@@ -1,11 +1,18 @@
+0.25.4rc2
+=========
+d4319a5  Minimal fix for #3001 (failing to fetch metadata on dangling symlink)
+cdcbdc7  Fixing #2914 - pre/post hooks now work for transactions
+67216aa  Fix for #3075 (sshkey host_aliases ignored)
+
 0.25.4rc1
 =========
+e4462c0  Updated version and CHANGELOG for 0.25.4
 441879f  Revert "Fix #2845 Cron entries using "special" parameter lose their title when changed"
 f7e1435  Updated rake task to fix gem build issue
+49013f0  Updated version and CHANGELOG for 0.25.3
 
 0.25.3
 ======
-49013f0  Updated version and CHANGELOG for 0.25.3
 f8c1b08  Reversion of pipe IO patch for testing on #3025
 7f25805  Fix #1464 Mount complains about missing fields
 c99f394  Fix #2845 Cron entries using "special" parameter lose their title when changed
@@ -163,31 +170,6 @@ b8470b8  Fix #2757 & CSR 92 (symlinks in recursively managed dirs)
 eca338c  Fix for #2772 (webrick test failures)
 b1c57e9  Al Hoang's patch for #2781, removing obsolete when/: syntax
 50e9c98  Follow-on for #2724 - Adding an external node classifier
-2f0b1e5  Updated CHANGELOG
-20e5222  Fixing #2689 - file owner warnings are reduced
-09fb3f7  Fixing #2752 - "require" loads "include"
-6846c32  Fixing some recently broken Scope tests
-0043392  Fixed typo in lib/puppet/indirector/ldap.rb
-6b254eb  Fix #2753 - Do not "global allow" plugins/modules mount if some rules have been parsed
-ff3a7bc  Re-fixed #2750 - Stop disabling the CRL or checking for a disabled CRL
-594c774  Revised partial fix for #2661 and related issues
-73d04c6  Bug #2534 Raise error if property appears twice
-7517572  Bug #1908 cron environment should allow empty vals
-febe707  Bug #1742 Invalid params to --color outputs 'nil'
-d383ab8  Use notice() in the versioncmp() docs
-9dff716  conf/redhat/*.init: Use -p option to killproc
-f47a70f  Ticket #2665: Regexp exception on ++ in package names
-b6e4ef3  Fixed #2750 - Set :cacrl to nil instead of 'false' in puppetd
-2b57e06  Fix #2691 - Collection AR request should not include params if querying with tags
-e8bce7a  Workaround #2668 - Compress facts so that the request size limit triggers less often
-e2ce790  Fixed #2737 - The zone provider needs to get acquainted with OpenSolaris
-aea1e5f  Update Red Hat spec file for 0.25.1
-fbdded7  Ticket #2685 (Type error in ssh_authorized_keys)
-4d9f76a  Fix for #2745 fakedata tests not working
-b4bcfe9  Fix for #2736, target doesn't work for ssh_authorized_keys
-ae528f6  Ticket #2734 PSON/JSON not serializing classes of a catalog
-f59f805  Bug #1900 Parsing of quoted $ in stdin
-6ba122f  Fixing #2735 - node classes are immed. added to classlist
 
 0.25.1
 ======
@@ -216,6 +198,9 @@ b4bcfe9  Fix for #2736, target doesn't work for ssh_authorized_keys
 ae528f6  Ticket #2734 PSON/JSON not serializing classes of a catalog
 f59f805  Bug #1900 Parsing of quoted $ in stdin
 6ba122f  Fixing #2735 - node classes are immed. added to classlist
+
+0.25.1rc2
+=========
 bca3b70  Bundling of pure ruby json lib as "pson"
 ce46be5  Proposed alternative solution for #2664 (REGEX / DIV lexing)
 b0518c3  Fix for #2681 (duplicate resource)
@@ -346,267 +331,6 @@ b611c34  Updated fix for #2481
 f385072  Revert "Fxied #2481 - Added status and restart overrides for Red Hat service provider."
 cc379b6  Fixed #2498 - logcheck update
 85a3633  Removed extraneous debugging
-bf94de9  Updated two more tests
-5b87dba  Logs now assume resource params have metadata
-1410bed  Adding metadata delegation from param to resource
-3ab3a5c  Removing unnecessary debug output
-488e368  Adding integration tests for #2371 (backup refactor)
-f1406bf  Adding many tests for #2371, and slightly refactoring
-8f60f0c  Fixes for Redmine 2371.
-cd224c6  Fixes #2464, #2457. Deprecate reportserver for report_server. Add report_port setting. Add tests.
-401a9ec  Fixing #2484 - "format missing" messages are better
-f6cc598  Fixes #2483 - Log only copies metadata from RAL objects
-7c4c00f  Fixed #2486 - Missing require 'monitor' in parser_support.rb
-ea34ee6  Added R.I.Pienaar's extlookup.rb to the ext directory
-36d3f58  Added example conf/puppet-queue.conf
-967eb9f  Fxied #2481 - Added status and restart overrides for Red Hat service provider.
-c702f76  rack: SSL Env vars can be in Request.env or ENV
-ca17b3c  rack: don't directly use the forbidden HTTP_CONTENT_TYPE env var (fixes rack specification conformance)
-a002e58  Removing old filebucket test
-d8de446  Cleaning up tests for #2469
-266aafa  default server in remote filebuckets
-1f8ef60  Fixes #2444 - Various JSON test failures
-11c0fb7  Fixed #2294 - Classes sometimes cannot be found
-7e5b562  Adding #2477 - puppet can apply provided catalogs
-97274ad  Fixing problems my Feature refactor caused
-6fb8bf6  Fixing ruby warning in definition test
-b3545fc  Fixed global deprecation error in useradd Unit tests
-dc24472  Adding a test for the Exec type
-58d9587  Speeding a test up through stubbing
-d4d8372  Fixing a small test by stubbing instead of mocking
-f7e1c36  Fixing a test broken by the regex features
-54a225d  Fixing tests broken by caching autoload results
-1ce31b4  Migrating Handler base tests from test/ to spec/
-cc3f56a  Migrating Feature tests to spec
-21d1d25  Fixing cron test to match new behaviour
-849fa67  Migrating tests to spec and removing an obsolete test
-6f458cc  Logging the configuration version we're applying
-ac58e27  Configuration version information is now in logs
-6ed0103  Adding support for an external catalog version
-39320b8  Cleaning up duplication in another test file
-25fae5f  Removing duplication in the test structure
-36c0662  Simplified Rakefile and moved tasks to tasks/rake directorya
-b45ccf8  Implement node matching with regexes
-58a73b5  Make sure node are referenced by their names
-3ebf148  Enhance selector and case statements to match with regexp
-ef68967  Fix #2033 - Allow regexp in if expression
-17e62b1  Add AST::Regex, an AST leaf node representing a regex
-4f9545f  Add regexes and regex match operators to the parser
-0ccd259  Add regex, match and not match token to the lexer
-201ae59  Allow variable $0 to $9 to be interpolated, if ephemeral
-f357a91  Implement ephemeral scope variables
-d40ef29  Signed-off-by: Eric Sorenson <ahpook@gmail.com>
-6d22afb  Modifying the REST client error to make server errors more clear
-21f477a  Fixes #2472. Load Facter facts when ralsh is invoked, plus test.
-2e41edb  Update CHANGELOG.git
-ebb5a1f  Fixed ci_spec task for RubyGems 1.3.5
-b6b903e  Fixes #2461. Provide new and old code paths for macosx_productversion_major with deprecation warning
-26b0c70  Fixing typo in two tests which caused them to always pass
-76fc2b1  Fixing #2440 - catalogs can now be compiled on demand
-832b6ff  Exiting from app failures instead of raising
-4ea3f17  Minimal patch to fix #2290 (/tmp permissions)
-08ff9e8  Fix #2467 - rack: suggest putting puppet/lib at beginning of RUBYLIB search path
-fb60f90  Fix #2465 - Default auth information is confusing with no auth.conf
-0ca9b53  Fix #2459 - puppetdoc added namespace classes as RDoc modules instead of classes
-18b5d61  Fix #2429 - vim: class/define/node should only be followed by whitespace
-da828a4  Fix #2448 - fix the broken runit provider and tests
-3898436  Fixed #2405 - Mount parameter "dump" doesn't accept all valid values on FreeBSD
-9825bec  Fixes #2362. Do not validate users/groups when supplied with numeric uid/gids
-450a19c  Fix #2454 - Definition named after a module don't show in puppetdoc
-8551ece  Fix #2453 - puppetdoc mixes long class names that look alike
-e3ee594  Fix #2422 & #2433 - make sure puppetdoc transform AST::Leaf boolean correctly
-b3b76df  Fixing #2296 - overlapping recursions work again
-9120712  Fixing mocks to remove warnings
-eeec8e9  Fixing #2423 - no more strange dependency cycles
-7d40f9e  Fixing #2443: Adding debugging guidance to dep cycle errors
-b4facb0  Fixing a test broken by changing the default os x package type
-b418921  Fixing selinux tests broken in the fix for #1963
-719e76b  Fixing #2445 - fixing the mount test mock
-f13f08d  Minor fix to URL for LDAP nodes documentation
-7c859a7  Fixing #2399 - removing client-side rrd graphs
-f6d6145  Fixing #2421 - file renaming errors now propagate
-db82523  Fixes #2438, get major OS X version from Facter and replace Puppet::Error invocations with fail builtin
-22145e7  Update install.rb to cope with all OS X versions, not just 10.5
-935c463  Fixing #2403 - provider specificity is richer and better
-d95b687  Fix #2439 - let puppetdoc use loaded_code
-ef5c4ae  Fixed #2436 - Changed ralsh to use Puppet::Type.new and avoid deprecation notice
-0c18013  Fixes #2430 - Stock apache2.conf for passenger incorrect
-c383ceb  Make pkgdmg default Darwin provider, make confines consistent on Darwin package providers.
-98599c4  Convert to using sbindir for OS X packages, clean out previous executables in bindir
-c659743  Fix #2425 - make sure client can contact CA server with REST
-17205bb  Fix #2424 - take 2, make sure default mounts allow every clients
-f2c55cc  Fix #2378 and #2391 tests
-8bbd8b4  Fix #2424 - File server can't find module in environment
-effaf80  Fix small typo in the fix for #2394
-a06094e  Feature #2378 - Implement "thin_storeconfigs"
-b2a008e  Fix #2391 - Exported resources never make to the storeconfigs db
-8f82407  Fix #2261 - Make sure query string parameters are properly escaped
-c86d44e  Fixed #579 - puppet should try to clear solaris 10 services in maintenance state
-910a5e2  Fix #1963 - Failing to read /proc/mounts for selinux kills file downloads
-ba824e9  Fixing #2245 - provider lists are not lost on type reload
-eb40966  Ruby no longer clobbers puppet autoloading
-a42e878  deprecate NetInfo providers and examples, remove all NetInfo references and tests.
-22f5632  Fixed #2410 - default acl logs as info instead of warn.
-65b0137  Adding test for current auth config warning.
-74f5ad4  Fixed #2394 - warn once on module mount deprecation.
-f46a52a  Add test for current module mount deprec warning.
-858d333  Fixes #2258,#2257,#2256. Maintain correct type for integers/booleans, allow correct values, and fix rule array handling
-44f127f  Added Markdown mode to puppetdoc to output Markdown.
-8a8ce9d  Excluded directories from rcov coverage report
-d152c5e  Allow boolean value for boolean cli parameter
-911b490  Fix #2364 - Associates the correct comment to the right statement
-faefd92  Make sure the parser sees the correct line number
-869ec27  Fix #2366 - puppetdoc was parsing classes in the wrong order
-4c659b7  Added rcov coverage to Spec tests
-1fd98b1  Fixes #2367 - Mongrel::HTTPRequest returns a StringIO object
-8b09b83  Fix #2082 - puppetca shouldn't list revoked certificates
-ea66cf6  Fix #2348 - Allow authstore (and REST auth) to match allow/deny against opaque strings
-1e83aad  Fix #2392 - use Content-Type for REST communication
-aaca17a  Fixed #2293 - Added cron syntax X-Y/Z and '7' for sunday
-cddc365  Switching to LoadedCode from ASTSet
-fc1f8cd  Adding a special class to handle loaded classes/defines/nodes
-325b8e4  Fix #2383, an incompatibility with early ruby 1.8 versions
-46112da  Fixing #2238 In some cases blank? is not available on String.
-cdd1662  Fixing #2238 - Deal with nil hash keys from mongrel params
-769c8aa  Final fix to CI test rakes
-a6816ff  Set ENV['PATH'] to an empty string if non-existent
-64a4720  Fix to CI rake tasks
-5680cd5  Fixing #2197 - daemontools tests now pass
-603b9cf  Change the diff default output to "unified"
-9bc9b5c  Added missing colon to suntab
-0f2d70d  Fixed #2087 and refactored the code that gets the smf service state
-3f070c1  Using the logging utilities to clean up module warnings
-feb7f89  Fixing #1064 - Deprecating module 'plugins' directories
-ccf4e69  Removing deprecated :pluginpath setting
-4036de9  Fixing #2094 - filebucket failures are clearer now
-ed876e0  Refactoring part of the file/filebucket integration
-bd81c25  Adding tests for file/backup behaviour
-c45ebfa  Fixed pi binary so --meta option works and updated documentation
-d2080a5  Fixing #2323 - Modules use environments correctly
-b9e632f  Fixed #2102 - Rails feature update fixed for Debian and Ubuntu
-1c4ef61  Fixed #2052 - Added -e option to puppet --help output
-d332333  Fix #2333 - Make sure lexer skip whitespace on non-token
-5fbf63c  Updated split function and add split function unit tests (courtesy of Thomas Bellman)
-a585bdd  * provider/augeas: strip whitespace and ignore blank lines
-a94d2de  Fixed pi tests
-5f7455e  Fixed #2222 - Cleanup pi binary options and --help output
-134ae3e  Fixing #2329 - puppetqd tests now pass
-de55e19  Cleaning up scope tests a bit
-e4ae870  Fixing #2336 - qualified variables only throw warnings
-607b01e  Fix #2246 - take2: make sure we run the rails tag query only when needed
-06b919d  Fix collector specs which were not working
-2945f8d  Make sure overriding a tag also produces a tag
-e142ca6  Removed a unit test which tested munging which is no longer done in the type
-d8ee6cf  Clearn up a parsing error reported by the tests
-446557f  vim: several improvements + cleanup
-9152678  Fixed #2229 - Red Hat init script error
-b5a8c4d  Fix #1907 (or sort) - 'require' puppet function
-74730df  #2332: Remove trailing slashes from path commands in the plugin
-1a89455  Changing the preferred serialization format to json
-0de70b7  Switching Queueing to using JSON instead of YAML
-7b33b6d  Adding JSON support to Catalogs
-c0bd0aa  Providing JSON support to the Resource class
-c16fd1b  Adding a JSON utility module for providing Ruby compat
-f059c51  Adding JSON support to Puppet::Relationship
-7f322b3  Adding a JSON format
-7666597  Allowing formats to specify the individual method names to use
-d40068f  Allowing formats to specify the methods they require
-024ccf5  Adding a "json" feature
-c8b382d  Fix some tests who were missing some actions
-f9516d4  Make sure virtual and rails query use tags when tag are searched
-b5855ec  Make sure resources are tagged with the user tag on the server
-d69fffb  Fix #2246 - Array tagged resources can't be collected or exported
-6ce0d1e  Partial fix for #2329
-4f2c066  Removed extra whitespace from end of lines
-97e6975  Changed indentation to be more consistent with style guide (4 spaces per level)
-41ce18c  Changed tabs to spaces without interfering with indentation or alignment
-f3b4092  Fix #2308 - Mongrel should use X-Forwarded-For
-7b0413e  Fixes Bug #2324 - Puppetd fails to start without rails
-48d5e8c  Enhance versioncmp documentation
-ef56ba5  * provider/augeas: minor spec test cleanup
-d322329  * provider/augeas: allow escaped whitespace and brackets in paths
-9735c50  * provider/augeas: match comparison uses '==' and '!=' again
-dbfa61b  * provider/augeas (process_match): no match results in empty array
-386923e  * provider/augeas: remove useless checks for nil
-171669a  * provider/augeas: simplify evaluation in process_get/match
-51cc752  * provider/augeas (open_augeas): use Augeas flag names, not ints
-4951cdf  * provider/augeas: ensure Augeas connection is always closed
-0d5a24d  * provider/augeas: minor code cleanup
-cea7bb5  * provider/augeas (parse_commands): use split to split string into lines
-95bd826  * provider/augeas: remove trailing whitespace (no functional change)
-7c5125b  Brought in lutters parse_commands patch and integrated it into the type. This includes reworking the get and match commands as well. This change introduces a few small changes. These are:
-6ce8154  Removed --no-chain-reply-to in rake mail_patches task
-4ef7bba  Removing --no-thread from the mail_patches rake target
-508934b  Fixing a bunch of warnings
-fb0ed7a  Fixing tests broken by a recent fix to Cacher
-650029e  Always providing a value for 'exported' on Rails resources
-f1dba91  Fixing #2230 - exported resources work again
-5522eb8  Disabling the catalog cache, so puppetqd is compatible with storeconfigs
-abbb282  Fixing the rails feature to be compatible with 2.1+
-907b39b  Using Message acknowledgement in queueing
-42247f0  Fixing #2315 - ca --generate works again
-d7be033  Fix #2220 - Make sure stat is refreshed while managing Files
-e4d5966  Added puppet branding to format patch command
-00d5139  vim: Remove another mention of 'site' from syntax
-9067abd  vim: Highlight parameters with 'plusignment' operator
-736b0e4  vim: Highlight strings in single quotes
-ce01c95  vim: Clean up syntax spacing
-3af2dbf  JRuby OpenSSL implementation is more strict than real ruby one and requires certificate serial number to be strictly positive.
-62534a1  Logging when a cached catalog is used.
-ff5c44f  Changing Puppet::Cacher::Expirer#expired? method name
-e3d4c8e  Fixing #2240 - external node failures now log output
-bc1445b  Fixing #2237 - client_yaml dir is always created by puppetd
-e0c19f9  Fixing #2228 - --logdest works again in puppetd and puppetmasterd
-ab34cf6  Fixing puppetmasterd tests when missing rack
-9d5d0a0  Fixing the Agent so puppetrun actually works server-side
-b0ef08b  Fixing #2248 - --no-client correctly leaves off client
-b83b159  Fixing #2243 - puppetrun works again
-3d2189f  Fixed #2304 - Added naggen script to directly generate nagios configuration files from a StoreConfigs Rails database
-700ad5b  Sync conf/redhat/puppet.spec with Fedora/EPEL
-3ec3f91  Fixed #2280 - Detailed exit codes fix
-f98d49f  Fixing #2253 - pluginsync failures propagate correctly
-d860a2f  Fixing a transaction test that had some broken plumbing
-a728757  Refactoring resource generation slightly
-6e824d8  Adding a Spec lib directory and moving tmpfile to it
-1d69dbf  Extracting a method from eval_resource in Transaction
-7650fb2  Not trying to load files that get removed in pluginsyncing
-3995e70  Fix #2300 - Update ssh_authorized_key documentation
-cb4a4d3  Changed version to allow Rake to work.  Minor edit to Rakefile
-99f666f  enable maillist on centos, redhat, fedora
-e13befa  Fixing #2288 - fixing the tests broken by my attr_ttl code
-a406d58  Fix for #2234: test fails with old Rack version
-c189b46  Fixing #2273 - file purging works more intuitively
-138f19f  Caching whether named autoloaded files are missing
-415553e  Adding caching of file metadata to the autoloader
-d489a2b  Adding modulepath caching to the Autoloader
-5f1c228  Adding caching to the Environment class
-047ab78  Adding TTL support to attribute caching
-6a413d2  Fixed #2666 - Broken docstring formatting
-469604f  Deprecating factsync - pluginsync should be used instead
-d39c485  Added spec and unit tests to the Rakefile files list and fixed CI rake tasks
-e1a7f84  Added install.rb to Rakefile package task
-e180a91  Fixed #2271 - Fix to puppetd documentation
-4bf2980  Protecting Stomp client against internal failures
-f4cb8f3  Adding some usability bits to puppetqd
-a18298a  Refactoring the stomp client and tests a bit
-2771918  Relying on threads rather than sleeping for puppetqd
-07ff4be  Fixing #2250 - Missing templates throw a helpful error
-7ce42da  Fixing #2273 - CA location is set correctly in puppetca
-e1779c7  RackXMLRPC: buffer request contents in memory, as a real string.
-fb957cc  Modules now can find their own paths
-c608409  Moving file-searching code out of Puppet::Module
-83ba0e5  Fixing #2234 - fixing all of the tests broken by my bindaddress fix
-4f3a67f  Fixing #2221 - pluginsignore should work again
-2d580c2  Fix snippets tests failing because of activated storeconfigs
-8c718c9  Fix failing test: file.close! and file.path ordering fix
-17f2c7d  Confine stomp tests to Stomp enabled systems
-6a80b76  Fix some master failing tests
-172422f  Fix bug #2124 - ssh_authorized_key always changes target if target is not defined
-f945b66  Fixing #2265 - rack is loaded with features rather than manually
-5aef915  Added .git to pluginsignore default list of ignores
-6db5e8d  Cleanup of the Puppet Rakefile and removal of the requirement for the Reductive Build Library
-5cc4910  Fix #1409 once again, including test
-a6af5bf  Added split function
 
 0.25.0rc1
 =========
@@ -739,6 +463,9 @@ a6816ff  Set ENV['PATH'] to an empty string if non-existent
 603b9cf  Change the diff default output to "unified"
 9bc9b5c  Added missing colon to suntab
 0f2d70d  Fixed #2087 and refactored the code that gets the smf service state
+
+0.25.0beta2
+===========
 3f070c1  Using the logging utilities to clean up module warnings
 feb7f89  Fixing #1064 - Deprecating module 'plugins' directories
 ccf4e69  Removing deprecated :pluginpath setting
@@ -871,6 +598,9 @@ f945b66  Fixing #2265 - rack is loaded with features rather than manually
 6db5e8d  Cleanup of the Puppet Rakefile and removal of the requirement for the Reductive Build Library
 5cc4910  Fix #1409 once again, including test
 a6af5bf  Added split function
+
+0.25.0beta1
+===========
 2dd55fc  Fixing #2200 - puppetqd expects Daemon to be a class
 c016062  Removing unneeded test stubs
 1a2e1bc  Fixing #2195 - the Server class handles bindaddress
@@ -1442,7 +1172,7 @@ d0bf26e  Fixed install.rb typo
 2c7e189  Fixes incorrect detail variable in OS X version check, re-patches ralsh to work with Facter values and adds error check for missing password hash files.
 73a0757  Fix #1828 - Scope.number? wasn't strict enough and could produce wrong results
 
-0.24.7rc1
+0.24.8rc1
 =========
 84d6637  Fixed #2000 - No default specified for checksum
 a3bb201  Fixing change printing when list properties are absent
@@ -1528,8 +1258,91 @@ b7ab54c  Add methods to return hash instead of objects to params and tags
 b27fccd  Fixed #1852 - Correct behaviour when no SELinux bindings
 7403330  Updated Red Hat spec file 0.24.7
 
-0.24.7
-======
+0.24.7rc1
+=========
+84d6637  Fixed #2000 - No default specified for checksum
+a3bb201  Fixing change printing when list properties are absent
+67fc394  Fixed #2026 - Red Hat ignoring stop method
+cf64827  Bring in the documentation changes from the master branch
+01bc88c  Added a force option to ensure the change is always applied, and call augeas twice to reduce the chance that data is lost
+cedeb79  Backport the fix for #1835
+cf48ec0  First cut at the not running if augeas does not change any of the underlieing files
+9d36b58  Bug 1948: Added patch by jab to support the correct ins syntax. Updated the test cases as well
+61661b1  Fixing #1991 - ldap booleans get converted to booleans
+d5850dc  Refactored a method: extracted about five other methods
+1c7c8fe  dbfix - fix typo and close another possible inconsistency
+c55ac3f  Fix #2010 - add protection code for some storeconfig corruption
+a790ee3  Further fix to #1910
+9577d3a  Fixing #2013 - prefetching had a mismatch between type and title
+719a8df  Fixed to rake tests for reductivelabs build
+ac87600  Fixed report reference page
+0c16426  Fixing broken 0.24.x tests in test/.
+23066c1  Fixing every failing test I can find on the build server.
+ec56ddf  This script fixes the most common issues with inconsistent storeconfigs database (including duplicate resources record, duplicate param_values records, dangling records...).
+c052ff8  Make puppetd --waitforcert option behave as documented:
+e2b4062  Adding a performance optimization to the FileCollection.
+fa6494b  Using the FileCollection where appropriate.
+373d505  Adding a FileCollection and a lookup module for it.
+0e46786   Fixed #1963 - Failing to read /proc/mounts for selinux kills file downloads
+4170238  Fixed #2025 - gentoo service provider handle only default init level
+8c010e0  Fixed #1910 - updated logcheck
+7504b04  Updated useradd.rb managehome confine to include other RH-like distributions
+f07d928  Use Puppet.debug instead of own debug flag
+25a3f59  Fixing #558 - File checksums no longer refer to 'nosum'
+d758f45  Fixing #1871 once and for all - contents are never printed
+c0f4943  Minor fix to launchd tests
+24d48e6  Fix #1972 - ActiveRecord fixes resulted in broken tests
+446989b  Fix spec test for launchd service provider to work with new service status method and add two new status tests.
+3ef5849  Fixing a test I broke in commit:"897539e857b0da9145f15648b6aa2ef124ec1a19".
+72bd378  Removing a no-longer-valid test.
+682dd8b  Fixing password validation to support symbols.
+44f97aa  Only backing up within parsedfile when managing files
+04af7b4  Fixing a syntax error in the up2date provider
+1070b3c  Fixing a test broken by a log demotion
+ab84756  Cleaned up variable names to be more sane, clarified error messages and fixed incorrect use of 'value' variable rather than 'member'.
+7f41857  Provide dscl -url output support for OS X 10.4 clients using the directoryservice provider.
+0bc3c07  Fix launchd service provider so it is backwards compatible with OS X 10.4 as well
+2561c8e  Updated Augeas type code
+7d72186  Removed site from Puppet VIM syntax
+1bc7404  Fixed #1831 - Added sprintf function
+336b645  Fixed #1830 - Added regsubst function
+2a85551  Bug 1948: Add logic and testing for the command parsing logic
+2218611  Updated up2date and service confines to add support for Oracle EL and VM
+39a8b28  Fixing #1964 - Facts get loaded from plugins
+7cf085c  Adding tests for Puppet::Indirector::Facts::Facter.loadfacts
+70ea39a  Adding a post-processor for Nagios names.
+4dfa034  Revert "Refixing #1420 - _naginator_name is only used for services"
+d5a193a  Fixing #1541 - ParsedFile only backs up files once per transaction
+53f15b9  Removing the apparently obsolete netinfo filetype.
+4e89156  Migrated FileType tests to spec, and fleshed them out a bit.
+cc4d658  Bug #1948: Added patch by jab to support the correct ins syntax. Updated the test cases as well
+5e35166  Fixing #961 - closing the http connection after every xmlrpc call
+af3f3ae  Refactoring the XMLRPC::Client error-handling
+f0ac3ae  Fixed #1959 - Added column protection for environment schema migration
+319822a  Fixing #1869 - autoloaded files should never leak exceptions
+6b0c1b9  Fixing #1543 - Nagios parse errors no longer kill Puppet
+7fd5c7e  Moving the transaction specs to the right path
+efb5cc5  Refixing #1420 - _naginator_name is only used for services
+32c2be9  Fixed #1884 - exported defines are collected by the exporting host
+0e49159  Cleaning up the AST::Resource code a bit
+b22d148  Fix #1691 - Realize fails with array of Resource References
+6331bfc  Fix #1682 - Resource titles are not flattened as they should
+7e036eb  Fix #1922 - Functions squash all arguments into a single hash
+535fa89  Fixed #1538 - Yumrepo sets permissions wrongly on files in /etc/yum.repos.d
+f7b04df  Fixed #1936 - Added /* */ support to the vim file
+671d73c  Prefetching, and thus purging, Nagios resources now works *only* if you use the default configuration file locations.
+063871f  Adding some basic tests for the Naginator provider base class
+897539e  Removing a redundant instance prefect call.
+012efe3  Fixing #1912 - gid still works with no 'should' value.
+a9f34af  Fixing the Rakefile to use 'git format-patch'.
+db05c00  Fixing #1920 - user passwords no longer allow ':'
+aa219e7  Adding README.rst file
+1d3f117  Added Reductive Labs build library
+f01882d  Change the way the tags and params are handled in rails
+b7ab54c  Add methods to return hash instead of objects to params and tags
+5c64435  Rails serialization module to help serialize/unserialize some Puppet Objects
+b27fccd  Fixed #1852 - Correct behaviour when no SELinux bindings
+7403330  Updated Red Hat spec file 0.24.7
 8befc18  Updated to version 0.24.7
 cf19bd8  Not using a temporary file when locking files for writing.
 b966ea0  Modifying the corruption-checking test.
