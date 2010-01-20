@@ -5,17 +5,55 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/transaction'
 
 describe Puppet::Transaction do
+    before do
+        @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+    end
+
     it "should delegate its event list to the event manager" do
         @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
         @transaction.event_manager.expects(:events).returns %w{my events}
         @transaction.events.should == %w{my events}
     end
 
+    it "should be able to accept resource status instances" do
+        resource = Puppet::Type.type(:notify).new :title => "foobar"
+        status = Puppet::Resource::Status.new(resource)
+        @transaction.add_resource_status(status)
+        @transaction.resource_status(resource).should equal(status)
+    end
+
+    it "should be able to look resource status up by resource reference" do
+        resource = Puppet::Type.type(:notify).new :title => "foobar"
+        status = Puppet::Resource::Status.new(resource)
+        @transaction.add_resource_status(status)
+        @transaction.resource_status(resource.to_s).should equal(status)
+    end
+
+    it "should return nil when asked for a status that has not been created" do
+        @transaction.resource_status("File[/foo]").should be_nil
+    end
+
+    it "should consider a resource to be failed if a status instance exists for that resource and indicates it is failed" do
+        resource = Puppet::Type.type(:notify).new :name => "yayness"
+        status = Puppet::Resource::Status.new(resource)
+        status.failed = "some message"
+        @transaction.add_resource_status(status)
+        @transaction.should be_failed(resource)
+    end
+
+   it "should consider a resource to have failed dependencies if any of its dependencies are failed"
+
     describe "when initializing" do
         it "should create an event manager" do
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
             @transaction.event_manager.should be_instance_of(Puppet::Transaction::EventManager)
             @transaction.event_manager.transaction.should equal(@transaction)
+        end
+
+        it "should create a resource harness" do
+            @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+            @transaction.resource_harness.should be_instance_of(Puppet::Transaction::ResourceHarness)
+            @transaction.resource_harness.transaction.should equal(@transaction)
         end
     end
 
@@ -58,61 +96,38 @@ describe Puppet::Transaction do
         end
     end
 
-    describe "when applying changes" do
+    describe "when applying a resource" do
         before do
+            @resource = Puppet::Type.type(:file).new :path => "/my/file"
+            @status = Puppet::Resource::Status.new(@resource)
+
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
             @transaction.event_manager.stubs(:queue_event)
-
-            @resource = stub 'resource'
-            @property = stub 'property', :is_to_s => "is", :should_to_s => "should"
-
-            @event = stub 'event', :status => "success"
-            @change = stub 'change', :property => @property, :changed= => nil, :forward => @event, :is => "is", :should => "should"
+            @transaction.resource_harness.stubs(:evaluate).returns(@status)
         end
 
-        it "should apply each change" do
-            c1 = stub 'c1', :property => @property, :changed= => nil
-            c1.expects(:forward).returns @event
-            c2 = stub 'c2', :property => @property, :changed= => nil
-            c2.expects(:forward).returns @event
-
-            @transaction.apply_changes(@resource, [c1, c2])
+        it "should use its resource harness to apply the resource" do
+            @transaction.resource_harness.expects(:evaluate).with(@resource)
+            @transaction.apply(@resource)
         end
 
-        it "should queue the events from each change" do
-            c1 = stub 'c1', :forward => stub("event1", :status => "success"), :property => @property, :changed= => nil
-            c2 = stub 'c2', :forward => stub("event2", :status => "success"), :property => @property, :changed= => nil
-
-            @transaction.event_manager.expects(:queue_event).with(@resource, c1.forward)
-            @transaction.event_manager.expects(:queue_event).with(@resource, c2.forward)
-
-            @transaction.apply_changes(@resource, [c1, c2])
+        it "should add the resulting resource status to its status list" do
+            @transaction.apply(@resource)
+            @transaction.resource_status(@resource).should be_instance_of(Puppet::Resource::Status)
         end
 
-        it "should store the change in the transaction's change list" do
-            @transaction.apply_changes(@resource, [@change])
-            @transaction.changes.should include(@change)
+        it "should queue any events added to the resource status" do
+            @status.expects(:events).returns %w{a b}
+            @transaction.event_manager.expects(:queue_event).with(@resource, "a")
+            @transaction.event_manager.expects(:queue_event).with(@resource, "b")
+            @transaction.apply(@resource)
         end
 
-        it "should increment the number of applied resources" do
-            @transaction.apply_changes(@resource, [@change])
-            @transaction.resourcemetrics[:applied].should == 1
-        end
-
-        describe "and a change fails" do
-            before do
-                @event.stubs(:status).returns "failure"
-            end
-
-            it "should increment the failures" do
-                @transaction.apply_changes(@resource, [@change])
-                @transaction.should be_any_failed
-            end
-
-            it "should queue the event" do
-                @transaction.event_manager.expects(:queue_event).with(@resource, @event)
-                @transaction.apply_changes(@resource, [@change])
-            end
+        it "should log and skip any resources that cannot be applied" do
+            @transaction.resource_harness.expects(:evaluate).raises ArgumentError
+            @resource.expects(:err)
+            @transaction.apply(@resource)
+            @transaction.resource_status(@resource).should be_nil
         end
     end
 

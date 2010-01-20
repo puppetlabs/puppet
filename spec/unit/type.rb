@@ -34,6 +34,15 @@ describe Puppet::Type do
         resource.parameter(:fstype).must be_instance_of(Puppet::Type.type(:mount).attrclass(:fstype))
     end
 
+    it "should be able to retrieve all set properties" do
+        resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+        props = resource.properties
+        props.should_not be_include(nil)
+        [:fstype, :ensure, :pass].each do |name|
+            props.should be_include(resource.parameter(name))
+        end
+    end
+
     it "should have a method for setting default values for resources" do
         Puppet::Type.type(:mount).new(:name => "foo").should respond_to(:set_default)
     end
@@ -350,32 +359,49 @@ describe Puppet::Type do
     end
 
     describe "when retrieving current property values" do
-        # Use 'mount' as an example, because it doesn't override 'retrieve'
         before do
             @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-            @properties = {}
+            @resource.property(:ensure).stubs(:retrieve).returns :absent
         end
 
-        it "should return a hash containing values for all set properties" do
+        it "should fail if its provider is unsuitable" do
+            @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
+            @resource.provider.class.expects(:suitable?).returns false
+            lambda { @resource.retrieve }.should raise_error(Puppet::Error)
+        end
+
+        it "should return a Puppet::Resource instance with its type and title set appropriately" do
+            result = @resource.retrieve
+            result.should be_instance_of(Puppet::Resource)
+            result.type.should == "Mount"
+            result.title.should == "foo"
+        end
+
+        it "should set the name of the returned resource if its own name and title differ" do
+            @resource[:name] = "my name"
+            @resource.title = "other name"
+            @resource.retrieve[:name].should == "my name"
+        end
+
+        it "should provide a value for all set properties" do
             values = @resource.retrieve
-            [@resource.property(:fstype), @resource.property(:pass)].each { |property| values.should be_include(property) }
+            [:ensure, :fstype, :pass].each { |property| values[property].should_not be_nil }
         end
 
-        it "should not call retrieve on non-ensure properties if the resource is absent" do
+        it "should provide a value for 'ensure' even if no desired value is provided" do
+            @resource = Puppet::Type.type(:file).new(:path => "/my/file/that/can't/exist")
+        end
+
+        it "should not call retrieve on non-ensure properties if the resource is absent and should consider the property absent" do
             @resource.property(:ensure).expects(:retrieve).returns :absent
             @resource.property(:fstype).expects(:retrieve).never
-            @resource.retrieve[@resource.property(:fstype)]
-        end
-
-        it "should set all values to :absent if the resource is absent" do
-            @resource.property(:ensure).expects(:retrieve).returns :absent
-            @resource.retrieve[@resource.property(:fstype)].should == :absent
+            @resource.retrieve[:fstype].should == :absent
         end
 
         it "should include the result of retrieving each property's current value if the resource is present" do
             @resource.property(:ensure).expects(:retrieve).returns :present
             @resource.property(:fstype).expects(:retrieve).returns 15
-            @resource.retrieve[@resource.property(:fstype)].should == 15
+            @resource.retrieve[:fstype] == 15
         end
     end
 

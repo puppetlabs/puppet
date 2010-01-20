@@ -8,6 +8,8 @@ class Puppet::Transaction
     require 'puppet/transaction/change'
     require 'puppet/transaction/event'
     require 'puppet/transaction/event_manager'
+    require 'puppet/transaction/resource_harness'
+    require 'puppet/resource/status'
 
     attr_accessor :component, :catalog, :ignoreschedules
     attr_accessor :sorted_resources, :configurator
@@ -20,6 +22,9 @@ class Puppet::Transaction
 
     # Routes and stores any events and subscriptions.
     attr_reader :event_manager
+
+    # Handles most of the actual interacting with resources
+    attr_reader :resource_harness
 
     include Puppet::Util
     include Puppet::Util::Tagging
@@ -60,38 +65,13 @@ class Puppet::Transaction
 
     # Apply all changes for a resource
     def apply(resource)
-        begin
-            changes = resource.evaluate
-        rescue => detail
-            puts detail.backtrace if Puppet[:trace]
-
-            resource.err "Failed to retrieve current state of resource: %s" % detail
-
-            # Mark that it failed
-            @failures[resource] += 1
-
-            # And then return
-            return
+        status = resource_harness.evaluate(resource)
+        add_resource_status(status)
+        status.events.each do |event|
+            event_manager.queue_event(resource, event)
         end
-
-        changes = [changes] unless changes.is_a?(Array)
-
-        @resourcemetrics[:out_of_sync] += 1 if changes.length > 0
-
-        return if changes.empty? or ! allow_processing?(resource, changes)
-
-        apply_changes(resource, changes)
-
-        # If there were changes and the resource isn't in noop mode...
-        unless changes.empty? or resource.noop
-            # Record when we last synced
-            resource.cache(:synced, Time.now)
-
-            # Flush, if appropriate
-            if resource.respond_to?(:flush)
-                resource.flush
-            end
-        end
+    rescue => detail
+        resource.err "Could not evaluate: #{detail}"
     end
 
     # Apply each change in turn.
@@ -136,13 +116,6 @@ class Puppet::Transaction
                 resource.debug "Skipping automatic relationship to %s" % gen_child
             end
         end
-    end
-
-    # Are we deleting this resource?
-    def deleting?(changes)
-        changes.detect { |change|
-            change.property.name == :ensure and change.should == :absent
-        }
     end
 
     # See if the resource generates new resources at evaluation time.
@@ -237,13 +210,8 @@ class Puppet::Transaction
         event_manager.events
     end
 
-    # Determine whether a given resource has failed.
-    def failed?(obj)
-        if @failures[obj] > 0
-            return @failures[obj]
-        else
-            return false
-        end
+    def failed?(resource)
+        s = resource_status(resource) and s.failed?
     end
 
     # Does this resource have any failed dependencies?
@@ -252,17 +220,14 @@ class Puppet::Transaction
         # we check for failures in any of the vertexes above us.  It's not
         # enough to check the immediate dependencies, which is why we use
         # a tree from the reversed graph.
-        skip = false
-        deps = relationship_graph.dependencies(resource)
-        deps.each do |dep|
-            if fails = failed?(dep)
-                resource.notice "Dependency %s[%s] has %s failures" %
-                    [dep.class.name, dep.name, @failures[dep]]
-                skip = true
-            end
+        found_failed = false
+        relationship_graph.dependencies(resource).each do |dep|
+            next unless failed?(dep)
+            resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
+            found_failed = true
         end
 
-        return skip
+        return found_failed
     end
 
     # A general method for recursively generating new resources from a
@@ -363,6 +328,10 @@ class Puppet::Transaction
         @report = Report.new
 
         @event_manager = Puppet::Transaction::EventManager.new(self)
+
+        @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
+
+        @resource_status = {}
     end
 
     # Prefetch any providers that support it.  We don't support prefetching
@@ -405,6 +374,36 @@ class Puppet::Transaction
 
     def relationship_graph
         catalog.relationship_graph
+    end
+
+    # Send off the transaction report.
+    def send_report
+        begin
+            report = generate_report()
+        rescue => detail
+            Puppet.err "Could not generate report: %s" % detail
+            return
+        end
+
+        if Puppet[:summarize]
+            puts report.summary
+        end
+
+        if Puppet[:report]
+            begin
+                report.save()
+            rescue => detail
+                Puppet.err "Reporting failed: %s" % detail
+            end
+        end
+    end
+
+    def add_resource_status(status)
+        @resource_status[status.resource] = status
+    end
+
+    def resource_status(resource)
+        @resource_status[resource.to_s]
     end
 
     # Roll all completed changes back.
@@ -479,21 +478,6 @@ class Puppet::Transaction
 
     def appropriately_tagged?(resource)
         self.ignore_tags? or tags.empty? or resource.tagged?(*tags)
-    end
-
-    private
-
-    def apply_change(resource, change)
-        @changes << change
-
-        event = change.forward
-
-        if event.status == "success"
-            @resourcemetrics[:applied] += 1
-        else
-            @failures[resource] += 1
-        end
-        event_manager.queue_event(resource, event)
     end
 end
 

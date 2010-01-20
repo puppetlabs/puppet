@@ -26,14 +26,16 @@ class Puppet::Transaction::ResourceHarness
     def changes_to_perform(status, resource)
         current = resource.retrieve
 
+        resource.cache :checked, Time.now
+
         if param = resource.parameter(:ensure)
-            insync = param.insync?(current[:ensure])
-            return [Puppet::Transaction::Change.new(param, current[:ensure])] unless insync
-            return [] if param.should == :absent
+            return [] if absent_and_not_being_created?(current, param)
+            return [Puppet::Transaction::Change.new(param, current[:ensure])] unless ensure_is_insync?(current, param)
+            return [] if ensure_should_be_absent?(current, param)
         end
 
         resource.properties.reject { |p| p.name == :ensure }.find_all do |param|
-            ! param.insync?(current[param.name])
+            param_is_not_insync?(current, param)
         end.collect do |param|
             Puppet::Transaction::Change.new(param, current[param.name])
         end
@@ -51,6 +53,7 @@ class Puppet::Transaction::ResourceHarness
         return status
     rescue => detail
         resource.fail "Could not create resource status: #{detail}" unless status
+        puts detail.backtrace if Puppet[:trace]
         resource.err "Could not evaluate: #{detail}"
         status.failed = true
         return status
@@ -58,5 +61,23 @@ class Puppet::Transaction::ResourceHarness
 
     def initialize(transaction)
         @transaction = transaction
+    end
+
+    private
+
+    def absent_and_not_being_created?(current, param)
+        current[:ensure] == :absent and param.should.nil?
+    end
+
+    def ensure_is_insync?(current, param)
+        param.insync?(current[:ensure])
+    end
+
+    def ensure_should_be_absent?(current, param)
+        param.should == :absent
+    end
+
+    def param_is_not_insync?(current, param)
+        ! param.insync?(current[param.name] || :absent)
     end
 end

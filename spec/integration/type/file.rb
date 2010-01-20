@@ -7,7 +7,24 @@ require 'puppet_spec/files'
 describe Puppet::Type.type(:file) do
     include PuppetSpec::Files
 
+    it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
+        file = Puppet::Type.type(:file).new :path => "/my/file", :mode => "755"
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource file
+
+        file.parameter(:mode).expects(:retrieve).never
+
+        transaction = Puppet::Transaction.new(catalog)
+        transaction.resource_harness.evaluate(file).should_not be_failed
+    end
+
     describe "when writing files" do
+        before do
+            Puppet::Util::Log.newdestination :console
+        end
+
+        after { Puppet::Util::Log.close :console }
+
         it "should backup files to a filebucket when one is configured" do
             bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
             file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
@@ -49,6 +66,8 @@ describe Puppet::Type.type(:file) do
 
             File.chmod(0111, dir) # make it non-writeable
 
+            Puppet::Util::Log.stubs(:newmessage)
+
             catalog.apply
 
             File.read(file[:path]).should == "bar\n"
@@ -75,7 +94,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it "should backup directories to the local filesystem by copying the whole directory" do
-            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => ".bak", :content => "foo"
+            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => ".bak", :content => "foo", :force => true
             catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
 
@@ -92,7 +111,7 @@ describe Puppet::Type.type(:file) do
 
         it "should backup directories to filebuckets by backing up each file separately" do
             bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
-            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
+            file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
             catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file, bucket
 

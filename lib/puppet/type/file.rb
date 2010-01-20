@@ -404,6 +404,16 @@ Puppet::Type.newtype(:file) do
 
         super
 
+        # If they've specified a source, we get our 'should' values
+        # from it.
+        unless self[:ensure]
+            if self[:target]
+                self[:ensure] = :symlink
+            elsif self[:content]
+                self[:ensure] = :file
+            end
+        end
+
         @title = self.class.canonicalize_ref(@title)
         @stat = nil
     end
@@ -630,7 +640,6 @@ Puppet::Type.newtype(:file) do
         expire
     end
 
-    # a wrapper method to make sure the file exists before doing anything
     def retrieve
         if source = parameter(:source)
             source.copy_source_values
@@ -782,24 +791,6 @@ Puppet::Type.newtype(:file) do
         return if newsum == checksum
 
         self.fail "File written to disk did not match checksum; discarding changes (%s vs %s)" % [checksum, newsum]
-    end
-
-    # Override the parent method, because we don't want to generate changes
-    # when the file is missing and there is no 'ensure' state.
-    def propertychanges(currentvalues)
-        unless self.stat
-            found = false
-            ([:ensure] + CREATORS).each do |prop|
-                if @parameters.include?(prop)
-                    found = true
-                    break
-                end
-            end
-            unless found
-                return []
-            end
-        end
-        super
     end
 
     # There are some cases where all of the work does not get done on

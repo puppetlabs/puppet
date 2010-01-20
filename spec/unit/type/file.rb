@@ -125,6 +125,19 @@ describe Puppet::Type.type(:file) do
         file.autorequire.should be_empty
     end
 
+
+    describe "when initializing" do
+        it "should set a desired 'ensure' value if none is set and 'content' is set" do
+            file = Puppet::Type::File.new(:name => "/my/file", :content => "/foo/bar")
+            file[:ensure].should == :file
+        end
+
+        it "should set a desired 'ensure' value if none is set and 'target' is set" do
+            file = Puppet::Type::File.new(:name => "/my/file", :target => "/foo/bar")
+            file[:ensure].should == :symlink
+        end
+    end
+
     describe "when validating attributes" do
         %w{path backup recurse recurselimit source replace force ignore links purge sourceselect}.each do |attr|
             it "should have a '#{attr}' parameter" do
@@ -805,6 +818,25 @@ describe Puppet::Type.type(:file) do
             file = Puppet::Type::File.new(:name => "/my/file", :backup => ".foo")
             file.expects(:bucket)
             file.finish
+        end
+    end
+
+    describe "when writing the file" do
+        it "should propagate failures encountered when renaming the temporary file" do
+            File.stubs(:open)
+
+            File.expects(:rename).raises ArgumentError
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "puppet")
+
+            lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
+        end
+    end
+
+    describe "when retrieving the current file state" do
+        it "should copy the source values if the 'source' parameter is set" do
+            file = Puppet::Type::File.new(:name => "/my/file", :source => "/foo/bar")
+            file.parameter(:source).expects(:copy_source_values)
+            file.retrieve
         end
     end
 end

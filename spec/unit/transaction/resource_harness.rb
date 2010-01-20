@@ -98,6 +98,11 @@ describe Puppet::Transaction::ResourceHarness do
             @harness.changes_to_perform(@status, @resource)
         end
 
+        it "should cache that the resource was checked" do
+            @resource.expects(:cache).with { |name, time| name == :checked and time.is_a?(Time) }
+            @harness.changes_to_perform(@status, @resource)
+        end
+
         it "should create changes with the appropriate property and current value" do
             @resource[:ensure] = :present
             @current_state[:ensure] = :absent
@@ -115,15 +120,28 @@ describe Puppet::Transaction::ResourceHarness do
                 @current_state[:ensure] = :absent
                 @current_state[:mode] = :absent
 
+                @resource.stubs(:retrieve).returns @current_state
+
                 changes = @harness.changes_to_perform(@status, @resource)
                 changes.length.should == 1
                 changes[0].property.name.should == :ensure
             end
         end
 
-        describe "and the 'ensure' parameter is present, should be set to 'absent', and is correctly set to 'absent'" do
-            it "should return an empty array" do
+        describe "and the 'ensure' parameter should be set to 'absent', and is correctly set to 'absent'" do
+            it "should return no changes" do
                 @resource[:ensure] = :absent
+                @resource[:mode] = "755"
+                @current_state[:ensure] = :absent
+                @current_state[:mode] = :absent
+
+                @harness.changes_to_perform(@status, @resource).should == []
+            end
+        end
+
+        describe "and the 'ensure' parameter is 'absent' and there is no 'desired value'" do
+            it "should return no changes" do
+                @resource.newattr(:ensure)
                 @resource[:mode] = "755"
                 @current_state[:ensure] = :absent
                 @current_state[:mode] = :absent
