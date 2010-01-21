@@ -173,6 +173,9 @@ describe "Puppet" do
         describe "the main command" do
             before :each do
                 Puppet.stubs(:[])
+                Puppet.settings.stubs(:use)
+                Puppet.stubs(:[]).with(:prerun_command).returns ""
+                Puppet.stubs(:[]).with(:postrun_command).returns ""
                 Puppet.stubs(:[]).with(:trace).returns(true)
 
                 @puppet.options.stubs(:[])
@@ -273,6 +276,16 @@ describe "Puppet" do
 
             it "should finalize the catalog" do
                 @catalog.expects(:finalize)
+
+                @puppet.main
+            end
+
+            it "should call the prerun and postrun commands on a Configurer instance" do
+                configurer = stub 'configurer'
+
+                Puppet::Configurer.expects(:new).returns configurer
+                configurer.expects(:execute_prerun_command)
+                configurer.expects(:execute_postrun_command)
 
                 @puppet.main
             end
