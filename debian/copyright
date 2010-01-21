@@ -12,8 +12,11 @@ Copyright: Reductive Labs, LLC
 License: GPL-2+
 
 Files: debian/*
-Copyright: <Debian Puppet maintainers>
-License: <to be added>
+Copyright: 
+ Andrew Pollock <apollock@debian.org>,
+ Nigel Kersten <nigel@explanatorygap.net>,
+ Stig Sandbeck Mathisen <ssm@debian.org>
+License: GPL-2
 
 Files: install.rb
 Copyright: Austin Ziegler <ruby-install@halostatue.ca>
