@@ -1,9 +1,9 @@
-puppet (0.25.3-2) UNRELEASED; urgency=low
+puppet (0.25.4~rc2-1) UNRELEASED; urgency=low
 
-  * NOT RELEASED YET
   * Update debian/copyright
+  * New upstream release 0.25.4~rc2
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Wed, 20 Jan 2010 23:37:51 +0100
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Thu, 21 Jan 2010 15:26:59 +0100
 
 puppet (0.25.3-1) unstable; urgency=low
 
