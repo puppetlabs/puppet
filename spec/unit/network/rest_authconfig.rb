@@ -16,6 +16,7 @@ describe Puppet::Network::RestAuthConfig do
         { :acl => "/certificate/ca", :method => :find, :authenticated => false },
         { :acl => "/certificate/", :method => :find, :authenticated => false },
         { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
+        { :acl => "/status", :method => [:find], :authenticated => true },
     ]
 
     before :each do

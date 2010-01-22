@@ -156,6 +156,7 @@ require 'puppet/network'
 require 'puppet/ssl'
 require 'puppet/module'
 require 'puppet/util/storage'
+require 'puppet/status'
 
 if Puppet[:storeconfigs]
     require 'puppet/rails'

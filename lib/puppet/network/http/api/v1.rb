@@ -34,7 +34,7 @@ module Puppet::Network::HTTP::API::V1
     end
 
     def indirection2uri(request)
-        indirection = request.method == :search ? request.indirection_name.to_s + "s" : request.indirection_name.to_s
+        indirection = request.method == :search ? pluralize(request.indirection_name.to_s) : request.indirection_name.to_s
         "/#{request.environment.to_s}/#{indirection}/#{request.escaped_key}#{request.query_string}"
     end
 
@@ -50,11 +50,19 @@ module Puppet::Network::HTTP::API::V1
         return method
     end
 
+    def pluralize(indirection)
+        return "statuses" if indirection == "status"
+        return indirection + "s"
+    end
+
     def plurality(indirection)
         # NOTE This specific hook for facts is ridiculous, but it's a *many*-line
         # fix to not need this, and our goal is to move away from the complication
         # that leads to the fix being too long.
         return :singular if indirection == "facts"
+
+        # "status" really is singular
+        return :singular if indirection == "status"
 
         result = (indirection =~ /s$/) ? :plural : :singular
 
