@@ -14,6 +14,7 @@ License: GPL-2+
 Files: debian/*
 Copyright: 
  Andrew Pollock <apollock@debian.org>,
+ Jamie Wilkinson <jaq@debian.org>,
  Matthew Palmer <mpalmer@debian.org>,
  Micah Anderson <micah@debian.org>,
  Nigel Kersten <nigel@explanatorygap.net>,
