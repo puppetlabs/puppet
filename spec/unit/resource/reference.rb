@@ -96,16 +96,16 @@ describe Puppet::Resource::Reference do
     it "should not be considered equivalent to another reference if their titles do not match" do
         Puppet::Resource::Reference.new("file", "/foo").should_not == Puppet::Resource::Reference.new("file", "/f")
     end
-end
 
-describe Puppet::Resource::Reference, "when resolving resources with a catalog" do
-    it "should resolve all resources using the catalog" do
-        config = mock 'catalog'
-        ref = Puppet::Resource::Reference.new("foo::bar", "yay")
-        ref.catalog = config
+    describe "when resolving resources with a catalog" do
+        it "should resolve all resources using the catalog" do
+            config = mock 'catalog'
+            ref = Puppet::Resource::Reference.new("foo::bar", "yay")
+            ref.catalog = config
 
-        config.expects(:resource).with("Foo::Bar[yay]").returns(:myresource)
+            config.expects(:resource).with("Foo::Bar[yay]").returns(:myresource)
 
-        ref.resolve.should == :myresource
+            ref.resolve.should == :myresource
+        end
     end
 end
