@@ -411,4 +411,45 @@ describe Puppet::Parser do
             @parser.load("").should == false
         end
     end
+
+    describe "when parsing classes" do
+        before :each do
+            @krt = Puppet::Resource::TypeCollection.new("development")
+            @parser = Puppet::Parser::Parser.new "development"
+            @parser.stubs(:known_resource_types).returns @krt
+        end
+
+        it "should create new classes" do
+            @parser.parse("class foobar {}")
+            @krt.hostclass("foobar").should be_instance_of(Puppet::Resource::Type)
+        end
+
+        it "should correctly set the parent class when one is provided" do
+            @parser.parse("class foobar inherits yayness {}")
+            @krt.hostclass("foobar").parent.should == "yayness"
+        end
+
+        it "should define the code when some is provided" do
+            @parser.parse("class foobar { $var = val }")
+            @krt.hostclass("foobar").code.should_not be_nil
+        end
+
+        it "should define parameters when provided" do
+            @parser.parse("class foobar($biz,$baz) {}")
+            @krt.hostclass("foobar").arguments.should == {"biz" => nil, "baz" => nil}
+        end
+    end
+
+    describe "when parsing resources" do
+        before :each do
+            @krt = Puppet::Resource::TypeCollection.new("development")
+            @parser = Puppet::Parser::Parser.new "development"
+            @parser.stubs(:known_resource_types).returns @krt
+        end
+
+        it "should be able to parse class resources" do
+            @krt.add(Puppet::Resource::Type.new(:hostclass, "foobar", :arguments => {"biz" => nil}))
+            lambda { @parser.parse("class { foobar: biz => stuff }") }.should_not raise_error
+        end
+    end
 end

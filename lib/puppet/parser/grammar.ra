@@ -660,17 +660,17 @@ definition: DEFINE classname argumentlist LBRACE statements RBRACE {
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
-hostclass: CLASS classname classparent LBRACE statements RBRACE {
+hostclass: CLASS classname argumentlist classparent LBRACE statements RBRACE {
     @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    newclass classname(val[1]), :code => val[4], :parent => val[2], :line => val[0][:line]
+    newclass classname(val[1]), :arguments => val[2], :code => val[5], :parent => val[3], :line => val[0][:line]
     result = nil
-}           | CLASS classname classparent LBRACE RBRACE {
+}           | CLASS classname argumentlist classparent LBRACE RBRACE {
     @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    newclass classname(val[1]), :parent => val[2], :line => val[0][:line]
+    newclass classname(val[1]), :arguments => val[2], :parent => val[3], :line => val[0][:line]
     result = nil
 }
 
@@ -688,6 +688,7 @@ classref:       CLASSREF { result = val[0][:value] }
 
 classname:       NAME { result = val[0][:value] }
             | CLASSNAME { result = val[0][:value] }
+            | CLASS { result = "class" }
 
 # Multiple hostnames, as used for node names.  These are all literal
 # strings, not AST objects.
