@@ -216,4 +216,28 @@ describe Puppet::Node::Environment do
             end
         end
     end
+
+    describe Puppet::Node::Environment::Helper do
+        before do
+            @helper = Object.new
+            @helper.extend(Puppet::Node::Environment::Helper)
+        end
+
+        it "should be able to set and retrieve the environment" do
+            @helper.environment = :foo
+            @helper.environment.name.should == :foo
+        end
+
+        it "should accept an environment directly" do
+            env = Puppet::Node::Environment.new :foo
+            @helper.environment = env
+            @helper.environment.name.should == :foo
+        end
+
+        it "should accept an environment as a string" do
+            env = Puppet::Node::Environment.new "foo"
+            @helper.environment = env
+            @helper.environment.name.should == :foo
+        end
+    end
 end

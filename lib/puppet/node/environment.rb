@@ -7,6 +7,20 @@ end
 # Model the environment that a node can operate in.  This class just
 # provides a simple wrapper for the functionality around environments.
 class Puppet::Node::Environment
+    module Helper
+        def environment
+            Puppet::Node::Environment.new(@environment)
+        end
+
+        def environment=(env)
+            if env.is_a?(String) or env.is_a?(Symbol)
+                @environment = env
+            else
+                @environment = env.name
+            end
+        end
+    end
+
     include Puppet::Util::Cacher
 
     @seen = {}
