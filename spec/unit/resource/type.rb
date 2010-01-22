@@ -138,37 +138,37 @@ describe Puppet::Resource::Type do
 
         it "should set any provided arguments with the keys as symbols" do
             type = Puppet::Resource::Type.new(:hostclass, "foo", :arguments => {:foo => "bar", :baz => "biz"})
-            type.should be_validattr("foo")
-            type.should be_validattr("baz")
+            type.should be_valid_parameter("foo")
+            type.should be_valid_parameter("baz")
         end
 
         it "should set any provided arguments with they keys as strings" do
             type = Puppet::Resource::Type.new(:hostclass, "foo", :arguments => {"foo" => "bar", "baz" => "biz"})
-            type.should be_validattr(:foo)
-            type.should be_validattr(:baz)
+            type.should be_valid_parameter(:foo)
+            type.should be_valid_parameter(:baz)
         end
 
         it "should function if provided no arguments" do
             type = Puppet::Resource::Type.new(:hostclass, "foo")
-            type.should_not be_validattr(:foo)
+            type.should_not be_valid_parameter(:foo)
         end
     end
 
     describe "when testing the validity of an attribute" do
         it "should return true if the parameter was typed at initialization" do
-            Puppet::Resource::Type.new(:hostclass, "foo", :arguments => {"foo" => "bar"}).should be_validattr("foo")
+            Puppet::Resource::Type.new(:hostclass, "foo", :arguments => {"foo" => "bar"}).should be_valid_parameter("foo")
         end
 
         it "should return true if it is a metaparam" do
-            Puppet::Resource::Type.new(:hostclass, "foo").should be_validattr("require")
+            Puppet::Resource::Type.new(:hostclass, "foo").should be_valid_parameter("require")
         end
 
         it "should return true if the parameter is named 'name'" do
-            Puppet::Resource::Type.new(:hostclass, "foo").should be_validattr("name")
+            Puppet::Resource::Type.new(:hostclass, "foo").should be_valid_parameter("name")
         end
 
         it "should return false if it is not a metaparam and was not provided at initialization" do
-            Puppet::Resource::Type.new(:hostclass, "foo").should_not be_validattr("yayness")
+            Puppet::Resource::Type.new(:hostclass, "foo").should_not be_valid_parameter("yayness")
         end
     end
 

@@ -131,7 +131,7 @@ describe Puppet::Provider::Ldap do
 
                 @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
                 @resource_class.stubs(:attrclass).with(:one).returns(@property_class)
-                @resource_class.stubs(:validattr?).returns true
+                @resource_class.stubs(:valid_parameter?).returns true
             end
 
             it "should store a copy of the hash as its ldap_properties" do
@@ -161,7 +161,7 @@ describe Puppet::Provider::Ldap do
             end
 
             it "should discard any properties not valid in the resource class" do
-                @resource_class.expects(:validattr?).with(:a).returns false
+                @resource_class.expects(:valid_parameter?).with(:a).returns false
                 @property_class.stubs(:array_matching).returns :all
 
                 instance = @class.new(:one => %w{two three}, :a => %w{b})
@@ -177,7 +177,7 @@ describe Puppet::Provider::Ldap do
             @instance = @class.new
 
             @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-            @resource_class = stub 'resource_class', :attrclass => @property_class, :validattr? => true, :validproperties => [:one, :two]
+            @resource_class = stub 'resource_class', :attrclass => @property_class, :valid_parameter? => true, :validproperties => [:one, :two]
             @class.stubs(:resource_type).returns @resource_class
         end
 

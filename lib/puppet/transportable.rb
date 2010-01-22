@@ -49,7 +49,7 @@ module Puppet
         def to_component
             trans = TransObject.new(ref, :component)
             @params.each { |param,value|
-                next unless Puppet::Type::Component.validattr?(param)
+                next unless Puppet::Type::Component.valid_parameter?(param)
                 Puppet.debug "Defining %s on %s" % [param, ref]
                 trans[param] = value
             }

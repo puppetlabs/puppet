@@ -396,7 +396,7 @@ class Puppet::Parser::Resource
         # Now make sure it's a valid argument to our class.  These checks
         # are organized in order of commonhood -- most types, it's a valid
         # argument and paramcheck is enabled.
-        if @ref.typeclass.validattr?(param)
+        if @ref.typeclass.valid_parameter?(param)
             true
         elsif %w{name title}.include?(param) # always allow these
             true

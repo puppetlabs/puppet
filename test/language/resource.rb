@@ -67,17 +67,17 @@ class TestResource < PuppetTest::TestCase
         res.instance_variable_set("@ref", ref)
         klass = mock("class")
         ref.expects(:typeclass).returns(klass).times(4)
-        klass.expects(:validattr?).with("good").returns(true)
+        klass.expects(:valid_parameter?).with("good").returns(true)
         assert(res.send(:paramcheck, :good), "Did not allow valid param")
 
         # It's name or title
-        klass.expects(:validattr?).with("name").returns(false)
+        klass.expects(:valid_parameter?).with("name").returns(false)
         assert(res.send(:paramcheck, :name), "Did not allow name")
-        klass.expects(:validattr?).with("title").returns(false)
+        klass.expects(:valid_parameter?).with("title").returns(false)
         assert(res.send(:paramcheck, :title), "Did not allow title")
 
         # It's not actually allowed
-        klass.expects(:validattr?).with("other").returns(false)
+        klass.expects(:valid_parameter?).with("other").returns(false)
         res.expects(:fail)
         ref.expects(:type)
         res.send(:paramcheck, :other)

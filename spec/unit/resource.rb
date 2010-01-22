@@ -90,20 +90,111 @@ describe Puppet::Resource do
         resource.should be_exported
     end
 
-    it "should support an environment attribute"
+    it "should support an environment attribute" do
+        Puppet::Resource.new("file", "/my/file", :environment => :foo).environment.name.should == :foo
+    end
 
-    it "should convert its environment into an environment instance if one is provided"
+    it "should support a namespace attribute" do
+        Puppet::Resource.new("file", "/my/file", :namespace => :foo).namespace.should == :foo
+    end
 
-    it "should support a namespace attribute"
+    it "should default to a namespace of an empty string" do
+        Puppet::Resource.new("file", "/my/file").namespace.should == ""
+    end
+
+    it "should be able to look up its resource type when the type is a builtin resource" do
+        Puppet::Resource.new("file", "/my/file").resource_type.should equal(Puppet::Type.type(:file))
+    end
+
+    it "should be able to look up its resource type via its environment when the type is a defined resource type" do
+        resource = Puppet::Resource.new("foobar", "/my/file")
+        type = Puppet::Resource::Type.new(:definition, "foobar")
+        resource.environment.known_resource_types.add type
+
+        resource.resource_type.should equal(type)
+    end
+
+    it "should be able to look up its resource type via its environment when the type is a node" do
+        resource = Puppet::Resource.new("node", "foobar")
+        node = Puppet::Resource::Type.new(:node, "foobar")
+        resource.environment.known_resource_types.add node
+
+        resource.resource_type.should equal(node)
+    end
+
+    it "should be able to look up its resource type via its environment when the type is a class" do
+        resource = Puppet::Resource.new("class", "foobar")
+        klass = Puppet::Resource::Type.new(:hostclass, "foobar")
+        resource.environment.known_resource_types.add klass
+
+        resource.resource_type.should equal(klass)
+    end
+
+    it "should use its namespace when looking up defined resource types" do
+        resource = Puppet::Resource.new("bar", "/my/file", :namespace => "foo")
+        type = Puppet::Resource::Type.new(:definition, "foo::bar")
+        resource.environment.known_resource_types.add type
+
+        resource.resource_type.should equal(type)
+    end
+
+    it "should use its namespace when looking up host classes" do
+        resource = Puppet::Resource.new("class", "bar", :namespace => "foo")
+        type = Puppet::Resource::Type.new(:hostclass, "foo::bar")
+        resource.environment.known_resource_types.add type
+
+        resource.resource_type.should equal(type)
+    end
+
+    it "should return nil when looking up resource types that don't exist" do
+        Puppet::Resource.new("foobar", "bar").resource_type.should be_nil
+    end
+
+    it "should fail when an invalid parameter is used and parameter validation is enabled" do
+        type = Puppet::Resource::Type.new(:definition, "foobar")
+        Puppet::Node::Environment.new.known_resource_types.add type
+        resource = Puppet::Resource.new("foobar", "/my/file", :validate_parameters => true)
+        lambda { resource[:yay] = true }.should raise_error(ArgumentError)
+    end
+
+    it "should not fail when an invalid parameter is used and parameter validation is disabled" do
+        type = Puppet::Resource::Type.new(:definition, "foobar")
+        Puppet::Node::Environment.new.known_resource_types.add type
+        resource = Puppet::Resource.new("foobar", "/my/file")
+        resource[:yay] = true
+    end
+
+    it "should not fail when a valid parameter is used and parameter validation is enabled" do
+        type = Puppet::Resource::Type.new(:definition, "foobar", :arguments => {"yay" => nil})
+        Puppet::Node::Environment.new.known_resource_types.add type
+        resource = Puppet::Resource.new("foobar", "/my/file", :validate_parameters => true)
+        resource[:yay] = true
+    end
 
     describe "when managing parameters" do
         before do
             @resource = Puppet::Resource.new("file", "/my/file")
         end
 
-        it "should be able to check whether parameters are valid when the resource models builtin resources"
+        it "should correctly detect when provided parameters are not valid for builtin types" do
+            Puppet::Resource.new("file", "/my/file").should_not be_valid_parameter("foobar")
+        end
 
-        it "should be able to check whether parameters are valid when the resource models defined resources"
+        it "should correctly detect when provided parameters are valid for builtin types" do
+            Puppet::Resource.new("file", "/my/file").should be_valid_parameter("mode")
+        end
+
+        it "should correctly detect when provided parameters are not valid for defined resource types" do
+            type = Puppet::Resource::Type.new(:definition, "foobar")
+            Puppet::Node::Environment.new.known_resource_types.add type
+            Puppet::Resource.new("foobar", "/my/file").should_not be_valid_parameter("myparam")
+        end
+
+        it "should correctly detect when provided parameters are valid for defined resource types" do
+            type = Puppet::Resource::Type.new(:definition, "foobar", :arguments => {"myparam" => nil})
+            Puppet::Node::Environment.new.known_resource_types.add type
+            Puppet::Resource.new("foobar", "/my/file").should be_valid_parameter("myparam")
+        end
 
         it "should allow setting and retrieving of parameters" do
             @resource[:foo] = "bar"
@@ -138,6 +229,7 @@ describe Puppet::Resource do
 
         it "should be able to set the name for non-builtin types" do
             resource = Puppet::Resource.new(:foo, "bar")
+            resource[:name] = "eh"
             lambda { resource[:name] = "eh" }.should_not raise_error
         end
 

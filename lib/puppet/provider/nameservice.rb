@@ -44,7 +44,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         def options(name, hash)
-            unless resource_type.validattr?(name)
+            unless resource_type.valid_parameter?(name)
                 raise Puppet::DevError, "%s is not a valid attribute for %s" %
                     [name, resource_type.name]
             end

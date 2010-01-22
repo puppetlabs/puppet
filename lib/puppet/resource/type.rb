@@ -144,7 +144,7 @@ class Puppet::Resource::Type
         set = {}
         resource.to_hash.each do |param, value|
             param = param.to_sym
-            fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless validattr?(param)
+            fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)
 
             exceptwrap { scope.setvar(param.to_s, value) }
 
@@ -174,7 +174,7 @@ class Puppet::Resource::Type
     end
 
     # Check whether a given argument is valid.
-    def validattr?(param)
+    def valid_parameter?(param)
         param = param.to_s
 
         return true if param == "name"

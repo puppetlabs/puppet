@@ -388,6 +388,11 @@ class Type
         end
     end
 
+    # This is a forward-compatibility method - it's the validity interface we'll use in Puppet::Resource.
+    def self.valid_parameter?(name)
+        validattr?(name)
+    end
+
     # Return either the attribute alias or the attribute.
     def attr_alias(name)
         name = symbolize(name)
