@@ -189,7 +189,7 @@ describe Puppet::Node::Environment do
 
             it "should ignore invalid modules" do
                 env = Puppet::Node::Environment.new("testing")
-                env.expects(:modulepath).returns( %w{/a} )
+                env.stubs(:modulepath).returns %w{/a}
                 Dir.expects(:entries).with("/a").returns %w{foo bar}
 
                 Puppet::Module.expects(:new).with { |name, env| name == "foo" }.returns mock("foomod", :name => "foo")
