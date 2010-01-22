@@ -80,7 +80,7 @@ module Puppet
 
         # Create a normalized resource from our TransObject.
         def to_resource
-            result = Puppet::Resource.new(type, name, @params.dup)
+            result = Puppet::Resource.new(type, name, :parameters => @params.dup)
             result.tag(*tags)
 
             result

@@ -164,7 +164,7 @@ describe Puppet::Type do
 
         describe "and passed a Puppet::Resource instance" do
             it "should set its title to the title of the resource if the resource type is equal to the current type" do
-                resource = Puppet::Resource.new(:mount, "/foo", :name => "/other")
+                resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "/other"})
                 Puppet::Type.type(:mount).new(resource).title.should == "/foo"
             end
 
@@ -191,7 +191,7 @@ describe Puppet::Type do
             end
 
             it "should copy the resource's parameters as its own" do
-                resource = Puppet::Resource.new(:mount, "/foo", :atboot => true, :fstype => "boo")
+                resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:atboot => true, :fstype => "boo"})
                 params = Puppet::Type.type(:mount).new(resource).to_hash
                 params[:fstype].should == "boo"
                 params[:atboot].should == true
@@ -253,7 +253,7 @@ describe Puppet::Type do
 
         it "should set the attributes in the order returned by the class's :allattrs method" do
             Puppet::Type.type(:mount).stubs(:allattrs).returns([:name, :atboot, :noop])
-            resource = Puppet::Resource.new(:mount, "/foo", :name => "myname", :atboot => "myboot", :noop => "whatever")
+            resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => "myboot", :noop => "whatever"})
 
             set = []
 
@@ -270,7 +270,7 @@ describe Puppet::Type do
 
         it "should always set the name and then default provider before anything else" do
             Puppet::Type.type(:mount).stubs(:allattrs).returns([:provider, :name, :atboot])
-            resource = Puppet::Resource.new(:mount, "/foo", :name => "myname", :atboot => "myboot")
+            resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => "myboot"})
 
             set = []
 

@@ -23,10 +23,6 @@ describe Puppet::Resource do
             Puppet::Resource.new("file", "/f")
         end
 
-        it "should allow setting of parameters" do
-            Puppet::Resource.new("file", "/f", :noop => true)[:noop].should be_true
-        end
-
         it "should tag itself with its type" do
             Puppet::Resource.new("file", "/f").should be_tagged("file")
         end
@@ -37,6 +33,11 @@ describe Puppet::Resource do
 
         it "should not tag itself with its title if the title is a not valid tag" do
             Puppet::Resource.new("file", "/bar").should_not be_tagged("/bar")
+        end
+
+        it "should allow setting of attributes" do
+            Puppet::Resource.new("file", "/bar", :file => "/foo").file.should == "/foo"
+            Puppet::Resource.new("file", "/bar", :exported => true).should be_exported
         end
     end
 
@@ -89,14 +90,28 @@ describe Puppet::Resource do
         resource.should be_exported
     end
 
+    it "should support an environment attribute"
+
+    it "should convert its environment into an environment instance if one is provided"
+
+    it "should support a namespace attribute"
+
     describe "when managing parameters" do
         before do
             @resource = Puppet::Resource.new("file", "/my/file")
         end
 
+        it "should be able to check whether parameters are valid when the resource models builtin resources"
+
+        it "should be able to check whether parameters are valid when the resource models defined resources"
+
         it "should allow setting and retrieving of parameters" do
             @resource[:foo] = "bar"
             @resource[:foo].should == "bar"
+        end
+
+        it "should allow setting of parameters at initialization" do
+            Puppet::Resource.new("file", "/my/file", :parameters => {:foo => "bar"})[:foo].should == "bar"
         end
 
         it "should canonicalize retrieved parameter names to treat symbols and strings equivalently" do
@@ -255,7 +270,7 @@ describe Puppet::Resource do
 
     describe "when converting to puppet code" do
         before do
-            @resource = Puppet::Resource.new("one::two", "/my/file", :noop => true, :foo => %w{one two})
+            @resource = Puppet::Resource.new("one::two", "/my/file", :parameters => {:noop => true, :foo => %w{one two}})
         end
 
         it "should print the type and title" do

@@ -14,7 +14,6 @@ describe Puppet::Util::Settings do
     it "should be able to make needed directories" do
         settings = Puppet::Util::Settings.new
         settings.setdefaults :main, minimal_default_settings.update( :maindir => [tmpfile("main"), "a"] )
-
         settings.use(:main)
 
         File.should be_directory(settings[:maindir])

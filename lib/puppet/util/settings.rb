@@ -815,14 +815,14 @@ Generated on #{Time.now}.
             next unless sections.nil? or sections.include?(setting.section)
 
             if user = setting.owner and user != "root" and catalog.resource(:user, user).nil?
-                resource = Puppet::Resource.new(:user, user, :ensure => :present)
+                resource = Puppet::Resource.new(:user, user, :parameters => {:ensure => :present})
                 if self[:group]
                     resource[:gid] = self[:group]
                 end
                 catalog.add_resource resource
             end
             if group = setting.group and ! %w{root wheel}.include?(group) and catalog.resource(:group, group).nil?
-                catalog.add_resource Puppet::Resource.new(:group, group, :ensure => :present)
+                catalog.add_resource Puppet::Resource.new(:group, group, :parameters => {:ensure => :present})
             end
         end
     end

@@ -116,13 +116,19 @@ class Puppet::Resource
     end
 
     # Create our resource.
-    def initialize(type, title, parameters = {})
-        @reference = Puppet::Resource::Reference.new(type, title)
+    def initialize(type, title, attributes = {})
         @parameters = {}
 
-        parameters.each do |param, value|
+        (attributes[:parameters] || {}).each do |param, value|
             self[param] = value
         end
+
+        attributes.each do |attr, value|
+            next if attr == :parameters
+            send(attr.to_s + "=", value)
+        end
+
+        @reference = Puppet::Resource::Reference.new(type, title)
 
         tag(@reference.type)
         tag(@reference.title) if valid_tag?(@reference.title)
