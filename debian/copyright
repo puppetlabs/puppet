@@ -8,7 +8,7 @@ Maintainer:
 Source: git://github.com/reductivelabs/puppet.git,
  http://reductivelabs.com/trac/puppet/wiki/DownloadingPuppet
 
-Copyright: Reductive Labs, LLC
+Copyright: 2005-2010 Reductive Labs, LLC
 License: GPL-2+
 
 Files: debian/*
