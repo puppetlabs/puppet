@@ -105,6 +105,8 @@ class Puppet::Configurer
             duration = thinmark do
                 result = catalog_class.find(name, fact_options.merge(:ignore_cache => true))
             end
+        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+            raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not retrieve catalog from remote server: %s" % detail
@@ -148,6 +150,8 @@ class Puppet::Configurer
     def run(options = {})
         begin
             prepare()
+        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+            raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Failed to prepare catalog: %s" % detail

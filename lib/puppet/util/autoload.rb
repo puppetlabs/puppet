@@ -86,6 +86,8 @@ class Puppet::Util::Autoload
                 name = symbolize(name)
                 loaded name, file
                 return true
+            rescue SystemExit,NoMemoryError,SignalException,Interrupt
+                raise
             rescue Exception => detail
                 # I have no idea what's going on here, but different versions
                 # of ruby are raising different errors on missing files.
@@ -123,6 +125,8 @@ class Puppet::Util::Autoload
                 begin
                     Kernel.require file
                     loaded(name, file)
+                rescue SystemExit,NoMemoryError,SignalException,Interrupt
+                    raise
                 rescue Exception => detail
                     if Puppet[:trace]
                         puts detail.backtrace
