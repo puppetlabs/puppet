@@ -40,7 +40,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
                 found = true
                 yield entry
             end
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             if count == 0

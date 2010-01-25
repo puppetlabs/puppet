@@ -66,7 +66,7 @@ module Puppet::Network::HTTP::Handler
         check_authorization(indirection_request)
 
         send("do_%s" % indirection_request.method, indirection_request, request, response)
-    rescue SystemExit,NoMemoryError,SignalException,Interrupt
+    rescue SystemExit,NoMemoryError
         raise
     rescue Exception => e
         return do_exception(response, e)

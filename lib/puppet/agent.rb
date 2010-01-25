@@ -51,7 +51,7 @@ class Puppet::Agent
         with_client do |client|
             begin
                 sync.synchronize { lock { client.run(*args) } }
-            rescue SystemExit,NoMemoryError,SignalException,Interrupt
+            rescue SystemExit,NoMemoryError
                 raise
             rescue Exception => detail
                 puts detail.backtrace if Puppet[:trace]
@@ -124,7 +124,7 @@ class Puppet::Agent
     def with_client
         begin
             @client = client_class.new
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]

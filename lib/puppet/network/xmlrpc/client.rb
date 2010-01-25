@@ -144,7 +144,7 @@ module Puppet::Network
             Puppet.debug "Calling %s.%s" % [namespace, method]
             begin
                 call("%s.%s" % [namespace, method.to_s],*args)
-            rescue SystemExit,NoMemoryError,SignalException,Interrupt
+            rescue SystemExit,NoMemoryError
                 raise
             rescue Exception => detail
                 retry if self.class.error_handler(detail).execute(self, detail, namespace, method) == :retry

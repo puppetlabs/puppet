@@ -83,7 +83,7 @@ class Puppet::Util::Feature
 
         begin
             require lib
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception
             Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]

@@ -17,7 +17,7 @@ module Puppet::Configurer::FactHandler
         begin
             reload_facter()
             Puppet::Node::Facts.find(Puppet[:certname])
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]

@@ -19,7 +19,7 @@ module Puppet::Configurer::PluginHandler
         begin
             Puppet.info "Loading downloaded plugin %s" % file
             load file
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             Puppet.err "Could not load downloaded file %s: %s" % [file, detail]

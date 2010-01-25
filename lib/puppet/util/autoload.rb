@@ -86,7 +86,7 @@ class Puppet::Util::Autoload
                 name = symbolize(name)
                 loaded name, file
                 return true
-            rescue SystemExit,NoMemoryError,SignalException,Interrupt
+            rescue SystemExit,NoMemoryError
                 raise
             rescue Exception => detail
                 # I have no idea what's going on here, but different versions
@@ -125,7 +125,7 @@ class Puppet::Util::Autoload
                 begin
                     Kernel.require file
                     loaded(name, file)
-                rescue SystemExit,NoMemoryError,SignalException,Interrupt
+                rescue SystemExit,NoMemoryError
                     raise
                 rescue Exception => detail
                     if Puppet[:trace]
