@@ -22,6 +22,7 @@ class Puppet::Parser::Scope
     attr_accessor :base, :keyword, :nodescope
     attr_accessor :top, :translated, :compiler
     attr_accessor :parent
+    attr_reader :namespaces
 
     # A demeterific shortcut to the catalog.
     def catalog
@@ -86,21 +87,11 @@ class Puppet::Parser::Scope
     end
 
     def find_hostclass(name)
-        @namespaces.each do |namespace|
-            if r = known_resource_types.find_hostclass(namespace, name)
-                return r
-            end
-        end
-        return nil
+        known_resource_types.find_hostclass(namespaces, name)
     end
 
     def find_definition(name)
-        @namespaces.each do |namespace|
-            if r = known_resource_types.find_definition(namespace, name)
-                return r
-            end
-        end
-        return nil
+        known_resource_types.find_definition(namespaces, name)
     end
 
     def findresource(string, name = nil)

@@ -75,24 +75,31 @@ class Puppet::Resource::TypeCollection
         @definitions[munge_name(name)]
     end
 
-    def find(namespace, name, type)
+    def find(namespaces, name, type)
         if r = find_fully_qualified(name, type)
             return r
         end
 
-        ary = namespace.split("::")
+        namespaces = Array(namespaces)
 
-        while ary.length > 0
-            tmp_namespace = ary.join("::")
-            if r = find_partially_qualified(tmp_namespace, name, type)
-                return r
+        namespaces.each do |namespace|
+            ary = namespace.split("::")
+
+            while ary.length > 0
+                tmp_namespace = ary.join("::")
+                if r = find_partially_qualified(tmp_namespace, name, type)
+                    return r
+                end
+
+                # Delete the second to last object, which reduces our namespace by one.
+                ary.pop
             end
 
-            # Delete the second to last object, which reduces our namespace by one.
-            ary.pop
+            if result = send(type, name)
+                return result
+            end
         end
-
-        send(type, name)
+        nil
     end
 
     def find_node(name)

@@ -127,14 +127,21 @@ describe Puppet::Resource::TypeCollection do
             loader.find("namespace", "::foo::bar", :hostclass).should be_nil
         end
 
-        it "should return the partially qualified object if it exists in the provided namespace" do
+        it "should return the partially qualified object if it exists in a provided namespace" do
             loader = Puppet::Resource::TypeCollection.new("env")
             instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
             loader.add instance
             loader.find("foo", "bar::baz", :hostclass).should equal(instance)
         end
 
-        it "should return the unqualified object if it exists in the provided namespace" do
+        it "should be able to find partially qualified objects in any of the provided namespaces" do
+            loader = Puppet::Resource::TypeCollection.new("env")
+            instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
+            loader.add instance
+            loader.find(["nons", "foo", "otherns"], "bar::baz", :hostclass).should equal(instance)
+        end
+
+        it "should return the unqualified object if it exists in a provided namespace" do
             loader = Puppet::Resource::TypeCollection.new("env")
             instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
             loader.add instance
