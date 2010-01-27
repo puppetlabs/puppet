@@ -46,7 +46,7 @@ describe RDoc::Parser do
     end
 
     it "should get a PuppetClass for the main class" do
-        @parser.scan.classes[0].should be_a RDoc::PuppetClass
+        @parser.scan.classes[0].should be_a(RDoc::PuppetClass)
     end
 
     it "should produce a PuppetClass whose name is test" do
