@@ -43,6 +43,11 @@ describe Puppet::Node::Environment do
         Puppet::Node::Environment.new(:one).to_s.should == "one"
     end
 
+    it "should just return any provided environment if an environment is provided as the name" do
+        one = Puppet::Node::Environment.new(:one)
+        Puppet::Node::Environment.new(one).should equal(one)
+    end
+
     describe "when managing known resource types" do
         before do
             @env = Puppet::Node::Environment.new("dev")

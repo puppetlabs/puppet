@@ -27,6 +27,7 @@ class Puppet::Node::Environment
 
     # Return an existing environment instance, or create a new one.
     def self.new(name = nil)
+        return name if name.is_a?(self)
         name ||= Puppet.settings.value(:environment)
 
         raise ArgumentError, "Environment name must be specified" unless name
