@@ -68,7 +68,7 @@ class Puppet::SSL::Base
             raise ArgumentError, "#{md} is not a valid digest algorithm for fingerprinting certificate #{name}"
         end
 
-        OpenSSL::Digest.hexdigest(md, content.to_der).scan(/../).join(':').upcase
+        OpenSSL::Digest.const_get(md).hexdigest(content.to_der).scan(/../).join(':').upcase
     end
 
     private
