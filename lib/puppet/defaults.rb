@@ -706,11 +706,6 @@ module Puppet
         ]
     )
 
-    setdefaults(:parser,
-        :typecheck => [true, "Whether to validate types during parsing."],
-        :paramcheck => [true, "Whether to validate parameters during parsing."]
-    )
-
     setdefaults(:main,
         :casesensitive => [false,
             "Whether matching in case statements and selectors
