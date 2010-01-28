@@ -98,6 +98,7 @@ describe Puppet::Rails, "when initializing a mysql connection" do
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
         Puppet.settings.stubs(:value).with(:dbsocket).returns("")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "mysql",
@@ -106,11 +107,12 @@ describe Puppet::Rails, "when initializing a mysql connection" do
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
-            :reconnect => true
+            :reconnect => true,
+            :pool => 1
         }
     end
 
-    it "should provide the adapter, log_level, and host, username, password, database, socket, and reconnect arguments" do
+    it "should provide the adapter, log_level, and host, username, password, database, socket, connections, and reconnect arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
@@ -118,6 +120,7 @@ describe Puppet::Rails, "when initializing a mysql connection" do
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
         Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "mysql",
@@ -127,7 +130,8 @@ describe Puppet::Rails, "when initializing a mysql connection" do
             :password => "testpassword",
             :database => "testname",
             :socket => "testsocket",
-            :reconnect => true
+            :reconnect => true,
+            :pool => 1
         }
     end
 
@@ -149,6 +153,7 @@ describe Puppet::Rails, "when initializing a mysql connection" do
             :password => "testpassword",
             :database => "testname",
             :socket => "testsocket",
+            :reconnect => true,
             :pool => 1
         }
     end
@@ -157,7 +162,7 @@ end
 describe Puppet::Rails, "when initializing a postgresql connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
-    it "should provide the adapter, log_level, and host, username, password, and database arguments" do
+    it "should provide the adapter, log_level, and host, username, password, connections, and database arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
@@ -165,6 +170,7 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
         Puppet.settings.stubs(:value).with(:dbsocket).returns("")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1) 
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "postgresql",
@@ -172,11 +178,13 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
             :host => "testserver",
             :username => "testuser",
             :password => "testpassword",
-            :database => "testname"
+            :database => "testname",
+            :reconnect => true,
+            :pool => 1
         }
     end
 
-    it "should provide the adapter, log_level, and host, username, password, database, and socket arguments" do
+    it "should provide the adapter, log_level, and host, username, password, database, connections, and socket arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
@@ -184,6 +192,7 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
         Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "postgresql",
@@ -192,7 +201,9 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
-            :socket => "testsocket"
+            :socket => "testsocket",
+            :pool => 1,
+            :reconnect => true
         }
     end
 end
@@ -200,28 +211,13 @@ end
 describe Puppet::Rails, "when initializing an Oracle connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
-    it "should provide the adapter, log_level, and username, password, and database arguments" do
+    it "should provide the adapter, log_level, and username, password, dbconnections, and database arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
-
-        Puppet::Rails.database_arguments.should == {
-            :adapter => "oracle_enhanced",
-            :log_level => "testlevel",
-            :username => "testuser",
-            :password => "testpassword",
-            :database => "testname"
-        }
-    end
-
-    it "should provide the adapter, log_level, and host, username, password, database, and socket arguments" do
-        Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
-        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
-        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
-        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
-        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1) 
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "oracle_enhanced",
@@ -229,6 +225,25 @@ describe Puppet::Rails, "when initializing an Oracle connection" do
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
+            :pool => 1
+        }
+    end
+
+    it "should provide the adapter, log_level, and host, username, password, database, pool, and socket arguments" do
+        Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
+        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
+
+        Puppet::Rails.database_arguments.should == {
+            :adapter => "oracle_enhanced",
+            :log_level => "testlevel",
+            :username => "testuser",
+            :password => "testpassword",
+            :database => "testname",
+            :pool => 1 
         }
     end
 end
