@@ -105,7 +105,7 @@ class Puppet::Configurer
             duration = thinmark do
                 result = catalog_class.find(name, fact_options.merge(:ignore_cache => true))
             end
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
@@ -150,7 +150,7 @@ class Puppet::Configurer
     def run(options = {})
         begin
             prepare()
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]

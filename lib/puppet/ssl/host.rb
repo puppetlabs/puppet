@@ -220,7 +220,7 @@ class Puppet::SSL::Host
             return if certificate
             generate
             return if certificate
-        rescue SystemExit,NoMemoryError,SignalException,Interrupt
+        rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
