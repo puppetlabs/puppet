@@ -1,3 +1,9 @@
+puppet (0.25.4-1) unstable; urgency=low
+
+  * New upstream version 0.25.4
+
+ -- Nigel Kersten <nigel@explanatorygap.net>  Fri, 29 Jan 2010 08:38:53 -0800
+
 puppet (0.25.4~rc3-1) UNRELEASED; urgency=low
 
   * Update debian/copyright
