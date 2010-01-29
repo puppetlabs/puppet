@@ -1,3 +1,8 @@
+0.25.4
+======
+0025e13  Partial reversion of patch for #3088 to fix #3104 (Exception misreported)
+bfc9e45  Updated CHANGELOG for 0.25.4rc3
+
 0.25.4rc3
 =========
 a91c476  Fix for #3088 (catching Exception also traps SystemExit)
@@ -5,6 +10,10 @@ a91c476  Fix for #3088 (catching Exception also traps SystemExit)
 75634b7  Fix for #3093 (also need to be able to call pkgget_with_cat on class)
 94e269c  Uncommeniting the fix for #3001
 9636b93  Updated CHANGELOG for 0.24.5rc2
+d4319a5  Minimal fix for #3001 (failing to fetch metadata on dangling symlink)
+cdcbdc7  Fixing #2914 - pre/post hooks now work for transactions
+67216aa  Fix for #3075 (sshkey host_aliases ignored)
+e4462c0  Updated version and CHANGELOG for 0.25.4
 
 0.25.4rc2
 =========
@@ -12,9 +21,6 @@ d4319a5  Minimal fix for #3001 (failing to fetch metadata on dangling symlink)
 cdcbdc7  Fixing #2914 - pre/post hooks now work for transactions
 67216aa  Fix for #3075 (sshkey host_aliases ignored)
 e4462c0  Updated version and CHANGELOG for 0.25.4
-
-0.25.4rc1
-=========
 441879f  Revert "Fix #2845 Cron entries using "special" parameter lose their title when changed"
 f7e1435  Updated rake task to fix gem build issue
 49013f0  Updated version and CHANGELOG for 0.25.3
@@ -45,9 +51,6 @@ c84186a  Revert "Fix for #2731 (problem communicating with processes in SELinux)
 7e2b1e9  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
 d1ff4b3  Fix for #2994 (undefined method "_file" message)
 4d81511  fix #2987 - check correct hash entry
-682000b  Updated CHANGELOG for 0.25.2rc2
-e4bb529  Fix for #2967 (RFC-1123 problem and regression on wildcarded domains)
-776be7c  Updated CHANGELOG
 
 0.25.2
 ======
@@ -67,21 +70,12 @@ c84186a  Revert "Fix for #2731 (problem communicating with processes in SELinux)
 7e2b1e9  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
 d1ff4b3  Fix for #2994 (undefined method "_file" message)
 4d81511  fix #2987 - check correct hash entry
-
-0.25.2rc3
-=========
-13cbf04  ReFix 2675 ending slash in directory should get stripped off
-5c6f07b  Use a pipe instead of a temp file for command output.
-7e64393  Additional fix for #2994 (followed symlinks do not have checksums)
-7e2e12b  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
-c84186a  Revert "Fix for #2731 (problem communicating with processes in SELinux)"
-74d9693  Updated man pages for 0.25.2
-7e2b1e9  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
-d1ff4b3  Fix for #2994 (undefined method "_file" message)
-4d81511  fix #2987 - check correct hash entry
 682000b  Updated CHANGELOG for 0.25.2rc2
 e4bb529  Fix for #2967 (RFC-1123 problem and regression on wildcarded domains)
 776be7c  Updated CHANGELOG
+
+0.25.2rc1
+=========
 a73f799  Updated version
 26e7486  Fixing failing tests
 05e897e  Fix for #2881 (ralsh doesn't find individual parsed resources)
@@ -1187,8 +1181,6 @@ bbcda1d  Fix Bug #1629
 081021a  Fix #1829 - Add puppet function versioncmp to compare versions
 2b33f80  Fixed install.rb typo
 5ab63cd  Updated lib install permissions to 0644
-2c7e189  Fixes incorrect detail variable in OS X version check, re-patches ralsh to work with Facter values and adds error check for missing password hash files.
-73a0757  Fix #1828 - Scope.number? wasn't strict enough and could produce wrong results
 
 0.24.8
 ======
@@ -1203,89 +1195,6 @@ d0bf26e  Fixed install.rb typo
 4cf7a89  Updated lib install permissions to 0644
 2c7e189  Fixes incorrect detail variable in OS X version check, re-patches ralsh to work with Facter values and adds error check for missing password hash files.
 73a0757  Fix #1828 - Scope.number? wasn't strict enough and could produce wrong results
-84d6637  Fixed #2000 - No default specified for checksum
-a3bb201  Fixing change printing when list properties are absent
-67fc394  Fixed #2026 - Red Hat ignoring stop method
-cf64827  Bring in the documentation changes from the master branch
-01bc88c  Added a force option to ensure the change is always applied, and call augeas twice to reduce the chance that data is lost
-cedeb79  Backport the fix for #1835
-cf48ec0  First cut at the not running if augeas does not change any of the underlieing files
-9d36b58  Bug 1948: Added patch by jab to support the correct ins syntax. Updated the test cases as well
-61661b1  Fixing #1991 - ldap booleans get converted to booleans
-d5850dc  Refactored a method: extracted about five other methods
-1c7c8fe  dbfix - fix typo and close another possible inconsistency
-c55ac3f  Fix #2010 - add protection code for some storeconfig corruption
-a790ee3  Further fix to #1910
-9577d3a  Fixing #2013 - prefetching had a mismatch between type and title
-719a8df  Fixed to rake tests for reductivelabs build
-ac87600  Fixed report reference page
-0c16426  Fixing broken 0.24.x tests in test/.
-23066c1  Fixing every failing test I can find on the build server.
-ec56ddf  This script fixes the most common issues with inconsistent storeconfigs database (including duplicate resources record, duplicate param_values records, dangling records...).
-c052ff8  Make puppetd --waitforcert option behave as documented:
-e2b4062  Adding a performance optimization to the FileCollection.
-fa6494b  Using the FileCollection where appropriate.
-373d505  Adding a FileCollection and a lookup module for it.
-0e46786   Fixed #1963 - Failing to read /proc/mounts for selinux kills file downloads
-4170238  Fixed #2025 - gentoo service provider handle only default init level
-8c010e0  Fixed #1910 - updated logcheck
-7504b04  Updated useradd.rb managehome confine to include other RH-like distributions
-f07d928  Use Puppet.debug instead of own debug flag
-25a3f59  Fixing #558 - File checksums no longer refer to 'nosum'
-d758f45  Fixing #1871 once and for all - contents are never printed
-c0f4943  Minor fix to launchd tests
-24d48e6  Fix #1972 - ActiveRecord fixes resulted in broken tests
-446989b  Fix spec test for launchd service provider to work with new service status method and add two new status tests.
-3ef5849  Fixing a test I broke in commit:"897539e857b0da9145f15648b6aa2ef124ec1a19".
-72bd378  Removing a no-longer-valid test.
-682dd8b  Fixing password validation to support symbols.
-44f97aa  Only backing up within parsedfile when managing files
-04af7b4  Fixing a syntax error in the up2date provider
-1070b3c  Fixing a test broken by a log demotion
-ab84756  Cleaned up variable names to be more sane, clarified error messages and fixed incorrect use of 'value' variable rather than 'member'.
-7f41857  Provide dscl -url output support for OS X 10.4 clients using the directoryservice provider.
-0bc3c07  Fix launchd service provider so it is backwards compatible with OS X 10.4 as well
-2561c8e  Updated Augeas type code
-7d72186  Removed site from Puppet VIM syntax
-1bc7404  Fixed #1831 - Added sprintf function
-336b645  Fixed #1830 - Added regsubst function
-2a85551  Bug 1948: Add logic and testing for the command parsing logic
-2218611  Updated up2date and service confines to add support for Oracle EL and VM
-39a8b28  Fixing #1964 - Facts get loaded from plugins
-7cf085c  Adding tests for Puppet::Indirector::Facts::Facter.loadfacts
-70ea39a  Adding a post-processor for Nagios names.
-4dfa034  Revert "Refixing #1420 - _naginator_name is only used for services"
-d5a193a  Fixing #1541 - ParsedFile only backs up files once per transaction
-53f15b9  Removing the apparently obsolete netinfo filetype.
-4e89156  Migrated FileType tests to spec, and fleshed them out a bit.
-cc4d658  Bug #1948: Added patch by jab to support the correct ins syntax. Updated the test cases as well
-5e35166  Fixing #961 - closing the http connection after every xmlrpc call
-af3f3ae  Refactoring the XMLRPC::Client error-handling
-f0ac3ae  Fixed #1959 - Added column protection for environment schema migration
-319822a  Fixing #1869 - autoloaded files should never leak exceptions
-6b0c1b9  Fixing #1543 - Nagios parse errors no longer kill Puppet
-7fd5c7e  Moving the transaction specs to the right path
-efb5cc5  Refixing #1420 - _naginator_name is only used for services
-32c2be9  Fixed #1884 - exported defines are collected by the exporting host
-0e49159  Cleaning up the AST::Resource code a bit
-b22d148  Fix #1691 - Realize fails with array of Resource References
-6331bfc  Fix #1682 - Resource titles are not flattened as they should
-7e036eb  Fix #1922 - Functions squash all arguments into a single hash
-535fa89  Fixed #1538 - Yumrepo sets permissions wrongly on files in /etc/yum.repos.d
-f7b04df  Fixed #1936 - Added /* */ support to the vim file
-671d73c  Prefetching, and thus purging, Nagios resources now works *only* if you use the default configuration file locations.
-063871f  Adding some basic tests for the Naginator provider base class
-897539e  Removing a redundant instance prefect call.
-012efe3  Fixing #1912 - gid still works with no 'should' value.
-a9f34af  Fixing the Rakefile to use 'git format-patch'.
-db05c00  Fixing #1920 - user passwords no longer allow ':'
-aa219e7  Adding README.rst file
-1d3f117  Added Reductive Labs build library
-f01882d  Change the way the tags and params are handled in rails
-b7ab54c  Add methods to return hash instead of objects to params and tags
-5c64435  Rails serialization module to help serialize/unserialize some Puppet Objects
-b27fccd  Fixed #1852 - Correct behaviour when no SELinux bindings
-7403330  Updated Red Hat spec file 0.24.7
 
 0.24.7rc1
 =========
@@ -1372,6 +1281,9 @@ b7ab54c  Add methods to return hash instead of objects to params and tags
 5c64435  Rails serialization module to help serialize/unserialize some Puppet Objects
 b27fccd  Fixed #1852 - Correct behaviour when no SELinux bindings
 7403330  Updated Red Hat spec file 0.24.7
+
+0.24.7
+======
 8befc18  Updated to version 0.24.7
 cf19bd8  Not using a temporary file when locking files for writing.
 b966ea0  Modifying the corruption-checking test.
