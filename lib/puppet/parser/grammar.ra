@@ -664,7 +664,7 @@ hostclass: CLASS classname argumentlist classparent LBRACE statements RBRACE {
     @lexer.commentpop
     # Our class gets defined in the parent namespace, not our own.
     @lexer.namepop
-    newclass classname(val[1]), :arguments => val[2], :code => val[5], :parent => val[3], :line => val[0][:line]
+    newclass classname(val[1]), :arguments => val[2], :parent => val[3], :code => val[5], :line => val[0][:line]
     result = nil
 }           | CLASS classname argumentlist classparent LBRACE RBRACE {
     @lexer.commentpop
@@ -845,9 +845,6 @@ module Puppet
     class ImportError < Racc::ParseError; end
     class AlreadyImportedError < ImportError; end
 end
-
-Puppet[:typecheck] = true
-Puppet[:paramcheck] = true
 
 ---- inner ----
 
