@@ -463,7 +463,7 @@ yay = /a/path
 
     def test_correct_type_assumptions
         file = Puppet::Util::Settings::FileSetting
-        element = Puppet::Util::Settings::Setting
+        setting = Puppet::Util::Settings::Setting
         bool = Puppet::Util::Settings::BooleanSetting
 
         # We have to keep these ordered, unfortunately.
@@ -472,8 +472,8 @@ yay = /a/path
             ["true", bool],
             [true, bool],
             ["false", bool],
-            ["server", element],
-            ["http://$server/yay", element],
+            ["server", setting],
+            ["http://$server/yay", setting],
             ["$server/yayness", file],
             ["$server/yayness.conf", file]
         ].each do |ary|
@@ -483,7 +483,7 @@ yay = /a/path
             assert_nothing_raised {
                 config.setdefaults(:yayness, name => { :default => value, :desc => name.to_s})
             }
-            elem = config.element(name)
+            elem = config.setting(name)
 
             assert_instance_of(type, elem,
                 "%s got created as wrong type" % value.inspect)
@@ -529,7 +529,7 @@ yay = /a/path
         assert_nothing_raised do
             config.setdefaults :test, :blocktest => {:default => "yay", :desc => "boo", :hook => proc { |value| testing = value }}
         end
-        elem = config.element(:blocktest)
+        elem = config.setting(:blocktest)
 
         assert_nothing_raised do
             assert_equal("yay", elem.value)
