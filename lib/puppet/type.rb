@@ -9,7 +9,7 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/resource/reference'
+require 'puppet/resource'
 require 'puppet/util/cacher'
 require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
@@ -1231,10 +1231,10 @@ class Type
         def munge(references)
             references = [references] unless references.is_a?(Array)
             references.collect do |ref|
-                if ref.is_a?(Puppet::Resource::Reference)
+                if ref.is_a?(Puppet::Resource)
                     ref
                 else
-                    Puppet::Resource::Reference.new(ref)
+                    Puppet::Resource.new(ref)
                 end
             end
         end

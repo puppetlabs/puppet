@@ -456,13 +456,13 @@ describe Puppet::Resource::Type do
         end
 
         it "should fail unless it is a class" do
-            lambda { Puppet::Resource::Type.new(:node, "bar").merge("foo") }.should raise_error(ArgumentError)
+            lambda { Puppet::Resource::Type.new(:node, "bar").merge("foo") }.should raise_error(Puppet::Error)
         end
 
         it "should fail unless the source instance is a class" do
             dest = Puppet::Resource::Type.new(:hostclass, "bar")
             source = Puppet::Resource::Type.new(:node, "foo")
-            lambda { dest.merge(source) }.should raise_error(ArgumentError)
+            lambda { dest.merge(source) }.should raise_error(Puppet::Error)
         end
 
         it "should fail if both classes have different parent classes" do
@@ -471,7 +471,7 @@ describe Puppet::Resource::Type do
                 code.add Puppet::Resource::Type.new(:hostclass, parent)
                 code.add Puppet::Resource::Type.new(:hostclass, child, :parent => parent)
             end
-            lambda { code.hostclass("b").merge(code.hostclass("d")) }.should raise_error(ArgumentError)
+            lambda { code.hostclass("b").merge(code.hostclass("d")) }.should raise_error(Puppet::Error)
         end
 
         it "should copy the other class's parent if it has not parent" do

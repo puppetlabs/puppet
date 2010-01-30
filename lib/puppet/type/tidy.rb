@@ -275,9 +275,9 @@ Puppet::Type.newtype(:tidy) do
             dir = File.dirname(path)
             next unless resource = files_by_name[dir]
             if resource[:require]
-                resource[:require] << Puppet::Resource::Reference.new(:file, path)
+                resource[:require] << Puppet::Resource.new(:file, path)
             else
-                resource[:require] = [Puppet::Resource::Reference.new(:file, path)]
+                resource[:require] = [Puppet::Resource.new(:file, path)]
             end
         end
 

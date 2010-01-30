@@ -12,71 +12,89 @@ describe Puppet::Resource do
         end
     end
 
-    describe "when initializing" do
-        it "should require the type and title" do
-            lambda { Puppet::Resource.new }.should raise_error(ArgumentError)
-        end
-
-        it "should create a resource reference with its type and title" do
-            ref = Puppet::Resource::Reference.new("file", "/f")
-            Puppet::Resource::Reference.expects(:new).with("file", "/f").returns ref
-            Puppet::Resource.new("file", "/f")
-        end
-
-        it "should tag itself with its type" do
-            Puppet::Resource.new("file", "/f").should be_tagged("file")
-        end
-
-        it "should tag itself with its title if the title is a valid tag" do
-            Puppet::Resource.new("file", "bar").should be_tagged("bar")
-        end
-
-        it "should not tag itself with its title if the title is a not valid tag" do
-            Puppet::Resource.new("file", "/bar").should_not be_tagged("/bar")
-        end
-
-        it "should allow setting of attributes" do
-            Puppet::Resource.new("file", "/bar", :file => "/foo").file.should == "/foo"
-            Puppet::Resource.new("file", "/bar", :exported => true).should be_exported
-        end
+    it "should have a :title attribute" do
+        Puppet::Resource.new(:file, "foo").title.should == "foo"
     end
 
-    it "should use the resource reference to determine its type" do
-        ref = Puppet::Resource::Reference.new("file", "/f")
-        Puppet::Resource::Reference.expects(:new).returns ref
-        resource = Puppet::Resource.new("file", "/f")
-        ref.expects(:type).returns "mytype"
-        resource.type.should == "mytype"
+    it "should require the type and title" do
+        lambda { Puppet::Resource.new }.should raise_error(ArgumentError)
     end
 
-    it "should use its resource reference to determine its title" do
-        ref = Puppet::Resource::Reference.new("file", "/f")
-        Puppet::Resource::Reference.expects(:new).returns ref
-        resource = Puppet::Resource.new("file", "/f")
-        ref.expects(:title).returns "mytitle"
-        resource.title.should == "mytitle"
+    it "should canonize types to capitalized strings" do
+        Puppet::Resource.new(:file, "foo").type.should == "File"
     end
 
-    it "should use its resource reference to determine whether it is builtin" do
-        ref = Puppet::Resource::Reference.new("file", "/f")
-        Puppet::Resource::Reference.expects(:new).returns ref
-        resource = Puppet::Resource.new("file", "/f")
-        ref.expects(:builtin_type?).returns "yep"
-        resource.builtin_type?.should == "yep"
+    it "should canonize qualified types so all strings are capitalized" do
+        Puppet::Resource.new("foo::bar", "foo").type.should == "Foo::Bar"
     end
 
-    it "should call its builtin_type? method when 'builtin?' is called" do
-        resource = Puppet::Resource.new("file", "/f")
-        resource.expects(:builtin_type?).returns "foo"
-        resource.builtin?.should == "foo"
+    it "should tag itself with its type" do
+        Puppet::Resource.new("file", "/f").should be_tagged("file")
     end
 
-    it "should use its resource reference to produce its canonical reference string" do
-        ref = Puppet::Resource::Reference.new("file", "/f")
-        Puppet::Resource::Reference.expects(:new).returns ref
-        resource = Puppet::Resource.new("file", "/f")
-        ref.expects(:to_s).returns "Foo[bar]"
-        resource.ref.should == "Foo[bar]"
+    it "should tag itself with its title if the title is a valid tag" do
+        Puppet::Resource.new("file", "bar").should be_tagged("bar")
+    end
+
+    it "should not tag itself with its title if the title is a not valid tag" do
+        Puppet::Resource.new("file", "/bar").should_not be_tagged("/bar")
+    end
+
+    it "should allow setting of attributes" do
+        Puppet::Resource.new("file", "/bar", :file => "/foo").file.should == "/foo"
+        Puppet::Resource.new("file", "/bar", :exported => true).should be_exported
+    end
+
+    it "should set its type to 'Class' and its title to the passed title if the passed type is :component and the title has no square brackets in it" do
+        ref = Puppet::Resource.new(:component, "foo")
+        ref.type.should == "Class"
+        ref.title.should == "foo"
+    end
+
+    it "should interpret the title as a reference and assign appropriately if the type is :component and the title contains square brackets" do
+        ref = Puppet::Resource.new(:component, "foo::bar[yay]")
+        ref.type.should == "Foo::Bar"
+        ref.title.should == "yay"
+    end
+
+    it "should set the type to 'Class' if it is nil and the title contains no square brackets" do
+        ref = Puppet::Resource.new(nil, "yay")
+        ref.type.should == "Class"
+        ref.title.should == "yay"
+    end
+
+    it "should interpret the title as a reference and assign appropriately if the type is nil and the title contains square brackets" do
+        ref = Puppet::Resource.new(nil, "foo::bar[yay]")
+        ref.type.should == "Foo::Bar"
+        ref.title.should == "yay"
+    end
+
+    it "should interpret the title as a reference and assign appropriately if the type is nil and the title contains nested square brackets" do
+        ref = Puppet::Resource.new(nil, "foo::bar[baz[yay]]")
+        ref.type.should == "Foo::Bar"
+        ref.title.should =="baz[yay]"
+    end
+
+    it "should interpret the type as a reference and assign appropriately if the title is nil and the type contains square brackets" do
+        ref = Puppet::Resource.new("foo::bar[baz]")
+        ref.type.should == "Foo::Bar"
+        ref.title.should =="baz"
+    end
+
+    it "should be able to extract its information from a Puppet::Type instance" do
+        ral = Puppet::Type.type(:file).new :path => "/foo"
+        ref = Puppet::Resource.new(ral)
+        ref.type.should == "File"
+        ref.title.should == "/foo"
+    end
+
+
+    it "should fail if the title is nil and the type is not a valid resource reference string" do
+        lambda { Puppet::Resource.new("foo") }.should raise_error(ArgumentError)
+    end
+
+    it "should be able to produce a backward-compatible reference array" do
+        Puppet::Resource.new("foobar", "/f").to_trans_ref.should == %w{Foobar /f}
     end
 
     it "should be taggable" do
@@ -94,12 +112,16 @@ describe Puppet::Resource do
         Puppet::Resource.new("file", "/my/file", :environment => :foo).environment.name.should == :foo
     end
 
-    it "should support a namespace attribute" do
-        Puppet::Resource.new("file", "/my/file", :namespace => :foo).namespace.should == :foo
+    it "should support specifying namespaces" do
+        Puppet::Resource.new("file", "/my/file", :namespaces => [:foo]).namespaces.should == [:foo]
     end
 
-    it "should default to a namespace of an empty string" do
-        Puppet::Resource.new("file", "/my/file").namespace.should == ""
+    it "should convert namespaces to an array if not specified as one" do
+        Puppet::Resource.new("file", "/my/file", :namespaces => :foo).namespaces.should == [:foo]
+    end
+
+    it "should default to a single amespace of an empty string" do
+        Puppet::Resource.new("file", "/my/file").namespaces.should == [""]
     end
 
     it "should be able to look up its resource type when the type is a builtin resource" do
@@ -130,16 +152,16 @@ describe Puppet::Resource do
         resource.resource_type.should equal(klass)
     end
 
-    it "should use its namespace when looking up defined resource types" do
-        resource = Puppet::Resource.new("bar", "/my/file", :namespace => "foo")
+    it "should use its namespaces when looking up defined resource types" do
+        resource = Puppet::Resource.new("bar", "/my/file", :namespaces => ["foo"])
         type = Puppet::Resource::Type.new(:definition, "foo::bar")
         resource.environment.known_resource_types.add type
 
         resource.resource_type.should equal(type)
     end
 
-    it "should use its namespace when looking up host classes" do
-        resource = Puppet::Resource.new("class", "bar", :namespace => "foo")
+    it "should use its namespaces when looking up host classes" do
+        resource = Puppet::Resource.new("class", "bar", :namespaces => ["foo"])
         type = Puppet::Resource::Type.new(:hostclass, "foo::bar")
         resource.environment.known_resource_types.add type
 
@@ -169,6 +191,30 @@ describe Puppet::Resource do
         Puppet::Node::Environment.new.known_resource_types.add type
         resource = Puppet::Resource.new("foobar", "/my/file", :validate_parameters => true)
         resource[:yay] = true
+    end
+
+    it "should be considered equivalent to another resource if their type and title match and no parameters are set" do
+        Puppet::Resource.new("file", "/f").should == Puppet::Resource.new("file", "/f")
+    end
+
+    it "should be considered equivalent to another resource if their type, title, and parameters are equal" do
+        Puppet::Resource.new("file", "/f", :parameters => {:foo => "bar"}).should == Puppet::Resource.new("file", "/f", :parameters => {:foo => "bar"})
+    end
+
+    it "should not be considered equivalent to another resource if their type and title match but parameters are different" do
+        Puppet::Resource.new("file", "/f", :parameters => {:fee => "baz"}).should_not == Puppet::Resource.new("file", "/f", :parameters => {:foo => "bar"})
+    end
+
+    it "should not be considered equivalent to a non-resource" do
+        Puppet::Resource.new("file", "/f").should_not == "foo"
+    end
+
+    it "should not be considered equivalent to another resource if their types do not match" do
+        Puppet::Resource.new("file", "/f").should_not == Puppet::Resource.new("exec", "/f")
+    end
+
+    it "should not be considered equivalent to another resource if their titles do not match" do
+        Puppet::Resource.new("file", "/foo").should_not == Puppet::Resource.new("file", "/f")
     end
 
     describe "when managing parameters" do
@@ -305,7 +351,10 @@ describe Puppet::Resource do
         end
 
         it "should set :name to the title if :name is not present for non-builtin types" do
+            krt = Puppet::Resource::TypeCollection.new("myenv")
+            krt.add Puppet::Resource::Type.new(:definition, :foo)
             resource = Puppet::Resource.new :foo, "bar"
+            resource.stubs(:known_resource_types).returns krt
             resource.to_hash[:name].should == "bar"
         end
     end
@@ -334,25 +383,19 @@ describe Puppet::Resource do
     end
 
     describe "when converting to a RAL resource" do
-        before do
-            @resource = Puppet::Resource.new("file", "/my/file")
-            @resource["one"] = "test"
-            @resource["two"] = "other"
-        end
-
-        it "should use the resource type's :create method to create the resource if the resource is of a builtin type" do
-            type = mock 'resource type'
-            type.expects(:new).with(@resource).returns(:myresource)
-            Puppet::Type.expects(:type).with(@resource.type).returns(type)
-            @resource.to_ral.should == :myresource
+        it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
+            resource = Puppet::Resource.new("file", "/my/file")
+            result = resource.to_ral
+            result.should be_instance_of(Puppet::Type.type(:file))
+            result[:path].should == "/my/file"
         end
 
         it "should convert to a component instance if the resource type is not of a builtin type" do
-            component = mock 'component type'
-            Puppet::Type::Component.expects(:new).with(@resource).returns "meh"
+            resource = Puppet::Resource.new("foobar", "somename")
+            result = resource.to_ral
 
-            Puppet::Type.expects(:type).with(@resource.type).returns(nil)
-            @resource.to_ral.should == "meh"
+            result.should be_instance_of(Puppet::Type.type(:component))
+            result.title.should == "Foobar[somename]"
         end
     end
 
@@ -450,13 +493,13 @@ describe Puppet::Resource do
             end
 
             it "should convert resource references into the backward-compatible form" do
-                @resource[:foo] = Puppet::Resource::Reference.new(:file, "/f")
-                @resource.to_trans["foo"].should == %w{file /f}
+                @resource[:foo] = Puppet::Resource.new(:file, "/f")
+                @resource.to_trans["foo"].should == %w{File /f}
             end
 
             it "should convert resource references into the backward-compatible form even when within arrays" do
-                @resource[:foo] = ["a", Puppet::Resource::Reference.new(:file, "/f")]
-                @resource.to_trans["foo"].should == ["a", %w{file /f}]
+                @resource[:foo] = ["a", Puppet::Resource.new(:file, "/f")]
+                @resource.to_trans["foo"].should == ["a", %w{File /f}]
             end
         end
     end
@@ -616,6 +659,18 @@ describe Puppet::Resource do
 
         it "should have a name" do
             Puppet::Resource.new("file", "/my/file").name.should == "File//my/file"
+        end
+    end
+
+    describe "when resolving resources with a catalog" do
+        it "should resolve all resources using the catalog" do
+            catalog = mock 'catalog'
+            resource = Puppet::Resource.new("foo::bar", "yay")
+            resource.catalog = catalog
+
+            catalog.expects(:resource).with("Foo::Bar[yay]").returns(:myresource)
+
+            resource.resolve.should == :myresource
         end
     end
 end

@@ -464,13 +464,13 @@ describe Puppet::Type::RelationshipMetaparam do
             @metaparam = Puppet::Type.metaparamclass(:require).new :resource => @resource
         end
 
-        it "should accept Puppet::Resource::Reference instances" do
-            ref = Puppet::Resource::Reference.new(:file, "/foo")
+        it "should accept Puppet::Resource instances" do
+            ref = Puppet::Resource.new(:file, "/foo")
             @metaparam.munge(ref)[0].should equal(ref)
         end
 
-        it "should turn any string into a Puppet::Resource::Reference" do
-            @metaparam.munge("File[/ref]")[0].should be_instance_of(Puppet::Resource::Reference)
+        it "should turn any string into a Puppet::Resource" do
+            @metaparam.munge("File[/ref]")[0].should be_instance_of(Puppet::Resource)
         end
     end
 

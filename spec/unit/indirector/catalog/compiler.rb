@@ -11,7 +11,7 @@ describe Puppet::Resource::Catalog::Compiler do
     before do
         Puppet::Rails.stubs(:init)
         Facter.stubs(:to_hash).returns({})
-        Facter.stubs(:[]).returns(Facter::Util::Fact.new("something"))
+        Facter.stubs(:value).returns(Facter::Util::Fact.new("something"))
     end
 
     describe "when initializing" do
@@ -44,7 +44,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
         describe "and storeconfigs is enabled" do
             before do
-                Puppet.settings[:storeconfigs] = true
+                Puppet.settings.expects(:value).with(:storeconfigs).returns true
             end
 
             it "should initialize Rails if it is available" do
@@ -141,11 +141,11 @@ describe Puppet::Resource::Catalog::Compiler do
 
     describe "when extracting facts from the request" do
         before do
+            Facter.stubs(:value).returns "something"
             @compiler = Puppet::Resource::Catalog::Compiler.new
             @request = stub 'request', :options => {}
 
             @facts = stub 'facts', :save => nil
-            Facter.stubs(:value).returns "something"
         end
 
         it "should do nothing if no facts are provided" do

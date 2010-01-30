@@ -5,7 +5,6 @@ require 'puppet/external/event-loop'
 require 'puppet/util/cacher'
 require 'puppet/util/loadedfile'
 require 'puppet/resource'
-require 'puppet/resource/reference'
 
 # The class for handling configuration files.
 class Puppet::Util::Settings

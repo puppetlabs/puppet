@@ -388,15 +388,4 @@ class Puppet::Parser::Parser
     def watch_file(filename)
         known_resource_types.watch_file(filename)
     end
-
-    private
-
-    def check_and_add_to_watched_files(filename)
-        unless @files.include?(filename)
-            @files[filename] = Puppet::Util::LoadedFile.new(filename)
-            return true
-        else
-            return false
-        end
-    end
 end

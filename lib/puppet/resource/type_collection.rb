@@ -1,6 +1,12 @@
 class Puppet::Resource::TypeCollection
     attr_reader :environment
 
+    def clear
+        @hostclasses.clear
+        @definitions.clear
+        @nodes.clear
+    end
+
     def initialize(env)
         @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
         @hostclasses = {}
@@ -19,6 +25,10 @@ class Puppet::Resource::TypeCollection
     end
 
     def add(instance)
+        if instance.type == :hostclass and other = @hostclasses[instance.name] and other.type == :hostclass
+            other.merge(instance)
+            return other
+        end
         method = "add_#{instance.type}"
         send(method, instance)
         instance.code_collection = self
@@ -26,8 +36,8 @@ class Puppet::Resource::TypeCollection
     end
 
     def add_hostclass(instance)
-        dupe_check(instance, @hostclasses) { |dupe| "Class #{instance.name} is already defined#{dupe.error_context}; cannot redefine" }
-        dupe_check(instance, @definitions) { |dupe| "Definition #{instance.name} is already defined#{dupe.error_context}; cannot be redefined as a class" }
+        dupe_check(instance, @hostclasses) { |dupe| "Class '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine" }
+        dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined as a class" }
 
         @hostclasses[instance.name] = instance
         instance
@@ -38,7 +48,7 @@ class Puppet::Resource::TypeCollection
     end
 
     def add_node(instance)
-        dupe_check(instance, @nodes) { |dupe| "Node #{instance.name} is already defined#{dupe.error_context}; cannot redefine" }
+        dupe_check(instance, @nodes) { |dupe| "Node '#{instance.name}' is already defined#{dupe.error_context}; cannot redefine" }
 
         @node_list << instance
         @nodes[instance.name] = instance
@@ -67,8 +77,10 @@ class Puppet::Resource::TypeCollection
         @nodes.length > 0
     end
 
-    def add_definition(code)
-        @definitions[code.name] = code
+    def add_definition(instance)
+        dupe_check(instance, @hostclasses) { |dupe| "'#{instance.name}' is already defined#{dupe.error_context} as a class; cannot redefine as a definition" }
+        dupe_check(instance, @definitions) { |dupe| "Definition '#{instance.name}' is already defined#{dupe.error_context}; cannot be redefined" }
+        @definitions[instance.name] = instance
     end
 
     def definition(name)
@@ -76,11 +88,12 @@ class Puppet::Resource::TypeCollection
     end
 
     def find(namespaces, name, type)
+        #Array("") == [] for some reason
+        namespaces = [namespaces] unless namespaces.is_a?(Array)
+
         if r = find_fully_qualified(name, type)
             return r
         end
-
-        namespaces = Array(namespaces)
 
         namespaces.each do |namespace|
             ary = namespace.split("::")

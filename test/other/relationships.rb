@@ -80,7 +80,7 @@ class TestRelationships < Test::Unit::TestCase
 
     # Testing #411.  It was a problem with builddepends.
     def test_missing_deps
-        file = Puppet::Type.type(:file).new :path => tempfile, :require => Puppet::Resource::Reference.new("file", "/no/such/file")
+        file = Puppet::Type.type(:file).new :path => tempfile, :require => Puppet::Resource.new("file", "/no/such/file")
 
         assert_raise(Puppet::Error) do
             file.builddepends

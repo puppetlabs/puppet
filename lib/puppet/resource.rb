@@ -5,7 +5,6 @@ require 'puppet/util/pson'
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
 class Puppet::Resource
-    require 'puppet/resource/reference'
     include Puppet::Util::Tagging
 
     require 'puppet/resource/type_collection_helper'
@@ -13,8 +12,8 @@ class Puppet::Resource
 
     extend Puppet::Util::Pson
     include Enumerable
-    attr_accessor :file, :line, :catalog, :exported, :virtual, :namespace, :validate_parameters
-    attr_writer :type, :title, :environment
+    attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters
+    attr_reader :type, :title, :namespaces
 
     require 'puppet/indirector'
     extend Puppet::Indirector
@@ -95,6 +94,13 @@ class Puppet::Resource
         @parameters[parameter_name(param)]
     end
 
+    def ==(other)
+        return false unless other.respond_to?(:title) and self.type == other.type and self.title == other.title
+
+        return false unless to_hash == other.to_hash
+        true
+    end
+
     # Compatibility method.
     def builtin?
         builtin_type?
@@ -102,7 +108,7 @@ class Puppet::Resource
 
     # Is this a builtin resource type?
     def builtin_type?
-        @reference.builtin_type?
+        resource_type.is_a?(Class)
     end
 
     # Iterate over each param/value pair, as required for Enumerable.
@@ -114,6 +120,23 @@ class Puppet::Resource
         super || @parameters.keys.include?( parameter_name(parameter) )
     end
 
+    # These two methods are extracted into a Helper
+    # module, but file load order prevents me
+    # from including them in the class, and I had weird
+    # behaviour (i.e., sometimes it didn't work) when
+    # I directly extended each resource with the helper.
+    def environment
+        Puppet::Node::Environment.new(@environment)
+    end
+
+    def environment=(env)
+        if env.is_a?(String) or env.is_a?(Symbol)
+            @environment = env
+        else
+            @environment = env.name
+        end
+    end
+
     %w{exported virtual}.each do |m|
         define_method(m+"?") do
             self.send(m)
@@ -121,14 +144,11 @@ class Puppet::Resource
     end
 
     # Create our resource.
-    def initialize(type, title, attributes = {})
-        # Doing this, instead of including it in the class,
-        # is the only way I could get the load order to work
-        # here.
-        extend Puppet::Node::Environment::Helper
+    def initialize(type, title = nil, attributes = {})
+        self.type, self.title = extract_type_and_title(type, title)
 
         @parameters = {}
-        @namespace = ""
+        @namespaces = [""]
 
         (attributes[:parameters] || {}).each do |param, value|
             self[param] = value
@@ -139,15 +159,25 @@ class Puppet::Resource
             send(attr.to_s + "=", value)
         end
 
-        @reference = Puppet::Resource::Reference.new(type, title)
-
-        tag(@reference.type)
-        tag(@reference.title) if valid_tag?(@reference.title)
+        tag(self.type)
+        tag(self.title) if valid_tag?(self.title)
     end
 
-    # Provide a reference to our resource in the canonical form.
     def ref
-        @reference.to_s
+        to_s
+    end
+
+    # Find our resource.
+    def resolve
+        return catalog.resource(to_s) if catalog
+        return nil
+    end
+
+    def title=(value)
+        if @type and klass = Puppet::Type.type(@type.to_s.downcase)
+            value = klass.canonicalize_ref(value)
+        end
+        @title = value
     end
 
     def resource_type
@@ -157,16 +187,6 @@ class Puppet::Resource
         else
             find_builtin_resource_type || find_defined_resource_type
         end
-    end
-
-    # Get our title information from the reference, since it will canonize it for us.
-    def title
-        @reference.title
-    end
-
-    # Get our type information from the reference, since it will canonize it for us.
-    def type
-        @reference.type
     end
 
     # Produce a simple hash of our parameters.
@@ -179,7 +199,7 @@ class Puppet::Resource
     end
 
     def to_s
-        return ref
+        "#{type}[#{title}]"
     end
 
     # Convert our resource to Puppet code.
@@ -211,7 +231,7 @@ class Puppet::Resource
 
     # Translate our object to a backward-compatible transportable object.
     def to_trans
-        if @reference.builtin_type?
+        if builtin_type?
             result = to_transobject
         else
             result = to_transbucket
@@ -223,16 +243,20 @@ class Puppet::Resource
         return result
     end
 
+    def to_trans_ref
+        [type.to_s, title.to_s]
+    end
+
     # Create an old-style TransObject instance, for builtin resource types.
     def to_transobject
         # Now convert to a transobject
-        result = Puppet::TransObject.new(@reference.title, @reference.type)
+        result = Puppet::TransObject.new(title, type)
         to_hash.each do |p, v|
-            if v.is_a?(Puppet::Resource::Reference)
+            if v.is_a?(Puppet::Resource)
                 v = v.to_trans_ref
             elsif v.is_a?(Array)
                 v = v.collect { |av|
-                    if av.is_a?(Puppet::Resource::Reference)
+                    if av.is_a?(Puppet::Resource)
                         av = av.to_trans_ref
                     end
                     av
@@ -266,6 +290,15 @@ class Puppet::Resource
         self
     end
 
+    # Canonize the type so we know it's always consistent.
+    def type=(value)
+        if value.nil? or value.to_s.downcase == "component"
+            @type = "Class"
+        else
+            @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+        end
+    end
+
     def valid_parameter?(name)
         resource_type.valid_parameter?(name)
     end
@@ -282,7 +315,7 @@ class Puppet::Resource
 
     def find_hostclass
         name = title == :main ? "" : title
-        known_resource_types.find_hostclass(namespace, name)
+        known_resource_types.find_hostclass(namespaces, name)
     end
 
     def find_builtin_resource_type
@@ -290,7 +323,7 @@ class Puppet::Resource
     end
 
     def find_defined_resource_type
-        known_resource_types.find_definition(namespace, type.to_s.downcase)
+        known_resource_types.find_definition(namespaces, type.to_s.downcase)
     end
 
     # Produce a canonical method name.
@@ -302,10 +335,14 @@ class Puppet::Resource
         param
     end
 
+    def namespaces=(ns)
+        @namespaces = Array(ns)
+    end
+
     # The namevar for our resource type. If the type doesn't exist,
     # always use :name.
     def namevar
-        if t = resource_type
+        if builtin_type? and t = resource_type
             t.namevar
         else
             :name
@@ -321,5 +358,15 @@ class Puppet::Resource
 
         # TransBuckets don't support parameters, which is why they're being deprecated.
         return bucket
+    end
+
+    private
+
+    def extract_type_and_title(argtype, argtitle)
+	    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
+	    elsif argtitle                                         then [ argtype,            argtitle      ]
+	    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
+	    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+	    end
     end
 end

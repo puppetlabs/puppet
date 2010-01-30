@@ -429,6 +429,12 @@ describe Puppet::Parser do
             @krt.hostclass("foobar").parent.should == "yayness"
         end
 
+        it "should correctly set the parent class for multiple classes at a time" do
+            @parser.parse("class foobar inherits yayness {}\nclass boo inherits bar {}")
+            @krt.hostclass("foobar").parent.should == "yayness"
+            @krt.hostclass("boo").parent.should == "bar"
+        end
+
         it "should define the code when some is provided" do
             @parser.parse("class foobar { $var = val }")
             @krt.hostclass("foobar").code.should_not be_nil
@@ -450,6 +456,16 @@ describe Puppet::Parser do
         it "should be able to parse class resources" do
             @krt.add(Puppet::Resource::Type.new(:hostclass, "foobar", :arguments => {"biz" => nil}))
             lambda { @parser.parse("class { foobar: biz => stuff }") }.should_not raise_error
+        end
+        
+        it "should correctly mark exported resources as exported" do
+            @parser.parse("@@file { '/file': }")
+            @krt.hostclass("").code[0].exported.should be_true
+        end
+        
+        it "should correctly mark virtual resources as virtual" do
+            @parser.parse("@file { '/file': }")
+            @krt.hostclass("").code[0].virtual.should be_true
         end
     end
 end

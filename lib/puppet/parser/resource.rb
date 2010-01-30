@@ -1,8 +1,11 @@
-# A resource that we're managing.  This handles making sure that only subclasses
-# can set parameters.
-class Puppet::Parser::Resource
+require 'puppet/resource'
+
+# The primary difference between this class and its
+# parent is that this class has rules on who can set
+# parameters
+class Puppet::Parser::Resource < Puppet::Resource
     require 'puppet/parser/resource/param'
-    require 'puppet/parser/resource/reference'
+    require 'puppet/resource'
     require 'puppet/util/tagging'
     require 'puppet/file_collection/lookup'
     require 'puppet/parser/yaml_trimmer'
@@ -29,15 +32,8 @@ class Puppet::Parser::Resource
         @relationship_names.include?(name)
     end
 
-    # Proxy a few methods to our @ref object.
-    [:builtin?, :type, :title].each do |method|
-        define_method(method) do
-            @ref.send(method)
-        end
-    end
-
     # Set up some boolean test methods
-    [:exported, :translated, :override, :virtual, :evaluated].each do |method|
+    [:translated, :override, :evaluated].each do |method|
         newmeth = (method.to_s + "?").intern
         define_method(newmeth) do
             self.send(method)
@@ -60,25 +56,25 @@ class Puppet::Parser::Resource
         set_parameter(param, value)
     end
 
-    def builtin=(bool)
-        @ref.builtin = bool
-    end
-
     def eachparam
         @params.each do |name, param|
             yield param
         end
     end
 
+    def environment
+        scope.environment
+    end
+
     # Retrieve the associated definition and evaluate it.
     def evaluate
-        if klass = @ref.definedtype
+        if klass = resource_type and ! builtin_type?
             finish()
             return klass.evaluate_code(self)
         elsif builtin?
-            devfail "Cannot evaluate a builtin type"
+            devfail "Cannot evaluate a builtin type (#{type})"
         else
-            self.fail "Cannot find definition %s" % self.type
+            self.fail "Cannot find definition #{type}"
         end
     ensure
         @evaluated = true
@@ -111,61 +107,41 @@ class Puppet::Parser::Resource
         defined?(@finished) and @finished
     end
 
-    def initialize(options)
+    def initialize(type, title, options)
+        self.type = type
+        self.title = title
+
+        @params = {}
+        # Define all of the parameters
+        if params = options[:params]
+            extract_parameters(params)
+            options.delete(:params)
+        end
+
         # Set all of the options we can.
         options.each do |option, value|
             if respond_to?(option.to_s + "=")
                 send(option.to_s + "=", value)
                 options.delete(option)
+            else
+                raise ArgumentError, "Resources do not accept #{option}"
             end
         end
 
         unless self.scope
             raise ArgumentError, "Resources require a scope"
         end
+
         @source ||= scope.source
 
-        options = symbolize_options(options)
-
-        # Set up our reference.
-        if type = options[:type] and title = options[:title]
-            options.delete(:type)
-            options.delete(:title)
-        else
-            raise ArgumentError, "Resources require a type and title"
-        end
-
-        @ref = Reference.new(:type => type, :title => title, :scope => self.scope)
-
-        @params = {}
-
-        # Define all of the parameters
-        if params = options[:params]
-            options.delete(:params)
-            params.each do |param|
-                # Don't set the same parameter twice
-                if @params[param.name]
-                    self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" %
-                        [param.name, self.to_s]
-                end
-
-                set_parameter(param)
-            end
-        end
-
-        # Throw an exception if we've got any arguments left to set.
-        unless options.empty?
-            raise ArgumentError, "Resources do not accept %s" % options.keys.collect { |k| k.to_s }.join(", ")
-        end
-
-        tag(@ref.type)
-        tag(@ref.title) if valid_tag?(@ref.title.to_s)
+        tag(self.type)
+        tag(self.title) if valid_tag?(self.title.to_s)
     end
 
     # Is this resource modeling an isomorphic resource type?
     def isomorphic?
-        if builtin?
-            return @ref.builtintype.isomorphic?
+        if builtin_type?
+            return resource_type.isomorphic?
         else
             return true
         end
@@ -199,22 +175,13 @@ class Puppet::Parser::Resource
         @name
     end
 
-    # This *significantly* reduces the number of calls to Puppet.[].
-    def paramcheck?
-        unless defined? @@paramcheck
-            @@paramcheck = Puppet[:paramcheck]
-        end
-        @@paramcheck
+    def namespaces
+        scope.namespaces
     end
 
     # A temporary occasion, until I get paths in the scopes figured out.
     def path
         to_s
-    end
-
-    # Return the short version of our name.
-    def ref
-        @ref.to_s
     end
 
     # Define a parameter in our resource.
@@ -254,16 +221,16 @@ class Puppet::Parser::Resource
         result = Puppet::Resource.new(type, title)
 
         to_hash.each do |p, v|
-            if v.is_a?(Puppet::Parser::Resource::Reference)
-                v = Puppet::Resource::Reference.new(v.type, v.title)
+            if v.is_a?(Puppet::Resource)
+                v = Puppet::Resource.new(v.type, v.title)
             elsif v.is_a?(Array)
                 # flatten resource references arrays
-                if v.flatten.find { |av| av.is_a?(Puppet::Parser::Resource::Reference) }
+                if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
                     v = v.flatten
                 end
                 v = v.collect do |av|
-                    if av.is_a?(Puppet::Parser::Resource::Reference)
-                        av = Puppet::Resource::Reference.new(av.type, av.title)
+                    if av.is_a?(Puppet::Resource)
+                        av = Puppet::Resource.new(av.type, av.title)
                     end
                     av
                 end
@@ -287,10 +254,6 @@ class Puppet::Parser::Resource
         result.tag(*self.tags)
 
         return result
-    end
-
-    def to_s
-        self.ref
     end
 
     # Translate our object to a transportable object.
@@ -389,28 +352,26 @@ class Puppet::Parser::Resource
         set_parameter(param)
     end
 
-    # Verify that all passed parameters are valid.  This throws an error if
-    #  there's a problem, so we don't have to worry about the return value.
-    def paramcheck(param)
-        param = param.to_s
-        # Now make sure it's a valid argument to our class.  These checks
-        # are organized in order of commonhood -- most types, it's a valid
-        # argument and paramcheck is enabled.
-        if @ref.typeclass.valid_parameter?(param)
-            true
-        elsif %w{name title}.include?(param) # always allow these
-            true
-        elsif paramcheck?
-            self.fail Puppet::ParseError, "Invalid parameter '%s' for type '%s'" %
-                    [param, @ref.type]
-        end
-    end
-
     # Make sure the resource's parameters are all valid for the type.
     def validate
         @params.each do |name, param|
-            # Make sure it's a valid parameter.
-            paramcheck(name)
+            validate_parameter(name)
+        end
+    rescue => detail
+        fail Puppet::ParseError, detail.to_s
+    end
+
+    private
+
+    def extract_parameters(params)
+        params.each do |param|
+            # Don't set the same parameter twice
+            if @params[param.name]
+                self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" %
+                    [param.name, self.to_s]
+            end
+
+            set_parameter(param)
         end
     end
 end

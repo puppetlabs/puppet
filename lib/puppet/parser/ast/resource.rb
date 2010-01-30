@@ -14,7 +14,7 @@ class Resource < AST::ResourceReference
     # in the current scope.
     def evaluate(scope)
         # Evaluate all of the specified params.
-        paramobjects = @params.collect { |param|
+        paramobjects = params.collect { |param|
             param.safeevaluate(scope)
         }
 
@@ -24,8 +24,6 @@ class Resource < AST::ResourceReference
         unless resource_titles.is_a?(Array)
             resource_titles = [resource_titles]
         end
-
-        resource_type = qualified_type(scope)
 
         # We want virtual to be true if exported is true.  We can't
         # just set :virtual => self.virtual in the initialization,
@@ -39,9 +37,7 @@ class Resource < AST::ResourceReference
         # many times.
         resource_titles.flatten.collect { |resource_title|
             exceptwrap :type => Puppet::ParseError do
-                resource = Puppet::Parser::Resource.new(
-                    :type => resource_type,
-                    :title => resource_title,
+                resource = Puppet::Parser::Resource.new(type, resource_title,
                     :params => paramobjects,
                     :file => self.file,
                     :line => self.line,

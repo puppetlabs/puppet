@@ -28,7 +28,7 @@ describe "the require function" do
     end
 
     it "should set the 'require' prarameter on the resource to a resource reference" do
-        @resource.expects(:set_parameter).with { |name, value| name == :require and value[0].is_a?(Puppet::Parser::Resource::Reference) }
+        @resource.expects(:set_parameter).with { |name, value| name == :require and value[0].is_a?(Puppet::Resource) }
         @scope.stubs(:function_include)
         @scope.function_require("myclass")
     end

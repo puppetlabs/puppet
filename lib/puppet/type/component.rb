@@ -65,7 +65,7 @@ Puppet::Type.newtype(:component) do
     end
 
     def title=(str)
-        @reference = Puppet::Resource::Reference.new(str)
+        @reference = Puppet::Resource.new(str)
     end
 
     def refresh

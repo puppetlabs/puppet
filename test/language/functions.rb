@@ -289,16 +289,12 @@ class TestLangFunctions < Test::Unit::TestCase
 
         Puppet[:code] = %{file { "#{file}": content => template("#{template}") }}
         Puppet[:environment] = "yay"
-        interp = Puppet::Parser::Interpreter.new
         node = mknode
-        node.stubs(:environment).returns("yay")
+        node.stubs(:environment).returns Puppet::Node::Environment.new
 
         Puppet[:environment] = "yay"
 
-        catalog = nil
-        assert_nothing_raised {
-            catalog = interp.compile(node)
-        }
+        catalog = Puppet::Parser::Compiler.new(node).compile
 
         version = catalog.version
 
@@ -317,7 +313,7 @@ class TestLangFunctions < Test::Unit::TestCase
             f.puts "new text"
         end
 
-        newversion = interp.compile(node).version
+        newversion = Puppet::Parser::Compiler.new(node).compile.version
 
         assert(version != newversion, "Parse date did not change")
     end
@@ -385,100 +381,6 @@ class TestLangFunctions < Test::Unit::TestCase
             "Did not set function correctly")
     end
 
-    def test_realize
-        scope = mkscope
-        parser = scope.compiler.parser
-
-        realize = Puppet::Parser::Functions.function(:realize)
-
-        # Make a definition
-        parser.newdefine("mytype")
-
-        [%w{file /tmp/virtual}, %w{mytype yay}].each do |type, title|
-            # Make a virtual resource
-            virtual = mkresource(:type => type, :title => title,
-                :virtual => true, :params => {}, :scope => scope)
-
-            scope.compiler.add_resource(scope, virtual)
-
-            ref = Puppet::Parser::Resource::Reference.new(
-                :type => type, :title => title,
-                :scope => scope
-            )
-            # Now call the realize function
-            assert_nothing_raised do
-                scope.function_realize(ref)
-            end
-
-            # Make sure it created a collection
-            assert_equal(1, scope.compiler.collections.length,
-                "Did not set collection")
-
-            assert_nothing_raised do
-                scope.compiler.collections.each do |coll| coll.evaluate end
-            end
-            scope.compiler.collections.clear
-
-            # Now make sure the virtual resource is no longer virtual
-            assert(! virtual.virtual?, "Did not make virtual resource real")
-        end
-
-        # Make sure we puke on any resource that doesn't exist
-        none = Puppet::Parser::Resource::Reference.new(
-            :type => "file", :title => "/tmp/nosuchfile",
-            :scope => scope
-        )
-
-        # The function works
-        assert_nothing_raised do
-            scope.function_realize(none.to_s)
-        end
-
-        # Make sure it created a collection
-        assert_equal(1, scope.compiler.collections.length,
-            "Did not set collection")
-
-        # And the collection has our resource in it
-        assert_equal([none.to_s], scope.compiler.collections[0].resources,
-            "Did not set resources in collection")
-    end
-
-    def test_defined
-        scope = mkscope
-        parser = scope.compiler.parser
-
-        defined = Puppet::Parser::Functions.function(:defined)
-
-        parser.newclass("yayness")
-        parser.newdefine("rahness")
-
-        assert_nothing_raised do
-            assert(scope.function_defined("yayness"), "yayness class was not considered defined")
-            assert(scope.function_defined("rahness"), "rahness definition was not considered defined")
-            assert(scope.function_defined("service"), "service type was not considered defined")
-            assert(! scope.function_defined("fakness"), "fakeness was considered defined")
-        end
-
-        # Now make sure any match in a list will work
-        assert(scope.function_defined(["booness", "yayness", "fakeness"]),
-            "A single answer was not sufficient to return true")
-
-        # and make sure multiple falses are still false
-        assert(! scope.function_defined(%w{no otherno stillno}),
-            "Multiple falses were somehow true")
-
-        # Now make sure we can test resources
-        scope.compiler.add_resource(scope, mkresource(:type => "file", :title => "/tmp/rahness",
-            :scope => scope, :source => scope.source,
-            :params => {:owner => "root"}))
-
-        yep = Puppet::Parser::Resource::Reference.new(:type => "file", :title => "/tmp/rahness")
-        nope = Puppet::Parser::Resource::Reference.new(:type => "file", :title => "/tmp/fooness")
-
-        assert(scope.function_defined([yep]), "valid resource was not considered defined")
-        assert(! scope.function_defined([nope]), "invalid resource was considered defined")
-    end
-
     def test_search
         parser = mkparser
         scope = mkscope(:parser => parser)
@@ -503,7 +405,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
     def test_include
         scope = mkscope
-        parser = scope.compiler.parser
+        parser = mkparser
 
         include = Puppet::Parser::Functions.function(:include)
 
@@ -569,7 +471,7 @@ class TestLangFunctions < Test::Unit::TestCase
         generate = Puppet::Parser::Functions.function(:generate)
 
         scope = mkscope
-        parser = scope.compiler.parser
+        parser = mkparser
 
         val = nil
         assert_nothing_raised("Could not call generator with no args") do

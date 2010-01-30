@@ -9,16 +9,15 @@ describe Puppet::Parser::AST::Resource do
         @title = stub_everything 'title'
         @compiler = stub_everything 'compiler'
         @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
-        @param1 = stub_everything 'parameter', :is_a? => true
         @scope.stubs(:resource).returns(stub_everything)
-        @params = ast::ASTArray.new( :children => [@param1])
-        @resource = ast::Resource.new(:title => @title, :type => "Resource", :params => @params )
+        @resource = ast::Resource.new(:title => @title, :type => "Resource", :params => ast::ASTArray.new(:children => []) )
         @resource.stubs(:qualified_type).returns("Resource")
-        Puppet::Parser::Resource.stubs(:new).returns(stub_everything)
     end
 
     it "should evaluate all its parameters" do
-        @param1.expects(:safeevaluate).with(@scope)
+        param = stub 'param'
+        param.expects(:safeevaluate).with(@scope).returns Puppet::Parser::Resource::Param.new(:name => "myparam", :value => "myvalue", :source => stub("source"))
+        @resource.stubs(:params).returns [param]
 
         @resource.evaluate(@scope)
     end
@@ -49,10 +48,10 @@ describe Puppet::Parser::AST::Resource do
         title_array.stubs(:flatten).returns([@title])
         titles.stubs(:safeevaluate).with(@scope).returns(title_array)
 
-        Puppet::Parser::Resource.expects(:new).with { |hash| hash[:title] == @title }
-
         @resource.title = titles
-        @resource.evaluate(@scope)
+        result = @resource.evaluate(@scope)
+        result[0].should be_instance_of(Puppet::Parser::Resource)
+        result[0].title.should == @title
     end
 
     it "should handover resources to the compiler" do
@@ -77,18 +76,18 @@ describe Puppet::Parser::AST::Resource do
 
         title_array.stubs(:flatten).returns([@title])
         titles.stubs(:safeevaluate).with(@scope).returns(title_array)
-        Puppet::Parser::Resource.stubs(:new).returns(resource)
 
-        @compiler.stubs(:add_resource).with(resource)
+        @compiler.stubs(:add_resource)
 
         @resource.title = titles
-        @resource.evaluate(@scope).should == [resource]
+        @resource.evaluate(@scope)[0].should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should generate virtual resources if it is virtual" do
         @resource.virtual = true
 
-        Puppet::Parser::Resource.expects(:new).with { |hash| hash[:virtual] == true }
+        result = @resource.evaluate(@scope)
+        result[0].should be_virtual
 
         @resource.evaluate(@scope)
     end
@@ -96,8 +95,8 @@ describe Puppet::Parser::AST::Resource do
     it "should generate virtual and exported resources if it is exported" do
         @resource.exported = true
 
-        Puppet::Parser::Resource.expects(:new).with { |hash| hash[:virtual] == true and hash[:exported] == true }
-
-        @resource.evaluate(@scope)
+        result = @resource.evaluate(@scope)
+        result[0].should be_virtual
+        result[0].should be_exported
     end
 end

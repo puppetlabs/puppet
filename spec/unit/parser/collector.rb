@@ -52,11 +52,10 @@ end
 describe Puppet::Parser::Collector, "when collecting specific virtual resources" do
     before do
         @scope = mock 'scope'
-        @resource_type = mock 'resource_type'
         @vquery = mock 'vquery'
         @equery = mock 'equery'
 
-        @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @equery, @vquery, :virtual)
+        @collector = Puppet::Parser::Collector.new(@scope, "resource_type", @equery, @vquery, :virtual)
     end
 
     it "should not fail when it does not find any resources to collect" do

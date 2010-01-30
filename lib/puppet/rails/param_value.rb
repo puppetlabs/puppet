@@ -23,7 +23,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     def self.munge_parser_values(value)
         values = value.is_a?(Array) ? value : [value]
         values.map do |v|
-            if v.is_a?(Puppet::Resource::Reference)
+            if v.is_a?(Puppet::Resource)
                 v
             else
                 v.to_s

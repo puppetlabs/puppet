@@ -75,7 +75,7 @@ class Puppet::Parser::Collector
         @collected = {}
 
         # Canonize the type
-        @type = Puppet::Resource::Reference.new(type, "whatever").type
+        @type = Puppet::Resource.new(type, "whatever").type
         @equery = equery
         @vquery = vquery
 

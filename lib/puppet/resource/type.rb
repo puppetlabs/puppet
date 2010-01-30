@@ -60,11 +60,11 @@ class Puppet::Resource::Type
 
     # Add code from a new instance to our code.
     def merge(other)
-        fail ArgumentError, "#{name} is not a class; cannot add code to it" unless type == :hostclass
-        fail ArgumentError, "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
+        fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
+        fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
 
         if parent and other.parent and parent != other.parent
-            fail ArgumentError, "Cannot merge classes with different parent classes"
+            fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
         end
 
         # We know they're either equal or only one is set, so keep whichever parent is specified.
@@ -114,7 +114,7 @@ class Puppet::Resource::Type
             return resource
         end
 
-        resource = Puppet::Parser::Resource.new(:type => resource_type, :title => name, :scope => scope, :source => self)
+        resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
         scope.compiler.add_resource(scope, resource)
         scope.catalog.tag(*resource.tags)
         resource

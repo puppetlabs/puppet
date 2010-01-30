@@ -174,10 +174,9 @@ describe Puppet::Parser::Compiler do
 
         it "should evaluate the main class if it exists" do
             compile_stub(:evaluate_main)
-            main_class = mock 'main_class'
+            main_class = @known_resource_types.add Puppet::Resource::Type.new(:hostclass, "")
             main_class.expects(:evaluate_code).with { |r| r.is_a?(Puppet::Parser::Resource) }
             @compiler.topscope.expects(:source=).with(main_class)
-            @known_resource_types.stubs(:find_hostclass).with("", "").returns(main_class)
 
             @compiler.compile
         end
@@ -185,7 +184,7 @@ describe Puppet::Parser::Compiler do
         it "should create a new, empty 'main' if no main class exists" do
             compile_stub(:evaluate_main)
             @compiler.compile
-            @known_resource_types.find_hostclass("", "").should be_instance_of(Puppet::Resource::Type)
+            @known_resource_types.find_hostclass([""], "").should be_instance_of(Puppet::Resource::Type)
         end
 
         it "should evaluate any node classes" do
@@ -252,7 +251,7 @@ describe Puppet::Parser::Compiler do
 
         it "should call finish() on all resources" do
             # Add a resource that does respond to :finish
-            resource = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish"
+            resource = Puppet::Parser::Resource.new "file", "finish", :scope => @scope
             resource.expects(:finish)
 
             @compiler.add_resource(@scope, resource)
@@ -268,12 +267,12 @@ describe Puppet::Parser::Compiler do
         it "should call finish() in add_resource order" do
             resources = sequence('resources')
 
-            resource1 = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish1"
+            resource1 = Puppet::Parser::Resource.new "file", "finish1", :scope => @scope
             resource1.expects(:finish).in_sequence(resources)
 
             @compiler.add_resource(@scope, resource1)
 
-            resource2 = Puppet::Parser::Resource.new :scope => @scope, :type => "file", :title => "finish2"
+            resource2 = Puppet::Parser::Resource.new "file", "finish2", :scope => @scope
             resource2.expects(:finish).in_sequence(resources)
 
             @compiler.add_resource(@scope, resource2)

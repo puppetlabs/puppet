@@ -47,9 +47,8 @@ module PuppetTest::ParserTesting
     end
 
     def mkcompiler(parser = nil)
-        parser ||= mkparser
         node = mknode
-        return Compiler.new(node, parser)
+        return Compiler.new(node)
     end
 
     def mknode(name = nil)
@@ -59,12 +58,9 @@ module PuppetTest::ParserTesting
         Puppet::Node.new(name)
     end
 
-    def mkinterp
-        Puppet::Parser::Interpreter.new
-    end
-
-    def mkparser(args = {})
-        Puppet::Parser::Parser.new(args)
+    def mkparser
+        Puppet::Node::Environment.clear
+        Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
     end
 
     def mkscope(hash = {})
@@ -306,13 +302,10 @@ module PuppetTest::ParserTesting
         interp = nil
         oldmanifest = Puppet[:manifest]
         Puppet[:manifest] = manifest
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new
-        }
 
         trans = nil
         assert_nothing_raised {
-            trans = interp.compile(mknode)
+            trans = Puppet::Parser::Compiler.new(mknode).compile
         }
 
         config = nil

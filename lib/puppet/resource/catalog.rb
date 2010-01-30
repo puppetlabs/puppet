@@ -376,12 +376,12 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         # Always create a resource reference, so that it always canonizes how we
         # are referring to them.
         if title
-            ref = Puppet::Resource::Reference.new(type, title).to_s
+            ref = Puppet::Resource.new(type, title).to_s
         else
             # If they didn't provide a title, then we expect the first
             # argument to be of the form 'Class[name]', which our
             # Reference class canonizes for us.
-            ref = Puppet::Resource::Reference.new(nil, type).to_s
+            ref = Puppet::Resource.new(nil, type).to_s
         end
         @resource_table[ref]
     end

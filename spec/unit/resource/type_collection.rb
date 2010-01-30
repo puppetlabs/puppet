@@ -64,7 +64,32 @@ describe Puppet::Resource::TypeCollection do
         @code.definition("foo").should equal(define)
     end
 
+    it "should merge new classes with existing classes of the same name" do
+        loader = Puppet::Resource::TypeCollection.new("env")
+        first = Puppet::Resource::Type.new(:hostclass, "foo")
+        second = Puppet::Resource::Type.new(:hostclass, "foo")
+        loader.add first
+        first.expects(:merge).with(second)
+        loader.add(second)
+    end
+
+    it "should remove all nodes, classes, and definitions when cleared" do
+        loader = Puppet::Resource::TypeCollection.new("env")
+        loader.add Puppet::Resource::Type.new(:hostclass, "class")
+        loader.add Puppet::Resource::Type.new(:definition, "define")
+        loader.add Puppet::Resource::Type.new(:node, "node")
+
+        loader.clear
+        loader.hostclass("class").should be_nil
+        loader.definition("define").should be_nil
+        loader.node("node").should be_nil
+    end
+
     %w{hostclass node definition}.each do |data|
+        before do
+            @instance = Puppet::Resource::Type.new(data, "foo")
+        end
+
         it "should have a method for adding a #{data}" do
             Puppet::Resource::TypeCollection.new("env").should respond_to("add_" + data)
         end
@@ -75,10 +100,12 @@ describe Puppet::Resource::TypeCollection do
             loader.send(data, @instance.name).should equal(@instance)
         end
 
-        it "should fail to add a #{data} when one already exists" do
-            loader = Puppet::Resource::TypeCollection.new("env")
-            loader.add @instance
-            lambda { loader.add(@instance) }.should raise_error(Puppet::ParseError)
+        unless data == "hostclass"
+            it "should fail to add a #{data} when one already exists" do
+                loader = Puppet::Resource::TypeCollection.new("env")
+                loader.add @instance
+                lambda { loader.add(@instance) }.should raise_error(Puppet::ParseError)
+            end
         end
 
         it "should return the added #{data}" do
@@ -125,6 +152,13 @@ describe Puppet::Resource::TypeCollection do
         it "should return nil if the instance name is fully qualified and no such instance exists" do
             loader = Puppet::Resource::TypeCollection.new("env")
             loader.find("namespace", "::foo::bar", :hostclass).should be_nil
+        end
+
+        it "should be able to find classes in the base namespace" do
+            loader = Puppet::Resource::TypeCollection.new("env")
+            instance = Puppet::Resource::Type.new(:hostclass, "foo")
+            loader.add instance
+            loader.find("", "foo", :hostclass).should equal(instance)
         end
 
         it "should return the partially qualified object if it exists in a provided namespace" do

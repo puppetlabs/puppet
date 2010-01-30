@@ -109,7 +109,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         def mkresource(type, name)
-            Puppet::Parser::Resource.new(:type => type, :title => name, :source => @source, :scope => @scope)
+            Puppet::Parser::Resource.new(type, name, :source => @source, :scope => @scope)
         end
 
         it "should always create a TransBucket for the 'main' class" do

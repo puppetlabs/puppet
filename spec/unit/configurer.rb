@@ -84,6 +84,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
     before do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
+        @agent.stubs(:prepare)
         @agent.stubs(:facts_for_uploading).returns({})
         @agent.stubs(:retrieve_catalog).returns Puppet::Resource::Catalog.new
 
@@ -122,7 +123,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
     it "should log a failure and do nothing if no catalog can be retrieved" do
         @agent.expects(:retrieve_catalog).returns nil
 
-        Puppet.expects(:err)
+        Puppet.expects(:err).with "Could not retrieve catalog; skipping run"
 
         @agent.run
     end

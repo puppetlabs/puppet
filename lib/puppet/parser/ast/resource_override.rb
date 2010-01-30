@@ -36,9 +36,7 @@ class Puppet::Parser::AST
             resource = [resource] unless resource.is_a?(Array)
 
             resource = resource.collect do |r|
-                res = Puppet::Parser::Resource.new(
-                    :type => r.type,
-                    :title => r.title,
+                res = Puppet::Parser::Resource.new(r.type, r.title,
                     :params => params,
                     :file => file,
                     :line => line,

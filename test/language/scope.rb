@@ -20,6 +20,11 @@ class TestScope < Test::Unit::TestCase
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
 
+    def setup
+        Puppet::Node::Environment.clear
+        super
+    end
+
     def to_ary(hash)
         hash.collect { |key,value|
             [key,value]
@@ -102,60 +107,6 @@ class TestScope < Test::Unit::TestCase
         }
     end
 
-    def test_setdefaults
-        config = mkcompiler
-
-        scope = config.topscope
-
-        defaults = scope.instance_variable_get("@defaults")
-
-        # First the case where there are no defaults and we pass a single param
-        param = stub :name => "myparam", :file => "f", :line => "l"
-        scope.setdefaults(:mytype, param)
-        assert_equal({"myparam" => param}, defaults[:mytype], "Did not set default correctly")
-
-        # Now the case where we pass in multiple parameters
-        param1 = stub :name => "one", :file => "f", :line => "l"
-        param2 = stub :name => "two", :file => "f", :line => "l"
-        scope.setdefaults(:newtype, [param1, param2])
-        assert_equal({"one" => param1, "two" => param2}, defaults[:newtype], "Did not set multiple defaults correctly")
-
-        # And the case where there's actually a conflict.  Use the first default for this.
-        newparam = stub :name => "myparam", :file => "f", :line => "l"
-        assert_raise(Puppet::ParseError, "Allowed resetting of defaults") do
-            scope.setdefaults(:mytype, param)
-        end
-        assert_equal({"myparam" => param}, defaults[:mytype], "Replaced default even though there was a failure")
-    end
-
-    def test_lookupdefaults
-        config = mkcompiler
-        top = config.topscope
-
-        # Make a subscope
-        sub = config.newscope(top)
-
-        topdefs = top.instance_variable_get("@defaults")
-        subdefs = sub.instance_variable_get("@defaults")
-
-        # First add some defaults to our top scope
-        topdefs[:t1] = {:p1 => :p2, :p3 => :p4}
-        topdefs[:t2] = {:p5 => :p6}
-
-        # Then the sub scope
-        subdefs[:t1] = {:p1 => :p7, :p8 => :p9}
-        subdefs[:t2] = {:p5 => :p10, :p11 => :p12}
-
-        # Now make sure we get the correct list back
-        result = nil
-        assert_nothing_raised("Could not get defaults") do
-            result = sub.lookupdefaults(:t1)
-        end
-        assert_equal(:p9, result[:p8], "Did not get child defaults")
-        assert_equal(:p4, result[:p3], "Did not override parent defaults with child default")
-        assert_equal(:p7, result[:p1], "Did not get parent defaults")
-    end
-
     def test_parent
         config = mkcompiler
         top = config.topscope
@@ -165,86 +116,6 @@ class TestScope < Test::Unit::TestCase
 
         assert_equal(top, sub.parent, "Did not find parent scope correctly")
         assert_equal(top, sub.parent, "Did not find parent scope on second call")
-    end
-
-    def test_strinterp
-        # Make and evaluate our classes so the qualified lookups work
-        parser = mkparser
-        klass = parser.newclass("")
-        scope = mkscope(:parser => parser)
-        Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => scope, :source => mock('source')).evaluate
-
-        assert_nothing_raised {
-            scope.setvar("test","value")
-        }
-
-        scopes = {"" => scope}
-
-        %w{one one::two one::two::three}.each do |name|
-            klass = parser.newclass(name)
-            Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
-            scopes[name] = scope.compiler.class_scope(klass)
-            scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
-        end
-
-        assert_equal("value", scope.lookupvar("::test"), "did not look up qualified value correctly")
-        tests = {
-            "string ${test}" => "string value",
-            "string ${one::two::three::test}" => "string value-three",
-            "string $one::two::three::test" => "string value-three",
-            "string ${one::two::test}" => "string value-two",
-            "string $one::two::test" => "string value-two",
-            "string ${one::test}" => "string value-one",
-            "string $one::test" => "string value-one",
-            "string ${::test}" => "string value",
-            "string $::test" => "string value",
-            "string ${test} ${test} ${test}" => "string value value value",
-            "string $test ${test} $test" => "string value value value",
-            "string \\$test" => "string $test",
-            '\\$test string' => "$test string",
-            '$test string' => "value string",
-            'a testing $' => "a testing $",
-            'a testing \$' => "a testing $",
-            "an escaped \\\n carriage return" => "an escaped  carriage return",
-            '\$' => "$",
-            '\s' => "\s",
-            '\t' => "\t",
-            '\n' => "\n"
-        }
-
-        tests.each do |input, output|
-            assert_nothing_raised("Failed to scan %s" % input.inspect) do
-                assert_equal(output, scope.strinterp(input),
-                    'did not parserret %s correctly' % input.inspect)
-            end
-        end
-
-        logs = []
-        Puppet::Util::Log.close
-        Puppet::Util::Log.newdestination(logs)
-
-        # #523
-        %w{d f h l w z}.each do |l|
-            string = "\\" + l
-            assert_nothing_raised do
-                assert_equal(string, scope.strinterp(string),
-                    'did not parserret %s correctly' % string)
-            end
-
-            assert(logs.detect { |m| m.message =~ /Unrecognised escape/ },
-                "Did not get warning about escape sequence with %s" % string)
-            logs.clear
-        end
-    end
-
-    def test_tagfunction
-        Puppet::Parser::Functions.function(:tag)
-        scope = mkscope
-        resource = mock 'resource'
-        scope.resource = resource
-        resource.expects(:tag).with("yayness", "booness")
-
-        scope.function_tag(%w{yayness booness})
     end
 
     def test_includefunction
@@ -270,7 +141,7 @@ class TestScope < Test::Unit::TestCase
 
         [myclass, otherclass].each do |klass|
             assert(scope.compiler.class_scope(klass),
-                "%s was not set" % klass.classname)
+                "%s was not set" % klass.name)
         end
     end
 
@@ -312,13 +183,14 @@ class TestScope < Test::Unit::TestCase
     # components.
     def test_virtual_definitions_do_not_get_evaluated
         config = mkcompiler
-        parser = config.parser
+        parser = mkparser
 
         # Create a default source
-        config.topscope.source = parser.newclass ""
+        parser.newclass("")
+        config.topscope.source = parser.known_resource_types.hostclass("")
 
         # And a scope resource
-        scope_res = stub 'scope_resource', :virtual? => true, :exported? => false, :tags => [], :builtin? => true, :type => "eh", :title => "bee"
+        scope_res = Puppet::Parser::Resource.new(:file, "/file", :scope => "scope", :source => "source")
         config.topscope.resource = scope_res
 
         args = AST::ASTArray.new(
@@ -374,20 +246,13 @@ include yay
 @@host { puppet: ip => \"192.168.0.3\" }
 Host <<||>>"
 
-        interp = nil
-        assert_nothing_raised {
-            interp = Puppet::Parser::Interpreter.new
-        }
-
         config = nil
         # We run it twice because we want to make sure there's no conflict
         # if we pull it up from the database.
         node = mknode
-        node.parameters = {"hostname" => node.name}
+        node.merge "hostname" => node.name
         2.times { |i|
-            assert_nothing_raised {
-                config = interp.compile(node)
-            }
+            config = Puppet::Parser::Compiler.new(node).compile
 
             flat = config.extract.flatten
 
@@ -416,54 +281,6 @@ Host <<||>>"
         assert_nothing_raised { scope.add_namespace("yay::test") }
         assert_equal(["fun::test", "yay::test"], scope.namespaces,
             "Did not add extra namespace correctly")
-    end
-
-    def test_find_hostclass_and_find_definition
-        parser = mkparser
-
-        # Make sure our scope calls the parser find_hostclass method with
-        # the right namespaces
-        scope = mkscope :parser => parser
-
-        parser.metaclass.send(:attr_accessor, :last)
-
-        methods = [:find_hostclass, :find_definition]
-        methods.each do |m|
-            parser.meta_def(m) do |namespace, name|
-                @checked ||= []
-                @checked << [namespace, name]
-
-                # Only return a value on the last call.
-                if @last == namespace
-                    ret = @checked.dup
-                    @checked.clear
-                    return ret
-                else
-                    return nil
-                end
-            end
-        end
-
-        test = proc do |should|
-            parser.last = scope.namespaces[-1]
-            methods.each do |method|
-                result = scope.send(method, "testing")
-                assert_equal(should, result,
-                    "did not get correct value from %s with namespaces %s" %
-                    [method, scope.namespaces.inspect])
-            end
-        end
-
-        # Start with the empty namespace
-        assert_nothing_raised { test.call([["", "testing"]]) }
-
-        # Now add a namespace
-        scope.add_namespace("a")
-        assert_nothing_raised { test.call([["a", "testing"]]) }
-
-        # And another
-        scope.add_namespace("b")
-        assert_nothing_raised { test.call([["a", "testing"], ["b", "testing"]]) }
     end
 
     # #629 - undef should be "" or :undef

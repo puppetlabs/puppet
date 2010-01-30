@@ -8,6 +8,7 @@ describe Puppet::Parser::Scope do
         # This is necessary so we don't try to use the compiler to discover our parent.
         @topscope.parent = nil
         @scope = Puppet::Parser::Scope.new()
+        @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
         @scope.parent = @topscope
     end
  
@@ -104,7 +105,7 @@ describe Puppet::Parser::Scope do
 
             def create_class_scope(name)
                 klass = newclass(name)
-                Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => @scope, :source => mock('source')).evaluate
+                Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
 
                 return @scope.class_scope(klass)
             end
@@ -315,6 +316,114 @@ describe Puppet::Parser::Scope do
 
             @scope.strinterp('==${10}==').should == "==value=="
         end
+
+        describe "with qualified variables" do
+            before do
+                @scopes = {}
+                klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
+                Puppet::Parser::Resource.new("class", :main, :scope => @scope, :source => mock('source')).evaluate
+                @scopes[""] = @scope.compiler.class_scope(klass)
+                @scopes[""].setvar("test", "value")
+
+                %w{one one::two one::two::three}.each do |name|
+                    klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, name))
+                    Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
+                    @scopes[name] = @scope.compiler.class_scope(klass)
+                    @scopes[name].setvar("test", "value-#{name.sub(/.+::/,'')}")
+                end
+            end
+            {
+                "===${one::two::three::test}===" => "===value-three===",
+                "===$one::two::three::test===" => "===value-three===",
+                "===${one::two::test}===" => "===value-two===",
+                "===$one::two::test===" => "===value-two===",
+                "===${one::test}===" => "===value-one===",
+                "===$one::test===" => "===value-one===",
+                "===${::test}===" => "===value===",
+                "===$::test===" => "===value==="
+            }.each do |input, output|
+                it "should parse '#{input}' correctly" do
+                    @scope.strinterp(input).should == output
+                end
+            end
+        end
+
+        tests = {
+            "===${test}===" => "===value===",
+            "===${test} ${test} ${test}===" => "===value value value===",
+            "===$test ${test} $test===" => "===value value value===",
+            "===\\$test===" => "===$test===",
+            '===\\$test string===' => "===$test string===",
+            '===$test string===' => "===value string===",
+            '===a testing $===' => "===a testing $===",
+            '===a testing \$===' => "===a testing $===",
+            "===an escaped \\\n carriage return===" => "===an escaped  carriage return===",
+            '\$' => "$",
+            '\s' => "\s",
+            '\t' => "\t",
+            '\n' => "\n"
+        }
+
+        tests.each do |input, output|
+            it "should parse '#{input}' correctly" do
+                @scope.setvar("test", "value")
+                @scope.strinterp(input).should == output
+            end
+        end
+
+        # #523
+        %w{d f h l w z}.each do |l|
+            it "should parse '#{l}' when escaped" do
+                string = "\\" + l
+                @scope.strinterp(string).should == string
+            end
+        end
+    end
+
+    def test_strinterp
+        # Make and evaluate our classes so the qualified lookups work
+        parser = mkparser
+        klass = parser.newclass("")
+        scope = mkscope(:parser => parser)
+        Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => scope, :source => mock('source')).evaluate
+
+        assert_nothing_raised {
+            scope.setvar("test","value")
+        }
+
+        scopes = {"" => scope}
+
+        %w{one one::two one::two::three}.each do |name|
+            klass = parser.newclass(name)
+            Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
+            scopes[name] = scope.compiler.class_scope(klass)
+            scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
+        end
+
+        assert_equal("value", scope.lookupvar("::test"), "did not look up qualified value correctly")
+        tests.each do |input, output|
+            assert_nothing_raised("Failed to scan %s" % input.inspect) do
+                assert_equal(output, scope.strinterp(input),
+                    'did not parserret %s correctly' % input.inspect)
+            end
+        end
+
+        logs = []
+        Puppet::Util::Log.close
+        Puppet::Util::Log.newdestination(logs)
+
+        # #523
+        %w{d f h l w z}.each do |l|
+            string = "\\" + l
+            assert_nothing_raised do
+                assert_equal(string, scope.strinterp(string),
+                    'did not parserret %s correctly' % string)
+            end
+
+            assert(logs.detect { |m| m.message =~ /Unrecognised escape/ },
+                "Did not get warning about escape sequence with %s" % string)
+            logs.clear
+        end
     end
 
     describe "when setting ephemeral vars from matches" do
@@ -355,6 +464,52 @@ describe Puppet::Parser::Scope do
             @scope.setvar("foo", "bar", :ephemeral => true)
             @scope.unsetvar("foo")
             @scope.lookupvar("foo").should == ""
+        end
+    end
+
+    it "should use its namespaces to find hostclasses" do
+        klass = @scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "a::b::c")
+        @scope.add_namespace "a::b"
+        @scope.find_hostclass("c").should equal(klass)
+    end
+
+    it "should use its namespaces to find definitions" do
+        define = @scope.known_resource_types.add Puppet::Resource::Type.new(:definition, "a::b::c")
+        @scope.add_namespace "a::b"
+        @scope.find_definition("c").should equal(define)
+    end
+
+    describe "when managing defaults" do
+        it "should be able to set and lookup defaults" do
+            param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+            @scope.setdefaults(:mytype, param)
+            @scope.lookupdefaults(:mytype).should == {:myparam => param}
+        end
+
+        it "should fail if a default is already defined and a new default is being defined" do
+            param = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+            @scope.setdefaults(:mytype, param)
+            lambda { @scope.setdefaults(:mytype, param) }.should raise_error(Puppet::ParseError)
+        end
+
+        it "should return multiple defaults at once" do
+            param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+            @scope.setdefaults(:mytype, param1)
+            param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
+            @scope.setdefaults(:mytype, param2)
+
+            @scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
+        end
+
+        it "should look up defaults defined in parent scopes" do
+            param1 = Puppet::Parser::Resource::Param.new(:name => :myparam, :value => "myvalue", :source => stub("source"))
+            @scope.setdefaults(:mytype, param1)
+
+            child_scope = @scope.newscope
+            param2 = Puppet::Parser::Resource::Param.new(:name => :other, :value => "myvalue", :source => stub("source"))
+            child_scope.setdefaults(:mytype, param2)
+
+            child_scope.lookupdefaults(:mytype).should == {:myparam => param1, :other => param2}
         end
     end
 end

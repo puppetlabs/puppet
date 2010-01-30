@@ -42,7 +42,7 @@ describe "Puppet::Rails::ParamValue" do
         end
 
         it "should not convert Resource References into strings" do
-            ref = Puppet::Resource::Reference.new(:file, "/file")
+            ref = Puppet::Resource.new(:file, "/file")
             Puppet::Rails::ParamValue.from_parser_param(:myparam, ref)[0][:value].should == ref
         end
     end

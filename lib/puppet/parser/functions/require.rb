@@ -49,7 +49,7 @@ fail if used with earlier clients.
             # The 'obvious' way is just to add an edge in the catalog,
             # but that is considered a containment edge, not a dependency
             # edge, so it usually gets lost on the client.
-            ref = Puppet::Parser::Resource::Reference.new(:type => :class, :title => klass)
+            ref = Puppet::Resource.new(:class, klass)
             resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)
         end
     end

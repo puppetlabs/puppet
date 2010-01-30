@@ -390,7 +390,7 @@ describe tidy do
                 "/what/ever/one/subone" => ["/what/ever/one/subone/ssone"]
             }.each do |parent, children|
                 children.each do |child|
-                    ref = Puppet::Resource::Reference.new(:file, child)
+                    ref = Puppet::Resource.new(:file, child)
                     result[parent][:require].find { |req| req.to_s == ref.to_s }.should_not be_nil
                 end
             end

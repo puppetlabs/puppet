@@ -14,7 +14,7 @@ describe "Puppet" do
         it "should be able to apply catalogs provided in a file in pson" do
             file_to_create = tmpfile("pson_catalog")
             catalog = Puppet::Resource::Catalog.new
-            resource = Puppet::Resource.new(:file, file_to_create, :content => "my stuff")
+            resource = Puppet::Resource.new(:file, file_to_create, :parameters => {:content => "my stuff"})
             catalog.add_resource resource
 
             manifest = tmpfile("manifest")

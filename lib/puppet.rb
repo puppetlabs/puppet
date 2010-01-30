@@ -153,7 +153,6 @@ end
 require 'puppet/type'
 require 'puppet/parser'
 require 'puppet/resource'
-require 'puppet/resource/reference'
 require 'puppet/network'
 require 'puppet/ssl'
 require 'puppet/module'

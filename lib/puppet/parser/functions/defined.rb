@@ -6,21 +6,21 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :doc => "Dete
     (e.g., ``if defined(File['/tmp/myfile']) { ... }``).  This function is unfortunately
     dependent on the parse order of the configuration when testing whether a resource is defined.") do |vals|
         result = false
+        vals = [vals] unless vals.is_a?(Array)
         vals.each do |val|
             case val
             when String
-                # For some reason, it doesn't want me to return from here.
                 if Puppet::Type.type(val) or find_definition(val) or find_hostclass(val)
                     result = true
                     break
                 end
-            when Puppet::Parser::Resource::Reference
+            when Puppet::Resource
                 if findresource(val.to_s)
                     result = true
                     break
                 end
             else
-                raise ArgumentError, "Invalid argument of type %s to 'defined'" % val.class
+                raise ArgumentError, "Invalid argument of type '#{val.class}' to 'defined'"
             end
         end
         result
