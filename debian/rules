@@ -65,7 +65,7 @@ install: build
 		$(CURDIR)/debian/vim-puppet/usr/share/vim/registry/
 
 	# Emacs mode
-	$(NSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
+	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
 		$(CURDIR)/debian/puppet-el.emacsen-startup
 	$(INSTALL) -m0644 ext/emacs/puppet-mode.el			\
 		$(CURDIR)/debian/puppet-el/usr/share/emacs/site-lisp/puppet-mode.el
