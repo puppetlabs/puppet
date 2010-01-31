@@ -76,7 +76,7 @@ Description: Vim syntax highlighting for puppet manifests
 
 Package: puppet-el
 Architecture: all
-Depends: ${misc:Depends}
+Depends: ${misc:Depends}, emacsen-common
 Conflicts: puppet (<< ${source:Version})
 Description: Emacs syntax highlighting for puppet manifests
  The puppet-el package provides syntax highlighting for puppet manifests

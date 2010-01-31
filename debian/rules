@@ -37,7 +37,6 @@ clean:
 	dh_testroot
 	rm -f build-stamp configure-stamp
 	rm -f debian/puppet-common.logcheck.ignore.server
-	rm -f debian/puppet-el.emacsen-startup
 	dh_clean 
 
 install: build
@@ -65,8 +64,6 @@ install: build
 		$(CURDIR)/debian/vim-puppet/usr/share/vim/registry/
 
 	# Emacs mode
-	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
-		$(CURDIR)/debian/puppet-el/puppet-el/emacsen-startup
 	$(INSTALL) -m0644 ext/emacs/puppet-mode.el			\
 		$(CURDIR)/debian/puppet-el/usr/share/emacs/site-lisp/puppet-mode.el
 
