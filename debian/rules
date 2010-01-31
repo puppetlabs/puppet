@@ -66,7 +66,7 @@ install: build
 
 	# Emacs mode
 	$(INSTALL) -m0644 ext/emacs/puppet-mode-init.el			\
-		$(CURDIR)/debian/puppet-el/puppet-el.emacsen-startup
+		$(CURDIR)/debian/puppet-el/puppet-el/emacsen-startup
 	$(INSTALL) -m0644 ext/emacs/puppet-mode.el			\
 		$(CURDIR)/debian/puppet-el/usr/share/emacs/site-lisp/puppet-mode.el
 
