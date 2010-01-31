@@ -19,11 +19,11 @@ describe Puppet::Parser::Resource do
         args[:source] ||= @source
         args[:scope] ||= @scope
 
-        params = args[:params] || {:one => "yay", :three => "rah"}
-        if args[:params] == :none
-            args.delete(:params)
-        elsif not args[:params].is_a? Array
-            args[:params] = paramify(args[:source], params)
+        params = args[:parameters] || {:one => "yay", :three => "rah"}
+        if args[:parameters] == :none
+            args.delete(:parameters)
+        elsif not args[:parameters].is_a? Array
+            args[:parameters] = paramify(args[:source], params)
         end
 
         Puppet::Parser::Resource.new("resource", "testing", args)
@@ -122,7 +122,7 @@ describe Puppet::Parser::Resource do
 
         it "should be tagged with user tags" do
             tags = [ "tag1", "tag2" ]
-            @arguments[:params] = [ param(:tag, tags , :source) ]
+            @arguments[:parameters] = [ param(:tag, tags , :source) ]
             res = Puppet::Parser::Resource.new("resource", "testing", @arguments)
             (res.tags & tags).should == tags
         end
@@ -343,7 +343,7 @@ describe Puppet::Parser::Resource do
             @override.source = @resource.source
             @override.source.expects(:child_of?).with("source3").never
             params = {:a => :b, :c => :d}
-            @override.expects(:params).returns(params)
+            @override.expects(:parameters).returns(params)
             @resource.expects(:override_parameter).with(:b)
             @resource.expects(:override_parameter).with(:d)
             @resource.merge(@override)
@@ -354,7 +354,7 @@ describe Puppet::Parser::Resource do
             @override.source = "source4"
             @override.source.expects(:child_of?).with("source3").returns(true)
             params = {:a => :b, :c => :d}
-            @override.expects(:params).returns(params)
+            @override.expects(:parameters).returns(params)
             @resource.expects(:override_parameter).with(:b)
             @resource.expects(:override_parameter).with(:d)
             @resource.merge(@override)
@@ -433,7 +433,7 @@ describe Puppet::Parser::Resource do
 
     describe "when being converted to a resource" do
         before do
-            @parser_resource = mkresource :scope => @scope, :params => {:foo => "bar", :fee => "fum"}
+            @parser_resource = mkresource :scope => @scope, :parameters => {:foo => "bar", :fee => "fum"}
         end
 
         it "should create an instance of Puppet::Resource" do
@@ -485,14 +485,14 @@ describe Puppet::Parser::Resource do
 
         it "should convert any parser resource references to Puppet::Resource instances" do
             ref = Puppet::Resource.new("file", "/my/file")
-            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ref}
+            @parser_resource = mkresource :source => @source, :parameters => {:foo => "bar", :fee => ref}
             result = @parser_resource.to_resource
             result[:fee].should == Puppet::Resource.new(:file, "/my/file")
         end
 
         it "should convert any parser resource references to Puppet::Resource instances even if they are in an array" do
             ref = Puppet::Resource.new("file", "/my/file")
-            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ["a", ref]}
+            @parser_resource = mkresource :source => @source, :parameters => {:foo => "bar", :fee => ["a", ref]}
             result = @parser_resource.to_resource
             result[:fee].should == ["a", Puppet::Resource.new(:file, "/my/file")]
         end
@@ -500,14 +500,14 @@ describe Puppet::Parser::Resource do
         it "should convert any parser resource references to Puppet::Resource instances even if they are in an array of array, and even deeper" do
             ref1 = Puppet::Resource.new("file", "/my/file1")
             ref2 = Puppet::Resource.new("file", "/my/file2")
-            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => ["a", [ref1,ref2]]}
+            @parser_resource = mkresource :source => @source, :parameters => {:foo => "bar", :fee => ["a", [ref1,ref2]]}
             result = @parser_resource.to_resource
             result[:fee].should == ["a", Puppet::Resource.new(:file, "/my/file1"), Puppet::Resource.new(:file, "/my/file2")]
         end
 
         it "should fail if the same param is declared twice" do
             lambda do 
-                @parser_resource = mkresource :source => @source, :params => [
+                @parser_resource = mkresource :source => @source, :parameters => [
                     Puppet::Parser::Resource::Param.new(
                         :name => :foo, :value => "bar", :source => @source
                     ),

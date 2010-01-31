@@ -38,7 +38,7 @@ class Resource < AST::ResourceReference
         resource_titles.flatten.collect { |resource_title|
             exceptwrap :type => Puppet::ParseError do
                 resource = Puppet::Parser::Resource.new(type, resource_title,
-                    :params => paramobjects,
+                    :parameters => paramobjects,
                     :file => self.file,
                     :line => self.line,
                     :exported => self.exported,

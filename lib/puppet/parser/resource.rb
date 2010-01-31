@@ -22,7 +22,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     attr_accessor :source, :scope, :rails_id
     attr_accessor :virtual, :override, :translated, :catalog
 
-    attr_reader :exported, :evaluated, :params
+    attr_reader :exported, :evaluated, :parameters
 
     # Determine whether the provided parameter name is a relationship parameter.
     def self.relationship_parameter?(name)
@@ -45,8 +45,8 @@ class Puppet::Parser::Resource < Puppet::Resource
         if param == :title
             return self.title
         end
-        if @params.has_key?(param)
-            @params[param].value
+        if @parameters.has_key?(param)
+            @parameters[param].value
         else
             nil
         end
@@ -57,7 +57,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
 
     def eachparam
-        @params.each do |name, param|
+        @parameters.each do |name, param|
             yield param
         end
     end
@@ -107,41 +107,13 @@ class Puppet::Parser::Resource < Puppet::Resource
         defined?(@finished) and @finished
     end
 
-    def initialize(type, title, options)
-        @scope = options[:scope]
+    def initialize(*args)
+        super
 
-        @params = {}
-        # Define all of the parameters
-        if params = options[:params]
-            extract_parameters(params)
-            options.delete(:params)
-        end
-
-        # Set all of the options we can.
-        options.each do |option, value|
-            if respond_to?(option.to_s + "=")
-                send(option.to_s + "=", value)
-                options.delete(option)
-            else
-                raise ArgumentError, "Resources do not accept #{option}"
-            end
-        end
-
-        unless self.scope
+        unless scope
             raise ArgumentError, "Resources require a scope"
         end
-
         @source ||= scope.source
-
-        self.relative_type = type
-        self.title = title
-
-        if strict? and ! resource_type
-            raise ArgumentError, "Invalid resource type #{type}"
-        end
-
-        tag(self.type)
-        tag(self.title) if valid_tag?(self.title.to_s)
     end
 
     # Is this resource modeling an isomorphic resource type?
@@ -162,7 +134,7 @@ class Puppet::Parser::Resource < Puppet::Resource
             raise Puppet::ParseError.new("Only subclasses can override parameters", resource.line, resource.file)
         end
         # Some of these might fail, but they'll fail in the way we want.
-        resource.params.each do |name, param|
+        resource.parameters.each do |name, param|
             override_parameter(param)
         end
     end
@@ -205,11 +177,11 @@ class Puppet::Parser::Resource < Puppet::Resource
         tag(*param.value) if param.name == :tag
 
         # And store it in our parameter hash.
-        @params[param.name] = param
+        @parameters[param.name] = param
     end
 
     def to_hash
-        @params.inject({}) do |hash, ary|
+        @parameters.inject({}) do |hash, ary|
             param = ary[1]
             # Skip "undef" values.
             if param.value != :undef
@@ -280,10 +252,10 @@ class Puppet::Parser::Resource < Puppet::Resource
     # Add default values from our definition.
     def add_defaults
         scope.lookupdefaults(self.type).each do |name, param|
-            unless @params.include?(name)
+            unless @parameters.include?(name)
                 self.debug "Adding default for %s" % name
 
-                @params[name] = param.dup
+                @parameters[name] = param.dup
             end
         end
     end
@@ -293,10 +265,10 @@ class Puppet::Parser::Resource < Puppet::Resource
         return unless val = scope.lookupvar(name.to_s, false) and val != :undefined
 
         # The default case: just set the value
-        set_parameter(name, val) and return unless @params[name]
+        set_parameter(name, val) and return unless @parameters[name]
 
         # For relationship params, though, join the values (a la #446).
-        @params[name].value = [@params[name].value, val].flatten
+        @parameters[name].value = [@parameters[name].value, val].flatten
     end
 
     # Add any metaparams defined in our scope. This actually adds any metaparams
@@ -310,7 +282,7 @@ class Puppet::Parser::Resource < Puppet::Resource
                 next
             end
 
-            next if @params[name]
+            next if @parameters[name]
 
             # Skip metaparams for which we get no value.
             next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
@@ -329,7 +301,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     def override_parameter(param)
         # This can happen if the override is defining a new parameter, rather
         # than replacing an existing one.
-        (set_parameter(param) and return) unless current = @params[param.name]
+        (set_parameter(param) and return) unless current = @parameters[param.name]
 
         # The parameter is already set.  Fail if they're not allowed to override it.
         unless param.source.child_of?(current.source)
@@ -360,7 +332,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # Make sure the resource's parameters are all valid for the type.
     def validate
-        @params.each do |name, param|
+        @parameters.each do |name, param|
             validate_parameter(name)
         end
     rescue => detail
@@ -372,7 +344,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     def extract_parameters(params)
         params.each do |param|
             # Don't set the same parameter twice
-            if @params[param.name]
+            if @parameters[param.name]
                 self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" %
                     [param.name, self.to_s]
             end
