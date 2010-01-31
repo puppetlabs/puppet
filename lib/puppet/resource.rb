@@ -13,8 +13,7 @@ class Puppet::Resource
     extend Puppet::Util::Pson
     include Enumerable
     attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
-    attr_reader :title, :namespaces
-    attr_writer :relative_type
+    attr_reader :namespaces
 
     require 'puppet/indirector'
     extend Puppet::Indirector
@@ -166,6 +165,8 @@ class Puppet::Resource
             extract_parameters(params)
         end
 
+        resolve_type_and_title()
+
         tag(self.type)
         tag(self.title) if valid_tag?(self.title)
 
@@ -185,23 +186,38 @@ class Puppet::Resource
     end
 
     def title=(value)
-        if klass = resource_type and klass.respond_to?(:canonicalize_ref)
-            value = klass.canonicalize_ref(value)
+        @unresolved_title = value
+        @title = nil
+    end
+
+    def old_title
+        if type == "Class" and value == ""
+            @title = :main
+            return
         end
+
+        if klass = resource_type
+            p klass
+            if type == "Class"
+                value = munge_type_name(resource_type.name)
+            end
+
+            if klass.respond_to?(:canonicalize_ref)
+                value = klass.canonicalize_ref(value)
+            end
+        elsif type == "Class"
+            value = munge_type_name(value)
+        end
+
         @title = value
     end
 
-    # Canonize the type so we know it's always consistent.
-    def relative_type
-        munge_type_name(@relative_type)
-    end
-
     def resource_type
-        case relative_type.to_s.downcase
-        when "class"; find_hostclass
-        when "node"; find_node
+        case type
+        when "Class"; find_hostclass(title)
+        when "Node"; find_node(title)
         else
-            find_builtin_resource_type || find_defined_resource_type
+            find_resource_type(type)
         end
     end
 
@@ -306,18 +322,26 @@ class Puppet::Resource
         self
     end
 
-    def type
-        munge_type_name(if r = resource_type
-            resource_type.name
-        else
-            relative_type
-        end)
+    # We have to lazy-evaluate this.
+    def title=(value)
+        @title = nil
+        @unresolved_title = value
     end
 
-    # Only allow people to set the relative type,
-    # so we force it to be looked up each time.
+    # We have to lazy-evaluate this.
     def type=(value)
-        @relative_type = value
+        @type = nil
+        @unresolved_type = value || "Class"
+    end
+
+    def title
+        resolve_type_and_title unless @title
+        @title
+    end
+
+    def type
+        resolve_type_and_title unless @type
+        @type
     end
 
     def valid_parameter?(name)
@@ -330,21 +354,25 @@ class Puppet::Resource
 
     private
 
-    def find_node
-        known_resource_types.node(title)
+    def find_node(name)
+        known_resource_types.node(name)
     end
 
-    def find_hostclass
+    def find_hostclass(title)
         name = title == :main ? "" : title
         known_resource_types.find_hostclass(namespaces, name)
     end
 
-    def find_builtin_resource_type
-        Puppet::Type.type(relative_type.to_s.downcase.to_sym)
+    def find_resource_type(type)
+        find_builtin_resource_type(type) || find_defined_resource_type(type)
     end
 
-    def find_defined_resource_type
-        known_resource_types.find_definition(namespaces, relative_type.to_s.downcase)
+    def find_builtin_resource_type(type)
+        Puppet::Type.type(type.to_s.downcase.to_sym)
+    end
+
+    def find_defined_resource_type(type)
+        known_resource_types.find_definition(namespaces, type.to_s.downcase)
     end
 
     # Produce a canonical method name.
@@ -381,8 +409,6 @@ class Puppet::Resource
         return bucket
     end
 
-    private
-
     def extract_parameters(params)
         params.each do |param, value|
             validate_parameter(param) if strict?
@@ -399,12 +425,72 @@ class Puppet::Resource
     end
 
     def munge_type_name(value)
-        return :main if value == ""
+        return :main if value == :main
+        return "Class" if value == "" or value.nil? or value.to_s.downcase == "component"
 
-        if value.nil? or value.to_s.downcase == "component"
-            "Class"
+        value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+    end
+
+    # This is an annoyingly complicated method for resolving qualified
+    # types as necessary, and putting them in type or title attributes.
+    def resolve_type_and_title
+        if @unresolved_type
+            @type = resolve_type
+            @unresolved_type = nil
+        end
+        if @unresolved_title
+            @title = resolve_title
+            @unresolved_title = nil
+        end
+    end
+
+    def resolve_type
+        type = munge_type_name(@unresolved_type)
+
+        case type
+        when "Class", "Node";
+            return type
         else
-            value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+            # Otherwise, some kind of builtin or defined resource type
+            return munge_type_name(if r = find_resource_type(type)
+                r.name
+            else
+                type
+            end)
+        end
+    end
+
+    # This method only works if resolve_type was called first
+    def resolve_title
+        case @type
+        when "Node"; return @unresolved_title
+        when "Class";
+            resolve_title_for_class(@unresolved_title)
+        else
+            resolve_title_for_resource(@unresolved_title)
+        end
+    end
+
+    def resolve_title_for_class(title)
+        if title == "" or title == :main
+            return :main
+        end
+
+        if klass = find_hostclass(title)
+            result = klass.name
+
+            if klass.respond_to?(:canonicalize_ref)
+                result = klass.canonicalize_ref(result)
+            end
+        end
+        return munge_type_name(result || title)
+    end
+
+    def resolve_title_for_resource(title)
+        if type = find_resource_type(@type) and type.respond_to?(:canonicalize_ref)
+            return type.canonicalize_ref(title)
+        else
+            return title
         end
     end
 end

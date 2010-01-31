@@ -48,7 +48,7 @@ describe Puppet::Resource do
     it "should set its type to 'Class' and its title to the passed title if the passed type is :component and the title has no square brackets in it" do
         ref = Puppet::Resource.new(:component, "foo")
         ref.type.should == "Class"
-        ref.title.should == "foo"
+        ref.title.should == "Foo"
     end
 
     it "should interpret the title as a reference and assign appropriately if the type is :component and the title contains square brackets" do
@@ -60,7 +60,7 @@ describe Puppet::Resource do
     it "should set the type to 'Class' if it is nil and the title contains no square brackets" do
         ref = Puppet::Resource.new(nil, "yay")
         ref.type.should == "Class"
-        ref.title.should == "yay"
+        ref.title.should == "Yay"
     end
 
     it "should interpret the title as a reference and assign appropriately if the type is nil and the title contains square brackets" do
@@ -113,105 +113,156 @@ describe Puppet::Resource do
     end
 
     it "should support specifying namespaces" do
-        Puppet::Resource.new("file", "/my/file", :namespaces => [:foo]).namespaces.should == [:foo]
+        Puppet::Resource.new("file", "/my/file", :namespaces => ["foo"]).namespaces.should == ["foo"]
     end
 
     it "should convert namespaces to an array if not specified as one" do
-        Puppet::Resource.new("file", "/my/file", :namespaces => :foo).namespaces.should == [:foo]
+        Puppet::Resource.new("file", "/my/file", :namespaces => "foo").namespaces.should == ["foo"]
     end
 
     it "should default to a single amespace of an empty string" do
         Puppet::Resource.new("file", "/my/file").namespaces.should == [""]
     end
 
-    it "should be able to look up its resource type when the type is a builtin resource" do
-        Puppet::Resource.new("file", "/my/file").resource_type.should equal(Puppet::Type.type(:file))
-    end
+    describe "and munging its type and title" do
+        describe "when modeling a builtin resource" do
+            it "should be able to find the resource type" do
+                Puppet::Resource.new("file", "/my/file").resource_type.should equal(Puppet::Type.type(:file))
+            end
 
-    it "should be able to look up its resource type via its environment when the type is a defined resource type" do
-        resource = Puppet::Resource.new("foobar", "/my/file")
-        type = Puppet::Resource::Type.new(:definition, "foobar")
-        resource.environment.known_resource_types.add type
+            it "should set its type to the capitalized type name" do
+                Puppet::Resource.new("file", "/my/file").type.should == "File"
+            end
+        end
 
-        resource.resource_type.should equal(type)
-    end
+        describe "when modeling a defined resource" do
+            describe "that exists" do
+                before do
+                    @type = Puppet::Resource::Type.new(:definition, "foo::bar")
+                    Puppet::Node::Environment.new.known_resource_types.add @type
+                end
 
-    it "should be able to look up its resource type via its environment when the type is a node" do
-        resource = Puppet::Resource.new("node", "foobar")
-        node = Puppet::Resource::Type.new(:node, "foobar")
-        resource.environment.known_resource_types.add node
+                it "should set its type to the capitalized type name" do
+                    Puppet::Resource.new("foo::bar", "/my/file").type.should == "Foo::Bar"
+                end
 
-        resource.resource_type.should equal(node)
-    end
+                it "should be able to find the resource type" do
+                    Puppet::Resource.new("foo::bar", "/my/file").resource_type.should equal(@type)
+                end
 
-    it "should be able to look up its resource type via its environment when the type is a class" do
-        resource = Puppet::Resource.new("class", "foobar")
-        klass = Puppet::Resource::Type.new(:hostclass, "foobar")
-        resource.environment.known_resource_types.add klass
+                it "should set its title to the provided title" do
+                    Puppet::Resource.new("foo::bar", "/my/file").title.should == "/my/file"
+                end
 
-        resource.resource_type.should equal(klass)
-    end
+                describe "and the resource is unqualified and models a qualified resource type" do
+                    it "should set its type to the fully qualified resource type" do
+                        Puppet::Resource.new("bar", "/my/file", :namespaces => %w{foo}).type.should == "Foo::Bar"
+                    end
 
-    it "should use its namespaces when looking up defined resource types" do
-        resource = Puppet::Resource.new("bar", "/my/file", :namespaces => ["foo"])
-        type = Puppet::Resource::Type.new(:definition, "foo::bar")
-        resource.environment.known_resource_types.add type
+                    it "should be able to find the resource type" do
+                        Puppet::Resource.new("bar", "/my/file", :namespaces => %w{foo}).resource_type.should equal(@type)
+                    end
+                end
+            end
 
-        resource.resource_type.should equal(type)
-    end
+            describe "that does not exist" do
+                it "should set its resource type to the capitalized resource type name" do
+                    Puppet::Resource.new("foo::bar", "/my/file").type.should == "Foo::Bar"
+                end
+            end
+        end
 
-    it "should use its namespaces to set its type name when looking up defined resource types" do
-        type = Puppet::Resource::Type.new(:definition, "foo::bar")
-        Puppet::Node::Environment.new.known_resource_types.add type
-        resource = Puppet::Resource.new("bar", "/my/file", :namespaces => ["foo"])
-        resource.type.should == "Foo::Bar"
-    end
+        describe "when modeling a node" do
+            # Life's easier with nodes, because they can't be qualified.
+            it "should set its type to 'Node' and its title to the provided title" do
+                node = Puppet::Resource.new("node", "foo")
+                node.type.should == "Node"
+                node.title.should == "foo"
+            end
+        end
 
-    it "should look up its resource type when set manually" do
-        type = Puppet::Resource::Type.new(:definition, "foo::bar")
-        Puppet::Node::Environment.new.known_resource_types.add type
-        resource = Puppet::Resource.new("foo", "/my/file", :namespaces => ["foo"])
-        resource.type = "bar"
-        resource.type.should == "Foo::Bar"
-    end
+        describe "when modeling a class" do
+            it "should set its type to 'Class'" do
+                Puppet::Resource.new("class", "foo").type.should == "Class"
+            end
 
-    it "should use its namespaces when looking up host classes" do
-        resource = Puppet::Resource.new("class", "bar", :namespaces => ["foo"])
-        type = Puppet::Resource::Type.new(:hostclass, "foo::bar")
-        resource.environment.known_resource_types.add type
+            describe "that exists" do
+                before do
+                    @type = Puppet::Resource::Type.new(:hostclass, "foo::bar")
+                    Puppet::Node::Environment.new.known_resource_types.add @type
+                end
 
-        resource.resource_type.should equal(type)
-    end
+                it "should set its title to the capitalized, fully qualified resource type" do
+                    Puppet::Resource.new("class", "foo::bar").title.should == "Foo::Bar"
+                end
 
-    it "should consider a class whose name is an empty string to be the main class" do
-        type = Puppet::Resource::Type.new(:hostclass, "")
-        Puppet::Node::Environment.new.known_resource_types.add type
+                it "should be able to find the resource type" do
+                    Puppet::Resource.new("class", "foo::bar").resource_type.should equal(@type)
+                end
 
-        resource = Puppet::Resource.new("class", "").type.should == :main
+                describe "and the resource is unqualified and models a qualified class" do
+                    it "should set its title to the fully qualified resource type" do
+                        Puppet::Resource.new("class", "bar", :namespaces => %w{foo}).title.should == "Foo::Bar"
+                    end
+
+                    it "should be able to find the resource type" do
+                        Puppet::Resource.new("class", "bar", :namespaces => %w{foo}).resource_type.should equal(@type)
+                    end
+
+                    it "should set its type to 'Class'" do
+                        Puppet::Resource.new("class", "bar", :namespaces => %w{foo}).type.should == "Class"
+                    end
+                end
+            end
+
+            describe "that does not exist" do
+                it "should set its type to 'Class' and its title to the capitalized provided name" do
+                    klass = Puppet::Resource.new("class", "foo::bar")
+                    klass.type.should == "Class"
+                    klass.title.should == "Foo::Bar"
+                end
+            end
+
+            describe "and its name is set to the empty string" do
+                it "should set its title to :main" do
+                    Puppet::Resource.new("class", "").title.should == :main
+                end
+
+                describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
+                    it "should set its title to :main" do
+                        @type = Puppet::Resource::Type.new(:hostclass, "")
+                        Puppet::Node::Environment.new.known_resource_types.add @type
+
+                        Puppet::Resource.new("class", "").title.should == :main
+                    end
+                end
+            end
+
+            describe "and its name is set to :main" do
+                it "should set its title to :main" do
+                    Puppet::Resource.new("class", :main).title.should == :main
+                end
+
+                describe "and a class exists whose name is the empty string" do # this was a bit tough to track down
+                    it "should set its title to :main" do
+                        @type = Puppet::Resource::Type.new(:hostclass, "")
+                        Puppet::Node::Environment.new.known_resource_types.add @type
+
+                        Puppet::Resource.new("class", :main).title.should == :main
+                    end
+                end
+            end
+        end
     end
 
     it "should return nil when looking up resource types that don't exist" do
         Puppet::Resource.new("foobar", "bar").resource_type.should be_nil
     end
 
-    it "should fail when an invalid parameter is used and parameter validation is enabled" do
-        type = Puppet::Resource::Type.new(:definition, "foobar")
-        Puppet::Node::Environment.new.known_resource_types.add type
-        resource = Puppet::Resource.new("foobar", "/my/file", :validate_parameters => true)
-        lambda { resource[:yay] = true }.should raise_error(ArgumentError)
-    end
-
-    it "should not fail when an invalid parameter is used and parameter validation is disabled" do
+    it "should not fail when an invalid parameter is used and strict mode is disabled" do
         type = Puppet::Resource::Type.new(:definition, "foobar")
         Puppet::Node::Environment.new.known_resource_types.add type
         resource = Puppet::Resource.new("foobar", "/my/file")
-        resource[:yay] = true
-    end
-
-    it "should not fail when a valid parameter is used and parameter validation is enabled" do
-        type = Puppet::Resource::Type.new(:definition, "foobar", :arguments => {"yay" => nil})
-        Puppet::Node::Environment.new.known_resource_types.add type
-        resource = Puppet::Resource.new("foobar", "/my/file", :validate_parameters => true)
         resource[:yay] = true
     end
 
@@ -239,10 +290,7 @@ describe Puppet::Resource do
         Puppet::Resource.new("file", "/foo").should_not == Puppet::Resource.new("file", "/f")
     end
 
-    describe "when refering to a resource with name canonicalization" do
-        before do
-        end
-
+    describe "when referring to a resource with name canonicalization" do
         it "should canonicalize its own name" do
             res = Puppet::Resource.new("file", "/path/")
             res.title.should == "/path"
