@@ -160,12 +160,34 @@ describe Puppet::Resource do
         resource.resource_type.should equal(type)
     end
 
+    it "should use its namespaces to set its type name when looking up defined resource types" do
+        type = Puppet::Resource::Type.new(:definition, "foo::bar")
+        Puppet::Node::Environment.new.known_resource_types.add type
+        resource = Puppet::Resource.new("bar", "/my/file", :namespaces => ["foo"])
+        resource.type.should == "Foo::Bar"
+    end
+
+    it "should look up its resource type when set manually" do
+        type = Puppet::Resource::Type.new(:definition, "foo::bar")
+        Puppet::Node::Environment.new.known_resource_types.add type
+        resource = Puppet::Resource.new("foo", "/my/file", :namespaces => ["foo"])
+        resource.type = "bar"
+        resource.type.should == "Foo::Bar"
+    end
+
     it "should use its namespaces when looking up host classes" do
         resource = Puppet::Resource.new("class", "bar", :namespaces => ["foo"])
         type = Puppet::Resource::Type.new(:hostclass, "foo::bar")
         resource.environment.known_resource_types.add type
 
         resource.resource_type.should equal(type)
+    end
+
+    it "should consider a class whose name is an empty string to be the main class" do
+        type = Puppet::Resource::Type.new(:hostclass, "")
+        Puppet::Node::Environment.new.known_resource_types.add type
+
+        resource = Puppet::Resource.new("class", "").type.should == :main
     end
 
     it "should return nil when looking up resource types that don't exist" do
@@ -215,6 +237,17 @@ describe Puppet::Resource do
 
     it "should not be considered equivalent to another resource if their titles do not match" do
         Puppet::Resource.new("file", "/foo").should_not == Puppet::Resource.new("file", "/f")
+    end
+
+    describe "when refering to a resource with name canonicalization" do
+        before do
+        end
+
+        it "should canonicalize its own name" do
+            res = Puppet::Resource.new("file", "/path/")
+            res.title.should == "/path"
+            res.ref.should == "File[/path]"
+        end
     end
 
     describe "when managing parameters" do

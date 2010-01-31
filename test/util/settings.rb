@@ -78,10 +78,8 @@ class TestSettings < Test::Unit::TestCase
     end
 
     def mkconfig
-        c = nil
-        assert_nothing_raised {
-            c = Puppet::Util::Settings.new
-        }
+        c = Puppet::Util::Settings.new
+        c.setdefaults :main, :noop => [false, "foo"]
         return c
     end
 
@@ -303,6 +301,8 @@ yay = /a/path
     end
 
     def test_addargs_functional
+        @config = Puppet::Util::Settings.new
+
         @config.setdefaults("testing",
                             :onboolean => [true, "An on bool"],
                             :string => ["a string", "A string arg"]
@@ -666,15 +666,15 @@ yay = /a/path
     end
 
     # Test to make sure that we can set and get a short name
-    def test_celement_short_name
-        element = nil
-        assert_nothing_raised("Could not create celement") do
-            element = Setting.new :short => "n", :desc => "anything", :settings => Puppet::Util::Settings.new
+    def test_setting_short_name
+        setting= nil
+        assert_nothing_raised("Could not create setting") do
+            setting= Setting.new :short => "n", :desc => "anything", :settings => Puppet::Util::Settings.new
         end
-        assert_equal("n", element.short, "Short value is not retained")
+        assert_equal("n", setting.short, "Short value is not retained")
 
         assert_raise(ArgumentError,"Allowed multicharactered short names.") do
-            element = Setting.new :short => "no", :desc => "anything", :settings => Puppet::Util::Settings.new
+            setting= Setting.new :short => "no", :desc => "anything", :settings => Puppet::Util::Settings.new
         end
     end
 

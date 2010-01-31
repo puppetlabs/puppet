@@ -15,7 +15,7 @@ module Puppet::Util::ReferenceSerializer
 
     def serialize_value(val)
         case val
-        when Puppet::Parser::Resource::Reference
+        when Puppet::Resource
             YAML.dump(val)
         when true, false
             # The database does this for us, but I prefer the

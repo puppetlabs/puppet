@@ -18,7 +18,8 @@ Puppet::Reports.register_report(:store) do
                 :desc => "Client dir for %s" % client,
                 :owner => 'service',
                 :group => 'service'
-            }
+            },
+            :noop => [false, "Used by settings internally."]
         )
 
         config.use("reportclient-#{client}".to_sym)

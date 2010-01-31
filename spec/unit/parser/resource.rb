@@ -16,12 +16,8 @@ describe Puppet::Parser::Resource do
     end
 
     def mkresource(args = {})
-        args[:source] ||= "source"
-        args[:scope] ||= stub('scope', :source => mock('source'))
-
-        {:source => "source", :scope => "scope"}.each do |param, value|
-            args[param] ||= value
-        end
+        args[:source] ||= @source
+        args[:scope] ||= @scope
 
         params = args[:params] || {:one => "yay", :three => "rah"}
         if args[:params] == :none
@@ -101,18 +97,18 @@ describe Puppet::Parser::Resource do
     end
 
     it "should be able to use the indexing operator to access parameters" do
-        resource = Puppet::Parser::Resource.new("resource", "testing", :source => "source", :scope => "scope")
+        resource = Puppet::Parser::Resource.new("resource", "testing", :source => "source", :scope => @scope)
         resource["foo"] = "bar"
         resource["foo"].should == "bar"
     end
 
     it "should return the title when asked for a parameter named 'title'" do
-        Puppet::Parser::Resource.new("resource", "testing", :source => "source", :scope => "scope")[:title].should == "testing"
+        Puppet::Parser::Resource.new("resource", "testing", :source => @source, :scope => @scope)[:title].should == "testing"
     end
 
     describe "when initializing" do
         before do
-            @arguments = {:scope => stub('scope', :source => mock('source'))}
+            @arguments = {:scope => @scope}
         end
 
         it "should fail unless #{name.to_s} is specified" do
@@ -129,17 +125,6 @@ describe Puppet::Parser::Resource do
             @arguments[:params] = [ param(:tag, tags , :source) ]
             res = Puppet::Parser::Resource.new("resource", "testing", @arguments)
             (res.tags & tags).should == tags
-        end
-    end
-
-    describe "when refering to a resource with name canonicalization" do
-        before do
-            @arguments = {:scope => stub('scope', :source => mock('source'))}
-        end
-
-        it "should canonicalize its own name" do
-            res = Puppet::Parser::Resource.new("file", "/path/", @arguments)
-            res.ref.should == "File[/path]"
         end
     end
 
@@ -294,7 +279,7 @@ describe Puppet::Parser::Resource do
     describe "when being tagged" do
         before do
             @scope_resource = stub 'scope_resource', :tags => %w{srone srtwo}
-            @scope = stub 'scope', :resource => @scope_resource
+            @scope.stubs(:resource).returns @scope_resource
             @resource = Puppet::Parser::Resource.new("file", "yay", :scope => @scope, :source => mock('source'))
         end
 
@@ -448,8 +433,7 @@ describe Puppet::Parser::Resource do
 
     describe "when being converted to a resource" do
         before do
-            @source = stub 'scope', :name => "myscope"
-            @parser_resource = mkresource :source => @source, :params => {:foo => "bar", :fee => "fum"}
+            @parser_resource = mkresource :scope => @scope, :params => {:foo => "bar", :fee => "fum"}
         end
 
         it "should create an instance of Puppet::Resource" do
@@ -537,7 +521,7 @@ describe Puppet::Parser::Resource do
 
     describe "when validating" do
         it "should check each parameter" do
-            resource = Puppet::Parser::Resource.new :foo, "bar", :scope => stub("scope"), :source => stub("source")
+            resource = Puppet::Parser::Resource.new :foo, "bar", :scope => @scope, :source => stub("source")
             resource[:one] = :two
             resource[:three] = :four
             resource.expects(:validate_parameter).with(:one)
@@ -546,7 +530,7 @@ describe Puppet::Parser::Resource do
         end
 
         it "should raise a parse error when there's a failure" do
-            resource = Puppet::Parser::Resource.new :foo, "bar", :scope => stub("scope"), :source => stub("source")
+            resource = Puppet::Parser::Resource.new :foo, "bar", :scope => @scope, :source => stub("source")
             resource[:one] = :two
             resource.expects(:validate_parameter).with(:one).raises ArgumentError
             lambda { resource.send(:validate) }.should raise_error(Puppet::ParseError)
@@ -556,7 +540,7 @@ describe Puppet::Parser::Resource do
     describe "when setting parameters" do
         before do
             @source = newclass "foobar"
-            @resource = Puppet::Parser::Resource.new :foo, "bar", :scope => stub("scope"), :source => @source
+            @resource = Puppet::Parser::Resource.new :foo, "bar", :scope => @scope, :source => @source
         end
 
         it "should accept Param instances and add them to the parameter list" do

@@ -174,7 +174,7 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
         @collector.evaluate.should == [one]
     end
 
-    it "should create a resource with overriden parameters" do
+    it "should create a resource with overridden parameters" do
         one = stub_everything 'one', :type => "Mytype", :virtual? => true, :title => "test"
         param = stub 'param'
         @compiler.stubs(:add_override)
@@ -182,7 +182,7 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
         @compiler.expects(:resources).returns([one])
 
         @collector.add_override(:params => param )
-        Puppet::Parser::Resource.expects(:new).with { |h|
+        Puppet::Parser::Resource.expects(:new).with { |type, title, h|
             h[:params] == param
         }
 
@@ -214,7 +214,7 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
         @compiler.expects(:resources).at_least(2).returns([one])
 
         @collector.add_override(:params => param )
-        Puppet::Parser::Resource.expects(:new).once.with { |h|
+        Puppet::Parser::Resource.expects(:new).once.with { |type, title, h|
             h[:params] == param
         }
 
@@ -375,7 +375,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @compiler.stubs(:add_resource)
 
         @collector.add_override(:params => param )
-        Puppet::Parser::Resource.expects(:new).once.with { |h|
+        Puppet::Parser::Resource.expects(:new).once.with { |type, title, h|
             h[:params] == param
         }
 

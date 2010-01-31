@@ -108,7 +108,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     end
 
     def initialize(type, title, options)
-        self.type = type
+        @scope = options[:scope]
+
+        self.relative_type = type
         self.title = title
 
         @params = {}

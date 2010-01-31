@@ -20,7 +20,7 @@ class TestASTResourceReference < Test::Unit::TestCase
     def setup
         super
         @scope = mkscope
-        @parser = @scope.compiler.parser
+        @parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
     end
 
     # Related to #706, make sure resource references correctly translate to qualified types.

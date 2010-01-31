@@ -32,7 +32,10 @@ class TestReports < Test::Unit::TestCase
         config.retrieval_duration = 0.001
         trans = config.apply
 
-        return trans.generate_report
+        report = Puppet::Transaction::Report.new
+        trans.add_metrics_to_report(report)
+
+        return report
     end
 
     # Make sure we can use reports as log destinations.
@@ -224,10 +227,7 @@ class TestReports < Test::Unit::TestCase
     def test_summary
         report = mkreport
 
-        summary = nil
-        assert_nothing_raised("Could not create report summary") do
-            summary = report.summary
-        end
+        summary = report.summary
 
         %w{Changes Total Resources}.each do |main|
             assert(summary.include?(main), "Summary did not include info for %s" % main)

@@ -15,8 +15,7 @@ class TestVariable < Test::Unit::TestCase
 
     def setup
         super
-        @interp = mkinterp
-        @scope = mkscope :interp => @interp
+        @scope = mkscope
         @name = "myvar"
         @var = AST::Variable.new(:value => @name)
     end

@@ -52,6 +52,19 @@ describe resources do
                 @resources.generate.collect { |r| r.ref }.should_not include(@host1.ref)
             end
 
+            it "should not include the skipped users" do
+                res = Puppet::Type.type(:resources).new :name => :user, :purge => true
+                res.catalog = Puppet::Resource::Catalog.new
+
+                users = [
+                    Puppet::Type.type(:user).new(:name => "root")
+                ]
+                Puppet::Type.type(:user).expects(:instances).returns users
+                list = res.generate
+
+                names = list.collect { |r| r[:name] }
+                names.should_not be_include("root")
+            end
 
             describe "when generating a purgeable resource" do
                 it "should be included in the generated resources" do

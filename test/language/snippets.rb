@@ -74,10 +74,6 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def ast2scope(ast)
-        interp = Puppet::Parser::Interpreter.new(
-            :ast => ast,
-            :client => client()
-        )
         scope = Puppet::Parser::Scope.new()
         ast.evaluate(scope)
 

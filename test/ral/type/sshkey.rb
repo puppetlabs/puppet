@@ -98,47 +98,6 @@ class TestSSHKey < Test::Unit::TestCase
 
     end
 
-    def test_moddingkey
-        key = mkkey()
-
-        @catalog.apply
-
-        key.retrieve
-
-        aliases = %w{madstop kirby yayness}
-        key[:alias] = aliases
-
-        @catalog.apply
-
-        aliases.each do |name|
-            assert_equal(key.object_id, @catalog.resource(:sshkey, name).object_id, "alias %s was not set" % name)
-        end
-    end
-
-    def test_aliasisproperty
-        assert_equal(:property, @sshkeytype.attrtype(:host_aliases))
-    end
-
-    def test_multivalues
-        key = mkkey
-        assert_raise(Puppet::Error) {
-            key[:host_aliases] = "puppetmasterd yayness"
-        }
-    end
-
-    def test_puppetalias
-        key = mkkey()
-
-        assert_nothing_raised {
-            key[:alias] = "testing"
-        }
-
-        key.finish
-
-        same = @catalog.resource(:sshkey, "testing")
-        assert(same, "Could not retrieve by alias")
-    end
-
     def test_removal
         sshkey = mkkey()
         assert_nothing_raised {

@@ -56,7 +56,7 @@ class TestAST < Test::Unit::TestCase
             ref = resourceoverride("file", "/yayness", "owner" => "blah", "group" => "boo")
         end
 
-        Puppet::Parser::Resource.expects(:new).with { |o| o.is_a?(Hash) }.returns(:override)
+        Puppet::Parser::Resource.expects(:new).with { |type, title, o| o.is_a?(Hash) }.returns(:override)
         scope.compiler.expects(:add_override).with(:override)
         ret = nil
         assert_nothing_raised do

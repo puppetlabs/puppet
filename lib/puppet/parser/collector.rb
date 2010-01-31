@@ -41,9 +41,7 @@ class Puppet::Parser::Collector
             # overrided those resources
             objects.each do |res|
                 unless @collected.include?(res.ref)
-                    res = Puppet::Parser::Resource.new(
-                        :type => res.type,
-                        :title => res.title,
+                    newres = Puppet::Parser::Resource.new(res.type, res.title,
                         :params => overrides[:params],
                         :file => overrides[:file],
                         :line => overrides[:line],
@@ -51,7 +49,7 @@ class Puppet::Parser::Collector
                         :scope => overrides[:scope]
                     )
 
-                    scope.compiler.add_override(res)
+                    scope.compiler.add_override(newres)
                 end
             end
         end

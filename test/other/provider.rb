@@ -33,21 +33,6 @@ class TestImpl < Test::Unit::TestCase
         return provider
     end
 
-    # Just a quick run-through to see if the basics work
-    def test_newprovider
-        assert_nothing_raised do
-            @provider.confine :operatingsystem => Facter["operatingsystem"].value
-            @provider.defaultfor :operatingsystem => Facter["operatingsystem"].value
-        end
-
-        assert(@provider.suitable?, "Implementation was not considered suitable")
-        assert(@provider.default?, "Implementation was not considered a default")
-
-        assert_equal(@provider, @type.defaultprovider,
-                     "Did not correctly find default provider")
-
-    end
-
     def test_provider_default
         nondef = nil
         assert_nothing_raised {

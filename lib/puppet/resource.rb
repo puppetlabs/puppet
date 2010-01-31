@@ -13,7 +13,8 @@ class Puppet::Resource
     extend Puppet::Util::Pson
     include Enumerable
     attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters
-    attr_reader :type, :title, :namespaces
+    attr_reader :title, :namespaces
+    attr_writer :relative_type
 
     require 'puppet/indirector'
     extend Puppet::Indirector
@@ -145,8 +146,6 @@ class Puppet::Resource
 
     # Create our resource.
     def initialize(type, title = nil, attributes = {})
-        self.type, self.title = extract_type_and_title(type, title)
-
         @parameters = {}
         @namespaces = [""]
 
@@ -158,6 +157,13 @@ class Puppet::Resource
             next if attr == :parameters
             send(attr.to_s + "=", value)
         end
+
+        # We do namespaces first, and use tmp variables, so our title
+        # canonicalization works (i.e., namespaces are set and resource
+        # types can be looked up)
+        tmp_type, tmp_title = extract_type_and_title(type, title)
+        self.type = tmp_type
+        self.title = tmp_title
 
         tag(self.type)
         tag(self.title) if valid_tag?(self.title)
@@ -174,14 +180,19 @@ class Puppet::Resource
     end
 
     def title=(value)
-        if @type and klass = Puppet::Type.type(@type.to_s.downcase)
+        if klass = resource_type and klass.respond_to?(:canonicalize_ref)
             value = klass.canonicalize_ref(value)
         end
         @title = value
     end
 
+    # Canonize the type so we know it's always consistent.
+    def relative_type
+        munge_type_name(@relative_type)
+    end
+
     def resource_type
-        case type.to_s.downcase
+        case relative_type.to_s.downcase
         when "class"; find_hostclass
         when "node"; find_node
         else
@@ -290,13 +301,18 @@ class Puppet::Resource
         self
     end
 
-    # Canonize the type so we know it's always consistent.
-    def type=(value)
-        if value.nil? or value.to_s.downcase == "component"
-            @type = "Class"
+    def type
+        munge_type_name(if r = resource_type
+            resource_type.name
         else
-            @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
-        end
+            relative_type
+        end)
+    end
+
+    # Only allow people to set the relative type,
+    # so we force it to be looked up each time.
+    def type=(value)
+        @relative_type = value
     end
 
     def valid_parameter?(name)
@@ -319,11 +335,11 @@ class Puppet::Resource
     end
 
     def find_builtin_resource_type
-        Puppet::Type.type(type.to_s.downcase.to_sym)
+        Puppet::Type.type(relative_type.to_s.downcase.to_sym)
     end
 
     def find_defined_resource_type
-        known_resource_types.find_definition(namespaces, type.to_s.downcase)
+        known_resource_types.find_definition(namespaces, relative_type.to_s.downcase)
     end
 
     # Produce a canonical method name.
@@ -368,5 +384,15 @@ class Puppet::Resource
 	    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
 	    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
 	    end
+    end
+
+    def munge_type_name(value)
+        return :main if value == ""
+
+        if value.nil? or value.to_s.downcase == "component"
+            "Class"
+        else
+            value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+        end
     end
 end

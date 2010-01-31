@@ -108,17 +108,6 @@ class TestHost < Test::Unit::TestCase
         # This was a hard bug to track down.
         assert_instance_of(String, current_values[host.property(:ip)])
 
-        host[:host_aliases] = %w{madstop kirby yayness}
-
-        assert_events([:host_aliases_changed], host)
-
-        assert_nothing_raised {
-            current_values = host.retrieve
-        }
-
-        assert_equal(%w{madstop kirby yayness},
-                     current_values[host.property(:host_aliases)])
-
         host[:ensure] = :absent
         assert_events([:host_removed], host)
     end
@@ -182,28 +171,4 @@ class TestHost < Test::Unit::TestCase
             host[:name] = "y"
         }
     end
-
-    def test_aliasisproperty
-        assert_equal(:property, @hosttype.attrtype(:host_aliases))
-    end
-
-    def test_multivalues
-        host = mkhost
-        assert_raise(Puppet::Error) {
-            host[:host_aliases] = "puppetmasterd yayness"
-        }
-    end
-
-    def test_puppetalias
-        host = mkhost()
-        catalog = mk_catalog(host)
-
-        assert_nothing_raised {
-            host[:alias] = "testing"
-        }
-
-        same = catalog.resource(:host, "testing")
-        assert(same, "Could not retrieve by alias")
-    end
 end
-
