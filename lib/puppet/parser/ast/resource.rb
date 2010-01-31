@@ -44,7 +44,8 @@ class Resource < AST::ResourceReference
                     :exported => self.exported,
                     :virtual => virt,
                     :source => scope.source,
-                    :scope => scope
+                    :scope => scope,
+                    :strict => true
                 )
 
                 # And then store the resource in the compiler.

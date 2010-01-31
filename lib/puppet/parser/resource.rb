@@ -110,9 +110,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     def initialize(type, title, options)
         @scope = options[:scope]
 
-        self.relative_type = type
-        self.title = title
-
         @params = {}
         # Define all of the parameters
         if params = options[:params]
@@ -135,6 +132,13 @@ class Puppet::Parser::Resource < Puppet::Resource
         end
 
         @source ||= scope.source
+
+        self.relative_type = type
+        self.title = title
+
+        if strict? and ! resource_type
+            raise ArgumentError, "Invalid resource type #{type}"
+        end
 
         tag(self.type)
         tag(self.title) if valid_tag?(self.title.to_s)

@@ -12,7 +12,7 @@ class Puppet::Resource
 
     extend Puppet::Util::Pson
     include Enumerable
-    attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters
+    attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
     attr_reader :title, :namespaces
     attr_writer :relative_type
 
@@ -138,7 +138,7 @@ class Puppet::Resource
         end
     end
 
-    %w{exported virtual}.each do |m|
+    %w{exported virtual strict}.each do |m|
         define_method(m+"?") do
             self.send(m)
         end
@@ -149,10 +149,7 @@ class Puppet::Resource
         @parameters = {}
         @namespaces = [""]
 
-        (attributes[:parameters] || {}).each do |param, value|
-            self[param] = value
-        end
-
+        # Set things like namespaces and strictness first.
         attributes.each do |attr, value|
             next if attr == :parameters
             send(attr.to_s + "=", value)
@@ -165,8 +162,17 @@ class Puppet::Resource
         self.type = tmp_type
         self.title = tmp_title
 
+        (attributes[:parameters] || {}).each do |param, value|
+            validate_parameter(param) if strict?
+            self[param] = value
+        end
+
         tag(self.type)
         tag(self.title) if valid_tag?(self.title)
+
+        if strict? and ! resource_type
+            raise ArgumentError, "Invalid resource type #{type}"
+        end
     end
 
     def ref

@@ -6,11 +6,11 @@ describe Puppet::Parser::AST::Resource do
     ast = Puppet::Parser::AST
 
     before :each do
-        @title = stub_everything 'title'
-        @compiler = stub_everything 'compiler', :environment => Puppet::Node::Environment.new
+        @title = Puppet::Parser::AST::String.new(:value => "mytitle")
+        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
         @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
         @scope.stubs(:resource).returns(stub_everything)
-        @resource = ast::Resource.new(:title => @title, :type => "Resource", :params => ast::ASTArray.new(:children => []) )
+        @resource = ast::Resource.new(:title => @title, :type => "file", :params => ast::ASTArray.new(:children => []) )
         @resource.stubs(:qualified_type).returns("Resource")
     end
 
@@ -23,73 +23,57 @@ describe Puppet::Parser::AST::Resource do
     end
 
     it "should evaluate its title" do
-
-        @title.expects(:safeevaluate).with(@scope)
-
-        @resource.evaluate(@scope)
+        @resource.evaluate(@scope)[0].title.should == "mytitle"
     end
 
     it "should flatten the titles array" do
-        titles = stub 'titles'
-        title_array = stub 'title_array', :is_a? => true
+        titles = []
+        %w{one two}.each do |title|
+            titles << Puppet::Parser::AST::String.new(:value => title)
+        end
 
-        titles.stubs(:safeevaluate).with(@scope).returns(title_array)
+        array = Puppet::Parser::AST::ASTArray.new(:children => titles)
 
-        title_array.expects(:flatten).returns([])
-
-        @resource.title = titles
-        @resource.evaluate(@scope)
+        @resource.title = array
+        result = @resource.evaluate(@scope).collect { |r| r.title }
+        result.should be_include("one")
+        result.should be_include("two")
     end
 
-    it "should create one resource objects per title" do
-        titles = stub 'titles'
-        title_array = stub 'title_array', :is_a? => true
+    it "should create and return one resource objects per title" do
+        titles = []
+        %w{one two}.each do |title|
+            titles << Puppet::Parser::AST::String.new(:value => title)
+        end
 
-        title_array.stubs(:flatten).returns([@title])
-        titles.stubs(:safeevaluate).with(@scope).returns(title_array)
+        array = Puppet::Parser::AST::ASTArray.new(:children => titles)
 
-        @resource.title = titles
-        result = @resource.evaluate(@scope)
-        result[0].should be_instance_of(Puppet::Parser::Resource)
-        result[0].title.should == @title
+        @resource.title = array
+        result = @resource.evaluate(@scope).collect { |r| r.title }
+        result.should be_include("one")
+        result.should be_include("two")
     end
 
     it "should handover resources to the compiler" do
-        resource = stub 'resource'
-        titles = stub 'titles'
-        title_array = stub 'title_array', :is_a? => true
+        titles = []
+        %w{one two}.each do |title|
+            titles << Puppet::Parser::AST::String.new(:value => title)
+        end
 
-        title_array.stubs(:flatten).returns([@title])
-        titles.stubs(:safeevaluate).with(@scope).returns(title_array)
-        Puppet::Parser::Resource.stubs(:new).returns(resource)
+        array = Puppet::Parser::AST::ASTArray.new(:children => titles)
 
-        @compiler.expects(:add_resource).with(@scope, resource)
+        @resource.title = array
+        result = @resource.evaluate(@scope)
 
-        @resource.title = titles
-        @resource.evaluate(@scope)
+        result.each do |res|
+            @compiler.catalog.resource(res.ref).should be_instance_of(Puppet::Parser::Resource)
+        end
     end
-
-    it "should return the newly created resources" do
-        resource = stub 'resource'
-        titles = stub 'titles'
-        title_array = stub 'title_array', :is_a? => true
-
-        title_array.stubs(:flatten).returns([@title])
-        titles.stubs(:safeevaluate).with(@scope).returns(title_array)
-
-        @compiler.stubs(:add_resource)
-
-        @resource.title = titles
-        @resource.evaluate(@scope)[0].should be_instance_of(Puppet::Parser::Resource)
-    end
-
     it "should generate virtual resources if it is virtual" do
         @resource.virtual = true
 
         result = @resource.evaluate(@scope)
         result[0].should be_virtual
-
-        @resource.evaluate(@scope)
     end
 
     it "should generate virtual and exported resources if it is exported" do

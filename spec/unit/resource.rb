@@ -250,6 +250,20 @@ describe Puppet::Resource do
         end
     end
 
+    describe "when running in strict mode" do
+        it "should be strict" do
+            Puppet::Resource.new("file", "/path", :strict => true).should be_strict
+        end
+
+        it "should fail if invalid parameters are used" do
+            lambda { Puppet::Resource.new("file", "/path", :strict => true, :parameters => {:nosuchparam => "bar"}) }.should raise_error
+        end
+
+        it "should fail if the resource type cannot be resolved" do
+            lambda { Puppet::Resource.new("nosuchtype", "/path", :strict => true) }.should raise_error
+        end
+    end
+
     describe "when managing parameters" do
         before do
             @resource = Puppet::Resource.new("file", "/my/file")
