@@ -4,7 +4,8 @@ puppet (0.25.4-1) unstable; urgency=low
   * New upstream version 0.25.4
  
   [ Micah Anderson ]
-  * Fix debian/rules install of puppet-mode-init.el
+  * Fix debian/rules typo in install of puppet-mode-init.el
+  * Fix which package puppet-mode-init.el gets installed into
 
  -- Nigel Kersten <nigel@explanatorygap.net>  Fri, 29 Jan 2010 08:38:53 -0800
 
