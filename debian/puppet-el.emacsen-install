@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# emacsen install script for the Debian GNU/Linux cmake package
+# emacsen install script for the Debian GNU/Linux puppet-el package
 
 FLAVOR=$1
 PACKAGE=puppet-el
