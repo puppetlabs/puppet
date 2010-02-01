@@ -39,6 +39,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       "match" => [ :path, :glob ],
       "size" => [:comparator, :int],
       "include" => [:string],
+      "not_include" => [:string],
       "==" => [:glob],
       "!=" => [:glob]
     }
@@ -206,6 +207,9 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         when "include"
             arg = clause_array.shift
             return_value = result.include?(arg)
+        when "not_include"
+            arg = clause_array.shift
+            return_value = !result.include?(arg)
         when "=="
             begin
                 arg = clause_array.shift

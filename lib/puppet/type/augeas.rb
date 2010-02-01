@@ -71,6 +71,7 @@ Puppet::Type.newtype(:augeas) do
                get [AUGEAS_PATH] [COMPARATOR] [STRING]
                match [MATCH_PATH] size [COMPARATOR] [INT]
                match [MATCH_PATH] include [STRING]
+               match [MATCH_PATH] not_include [STRING]
                match [MATCH_PATH] == [AN_ARRAY]
                match [MATCH_PATH] != [AN_ARRAY]
 

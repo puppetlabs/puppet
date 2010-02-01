@@ -204,6 +204,16 @@ describe provider_class do
             @provider.process_match(command).should == false
         end
 
+        it "should return true for includes match" do
+            command = ["match", "fake value", "not_include JarJar"]
+            @provider.process_match(command).should == true
+        end
+
+        it "should return false for includes non match" do
+            command = ["match", "fake value", "not_include values"]
+            @provider.process_match(command).should == false
+        end
+
         it "should return true for an array match" do
             command = ["match", "fake value", "== ['set', 'of', 'values']"]
             @provider.process_match(command).should == true
