@@ -197,6 +197,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         #Get the values from augeas
         result = @aug.match(path) || []
+        fail("Error trying to match path '#{path}'") if (result == -1)
+
         # Now do the work
         case verb
         when "size"
@@ -321,13 +323,16 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 case command
                     when "set"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        aug.set(cmd_array[0], cmd_array[1])
+                        rv = aug.set(cmd_array[0], cmd_array[1])
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv)
                     when "rm", "remove"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        aug.rm(cmd_array[0])
+                        rv = aug.rm(cmd_array[0])
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv)
                     when "clear"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        @aug.clear(cmd_array[0])
+                        rv = aug.clear(cmd_array[0])
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv == -1)
                     when "insert", "ins"
                         label = cmd_array[0]
                         where = cmd_array[1]
@@ -338,7 +343,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                             else fail("Invalid value '#{where}' for where param")
                         end
                         debug("sending command '#{command}' with params #{[label, where, path].inspect}")
-                        aug.insert(path, label, before)
+                        rv = aug.insert(path, label, before)
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv == -1)
                     else fail("Command '#{command}' is not supported")
                 end
             rescue SystemExit,NoMemoryError
