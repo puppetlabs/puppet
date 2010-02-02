@@ -1,8 +1,9 @@
-Puppet::Type.type(:service).provide :freebsd2, :parent => :init do
+Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
   desc "Provider for FreeBSD. Makes use of rcvar argument of init scripts and parses/edits rc files."
 
   confine :operatingsystem => [:freebsd]
+  defaultfor :operatingsystem => [:freebsd]
 
   @@rcconf = '/etc/rc.conf'
   @@rcconf_local = '/etc/rc.conf.local'
