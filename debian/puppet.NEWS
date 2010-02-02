@@ -3,8 +3,8 @@ puppet (0.25.4-1) unstable; urgency=low
   In this packaging version we add a "puppet-common" package, on which the
   packages "puppet" and "puppetmaster" depend.
 
-  Two packages containing editor support for syntax highlighting are added,
-  "puppet-el" and "vim-puppet".
+  The editor syntax highlighting code previously in the "puppet" package has
+  been moved to the packages "puppet-el" and "vim-puppet".
 
  -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 19 Jan 2010 13:09:36 +0000
 
