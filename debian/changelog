@@ -6,6 +6,7 @@ puppet (0.25.4-1) unstable; urgency=low
   [ Micah Anderson ]
   * Fix debian/rules typo in install of puppet-mode-init.el
   * Fix which package puppet-mode-init.el gets installed into
+  * Add Suggests for vim-puppet and puppet-el on binary packages
 
   [ Stig Sandbeck Mathisen ]
   * Update debian/copyright
