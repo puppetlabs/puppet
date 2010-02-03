@@ -160,5 +160,6 @@ module PuppetTest
         raise Puppet::DevError, "No fakedata matching #{glob}" if files.empty?
         files
     end
+    module_function :fakedata
 
 end
