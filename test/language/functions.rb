@@ -382,16 +382,13 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     def test_search
-        parser = mkparser
-        scope = mkscope(:parser => parser)
+        scope = mkscope
 
-        fun = parser.newdefine("yay::ness")
-        foo = parser.newdefine("foo::bar")
+        fun = scope.known_resource_types.add Puppet::Resource::Type.new(:definition, "yay::ness")
+        foo = scope.known_resource_types.add Puppet::Resource::Type.new(:definition, "foo::bar")
 
         search = Puppet::Parser::Functions.function(:search)
-        assert_nothing_raised do
-            scope.function_search(["foo", "yay"])
-        end
+        scope.function_search(["foo", "yay"])
 
         ffun = ffoo = nil
         assert_nothing_raised("Search path change did not work") do

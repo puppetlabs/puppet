@@ -53,9 +53,7 @@ module PuppetTest::ParserTesting
 
     def mknode(name = nil)
         require 'puppet/node'
-        name ||= "nodename"
-        Puppet::Network::Handler.handler(:node)
-        Puppet::Node.new(name)
+        Puppet::Node.new(name || "nodename")
     end
 
     def mkparser
@@ -64,9 +62,9 @@ module PuppetTest::ParserTesting
     end
 
     def mkscope(hash = {})
-        hash[:parser] ||= mkparser
-        compiler ||= mkcompiler(hash[:parser])
-        compiler.topscope.source = (hash[:parser].find_hostclass("", "") || hash[:parser].newclass(""))
+        parser ||= mkparser
+        compiler ||= mkcompiler
+        compiler.topscope.source = (parser.find_hostclass("", "") || parser.newclass(""))
 
         unless compiler.topscope.source
             raise "Could not find source for scope"
@@ -108,7 +106,7 @@ module PuppetTest::ParserTesting
                 :line => __LINE__,
                 :title => title,
                 :type => type,
-                :params => resourceinst(params)
+                :parameters => resourceinst(params)
             )
         }
     end
@@ -126,7 +124,7 @@ module PuppetTest::ParserTesting
                 :line => __LINE__,
                 :object => resourceref(type, title),
                 :type => type,
-                :params => resourceinst(params)
+                :parameters => resourceinst(params)
             )
         }
     end
@@ -273,7 +271,7 @@ module PuppetTest::ParserTesting
                 :file => __FILE__,
                 :line => __LINE__,
                 :type => type,
-                :params => past
+                :parameters => past
             )
         }
     end

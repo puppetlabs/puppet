@@ -6,12 +6,10 @@ require 'puppettest'
 require 'puppet/parser/parser'
 require 'puppettest/resourcetesting'
 require 'puppettest/parsertesting'
-require 'puppettest/support/collection'
 
 class TestAST < Test::Unit::TestCase
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
-    include PuppetTest::Support::Collection
 
     def test_if
         scope = mkscope
@@ -56,41 +54,13 @@ class TestAST < Test::Unit::TestCase
             ref = resourceoverride("file", "/yayness", "owner" => "blah", "group" => "boo")
         end
 
-        Puppet::Parser::Resource.expects(:new).with { |type, title, o| o.is_a?(Hash) }.returns(:override)
-        scope.compiler.expects(:add_override).with(:override)
+        scope.compiler.expects(:add_override).with { |res| res.is_a?(Puppet::Parser::Resource) }
         ret = nil
         assert_nothing_raised do
             ret = ref.evaluate scope
         end
 
-        assert_equal(:override, ret, "Did not return override")
-    end
-
-    # make sure our resourcedefaults ast object works correctly.
-    def test_resourcedefaults
-        scope = mkscope
-
-        # Now make some defaults for files
-        args = {:source => "/yay/ness", :group => "yayness"}
-        assert_nothing_raised do
-            obj = defaultobj "file", args
-            obj.evaluate scope
-        end
-
-        hash = nil
-        assert_nothing_raised do
-            hash = scope.lookupdefaults("File")
-        end
-
-        hash.each do |name, value|
-            assert_instance_of(Symbol, name) # params always convert
-            assert_instance_of(Puppet::Parser::Resource::Param, value)
-        end
-
-        args.each do |name, value|
-            assert(hash[name], "Did not get default %s" % name)
-            assert_equal(value, hash[name].value)
-        end
+        assert_instance_of(Puppet::Parser::Resource, ret, "Did not return override")
     end
 
     def test_collection
@@ -113,26 +83,5 @@ class TestAST < Test::Unit::TestCase
         # Now make sure we get it back from the scope
         colls = scope.compiler.instance_variable_get("@collections")
         assert_equal([ret], colls, "Did not store collector in config's collection list")
-    end
-
-    def test_virtual_collexp
-        scope = mkscope
-
-        # make a resource
-        resource = mkresource(:type => "file", :title => "/tmp/testing",
-            :scope => scope, :params => {:owner => "root", :group => "bin", :mode => "644"})
-
-        run_collection_queries(:virtual) do |string, result, query|
-            code = nil
-            assert_nothing_raised do
-                str, code = query.evaluate scope
-            end
-
-            assert_instance_of(Proc, code)
-            assert_nothing_raised do
-                assert_equal(result, code.call(resource),
-                    "'#{string}' failed")
-            end
-        end
     end
 end

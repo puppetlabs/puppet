@@ -42,7 +42,7 @@ class Puppet::Parser::Collector
             objects.each do |res|
                 unless @collected.include?(res.ref)
                     newres = Puppet::Parser::Resource.new(res.type, res.title,
-                        :params => overrides[:params],
+                        :parameters => overrides[:parameters],
                         :file => overrides[:file],
                         :line => overrides[:line],
                         :source => overrides[:source],
@@ -83,7 +83,7 @@ class Puppet::Parser::Collector
 
     # add a resource override to the soon to be exported/realized resources
     def add_override(hash)
-        unless hash[:params]
+        unless hash[:parameters]
             raise ArgumentError, "Exported resource try to override without parameters"
         end
 

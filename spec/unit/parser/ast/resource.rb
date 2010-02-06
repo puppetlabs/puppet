@@ -10,14 +10,14 @@ describe Puppet::Parser::AST::Resource do
         @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
         @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
         @scope.stubs(:resource).returns(stub_everything)
-        @resource = ast::Resource.new(:title => @title, :type => "file", :params => ast::ASTArray.new(:children => []) )
+        @resource = ast::Resource.new(:title => @title, :type => "file", :parameters => ast::ASTArray.new(:children => []) )
         @resource.stubs(:qualified_type).returns("Resource")
     end
 
     it "should evaluate all its parameters" do
         param = stub 'param'
         param.expects(:safeevaluate).with(@scope).returns Puppet::Parser::Resource::Param.new(:name => "myparam", :value => "myvalue", :source => stub("source"))
-        @resource.stubs(:params).returns [param]
+        @resource.stubs(:parameters).returns [param]
 
         @resource.evaluate(@scope)
     end
@@ -98,7 +98,7 @@ describe Puppet::Parser::AST::Resource do
 
         def resource(type, params = nil)
             params ||= Puppet::Parser::AST::ASTArray.new(:children => [])
-            Puppet::Parser::AST::Resource.new(:type => type, :title => Puppet::Parser::AST::String.new(:value => "myresource"), :params => params)
+            Puppet::Parser::AST::Resource.new(:type => type, :title => Puppet::Parser::AST::String.new(:value => "myresource"), :parameters => params)
         end
 
         it "should be able to generate resources with fully qualified type information" do

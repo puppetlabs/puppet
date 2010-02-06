@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::ResourceOverride do
     ast = Puppet::Parser::AST
 
     before :each do
-        @compiler = stub 'compiler'
+        @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
         @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
         @params = ast::ASTArray.new({})
         @compiler.stubs(:add_override)
@@ -17,7 +17,7 @@ describe Puppet::Parser::AST::ResourceOverride do
         klass = stub 'klass', :title => "title", :type => "type"
         object = mock 'object'
         object.expects(:safeevaluate).with(@scope).returns(klass)
-        ast::ResourceOverride.new(:object => object, :params => @params ).evaluate(@scope)
+        ast::ResourceOverride.new(:object => object, :parameters => @params ).evaluate(@scope)
     end
 
     it "should tell the compiler to override the resource with our own" do
@@ -25,13 +25,13 @@ describe Puppet::Parser::AST::ResourceOverride do
 
         klass = stub 'klass', :title => "title", :type => "one"
         object = mock 'object', :safeevaluate => klass
-        ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)
+        ast::ResourceOverride.new(:object => object , :parameters => @params).evaluate(@scope)
     end
 
     it "should return the overriden resource directly when called with one item" do
         klass = stub 'klass', :title => "title", :type => "one"
         object = mock 'object', :safeevaluate => klass
-        override = ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)
+        override = ast::ResourceOverride.new(:object => object , :parameters => @params).evaluate(@scope)
         override.should be_an_instance_of(Puppet::Parser::Resource)
         override.title.should == "title"
         override.type.should == "One"
@@ -43,7 +43,7 @@ describe Puppet::Parser::AST::ResourceOverride do
 
         object = mock 'object', :safeevaluate => [klass1,klass2]
 
-        override = ast::ResourceOverride.new(:object => object , :params => @params).evaluate(@scope)
+        override = ast::ResourceOverride.new(:object => object , :parameters => @params).evaluate(@scope)
         override.should have(2).elements
         override.each {|o| o.should be_an_instance_of(Puppet::Parser::Resource) }
     end

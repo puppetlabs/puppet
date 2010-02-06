@@ -23,11 +23,11 @@ module PuppetTest::ResourceTesting
             args[param] ||= value
         end
 
-        params = args[:params] || {:one => "yay", :three => "rah"}
-        if args[:params] == :none
-            args.delete(:params)
+        params = args[:parameters] || {:one => "yay", :three => "rah"}
+        if args[:parameters] == :none
+            args.delete(:parameters)
         else
-            args[:params] = paramify args[:source], params
+            args[:parameters] = paramify args[:source], params
         end
 
         Parser::Resource.new(type, title, args)

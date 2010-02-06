@@ -154,20 +154,20 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
         result.push ast(AST::Resource,
             :type => val[0],
             :title => instance[0],
-            :params => instance[1])
+            :parameters => instance[1])
     }
 }           | classname LBRACE params endcomma RBRACE {
     # This is a deprecated syntax.
     error "All resource specifications require names"
 }           | classref LBRACE params endcomma RBRACE {
     # a defaults setting for a type
-    result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
+    result = ast(AST::ResourceDefaults, :type => val[0], :parameters => val[2])
 }
 
 # Override a value set elsewhere in the configuration.
 resourceoverride:     resourceref LBRACE anyparams endcomma RBRACE {
     @lexer.commentpop
-    result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
+    result = ast AST::ResourceOverride, :object => val[0], :parameters => val[2]
 }
 
 # Exported and virtual resources; these don't get sent to the client

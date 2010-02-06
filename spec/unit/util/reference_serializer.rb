@@ -14,7 +14,7 @@ describe Puppet::Util::ReferenceSerializer do
 
     describe "when serializing" do
         it "should yaml-dump resource references" do
-            ref = Puppet::Parser::Resource::Reference.new(:type => "file", :title => "/foo")
+            ref = Puppet::Resource.new("file", "/foo")
             @tester.serialize_value(ref).should =~ /^---/
         end
 

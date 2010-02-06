@@ -485,9 +485,9 @@ describe Puppet::Type::RelationshipMetaparam do
         param = Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]})
 
         catalog.expects(:resource).with("Foo[bar]").returns "something"
-        catalog.expects(:resource).with("Class[test]").returns nil
+        catalog.expects(:resource).with("Class[Test]").returns nil
 
-        param.expects(:fail).with { |string| string.include?("Class[test]") }
+        param.expects(:fail).with { |string| string.include?("Class[Test]") }
 
         param.validate_relationship
     end

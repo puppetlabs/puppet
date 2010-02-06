@@ -25,7 +25,7 @@ module Puppet
 
     class Parser < Racc::Parser
 
-module_eval <<'..end grammar.ra modeval..idfda8a9bd6f', 'grammar.ra', 850
+module_eval <<'..end grammar.ra modeval..idfe2b94e6d1', 'grammar.ra', 850
 
 # It got too annoying having code in a file that needs to be compiled.
 require 'puppet/parser/parser_support'
@@ -37,7 +37,7 @@ require 'puppet/parser/parser_support'
 
 # $Id$
 
-..end grammar.ra modeval..idfda8a9bd6f
+..end grammar.ra modeval..idfe2b94e6d1
 
 ##### racc 1.4.5 generates ###
 
@@ -1251,7 +1251,7 @@ module_eval <<'.,.,', 'grammar.ra', 159
         result.push ast(AST::Resource,
             :type => val[0],
             :title => instance[0],
-            :params => instance[1])
+            :parameters => instance[1])
     }
    result
   end
@@ -1268,7 +1268,7 @@ module_eval <<'.,.,', 'grammar.ra', 162
 module_eval <<'.,.,', 'grammar.ra', 165
   def _reduce_37( val, _values, result )
     # a defaults setting for a type
-    result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
+    result = ast(AST::ResourceDefaults, :type => val[0], :parameters => val[2])
    result
   end
 .,.,
@@ -1276,7 +1276,7 @@ module_eval <<'.,.,', 'grammar.ra', 165
 module_eval <<'.,.,', 'grammar.ra', 171
   def _reduce_38( val, _values, result )
     @lexer.commentpop
-    result = ast AST::ResourceOverride, :object => val[0], :params => val[2]
+    result = ast AST::ResourceOverride, :object => val[0], :parameters => val[2]
    result
   end
 .,.,

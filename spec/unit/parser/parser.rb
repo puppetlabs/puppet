@@ -154,7 +154,7 @@ describe Puppet::Parser do
 
         it "should create an ast::ResourceOverride" do
             ast::ResourceOverride.expects(:new).with { |arg|
-                arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:params].is_a?(ast::ResourceParam)
+                arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:parameters].is_a?(ast::ResourceParam)
             }
             @parser.parse('Resource["title1","title2"] { param => value }')
         end

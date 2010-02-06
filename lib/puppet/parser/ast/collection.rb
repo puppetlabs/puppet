@@ -31,7 +31,7 @@ class Collection < AST::Branch
             end
 
             newcoll.add_override(
-                :params => params,
+                :parameters => params,
                 :file => @file,
                 :line => @line,
                 :source => scope.source,

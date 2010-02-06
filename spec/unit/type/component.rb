@@ -10,11 +10,11 @@ describe component do
     end
 
     it "should use Class as its type when a normal string is provided as the title" do
-        component.new(:name => "bar").ref.should == "Class[bar]"
+        component.new(:name => "bar").ref.should == "Class[Bar]"
     end
 
     it "should always produce a resource reference string as its title" do
-        component.new(:name => "bar").title.should == "Class[bar]"
+        component.new(:name => "bar").title.should == "Class[Bar]"
     end
 
     it "should have a reference string equivalent to its title" do
@@ -49,7 +49,7 @@ describe component do
 
     describe "when building up the path" do
         it "should produce the class name if the component models a class" do
-            component.new(:name => "Class[foo]").pathbuilder.must == ["foo"]
+            component.new(:name => "Class[foo]").pathbuilder.must == ["Foo"]
         end
 
         it "should produce an empty string if the component models the 'main' class" do

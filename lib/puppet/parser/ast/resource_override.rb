@@ -8,11 +8,11 @@ class Puppet::Parser::AST
         associates_doc
 
         attr_accessor :object
-        attr_reader :params
+        attr_reader :parameters
 
         # Iterate across all of our children.
         def each
-            [@object,@params].flatten.each { |param|
+            [@object,@parameters].flatten.each { |param|
                 #Puppet.debug("yielding param %s" % param)
                 yield param
             }
@@ -27,7 +27,7 @@ class Puppet::Parser::AST
             hash = {}
 
             # Evaluate all of the specified params.
-            params = @params.collect { |param|
+            params = @parameters.collect { |param|
                 param.safeevaluate(scope)
             }
 
@@ -37,7 +37,7 @@ class Puppet::Parser::AST
 
             resource = resource.collect do |r|
                 res = Puppet::Parser::Resource.new(r.type, r.title,
-                    :params => params,
+                    :parameters => params,
                     :file => file,
                     :line => line,
                     :source => scope.source,

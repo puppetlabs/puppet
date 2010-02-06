@@ -118,53 +118,6 @@ class TestScope < Test::Unit::TestCase
         assert_equal(top, sub.parent, "Did not find parent scope on second call")
     end
 
-    def test_includefunction
-        parser = mkparser
-        scope = mkscope :parser => parser
-
-        myclass = parser.newclass "myclass"
-        otherclass = parser.newclass "otherclass"
-
-        function = Puppet::Parser::AST::Function.new(
-            :name => "include",
-            :ftype => :statement,
-            :arguments => AST::ASTArray.new(
-                :children => [nameobj("myclass"), nameobj("otherclass")]
-            )
-        )
-
-        assert_nothing_raised do
-            function.evaluate scope
-        end
-
-        scope.compiler.send(:evaluate_generators)
-
-        [myclass, otherclass].each do |klass|
-            assert(scope.compiler.class_scope(klass),
-                "%s was not set" % klass.name)
-        end
-    end
-
-    def test_definedfunction
-        Puppet::Parser::Functions.function(:defined)
-        parser = mkparser
-        %w{one two}.each do |name|
-            parser.newdefine name
-        end
-
-        scope = mkscope :parser => parser
-
-        assert_nothing_raised {
-            %w{one two file user}.each do |type|
-                assert(scope.function_defined([type]),
-                    "Class #{type} was not considered defined")
-            end
-
-            assert(!scope.function_defined(["nopeness"]),
-                "Class 'nopeness' was incorrectly considered defined")
-        }
-    end
-
     # Make sure we know what we consider to be truth.
     def test_truth
         assert_equal(true, Puppet::Parser::Scope.true?("a string"),
@@ -179,23 +132,19 @@ class TestScope < Test::Unit::TestCase
             "undef considered true")
     end
 
-    # Verify that we recursively mark as exported the results of collectable
-    # components.
     def test_virtual_definitions_do_not_get_evaluated
-        config = mkcompiler
         parser = mkparser
+        config = mkcompiler
 
         # Create a default source
         parser.newclass("")
         config.topscope.source = parser.known_resource_types.hostclass("")
 
         # And a scope resource
-        scope_res = Puppet::Parser::Resource.new(:file, "/file", :scope => "scope", :source => "source")
+        scope_res = Puppet::Parser::Resource.new(:file, "/file", :scope => config.topscope)
         config.topscope.resource = scope_res
 
         args = AST::ASTArray.new(
-            :file => tempfile(),
-            :line => rand(100),
             :children => [nameobj("arg")]
         )
 

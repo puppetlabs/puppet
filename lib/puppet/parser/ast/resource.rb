@@ -8,13 +8,13 @@ class Resource < AST::ResourceReference
     associates_doc
 
     attr_accessor :title, :type, :exported, :virtual
-    attr_reader :params
+    attr_reader :parameters
 
     # Does not actually return an object; instead sets an object
     # in the current scope.
     def evaluate(scope)
         # Evaluate all of the specified params.
-        paramobjects = params.collect { |param|
+        paramobjects = parameters.collect { |param|
             param.safeevaluate(scope)
         }
 
@@ -58,11 +58,11 @@ class Resource < AST::ResourceReference
     end
 
     # Set the parameters for our object.
-    def params=(params)
+    def parameters=(params)
         if params.is_a?(AST::ASTArray)
-            @params = params
+            @parameters = params
         else
-            @params = AST::ASTArray.new(
+            @parameters = AST::ASTArray.new(
                 :line => params.line,
                 :file => params.file,
                 :children => [params]

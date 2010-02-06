@@ -123,7 +123,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def randeach(type)
-        [:properties, :metaparams, :params].collect { |thing|
+        [:properties, :metaparams, :parameters].collect { |thing|
             randthing(thing,type)
         }
     end
@@ -206,7 +206,7 @@ class TestSnippets < Test::Unit::TestCase
 
         assert_nothing_raised {
             assert_equal(
-                "//testing/Mytype[componentname]/File[/tmp/classtest]",
+                "//Testing/Mytype[componentname]/File[/tmp/classtest]",
                 file.path)
         }
     end

@@ -40,7 +40,7 @@ Puppet::Type.newtype(:component) do
         if reference.type == "Class"
             # 'main' is the top class, so we want to see '//' instead of
             # its name.
-            if reference.title == "main"
+            if reference.title.to_s.downcase == "main"
                 myname = ""
             else
                 myname = reference.title

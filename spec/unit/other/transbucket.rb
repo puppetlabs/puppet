@@ -44,7 +44,7 @@ describe Puppet::TransBucket do
 
     it "should return use 'component' as the type and the provided type as the title if only a name is provided" do
         @bucket.name = "mystuff"
-        @bucket.to_ref.should == "Class[mystuff]"
+        @bucket.to_ref.should == "Class[Mystuff]"
     end
 
     it "should return nil as its reference when type and name are missing" do
