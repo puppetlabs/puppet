@@ -226,7 +226,7 @@ class Puppet::Resource::Type
     end
 
     def parent_scope(scope, klass)
-        scope.compiler.class_scope(klass) || raise(Puppet::DevError, "Could not find scope for #{klass.name}")
+        scope.class_scope(klass) || raise(Puppet::DevError, "Could not find scope for #{klass.name}")
     end
 
     def set_name_and_namespace(name)
