@@ -25,8 +25,13 @@ class Puppet::Resource::Type
 
     # Now evaluate the code associated with this class or definition.
     def evaluate_code(resource)
-        # Create a new scope.
-        scope = subscope(resource.scope, resource)
+        scope = resource.scope
+
+        if tmp = evaluate_parent_type(resource)
+            scope = tmp
+        end
+
+        scope = subscope(scope, resource)
 
         set_resource_parameters(resource, scope)
 
@@ -206,12 +211,22 @@ class Puppet::Resource::Type
         end
     end
 
+    def evaluate_parent_type(resource)
+        return unless klass = parent_type and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name)
+        parent_resource.evaluate unless parent_resource.evaluated?
+        return parent_scope(resource.scope, klass)
+    end
+
     # Split an fq name into a namespace and name
     def namesplit(fullname)
         ary = fullname.split("::")
         n = ary.pop || ""
         ns = ary.join("::")
         return ns, n
+    end
+
+    def parent_scope(scope, klass)
+        scope.compiler.class_scope(klass) || raise(Puppet::DevError, "Could not find scope for #{klass.name}")
     end
 
     def set_name_and_namespace(name)

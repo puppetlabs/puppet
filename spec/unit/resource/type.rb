@@ -329,7 +329,7 @@ describe Puppet::Resource::Type do
         before do
             @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
             @scope = Puppet::Parser::Scope.new :compiler => @compiler
-            @resource = stub 'resource', :title => "yay", :name => "yea", :ref => "Foo[bar]", :scope => @scope
+            @resource = Puppet::Parser::Resource.new(:foo, "yay", :scope => @scope)
             @type = Puppet::Resource::Type.new(:hostclass, "foo")
             @type.stubs(:set_resource_parameters)
         end
@@ -350,6 +350,15 @@ describe Puppet::Resource::Type do
             @type.evaluate_code(@resource)
         end
 
+        it "should still create a scope but not store it if the type is a definition" do
+            subscope = stub 'subscope', :compiler => @compiler, :setvar => nil
+
+            @type = Puppet::Resource::Type.new(:definition, "foo")
+            @type.expects(:subscope).with(@scope, @resource).returns subscope
+            @type.evaluate_code(@resource)
+            @compiler.class_scope(@type).should be_nil
+        end
+
         it "should evaluate the code if any is provided" do
             code = stub 'code'
             @type.stubs(:code).returns code
@@ -363,6 +372,40 @@ describe Puppet::Resource::Type do
             @type.expects(:code).returns nil
 
             @type.evaluate_code(@resource)
+        end
+
+        describe "and it has a parent class" do
+            before do
+                @parent_type = Puppet::Resource::Type.new(:hostclass, "parent")
+                @compiler
+                @type.parent = "parent"
+                @parent_resource = Puppet::Parser::Resource.new(:class, "parent", :scope => @scope)
+
+                @compiler.add_resource @scope, @parent_resource
+
+                @type.code_collection = @scope.known_resource_types
+                @type.code_collection.add @parent_type
+            end
+
+            it "should evaluate the parent's resource" do
+                @type.evaluate_code(@resource)
+
+                @compiler.class_scope(@parent_type).should_not be_nil
+            end
+
+            it "should not evaluate the parent's resource if it has already been evaluated" do
+                @parent_resource.evaluate
+
+                @parent_resource.expects(:evaluate).never
+
+                @type.evaluate_code(@resource)
+            end
+
+            it "should use the parent's scope as its base scope" do
+                @type.evaluate_code(@resource)
+
+                @scope.compiler.class_scope(@type).parent.object_id.should == @scope.compiler.class_scope(@parent_type).object_id
+            end
         end
     end
 
