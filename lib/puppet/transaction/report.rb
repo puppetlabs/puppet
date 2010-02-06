@@ -138,7 +138,7 @@ class Puppet::Transaction::Report
     def calculate_time_metrics
         metrics = Hash.new(0)
         resource_statuses.each do |name, status|
-            type = Puppet::Resource::Reference.new(name).type
+            type = Puppet::Resource.new(name).type
             metrics[type.to_s.downcase] += status.evaluation_time if status.evaluation_time
         end
 
