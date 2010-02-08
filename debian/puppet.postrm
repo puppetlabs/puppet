@@ -2,7 +2,6 @@
 
 case "$1" in
     purge)
-	rm -rf /var/lib/puppet
 	rm -f /etc/puppet/puppetd.conf
 	;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
