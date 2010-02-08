@@ -11,6 +11,8 @@ class Puppet::Parser::AST
         # Short-curcuit evaluation.  Return the value of the statements for
         # the first option that matches.
         def evaluate(scope)
+            level = scope.ephemeral_level
+
             value = @test.safeevaluate(scope)
 
             retvalue = nil
@@ -32,7 +34,7 @@ class Puppet::Parser::AST
             Puppet.debug "No true answers and no default"
             return nil
         ensure
-            scope.unset_ephemeral_var
+            scope.unset_ephemeral_var(level)
         end
 
         def each

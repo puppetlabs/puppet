@@ -16,6 +16,7 @@ class Puppet::Parser::AST
         # else if there's an 'else' setting, evaluate it.
         # the first option that matches.
         def evaluate(scope)
+            level = scope.ephemeral_level
             value = @test.safeevaluate(scope)
 
             # let's emulate a new scope for each branches
@@ -30,7 +31,7 @@ class Puppet::Parser::AST
                     end
                 end
             ensure
-                scope.unset_ephemeral_var
+                scope.unset_ephemeral_var(level)
             end
         end
     end

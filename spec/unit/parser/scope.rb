@@ -286,6 +286,85 @@ describe Puppet::Parser::Scope do
 
             @scope.lookupvar("myvar", false).should == :value1
         end
+
+        it "should raise an error when setting it again" do
+            @scope.setvar("1", :value2, :ephemeral => true)
+            lambda { @scope.setvar("1", :value3, :ephemeral => true) }.should raise_error
+        end
+
+        it "should declare ephemeral number only variable names" do
+            @scope.ephemeral?("0").should be_true
+        end
+
+        it "should not declare ephemeral other variable names" do
+            @scope.ephemeral?("abc0").should be_nil
+        end
+
+        describe "with more than one level" do
+            it "should prefer latest ephemeral scopes" do
+                @scope.setvar("0", :earliest, :ephemeral => true)
+                @scope.new_ephemeral
+                @scope.setvar("0", :latest, :ephemeral => true)
+                @scope.lookupvar("0", false).should == :latest
+            end
+
+            it "should be able to report the current level" do
+                @scope.ephemeral_level.should == 1
+                @scope.new_ephemeral
+                @scope.ephemeral_level.should == 2
+            end
+
+            it "should check presence of an ephemeral variable accross multiple levels" do
+                @scope.new_ephemeral
+                @scope.setvar("1", :value1, :ephemeral => true)
+                @scope.new_ephemeral
+                @scope.setvar("0", :value2, :ephemeral => true)
+                @scope.new_ephemeral
+                @scope.ephemeral_include?("1").should be_true
+            end
+
+            it "should return false when an ephemeral variable doesn't exist in any ephemeral scope" do
+                @scope.new_ephemeral
+                @scope.setvar("1", :value1, :ephemeral => true)
+                @scope.new_ephemeral
+                @scope.setvar("0", :value2, :ephemeral => true)
+                @scope.new_ephemeral
+                @scope.ephemeral_include?("2").should be_false
+            end
+
+            it "should get ephemeral values from earlier scope when not in later" do
+                @scope.setvar("1", :value1, :ephemeral => true)
+                @scope.new_ephemeral
+                @scope.setvar("0", :value2, :ephemeral => true)
+                @scope.lookupvar("1", false).should == :value1
+            end
+
+            describe "when calling unset_ephemeral_var without a level" do
+                it "should remove all the variables values"  do
+                    @scope.setvar("1", :value1, :ephemeral => true)
+                    @scope.new_ephemeral
+                    @scope.setvar("1", :value2, :ephemeral => true)
+
+                    @scope.unset_ephemeral_var
+
+                    @scope.lookupvar("1", false).should == :undefined
+                end
+            end
+
+            describe "when calling unset_ephemeral_var with a level" do
+                it "should remove ephemeral scopes up to this level" do
+                    @scope.setvar("1", :value1, :ephemeral => true)
+                    @scope.new_ephemeral
+                    @scope.setvar("1", :value2, :ephemeral => true)
+                    @scope.new_ephemeral
+                    @scope.setvar("1", :value3, :ephemeral => true)
+
+                    @scope.unset_ephemeral_var(2)
+
+                    @scope.lookupvar("1", false).should == :value2
+                end
+            end
+        end
     end
 
     describe "when interpolating string" do
@@ -451,6 +530,11 @@ describe Puppet::Parser::Scope do
 
             @scope.ephemeral_from(@match)
         end
+
+        it "should create a new ephemeral level" do
+            @scope.expects(:new_ephemeral)
+            @scope.ephemeral_from(@match)
+        end
     end
 
     describe "when unsetting variables" do
@@ -461,9 +545,16 @@ describe Puppet::Parser::Scope do
         end
 
         it "should be able to unset ephemeral variables" do
-            @scope.setvar("foo", "bar", :ephemeral => true)
-            @scope.unsetvar("foo")
-            @scope.lookupvar("foo").should == ""
+            @scope.setvar("0", "bar", :ephemeral => true)
+            @scope.unsetvar("0")
+            @scope.lookupvar("0").should == ""
+        end
+
+        it "should not unset ephemeral variables in previous ephemeral scope" do
+            @scope.setvar("0", "bar", :ephemeral => true)
+            @scope.new_ephemeral
+            @scope.unsetvar("0")
+            @scope.lookupvar("0").should == "bar"
         end
     end
 
