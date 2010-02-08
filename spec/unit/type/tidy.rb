@@ -273,6 +273,12 @@ describe tidy do
 
                 @sizer.must be_tidy("/what/ever", @stat)
             end
+
+            it "should return true if the file is equal to the specified size" do
+                @stat.expects(:size).returns(1024)
+
+                @sizer.must be_tidy("/what/ever", @stat)
+            end
         end
 
         describe "and determining whether a file should be tidied" do
