@@ -1,7 +1,6 @@
 man/man8/puppet.8
 man/man8/filebucket.8  
 man/man8/puppet.8  
-man/man8/puppet.conf.8  
 man/man8/puppetd.8  
 man/man8/puppetdoc.8  
 man/man8/ralsh.8

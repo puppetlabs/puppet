@@ -1,8 +1,11 @@
 puppet (0.25.4-2) UNRELEASED; urgency=low
 
+  [ Stig Sandbeck Mathisen ]
   * puppet: do not explicitly remove /var/lib/puppet on purge (Closes: #525852)
+  * upstream cherry-pick: Updated man pages and moved puppet.conf.8 to
+    puppet.conf.5 (Closes: #563567)
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 08 Feb 2010 10:00:10 +0100
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 08 Feb 2010 15:06:21 +0100
 
 puppet (0.25.4-1) unstable; urgency=low
 
