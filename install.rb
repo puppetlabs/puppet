@@ -83,7 +83,7 @@ sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
-man   = glob(%w{man/man8/*})
+man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
 tests = glob(%w{test/**/*.rb})
 
@@ -355,9 +355,9 @@ def build_man(bins)
         # Locate rst2man
         rst2man = %x{which rst2man.py}
         rst2man.chomp!
-        # Create puppet.conf.8 man page
+        # Create puppet.conf.5 man page
         %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
-        %x{#{rst2man} ./puppet.conf.rst ./man/man8/puppet.conf.8}
+        %x{#{rst2man} ./puppet.conf.rst ./man/man5/puppet.conf.5}
         File.unlink("./puppet.conf.rst")
 
         # Create binary man pages
