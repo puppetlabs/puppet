@@ -12,6 +12,7 @@ class Puppet::Parser::AST
 
         # Find the value that corresponds with the test.
         def evaluate(scope)
+            level = scope.ephemeral_level
             # Get our parameter.
             paramvalue = @param.safeevaluate(scope)
 
@@ -37,7 +38,7 @@ class Puppet::Parser::AST
 
             self.fail Puppet::ParseError, "No matching value for selector param '%s'" % paramvalue
         ensure
-            scope.unset_ephemeral_var
+            scope.unset_ephemeral_var(level)
         end
 
         def to_s
