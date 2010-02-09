@@ -86,6 +86,8 @@ class Puppet::Util::Autoload
                 name = symbolize(name)
                 loaded name, file
                 return true
+            rescue SystemExit,NoMemoryError
+                raise
             rescue Exception => detail
                 # I have no idea what's going on here, but different versions
                 # of ruby are raising different errors on missing files.
@@ -123,6 +125,8 @@ class Puppet::Util::Autoload
                 begin
                     Kernel.require file
                     loaded(name, file)
+                rescue SystemExit,NoMemoryError
+                    raise
                 rescue Exception => detail
                     if Puppet[:trace]
                         puts detail.backtrace
@@ -152,7 +156,7 @@ class Puppet::Util::Autoload
         end
     end
 
-    def search_directories
-        [module_directories, Puppet[:libdir], $:].flatten
+    def search_directories(dummy_argument=:work_arround_for_ruby_GC_bug)
+        [module_directories, Puppet[:libdir].split(File::PATH_SEPARATOR), $:].flatten
     end
 end

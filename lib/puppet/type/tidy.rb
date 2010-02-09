@@ -139,7 +139,7 @@ Puppet::Type.newtype(:tidy) do
         end
 
         def tidy?(path, stat)
-            if stat.size > value
+            if stat.size >= value
                 return true
             else
                 return false

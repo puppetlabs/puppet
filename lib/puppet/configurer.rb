@@ -5,6 +5,8 @@ require 'puppet/network/http_pool'
 require 'puppet/util'
 
 class Puppet::Configurer
+    class CommandHookError < RuntimeError; end
+
     require 'puppet/configurer/fact_handler'
     require 'puppet/configurer/plugin_handler'
 
@@ -31,6 +33,19 @@ class Puppet::Configurer
     # How to lock instances of this class.
     def self.lockfile_path
         Puppet[:puppetdlockfile]
+    end
+
+    def clear
+        @catalog.clear(true) if @catalog
+        @catalog = nil
+    end
+
+    def execute_postrun_command
+        execute_from_setting(:postrun_command)
+    end
+
+    def execute_prerun_command
+        execute_from_setting(:prerun_command)
     end
 
     # Initialize and load storage
@@ -73,6 +88,8 @@ class Puppet::Configurer
         download_plugins()
 
         download_fact_plugins()
+
+        execute_prerun_command
     end
 
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -91,6 +108,8 @@ class Puppet::Configurer
             duration = thinmark do
                 result = catalog_class.find(name, fact_options.merge(:ignore_cache => true))
             end
+        rescue SystemExit,NoMemoryError
+            raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not retrieve catalog from remote server: %s" % detail
@@ -134,6 +153,8 @@ class Puppet::Configurer
     def run(options = {})
         begin
             prepare()
+        rescue SystemExit,NoMemoryError
+            raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Failed to prepare catalog: %s" % detail
@@ -165,6 +186,7 @@ class Puppet::Configurer
         # Now close all of our existing http connections, since there's no
         # reason to leave them lying open.
         Puppet::Network::HttpPool.clear_http_instances
+        execute_postrun_command
 
         Puppet::Util::Log.close(report)
 
@@ -197,5 +219,15 @@ class Puppet::Configurer
         end
 
         return timeout
+    end
+
+    def execute_from_setting(setting)
+        return if (command = Puppet[setting]) == ""
+
+        begin
+            Puppet::Util.execute([command])
+        rescue => detail
+            raise CommandHookError, "Could not run command from #{setting}: #{detail}"
+        end
     end
 end

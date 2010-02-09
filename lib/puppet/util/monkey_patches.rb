@@ -1,3 +1,4 @@
+Process.maxgroups = 1024
 module RDoc 
     def self.caller(skip=nil)
         in_gem_wrapper = false

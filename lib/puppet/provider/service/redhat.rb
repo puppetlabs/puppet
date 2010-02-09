@@ -1,6 +1,6 @@
 # Manage Red Hat services.  Start/stop uses /sbin/service and enable/disable uses chkconfig
 
-Puppet::Type.type(:service).provide :redhat, :parent => :init do
+Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init do
     desc "Red Hat's (and probably many others) form of ``init``-style service management:
 
     Uses ``chkconfig`` for service enabling and disabling.

@@ -159,9 +159,6 @@ module Puppet
             may need to use a FQDN for the server hostname when using a proxy."],
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
-        :http_enable_post_connection_check => [true,
-            "Boolean; whether or not puppetd should validate the server
-            SSL certificate against the request hostname."],
         :filetimeout => [ 15,
             "The minimum time to wait (in seconds) between checking for updates in
             configuration files.  This timeout determines how quickly Puppet checks whether
@@ -199,7 +196,12 @@ module Puppet
             reports, allowing you to correlate changes on your hosts to the source version on the server."],
         :zlib => [true, 
             "Boolean; whether to use the zlib library",
-        ]
+        ],
+        :prerun_command => ["", "A command to run before every agent run.  If this command returns a non-zero
+            return code, the entire Puppet run will fail."],
+        :postrun_command => ["", "A command to run after every agent run.  If this command returns a non-zero
+            return code, the entire Puppet run will be considered to have failed, even though it might have
+            performed work during the normal run."]
     )
 
     hostname = Facter["hostname"].value
