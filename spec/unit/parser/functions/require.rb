@@ -13,6 +13,8 @@ describe "the require function" do
         @scope.stubs(:resource).returns @resource
         @scope.stubs(:findresource)
         @scope.stubs(:compiler).returns(@compiler)
+        @klass = stub 'class', :classname => "myclass"
+        @scope.stubs(:find_hostclass).returns(@klass)
     end
 
     it "should exist" do
@@ -42,6 +44,15 @@ describe "the require function" do
         @scope.expects(:warning)
         @resource.expects(:set_parameter).never
         @scope.expects(:function_include)
+
+        @scope.function_require("myclass")
+    end
+
+    it "should lookup the absolute class path" do
+        @scope.stubs(:function_include)
+
+        @scope.expects(:find_hostclass).with("myclass").returns(@klass)
+        @klass.expects(:classname).returns("myclass")
 
         @scope.function_require("myclass")
     end

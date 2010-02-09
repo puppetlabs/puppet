@@ -37,6 +37,13 @@ fail if used with earlier clients.
         vals = [vals] unless vals.is_a?(Array)
 
         vals.each do |klass|
+            # lookup the class in the scopes
+            if classobj = find_hostclass(klass)
+                klass = classobj.classname
+            else
+                raise Puppet::ParseError, "Could not find class %s" % klass
+            end
+
             # This is a bit hackish, in some ways, but it's the only way
             # to configure a dependency that will make it to the client.
             # The 'obvious' way is just to add an edge in the catalog,
