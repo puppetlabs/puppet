@@ -109,4 +109,8 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     [self.initscript, :onestop]
   end
 
+  def statuscmd
+    [self.initscript, :onestatus]
+  end
+
 end
