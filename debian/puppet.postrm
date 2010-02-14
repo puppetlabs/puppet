@@ -2,8 +2,12 @@
 
 case "$1" in
     purge)
-	rm -f /etc/puppet/puppetd.conf
-	;;
+		# Remove puppetd.conf (used in > 0.24)
+		rm -f /etc/puppet/puppetd.conf
+
+		# Remove explicitly created state directory
+		rm -rf /var/lib/puppet/state
+		;;
     remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
 
 
