@@ -4,8 +4,14 @@ puppet (0.25.4-2) UNRELEASED; urgency=low
   * puppet: do not explicitly remove /var/lib/puppet on purge (Closes: #525852)
   * upstream cherry-pick: Updated man pages and moved puppet.conf.8 to
     puppet.conf.5 (Closes: #563567)
+  * Fix "Improper ownership of /var/lib/puppet/state", explicitly create this
+    in postinst (and remove in postrm on purge) (Closes: #462551)
+  * Fix "wrong default location for templates", update default settings, and
+    create puppet-common.NEWS with information (Closes: #484659)
+  * Move postinst and postrm handling of shared users and directories to
+    puppet-common
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 08 Feb 2010 15:06:21 +0100
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 14 Feb 2010 15:36:48 +0100
 
 puppet (0.25.4-1) unstable; urgency=low
 
