@@ -14,39 +14,62 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   end
 
   # Executing an init script with the 'rcvar' argument returns
-  # the service name and whether it's enabled/disabled
+  # the service name, rcvar name and whether it's enabled/disabled
   def rcvar
     rcvar = execute([self.initscript, :rcvar], :failonfail => true, :squelch => false)
-    rcvar = rcvar.lines.to_a[1].gsub(/\n/, "")
-    self.debug("rcvar is #{rcvar}")
+    rcvar = rcvar.split("\n")
     return rcvar
   end
 
-  # Extract the service name from the rcvar
+  # Extract service name
+  def service_name
+    name = self.rcvar[0]
+    self.error("No service name found in rcvar") if name.nil?
+    name = name.gsub!(/# (.*)/, '\1')
+    self.error("Service name is empty") if name.nil?
+    self.debug("Service name is #{name}")
+    return name
+  end
+
+  # Extract rcvar name
   def rcvar_name
-    name = self.rcvar.gsub(/(.*)_enable=(.*)/, '\1')
+    name = self.rcvar[1]
+    self.error("No rcvar name found in rcvar") if name.nil?
+    name = name.gsub!(/(.*)_enable=(.*)/, '\1')
+    self.error("rcvar name is empty") if name.nil?
     self.debug("rcvar name is #{name}")
     return name
   end
 
+  # Extract rcvar value
+  def rcvar_value
+    value = self.rcvar[1]
+    self.error("No rcvar value found in rcvar") if value.nil?
+    value = value.gsub!(/(.*)_enable=\"?(.*)\"?/, '\2')
+    self.error("rcvar value is empty") if value.nil?
+    self.debug("rcvar value is #{value}")
+    return value
+  end
+
   # Edit rc files and set the service to yes/no
   def rc_edit(yesno)
-    name = self.rcvar_name
-    self.debug("Editing rc files: setting #{name} to #{yesno}")
-    if not self.rc_replace(yesno, name)
-      self.rc_add(yesno, name)
+    service = self.service_name
+    rcvar = self.rcvar_name
+    self.debug("Editing rc files: setting #{rcvar} to #{yesno} for #{service}")
+    if not self.rc_replace(service, rcvar, yesno)
+      self.rc_add(service, rcvar, yesno)
     end
   end
 
   # Try to find an existing setting in the rc files 
   # and replace the value
-  def rc_replace(yesno, name)
+  def rc_replace(service, rcvar, yesno)
     success = false
     # Replace in all files, not just in the first found with a match
-    [@@rcconf, @@rcconf_local, @@rcconf_dir + "/#{name}"].each do |filename|
+    [@@rcconf, @@rcconf_local, @@rcconf_dir + "/#{service}"].each do |filename|
       if File.exists?(filename)
         s = File.read(filename)
-        if s.gsub!(/(#{name}_enable)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
+        if s.gsub!(/(#{rcvar}_enable)=\"?(YES|NO)\"?/, "\\1=\"#{yesno}\"")
           File.open(filename, File::WRONLY) { |f| f << s }
           self.debug("Replaced in #{filename}")
           success = true
@@ -57,11 +80,11 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   end
 
   # Add a new setting to the rc files
-  def rc_add(yesno, name)
-    append = "\n\# Added by Puppet\n#{name}_enable=\"#{yesno}\""
+  def rc_add(service, rcvar, yesno)
+    append = "\n\# Added by Puppet\n#{rcvar}_enable=\"#{yesno}\""
     # First, try the one-file-per-service style
     if File.exists?(@@rcconf_dir)
-      File.open(@@rcconf_dir + "/#{name}", File::WRONLY | File::APPEND | File::CREAT, 0644) {
+      File.open(@@rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0644) {
         |f| f << append
         self.debug("Appended to #{f.path}")
       }
@@ -83,7 +106,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   end
 
   def enabled?
-    if /YES$/ =~ self.rcvar then
+    if /YES$/ =~ self.rcvar_value then
       self.debug("Is enabled")
       return :true
     end
