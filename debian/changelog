@@ -1,4 +1,4 @@
-puppet (0.25.4-2) UNRELEASED; urgency=low
+puppet (0.25.4-2) unstable; urgency=low
 
   [ Stig Sandbeck Mathisen ]
   * puppet: do not explicitly remove /var/lib/puppet on purge (Closes: #525852)
@@ -11,7 +11,7 @@ puppet (0.25.4-2) UNRELEASED; urgency=low
   * Move postinst and postrm handling of shared users and directories to
     puppet-common (Closes: #570012)
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 14 Feb 2010 15:36:48 +0100
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 16 Feb 2010 06:30:55 +0000
 
 puppet (0.25.4-1) unstable; urgency=low
 
