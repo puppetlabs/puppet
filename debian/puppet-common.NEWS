@@ -1,10 +1,10 @@
 puppet (0.25.4-2) unstable; urgency=low
 
- The default location of the puppet template directory has been moved to
- /etc/puppet/templates from /var/lib/puppet/templates.
+  The default location of the puppet template directory has been moved to
+  /etc/puppet/templates from /var/lib/puppet/templates.
   
- If you use templates in your manifests, please either set "templatedir" in
- /etc/puppet/puppet.conf to the old location, or move your templates to the new
- location.
+  If you use templates in your manifests, please either set "templatedir" in
+  /etc/puppet/puppet.conf to the old location, or move your templates to the new
+  location.
 
  -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 14 Feb 2010 15:33:30 +0100
