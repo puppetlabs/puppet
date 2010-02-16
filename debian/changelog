@@ -9,7 +9,7 @@ puppet (0.25.4-2) UNRELEASED; urgency=low
   * Fix "wrong default location for templates", update default settings, and
     create puppet-common.NEWS with information (Closes: #484659)
   * Move postinst and postrm handling of shared users and directories to
-    puppet-common
+    puppet-common (Closes: #570012)
 
  -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 14 Feb 2010 15:36:48 +0100
 
