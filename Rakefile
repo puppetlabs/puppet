@@ -3,7 +3,7 @@
 $: << File.expand_path('lib')
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 
-require './lib/puppet.rb'
+require 'puppet.rb'
 require 'rake'
 require 'rake/packagetask'
 require 'rake/gempackagetask'
