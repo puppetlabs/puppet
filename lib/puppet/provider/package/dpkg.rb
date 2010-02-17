@@ -32,14 +32,14 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         return packages
     end
 
-    REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
-    FIELDS = [:desired, :error, :status, :name, :ensure]
+    self::REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
+    self::FIELDS = [:desired, :error, :status, :name, :ensure]
 
     def self.parse_line(line)
-        if match = REGEX.match(line)
+        if match = self::REGEX.match(line)
             hash = {}
 
-            FIELDS.zip(match.captures) { |field,value|
+            self::FIELDS.zip(match.captures) { |field,value|
                 hash[field] = value
             }
 
