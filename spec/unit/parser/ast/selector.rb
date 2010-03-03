@@ -40,16 +40,6 @@ describe Puppet::Parser::AST::Selector do
             @selector.evaluate(@scope)
         end
 
-        it "should downcase the evaluated param value if allowed" do
-            Puppet.stubs(:[]).with(:casesensitive).returns(false)
-            value = stub 'param'
-            @param.stubs(:safeevaluate).with(@scope).returns(value)
-
-            value.expects(:downcase)
-
-            @selector.evaluate(@scope)
-        end
-
         it "should scan each option" do
             @values.expects(:each).multiple_yields(@value1, @value2)
 

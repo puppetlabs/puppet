@@ -12,8 +12,6 @@ class Puppet::Parser::AST
         # the first option that matches.
         def evaluate(scope)
             value = @test.safeevaluate(scope)
-            sensitive = Puppet[:casesensitive]
-            value = value.downcase if ! sensitive and value.respond_to?(:downcase)
 
             retvalue = nil
             found = false
@@ -22,7 +20,7 @@ class Puppet::Parser::AST
             default = nil
             @options.each do |option|
                 option.eachopt do |opt|
-                    return option.safeevaluate(scope) if opt.evaluate_match(value, scope, :file => file, :line => line, :sensitive => sensitive)
+                    return option.safeevaluate(scope) if opt.evaluate_match(value, scope, :file => file, :line => line, :sensitive => Puppet[:casesensitive])
                 end
 
                 default = option if option.default?
