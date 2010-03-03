@@ -13,12 +13,12 @@ class Puppet::Parser::AST
         # evaluate ourselves, and match
         def evaluate_match(value, scope, options = {})
             obj = self.safeevaluate(scope)
-            if ! options[:sensitive] && obj.respond_to?(:downcase)
-                obj = obj.downcase
+            if options[:sensitive]
+                obj   = obj.downcase   if obj.respond_to?(:downcase)
+                value = value.downcase if value.respond_to?(:downcase)
             end
             # "" == undef for case/selector/if
-            return true if obj == "" and value == :undef
-            obj == value
+            obj == value or (obj == "" and value == :undef)
         end
 
         def match(value)

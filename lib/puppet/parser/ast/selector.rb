@@ -17,8 +17,6 @@ class Puppet::Parser::AST
 
             sensitive = Puppet[:casesensitive]
 
-            paramvalue = paramvalue.downcase if not sensitive and paramvalue.respond_to?(:downcase)
-
             default = nil
 
             unless @values.instance_of? AST::ASTArray or @values.instance_of? Array

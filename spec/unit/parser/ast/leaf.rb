@@ -40,6 +40,13 @@ describe Puppet::Parser::AST::Leaf do
 
             @leaf.evaluate_match(:undef, @scope).should be_true
         end
+
+        it "should downcase the parameter value if wanted" do
+            parameter = stub 'parameter'
+            parameter.expects(:downcase).returns("value")
+
+            @leaf.evaluate_match(parameter, @scope, :insensitive => true)
+        end
     end
 
     describe "when converting to string" do
@@ -238,6 +245,12 @@ describe Puppet::Parser::AST::Regex do
             @value.expects(:match).with("value")
 
             @regex.evaluate_match("value", @scope)
+        end
+
+        it "should not downcase the paramater value" do
+            @value.expects(:match).with("VaLuE")
+
+            @regex.evaluate_match("VaLuE", @scope)
         end
 
         it "should set ephemeral scope vars if there is a match" do
