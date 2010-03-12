@@ -55,17 +55,17 @@ case "$1" in
     start)
 	log_begin_msg "Starting $DESC"
 	start_puppet
-	log_end_msg 0
+	log_end_msg $?
 	;;
     stop)
 	log_begin_msg "Stopping $DESC"
 	stop_puppet
-	log_end_msg 0
+	log_end_msg $?
 	;;
     reload)
     	log_begin_msg "Reloading $DESC"
     	reload_puppet
-    	log_end_msg 0
+    	log_end_msg $?
     	;;
     status)
 	status_puppet
@@ -75,12 +75,10 @@ case "$1" in
 	stop_puppet
 	sleep 1
 	start_puppet
-	log_end_msg 0
+	log_end_msg $?
 	;;
   *)
 	echo "Usage: $0 {start|stop|status|restart|force-reload|reload}" >&2
 	exit 1
 	;;
 esac
-
-exit 0

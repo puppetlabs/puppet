@@ -1,3 +1,10 @@
+puppet (0.25.4-3) UNRELEASED; urgency=low
+
+  * Fix "puppetmaster and puppet scripts always return 0" with patch from
+    Mathias Gug, make sure return codes are actually used (Closes: #573473)
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 12 Mar 2010 12:18:43 +0100
+
 puppet (0.25.4-2) unstable; urgency=low
 
   [ Stig Sandbeck Mathisen ]
