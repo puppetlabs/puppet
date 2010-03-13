@@ -320,6 +320,13 @@ describe Puppet::Type.type(:file) do
             @file.expects(:newchild).with("my/file").returns "fiebar"
             @file.recurse_local.should == {"my/file" => "fiebar"}
         end
+
+        it "should set checksum_type to none if this file checksum is none" do
+            @file[:checksum] = :none
+            Puppet::FileServing::Metadata.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
+            @file.expects(:newchild).with("my/file").returns "fiebar"
+            @file.recurse_local
+        end
     end
 
     it "should have a method for performing link recursion" do

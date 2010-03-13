@@ -23,7 +23,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
 
     @unmanaged = true
 
-    @validtypes = %w{md5 md5lite timestamp mtime time}
+    @validtypes = %w{md5 md5lite timestamp mtime time none}
 
     def self.validtype?(type)
         @validtypes.include?(type)
@@ -52,6 +52,7 @@ Puppet::Type.type(:file).newproperty(:checksum) do
             cache(type, sum)
             return type
         else
+            return :none if value.nil? or value.to_s == "" or value.to_s == "none"
             if FileTest.directory?(@resource[:path])
                 return :time
             elsif @resource[:source] and value.to_s != "md5"

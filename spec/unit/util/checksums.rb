@@ -14,7 +14,7 @@ describe Puppet::Util::Checksums do
     end
 
     content_sums = [:md5, :md5lite, :sha1, :sha1lite]
-    file_only = [:ctime, :mtime]
+    file_only = [:ctime, :mtime, :none]
 
     content_sums.each do |sumtype|
         it "should be able to calculate %s sums from strings" % sumtype do
@@ -102,6 +102,12 @@ describe Puppet::Util::Checksums do
 
                 @summer.send(sum.to_s + "_file", file).should == "mysum"
             end
+        end
+    end
+
+    describe "when using the none checksum" do
+        it "should return an empty string" do
+            @summer.none_file("/my/file").should == ""
         end
     end
 end

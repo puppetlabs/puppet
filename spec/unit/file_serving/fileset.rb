@@ -42,6 +42,12 @@ describe Puppet::FileServing::Fileset, " when initializing" do
         set.links.should == :manage
     end
 
+    it "should accept a 'checksum_type' option" do
+        File.expects(:lstat).with("/some/file").returns stub("stat")
+        set = Puppet::FileServing::Fileset.new("/some/file", :checksum_type => :test)
+        set.checksum_type.should == :test
+    end
+
     it "should fail if 'links' is set to anything other than :manage or :follow" do
         proc { Puppet::FileServing::Fileset.new("/some/file", :links => :whatever) }.should raise_error(ArgumentError)
     end

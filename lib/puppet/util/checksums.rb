@@ -68,6 +68,11 @@ module Puppet::Util::Checksums
         File.stat(filename).send(:ctime)
     end
 
+    # Return a "no checksum"
+    def none_file(filename)
+        ""
+    end
+
     private
 
     # Perform an incremental checksum on a file.
