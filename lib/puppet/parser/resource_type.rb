@@ -165,6 +165,7 @@ class Puppet::Parser::ResourceType
 
         scope.setvar("title", resource.title) unless set.include? :title
         scope.setvar("name", resource.name) unless set.include? :name
+        scope.class_set(self.name,scope)
     end
 
     # Create a new subscope in which to evaluate our code.

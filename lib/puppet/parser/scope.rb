@@ -18,7 +18,7 @@ class Puppet::Parser::Scope
     attr_accessor :level, :parser, :source, :resource
     attr_accessor :base, :keyword, :nodescope
     attr_accessor :top, :translated, :compiler
-    attr_writer :parent
+    attr_accessor :parent
 
     # A demeterific shortcut to the catalog.
     def catalog
@@ -139,6 +139,34 @@ class Puppet::Parser::Scope
         @defaults = Hash.new { |dhash,type|
             dhash[type] = {}
         }
+
+        # The table for storing class singletons.  This will only actually
+        # be used by top scopes and node scopes.
+        @class_scopes = {}
+    end
+
+    # Store the fact that we've evaluated a class, and store a reference to
+    # the scope in which it was evaluated, so that we can look it up later.
+    def class_set(name, scope)
+        return parent.class_set(name,scope) if parent
+        if existing = @class_scopes[name]
+            if existing.nodescope? != scope.nodescope?
+                raise Puppet::ParseError, "Cannot have classes, nodes, or definitions with the same name"
+            else
+                raise Puppet::DevError, "Somehow evaluated %s %s twice" % [ existing.nodescope? ? "node" : "class", name]
+            end
+        end
+        @class_scopes[name] = scope
+    end
+
+    # Return the scope associated with a class.  This is just here so
+    # that subclasses can set their parent scopes to be the scope of
+    # their parent class, and it's also used when looking up qualified
+    # variables.
+    def class_scope(klass)
+        # They might pass in either the class or class name
+        k = klass.respond_to?(:name) ? klass.name : klass
+        @class_scopes[k] || (parent && parent.class_scope(k))
     end
 
     # Collect all of the defaults set at any higher scopes.
@@ -182,7 +210,7 @@ class Puppet::Parser::Scope
             warning "Could not look up qualified variable '%s'; class %s could not be found" % [name, klassname]
             return usestring ? "" : :undefined
         end
-        unless kscope = compiler.class_scope(klass)
+        unless kscope = class_scope(klass)
             warning "Could not look up qualified variable '%s'; class %s has not been evaluated" % [name, klassname]
             return usestring ? "" : :undefined
         end
@@ -249,15 +277,6 @@ class Puppet::Parser::Scope
     # the system, including on the client.
     def nodescope?
         self.nodescope
-    end
-
-    # We probably shouldn't cache this value...  But it's a lot faster
-    # than doing lots of queries.
-    def parent
-        unless defined?(@parent)
-            @parent = compiler.parent(self)
-        end
-        @parent
     end
 
     # Return the list of scopes up to the top scope, ordered with our own first.

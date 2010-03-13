@@ -40,26 +40,10 @@ describe Puppet::Parser::Compiler do
         @compiler = Puppet::Parser::Compiler.new(@node, @parser)
     end
 
-    it "should be able to store references to class scopes" do
-        lambda { @compiler.class_set "myname", "myscope" }.should_not raise_error
-    end
-
-    it "should be able to retrieve class scopes by name" do
-        @compiler.class_set "myname", "myscope"
-        @compiler.class_scope("myname").should == "myscope"
-    end
-
-    it "should be able to retrieve class scopes by object" do
-        klass = mock 'ast_class'
-        klass.expects(:name).returns("myname")
-        @compiler.class_set "myname", "myscope"
-        @compiler.class_scope(klass).should == "myscope"
-    end
-
-    it "should be able to return a class list containing all set classes" do
-        @compiler.class_set "", "empty"
-        @compiler.class_set "one", "yep"
-        @compiler.class_set "two", "nope"
+    it "should be able to return a class list containing all added classes" do
+        @compiler.add_class ""
+        @compiler.add_class "one"
+        @compiler.add_class "two"
 
         @compiler.classlist.sort.should == %w{one two}.sort
     end
@@ -116,7 +100,14 @@ describe Puppet::Parser::Compiler do
             scope = mock 'scope'
             newscope = @compiler.newscope(scope)
 
-            @compiler.parent(newscope).should equal(scope)
+            newscope.parent.should equal(scope)
+        end
+
+        it "should set the parent scope of the new scope to its topscope if the parent passed in is nil" do
+            scope = mock 'scope'
+            newscope = @compiler.newscope(nil)
+
+            newscope.parent.should equal(@compiler.topscope)
         end
     end
 
@@ -406,6 +397,7 @@ describe Puppet::Parser::Compiler do
             @compiler.catalog.stubs(:tag)
 
             @class.expects(:mk_plain_resource).with(@scope)
+            @scope.stubs(:class_scope).with(@class)
 
             @compiler.evaluate_classes(%w{myclass}, @scope)
         end
@@ -416,6 +408,7 @@ describe Puppet::Parser::Compiler do
             @resource.expects(:evaluate).never
 
             @class.expects(:mk_plain_resource).returns(@resource)
+            @scope.stubs(:class_scope).with(@class)
 
             @compiler.evaluate_classes(%w{myclass}, @scope)
         end
@@ -425,6 +418,7 @@ describe Puppet::Parser::Compiler do
 
             @resource.expects(:evaluate)
             @class.expects(:mk_plain_resource).returns(@resource)
+            @scope.stubs(:class_scope).with(@class)
 
             @compiler.evaluate_classes(%w{myclass}, @scope, false)
         end
@@ -432,7 +426,7 @@ describe Puppet::Parser::Compiler do
         it "should skip classes that have already been evaluated" do
             @compiler.catalog.stubs(:tag)
 
-            @compiler.expects(:class_scope).with(@class).returns("something")
+            @scope.stubs(:class_scope).with(@class).returns("something")
 
             @compiler.expects(:add_resource).never
 
@@ -445,7 +439,7 @@ describe Puppet::Parser::Compiler do
         it "should skip classes previously evaluated with different capitalization" do
             @compiler.catalog.stubs(:tag)
             @scope.stubs(:find_hostclass).with("MyClass").returns(@class)
-            @compiler.expects(:class_scope).with(@class).returns("something")
+            @scope.stubs(:class_scope).with(@class).returns("something")
             @compiler.expects(:add_resource).never
             @resource.expects(:evaluate).never
             Puppet::Parser::Resource.expects(:new).never
@@ -457,6 +451,7 @@ describe Puppet::Parser::Compiler do
 
             @compiler.stubs(:add_resource)
             @scope.stubs(:find_hostclass).with("notfound").returns(nil)
+            @scope.stubs(:class_scope).with(@class)
 
             Puppet::Parser::Resource.stubs(:new).returns(@resource)
             @class.stubs :mk_plain_resource
@@ -534,7 +529,7 @@ describe Puppet::Parser::Compiler do
 
             # The #evaluate method normally does this.
             scope = stub 'scope', :source => "mysource"
-            @compiler.class_set(node_class.name, scope)
+            @compiler.topscope.expects(:class_scope).with(node_class).returns(scope)
             node_resource.stubs(:evaluate)
 
             @compiler.compile
@@ -580,25 +575,6 @@ describe Puppet::Parser::Compiler do
             @compiler.add_override(@override)
 
             lambda { @compiler.compile }.should raise_error(Puppet::ParseError)
-        end
-    end
-
-    # #620 - Nodes and classes should conflict, else classes don't get evaluated
-    describe "when evaluating nodes and classes with the same name (#620)" do
-
-        before do
-            @node = stub :nodescope? => true
-            @class = stub :nodescope? => false
-        end
-
-        it "should fail if a node already exists with the same name as the class being evaluated" do
-            @compiler.class_set("one", @node)
-            lambda { @compiler.class_set("one", @class) }.should raise_error(Puppet::ParseError)
-        end
-
-        it "should fail if a class already exists with the same name as the node being evaluated" do
-            @compiler.class_set("one", @class)
-            lambda { @compiler.class_set("one", @node) }.should raise_error(Puppet::ParseError)
         end
     end
 end

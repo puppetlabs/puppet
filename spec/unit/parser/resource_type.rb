@@ -214,6 +214,7 @@ describe Puppet::Parser::ResourceType do
 
             @scope.expects(:setvar).with("foo", "bar")
             @scope.expects(:setvar).with("boo", "baz")
+            @scope.stubs(:class_set).with("foo",@scope)
 
             @type.set_resource_parameters(@resource, @scope)
         end
@@ -222,6 +223,7 @@ describe Puppet::Parser::ResourceType do
             @type.set_arguments :foo => nil
             @resource.expects(:to_hash).returns(:foo => "bar")
             @scope.expects(:setvar).with("foo", "bar")
+            @scope.stubs(:class_set).with("foo",@scope)
 
             @type.set_resource_parameters(@resource, @scope)
         end
@@ -238,6 +240,7 @@ describe Puppet::Parser::ResourceType do
             @resource.expects(:to_hash).returns({})
 
             @scope.expects(:setvar).with("foo", "something")
+            @scope.stubs(:class_set).with("foo",@scope)
 
             @type.set_resource_parameters(@resource, @scope)
         end
@@ -254,6 +257,7 @@ describe Puppet::Parser::ResourceType do
 
             @resource.expects(:title).returns 'teetle'
             @scope.expects(:setvar).with("title", "teetle")
+            @scope.stubs(:class_set).with("foo",@scope)
 
             @type.set_resource_parameters(@resource, @scope)
         end
@@ -263,6 +267,7 @@ describe Puppet::Parser::ResourceType do
 
             @resource.expects(:name).returns 'nombre'
             @scope.expects(:setvar).with("name", "nombre")
+            @scope.stubs(:class_set).with("foo",@scope)
 
             @type.set_resource_parameters(@resource, @scope)
         end

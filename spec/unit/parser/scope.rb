@@ -10,6 +10,41 @@ describe Puppet::Parser::Scope do
         @scope = Puppet::Parser::Scope.new()
         @scope.parent = @topscope
     end
+ 
+    it "should be able to store references to class scopes" do
+        lambda { @scope.class_set "myname", "myscope" }.should_not raise_error
+    end
+
+    it "should be able to retrieve class scopes by name" do
+        @scope.class_set "myname", "myscope"
+        @scope.class_scope("myname").should == "myscope"
+    end
+
+    it "should be able to retrieve class scopes by object" do
+        klass = mock 'ast_class'
+        klass.expects(:name).returns("myname")
+        @scope.class_set "myname", "myscope"
+        @scope.class_scope(klass).should == "myscope"
+    end
+
+    # #620 - Nodes and classes should conflict, else classes don't get evaluated
+    describe "when evaluating nodes and classes with the same name (#620)" do
+
+        before do
+            @node = stub :nodescope? => true
+            @class = stub :nodescope? => false
+        end
+
+        it "should fail if a node already exists with the same name as the class being evaluated" do
+            @scope.class_set("one", @node)
+            lambda { @scope.class_set("one", @class) }.should raise_error(Puppet::ParseError)
+        end
+
+        it "should fail if a class already exists with the same name as the node being evaluated" do
+            @scope.class_set("one", @class)
+            lambda { @scope.class_set("one", @node) }.should raise_error(Puppet::ParseError)
+        end
+    end
 
     describe "when looking up a variable" do
         it "should default to an empty string" do
@@ -52,7 +87,7 @@ describe Puppet::Parser::Scope do
                 klass = @parser.newclass(name)
                 Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => @scope, :source => mock('source')).evaluate
 
-                return @compiler.class_scope(klass)
+                return @scope.class_scope(klass)
             end
 
             it "should be able to look up explicitly fully qualified variables from main" do

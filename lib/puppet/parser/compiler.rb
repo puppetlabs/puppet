@@ -51,32 +51,11 @@ class Puppet::Parser::Compiler
         parser.nodes?
     end
 
-    # Store the fact that we've evaluated a class, and store a reference to
-    # the scope in which it was evaluated, so that we can look it up later.
-    def class_set(name, scope)
-        if existing = @class_scopes[name]
-            if existing.nodescope? != scope.nodescope?
-                raise Puppet::ParseError, "Cannot have classes, nodes, or definitions with the same name"
-            else
-                raise Puppet::DevError, "Somehow evaluated %s %s twice" % [ existing.nodescope? ? "node" : "class", name]
-            end
-        end
-        @class_scopes[name] = scope
+    # Store the fact that we've evaluated a class
+    def add_class(name)
         @catalog.add_class(name) unless name == ""
     end
 
-    # Return the scope associated with a class.  This is just here so
-    # that subclasses can set their parent scopes to be the scope of
-    # their parent class, and it's also used when looking up qualified
-    # variables.
-    def class_scope(klass)
-        # They might pass in either the class or class name
-        if klass.respond_to?(:name)
-            @class_scopes[klass.name]
-        else
-            @class_scopes[klass]
-        end
-    end
 
     # Return a list of all of the defined classes.
     def classlist
@@ -138,7 +117,7 @@ class Puppet::Parser::Compiler
         classes.each do |name|
             # If we can find the class, then make a resource that will evaluate it.
             if klass = scope.find_hostclass(name)
-                found << name and next if class_scope(klass)
+                found << name and next if scope.class_scope(klass)
 
                 resource = klass.mk_plain_resource(scope)
 
@@ -180,25 +159,14 @@ class Puppet::Parser::Compiler
     end
 
     # Create a new scope, with either a specified parent scope or
-    # using the top scope.  Adds an edge between the scope and
-    # its parent to the graph.
+    # using the top scope.  
     def newscope(parent, options = {})
         parent ||= topscope
         options[:compiler] = self
         options[:parser] ||= self.parser
         scope = Puppet::Parser::Scope.new(options)
-        @scope_graph.add_edge(parent, scope)
+        scope.parent = parent
         scope
-    end
-
-    # Find the parent of a given scope.  Assumes scopes only ever have
-    # one in edge, which will always be true.
-    def parent(scope)
-        if ary = @scope_graph.adjacent(scope, :direction => :in) and ary.length > 0
-            ary[0]
-        else
-            nil
-        end
     end
 
     # Return any overrides for the given resource.
@@ -236,7 +204,7 @@ class Puppet::Parser::Compiler
 
         # Now set the node scope appropriately, so that :topscope can
         # behave differently.
-        @node_scope = class_scope(astnode)
+        @node_scope = topscope.class_scope(astnode)
     end
 
     # Evaluate our collections and return true if anything returned an object.
@@ -384,15 +352,10 @@ class Puppet::Parser::Compiler
     def init_main
         # Create our initial scope and a resource that will evaluate main.
         @topscope = Puppet::Parser::Scope.new(:compiler => self, :parser => self.parser)
-        @scope_graph.add_vertex(@topscope)
     end
 
     # Set up all of our internal variables.
     def initvars
-        # The table for storing class singletons.  This will only actually
-        # be used by top scopes and node scopes.
-        @class_scopes = {}
-
         # The list of objects that will available for export.
         @exported_resources = {}
 
@@ -405,9 +368,6 @@ class Puppet::Parser::Compiler
         # The list of collections that have been created.  This is a global list,
         # but they each refer back to the scope that created them.
         @collections = []
-
-        # A graph for maintaining scope relationships.
-        @scope_graph = Puppet::SimpleGraph.new
 
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Resource::Catalog.new(@node.name)
