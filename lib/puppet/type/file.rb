@@ -592,7 +592,14 @@ module Puppet
         end
 
         def perform_recursion(path)
-            Puppet::FileServing::Metadata.search(path, :links => self[:links], :recurse => (self[:recurse] == :remote ? true : self[:recurse]), :recurselimit => self[:recurselimit], :ignore => self[:ignore])
+            params = {
+                :links => self[:links],
+                :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
+                :recurselimit => self[:recurselimit],
+                :ignore => self[:ignore]
+            }
+            params[:checksum_type] = self[:checksum] if self[:checksum] == :none
+            Puppet::FileServing::Metadata.search(path, params)
         end
 
         # Remove any existing data.  This is only used when dealing with
