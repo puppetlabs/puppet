@@ -1,3 +1,16 @@
+puppet (0.25.4-3) unstable; urgency=low
+
+  The pluginsync=true option is no longer set in the default puppet.conf
+  that is distributed with the package. There is a spurious error that
+  is thrown when this is enabled, and you have no plugins. Most people
+  will eventually want this enabled, however for a new puppet installation
+  it tends to scare people. Given the security implications of pluginsync
+  (it can append to anything in RUBYLIB, not just puppet/facter related
+  things), it is better to have it off by default, and let you decide
+  when you want it enabled.
+
+ -- Micah Anderson <micah@debian.org>  Mon, 15 Mar 2010 18:01:15 -0400
+
 puppet (0.25.4-2) unstable; urgency=low
 
   The default location of the puppet template directory has been moved to
