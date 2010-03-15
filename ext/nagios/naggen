@@ -178,7 +178,7 @@ class NagiosWriter
     def initialize(nagios_type)
         @nagios_type = nagios_type
 
-        @bucket = Puppet::Network::Client.client(:Dipper).new(:Path => Puppet[:clientbucketdir])
+        @bucket = Puppet::FileBucket::Dipper.new(:Path => Puppet[:clientbucketdir])
     end
 
     def rails_resources

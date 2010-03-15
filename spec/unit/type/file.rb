@@ -811,7 +811,7 @@ describe Puppet::Type.type(:file) do
 
         it "should be able to use the default filebucket without a catalog" do
             file = Puppet::Type::File.new(:name => "/my/file", :backup => "puppet")
-            file.bucket.should be_instance_of(Puppet::Network::Client::Dipper)
+            file.bucket.should be_instance_of(Puppet::FileBucket::Dipper)
         end
 
         it "should look up the filebucket during finish()" do

@@ -81,7 +81,6 @@ Puppet::Application.new(:server) do
         require 'etc'
         require 'puppet/file_serving/content'
         require 'puppet/file_serving/metadata'
-        require 'puppet/checksum'
 
         xmlrpc_handlers = [:Status, :FileServer, :Master, :Report, :Filebucket]
 

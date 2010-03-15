@@ -43,7 +43,7 @@ describe "Filebucket" do
             Puppet.stubs(:settraps)
             Puppet::Log.stubs(:level=)
             Puppet.stubs(:parse_config)
-            Puppet::Network::Client.dipper.stubs(:new)
+            Puppet::FileBucket::Dipper.stubs(:new)
             @filebucket.options.stubs(:[]).with(any_parameters)
         end
 
@@ -106,15 +106,15 @@ describe "Filebucket" do
             it "should create a client with the default bucket if none passed" do
                 Puppet.stubs(:[]).with(:bucketdir).returns("path")
 
-                Puppet::Network::Client::Dipper.expects(:new).with { |h| h[:Path] == "path" }
+                Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == "path" }
 
                 @filebucket.run_setup
             end
 
-            it "should create a local Client dipper with the given bucket" do
+            it "should create a local Dipper with the given bucket" do
                 @filebucket.options.stubs(:[]).with(:bucket).returns("path")
 
-                Puppet::Network::Client::Dipper.expects(:new).with { |h| h[:Path] == "path" }
+                Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == "path" }
 
                 @filebucket.run_setup
             end
@@ -126,7 +126,7 @@ describe "Filebucket" do
             it "should create a remote Client to the configured server" do
                 Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
 
-                Puppet::Network::Client::Dipper.expects(:new).with { |h| h[:Server] == "puppet.reductivelabs.com" }
+                Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Server] == "puppet.reductivelabs.com" }
 
                 @filebucket.run_setup
             end
@@ -142,11 +142,11 @@ describe "Filebucket" do
             Puppet.stubs(:settraps)
             Puppet::Log.stubs(:level=)
             Puppet.stubs(:parse_config)
-            Puppet::Network::Client.dipper.stubs(:new)
+            Puppet::FileBucket::Dipper.stubs(:new)
             @filebucket.options.stubs(:[]).with(any_parameters)
 
             @client = stub 'client'
-            Puppet::Network::Client::Dipper.stubs(:new).returns(@client)
+            Puppet::FileBucket::Dipper.stubs(:new).returns(@client)
 
             @filebucket.run_setup
         end

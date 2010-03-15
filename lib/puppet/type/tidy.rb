@@ -215,7 +215,7 @@ Puppet::Type.newtype(:tidy) do
         super
 
         # only allow backing up into filebuckets
-        unless self[:backup].is_a? Puppet::Network::Client.dipper
+        unless self[:backup].is_a? Puppet::FileBucket::Dipper
             self[:backup] = false
         end
     end

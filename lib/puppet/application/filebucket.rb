@@ -1,6 +1,6 @@
 require 'puppet'
 require 'puppet/application'
-require 'puppet/network/client'
+require 'puppet/file_bucket/dipper'
 
 Puppet::Application.new(:filebucket) do
 
@@ -70,10 +70,10 @@ Puppet::Application.new(:filebucket) do
         begin
             if options[:local] or options[:bucket]
                 path = options[:bucket] || Puppet[:bucketdir]
-                @client = Puppet::Network::Client.dipper.new(:Path => path)
+                @client = Puppet::FileBucket::Dipper.new(:Path => path)
             else
                 require 'puppet/network/handler'
-                @client = Puppet::Network::Client.dipper.new(:Server => Puppet[:server])
+                @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
             end
         rescue => detail
             $stderr.puts detail
@@ -85,3 +85,4 @@ Puppet::Application.new(:filebucket) do
     end
 
 end
+

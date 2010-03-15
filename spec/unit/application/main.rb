@@ -53,7 +53,7 @@ describe "Puppet" do
             Puppet.stubs(:trap)
             Puppet::Log.stubs(:level=)
             Puppet.stubs(:parse_config)
-            Puppet::Network::Client.dipper.stubs(:new)
+            Puppet::FileBucket::Dipper.stubs(:new)
             STDIN.stubs(:read)
 
             @main.options.stubs(:[]).with(any_parameters)

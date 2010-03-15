@@ -165,7 +165,7 @@ module Puppet::Network::HTTP::Handler
     # LAK:NOTE This has to be here for testing; it's a stub-point so
     # we keep infinite recursion from happening.
     def save_object(ind_request, object)
-        object.save(ind_request.to_hash)
+        object.save(ind_request)
     end
 
     def get?(request)

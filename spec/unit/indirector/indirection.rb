@@ -198,8 +198,8 @@ describe Puppet::Indirector::Indirection do
                 @indirection.request(:funtest, "yayness", :one => :two)
             end
 
-            it "should default to the arguments being nil" do
-                Puppet::Indirector::Request.expects(:new).with { |name, method, key, args| args.nil? }
+            it "should default to the arguments being empty" do
+                Puppet::Indirector::Request.expects(:new).with { |name, method, key, args| args == {} }
                 @indirection.request(:funtest, "yayness")
             end
 

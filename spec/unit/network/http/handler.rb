@@ -402,10 +402,7 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should use a common method for determining the request parameters" do
-                @irequest.stubs(:to_hash).returns(:foo => :baz, :bar => :xyzzy)
-                @model_instance.expects(:save).with do |args|
-                    args[:foo] == :baz and args[:bar] == :xyzzy
-                end
+                @model_instance.expects(:save).with(@irequest)
                 @handler.do_save(@irequest, @request, @response)
             end
 

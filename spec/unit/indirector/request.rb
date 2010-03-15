@@ -132,8 +132,8 @@ describe Puppet::Indirector::Request do
                 Puppet::Indirector::Request.new(:ind, :method, "http://host/stuff").port.should == 80
             end
 
-            it "should set the request key to the unescaped unqualified path from the URI" do
-                Puppet::Indirector::Request.new(:ind, :method, "http:///stuff with spaces").key.should == "stuff with spaces"
+            it "should set the request key to the unescaped key part path from the URI" do
+                Puppet::Indirector::Request.new(:ind, :method, "http://host/environment/terminus/stuff with spaces").key.should == "stuff with spaces"
             end
 
             it "should set the :uri attribute to the full URI" do

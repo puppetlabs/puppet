@@ -286,7 +286,7 @@ end
 Suite.new :filebucket, "Filebucket interactions" do
     def prepare
         require 'tempfile'
-        @client = Puppet::Network::Client.dipper.new($args)
+        @client = Puppet::FileBucket::Dipper.new($args)
     end
 
     newtest :backup, "Backed up file" do

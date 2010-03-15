@@ -116,8 +116,14 @@ class Puppet::Indirector::Indirection
     end
 
     # Set up our request object.
-    def request(method, key, arguments = nil)
-        Puppet::Indirector::Request.new(self.name, method, key, arguments)
+    def request(method, instance_or_key, request_or_options = {})
+        if request_or_options.is_a? Puppet::Indirector::Request
+            request = request_or_options
+            request.instance = instance_or_key
+            request.method   = method
+            return request
+        end
+        Puppet::Indirector::Request.new(self.name, method, instance_or_key, request_or_options)
     end
 
     # Return the singleton terminus for this indirection.
@@ -248,8 +254,8 @@ class Puppet::Indirector::Indirection
 
     # Save the instance in the appropriate terminus.  This method is
     # normally an instance method on the indirected class.
-    def save(instance, *args)
-        request = request(:save, instance, *args)
+    def save(instance, request_or_options = nil)
+        request = request(:save, instance, request_or_options)
         terminus = prepare(request)
 
         result = terminus.save(request)

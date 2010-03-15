@@ -55,19 +55,19 @@ describe Puppet::Type.type(:filebucket) do
 
         it "should use any provided path" do
             bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => "/foo/bar"
-            Puppet::Network::Client.client(:Dipper).expects(:new).with(:Path => "/foo/bar").returns @bucket
+            Puppet::FileBucket::Dipper.expects(:new).with(:Path => "/foo/bar").returns @bucket
             bucket.bucket
         end
         it "should use any provided server and port" do
             bucket = Puppet::Type.type(:filebucket).new :name => "main", :server => "myserv", :port => "myport", :path => false
-            Puppet::Network::Client.client(:Dipper).expects(:new).with(:Server => "myserv", :Port => "myport").returns @bucket
+            Puppet::FileBucket::Dipper.expects(:new).with(:Server => "myserv", :Port => "myport").returns @bucket
             bucket.bucket
         end
 
         it "should use the default server if the path is unset and no server is provided" do
             Puppet.settings[:server] = "myserv"
             bucket = Puppet::Type.type(:filebucket).new :name => "main", :path => false
-            Puppet::Network::Client.client(:Dipper).expects(:new).with { |args| args[:Server] == "myserv" }.returns @bucket
+            Puppet::FileBucket::Dipper.expects(:new).with { |args| args[:Server] == "myserv" }.returns @bucket
             bucket.bucket
         end
     end
