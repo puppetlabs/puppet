@@ -1,10 +1,9 @@
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
 
-module Puppet::Parser
-module Functions
-    # A module for managing parser functions.  Each specified function
-    # becomes an instance method on the Scope class.
+# A module for managing parser functions.  Each specified function
+# becomes an instance method on the Scope class.
+module Puppet::Parser::Functions
 
     @functions = {}
 
@@ -124,11 +123,9 @@ module Functions
     # Runs a newfunction to create a function for each of the log levels
 
     Puppet::Util::Log.levels.each do |level|
-        newfunction(level, :doc => "Log a message on the server at level
-        #{level.to_s}.") do |vals|
+        newfunction(level, :doc => "Log a message on the server at level #{level.to_s}.") do |vals|
             send(level, vals.join(" "))
         end
     end
 
-end
 end
