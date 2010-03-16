@@ -113,37 +113,33 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     describe "when copying the source values" do
         before do
-            @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf"
+
+            @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
 
             @source = source.new(:resource => @resource)
-            @source.metadata = @metadata
-
-            @resource.stubs(:deleting?).returns false
+            @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file"
+            @source.stubs(:metadata).returns @metadata
         end
 
         it "should fail if there is no metadata" do
-            @source.metadata = nil
+            @source.stubs(:metadata).returns nil
             @source.expects(:devfail).raises ArgumentError
             lambda { @source.copy_source_values }.should raise_error(ArgumentError)
         end
 
         it "should set :ensure to the file type" do
-            @resource.stubs(:[])
-            @resource.stubs(:[]=)
-            @metadata.stubs(:ftype).returns "foobar"
+            @metadata.stubs(:ftype).returns "file"
 
-            @resource.expects(:[]=).with(:ensure, "foobar")
             @source.copy_source_values
+            @resource[:ensure].must == :file
         end
 
         it "should not set 'ensure' if it is already set to 'absent'" do
-            @resource.stubs(:[])
-            @resource.stubs(:[]=)
-            @metadata.stubs(:ftype).returns "foobar"
+            @metadata.stubs(:ftype).returns "file"
 
-            @resource.expects(:[]).with(:ensure).returns :absent
-            @resource.expects(:[]=).with(:ensure, "foobar").never
+            @resource[:ensure] = :absent
             @source.copy_source_values
+            @resource[:ensure].must == :absent
         end
 
         describe "and the source is a file" do
@@ -152,50 +148,43 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             end
 
             it "should copy the metadata's owner, group, and mode to the resource if they are not set on the resource" do
-                @resource.stubs(:[]).returns nil
-
                 Puppet::Util::SUIDManager.expects(:uid).returns 0
 
-                @resource.expects(:[]=).with(:owner, 100)
-                @resource.expects(:[]=).with(:group, 200)
-                @resource.expects(:[]=).with(:mode, 123)
-                @resource.expects(:[]=).with(:checksum, "{md5}asdfasdf")
-
                 @source.copy_source_values
+
+                @resource[:owner].must == 100
+                @resource[:group].must == 200
+                @resource[:mode].must == 123
             end
 
             it "should copy the metadata's owner, group, and mode to the resource if they are set to :absent on the resource" do
-                @resource.stubs(:[]).returns :absent
-
                 Puppet::Util::SUIDManager.expects(:uid).returns 0
 
-                @resource.expects(:[]=).with(:owner, 100)
-                @resource.expects(:[]=).with(:group, 200)
-                @resource.expects(:[]=).with(:mode, 123)
-                @resource.expects(:[]=).with(:checksum, "{md5}asdfasdf")
-
                 @source.copy_source_values
+
+                @resource[:owner].must == 100
+                @resource[:group].must == 200
+                @resource[:mode].must == 123
             end
 
             it "should not copy the metadata's owner to the resource if it is already set" do
-                @resource.stubs(:[]).returns "value"
-                @resource.expects(:[]).returns "value"
-
-                @resource.expects(:[]=).never
+                @resource[:owner] = 1
+                @resource[:group] = 2
+                @resource[:mode] = 3
 
                 @source.copy_source_values
+
+                @resource[:owner].must == 1
+                @resource[:group].must == 2
+                @resource[:mode].must == 3
             end
 
             describe "and puppet is not running as root" do
                 it "should not try to set the owner" do
-                    @resource.stubs(:[]).returns nil
-                    @resource.stubs(:[]=)
-
-                    @resource.expects(:[]=).with(:owner, 100).never
-
                     Puppet::Util::SUIDManager.expects(:uid).returns 100
 
                     @source.copy_source_values
+                    @resource[:owner].should be_nil
                 end
             end
         end
