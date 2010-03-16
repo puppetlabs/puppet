@@ -105,6 +105,11 @@ class Puppet::Parser::Scope
         end
     end
 
+    # Remove this when rebasing
+    def environment
+        compiler.environment
+    end
+
     # Are we the top scope?
     def topscope?
         @level == 1
@@ -140,6 +145,8 @@ class Puppet::Parser::Scope
                 raise Puppet::DevError, "Invalid scope argument %s" % name
             end
         }
+
+        extend_with_functions_module()
 
         @tags = []
 
@@ -493,5 +500,11 @@ class Puppet::Parser::Scope
         match.captures.each_with_index do |m,i|
             setvar("#{i+1}", m, :file => file, :line => line, :ephemeral => true)
         end
+    end
+
+    private
+
+    def extend_with_functions_module
+        extend Puppet::Parser::Functions.environment_module(compiler ? environment : nil)
     end
 end

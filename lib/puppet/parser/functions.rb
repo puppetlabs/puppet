@@ -2,10 +2,12 @@ require 'puppet/util/autoload'
 require 'puppet/parser/scope'
 
 # A module for managing parser functions.  Each specified function
-# becomes an instance method on the Scope class.
+# is added to a central module that then gets included into the Scope
+# class.
 module Puppet::Parser::Functions
 
     @functions = {}
+    @modules = {}
 
     class << self
         include Puppet::Util
@@ -20,6 +22,10 @@ module Puppet::Parser::Functions
         end
 
         @autoloader
+    end
+
+    def self.environment_module(env = nil)
+        @module ||= Module.new
     end
 
     # Create a new function type.
@@ -43,7 +49,7 @@ module Puppet::Parser::Functions
         end
 
         fname = "function_" + name.to_s
-        Puppet::Parser::Scope.send(:define_method, fname, &block)
+        environment_module.send(:define_method, fname, &block)
 
         # Someday we'll support specifying an arity, but for now, nope
         #@functions[name] = {:arity => arity, :type => ftype}
@@ -64,7 +70,7 @@ module Puppet::Parser::Functions
         @functions.delete(name)
 
         fname = "function_" + name.to_s
-        Puppet::Parser::Scope.send(:remove_method, fname)
+        environment_module.send(:remove_method, fname)
     end
 
     # Determine if a given name is a function

@@ -58,6 +58,24 @@ describe Puppet::Parser::Scope do
         Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
     end
 
+    describe "when initializing" do
+        it "should extend itself with its environment's Functions module" do
+            env = Puppet::Node::Environment.new("myenv")
+            compiler = stub 'compiler', :environment => env
+            mod = Module.new
+            Puppet::Parser::Functions.expects(:environment_module).with(env).returns mod
+
+            Puppet::Parser::Scope.new(:compiler => compiler).metaclass.ancestors.should be_include(mod)
+        end
+
+        it "should extend itself with the default Functions module if it has no environment" do
+            mod = Module.new
+            Puppet::Parser::Functions.expects(:environment_module).with(nil).returns mod
+
+            Puppet::Parser::Scope.new().metaclass.ancestors.should be_include(mod)
+        end
+    end
+
     describe "when looking up a variable" do
         it "should default to an empty string" do
             @scope.lookupvar("var").should == ""
