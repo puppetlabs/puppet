@@ -28,6 +28,22 @@ describe Puppet::Util::Checksums do
         end
     end
 
+    it "should have a method for determining whether a given string is a checksum" do
+        @summer.should respond_to(:checksum?)
+    end
+
+    %w{{md5}asdfasdf {sha1}asdfasdf {ctime}asdasdf {mtime}asdfasdf}.each do |sum|
+        it "should consider #{sum} to be a checksum" do
+            @summer.should be_checksum(sum)
+        end
+    end
+
+    %w{{nosuchsum}asdfasdf {a}asdfasdf {ctime}}.each do |sum|
+        it "should not consider #{sum} to be a checksum" do
+            @summer.should_not be_checksum(sum)
+        end
+    end
+
     it "should have a method for stripping a sum type from an existing checksum" do
         @summer.sumtype("{md5}asdfasdfa").should == "md5"
     end

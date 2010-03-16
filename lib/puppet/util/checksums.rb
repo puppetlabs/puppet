@@ -1,6 +1,11 @@
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
+    # Is the provided string a checksum?
+    def checksum?(string)
+        string =~ /^\{(\w{3,5})\}\S+/
+    end
+
     # Strip the checksum type from an existing checksum
     def sumtype(checksum)
         if checksum =~ /^\{(\w+)\}/
