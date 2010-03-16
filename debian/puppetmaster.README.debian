@@ -1,0 +1,18 @@
+By default, the puppetmaster package is configured in
+/etc/default/puppetmaster to utilize the webrick server included in
+the application. This server is single-threaded, very slow and tends
+to fall over when you get close to 30 nodes. You will start to see
+connection-reset or End-of-file errors when this happens.
+
+You will want to a server that can scale better than webrick, such as
+Passenger (aka. mod_rails), or mongrel, both with a front-end
+web-proxy such as apache.
+
+If you would like to run Passenger (aka. mod_rails) with apache or
+mongrel, then you will need to make sure you have
+libapache2-mod-passenger and librack-ruby installed and you should
+have a look at the /usr/share/doc/puppetmaster/examples/apache2.conf
+for some reasonable settings to get you started.
+
+For more information:
+http://projects.reductivelabs.com/projects/puppet/wiki/Using_Passenger
