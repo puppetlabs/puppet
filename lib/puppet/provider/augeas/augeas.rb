@@ -324,15 +324,15 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     when "set"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         rv = aug.set(cmd_array[0], cmd_array[1])
-                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv)
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
                     when "rm", "remove"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         rv = aug.rm(cmd_array[0])
-                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv)
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
                     when "clear"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
                         rv = aug.clear(cmd_array[0])
-                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv == -1)
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
                     when "insert", "ins"
                         label = cmd_array[0]
                         where = cmd_array[1]
@@ -344,7 +344,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                         end
                         debug("sending command '#{command}' with params #{[label, where, path].inspect}")
                         rv = aug.insert(path, label, before)
-                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}") if (rv == -1)
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
                     else fail("Command '#{command}' is not supported")
                 end
             rescue SystemExit,NoMemoryError
