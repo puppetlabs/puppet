@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/file_bucket/dipper'
 describe Puppet::FileBucket::Dipper do
     it "should fail in an informative way when there are failures backing up to the server" do
-        File.stubs(:exists?).returns true
+        File.stubs(:exist?).returns true
         File.stubs(:read).returns "content"
 
         @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
@@ -23,7 +23,7 @@ describe Puppet::FileBucket::Dipper do
             :Path => "/my/bucket"
         )
 
-        File.stubs(:exists?).returns true
+        File.stubs(:exist?).returns true
         File.stubs(:read).with("/my/file").returns "my contents"
 
         req = stub "req"
@@ -48,7 +48,7 @@ describe Puppet::FileBucket::Dipper do
             :Path => "/my/bucket"
         )
 
-        File.stubs(:exists?).returns true
+        File.stubs(:exist?).returns true
         File.stubs(:read).with("/my/file").returns "my contents"
 
         bucketfile = stub "bucketfile"
@@ -67,7 +67,7 @@ describe Puppet::FileBucket::Dipper do
             :Port   => "31337"
         )
 
-        File.stubs(:exists?).returns true
+        File.stubs(:exist?).returns true
         File.stubs(:read).with("/my/file").returns "my contents"
 
         req = stub "req"
@@ -93,7 +93,7 @@ describe Puppet::FileBucket::Dipper do
             :Port   => "31337"
         )
 
-        File.stubs(:exists?).returns true
+        File.stubs(:exist?).returns true
         File.stubs(:read).with("/my/file").returns "my contents"
 
         bucketfile = stub "bucketfile"
