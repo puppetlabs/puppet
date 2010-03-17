@@ -179,75 +179,76 @@ describe "resource" do
             before :each do
                 @resource.stubs(:puts)
                 @resource.host = 'host'
-                @client = stub_everything 'client'
-                @client.stubs(:read_cert).returns(true)
-                @client.stubs(:instances).returns([])
-                Puppet::Network::Client.resource.stubs(:new).returns(@client)
+
+                Puppet::Resource.stubs(:find  ).never
+                Puppet::Resource.stubs(:search).never
+                Puppet::Resource.stubs(:save  ).never
             end
 
-            it "should connect to it" do
-                Puppet::Network::Client.resource.expects(:new).with { |h| h[:Server] == 'host' }.returns(@client)
-                @resource.main
-            end
-
-            it "should raise an error if there are no certs" do
-                @client.stubs(:read_cert).returns(nil)
-
-                lambda { @resource.main }.should raise_error
-            end
-
-            it "should retrieve all the instances if there is no name" do
-                @client.expects(:instances).returns([])
-
+            it "should search for resources" do
+                Puppet::Resource.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
                 @resource.main
             end
 
             it "should describe the given resource" do
                 push_args('type','name')
-                @client.expects(:describe).returns(stub_everything)
+                x = stub_everything 'resource'
+                Puppet::Resource.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
                 @resource.main
                 pop_args
             end
+
+            it "should add given parameters to the object" do
+                push_args('type','name','param=temp')
+
+                res = stub "resource"
+                res.expects(:save).with{|x| x.uri == 'https://host:8139/production/resources/type/name'}.returns(res)
+                res.expects(:collect)
+                res.expects(:to_manifest)
+                Puppet::Resource.expects(:new).with('type', 'name', {'param' => 'temp'}).returns(res)
+
+                @resource.main
+                pop_args
+            end
+
         end
 
         describe "without a host" do
             before :each do
                 @resource.stubs(:puts)
                 @resource.host = nil
+
+                Puppet::Resource.stubs(:find  ).never
+                Puppet::Resource.stubs(:search).never
+                Puppet::Resource.stubs(:save  ).never
             end
 
-            it "should retrieve all the instances if there is no name" do
-                @type.expects(:instances).returns([])
-
+            it "should search for resources" do
+                Puppet::Resource.expects(:search).with('type/', {}).returns([])
                 @resource.main
             end
 
-            describe 'but with a given name' do
-                before :each do
-                    push_args('type','name')
-                    @type.stubs(:new).returns(:bob)
-                end
-
-                after :each do
-                    pop_args
-                end
-
-                it "should retrieve a specific instance if it exists" do
-                    pending
-                end
-
-                it "should create a stub instance if it doesn't exist" do
-                    pending
-                end
-
-                it "should add given parameters to the object" do
-                    push_args('type','name','param=temp')
-                    pending
-                    @object.expects(:[]=).with('param','temp')
-                    @resource.main
-                    pop_args
-                end
+            it "should describe the given resource" do
+                push_args('type','name')
+                x = stub_everything 'resource'
+                Puppet::Resource.expects(:find).with('type/name').returns(x)
+                @resource.main
+                pop_args
             end
+
+            it "should add given parameters to the object" do
+                push_args('type','name','param=temp')
+
+                res = stub "resource"
+                res.expects(:save).with{|x| x.uri == nil}.returns(res)
+                res.expects(:collect)
+                res.expects(:to_manifest)
+                Puppet::Resource.expects(:new).with('type', 'name', {'param' => 'temp'}).returns(res)
+
+                @resource.main
+                pop_args
+            end
+
         end
     end
 end

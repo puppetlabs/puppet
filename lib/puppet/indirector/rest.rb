@@ -67,7 +67,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
     def find(request)
         return nil unless result = deserialize(network(request).get(indirection2uri(request), headers))
-        result.name = request.key
+        result.name = request.key if result.respond_to?(:name=)
         result
     end
 

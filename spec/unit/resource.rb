@@ -492,4 +492,23 @@ describe Puppet::Resource do
             resource['foo'].should == %w{one}
         end
     end
+
+    describe "it should implement to_resource" do
+        resource = Puppet::Resource.new("file", "/my/file")
+        resource.to_resource.should == resource
+    end
+
+    describe "because it is an indirector model" do
+        it "should include Puppet::Indirector" do
+            Puppet::Resource.should be_is_a(Puppet::Indirector)
+        end
+
+        it "should have a default terminus" do
+            Puppet::Resource.indirection.terminus_class.should == :ral
+        end
+
+        it "should have a name" do
+            Puppet::Resource.new("file", "/my/file").name.should == "File//my/file"
+        end
+    end
 end

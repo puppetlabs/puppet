@@ -71,52 +71,24 @@ Puppet::Application.new(:resource) do
             trans.to_manifest
         }
 
-        text = if @host
-            client = Puppet::Network::Client.resource.new(:Server => @host, :Port => Puppet[:puppetport])
-            unless client.read_cert
-                raise "client.read_cert failed"
-            end
-            begin
-                # They asked for a single resource.
-                if name
-                    transbucket = [client.describe(type, name)]
-                else
-                    # Else, list the whole thing out.
-                    transbucket = client.instances(type)
-                end
-            rescue Puppet::Network::XMLRPCClientError => exc
-                raise "client.list(#{type}) failed: #{exc.message}"
-            end
-            transbucket.sort { |a,b| a.name <=> b.name }.collect(&format)
+        if @host
+            Puppet::Resource.indirection.terminus_class = :rest
+            port = Puppet[:puppetport]
+            key = ["https://#{host}:#{port}", "production", "resources", type, name].join('/')
         else
-            if name
-                obj = typeobj.instances.find { |o| o.name == name } || typeobj.new(:name => name, :check => properties)
-                vals = obj.retrieve
+            key = [type, name].join('/')
+        end
 
-                unless params.empty?
-                    params.each do |param, value|
-                        obj[param] = value
-                    end
-                    catalog = Puppet::Resource::Catalog.new
-                    catalog.add_resource obj
-                    begin
-                        catalog.apply
-                    rescue => detail
-                        if Puppet[:trace]
-                            puts detail.backtrace
-                        end
-                    end
-
-                end
-                [format.call(obj.to_trans(true))]
+        text = if name
+            if params.empty?
+                [ Puppet::Resource.find( key ) ]
             else
-                typeobj.instances.collect do |obj|
-                    next if ARGV.length > 0 and ! ARGV.include? obj.name
-                    trans = obj.to_trans(true)
-                    format.call(trans)
-                end
+                request = Puppet::Indirector::Request.new(:resource, :save, key) # Yuck.
+                [ Puppet::Resource.new( type, name, params ).save( request ) ]
             end
-        end.compact.join("\n")
+        else
+            Puppet::Resource.search( key, {} )
+        end.map(&format).join("\n")
 
         if options[:edit]
             file = "/tmp/x2puppet-#{Process.pid}.pp"

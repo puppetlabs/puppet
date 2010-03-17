@@ -1,3 +1,4 @@
+require 'puppet/resource'
 require 'puppet/node'
 require 'puppet/indirector'
 require 'puppet/simple_graph'
@@ -79,7 +80,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
             # If the name and title differ, set up an alias
 
-            if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+            if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
                 self.alias(resource, resource.name) if resource.isomorphic?
             end
 

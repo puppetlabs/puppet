@@ -1,6 +1,5 @@
 require 'puppet'
 require 'sync'
-require 'puppet/transportable'
 require 'getoptlong'
 
 require 'puppet/external/event-loop'
