@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/network/client'
 
 describe Puppet::Network::Client do
-    %w{ca file report resource runner status}.each do |name|
+    %w{ca file report runner status}.each do |name|
         it "should have a #{name} client" do
             Puppet::Network::Client.client(name).should be_instance_of(Class)
         end
