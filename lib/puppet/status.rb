@@ -17,4 +17,12 @@ class Puppet::Status
     def self.from_pson( pson )
         self.new( pson )
     end
+
+    def name
+        "status"
+    end
+
+    def name=(name)
+        # NOOP
+    end
 end

@@ -20,4 +20,12 @@ describe Puppet::Status do
         status = Puppet::Status.new( { "is_alive" => false } )
         status.status.should == { "is_alive" => false }
     end
+
+    it "should have a name" do
+        Puppet::Status.new.name
+    end
+
+    it "should allow a name to be set" do
+        Puppet::Status.new.name = "status"
+    end
 end
