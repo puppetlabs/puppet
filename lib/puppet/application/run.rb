@@ -112,14 +112,22 @@ Puppet::Application.new(:run) do
                 next
             end
         end
-        client = Puppet::Network::Client.runner.new(
-            :Server => host,
-            :Port => Puppet[:puppetport]
-        )
+
+        require 'puppet/run'
+        Puppet::Run.indirection.terminus_class = :rest
+        port = Puppet[:puppetport]
+        url = ["https://#{host}:#{port}", "production", "run", host].join('/')
 
         print "Triggering %s\n" % host
         begin
-            result = client.run(@tags, options[:ignoreschedules] || false, options[:foreground] || false)
+            request = Puppet::Indirector::Request.new(:run, :save, url) # Yuck.
+            run_options = {
+                :tags => @tags,
+                :background => ! options[:foreground],
+                :ignoreschedules => options[:ignoreschedules]
+            }
+            run = Puppet::Run.new( run_options ).save( request )
+            result = run.status
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             $stderr.puts "Host %s failed: %s\n" % [host, detail]
@@ -181,12 +189,6 @@ Puppet::Application.new(:run) do
         elsif ! @classes.empty?
             $stderr.puts "You must be using LDAP to specify host classes"
             exit(24)
-        end
-
-        if @tags.empty?
-            @tags = ""
-        else
-            @tags = @tags.join(",")
         end
 
         @children = {}

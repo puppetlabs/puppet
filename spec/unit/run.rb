@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/agent'
 require 'puppet/run'
 
@@ -9,8 +9,8 @@ describe Puppet::Run do
         @runner = Puppet::Run.new
     end
 
-    it "should indirect :runner" do
-        Puppet::Run.indirection.name.should == :runner
+    it "should indirect :run" do
+        Puppet::Run.indirection.name.should == :run
     end
 
     it "should use a configurer agent as its agent" do
@@ -113,6 +113,22 @@ describe Puppet::Run do
             @agent.expects(:run)
 
             @runner.run
+        end
+    end
+
+    describe ".from_pson" do
+        it "should accept a hash of options, and pass them with symbolified keys to new" do
+            options = {
+                "tags" => "whatever",
+                "background" => true,
+            }
+
+            Puppet::Run.expects(:new).with({
+                :tags => "whatever",
+                :background => true,
+            })
+
+            Puppet::Run.from_pson(options)
         end
     end
 end

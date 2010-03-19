@@ -6,7 +6,7 @@ require 'puppet/indirector'
 # puppetrun to kick off agents remotely.
 class Puppet::Run
     extend Puppet::Indirector
-    indirects :runner, :terminus_class => :rest
+    indirects :run, :terminus_class => :local
 
     attr_reader :status, :background, :options
 
@@ -26,7 +26,7 @@ class Puppet::Run
 
         valid_options = [:tags, :ignoreschedules]
         options.each do |key, value|
-            raise ArgumentError, "Runner does not accept %s" % key unless valid_options.include?(key)
+            raise ArgumentError, "Run does not accept %s" % key unless valid_options.include?(key)
         end
 
         @options = options
@@ -36,7 +36,7 @@ class Puppet::Run
         msg = ""
         msg += "triggered run" %
         if options[:tags]
-            msg += " with tags %s" % options[:tags]
+            msg += " with tags #{options[:tags].inspect}"
         end
 
         if options[:ignoreschedules]
@@ -49,7 +49,7 @@ class Puppet::Run
     def run
         if agent.running?
             @status = "running"
-            return
+            return self
         end
 
         log_run()
@@ -61,5 +61,20 @@ class Puppet::Run
         end
 
         @status = "success"
+
+        self
+    end
+
+    def self.from_pson( pson )
+        options = {}
+        pson.each do |key, value|
+            options[key.to_sym] = value
+        end
+
+        new(options)
+    end
+
+    def to_pson
+        @options.merge(:background => @background).to_pson
     end
 end
