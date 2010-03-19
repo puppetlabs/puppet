@@ -2,15 +2,15 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/agent'
-require 'puppet/agent/runner'
+require 'puppet/run'
 
-describe Puppet::Agent::Runner do
+describe Puppet::Run do
     before do
-        @runner = Puppet::Agent::Runner.new
+        @runner = Puppet::Run.new
     end
 
     it "should indirect :runner" do
-        Puppet::Agent::Runner.indirection.name.should == :runner
+        Puppet::Run.indirection.name.should == :runner
     end
 
     it "should use a configurer agent as its agent" do
@@ -21,35 +21,35 @@ describe Puppet::Agent::Runner do
     end
 
     it "should accept options at initialization" do
-        lambda { Puppet::Agent::Runner.new :background => true }.should_not raise_error
+        lambda { Puppet::Run.new :background => true }.should_not raise_error
     end
 
     it "should default to running in the foreground" do
-        Puppet::Agent::Runner.new.should_not be_background
+        Puppet::Run.new.should_not be_background
     end
 
     it "should default to its options being an empty hash" do
-        Puppet::Agent::Runner.new.options.should == {}
+        Puppet::Run.new.options.should == {}
     end
 
     it "should accept :tags for the agent" do
-        Puppet::Agent::Runner.new(:tags => "foo").options[:tags].should == "foo"
+        Puppet::Run.new(:tags => "foo").options[:tags].should == "foo"
     end
 
     it "should accept :ignoreschedules for the agent" do
-        Puppet::Agent::Runner.new(:ignoreschedules => true).options[:ignoreschedules].should be_true
+        Puppet::Run.new(:ignoreschedules => true).options[:ignoreschedules].should be_true
     end
 
     it "should accept an option to configure it to run in the background" do
-        Puppet::Agent::Runner.new(:background => true).should be_background
+        Puppet::Run.new(:background => true).should be_background
     end
 
     it "should retain the background option" do
-        Puppet::Agent::Runner.new(:background => true).options[:background].should be_nil
+        Puppet::Run.new(:background => true).options[:background].should be_nil
     end
 
     it "should not accept arbitrary options" do
-        lambda { Puppet::Agent::Runner.new(:foo => true) }.should raise_error(ArgumentError)
+        lambda { Puppet::Run.new(:foo => true) }.should raise_error(ArgumentError)
     end
 
     describe "when asked to run" do

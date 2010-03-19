@@ -10,7 +10,7 @@ class TestHandlerRunner < Test::Unit::TestCase
 
     def test_it_calls_agent_runner
         runner = mock 'runner'
-        Puppet::Agent::Runner.expects(:new).with(:tags => "mytags", :ignoreschedules => true, :background => false).returns runner
+        Puppet::Run.expects(:new).with(:tags => "mytags", :ignoreschedules => true, :background => false).returns runner
         runner.expects(:run)
         runner.expects(:status).returns "yay"
 

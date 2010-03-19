@@ -1,4 +1,4 @@
-require 'puppet/agent/runner'
+require 'puppet/run'
 
 class Puppet::Network::Handler
     class MissingMasterError < RuntimeError; end # Cannot find the master client
@@ -20,7 +20,7 @@ class Puppet::Network::Handler
             options[:ignoreschedules] = ignoreschedules if ignoreschedules
             options[:background] = !fg
 
-            runner = Puppet::Agent::Runner.new(options)
+            runner = Puppet::Run.new(options)
 
             runner.run
 

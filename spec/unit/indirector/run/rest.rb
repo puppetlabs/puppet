@@ -4,8 +4,8 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/indirector/runner/rest'
 
-describe Puppet::Agent::Runner::Rest do
+describe Puppet::Run::Rest do
     it "should be a sublcass of Puppet::Indirector::REST" do
-        Puppet::Agent::Runner::Rest.superclass.should equal(Puppet::Indirector::REST)
+        Puppet::Run::Rest.superclass.should equal(Puppet::Indirector::REST)
     end
 end
