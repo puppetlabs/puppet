@@ -215,15 +215,17 @@ class Transaction
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
-        relationship_graph.matching_edges(events, resource).each do |orig_edge|
-            # We have to dup the label here, else we modify the original edge label,
-            # which affects whether a given event will match on the next run, which is,
-            # of course, bad.
-            edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
-            edge.event = events.collect { |e| e.name }
-            set_trigger(edge)
+        Puppet::Util.benchmark(:debug, "Time for triggering #{events.size} events to edges") do
+            b = relationship_graph.matching_edges(events, resource)
+            b.each do |orig_edge|
+                # We have to dup the label here, else we modify the original edge label,
+                # which affects whether a given event will match on the next run, which is,
+                # of course, bad.
+                edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
+                edge.event = events.collect { |e| e.name }
+                set_trigger(edge)
+            end
         end
-
         # And return the events for collection
         events
     end
