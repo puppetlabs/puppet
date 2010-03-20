@@ -30,9 +30,13 @@ module Puppet
         munge do |value|
             if value == :absent
                 value
+            elsif checksum?(value)
+                # XXX This is potentially dangerous because it means users can't write a file whose
+                # entire contents are a plain checksum
+                value
             else
                 @actual_content = value
-                "{#{checksum_type}}" + send(self.checksum_type, value)
+                resource.parameter(:checksum).sum(value)
             end
         end
 
@@ -54,10 +58,8 @@ module Puppet
         def checksum_type
             if source = resource.parameter(:source)
                 result = source.checksum
-            elsif checksum = resource.parameter(:checksum)
-                result = checksum.checktype
-            else
-                return :md5
+            else checksum = resource.parameter(:checksum)
+                result = resource[:checksum]
             end
             if result =~ /^\{(\w+)\}.+/
                 return $1.to_sym
@@ -76,7 +78,7 @@ module Puppet
             if s = resource.parameter(:source)
                 return s.content
             end
-            return nil
+            fail "Could not find actual content from checksum"
         end
 
         def content
@@ -116,10 +118,10 @@ module Puppet
             return :absent unless stat = @resource.stat
             ftype = stat.ftype
             # Don't even try to manage the content on directories or links
-            return nil if ["directory","link"].include? ftype or checksum_type.nil?
+            return nil if ["directory","link"].include?(ftype)
 
             begin
-                "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path]).to_s
+                resource.parameter(:checksum).sum_file(resource[:path])
             rescue => detail
                 raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}"
             end

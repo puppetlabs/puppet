@@ -722,12 +722,6 @@ Puppet::Type.newtype(:file) do
     # Write out the file.  Requires the content to be written,
     # the property name for logging, and the checksum for validation.
     def write(content, property, checksum = nil)
-        if validate = validate_checksum?
-            # Use the appropriate checksum type -- md5, md5lite, etc.
-            sumtype = property(:checksum).checktype
-            checksum ||= "{#{sumtype}}" + property(:checksum).send(sumtype, content)
-        end
-
         remove_existing(:file)
 
         use_temporary_file = (content.length != 0)
@@ -750,7 +744,7 @@ Puppet::Type.newtype(:file) do
         # And put our new file in place
         if use_temporary_file # This is only not true when our file is empty.
             begin
-                fail_if_checksum_is_wrong(path, checksum) if validate
+                fail_if_checksum_is_wrong(path, content) if validate
                 File.rename(path, self[:path])
             rescue => detail
                 fail "Could not rename temporary file %s to %s : %s" % [path, self[:path], detail]
@@ -763,32 +757,17 @@ Puppet::Type.newtype(:file) do
         # make sure all of the modes are actually correct
         property_fix
 
-        # And then update our checksum, so the next run doesn't find it.
-        self.setchecksum(checksum)
-    end
-
-    # Should we validate the checksum of the file we're writing?
-    def validate_checksum?
-        if sumparam = @parameters[:checksum]
-            return sumparam.checktype.to_s !~ /time/
-        else
-            return false
-        end
     end
 
     private
 
     # Make sure the file we wrote out is what we think it is.
     def fail_if_checksum_is_wrong(path, checksum)
-        if checksum =~ /^\{(\w+)\}.+/
-            sumtype = $1
-        else
-            # This shouldn't happen, but if it happens to, it's nicer
-            # to just use a default sumtype than fail.
-            sumtype = "md5"
-        end
-        newsum = property(:checksum).getsum(sumtype, path)
-        return if newsum == checksum
+        # Use the appropriate checksum type -- md5, md5lite, etc.
+        checksum = parameter(:checksum).sum(content)
+
+        newsum = parameter(:checksum).sum_file(path)
+        return if [:absent, nil, checksum].include?(newsum)
 
         self.fail "File written to disk did not match checksum; discarding changes (%s vs %s)" % [checksum, newsum]
     end

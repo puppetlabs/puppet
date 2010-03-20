@@ -130,6 +130,19 @@ describe Puppet::Type.type(:file) do
             bucket.bucket.getfile(foomd5).should == "fooyay"
             bucket.bucket.getfile(barmd5).should == "baryay"
         end
+
+        it "should propagate failures encountered when renaming the temporary file" do
+            file = Puppet::Type.type(:file).new :path => tmpfile("fail_rename"), :content => "foo"
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource file
+
+            File.open(file[:path], "w") { |f| f.print "bar" }
+
+            File.expects(:rename).raises ArgumentError
+
+            lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
+            File.read(file[:path]).should == "bar"
+        end
     end
 
     describe "when recursing" do
@@ -372,6 +385,7 @@ describe Puppet::Type.type(:file) do
 
             # Now change the file
             File.open(source, "w") { |f| f.print "bar" }
+            file.expire
             catalog.apply
 
             # And make sure it's changed

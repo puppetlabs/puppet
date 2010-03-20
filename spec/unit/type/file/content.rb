@@ -5,8 +5,7 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 content = Puppet::Type.type(:file).attrclass(:content)
 describe content do
     before do
-        # Wow that's a messy interface to the resource.
-        @resource = stub 'resource', :[] => nil, :[]= => nil, :property => nil, :newattr => nil, :parameter => nil
+        @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
     end
 
     it "should be a subclass of Property" do
@@ -14,45 +13,31 @@ describe content do
     end
 
     describe "when determining the checksum type" do
-        it "should use the type specified in the source checksum if a source is set" do
-            source = mock 'source'
-            source.expects(:checksum).returns "{litemd5}eh"
+        before do
+            @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+        end
 
-            @resource.expects(:parameter).with(:source).returns source
+        it "should use the type specified in the source checksum if a source is set" do
+            @resource[:source] = "/foo"
+            @resource.parameter(:source).expects(:checksum).returns "{md5lite}eh"
 
             @content = content.new(:resource => @resource)
-            @content.checksum_type.should == :litemd5
+            @content.checksum_type.should == :md5lite
         end
 
         it "should use the type specified by the checksum parameter if no source is set" do
-            checksum = mock 'checksum'
-            checksum.expects(:checktype).returns :litemd5
-
-            @resource.expects(:parameter).with(:source).returns nil
-            @resource.expects(:parameter).with(:checksum).returns checksum
+            @resource[:checksum] = :md5lite
 
             @content = content.new(:resource => @resource)
-            @content.checksum_type.should == :litemd5
-        end
-
-        it "should only return the checksum type from the checksum parameter if the parameter returns a whole checksum" do
-            checksum = mock 'checksum'
-            checksum.expects(:checktype).returns "{md5}something"
-
-            @resource.expects(:parameter).with(:source).returns nil
-            @resource.expects(:parameter).with(:checksum).returns checksum
-
-            @content = content.new(:resource => @resource)
-            @content.checksum_type.should == :md5
-        end
-
-        it "should use md5 if neither a source nor a checksum parameter is available" do
-            @content = content.new(:resource => @resource)
-            @content.checksum_type.should == :md5
+            @content.checksum_type.should == :md5lite
         end
     end
 
     describe "when determining the actual content to write" do
+        before do
+            @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+        end
+
         it "should use the set content if available" do
             @content = content.new(:resource => @resource)
             @content.should = "ehness"
@@ -69,9 +54,9 @@ describe content do
             @content.actual_content.should == "scont"
         end
 
-        it "should return nil if no source is available and no content is set" do
+        it "should fail if no source is available and no content is set" do
             @content = content.new(:resource => @resource)
-            @content.actual_content.should be_nil
+            lambda { @content.actual_content }.should raise_error(Puppet::Error)
         end
     end
 
@@ -99,6 +84,16 @@ describe content do
             @content.should = :absent
 
             @content.should.must == :absent
+        end
+
+        it "should accept a checksum as the desired content" do
+            @content = content.new(:resource => @resource)
+            digest = Digest::MD5.hexdigest("this is some content")
+
+            string = "{md5}#{digest}"
+            @content.should = string
+
+            @content.should.must == string
         end
     end
 
@@ -130,29 +125,22 @@ describe content do
 
         it "should always return the checksum as a string" do
             @content = content.new(:resource => @resource)
-            @content.stubs(:checksum_type).returns "mtime"
+            @resource[:checksum] = :mtime
 
             stat = mock 'stat', :ftype => "file"
             @resource.expects(:stat).returns stat
 
-            @resource.expects(:[]).with(:path).returns "/my/file"
-
             time = Time.now
-            @content.expects(:mtime_file).with("/my/file").returns time
+            @resource.parameter(:checksum).expects(:mtime_file).with(@resource[:path]).returns time
 
             @content.retrieve.should == "{mtime}%s" % time
         end
 
         it "should return the checksum of the file if it exists and is a normal file" do
             @content = content.new(:resource => @resource)
-            @content.stubs(:checksum_type).returns "md5"
-
             stat = mock 'stat', :ftype => "file"
             @resource.expects(:stat).returns stat
-
-            @resource.expects(:[]).with(:path).returns "/my/file"
-
-            @content.expects(:md5_file).with("/my/file").returns "mysum"
+            @resource.parameter(:checksum).expects(:md5_file).with(@resource[:path]).returns "mysum"
 
             @content.retrieve.should == "{md5}mysum"
         end
@@ -160,11 +148,8 @@ describe content do
 
     describe "when testing whether the content is in sync" do
         before do
-            @resource.stubs(:[]).with(:ensure).returns :file
-            @resource.stubs(:replace?).returns true
-            @resource.stubs(:should_be_file?).returns true
+            @resource[:ensure] = :file
             @content = content.new(:resource => @resource)
-            @content.stubs(:checksum_type).returns "md5"
         end
 
         it "should return true if the resource shouldn't be a regular file" do

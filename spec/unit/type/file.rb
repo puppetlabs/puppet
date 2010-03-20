@@ -139,13 +139,13 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when validating attributes" do
-        %w{path backup recurse recurselimit source replace force ignore links purge sourceselect}.each do |attr|
+        %w{path checksum backup recurse recurselimit source replace force ignore links purge sourceselect}.each do |attr|
             it "should have a '#{attr}' parameter" do
                 Puppet::Type.type(:file).attrtype(attr.intern).should == :param
             end
         end
 
-        %w{checksum content target ensure owner group mode type}.each do |attr|
+        %w{content target ensure owner group mode type}.each do |attr|
             it "should have a '#{attr}' property" do
                 Puppet::Type.type(:file).attrtype(attr.intern).should == :property
             end
