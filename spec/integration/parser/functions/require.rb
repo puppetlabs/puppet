@@ -22,10 +22,27 @@ describe "the require function" do
 
         @scope.function_require("requiredclass")
         @scope.resource["require"].should_not be_nil
-        ref = @scope.resource["require"]
+        ref = @scope.resource["require"].shift
         ref.type.should == "Class"
         ref.title.should == "requiredclass"
     end
+
+    it "should queue relationships between the 'required' class and our classes" do
+        @parser.newclass("requiredclass1")
+        @parser.newclass("requiredclass2")
+
+        @scope.function_require("requiredclass1")
+        @scope.function_require("requiredclass2")
+
+        @scope.resource["require"].should_not be_nil
+
+        (ref1,ref2) = @scope.resource["require"]
+        ref1.type.should == "Class"
+        ref1.title.should == "requiredclass1"
+        ref2.type.should == "Class"
+        ref2.title.should == "requiredclass2"
+    end
+
 end
 
 describe "the include function" do

@@ -8,7 +8,7 @@ describe "the require function" do
         @catalog = stub 'catalog'
         @compiler = stub 'compiler', :catalog => @catalog
 
-        @resource = stub 'resource', :set_parameter => nil, :metaparam_compatibility_mode? => false
+        @resource = stub 'resource', :set_parameter => nil, :metaparam_compatibility_mode? => false, :[] => nil
         @scope = Puppet::Parser::Scope.new()
         @scope.stubs(:resource).returns @resource
         @scope.stubs(:findresource)
@@ -28,7 +28,7 @@ describe "the require function" do
     end
 
     it "should set the 'require' prarameter on the resource to a resource reference" do
-        @resource.expects(:set_parameter).with { |name, value| name == :require and value.is_a?(Puppet::Parser::Resource::Reference) }
+        @resource.expects(:set_parameter).with { |name, value| name == :require and value[0].is_a?(Puppet::Parser::Resource::Reference) }
         @scope.stubs(:function_include)
         @scope.function_require("myclass")
     end
@@ -53,6 +53,16 @@ describe "the require function" do
 
         @scope.expects(:find_hostclass).with("myclass").returns(@klass)
         @klass.expects(:classname).returns("myclass")
+
+        @scope.function_require("myclass")
+    end
+
+    it "should append the required class to the require parameter" do
+        @scope.stubs(:function_include)
+        Puppet::Parser::Resource::Reference.stubs(:new).returns(:require2)
+
+        @resource.expects(:[]).with(:require).returns(:require1)
+        @resource.expects(:set_parameter).with(:require, [:require1, :require2])
 
         @scope.function_require("myclass")
     end

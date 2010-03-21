@@ -50,7 +50,7 @@ fail if used with earlier clients.
             # but that is considered a containment edge, not a dependency
             # edge, so it usually gets lost on the client.
             ref = Puppet::Parser::Resource::Reference.new(:type => :class, :title => klass)
-            resource.set_parameter(:require, ref)
+            resource.set_parameter(:require, [resource[:require]].flatten.compact << ref)
         end
     end
 end
