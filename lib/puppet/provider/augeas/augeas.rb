@@ -291,7 +291,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     save_result = @aug.save
                     saved_files = @aug.match("/augeas/events/saved")
                     if save_result and not files_changed?
-                        debug("Skipping becuase no files were changed")
+                        debug("Skipping because no files were changed")
                         return_value = false
                     else
                         debug("Files changed, should execute")

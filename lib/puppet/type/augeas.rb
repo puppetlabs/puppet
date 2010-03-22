@@ -166,7 +166,7 @@ Puppet::Type.newtype(:augeas) do
         end
 
         # if the onlyif resource is provided, then the value is parsed.
-        # a return value of 0 will stop exection becuase it matches the
+        # a return value of 0 will stop exection because it matches the
         # default value.
         def retrieve
             if @resource.provider.need_to_run?()
