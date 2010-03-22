@@ -82,18 +82,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 if f == :path
                     start = sc.pos
                     nbracket = 0
+                    inSingleTick = false
+                    inDoubleTick = false
                     begin
-                        sc.skip(/([^\]\[\s\\]|\\.)+/)
+                        sc.skip(/([^\]\[\s\\'"]|\\.)+/)
                         ch = sc.getch
                         nbracket += 1 if ch == "["
                         nbracket -= 1 if ch == "]"
+                        inSingleTick = !inSingleTick if ch == "'"
+                        inDoubleTick = !inDoubleTick if ch == "\""
                         fail("unmatched [") if nbracket < 0
-                    end until nbracket == 0 && (sc.eos? || ch =~ /\s/)
+                    end until ((nbracket == 0 && !inSingleTick && !inDoubleTick && (ch =~ /\s/)) || sc.eos?)
                         len = sc.pos - start
                         len -= 1 unless sc.eos?
                     unless p = sc.string[start, len]
                         fail("missing path argument #{narg} for #{cmd}")
                     end
+                    # Rip off any ticks if they are there.
+                    p = p[1, (p.size - 2)] if p[0,1] == "'" || p[0,1] == "\""
                     p.chomp!("/")
                     if p[0,1] != "$" && p[0,1] != "/"
                         argline << context + p
@@ -278,7 +284,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     save_result = @aug.save
                     saved_files = @aug.match("/augeas/events/saved")
                     if save_result and not files_changed?
-                        debug("Skipping becuase no files were changed")
+                        debug("Skipping because no files were changed")
                         return_value = false
                     else
                         debug("Files changed, should execute")
