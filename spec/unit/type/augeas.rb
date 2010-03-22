@@ -114,6 +114,8 @@ describe augeas do
         end
 
         it "should set the context when a specific file is used" do
+            fake_provider = stub_everything "fake_provider"
+            augeas.stubs(:defaultprovider).returns fake_provider
             augeas.new(:name => :no_incl, :lens => "Hosts.lns", :incl => "/etc/hosts")[:context].should == "/files/etc/hosts"
         end
     end
