@@ -566,7 +566,9 @@ describe Puppet::SSL::Host do
             @store.stub_everything
             OpenSSL::X509::Store.stubs(:new).returns @store
 
-            Puppet.settings.stubs(:value).returns "ssl_host_testing"
+            Puppet.settings.stubs(:value).with(:localcacert).returns "ssl_host_testing"
+
+            Puppet::SSL::CertificateRevocationList.stubs(:find).returns(nil)
         end
 
         it "should accept a purpose" do
