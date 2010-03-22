@@ -601,14 +601,14 @@ Puppet::Type.newtype(:file) do
     end
 
     def perform_recursion(path)
-        params = {
+        Puppet::FileServing::Metadata.search(
+            path,
             :links => self[:links],
             :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
             :recurselimit => self[:recurselimit],
-            :ignore => self[:ignore]
-        }
-        params[:checksum_type] = self[:checksum] if self[:checksum] == :none
-        Puppet::FileServing::Metadata.search(path, params)
+            :ignore => self[:ignore],
+            :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none
+        )
     end
 
     # Remove any existing data.  This is only used when dealing with
