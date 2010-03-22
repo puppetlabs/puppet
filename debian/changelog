@@ -11,6 +11,8 @@ puppet (0.25.4-4) UNRELEASED; urgency=low
   * Provide an example apache2.conf for libapache2-mod-passenger
   * Ship the rack config.ru, and README as README.rack
   * Fix puppet-el.emacsen-startup script to be properly installed
+  * debian/puppetmaster.init: Fix init stop action to not fail if the
+    puppetmaster is already stopped, Thanks Mathias Gug (Closes: #574677)
 
  -- Micah Anderson <micah@debian.org>  Tue, 16 Mar 2010 12:27:07 -0400
 
