@@ -22,7 +22,7 @@ class Puppet::Transaction::EventManager
         end
 
         if restarted
-            queue_event(resource, resource.event(:name => :restarted, :status => "success"))
+            queue_events(resource, [resource.event(:name => :restarted, :status => "success")])
 
             transaction.resource_status(resource).restarted = true
         end
@@ -30,21 +30,23 @@ class Puppet::Transaction::EventManager
 
     # Queue events for other resources to respond to.  All of these events have
     # to be from the same resource.
-    def queue_event(resource, event)
-        @events << event
+    def queue_events(resource, events)
+        @events += events
 
-        # Collect the targets of any subscriptions to those events.  We pass
-        # the parent resource in so it will override the source in the events,
-        # since eval_generated children can't have direct relationships.
-        relationship_graph.matching_edges(event, resource).each do |edge|
-            next unless method = edge.callback
-            next unless edge.target.respond_to?(method)
+        events.each do |event|
+            # Collect the targets of any subscriptions to those events.  We pass
+            # the parent resource in so it will override the source in the events,
+            # since eval_generated children can't have direct relationships.
+            relationship_graph.matching_edges(event, resource).each do |edge|
+                next unless method = edge.callback
+                next unless edge.target.respond_to?(method)
 
-            queue_event_for_resource(resource, edge.target, method, event)
-        end
+                queue_event_for_resource(resource, edge.target, method, event)
+            end
 
-        if resource.self_refresh? and ! resource.deleting?
-            queue_event_for_resource(resource, resource, :refresh, event)
+            if resource.self_refresh? and ! resource.deleting?
+                queue_event_for_resource(resource, resource, :refresh, event)
+            end
         end
     end
 
@@ -83,7 +85,7 @@ class Puppet::Transaction::EventManager
         resource.notice "Would have triggered '#{callback}' from #{events.length} events"
 
         # And then add an event for it.
-        queue_event(resource, resource.event(:status => "noop", :name => :noop_restart))
+        queue_events(resource, [resource.event(:status => "noop", :name => :noop_restart)])
         true # so the 'and if' works
     end
 end

@@ -32,10 +32,12 @@ describe Puppet::Transaction::EventManager do
             @event = Puppet::Transaction::Event.new(:name => :foo, :resource => @resource)
         end
 
-        it "should store each event in its event list" do
-            @manager.queue_event(@resource, @event)
+        it "should store all of the events in its event list" do
+            @event2 = Puppet::Transaction::Event.new(:name => :bar, :resource => @resource)
+            @manager.queue_events(@resource, [@event, @event2])
 
             @manager.events.should include(@event)
+            @manager.events.should include(@event2)
         end
 
         it "should queue events for the target and callback of any matching edges" do
@@ -47,7 +49,7 @@ describe Puppet::Transaction::EventManager do
             @manager.expects(:queue_event_for_resource).with(@resource, edge1.target, edge1.callback, @event)
             @manager.expects(:queue_event_for_resource).with(@resource, edge2.target, edge2.callback, @event)
 
-            @manager.queue_event(@resource, @event)
+            @manager.queue_events(@resource, [@event])
         end
 
         it "should queue events for the changed resource if the resource is self-refreshing and not being deleted" do
@@ -57,7 +59,7 @@ describe Puppet::Transaction::EventManager do
             @resource.expects(:deleting?).returns false
             @manager.expects(:queue_event_for_resource).with(@resource, @resource, :refresh, @event)
 
-            @manager.queue_event(@resource, @event)
+            @manager.queue_events(@resource, [@event])
         end
 
         it "should not queue events for the changed resource if the resource is not self-refreshing" do
@@ -67,7 +69,7 @@ describe Puppet::Transaction::EventManager do
             @resource.stubs(:deleting?).returns false
             @manager.expects(:queue_event_for_resource).never
 
-            @manager.queue_event(@resource, @event)
+            @manager.queue_events(@resource, [@event])
         end
 
         it "should not queue events for the changed resource if the resource is being deleted" do
@@ -77,7 +79,7 @@ describe Puppet::Transaction::EventManager do
             @resource.expects(:deleting?).returns true
             @manager.expects(:queue_event_for_resource).never
 
-            @manager.queue_event(@resource, @event)
+            @manager.queue_events(@resource, [@event])
         end
 
         it "should ignore edges that don't have a callback" do
@@ -87,7 +89,7 @@ describe Puppet::Transaction::EventManager do
 
             @manager.expects(:queue_event_for_resource).never
 
-            @manager.queue_event(@resource, @event)
+            @manager.queue_events(@resource, [@event])
         end
 
         it "should ignore targets that don't respond to the callback" do
@@ -97,7 +99,7 @@ describe Puppet::Transaction::EventManager do
 
             @manager.expects(:queue_event_for_resource).never
 
-            @manager.queue_event(@resource, @event)
+            @manager.queue_events(@resource, [@event])
         end
     end
 
@@ -136,7 +138,7 @@ describe Puppet::Transaction::EventManager do
         before do
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
             @manager = Puppet::Transaction::EventManager.new(@transaction)
-            @manager.stubs(:queue_event)
+            @manager.stubs(:queue_events)
 
             @resource = Puppet::Type.type(:file).new :path => "/my/file"
             @event = Puppet::Transaction::Event.new(:name => :event, :resource => @resource)
@@ -167,7 +169,7 @@ describe Puppet::Transaction::EventManager do
             @resource.stubs(:callback1)
 
             @resource.expects(:event).with(:name => :restarted, :status => "success").returns "myevent"
-            @manager.expects(:queue_event).with(@resource, "myevent")
+            @manager.expects(:queue_events).with(@resource, ["myevent"])
 
             @manager.process_events(@resource)
         end
@@ -219,7 +221,7 @@ describe Puppet::Transaction::EventManager do
             it "should queue a new noop event generated from the resource" do
                 event = Puppet::Transaction::Event.new
                 @resource.expects(:event).with(:status => "noop", :name => :noop_restart).returns event
-                @manager.expects(:queue_event).with(@resource, event)
+                @manager.expects(:queue_events).with(@resource, [event])
 
                 @manager.process_events(@resource)
             end
@@ -245,7 +247,7 @@ describe Puppet::Transaction::EventManager do
             end
 
             it "should not queue a 'restarted' event" do
-                @manager.expects(:queue_event).never
+                @manager.expects(:queue_events).never
                 @manager.process_events(@resource)
             end
 

@@ -42,9 +42,7 @@ class Puppet::Transaction
     def apply(resource)
         status = resource_harness.evaluate(resource)
         add_resource_status(status)
-        status.events.each do |event|
-            event_manager.queue_event(resource, event)
-        end
+        event_manager.queue_events(resource, status.events)
     rescue => detail
         resource.err "Could not evaluate: #{detail}"
     end
