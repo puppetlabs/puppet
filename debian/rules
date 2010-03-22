@@ -68,7 +68,7 @@ install: build
 		$(CURDIR)/debian/puppet-el/usr/share/emacs/site-lisp/puppet-mode.el
 
 	# Install the rack README as README.rack
-	$(INSTALL) -m0644 ext/rack/README
+	$(INSTALL) -m0644 ext/rack/README \
 		$(CURDIR)/debian/puppetmaster/usr/share/doc/puppetmaster/README.rack
 	# Install the config.ru and the necessary helper directories
 	$(INSTALL) -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
