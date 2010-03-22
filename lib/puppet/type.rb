@@ -1065,7 +1065,7 @@ class Type
     end
 
     newmetaparam(:check) do
-        desc "Propertys which should have their values retrieved
+        desc "Properties which should have their values retrieved
             but which should not actually be modified.  This is currently used
             internally, but will eventually be used for querying, so that you
             could specify that you wanted to check the install state of all
