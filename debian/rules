@@ -71,9 +71,9 @@ install: build
 	$(INSTALL) -m0644 ext/rack/README \
 		$(CURDIR)/debian/puppetmaster/usr/share/doc/puppetmaster/README.rack
 	# Install the config.ru and the necessary helper directories
-	$(INSTALL) -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
-	$(INSTALL) -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd/public
-	$(INSTALL) -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd/tmp
+	$(INSTALL) -d -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
+	$(INSTALL) -d -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd/public
+	$(INSTALL) -d -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd/tmp
 	$(INSTALL) -m0644 -o puppet -g puppet ext/rack/files/config.ru \
 		$(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
 
