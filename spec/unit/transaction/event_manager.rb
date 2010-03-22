@@ -46,8 +46,8 @@ describe Puppet::Transaction::EventManager do
 
             @graph.expects(:matching_edges).with { |event, resource| event == @event }.returns [edge1, edge2]
 
-            @manager.expects(:queue_event_for_resource).with(@resource, edge1.target, edge1.callback, @event)
-            @manager.expects(:queue_event_for_resource).with(@resource, edge2.target, edge2.callback, @event)
+            @manager.expects(:queue_events_for_resource).with(@resource, edge1.target, edge1.callback, [@event])
+            @manager.expects(:queue_events_for_resource).with(@resource, edge2.target, edge2.callback, [@event])
 
             @manager.queue_events(@resource, [@event])
         end
@@ -57,7 +57,7 @@ describe Puppet::Transaction::EventManager do
 
             @resource.expects(:self_refresh?).returns true
             @resource.expects(:deleting?).returns false
-            @manager.expects(:queue_event_for_resource).with(@resource, @resource, :refresh, @event)
+            @manager.expects(:queue_events_for_resource).with(@resource, @resource, :refresh, [@event])
 
             @manager.queue_events(@resource, [@event])
         end
@@ -67,7 +67,7 @@ describe Puppet::Transaction::EventManager do
 
             @resource.expects(:self_refresh?).returns false
             @resource.stubs(:deleting?).returns false
-            @manager.expects(:queue_event_for_resource).never
+            @manager.expects(:queue_events_for_resource).never
 
             @manager.queue_events(@resource, [@event])
         end
@@ -77,7 +77,7 @@ describe Puppet::Transaction::EventManager do
 
             @resource.expects(:self_refresh?).returns true
             @resource.expects(:deleting?).returns true
-            @manager.expects(:queue_event_for_resource).never
+            @manager.expects(:queue_events_for_resource).never
 
             @manager.queue_events(@resource, [@event])
         end
@@ -87,7 +87,7 @@ describe Puppet::Transaction::EventManager do
 
             @graph.expects(:matching_edges).returns [edge1]
 
-            @manager.expects(:queue_event_for_resource).never
+            @manager.expects(:queue_events_for_resource).never
 
             @manager.queue_events(@resource, [@event])
         end
@@ -97,7 +97,7 @@ describe Puppet::Transaction::EventManager do
 
             @graph.expects(:matching_edges).returns [edge1]
 
-            @manager.expects(:queue_event_for_resource).never
+            @manager.expects(:queue_events_for_resource).never
 
             @manager.queue_events(@resource, [@event])
         end
@@ -117,7 +117,7 @@ describe Puppet::Transaction::EventManager do
             target = stub("target")
 
             2.times do |i|
-                @manager.queue_event_for_resource(stub("source", :info => nil), target, "callback#{i}", ["event#{i}"])
+                @manager.queue_events_for_resource(stub("source", :info => nil), target, "callback#{i}", ["event#{i}"])
             end
 
             @manager.queued_events(target) { |callback, events| }
@@ -128,7 +128,7 @@ describe Puppet::Transaction::EventManager do
             source = stub 'source'
             source.expects(:info)
 
-            @manager.queue_event_for_resource(source, target, "callback", ["event"])
+            @manager.queue_events_for_resource(source, target, "callback", ["event"])
 
             @manager.queued_events(target) { |callback, events| }
         end

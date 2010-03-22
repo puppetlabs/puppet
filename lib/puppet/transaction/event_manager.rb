@@ -51,23 +51,21 @@ class Puppet::Transaction::EventManager
                 next unless method = edge.callback
                 next unless edge.target.respond_to?(method)
 
-                list.each do |e|
-                    queue_event_for_resource(resource, edge.target, method, e)
-                end
+                queue_events_for_resource(resource, edge.target, method, list)
             end
 
             if resource.self_refresh? and ! resource.deleting?
-                queue_event_for_resource(resource, resource, :refresh, event)
+                queue_events_for_resource(resource, resource, :refresh, [event])
             end
         end
     end
 
-    def queue_event_for_resource(source, target, callback, event)
+    def queue_events_for_resource(source, target, callback, events)
         source.info "Scheduling #{callback} of #{target}"
 
         @event_queues[target] ||= {}
         @event_queues[target][callback] ||= []
-        @event_queues[target][callback] << event
+        @event_queues[target][callback] += events
     end
 
     def queued_events(resource)
