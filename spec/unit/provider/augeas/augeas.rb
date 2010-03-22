@@ -141,6 +141,20 @@ describe provider_class do
             tokens.should == [ args ]
         end
 
+        it "should allow single quoted escaped spaces in paths" do
+            @resource.stubs(:[]).returns("/foo/")
+            args = [ "set", "'/white\\ space/key'", "value" ]
+            tokens = @provider.parse_commands(args.join(" \t "))
+            tokens.should == [[ "set", "/white\\ space/key", "value" ]]
+        end
+
+        it "should allow double quoted escaped spaces in paths" do
+            @resource.stubs(:[]).returns("/foo/")
+            args = [ "set", '"/white\\ space/key"', "value" ]
+            tokens = @provider.parse_commands(args.join(" \t "))
+            tokens.should == [[ "set", "/white\\ space/key", "value" ]]
+        end
+
         it "should remove trailing slashes" do
             @resource.stubs(:[]).returns("/foo/")
             tokens = @provider.parse_commands("set foo/ bar")
