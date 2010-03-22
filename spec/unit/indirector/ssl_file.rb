@@ -21,7 +21,7 @@ describe Puppet::Indirector::SslFile do
         @setting = :mydir
         @file_class.store_in @setting
         @path = "/my/directory"
-        Puppet.settings.stubs(:value).returns "stubbed_setting"
+        Puppet.settings.stubs(:value).with(:noop).returns(false)
         Puppet.settings.stubs(:value).with(@setting).returns(@path)
         Puppet.settings.stubs(:value).with(:trace).returns(false)
     end
@@ -198,6 +198,7 @@ describe Puppet::Indirector::SslFile do
                 it "should use the filehandle provided by the Settings" do
                     @searcher.class.store_at @setting
                     @searcher.class.store_ca_at :castuff
+                    Puppet.settings.stubs(:value).with(:castuff).returns "castuff stub"
 
                     fh = mock 'filehandle'
                     fh.stubs :print
