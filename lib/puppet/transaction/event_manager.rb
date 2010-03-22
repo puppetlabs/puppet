@@ -33,7 +33,17 @@ class Puppet::Transaction::EventManager
     def queue_events(resource, events)
         @events += events
 
-        events.each do |event|
+        # Do some basic normalization so we're not doing so many
+        # graph queries for large sets of events.
+        events.inject({}) do |collection, event|
+            collection[event.name] ||= []
+            collection[event.name] << event
+            collection
+        end.collect do |name, list|
+            # It doesn't matter which event we use - they all have the same source
+            # and name here.
+            event = list[0]
+
             # Collect the targets of any subscriptions to those events.  We pass
             # the parent resource in so it will override the source in the events,
             # since eval_generated children can't have direct relationships.
@@ -41,7 +51,9 @@ class Puppet::Transaction::EventManager
                 next unless method = edge.callback
                 next unless edge.target.respond_to?(method)
 
-                queue_event_for_resource(resource, edge.target, method, event)
+                list.each do |e|
+                    queue_event_for_resource(resource, edge.target, method, e)
+                end
             end
 
             if resource.self_refresh? and ! resource.deleting?
