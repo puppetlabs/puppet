@@ -7,8 +7,7 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
     property = Puppet::Type.type(:file).attrclass(param)
     describe property do
         before do
-            @resource = mock 'resource'
-            @resource.stubs(:[]).with(:path).returns "/my/file"
+            @resource = Puppet::Type.type(:file).new :path => "/my/file"
             @sel = property.new :resource => @resource
         end
 
