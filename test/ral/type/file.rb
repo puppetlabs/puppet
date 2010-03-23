@@ -978,25 +978,4 @@ class TestFile < Test::Unit::TestCase
         assert_equal("/", obj.title, "/ directory was changed to empty string")
     end
 
-    # #1010 and #1037 -- write should fail if the written checksum does not
-    # match the file we thought we were writing.
-    def test_write_validates_checksum
-        file = tempfile
-        inst = Puppet::Type.newfile(:path => file, :content => "something")
-
-        tmpfile = file + ".puppettmp"
-
-        wh = mock 'writehandle', :print => nil
-        rh = mock 'readhandle'
-        rh.expects(:read).with(4096).times(2).returns("other").then.returns(nil)
-        File.expects(:open).with { |*args| args[0] == tmpfile and args[1] != "r" }.yields(wh)
-        File.expects(:open).with { |*args| args[0] == tmpfile and args[1] == "r" }.yields(rh)
-
-        File.stubs(:rename)
-        FileTest.stubs(:exist?).returns(true)
-        FileTest.stubs(:file?).returns(true)
-
-        inst.expects(:fail)
-        inst.write("something", :whatever)
-    end
 end
