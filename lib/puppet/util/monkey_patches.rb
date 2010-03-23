@@ -21,7 +21,6 @@ end
 
 class Object
     def to_yaml
-        p [self,:to_yaml,ZAML.dump(self)]
         ZAML.dump(self)
     end
 end
