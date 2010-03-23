@@ -305,16 +305,6 @@ module Puppet
         def exists?
             @provider.get(:ensure) != :absent
         end
-
-        def retrieve
-            @provider.properties.inject({}) do |props, ary|
-                name, value = ary
-                if prop = @parameters[name]
-                    props[prop] = value
-                end
-                props
-            end
-        end
     end # Puppet::Type.type(:package)
 end
 
