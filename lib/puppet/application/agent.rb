@@ -108,7 +108,10 @@ Puppet::Application.new(:agent) do
            exit(1)
            return
         end
-        Puppet.notice cert.fingerprint(options[:digest])
+        unless fingerprint = cert.fingerprint(options[:digest])
+            raise ArgumentError, "Could not get fingerprint for digest '#{options[:digest]}'"
+        end
+        Puppet.notice fingerprint
     end
 
     command(:onetime) do

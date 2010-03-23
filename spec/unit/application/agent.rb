@@ -564,14 +564,14 @@ describe Puppet::Application[:agent] do
 
             it "should fingerprint the certificate if it exists" do
                 @host.expects(:certificate).returns(@cert)
-                @cert.expects(:fingerprint).with(:MD5)
+                @cert.expects(:fingerprint).with(:MD5).returns "fingerprint"
                 @puppetd.fingerprint
             end
 
             it "should fingerprint the certificate request if no certificate have been signed" do
                 @host.expects(:certificate).returns(nil)
                 @host.expects(:certificate_request).returns(@cert)
-                @cert.expects(:fingerprint).with(:MD5)
+                @cert.expects(:fingerprint).with(:MD5).returns "fingerprint"
                 @puppetd.fingerprint
             end
 
