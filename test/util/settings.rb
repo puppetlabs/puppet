@@ -578,7 +578,7 @@ yay = /a/path
             :mydir => {:default => tempfile(),
                 :mode => 0644,
                 :owner => "root",
-                :group => "root",
+                :group => "service",
                 :desc => "yay"
             },
             :mkusers => [false, "yay"]
