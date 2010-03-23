@@ -43,7 +43,7 @@ describe provider do
       result.should be_nil
     end
 
-    it "should list package correctly" do    
+    it "should fail to list a missing package" do
         @provider.expects(:pkg).with(:list, "-H", "dummy").returns "1"
         @provider.query.should == {:status=>"missing", :ensure=>:absent,
                                    :name=>"dummy", :error=>"ok"}
@@ -51,13 +51,13 @@ describe provider do
   
     it "should fail to list a package when it can't parse the output line" do
         @provider.expects(:pkg).with(:list, "-H", "dummy").returns "failed"
-        @provider.query.should == {}
-        #== {:status=>"missing", :ensure=>:absent, :name=>"dummy", :error=>"ok"}
+        @provider.query.should == {:status=>"missing", :ensure=>:absent, :name=>"dummy", :error=>"ok"}
     end
 
-    it "should fail to list a missing package" do
+    it "should list package correctly" do
         @provider.expects(:pkg).with(:list, "-H", "dummy").returns "dummy 1.0@1.0-1.0 installed ----"
-        lambda { @provider.query }.should raise_error(Puppet::Error)
-        #== {:status=>"missing", :ensure=>:absent, :name=>"dummy", :error=>"ok"}
+        @provider.query.should == {:name => "dummy", :version => "1.0@1.0-1.0",
+                          :ensure => :present, :status => "installed",
+                          :provider => :pkg, :error => "ok"}
     end
 end
