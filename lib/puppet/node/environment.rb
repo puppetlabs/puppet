@@ -62,7 +62,13 @@ class Puppet::Node::Environment
     # Cache the list, because it can be expensive to create.
     cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
         module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
-        module_names.collect { |path| Puppet::Module.new(path, self) rescue nil }.compact
+        module_names.collect do |path|
+            begin
+                Puppet::Module.new(path, self)
+            rescue Puppet::Module::Error => e
+                nil
+            end
+        end.compact
     end
 
     # Cache the manifestdir, so that we aren't searching through

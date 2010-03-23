@@ -2,19 +2,15 @@ require 'puppet/util/logging'
 
 # Support for modules
 class Puppet::Module
-    class MissingModule < Puppet::Error; end
-    class IncompatibleModule < Puppet::Error; end
-    class UnsupportedPlatform < Puppet::Error; end
-    class IncompatiblePlatform < Puppet::Error; end
-    class MissingMetadata < Puppet::Error; end
+    class Error < Puppet::Error; end
+    class MissingModule < Error; end
+    class IncompatibleModule < Error; end
+    class UnsupportedPlatform < Error; end
+    class IncompatiblePlatform < Error; end
+    class MissingMetadata < Error; end
+    class InvalidName < Error; end
 
     include Puppet::Util::Logging
-
-    class InvalidName < ArgumentError
-        def message
-            "Invalid module name; module names must be alphanumeric (plus '-')"
-        end
-    end
 
     TEMPLATES = "templates"
     FILES = "files"
@@ -215,6 +211,6 @@ class Puppet::Module
     end
 
     def assert_validity
-        raise InvalidName unless name =~ /^[-\w]+$/
+        raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-')" unless name =~ /^[-\w]+$/
     end
 end
