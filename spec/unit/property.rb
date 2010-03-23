@@ -325,6 +325,14 @@ describe Puppet::Property do
 
             @property.should = "foo"
         end
+
+        it "should support specifying an individual required feature" do
+            value = @class.newvalue(/./, :required_features => :a)
+
+            @provider.expects(:satisfies?).returns true
+
+            @property.should = "foo"
+        end
     end
 
     describe "when munging values" do

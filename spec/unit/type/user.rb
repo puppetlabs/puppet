@@ -254,7 +254,7 @@ describe user do
     describe "when manages_solaris_rbac is enabled" do
         before do
             @provider.stubs(:satisfies?).returns(false)
-            @provider.expects(:satisfies?).with(:manages_solaris_rbac).returns(true)
+            @provider.expects(:satisfies?).with([:manages_solaris_rbac]).returns(true)
         end
 
         it "should support a :role value for ensure" do

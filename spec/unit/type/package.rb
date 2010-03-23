@@ -61,32 +61,32 @@ describe Puppet::Type.type(:package), "when validating attribute values" do
     end
 
     it "should support :purged as a value to :ensure if the provider has the :purgeable feature" do
-        @provider.expects(:satisfies?).with(:purgeable).returns(true)
+        @provider.expects(:satisfies?).with([:purgeable]).returns(true)
         Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged)
     end
 
     it "should not support :purged as a value to :ensure if the provider does not have the :purgeable feature" do
-        @provider.expects(:satisfies?).with(:purgeable).returns(false)
+        @provider.expects(:satisfies?).with([:purgeable]).returns(false)
         proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => :purged) }.should raise_error(Puppet::Error)
     end
 
     it "should support :latest as a value to :ensure if the provider has the :upgradeable feature" do
-        @provider.expects(:satisfies?).with(:upgradeable).returns(true)
+        @provider.expects(:satisfies?).with([:upgradeable]).returns(true)
         Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest)
     end
 
     it "should not support :latest as a value to :ensure if the provider does not have the :upgradeable feature" do
-        @provider.expects(:satisfies?).with(:upgradeable).returns(false)
+        @provider.expects(:satisfies?).with([:upgradeable]).returns(false)
         proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => :latest) }.should raise_error(Puppet::Error)
     end
 
     it "should support version numbers as a value to :ensure if the provider has the :versionable feature" do
-        @provider.expects(:satisfies?).with(:versionable).returns(true)
+        @provider.expects(:satisfies?).with([:versionable]).returns(true)
         Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0")
     end
 
     it "should not support version numbers as a value to :ensure if the provider does not have the :versionable feature" do
-        @provider.expects(:satisfies?).with(:versionable).returns(false)
+        @provider.expects(:satisfies?).with([:versionable]).returns(false)
         proc { Puppet::Type.type(:package).new(:name => "yay", :ensure => "1.0") }.should raise_error(Puppet::Error)
     end
 

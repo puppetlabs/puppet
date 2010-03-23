@@ -333,6 +333,7 @@ class Puppet::Property < Puppet::Parameter
     # Make sure that we've got all of the required features for a given value.
     def validate_features_per_value(value)
         if features = self.class.value_option(self.class.value_name(value), :required_features)
+            features = Array(features)
             needed_features = features.collect { |f| f.to_s }.join(", ")
             raise ArgumentError, "Provider must have features '#{needed_features}' to set '#{self.class.name}' to '#{value}'" unless provider.satisfies?(features)
         end
