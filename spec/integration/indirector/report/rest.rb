@@ -74,7 +74,7 @@ describe "Report REST Terminus" do
             :failed_restarts => 1,
             :scheduled => 10
         }
-        report.newmetric(:resources, resourcemetrics)
+        report.add_metric(:resources, resourcemetrics)
 
         timemetrics = {
             :resource1 => 10,
@@ -82,13 +82,12 @@ describe "Report REST Terminus" do
             :resource3 => 40,
             :resource4 => 20,
         }
-        report.newmetric(:times, timemetrics)
+        report.add_metric(:times, timemetrics)
 
-        report.newmetric(:changes,
+        report.add_metric(:changes,
             :total => 20
         )
 
-        report.time = Time.now
         report.save
     end
 end
