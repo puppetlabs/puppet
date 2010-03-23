@@ -236,7 +236,7 @@ describe Puppet::Configurer, "when sending a report" do
     end
 
     it "should use any provided transaction to add metrics to the report" do
-        @trans.expects(:add_metrics_to_report).with(@report)
+        @trans.expects(:generate_report)
         @configurer.send_report(@report, @trans)
     end
 
