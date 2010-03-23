@@ -39,7 +39,7 @@ fail if used with earlier clients.
         vals.each do |klass|
             # lookup the class in the scopes
             if classobj = find_hostclass(klass)
-                klass = classobj.classname
+                klass = classobj.name
             else
                 raise Puppet::ParseError, "Could not find class %s" % klass
             end

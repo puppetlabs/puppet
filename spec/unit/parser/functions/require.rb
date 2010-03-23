@@ -13,7 +13,7 @@ describe "the require function" do
         @scope.stubs(:resource).returns @resource
         @scope.stubs(:findresource)
         @scope.stubs(:compiler).returns(@compiler)
-        @klass = stub 'class', :classname => "myclass"
+        @klass = stub 'class', :name => "myclass"
         @scope.stubs(:find_hostclass).returns(@klass)
     end
 
@@ -52,7 +52,7 @@ describe "the require function" do
         @scope.stubs(:function_include)
 
         @scope.expects(:find_hostclass).with("myclass").returns(@klass)
-        @klass.expects(:classname).returns("myclass")
+        @klass.expects(:name).returns("myclass")
 
         @scope.function_require("myclass")
     end
