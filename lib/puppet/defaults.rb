@@ -561,6 +561,10 @@ module Puppet
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
         ],
+        :use_cached_catalog => [false,
+            "Whether to only use the cached catalog rather than compiling a new catalog
+            on every run.  Puppet can be run with this enabled by default and then selectively
+            disabled when a recompile is desired."],
         :ignorecache => [false,
             "Ignore cache and always recompile the configuration.  This is
             useful for testing new configurations, where the local cache may in

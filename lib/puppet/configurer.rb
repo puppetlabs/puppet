@@ -100,7 +100,7 @@ class Puppet::Configurer
         fact_options = facts_for_uploading()
 
         # First try it with no cache, then with the cache.
-        unless result = retrieve_new_catalog(fact_options)
+        unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(fact_options)) or result = retrieve_new_catalog(fact_options)
             if ! Puppet[:usecacheonfailure]
                 Puppet.warning "Not using cache on failed catalog"
                 return nil
