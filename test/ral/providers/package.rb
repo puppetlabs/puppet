@@ -238,6 +238,10 @@ class TestPackageProvider < Test::Unit::TestCase
         end
     end
 
+    def test_dont_complain_if_theres_nothing_to_test
+        assert("sometimes the above metaprogramming fails to find anything to test and the runner complains")
+    end
+
     def modpkg(pkg)
         case pkg[:provider]
         when :sun
