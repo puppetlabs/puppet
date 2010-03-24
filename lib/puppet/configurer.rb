@@ -91,47 +91,23 @@ class Puppet::Configurer
 
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
     def retrieve_catalog
-        name = Puppet[:certname]
-        catalog_class = Puppet::Resource::Catalog
-
         # This is a bit complicated.  We need the serialized and escaped facts,
         # and we need to know which format they're encoded in.  Thus, we
         # get a hash with both of these pieces of information.
         fact_options = facts_for_uploading()
 
         # First try it with no cache, then with the cache.
-        result = nil
-        begin
-            duration = thinmark do
-                result = catalog_class.find(name, fact_options.merge(:ignore_cache => true))
-            end
-        rescue SystemExit,NoMemoryError
-            raise
-        rescue Exception => detail
-            puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not retrieve catalog from remote server: %s" % detail
-        end
-
-        unless result
+        unless result = retrieve_new_catalog(fact_options)
             if ! Puppet[:usecacheonfailure]
                 Puppet.warning "Not using cache on failed catalog"
                 return nil
             end
-
-            begin
-                duration = thinmark do
-                    result = catalog_class.find(name, fact_options.merge(:ignore_terminus => true))
-                end
-                Puppet.notice "Using cached catalog"
-            rescue => detail
-                puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not retrieve catalog from cache: %s" % detail
-            end
+            result = retrieve_catalog_from_cache(fact_options)
         end
 
         return nil unless result
 
-        convert_catalog(result, duration)
+        convert_catalog(result, @duration)
     end
 
     # Convert a plain resource catalog into our full host catalog.
@@ -207,5 +183,32 @@ class Puppet::Configurer
         rescue => detail
             raise CommandHookError, "Could not run command from #{setting}: #{detail}"
         end
+    end
+
+    def retrieve_catalog_from_cache(fact_options)
+        result = nil
+        @duration = thinmark do
+            result = Puppet::Resource::Catalog.find(Puppet[:certname], fact_options.merge(:ignore_terminus => true))
+        end
+        Puppet.notice "Using cached catalog"
+        result
+    rescue => detail
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err "Could not retrieve catalog from cache: %s" % detail
+        return nil
+    end
+
+    def retrieve_new_catalog(fact_options)
+        result = nil
+        @duration = thinmark do
+            result = Puppet::Resource::Catalog.find(Puppet[:certname], fact_options.merge(:ignore_cache => true))
+        end
+        result
+    rescue SystemExit,NoMemoryError
+        raise
+    rescue Exception => detail
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err "Could not retrieve catalog from remote server: %s" % detail
+        return nil
     end
 end
