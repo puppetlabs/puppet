@@ -70,12 +70,14 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         end
 
         begin
-            state = svcs("-H", "-o", "state", @resource[:name]).chomp
+            # get the current state and the next state, and if the next
+            # state is set (i.e. not "-") use it for state comparison
+            states = svcs("-H", "-o", "state,nstate", @resource[:name]).chomp.split
+            state = states[1] == "-" ? states[0] : states[1]
         rescue Puppet::ExecutionFailure
             info "Could not get status on service %s" % self.name
             return :stopped
         end
-
 
         case state
         when "online"
