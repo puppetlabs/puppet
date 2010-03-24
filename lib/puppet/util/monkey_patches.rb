@@ -11,7 +11,7 @@ end
 
 
 require "yaml"
-require "lib/puppet/util/zaml.rb"
+require "puppet/util/zaml.rb"
 class Symbol
     def to_zaml(z)
         z.emit("!ruby/sym ")
