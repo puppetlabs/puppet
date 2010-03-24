@@ -12,5 +12,5 @@ Puppet[:name] = "puppetmasterd"
 Puppet::Node::Facts.terminus_class = :yaml
 
 Puppet::Node::Facts.search("*").sort { |a,b| a.name <=> b.name }.each do |node|
-  puts "#{node.name} checked in #{((Time.now - Time.parse(node.values[:_timestamp].to_s)) / 60).floor} minutes ago.  Version #{node.values['puppetversion']}#{node.expired? ? '  Cached expired.' : ''}"
+  puts "#{node.name} checked in #{((Time.now - Time.parse(node.values[:_timestamp].to_s)) / 60).floor} minutes ago.  Version #{node.values['puppetversion']}#{node.expired? ? '  Cache expired.' : ''}"
 end
