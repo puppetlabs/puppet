@@ -19,11 +19,13 @@ class Symbol
     end
 end
 
-class Object
-    def to_yaml
-        ZAML.dump(self)
+[Object, Exception, Integer, Struct, Date, Time, Range, Regexp, Hash, Array, Float, String, FalseClass, TrueClass, Symbol, NilClass, Class].each { |cls|
+    cls.class_eval do
+        def to_yaml
+            ZAML.dump(self)
+        end
     end
-end
+}
 
 def YAML.dump(*args)
     ZAML.dump(*args)
