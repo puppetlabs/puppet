@@ -79,6 +79,7 @@ describe Puppet::Util::Settings do
         end
 
         it "should support a getopt-specific mechanism for turning booleans off" do
+            @settings[:bool] = true
             @settings.handlearg("--no-bool", "")
             @settings[:bool].should == false
         end
@@ -97,18 +98,31 @@ describe Puppet::Util::Settings do
             @settings[:bool].should == true
         end
 
-        it "should consider a cli setting with an empty string as an argument to be a boolean" do
+        it "should consider a cli setting with an empty string as an argument to be a boolean, if the setting itself is a boolean" do
             # Turn it off first
             @settings[:bool] = false
             @settings.handlearg("--bool", "")
             @settings[:bool].should == true
         end
 
+        it "should consider a cli setting with an empty string as an argument to be an empty argument, if the setting itself is not a boolean" do
+            @settings[:myval] = "bob"
+            @settings.handlearg("--myval", "")
+            @settings[:myval].should == ""
+        end
+
         it "should consider a cli setting with a boolean as an argument to be a boolean" do
             # Turn it off first
             @settings[:bool] = false
-            @settings.handlearg("--bool", true)
+            @settings.handlearg("--bool", "true")
             @settings[:bool].should == true
+        end
+
+       it "should not consider a cli setting of a non boolean with a boolean as an argument to be a boolean" do
+            # Turn it off first
+            @settings[:myval] = "bob"
+            @settings.handlearg("--no-myval", "")
+            @settings[:myval].should == ""
         end
 
         it "should clear the cache when setting getopt-specific values" do

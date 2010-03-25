@@ -147,6 +147,7 @@ class Puppet::Util::Settings
         @cache.clear
         value = munge_value(value) if value
         str = opt.sub(/^--/,'')
+
         bool = true
         newstr = str.sub(/^no-/, '')
         if newstr != str
@@ -155,8 +156,10 @@ class Puppet::Util::Settings
         end
         str = str.intern
 
-        if value == "" or value.nil?
-            value = bool
+        if @config[str].is_a?(Puppet::Util::Settings::BooleanSetting)
+            if value == "" or value.nil?
+                value = bool
+            end
         end
 
         set_value(str, value, :cli)
