@@ -17,7 +17,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     class DuplicateResourceError < Puppet::Error; end
 
     extend Puppet::Indirector
-    indirects :catalog, :terminus_class => :compiler
+    indirects :catalog, :terminus_setting => :catalog_terminus
 
     include Puppet::Util::Tagging
     extend Puppet::Util::Pson

@@ -245,7 +245,10 @@ Puppet::Application.new(:agent) do
 
         Puppet::Transaction::Report.terminus_class = :rest
 
-        Puppet::Resource::Catalog.terminus_class = :rest
+        # Override the default; puppetd needs this, usually.
+        # You can still override this on the command-line with, e.g., :compiler.
+        Puppet[:catalog_terminus] = :rest
+
         Puppet::Resource::Catalog.cache_class = :yaml
 
         Puppet::Node::Facts.terminus_class = :facter

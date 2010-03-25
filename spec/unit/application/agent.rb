@@ -327,9 +327,8 @@ describe Puppet::Application[:agent] do
             @puppetd.run_setup
         end
 
-        it "should tell the catalog handler to use REST" do
-            Puppet::Resource::Catalog.expects(:terminus_class=).with(:rest)
-
+        it "should change the catalog_terminus setting to 'rest'" do
+            Puppet.expects(:[]=).with(:catalog_terminus, :rest)
             @puppetd.run_setup
         end
 

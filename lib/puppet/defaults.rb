@@ -149,6 +149,8 @@ module Puppet
             huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
             slightly more useful way when that happens."],
         :node_terminus => ["plain", "Where to find information about nodes."],
+        :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
+            you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
         :httplog => { :default => "$logdir/http.log",
             :owner => "root",
             :mode => 0640,
