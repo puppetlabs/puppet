@@ -843,8 +843,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Resource::Catalog.find(:myconfig)
         end
 
-        it "should default to the 'compiler' terminus" do
-            Puppet::Resource::Catalog.indirection.terminus_class.should == :compiler
+        it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
+            Puppet.settings[:catalog_terminus] = "rest"
+            Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
+        end
+
+        it "should allow the terminus class to be set manually" do
+            Puppet::Resource::Catalog.indirection.terminus_class = :rest
+            Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
         end
 
         after do

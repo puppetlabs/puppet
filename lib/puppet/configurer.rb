@@ -91,10 +91,14 @@ class Puppet::Configurer
 
     # Get the remote catalog, yo.  Returns nil if no catalog can be found.
     def retrieve_catalog
-        # This is a bit complicated.  We need the serialized and escaped facts,
-        # and we need to know which format they're encoded in.  Thus, we
-        # get a hash with both of these pieces of information.
-        fact_options = facts_for_uploading()
+        if Puppet::Resource::Catalog.indirection.terminus_class == :rest
+            # This is a bit complicated.  We need the serialized and escaped facts,
+            # and we need to know which format they're encoded in.  Thus, we
+            # get a hash with both of these pieces of information.
+            fact_options = facts_for_uploading()
+        else
+            fact_options = {}
+        end
 
         # First try it with no cache, then with the cache.
         unless (Puppet[:use_cached_catalog] and result = retrieve_catalog_from_cache(fact_options)) or result = retrieve_new_catalog(fact_options)
