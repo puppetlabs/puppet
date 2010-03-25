@@ -238,9 +238,9 @@ Puppet::Application.new(:agent) do
 
         Puppet.settings.use :main, :puppetd, :ssl
 
-        # We need to specify a ca location for things to work
-        # in fingerprint mode we just need access to the local files and
-        # we don't need a ca.
+        # We need to specify a ca location for all of the SSL-related i
+        # indirected classes to work; in fingerprint mode we just need 
+        # access to the local files and we don't need a ca.
         Puppet::SSL::Host.ca_location = options[:fingerprint] ? :none : :remote
 
         Puppet::Transaction::Report.terminus_class = :rest
