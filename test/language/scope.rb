@@ -395,6 +395,7 @@ Host <<||>>"
                 assert(flat.find{|o| o.name == name }, "Did not find #{name}")
             end
         }
+    ensure
         Puppet[:storeconfigs] = false
         Puppet::Resource::Catalog.cache_class =  catalog_cache_class
         Puppet::Node::Facts.cache_class = facts_cache_class

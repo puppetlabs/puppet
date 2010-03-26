@@ -499,6 +499,8 @@ file { "/tmp/yayness":
                 check.call(res, "multiresource")
             end
         end
+
+    ensure
         if Puppet.features.rails?
             Puppet[:storeconfigs] = false
             Puppet::Resource::Catalog.cache_class =  catalog_cache_class
@@ -535,6 +537,8 @@ file { "/tmp/yayness":
             assert_instance_of(AST::Collection, coll)
             assert_equal(form, coll.form)
         end
+
+    ensure
         if Puppet.features.rails?
             Puppet[:storeconfigs] = false
             Puppet::Resource::Catalog.cache_class =  catalog_cache_class
@@ -643,7 +647,7 @@ file { "/tmp/yayness":
             parser.parse %{define one::two { }}
         }
         assert(parser.definition("one::two"), "Could not find one::two with no namespace")
-        
+
         # Now try using the definition
         assert_nothing_raised("Could not parse fully-qualified definition usage") {
             parser.parse %{one::two { yayness: }}
@@ -1180,7 +1184,7 @@ file { "/tmp/yayness":
             result = parser.newclass "Yayness"
         end
         assert_equal(result, parser.find_hostclass("", "yayNess"))
-        
+
         assert_nothing_raised do
             result = parser.newdefine "FunTest"
         end
