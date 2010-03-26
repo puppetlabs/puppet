@@ -68,8 +68,8 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     end
 
     def self.installpkgdmg(source, name)
-        unless source =~ /\.dmg$/i
-            raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg")
+        unless source =~ /\.dmg$/i || source =~ /\.pkg$/i
+            raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg or flat .pkg file")
         end
         require 'open-uri'
         cached_source = source
@@ -85,28 +85,34 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
         end
 
         begin
-            File.open(cached_source) do |dmg|
-                xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
-                hdiutil_info = Plist::parse_xml(xml_str)
-                unless hdiutil_info.has_key?("system-entities")
-                    raise Puppet::Error.new("No disk entities returned by mount at %s" % dmg.path)
-                end
-                mounts = hdiutil_info["system-entities"].collect { |entity|
-                    entity["mount-point"]
-                }.compact
-                begin
-                    mounts.each do |mountpoint|
-                        Dir.entries(mountpoint).select { |f|
-                            f =~ /\.m{0,1}pkg$/i
-                        }.each do |pkg|
-                            installpkg("#{mountpoint}/#{pkg}", name, source)
+            if source =~ /\.dmg$/i
+                File.open(cached_source) do |dmg|
+                    xml_str = hdiutil "mount", "-plist", "-nobrowse", "-readonly", "-noidme", "-mountrandom", "/tmp", dmg.path
+                    hdiutil_info = Plist::parse_xml(xml_str)
+                    unless hdiutil_info.has_key?("system-entities")
+                        raise Puppet::Error.new("No disk entities returned by mount at %s" % dmg.path)
+                    end
+                    mounts = hdiutil_info["system-entities"].collect { |entity|
+                        entity["mount-point"]
+                    }.compact
+                    begin
+                        mounts.each do |mountpoint|
+                            Dir.entries(mountpoint).select { |f|
+                                f =~ /\.m{0,1}pkg$/i
+                            }.each do |pkg|
+                                installpkg("#{mountpoint}/#{pkg}", name, source)
+                            end
+                        end
+                    ensure
+                        mounts.each do |mountpoint|
+                            hdiutil "eject", mountpoint
                         end
                     end
-                ensure
-                    mounts.each do |mountpoint|
-                        hdiutil "eject", mountpoint
-                    end
                 end
+            elsif source =~ /\.pkg$/i
+                installpkg(cached_source, name, source)
+            else
+                raise Puppet::Error.new("Mac OS X PKG DMG's must specificy a source string ending in .dmg or flat .pkg file")
             end
         ensure
             # JJM Remove the file if open-uri didn't already do so.
@@ -116,6 +122,7 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
     def query
         if FileTest.exists?("/var/db/.puppet_pkgdmg_installed_#{@resource[:name]}")
+            Puppet.debug "/var/db/.puppet_pkgdmg_installed_#{@resource[:name]} found"
             return {:name => @resource[:name], :ensure => :present}
         else
             return nil

@@ -9,8 +9,9 @@ describe provider do
         @resource = stub 'resource', :[] => "dummypkgdmg"
         @provider = provider.new(@resource)
 
-        @fakemountpoint = "/tmp/dmg.foo"
-        @fakehdiutilinfo = {"system-entities" => [{"mount-point" => @fakemountpoint}] }
+        @fakemountpoint   = "/tmp/dmg.foo"
+        @fakepkgfile      = "/tmp/test.pkg"
+        @fakehdiutilinfo  = {"system-entities" => [{"mount-point" => @fakemountpoint}] }
         @fakehdiutilplist = Plist::Emit.dump(@fakehdiutilinfo)
 
         @hdiutilmountargs = ["mount", "-plist", "-nobrowse", "-readonly",
@@ -36,8 +37,8 @@ describe provider do
             lambda { @provider.install }.should raise_error(Puppet::Error)
         end
 
-        it "the source does not end in .dmg" do
-            @resource.stubs(:[]).with(:source).returns "notendingindotdmg"
+        it "the source does not end in .dmg or .pkg" do
+            @resource.stubs(:[]).with(:source).returns "notendingindotdmgorpkg"
             lambda { @provider.install }.should raise_error(Puppet::Error)
         end
 
@@ -48,7 +49,7 @@ describe provider do
     end
 
     # These tests shouldn't be this messy. The pkgdmg provider needs work...
-    describe "when installing" do
+    describe "when installing a pkgdmg" do
         before do
             fh = mock 'filehandle'
             fh.stubs(:path).yields "/tmp/foo"
@@ -70,4 +71,14 @@ describe provider do
             @provider.install
         end
     end
+
+    describe "when installing flat pkg file" do
+        it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
+            @resource.stubs(:[]).with(:source).returns "/tmp/test.pkg"
+            @resource.stubs(:[]).with(:name).returns "testpkg"
+			@provider.class.expects(:installpkgdmg).with("#{@fakepkgfile}", "testpkg").returns ""
+			@provider.install
+		end
+    end
+    
 end
