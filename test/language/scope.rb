@@ -315,7 +315,7 @@ class TestScope < Test::Unit::TestCase
         parser = config.parser
 
         # Create a default source
-        config.topscope.source = parser.newclass "", ""
+        config.topscope.source = parser.newclass ""
 
         # And a scope resource
         scope_res = stub 'scope_resource', :virtual? => true, :exported? => false, :tags => [], :builtin? => true, :type => "eh", :title => "bee"
