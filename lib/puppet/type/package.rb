@@ -35,6 +35,12 @@ module Puppet
                 package database for installed version(s), and can select
                 which out of a set of available versions of a package to
                 install if asked."
+        feature :holdable, "The provider is capable of placing packages on hold
+                such that they are not automatically upgraded as a result of
+                other package dependencies unless explicit action is taken by
+                a user or another package. Held is considered a superset of
+                installed.",
+            :methods => [:hold]
 
         ensurable do
             desc "What state the package should be in.
@@ -58,6 +64,10 @@ module Puppet
 
             newvalue(:purged, :event => :package_purged, :required_features => :purgeable) do
                 provider.purge
+            end
+
+            newvalue(:held, :event => :package_held, :required_features => :holdable) do
+                provider.hold
             end
 
             # Alias the 'present' value.
@@ -111,7 +121,7 @@ module Puppet
                 @should.each { |should|
                     case should
                     when :present
-                        return true unless [:absent, :purged].include?(is)
+                        return true unless [:absent, :purged, :held].include?(is)
                     when :latest
                         # Short-circuit packages that are not present
                         return false if is == :absent or is == :purged

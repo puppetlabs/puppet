@@ -5,6 +5,8 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         and not ``apt``, you must specify the source of any packages you want
         to manage."
 
+    has_feature :holdable
+
     commands :dpkg => "/usr/bin/dpkg"
     commands :dpkg_deb => "/usr/bin/dpkg-deb"
     commands :dpkgquery => "/usr/bin/dpkg-query"
@@ -47,8 +49,11 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
             if hash[:status] == 'not-installed'
                 hash[:ensure] = :purged
-            elsif hash[:status] != "installed"
+            elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
                 hash[:ensure] = :absent
+            end
+            if hash[:desired] == 'hold'
+                hash[:ensure] = :held
             end
         else
             Puppet.warning "Failed to match dpkg-query line %s" % line.inspect
@@ -64,6 +69,9 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         end
 
         args = []
+
+        # We always unhold when installing to remove any prior hold.
+        self.unhold
 
         if @resource[:configfiles] == :keep
             args << '--force-confold'
@@ -126,5 +134,26 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     def purge
         dpkg "--purge", @resource[:name]
+    end
+
+    def hold
+        self.install
+        begin
+            Tempfile.open('puppet_dpkg_set_selection') { |tmpfile|
+                tmpfile.write("#{@resource[:name]} hold\n")
+                tmpfile.flush
+                execute([:dpkg, "--set-selections"], :stdinfile => tmpfile.path.to_s)
+            }
+        end 
+    end
+
+    def unhold
+        begin
+            Tempfile.open('puppet_dpkg_set_selection') { |tmpfile|
+                tmpfile.write("#{@resource[:name]} install\n")
+                tmpfile.flush
+                execute([:dpkg, "--set-selections"], :stdinfile => tmpfile.path.to_s)
+            }
+        end
     end
 end

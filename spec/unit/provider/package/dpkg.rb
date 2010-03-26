@@ -88,10 +88,29 @@ describe provider do
             @provider.query[:ensure].should == :purged
         end
 
-        it "should consider the package absent if its status is neither 'installed' nor 'not-installed'" do
-            @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "foo")
-
+        it "should consider the package absent if it is marked 'config-files'" do
+            @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "config-files")
             @provider.query[:ensure].should == :absent
+        end
+
+        it "should consider the package absent if it is marked 'half-installed'" do
+            @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "half-installed")
+            @provider.query[:ensure].should == :absent
+        end
+
+        it "should consider the package absent if it is marked 'unpacked'" do
+            @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "unpacked")
+            @provider.query[:ensure].should == :absent
+        end
+
+        it "should consider the package absent if it is marked 'half-configured'" do
+            @provider.expects(:dpkgquery).returns @fakeresult.sub("installed", "half-configured")
+            @provider.query[:ensure].should == :absent
+        end
+
+        it "should consider the package held if its state is 'hold'" do
+            @provider.expects(:dpkgquery).returns @fakeresult.sub("install", "hold")
+            @provider.query[:ensure].should == :held
         end
     end
 
@@ -129,6 +148,38 @@ describe provider do
             @provider.expects(:dpkg).with { |*command| command[0] == "--force-confnew" }
 
             @provider.install
+        end
+
+        it "should ensure any hold is removed" do
+            @provider.expects(:unhold).once
+            @provider.expects(:dpkg)
+            @provider.install
+        end
+    end
+
+    describe "when holding or unholding" do
+        before do
+          @tempfile = stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file"
+          @tempfile.stubs(:write)
+          Tempfile.stubs(:new).returns @tempfile
+        end
+
+        it "should install first if holding" do
+            @provider.stubs(:execute)
+            @provider.expects(:install).once
+            @provider.hold
+        end
+
+        it "should execute dpkg --set-selections when holding" do
+            @provider.stubs(:install)
+            @provider.expects(:execute).with([:dpkg, '--set-selections'], {:stdinfile => @tempfile.path}).once
+            @provider.hold
+        end
+
+        it "should execute dpkg --set-selections when unholding" do
+            @provider.stubs(:install)
+            @provider.expects(:execute).with([:dpkg, '--set-selections'], {:stdinfile => @tempfile.path}).once
+            @provider.hold
         end
     end
 
