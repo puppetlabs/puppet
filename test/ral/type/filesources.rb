@@ -279,32 +279,6 @@ class TestFileSources < Test::Unit::TestCase
         assert(!FileTest.exists?(name), "File with no source exists anyway")
     end
 
-    def test_alwayschecksum
-        from = tempfile()
-        to = tempfile()
-
-        File.open(from, "w") { |f| f.puts "yayness" }
-        File.open(to, "w") { |f| f.puts "yayness" }
-
-        file = nil
-
-        # Now the files should be exactly the same, so we should not see attempts
-        # at copying
-        assert_nothing_raised {
-            file = Puppet::Type.type(:file).new(
-                :path => to,
-                :source => from
-            )
-        }
-
-        currentvalue = file.retrieve
-
-        assert(currentvalue[file.property(:checksum)],
-               "File does not have a checksum property")
-
-        assert_equal(0, file.evaluate.length, "File produced changes")
-    end
-
     def test_sourcepaths
         files = []
         3.times {
@@ -332,28 +306,6 @@ class TestFileSources < Test::Unit::TestCase
         File.open(to) { |f| txt = f.read.chomp }
 
         assert_equal("yee-haw", txt, "Contents do not match")
-    end
-
-    # Make sure that source-copying updates the checksum on the same run
-    def test_checksumchange
-        source = tempfile()
-        dest = tempfile()
-        File.open(dest, "w") { |f| f.puts "boo" }
-        File.open(source, "w") { |f| f.puts "yay" }
-
-        file = nil
-        assert_nothing_raised {
-            file = Puppet::Type.type(:file).new(
-                :name => dest,
-                :source => source
-            )
-        }
-
-        file.retrieve
-
-        assert_events([:file_changed], file)
-        file.retrieve
-        assert_events([], file)
     end
 
     # Make sure that source-copying updates the checksum on the same run
@@ -404,40 +356,31 @@ class TestFileSources < Test::Unit::TestCase
     # Make sure files aren't replaced when replace is false, but otherwise
     # are.
     def test_replace
-        source = tempfile()
-        File.open(source, "w") { |f| f.puts "yayness" }
-
         dest = tempfile()
         file = Puppet::Type.newfile(
             :path => dest,
-            :source => source,
+            :content => "foobar",
             :recurse => true
         )
 
 
         assert_apply(file)
 
-        assert(FileTest.exists?(dest), "Did not create file")
-        assert_equal("yayness\n", File.read(dest))
+        File.open(dest, "w") { |f| f.puts "yayness" }
 
-        # Now set :replace
-        assert_nothing_raised {
-            file[:replace] = false
-        }
+        file[:replace] = false
 
-        File.open(source, "w") { |f| f.puts "funtest" }
         assert_apply(file)
 
         # Make sure it doesn't change.
         assert_equal("yayness\n", File.read(dest),
             "File got replaced when :replace was false")
 
-        # Now set it to true and make sure it does change.
         file[:replace] = true
         assert_apply(file)
 
         # Make sure it changes.
-        assert_equal("funtest\n", File.read(dest),
+        assert_equal("foobar", File.read(dest),
             "File was not replaced when :replace was true")
     end
 

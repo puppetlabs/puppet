@@ -231,11 +231,6 @@ class TestFile < Test::Unit::TestCase
                 assert_nothing_raised() {
                     file[:owner] = name
                 }
-                changes = []
-                assert_nothing_raised() {
-                    changes << file.evaluate
-                }
-                assert(changes.length > 0)
                 assert_apply(file)
                 currentvalue = file.retrieve
                 assert(file.insync?(currentvalue))
@@ -311,7 +306,6 @@ class TestFile < Test::Unit::TestCase
             assert_events([:file_created], file)
             assert_events([], file)
             assert(FileTest.file?(path), "File does not exist")
-            assert(file.insync?(file.retrieve))
             @@tmpfiles.push path
         }
     end
@@ -331,7 +325,6 @@ class TestFile < Test::Unit::TestCase
                 [path])
             assert_events([:directory_created], file)
             assert_events([], file)
-            assert(file.insync?(file.retrieve))
             assert(FileTest.directory?(path))
             @@tmpfiles.push path
         }
@@ -345,10 +338,8 @@ class TestFile < Test::Unit::TestCase
             assert_nothing_raised() {
                 file[:mode] = mode
             }
-            assert_events([:file_changed], file)
+            assert_events([:mode_changed], file)
             assert_events([], file)
-
-            assert(file.insync?(file.retrieve))
 
             assert_nothing_raised() {
                 file.delete(:mode)
@@ -461,10 +452,6 @@ class TestFile < Test::Unit::TestCase
             )
         }
 
-        assert_nothing_raised {
-            file.evaluate
-        }
-
         assert_equal("directory", file.property(:type).retrieve)
 
         # And then check files
@@ -480,15 +467,6 @@ class TestFile < Test::Unit::TestCase
         assert_apply(file)
 
         assert_equal("file", file.property(:type).retrieve)
-
-        file[:type] = "directory"
-
-        currentvalues = {}
-        assert_nothing_raised { currentvalues = file.retrieve }
-
-        # The 'retrieve' method sets @should to @is, so they're never
-        # out of sync.  It's a read-only class.
-        assert(file.insync?(currentvalues))
     end
 
     def test_path
@@ -585,7 +563,7 @@ class TestFile < Test::Unit::TestCase
 
         file.retrieve
 
-        assert_events([:file_changed], file)
+        assert_events([:content_changed], file)
         file.retrieve
         assert_events([], file)
     end
@@ -962,15 +940,6 @@ class TestFile < Test::Unit::TestCase
             File.unlink(path)
         end
     end
-    end
-
-    # #567
-    def test_missing_files_are_in_sync
-        file = tempfile
-        obj = Puppet::Type.newfile(:path => file, :mode => 0755)
-
-        changes = obj.evaluate
-        assert(changes.empty?, "Missing file with no ensure resulted in changes")
     end
 
     def test_root_dir_is_named_correctly

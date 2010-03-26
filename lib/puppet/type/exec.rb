@@ -70,10 +70,14 @@ module Puppet
             @checks.keys
         end
 
-        newproperty(:returns, :array_matching => :all) do |property|
+        newproperty(:returns, :array_matching => :all, :event => :executed_command) do |property|
             include Puppet::Util::Execution
             munge do |value|
                 value.to_s
+            end
+
+            def event_name
+                :executed_command
             end
 
             defaultto "0"

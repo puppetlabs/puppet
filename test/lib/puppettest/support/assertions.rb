@@ -36,10 +36,6 @@ module PuppetTest
         FileUtils.rm(filename)
     end
 
-    def assert_rollback_events(trans, events, msg = nil)
-        run_events(:rollback, trans, events, msg)
-    end
-
     def assert_events(events, *resources)
         trans = nil
         comp = nil

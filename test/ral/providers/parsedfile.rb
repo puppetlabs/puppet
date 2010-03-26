@@ -635,8 +635,7 @@ class TestParsedFile < Test::Unit::TestCase
             current_value = bill.retrieve
         end
 
-        assert(bill.insync?(current_value),
-            "An invalid field marked the record out of sync")
+        assert_events([], bill)
     end
 
     # Make sure we call the prefetch hook at the right place.

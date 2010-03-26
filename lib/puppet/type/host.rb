@@ -19,7 +19,7 @@ module Puppet
                 the "alias" metaparam; use this property to add aliases to a host
                 on disk, and "alias" to aliases for use in your Puppet scripts.'
 
-           def insync?(is)
+            def insync?(is)
                 is == @should
             end
 

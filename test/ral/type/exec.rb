@@ -6,20 +6,6 @@ require 'puppettest'
 
 class TestExec < Test::Unit::TestCase
     include PuppetTest
-    def test_execution
-        command = nil
-        output = nil
-        assert_nothing_raised {
-            command = Puppet::Type.type(:exec).new(
-                :command => "/bin/echo"
-            )
-        }
-        assert_nothing_raised {
-            command.evaluate
-        }
-        assert_events([:executed_command], command)
-    end
-
     def test_numvsstring
         [0, "0"].each { |val|
             command = nil
@@ -138,7 +124,7 @@ class TestExec < Test::Unit::TestCase
 
         # Now change our content, so we throw a refresh
         file[:content] = "yayness"
-        assert_events([:file_changed, :triggered], file, cmd)
+        assert_events([:content_changed, :restarted], file, cmd)
         assert(FileTest.exists?(maker), "file was not made in refresh")
     end
 
@@ -200,7 +186,7 @@ class TestExec < Test::Unit::TestCase
 
         comp = mk_catalog("Testing", file, exec)
 
-        assert_events([:file_created, :executed_command], comp)
+        assert_events([:file_changed, :executed_command], comp)
     end
 
     # Verify that we auto-require any managed scripts.
@@ -424,7 +410,7 @@ class TestExec < Test::Unit::TestCase
 
         comp = mk_catalog(file, exec)
         comp.finalize
-        assert_events([:executed_command, :file_changed], comp)
+        assert_events([:executed_command, :mode_changed], comp)
 
         assert(FileTest.exists?(path), "Exec ran first")
         assert(File.stat(path).mode & 007777 == 0755)

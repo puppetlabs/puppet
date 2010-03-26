@@ -138,12 +138,7 @@ class TestCron < Test::Unit::TestCase
             cron.provider.month = ["4"]
             cron.provider.class.prefetch
             currentvalue = cron.retrieve
-
-            currentvalue.each do |prop, value|
-                # We're only interested in comparing the command.
-                next unless prop.name.to_s == "command"
-                assert(prop.insync?(value), "Property %s is not considered in sync with value %s" % [prop.name, value.inspect])
-            end
+            assert(cron.parameter(:command).insync?(currentvalue[:command]), "Property :command is not considered in sync with value #{currentvalue[:command]}")
         end
     end
 
@@ -239,10 +234,10 @@ class TestCron < Test::Unit::TestCase
             cron.provider.class.prefetch
             currentvalue = cron.retrieve
 
-            currentvalue.each do |prop, value|
+            currentvalue.each do |name, value|
                 # We're only interested in comparing minutes.
-                next unless prop.name.to_s == "minute"
-                assert(prop.insync?(value), "Property %s is not considered in sync with value %s" % [prop.name, value.inspect])
+                next unless name.to_s == "minute"
+                assert(cron.parameter(name).insync?(value), "Property #{name} is not considered in sync with value #{value.inspect}")
             end
         end
     end
@@ -262,7 +257,7 @@ class TestCron < Test::Unit::TestCase
         cron.provider.class.prefetch
 
         cron[:minute] = :absent
-        assert_events([:cron_changed], cron)
+        assert_events([:minute_changed], cron)
 
         current_values = nil
         assert_nothing_raised {
@@ -483,9 +478,8 @@ class TestCron < Test::Unit::TestCase
         # Now make sure that it's correctly in sync
         cron.provider.class.prefetch("testing" => cron)
         properties = cron.retrieve
-        command, result = properties.find { |prop, value| prop.name == :command }
-        assert_equal(string, result, "Cron did not pick up extra spaces in command")
-        assert(command.insync?(string), "Command changed with multiple spaces")
+        assert_equal(string, properties[:command], "Cron did not pick up extra spaces in command")
+        assert(cron.parameter(:command).insync?(properties[:command]), "Command changed with multiple spaces")
     end
 end
 

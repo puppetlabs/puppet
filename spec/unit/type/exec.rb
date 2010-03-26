@@ -28,6 +28,13 @@ module ExecModuleTesting
     end
 end
 
+describe Puppet::Type.type(:exec) do
+    it "should return :executed_command as its event" do
+        resource = Puppet::Type.type(:exec).new :command => "/bin/true"
+        resource.parameter(:returns).event.name.should == :executed_command
+    end
+end
+
 describe Puppet::Type.type(:exec), " when execing" do
     include ExecModuleTesting
 

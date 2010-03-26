@@ -110,7 +110,7 @@ class TestHost < Test::Unit::TestCase
 
         host[:host_aliases] = %w{madstop kirby yayness}
 
-        assert_events([:host_changed], host)
+        assert_events([:host_aliases_changed], host)
 
         assert_nothing_raised {
             current_values = host.retrieve

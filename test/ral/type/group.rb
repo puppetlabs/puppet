@@ -73,9 +73,6 @@ class TestGroup < Test::Unit::TestCase
         group[:ensure] = :absent
         trans = assert_events([:group_removed], comp)
         assert_equal(:absent, group.provider.ensure,  "Group is present")
-
-        assert_rollback_events(trans, [:group_created], "group")
-        assert_equal(:present, group.provider.ensure,  "Group is absent")
     end
 
     # This is a bit odd, since we're not actually doing anything on the machine.

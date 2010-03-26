@@ -91,8 +91,6 @@ class TestUser < Test::Unit::TestCase
         user[:ensure] = :absent
         trans = assert_events([:user_removed], comp)
 
-        assert_rollback_events(trans, [:user_created], "user")
-
         user[:ensure] = old
         assert_apply(user)
     end
@@ -104,13 +102,13 @@ class TestUser < Test::Unit::TestCase
 
         comp = mk_catalog("commenttest", user)
 
-        trans = assert_events([:user_changed], comp, "user")
+        assert_apply user
 
         assert_equal("A different comment", user.provider.comment,
             "Comment was not changed")
 
-        assert_rollback_events(trans, [:user_changed], "user")
-
+        user[:comment] = old
+        assert_apply user
         assert_equal(old, user.provider.comment,
             "Comment was not reverted")
     end
@@ -120,17 +118,15 @@ class TestUser < Test::Unit::TestCase
         comp = mk_catalog("hometest", user)
 
         old = user.provider.home
-        user[:home] = old
-
-        trans = assert_events([], comp, "user")
+        assert_apply user
 
         user[:home] = "/tmp"
 
-        trans = assert_events([:user_changed], comp, "user")
+        assert_apply user
 
         assert_equal("/tmp", user.provider.home, "Home was not changed")
-
-        assert_rollback_events(trans, [:user_changed], "user")
+        user[:home] = old
+        assert_apply user
 
         assert_equal(old, user.provider.home, "Home was not reverted")
     end
@@ -141,7 +137,7 @@ class TestUser < Test::Unit::TestCase
 
         user[:shell] = old
 
-        trans = assert_events([], comp, "user")
+        assert_apply(user)
 
         newshell = findshell(old)
 
@@ -152,14 +148,15 @@ class TestUser < Test::Unit::TestCase
 
         user[:shell] = newshell
 
-        trans = assert_events([:user_changed], comp, "user")
+        assert_apply(user)
 
         user.retrieve
         assert_equal(newshell, user.provider.shell,
             "Shell was not changed")
 
-        assert_rollback_events(trans, [:user_changed], "user")
         user.retrieve
+        user[:shell] = old
+        assert_apply user
 
         assert_equal(old, user.provider.shell, "Shell was not reverted")
     end
@@ -190,11 +187,11 @@ class TestUser < Test::Unit::TestCase
             user[:uid] = newuid
         }
 
-        trans = assert_events([:user_changed], comp, "user")
+        assert_apply user
 
         assert_equal(newuid, user.provider.uid, "UID was not changed")
-
-        assert_rollback_events(trans, [:user_changed], "user")
+        user[:uid] = old
+        assert_apply user
 
         assert_equal(old, user.provider.uid, "UID was not reverted")
     end
@@ -296,7 +293,7 @@ class TestUser < Test::Unit::TestCase
 
         assert(!user.insync?(currentvalue), "User is incorrectly in sync")
 
-        assert_events([:user_changed], user)
+        assert_events([:user_created], user)
         assert_nothing_raised {
             currentvalue = user.retrieve
         }
@@ -367,7 +364,8 @@ class TestUser < Test::Unit::TestCase
         assert_equal(user.should(:comment), user.provider.comment,
             "Comment was not set correctly")
 
-        assert_rollback_events(trans, [:user_removed], "user")
+        user[:ensure] = :absent
+        assert_events([:user_removed], user)
 
         assert(! user.provider.exists?, "User did not get deleted")
     end
@@ -413,11 +411,7 @@ class TestUser < Test::Unit::TestCase
 
         user[:ensure] = :absent
 
-        assert_nothing_raised do
-            user.evaluate
-        end
-
-        assert(user.send(:property, :groups).insync?(nil),
+        assert(user.property(:groups).insync?(nil),
             "Groups state considered out of sync with no :should value")
     end
 
