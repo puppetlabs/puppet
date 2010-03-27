@@ -232,7 +232,7 @@ describe "Puppet" do
             it "should raise an error if we can't find the node" do
                 Puppet::Node::Facts.expects(:find).returns(nil)
 
-                lambda { @puppet.main }.should raise_error
+                lambda { @main.main }.should raise_error
             end
 
             it "should find the node" do
