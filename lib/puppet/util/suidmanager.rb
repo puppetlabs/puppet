@@ -1,4 +1,3 @@
-require 'facter'
 require 'puppet/util/warnings'
 require 'forwardable'
 
@@ -6,13 +5,38 @@ module Puppet::Util::SUIDManager
     include Puppet::Util::Warnings
     extend Forwardable
 
+    # Note groups= is handled specially due to a bug in OS X 10.6
     to_delegate_to_process = [ :euid=, :euid, :egid=, :egid,
-                               :uid=, :uid, :gid=, :gid, :groups=, :groups ]
+                               :uid=, :uid, :gid=, :gid, :groups ]
 
     to_delegate_to_process.each do |method|
         def_delegator Process, method
         module_function method
     end
+
+    def osx_maj_ver
+        return @osx_maj_ver unless @osx_maj_ver.nil?
+        require 'facter'
+        # 'kernel' is available without explicitly loading all facts
+        if Facter.value('kernel') != 'Darwin'
+          @osx_maj_ver = false
+          return @osx_maj_ver
+        end
+        # But 'macosx_productversion_major' requires it.
+        Facter.loadfacts
+        @osx_maj_ver = Facter.value('macosx_productversion_major')
+        return @osx_maj_ver
+    end
+    module_function :osx_maj_ver
+    
+    def groups=(grouplist)
+        if osx_maj_ver == '10.6'
+            return true
+        else
+            return Process.groups = grouplist
+        end
+    end
+    module_function :groups=
 
     if Facter['kernel'].value == 'Darwin'
         # Cannot change real UID on Darwin so we set euid
