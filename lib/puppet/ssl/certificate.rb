@@ -28,8 +28,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
     end
 
     def expiration
-        # Our expiration is either that of the cache or the content, whichever comes first
-        cache_expiration = @expiration
-        [(content and content.not_after), cache_expiration].compact.sort.first
+        return nil unless content
+        return content.not_after
     end
 end

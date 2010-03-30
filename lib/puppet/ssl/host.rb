@@ -154,19 +154,26 @@ class Puppet::SSL::Host
     end
 
     def certificate
-        @certificate ||= (
+        unless @certificate
+            generate_key unless key
+
             # get the CA cert first, since it's required for the normal cert
             # to be of any use.
-            if not (key or generate_key) or not (ca? or Certificate.find("ca")) or not (cert = Certificate.find(name)) or cert.expired?
-                nil
-            elsif not cert.content.check_private_key(key.content)
-                Certificate.expire(name)
-                Puppet.warning "Retrieved certificate does not match private key"
-                nil
-            else
-                cert
+            return nil unless Certificate.find("ca") unless ca?
+            return nil unless @certificate = Certificate.find(name)
+
+            unless certificate_matches_key?
+                raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
             end
-            )
+        end
+        @certificate
+    end
+
+    def certificate_matches_key?
+        return false unless key
+        return false unless certificate
+
+        return certificate.content.check_private_key(key.content)
     end
 
     # Generate all necessary parts of our ssl host.
