@@ -129,9 +129,9 @@ describe Puppet::Indirector, "when redirecting a model" do
             @instance.save
         end
 
-        it "should pass the instance and all arguments to the indirection's :save method" do
-            @indirection.expects(:save).with(@instance, :one => :two)
-            @instance.save :one => :two
+        it "should pass the instance and an optional key to the indirection's :save method" do
+            @indirection.expects(:save).with("key", @instance)
+            @instance.save "key"
         end
 
         it "should return the results of the delegation as its result" do

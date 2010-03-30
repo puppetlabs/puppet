@@ -202,7 +202,7 @@ describe "resource" do
                 push_args('type','name','param=temp')
 
                 res = stub "resource"
-                res.expects(:save).with{|x| x.uri == 'https://host:8139/production/resources/type/name'}.returns(res)
+                res.expects(:save).with('https://host:8139/production/resources/type/name').returns(res)
                 res.expects(:collect)
                 res.expects(:to_manifest)
                 Puppet::Resource.expects(:new).with('type', 'name', {'param' => 'temp'}).returns(res)
@@ -240,7 +240,7 @@ describe "resource" do
                 push_args('type','name','param=temp')
 
                 res = stub "resource"
-                res.expects(:save).with{|x| x.uri == nil}.returns(res)
+                res.expects(:save).with('type/name').returns(res)
                 res.expects(:collect)
                 res.expects(:to_manifest)
                 Puppet::Resource.expects(:new).with('type', 'name', {'param' => 'temp'}).returns(res)

@@ -52,9 +52,14 @@ class Puppet::Indirector::Request
         ignore_terminus
     end
 
-    def initialize(indirection_name, method, key, options = {})
-        options ||= {}
-        raise ArgumentError, "Request options must be a hash, not %s" % options.class unless options.is_a?(Hash)
+    def initialize(indirection_name, method, key_or_instance, options_or_instance = {})
+        if options_or_instance.is_a? Hash
+            options = options_or_instance
+            @instance = nil
+        else
+            options  = {}
+            @instance = options_or_instance
+        end
 
         self.indirection_name = indirection_name
         self.method = method
@@ -63,7 +68,13 @@ class Puppet::Indirector::Request
 
         @options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
 
-        if key.is_a?(String) or key.is_a?(Symbol)
+        if key_or_instance.is_a?(String) || key_or_instance.is_a?(Symbol)
+            key = key_or_instance
+        else
+            @instance = key_or_instance if ! @instance
+        end
+
+        if key
             # If the request key is a URI, then we need to treat it specially,
             # because it rewrites the key.  We could otherwise strip server/port/etc
             # info out in the REST class, but it seemed bad design for the REST
@@ -73,10 +84,9 @@ class Puppet::Indirector::Request
             else
                 @key = key
             end
-        else
-            @instance = key
-            @key = @instance.name
         end
+
+        @key = @instance.name if ! @key and @instance
     end
 
     # Look up the indirection based on the name provided.

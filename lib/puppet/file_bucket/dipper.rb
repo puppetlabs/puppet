@@ -38,9 +38,7 @@ class Puppet::FileBucket::Dipper
             file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => file)
             dest_path = "#{@rest_path}#{file_bucket_file.name}"
 
-            request = Puppet::Indirector::Request.new(:file_bucket_file, :save, dest_path)
-
-            file_bucket_file.save(request)
+            file_bucket_file.save(dest_path)
             return file_bucket_file.checksum_data
         rescue => detail
             puts detail.backtrace if Puppet[:trace]

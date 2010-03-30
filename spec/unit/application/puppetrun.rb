@@ -258,7 +258,7 @@ describe "run" do
                 end
 
                 it "should call run on a Puppet::Run for the given host" do
-                    @run.expects(:save).with{|req| req.uri == 'https://host:8139/production/run/host'}.returns(@run)
+                    @run.expects(:save).with('https://host:8139/production/run/host').returns(@run)
 
                     @run.run_for_host('host')
                 end

@@ -120,13 +120,12 @@ Puppet::Application.new(:run) do
 
         print "Triggering %s\n" % host
         begin
-            request = Puppet::Indirector::Request.new(:run, :save, url) # Yuck.
             run_options = {
                 :tags => @tags,
                 :background => ! options[:foreground],
                 :ignoreschedules => options[:ignoreschedules]
             }
-            run = Puppet::Run.new( run_options ).save( request )
+            run = Puppet::Run.new( run_options ).save( url )
             result = run.status
         rescue => detail
             puts detail.backtrace if Puppet[:trace]

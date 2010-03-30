@@ -200,7 +200,7 @@ describe Puppet::SSL::CertificateRequest do
                 Puppet::SSL::CertificateAuthority.expects(:instance).returns ca
 
                 csr = Puppet::SSL::CertificateRequest.new("me")
-                Puppet::SSL::CertificateRequest.indirection.expects(:save).with(csr)
+                Puppet::SSL::CertificateRequest.indirection.expects(:save).with(nil, csr)
 
                 csr.save
             end
@@ -211,7 +211,7 @@ describe Puppet::SSL::CertificateRequest do
                 Puppet::SSL::CertificateAuthority.expects(:instance).returns nil
 
                 csr = Puppet::SSL::CertificateRequest.new("me")
-                Puppet::SSL::CertificateRequest.indirection.expects(:save).with(csr)
+                Puppet::SSL::CertificateRequest.indirection.expects(:save).with(nil, csr)
 
                 csr.save
             end

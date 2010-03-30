@@ -198,8 +198,8 @@ describe Puppet::Indirector::Indirection do
                 @indirection.request(:funtest, "yayness", :one => :two)
             end
 
-            it "should default to the arguments being empty" do
-                Puppet::Indirector::Request.expects(:new).with { |name, method, key, args| args == {} }
+            it "should not pass options if none are supplied" do
+                Puppet::Indirector::Request.expects(:new).with { |*args| args.length < 4 }
                 @indirection.request(:funtest, "yayness")
             end
 

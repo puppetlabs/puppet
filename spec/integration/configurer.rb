@@ -23,7 +23,7 @@ describe Puppet::Configurer do
 
             configurer = Puppet::Configurer.new
 
-            Puppet::Transaction::Report.indirection.expects(:save).with do |report|
+            Puppet::Transaction::Report.indirection.expects(:save).with do |x, report|
                 report.time.class == Time and report.logs.length > 0
             end
 

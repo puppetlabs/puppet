@@ -26,19 +26,16 @@ describe Puppet::FileBucket::Dipper do
         File.stubs(:exist?).returns true
         File.stubs(:read).with("/my/file").returns "my contents"
 
-        req = stub "req"
         bucketfile = stub "bucketfile"
         bucketfile.stubs(:name).returns('md5/DIGEST123')
         bucketfile.stubs(:checksum_data).returns("DIGEST123")
-        bucketfile.expects(:save).with(req)
+        bucketfile.expects(:save).with('md5/DIGEST123')
 
         Puppet::FileBucket::File.stubs(:new).with(
             "my contents",
             :bucket_path => '/my/bucket',
             :path => '/my/file'
         ).returns(bucketfile)
-
-        Puppet::Indirector::Request.stubs(:new).with(:file_bucket_file, :save, 'md5/DIGEST123').returns(req)
 
         @dipper.backup("/my/file").should == "DIGEST123"
     end
@@ -70,19 +67,16 @@ describe Puppet::FileBucket::Dipper do
         File.stubs(:exist?).returns true
         File.stubs(:read).with("/my/file").returns "my contents"
 
-        req = stub "req"
         bucketfile = stub "bucketfile"
         bucketfile.stubs(:name).returns('md5/DIGEST123')
         bucketfile.stubs(:checksum_data).returns("DIGEST123")
-        bucketfile.expects(:save).with(req)
+        bucketfile.expects(:save).with('https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123')
 
         Puppet::FileBucket::File.stubs(:new).with(
             "my contents",
             :bucket_path => nil,
             :path => '/my/file'
         ).returns(bucketfile)
-
-        Puppet::Indirector::Request.stubs(:new).with(:file_bucket_file, :save, 'https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123').returns(req)
 
         @dipper.backup("/my/file").should == "DIGEST123"
     end

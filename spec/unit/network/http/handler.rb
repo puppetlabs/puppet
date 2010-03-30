@@ -402,7 +402,7 @@ describe Puppet::Network::HTTP::Handler do
             end
 
             it "should use a common method for determining the request parameters" do
-                @model_instance.expects(:save).with(@irequest)
+                @model_instance.expects(:save).with('key').once
                 @handler.do_save(@irequest, @request, @response)
             end
 

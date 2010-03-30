@@ -61,8 +61,8 @@ module Puppet::Indirector
     end
 
     module InstanceMethods
-        def save(*args)
-            self.class.indirection.save self, *args
+        def save(key = nil)
+            self.class.indirection.save key, self
         end
     end
 end

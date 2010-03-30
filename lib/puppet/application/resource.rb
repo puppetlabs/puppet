@@ -83,8 +83,7 @@ Puppet::Application.new(:resource) do
             if params.empty?
                 [ Puppet::Resource.find( key ) ]
             else
-                request = Puppet::Indirector::Request.new(:resource, :save, key) # Yuck.
-                [ Puppet::Resource.new( type, name, params ).save( request ) ]
+                [ Puppet::Resource.new( type, name, params ).save( key ) ]
             end
         else
             Puppet::Resource.search( key, {} )

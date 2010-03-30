@@ -40,10 +40,6 @@ describe Puppet::Indirector::Request do
             lambda { Puppet::Indirector::Request.new(:ind, :method, :key) }.should_not raise_error(ArgumentError)
         end
 
-        it "should fail if options are specified as anything other than nil or a hash" do
-            lambda { Puppet::Indirector::Request.new(:ind, :method, :key, [:one, :two]) }.should raise_error(ArgumentError)
-        end
-
         it "should use an empty options hash if nil was provided" do
             Puppet::Indirector::Request.new(:ind, :method, :key, nil).options.should == {}
         end
