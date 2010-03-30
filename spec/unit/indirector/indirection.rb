@@ -545,44 +545,33 @@ describe Puppet::Indirector::Indirection do
                     @indirection.expire("/my/key")
                 end
 
-                describe "and the terminus supports removal of cache items with destroy" do
-                    it "should destroy the cached instance" do
-                        @cache.expects(:find).returns @cached
-                        @cache.expects(:destroy).with { |r| r.method == :destroy and r.key == "/my/key" }
-                        @cache.expects(:save).never
-                        @indirection.expire("/my/key")
-                    end
+                it "should set the cached instance's expiration to a time in the past" do
+                    @cache.expects(:find).returns @cached
+                    @cache.stubs(:save)
+
+                    @cached.expects(:expiration=).with { |t| t < Time.now }
+
+                    @indirection.expire("/my/key")
                 end
 
-                describe "and the terminus does not support removal of cache items with destroy" do
-                    it "should set the cached instance's expiration to a time in the past" do
-                        @cache.expects(:find).returns @cached
-                        @cache.stubs(:save)
+                it "should save the now expired instance back into the cache" do
+                    @cache.expects(:find).returns @cached
 
-                        @cached.expects(:expiration=).with { |t| t < Time.now }
+                    @cached.expects(:expiration=).with { |t| t < Time.now }
 
-                        @indirection.expire("/my/key")
-                    end
+                    @cache.expects(:save)
 
-                    it "should save the now expired instance back into the cache" do
-                        @cache.expects(:find).returns @cached
+                    @indirection.expire("/my/key")
+                end
 
-                        @cached.expects(:expiration=).with { |t| t < Time.now }
+                it "should use a request to save the expired resource to the cache" do
+                    @cache.expects(:find).returns @cached
 
-                        @cache.expects(:save)
+                    @cached.expects(:expiration=).with { |t| t < Time.now }
 
-                        @indirection.expire("/my/key")
-                    end
+                    @cache.expects(:save).with { |r| r.is_a?(Puppet::Indirector::Request) and r.instance == @cached and r.method == :save }.returns(@cached)
 
-                    it "should use a request to save the expired resource to the cache" do
-                        @cache.expects(:find).returns @cached
-
-                        @cached.expects(:expiration=).with { |t| t < Time.now }
-
-                        @cache.expects(:save).with { |r| r.is_a?(Puppet::Indirector::Request) and r.instance == @cached and r.method == :save }.returns(@cached)
-
-                        @indirection.expire("/my/key")
-                    end
+                    @indirection.expire("/my/key")
                 end
             end
         end
