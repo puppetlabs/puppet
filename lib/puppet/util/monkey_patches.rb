@@ -31,5 +31,16 @@ def YAML.dump(*args)
     ZAML.dump(*args)
 end
 
-
+#
+# Workaround for bug in MRI 1.8.7, see
+#     http://redmine.ruby-lang.org/issues/show/2708
+# for details
+#
+if RUBY_VERSION == '1.8.7'
+    class NilClass
+        def closed?
+            true
+        end
+    end
+end
 
