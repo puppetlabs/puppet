@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+
+appdir = File.join('puppet', 'application')
+builtins = Dir[File.join(appdir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
+
+usage = "Usage: puppet command <space separated arguments>"
+available = "Available commands are: #{builtins.sort.join(', ')}"
+
+command_name = ARGV.empty? || ARGV.first[/^-/] ? nil : ARGV.shift # subcommand?
+if command_name.nil? # main
+    puts usage, available
+elsif builtins.include?(command_name) #subcommand
+    require File.join(appdir, command_name)
+    Puppet::Application[command_name].run
+else
+    abort "Error: Unknown command #{command_name}.\n#{usage}\n#{available}"
+end

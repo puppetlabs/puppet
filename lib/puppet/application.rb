@@ -89,7 +89,11 @@ require 'optparse'
 class Puppet::Application
     include Puppet::Util
 
+    SBINDIR = File.expand_path(File.dirname(__FILE__)) + '/../../sbin'
+
     @@applications = {}
+    def self.applications; @@applications end
+
     class << self
         include Puppet::Util
     end
@@ -173,7 +177,7 @@ class Puppet::Application
     def initialize(name, banner = nil, &block)
         @opt_parser = OptionParser.new(banner)
 
-        name = symbolize(name)
+        @name = symbolize(name)
 
         init_default
 
@@ -181,7 +185,7 @@ class Puppet::Application
 
         instance_eval(&block) if block_given?
 
-        @@applications[name] = self
+        @@applications[@name] = self
     end
 
     # initialize default application behaviour
@@ -292,6 +296,12 @@ class Puppet::Application
 
     def help
         if Puppet.features.usage?
+            # RH:FIXME: My goodness, this is ugly.
+            ::RDoc.const_set("PuppetSourceFile", @name)
+            def (::RDoc).caller
+                file = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{SBINDIR}/*`.chomp
+                super << "#{file}:0"
+            end
             ::RDoc::usage && exit
         else
             puts "No help available unless you have RDoc::usage installed"
