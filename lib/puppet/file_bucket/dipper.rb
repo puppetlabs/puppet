@@ -35,7 +35,7 @@ class Puppet::FileBucket::Dipper
         end
         contents = ::File.read(file)
         begin
-            file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => file)
+            file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => absolutize_path(file) )
             dest_path = "#{@rest_path}#{file_bucket_file.name}"
 
             file_bucket_file.save(dest_path)
@@ -91,5 +91,12 @@ class Puppet::FileBucket::Dipper
             return nil
         end
     end
+
+    private
+    def absolutize_path( path )
+        require 'pathname'
+        Pathname.new(path).realpath
+    end
+
 end
 

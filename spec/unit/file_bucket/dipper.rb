@@ -4,6 +4,12 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/file_bucket/dipper'
 describe Puppet::FileBucket::Dipper do
+    before do
+        ['/my/file'].each do |x|
+            Puppet::FileBucket::Dipper.any_instance.stubs(:absolutize_path).with(x).returns(x)
+        end
+    end
+
     it "should fail in an informative way when there are failures backing up to the server" do
         File.stubs(:exist?).returns true
         File.stubs(:read).returns "content"

@@ -72,7 +72,6 @@ Puppet::Application.new(:filebucket) do
                 path = options[:bucket] || Puppet[:bucketdir]
                 @client = Puppet::FileBucket::Dipper.new(:Path => path)
             else
-                require 'puppet/network/handler'
                 @client = Puppet::FileBucket::Dipper.new(:Server => Puppet[:server])
             end
         rescue => detail
