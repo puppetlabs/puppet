@@ -89,7 +89,7 @@ require 'optparse'
 class Puppet::Application
     include Puppet::Util
 
-    SBINDIR = File.expand_path(File.dirname(__FILE__)) + '/../../sbin'
+    BINDIRS = File.expand_path(File.dirname(__FILE__)) + '/../../{sbin,bin}'
 
     @@applications = {}
     def self.applications; @@applications end
@@ -299,14 +299,17 @@ class Puppet::Application
             # RH:FIXME: My goodness, this is ugly.
             ::RDoc.const_set("PuppetSourceFile", @name)
             def (::RDoc).caller
-                file = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{SBINDIR}/*`.chomp
-                super << "#{file}:0"
+                docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{BINDIRS}/*`.chomp
+                super << "#{docfile}:0"
             end
             ::RDoc::usage && exit
         else
             puts "No help available unless you have RDoc::usage installed"
             exit
         end
+    rescue Errno::ENOENT
+        puts "No help available for puppet #@name"
+        exit
     end
 
     private
