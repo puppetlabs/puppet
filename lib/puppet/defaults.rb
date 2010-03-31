@@ -16,7 +16,7 @@ module Puppet
     else
         # Else, use system-wide directories.
         conf = "/etc/puppet"
-        var = "/var/puppet"
+        var = "/var/lib/puppet"
     end
 
     self.setdefaults(:main,

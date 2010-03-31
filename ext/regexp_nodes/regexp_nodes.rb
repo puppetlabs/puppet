@@ -43,14 +43,14 @@ require 'set'
 # set up some nice logging
 require 'logger'
 # XXX flip this for production vs local sandbox
-# $LOG = Logger.new("/var/puppet/log/extnodes.log")
+# $LOG = Logger.new("/var/lib/puppet/log/extnodes.log")
 # $LOG.level = Logger::FATAL
 $LOG = Logger.new($stderr)
 $LOG.level = Logger::DEBUG
 
 # paths for files we use will be relative to this directory
 # XXX flip this for production vs local sandbox
-# WORKINGDIR = "/var/puppet/bin"
+# WORKINGDIR = "/var/lib/puppet/bin"
 WORKINGDIR = Dir.pwd
 
 # This class holds all the methods for creating and accessing the properties
@@ -154,7 +154,7 @@ class ExternalNode
     # directories to get the parameter name, then use the names of the files
     # contained in there for the values of those parameters.
     #
-    # ex: cat /var/puppet/bin/parameters/environment/production
+    # ex: cat /var/lib/puppet/bin/parameters/environment/production
     # ^prodweb
     # would set parameters["environment"] = "production" for prodweb001
     def match_parameters(fullpath)
