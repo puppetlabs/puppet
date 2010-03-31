@@ -99,7 +99,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %pre
 /usr/sbin/groupadd -r puppet 2>/dev/null || :
 /usr/sbin/useradd -g puppet -c "Puppet" \
-    -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
+    -s /sbin/nologin -r -d /var/lib/puppet puppet 2> /dev/null || :
 
 %post
 /sbin/chkconfig --add puppet
