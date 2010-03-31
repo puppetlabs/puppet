@@ -9,6 +9,7 @@ describe "resource" do
         @resource = Puppet::Application[:resource]
         Puppet::Util::Log.stubs(:newdestination)
         Puppet::Util::Log.stubs(:level=)
+        Puppet::Resource.indirection.stubs(:terminus_class=)
     end
 
     it "should ask Puppet::Application to not parse Puppet configuration file" do
