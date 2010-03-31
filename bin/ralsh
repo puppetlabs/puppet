@@ -86,4 +86,4 @@
 # Licensed under the GNU Public License
 
 require 'puppet/application/ralsh'
-Puppet::Application[:ralsh].run
+Puppet::Application[:resource].run
