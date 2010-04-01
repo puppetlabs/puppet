@@ -832,6 +832,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     describe "when indirecting" do
         before do
+            @real_indirection = Puppet::Resource::Catalog.indirection
+
             @indirection = stub 'indirection', :name => :catalog
 
             Puppet::Util::Cacher.expire
@@ -844,6 +846,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
+            # Puppet only checks the terminus setting the first time you ask
+            # so this returns the object to the clean state
+            # at the expense of making this test less pure
+            Puppet::Resource::Catalog.indirection.reset_terminus_class
+
             Puppet.settings[:catalog_terminus] = "rest"
             Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
         end
@@ -855,6 +862,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
         after do
             Puppet::Util::Cacher.expire
+            @real_indirection.reset_terminus_class
         end
     end
 

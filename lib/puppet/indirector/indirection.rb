@@ -145,6 +145,10 @@ class Puppet::Indirector::Indirection
         @terminus_class
     end
 
+    def reset_terminus_class
+        @terminus_class = nil
+    end
+
     # Specify the terminus class to use.
     def terminus_class=(klass)
         validate_terminus_class(klass)
