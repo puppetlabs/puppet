@@ -1,10 +1,10 @@
 #! /bin/sh
 ### BEGIN INIT INFO
-# Provides:          puppetmaster                                                                                                                          
+# Provides:          puppetmaster
 # Required-Start:    $network $named $remote_fs $syslog
 # Required-Stop:     $network $named $remote_fs $syslog
-# Default-Start:     2 3 4 5                                                                                                                               
-# Default-Stop:      0 1 6                                                                                                                                 
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
 ### END INIT INFO                 
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
