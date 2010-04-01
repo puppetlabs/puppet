@@ -15,7 +15,8 @@ puppet (0.25.4-3) UNRELEASED; urgency=low
     puppetmaster is already stopped, Thanks Mathias Gug (Closes: #574677)
   * Add Suggests: stompserver/libstomp-ruby1.8 - needed for puppetqd 
   * Add README.queueing to puppetmaster package which describes puppetqd
-
+  * Add /etc/init.d/puppetqd and defaults in /etc/defaults/puppetmaster
+  
  -- Micah Anderson <micah@debian.org>  Tue, 16 Mar 2010 12:27:07 -0400
 
 puppet (0.25.4-2) unstable; urgency=low
