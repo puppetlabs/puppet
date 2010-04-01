@@ -32,7 +32,7 @@ Architecture: all
 Depends: ${misc:Depends}, ruby1.8, puppet-common (= ${source:Version}), facter, lsb-base
 Conflicts: puppet (<< 0.24.7-1)
 Recommends: rails (>= 1.2.3-2), rdoc, libldap-ruby1.8
-Suggests: apache2 | nginx, mongrel, puppet-el, vim-puppet, libapache2-mod-passenger, librack-ruby
+Suggests: apache2 | nginx, mongrel, puppet-el, vim-puppet, libapache2-mod-passenger, librack-ruby, stompserver, libstomp-ruby1.8
 Description: centralised configuration management control daemon
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the

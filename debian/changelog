@@ -13,6 +13,8 @@ puppet (0.25.4-3) UNRELEASED; urgency=low
   * Fix puppet-el.emacsen-startup script to be properly installed
   * debian/puppetmaster.init: Fix init stop action to not fail if the
     puppetmaster is already stopped, Thanks Mathias Gug (Closes: #574677)
+  * Add Suggests: stompserver/libstomp-ruby1.8 - needed for puppetqd 
+  * Add README.queueing to puppetmaster package which describes puppetqd
 
  -- Micah Anderson <micah@debian.org>  Tue, 16 Mar 2010 12:27:07 -0400
 
