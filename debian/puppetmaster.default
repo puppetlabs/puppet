@@ -1,6 +1,6 @@
 # Defaults for puppetmaster - sourced by /etc/init.d/puppetmaster
 
-# Start puppet on boot?
+# Start puppetmaster on boot?
 START=yes
 
 # Startup options
