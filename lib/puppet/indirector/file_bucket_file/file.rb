@@ -29,7 +29,7 @@ module Puppet::FileBucketFile
 
         def find_by_checksum( checksum )
             model.new( nil, :checksum => checksum ) do |bucket_file|
-                filename = contents_path_for bucket_file
+                filename = contents_path_for( bucket_file )
 
                 if ! ::File.exist? filename
                     return nil
@@ -42,8 +42,8 @@ module Puppet::FileBucketFile
                     raise Puppet::Error, "file could not be read: #{e.message}"
                 end
 
-                if ::File.exist?(paths_path_for bucket_file)
-                    ::File.open(paths_path_for bucket_file) do |f|
+                if ::File.exist?(paths_path_for( bucket_file) )
+                    ::File.open(paths_path_for( bucket_file) ) do |f|
                         bucket_file.paths = f.readlines.map { |l| l.chomp }
                     end
                 end
@@ -54,13 +54,13 @@ module Puppet::FileBucketFile
 
         def save_to_disk( bucket_file )
             # If the file already exists, just return the md5 sum.
-            if ::File.exist?(contents_path_for bucket_file)
+            if ::File.exist?(contents_path_for( bucket_file) )
                 verify_identical_file!(bucket_file)
             else
                 # Make the directories if necessary.
-                unless ::File.directory?(path_for bucket_file)
+                unless ::File.directory?( path_for( bucket_file) )
                     Puppet::Util.withumask(0007) do
-                        ::FileUtils.mkdir_p(path_for bucket_file)
+                        ::FileUtils.mkdir_p( path_for( bucket_file) )
                     end
                 end
 
@@ -126,8 +126,8 @@ module Puppet::FileBucketFile
             return unless bucket_file.path
 
             # check for dupes
-            if ::File.exist?(paths_path_for bucket_file)
-                ::File.open(paths_path_for bucket_file) do |f|
+            if ::File.exist?(paths_path_for( bucket_file) )
+                ::File.open(paths_path_for( bucket_file) ) do |f|
                     return if f.readlines.collect { |l| l.chomp }.include?(bucket_file.path)
                 end
             end
