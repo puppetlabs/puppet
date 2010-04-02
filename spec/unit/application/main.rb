@@ -2,33 +2,33 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/application/puppet'
+require 'puppet/application/main'
 
 describe "Puppet" do
     before :each do
-        @puppet = Puppet::Application[:puppet]
+        @main = Puppet::Application[:main]
         Puppet::Util::Log.stubs(:newdestination)
         Puppet::Util::Log.stubs(:level=)
     end
 
     [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
         it "should declare handle_#{option} method" do
-            @puppet.should respond_to("handle_#{option}".to_sym)
+            @main.should respond_to("handle_#{option}".to_sym)
         end
 
         it "should store argument value when calling handle_#{option}" do
-            @puppet.options.expects(:[]=).with(option, 'arg')
-            @puppet.send("handle_#{option}".to_sym, 'arg')
+            @main.options.expects(:[]=).with(option, 'arg')
+            @main.send("handle_#{option}".to_sym, 'arg')
         end
     end
 
     it "should set the code to the provided code when :execute is used" do
-        @puppet.options.expects(:[]=).with(:code, 'arg')
-        @puppet.send("handle_execute".to_sym, 'arg')
+        @main.options.expects(:[]=).with(:code, 'arg')
+        @main.send("handle_execute".to_sym, 'arg')
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do
-        @puppet.should_parse_config?.should be_true
+        @main.should_parse_config?.should be_true
     end
 
     describe "when applying options" do
@@ -36,13 +36,13 @@ describe "Puppet" do
         it "should set the log destination with --logdest" do
             Puppet::Log.expects(:newdestination).with("console")
 
-            @puppet.handle_logdest("console")
+            @main.handle_logdest("console")
         end
 
         it "should put the logset options to true" do
-            @puppet.options.expects(:[]=).with(:logset,true)
+            @main.options.expects(:[]=).with(:logset,true)
 
-            @puppet.handle_logdest("console")
+            @main.handle_logdest("console")
         end
     end
 
@@ -56,7 +56,7 @@ describe "Puppet" do
             Puppet::Network::Client.dipper.stubs(:new)
             STDIN.stubs(:read)
 
-            @puppet.options.stubs(:[]).with(any_parameters)
+            @main.options.stubs(:[]).with(any_parameters)
         end
 
         it "should set show_diff on --noop" do
@@ -66,50 +66,50 @@ describe "Puppet" do
 
             Puppet.expects(:[]=).with(:show_diff, true)
 
-            @puppet.run_setup
+            @main.run_setup
         end
 
         it "should set console as the log destination if logdest option wasn't provided" do
             Puppet::Log.expects(:newdestination).with(:console)
 
-            @puppet.run_setup
+            @main.run_setup
         end
 
         it "should set INT trap" do
-            @puppet.expects(:trap).with(:INT)
+            @main.expects(:trap).with(:INT)
 
-            @puppet.run_setup
+            @main.run_setup
         end
 
         it "should set log level to debug if --debug was passed" do
-            @puppet.options.stubs(:[]).with(:debug).returns(true)
+            @main.options.stubs(:[]).with(:debug).returns(true)
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @puppet.run_setup
+            @main.run_setup
         end
 
         it "should set log level to info if --verbose was passed" do
-            @puppet.options.stubs(:[]).with(:verbose).returns(true)
+            @main.options.stubs(:[]).with(:verbose).returns(true)
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @puppet.run_setup
+            @main.run_setup
         end
 
         it "should print puppet config if asked to in Puppet config" do
-            @puppet.stubs(:exit)
+            @main.stubs(:exit)
             Puppet.settings.stubs(:print_configs?).returns(true)
 
             Puppet.settings.expects(:print_configs)
 
-            @puppet.run_setup
+            @main.run_setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @puppet.run_setup }.should raise_error(SystemExit)
+            lambda { @main.run_setup }.should raise_error(SystemExit)
         end
 
     end
@@ -117,23 +117,23 @@ describe "Puppet" do
     describe "when executing" do
 
         it "should dispatch to parseonly if parseonly is set" do
-            @puppet.stubs(:options).returns({})
+            @main.stubs(:options).returns({})
             Puppet.stubs(:[]).with(:parseonly).returns(true)
 
-            @puppet.get_command.should == :parseonly
+            @main.get_command.should == :parseonly
         end
 
         it "should dispatch to 'apply' if it was called with 'apply'" do
-            @puppet.options[:catalog] = "foo"
+            @main.options[:catalog] = "foo"
 
-            @puppet.get_command.should == :apply
+            @main.get_command.should == :apply
         end
 
         it "should dispatch to main if parseonly is not set" do
-            @puppet.stubs(:options).returns({})
+            @main.stubs(:options).returns({})
             Puppet.stubs(:[]).with(:parseonly).returns(false)
 
-            @puppet.get_command.should == :main
+            @main.get_command.should == :main
         end
 
         describe "the parseonly command" do
@@ -142,8 +142,8 @@ describe "Puppet" do
                 Puppet.stubs(:[]).with(:manifest).returns("site.pp")
                 @interpreter = stub_everything
                 Puppet.stubs(:err)
-                @puppet.stubs(:exit)
-                @puppet.options.stubs(:[]).with(:code).returns "some code"
+                @main.stubs(:exit)
+                @main.options.stubs(:[]).with(:code).returns "some code"
                 Puppet::Parser::Interpreter.stubs(:new).returns(@interpreter)
             end
 
@@ -151,21 +151,21 @@ describe "Puppet" do
 
                 @interpreter.expects(:parser)
 
-                @puppet.parseonly
+                @main.parseonly
             end
 
             it "should exit with exit code 0 if no error" do
-                @puppet.expects(:exit).with(0)
+                @main.expects(:exit).with(0)
 
-                @puppet.parseonly
+                @main.parseonly
             end
 
             it "should exit with exit code 1 if error" do
                 @interpreter.stubs(:parser).raises(Puppet::ParseError)
 
-                @puppet.expects(:exit).with(1)
+                @main.expects(:exit).with(1)
 
-                @puppet.parseonly
+                @main.parseonly
             end
 
         end
@@ -178,7 +178,7 @@ describe "Puppet" do
                 Puppet.stubs(:[]).with(:postrun_command).returns ""
                 Puppet.stubs(:[]).with(:trace).returns(true)
 
-                @puppet.options.stubs(:[])
+                @main.options.stubs(:[])
 
                 @facts = stub_everything 'facts'
                 Puppet::Node::Facts.stubs(:find).returns(@facts)
@@ -195,14 +195,14 @@ describe "Puppet" do
                 @transaction = stub_everything 'transaction'
                 @catalog.stubs(:apply).returns(@transaction)
 
-                @puppet.stubs(:exit)
+                @main.stubs(:exit)
             end
 
             it "should set the code to run from --code" do
-                @puppet.options.stubs(:[]).with(:code).returns("code to run")
+                @main.options.stubs(:[]).with(:code).returns("code to run")
                 Puppet.expects(:[]=).with(:code,"code to run")
 
-                @puppet.main
+                @main.main
             end
 
             it "should set the code to run from STDIN if no arguments" do
@@ -211,7 +211,7 @@ describe "Puppet" do
 
                 Puppet.expects(:[]=).with(:code,"code to run")
 
-                @puppet.main
+                @main.main
             end
 
             it "should set the manifest if some files are passed on command line" do
@@ -220,25 +220,25 @@ describe "Puppet" do
 
                 Puppet.expects(:[]=).with(:manifest,"site.pp")
 
-                @puppet.main
+                @main.main
             end
 
             it "should collect the node facts" do
                 Puppet::Node::Facts.expects(:find).returns(@facts)
 
-                @puppet.main
+                @main.main
             end
 
             it "should find the node" do
                 Puppet::Node.expects(:find).returns(@node)
 
-                @puppet.main
+                @main.main
             end
 
             it "should raise an error if we can't find the node" do
                 Puppet::Node.expects(:find).returns(nil)
 
-                lambda { @puppet.main }.should raise_error
+                lambda { @main.main }.should raise_error
             end
 
             it "should merge in our node the loaded facts" do
@@ -246,11 +246,11 @@ describe "Puppet" do
 
                 @node.expects(:merge).with("values")
 
-                @puppet.main
+                @main.main
             end
 
             it "should load custom classes if loadclasses" do
-                @puppet.options.stubs(:[]).with(:loadclasses).returns(true)
+                @main.options.stubs(:[]).with(:loadclasses).returns(true)
                 Puppet.stubs(:[]).with(:classfile).returns("/etc/puppet/classes.txt")
                 FileTest.stubs(:exists?).with("/etc/puppet/classes.txt").returns(true)
                 FileTest.stubs(:readable?).with("/etc/puppet/classes.txt").returns(true)
@@ -258,26 +258,26 @@ describe "Puppet" do
 
                 @node.expects(:classes=)
 
-                @puppet.main
+                @main.main
             end
 
             it "should compile the catalog" do
                 Puppet::Resource::Catalog.expects(:find).returns(@catalog)
 
-                @puppet.main
+                @main.main
             end
 
             it "should transform the catalog to ral" do
 
                 @catalog.expects(:to_ral).returns(@catalog)
 
-                @puppet.main
+                @main.main
             end
 
             it "should finalize the catalog" do
                 @catalog.expects(:finalize)
 
-                @puppet.main
+                @main.main
             end
 
             it "should call the prerun and postrun commands on a Configurer instance" do
@@ -287,87 +287,87 @@ describe "Puppet" do
                 configurer.expects(:execute_prerun_command)
                 configurer.expects(:execute_postrun_command)
 
-                @puppet.main
+                @main.main
             end
 
             it "should apply the catalog" do
                 @catalog.expects(:apply)
 
-                @puppet.main
+                @main.main
             end
 
             describe "with detailed_exitcodes" do
                 it "should exit with report's computed exit status" do
                     Puppet.stubs(:[]).with(:noop).returns(false)
-                    @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+                    @main.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
                     report = stub 'report', :exit_status => 666
                     @transaction.stubs(:report).returns(report)
-                    @puppet.expects(:exit).with(666)
+                    @main.expects(:exit).with(666)
 
-                    @puppet.main
+                    @main.main
                 end
 
                 it "should always exit with 0 if option is disabled" do
                     Puppet.stubs(:[]).with(:noop).returns(false)
-                    @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
+                    @main.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
                     report = stub 'report', :exit_status => 666
                     @transaction.stubs(:report).returns(report)
-                    @puppet.expects(:exit).with(0)
+                    @main.expects(:exit).with(0)
 
-                    @puppet.main
+                    @main.main
                 end
 
                 it "should always exit with 0 if --noop" do
                     Puppet.stubs(:[]).with(:noop).returns(true)
-                    @puppet.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+                    @main.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
                     report = stub 'report', :exit_status => 666
                     @transaction.stubs(:report).returns(report)
-                    @puppet.expects(:exit).with(0)
+                    @main.expects(:exit).with(0)
 
-                    @puppet.main
+                    @main.main
                 end
             end
         end
 
         describe "the 'apply' command" do
             it "should read the catalog in from disk if a file name is provided" do
-                @puppet.options[:catalog] = "/my/catalog.pson"
+                @main.options[:catalog] = "/my/catalog.pson"
                 File.expects(:read).with("/my/catalog.pson").returns "something"
                 Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
-                @puppet.apply
+                @main.apply
             end
 
             it "should read the catalog in from stdin if '-' is provided" do
-                @puppet.options[:catalog] = "-"
+                @main.options[:catalog] = "-"
                 $stdin.expects(:read).returns "something"
                 Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
-                @puppet.apply
+                @main.apply
             end
 
             it "should deserialize the catalog from the default format" do
-                @puppet.options[:catalog] = "/my/catalog.pson"
+                @main.options[:catalog] = "/my/catalog.pson"
                 File.stubs(:read).with("/my/catalog.pson").returns "something"
                 Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
                 Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'something').returns Puppet::Resource::Catalog.new
-                @puppet.apply
+                @main.apply
             end
 
             it "should fail helpfully if deserializing fails" do
-                @puppet.options[:catalog] = "/my/catalog.pson"
+                @main.options[:catalog] = "/my/catalog.pson"
                 File.stubs(:read).with("/my/catalog.pson").returns "something syntacically invalid"
-                lambda { @puppet.apply }.should raise_error(Puppet::Error)
+                lambda { @main.apply }.should raise_error(Puppet::Error)
             end
 
             it "should convert plain data structures into a catalog if deserialization does not do so" do
-                @puppet.options[:catalog] = "/my/catalog.pson"
+                @main.options[:catalog] = "/my/catalog.pson"
                 File.stubs(:read).with("/my/catalog.pson").returns "something"
                 Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,"something").returns({:foo => "bar"})
                 Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
-                @puppet.apply
+                @main.apply
             end
 
             it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
-                @puppet.options[:catalog] = "/my/catalog.pson"
+                @main.options[:catalog] = "/my/catalog.pson"
                 File.stubs(:read).with("/my/catalog.pson").returns "something"
                 catalog = Puppet::Resource::Catalog.new
                 Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns catalog
@@ -377,7 +377,7 @@ describe "Puppet" do
                 Puppet::Configurer.expects(:new).returns configurer
                 configurer.expects(:run).with(:catalog => "mycatalog")
 
-                @puppet.apply
+                @main.apply
             end
         end
     end
