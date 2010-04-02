@@ -325,9 +325,9 @@ describe "doc" do
             end
 
             it "should call Puppet::Util::RDoc.rdoc in full mode with outputdir set to doc if no --outputdir" do
-                @puppetdoc.options.expects(:[]).with(:outputdir).returns(false)
+                @doc.options.expects(:[]).with(:outputdir).returns(false)
                 Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'])
-                @puppetdoc.rdoc
+                @doc.rdoc
             end
 
             it "should call Puppet::Util::RDoc.manifestdoc in manifest mode" do
@@ -342,7 +342,7 @@ describe "doc" do
 
                 Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'])
 
-                @puppetdoc.rdoc
+                @doc.rdoc
             end
         end
 

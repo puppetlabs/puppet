@@ -177,7 +177,7 @@ describe "PuppetMaster" do
         end
 
         it "should tell Puppet.settings to use :main,:ssl and :server_app category" do
-            Puppet.settings.expects(:use).with(:main,:server_app,:ssl)
+            Puppet.settings.expects(:use).with(:main,:puppetmasterd,:ssl)
 
             @server_app.run_setup
         end

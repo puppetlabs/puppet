@@ -145,13 +145,13 @@ describe "run" do
             end
 
             it "should pass the fqdn option to search" do
-                @puppetrun.options.stubs(:[]).with(:fqdn).returns(:something)
-                @puppetrun.options.stubs(:[]).with(:all).returns(true)
-                @puppetrun.stubs(:puts)
+                @run.options.stubs(:[]).with(:fqdn).returns(:something)
+                @run.options.stubs(:[]).with(:all).returns(true)
+                @run.stubs(:puts)
 
                 Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
 
-                @puppetrun.run_setup
+                @run.run_setup
             end
 
             it "should search for all nodes if --all" do
