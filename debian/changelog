@@ -25,7 +25,8 @@ puppet (0.25.4-3) unstable; urgency=low
   * Add Suggests: stompserver/libstomp-ruby1.8 - needed for puppetqd 
   * Add README.queueing to puppetmaster package which describes puppetqd
   * Add /etc/init.d/puppetqd and defaults in /etc/defaults/puppetmaster
-  
+  * Switch to dpkg-source 3.0 (quilt) format
+ 
  -- Micah Anderson <micah@debian.org>  Tue, 16 Mar 2010 12:27:07 -0400
 
 puppet (0.25.4-2) unstable; urgency=low
