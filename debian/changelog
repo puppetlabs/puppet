@@ -1,4 +1,4 @@
-puppet (0.25.4-3) UNRELEASED; urgency=low
+puppet (0.25.4-3) unstable; urgency=low
 
   [ Stig Sandbeck Mathisen ]
   * Fix "puppetmaster and puppet scripts always return 0" with patch from
