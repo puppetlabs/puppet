@@ -1,8 +1,11 @@
 puppet (0.25.4-4) UNRELEASED; urgency=low
 
   * debian/watch: update for new upstream location
+  * apply patch from Mathias Gug to add /etc/puppet to puppet-common's
+    directories so that it is removed on package purge (if empty). Also removes
+    /var/log/puppet on purge (closes: #571130)
 
- -- Andrew Pollock <apollock@debian.org>  Fri, 02 Apr 2010 21:24:36 -0700
+ -- Andrew Pollock <apollock@debian.org>  Fri, 02 Apr 2010 21:34:53 -0700
 
 puppet (0.25.4-3) unstable; urgency=low
 

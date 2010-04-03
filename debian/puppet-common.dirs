@@ -1,3 +1,4 @@
+etc/puppet
 etc/puppet/manifests
 usr/lib/ruby/1.8
 var/lib/puppet
