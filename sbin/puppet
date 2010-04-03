@@ -1,7 +1,8 @@
 #!/usr/bin/env ruby
 
 appdir = File.join('puppet', 'application')
-builtins = Dir[File.join(appdir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
+absolute_appdir = $:.collect { |x| File.join(x,'puppet','application') }.detect{ |x| File.directory?(x) }
+builtins = Dir[File.join(absolute_appdir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
 
 usage = "Usage: puppet command <space separated arguments>"
 available = "Available commands are: #{builtins.sort.join(', ')}"
