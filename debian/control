@@ -14,7 +14,7 @@ Package: puppet
 Architecture: all
 Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${source:Version})
 Recommends: rdoc, libaugeas-ruby1.8
-Suggests: puppet-el, vim-puppet
+Suggests: puppet-el, vim-puppet, libselinux-ruby1.8
 Description: centralised configuration management for networks
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the
