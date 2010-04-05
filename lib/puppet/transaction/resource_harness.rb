@@ -51,8 +51,10 @@ class Puppet::Transaction::ResourceHarness
             status.out_of_sync = true
             status.change_count = changes.length
             apply_changes(status, changes)
-            resource.cache(:synced, Time.now)
-            resource.flush if resource.respond_to?(:flush)
+            if ! resource.noop?
+                resource.cache(:synced, Time.now)
+                resource.flush if resource.respond_to?(:flush)
+            end
         end
         return status
     rescue => detail
