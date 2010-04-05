@@ -215,7 +215,7 @@ class Transaction
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
-        Puppet::Util.benchmark(:debug, "Time for triggering #{events.size} events to edges") do
+        duration = thinmark do
             b = relationship_graph.matching_edges(events, resource)
             b.each do |orig_edge|
                 # We have to dup the label here, else we modify the original edge label,
@@ -226,6 +226,8 @@ class Transaction
                 set_trigger(edge)
             end
         end
+        Puppet.debug("Time for triggering #{events.size} events to edges: #{duration}") if events.size > 0 and duration > 0
+
         # And return the events for collection
         events
     end
