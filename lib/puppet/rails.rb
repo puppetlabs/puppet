@@ -58,6 +58,9 @@ module Puppet::Rails
 
             socket          = Puppet[:dbsocket]
             args[:socket]   = socket unless socket.empty?
+	        
+            connections     = Puppet[:dbconnections].to_i
+            args[:pool]     = connections if connections > 0 
         else
             raise ArgumentError, "Invalid db adapter %s" % adapter
         end

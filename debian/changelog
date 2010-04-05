@@ -9,6 +9,8 @@ puppet (0.25.4-4) UNRELEASED; urgency=low
   [ Micah Anderson ]
   * add Suggests: libselinux-ruby1.8 as puppet supports it, but only
     if the library is present
+  * cherry-pick: add puppetmasterd dbconnections option to increase 
+    the rails 'max pool size' (redmine: #2568)
 
  -- Micah Anderson <micah@debian.org>  Sun, 04 Apr 2010 22:24:05 -0400
 

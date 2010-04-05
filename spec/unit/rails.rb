@@ -85,6 +85,28 @@ describe Puppet::Rails, "when initializing a sqlite3 connection" do
             :database  => "testlocation"
         }
     end
+
+    it "should provide the adapter, log_level, and host, username, password, database, socket, and connections arguments" do
+        Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
+        Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+        Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+        Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+        Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+        Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
+
+        Puppet::Rails.database_arguments.should == {
+            :adapter => "mysql",
+            :log_level => "testlevel",
+            :host => "testserver",
+            :username => "testuser",
+            :password => "testpassword",
+            :database => "testname",
+            :socket => "testsocket",
+            :pool => 1
+        }
+    end
 end
 
 describe Puppet::Rails, "when initializing a mysql or postgresql connection" do
