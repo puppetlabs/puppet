@@ -45,7 +45,7 @@ stop_puppetqd() {
 }
 
 status_puppetqd() {
-    if is_true "PUPPETQD" ; then
+    if is_true "$PUPPETQD" ; then
         status_of_proc -p "/var/run/puppet/puppetqd.pid" "${DAEMON}" "${NAME}"
     else
 	echo ""
