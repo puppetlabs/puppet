@@ -204,14 +204,14 @@ describe Puppet::Transaction::ResourceHarness do
 
     describe "when applying changes" do
         before do
-            @change1 = stub 'change1', :apply => stub("event")
-            @change2 = stub 'change2', :apply => stub("event")
+            @change1 = stub 'change1', :apply => stub("event", :status => "success")
+            @change2 = stub 'change2', :apply => stub("event", :status => "success")
             @changes = [@change1, @change2]
         end
 
         it "should apply the change" do
-            @change1.expects(:apply)
-            @change2.expects(:apply)
+            @change1.expects(:apply).returns( stub("event", :status => "success") )
+            @change2.expects(:apply).returns( stub("event", :status => "success") )
 
             @harness.apply_changes(@status, @changes)
         end

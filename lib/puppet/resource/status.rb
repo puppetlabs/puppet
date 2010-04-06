@@ -24,6 +24,9 @@ class Puppet::Resource::Status
 
     def add_event(event)
         @events << event
+        if event.status == 'failure'
+            self.failed = true
+        end
     end
 
     def events
