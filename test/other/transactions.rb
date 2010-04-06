@@ -200,56 +200,6 @@ class TestTransactions < Test::Unit::TestCase
         }
     end
 
-    # modify a file and then roll the modifications back
-    def test_filerollback
-        transaction = nil
-        file = newfile()
-
-        properties = {}
-        check = [:group,:mode]
-        file[:check] = check
-
-        assert_nothing_raised() {
-            file.retrieve
-        }
-
-        assert_nothing_raised() {
-            check.each { |property|
-                value = file.property(property).retrieve
-                assert(value)
-                properties[property] = value
-            }
-        }
-
-
-        component = mk_catalog("file",file)
-        require 'etc'
-        groupname = Etc.getgrgid(File.stat(file.name).gid).name
-        assert_nothing_raised() {
-            # Find a group that it's not set to
-            group = @groups.find { |group| group != groupname }
-            unless group
-                raise "Could not find suitable group"
-            end
-            file[:group] = group
-
-            file[:mode] = "755"
-        }
-        trans = assert_events([:file_changed, :file_changed], component)
-        file.retrieve
-
-        assert_rollback_events(trans, [:file_changed, :file_changed], "file")
-
-        assert_nothing_raised() {
-            file.retrieve
-        }
-        properties.each { |property,value|
-            assert_equal(
-                value, file.value(property), "File %s remained %s" % [property, file.value(property)]
-            )
-        }
-    end
-
     # test that services are correctly restarted and that work is done
     # in the right order
     def test_refreshing
