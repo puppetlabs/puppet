@@ -64,8 +64,9 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
         when true, false, Symbol
             # pass
         else
-            # Add the package version
+            # Add the package version and --force-yes option
             str += "=%s" % should
+            cmd << "--force-yes"
         end
 
         cmd << :install << str

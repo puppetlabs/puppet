@@ -109,6 +109,13 @@ Version table:
             @provider.install
         end
 
+        it "should use --force-yes if a package version is specified" do
+            @resource.expects(:[]).with(:ensure).returns "1.0"
+            @provider.expects(:aptget).with { |*command| command.include?("--force-yes") }
+
+            @provider.install
+        end
+
         it "should do a quiet install" do
             @provider.expects(:aptget).with { |*command| command.include?("-q") }
 
