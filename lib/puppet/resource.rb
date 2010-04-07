@@ -101,6 +101,10 @@ class Puppet::Resource
         @parameters.each { |p,v| yield p, v }
     end
 
+    def include?(parameter)
+        super || @parameters.keys.include?( parameter_name(parameter) )
+    end
+
     %w{exported virtual}.each do |m|
         define_method(m+"?") do
             self.send(m)
