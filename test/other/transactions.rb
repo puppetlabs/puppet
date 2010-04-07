@@ -237,7 +237,7 @@ class TestTransactions < Test::Unit::TestCase
         # set up.
         config = mk_catalog(file, exec)
 
-        trans = assert_events([:file_changed, :triggered], config)
+        trans = assert_events([:mode_changed, :restarted], config)
 
         assert(FileTest.exists?(execfile), "Execfile does not exist")
         File.unlink(execfile)
@@ -245,7 +245,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:group] = @groups[1]
         }
 
-        trans = assert_events([:file_changed, :triggered], config)
+        trans = assert_events([:group_changed, :restarted], config)
         assert(FileTest.exists?(execfile), "Execfile does not exist")
     end
 
@@ -286,7 +286,7 @@ class TestTransactions < Test::Unit::TestCase
             file[:mode] = "755"
         }
 
-        trans = assert_events([:file_changed, :file_changed, :triggered], config)
+        trans = assert_events([:group_changed, :mode_changed, :restarted], config)
     end
 
     # Make sure that multiple subscriptions get triggered.
@@ -377,7 +377,7 @@ class TestTransactions < Test::Unit::TestCase
 
         file[:content] = "some content"
 
-        assert_events([:file_changed, :triggered], config)
+        assert_events([:content_changed, :restarted], config)
 
         assert(FileTest.exists?(fname), "File did not get recreated")
 
