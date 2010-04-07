@@ -1,6 +1,6 @@
 # Runs an external command and returns the results
 Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
-        :doc => "Calls an external command on the Puppet master and returns 
+        :doc => "Calls an external command on the Puppet master and returns
         the results of the command.  Any arguments are passed to the external command as
         arguments.  If the generator does not exit with return code of 0,
         the generator is considered to have failed and a parse error is
@@ -26,7 +26,9 @@ Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
             end
 
             begin
-                output = Puppet::Util.execute(args)
+                Dir.chdir(File.dirname(args[0])) do
+                    output = Puppet::Util.execute(args)
+                end
             rescue Puppet::ExecutionFailure => detail
                 raise Puppet::ParseError, "Failed to execute generator %s: %s" %
                     [args[0], detail]
