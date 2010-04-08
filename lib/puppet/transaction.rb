@@ -39,10 +39,10 @@ class Puppet::Transaction
     end
 
     # Apply all changes for a resource
-    def apply(resource)
+    def apply(resource, ancestor = nil)
         status = resource_harness.evaluate(resource)
         add_resource_status(status)
-        event_manager.queue_events(resource, status.events)
+        event_manager.queue_events(ancestor || resource, status.events)
     rescue => detail
         resource.err "Could not evaluate: #{detail}"
     end
@@ -87,19 +87,19 @@ class Puppet::Transaction
     end
 
     # Evaluate a single resource.
-    def eval_resource(resource)
+    def eval_resource(resource, ancestor = nil)
         if skip?(resource)
             resource_status(resource).skipped = true
             return
         end
 
-        eval_children_and_apply_resource(resource)
+        eval_children_and_apply_resource(resource, ancestor)
 
         # Check to see if there are any events queued for this resource
         event_manager.process_events(resource)
     end
 
-    def eval_children_and_apply_resource(resource)
+    def eval_children_and_apply_resource(resource, ancestor = nil)
         resource_status(resource).scheduled = true
 
         # We need to generate first regardless, because the recursive
@@ -109,16 +109,16 @@ class Puppet::Transaction
         if ! children.empty? and resource.depthfirst?
             children.each do |child|
                 # The child will never be skipped when the parent isn't
-                eval_resource(child, false)
+                eval_resource(child, ancestor || resource)
             end
         end
 
         # Perform the actual changes
-        apply(resource)
+        apply(resource, ancestor)
 
         if ! children.empty? and ! resource.depthfirst?
             children.each do |child|
-                eval_resource(child)
+                eval_resource(child, ancestor || resource)
             end
         end
     end

@@ -117,7 +117,7 @@ describe Puppet::Transaction do
         end
 
         it "should eval and apply children" do
-            @transaction.expects(:eval_children_and_apply_resource).with(@resource)
+            @transaction.expects(:eval_children_and_apply_resource).with(@resource, nil)
 
             @transaction.eval_resource(@resource)
         end
