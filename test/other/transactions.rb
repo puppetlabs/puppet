@@ -396,7 +396,7 @@ class TestTransactions < Test::Unit::TestCase
 
         assert(! file.insync?(file.retrieve), "Uh, file is in sync?")
 
-        assert_events([:file_changed, :triggered], config)
+        assert_events([:content_changed, :restarted], config)
         assert(FileTest.exists?(fname), "File did not get recreated")
     end
 

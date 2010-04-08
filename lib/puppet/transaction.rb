@@ -90,10 +90,9 @@ class Puppet::Transaction
     def eval_resource(resource, ancestor = nil)
         if skip?(resource)
             resource_status(resource).skipped = true
-            return
+        else
+            eval_children_and_apply_resource(resource, ancestor)
         end
-
-        eval_children_and_apply_resource(resource, ancestor)
 
         # Check to see if there are any events queued for this resource
         event_manager.process_events(resource)
