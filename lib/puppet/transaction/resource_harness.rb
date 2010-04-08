@@ -28,6 +28,8 @@ class Puppet::Transaction::ResourceHarness
 
         resource.cache :checked, Time.now
 
+        return [] if ! allow_changes?(resource)
+
         if param = resource.parameter(:ensure)
             return [] if absent_and_not_being_created?(current, param)
             return [Puppet::Transaction::Change.new(param, current[:ensure])] unless ensure_is_insync?(current, param)
