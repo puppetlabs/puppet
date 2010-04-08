@@ -186,3 +186,6 @@ Puppet::Network::FormatHandler.create(:pson, :mime => "text/pson", :weight => 10
         klass.from_pson(data)
     end
 end
+
+# This is really only ever going to be used for Catalogs.
+Puppet::Network::FormatHandler.create(:dot, :mime => "text/dot", :required_methods => [:render_method])
