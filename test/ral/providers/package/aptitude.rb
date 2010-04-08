@@ -5,6 +5,8 @@ require File.dirname(__FILE__) + '/../../../lib/puppettest'
 require 'mocha'
 
 class AptitudePackageProviderTest < PuppetTest::TestCase
+    include PuppetTest
+
     confine "Aptitude package provider missing" =>
         Puppet::Type.type(:package).provider(:aptitude).suitable?
 
@@ -40,9 +42,7 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
                          'faff'
                       ).returns(0)
 
-        pkg.evaluate.each { |state|
-                    state.forward
-          }
+        assert_apply( pkg )
     end
 
     def test_purge
@@ -66,6 +66,6 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
                             'faff'
                       ).returns(0)
 
-        pkg.evaluate.each { |state| state.forward }
+        assert_apply( pkg )
     end
 end
