@@ -7,7 +7,12 @@ builtins = Dir[File.join(absolute_appdir, '*.rb')].map{|fn| File.basename(fn, '.
 usage = "Usage: puppet command <space separated arguments>"
 available = "Available commands are: #{builtins.sort.join(', ')}"
 
-command_name = ARGV.empty? || ARGV.first[/^-/] ? nil : ARGV.shift # subcommand?
+command_name = ARGV.empty? || ARGV.first[/^-/] || ARGV.first =~ /\.pp/ || ARGV.first =~ /\.rb/ ? nil : ARGV.shift # subcommand?
+
+if command_name.nil? # It's old-style puppet, executing something
+    command_name = "main"
+end
+
 if command_name.nil? # main
     puts usage, available
 elsif builtins.include?(command_name) #subcommand
