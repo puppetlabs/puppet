@@ -744,7 +744,7 @@ Puppet::Type.newtype(:file) do
         # And put our new file in place
         if use_temporary_file # This is only not true when our file is empty.
             begin
-                fail_if_checksum_is_wrong(path, content) if validate
+                fail_if_checksum_is_wrong(path, content) if validate_checksum?
                 File.rename(path, self[:path])
             rescue => detail
                 fail "Could not rename temporary file %s to %s : %s" % [path, self[:path], detail]
@@ -760,6 +760,10 @@ Puppet::Type.newtype(:file) do
     end
 
     private
+
+    def validate_checksum?
+        false
+    end
 
     # Make sure the file we wrote out is what we think it is.
     def fail_if_checksum_is_wrong(path, checksum)
