@@ -75,7 +75,7 @@ describe Puppet::Parser::Resource do
 
     it "should use the scope's environment as its environment" do
         @scope.expects(:environment).returns "myenv"
-        Puppet::Parser::Resource.new(:type => "file", :title => "whatever", :scope => @scope).environment.should == "myenv"
+        Puppet::Parser::Resource.new("file", "whatever", :scope => @scope).environment.should == "myenv"
     end
 
     it "should be isomorphic if it is builtin and models an isomorphic type" do
