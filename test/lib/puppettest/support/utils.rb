@@ -80,7 +80,7 @@ module PuppetTest::Support::Utils
         method = type
 
         trans.send(method)
-        newevents = trans.events.reject { |e| e.nil? }.collect { |e|
+        newevents = trans.events.reject { |e| e.status == 'failure' }.collect { |e|
             e.name
         }
 

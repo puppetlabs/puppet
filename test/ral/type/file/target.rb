@@ -70,7 +70,7 @@ class TestFileTarget < Test::Unit::TestCase
 
         # Use classes for comparison, because the resource inspection is so large
         assert_equal(NilClass, catalog.resource(:file, sublink).class, "dynamically generated resources were not removed")
-        assert_equal([], link.evaluate, "Link is not in sync")
+        assert_events([], link, "Link is not in sync")
     end
 
     def test_recursivelinking
