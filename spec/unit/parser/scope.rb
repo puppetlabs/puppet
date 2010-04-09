@@ -322,13 +322,13 @@ describe Puppet::Parser::Scope do
                 @scopes = {}
                 klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
                 Puppet::Parser::Resource.new("class", :main, :scope => @scope, :source => mock('source')).evaluate
-                @scopes[""] = @scope.compiler.class_scope(klass)
+                @scopes[""] = @scope.class_scope(klass)
                 @scopes[""].setvar("test", "value")
 
                 %w{one one::two one::two::three}.each do |name|
                     klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, name))
                     Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
-                    @scopes[name] = @scope.compiler.class_scope(klass)
+                    @scopes[name] = @scope.class_scope(klass)
                     @scopes[name].setvar("test", "value-#{name.sub(/.+::/,'')}")
                 end
             end
@@ -396,7 +396,7 @@ describe Puppet::Parser::Scope do
         %w{one one::two one::two::three}.each do |name|
             klass = parser.newclass(name)
             Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
-            scopes[name] = scope.compiler.class_scope(klass)
+            scopes[name] = scope.class_scope(klass)
             scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
         end
 
