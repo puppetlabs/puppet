@@ -272,6 +272,10 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         @equery = "test = true"
         @vquery = proc { |r| true }
 
+        res = stub("resource 1")
+        res.stubs(:type).returns @resource_type
+        Puppet::Resource.stubs(:new).returns res
+
         Puppet.settings.stubs(:value).with(:storeconfigs).returns true
         Puppet.settings.stubs(:value).with(:environment).returns "production"
 
@@ -360,7 +364,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
         one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :ref => "one"
         Puppet::Rails::Resource.stubs(:find).returns([one])
 
-        resource = mock 'resource'
+        resource = mock 'resource', :type => "Mytype"
         one.expects(:to_resource).with(@scope).returns(resource)
         resource.stubs(:exported=)
         resource.stubs(:virtual=)
