@@ -26,8 +26,8 @@ describe "The require function" do
     end
 
     it "should queue relationships between the 'required' class and our classes" do
-        @parser.newclass("requiredclass1")
-        @parser.newclass("requiredclass2")
+        @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass1")
+        @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "requiredclass2")
 
         @scope.function_require("requiredclass1")
         @scope.function_require("requiredclass2")
@@ -36,9 +36,9 @@ describe "The require function" do
 
         (ref1,ref2) = @scope.resource["require"]
         ref1.type.should == "Class"
-        ref1.title.should == "requiredclass1"
+        ref1.title.should == "Requiredclass1"
         ref2.type.should == "Class"
-        ref2.title.should == "requiredclass2"
+        ref2.title.should == "Requiredclass2"
     end
 
 end

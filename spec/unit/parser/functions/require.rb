@@ -8,13 +8,15 @@ describe "the require function" do
         @catalog = stub 'catalog'
         @compiler = stub 'compiler', :catalog => @catalog
 
-        @resource = stub 'resource', :set_parameter => nil, :metaparam_compatibility_mode? => false, :[] => nil
         @scope = Puppet::Parser::Scope.new()
-        @scope.stubs(:resource).returns @resource
         @scope.stubs(:findresource)
         @scope.stubs(:compiler).returns(@compiler)
         @klass = stub 'class', :name => "myclass"
         @scope.stubs(:find_hostclass).returns(@klass)
+
+        @resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope, :source => "source")
+        @resource.stubs(:metaparam_compatibility_mode?).returns false
+        @scope.stubs(:resource).returns @resource
     end
 
     it "should exist" do
@@ -28,9 +30,11 @@ describe "the require function" do
     end
 
     it "should set the 'require' prarameter on the resource to a resource reference" do
-        @resource.expects(:set_parameter).with { |name, value| name == :require and value[0].is_a?(Puppet::Resource) }
         @scope.stubs(:function_include)
         @scope.function_require("myclass")
+
+        @resource["require"].should be_instance_of(Array)
+        @resource["require"][0].should be_instance_of(Puppet::Resource)
     end
 
     it "should verify the 'include' function is loaded" do
@@ -59,11 +63,12 @@ describe "the require function" do
 
     it "should append the required class to the require parameter" do
         @scope.stubs(:function_include)
-        Puppet::Parser::Resource::Reference.stubs(:new).returns(:require2)
 
-        @resource.expects(:[]).with(:require).returns(:require1)
-        @resource.expects(:set_parameter).with(:require, [:require1, :require2])
-
+        one = Puppet::Resource.new(:file, "/one")
+        @resource[:require] = one
         @scope.function_require("myclass")
+
+        @resource[:require].should be_include(one)
+        @resource[:require].detect { |r| r.to_s == "Class[Myclass]" }.should be_instance_of(Puppet::Resource)
     end
 end
