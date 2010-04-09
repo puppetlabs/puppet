@@ -86,22 +86,6 @@ describe Puppet::Parser::AST::Selector do
                 @selector.evaluate(@scope)
             end
 
-            it "should transmit the sensitive parameter to evaluate_match" do
-                Puppet.stubs(:[]).with(:casesensitive).returns(:sensitive)
-                @param1.expects(:evaluate_match).with { |*arg| arg[2][:sensitive] == :sensitive }
-
-                @selector.evaluate(@scope)
-            end
-
-            it "should transmit the AST file and line to evaluate_match" do
-                @selector.file = :file
-                @selector.line = :line
-                @param1.expects(:evaluate_match).with { |*arg| arg[2][:file] == :file and arg[2][:line] == :line }
-
-                @selector.evaluate(@scope)
-            end
-
-
             it "should evaluate the matching param" do
                 @param1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
 

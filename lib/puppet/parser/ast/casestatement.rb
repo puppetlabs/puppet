@@ -20,7 +20,7 @@ class Puppet::Parser::AST
             default = nil
             @options.each do |option|
                 option.eachopt do |opt|
-                    return option.safeevaluate(scope) if opt.evaluate_match(value, scope, :file => file, :line => line, :sensitive => Puppet[:casesensitive])
+                    return option.safeevaluate(scope) if opt.evaluate_match(value, scope)
                 end
 
                 default = option if option.default?

@@ -57,13 +57,6 @@ describe Puppet::Parser::AST::CaseStatement do
                 @casestmt.evaluate(@scope)
             end
 
-            it "should evaluate_match with sensitive parameter" do
-                Puppet.stubs(:[]).with(:casesensitive).returns(true)
-                @opval1.expects(:evaluate_match).with { |*arg| arg[2][:sensitive] == true }
-
-                @casestmt.evaluate(@scope)
-            end
-
             it "should return the first matching evaluated option" do
                 @opval2.stubs(:evaluate_match).with { |*arg| arg[0] == "value" }.returns(true)
                 @option2.stubs(:safeevaluate).with(@scope).returns(:result)
@@ -129,5 +122,36 @@ describe Puppet::Parser::AST::CaseStatement do
             end
         end
 
+    end
+
+    it "should match if any of the provided options evaluate as true" do
+        ast = nil
+        AST = Puppet::Parser::AST
+
+        tests = {
+            "one" => %w{a b c},
+            "two" => %w{e f g}
+        }
+        options = tests.collect do |result, values|
+            values = values.collect { |v| AST::Leaf.new :value => v }
+            AST::CaseOpt.new(:value => AST::ASTArray.new(:children => values),
+                :statements => AST::Leaf.new(:value => result))
+        end
+        options << AST::CaseOpt.new(:value => AST::Default.new(:value => "default"),
+            :statements => AST::Leaf.new(:value => "default"))
+
+        ast = nil
+        param = AST::Variable.new(:value => "testparam")
+        ast = AST::CaseStatement.new(:test => param, :options => options)
+
+        tests.each do |should, values|
+            values.each do |value|
+                @scope = Puppet::Parser::Scope.new()
+                @scope.setvar("testparam", value)
+                result = ast.evaluate(@scope)
+
+                result.should == should
+            end
+        end
     end
 end

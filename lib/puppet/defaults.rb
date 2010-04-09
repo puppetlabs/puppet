@@ -707,10 +707,6 @@ module Puppet
     )
 
     setdefaults(:main,
-        :casesensitive => [false,
-            "Whether matching in case statements and selectors
-            should be case-sensitive.  Case insensitivity is
-            handled by downcasing all values before comparison."],
         :external_nodes => ["none",
             "An external command that can produce node information.  The output
             must be a YAML dump of a hash, and that hash must have one or both of

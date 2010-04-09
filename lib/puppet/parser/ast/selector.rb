@@ -15,8 +15,6 @@ class Puppet::Parser::AST
             # Get our parameter.
             paramvalue = @param.safeevaluate(scope)
 
-            sensitive = Puppet[:casesensitive]
-
             default = nil
 
             unless @values.instance_of? AST::ASTArray or @values.instance_of? Array
@@ -26,7 +24,7 @@ class Puppet::Parser::AST
             # Then look for a match in the options.
             @values.each do |obj|
                 # short circuit asap if we have a match
-                return obj.value.safeevaluate(scope) if obj.param.evaluate_match(paramvalue, scope, :file => file, :line => line, :sensitive => sensitive)
+                return obj.value.safeevaluate(scope) if obj.param.evaluate_match(paramvalue, scope)
 
                 # Store the default, in case it's necessary.
                 default = obj if obj.param.is_a?(Default)

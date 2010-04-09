@@ -32,7 +32,7 @@ describe Puppet::Parser::AST::Leaf do
             @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
             @value.expects(:downcase).returns("value")
 
-            @leaf.evaluate_match("value", @scope, :sensitive => true)
+            @leaf.evaluate_match("value", @scope)
         end
 
         it "should match undef if value is an empty string" do
@@ -45,7 +45,7 @@ describe Puppet::Parser::AST::Leaf do
             parameter = stub 'parameter'
             parameter.expects(:downcase).returns("value")
 
-            @leaf.evaluate_match(parameter, @scope, :sensitive => true)
+            @leaf.evaluate_match(parameter, @scope)
         end
     end
 
