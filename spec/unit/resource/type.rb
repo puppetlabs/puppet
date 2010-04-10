@@ -17,6 +17,12 @@ describe Puppet::Resource::Type do
         end
     end
 
+    [:hostclass, :node, :definition].each do |type|
+        it "should know when it is a #{type}" do
+            Puppet::Resource::Type.new(type, "foo").send("#{type}?").should be_true
+        end
+    end
+
     describe "when a node"  do
         it "should allow a regex as its name" do
             lambda { Puppet::Resource::Type.new(:node, /foo/) }.should_not raise_error
@@ -330,10 +336,13 @@ describe Puppet::Resource::Type do
             @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
             @scope = Puppet::Parser::Scope.new :compiler => @compiler
             @resource = Puppet::Parser::Resource.new(:foo, "yay", :scope => @scope)
+
+            # This is so the internal resource lookup works, yo.
+            @compiler.catalog.add_resource @resource
+
             @known_resource_types = stub 'known_resource_types'
             @resource.stubs(:known_resource_types).returns @known_resource_types
             @type = Puppet::Resource::Type.new(:hostclass, "foo")
-            @type.stubs(:set_resource_parameters)
         end
 
         it "should set all of its parameters in a subscope" do
@@ -345,27 +354,20 @@ describe Puppet::Resource::Type do
         end
 
         it "should store the class scope" do
-            subscope = stub 'subscope'
-            subscope.expects(:class_set).with('foo',subscope)
-            @type.expects(:subscope).with(@scope, @resource).returns subscope
-
             @type.evaluate_code(@resource)
+            @scope.class_scope(@type).should be_instance_of(@scope.class)
         end
 
         it "should still create a scope but not store it if the type is a definition" do
-            subscope = stub 'subscope', :compiler => @compiler, :setvar => nil
-
             @type = Puppet::Resource::Type.new(:definition, "foo")
-            @type.expects(:subscope).with(@scope, @resource).returns subscope
             @type.evaluate_code(@resource)
-            @compiler.class_scope(@type).should be_nil
+            @scope.class_scope(@type).should be_nil
         end
 
         it "should evaluate the AST code if any is provided" do
             code = stub 'code'
             @type.stubs(:code).returns code
-            @type.stubs(:subscope).returns stub("subscope", :compiler => @compiler)
-            code.expects(:safeevaluate).with @type.subscope
+            code.expects(:safeevaluate)
 
             @type.evaluate_code(@resource)
         end
@@ -373,10 +375,9 @@ describe Puppet::Resource::Type do
         describe "and ruby code is provided" do
             it "should create a DSL Resource API and evaluate it" do
                 @type.stubs(:ruby_code).returns(proc { "foo" })
-                scope = stub 'scope', :compiler => stub_everything
-                @type.expects(:subscope).returns(scope)
+
                 @api = stub 'api'
-                Puppet::DSL::ResourceAPI.expects(:new).with(@resource, scope, @type.ruby_code).returns @api
+                Puppet::DSL::ResourceAPI.expects(:new).with { |res, scope, code| code == @type.ruby_code }.returns @api
                 @api.expects(:evaluate)
 
                 @type.evaluate_code(@resource)
@@ -398,14 +399,14 @@ describe Puppet::Resource::Type do
 
                 @compiler.add_resource @scope, @parent_resource
 
-                @type.code_collection = @scope.known_resource_types
-                @type.code_collection.add @parent_type
+                @type.resource_type_collection = @scope.known_resource_types
+                @type.resource_type_collection.add @parent_type
             end
 
             it "should evaluate the parent's resource" do
                 @type.evaluate_code(@resource)
 
-                @compiler.class_scope(@parent_type).should_not be_nil
+                @scope.class_scope(@parent_type).should_not be_nil
             end
 
             it "should not evaluate the parent's resource if it has already been evaluated" do
@@ -419,7 +420,7 @@ describe Puppet::Resource::Type do
             it "should use the parent's scope as its base scope" do
                 @type.evaluate_code(@resource)
 
-                @scope.compiler.class_scope(@type).parent.object_id.should == @scope.compiler.class_scope(@parent_type).object_id
+                @scope.class_scope(@type).parent.object_id.should == @scope.class_scope(@parent_type).object_id
             end
         end
     end

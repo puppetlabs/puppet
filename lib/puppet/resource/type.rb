@@ -15,6 +15,10 @@ class Puppet::Resource::Type
     attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
     attr_reader :type, :namespace, :arguments, :behaves_like
 
+    RESOURCE_SUPERTYPES.each do |t|
+        define_method("#{t}?") { self.type == t }
+    end
+
     # Are we a child of the passed class?  Do a recursive search up our
     # parentage tree to figure it out.
     def child_of?(klass)
@@ -172,7 +176,7 @@ class Puppet::Resource::Type
 
         scope.setvar("title", resource.title) unless set.include? :title
         scope.setvar("name", resource.name) unless set.include? :name
-        scope.class_set(self.name,scope)
+        scope.class_set(self.name,scope) if hostclass?
     end
 
     # Create a new subscope in which to evaluate our code.
@@ -214,7 +218,8 @@ class Puppet::Resource::Type
     end
 
     def evaluate_parent_type(resource)
-        return unless klass = parent_type and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name)
+        #return unless klass = parent_type and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name)
+        return unless klass = parent_type and parent_resource = resource.catalog.resource(:class, klass.name)
         parent_resource.evaluate unless parent_resource.evaluated?
         return parent_scope(resource.scope, klass)
     end
