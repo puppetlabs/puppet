@@ -126,7 +126,9 @@ Puppet::Application.new(:run) do
                 :ignoreschedules => options[:ignoreschedules]
             }
             run = Puppet::Run.new( run_options ).save( url )
+            puts "Getting status"
             result = run.status
+            puts "status is #{result}"
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             $stderr.puts "Host %s failed: %s\n" % [host, detail]
@@ -134,7 +136,8 @@ Puppet::Application.new(:run) do
         end
 
         case result
-        when "success"; exit(0)
+        when "success";
+            exit(0)
         when "running"
             $stderr.puts "Host %s is already running" % host
             exit(3)

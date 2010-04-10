@@ -250,21 +250,21 @@ describe "run" do
                     options = {
                         :background => true, :ignoreschedules => false, :tags => []
                     }
-                    @run = Puppet::Run.new( options.dup )
-                    @run.stubs(:status).returns("success")
+                    @agent_run = Puppet::Run.new( options.dup )
+                    @agent_run.stubs(:status).returns("success")
 
                     Puppet::Run.indirection.expects(:terminus_class=).with( :rest )
-                    Puppet::Run.expects(:new).with( options ).returns(@run)
+                    Puppet::Run.expects(:new).with( options ).returns(@agent_run)
                 end
 
                 it "should call run on a Puppet::Run for the given host" do
-                    @run.expects(:save).with('https://host:8139/production/run/host').returns(@run)
+                    @agent_run.expects(:save).with('https://host:8139/production/run/host').returns(@agent_run)
 
                     @run.run_for_host('host')
                 end
 
                 it "should exit the child with 0 on success" do
-                    @run.stubs(:status).returns("success")
+                    @agent_run.stubs(:status).returns("success")
 
                     @run.expects(:exit).with(0)
 
@@ -272,7 +272,7 @@ describe "run" do
                 end
 
                 it "should exit the child with 3 on running" do
-                    @run.stubs(:status).returns("running")
+                    @agent_run.stubs(:status).returns("running")
 
                     @run.expects(:exit).with(3)
 
@@ -280,7 +280,7 @@ describe "run" do
                 end
 
                 it "should exit the child with 12 on unknown answer" do
-                    @run.stubs(:status).returns("whatever")
+                    @agent_run.stubs(:status).returns("whatever")
 
                     @run.expects(:exit).with(12)
 
