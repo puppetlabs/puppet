@@ -143,6 +143,7 @@ describe provider_class do
             # Never write to disk, only to RAM.
             #@provider_class.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
             @provider_class.stubs(:target_object).returns(Puppet::Util::FileType.filetype(:ram).new("eh"))
+            @provider_class.clear
 
             @mount = mkmount
             @target = @provider_class.default_target
