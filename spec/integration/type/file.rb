@@ -134,7 +134,7 @@ describe Puppet::Type.type(:file) do
 
             File.expects(:rename).raises ArgumentError
 
-            lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
+            lambda { file.write(:content) }.should raise_error(Puppet::Error)
             File.read(file[:path]).should == "bar"
         end
     end

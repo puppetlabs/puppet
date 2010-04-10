@@ -39,10 +39,26 @@ module Puppet::Util::Checksums
         md5_file(filename, true)
     end
 
+    def md5_stream(&block)
+        require 'digest/md5'
+        digest = Digest::MD5.new()
+        yield digest
+        return digest.hexdigest
+    end
+
+    alias :md5lite_stream :md5_stream
+
     # Return the :mtime timestamp of a file.
     def mtime_file(filename)
         File.stat(filename).send(:mtime)
     end
+
+    # by definition this doesn't exist
+    def mtime_stream
+        nil
+    end
+
+    alias :ctime_stream :mtime_stream
 
     # Calculate a checksum using Digest::SHA1.
     def sha1(content)
@@ -67,6 +83,15 @@ module Puppet::Util::Checksums
     def sha1lite_file(filename)
         sha1_file(filename, true)
     end
+
+    def sha1_stream
+        require 'digest/sha1'
+        digest = Digest::SHA1.new()
+        yield digest
+        return digest.hexdigest
+    end
+
+    alias :sha1lite_stream :sha1_stream
 
     # Return the :ctime of a file.
     def ctime_file(filename)

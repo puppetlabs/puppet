@@ -198,51 +198,75 @@ describe Puppet::Type.type(:file).attrclass(:source) do
         end
     end
 
-    it "should have a method for returning the content" do
-        source.new(:resource => @resource).must respond_to(:content)
+    it "should have a local? method" do
+        source.new(:resource => @resource).must be_respond_to(:local?)
     end
 
-    describe "when looking up the content" do
-        before do
+    context "when accessing source properties" do
+        before(:each) do
             @source = source.new(:resource => @resource)
-            @metadata = stub 'metadata', :source => "/my/source"
-            @source.stubs(:metadata).returns @metadata
-
-            @content = stub 'content', :content => "foobar"
+            @metadata = stub_everything
+            @source.stubs(:metadata).returns(@metadata)
         end
 
-        it "should fail if the metadata does not have a source set" do
-            @metadata.stubs(:source).returns nil
-            lambda { @source.content }.should raise_error(Puppet::DevError)
+        describe "for local sources" do
+            before(:each) do
+                @metadata.stubs(:ftype).returns "file"
+                @metadata.stubs(:source).returns("file:///path/to/source")
+            end
+
+            it "should be local" do
+                @source.must be_local
+            end
+
+            it "should be local if there is no scheme" do
+                @metadata.stubs(:source).returns("/path/to/source")
+                @source.must be_local
+            end
+
+            it "should be able to return the metadata source full path" do
+                @source.full_path.should == "/path/to/source"
+            end
         end
 
-        it "should look the content up from the Content class using the metadata source if no content is set" do
-            Puppet::FileServing::Content.expects(:find).with("/my/source").returns @content
-            @source.content.should == "foobar"
-        end
+        describe "for remote sources" do
+            before(:each) do
+                @metadata.stubs(:ftype).returns "file"
+                @metadata.stubs(:source).returns("puppet://server:8192/path/to/source")
+            end
 
-        it "should return previously found content" do
-            Puppet::FileServing::Content.expects(:find).with("/my/source").returns @content
-            @source.content.should == "foobar"
-            @source.content.should == "foobar"
-        end
+            it "should not be local" do
+                @source.should_not be_local
+            end
 
-        it "should fail if no content can be retrieved" do
-            Puppet::FileServing::Content.expects(:find).with("/my/source").returns nil
-            @source.expects(:fail).raises RuntimeError
-            lambda { @source.content }.should raise_error(RuntimeError)
-        end
+            it "should be able to return the metadata source full path" do
+                @source.full_path.should == "/path/to/source"
+            end
 
-        it "should expire the content appropriately" do
-            expirer = stub 'expired', :dependent_data_expired? => true
+            it "should be able to return the source server" do
+                @source.server.should == "server"
+            end
 
-            content2 = stub 'content', :content => "secondrun"
-            Puppet::FileServing::Content.expects(:find).with("/my/source").times(2).returns(@content).then.returns(content2)
-            @source.content.should == "foobar"
+            it "should be able to return the source port" do
+                @source.port.should == 8192
+            end
 
-            @source.stubs(:expirer).returns expirer
+            describe "which don't specify server or port" do
+                before(:each) do
+                    @metadata.stubs(:source).returns("puppet:///path/to/source")
+                end
 
-            @source.content.should == "secondrun"
+                it "should return the default source server" do
+                    Puppet.settings.expects(:[]).with(:server).returns("myserver")
+                    @source.server.should == "myserver"
+                end
+
+                it "should return the default source port" do
+                    Puppet.settings.expects(:[]).with(:masterport).returns(1234)
+                    @source.port.should == 1234
+                end
+            end
         end
     end
+
 end

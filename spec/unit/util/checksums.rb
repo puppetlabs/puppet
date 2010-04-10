@@ -28,6 +28,12 @@ describe Puppet::Util::Checksums do
         end
     end
 
+    [content_sums, file_only].flatten.each do |sumtype|
+        it "should be able to calculate %s sums from stream" % sumtype do
+            @summer.should be_respond_to(sumtype.to_s + "_stream")
+        end
+    end
+
     it "should have a method for determining whether a given string is a checksum" do
         @summer.should respond_to(:checksum?)
     end
@@ -78,6 +84,16 @@ describe Puppet::Util::Checksums do
 
                 @summer.send(sum.to_s + "_file", file).should == :mydigest
             end
+
+            it "should yield #{klass} to the given block to calculate stream checksums" do
+                digest = mock 'digest'
+                klass.expects(:new).returns digest
+                digest.expects(:hexdigest).returns :mydigest
+
+                @summer.send(sum.to_s + "_stream") do |sum|
+                    sum.should == digest
+                end.should == :mydigest
+            end
         end
     end
 
@@ -117,6 +133,10 @@ describe Puppet::Util::Checksums do
                 File.expects(:stat).with(file).returns(stat)
 
                 @summer.send(sum.to_s + "_file", file).should == "mysum"
+            end
+
+            it "should return nil for streams" do
+                @summer.send(sum.to_s + "_stream").should be_nil
             end
         end
     end

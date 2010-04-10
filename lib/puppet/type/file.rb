@@ -719,35 +719,33 @@ Puppet::Type.newtype(:file) do
         obj
     end
 
-    # Write out the file.  Requires the content to be written,
-    # the property name for logging, and the checksum for validation.
-    def write(content, property, checksum = nil)
+    # Write out the file.  Requires the property name for logging.
+    # Write will be done by the content property, along with checksum computation
+    def write(property)
         remove_existing(:file)
 
-        use_temporary_file = (content.length != 0)
+        use_temporary_file = write_temporary_file?
         if use_temporary_file
             path = "#{self[:path]}.puppettmp_#{rand(10000)}"
             while File.exists?(path) or File.symlink?(path)
                 path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-                end
-          else
+            end
+        else
             path = self[:path]
-          end
+        end
 
         mode = self.should(:mode) # might be nil
         umask = mode ? 000 : 022
 
-        Puppet::Util.withumask(umask) do
-            File.open(path, File::CREAT|File::WRONLY|File::TRUNC, mode) { |f| f.print content }
-        end
+        content_checksum = Puppet::Util.withumask(umask) { File.open(path, 'w', mode) { |f| write_content(f) } }
 
         # And put our new file in place
         if use_temporary_file # This is only not true when our file is empty.
             begin
-                fail_if_checksum_is_wrong(path, content) if validate_checksum?
+                fail_if_checksum_is_wrong(path, content_checksum) if validate_checksum?
                 File.rename(path, self[:path])
             rescue => detail
-                fail "Could not rename temporary file %s to %s : %s" % [path, self[:path], detail]
+                fail "Could not rename temporary file %s to %s: %s" % [path, self[:path], detail]
             ensure
                 # Make sure the created file gets removed
                 File.unlink(path) if FileTest.exists?(path)
@@ -761,19 +759,32 @@ Puppet::Type.newtype(:file) do
 
     private
 
+    # Should we validate the checksum of the file we're writing?
     def validate_checksum?
-        false
+         self[:checksum] !~ /time/
     end
 
     # Make sure the file we wrote out is what we think it is.
-    def fail_if_checksum_is_wrong(path, checksum)
-        # Use the appropriate checksum type -- md5, md5lite, etc.
-        checksum = parameter(:checksum).sum(content)
-
+    def fail_if_checksum_is_wrong(path, content_checksum)
         newsum = parameter(:checksum).sum_file(path)
-        return if [:absent, nil, checksum].include?(newsum)
+        return if [:absent, nil, content_checksum].include?(newsum)
 
-        self.fail "File written to disk did not match checksum; discarding changes (%s vs %s)" % [checksum, newsum]
+        self.fail "File written to disk did not match checksum; discarding changes (%s vs %s)" % [content_checksum, newsum]
+    end
+
+    # write the current content. Note that if there is no content property
+    # simply opening the file with 'w' as done in write is enough to truncate
+    # or write an empty length file.
+    def write_content(file)
+        (content = property(:content)) && content.write(file)
+    end
+
+    private
+
+    def write_temporary_file?
+        # unfortunately we don't know the source file size before fetching it
+        # so let's assume the file won't be empty 
+        (c = property(:content) and c.length) || (s = @parameters[:source] and 1)
     end
 
     # There are some cases where all of the work does not get done on

@@ -56,4 +56,18 @@ describe checksum do
         @checksum.expects(:md5_file).returns "mysum"
         @checksum.sum_file("/foo/bar").should == "{md5}mysum"
     end
+
+    it "should return the summed contents of a stream with a checksum label" do
+        @resource[:checksum] = :md5
+        @checksum.expects(:md5_stream).returns "mysum"
+        @checksum.sum_stream.should == "{md5}mysum"
+    end
+
+    it "should yield the sum_stream block to the underlying checksum" do
+        @resource[:checksum] = :md5
+        @checksum.expects(:md5_stream).yields("something").returns("mysum")
+        @checksum.sum_stream do |sum|
+            sum.should == "something"
+        end
+    end
 end

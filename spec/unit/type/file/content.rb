@@ -44,19 +44,13 @@ describe content do
             @content.actual_content.should == "ehness"
         end
 
-        it "should use the content from the source if the source is set" do
+        it "should not use the content from the source if the source is set" do
             source = mock 'source'
-            source.expects(:content).returns "scont"
 
-            @resource.expects(:parameter).with(:source).returns source
+            @resource.expects(:parameter).never.with(:source).returns source
 
             @content = content.new(:resource => @resource)
-            @content.actual_content.should == "scont"
-        end
-
-        it "should fail if no source is available and no content is set" do
-            @content = content.new(:resource => @resource)
-            lambda { @content.actual_content }.should raise_error(Puppet::Error)
+            @content.actual_content.should be_nil
         end
     end
 
@@ -236,7 +230,7 @@ describe content do
         end
 
         it "should use the file's :write method to write the content" do
-            @resource.expects(:write).with("some content", :content)
+            @resource.expects(:write).with(:content)
 
             @content.sync
         end
@@ -251,6 +245,142 @@ describe content do
             @resource.expects(:stat).returns nil
             @resource.stubs(:write)
             @content.sync.should == :file_created
+        end
+    end
+
+    describe "when writing" do
+        before do
+            @content = content.new(:resource => @resource)
+            @fh = stub_everything
+        end
+
+        it "should fail if no actual content nor source exists" do
+            lambda { @content.write(@fh) }.should raise_error
+        end
+
+        describe "from actual content" do
+            before(:each) do
+                @content.stubs(:actual_content).returns("this is content")
+            end
+
+            it "should write to the given file handle" do
+                @fh.expects(:print).with("this is content")
+                @content.write(@fh)
+            end
+
+            it "should return the current checksum value" do
+                @resource.parameter(:checksum).expects(:sum_stream).returns "checksum"
+                @content.write(@fh).should == "checksum"
+            end
+        end
+
+        describe "from local source" do
+            before(:each) do
+                @content.stubs(:actual_content).returns(nil)
+                @source = stub_everything 'source', :local? => true, :full_path => "/path/to/source"
+                @resource.stubs(:parameter).with(:source).returns @source
+
+                @sum = stub_everything 'sum'
+                @resource.stubs(:parameter).with(:checksum).returns(@sum)
+
+                @digest = stub_everything 'digest'
+                @sum.stubs(:sum_stream).yields(@digest)
+
+                @file = stub_everything 'file'
+                File.stubs(:open).yields(@file)
+                @file.stubs(:read).with(8192).returns("chunk1").then.returns("chunk2").then.returns(nil)
+            end
+
+            it "should open the local file" do
+                File.expects(:open).with("/path/to/source", "r")
+                @content.write(@fh)
+            end
+
+            it "should read the local file by chunks" do
+                @file.expects(:read).with(8192).returns("chunk1").then.returns(nil)
+                @content.write(@fh)
+            end
+
+            it "should write each chunk to the file" do
+                @fh.expects(:print).with("chunk1").then.with("chunk2")
+                @content.write(@fh)
+            end
+
+            it "should pass each chunk to the current sum stream" do
+                @digest.expects(:<<).with("chunk1").then.with("chunk2")
+                @content.write(@fh)
+            end
+
+            it "should return the checksum computed" do
+                @sum.stubs(:sum_stream).yields(@digest).returns("checksum")
+                @content.write(@fh).should == "checksum"
+            end
+        end
+
+        describe "from remote source" do
+            before(:each) do
+                @response = stub_everything 'mock response', :code => "404"
+                @conn = stub_everything 'connection'
+                @conn.stubs(:request_get).yields(@response)
+                Puppet::Network::HttpPool.stubs(:http_instance).returns @conn
+
+                @content.stubs(:actual_content).returns(nil)
+                @source = stub_everything 'source', :local? => false, :full_path => "/path/to/source", :server => "server", :port => 1234
+                @resource.stubs(:parameter).with(:source).returns @source
+
+                @sum = stub_everything 'sum'
+                @resource.stubs(:parameter).with(:checksum).returns(@sum)
+
+                @digest = stub_everything 'digest'
+                @sum.stubs(:sum_stream).yields(@digest)
+            end
+
+            it "should open a network connection to source server and port" do
+                Puppet::Network::HttpPool.expects(:http_instance).with("server", 1234).returns @conn
+                @content.write(@fh)
+            end
+
+            it "should send the correct indirection uri" do
+                @conn.expects(:request_get).with { |uri,headers| uri == "/production/file_content//path/to/source" }.yields(@response)
+                @content.write(@fh)
+            end
+
+            it "should return nil if source is not found" do
+                @response.expects(:code).returns("404")
+                @content.write(@fh).should == nil
+            end
+
+            it "should not write anything if source is not found" do
+                @response.expects(:code).returns("404")
+                @fh.expects(:print).never
+                @content.write(@fh).should == nil
+            end
+
+            it "should raise an HTTP error in case of server error" do
+                @response.expects(:code).returns("500")
+                lambda { @content.write(@fh) }.should raise_error
+            end
+
+            it "should write content by chunks" do
+                @response.expects(:code).returns("200")
+                @response.expects(:read_body).multiple_yields("chunk1","chunk2")
+                @fh.expects(:print).with("chunk1").then.with("chunk2")
+                @content.write(@fh)
+            end
+
+            it "should pass each chunk to the current sum stream" do
+                @response.expects(:code).returns("200")
+                @response.expects(:read_body).multiple_yields("chunk1","chunk2")
+                @digest.expects(:<<).with("chunk1").then.with("chunk2")
+                @content.write(@fh)
+            end
+
+            it "should return the checksum computed" do
+                @response.expects(:code).returns("200")
+                @response.expects(:read_body).multiple_yields("chunk1","chunk2")
+                @sum.expects(:sum_stream).yields(@digest).returns("checksum")
+                @content.write(@fh).should == "checksum"
+            end
         end
     end
 end

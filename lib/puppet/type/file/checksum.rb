@@ -23,4 +23,11 @@ Puppet::Type.type(:file).newparam(:checksum) do
         method = type.to_s + "_file"
         "{#{type}}" + send(method, path).to_s
     end
+
+    def sum_stream(&block)
+        type = value || :md5 # same comment as above
+        method = type.to_s + "_stream"
+        checksum = send(method, &block)
+        "{#{type}}#{checksum}"
+    end
 end

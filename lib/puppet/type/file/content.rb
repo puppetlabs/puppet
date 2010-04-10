@@ -1,9 +1,16 @@
+require 'net/http'
+require 'uri'
+
 require 'puppet/util/checksums'
+require 'puppet/network/http/api/v1'
 
 module Puppet
     Puppet::Type.type(:file).newproperty(:content) do
         include Puppet::Util::Diff
         include Puppet::Util::Checksums
+        include Puppet::Network::HTTP::API::V1
+
+        attr_reader :actual_content
 
         desc "Specify the contents of a file as a string.  Newlines, tabs, and
             spaces can be specified using the escaped syntax (e.g., \\n for a
@@ -68,21 +75,12 @@ module Puppet
             end
         end
 
-        # If content was specified, return that; else try to return the source content;
-        # else, return nil.
-        def actual_content
-            if defined?(@actual_content) and @actual_content
-                return @actual_content
-            end
-
-            if s = resource.parameter(:source)
-                return s.content
-            end
-            fail "Could not find actual content from checksum"
+        def length
+            (actual_content and actual_content.length) || 0
         end
 
         def content
-            self.should || (s = resource.parameter(:source) and s.content)
+            self.should
         end
 
         # Override this method to provide diffs if asked for.
@@ -132,9 +130,46 @@ module Puppet
             # We're safe not testing for the 'source' if there's no 'should'
             # because we wouldn't have gotten this far if there weren't at least
             # one valid value somewhere.
-            @resource.write(actual_content, :content)
+            @resource.write(:content)
 
             return return_event
+        end
+
+        def write(file)
+            self.fail "Writing content that wasn't provided" unless actual_content || resource.parameter(:source)
+            resource.parameter(:checksum).sum_stream { |sum|
+                each_chunk_from(actual_content || resource.parameter(:source)) { |chunk|
+                    sum << chunk
+                    file.print chunk
+                }
+            }
+        end
+
+        def each_chunk_from(source_or_content)
+            if source_or_content.is_a?(String)
+                yield source_or_content
+            elsif source_or_content.nil?
+                nil
+            elsif source_or_content.local?
+                File.open(source_or_content.full_path, "r") do |src|
+                    while chunk = src.read(8192)
+                        yield chunk
+                    end
+                end
+            else
+                request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path)
+                connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
+                connection.request_get(indirection2uri(request), {"Accept" => "raw"}) do |response|
+                    case response.code
+                    when "404"; nil
+                    when /^2/;  response.read_body { |chunk| yield chunk }
+                    else
+                        # Raise the http error if we didn't get a 'success' of some kind.
+                        message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : response.body]
+                        raise Net::HTTPError.new(message, response)
+                    end
+                end
+            end
         end
     end
 end
