@@ -81,6 +81,23 @@ describe "Puppet::Network::HTTP::MongrelREST" do
                 @handler.set_response(@response, "mybody", 200)
             end
 
+            describe "when the result is a File" do
+                it "should use response send_file" do
+                    head = mock 'head'
+                    body = mock 'body'
+                    stat = stub 'stat', :size => 100
+                    file = stub 'file', :stat => stat, :path => "/tmp/path"
+                    file.stubs(:is_a?).with(File).returns(true)
+
+                    @response.expects(:start).with(200).yields(head, body)
+                    @response.expects(:send_status).with(100)
+                    @response.expects(:send_header)
+                    @response.expects(:send_file).with("/tmp/path")
+
+                    @handler.set_response(@response, file, 200)
+                end
+            end
+
             it "should set the status and reason and write the body when setting the response for a successful request" do
                 head = mock 'head'
                 body = mock 'body'

@@ -26,10 +26,11 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
         instance
     end
 
-    # Collect our data.
+    # BF: we used to fetch the file content here, but this is counter-productive
+    # for puppetmaster streaming of file content. So collect just returns itself
     def collect
         return if stat.ftype == "directory"
-        content
+        self
     end
 
     # Read the content of our file in.
@@ -44,6 +45,6 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
     end
 
     def to_raw
-        content
+        File.new(full_path(), "r")
     end
 end

@@ -50,7 +50,12 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
     def set_response(response, result, status = 200)
         response.status = status
-        response.body          = result if status >= 200 and status != 304
+        if status >= 200 and status != 304
+            response.body = result
+            if result.is_a?(File)
+                response["content-length"] = result.stat.size
+            end
+        end
         response.reason_phrase = result if status < 200 or status >= 300
     end
 

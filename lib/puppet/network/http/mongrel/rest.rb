@@ -54,12 +54,19 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
         # we have a failure, unless we're on a version of mongrel that doesn't
         # support this.
         if status < 300
-            response.start(status) { |head, body| body.write(result) }
+            unless result.is_a?(File)
+                response.start(status) { |head, body| body.write(result) }
+            else
+                response.start(status) { |head, body| }
+                response.send_status(result.stat.size)
+                response.send_header
+                response.send_file(result.path)
+            end
         else
             begin
                 response.start(status,false,result) { |head, body| body.write(result) }
             rescue ArgumentError
-	        response.start(status)              { |head, body| body.write(result) }
+                response.start(status)              { |head, body| body.write(result) }
             end
         end
     end

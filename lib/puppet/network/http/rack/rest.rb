@@ -8,6 +8,24 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     HEADER_ACCEPT = 'HTTP_ACCEPT'.freeze
     ContentType = 'Content-Type'.freeze
 
+    CHUNK_SIZE = 8192
+
+    class RackFile
+        def initialize(file)
+            @file = file
+        end
+
+        def each
+            while chunk = @file.read(CHUNK_SIZE)
+                yield chunk
+            end
+        end
+
+        def close
+            @file.close
+        end
+    end
+
     def initialize(args={})
         super()
         initialize_for_puppet(args)
@@ -20,7 +38,12 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     # produce the body of the response
     def set_response(response, result, status = 200)
         response.status = status
-        response.write result
+        unless result.is_a?(File)
+            response.write result
+        else
+            response["Content-Length"] = result.stat.size
+            response.body = RackFile.new(result)
+        end
     end
 
     # Retrieve the accept header from the http request.

@@ -25,15 +25,15 @@ describe Puppet::FileServing::Content do
         Puppet::FileServing::Content.new("/path").should respond_to(:collect)
     end
 
-    it "should retrieve and store its contents when its attributes are collected if the file is a normal file" do
+    it "should not retrieve and store its contents when its attributes are collected if the file is a normal file" do
         content = Puppet::FileServing::Content.new("/path")
 
         result = "foo"
         File.stubs(:lstat).returns(stub("stat", :ftype => "file"))
-        File.expects(:read).with("/path").returns result
+        File.expects(:read).with("/path").never
         content.collect
 
-        content.instance_variable_get("@content").should_not be_nil
+        content.instance_variable_get("@content").should be_nil
     end
 
     it "should not attempt to retrieve its contents if the file is a directory" do
@@ -69,6 +69,14 @@ describe Puppet::FileServing::Content do
         instance.expects(:content=).with "foo/bar"
 
         Puppet::FileServing::Content.from_raw("foo/bar").should equal(instance)
+    end
+
+    it "should return an opened File when converted to raw" do
+        content = Puppet::FileServing::Content.new("/path")
+
+        File.expects(:new).with("/path","r").returns :file
+
+        content.to_raw.should == :file
     end
 end
 

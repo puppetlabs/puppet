@@ -74,6 +74,26 @@ describe "Puppet::Network::HTTP::RackREST" do
 
                 @handler.set_response(@response, "mybody", 400)
             end
+
+            describe "when result is a File" do
+                before :each do
+                    stat = stub 'stat', :size => 100
+                    @file = stub 'file', :stat => stat, :path => "/tmp/path"
+                    @file.stubs(:is_a?).with(File).returns(true)
+                end
+
+                it "should set the Content-Length header" do
+                    @response.expects(:[]=).with("Content-Length", 100)
+
+                    @handler.set_response(@response, @file, 200)
+                end
+
+                it "should return a RackFile adapter as body" do
+                    @response.expects(:body=).with { |val| val.is_a?(Puppet::Network::HTTP::RackREST::RackFile) }
+
+                    @handler.set_response(@response, @file, 200)
+                end
+            end
         end
 
         describe "and determining the request parameters" do
@@ -195,5 +215,35 @@ describe "Puppet::Network::HTTP::RackREST" do
                 @handler.params(req)[:node].should == "host.domain.com"
             end
         end
+    end
+end
+
+describe Puppet::Network::HTTP::RackREST::RackFile do
+    before(:each) do
+        stat = stub 'stat', :size => 100
+        @file = stub 'file', :stat => stat, :path => "/tmp/path"
+        @rackfile = Puppet::Network::HTTP::RackREST::RackFile.new(@file)
+    end
+
+    it "should have an each method" do
+        @rackfile.should be_respond_to(:each)
+    end
+
+    it "should yield file chunks by chunks" do
+        @file.expects(:read).times(3).with(8192).returns("1", "2", nil)
+        i = 1
+        @rackfile.each do |chunk|
+            chunk.to_i.should == i
+            i += 1
+        end
+    end
+
+    it "should have a close method" do
+        @rackfile.should be_respond_to(:close)
+    end
+
+    it "should delegate close to File close" do
+        @file.expects(:close)
+        @rackfile.close
     end
 end

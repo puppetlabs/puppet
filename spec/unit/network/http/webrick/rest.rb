@@ -69,6 +69,29 @@ describe Puppet::Network::HTTP::WEBrickREST do
                 @handler.set_response(@response, "mybody", 200)
             end
 
+            describe "when the result is a File" do
+                before(:each) do
+                    stat = stub 'stat', :size => 100
+                    @file = stub 'file', :stat => stat, :path => "/tmp/path"
+                    @file.stubs(:is_a?).with(File).returns(true)
+                end
+
+                it "should serve it" do
+                    @response.stubs(:[]=)
+
+                    @response.expects(:status=).with 200
+                    @response.expects(:body=).with @file
+
+                    @handler.set_response(@response, @file, 200)
+                end
+
+                it "should set the Content-Length header" do
+                    @response.expects(:[]=).with('content-length', 100)
+
+                    @handler.set_response(@response, @file, 200)
+                end
+            end
+
             it "should set the status and message on the response when setting the response for a failed query" do
                 @response.expects(:status=).with 400
                 @response.expects(:reason_phrase=).with "mybody"
