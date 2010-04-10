@@ -3,7 +3,7 @@
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
 require 'puppettest'
-require 'puppet/network/client/resource'
+require 'puppet/file_bucket/dipper'
 
 class TestDipperClient < Test::Unit::TestCase
     include PuppetTest::ServerTest

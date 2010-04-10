@@ -13,7 +13,7 @@ class Puppet::FileBucket::File
     attr :paths, true
     attr :contents, true
     attr :checksum_type
-    attr :bucket_path
+    attr :bucket_path, true
 
     def self.default_checksum_type
         :md5

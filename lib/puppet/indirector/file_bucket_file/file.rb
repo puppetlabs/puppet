@@ -11,7 +11,7 @@ module Puppet::FileBucketFile
 
         def find( request )
             checksum, path = request_to_checksum_and_path( request )
-            return find_by_checksum( checksum )
+            return find_by_checksum( checksum, request.options )
         end
 
         def save( request )
@@ -27,8 +27,9 @@ module Puppet::FileBucketFile
 
         private
 
-        def find_by_checksum( checksum )
+        def find_by_checksum( checksum, options )
             model.new( nil, :checksum => checksum ) do |bucket_file|
+                bucket_file.bucket_path = options[:bucket_path]
                 filename = contents_path_for( bucket_file )
 
                 if ! ::File.exist? filename

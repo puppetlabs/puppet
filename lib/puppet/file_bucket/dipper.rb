@@ -49,8 +49,9 @@ class Puppet::FileBucket::Dipper
     # Retrieve a file by sum.
     def getfile(sum)
         source_path = "#{@rest_path}md5/#{sum}"
-        file_bucket_file = Puppet::FileBucket::File.find(source_path)
+        file_bucket_file = Puppet::FileBucket::File.find(source_path, :bucket_path => @local_path)
 
+        raise Puppet::Error, "File not found" unless file_bucket_file
         return file_bucket_file.to_s
     end
 
