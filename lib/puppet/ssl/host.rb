@@ -232,7 +232,7 @@ class Puppet::SSL::Host
         rescue Exception => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
             if time < 1
-                puts "Exiting; failed to retrieve certificate and watiforcert is disabled"
+                puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
                 exit(1)
             else
                 sleep(time)
