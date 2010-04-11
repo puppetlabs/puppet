@@ -131,8 +131,9 @@
 #   makes sense when used in conjunction with --listen.
 #
 # onetime::
-#   Run the configuration once, rather than as a long-running daemon.  This is
-#   useful for interactively running puppetd.
+#   Run the configuration once. Runs a single daemonized Puppet run. Useful for 
+#   interactively running puppetd and hence used in conjunction with the --no-daemonize 
+#   option.
 #
 # fingerprint::
 #   Display the current certificate or certificate signing request fingerprint
