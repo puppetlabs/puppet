@@ -36,7 +36,7 @@ describe Puppet::FileBucketFile::File do
         it "should return nil if a file doesn't exist" do
             ::File.expects(:exist?).with("#{@dir}/contents").returns false
 
-            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}")
+            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}", {})
             bucketfile.should == nil
         end
 
@@ -45,7 +45,7 @@ describe Puppet::FileBucketFile::File do
             ::File.expects(:exist?).with("#{@dir}/paths").returns false
             ::File.expects(:read).with("#{@dir}/contents").returns @contents
 
-            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}")
+            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}", {})
             bucketfile.should_not == nil
         end
 
@@ -59,7 +59,7 @@ describe Puppet::FileBucketFile::File do
             mockfile.expects(:readlines).returns( paths )
             ::File.expects(:open).with("#{@dir}/paths").yields mockfile
 
-            Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}").paths.should == paths
+            Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}", {}).paths.should == paths
         end
 
     end
@@ -79,11 +79,11 @@ describe Puppet::FileBucketFile::File do
             @contents_path = '/what/ever/7/0/9/2/4/d/6/f/70924d6fa4b2d745185fa4660703a5c0/contents'
             @paths_path    = '/what/ever/7/0/9/2/4/d/6/f/70924d6fa4b2d745185fa4660703a5c0/paths'
 
-            @request = stub 'request', :key => "md5/#{@digest}/remote/path"
+            @request = stub 'request', :key => "md5/#{@digest}/remote/path", :options => {}
         end
 
         it "should call find_by_checksum" do
-            @store.expects(:find_by_checksum).with("md5:#{@digest}").returns(false)
+            @store.expects(:find_by_checksum).with{|x,opts| x == "md5:#{@digest}"}.returns(false)
             @store.find(@request)
         end
 
@@ -96,6 +96,7 @@ describe Puppet::FileBucketFile::File do
             content = "my content"
             bucketfile = stub 'bucketfile'
             bucketfile.stubs(:bucket_path)
+            bucketfile.stubs(:bucket_path=)
             bucketfile.stubs(:checksum_data).returns(@digest)
             bucketfile.stubs(:checksum).returns(@checksum)
 

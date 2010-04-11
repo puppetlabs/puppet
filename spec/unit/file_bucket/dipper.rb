@@ -57,9 +57,9 @@ describe Puppet::FileBucket::Dipper do
         bucketfile = stub "bucketfile"
         bucketfile.stubs(:to_s).returns "Content"
 
-        Puppet::FileBucket::File.expects(:find).with(
-            'md5/DIGEST123'
-        ).returns(bucketfile)
+        Puppet::FileBucket::File.expects(:find).with{|x,opts|
+            x == 'md5/DIGEST123'
+        }.returns(bucketfile)
 
         @dipper.getfile("DIGEST123").should == "Content"
     end
@@ -99,9 +99,9 @@ describe Puppet::FileBucket::Dipper do
         bucketfile = stub "bucketfile"
         bucketfile.stubs(:to_s).returns "Content"
 
-        Puppet::FileBucket::File.expects(:find).with(
-            'https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123'
-        ).returns(bucketfile)
+        Puppet::FileBucket::File.expects(:find).with{|x,opts|
+            x == 'https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123'
+        }.returns(bucketfile)
 
         @dipper.getfile("DIGEST123").should == "Content"
     end
