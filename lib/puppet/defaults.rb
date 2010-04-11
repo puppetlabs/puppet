@@ -621,7 +621,13 @@ module Puppet
         :graph => [false, "Whether to create dot graph files for the different
             configuration graphs.  These dot files can be interpreted by tools
             like OmniGraffle or dot (which is part of ImageMagick)."],
-        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."]
+        :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."],
+        :http_compression => [false, "Allow http compression in REST communication with the master.
+            This setting might improve performance for puppetd -> puppetmasterd communications over slow WANs.
+            Your puppetmaster needs to support compression (usually by activating some settings in a reverse-proxy
+            in front of the puppetmaster, which rules out webrick). 
+            It is harmless to activate this settings if your master doesn't support
+            compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
     )
 
     # Plugin information.

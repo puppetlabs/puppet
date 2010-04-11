@@ -41,6 +41,7 @@ describe Puppet::Indirector::REST do
 
         @response = stub('mock response', :body => 'result', :code => "200")
         @response.stubs(:[]).with('content-type').returns "text/plain"
+        @response.stubs(:[]).with('content-encoding').returns nil
 
         @searcher = @rest_class.new
         @searcher.stubs(:model).returns @model
@@ -97,6 +98,7 @@ describe Puppet::Indirector::REST do
 
                     @response = mock 'response'
                     @response.stubs(:code).returns rc.to_s
+                    @response.stubs(:[]).with('content-encoding').returns nil
                     @response.stubs(:message).returns "There was a problem (header)"
                 end
 
@@ -119,14 +121,23 @@ describe Puppet::Indirector::REST do
                     @response.stubs(:body).returns nil
                     lambda { @searcher.deserialize(@response) }.should raise_error(Net::HTTPError,"Error #{rc} on SERVER: There was a problem (header)")
                 end
+
+                describe "and with http compression" do
+                    it "should uncompress the body" do
+                        @response.stubs(:body).returns("compressed body")
+                        @searcher.expects(:uncompress_body).with(@response).returns("uncompressed")
+                        lambda { @searcher.deserialize(@response) }.should raise_error { |e| e.message =~ /uncompressed/ }
+                    end
+                end
             end
-        }    
+        }
 
         it "should return the results of converting from the format specified by the content-type header if the response code is in the 200s" do
             @model.expects(:convert_from).with("myformat", "mydata").returns "myobject"
 
             response = mock 'response'
             response.stubs(:[]).with("content-type").returns "myformat"
+            response.stubs(:[]).with("content-encoding").returns nil
             response.stubs(:body).returns "mydata"
             response.stubs(:code).returns "200"
 
@@ -138,6 +149,7 @@ describe Puppet::Indirector::REST do
 
             response = mock 'response'
             response.stubs(:[]).with("content-type").returns "myformat"
+            response.stubs(:[]).with("content-encoding").returns nil
             response.stubs(:body).returns "mydata"
             response.stubs(:code).returns "200"
 
@@ -149,10 +161,24 @@ describe Puppet::Indirector::REST do
 
             response = mock 'response'
             response.stubs(:[]).with("content-type").returns "text/plain; charset=utf-8"
+            response.stubs(:[]).with("content-encoding").returns nil
             response.stubs(:body).returns "mydata"
             response.stubs(:code).returns "200"
 
             @searcher.deserialize(response)
+        end
+
+        it "should uncompress the body" do
+            @model.expects(:convert_from).with("myformat", "uncompressed mydata").returns "myobject"
+
+            response = mock 'response'
+            response.stubs(:[]).with("content-type").returns "myformat"
+            response.stubs(:body).returns "compressed mydata"
+            response.stubs(:code).returns "200"
+
+            @searcher.expects(:uncompress_body).with(response).returns("uncompressed mydata")
+
+            @searcher.deserialize(response).should == "myobject"
         end
     end
 
@@ -229,6 +255,13 @@ describe Puppet::Indirector::REST do
             @connection.expects(:get).with { |path, args| args["Accept"] == "supported, formats" }.returns(@response)
 
             @searcher.model.expects(:supported_formats).returns %w{supported formats}
+            @searcher.find(@request)
+        end
+
+        it "should add Accept-Encoding header" do
+            @searcher.expects(:add_accept_encoding).returns({"accept-encoding" => "gzip"})
+
+            @connection.expects(:get).with { |path, args| args["accept-encoding"] == "gzip" }.returns(@response)
             @searcher.find(@request)
         end
 

@@ -240,4 +240,8 @@ describe "Puppet defaults" do
     it "should have a 'certificate_revocation' setting that defaults to true" do
         Puppet.settings[:certificate_revocation].should be_true
     end
+
+    it "should have an http_compression setting that defaults to false" do
+        Puppet.settings[:http_compression].should be_false
+    end
 end

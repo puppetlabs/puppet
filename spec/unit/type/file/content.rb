@@ -381,6 +381,56 @@ describe content do
                 @sum.expects(:sum_stream).yields(@digest).returns("checksum")
                 @content.write(@fh).should == "checksum"
             end
+
+            it "should get the current accept encoding header value" do
+                @content.expects(:add_accept_encoding)
+                @content.write(@fh)
+            end
+
+            it "should uncompress body on error" do
+                @response.expects(:code).returns("500")
+                @response.expects(:body).returns("compressed body")
+                @content.expects(:uncompress_body).with(@response).returns("uncompressed")
+                lambda { @content.write(@fh) }.should raise_error { |e| e.message =~ /uncompressed/ }
+            end
+
+            it "should uncompress chunk by chunk" do
+                uncompressor = stub_everything 'uncompressor'
+                @content.expects(:uncompress).with(@response).yields(uncompressor)
+                @response.expects(:code).returns("200")
+                @response.expects(:read_body).multiple_yields("chunk1","chunk2")
+
+                uncompressor.expects(:uncompress).with("chunk1").then.with("chunk2")
+                @content.write(@fh)
+            end
+
+            it "should write uncompressed chunks to the file" do
+                uncompressor = stub_everything 'uncompressor'
+                @content.expects(:uncompress).with(@response).yields(uncompressor)
+                @response.expects(:code).returns("200")
+                @response.expects(:read_body).multiple_yields("chunk1","chunk2")
+
+                uncompressor.expects(:uncompress).with("chunk1").returns("uncompressed1")
+                uncompressor.expects(:uncompress).with("chunk2").returns("uncompressed2")
+
+                @fh.expects(:print).with("uncompressed1")
+                @fh.expects(:print).with("uncompressed2")
+
+                @content.write(@fh)
+            end
+
+            it "should pass each uncompressed chunk to the current sum stream" do
+                uncompressor = stub_everything 'uncompressor'
+                @content.expects(:uncompress).with(@response).yields(uncompressor)
+                @response.expects(:code).returns("200")
+                @response.expects(:read_body).multiple_yields("chunk1","chunk2")
+
+                uncompressor.expects(:uncompress).with("chunk1").returns("uncompressed1")
+                uncompressor.expects(:uncompress).with("chunk2").returns("uncompressed2")
+
+                @digest.expects(:<<).with("uncompressed1").then.with("uncompressed2")
+                @content.write(@fh)
+            end
         end
     end
 end

@@ -3,10 +3,12 @@ require 'uri'
 
 require 'puppet/network/http_pool'
 require 'puppet/network/http/api/v1'
+require 'puppet/network/http/compression'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     include Puppet::Network::HTTP::API::V1
+    include Puppet::Network::HTTP::Compression.module
 
     class << self
         attr_reader :server_setting, :port_setting
@@ -43,22 +45,24 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
             content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
 
+            body = uncompress_body(response)
+
             # Convert the response to a deserialized object.
             if multiple
-                model.convert_from_multiple(content_type, response.body)
+                model.convert_from_multiple(content_type, body)
             else
-                model.convert_from(content_type, response.body)
+                model.convert_from(content_type, body)
             end
         else
             # Raise the http error if we didn't get a 'success' of some kind.
-            message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : response.body]
+            message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : uncompress_body(response)]
             raise Net::HTTPError.new(message, response)
         end
     end
 
     # Provide appropriate headers.
     def headers
-        {"Accept" => model.supported_formats.join(", ")}
+        add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
     end
 
     def network(request)

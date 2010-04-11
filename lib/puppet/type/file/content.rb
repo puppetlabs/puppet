@@ -3,12 +3,14 @@ require 'uri'
 
 require 'puppet/util/checksums'
 require 'puppet/network/http/api/v1'
+require 'puppet/network/http/compression'
 
 module Puppet
     Puppet::Type.type(:file).newproperty(:content) do
         include Puppet::Util::Diff
         include Puppet::Util::Checksums
         include Puppet::Network::HTTP::API::V1
+        include Puppet::Network::HTTP::Compression.module
 
         attr_reader :actual_content
 
@@ -159,13 +161,13 @@ module Puppet
             else
                 request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path)
                 connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
-                connection.request_get(indirection2uri(request), {"Accept" => "raw"}) do |response|
+                connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
                     case response.code
                     when "404"; nil
-                    when /^2/;  response.read_body { |chunk| yield chunk }
+                    when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
                     else
                         # Raise the http error if we didn't get a 'success' of some kind.
-                        message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : response.body]
+                        message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : uncompress_body(response)]
                         raise Net::HTTPError.new(message, response)
                     end
                 end

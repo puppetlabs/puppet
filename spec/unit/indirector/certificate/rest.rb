@@ -47,6 +47,7 @@ rn/G
 
         response = stub 'response', :code => "200", :body => cert_string
         response.stubs(:[]).with('content-type').returns "text/plain"
+        response.stubs(:[]).with('content-encoding')
         network.expects(:get).returns response
 
         request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com")
