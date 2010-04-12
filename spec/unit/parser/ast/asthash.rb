@@ -7,11 +7,6 @@ describe Puppet::Parser::AST::ASTHash do
         @scope = Puppet::Parser::Scope.new()
     end
 
-    it "should have a [] accessor" do
-        hash = Puppet::Parser::AST::ASTHash.new(:value => {})
-        hash.should respond_to(:[])
-    end
-
     it "should have a merge functionality" do
         hash = Puppet::Parser::AST::ASTHash.new(:value => {})
         hash.should respond_to(:merge)
@@ -44,6 +39,33 @@ describe Puppet::Parser::AST::ASTHash do
 
         operator = Puppet::Parser::AST::ASTHash.new(:value => { key1 => value1, key2 => value2})
         operator.evaluate(@scope)
+    end
+
+    it "should evaluate the hash keys if they are AST instances" do
+        key1 = stub "key1"
+        value1 = stub "value1", :safeevaluate => "one"
+        key2 = stub "key2"
+        value2 = stub "value2", :safeevaluate => "two"
+
+        key1.expects(:safeevaluate).with(@scope).returns("1")
+        key2.expects(:safeevaluate).with(@scope).returns("2")
+
+        operator = Puppet::Parser::AST::ASTHash.new(:value => { key1 => value1, key2 => value2})
+        hash = operator.evaluate(@scope)
+        hash["1"].should == "one"
+        hash["2"].should == "two"
+    end
+
+    it "should evaluate the hash keys if they are not AST instances" do
+        key1 = "1"
+        value1 = stub "value1", :safeevaluate => "one"
+        key2 = "2"
+        value2 = stub "value2", :safeevaluate => "two"
+
+        operator = Puppet::Parser::AST::ASTHash.new(:value => { key1 => value1, key2 => value2})
+        hash = operator.evaluate(@scope)
+        hash["1"].should == "one"
+        hash["2"].should == "two"
     end
 
     it "should return an evaluated hash" do

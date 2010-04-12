@@ -9,7 +9,8 @@ class Puppet::Parser::AST
             items = {}
 
             @value.each_pair do |k,v|
-                items.merge!({ k => v.safeevaluate(scope) })
+                key = k.respond_to?(:safeevaluate) ? k.safeevaluate(scope) : k
+                items.merge!({ key => v.safeevaluate(scope) })
             end
 
             return items
