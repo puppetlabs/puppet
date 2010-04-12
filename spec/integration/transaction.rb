@@ -26,7 +26,7 @@ describe Puppet::Transaction do
 
         transaction = Puppet::Transaction.new(catalog)
 
-        resource.expects(:evaluate).raises "this is a failure"
+        resource.expects(:retrieve).raises "this is a failure"
         resource.stubs(:err)
 
         child_resource.expects(:retrieve).never
