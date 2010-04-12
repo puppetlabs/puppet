@@ -20,14 +20,10 @@ module Puppet
 
             newvalue(:present) do
                 provider.create
-
-                :group_created
             end
 
             newvalue(:absent) do
                 provider.delete
-
-                :group_removed
             end
         end
 
@@ -46,7 +42,6 @@ module Puppet
                     raise Puppet::DevError, "GID cannot be deleted"
                 else
                     provider.gid = self.should
-                    :group_modified
                 end
             end
 
