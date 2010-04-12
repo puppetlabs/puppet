@@ -47,8 +47,8 @@ Spec::Runner.configure do |config|
                     next
                 end
                 if FileTest.exist?(file)
-                    system("chmod -R 755 #{file}")
-                    system("rm -rf #{file}")
+                    system("chmod -R 755 '#{file}'")
+                    system("rm -rf '#{file}'")
                 end
             end
             $tmpfiles.clear
