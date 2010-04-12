@@ -2,6 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
+require 'puppet_spec/files'
 require 'puppettest'
 require 'puppettest/support/utils'
 require 'puppettest/fileparsing'
@@ -9,12 +10,18 @@ require 'puppettest/fileparsing'
 provider_class = Puppet::Type.type(:ssh_authorized_key).provider(:parsed)
 
 describe provider_class do
+    include PuppetSpec::Files
     include PuppetTest
     include PuppetTest::FileParsing
 
     before :each do
         @sshauthkey_class = Puppet::Type.type(:ssh_authorized_key)
         @provider = @sshauthkey_class.provider(:parsed)
+
+        @keyfile = tmpfile("ssh_key")
+        #@provider.stubs(:default_target).returns @keyfile
+        #@provider.stubs(:flush)
+        @provider.any_instance.stubs(:target).returns @keyfile
     end
 
     after :each do
@@ -43,7 +50,6 @@ describe provider_class do
 
     PuppetTest.fakedata("data/providers/ssh_authorized_key/parsed").each { |file|
         it "should be able to parse example data in #{file}" do
-            puts "Parsing %s" % file
             fakedataparse(file)
         end
     }
@@ -72,7 +78,7 @@ describe provider_class do
         genkey(key).should == "from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n"
     end
 
-    it "'s parse_options method should be able to parse options containing commas" do
+    it "should be able to parse options containing commas via its parse_options method" do
         options = %w{from="host1.reductlivelabs.com,host.reductivelabs.com" command="/usr/local/bin/run" ssh-pty}
         optionstr = options.join(", ")
 
@@ -130,6 +136,7 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0600" do
+                FileTest.expects(:exist?).with("/tmp/.ssh_dir/place_to_put_authorized_keys").returns true
                 File.expects(:chmod).with(0600, "/tmp/.ssh_dir/place_to_put_authorized_keys")
                 @provider.flush
             end
@@ -168,6 +175,7 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0600" do
+                FileTest.expects(:exist?).with(File.expand_path("~nobody/.ssh/authorized_keys")).returns true
                 File.expects(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
                 @provider.flush
             end
@@ -186,6 +194,7 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0644" do
+                FileTest.expects(:exist?).with("/tmp/.ssh_dir/place_to_put_authorized_keys").returns true
                 File.expects(:chmod).with(0644, "/tmp/.ssh_dir/place_to_put_authorized_keys")
                 @provider.flush
             end

@@ -89,7 +89,7 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
             end
         end
 
-        if target
+        if target and FileTest.exist?(target)
             File.chmod(file_perm, target)
         end
     end
