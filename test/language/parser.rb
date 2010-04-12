@@ -498,7 +498,7 @@ file { "/tmp/yayness":
                 ret = parser.parse("#{at}file { ['/tmp/1', '/tmp/2']: owner => root }")
             end
 
-            ret.hostclass("").each do |res|
+            ret.hostclass("").code.each do |res|
                 assert_instance_of(AST::Resource, res)
                 check.call(res, "multiresource")
             end
