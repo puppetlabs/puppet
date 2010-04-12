@@ -19,12 +19,6 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when writing files" do
-        before do
-            Puppet::Util::Log.newdestination :console
-        end
-
-        after { Puppet::Util::Log.close :console }
-
         it "should backup files to a filebucket when one is configured" do
             bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
             file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
@@ -358,6 +352,7 @@ describe Puppet::Type.type(:file) do
             dest = tmpfile("destwith spaces")
 
             File.open(source, "w") { |f| f.print "foo" }
+            File.chmod(0755, source)
 
             file = Puppet::Type::File.new(:path => dest, :source => source)
 
@@ -367,29 +362,7 @@ describe Puppet::Type.type(:file) do
             catalog.apply
 
             File.read(dest).should == "foo"
-        end
-
-        it "should be able to notice changed files in the same process" do
-            source = tmpfile("source")
-            dest = tmpfile("dest")
-
-            File.open(source, "w") { |f| f.print "foo" }
-
-            file = Puppet::Type::File.new(:name => dest, :source => source, :backup => false)
-
-            catalog = Puppet::Resource::Catalog.new
-            catalog.add_resource file
-            catalog.apply
-
-            File.read(dest).should == "foo"
-
-            # Now change the file
-            File.open(source, "w") { |f| f.print "bar" }
-            file.expire
-            catalog.apply
-
-            # And make sure it's changed
-            File.read(dest).should == "bar"
+            (File.stat(dest).mode & 007777).should == 0755
         end
 
         it "should be able to copy individual files even if recurse has been specified" do
