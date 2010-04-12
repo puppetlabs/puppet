@@ -16,6 +16,25 @@ describe Puppet::Type.type(:file) do
         @file.catalog = @catalog
     end
 
+    describe "when determining if recursion is enabled" do
+        it "should default to recursion being disabled" do
+            @file.should_not be_recurse
+        end
+        [true, "true", 10, "inf", "remote"].each do |value|
+            it "should consider #{value} to enable recursion" do
+                @file[:recurse] = value
+                @file.must be_recurse
+            end
+        end
+
+        [false, "false", 0].each do |value|
+            it "should consider #{value} to disable recursion" do
+                @file[:recurse] = value
+                @file.should_not be_recurse
+            end
+        end
+    end
+
     describe "#write" do
 
         it "should propagate failures encountered when renaming the temporary file" do

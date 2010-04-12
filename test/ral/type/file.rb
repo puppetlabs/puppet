@@ -378,69 +378,6 @@ class TestFile < Test::Unit::TestCase
         }
     end
 
-    def test_recurse?
-        file = Puppet::Type.type(:file).new :path => tempfile
-
-        # Make sure we default to false
-        assert(! file.recurse?, "Recurse defaulted to true")
-
-        [true, "true", 10, "inf", "remote"].each do |value|
-            file[:recurse] = value
-            assert(file.recurse?, "%s did not cause recursion" % value)
-        end
-
-        [false, "false", 0].each do |value|
-            file[:recurse] = value
-            assert(! file.recurse?, "%s caused recursion" % value)
-        end
-    end
-
-    def test_recursion
-        basedir = tempfile()
-        subdir = File.join(basedir, "subdir")
-        tmpfile = File.join(basedir,"testing")
-        FileUtils.mkdir_p(subdir)
-
-        dir = nil
-        [true, "true", "inf", 50].each do |value|
-            assert_nothing_raised {
-                dir = Puppet::Type.type(:file).new(
-                    :path => basedir,
-                    :recurse => value,
-                    :check => %w{owner mode group}
-                )
-            }
-            config = mk_catalog dir
-            transaction = Puppet::Transaction.new(config)
-
-            children = nil
-
-            assert_nothing_raised {
-                children = transaction.eval_generate(dir)
-            }
-
-            assert_equal([subdir], children.collect {|c| c.title },
-                "Incorrect generated children")
-
-            # Remove our subdir resource,
-            subdir_resource = config.resource(:file, subdir)
-            config.remove_resource(subdir_resource)
-
-            # Create the test file
-            File.open(tmpfile, "w") { |f| f.puts "yayness" }
-
-            assert_nothing_raised {
-                children = transaction.eval_generate(dir)
-            }
-
-            # And make sure we get both resources back.
-            assert_equal([subdir, tmpfile].sort, children.collect {|c| c.title }.sort,
-                "Incorrect generated children when recurse == %s" % value.inspect)
-
-            File.unlink(tmpfile)
-        end
-    end
-
     def test_filetype_retrieval
         file = nil
 
