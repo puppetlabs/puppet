@@ -656,45 +656,6 @@ class TestFile < Test::Unit::TestCase
         assert_equal("%o" % 0755, "%o" % (File.stat(path).mode & 007777))
     end
 
-    def test_backupmodes
-        File.umask(0022)
-
-        file = tempfile()
-        newfile = tempfile()
-
-        File.open(file, "w", 0411) { |f| f.puts "yayness" }
-
-        obj = Puppet::Type.type(:file).new(
-            :path => file, :content => "rahness\n", :backup => ".puppet-bak"
-        )
-        catalog = mk_catalog(obj)
-        catalog.apply
-
-        backupfile = file + obj[:backup]
-        @@tmpfiles << backupfile
-        assert(FileTest.exists?(backupfile),
-            "Backup file %s does not exist" % backupfile)
-
-        assert_equal(0411, filemode(backupfile),
-            "File mode is wrong for backupfile")
-
-        name = "bucket"
-        bpath = tempfile()
-        Dir.mkdir(bpath)
-        bucket = Puppet::Type.type(:filebucket).new(:title => name, :path => bpath)
-        catalog.add_resource(bucket)
-
-        obj[:backup] = name
-        obj[:content] = "New content"
-        catalog.finalize
-        catalog.apply
-
-        md5 = "18cc17fa3047fcc691fdf49c0a7f539a"
-        dir, file, pathfile = Puppet::Network::Handler.filebucket.paths(bpath, md5)
-
-        assert_equal(0440, filemode(file))
-    end
-
     def test_replacefilewithlink
         path = tempfile()
         link = tempfile()
