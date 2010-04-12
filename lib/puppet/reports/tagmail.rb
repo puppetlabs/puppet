@@ -38,7 +38,7 @@ Puppet::Reports.register_report(:tagmail) do
 
     # Find all matching messages.
     def match(taglists)
-        reports = []
+        matching_logs = []
         taglists.each do |emails, pos, neg|
             # First find all of the messages matched by our positive tags
             messages = nil
@@ -63,11 +63,11 @@ Puppet::Reports.register_report(:tagmail) do
                 Puppet.info "No messages to report to %s" % emails.join(",")
                 next
             else
-                reports << [emails, messages.collect { |m| m.to_report }.join("\n")]
+                matching_logs << [emails, messages.collect { |m| m.to_report }.join("\n")]
             end
         end
 
-        return reports
+        return matching_logs
     end
 
     # Load the config file

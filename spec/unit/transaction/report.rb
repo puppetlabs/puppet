@@ -209,5 +209,22 @@ describe Puppet::Transaction::Report do
             end
         end
     end
-end
 
+    describe "when producing a summary" do
+        before do
+            resource = Puppet::Type.type(:notify).new(:name => "testing")
+            catalog = Puppet::Resource::Catalog.new
+            catalog.add_resource resource
+            trans = catalog.apply
+
+            @report = trans.report
+            @report.calculate_metrics
+        end
+
+        %w{Changes Total Resources}.each do |main|
+            it "should include information on #{main} in the summary" do
+                @report.summary.should be_include(main)
+            end
+        end
+    end
+end

@@ -7,7 +7,7 @@ module PuppetTest::Reporttesting
             # We have to use warning so that the logs always happen
             log = Puppet.warning("Report test message %s" % i)
 
-            report.newlog(log)
+            report << log
         }
 
         return report
