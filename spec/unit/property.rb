@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby"
+#!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/property'
@@ -397,6 +397,20 @@ describe Puppet::Property do
                 @property.expects(:test)
                 @property.set("foo")
             end
+        end
+    end
+
+    describe "when producing a change log" do
+        it "should say 'defined' when the current value is 'absent'" do
+            @property.change_to_s(:absent, "foo").should =~ /^defined/
+        end
+
+        it "should say 'undefined' when the new value is 'absent'" do
+            @property.change_to_s("foo", :absent).should =~ /^undefined/
+        end
+
+        it "should say 'changed' when neither value is 'absent'" do
+            @property.change_to_s("foo", "bar").should =~ /changed/
         end
     end
 end

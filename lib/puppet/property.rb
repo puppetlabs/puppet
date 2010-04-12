@@ -122,14 +122,14 @@ class Puppet::Property < Puppet::Parameter
     end
 
     # How should a property change be printed as a string?
-    def change_to_s(currentvalue, newvalue)
+    def change_to_s(current_value, newvalue)
         begin
-            if currentvalue == :absent
+            if current_value == :absent
                 return "defined '#{name}' as '#{should_to_s(newvalue)}'"
             elsif newvalue == :absent or newvalue == [:absent]
                 return "undefined '#{name}' from '#{is_to_s(current_value)}'"
             else
-                return "#{name} changed '#{is_to_s(currentvalue)}' to '#{should_to_s(newvalue)}'"
+                return "#{name} changed '#{is_to_s(current_value)}' to '#{should_to_s(newvalue)}'"
             end
         rescue Puppet::Error, Puppet::DevError
             raise
