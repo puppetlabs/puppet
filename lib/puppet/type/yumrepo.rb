@@ -203,32 +203,8 @@ module Puppet
             self.class.section(self[:name])
         end
 
-        def evaluate
-            changes = super
-            # FIXME: Dirty, dirty hack
-            # We amend the go method of the last change to trigger
-            # writing the whole file
-            # A cleaner solution would be to either use the composite
-            # pattern and encapsulate all changes into a change that does
-            # not depend on a property and triggers storing, or insert another
-            # change at the end of changes to trigger storing Both
-            # solutions require that the PropertyChange interface be
-            # abstracted so that it can work with a change that is not
-            # directly backed by a Property
-            unless changes.empty?
-                class << changes[-1]
-                    def go
-                        result = super
-                        self.property.resource.store
-                        return result
-                    end
-                end
-            end
-            return changes
-        end
-
         # Store modifications to this yumrepo resource back to disk
-        def store
+        def flush
             self.class.store
         end
 
