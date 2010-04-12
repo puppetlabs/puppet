@@ -2,8 +2,8 @@
 
 require File.dirname(__FILE__) + '/../../lib/puppettest'
 
-require 'puppettest'
 require 'mocha'
+require 'puppettest'
 
 class TestType < Test::Unit::TestCase
     include PuppetTest
@@ -297,17 +297,6 @@ class TestType < Test::Unit::TestCase
         assert_equal((tags << "file").sort, obj.tags.sort)
     end
 
-    def disabled_test_list
-        Puppet::Type.loadall
-
-        Puppet::Type.eachtype do |type|
-            next if type.name == :symlink
-            next if type.name == :component
-            next if type.name == :tidy
-            assert(type.respond_to?(:list), "%s does not respond to list" % type.name)
-        end
-    end
-
     def test_to_hash
         file = Puppet::Type.newfile :path => tempfile(), :owner => "luke",
             :recurse => true, :loglevel => "warning"
@@ -330,58 +319,6 @@ class TestType < Test::Unit::TestCase
 
         exec = Puppet::Type.newexec(:title => "yay", :command => "/bin/echo yay")
         assert_equal("Exec[yay]", exec.ref)
-    end
-
-    def test_path
-        config = mk_catalog
-
-        # Check that our paths are built correctly.  Just pick a random, "normal" type.
-        type = Puppet::Type.type(:exec)
-        mk = Proc.new do |i, hash|
-            hash[:title] = "exec%s" % i
-            hash[:command] = "/bin/echo %s" % i
-            if parent = hash[:parent]
-                hash.delete(:parent)
-            end
-            res = type.create(hash)
-            config.add_resource res
-            if parent
-                config.add_edge(parent, res)
-            end
-            res
-        end
-
-        exec = mk.call(1, {})
-
-        assert_equal("/Exec[exec1]", exec.path)
-
-        comp = Puppet::Type.newcomponent :title => "My[component]", :type => "Yay"
-        config.add_resource comp
-
-        exec = mk.call(2, :parent => comp)
-
-        assert_equal("/My[component]/Exec[exec2]", exec.path)
-
-        comp = Puppet::Type.newcomponent :name => "Other[thing]"
-        config.add_resource comp
-        exec = mk.call(3, :parent => comp)
-        assert_equal("/Other[thing]/Exec[exec3]", exec.path)
-
-        comp = Puppet::Type.newcomponent :type => "server", :name => "server"
-        config.add_resource comp
-        exec = mk.call(4, :parent => comp)
-        assert_equal("/server/Exec[exec4]", exec.path)
-
-        comp = Puppet::Type.newcomponent :type => "whatever", :name => "class[main]"
-        config.add_resource comp
-        exec = mk.call(5, :parent => comp)
-        assert_equal("//Exec[exec5]", exec.path)
-
-        newcomp = Puppet::Type.newcomponent :type => "yay", :name => "Good[bad]"
-        config.add_resource newcomp
-        config.add_edge comp, newcomp
-        exec = mk.call(6, :parent => newcomp)
-        assert_equal("//Good[bad]/Exec[exec6]", exec.path)
     end
 
     # Partially test #704, but also cover the rest of the schedule management bases.
