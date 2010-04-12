@@ -157,6 +157,9 @@ class Puppet::Parser::Lexer
     TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
         [TOKENS[:NAME], value]
     end
+    def (TOKENS[:NUMBER]).acceptable?(context={})
+        ![:DQPRE,:DQMID].include? context[:after]
+    end
 
     TOKENS.add_token :NAME, %r{[a-z0-9][-\w]*} do |lexer, value|
         string_token = self
@@ -509,7 +512,7 @@ class Puppet::Parser::Lexer
             when 't'; "\t"
             when 's'; " "
             else
-                if Valid_escapes_in_strings.include? ch
+                if Valid_escapes_in_strings.include? ch and not (ch == '"' and terminators == "'")
                     ch
                 else
                     Puppet.warning "Unrecognised escape sequence '\\#{ch}'#{file && " in file #{file}"}#{line && " at line #{line}"}"

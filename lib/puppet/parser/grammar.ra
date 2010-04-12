@@ -822,8 +822,8 @@ hashpair:   key FARROW rvalue {
     result = ast AST::ASTHash, { :value => { val[0] => val[2] } }
 }
 
-key:   NAME { result = val[0][:value] }
-   | STRING { result = val[0][:value] }
+key:      NAME { result = val[0][:value] }
+  | quotedtext { result = val[0] }
 
 hasharrayaccess: VARIABLE LBRACK rvalue RBRACK {
     result = ast AST::HashOrArrayAccess, :variable => val[0][:value], :key => val[2] 
