@@ -96,17 +96,9 @@ module Puppet
             end
 
             return true if ! @resource.replace?
+            return true unless self.should
 
-            if self.should
-                result = super
-            elsif source = resource.parameter(:source)
-                fail "Got a remote source with no checksum" unless source.checksum
-                result = (is == source.checksum)
-            else
-                # We've got no content specified, and no source from which to
-                # get content.
-                return true
-            end
+            result = super
 
             if ! result and Puppet[:show_diff]
                 string_file_diff(@resource[:path], actual_content)

@@ -147,7 +147,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
                 @metadata.stubs(:ftype).returns "file"
             end
 
-            it "should copy the metadata's owner, group, and mode to the resource if they are not set on the resource" do
+            it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
                 Puppet::Util::SUIDManager.expects(:uid).returns 0
 
                 @source.copy_source_values
@@ -155,28 +155,23 @@ describe Puppet::Type.type(:file).attrclass(:source) do
                 @resource[:owner].must == 100
                 @resource[:group].must == 200
                 @resource[:mode].must == 123
-            end
 
-            it "should copy the metadata's owner, group, and mode to the resource if they are set to :absent on the resource" do
-                Puppet::Util::SUIDManager.expects(:uid).returns 0
-
-                @source.copy_source_values
-
-                @resource[:owner].must == 100
-                @resource[:group].must == 200
-                @resource[:mode].must == 123
+                # Metadata calls it checksum, we call it content.
+                @resource[:content].must == @metadata.checksum
             end
 
             it "should not copy the metadata's owner to the resource if it is already set" do
                 @resource[:owner] = 1
                 @resource[:group] = 2
                 @resource[:mode] = 3
+                @resource[:content] = "foobar"
 
                 @source.copy_source_values
 
                 @resource[:owner].must == 1
                 @resource[:group].must == 2
                 @resource[:mode].must == 3
+                @resource[:content].should_not == @metadata.checksum
             end
 
             describe "and puppet is not running as root" do

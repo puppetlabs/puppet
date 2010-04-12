@@ -112,11 +112,15 @@ module Puppet
 
             # Take each of the stats and set them as states on the local file
             # if a value has not already been provided.
-            [:owner, :mode, :group, :checksum].each do |param|
-                next if param == :owner and Puppet::Util::SUIDManager.uid != 0
-                next if param == :checksum and metadata.ftype == "directory"
-                unless value = resource[param] and value != :absent
-                    resource[param] = metadata.send(param)
+            [:owner, :mode, :group, :checksum].each do |metadata_method|
+                param_name = (metadata_method == :checksum) ? :content : metadata_method
+                next if metadata_method == :owner and Puppet::Util::SUIDManager.uid != 0
+                next if metadata_method == :checksum and metadata.ftype == "directory"
+
+                if resource[param_name].nil? or resource[param_name] == :absent
+                    v = metadata.send(metadata_method)
+                    resource.info "Setting #{param_name} to #{v}"
+                    resource[param_name] = metadata.send(metadata_method)
                 end
             end
 

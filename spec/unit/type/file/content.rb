@@ -201,32 +201,6 @@ describe content do
                     @content.insync?("{md5}" + Digest::MD5.hexdigest("some content"))
                 end
             end
-
-            describe "and the content is specified via a remote source" do
-                before do
-                    @metadata = stub 'metadata'
-                    @source = stub 'source', :metadata => @metadata
-                    @resource.stubs(:parameter).with(:source).returns @source
-                end
-
-                it "should use checksums to compare remote content, rather than downloading the content" do
-                    @source.stubs(:checksum).returns "{md5}whatever"
-
-                    @content.insync?("{md5}eh")
-                end
-
-                it "should return false if the current content is different from the remote content" do
-                    @source.stubs(:checksum).returns "{md5}whatever"
-
-                    @content.should_not be_insync("some content")
-                end
-
-                it "should return true if the current content is the same as the remote content" do
-                    @source.stubs(:checksum).returns("{md5}something")
-
-                    @content.must be_insync("{md5}something")
-                end
-            end
         end
 
         describe "and :replace is false" do
