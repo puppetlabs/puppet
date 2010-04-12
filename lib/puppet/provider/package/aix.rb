@@ -23,7 +23,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
     def self.prefetch(packages)
         if Process.euid != 0
-            raise Puppet::Error "The aix provider can only be used by root"
+            raise Puppet::Error, "The aix provider can only be used by root"
         end
 
         return unless packages.detect { |name, package| package.should(:ensure) == :latest }
