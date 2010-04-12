@@ -215,7 +215,7 @@ class DirectoryService < Puppet::Provider::NameService
         # stored in the user record. It is stored at a path that involves the
         # UUID of the user record for non-Mobile local acccounts.
         # Mobile Accounts are out of scope for this provider for now
-        if @resource_type.validproperties.include?(:password)
+        if @resource_type.validproperties.include?(:password) and Process.uid == 0 
             attribute_hash[:password] = self.get_password(attribute_hash[:guid])
         end
         return attribute_hash
@@ -324,7 +324,7 @@ class DirectoryService < Puppet::Provider::NameService
         password_hash_file = "#{@@password_hash_dir}/#{guid}"
         if File.exists?(password_hash_file) and File.file?(password_hash_file)
             if not File.readable?(password_hash_file)
-                fail("Could not read password hash file at #{password_hash_file} for #{@resource[:name]}")
+                fail("Could not read password hash file at #{password_hash_file}")
             end
             f = File.new(password_hash_file)
             password_hash = f.read
