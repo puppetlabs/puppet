@@ -4,9 +4,6 @@ class Puppet::Parser::AST
     class ASTHash < Leaf
         include Enumerable
 
-        def [](index)
-        end
-
         # Evaluate our children.
         def evaluate(scope)
             items = {}
