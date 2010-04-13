@@ -65,7 +65,9 @@ Puppet::Type.type(:zone).provide(:solaris) do
     end
 
     def install(dummy_argument=:work_arround_for_ruby_GC_bug)
-        if @resource[:install_args]
+        if @resource[:clone] # TODO: add support for "-s snapshot"
+            zoneadm :clone, @resource[:clone]
+        elsif @resource[:install_args]
             zoneadm :install, @resource[:install_args].split(" ")
         else
             zoneadm :install
@@ -227,8 +229,17 @@ Puppet::Type.type(:zone).provide(:solaris) do
         if dir = config["inherit-pkg-dir"]
             result[:inherit] = dir.collect { |dirs| dirs[:dir] }
         end
+        result[:iptype] = config[:"ip-type"]
         if net = config["net"]
-            result[:ip] = net.collect { |params| "%s:%s" % [params[:physical], params[:address]] }
+            result[:ip] = net.collect do |params|
+                if params[:defrouter]
+                    "%s:%s:%s" % [params[:physical], params[:address], params[:defrouter]]
+                elsif params[:address]
+                    "%s:%s" % [params[:physical], params[:address]]
+                else
+                    params[:physical]
+                end
+            end
         end
 
         result

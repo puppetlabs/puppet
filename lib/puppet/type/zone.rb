@@ -173,7 +173,7 @@ Puppet::Type.newtype(:zone) do
                     provider.send(method)
                 else
                     raise Puppet::DevError, "Cannot move %s from %s" %
-                        [direction, st[:name]]
+                    [direction, st[:name]]
                 end
             end
 
@@ -198,6 +198,13 @@ Puppet::Type.newtype(:zone) do
             and cannot be changed."
     end
 
+    newparam(:clone) do
+        desc "Instead of installing the zone, clone it from another zone.
+          If the zone root resides on a zfs file system, a snapshot will be
+          used to create the clone, is it redisides on ufs, a copy of the zone
+          will be used. The zone you clone from must not be running."
+    end
+
     newproperty(:ip, :parent => ZoneMultiConfigProperty) do
         require 'ipaddr'
 
@@ -205,44 +212,49 @@ Puppet::Type.newtype(:zone) do
             with the interface, separated by a colon, e.g.: bge0:192.168.0.1.
             For multiple interfaces, specify them in an array."
 
-        validate do |value|
-            unless value =~ /:/
-                raise ArgumentError,
-                    "IP addresses must specify the interface and the address, separated by a colon."
-            end
-
-            interface, address = value.split(':')
-
-            begin
-                IPAddr.new(address)
-            rescue ArgumentError
-                raise ArgumentError, "'%s' is an invalid IP address" % address
-            end
-        end
-
         # Add an interface.
         def add(str)
-            interface, ip = ipsplit(str)
-            "add net
-set address=#{ip}
-set physical=#{interface}
-end
-"
+            interface, ip, defrouter = ipsplit(str)
+            cmd = "add net\n"
+            cmd += "set physical=#{interface}\n" if interface
+            cmd += "set address=#{ip}\n" if ip
+            cmd += "set defrouter=#{defrouter}\n" if defrouter
+            #if @resource[:iptype] == :shared
+            cmd += "end\n"
         end
 
-        # Convert a string into the component interface and address
+        # Convert a string into the component interface, address and defrouter
         def ipsplit(str)
-            interface, address = str.split(':')
-            return interface, address
+            interface, address, defrouter = str.split(':')
+            return interface, address, defrouter
         end
 
         # Remove an interface.
         def rm(str)
-            interface, ip = ipsplit(str)
+            interface, ip, defrouter = ipsplit(str)
             # Reality seems to disagree with the documentation here; the docs
             # specify that braces are required, but they're apparently only
             # required if you're specifying multiple values.
-            "remove net address=#{ip}"
+            if ip
+                "remove net address=#{ip}"
+            elsif interface
+                "remove net interface=#{interface}"
+            else
+                raise ArgumentError, "can not remove network based on default router"
+            end
+        end
+    end
+
+    newproperty(:iptype, :parent => ZoneConfigProperty) do
+        desc "The IP stack type of the zone. Can either be 'shared' or 'exclusive'."
+
+        defaultto :shared
+
+        newvalue :shared
+        newvalue :exclusive
+
+        def configtext
+            "set ip-type=#{self.should}"
         end
     end
 
@@ -380,6 +392,34 @@ end
         end
     end
 
+    def validate_ip(ip, name)
+        begin
+            IPAddr.new(ip) if ip
+        rescue ArgumentError
+            self.fail "'%s' is an invalid %s" % [ip, name]
+        end
+    end
+
+    validate do
+        value = self[:ip]
+        interface, address, defrouter = value.split(':')
+        if self[:iptype] == :shared
+            if (interface && address && defrouter.nil?) ||
+               (interface && address && defrouter)
+               validate_ip(address, "IP address")
+               validate_ip(defrouter, "default router")
+            else
+                self.fail "ip must contain interface name and ip address separated by a \":\""
+            end
+        else
+            unless interface && address.nil? && defrouter.nil?
+                self.fail "only interface may be specified when using exclusive IP stack: %s" % value
+            end
+        end
+
+        self.fail "zone path is required" unless self[:path]
+    end
+
     def retrieve
         provider.flush
         if hash = provider.properties() and hash[:ensure] != :absent
@@ -412,4 +452,3 @@ end
         return prophash
     end
 end
-

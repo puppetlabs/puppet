@@ -26,16 +26,29 @@ describe provider_class do
             @provider.install
         end
 
-        it "should just install if there are no install args" do
-            @resource.stubs(:[]).with(:install_args).returns(nil)
-            @provider.expects(:zoneadm).with(:install)
-            @provider.install
+        describe "when cloning" do
+            before { @resource.stubs(:[]).with(:clone).returns(:clone_argument) }
+
+            it "sohuld clone with the resource's clone attribute" do
+                @provider.expects(:zoneadm).with(:clone, :clone_argument)
+                @provider.install
+            end
         end
 
-        it "should add the install args to the command if they exist" do
-            @resource.stubs(:[]).with(:install_args).returns("install args")
-            @provider.expects(:zoneadm).with(:install, ["install", "args"])
-            @provider.install
+        describe "when not cloning" do
+            before { @resource.stubs(:[]).with(:clone).returns(nil)}
+
+            it "should just install if there are no install args" do
+                @resource.stubs(:[]).with(:install_args).returns(nil)
+                @provider.expects(:zoneadm).with(:install)
+                @provider.install
+            end
+
+            it "should add the install args to the command if they exist" do
+                @resource.stubs(:[]).with(:install_args).returns("install args")
+                @provider.expects(:zoneadm).with(:install, ["install", "args"])
+                @provider.install
+            end
         end
     end
 
