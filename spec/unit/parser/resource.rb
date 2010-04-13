@@ -219,23 +219,6 @@ describe Puppet::Parser::Resource do
             @resource.should_not be_metaparam_compatibility_mode
         end
 
-        it "should copy metaparams from its scope" do
-            @scope.setvar("noop", "true")
-
-            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-            @resource["noop"].should == "true"
-        end
-
-        it "should not copy metaparams that it already has" do
-            @resource.set_parameter("noop", "false")
-            @scope.setvar("noop", "true")
-
-            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-            @resource["noop"].should == "false"
-        end
-
         it "should not copy relationship metaparams when not in metaparam compatibility mode" do
             @scope.setvar("require", "bar")
 
@@ -262,26 +245,6 @@ describe Puppet::Parser::Resource do
             @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
 
             @resource["require"].should == ["foo", "bar"]
-        end
-
-        it "should copy all metaparams that it finds" do
-            @scope.setvar("noop", "foo")
-            @scope.setvar("schedule", "bar")
-
-            @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
-
-            @resource["noop"].should == "foo"
-            @resource["schedule"].should == "bar"
-        end
-
-        it "should add any tags from the scope resource" do
-            scope_resource = stub 'scope_resource', :tags => %w{one two}
-            @scope.stubs(:resource).returns(scope_resource)
-
-            @resource.class.publicize_methods(:add_scope_tags)  { @resource.add_scope_tags }
-
-            @resource.tags.should be_include("one")
-            @resource.tags.should be_include("two")
         end
     end
 

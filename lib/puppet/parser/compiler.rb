@@ -361,6 +361,50 @@ class Puppet::Parser::Compiler
 
             resource.finish if resource.respond_to?(:finish)
         end
+
+        add_resource_metaparams
+    end
+
+    def add_resource_metaparams
+        unless main = catalog.resource(:class, :main)
+            raise "Couldn't find main"
+        end
+
+        names = []
+        Puppet::Type.eachmetaparam do |name|
+            next if Puppet::Parser::Resource.relationship_parameter?(name)
+            names << name
+        end
+
+        data = {}
+        catalog.walk(main, :out) do |source, target|
+            if source_data = data[source] || metaparams_as_data(source, names)
+                # only store anything in the data hash if we've actually got
+                # data
+                data[source] ||= source_data
+                source_data.each do |param, value|
+                    target[param] = value if target[param].nil?
+                end
+                data[target] = source_data.merge(metaparams_as_data(target, names))
+            end
+
+            target.tag(*(source.tags))
+        end
+    end
+
+    def metaparams_as_data(resource, params)
+        data = nil
+        params.each do |param|
+            unless resource[param].nil?
+                # Because we could be creating a hash for every resource,
+                # and we actually probably don't often have any data here at all,
+                # we're optimizing a bit by only creating a hash if there's
+                # any data to put in it.
+                data ||= {}
+                data[param] = resource[param]
+            end
+        end
+        data
     end
 
     # Initialize the top-level scope, class, and resource.

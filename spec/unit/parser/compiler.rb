@@ -35,9 +35,10 @@ describe Puppet::Parser::Compiler do
         @node = Puppet::Node.new "testnode"
         @known_resource_types = Puppet::Resource::TypeCollection.new "development"
 
-        @scope_resource = stub 'scope_resource', :builtin? => true, :finish => nil, :ref => 'Class[main]', :type => "class"
-        @scope = stub 'scope', :resource => @scope_resource, :source => mock("source")
         @compiler = Puppet::Parser::Compiler.new(@node)
+        @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => "fake_source")
+        @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
+        @scope.resource = @scope_resource
         @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
     end
 
@@ -249,35 +250,103 @@ describe Puppet::Parser::Compiler do
             @compiler.compile
         end
 
-        it "should call finish() on all resources" do
-            # Add a resource that does respond to :finish
-            resource = Puppet::Parser::Resource.new "file", "finish", :scope => @scope
-            resource.expects(:finish)
+        describe "when finishing" do
+            before do
+                @compiler.send(:evaluate_main)
+                @catalog = @compiler.catalog
+            end
 
-            @compiler.add_resource(@scope, resource)
+            def add_resource(name, parent = nil)
+                resource = Puppet::Parser::Resource.new "file", name, :scope => @scope
+                @compiler.add_resource(@scope, resource)
+                @catalog.add_edge(parent, resource) if parent
+                resource
+            end
 
-            # And one that does not
-            dnf = stub "dnf", :ref => "File[dnf]", :type => "file"
+            it "should call finish() on all resources" do
+                # Add a resource that does respond to :finish
+                resource = Puppet::Parser::Resource.new "file", "finish", :scope => @scope
+                resource.expects(:finish)
 
-            @compiler.add_resource(@scope, dnf)
+                @compiler.add_resource(@scope, resource)
 
-            @compiler.send(:finish)
-        end
+                # And one that does not
+                dnf = stub "dnf", :ref => "File[dnf]", :type => "file"
 
-        it "should call finish() in add_resource order" do
-            resources = sequence('resources')
+                @compiler.add_resource(@scope, dnf)
 
-            resource1 = Puppet::Parser::Resource.new "file", "finish1", :scope => @scope
-            resource1.expects(:finish).in_sequence(resources)
+                @compiler.send(:finish)
+            end
 
-            @compiler.add_resource(@scope, resource1)
+            it "should call finish() in add_resource order" do
+                resources = sequence('resources')
 
-            resource2 = Puppet::Parser::Resource.new "file", "finish2", :scope => @scope
-            resource2.expects(:finish).in_sequence(resources)
+                resource1 = add_resource("finish1")
+                resource1.expects(:finish).in_sequence(resources)
 
-            @compiler.add_resource(@scope, resource2)
+                resource2 = add_resource("finish2")
+                resource2.expects(:finish).in_sequence(resources)
 
-            @compiler.send(:finish)
+                @compiler.send(:finish)
+            end
+
+            it "should add each container's metaparams to its contained resources" do
+                main = @catalog.resource(:class, :main)
+                main[:noop] = true
+
+                resource1 = add_resource("meh", main)
+
+                @compiler.send(:finish)
+                resource1[:noop].should be_true
+            end
+
+            it "should add metaparams recursively" do
+                main = @catalog.resource(:class, :main)
+                main[:noop] = true
+
+                resource1 = add_resource("meh", main)
+                resource2 = add_resource("foo", resource1)
+
+                @compiler.send(:finish)
+                resource2[:noop].should be_true
+            end
+
+            it "should prefer metaparams from immediate parents" do
+                main = @catalog.resource(:class, :main)
+                main[:noop] = true
+
+                resource1 = add_resource("meh", main)
+                resource2 = add_resource("foo", resource1)
+
+                resource1[:noop] = false
+
+                @compiler.send(:finish)
+                resource2[:noop].should be_false
+            end
+
+            it "should merge tags downward" do
+                main = @catalog.resource(:class, :main)
+                main.tag("one")
+
+                resource1 = add_resource("meh", main)
+                resource1.tag "two"
+                resource2 = add_resource("foo", resource1)
+
+                @compiler.send(:finish)
+                resource2.tags.should be_include("one")
+                resource2.tags.should be_include("two")
+            end
+
+            it "should work if only middle resources have metaparams set" do
+                main = @catalog.resource(:class, :main)
+
+                resource1 = add_resource("meh", main)
+                resource1[:noop] = true
+                resource2 = add_resource("foo", resource1)
+
+                @compiler.send(:finish)
+                resource2[:noop].should be_true
+            end
         end
 
         it "should return added resources in add order" do

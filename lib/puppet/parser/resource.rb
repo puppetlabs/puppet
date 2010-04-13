@@ -100,7 +100,6 @@ class Puppet::Parser::Resource < Puppet::Resource
         @finished = true
         add_defaults()
         add_metaparams()
-        add_scope_tags()
         validate()
     end
 
@@ -279,23 +278,8 @@ class Puppet::Parser::Resource < Puppet::Resource
         compat_mode = metaparam_compatibility_mode?
 
         Puppet::Type.eachmetaparam do |name|
-            if self.class.relationship_parameter?(name)
-                add_backward_compatible_relationship_param(name) if compat_mode
-                next
-            end
-
-            next if @parameters[name]
-
-            # Skip metaparams for which we get no value.
-            next unless val = scope.lookupvar(name.to_s, false) and val != :undefined
-
-            set_parameter(name, val)
-        end
-    end
-
-    def add_scope_tags
-        if scope_resource = scope.resource
-            tag(*scope_resource.tags)
+            next unless self.class.relationship_parameter?(name)
+            add_backward_compatible_relationship_param(name) if compat_mode
         end
     end
 
