@@ -44,7 +44,7 @@ task :puppetpackages => [:create_gem, :package]
 
 Spec::Rake::SpecTask.new do |t|
     t.spec_opts = ['--format','s', '--loadby','mtime']
-    t.pattern ='spec/{unit,integation}/**/*.rb'
+    t.pattern ='spec/{unit,integration}/**/*.rb'
     t.fail_on_error = false
 end
 
