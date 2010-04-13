@@ -58,14 +58,6 @@ class Puppet::Transaction
         report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
     end
 
-    # Do any necessary cleanup.  If we don't get rid of the graphs, the
-    # contained resources might never get cleaned up.
-    def cleanup
-        if defined? @generated
-            catalog.remove_resource(*@generated)
-        end
-    end
-
     # Copy an important relationships from the parent to the newly-generated
     # child resource.
     def make_parent_child_relationship(resource, children)

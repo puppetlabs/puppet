@@ -158,7 +158,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     ensure
         @applying = false
         cleanup()
-        transaction.cleanup if defined? transaction and transaction
     end
 
     # Are we in the middle of applying the catalog?
@@ -506,12 +505,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     private
 
     def cleanup
-        unless @transient_resources.empty?
-            remove_resource(*@transient_resources)
-            @transient_resources.clear
-            @relationship_graph = nil
-        end
-
         # Expire any cached data the resources are keeping.
         expire()
     end
