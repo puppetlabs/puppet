@@ -4,7 +4,7 @@ require 'puppet/configurer'
 require 'puppet/network/handler'
 require 'puppet/network/client'
 
-Puppet::Application.new(:main) do
+Puppet::Application.new(:apply) do
 
     should_parse_config
 

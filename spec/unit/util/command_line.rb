@@ -19,35 +19,35 @@ describe Puppet::Util::CommandLine do
         args.should    == %w( --help whatever.pp )
     end
 
-    it "should use main if the first argument looks like a .pp file" do
+    it "should use 'apply' if the first argument looks like a .pp file" do
         args    = %w( whatever.pp )
         command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @tty )
 
-        command.should == "main"
+        command.should == "apply"
         args.should    == %w( whatever.pp )
     end
 
-    it "should use main if the first argument looks like a .rb file" do
+    it "should use 'apply' if the first argument looks like a .rb file" do
         args    = %w( whatever.rb )
         command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @tty )
 
-        command.should == "main"
+        command.should == "apply"
         args.should    == %w( whatever.rb )
     end
 
-    it "should use main if the first argument looks like a flag" do
+    it "should use 'apply' if the first argument looks like a flag" do
         args    = %w( --debug )
         command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @tty )
 
-        command.should == "main"
+        command.should == "apply"
         args.should    == %w( --debug )
     end
 
-    it "should use main if the first argument is -" do
+    it "should use 'apply' if the first argument is -" do
         args    = %w( - )
         command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @tty )
 
-        command.should == "main"
+        command.should == "apply"
         args.should    == %w( - )
     end
 
@@ -59,11 +59,11 @@ describe Puppet::Util::CommandLine do
         args.should    == []
     end
 
-    it "should use main if there are no arguments on a pipe" do
+    it "should use 'apply' if there are no arguments on a pipe" do
         args    = []
         command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @pipe )
 
-        command.should == "main"
+        command.should == "apply"
         args.should    == []
     end
 
