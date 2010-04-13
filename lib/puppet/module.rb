@@ -126,10 +126,10 @@ class Puppet::Module
         return find_init_manifest unless rest # Use init.pp
 
         rest ||= "init.pp"
-        p = File::join(path, MANIFESTS, rest)
-        result = Dir.glob(p).reject { |f| FileTest.directory?(f) }
+        full_path = File::join(path, MANIFESTS, rest)
+        result = Dir.glob(full_path).reject { |f| FileTest.directory?(f) }
         if result.size == 0 and rest !~ /\.pp$/
-            result = Dir.glob(p + ".pp")
+            result = Dir.glob(full_path + ".pp")
         end
         result.flatten.compact
     end

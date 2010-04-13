@@ -405,6 +405,7 @@ describe Puppet::Module, "when finding matching manifests" do
 
     it "should return all manifests matching the glob pattern" do
         Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{foo bar})
+        FileTest.stubs(:directory?).returns false
 
         @mod.match_manifests("yay/*.pp").should == %w{foo bar}
     end
