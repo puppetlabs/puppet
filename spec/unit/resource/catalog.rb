@@ -578,7 +578,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @transaction = mock 'transaction'
             Puppet::Transaction.stubs(:new).returns(@transaction)
             @transaction.stubs(:evaluate)
-            @transaction.stubs(:cleanup)
             @transaction.stubs(:addtimes)
         end
 
@@ -592,11 +591,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
                 arg[:config_retrieval].should be_instance_of(Time)
                 true
             end
-            @catalog.apply
-        end
-
-        it "should clean up the transaction" do
-            @transaction.expects :cleanup
             @catalog.apply
         end
 
@@ -622,37 +616,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         it "should set ignoreschedules on the transaction if specified in apply()" do
             @transaction.expects(:ignoreschedules=).with(true)
             @catalog.apply(:ignoreschedules => true)
-        end
-
-        it "should remove resources created mid-transaction" do
-            args = {:name => "/yay", :ensure => :file}
-            resource = stub 'file', :ref => "File[/yay]", :catalog= => @catalog, :title => "/yay", :[] => "/yay"
-            @transaction = mock 'transaction'
-            Puppet::Transaction.stubs(:new).returns(@transaction)
-            @transaction.stubs(:evaluate)
-            @transaction.stubs(:cleanup)
-            @transaction.stubs(:addtimes)
-            Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
-            resource.expects :remove
-            @catalog.apply do |trans|
-                @catalog.create_resource :file, args
-                @catalog.resource("File[/yay]").should equal(resource)
-            end
-            @catalog.resource("File[/yay]").should be_nil
-        end
-
-        it "should remove resources added mid-transaction" do
-            @transaction = mock 'transaction'
-            Puppet::Transaction.stubs(:new).returns(@transaction)
-            @transaction.stubs(:evaluate)
-            @transaction.stubs(:cleanup)
-            @transaction.stubs(:addtimes)
-            file = Puppet::Type.type(:file).new(:name => "/yay", :ensure => :file)
-            @catalog.apply do |trans|
-                @catalog.add_resource file
-                @catalog.resource("File[/yay]").should_not be_nil
-            end
-            @catalog.resource("File[/yay]").should be_nil
         end
 
         it "should expire cached data in the resources both before and after the transaction" do

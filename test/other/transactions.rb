@@ -555,11 +555,6 @@ class TestTransactions < Test::Unit::TestCase
                 "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
         end
-
-        # Now make sure that cleanup gets rid of those generated types.
-        assert_nothing_raised do
-            trans.cleanup
-        end
     end
 
     def test_ignore_tags?
