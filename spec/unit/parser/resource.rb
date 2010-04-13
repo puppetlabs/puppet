@@ -580,6 +580,11 @@ describe Puppet::Parser::Resource do
             lambda { @resource.set_parameter("myparam") }.should raise_error(ArgumentError)
         end
 
+        it "should allow parameters to be set to 'false'" do
+            @resource.set_parameter("myparam", false)
+            @resource["myparam"].should be_false
+        end
+
         it "should use its source when provided a parameter name and value" do
             @resource.set_parameter("myparam", "myvalue")
             @resource["myparam"].should == "myvalue"

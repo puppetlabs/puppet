@@ -168,7 +168,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # if we ever receive a parameter named 'tag', set
     # the resource tags with its value.
     def set_parameter(param, value = nil)
-        if value
+        if ! value.nil?
             param = Puppet::Parser::Resource::Param.new(
                 :name => param, :value => value, :source => self.source
             )
