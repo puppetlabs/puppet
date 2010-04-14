@@ -233,8 +233,8 @@ describe Puppet::Parser::AST::HostName do
     end
 
     it "should return a string usable as a tag when calling to_classname" do
-        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/.+.reductivelabs\.com/") )
-        host.to_classname.should == "reductivelabs.com"
+        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/.+.puppetlabs\.com/") )
+        host.to_classname.should == "puppetlabs.com"
     end
 
     it "should delegate 'match' to the underlying value if it is an HostName" do

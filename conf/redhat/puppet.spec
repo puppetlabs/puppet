@@ -9,8 +9,8 @@ Version:        0.25.2
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
-URL:            http://puppet.reductivelabs.com/
-Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+URL:            http://puppet.puppetlabs.com/
+Source0:        http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 Patch0:         rundir-perms.patch
 Group:          System Environment/Base
 

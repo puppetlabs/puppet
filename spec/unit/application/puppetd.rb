@@ -275,10 +275,10 @@ describe "puppetd" do
 
         it "should set a central log destination with --centrallogs" do
             @puppetd.options.stubs(:[]).with(:centrallogs).returns(true)
-            Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
+            Puppet.stubs(:[]).with(:server).returns("puppet.puppetlabs.com")
             Puppet::Util::Log.stubs(:newdestination).with(:syslog)
 
-            Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
+            Puppet::Util::Log.expects(:newdestination).with("puppet.puppetlabs.com")
 
             @puppetd.run_setup
         end

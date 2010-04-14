@@ -126,7 +126,7 @@ class TestCertMgr < Test::Unit::TestCase
                 :city => "Nashville",
                 :country => "US",
                 :email => "luke@madstop.com",
-                :org => "Reductive",
+                :org => "Puppet",
                 :ou => "Development",
                 :encrypt => mkPassFile()
             )

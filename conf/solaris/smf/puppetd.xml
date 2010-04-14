@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
 
-<!-- Puppetd Manifest: Luke Kanies - reductivelabs.com -->
+<!-- Puppetd Manifest: Luke Kanies - puppetlabs.com -->
 
 <service_bundle type='manifest' name='puppetd'>
 
@@ -68,8 +68,8 @@
         </common_name>
         <documentation>
             <manpage title='puppetd' section='1' />
-            <doc_link name='reductivelabs.com'
-                uri='http://www.reductivelabs.com/projects/puppet' />
+            <doc_link name='puppetlabs.com'
+                uri='http://www.puppetlabs.com/projects/puppet' />
         </documentation>
     </template>
 </service>

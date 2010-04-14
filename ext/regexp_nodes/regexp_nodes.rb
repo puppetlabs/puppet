@@ -2,7 +2,7 @@
 
 # = Synopsis
 # This is an external node classifier script, after
-# http://reductivelabs.com/trac/puppet/wiki/ExternalNodes
+# http://puppetlabs.com/trac/puppet/wiki/ExternalNodes
 #
 # = Usage
 # regexp_nodes.rb <host>

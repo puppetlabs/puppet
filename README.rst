@@ -34,5 +34,5 @@ Generally, you need the following things installed:
 * Facter => 1.1.1
   You can get this from your package management system or the `Facter site`_
 
-.. _Puppet Wiki: http://reductivelabs.com/trac/puppet/wiki/DocumentationStart
-.. _Facter site: http://reductivelabs.com/projects/facter
+.. _Puppet Wiki: http://puppetlabs.com/trac/puppet/wiki/DocumentationStart
+.. _Facter site: http://puppetlabs.com/projects/facter

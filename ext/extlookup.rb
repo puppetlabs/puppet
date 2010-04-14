@@ -74,7 +74,7 @@
 # need to edit a load of manifests to do simple things like adjust a desired version number.
 #
 # For more information on installing and writing your own custom functions see:
-#    http://reductivelabs.com/trac/puppet/wiki/WritingYourOwnFunctions
+#    http://puppetlabs.com/trac/puppet/wiki/WritingYourOwnFunctions
 #
 # For further help contact Volcane on #puppet
 require 'csv'

@@ -3,7 +3,7 @@
 #
 # = Synopsis
 #
-# Generate a reference for all Puppet types.  Largely meant for internal Reductive
+# Generate a reference for all Puppet types.  Largely meant for internal Puppet
 # Labs use.
 #
 # = Usage
@@ -16,7 +16,7 @@
 # If mode is not 'rdoc', then this command generates a restructured-text document describing all installed
 # Puppet types or all allowable arguments to puppet executables.  It is largely
 # meant for internal use and is used to generate the reference document
-# available on the Reductive Labs web site.
+# available on the Puppet Labs web site.
 #
 # In 'rdoc' mode, this command generates an html RDoc hierarchy describing the manifests that
 # are in 'manifestdir' and 'modulepath' configuration directives.
@@ -37,7 +37,7 @@
 #   Specifies the directory where to output the rdoc documentation in 'rdoc' mode.
 #
 # mode::
-#   Determine the output mode.  Valid modes are 'text', 'trac', 'pdf', 'markdown' and 'rdoc'. The 'pdf' and 'markdown' modes create PDF or Markdown formatted files in the /tmp directory. Note that 'trac' mode only works on Reductive Labs servers.  The default mode is 'text'.  In 'rdoc' mode you must provide 'manifests-path'
+#   Determine the output mode.  Valid modes are 'text', 'trac', 'pdf', 'markdown' and 'rdoc'. The 'pdf' and 'markdown' modes create PDF or Markdown formatted files in the /tmp directory. Note that 'trac' mode only works on Puppet Labs servers.  The default mode is 'text'.  In 'rdoc' mode you must provide 'manifests-path'
 #
 # reference::
 #   Build a particular reference.  Get a list of references by running +puppetdoc --list+.
@@ -58,7 +58,7 @@
 #
 # = Copyright
 #
-# Copyright (c) 2005-2007 Reductive Labs, LLC
+# Copyright (c) 2005-2007 Puppet Labs, LLC
 # Licensed under the GNU Public License
 
 require 'puppet/application/puppetdoc'

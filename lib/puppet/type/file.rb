@@ -22,7 +22,7 @@ module Puppet
 
             If you find that you are often copying files in from a central
             location, rather than using native resources, please contact
-            Reductive Labs and we can hopefully work with you to develop a
+            Puppet Labs and we can hopefully work with you to develop a
             native resource to support what you are doing."
 
         newparam(:path) do

@@ -450,12 +450,12 @@ module Puppet
             directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-            to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            to the authenticated client's SSL DN (e.g., ``/CN=puppet.puppetlabs.com``).
+            See http://puppetlabs.com/puppet/trac/wiki/UsingMongrel for more information."],
         :ssl_client_verify_header => ["HTTP_X_CLIENT_VERIFY", "The header containing the status
             message of the client verification. Only used with Mongrel.  This header must be set by the proxy
             to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            See http://puppetlabs.com/puppet/trac/wiki/UsingMongrel for more information."],
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
         :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
@@ -727,7 +727,7 @@ module Puppet
     setdefaults(:ldap,
         :ldapnodes => [false,
             "Whether to search for node configurations in LDAP.  See
-            http://reductivelabs.com/trac/puppet/wiki/LDAPNodes for more information."],
+            http://puppetlabs.com/trac/puppet/wiki/LDAPNodes for more information."],
         :ldapssl => [false,
             "Whether SSL should be used when searching for nodes.
             Defaults to false because SSL usually requires certificates

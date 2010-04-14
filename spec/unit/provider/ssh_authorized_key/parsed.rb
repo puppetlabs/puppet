@@ -73,7 +73,7 @@ describe provider_class do
     end
 
     it "'s parse_options method should be able to parse options containing commas" do
-        options = %w{from="host1.reductlivelabs.com,host.reductivelabs.com" command="/usr/local/bin/run" ssh-pty}
+        options = %w{from="host1.reductlivelabs.com,host.puppetlabs.com" command="/usr/local/bin/run" ssh-pty}
         optionstr = options.join(", ")
 
         @provider.parse_options(optionstr).should == options
