@@ -1,12 +1,14 @@
 # Rakefile for Puppet -*- ruby -*-
 
-$: << File.expand_path('lib')
 $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 
-require 'puppet.rb'
 require 'rake'
 require 'rake/packagetask'
 require 'rake/gempackagetask'
+
+module Puppet
+    PUPPETVERSION = File.read('lib/puppet.rb')[/PUPPETVERSION *= *'(.*)'/,1] or fail "Couldn't find PUPPETVERSION"
+end
 
 Dir['tasks/**/*.rake'].each { |t| load t }
 
