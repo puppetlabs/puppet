@@ -30,9 +30,9 @@ spec = Gem::Specification.new do |spec|
     spec.add_dependency('facter', '>= 1.5.1')
     spec.summary = 'Puppet, an automated configuration management tool'
     spec.description = 'Puppet, an automated configuration management tool'
-    spec.author = 'Reductive Labs'
-    spec.email = 'puppet@reductivelabs.com'
-    spec.homepage = 'http://reductivelabs.com'
+    spec.author = 'Puppet Labs'
+    spec.email = 'puppet@puppetlabs.com'
+    spec.homepage = 'http://puppetlabs.com'
     spec.rubyforge_project = 'puppet'
     spec.has_rdoc = true
     spec.rdoc_options <<
