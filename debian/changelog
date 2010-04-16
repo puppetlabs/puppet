@@ -1,4 +1,4 @@
-puppet (0.25.4-4) UNRELEASED; urgency=low
+puppet (0.25.4-4) unstable; urgency=low
 
   [ Andrew Pollock ]
   * debian/watch: update for new upstream location
@@ -13,7 +13,11 @@ puppet (0.25.4-4) UNRELEASED; urgency=low
     the rails 'max pool size' (redmine: #2568)
   * fix puppetqd initscript status operation 
 
- -- Micah Anderson <micah@debian.org>  Sun, 04 Apr 2010 22:24:05 -0400
+  [ Andrew Pollock ]
+  * debian/rules: don't install config.ru owned by the puppet user (closes:
+    #577366)
+
+ -- Andrew Pollock <apollock@debian.org>  Thu, 15 Apr 2010 21:18:32 -0700
 
 puppet (0.25.4-3) unstable; urgency=low
 

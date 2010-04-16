@@ -74,7 +74,7 @@ install: build
 	$(INSTALL) -d -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
 	$(INSTALL) -d -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd/public
 	$(INSTALL) -d -m0755 $(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd/tmp
-	$(INSTALL) -m0644 -o puppet -g puppet ext/rack/files/config.ru \
+	$(INSTALL) -m0644 ext/rack/files/config.ru \
 		$(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
 
 	dh_installexamples examples/*
