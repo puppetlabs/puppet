@@ -36,12 +36,6 @@ module Puppet::Parser::Functions
             raise Puppet::DevError, "Function %s already defined" % name
         end
 
-        # We want to use a separate, hidden module, because we don't want
-        # people to be able to call them directly.
-        unless defined? FCollection
-            eval("module FCollection; end")
-        end
-
         ftype = options[:type] || :statement
 
         unless ftype == :statement or ftype == :rvalue
