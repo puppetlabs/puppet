@@ -23,6 +23,47 @@ describe Puppet::Resource::Type do
         end
     end
 
+    it "should indirect 'resource_type'" do
+        Puppet::Resource::Type.indirection.name.should == :resource_type
+    end
+
+    it "should default to 'parser' for its terminus class" do
+        Puppet::Resource::Type.indirection.terminus_class.should == :parser
+    end
+
+    describe "when converting to json" do
+        before do
+            @type = Puppet::Resource::Type.new(:hostclass, "foo")
+        end
+
+        def from_json(json)
+            Puppet::Resource::Type.from_pson(json)
+        end
+
+        def double_convert
+            Puppet::Resource::Type.from_pson(PSON.parse(@type.to_pson))
+        end
+
+        it "should include the name and type" do
+            double_convert.name.should == @type.name
+            double_convert.type.should == @type.type
+        end
+
+        it "should include any arguments" do
+            @type.set_arguments("one" => nil, "two" => "foo")
+
+            double_convert.arguments.should == {"one" => nil, "two" => "foo"}
+        end
+
+        it "should include any extra attributes" do
+            @type.file = "/my/file"
+            @type.line = 50
+
+            double_convert.file.should == "/my/file"
+            double_convert.line.should == 50
+        end
+    end
+
     describe "when a node"  do
         it "should allow a regex as its name" do
             lambda { Puppet::Resource::Type.new(:node, /foo/) }.should_not raise_error

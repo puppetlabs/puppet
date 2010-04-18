@@ -6,6 +6,7 @@ require 'puppet/parser/ast/leaf'
 require 'puppet/dsl'
 
 class Puppet::Resource::Type
+    Puppet::ResourceType = self
     include Puppet::Util::InlineDocs
     include Puppet::Util::Warnings
     include Puppet::Util::Errors
@@ -17,6 +18,38 @@ class Puppet::Resource::Type
 
     RESOURCE_SUPERTYPES.each do |t|
         define_method("#{t}?") { self.type == t }
+    end
+
+    require 'puppet/indirector'
+    extend Puppet::Indirector
+    indirects :resource_type, :terminus_class => :parser
+
+    def self.from_pson(data)
+        name = data.delete('name') or raise ArgumentError, "Resource Type names must be specified"
+        type = data.delete('type') || "definition"
+
+        data = data.inject({}) { |result, ary| result[ary[0].intern] = ary[1]; result }
+
+        new(type, name, data)
+    end
+
+    def to_pson_data_hash
+        data = [:code, :doc, :line, :file, :parent].inject({}) do |hash, param|
+            next hash unless value = self.send(param)
+            hash[param.to_s] = value
+            hash
+        end
+
+        data['arguments'] = arguments.dup
+
+        data['name'] = name
+        data['type'] = type
+
+        data
+    end
+
+    def to_pson(*args)
+        to_pson_data_hash.to_pson(*args)
     end
 
     # Are we a child of the passed class?  Do a recursive search up our
@@ -260,3 +293,4 @@ class Puppet::Resource::Type
         end
     end
 end
+
