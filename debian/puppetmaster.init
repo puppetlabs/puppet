@@ -68,7 +68,7 @@ stop_puppetmaster() {
 	    NUMSTART=$(($NUMSTART + 1))
 	done
     else
-	start-stop-daemon --stop --quiet oknodo --pidfile /var/run/puppet/${NAME}.pid
+	start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/puppet/${NAME}.pid
     fi
 }
 

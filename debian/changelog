@@ -1,3 +1,10 @@
+puppet (0.25.4-5) unstable; urgency=low
+
+  * debian/puppetmaster.init: fix invocation of start-stop-daemon (closes:
+  * #578066)
+
+ -- Andrew Pollock <apollock@debian.org>  Sat, 17 Apr 2010 20:33:09 -0700
+
 puppet (0.25.4-4) unstable; urgency=low
 
   [ Andrew Pollock ]
