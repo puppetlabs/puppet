@@ -1,3 +1,10 @@
+puppet (0.25.4-6) unstable; urgency=low
+
+  * debian/rules: actually install config.ru owned by the puppet user,
+    this is necessary for proper suid of passenger (closes: #577366)
+
+ -- Micah Anderson <micah@debian.org>  Tue, 20 Apr 2010 16:06:38 -0400
+
 puppet (0.25.4-5) unstable; urgency=low
 
   * debian/puppetmaster.init: fix invocation of start-stop-daemon (closes:
