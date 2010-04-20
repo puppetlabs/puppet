@@ -41,7 +41,7 @@ start_puppetqd() {
 }
 
 stop_puppetqd() {
-        start-stop-daemon --stop --quiet oknodo --pidfile /var/run/puppet/puppetqd.pid
+    start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/puppet/puppetqd.pid
 }
 
 status_puppetqd() {
