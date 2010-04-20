@@ -44,7 +44,7 @@ start_puppet() {
 }
 
 stop_puppet() {
-	start-stop-daemon --stop --quiet --pidfile $PIDFILE
+	start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
 }
 
 status_puppet() {
