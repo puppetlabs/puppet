@@ -4,7 +4,7 @@ require 'puppet/daemon'
 require 'puppet/network/server'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 
-Puppet::Application.new(:server) do
+Puppet::Application.new(:master) do
 
     should_parse_config
 
@@ -115,7 +115,7 @@ Puppet::Application.new(:server) do
             @app = Puppet::Network::HTTP::Rack.new(:xmlrpc_handlers => xmlrpc_handlers, :protocols => [:rest, :xmlrpc])
         end
 
-        Puppet.notice "Starting Puppet server version %s" % [Puppet.version]
+        Puppet.notice "Starting Puppet master version %s" % [Puppet.version]
 
         unless options[:rack]
             @daemon.start
