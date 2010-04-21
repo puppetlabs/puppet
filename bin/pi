@@ -7,7 +7,7 @@
 # help.
 # = Usage
 #
-#   pi [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta] 
+#   puppet describe [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta]
 #
 # = Description
 #
@@ -32,9 +32,9 @@
 #
 # = Example
 #
-#   pi --list
-#   pi file --providers
-#   pi user -s -m
+#   puppet describe --list
+#   puppet describe file --providers
+#   puppet describe user -s -m
 #
 # = Author
 #

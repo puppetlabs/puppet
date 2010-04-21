@@ -7,7 +7,7 @@
 #
 # = Usage
 #
-#   puppetmasterd [-D|--daemonize|--no-daemonize] [-d|--debug] [-h|--help]
+#   puppet master [-D|--daemonize|--no-daemonize] [-d|--debug] [-h|--help]
 #       [-l|--logdest <file>|console|syslog] [-v|--verbose] [-V|--version]
 #
 # = Description
@@ -51,7 +51,7 @@
 #
 # = Example
 #
-#   puppetmasterd
+#   puppet master
 #
 # = Author
 #

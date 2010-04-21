@@ -7,7 +7,7 @@
 #
 # = Usage
 #
-#   filebucket [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+#   puppet filebucket [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
 #      [-l|--local] [-r|--remote]
 #      [-s|--server <server>] [-b|--bucket <directory>] <file> <file> ...
 #
@@ -41,9 +41,9 @@
 #
 # = Example
 #
-#   $ filebucket backup /etc/passwd
+#   $ puppet filebucket backup /etc/passwd
 #   /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
-#   $ filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
+#   $ puppet filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
 #   $
 #
 # = Options
@@ -83,7 +83,7 @@
 #
 # = Example
 #
-#   filebucket -b /tmp/filebucket /my/file
+#   puppet filebucket -b /tmp/filebucket /my/file
 #
 # = Author
 #

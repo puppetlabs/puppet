@@ -5,7 +5,7 @@
 #
 # = Usage
 #
-#   puppetqd  [-d|--debug] [-v|--verbose]
+#   puppet queue [-d|--debug] [-v|--verbose]
 #
 # = Description
 #
@@ -38,7 +38,7 @@
 #
 # = Example
 #
-#   puppetqd
+#   puppet queue
 #
 # = Author
 #
