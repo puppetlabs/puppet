@@ -51,6 +51,14 @@ describe Puppet::Util::CommandLine do
         args.should    == %w( - )
     end
 
+    it "should return nil if the first argument is --help" do
+        args    = %w( --help )
+        command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @tty )
+
+        command.should == nil
+    end
+
+
     it "should return nil if there are no arguments on a tty" do
         args    = []
         command = Puppet::Util::CommandLine.shift_subcommand_from_argv( args, @tty )
