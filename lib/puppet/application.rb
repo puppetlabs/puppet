@@ -115,7 +115,7 @@ require 'optparse'
 class Puppet::Application
     include Puppet::Util
 
-    BINDIRS = File.expand_path(File.dirname(__FILE__)) + '/../../{sbin,bin}'
+    BINDIRS = %w{sbin bin}.map{|dir| File.expand_path(File.dirname(__FILE__)) + "/../../#{dir}/*"}.join(" ")
 
     @@applications = {}
     def self.applications; @@applications end
@@ -375,7 +375,7 @@ class Puppet::Application
             # RH:FIXME: My goodness, this is ugly.
             ::RDoc.const_set("PuppetSourceFile", @name)
             def (::RDoc).caller
-                docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{BINDIRS}/*`.chomp
+                docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{BINDIRS}`.chomp
                 super << "#{docfile}:0"
             end
             ::RDoc::usage && exit
