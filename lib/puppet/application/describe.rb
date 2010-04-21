@@ -175,7 +175,7 @@ class TypeDoc
 
 end
 
-Puppet::Application.new(:pi,"#{$0} [options] [type]") do
+Puppet::Application.new(:describe,"#{$0} [options] [type]") do
 
     should_not_parse_config
 

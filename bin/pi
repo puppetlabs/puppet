@@ -45,6 +45,6 @@
 # Copyright (c) 2005 Reductive Labs, LLC
 # Licensed under the GNU Public License
 
-require 'puppet/application/pi'
+require 'puppet/application/describe'
 
-Puppet::Application[:pi].run
+Puppet::Application[:describe].run

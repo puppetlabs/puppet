@@ -2,59 +2,59 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/application/pi'
+require 'puppet/application/describe'
 
-describe "pi" do
+describe Puppet::Application[:describe] do
     before :each do
-        @pi = Puppet::Application[:pi]
+        @describe = Puppet::Application[:describe]
     end
 
     it "should ask Puppet::Application to not parse Puppet configuration file" do
-        @pi.should_parse_config?.should be_false
+        @describe.should_parse_config?.should be_false
     end
 
     it "should declare a main command" do
-        @pi.should respond_to(:main)
+        @describe.should respond_to(:main)
     end
 
     it "should declare a preinit block" do
-        @pi.should respond_to(:run_preinit)
+        @describe.should respond_to(:run_preinit)
     end
 
     [:providers,:list,:meta].each do |option|
         it "should declare handle_#{option} method" do
-            @pi.should respond_to("handle_#{option}".to_sym)
+            @describe.should respond_to("handle_#{option}".to_sym)
         end
 
         it "should store argument value when calling handle_#{option}" do
-            @pi.options.expects(:[]=).with("#{option}".to_sym, 'arg')
-            @pi.send("handle_#{option}".to_sym, 'arg')
+            @describe.options.expects(:[]=).with("#{option}".to_sym, 'arg')
+            @describe.send("handle_#{option}".to_sym, 'arg')
         end
     end
 
 
     describe "in preinit" do
         it "should set options[:parameteers] to true" do
-            @pi.run_preinit
+            @describe.run_preinit
 
-            @pi.options[:parameters].should be_true
+            @describe.options[:parameters].should be_true
         end
     end
 
     describe "when handling parameters" do
         it "should set options[:parameters] to false" do
-            @pi.handle_short(nil)
+            @describe.handle_short(nil)
 
-            @pi.options[:parameters].should be_false
+            @describe.options[:parameters].should be_false
         end
     end
 
     describe "during setup" do
         it "should collect ARGV in options[:types]" do
             ARGV.stubs(:dup).returns(['1','2'])
-            @pi.run_setup
+            @describe.run_setup
 
-            @pi.options[:types].should == ['1','2']
+            @describe.options[:types].should == ['1','2']
         end
     end
 
@@ -66,19 +66,19 @@ describe "pi" do
         end
 
         it "should call list_types if options list is set" do
-            @pi.options[:list] = true
+            @describe.options[:list] = true
 
             @typedoc.expects(:list_types)
 
-            @pi.run_command
+            @describe.run_command
         end
 
         it "should call format_type for each given types" do
-            @pi.options[:list] = false
-            @pi.options[:types] = ['type']
+            @describe.options[:list] = false
+            @describe.options[:types] = ['type']
 
-            @typedoc.expects(:format_type).with('type', @pi.options)
-            @pi.run_command
+            @typedoc.expects(:format_type).with('type', @describe.options)
+            @describe.run_command
         end
     end
 end
