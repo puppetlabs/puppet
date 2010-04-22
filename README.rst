@@ -5,8 +5,10 @@ Puppet, an automated administrative engine for your Linux and Unix systems, perf
 administrative tasks (such as adding users, installing packages, and updating server
 configurations) based on a centralized specification.
 
-Documentation (and detailed install instructions) can be found
-online at the `Puppet Wiki`_.
+Documentation (and detailed install instructions) can be found online at the 
+`Puppet Documentation`_ site.
+
+Additional documentation can also be found at the `Puppet Wiki`_.
 
 Installation
 ------------
@@ -31,8 +33,9 @@ Generally, you need the following things installed:
   running 'ruby -rxmlrpc/client -e "puts :yep"'.  If that errors out, you're missing
   the library.
 
-* Facter => 1.1.1
+* Facter => 1.5.1
   You can get this from your package management system or the `Facter site`_
 
-.. _Puppet Wiki: http://reductivelabs.com/trac/puppet/wiki/DocumentationStart
-.. _Facter site: http://reductivelabs.com/projects/facter
+.. _Puppet Documentation: http://docs.puppetlabs.com
+.. _Puppet Wiki: http://projects.puppetlabs.com/projects/puppet/wiki/
+.. _Facter site: http://puppetlabs.com/projects/facter

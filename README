@@ -1,5 +1,9 @@
 Documentation (and detailed install instructions) can be found
-online at http://reductivelabs.com/trac/puppet/wiki/DocumentationStart .
+online at http://docs.puppetlabs.com/.
+
+Additional documentation can also be found at the Puppet Wiki:
+
+http://projects.puppetlabs.com/projects/puppet/wiki/
 
 Generally, you need the following things installed:
 
@@ -22,6 +26,6 @@ Generally, you need the following things installed:
   the library.
 
 * Facter => 1.5.1
-  You can get this from < http://reductivelabs.com/projects/facter >
+  You can get this from < http://puppetlabs.com/projects/facter >
 
 $Id$
