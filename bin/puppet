@@ -69,21 +69,5 @@
 
 #Puppet::Application[:apply].run # this is so the RDoc::usage hack can find this file
 
-appdir = File.join('puppet', 'application')
-absolute_appdir = $:.collect { |x| File.join(x,'puppet','application') }.detect{ |x| File.directory?(x) }
-builtins = Dir[File.join(absolute_appdir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
-
-usage = "Usage: puppet command <space separated arguments>"
-available = "Available commands are: #{builtins.sort.join(', ')}"
-
 require 'puppet/util/command_line'
-subcommand_name = Puppet::Util::CommandLine.subcommand_name
-
-if subcommand_name.nil?
-    puts usage, available
-elsif builtins.include?(subcommand_name) #subcommand
-    require File.join(appdir, subcommand_name)
-    Puppet::Application[subcommand_name].run
-else
-    abort "Error: Unknown command #{subcommand_name}.\n#{usage}\n#{available}"
-end
+Puppet::Util::CommandLine.new.execute

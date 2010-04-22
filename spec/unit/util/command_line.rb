@@ -93,4 +93,21 @@ describe Puppet::Util::CommandLine do
         Puppet::Util::CommandLine.legacy_executable_name("puppetmasterd", [], @tty).should == "puppetmasterd"
     end
 
+    describe "when instantiated" do
+        it "should provide the results of subcommand and args" do
+            Puppet::Util::CommandLine.expects(:subcommand_and_args).with("puppet", [], @pipe).returns(["command", ['args']])
+            commandline = Puppet::Util::CommandLine.new("puppet", [], @pipe)
+
+            commandline.subcommand_name.should == 'command'
+            commandline.args.should == ['args']
+        end
+
+        it "should provide the legacy executable name" do
+            Puppet::Util::CommandLine.expects(:subcommand_and_args).with("puppet", ['master'], @pipe).returns(["master", []])
+            commandline = Puppet::Util::CommandLine.new("puppet", ['master'], @pipe)
+
+            commandline.legacy_executable_name.should == 'puppetmasterd'
+        end
+    end
+
 end
