@@ -73,8 +73,9 @@ describe Puppet::Network::FormatHandler do
             it "should still return the default format first" do
                 FormatTester.supported_formats.should == [:two, :one]
             end
-            it "should log a warning" do
-                Puppet.expects(:warning)
+            it "should log a debug message" do
+                Puppet.expects(:debug).with("Value of 'preferred_serialization_format' (unsupported) is invalid for FormatTester, using default (two)")
+                Puppet.expects(:debug).with("FormatTester supports formats: one two; using two")
                 FormatTester.supported_formats
             end
         end
