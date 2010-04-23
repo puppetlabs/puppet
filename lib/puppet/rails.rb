@@ -51,6 +51,7 @@ module Puppet::Rails
             args[:database] = Puppet[:dblocation]
         when "mysql", "postgresql"
             args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].empty?
+            args[:port]     = Puppet[:dbport] unless Puppet[:dbport].empty?
             args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
             args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
             args[:database] = Puppet[:dbname]

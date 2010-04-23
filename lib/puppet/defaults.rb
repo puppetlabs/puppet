@@ -680,6 +680,8 @@ module Puppet
         :dbname => [ "puppet", "The name of the database to use." ],
         :dbserver => [ "localhost", "The database server for caching. Only
             used when networked databases are used."],
+        :dbport => [ "", "The database password for caching. Only
+            used when networked databases are used."],
         :dbuser => [ "puppet", "The database user for caching. Only
             used when networked databases are used."],
         :dbpassword => [ "puppet", "The database password for caching. Only

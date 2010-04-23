@@ -90,10 +90,11 @@ end
 describe Puppet::Rails, "when initializing a mysql connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
-    it "should provide the adapter, log_level, and host, username, password, database, and reconnect arguments" do
+    it "should provide the adapter, log_level, and host, port, username, password, database, and reconnect arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbport).returns("")
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
@@ -112,10 +113,11 @@ describe Puppet::Rails, "when initializing a mysql connection" do
         }
     end
 
-    it "should provide the adapter, log_level, and host, username, password, database, socket, connections, and reconnect arguments" do
+    it "should provide the adapter, log_level, and host, port, username, password, database, socket, connections, and reconnect arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbport).returns("9999")
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
@@ -126,6 +128,7 @@ describe Puppet::Rails, "when initializing a mysql connection" do
             :adapter => "mysql",
             :log_level => "testlevel",
             :host => "testserver",
+            :port => "9999",
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
@@ -135,10 +138,11 @@ describe Puppet::Rails, "when initializing a mysql connection" do
         }
     end
 
-    it "should provide the adapter, log_level, and host, username, password, database, socket, and connections arguments" do
+    it "should provide the adapter, log_level, and host, port, username, password, database, socket, and connections arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbport).returns("9999")
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
@@ -149,6 +153,7 @@ describe Puppet::Rails, "when initializing a mysql connection" do
             :adapter => "mysql",
             :log_level => "testlevel",
             :host => "testserver",
+            :port => "9999",
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
@@ -162,10 +167,11 @@ end
 describe Puppet::Rails, "when initializing a postgresql connection" do
     confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
-    it "should provide the adapter, log_level, and host, username, password, connections, and database arguments" do
+    it "should provide the adapter, log_level, and host, port, username, password, connections, and database arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbport).returns("9999")
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
@@ -176,6 +182,7 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
             :adapter => "postgresql",
             :log_level => "testlevel",
             :host => "testserver",
+            :port => "9999",
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
@@ -184,10 +191,11 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
         }
     end
 
-    it "should provide the adapter, log_level, and host, username, password, database, connections, and socket arguments" do
+    it "should provide the adapter, log_level, and host, port, username, password, database, connections, and socket arguments" do
         Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
         Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
         Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+        Puppet.settings.stubs(:value).with(:dbport).returns("9999")
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
@@ -198,6 +206,7 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
             :adapter => "postgresql",
             :log_level => "testlevel",
             :host => "testserver",
+            :port => "9999",
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",

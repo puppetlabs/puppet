@@ -64,6 +64,7 @@ case adapter
         args[:username] = pm_conf[:dbuser] unless pm_conf[:dbuser].to_s.empty?
         args[:password] = pm_conf[:dbpassword] unless pm_conf[:dbpassword].to_s.empty?
         args[:database] = pm_conf[:dbname] unless pm_conf[:dbname].to_s.empty?
+        args[:port]     = pm_conf[:dbport] unless pm_conf[:dbport].to_s.empty?
         socket          = pm_conf[:dbsocket]
         args[:socket]   = socket unless socket.to_s.empty?
         connections     = pm_conf[:dbconnections].to_i
