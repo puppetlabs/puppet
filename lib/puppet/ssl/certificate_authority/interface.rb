@@ -56,6 +56,8 @@ class Puppet::SSL::CertificateAuthority::Interface
 
         if subjects == :all
             hosts = [signed, requests].flatten
+        elsif subjects == :signed
+            hosts = signed.flatten
         else
             hosts = subjects
         end
@@ -116,7 +118,7 @@ class Puppet::SSL::CertificateAuthority::Interface
 
     # Set the list of hosts we're operating on.  Also supports keywords.
     def subjects=(value)
-        unless value == :all or value.is_a?(Array)
+        unless value == :all or value == :signed or value.is_a?(Array)
             raise ArgumentError, "Subjects must be an array or :all; not %s" % value
         end
 
