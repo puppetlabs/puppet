@@ -632,7 +632,7 @@ module Puppet
 
     # Central fact information.
     self.setdefaults(:main,
-        :factpath => {:default => "$vardir/facts/",
+        :factpath => {:default => "$vardir/lib/facter/:$vardir/facts",
             :desc => "Where Puppet should look for facts.  Multiple directories should
                 be colon-separated, like normal PATH variables.",
             :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
