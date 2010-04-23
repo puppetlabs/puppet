@@ -49,6 +49,11 @@ describe "PuppetCA" do
         @puppetca.all.should be_true
     end
 
+    it "should set signed to true for --signed" do
+        @puppetca.handle_signed(0)
+        @puppetca.signed.should be_true
+    end
+    
     Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|
         it "should set mode to #{method} with option --#{method}" do
             @puppetca.send("handle_#{method}".to_sym, nil)
