@@ -149,7 +149,7 @@ module Puppet::Network::FormatHandler
                 list.delete(preferred_format)
                 list.unshift(preferred_format)
             else
-                Puppet.warning "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first})"
+                Puppet.debug "Value of 'preferred_serialization_format' (#{preferred_format}) is invalid for #{friendly_name}, using default (#{list.first})"
             end
             list
         end
