@@ -6,7 +6,10 @@ if [ "$1" = "configure" ]; then
     
     # Change the owner of the rack config.ru to be the puppet user
     # because passenger will suid to that user, see #577366
-    chown puppet:puppet /usr/share/puppet/rack/puppetmasterd/config.ru
+    if ! dpkg-statoverride --list /usr/share/puppet/rack/puppetmasterd/config.ru >/dev/null 2>&1
+    then
+	dpkg-statoverride --update --add puppet puppet 0644 /usr/share/puppet/rack/puppetmasterd/config.ru
+    fi
 fi
 
 #DEBHELPER#
