@@ -434,7 +434,8 @@ describe Puppet::Resource::Type do
         it "should evaluate the AST code if any is provided" do
             code = stub 'code'
             @type.stubs(:code).returns code
-            code.expects(:safeevaluate)
+            @type.stubs(:subscope).returns stub_everything("subscope", :compiler => @compiler)
+            code.expects(:safeevaluate).with @type.subscope
 
             @type.evaluate_code(@resource)
         end
@@ -442,7 +443,6 @@ describe Puppet::Resource::Type do
         describe "and ruby code is provided" do
             it "should create a DSL Resource API and evaluate it" do
                 @type.stubs(:ruby_code).returns(proc { "foo" })
-
                 @api = stub 'api'
                 Puppet::DSL::ResourceAPI.expects(:new).with { |res, scope, code| code == @type.ruby_code }.returns @api
                 @api.expects(:evaluate)
@@ -460,7 +460,6 @@ describe Puppet::Resource::Type do
         describe "and it has a parent class" do
             before do
                 @parent_type = Puppet::Resource::Type.new(:hostclass, "parent")
-                @compiler
                 @type.parent = "parent"
                 @parent_resource = Puppet::Parser::Resource.new(:class, "parent", :scope => @scope)
 
