@@ -69,7 +69,7 @@ class Puppet::Resource::Type
             scope = tmp
         end
 
-        scope = subscope(scope, resource)
+        scope = subscope(scope, resource) unless resource.title == :main
 
         set_resource_parameters(resource, scope)
 

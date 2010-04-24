@@ -412,6 +412,14 @@ describe Puppet::Resource::Type do
             @type.evaluate_code(@resource)
         end
 
+        it "should not create a subscope for the :main class" do
+            @resource.stubs(:title).returns(:main)
+            @type.expects(:subscope).never
+            @type.expects(:set_resource_parameters).with(@resource, @scope)
+
+            @type.evaluate_code(@resource)
+        end
+
         it "should store the class scope" do
             @type.evaluate_code(@resource)
             @scope.class_scope(@type).should be_instance_of(@scope.class)
