@@ -489,6 +489,47 @@ describe Puppet::Resource::Type do
                 @scope.class_scope(@type).parent.object_id.should == @scope.class_scope(@parent_type).object_id
             end
         end
+
+        describe "and it has a parent node" do
+            before do
+                @type = Puppet::Resource::Type.new(:node, "foo")
+                @parent_type = Puppet::Resource::Type.new(:node, "parent")
+                @type.parent = "parent"
+                @parent_resource = Puppet::Parser::Resource.new(:node, "parent", :scope => @scope)
+
+                @compiler.add_resource @scope, @parent_resource
+
+                @type.resource_type_collection = @scope.known_resource_types
+                @type.resource_type_collection.stubs(:node).with("parent").returns(@parent_type)
+                @type.resource_type_collection.stubs(:node).with("Parent").returns(@parent_type)
+            end
+
+            it "should evaluate the parent's resource" do
+                @type.evaluate_code(@resource)
+
+                @scope.class_scope(@parent_type).should_not be_nil
+            end
+
+            it "should not evaluate the parent's resource if it has already been evaluated" do
+                @parent_resource.evaluate
+
+                @parent_resource.expects(:evaluate).never
+
+                @type.evaluate_code(@resource)
+            end
+
+            it "should use a nodescope subscope" do
+                @type.evaluate_code(@resource)
+
+                @scope.class_scope(@type).nodescope.should be_true
+            end
+
+            it "should use the parent's scope as its base scope" do
+                @type.evaluate_code(@resource)
+
+                @scope.class_scope(@type).parent.object_id.should == @scope.class_scope(@parent_type).object_id
+            end
+        end
     end
 
     describe "when creating a resource" do
