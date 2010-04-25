@@ -1,5 +1,6 @@
 puppet (0.25.4-6) unstable; urgency=low
 
+  * debian/control: add version depends on librack-ruby
   * additional start-stop-daemon fix for puppet.init and puppetqd.init
   * debian/rules: actually install config.ru owned by the puppet user,
     this is necessary for proper suid of passenger (closes: #577366)
