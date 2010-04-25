@@ -289,7 +289,11 @@ class Puppet::Resource::Type
             @namespace = ""
         else
             @name = name.to_s.downcase
-            @namespace, ignored_shortname = namesplit(@name)
+
+            # Note we're doing something somewhat weird here -- we're setting
+            # the class's namespace to its fully qualified name.  This means
+            # anything inside that class starts looking in that namespace first.
+            @namespace, ignored_shortname = @type == :hostclass ? [@name, ''] : namesplit(@name)
         end
     end
 

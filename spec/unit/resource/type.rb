@@ -172,8 +172,14 @@ describe Puppet::Resource::Type do
             Puppet::Resource::Type.new(:hostclass, "Foo::Bar".intern).name.should == "foo::bar"
         end
 
-        it "should set its namespace to the downcased, stringified qualified portion of the name" do
-            Puppet::Resource::Type.new(:hostclass, "Foo::Bar::Baz".intern).namespace.should == "foo::bar"
+        it "should set its namespace to the downcased, stringified qualified name for classes" do
+            Puppet::Resource::Type.new(:hostclass, "Foo::Bar::Baz".intern).namespace.should == "foo::bar::baz"
+        end
+
+        [:definition, :node].each do |type|
+            it "should set its namespace to the downcased, stringified qualified portion of the name for #{type}s" do
+                Puppet::Resource::Type.new(type, "Foo::Bar::Baz".intern).namespace.should == "foo::bar"
+            end
         end
 
         %w{code line file doc}.each do |arg|
