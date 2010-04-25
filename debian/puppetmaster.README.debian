@@ -12,7 +12,15 @@ If you would like to run Passenger (aka. mod_rails) with apache or
 mongrel, then you will need to make sure you have
 libapache2-mod-passenger and librack-ruby installed and you should
 have a look at the /usr/share/doc/puppetmaster/examples/apache2.conf
-for some reasonable settings to get you started.
+for some reasonable settings to get you started (be sure to change
+the domain name in the SSL configuration to be yours).
+
+Additionally, your puppet.conf on your puppetmaster will need the
+following settings:
+
+[puppetmasterd]]
+ssl_client_header = SSL_CLIENT_S_DN
+ssl_client_verify_header = SSL_CLIENT_VERIFY
 
 For more information:
 http://projects.reductivelabs.com/projects/puppet/wiki/Using_Passenger

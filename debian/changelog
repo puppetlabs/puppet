@@ -1,5 +1,6 @@
 puppet (0.25.4-6) unstable; urgency=low
 
+  * add patch to ext/rack/files/apache2.conf for debian-specific settings
   * debian/control: add version depends on librack-ruby
   * additional start-stop-daemon fix for puppet.init and puppetqd.init
   * debian/rules: actually install config.ru owned by the puppet user,
