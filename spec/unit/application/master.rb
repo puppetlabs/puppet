@@ -80,13 +80,7 @@ describe Puppet::Application::Master do
 
     describe "when applying options" do
         before do
-            @old_argv = ARGV.dup
-            ARGV.clear
-        end
-
-        after do
-            ARGV.clear
-            @old_argv.each { |a| ARGV << a }
+            @master.command_line.stubs(:args).returns([])
         end
 
         it "should set the log destination with --logdest" do
@@ -102,7 +96,7 @@ describe Puppet::Application::Master do
         end
 
         it "should parse the log destination from ARGV" do
-            ARGV << "--logdest" << "/my/file"
+            @master.command_line.stubs(:args).returns(%w[--logdest /my/file])
 
             Puppet::Util::Log.expects(:newdestination).with("/my/file")
 

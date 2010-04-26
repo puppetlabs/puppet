@@ -92,13 +92,7 @@ describe Puppet::Application::Agent do
 
     describe "when handling options" do
         before do
-            @old_argv = ARGV.dup
-            ARGV.clear
-        end
-
-        after do
-            ARGV.clear
-            @old_argv.each { |a| ARGV << a }
+            @puppetd.command_line.stubs(:args).returns([])
         end
 
         [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
@@ -154,8 +148,8 @@ describe Puppet::Application::Agent do
             @puppetd.handle_logdest("console")
         end
 
-        it "should parse the log destination from ARGV" do
-            ARGV << "--logdest" << "/my/file"
+        it "should parse the log destination from the command line" do
+            @puppetd.command_line.stubs(:args).returns(%w[--logdest /my/file])
 
             Puppet::Util::Log.expects(:newdestination).with("/my/file")
 

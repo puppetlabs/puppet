@@ -198,26 +198,18 @@ class Puppet::Application
                     self.options["#{long}".to_sym] = value
                 end
             end
-            @opt_parser_commands ||= []
-            @opt_parser_commands << [options, fname]
+            self.option_parser_commands << [options, fname]
         end
 
         def banner(banner = nil)
-            @banner = banner unless banner.nil?
+            @banner ||= banner
         end
 
-        def new_option_parser( target )
-            @banner ||= nil
-
-            opt_parser = OptionParser.new(@banner)
-
-            @opt_parser_commands ||= []
-            @opt_parser_commands.each do |options, fname|
-                opt_parser.on(*options) do |value|
-                    target.send(fname, value)
-                end
-            end
-            opt_parser
+        def option_parser_commands
+            @option_parser_commands ||= (
+                superclass.respond_to?(:option_parser_commands) ? superclass.option_parser_commands.dup : []
+            )
+            @option_parser_commands
         end
 
         def find(name)
@@ -229,7 +221,7 @@ class Puppet::Application
         end
     end
 
-    attr_reader :options, :opt_parser, :command_line
+    attr_reader :options, :command_line
 
     # Every app responds to --version
     option("--version", "-V") do |arg|
@@ -250,9 +242,22 @@ class Puppet::Application
     def preinit
     end
 
+    def option_parser
+        return @option_parser if defined? @option_parser
+
+        @option_parser = OptionParser.new(self.class.banner)
+
+        self.class.option_parser_commands.each do |options, fname|
+            @option_parser.on(*options) do |value|
+                self.send(fname, value)
+            end
+        end
+        @option_parser.default_argv = self.command_line.args
+        @option_parser
+    end
+
     def initialize(command_line = nil)
         @command_line = command_line || Puppet::Util::CommandLine.new
-        @opt_parser = self.class.new_option_parser( self )
 
         @options = {}
     end
@@ -297,14 +302,14 @@ class Puppet::Application
 
         # convert them to OptionParser format
         optparse_opt.each do |option|
-            @opt_parser.on(*option) do |arg|
+            self.option_parser.on(*option) do |arg|
                 handlearg(option[0], arg)
             end
         end
 
         # scan command line argument
         begin
-            @opt_parser.parse!
+            self.option_parser.parse!
         rescue OptionParser::ParseError => detail
             $stderr.puts detail
             $stderr.puts "Try '#{$0} --help'"
