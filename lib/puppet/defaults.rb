@@ -678,11 +678,11 @@ module Puppet
         :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbmigrate => [ false, "Whether to automatically migrate the database." ],
         :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "localhost", "The database server for Client caching. Only
+        :dbserver => [ "localhost", "The database server for caching. Only
             used when networked databases are used."],
-        :dbuser => [ "puppet", "The database user for Client caching. Only
+        :dbuser => [ "puppet", "The database user for caching. Only
             used when networked databases are used."],
-        :dbpassword => [ "puppet", "The database password for Client caching. Only
+        :dbpassword => [ "puppet", "The database password for caching. Only
             used when networked databases are used."],
         :dbsocket => [ "", "The database socket location. Only used when networked
             databases are used.  Will be ignored if the value is an empty string."],
