@@ -1,5 +1,6 @@
 puppet (0.25.4-6) unstable; urgency=low
 
+  * clarify passenger options in default/puppetmaster 
   * add patch to ext/rack/files/apache2.conf for debian-specific settings
   * debian/control: add version depends on librack-ruby
   * additional start-stop-daemon fix for puppet.init and puppetqd.init

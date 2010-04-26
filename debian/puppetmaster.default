@@ -1,6 +1,7 @@
 # Defaults for puppetmaster - sourced by /etc/init.d/puppetmaster
 
-# Start puppetmaster on boot?
+# Start puppetmaster on boot? If you are using passenger, you should
+# have this set to "no"
 START=yes
 
 # Startup options
@@ -8,13 +9,14 @@ DAEMON_OPTS=""
 
 # What server type to run 
 # Options: 
-# 	   webrick (default, cannot handle more than ~30 nodes)
-#	   mongrel (scales better than webrick because you can run
+# 	   webrick: default, cannot handle more than ~30 nodes
+#	   mongrel: scales better than webrick because you can run
 #	    	    multiple processes if you are getting
 #	    	    connection-reset or End-of-file errors, switch to
 #	    	    mongrel. Requires front-end web-proxy such as
-#	    	    apache, nginx, or pound)
-#	   See: http://reductivelabs.com/trac/puppet/wiki/UsingMongrel
+#	    	    apache, nginx, or pound, more information:
+#	            http://reductivelabs.com/trac/puppet/wiki/UsingMongrel
+#          passenger: no need to set this, be sure to set START=no above
 SERVERTYPE=webrick
 
 # How many puppetmaster instances to start? Its pointless to set this
