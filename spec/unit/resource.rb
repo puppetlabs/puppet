@@ -664,6 +664,13 @@ describe Puppet::Resource do
             result["foo"].should == %w{bar eh}
             result["fee"].should == %w{baz}
         end
+
+        it "should serialize relationships as reference strings" do
+            resource = Puppet::Resource.new("File", "/foo")
+            resource[:requires] = Puppet::Resource.new("File", "/bar")
+            result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
+            result[:requires].should == "File[/bar]"
+        end
     end
 
     describe "when converting from pson" do

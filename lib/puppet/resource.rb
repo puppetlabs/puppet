@@ -60,7 +60,11 @@ class Puppet::Resource
 
             # Don't duplicate the title as the namevar
             next hash if param == namevar and value == title
-            hash[param] = value
+            if value.is_a? Puppet::Resource
+                hash[param] = value.to_s
+            else
+                hash[param] = value
+            end
             hash
         end
 
