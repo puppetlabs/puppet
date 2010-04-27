@@ -16,7 +16,7 @@ class Puppet::Transaction
     attr_accessor :sorted_resources, :configurator
 
     # The report, once generated.
-    attr_reader :report
+    attr_accessor :report
 
     # Routes and stores any events and subscriptions.
     attr_reader :event_manager

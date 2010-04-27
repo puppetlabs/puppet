@@ -81,7 +81,7 @@ describe Puppet::Util::Metric do
     end
 
     it "should return nil if the named value cannot be found" do
-        @metric[:foo].should be_nil
+        @metric[:foo].should == 0
     end
 
     # LAK: I'm not taking the time to develop these tests right now.

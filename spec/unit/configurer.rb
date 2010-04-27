@@ -86,7 +86,9 @@ describe Puppet::Configurer, "when executing a catalog run" do
         @agent = Puppet::Configurer.new
         @agent.stubs(:prepare)
         @agent.stubs(:facts_for_uploading).returns({})
-        @agent.stubs(:retrieve_catalog).returns Puppet::Resource::Catalog.new
+        @catalog = Puppet::Resource::Catalog.new
+        @catalog.stubs(:apply)
+        @agent.stubs(:retrieve_catalog).returns @catalog
 
         Puppet::Util::Log.stubs(:newdestination)
         Puppet::Util::Log.stubs(:close)
@@ -98,11 +100,27 @@ describe Puppet::Configurer, "when executing a catalog run" do
         @agent.run
     end
 
-    it "should initialize a transaction report" do
+    it "should initialize a transaction report if one is not provided" do
         report = stub 'report'
         @agent.expects(:initialize_report).returns report
 
         @agent.run
+    end
+
+    it "should pass the new report to the catalog" do
+        report = stub 'report'
+        @agent.stubs(:initialize_report).returns report
+        @catalog.expects(:apply).with{|options| options[:report] == report}
+
+        @agent.run
+    end
+
+    it "should use the provided report if it was passed one" do
+        report = stub 'report'
+        @agent.expects(:initialize_report).never
+        @catalog.expects(:apply).with{|options| options[:report] == report}
+
+        @agent.run(:report => report)
     end
 
     it "should set the report as a log destination" do

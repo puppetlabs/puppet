@@ -133,6 +133,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         Puppet::Util::Storage.load if host_config?
         transaction = Puppet::Transaction.new(self)
 
+        transaction.report = options[:report] if options[:report]
         transaction.tags = options[:tags] if options[:tags]
         transaction.ignoreschedules = true if options[:ignoreschedules]
 

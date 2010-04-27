@@ -140,7 +140,8 @@ class Puppet::Configurer
             Puppet.err "Failed to prepare catalog: %s" % detail
         end
 
-        report = initialize_report()
+        options[:report] ||= initialize_report()
+        report = options[:report]
         Puppet::Util::Log.newdestination(report)
 
         if catalog = options[:catalog]

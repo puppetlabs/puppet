@@ -14,7 +14,7 @@ class Puppet::Util::Metric
         if value = @values.find { |v| v[0] == name }
             return value[2]
         else
-            return nil
+            return 0
         end
     end
 
