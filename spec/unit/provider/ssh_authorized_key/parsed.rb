@@ -17,11 +17,10 @@ describe provider_class do
     before :each do
         @sshauthkey_class = Puppet::Type.type(:ssh_authorized_key)
         @provider = @sshauthkey_class.provider(:parsed)
-
-        @keyfile = tmpfile("ssh_key")
-        #@provider.stubs(:default_target).returns @keyfile
-        #@provider.stubs(:flush)
+        @keyfile = File.join(tmpdir, 'authorized_keys')
         @provider.any_instance.stubs(:target).returns @keyfile
+        @user = 'random_bob'
+        Puppet::Util.stubs(:uid).with(@user).returns 12345
     end
 
     after :each do
@@ -30,22 +29,23 @@ describe provider_class do
 
     def mkkey(args)
         fakeresource = fakeresource(:ssh_authorized_key, args[:name])
+        fakeresource.stubs(:should).with(:user).returns @user
+        fakeresource.stubs(:should).with(:target).returns @keyfile
 
         key = @provider.new(fakeresource)
         args.each do |p,v|
             key.send(p.to_s + "=", v)
         end
 
-        return key
+        key
     end
 
     def genkey(key)
         @provider.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
-        file = @provider.default_target
-
+        File.stubs(:chown)
+        File.stubs(:chmod)
         key.flush
-        text = @provider.target_object(file).read
-        return text
+        @provider.target_object(@keyfile).read
     end
 
     PuppetTest.fakedata("data/providers/ssh_authorized_key/parsed").each { |file|
@@ -136,7 +136,6 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0600" do
-                FileTest.expects(:exist?).with("/tmp/.ssh_dir/place_to_put_authorized_keys").returns true
                 File.expects(:chmod).with(0600, "/tmp/.ssh_dir/place_to_put_authorized_keys")
                 @provider.flush
             end
@@ -154,17 +153,32 @@ describe provider_class do
                 # but mocha objects strenuously to stubbing File.expand_path
                 # so I'm left with using nobody.
                 @dir = File.expand_path("~nobody/.ssh")
-           end
+            end
 
-            it "should create the directory" do
+            it "should create the directory if it doesn't exist" do
                 File.stubs(:exist?).with(@dir).returns false
                 Dir.expects(:mkdir).with(@dir,0700)
                 @provider.flush
             end
 
-            it "should chown the directory to the user" do
+            it "should not create or chown the directory if it already exist" do
+                File.stubs(:exist?).with(@dir).returns false
+                Dir.expects(:mkdir).never
+                @provider.flush
+            end
+
+            it "should chown the directory to the user if it creates it" do
+                File.stubs(:exist?).with(@dir).returns false
+                Dir.stubs(:mkdir).with(@dir,0700)
                 uid = Puppet::Util.uid("nobody")
                 File.expects(:chown).with(uid, nil, @dir)
+                @provider.flush
+            end
+
+            it "should not create or chown the directory if it already exist" do
+                File.stubs(:exist?).with(@dir).returns false
+                Dir.expects(:mkdir).never
+                File.expects(:chown).never
                 @provider.flush
             end
 
@@ -175,7 +189,6 @@ describe provider_class do
             end
 
             it "should chmod the key file to 0600" do
-                FileTest.expects(:exist?).with(File.expand_path("~nobody/.ssh/authorized_keys")).returns true
                 File.expects(:chmod).with(0600, File.expand_path("~nobody/.ssh/authorized_keys"))
                 @provider.flush
             end
@@ -187,18 +200,9 @@ describe provider_class do
                 @resource.stubs(:should).with(:target).returns("/tmp/.ssh_dir/place_to_put_authorized_keys")
             end
 
-            it "should make the directory" do
-                File.stubs(:exist?).with("/tmp/.ssh_dir").returns false
-                Dir.expects(:mkdir).with("/tmp/.ssh_dir", 0755)
-                @provider.flush
-            end
-
-            it "should chmod the key file to 0644" do
-                FileTest.expects(:exist?).with("/tmp/.ssh_dir/place_to_put_authorized_keys").returns true
-                File.expects(:chmod).with(0644, "/tmp/.ssh_dir/place_to_put_authorized_keys")
-                @provider.flush
+            it "should raise an error" do
+                proc { @provider.flush }.should raise_error
             end
         end
-
     end
 end
