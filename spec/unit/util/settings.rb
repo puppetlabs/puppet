@@ -512,6 +512,26 @@ describe Puppet::Util::Settings do
             @settings.parse
             @settings[:myarg].should == ""
         end
+
+        describe "and when reading a non-positive filetimeout value from the config file" do
+            before do
+                @settings.setdefaults :foo, :filetimeout => [5, "eh"]
+
+                somefile = "/some/file"
+                text = "[main]
+                filetimeout = -1
+                "
+                File.expects(:read).with(somefile).returns(text)
+                @settings[:config] = somefile
+            end
+
+            it "should not set a timer" do
+                EventLoop::Timer.expects(:new).never
+
+                @settings.parse
+                puts "2", @settings[:filetimeout]
+            end
+        end
     end
 
     describe "when reparsing its configuration" do

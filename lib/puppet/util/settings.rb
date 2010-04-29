@@ -308,13 +308,13 @@ class Puppet::Util::Settings
     def parse
         raise "No :config setting defined; cannot parse unknown config file" unless self[:config]
 
-        # Create a timer so that this file will get checked automatically
-        # and reparsed if necessary.
-        set_filetimeout_timer()
-
         @sync.synchronize do
             unsafe_parse(self[:config])
         end
+
+        # Create a timer so that this file will get checked automatically
+        # and reparsed if necessary.
+        set_filetimeout_timer()
     end
 
     # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
