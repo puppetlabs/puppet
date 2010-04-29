@@ -286,16 +286,10 @@ class Puppet::Parser::Lexer
         return array
     end
 
-    # this is probably pretty damned inefficient...
-    # it'd be nice not to have to load the whole file first...
     def file=(file)
         @file = file
         @line = 1
-        File.open(file) { |of|
-            str = ""
-            of.each { |line| str += line }
-            @scanner = StringScanner.new(str)
-        }
+        @scanner = StringScanner.new(File.read(file))
     end
 
     def shift_token
