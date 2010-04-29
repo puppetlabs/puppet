@@ -55,6 +55,11 @@ class Puppet::Resource::TypeCollection
         instance
     end
 
+    def loader
+        require 'puppet/parser/type_loader'
+        @loader ||= Puppet::Parser::TypeLoader.new(environment)
+    end
+
     def node(name)
         name = munge_name(name)
 
@@ -115,16 +120,30 @@ class Puppet::Resource::TypeCollection
         nil
     end
 
+    def find_or_load(namespaces, name, type)
+        name      = name.downcase
+        namespaces = [namespaces] unless namespaces.is_a?(Array)
+        namespaces = namespaces.collect { |ns| ns.downcase }
+
+        # This could be done in the load_until, but the knowledge seems to
+        # belong here.
+        if r = find(namespaces, name, type)
+            return r
+        end
+
+        return loader.load_until(namespaces, name) { find(namespaces, name, type) }
+    end
+
     def find_node(name)
         find("", name, :node)
     end
 
-    def find_hostclass(namespace, name)
-        find(namespace, name, :hostclass)
+    def find_hostclass(namespaces, name)
+        find_or_load(namespaces, name, :hostclass)
     end
 
-    def find_definition(namespace, name)
-        find(namespace, name, :definition)
+    def find_definition(namespaces, name)
+        find_or_load(namespaces, name, :definition)
     end
 
     [:hostclasses, :nodes, :definitions].each do |m|

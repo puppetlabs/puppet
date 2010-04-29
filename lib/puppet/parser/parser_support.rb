@@ -107,91 +107,15 @@ class Puppet::Parser::Parser
     end
 
     def find_hostclass(namespace, name)
-        find_or_load(namespace, name, :hostclass)
+        known_resource_types.find_or_load(namespace, name, :hostclass)
     end
 
     def find_definition(namespace, name)
-        find_or_load(namespace, name, :definition)
+        known_resource_types.find_or_load(namespace, name, :definition)
     end
 
-    def find_or_load(namespace, name, type)
-        method = "find_#{type}"
-        namespace = namespace.downcase
-        name      = name.downcase
-        fullname = (namespace + "::" + name).sub(/^::/, '')
-
-        if name =~ /^::/
-            names_to_try = [name.sub(/^::/, '')]
-        else
-            names_to_try = [fullname]
-
-            # Try to load the module init file if we're a qualified name
-            names_to_try << fullname.split("::")[0] if fullname.include?("::")
-
-            # Otherwise try to load the bare name on its own.  This
-            # is appropriate if the class we're looking for is in a
-            # module that's different from our namespace.
-            names_to_try << name
-            names_to_try.compact!
-        end
-
-        until (result = known_resource_types.send(method, namespace, name)) or names_to_try.empty? do
-            self.load(names_to_try.shift)
-        end
-        return result
-    end
-
-    # Import our files.
     def import(file)
-        if Puppet[:ignoreimport]
-            return AST::ASTArray.new(:children => [])
-        end
-        # use a path relative to the file doing the importing
-        if @lexer.file
-            dir = @lexer.file.sub(%r{[^/]+$},'').sub(/\/$/, '')
-        else
-            dir = "."
-        end
-        if dir == ""
-            dir = "."
-        end
-        result = ast AST::ASTArray
-
-        # We can't interpolate at this point since we don't have any
-        # scopes set up. Warn the user if they use a variable reference
-        raise "Got no file" unless file
-        pat = file
-        if pat.index("$")
-            Puppet.warning(
-               "The import of #{pat} contains a variable reference;" +
-               " variables are not interpolated for imports " +
-               "in file #{@lexer.file} at line #{@lexer.line}"
-            )
-        end
-        files = Puppet::Parser::Files.find_manifests(pat, :cwd => dir, :environment => @environment)
-        if files.size == 0
-            raise Puppet::ImportError.new("No file(s) found for import " +
-                                          "of '#{pat}'")
-        end
-
-        files.collect { |file|
-            parser = Puppet::Parser::Parser.new(@environment)
-            parser.files = self.files
-            Puppet.debug("importing '%s'" % file)
-
-            unless file =~ /^#{File::SEPARATOR}/
-                file = File.join(dir, file)
-            end
-            begin
-                parser.file = file
-            rescue Puppet::AlreadyImportedError
-                # This file has already been imported to just move on
-                next
-            end
-
-            # This will normally add code to the 'main' class.
-            parser.parse
-        }
+        known_resource_types.loader.import(file, @lexer.file)
     end
 
     def initialize(env)
@@ -203,69 +127,6 @@ class Puppet::Parser::Parser
     # Initialize or reset all of our variables.
     def initvars
         @lexer = Puppet::Parser::Lexer.new()
-        @files = {}
-        @loaded = []
-        @loading = {}
-        @loading.extend(MonitorMixin)
-        class << @loading
-            def done_with(item)
-                synchronize do 
-                    delete(item)[:busy].signal if self.has_key?(item) and self[item][:loader] == Thread.current
-                end
-            end
-            def owner_of(item)
-                synchronize do
-                    if !self.has_key? item
-                        self[item] = { :loader => Thread.current, :busy => self.new_cond}
-                        :nobody
-                      elsif self[item][:loader] == Thread.current
-                        :this_thread
-                      else
-                        flag = self[item][:busy]
-                        flag.wait
-                        flag.signal
-                        :another_thread
-                    end
-                end
-            end
-        end
-    end
-
-    # Utility method factored out of load
-    def able_to_import?(classname,item,msg)
-        unless @loaded.include?(item)
-            begin
-              case @loading.owner_of(item)
-              when :this_thread
-                  return
-              when :another_thread
-                  return able_to_import?(classname,item,msg)
-              when :nobody
-                  import(item)
-                  Puppet.info "Autoloaded #{msg}"
-                  @loaded << item
-              end
-            rescue Puppet::ImportError => detail
-                # We couldn't load the item
-            ensure
-                @loading.done_with(item)
-            end
-        end
-        # We don't know whether we're looking for a class or definition, so we have
-        # to test for both.
-        return known_resource_types.hostclass(classname) || known_resource_types.definition(classname)
-    end
-
-    # Try to load a class, since we could not find it.
-    def load(classname)
-        return false if classname == ""
-        filename = classname.gsub("::", File::SEPARATOR)
-        mod = filename.scan(/^[\w-]+/).shift
-
-        # First try to load the top-level module then the individual file
-        [[mod,     "module %s"              %            mod ],
-         [filename,"file %s from module %s" % [filename, mod]]
-        ].any? { |item,description| able_to_import?(classname,item,description) }
     end
 
     # Split an fq name into a namespace and name
@@ -363,15 +224,6 @@ class Puppet::Parser::Parser
 
     def parse_ruby_file
         require self.file
-    end
-
-    # See if any of the files have changed.
-    def reparse?
-        if file = @files.detect { |name, file| file.changed?  }
-            return file[1].stamp
-        else
-            return false
-        end
     end
 
     def string=(string)

@@ -32,6 +32,13 @@ describe Puppet::Parser do
         parser = Puppet::Parser::Parser.new "development"
         parser.known_resource_types.should equal(rtc)
     end
+    
+    it "should delegate importing to the known resource type loader" do
+        parser = Puppet::Parser::Parser.new "development"
+        parser.known_resource_types.loader.expects(:import).with("newfile", "current_file")
+        parser.lexer.expects(:file).returns "current_file"
+        parser.import("newfile")
+    end
 
     describe "when parsing files" do
         before do
@@ -327,88 +334,16 @@ describe Puppet::Parser do
     end
 
     describe "when looking up definitions" do
-        it "should check for them by name" do
-            @parser.stubs(:find_or_load).with("namespace","name",:definition).returns(:this_value)
+        it "should use the known resource types to check for them by name" do
+            @parser.known_resource_types.stubs(:find_or_load).with("namespace","name",:definition).returns(:this_value)
             @parser.find_definition("namespace","name").should == :this_value
         end
     end
 
     describe "when looking up hostclasses" do
-        it "should check for them by name" do
-            @parser.stubs(:find_or_load).with("namespace","name",:hostclass).returns(:this_value)
+        it "should use the known resource types to check for them by name" do
+            @parser.known_resource_types.stubs(:find_or_load).with("namespace","name",:hostclass).returns(:this_value)
             @parser.find_hostclass("namespace","name").should == :this_value
-        end
-    end
-
-    describe "when looking up names" do
-        before :each do
-            @known_resource_types = mock 'loaded code'
-            @known_resource_types.stubs(:find_my_type).with('loaded_namespace',  'loaded_name').returns(true)
-            @known_resource_types.stubs(:find_my_type).with('bogus_namespace',   'bogus_name' ).returns(false)
-            @parser = Puppet::Parser::Parser.new "development"
-            @parser.stubs(:known_resource_types).returns @known_resource_types
-        end
-
-        describe "that are already loaded" do
-            it "should not try to load anything" do
-                @parser.expects(:load).never
-                @parser.find_or_load("loaded_namespace","loaded_name",:my_type)
-            end
-            it "should return true" do
-                @parser.find_or_load("loaded_namespace","loaded_name",:my_type).should == true
-            end
-        end
-
-        describe "that aren't already loaded" do
-            it "should first attempt to load them with the all lowercase fully qualified name" do
-                @known_resource_types.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,true,true)
-                @parser.expects(:load).with("foo_namespace::foo_name").returns(true).then.raises(Exception)
-                @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
-            end
-
-            it "should next attempt to load them with the all lowercase namespace" do
-                @known_resource_types.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,true,true)
-                @parser.expects(:load).with("foo_namespace::foo_name").returns(false).then.raises(Exception)
-                @parser.expects(:load).with("foo_namespace"          ).returns(true ).then.raises(Exception)
-                @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
-            end
-
-            it "should finally attempt to load them with the all lowercase unqualified name" do
-                @known_resource_types.stubs(:find_my_type).with("foo_namespace","foo_name").returns(false,false,false,true,true)
-                @parser.expects(:load).with("foo_namespace::foo_name").returns(false).then.raises(Exception)
-                @parser.expects(:load).with("foo_namespace"          ).returns(false).then.raises(Exception)
-                @parser.expects(:load).with(               "foo_name").returns(true ).then.raises(Exception)
-                @parser.find_or_load("Foo_namespace","Foo_name",:my_type).should == true
-            end
-
-            it "should return false if the name isn't found" do
-                @parser.stubs(:load).returns(false)
-                @parser.find_or_load("Bogus_namespace","Bogus_name",:my_type).should == false
-            end
-
-            it "should directly look for fully qualified classes" do
-                @known_resource_types.stubs(:find_hostclass).with("foo_namespace","::foo_name").returns(false, true)
-                @parser.expects(:load).with("foo_name").returns true
-                @parser.find_or_load("foo_namespace","::foo_name",:hostclass)
-            end
-        end
-    end
-
-    describe "when loading classnames" do
-        before :each do
-            @known_resource_types = mock 'loaded code'
-            @parser = Puppet::Parser::Parser.new "development"
-            @parser.stubs(:known_resource_types).returns @known_resource_types
-        end
-
-        it "should just return false if the classname is empty" do
-            @parser.expects(:import).never
-            @parser.load("").should == false
-        end
-
-        it "should just return true if the item is loaded" do
-            pending "Need to access internal state (@parser's @loaded) to force this"
-            @parser.load("").should == false
         end
     end
 

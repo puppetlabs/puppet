@@ -633,12 +633,11 @@ selectlhand:  name
             | regex
 
 # These are only used for importing, and we don't interpolate there.
-qtexts:       quotedtext { result = [val[0].value] }
-            | qtexts COMMA quotedtext {
-    results = val[0] << val[2].value
-}
+string:        STRING       { result = [val[0][:value]] }
+strings:       string
+            |  strings COMMA string { result = val[0] += val[2] }
 
-import: IMPORT qtexts {
+import: IMPORT strings {
     val[1].each do |file|
         import(file)
     end

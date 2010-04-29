@@ -21,6 +21,10 @@ describe Puppet::Resource::TypeCollection do
         Puppet::Resource::TypeCollection.new("testing").environment.should equal(env)
     end
 
+    it "should create a 'loader' at initialization" do
+        Puppet::Resource::TypeCollection.new("testing").loader.should be_instance_of(Puppet::Parser::TypeLoader)
+    end
+
     it "should be able to add a resource type" do
         Puppet::Resource::TypeCollection.new("env").should respond_to(:add)
     end
@@ -83,6 +87,51 @@ describe Puppet::Resource::TypeCollection do
         loader.hostclass("class").should be_nil
         loader.definition("define").should be_nil
         loader.node("node").should be_nil
+    end
+
+    describe "when looking up names" do
+        before do
+            @type = Puppet::Resource::Type.new(:hostclass, "ns::klass")
+        end
+
+        it "should support looking up with multiple namespaces" do
+            @code.add @type
+            @code.find_hostclass(%w{boo baz ns}, "klass").should equal(@type)
+        end
+
+        it "should not attempt to import anything when the type is already defined" do
+            @code.add @type
+            @code.loader.expects(:import).never
+            @code.find_hostclass(%w{ns}, "klass").should equal(@type)
+        end
+
+        describe "that need to be loaded" do
+            it "should use the loader to load the files" do
+                @code.loader.expects(:load_until).with(["ns"], "klass")
+                @code.find_or_load(["ns"], "klass", :hostclass)
+            end
+
+            it "should downcase the name and downcase and array-fy the namespaces before passing to the loader" do
+                @code.loader.expects(:load_until).with(["ns"], "klass")
+                @code.find_or_load("Ns", "Klass", :hostclass)
+            end
+
+            it "should attempt to find the type when the loader yields" do
+                @code.loader.expects(:load_until).yields
+                @code.expects(:find).with(["ns"], "klass", :hostclass).times(2).returns(false).then.returns(true)
+                @code.find_or_load("ns", "klass", :hostclass)
+            end
+
+            it "should return the result of 'load_until'" do
+                @code.loader.expects(:load_until).returns "foo"
+                @code.find_or_load("Ns", "Klass", :hostclass).should == "foo"
+            end
+
+            it "should return nil if the name isn't found" do
+                @code.stubs(:load_until).returns(nil)
+                @code.find_or_load("Ns", "Klass", :hostclass).should be_nil
+            end
+        end
     end
 
     %w{hostclass node definition}.each do |data|
@@ -217,15 +266,15 @@ describe Puppet::Resource::TypeCollection do
         loader.find_node("bar")
     end
 
-    it "should use the generic 'find' method to find hostclasses" do
+    it "should use the 'find_or_load' method to find hostclasses" do
         loader = Puppet::Resource::TypeCollection.new("env")
-        loader.expects(:find).with("foo", "bar", :hostclass)
+        loader.expects(:find_or_load).with("foo", "bar", :hostclass)
         loader.find_hostclass("foo", "bar")
     end
 
-    it "should use the generic 'find' method to find definitions" do
+    it "should use the 'find_or_load' method to find definitions" do
         loader = Puppet::Resource::TypeCollection.new("env")
-        loader.expects(:find).with("foo", "bar", :definition)
+        loader.expects(:find_or_load).with("foo", "bar", :definition)
         loader.find_definition("foo", "bar")
     end
 
