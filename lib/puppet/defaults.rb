@@ -6,7 +6,7 @@ module Puppet
     var = nil
 
     require 'puppet/util/command_line'
-    name = Puppet::Util::CommandLine.legacy_executable_name
+    name = Puppet::Util::CommandLine.new.legacy_executable_name
 
     # Make File.expand_path happy
     require 'etc'
