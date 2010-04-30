@@ -5,13 +5,13 @@ require 'puppet/daemon'
 require 'puppet/configurer'
 require 'puppet/network/client'
 
-Puppet::Application.new(:agent) do
+class Puppet::Application::Agent < Puppet::Application
 
     should_parse_config
 
     attr_accessor :explicit_waitforcert, :args, :agent, :daemon, :host
 
-    preinit do
+    def preinit
         # Do an initial trap, so that cancels don't get a stack trace.
         trap(:INT) do
             $stderr.puts "Cancelling startup"
@@ -96,13 +96,13 @@ Puppet::Application.new(:agent) do
         @args[:Port] = arg
     end
 
-    dispatch do
-        return :fingerprint if options[:fingerprint]
-        return :onetime if options[:onetime]
-        return :main
+    def run_command
+        return fingerprint if options[:fingerprint]
+        return onetime if options[:onetime]
+        return main
     end
 
-    command(:fingerprint) do
+    def fingerprint
         unless cert = host.certificate || host.certificate_request
            $stderr.puts "Fingerprint asked but no certificate nor certificate request have yet been issued"
            exit(1)
@@ -114,7 +114,7 @@ Puppet::Application.new(:agent) do
         Puppet.notice fingerprint
     end
 
-    command(:onetime) do
+    def onetime
         unless options[:client]
             $stderr.puts "onetime is specified but there is no client"
             exit(43)
@@ -141,7 +141,7 @@ Puppet::Application.new(:agent) do
         end
     end
 
-    command(:main) do
+    def main
         Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
 
         @daemon.start
@@ -207,7 +207,7 @@ Puppet::Application.new(:agent) do
         @daemon.server = server
     end
 
-    setup do
+    def setup
         setup_test if options[:test]
 
         setup_logs

@@ -8,8 +8,8 @@ require 'getoptlong'
 
 describe Puppet::Application do
 
-    before :each do
-        @app = Puppet::Application.new(:test)
+    before do
+        @app = Class.new(Puppet::Application).new
     end
 
     it "should have a run entry-point" do
@@ -20,20 +20,21 @@ describe Puppet::Application do
         @app.should respond_to(:options)
     end
 
-    it "should create a default run_setup method" do
-        @app.should respond_to(:run_setup)
+    it "should include a default setup method" do
+        @app.should respond_to(:setup)
     end
 
-    it "should create a default run_preinit method" do
-        @app.should respond_to(:run_preinit)
+    it "should include a default preinit method" do
+        @app.should respond_to(:preinit)
     end
 
-    it "should create a default get_command method" do
-        @app.should respond_to(:get_command)
+    it "should include a default run_command method" do
+        @app.should respond_to(:run_command)
     end
 
-    it "should return :main as default get_command" do
-        @app.get_command.should == :main
+    it "should invoke main as the default" do
+        @app.expects( :main )
+        @app.run_command
     end
 
     describe 'when invoking clear!' do
@@ -170,7 +171,6 @@ describe Puppet::Application do
             ARGV.clear
 
             Puppet.settings.stubs(:optparse_addargs).returns([])
-            @app = Puppet::Application.new(:test)
         end
 
         after :each do
@@ -288,7 +288,6 @@ describe Puppet::Application do
     describe "when calling default setup" do
 
         before :each do
-            @app = Puppet::Application.new(:test)
             @app.stubs(:should_parse_config?).returns(false)
             @app.options.stubs(:[])
         end
@@ -300,7 +299,7 @@ describe Puppet::Application do
 
                 Puppet::Util::Log.expects(:level=).with(level == :verbose ? :info : :debug)
 
-                @app.run_setup
+                @app.setup
             end
         end
 
@@ -309,7 +308,7 @@ describe Puppet::Application do
 
             Puppet::Util::Log.expects(:newdestination).with(:syslog)
 
-            @app.run_setup
+            @app.setup
         end
 
     end
@@ -317,16 +316,15 @@ describe Puppet::Application do
     describe "when running" do
 
         before :each do
-            @app = Puppet::Application.new(:test)
-            @app.stubs(:run_preinit)
-            @app.stubs(:run_setup)
+            @app.stubs(:preinit)
+            @app.stubs(:setup)
             @app.stubs(:parse_options)
         end
 
-        it "should call run_preinit" do
+        it "should call preinit" do
             @app.stubs(:run_command)
 
-            @app.expects(:run_preinit)
+            @app.expects(:preinit)
 
             @app.run
         end
@@ -348,7 +346,7 @@ describe Puppet::Application do
 
         it "should parse Puppet configuration if should_parse_config is called" do
             @app.stubs(:run_command)
-            @app.should_parse_config
+            @app.class.should_parse_config
 
             Puppet.settings.expects(:parse)
 
@@ -357,7 +355,7 @@ describe Puppet::Application do
 
         it "should not parse_option if should_not_parse_config is called" do
             @app.stubs(:run_command)
-            @app.should_not_parse_config
+            @app.class.should_not_parse_config
 
             Puppet.settings.expects(:parse).never
 
@@ -373,11 +371,8 @@ describe Puppet::Application do
             @app.run
         end
 
-        it "should call the action matching what returned command" do
-            @app.stubs(:get_command).returns(:backup)
-            @app.stubs(:respond_to?).with(:backup).returns(true)
-
-            @app.expects(:backup)
+        it "should call run_command" do
+            @app.expects(:run_command)
 
             @app.run
         end
@@ -411,62 +406,23 @@ describe Puppet::Application do
 
     describe "when metaprogramming" do
 
-        before :each do
-            @app = Puppet::Application.new(:test)
-        end
-
-        it "should create a new method with command" do
-            @app.command(:test) do
-            end
-
-            @app.should respond_to(:test)
-        end
-
-        describe "when calling attr_accessor" do
-            it "should create a reader method" do
-                @app.attr_accessor(:attribute)
-
-                @app.should respond_to(:attribute)
-            end
-
-            it "should create a reader that delegates to instance_variable_get" do
-                @app.attr_accessor(:attribute)
-
-                @app.expects(:instance_variable_get).with(:@attribute)
-                @app.attribute
-            end
-
-            it "should create a writer method" do
-                @app.attr_accessor(:attribute)
-
-                @app.should respond_to(:attribute=)
-            end
-
-            it "should create a writer that delegates to instance_variable_set" do
-                @app.attr_accessor(:attribute)
-
-                @app.expects(:instance_variable_set).with(:@attribute, 1234)
-                @app.attribute=1234
-            end
-        end
-
         describe "when calling option" do
             it "should create a new method named after the option" do
-                @app.option("--test1","-t") do
+                @app.class.option("--test1","-t") do
                 end
 
                 @app.should respond_to(:handle_test1)
             end
 
             it "should transpose in option name any '-' into '_'" do
-                @app.option("--test-dashes-again","-t") do
+                @app.class.option("--test-dashes-again","-t") do
                 end
 
                 @app.should respond_to(:handle_test_dashes_again)
             end
 
             it "should create a new method called handle_test2 with option(\"--[no-]test2\")" do
-                @app.option("--[no-]test2","-t") do
+                @app.class.option("--[no-]test2","-t") do
                 end
 
                 @app.should respond_to(:handle_test2)
@@ -474,7 +430,7 @@ describe Puppet::Application do
 
             describe "when a block is passed" do
                 it "should create a new method with it" do
-                    @app.option("--[no-]test2","-t") do
+                    @app.class.option("--[no-]test2","-t") do
                         raise "I can't believe it, it works!"
                     end
 
@@ -482,66 +438,50 @@ describe Puppet::Application do
                 end
 
                 it "should declare the option to OptionParser" do
-                    @app.opt_parser.expects(:on).with { |*arg| arg[0] == "--[no-]test3" }
+                    OptionParser.any_instance.stubs(:on)
+                    OptionParser.any_instance.expects(:on).with { |*arg| arg[0] == "--[no-]test3" }
 
-                    @app.option("--[no-]test3","-t") do
+                    @app.class.option("--[no-]test3","-t") do
                     end
+
+                    @app.class.new_option_parser( @app )
                 end
 
                 it "should pass a block that calls our defined method" do
-                    @app.opt_parser.stubs(:on).yields(nil)
+                    OptionParser.any_instance.stubs(:on)
+                    OptionParser.any_instance.stubs(:on).with('--test4','-t').yields(nil)
 
                     @app.expects(:send).with(:handle_test4, nil)
 
-                    @app.option("--test4","-t") do
+                    @app.class.option("--test4","-t") do
                     end
+
+                    @app.class.new_option_parser( @app )
                 end
             end
 
             describe "when no block is given" do
                 it "should declare the option to OptionParser" do
-                    @app.opt_parser.expects(:on).with("--test4","-t")
+                    OptionParser.any_instance.stubs(:on)
+                    OptionParser.any_instance.expects(:on).with("--test4","-t")
 
-                    @app.option("--test4","-t")
+                    @app.class.option("--test4","-t")
+
+                    @app.class.new_option_parser( @app )
                 end
 
                 it "should give to OptionParser a block that adds the the value to the options array" do
-                    @app.opt_parser.stubs(:on).with("--test4","-t").yields(nil)
+                    OptionParser.any_instance.stubs(:on)
+                    OptionParser.any_instance.stubs(:on).with("--test4","-t").yields(nil)
 
                     @app.options.expects(:[]=).with(:test4,nil)
 
-                    @app.option("--test4","-t")
+                    @app.class.option("--test4","-t")
+
+                    @app.class.new_option_parser( @app )
                 end
             end
         end
 
-        it "should create a method called run_setup with setup" do
-            @app.setup do
-            end
-
-            @app.should respond_to(:run_setup)
-        end
-
-        it "should create a method called run_preinit with preinit" do
-            @app.preinit do
-            end
-
-            @app.should respond_to(:run_preinit)
-        end
-
-        it "should create a method called handle_unknown with unknown" do
-            @app.unknown do
-            end
-
-            @app.should respond_to(:handle_unknown)
-        end
-
-
-        it "should create a method called get_command with dispatch" do
-            @app.dispatch do
-            end
-
-            @app.should respond_to(:get_command)
-        end
     end
 end

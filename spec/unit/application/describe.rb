@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/describe'
 
-describe Puppet::Application[:describe] do
+describe Puppet::Application::Describe do
     before :each do
         @describe = Puppet::Application[:describe]
     end
@@ -18,7 +18,7 @@ describe Puppet::Application[:describe] do
     end
 
     it "should declare a preinit block" do
-        @describe.should respond_to(:run_preinit)
+        @describe.should respond_to(:preinit)
     end
 
     [:providers,:list,:meta].each do |option|
@@ -35,7 +35,7 @@ describe Puppet::Application[:describe] do
 
     describe "in preinit" do
         it "should set options[:parameteers] to true" do
-            @describe.run_preinit
+            @describe.preinit
 
             @describe.options[:parameters].should be_true
         end
@@ -51,8 +51,8 @@ describe Puppet::Application[:describe] do
 
     describe "during setup" do
         it "should collect arguments in options[:types]" do
-            Puppet::Util::CommandLine.stubs(:args).returns(['1','2'])
-            @describe.run_setup
+            @describe.command_line.stubs(:args).returns(['1','2'])
+            @describe.setup
 
             @describe.options[:types].should == ['1','2']
         end

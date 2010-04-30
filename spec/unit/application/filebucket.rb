@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/filebucket'
 
-describe Puppet::Application[:filebucket] do
+describe Puppet::Application::Filebucket do
     before :each do
         @filebucket = Puppet::Application[:filebucket]
     end
@@ -51,13 +51,13 @@ describe Puppet::Application[:filebucket] do
         it "should set console as the log destination" do
             Puppet::Log.expects(:newdestination).with(:console)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should trap INT" do
             @filebucket.expects(:trap).with(:INT)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should set log level to debug if --debug was passed" do
@@ -65,7 +65,7 @@ describe Puppet::Application[:filebucket] do
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should set log level to info if --verbose was passed" do
@@ -73,13 +73,13 @@ describe Puppet::Application[:filebucket] do
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should Parse puppet config" do
             Puppet.expects(:parse_config)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should print puppet config if asked to in Puppet config" do
@@ -88,13 +88,13 @@ describe Puppet::Application[:filebucket] do
 
             Puppet.settings.expects(:print_configs)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @filebucket.run_setup }.should raise_error(SystemExit)
+            lambda { @filebucket.setup }.should raise_error(SystemExit)
         end
 
         describe "with local bucket" do
@@ -108,7 +108,7 @@ describe Puppet::Application[:filebucket] do
 
                 Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == "path" }
 
-                @filebucket.run_setup
+                @filebucket.setup
             end
 
             it "should create a local Dipper with the given bucket" do
@@ -116,7 +116,7 @@ describe Puppet::Application[:filebucket] do
 
                 Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Path] == "path" }
 
-                @filebucket.run_setup
+                @filebucket.setup
             end
 
         end
@@ -128,7 +128,7 @@ describe Puppet::Application[:filebucket] do
 
                 Puppet::FileBucket::Dipper.expects(:new).with { |h| h[:Server] == "puppet.reductivelabs.com" }
 
-                @filebucket.run_setup
+                @filebucket.setup
             end
 
         end
@@ -148,19 +148,22 @@ describe Puppet::Application[:filebucket] do
             @client = stub 'client'
             Puppet::FileBucket::Dipper.stubs(:new).returns(@client)
 
-            @filebucket.run_setup
+            @filebucket.setup
         end
 
         it "should use the first non-option parameter as the dispatch" do
             Puppet::Util::CommandLine.stubs(:args).returns([:get])
 
-            @filebucket.get_command.should == :get
+            @filebucket.expects(:get)
+
+            @filebucket.run_command
         end
 
         describe "the command get" do
 
             before :each do
                 @filebucket.stubs(:print)
+                @filebucket.stubs(:args).returns([])
             end
 
             it "should call the client getfile method" do

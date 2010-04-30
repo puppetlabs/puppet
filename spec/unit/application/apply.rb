@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/apply'
 
-describe "Puppet" do
+describe Puppet::Application::Apply do
     before :each do
         @apply = Puppet::Application[:apply]
         Puppet::Util::Log.stubs(:newdestination)
@@ -67,19 +67,19 @@ describe "Puppet" do
 
             Puppet.expects(:[]=).with(:show_diff, true)
 
-            @apply.run_setup
+            @apply.setup
         end
 
         it "should set console as the log destination if logdest option wasn't provided" do
             Puppet::Log.expects(:newdestination).with(:console)
 
-            @apply.run_setup
+            @apply.setup
         end
 
         it "should set INT trap" do
             @apply.expects(:trap).with(:INT)
 
-            @apply.run_setup
+            @apply.setup
         end
 
         it "should set log level to debug if --debug was passed" do
@@ -87,7 +87,7 @@ describe "Puppet" do
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @apply.run_setup
+            @apply.setup
         end
 
         it "should set log level to info if --verbose was passed" do
@@ -95,7 +95,7 @@ describe "Puppet" do
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @apply.run_setup
+            @apply.setup
         end
 
         it "should print puppet config if asked to in Puppet config" do
@@ -104,13 +104,13 @@ describe "Puppet" do
 
             Puppet.settings.expects(:print_configs)
 
-            @apply.run_setup
+            @apply.setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @apply.run_setup }.should raise_error(SystemExit)
+            lambda { @apply.setup }.should raise_error(SystemExit)
         end
 
     end
@@ -121,20 +121,23 @@ describe "Puppet" do
             @apply.stubs(:options).returns({})
             Puppet.stubs(:[]).with(:parseonly).returns(true)
 
-            @apply.get_command.should == :parseonly
+            @apply.expects(:parseonly)
+            @apply.run_command
         end
 
         it "should dispatch to 'apply' if it was called with 'apply'" do
             @apply.options[:catalog] = "foo"
 
-            @apply.get_command.should == :apply
+            @apply.expects(:apply)
+            @apply.run_command
         end
 
         it "should dispatch to main if parseonly is not set" do
             @apply.stubs(:options).returns({})
             Puppet.stubs(:[]).with(:parseonly).returns(false)
 
-            @apply.get_command.should == :main
+            @apply.expects(:main)
+            @apply.run_command
         end
 
         describe "the parseonly command" do

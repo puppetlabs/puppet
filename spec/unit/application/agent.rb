@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/application/agent'
 require 'puppet/network/server'
 
-describe Puppet::Application[:agent] do
+describe Puppet::Application::Agent do
     before :each do
         @puppetd = Puppet::Application[:agent]
         @puppetd.stubs(:puts)
@@ -13,7 +13,7 @@ describe Puppet::Application[:agent] do
         Puppet::Daemon.stubs(:new).returns(@daemon)
         @agent = stub_everything 'agent'
         Puppet::Agent.stubs(:new).returns(@agent)
-        @puppetd.run_preinit
+        @puppetd.preinit
         Puppet::Util::Log.stubs(:newdestination)
         Puppet::Util::Log.stubs(:level=)
 
@@ -39,7 +39,7 @@ describe Puppet::Application[:agent] do
     end
 
     it "should declare a preinit block" do
-        @puppetd.should respond_to(:run_preinit)
+        @puppetd.should respond_to(:preinit)
     end
 
     describe "in preinit" do
@@ -50,41 +50,41 @@ describe Puppet::Application[:agent] do
         it "should catch INT" do
             @puppetd.expects(:trap).with { |arg,block| arg == :INT }
 
-            @puppetd.run_preinit
+            @puppetd.preinit
         end
 
         it "should set waitforcert to 120" do
-            @puppetd.run_preinit
+            @puppetd.preinit
 
             @puppetd.options[:waitforcert].should == 120
         end
 
         it "should init client to true" do
-            @puppetd.run_preinit
+            @puppetd.preinit
 
             @puppetd.options[:client].should be_true
         end
 
         it "should init fqdn to nil" do
-            @puppetd.run_preinit
+            @puppetd.preinit
 
             @puppetd.options[:fqdn].should be_nil
         end
 
         it "should init serve to []" do
-            @puppetd.run_preinit
+            @puppetd.preinit
 
             @puppetd.options[:serve].should == []
         end
 
         it "should use MD5 as default digest algorithm" do
-            @puppetd.run_preinit
+            @puppetd.preinit
 
             @puppetd.options[:digest].should == :MD5
         end
 
         it "should not fingerprint by default" do
-            @puppetd.run_preinit
+            @puppetd.preinit
 
             @puppetd.options[:fingerprint].should be_false
         end
@@ -210,7 +210,7 @@ describe Puppet::Application[:agent] do
             it "should call setup_test" do
                 @puppetd.options.stubs(:[]).with(:test).returns(true)
                 @puppetd.expects(:setup_test)
-                @puppetd.run_setup
+                @puppetd.setup
             end
 
             it "should set options[:verbose] to true" do
@@ -233,7 +233,7 @@ describe Puppet::Application[:agent] do
 
         it "should call setup_logs" do
             @puppetd.expects(:setup_logs)
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         describe "when setting up logs" do
@@ -283,13 +283,13 @@ describe Puppet::Application[:agent] do
 
             Puppet.settings.expects(:print_configs)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @puppetd.run_setup }.should raise_error(SystemExit)
+            lambda { @puppetd.setup }.should raise_error(SystemExit)
         end
 
         it "should set a central log destination with --centrallogs" do
@@ -299,55 +299,55 @@ describe Puppet::Application[:agent] do
 
             Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should use :main, :puppetd, and :ssl" do
             Puppet.settings.expects(:use).with(:main, :puppetd, :ssl)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should install a remote ca location" do
             Puppet::SSL::Host.expects(:ca_location=).with(:remote)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should install a none ca location in fingerprint mode" do
             @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
             Puppet::SSL::Host.expects(:ca_location=).with(:none)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should tell the report handler to use REST" do
             Puppet::Transaction::Report.expects(:terminus_class=).with(:rest)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should change the catalog_terminus setting to 'rest'" do
             Puppet.expects(:[]=).with(:catalog_terminus, :rest)
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should tell the catalog handler to use cache" do
             Puppet::Resource::Catalog.expects(:cache_class=).with(:yaml)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should tell the facts to use facter" do
             Puppet::Node::Facts.expects(:terminus_class=).with(:facter)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should create an agent" do
             Puppet::Agent.stubs(:new).with(Puppet::Configurer)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         [:enable, :disable].each do |action|
@@ -355,7 +355,7 @@ describe Puppet::Application[:agent] do
                 @puppetd.options.stubs(:[]).with(action).returns(true)
                 @puppetd.expects(:enable_disable_client).with(@agent)
 
-                @puppetd.run_setup
+                @puppetd.setup
             end
         end
 
@@ -379,13 +379,13 @@ describe Puppet::Application[:agent] do
         it "should inform the daemon about our agent if :client is set to 'true'" do
             @puppetd.options.expects(:[]).with(:client).returns true
             @daemon.expects(:agent=).with(@agent)
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should not inform the daemon about our agent if :client is set to 'false'" do
             @puppetd.options[:client] = false
             @daemon.expects(:agent=).never
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should daemonize if needed" do
@@ -393,14 +393,14 @@ describe Puppet::Application[:agent] do
 
             @daemon.expects(:daemonize)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should wait for a certificate" do
             @puppetd.options.stubs(:[]).with(:waitforcert).returns(123)
             @host.expects(:wait_for_cert).with(123)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should not wait for a certificate in fingerprint mode" do
@@ -408,7 +408,7 @@ describe Puppet::Application[:agent] do
             @puppetd.options.stubs(:[]).with(:waitforcert).returns(123)
             @host.expects(:wait_for_cert).never
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         it "should setup listen if told to and not onetime" do
@@ -417,7 +417,7 @@ describe Puppet::Application[:agent] do
 
             @puppetd.expects(:setup_listen)
 
-            @puppetd.run_setup
+            @puppetd.setup
         end
 
         describe "when setting up listen" do
@@ -475,19 +475,22 @@ describe Puppet::Application[:agent] do
         it "should dispatch to fingerprint if --fingerprint is used" do
             @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
 
-            @puppetd.get_command.should == :fingerprint
+            @puppetd.stubs(:fingerprint)
+            @puppetd.run_command
         end
 
         it "should dispatch to onetime if --onetime is used" do
             @puppetd.options.stubs(:[]).with(:onetime).returns(true)
 
-            @puppetd.get_command.should == :onetime
+            @puppetd.stubs(:onetime)
+            @puppetd.run_command
         end
 
         it "should dispatch to main if --onetime and --fingerprint are not used" do
             @puppetd.options.stubs(:[]).with(:onetime).returns(false)
 
-            @puppetd.get_command.should == :main
+            @puppetd.stubs(:main)
+            @puppetd.run_command
         end
 
         describe "with --onetime" do

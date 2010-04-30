@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/util/ldap/connection'
 require 'puppet/application/kick'
 
-describe Puppet::Application[:kick] do
+describe Puppet::Application::Kick do
     before :each do
         Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
         @kick = Puppet::Application[:kick]
@@ -14,7 +14,6 @@ describe Puppet::Application[:kick] do
     end
 
     it "should ask Puppet::Application to not parse Puppet configuration file" do
-        p @kick.object_id
         @kick.should_parse_config?.should be_false
     end
 
@@ -27,7 +26,7 @@ describe Puppet::Application[:kick] do
     end
 
     it "should declare a preinit block" do
-        @kick.should respond_to(:run_preinit)
+        @kick.should respond_to(:preinit)
     end
 
     describe "during preinit" do
@@ -38,41 +37,45 @@ describe Puppet::Application[:kick] do
         it "should catch INT and TERM" do
             @kick.stubs(:trap).with { |arg,block| arg == :INT or arg == :TERM }
 
-            @kick.run_preinit
+            @kick.preinit
         end
 
         it "should set parallel option to 1" do
-            @kick.run_preinit
+            @kick.preinit
 
             @kick.options[:parallel].should == 1
         end
 
         it "should set verbose by default" do
-            @kick.run_preinit
+            @kick.preinit
 
             @kick.options[:verbose].should be_true
         end
 
         it "should set fqdn by default" do
-            @kick.run_preinit
+            @kick.preinit
 
             @kick.options[:fqdn].should be_true
         end
 
         it "should set ignoreschedules to 'false'" do
-            @kick.run_preinit
+            @kick.preinit
 
             @kick.options[:ignoreschedules].should be_false
         end
 
         it "should set foreground to 'false'" do
-            @kick.run_preinit
+            @kick.preinit
 
             @kick.options[:foreground].should be_false
         end
     end
 
     describe "when applying options" do
+
+        before do
+            @kick.preinit
+        end
 
         [:all, :foreground, :debug, :ping, :test].each do |option|
             it "should declare handle_#{option} method" do
@@ -123,7 +126,7 @@ describe Puppet::Application[:kick] do
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @kick.run_setup
+            @kick.setup
         end
 
         it "should set log level to info if --verbose was passed" do
@@ -131,13 +134,13 @@ describe Puppet::Application[:kick] do
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @kick.run_setup
+            @kick.setup
         end
 
         it "should Parse puppet config" do
             Puppet.expects(:parse_config)
 
-            @kick.run_setup
+            @kick.setup
         end
 
         describe "when using the ldap node terminus" do
@@ -152,7 +155,7 @@ describe Puppet::Application[:kick] do
 
                 Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
 
-                @kick.run_setup
+                @kick.setup
             end
 
             it "should search for all nodes if --all" do
@@ -161,7 +164,7 @@ describe Puppet::Application[:kick] do
 
                 Puppet::Node.expects(:search).with("whatever",:fqdn => nil).returns([])
 
-                @kick.run_setup
+                @kick.setup
             end
 
             it "should search for nodes including given classes" do
@@ -171,7 +174,7 @@ describe Puppet::Application[:kick] do
 
                 Puppet::Node.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
 
-                @kick.run_setup
+                @kick.setup
             end
         end
 
@@ -182,7 +185,7 @@ describe Puppet::Application[:kick] do
 
                 @kick.expects(:exit).with(24)
 
-                @kick.run_setup
+                @kick.setup
             end
         end
     end
@@ -195,13 +198,15 @@ describe Puppet::Application[:kick] do
         it "should dispatch to test if --test is used" do
             @kick.options.stubs(:[]).with(:test).returns(true)
 
-            @kick.get_command.should == :test
+            @kick.expects(:test)
+            @kick.run_command
         end
 
         it "should dispatch to main if --test is not used" do
             @kick.options.stubs(:[]).with(:test).returns(false)
 
-            @kick.get_command.should == :main
+            @kick.expects(:main)
+            @kick.run_command
         end
 
         describe "the test command" do
@@ -218,8 +223,12 @@ describe Puppet::Application[:kick] do
                 @kick.options.stubs(:[]).with(:ping).returns(false)
                 @kick.options.stubs(:[]).with(:ignoreschedules).returns(false)
                 @kick.options.stubs(:[]).with(:foreground).returns(false)
+                @kick.options.stubs(:[]).with(:debug).returns(false)
                 @kick.stubs(:print)
                 @kick.stubs(:exit)
+                @kick.preinit
+                @kick.parse_options
+                @kick.setup
                 $stderr.stubs(:puts)
             end
 
@@ -251,6 +260,7 @@ describe Puppet::Application[:kick] do
                     options = {
                         :background => true, :ignoreschedules => false, :tags => []
                     }
+                    @kick.preinit
                     @agent_run = Puppet::Run.new( options.dup )
                     @agent_run.stubs(:status).returns("success")
 

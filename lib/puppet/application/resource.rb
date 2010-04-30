@@ -2,13 +2,13 @@ require 'puppet'
 require 'puppet/application'
 require 'facter'
 
-Puppet::Application.new(:resource) do
+class Puppet::Application::Resource < Puppet::Application
 
     should_not_parse_config
 
     attr_accessor :host, :extra_params
 
-    preinit do
+    def preinit
         @extra_params = []
         @host = nil
         Facter.loadfacts
@@ -37,7 +37,7 @@ Puppet::Application.new(:resource) do
         @extra_params << arg.to_sym
     end
 
-    command(:main) do
+    def main
         args = Puppet::Util::CommandLine.args
         type = args.shift or raise "You must specify the type to display"
         typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
@@ -109,7 +109,7 @@ Puppet::Application.new(:resource) do
         end
     end
 
-    setup do
+    def setup
         Puppet::Util::Log.newdestination(:console)
 
         # Now parse the config

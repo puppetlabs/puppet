@@ -7,13 +7,13 @@ require 'puppet/util/rdoc'
 $tab = "    "
 Reference = Puppet::Util::Reference
 
-Puppet::Application.new(:doc) do
+class Puppet::Application::Doc < Puppet::Application
 
     should_not_parse_config
 
     attr_accessor :unknown_args, :manifest
 
-    preinit do
+    def preinit
         {:references => [], :mode => :text, :format => :to_rest }.each do |name,value|
             options[name] = value
         end
@@ -52,17 +52,17 @@ Puppet::Application.new(:doc) do
         options[:references] << arg.intern
     end
 
-    unknown do |opt, arg|
+    def handle_unknown( opt, arg )
         @unknown_args << {:opt => opt, :arg => arg }
         true
     end
 
-    dispatch do
-        return options[:mode] if [:rdoc, :trac, :markdown].include?(options[:mode])
-        return :other
+    def run_command
+        return send(options[:mode]) if [:rdoc, :trac, :markdown].include?(options[:mode])
+        return other
     end
 
-    command(:rdoc) do
+    def rdoc
         exit_code = 0
         files = []
         unless @manifest
@@ -93,7 +93,7 @@ Puppet::Application.new(:doc) do
         exit exit_code
     end
 
-    command(:trac) do
+    def trac
         options[:references].each do |name|
             section = Puppet::Util::Reference.reference(name) or raise "Could not find section %s" % name
             unless options[:mode] == :pdf
@@ -102,7 +102,7 @@ Puppet::Application.new(:doc) do
         end
     end
 
-    command(:markdown) do
+    def markdown
         text = ""
         with_contents = false
         exit_code = 0
@@ -127,7 +127,7 @@ Puppet::Application.new(:doc) do
         exit exit_code
     end
 
-    command(:other) do
+    def other
         text = ""
         if options[:references].length > 1
             with_contents = false
@@ -165,7 +165,7 @@ Puppet::Application.new(:doc) do
         exit exit_code
     end
 
-    setup do
+    def setup
         # sole manifest documentation
         if Puppet::Util::CommandLine.args.size > 0
             options[:mode] = :rdoc

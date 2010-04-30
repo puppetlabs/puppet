@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/queue'
 
-describe "queue" do
+describe Puppet::Application::Queue do
     before :each do
         @queue = Puppet::Application[:queue]
         @queue.stubs(:puts)
@@ -24,7 +24,7 @@ describe "queue" do
     end
 
     it "should declare a preinit block" do
-        @queue.should respond_to(:run_preinit)
+        @queue.should respond_to(:preinit)
     end
 
     describe "in preinit" do
@@ -35,17 +35,17 @@ describe "queue" do
         it "should catch INT" do
             @queue.expects(:trap).with { |arg,block| arg == :INT }
 
-            @queue.run_preinit
+            @queue.preinit
         end
 
         it "should init :verbose to false" do
-            @queue.run_preinit
+            @queue.preinit
 
             @queue.options[:verbose].should be_false
         end
 
         it "should init :debug to false" do
-            @queue.run_preinit
+            @queue.preinit
 
             @queue.options[:debug].should be_false
         end
@@ -55,7 +55,7 @@ describe "queue" do
             daemon = mock("daemon")
             daemon.expects(:argv=).with("eh")
             Puppet::Daemon.expects(:new).returns daemon
-            @queue.run_preinit
+            @queue.preinit
         end
     end
 
@@ -87,7 +87,7 @@ describe "queue" do
 
         it "should fail if the stomp feature is missing" do
             Puppet.features.expects(:stomp?).returns false
-            lambda { @queue.run_setup }.should raise_error(ArgumentError)
+            lambda { @queue.setup }.should raise_error(ArgumentError)
         end
 
         it "should print puppet config if asked to in Puppet config" do
@@ -96,18 +96,18 @@ describe "queue" do
 
             Puppet.settings.expects(:print_configs)
 
-            @queue.run_setup
+            @queue.setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @queue.run_setup }.should raise_error(SystemExit)
+            lambda { @queue.setup }.should raise_error(SystemExit)
         end
 
         it "should call setup_logs" do
             @queue.expects(:setup_logs)
-            @queue.run_setup
+            @queue.setup
         end
 
         describe "when setting up logs" do
@@ -145,7 +145,7 @@ describe "queue" do
         it "should configure the Catalog class to use ActiveRecord" do
             Puppet::Resource::Catalog.expects(:terminus_class=).with(:active_record)
 
-            @queue.run_setup
+            @queue.setup
         end
 
         it "should daemonize if needed" do
@@ -153,7 +153,7 @@ describe "queue" do
 
             @queue.daemon.expects(:daemonize)
 
-            @queue.run_setup
+            @queue.setup
         end
     end
 

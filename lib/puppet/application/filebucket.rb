@@ -2,7 +2,7 @@ require 'puppet'
 require 'puppet/application'
 require 'puppet/file_bucket/dipper'
 
-Puppet::Application.new(:filebucket) do
+class Puppet::Application::Filebucket < Puppet::Application
 
     should_not_parse_config
 
@@ -12,22 +12,22 @@ Puppet::Application.new(:filebucket) do
     option("--remote","-r")
     option("--verbose","-v")
 
-    class << self
-        attr :args
-    end
+    attr :args
 
-    dispatch do
+    def run_command
         @args = Puppet::Util::CommandLine.args
-        args.shift
+        command = args.shift
+        return send(command) if %w[get backup restore].include? command
+        help
     end
 
-    command(:get) do
+    def get
         md5 = args.shift
         out = @client.getfile(md5)
         print out
     end
 
-    command(:backup) do
+    def backup
         args.each do |file|
             unless FileTest.exists?(file)
                 $stderr.puts "%s: no such file" % file
@@ -42,13 +42,13 @@ Puppet::Application.new(:filebucket) do
         end
     end
 
-    command(:restore) do
+    def restore
         file = args.shift
         md5 = args.shift
         @client.restore(file, md5)
     end
 
-    setup do
+    def setup
         Puppet::Log.newdestination(:console)
 
         @client = nil

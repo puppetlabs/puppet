@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/resource'
 
-describe "resource" do
+describe Puppet::Application::Resource do
     before :each do
         @resource = Puppet::Application[:resource]
         Puppet::Util::Log.stubs(:newdestination)
@@ -33,25 +33,25 @@ describe "resource" do
     end
 
     it "should declare a preinit block" do
-        @resource.should respond_to(:run_preinit)
+        @resource.should respond_to(:preinit)
     end
 
     describe "in preinit" do
         it "should set hosts to nil" do
-            @resource.run_preinit
+            @resource.preinit
 
             @resource.host.should be_nil
         end
 
         it "should init extra_params to empty array" do
-            @resource.run_preinit
+            @resource.preinit
 
             @resource.extra_params.should == []
         end
 
         it "should load Facter facts" do
           Facter.expects(:loadfacts).once
-          @resource.run_preinit
+          @resource.preinit
         end
     end
 
@@ -104,7 +104,7 @@ describe "resource" do
         it "should set console as the log destination" do
             Puppet::Log.expects(:newdestination).with(:console)
 
-            @resource.run_setup
+            @resource.setup
         end
 
         it "should set log level to debug if --debug was passed" do
@@ -112,7 +112,7 @@ describe "resource" do
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @resource.run_setup
+            @resource.setup
         end
 
         it "should set log level to info if --verbose was passed" do
@@ -121,13 +121,13 @@ describe "resource" do
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @resource.run_setup
+            @resource.setup
         end
 
         it "should Parse puppet config" do
             Puppet.expects(:parse_config)
 
-            @resource.run_setup
+            @resource.setup
         end
     end
 

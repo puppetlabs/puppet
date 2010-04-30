@@ -4,7 +4,7 @@ require 'puppet/daemon'
 require 'puppet/network/server'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 
-Puppet::Application.new(:master) do
+class Puppet::Application::Master < Puppet::Application
 
     should_parse_config
 
@@ -30,7 +30,7 @@ Puppet::Application.new(:master) do
         end
     end
 
-    preinit do
+    def preinit
         trap(:INT) do
             $stderr.puts "Cancelling startup"
             exit(0)
@@ -41,17 +41,17 @@ Puppet::Application.new(:master) do
         @daemon.argv = ARGV.dup
     end
 
-    dispatch do
+    def run_command
         if options[:node]
-            :compile
+            compile
         elsif Puppet[:parseonly]
-            :parseonly
+            parseonly
         else
-            :main
+            main
         end
     end
 
-    command(:compile) do
+    def compile
         Puppet::Util::Log.newdestination :console
         raise ArgumentError, "Cannot render compiled catalogs without pson support" unless Puppet.features.pson?
         begin
@@ -67,7 +67,7 @@ Puppet::Application.new(:master) do
         exit(0)
     end
 
-    command(:parseonly) do
+    def parseonly
         begin
             Puppet::Resource::TypeCollection.new(Puppet[:environment]).perform_initial_import
         rescue => detail
@@ -77,7 +77,7 @@ Puppet::Application.new(:master) do
         exit(0)
     end
 
-    command(:main) do
+    def main
         require 'etc'
         require 'puppet/file_serving/content'
         require 'puppet/file_serving/metadata'
@@ -124,7 +124,7 @@ Puppet::Application.new(:master) do
         end
     end
 
-    setup do
+    def setup
         # Handle the logging settings.
         if options[:debug] or options[:verbose]
             if options[:debug]

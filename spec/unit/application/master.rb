@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/master'
 
-describe "PuppetMaster" do
+describe Puppet::Application::Master do
     before :each do
         @master = Puppet::Application[:master]
         @daemon = stub_everything 'daemon'
@@ -37,7 +37,7 @@ describe "PuppetMaster" do
     end
 
     it "should declare a preinit block" do
-        @master.should respond_to(:run_preinit)
+        @master.should respond_to(:preinit)
     end
 
     describe "during preinit" do
@@ -48,13 +48,13 @@ describe "PuppetMaster" do
         it "should catch INT" do
             @master.stubs(:trap).with { |arg,block| arg == :INT }
 
-            @master.run_preinit
+            @master.preinit
         end
 
         it "should create a Puppet Daemon" do
             Puppet::Daemon.expects(:new).returns(@daemon)
 
-            @master.run_preinit
+            @master.preinit
         end
 
         it "should give ARGV to the Daemon" do
@@ -62,7 +62,7 @@ describe "PuppetMaster" do
             ARGV.stubs(:dup).returns(argv)
             @daemon.expects(:argv=).with(argv)
 
-            @master.run_preinit
+            @master.preinit
         end
 
     end
@@ -128,7 +128,7 @@ describe "PuppetMaster" do
 
             Puppet::Log.expects(:level=).with(:debug)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should set log level to info if --verbose was passed" do
@@ -136,7 +136,7 @@ describe "PuppetMaster" do
 
             Puppet::Log.expects(:level=).with(:info)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should set console as the log destination if no --logdest and --daemonize" do
@@ -144,13 +144,13 @@ describe "PuppetMaster" do
 
             Puppet::Log.expects(:newdestination).with(:syslog)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should set syslog as the log destination if no --logdest and not --daemonize" do
             Puppet::Log.expects(:newdestination).with(:syslog)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should set syslog as the log destination if --rack" do
@@ -158,7 +158,7 @@ describe "PuppetMaster" do
 
             Puppet::Log.expects(:newdestination).with(:syslog)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should print puppet config if asked to in Puppet config" do
@@ -167,31 +167,31 @@ describe "PuppetMaster" do
 
             Puppet.settings.expects(:print_configs)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @master.run_setup }.should raise_error(SystemExit)
+            lambda { @master.setup }.should raise_error(SystemExit)
         end
 
         it "should tell Puppet.settings to use :main,:ssl and :puppetmasterd category" do
             Puppet.settings.expects(:use).with(:main,:puppetmasterd,:ssl)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should set node facst terminus to yaml" do
             Puppet::Node::Facts.expects(:terminus_class=).with(:yaml)
 
-            @master.run_setup
+            @master.setup
         end
 
         it "should cache class in yaml" do
             Puppet::Node.expects(:cache_class=).with(:yaml)
 
-            @master.run_setup
+            @master.setup
         end
 
         describe "with no ca" do
@@ -199,7 +199,7 @@ describe "PuppetMaster" do
             it "should set the ca_location to none" do
                 Puppet::SSL::Host.expects(:ca_location=).with(:none)
 
-                @master.run_setup
+                @master.setup
             end
 
         end
@@ -213,19 +213,19 @@ describe "PuppetMaster" do
             it "should set the ca_location to local" do
                 Puppet::SSL::Host.expects(:ca_location=).with(:local)
 
-                @master.run_setup
+                @master.setup
             end
 
             it "should tell Puppet.settings to use :ca category" do
                 Puppet.settings.expects(:use).with(:ca)
 
-                @master.run_setup
+                @master.setup
             end
 
             it "should instantiate the CertificateAuthority singleton" do
                 Puppet::SSL::CertificateAuthority.expects(:instance)
 
-                @master.run_setup
+                @master.setup
             end
 
 
@@ -234,24 +234,30 @@ describe "PuppetMaster" do
     end
 
     describe "when running" do
+        before do
+            @master.preinit
+        end
 
         it "should dispatch to parseonly if parseonly is set" do
             Puppet.stubs(:[]).with(:parseonly).returns(true)
             @master.options[:node] = nil
 
-            @master.get_command.should == :parseonly
+            @master.expects(:parseonly)
+            @master.run_command
         end
 
         it "should dispatch to compile if called with --compile" do
             @master.options[:node] = "foo"
-            @master.get_command.should == :compile
+            @master.expects(:compile)
+            @master.run_command
         end
 
         it "should dispatch to main if parseonly is not set" do
             Puppet.stubs(:[]).with(:parseonly).returns(false)
             @master.options[:node] = nil
 
-            @master.get_command.should == :main
+            @master.expects(:main)
+            @master.run_command
         end
 
 
@@ -335,7 +341,7 @@ describe "PuppetMaster" do
 
         describe "the main command" do
             before :each do
-                @master.run_preinit
+                @master.preinit
                 @server = stub_everything 'server'
                 Puppet::Network::Server.stubs(:new).returns(@server)
                 @app = stub_everything 'app'

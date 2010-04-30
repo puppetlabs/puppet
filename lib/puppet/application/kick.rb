@@ -4,7 +4,7 @@ require 'puppet/application'
 Puppet.warning "RubyGems not installed" unless Puppet.features.rubygems?
 Puppet.warning "Failed to load ruby LDAP library. LDAP functionality will not be available" unless Puppet.features.ldap?
 
-Puppet::Application.new(:kick) do
+class Puppet::Application::Kick < Puppet::Application
 
     should_not_parse_config
 
@@ -41,17 +41,16 @@ Puppet::Application.new(:kick) do
         end
     end
 
-
-    dispatch do
-        options[:test] ? :test : :main
+    def run_command
+        options[:test] ? test : main
     end
 
-    command(:test) do
+    def test
         puts "Skipping execution in test mode"
         exit(0)
     end
 
-    command(:main) do
+    def main
         require 'puppet/network/client'
         require 'puppet/util/ldap/connection'
 
@@ -147,7 +146,7 @@ Puppet::Application.new(:kick) do
         end
     end
 
-    preinit do
+    def preinit
         [:INT, :TERM].each do |signal|
             trap(signal) do
                 $stderr.puts "Cancelling"
@@ -165,7 +164,7 @@ Puppet::Application.new(:kick) do
         @tags = []
     end
 
-    setup do
+    def setup
         if options[:debug]
             Puppet::Util::Log.level = :debug
         else

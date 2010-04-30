@@ -175,7 +175,8 @@ class TypeDoc
 
 end
 
-Puppet::Application.new(:describe,"#{$0} [options] [type]") do
+class Puppet::Application::Describe < Puppet::Application
+    banner "puppet describe [options] [type]"
 
     should_not_parse_config
 
@@ -187,11 +188,11 @@ Puppet::Application.new(:describe,"#{$0} [options] [type]") do
     option("--list", "-l")
     option("--meta","-m")
 
-    preinit do
+    def preinit
         options[:parameters] = true
     end
 
-    command(:main) do
+    def main
         doc = TypeDoc.new
 
         if options[:list]
@@ -201,7 +202,7 @@ Puppet::Application.new(:describe,"#{$0} [options] [type]") do
         end
     end
 
-    setup do
+    def setup
         options[:types] = Puppet::Util::CommandLine.args.dup
         unless options[:list] || options[:types].size > 0
             handle_help(nil)

@@ -5,13 +5,12 @@ require 'puppet/resource/catalog'
 require 'puppet/indirector/catalog/queue'
 require 'puppet/util'
 
-Puppet::Application.new(:queue) do
-    extend Puppet::Util
+class Puppet::Application::Queue < Puppet::Application
     should_parse_config
 
     attr_accessor :daemon
 
-    preinit do
+    def preinit
         @daemon = Puppet::Daemon.new
         @daemon.argv = ARGV.dup
         Puppet::Util::Log.newdestination(:console)
@@ -41,13 +40,13 @@ Puppet::Application.new(:queue) do
     option("--debug","-d")
     option("--verbose","-v")
 
-    command(:main) do
+    def main
         Puppet.notice "Starting puppetqd %s" % Puppet.version
         Puppet::Resource::Catalog::Queue.subscribe do |catalog|
             # Once you have a Puppet::Resource::Catalog instance, calling save() on it should suffice
             # to put it through to the database via its active_record indirector (which is determined
             # by the terminus_class = :active_record setting above)
-            benchmark(:notice, "Processing queued catalog for %s" % catalog.name) do
+            Puppet::Util.benchmark(:notice, "Processing queued catalog for %s" % catalog.name) do
                 begin
                     catalog.save
                 rescue => detail
@@ -72,7 +71,7 @@ Puppet::Application.new(:queue) do
         end
     end
 
-    setup do
+    def setup
         unless Puppet.features.stomp?
             raise ArgumentError, "Could not load the 'stomp' library, which must be present for queueing to work.  You must install the required library."
         end

@@ -4,11 +4,11 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/doc'
 
-describe "doc" do
+describe Puppet::Application::Doc do
     before :each do
         @doc = Puppet::Application[:doc]
         @doc.stubs(:puts)
-        @doc.run_preinit
+        @doc.preinit
         Puppet::Util::Log.stubs(:newdestination)
         Puppet::Util::Log.stubs(:level=)
     end
@@ -34,24 +34,24 @@ describe "doc" do
     end
 
     it "should declare a preinit block" do
-        @doc.should respond_to(:run_preinit)
+        @doc.should respond_to(:preinit)
     end
 
     describe "in preinit" do
         it "should set references to []" do
-            @doc.run_preinit
+            @doc.preinit
 
             @doc.options[:references].should == []
         end
 
         it "should init mode to text" do
-            @doc.run_preinit
+            @doc.preinit
 
             @doc.options[:mode].should == :text
         end
 
         it "should init format to to_rest" do
-            @doc.run_preinit
+            @doc.preinit
 
             @doc.options[:format].should == :to_rest
         end
@@ -137,7 +137,7 @@ describe "doc" do
 
             @doc.options.expects(:[]=).with(:mode,:rdoc)
 
-            @doc.run_setup
+            @doc.setup
         end
 
         it "should call setup_rdoc in rdoc mode" do
@@ -145,7 +145,7 @@ describe "doc" do
 
             @doc.expects(:setup_rdoc)
 
-            @doc.run_setup
+            @doc.setup
         end
 
         it "should call setup_reference if not rdoc" do
@@ -153,7 +153,7 @@ describe "doc" do
 
             @doc.expects(:setup_reference)
 
-            @doc.run_setup
+            @doc.setup
         end
 
         describe "in non-rdoc mode" do

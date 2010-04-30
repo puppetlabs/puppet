@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/cert'
 
-describe "PuppetCA" do
+describe Puppet::Application::Cert do
     before :each do
         @cert_app = Puppet::Application[:cert]
         Puppet::Util::Log.stubs(:newdestination)
@@ -74,7 +74,7 @@ describe "PuppetCA" do
         it "should set console as the log destination" do
             Puppet::Log.expects(:newdestination).with(:console)
 
-            @cert_app.run_setup
+            @cert_app.setup
         end
 
         it "should print puppet config if asked to in Puppet config" do
@@ -83,25 +83,25 @@ describe "PuppetCA" do
 
             Puppet.settings.expects(:print_configs)
 
-            @cert_app.run_setup
+            @cert_app.setup
         end
 
         it "should exit after printing puppet config if asked to in Puppet config" do
             Puppet.settings.stubs(:print_configs?).returns(true)
 
-            lambda { @cert_app.run_setup }.should raise_error(SystemExit)
+            lambda { @cert_app.setup }.should raise_error(SystemExit)
         end
 
         it "should set the CA location to 'only'" do
             Puppet::SSL::Host.expects(:ca_location=).with(:only)
 
-            @cert_app.run_setup
+            @cert_app.setup
         end
 
         it "should create a new certificate authority" do
             Puppet::SSL::CertificateAuthority.expects(:new)
 
-            @cert_app.run_setup
+            @cert_app.setup
         end
     end
 
