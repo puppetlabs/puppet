@@ -29,7 +29,8 @@ Puppet::Type.newtype(:file) do
         isnamevar
 
         validate do |value|
-            unless value =~ /^#{File::SEPARATOR}/
+            # use underlying platform's convention to check for relative paths
+            unless File.expand_path(value) == value
                 fail Puppet::Error,"File paths must be fully qualified, not '#{value}'"
             end
         end

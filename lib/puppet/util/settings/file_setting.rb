@@ -49,9 +49,9 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     # the variable 'dir', or adding a slash at the end.
     def munge(value)
         # If it's not a fully qualified path...
-        if value.is_a?(String) and value !~ /^\$/ and value !~ /^\// and value != 'false'
+        if value.is_a?(String) and value !~ /^\$/ and value != 'false'
             # Make it one
-            value = File.join(Dir.getwd, value)
+            value = File.expand_path(value)
         end
         if value.to_s =~ /\/$/
             @type = :directory
@@ -83,7 +83,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
         return nil unless path.is_a?(String)
 
         # Make sure the paths are fully qualified.
-        path = File.join(Dir.getwd, path) unless path =~ /^\//
+        path = File.expand_path(path)
 
         return nil unless type == :directory or create_files? or File.exist?(path)
         return nil if path =~ /^\/dev/

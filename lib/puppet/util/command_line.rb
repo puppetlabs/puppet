@@ -62,7 +62,7 @@ module Puppet
             private
 
             def subcommand_and_args( zero, argv, stdin )
-                zero = zero.gsub(/.*#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
+                zero = File.basename(zero, '.rb')
 
                 if zero == 'puppet'
                     case argv.first
