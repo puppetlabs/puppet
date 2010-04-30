@@ -25,7 +25,7 @@ require 'optparse'
 #
 #     # run_command is called to actually run the specified command
 #     def run_command
-#         send Puppet::Util::CommandLine.args.shift
+#         send Puppet::Util::CommandLine.new.args.shift
 #     end
 #
 #     # option uses metaprogramming to create a method
