@@ -152,7 +152,7 @@ describe Puppet::Application::Filebucket do
         end
 
         it "should use the first non-option parameter as the dispatch" do
-            Puppet::Util::CommandLine.stubs(:args).returns([:get])
+            @filebucket.command_line.stubs(:args).returns(['get'])
 
             @filebucket.expects(:get)
 

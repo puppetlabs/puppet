@@ -135,12 +135,12 @@ describe Puppet::Application::Resource do
 
         before :each do
             @type = stub_everything 'type', :properties => []
-            Puppet::Util::CommandLine.stubs(:args).returns(['type'])
+            @resource.command_line.stubs(:args).returns(['type'])
             Puppet::Type.stubs(:type).returns(@type)
         end
 
         it "should raise an error if no type is given" do
-            Puppet::Util::CommandLine.stubs(:args).returns([])
+            @resource.command_line.stubs(:args).returns([])
             lambda { @resource.main }.should raise_error
         end
 
@@ -168,19 +168,20 @@ describe Puppet::Application::Resource do
             end
 
             it "should search for resources" do
+                @resource.command_line.stubs(:args).returns(['type'])
                 Puppet::Resource.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
                 @resource.main
             end
 
             it "should describe the given resource" do
-                Puppet::Util::CommandLine.stubs(:args).returns(['type', 'name'])
+                @resource.command_line.stubs(:args).returns(['type', 'name'])
                 x = stub_everything 'resource'
                 Puppet::Resource.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
                 @resource.main
             end
 
             it "should add given parameters to the object" do
-                Puppet::Util::CommandLine.stubs(:args).returns(['type','name','param=temp'])
+                @resource.command_line.stubs(:args).returns(['type','name','param=temp'])
 
                 res = stub "resource"
                 res.expects(:save).with('https://host:8139/production/resources/type/name').returns(res)
@@ -209,14 +210,14 @@ describe Puppet::Application::Resource do
             end
 
             it "should describe the given resource" do
-                Puppet::Util::CommandLine.stubs(:args).returns(['type','name'])
+                @resource.command_line.stubs(:args).returns(['type','name'])
                 x = stub_everything 'resource'
                 Puppet::Resource.expects(:find).with('type/name').returns(x)
                 @resource.main
             end
 
             it "should add given parameters to the object" do
-                Puppet::Util::CommandLine.stubs(:args).returns(['type','name','param=temp'])
+                @resource.command_line.stubs(:args).returns(['type','name','param=temp'])
 
                 res = stub "resource"
                 res.expects(:save).with('type/name').returns(res)

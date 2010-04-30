@@ -75,7 +75,7 @@ module Puppet
                     puts self.class.usage_message
                 elsif self.class.available_subcommands.include?(subcommand_name) #subcommand
                     require File.join(self.class.appdir, subcommand_name)
-                    Puppet::Application[subcommand_name].run
+                    Puppet::Application.find(subcommand_name).new(self).run
                 else
                     abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}"
                 end

@@ -38,7 +38,7 @@ class Puppet::Application::Resource < Puppet::Application
     end
 
     def main
-        args = Puppet::Util::CommandLine.args
+        args = command_line.args
         type = args.shift or raise "You must specify the type to display"
         typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
         name = args.shift

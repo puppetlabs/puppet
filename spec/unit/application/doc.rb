@@ -128,11 +128,11 @@ describe Puppet::Application::Doc do
 
         before :each do
             Puppet::Log.stubs(:newdestination)
-            Puppet::Util::CommandLine.stubs(:args).returns([])
+            @doc.command_line.stubs(:args).returns([])
         end
 
         it "should default to rdoc mode if there are command line arguments" do
-            Puppet::Util::CommandLine.stubs(:args).returns(["1"])
+            @doc.command_line.stubs(:args).returns(["1"])
             @doc.stubs(:setup_rdoc)
 
             @doc.options.expects(:[]=).with(:mode,:rdoc)
@@ -304,7 +304,7 @@ describe Puppet::Application::Doc do
                 @doc.stubs(:exit)
                 File.stubs(:expand_path).with('modules').returns('modules')
                 File.stubs(:expand_path).with('manifests').returns('manifests')
-                Puppet::Util::CommandLine.stubs(:args).returns([])
+                @doc.command_line.stubs(:args).returns([])
             end
 
             it "should set document_all on --all" do

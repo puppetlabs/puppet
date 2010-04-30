@@ -66,10 +66,10 @@ class Puppet::Application::Apply < Puppet::Application
 
     def parseonly
         # Set our code or file to use.
-        if options[:code] or Puppet::Util::CommandLine.args.length == 0
+        if options[:code] or command_line.args.length == 0
             Puppet[:code] = options[:code] || STDIN.read
         else
-            Puppet[:manifest] = Puppet::Util::CommandLine.args.shift
+            Puppet[:manifest] = command_line.args.shift
         end
         begin
             Puppet::Resource::TypeCollection.new(Puppet[:environment]).perform_initial_import
@@ -82,10 +82,10 @@ class Puppet::Application::Apply < Puppet::Application
 
     def main
         # Set our code or file to use.
-        if options[:code] or Puppet::Util::CommandLine.args.length == 0
+        if options[:code] or command_line.args.length == 0
             Puppet[:code] = options[:code] || STDIN.read
         else
-            Puppet[:manifest] = Puppet::Util::CommandLine.args.shift
+            Puppet[:manifest] = command_line.args.shift
         end
 
         # Collect our facts.

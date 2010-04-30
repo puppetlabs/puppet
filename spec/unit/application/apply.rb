@@ -204,7 +204,7 @@ describe Puppet::Application::Apply do
             end
 
             it "should set the code to run from STDIN if no arguments" do
-                Puppet::Util::CommandLine.stubs(:args).returns([])
+                @apply.command_line.stubs(:args).returns([])
                 STDIN.stubs(:read).returns("code to run")
 
                 Puppet.expects(:[]=).with(:code,"code to run")
@@ -213,7 +213,7 @@ describe Puppet::Application::Apply do
             end
 
             it "should set the manifest if some files are passed on command line" do
-                Puppet::Util::CommandLine.stubs(:args).returns(['site.pp'])
+                @apply.command_line.stubs(:args).returns(['site.pp'])
 
                 Puppet.expects(:[]=).with(:manifest,"site.pp")
 

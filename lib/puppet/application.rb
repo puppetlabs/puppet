@@ -229,7 +229,7 @@ class Puppet::Application
         end
     end
 
-    attr_reader :options, :opt_parser
+    attr_reader :options, :opt_parser, :command_line
 
     # Every app responds to --version
     option("--version", "-V") do |arg|
@@ -250,7 +250,8 @@ class Puppet::Application
     def preinit
     end
 
-    def initialize
+    def initialize(command_line = nil)
+        @command_line = command_line || Puppet::Util::CommandLine.new
         @opt_parser = self.class.new_option_parser( self )
 
         @options = {}

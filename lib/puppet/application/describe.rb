@@ -203,7 +203,7 @@ class Puppet::Application::Describe < Puppet::Application
     end
 
     def setup
-        options[:types] = Puppet::Util::CommandLine.args.dup
+        options[:types] = command_line.args.dup
         unless options[:list] || options[:types].size > 0
             handle_help(nil)
         end
