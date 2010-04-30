@@ -133,34 +133,15 @@ describe "resource" do
 
     describe "when running" do
 
-        def set_args(args)
-            (ARGV.clear << args).flatten!
-        end
-
-        def push_args(*args)
-            @args_stack ||= []
-            @args_stack << ARGV.dup
-            set_args(args)
-        end
-
-        def pop_args
-            set_args(@args_stack.pop)
-        end
-
         before :each do
             @type = stub_everything 'type', :properties => []
-            push_args('type')
+            Puppet::Util::CommandLine.stubs(:args).returns(['type'])
             Puppet::Type.stubs(:type).returns(@type)
         end
 
-        after :each do
-            pop_args
-        end
-
         it "should raise an error if no type is given" do
-            push_args
+            Puppet::Util::CommandLine.stubs(:args).returns([])
             lambda { @resource.main }.should raise_error
-            pop_args
         end
 
         it "should raise an error when editing a remote host" do
@@ -192,15 +173,14 @@ describe "resource" do
             end
 
             it "should describe the given resource" do
-                push_args('type','name')
+                Puppet::Util::CommandLine.stubs(:args).returns(['type', 'name'])
                 x = stub_everything 'resource'
                 Puppet::Resource.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
                 @resource.main
-                pop_args
             end
 
             it "should add given parameters to the object" do
-                push_args('type','name','param=temp')
+                Puppet::Util::CommandLine.stubs(:args).returns(['type','name','param=temp'])
 
                 res = stub "resource"
                 res.expects(:save).with('https://host:8139/production/resources/type/name').returns(res)
@@ -209,7 +189,6 @@ describe "resource" do
                 Puppet::Resource.expects(:new).with('type', 'name', {'param' => 'temp'}).returns(res)
 
                 @resource.main
-                pop_args
             end
 
         end
@@ -230,15 +209,14 @@ describe "resource" do
             end
 
             it "should describe the given resource" do
-                push_args('type','name')
+                Puppet::Util::CommandLine.stubs(:args).returns(['type','name'])
                 x = stub_everything 'resource'
                 Puppet::Resource.expects(:find).with('type/name').returns(x)
                 @resource.main
-                pop_args
             end
 
             it "should add given parameters to the object" do
-                push_args('type','name','param=temp')
+                Puppet::Util::CommandLine.stubs(:args).returns(['type','name','param=temp'])
 
                 res = stub "resource"
                 res.expects(:save).with('type/name').returns(res)
@@ -247,7 +225,6 @@ describe "resource" do
                 Puppet::Resource.expects(:new).with('type', 'name', {'param' => 'temp'}).returns(res)
 
                 @resource.main
-                pop_args
             end
 
         end

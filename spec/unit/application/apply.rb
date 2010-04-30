@@ -201,7 +201,7 @@ describe "Puppet" do
             end
 
             it "should set the code to run from STDIN if no arguments" do
-                ARGV.stubs(:length).returns(0)
+                Puppet::Util::CommandLine.stubs(:args).returns([])
                 STDIN.stubs(:read).returns("code to run")
 
                 Puppet.expects(:[]=).with(:code,"code to run")
@@ -210,8 +210,7 @@ describe "Puppet" do
             end
 
             it "should set the manifest if some files are passed on command line" do
-                ARGV.stubs(:length).returns(1)
-                ARGV.stubs(:shift).returns("site.pp")
+                Puppet::Util::CommandLine.stubs(:args).returns(['site.pp'])
 
                 Puppet.expects(:[]=).with(:manifest,"site.pp")
 

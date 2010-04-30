@@ -70,7 +70,7 @@ Puppet::Application.new(:doc) do
             files += env.modulepath
             files << File.dirname(env[:manifest])
         end
-        files += ARGV
+        files += Puppet::Util::CommandLine.args
         Puppet.info "scanning: %s" % files.inspect
         Puppet.settings.setdefaults("puppetdoc",
             "document_all" => [false, "Document all resources"]
@@ -167,7 +167,7 @@ Puppet::Application.new(:doc) do
 
     setup do
         # sole manifest documentation
-        if ARGV.size > 0
+        if Puppet::Util::CommandLine.args.size > 0
             options[:mode] = :rdoc
             @manifest = true
         end

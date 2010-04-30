@@ -50,8 +50,8 @@ describe Puppet::Application[:describe] do
     end
 
     describe "during setup" do
-        it "should collect ARGV in options[:types]" do
-            ARGV.stubs(:dup).returns(['1','2'])
+        it "should collect arguments in options[:types]" do
+            Puppet::Util::CommandLine.stubs(:args).returns(['1','2'])
             @describe.run_setup
 
             @describe.options[:types].should == ['1','2']

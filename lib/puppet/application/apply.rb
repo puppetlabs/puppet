@@ -66,10 +66,10 @@ Puppet::Application.new(:apply) do
 
     command(:parseonly) do
         # Set our code or file to use.
-        if options[:code] or ARGV.length == 0
+        if options[:code] or Puppet::Util::CommandLine.args.length == 0
             Puppet[:code] = options[:code] || STDIN.read
         else
-            Puppet[:manifest] = ARGV.shift
+            Puppet[:manifest] = Puppet::Util::CommandLine.args.shift
         end
         begin
             Puppet::Resource::TypeCollection.new(Puppet[:environment]).perform_initial_import
@@ -82,10 +82,10 @@ Puppet::Application.new(:apply) do
 
     command(:main) do
         # Set our code or file to use.
-        if options[:code] or ARGV.length == 0
+        if options[:code] or Puppet::Util::CommandLine.args.length == 0
             Puppet[:code] = options[:code] || STDIN.read
         else
-            Puppet[:manifest] = ARGV.shift
+            Puppet[:manifest] = Puppet::Util::CommandLine.args.shift
         end
 
         # Collect our facts.

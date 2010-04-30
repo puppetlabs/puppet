@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/filebucket'
 
-describe "Filebucket" do
+describe Puppet::Application[:filebucket] do
     before :each do
         @filebucket = Puppet::Application[:filebucket]
     end
@@ -152,7 +152,7 @@ describe "Filebucket" do
         end
 
         it "should use the first non-option parameter as the dispatch" do
-            ARGV.stubs(:shift).returns(:get)
+            Puppet::Util::CommandLine.stubs(:args).returns([:get])
 
             @filebucket.get_command.should == :get
         end
@@ -171,7 +171,7 @@ describe "Filebucket" do
 
             it "should call the client getfile method with the given md5" do
                 md5="DEADBEEF"
-                ARGV.stubs(:shift).returns(md5)
+                @filebucket.stubs(:args).returns([md5])
 
                 @client.expects(:getfile).with(md5)
 
@@ -193,7 +193,7 @@ describe "Filebucket" do
                 @filebucket.stubs(:puts)
                 FileTest.stubs(:exists?).returns(true)
                 FileTest.stubs(:readable?).returns(true)
-                ARGV.stubs(:each).multiple_yields("file1","file2")
+                @filebucket.stubs(:args).returns(["file1", "file2"])
 
                 @client.expects(:backup).with("file1")
                 @client.expects(:backup).with("file2")
@@ -206,7 +206,7 @@ describe "Filebucket" do
             it "should call the client getfile method with the given md5" do
                 md5="DEADBEEF"
                 file="testfile"
-                ARGV.stubs(:shift).returns(file,md5)
+                @filebucket.stubs(:args).returns([file, md5])
 
                 @client.expects(:restore).with(file,md5)
 

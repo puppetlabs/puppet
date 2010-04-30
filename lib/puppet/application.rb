@@ -25,7 +25,7 @@ require 'optparse'
 #
 #     # dispatch is called to know to what command to call
 #     dispatch do
-#         ARGV.shift
+#         Puppet::Util::CommandLine.args.shift
 #     end
 #
 #     option("--arg ARGUMENT") do |v|

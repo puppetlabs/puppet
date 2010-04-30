@@ -5,19 +5,8 @@ module Puppet
     conf = nil
     var = nil
 
-    legacy_name = Hash.new{ |h,k| k }.update({
-        'agent'      => 'puppetd',
-        'cert'       => 'puppetca',
-        'doc'        => 'puppetdoc',
-        'filebucket' => 'filebucket',
-        'apply'      => 'puppet',
-        'describe'   => 'pi',
-        'queue'      => 'puppetqd',
-        'resource'   => 'ralsh',
-        'kick'       => 'puppetrun',
-        'master'     => 'puppetmasterd',
-    })
-    name = legacy_name[ $puppet_subcommand_name ] || $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
+    require 'puppet/util/command_line'
+    name = Puppet::Util::CommandLine.legacy_executable_name
 
     # Make File.expand_path happy
     require 'etc'

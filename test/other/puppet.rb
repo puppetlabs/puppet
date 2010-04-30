@@ -86,14 +86,7 @@ class TestPuppetModule < Test::Unit::TestCase
     end
 
     def test_name
-        # Make sure it defaults to $0 without the rb
-        should = $0.gsub(/.+#{File::SEPARATOR}/,'').sub(/\.rb$/, '')
-
-        assert_equal(should, Puppet[:name], "default name was not right")
-
-        assert_nothing_raised("Could not reset name") do
-            Puppet[:name] = "puppetca"
-        end
+        Puppet[:name] = "puppetca"
 
         assert_equal("puppetca", Puppet[:name], "name reset did not take")
     end

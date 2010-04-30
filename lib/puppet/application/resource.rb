@@ -38,11 +38,12 @@ Puppet::Application.new(:resource) do
     end
 
     command(:main) do
-        type = ARGV.shift or raise "You must specify the type to display"
+        args = Puppet::Util::CommandLine.args
+        type = args.shift or raise "You must specify the type to display"
         typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
-        name = ARGV.shift
+        name = args.shift
         params = {}
-        ARGV.each do |setting|
+        args.each do |setting|
             if setting =~ /^(\w+)=(.+)$/
                 params[$1] = $2
             else

@@ -12,18 +12,23 @@ Puppet::Application.new(:filebucket) do
     option("--remote","-r")
     option("--verbose","-v")
 
+    class << self
+        attr :args
+    end
+
     dispatch do
-        ARGV.shift
+        @args = Puppet::Util::CommandLine.args
+        args.shift
     end
 
     command(:get) do
-        md5 = ARGV.shift
+        md5 = args.shift
         out = @client.getfile(md5)
         print out
     end
 
     command(:backup) do
-        ARGV.each do |file|
+        args.each do |file|
             unless FileTest.exists?(file)
                 $stderr.puts "%s: no such file" % file
                 next
@@ -38,8 +43,8 @@ Puppet::Application.new(:filebucket) do
     end
 
     command(:restore) do
-        file = ARGV.shift
-        md5 = ARGV.shift
+        file = args.shift
+        md5 = args.shift
         @client.restore(file, md5)
     end
 

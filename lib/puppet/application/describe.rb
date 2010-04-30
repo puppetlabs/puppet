@@ -202,7 +202,7 @@ Puppet::Application.new(:describe,"#{$0} [options] [type]") do
     end
 
     setup do
-        options[:types] = ARGV.dup
+        options[:types] = Puppet::Util::CommandLine.args.dup
         unless options[:list] || options[:types].size > 0
             handle_help(nil)
         end

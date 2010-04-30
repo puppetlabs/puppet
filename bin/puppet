@@ -77,13 +77,13 @@ usage = "Usage: puppet command <space separated arguments>"
 available = "Available commands are: #{builtins.sort.join(', ')}"
 
 require 'puppet/util/command_line'
-$puppet_subcommand_name = Puppet::Util::CommandLine.shift_subcommand_from_argv
+subcommand_name = Puppet::Util::CommandLine.subcommand_name
 
-if $puppet_subcommand_name.nil?
+if subcommand_name.nil?
     puts usage, available
-elsif builtins.include?($puppet_subcommand_name) #subcommand
-    require File.join(appdir, $puppet_subcommand_name)
-    Puppet::Application[$puppet_subcommand_name].run
+elsif builtins.include?(subcommand_name) #subcommand
+    require File.join(appdir, subcommand_name)
+    Puppet::Application[subcommand_name].run
 else
-    abort "Error: Unknown command #{$puppet_subcommand_name}.\n#{usage}\n#{available}"
+    abort "Error: Unknown command #{subcommand_name}.\n#{usage}\n#{available}"
 end
