@@ -312,7 +312,7 @@ class Puppet::Application
             self.option_parser.parse!
         rescue OptionParser::ParseError => detail
             $stderr.puts detail
-            $stderr.puts "Try '#{$0} --help'"
+            $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"
             exit(1)
         end
     end
