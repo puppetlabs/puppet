@@ -1,5 +1,32 @@
+0.25.5rc2
+=========
+5258a0a  Fixing #3533 - Removing all transaction cleanup
+bcde541  Fix for #2910 -- Tidy/matches is too tricky to use
+5abe571  Bug #3451: Don't leak the terminus class setting from Puppet::Resource::Catalog's spec
+ebd924c  Fix to the fix for #3295
+ce233aa  Write ssh_authorized_keys as user
+6739bab  Fix for #3558 -- source file reading speedup
+b0e3c61  Fix for #3556 Plussignment value melding
+8a30495  Fixed #3655  - Puppet doesn't find installed packages with portage provider
+e4130af  Fixed #3672 - Error message on duplicate fileserver mounts incorrect
+1275a47  conf/redhat: Add notifempty to logrotate config
+134204d  Fixed stored configuration documentation
+1aa98a6  Fixes #3653 - Changed default factpath value to better reflect plugins in modules
+44f6d64  Partial fix to #2837 - changed warning message to debug
+3a1b178  Fix #3555 - fix state of purged lists
+f6046ab  Fix for #3577 -- to_yaml parameter in 0.25.5rc1
+f351e2d  Renamed all references to Reductive Labs to Puppet Labs
+cf7e696  Updated Rake tasks to no longer load puppet.rb
+b93924e  Fix #3540 - name methods correctly
+9bc2f28  Fixes #3295 - generate() now sets the working directory to the directory containing the specified command.
+3ee6834  Added YARD task
+99818ef  Update man pages and partial doc fix to #3491
+f988af3  Fixed #3532 - Typo in lib/puppet/ssl/host.rb
+f0e12e5  Fix #3496 - suppress transaction debug message
+
 0.25.5rc1
 =========
+0eea2f5  Updated version and CHANGELOG to 0.25.5rc1
 57ae381  Modify SuSE spec file for 0.25.x and correct shebang lines for puppetd/puppetmasterd
 d90ec79  Fixes #3460 - Makes Puppet FHS compliant by moving /var/puppet to /var/lib/puppet
 ae0b0bf  Fix for #3101 (bug in MRI 1.8.7)
