@@ -1,16 +1,17 @@
 # Augeas and SELinux requirements may be disabled at build time by passing
 # --without augeas and/or --without selinux to rpmbuild or mock
 
-%{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
-%define confdir conf/redhat
+%{!?ruby_sitelibdir: %global ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
+%global confdir conf/redhat
 
 Name:           puppet
-Version:        0.25.2
+Version:        0.25.5
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
-URL:            http://puppet.reductivelabs.com/
-Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+URL:            http://puppetlabs.com
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.sign
 Patch0:         rundir-perms.patch
 Group:          System Environment/Base
 
@@ -26,10 +27,10 @@ Requires:       ruby-shadow
 %endif
 
 # Pull in ruby selinux bindings where available
-%if 0%{?fedora}
-%if 0%{?fedora} >= 12
+%if 0%{?fedora} >= 12 || 0%{?rhel} >= 6
 %{!?_without_selinux:Requires: ruby(selinux)}
 %else
+%if 0%{?fedora} || 0%{?rhel} >= 5
 %{!?_without_selinux:Requires: libselinux-ruby}
 %endif
 %endif
@@ -65,7 +66,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-%patch0 -p1
+patch -p1 < conf/redhat/rundir-perms.patch
 
 %build
 # Fix some rpmlint complaints
@@ -153,9 +154,9 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
+%{_mandir}/man5/puppet.conf.5.gz
 %{_mandir}/man8/pi.8.gz
 %{_mandir}/man8/puppet.8.gz
-%{_mandir}/man8/puppet.conf.8.gz
 %{_mandir}/man8/puppetca.8.gz
 %{_mandir}/man8/puppetd.8.gz
 %{_mandir}/man8/ralsh.8.gz
@@ -220,6 +221,11 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Mon May 03 2010 Todd Zullinger <tmz@pobox.com> - 0.25.5-1
+- Update to 0.25.5
+- Adjust selinux conditional for EL-6
+- Apply rundir-perms patch from tarball rather than including it separately
+
 * Fri Jan 01 2010 Todd Zullinger <tmz@pobox.com> - 0.25.2-1
 - Update to 0.25.2
 - Install auth.conf, puppetqd manpage, and queuing examples/docs
