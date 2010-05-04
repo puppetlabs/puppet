@@ -29,7 +29,7 @@
 #
 # = Copyright
 #
-# Copyright (c) 2009 Reductive Labs, Inc.
+# Copyright (c) 2009 Puppet Labs, Inc.
 # Licensed under the GPL2
 
 require 'yaml'
