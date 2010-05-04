@@ -6,6 +6,7 @@ Puppet::Reports.register_report(:log) do
 
     def process
         self.logs.each do |log|
+            log.source = "//" + self.host + "/" + log.source
             Puppet::Util::Log.newmessage(log)
         end
     end
