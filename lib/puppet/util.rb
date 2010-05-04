@@ -285,29 +285,15 @@ module Util
             # Child process executes this
             Process.setsid
             begin
-                if arguments[:stdinfile]
-                    $stdin.reopen(arguments[:stdinfile])
-                else
-                    $stdin.reopen("/dev/null")
-                end
+                $stdin.reopen(arguments[:stdinfile] || "/dev/null")
                 $stdout.reopen(output_file)
                 $stderr.reopen(error_file)
 
                 3.upto(256){|fd| IO::new(fd).close rescue nil}
-                if arguments[:gid]
-                    Process.egid = arguments[:gid]
-                    Process.gid = arguments[:gid] unless @@os == "Darwin"
-                end
-                if arguments[:uid]
-                    Process.euid = arguments[:uid]
-                    Process.uid = arguments[:uid] unless @@os == "Darwin"
-                end
+                Process::GID.change_privilege arguments[:gid] if arguments[:gid]
+                Process::UID.change_privilege arguments[:uid] if arguments[:uid]
                 ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-                if command.is_a?(Array)
-                    Kernel.exec(*command)
-                else
-                    Kernel.exec(command)
-                end
+                Kernel.exec(*command)
             rescue => detail
                 puts detail.to_s
                 exit!(1)
