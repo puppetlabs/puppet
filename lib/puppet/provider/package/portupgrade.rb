@@ -1,251 +1,234 @@
-# Puppet::Type.type(:package).provide :portupgrade, :parent => :freebsd, :source => :freebsd do
-
 Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::Package do
-    include Puppet::Util::Execution
+	include Puppet::Util::Execution
 
-    desc "Support for FreeBSD's ports using the portupgrade ports management software.
-	  Use the port's full origin as the resource name. eg (ports-mgmt/portupgrade)
-	  for the portupgrade port."
+	desc "Support for FreeBSD's ports using the portupgrade ports management software.
+	      Use the port's full origin as the resource name. eg (ports-mgmt/portupgrade)
+	      for the portupgrade port."
 
-    commands :portupgrade => "/usr/local/sbin/portupgrade",
-	     :portinstall => "/usr/local/sbin/portinstall",
-             :portversion => "/usr/local/sbin/portversion",
-             :portuninstall => "/usr/local/sbin/pkg_deinstall",
-             :portinfo => "/usr/sbin/pkg_info"
+	commands :portupgrade   => "/usr/local/sbin/portupgrade",
+	         :portinstall   => "/usr/local/sbin/portinstall",
+	         :portversion   => "/usr/local/sbin/portversion",
+	         :portuninstall => "/usr/local/sbin/pkg_deinstall",
+	         :portinfo      => "/usr/sbin/pkg_info"
 
+## Activate this only once approved by someone important.
 #    defaultfor :operatingsystem => :freebsd
 
-    # Remove unwanted environment variables.
-    %w{INTERACTIVE UNAME}.each do |var|
-        if ENV.include?(var)
-            ENV.delete(var)
-        end
-    end
-
-    ######## instances sub command (builds the installed packages list)
-
-    def self.instances
-	Puppet.debug "portupgrade.rb Building packages list from installed ports"
-
-	# regex to match output from pkg_info
-	regex = %r{^(\S+)-([^-\s]+):(\S+)$}
-	# Corresponding field names
-	fields = [:portname, :ensure, :portorigin]
-	# define Temporary hash used, packages array of hashes
-	hash = Hash.new
-	packages = []
-
-	#exec command
-	cmd = ["-aoQ"]
-	begin
-		output = portinfo(*cmd)
-	rescue Puppet::ExecutionFailure
-		raise Puppet::Error.new(output)
-		return nil
-	end
-
-	# split output and match it and populate temp hash
-	output.split("\n").each { |data|
-		# reset hash to nil.
-		hash.clear
-		if match = regex.match(data)
-			# Output matched regex
-			fields.zip(match.captures) { |field, value|
-				hash[field] = value
-			}
-	
-			# populate the actual :name field from the :portorigin
-			# Set :provider to this object name
-			hash[:name] = hash[:portorigin]
-			hash[:provider] = self.name
-
-			# Add to the full packages listing
-			packages << new(hash)
-
-		else
-			# unrecognised output from pkg_info
-			Puppet.debug "portupgrade.Instances() - unable to match output: %s" % data
+	# Remove unwanted environment variables.
+	%w{INTERACTIVE UNAME}.each do |var|
+		if ENV.include?(var)
+			ENV.delete(var)
 		end
-	}
+	end	
 
-	# return the packages array of hashes
-	return packages
+	######## instances sub command (builds the installed packages list)
 
-    end
+	def self.instances
+		Puppet.debug "portupgrade.rb Building packages list from installed ports"
 
-    ######## packagename sub command
+		# regex to match output from pkg_info
+		regex = %r{^(\S+)-([^-\s]+):(\S+)$}
+		# Corresponding field names
+		fields = [:portname, :ensure, :portorigin]
+		# define Temporary hash used, packages array of hashes
+		hash = Hash.new
+		packages = []
 
-    def packagename
-	Puppet.debug "portupgrade.packagename() - checking package name: %s" % self.name
-        cmd = ["-qO", @resource[:name]]
-        begin
-                output = portinfo(*cmd)
-        rescue Puppet::ExecutionFailure
-                raise Puppet::Error.new(output)
-        end
-
-	if output =~ /^(\S+)\s+/
-		self.packagename = $1
-		return $1
-	end
-
-	return nil
-    end
-	
-    ######## Installation sub command
-
-    def install
-	Puppet.debug "portupgrade.install() - Installation call on %s" % @resource[:name]
-        # -M: yes, we're a batch, so don't ask any questions
-        cmd = %w{-M BATCH=yes} << @resource[:name]
-
-        output = portinstall(*cmd)
-        if output =~ /\*\* No such /
-            raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
-        end
-    end
-
-    ######## Latest subcommand (returns the latest version available, or current version if installed is latest)
-	
-    def latest
-	Puppet.debug "portupgrade.latest() - Latest check called on %s" % @resource[:name]
-	# search for latest version available, or return current version.
-	# cmd = "portversion -v <portorigin>", returns "<portname> <code> <stuff>"
-	# or "** No matching package found: <portname>"
-        cmd = ["-v", @resource[:name]]
-
-        begin
-            output = portversion(*cmd)
-        rescue Puppet::ExecutionFailure
-            raise Puppet::Error.new(output)
-        end
-
-	# Check: output format.
-	if output =~ /^\S+-([^-\s]+)\s+(\S)\s+(.*)/
-		# $1 = installed version, $2 = comparison, $3 other data
-		# latest installed
-		installedversion = $1
-		comparison = $2
-		otherdata = $3
-		
-		case comparison
-		when "=", ">"
-			Puppet.debug "portupgrade.latest() - Installed package is latest (%s)" % installedversion
-			return installedversion
-		when "<"
-			# "portpkg-1.7_5  <  needs updating (port has 1.14)"
-			# "portpkg-1.7_5  <  needs updating (port has 1.14) (=> 'newport/pkg')
-			if otherdata =~ /\(port has (\S+)\)/
-				newversion = $1
-				Puppet.debug "portupgrade.latest() - Installed version needs updating to (%s)" % newversion
-				return newversion
-			else
-				Puppet.debug "portupgrade.latest() - Unable to determine new version from (%s)" % otherdata
-				return installedversion
-			end
-		when "?", "!", "#"
-			Puppet.debug "portupgrade.latest() - Comparison Error reported from portversion (%s)" % output
-			return installedversion
-		else
-			Puppet.debug "portupgrade.latest() - Unknown code from portversion output (%s)" % output
-			return installedversion
-		end
-		
-	else
-		# error: output not parsed correctly, error out with nil.
-		if output =~ /^\*\* No matching package /
-			raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
-		else
-			# Any other error (dump output to log)
-			raise Puppet::ExecutionFailure, "Unexpected output from portversion: %s" % output
-		end
-
-		# Just in case we still are running, return nil
-		return nil
-
-	end
-
-	# At this point normal operation has finished and we shouldn't have been called.
-	# Error out and let the admin deal with it.
-	raise Puppet::Error, "portversion.latest() - fatal error with portversion: %s" % output
-	return nil
-	
-    end
-
-    ###### Query subcommand - return a hash of details if exists, or nil if it doesn't.
-	# Used to make sure the package is installed
-
-    def query
-	Puppet.debug "portupgrade.query() - Called on %s" % @resource[:name]
-
-	cmd = ["-qO", @resource[:name]]
-	begin
-		output = portinfo(*cmd)
-	rescue Puppet::ExecutionFailure
-		raise Puppet::Error.new(output)
-	end
-
-	# Check: if output isn't in the right format, return nil
-	if output !~ /^(\S+)-([^-\s]+)/
-		Puppet.debug "portupgrade.query() - package (%s) not installed" % @resource[:name]
-		return nil
-	end
-
-	# Fill in the details
-	hash = Hash.new
-	hash[:portorigin]	= self.name
-	hash[:portname]		= $1
-	hash[:ensure]		= $2
-
-	# If more details are required, then we can do another pkg_info query here
-	# and parse out that output and add to the hash
-
-	# return the hash to the caller
-	return hash
-    end
-
-    ####### Uninstall command 
-
-    def uninstall
-	Puppet.debug "portupgrade.uninstall() - called on %s" % @resource[:name]
-	# Get full package name from port origin to uninstall with
-	cmd = ["-qO", @resource[:name]]
-        begin
-                output = portinfo(*cmd)
-        rescue Puppet::ExecutionFailure
-                raise Puppet::Error.new(output)
-        end
-
-	if output =~ /^(\S+)/
-		# output matches, so uninstall it
-        	portuninstall $1
-	end
-
-    end
-
-    ######## Update/upgrade command
-
-    def update
-	Puppet.debug "portupgrade.update() - called on (%s)" % @resource[:name]
-
-        cmd = ["-qO", @resource[:name]]
-        begin
-                output = portinfo(*cmd)
-        rescue Puppet::ExecutionFailure
-                raise Puppet::Error.new(output)
-        end
-
-        if output =~ /^(\S+)/
-                # output matches, so upgrade the software
-        	cmd = %w{-M BATCH=yes} << $1
+		#exec command
+		cmdline = ["-aoQ"]
 		begin
-        		output = portupgrade(*cmd)
-        	rescue Puppet::ExecutionFailure
+			output = portinfo(*cmdline)
+		rescue Puppet::ExecutionFailure
+			raise Puppet::Error.new(output)
+			return nil
+		end
+
+		# split output and match it and populate temp hash
+		output.split("\n").each { |data|
+			# reset hash to nil.
+			hash.clear
+			if match = regex.match(data)
+				# Output matched regex
+				fields.zip(match.captures) { |field, value|
+					hash[field] = value
+				}
+	
+				# populate the actual :name field from the :portorigin
+				# Set :provider to this object name
+				hash[:name] = hash[:portorigin]
+				hash[:provider] = self.name
+
+				# Add to the full packages listing
+				packages << new(hash)
+
+			else
+				# unrecognised output from pkg_info
+				Puppet.debug "portupgrade.Instances() - unable to match output: %s" % data
+			end
+		}
+
+		# return the packages array of hashes
+		return packages
+
+	end
+
+	######## Installation sub command
+
+	def install
+		Puppet.debug "portupgrade.install() - Installation call on %s" % @resource[:name]
+		# -M: yes, we're a batch, so don't ask any questions
+        	cmdline = ["-M BATCH=yes", @resource[:name]]
+
+		output = portinstall(*cmdline)
+		if output =~ /\*\* No such /
+			raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
+		end
+
+		# No return code required, so do nil to be clean
+		return nil
+	end
+
+	######## Latest subcommand (returns the latest version available, or current version if installed is latest)
+	
+	def latest
+		Puppet.debug "portupgrade.latest() - Latest check called on %s" % @resource[:name]
+		# search for latest version available, or return current version.
+		# cmdline = "portversion -v <portorigin>", returns "<portname> <code> <stuff>"
+		# or "** No matching package found: <portname>"
+        	cmdline = ["-v", @resource[:name]]
+
+		begin
+			output = portversion(*cmdline)
+		rescue Puppet::ExecutionFailure
 			raise Puppet::Error.new(output)
 		end
-        end
+
+		# Check: output format.
+		if output =~ /^\S+-([^-\s]+)\s+(\S)\s+(.*)/
+			# $1 = installed version, $2 = comparison, $3 other data
+			# latest installed
+			installedversion = $1
+			comparison = $2
+			otherdata = $3
 		
-    end
+			case comparison
+			when "=", ">"
+				Puppet.debug "portupgrade.latest() - Installed package is latest (%s)" % installedversion
+				return installedversion
+			when "<"
+				# "portpkg-1.7_5  <  needs updating (port has 1.14)"
+				# "portpkg-1.7_5  <  needs updating (port has 1.14) (=> 'newport/pkg')
+				if otherdata =~ /\(port has (\S+)\)/
+					newversion = $1
+					Puppet.debug "portupgrade.latest() - Installed version needs updating to (%s)" % newversion
+					return newversion
+				else
+					Puppet.debug "portupgrade.latest() - Unable to determine new version from (%s)" % otherdata
+					return installedversion
+				end
+			when "?", "!", "#"
+				Puppet.debug "portupgrade.latest() - Comparison Error reported from portversion (%s)" % output
+				return installedversion
+			else
+				Puppet.debug "portupgrade.latest() - Unknown code from portversion output (%s)" % output
+				return installedversion
+			end
+			
+		else
+			# error: output not parsed correctly, error out with nil.
+			if output =~ /^\*\* No matching package /
+				raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
+			else
+				# Any other error (dump output to log)
+				raise Puppet::ExecutionFailure, "Unexpected output from portversion: %s" % output
+			end
+
+			# Just in case we still are running, return nil
+			return nil
+	
+		end
+
+		# At this point normal operation has finished and we shouldn't have been called.
+		# Error out and let the admin deal with it.
+		raise Puppet::Error, "portversion.latest() - fatal error with portversion: %s" % output
+		return nil
+	
+	end
+
+	###### Query subcommand - return a hash of details if exists, or nil if it doesn't.
+	# Used to make sure the package is installed
+
+	def query
+		Puppet.debug "portupgrade.query() - Called on %s" % @resource[:name]
+
+		cmdline = ["-qO", @resource[:name]]
+		begin
+			output = portinfo(*cmdline)
+		rescue Puppet::ExecutionFailure
+			raise Puppet::Error.new(output)
+		end
+
+		# Check: if output isn't in the right format, return nil
+		if output !~ /^(\S+)-([^-\s]+)/
+			Puppet.debug "portupgrade.query() - package (%s) not installed" % @resource[:name]
+			return nil
+		end
+
+		# Fill in the details
+		hash = Hash.new
+		hash[:portorigin]	= self.name
+		hash[:portname]		= $1
+		hash[:ensure]		= $2
+	
+		# If more details are required, then we can do another pkg_info query here
+		# and parse out that output and add to the hash
+
+		# return the hash to the caller
+		return hash
+	end
+
+	####### Uninstall command 
+
+	def uninstall
+		Puppet.debug "portupgrade.uninstall() - called on %s" % @resource[:name]
+		# Get full package name from port origin to uninstall with
+		cmdline = ["-qO", @resource[:name]]
+		begin
+			output = portinfo(*cmdline)
+		rescue Puppet::ExecutionFailure
+			raise Puppet::Error.new(output)
+		end
+
+		if output =~ /^(\S+)/
+			# output matches, so uninstall it
+        		portuninstall $1
+		end
+
+	end
+
+	######## Update/upgrade command
+
+	def update
+		Puppet.debug "portupgrade.update() - called on (%s)" % @resource[:name]
+
+		cmdline = ["-qO", @resource[:name]]
+		begin
+			output = portinfo(*cmdline)
+		rescue Puppet::ExecutionFailure
+			raise Puppet::Error.new(output)
+		end
+
+		if output =~ /^(\S+)/
+			# output matches, so upgrade the software
+			cmdline = ["-M BATCH=yes", $1]
+		begin
+			output = portupgrade(*cmdline)
+		rescue Puppet::ExecutionFailure
+			raise Puppet::Error.new(output)
+		end
+	end
+		
+	end
 
 ## EOF
 end
