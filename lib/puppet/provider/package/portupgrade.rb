@@ -1,3 +1,7 @@
+
+# Whole new package, so include pack stuff
+require 'puppet/provider/package'
+
 Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::Package do
 	include Puppet::Util::Execution
 
@@ -5,14 +9,17 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 	      Use the port's full origin as the resource name. eg (ports-mgmt/portupgrade)
 	      for the portupgrade port."
 
+	## has_features is usually autodetected based on defs below.
+	# has_features :installable, :uninstallable, :upgradeable
+
 	commands :portupgrade   => "/usr/local/sbin/portupgrade",
 	         :portinstall   => "/usr/local/sbin/portinstall",
 	         :portversion   => "/usr/local/sbin/portversion",
 	         :portuninstall => "/usr/local/sbin/pkg_deinstall",
 	         :portinfo      => "/usr/sbin/pkg_info"
 
-## Activate this only once approved by someone important.
-#    defaultfor :operatingsystem => :freebsd
+	## Activate this only once approved by someone important.
+	# defaultfor :operatingsystem => :freebsd
 
 	# Remove unwanted environment variables.
 	%w{INTERACTIVE UNAME}.each do |var|
@@ -34,7 +41,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 		hash = Hash.new
 		packages = []
 
-		#exec command
+		# exec command
 		cmdline = ["-aoQ"]
 		begin
 			output = portinfo(*cmdline)
@@ -45,7 +52,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
 		# split output and match it and populate temp hash
 		output.split("\n").each { |data|
-			# reset hash to nil.
+			# reset hash to nil for each line
 			hash.clear
 			if match = regex.match(data)
 				# Output matched regex
@@ -79,7 +86,13 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 		# -M: yes, we're a batch, so don't ask any questions
         	cmdline = ["-M BATCH=yes", @resource[:name]]
 
-		output = portinstall(*cmdline)
+		# FIXME: it's possible that portinstall prompts for data so locks up.
+		begin
+			output = portinstall(*cmdline)
+		rescue Puppet::ExecutionFailure
+			raise Puppet::Error.new(output)
+		end
+
 		if output =~ /\*\* No such /
 			raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
 		end
@@ -110,7 +123,9 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 			installedversion = $1
 			comparison = $2
 			otherdata = $3
-		
+	
+			# Only return a new version number when it's clear that there is a new version
+			# all others return the current version so no unexpected 'upgrades' occur.	
 			case comparison
 			when "=", ">"
 				Puppet.debug "portupgrade.latest() - Installed package is latest (%s)" % installedversion
@@ -136,6 +151,8 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 			
 		else
 			# error: output not parsed correctly, error out with nil.
+			# Seriously - this section should never be called in a perfect world.
+			# as verification that the port is installed has already happened in query.
 			if output =~ /^\*\* No matching package /
 				raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
 			else
@@ -145,7 +162,6 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
 			# Just in case we still are running, return nil
 			return nil
-	
 		end
 
 		# At this point normal operation has finished and we shouldn't have been called.
@@ -169,23 +185,24 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 		end
 
 		# Check: if output isn't in the right format, return nil
-		if output !~ /^(\S+)-([^-\s]+)/
+		if output =~ /^(\S+)-([^-\s]+)/
+			# Fill in the details
+			hash = Hash.new
+			hash[:portorigin]	= self.name
+			hash[:portname]		= $1
+			hash[:ensure]		= $2
+	
+			# If more details are required, then we can do another pkg_info query here
+			# and parse out that output and add to the hash
+
+			# return the hash to the caller
+			return hash
+		else
 			Puppet.debug "portupgrade.query() - package (%s) not installed" % @resource[:name]
 			return nil
 		end
 
-		# Fill in the details
-		hash = Hash.new
-		hash[:portorigin]	= self.name
-		hash[:portname]		= $1
-		hash[:ensure]		= $2
-	
-		# If more details are required, then we can do another pkg_info query here
-		# and parse out that output and add to the hash
-
-		# return the hash to the caller
-		return hash
-	end
+	end # def query
 
 	####### Uninstall command 
 
@@ -221,13 +238,12 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 		if output =~ /^(\S+)/
 			# output matches, so upgrade the software
 			cmdline = ["-M BATCH=yes", $1]
-		begin
-			output = portupgrade(*cmdline)
-		rescue Puppet::ExecutionFailure
-			raise Puppet::Error.new(output)
+			begin
+				output = portupgrade(*cmdline)
+			rescue Puppet::ExecutionFailure
+				raise Puppet::Error.new(output)
+			end
 		end
-	end
-		
 	end
 
 ## EOF
