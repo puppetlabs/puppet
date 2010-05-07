@@ -54,7 +54,11 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
     end
 
     def target
-        @resource.should(:target) || File.expand_path("~%s/.ssh/authorized_keys" % user)
+        begin
+            @resource.should(:target) || File.expand_path("~%s/.ssh/authorized_keys" % user)
+        rescue
+            raise Puppet::Error, "Target not defined and/or specified user does not exist yet"
+        end
     end
 
     def user

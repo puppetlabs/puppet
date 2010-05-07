@@ -204,5 +204,17 @@ describe provider_class do
                 proc { @provider.flush }.should raise_error
             end
         end
+
+        describe "and a invalid user has been specified with no target" do
+            before :each do
+                @resource.stubs(:should).with(:user).returns "thisusershouldnotexist"
+                @resource.stubs(:should).with(:target).returns nil
+            end
+
+            it "should catch an exception and raise a Puppet error" do
+                lambda { @provider.flush }.should raise_error(Puppet::Error)
+            end
+        end
+
     end
 end
