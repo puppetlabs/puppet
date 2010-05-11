@@ -134,7 +134,7 @@ describe Puppet::Parser::Compiler do
 
         def compile_methods
             [:set_node_parameters, :evaluate_main, :evaluate_ast_node, :evaluate_node_classes, :evaluate_generators, :fail_on_unevaluated,
-                :finish, :store, :extract]
+                :finish, :store, :extract, :evaluate_relationships]
         end
 
         # Stub all of the main compile methods except the ones we're specifically interested in.
@@ -391,6 +391,15 @@ describe Puppet::Parser::Compiler do
             @compiler.add_collection(coll)
 
             lambda { @compiler.compile }.should raise_error(Puppet::ParseError)
+        end
+    end
+
+    describe "when evaluating relationships" do
+        it "should evaluate each relationship with its catalog" do
+            dep = stub 'dep'
+            dep.expects(:evaluate).with(@compiler.catalog)
+            @compiler.add_relationship dep
+            @compiler.evaluate_relationships
         end
     end
 

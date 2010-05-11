@@ -11,7 +11,7 @@ token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
-token MATCH NOMATCH REGEX
+token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 
 prechigh
     right NOT
@@ -74,6 +74,18 @@ statement:    resource
             | nodedef
             | resourceoverride
             | append
+            | relationship
+
+relationship: relationship_side edge relationship_side {
+    result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
+}
+            | relationship edge relationship_side {
+    result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
+}
+
+relationship_side: resource | resourceref | collection
+
+edge: IN_EDGE | OUT_EDGE | IN_EDGE_SUB | OUT_EDGE_SUB
 
 fstatement:   NAME LPAREN funcvalues RPAREN {
     args = aryfy(val[2])

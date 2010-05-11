@@ -21,11 +21,15 @@ class Puppet::Parser::Compiler
         raise Puppet::Error, "#{detail} on node #{node.name}"
     end
 
-    attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources
+    attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources, :relationships
 
     # Add a collection to the global list.
     def add_collection(coll)
         @collections << coll
+    end
+
+    def add_relationship(dep)
+        @relationships << dep
     end
 
     # Store a resource override.
@@ -142,6 +146,10 @@ class Puppet::Parser::Compiler
             end
         end
         found
+    end
+
+    def evaluate_relationships
+        @relationships.each { |rel| rel.evaluate(catalog) }
     end
 
     # Return a resource by either its ref or its type and title.
@@ -337,6 +345,8 @@ class Puppet::Parser::Compiler
     # Make sure all of our resources and such have done any last work
     # necessary.
     def finish
+        evaluate_relationships()
+
         resources.each do |resource|
             # Add in any resource overrides.
             if overrides = resource_overrides(resource)
@@ -373,6 +383,9 @@ class Puppet::Parser::Compiler
         # The list of collections that have been created.  This is a global list,
         # but they each refer back to the scope that created them.
         @collections = []
+
+        # The list of relationships to evaluate.
+        @relationships = []
 
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Resource::Catalog.new(@node.name)

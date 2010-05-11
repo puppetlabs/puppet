@@ -174,6 +174,10 @@ describe Puppet::Parser::Lexer::TOKENS do
         :RSHIFT => '>>',
         :MATCH => '=~',
         :NOMATCH => '!~',
+        :IN_EDGE => '->',
+        :OUT_EDGE => '<-',
+        :IN_EDGE_SUB => '~>',
+        :OUT_EDGE_SUB => '<~',
     }.each do |name, string|
         it "should have a token named #{name.to_s}" do
             Puppet::Parser::Lexer::TOKENS[name].should_not be_nil
