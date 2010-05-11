@@ -31,3 +31,14 @@ Puppet.features.add(:rrd, :libs => ["RRDtool"])
 
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])
+
+# We can use POSIX user functions? The require returns false on Windows
+Puppet.features.add(:posix) do
+    require 'etc'
+    Etc.getpwuid(0) != nil
+end
+
+# We can use Win32 functions
+Puppet.features.add(:win32, :libs => ["sys/admin", "win32/process"])
+
+raise Puppet::Error "Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.win32?
