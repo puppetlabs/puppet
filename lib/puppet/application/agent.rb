@@ -3,6 +3,7 @@ require 'puppet/application'
 class Puppet::Application::Agent < Puppet::Application
 
     should_parse_config
+    mode :agent
 
     attr_accessor :explicit_waitforcert, :args, :agent, :daemon, :host
 

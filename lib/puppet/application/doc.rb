@@ -3,6 +3,7 @@ require 'puppet/application'
 class Puppet::Application::Doc < Puppet::Application
 
     should_not_parse_config
+    mode :master
 
     attr_accessor :unknown_args, :manifest
 
