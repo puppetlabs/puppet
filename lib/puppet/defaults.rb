@@ -1,56 +1,19 @@
 # The majority of the system configuration parameters are set in this file.
 module Puppet
-    # If we're running the standalone puppet process as a non-root user,
-    # use basedirs that are in the user's home directory.
-    conf = nil
-    var = nil
-
-    require 'puppet/util/command_line'
-    name = Puppet::Util::CommandLine.new.legacy_executable_name
-
-    # Make File.expand_path happy
-    require 'etc'
-    ENV["HOME"] ||= Etc.getpwuid(Process.uid).dir
-
-    if name != "puppetmasterd" and Puppet::Util::SUIDManager.uid != 0
-        conf = File.expand_path("~/.puppet")
-        var = File.expand_path("~/.puppet/var")
-    else
-        # Else, use system-wide directories.
-        conf = "/etc/puppet"
-        var = "/var/lib/puppet"
-    end
-
-    self.setdefaults(:main,
-        :confdir => [conf, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
-        is runnig as root or the user that ``puppetmasterd`` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
+    setdefaults(:main,
+        :confdir => [Puppet.mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
+        is running as root or the user that ``puppet master`` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
         it defaults to being in ``~``."],
-        :vardir => [var, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
-        :name => [name, "The name of the service, if we are running as one.  The
+        :vardir => [Puppet.mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
+        :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
+            default is essentially $0 without the path or ``.rb``."],
+        :mode => [Puppet.mode.name.to_s, "The name of the application, if we are running as one.  The
             default is essentially $0 without the path or ``.rb``."]
     )
 
-    if name == "puppetmasterd"
-        logopts = {:default => "$vardir/log",
-            :mode => 0750,
-            :owner => "service",
-            :group => "service",
-            :desc => "The Puppet log directory."
-        }
-    else
-        logopts = ["$vardir/log", "The Puppet log directory."]
-    end
-    setdefaults(:main, :logdir => logopts)
+    setdefaults(:main, :logdir => Puppet.mode.logopts)
 
-    # This name hackery is necessary so that the rundir is set reasonably during
-    # unit tests.
-    if Process.uid == 0 and %w{puppetd puppetmasterd}.include?(self.name)
-        rundir = "/var/run/puppet"
-    else
-        rundir = "$vardir/run"
-    end
-
-    self.setdefaults(:main,
+    setdefaults(:main,
         :trace => [false, "Whether to print stack traces on some errors"],
         :autoflush => [false, "Whether log files should always flush to disk."],
         :syslogfacility => ["daemon", "What syslog facility to use when logging to
@@ -63,7 +26,7 @@ module Puppet
                 might result in spurious service restarts)."
         },
         :rundir => {
-            :default => rundir,
+            :default => Puppet.mode.run_dir,
             :mode => 01777,
             :desc => "Where Puppet PID files are kept."
         },

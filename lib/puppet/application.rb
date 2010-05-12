@@ -219,6 +219,12 @@ class Puppet::Application
         def [](name)
             find(name).new
         end
+
+        def mode( mode_name = nil)
+            @mode ||= mode_name || @mode || :user
+            require 'puppet/util/mode'
+            Puppet::Util::Mode.new( @mode )
+        end
     end
 
     attr_reader :options, :command_line
@@ -258,8 +264,12 @@ class Puppet::Application
 
     def initialize(command_line = nil)
         @command_line = command_line || Puppet::Util::CommandLine.new
-
+        @mode = self.class.mode
         @options = {}
+
+        $puppet_application_mode = @mode
+        $puppet_application_name = name
+        require 'puppet'
     end
 
     # This is the main application entry point

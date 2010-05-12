@@ -91,6 +91,15 @@ module Puppet
         @@settings
     end
 
+    def self.mode
+        require 'puppet/util/mode'
+        $puppet_application_mode ||= Puppet::Util::Mode.new( :user )
+    end
+
+    def self.application_name
+        $puppet_application_name ||= "apply"
+    end
+
     # Load all of the configuration parameters.
     require 'puppet/defaults'
 
