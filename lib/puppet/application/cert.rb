@@ -1,6 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/ssl/certificate_authority'
 
 class Puppet::Application::Cert < Puppet::Application
 
@@ -9,6 +7,7 @@ class Puppet::Application::Cert < Puppet::Application
     attr_accessor :mode, :all, :ca, :digest, :signed
 
     def find_mode(opt)
+        require 'puppet/ssl/certificate_authority'
         modes = Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS
         tmp = opt.sub("--", '').to_sym
         @mode = modes.include?(tmp) ? tmp : nil
@@ -34,6 +33,7 @@ class Puppet::Application::Cert < Puppet::Application
         Puppet::Util::Log.level = :debug
     end
 
+    require 'puppet/ssl/certificate_authority/interface'
     Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject {|m| m == :destroy }.each do |method|
         option("--#{method}", "-%s" % method.to_s[0,1] ) do
             find_mode("--#{method}")

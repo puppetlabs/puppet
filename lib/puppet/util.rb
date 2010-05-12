@@ -6,6 +6,7 @@ require 'puppet/external/lock'
 
 module Puppet
     # A command failed to execute.
+    require 'puppet/error'
     class ExecutionFailure < Puppet::Error
     end
 module Util

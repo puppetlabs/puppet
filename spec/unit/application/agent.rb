@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/agent'
 require 'puppet/network/server'
+require 'puppet/daemon'
 
 describe Puppet::Application::Agent do
     before :each do

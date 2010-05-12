@@ -1,8 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/daemon'
-require 'puppet/network/server'
-require 'puppet/network/http/rack' if Puppet.features.rack?
 
 class Puppet::Application::Master < Puppet::Application
 
@@ -37,6 +33,7 @@ class Puppet::Application::Master < Puppet::Application
         end
 
         # Create this first-off, so we have ARGV
+        require 'puppet/daemon'
         @daemon = Puppet::Daemon.new
         @daemon.argv = ARGV.dup
     end
@@ -108,6 +105,7 @@ class Puppet::Application::Master < Puppet::Application
         end
 
         unless options[:rack]
+            require 'puppet/network/server'
             @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
             @daemon.daemonize if Puppet[:daemonize]
         else

@@ -1,8 +1,4 @@
-require 'puppet'
-require 'puppet/daemon'
 require 'puppet/application'
-require 'puppet/resource/catalog'
-require 'puppet/indirector/catalog/queue'
 require 'puppet/util'
 
 class Puppet::Application::Queue < Puppet::Application
@@ -11,6 +7,7 @@ class Puppet::Application::Queue < Puppet::Application
     attr_accessor :daemon
 
     def preinit
+        require 'puppet/daemon'
         @daemon = Puppet::Daemon.new
         @daemon.argv = ARGV.dup
         Puppet::Util::Log.newdestination(:console)
@@ -82,6 +79,7 @@ class Puppet::Application::Queue < Puppet::Application
             exit(Puppet.settings.print_configs ? 0 : 1)
         end
 
+        require 'puppet/resource/catalog'
         Puppet::Resource::Catalog.terminus_class = :active_record
 
         daemon.daemonize if Puppet[:daemonize]

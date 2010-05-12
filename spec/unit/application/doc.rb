@@ -3,6 +3,8 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/doc'
+require 'puppet/util/reference'
+require 'puppet/util/rdoc'
 
 describe Puppet::Application::Doc do
     before :each do
@@ -163,9 +165,9 @@ describe Puppet::Application::Doc do
                 @doc.options.stubs(:[]).with(:references).returns([])
                 static = stub 'static', :dynamic? => false
                 dynamic = stub 'dynamic', :dynamic? => true
-                Reference.stubs(:reference).with(:static).returns(static)
-                Reference.stubs(:reference).with(:dynamic).returns(dynamic)
-                Reference.stubs(:references).returns([:static,:dynamic])
+                Puppet::Util::Reference.stubs(:reference).with(:static).returns(static)
+                Puppet::Util::Reference.stubs(:reference).with(:dynamic).returns(dynamic)
+                Puppet::Util::Reference.stubs(:references).returns([:static,:dynamic])
 
                 @doc.options.stubs(:[]=).with(:references, [:static])
 
@@ -346,6 +348,7 @@ describe Puppet::Application::Doc do
                 reference = stub 'reference'
                 @doc.options.stubs(:[]).with(:mode).returns(:none)
                 @doc.options.stubs(:[]).with(:references).returns([:ref])
+                require 'puppet/util/reference'
                 Puppet::Util::Reference.expects(:reference).with(:ref).returns(reference)
                 @doc.options.stubs(:[]).with(:format).returns(:format)
                 @doc.stubs(:exit)

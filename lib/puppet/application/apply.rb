@@ -1,8 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/configurer'
-require 'puppet/network/handler'
-require 'puppet/network/client'
 
 class Puppet::Application::Apply < Puppet::Application
 
@@ -41,8 +37,6 @@ class Puppet::Application::Apply < Puppet::Application
     end
 
     def apply
-        require 'puppet/configurer'
-
         if options[:catalog] == "-"
             text = $stdin.read
         else
@@ -60,6 +54,7 @@ class Puppet::Application::Apply < Puppet::Application
 
         catalog = catalog.to_ral
 
+        require 'puppet/configurer'
         configurer = Puppet::Configurer.new
         configurer.run :catalog => catalog
     end
@@ -127,6 +122,7 @@ class Puppet::Application::Apply < Puppet::Application
 
             catalog.retrieval_duration = Time.now - starttime
 
+            require 'puppet/configurer'
             configurer = Puppet::Configurer.new
             configurer.execute_prerun_command
 

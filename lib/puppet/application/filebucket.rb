@@ -1,6 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/file_bucket/dipper'
 
 class Puppet::Application::Filebucket < Puppet::Application
 
@@ -72,6 +70,7 @@ class Puppet::Application::Filebucket < Puppet::Application
                 exit(Puppet.settings.print_configs ? 0 : 1)
         end
 
+        require 'puppet/file_bucket/dipper'
         begin
             if options[:local] or options[:bucket]
                 path = options[:bucket] || Puppet[:bucketdir]

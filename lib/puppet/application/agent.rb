@@ -1,9 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/agent'
-require 'puppet/daemon'
-require 'puppet/configurer'
-require 'puppet/network/client'
 
 class Puppet::Application::Agent < Puppet::Application
 
@@ -39,6 +34,7 @@ class Puppet::Application::Agent < Puppet::Application
 
         @explicit_waitforcert = false
         @args = {}
+        require 'puppet/daemon'
         @daemon = Puppet::Daemon.new
         @daemon.argv = ARGV.dup
     end
@@ -255,6 +251,8 @@ class Puppet::Application::Agent < Puppet::Application
 
         # We need tomake the client either way, we just don't start it
         # if --no-client is set.
+        require 'puppet/agent'
+        require 'puppet/configurer'
         @agent = Puppet::Agent.new(Puppet::Configurer)
 
         enable_disable_client(@agent) if options[:enable] or options[:disable]

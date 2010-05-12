@@ -1,4 +1,3 @@
-require 'puppet'
 require 'optparse'
 
 # This class handles all the aspects of a Puppet application/executable
@@ -114,7 +113,9 @@ require 'optparse'
 #          process_member(member)
 #      end
 #  end
-class Puppet::Application
+module Puppet
+class Application
+    require 'puppet/util'
     include Puppet::Util
 
     BINDIRS = %w{sbin bin}.map{|dir| File.expand_path(File.dirname(__FILE__)) + "/../../#{dir}/*"}.join(" ")
@@ -263,6 +264,7 @@ class Puppet::Application
     end
 
     def initialize(command_line = nil)
+        require 'puppet/util/command_line'
         @command_line = command_line || Puppet::Util::CommandLine.new
         @mode = self.class.mode
         @options = {}
@@ -383,4 +385,5 @@ class Puppet::Application
             exit(code)
         end
     end
+end
 end

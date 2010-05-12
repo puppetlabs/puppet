@@ -1,8 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-
-Puppet.warning "RubyGems not installed" unless Puppet.features.rubygems?
-Puppet.warning "Failed to load ruby LDAP library. LDAP functionality will not be available" unless Puppet.features.ldap?
 
 class Puppet::Application::Kick < Puppet::Application
 
@@ -52,6 +48,8 @@ class Puppet::Application::Kick < Puppet::Application
 
     def main
         require 'puppet/network/client'
+
+        Puppet.warning "Failed to load ruby LDAP library. LDAP functionality will not be available" unless Puppet.features.ldap?
         require 'puppet/util/ldap/connection'
 
         todo = @hosts.dup

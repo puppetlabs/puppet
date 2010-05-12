@@ -1,11 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/util/reference'
-require 'puppet/network/handler'
-require 'puppet/util/rdoc'
-
-$tab = "    "
-Reference = Puppet::Util::Reference
 
 class Puppet::Application::Doc < Puppet::Application
 
@@ -28,7 +21,8 @@ class Puppet::Application::Doc < Puppet::Application
 
     option("--format FORMAT", "-f") do |arg|
         method = "to_%s" % arg
-        if Reference.method_defined?(method)
+        require 'puppet/util/reference'
+        if Puppet::Util::Reference.method_defined?(method)
             options[:format] = method
         else
             raise "Invalid output format %s" % arg
@@ -36,7 +30,8 @@ class Puppet::Application::Doc < Puppet::Application
     end
 
     option("--mode MODE", "-m") do |arg|
-        if Reference.modes.include?(arg) or arg.intern==:rdoc
+        require 'puppet/util/reference'
+        if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
             options[:mode] = arg.intern
         else
             raise "Invalid output mode %s" % arg
@@ -44,7 +39,8 @@ class Puppet::Application::Doc < Puppet::Application
     end
 
     option("--list", "-l") do |arg|
-        puts Reference.references.collect { |r| Reference.reference(r).doc }.join("\n")
+        require 'puppet/util/reference'
+        puts Puppet::Util::Reference.references.collect { |r| Puppet::Util::Reference.reference(r).doc }.join("\n")
         exit(0)
     end
 
@@ -77,6 +73,7 @@ class Puppet::Application::Doc < Puppet::Application
         )
         Puppet.settings[:document_all] = options[:all] || false
         begin
+            require 'puppet/util/rdoc'
             if @manifest
                 Puppet::Util::RDoc.manifestdoc(files)
             else
@@ -94,6 +91,7 @@ class Puppet::Application::Doc < Puppet::Application
     end
 
     def trac
+        require 'puppet/util/reference'
         options[:references].each do |name|
             section = Puppet::Util::Reference.reference(name) or raise "Could not find section %s" % name
             unless options[:mode] == :pdf
@@ -106,6 +104,7 @@ class Puppet::Application::Doc < Puppet::Application
         text = ""
         with_contents = false
         exit_code = 0
+        require 'puppet/util/reference'
         options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
             raise "Could not find reference %s" % name unless section = Puppet::Util::Reference.reference(name)
 
@@ -135,6 +134,7 @@ class Puppet::Application::Doc < Puppet::Application
             with_contents = true
         end
         exit_code = 0
+        require 'puppet/util/reference'
         options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
             raise "Could not find reference %s" % name unless section = Puppet::Util::Reference.reference(name)
 
@@ -182,8 +182,9 @@ class Puppet::Application::Doc < Puppet::Application
     def setup_reference
         if options[:all]
             # Don't add dynamic references to the "all" list.
-            options[:references] = Reference.references.reject do |ref|
-                Reference.reference(ref).dynamic?
+            require 'puppet/util/reference'
+            options[:references] = Puppet::Util::Reference.references.reject do |ref|
+                Puppet::Util::Reference.reference(ref).dynamic?
             end
         end
 
