@@ -291,7 +291,9 @@ module Puppet
             :owner => "service",
             :desc => "Where the host's certificate revocation list can be found.
                 This is distinct from the certificate authority's CRL."
-        }
+        },
+        :certificate_revocation => [true, "Whether certificate revocation should be supported by downloading a Certificate Revocation List (CRL)
+            to all clients.  If enabled, CA chaining will almost definitely not work."]
     )
 
     setdefaults(:ca,

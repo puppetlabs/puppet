@@ -223,4 +223,8 @@ describe "Puppet defaults" do
     it "should have a 'postrun_command' that defaults to the empty string" do
         Puppet.settings[:postrun_command].should == ""
     end
+
+    it "should have a 'certificate_revocation' setting that defaults to true" do
+        Puppet.settings[:certificate_revocation].should be_true
+    end
 end

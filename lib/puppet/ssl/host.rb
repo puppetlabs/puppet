@@ -214,6 +214,7 @@ class Puppet::SSL::Host
             # If there's a CRL, add it to our store.
             if crl = Puppet::SSL::CertificateRevocationList.find("ca")
                 @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
                 @ssl_store.add_crl(crl.content)
             end
             return @ssl_store
