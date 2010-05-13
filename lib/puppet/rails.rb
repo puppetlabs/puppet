@@ -11,7 +11,7 @@ module Puppet::Rails
         # the state dir on every test.
         return if ActiveRecord::Base.connected?
 
-        Puppet.settings.use(:main, :rails, :puppetmasterd)
+        Puppet.settings.use(:main, :rails, :master)
 
         ActiveRecord::Base.logger = Logger.new(Puppet[:railslog])
         begin
@@ -131,7 +131,7 @@ module Puppet::Rails
             raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails"
         end
 
-        Puppet.settings.use(:puppetmasterd, :rails)
+        Puppet.settings.use(:master, :rails)
 
         begin
             ActiveRecord::Base.establish_connection(database_arguments())

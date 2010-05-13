@@ -146,7 +146,7 @@ class Puppet::Application::Master < Puppet::Application
             exit(Puppet.settings.print_configs ? 0 : 1)
         end
 
-        Puppet.settings.use :main, :puppetmasterd, :ssl
+        Puppet.settings.use :main, :master, :ssl
 
         # A temporary solution, to at least make the master work for now.
         Puppet::Node::Facts.terminus_class = :yaml

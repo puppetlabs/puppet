@@ -70,7 +70,7 @@ class Puppet::Configurer
 
     # Just so we can specify that we are "the" instance.
     def initialize
-        Puppet.settings.use(:main, :ssl, :puppetd)
+        Puppet.settings.use(:main, :ssl, :agent)
 
         self.class.instance = self
         @running = false

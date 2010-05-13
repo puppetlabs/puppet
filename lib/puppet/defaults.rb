@@ -368,7 +368,7 @@ module Puppet
         }
     )
 
-    self.setdefaults(:puppetmasterd,
+    self.setdefaults(:master,
         :user => ["puppet", "The user puppetmasterd should run as."],
         :group => ["puppet", "The group puppetmasterd should run as."],
         :manifestdir => ["$confdir/manifests",
@@ -458,7 +458,7 @@ module Puppet
             in the catalogs."]
     )
 
-    self.setdefaults(:puppetd,
+    setdefaults(:agent,
         :localconfig => { :default => "$statedir/localconfig",
             :owner => "root",
             :mode => 0660,
@@ -742,7 +742,7 @@ module Puppet
             branch under your main directory."]
     )
 
-    setdefaults(:puppetmasterd,
+    setdefaults(:master,
         :storeconfigs => {:default => false, :desc => "Whether to store each client's configuration.  This
             requires ActiveRecord from Ruby on Rails.",
             :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.

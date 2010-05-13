@@ -17,7 +17,7 @@ describe Puppet::Rails, "when initializing any connection" do
     end
 
     it "should use settings" do
-        Puppet.settings.expects(:use).with(:main, :rails, :puppetmasterd)
+        Puppet.settings.expects(:use).with(:main, :rails, :master)
 
         Puppet::Rails.connect
     end

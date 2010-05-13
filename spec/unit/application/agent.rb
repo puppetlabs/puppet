@@ -298,7 +298,7 @@ describe Puppet::Application::Agent do
         end
 
         it "should use :main, :puppetd, and :ssl" do
-            Puppet.settings.expects(:use).with(:main, :puppetd, :ssl)
+            Puppet.settings.expects(:use).with(:main, :agent, :ssl)
 
             @puppetd.setup
         end

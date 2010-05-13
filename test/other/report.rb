@@ -72,7 +72,7 @@ class TestReports < Test::Unit::TestCase
 
         # We have to reuse reporting here because of something going on in the
         # server/report.rb file
-        Puppet.settings.use(:main, :puppetmasterd)
+        Puppet.settings.use(:main, :master)
 
         3.times { |i|
             log = Puppet.warning("Report test message %s" % i)

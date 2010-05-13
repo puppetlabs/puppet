@@ -170,8 +170,8 @@ describe Puppet::Application::Master do
             lambda { @master.setup }.should raise_error(SystemExit)
         end
 
-        it "should tell Puppet.settings to use :main,:ssl and :puppetmasterd category" do
-            Puppet.settings.expects(:use).with(:main,:puppetmasterd,:ssl)
+        it "should tell Puppet.settings to use :main,:ssl and :master category" do
+            Puppet.settings.expects(:use).with(:main,:master,:ssl)
 
             @master.setup
         end
