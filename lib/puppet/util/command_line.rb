@@ -40,11 +40,15 @@ module Puppet
                 [usage, available].join("\n")
             end
 
+            def require_application(application)
+                require File.join(appdir, application)
+            end
+
             def execute
                 if subcommand_name.nil?
                     puts usage_message
                 elsif available_subcommands.include?(subcommand_name) #subcommand
-                    require File.join(appdir, subcommand_name)
+                    require_application subcommand_name
                     Puppet::Application.find(subcommand_name).new(self).run
                 else
                     abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}"
