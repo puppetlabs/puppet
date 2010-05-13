@@ -234,7 +234,7 @@ class String
                     (self =~ /\s$/) or
                     (self =~ /^[>|][-+\d]*\s/i) or
                     (self[-1..-1] =~ /\s/) or 
-                    (self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/) or
+                    (self =~ /[\x00-\x08\x0A-\x1F\x80-\xFF]/) or
                     (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or 
                     (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/) 
                     )
