@@ -96,7 +96,7 @@ class Puppet::Application::Apply < Puppet::Application
         # Merge in the facts.
         node.merge(facts.values)
 
-        # Allow users to load the classes that puppetd creates.
+        # Allow users to load the classes that puppet agent creates.
         if options[:loadclasses]
             file = Puppet[:classfile]
             if FileTest.exists?(file)

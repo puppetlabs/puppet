@@ -11,7 +11,7 @@ module Puppet::Configurer::FactHandler
     end
 
     def find_facts
-        # This works because puppetd configures Facts to use 'facter' for
+        # This works because puppet agent configures Facts to use 'facter' for
         # finding facts and the 'rest' terminus for caching them.  Thus, we'll
         # compile them and then "cache" them on the server.
         begin

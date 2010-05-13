@@ -26,7 +26,7 @@ end
 
 reference.header = "This is the list of all indirections, their associated terminus classes, and how you select between them.
 
-In general, the appropriate terminus class is selected by the application for you (e.g., ``puppetd`` would always use the ``rest``
+In general, the appropriate terminus class is selected by the application for you (e.g., ``puppet agent`` would always use the ``rest``
 terminus for most of its indirected classes), but some classes are tunable via normal settings.  These will have ``terminus setting``
 documentation listed with them.
 

@@ -1203,7 +1203,7 @@ class Type
             Tags are currently useful for things like applying a subset of a
             host's configuration::
 
-                puppetd --test --tags mytag
+                puppet agent --test --tags mytag
 
             This way, when you're testing a configuration you can run just the
             portion you're testing."

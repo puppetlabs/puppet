@@ -57,14 +57,14 @@ These parameters can be supplied to the executables either as command-line
 options or in the configuration file.  For instance, the command-line
 invocation below would set the configuration directory to ``/private/puppet``::
 
-    $ puppetd --confdir=/private/puppet
+    $ puppet agent --confdir=/private/puppet
 
 Note that boolean options are turned on and off with a slightly different
 syntax on the command line::
 
-    $ puppetd --storeconfigs
+    $ puppet agent --storeconfigs
 
-    $ puppetd --no-storeconfigs
+    $ puppet agent --no-storeconfigs
 
 The invocations above will enable and disable, respectively, the storage of
 the client configuration.
@@ -81,11 +81,8 @@ executables look for ``puppet.conf`` in their configuration directory
 ``~user/.puppet/puppet.conf`` as a regular user by default.
 
 All executables will set any parameters set within the ``main`` section,
-while each executable will also look for a section named for the executable
-and load those parameters.  For example, ``puppetd`` will look for a
-section named ``puppetd``, and ``puppetmasterd`` looks for a section
-named ``puppetmasterd``.  This allows you to use a single configuration file
-to customize the settings for all of your executables.
+and each executable will also use one of the ``master``, ``agent``, or
+``user`` sections.
 
 File Format
 '''''''''''
@@ -111,7 +108,7 @@ the executable in question with the `--genconfig` command.  The executable
 will print a template configuration to standard output, which can be
 redirected to a file like so::
 
-    $ puppetd --genconfig > /etc/puppet/puppet.conf
+    $ puppet agent --genconfig > /etc/puppet/puppet.conf
 
 Note that this invocation will replace the contents of any pre-existing
 `puppet.conf` file, so make a backup of your present config if it contains
@@ -122,23 +119,23 @@ argument, which will generate a manifest that can be used to manage all of
 Puppet's directories and files and prints it to standard output.  This can
 likewise be redirected to a file::
 
-    $ puppetd --genmanifest > /etc/puppet/manifests/site.pp
+    $ puppet agent --genmanifest > /etc/puppet/manifests/site.pp
 
 Puppet can also create user and group accounts for itself (one `puppet` group
 and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument::
 
-    $ puppetd --mkusers
+    $ puppet agent --mkusers
 
 Signals
 -------
-The ``puppetd`` and ``puppetmasterd`` executables catch some signals for special
+The ``puppet agent`` and ``puppet master`` executables catch some signals for special
 handling.  Both daemons catch (``SIGHUP``), which forces the server to restart
 tself.  Predictably, interrupt and terminate (``SIGINT`` and ``SIGTERM``) will shut
-down the server, whether it be an instance of ``puppetd`` or ``puppetmasterd``.
+down the server, whether it be an instance of ``puppet agent`` or ``puppet master``.
 
-Sending the ``SIGUSR1`` signal to an instance of ``puppetd`` will cause it to
+Sending the ``SIGUSR1`` signal to an instance of ``puppet agent`` will cause it to
 immediately begin a new configuration transaction with the server.  This
-signal has no effect on ``puppetmasterd``.
+signal has no effect on ``puppet master``.
 
 Configuration Parameter Reference
 ---------------------------------

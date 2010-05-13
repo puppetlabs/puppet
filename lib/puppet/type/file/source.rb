@@ -28,8 +28,8 @@ module Puppet
                     }
                 }
 
-            You can also leave out the server name, in which case ``puppetd``
-            will fill in the name of its configuration server and ``puppet``
+            You can also leave out the server name, in which case ``puppet agent``
+            will fill in the name of its configuration server and ``puppet apply``
             will use the local filesystem.  This makes it easy to use the same
             configuration in both local and centralized forms.
 
@@ -37,9 +37,9 @@ module Puppet
             URL's. Puppet will connect to the file server running on
             ``server`` to retrieve the contents of the file. If the
             ``server`` part is empty, the behavior of the command-line
-            interpreter (``puppet``) and the client demon (``puppetd``) differs
-            slightly: ``puppet`` will look such a file up on the module path
-            on the local host, whereas ``puppetd`` will connect to the
+            interpreter (``puppet apply``) and the client demon (``puppet agent``) differs
+            slightly: ``apply`` will look such a file up on the module path
+            on the local host, whereas ``agent`` will connect to the
             puppet server that it received the manifest from.
 
             See the `FileServingConfiguration fileserver configuration documentation`:trac: for information on how to configure

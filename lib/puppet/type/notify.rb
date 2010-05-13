@@ -4,7 +4,7 @@
 
 module Puppet
     newtype(:notify) do
-        @doc = "Sends an arbitrary message to the puppetd run-time log."
+        @doc = "Sends an arbitrary message to the agent run-time log."
 
         newproperty(:message) do
             desc "The message to be sent to the log."

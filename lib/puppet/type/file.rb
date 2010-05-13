@@ -74,7 +74,7 @@ Puppet::Type.newtype(:file) do
                     server => puppet
                 }
 
-            The ``puppetmasterd`` daemon creates a filebucket by default,
+            The ``puppet master`` daemon creates a filebucket by default,
             so you can usually back up to your main server with this
             configuration.  Once you've described the bucket in your
             configuration, you can use it in any file::
