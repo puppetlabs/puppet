@@ -79,8 +79,6 @@ class Puppet::Util::Settings
         end
 
         @cache.clear
-
-        @name = nil
     end
 
     # This is mostly just used for testing.
@@ -198,9 +196,6 @@ class Puppet::Util::Settings
         # And keep a per-environment cache
         @cache = Hash.new { |hash, key| hash[key] = {} }
 
-        # A central concept of a name.
-        @name = nil
-
         # The list of sections we've used.
         @used = []
     end
@@ -287,24 +282,9 @@ class Puppet::Util::Settings
         end
     end
 
-    # Figure out our name.
-    def name
-        unless @name
-            unless @config[:name]
-                return nil
-            end
-            searchpath.each do |source|
-                next if source == :name
-                @sync.synchronize do
-                    @name = @values[source][:name]
-                end
-                break if @name
-            end
-            unless @name
-                @name = convert(@config[:name].default).intern
-            end
-        end
-        @name
+    # Figure out the section name for the mode.
+    def mode
+        convert(@config[:mode].default).intern if @config[:mode]
     end
 
     # Return all of the parameters associated with a given section.
@@ -457,9 +437,9 @@ class Puppet::Util::Settings
     # The order in which to search for values.
     def searchpath(environment = nil)
         if environment
-            [:cli, :memory, environment, :name, :main]
+            [:cli, :memory, environment, :mode, :main]
         else
-            [:cli, :memory, :name, :main]
+            [:cli, :memory, :mode, :main]
         end
     end
 
@@ -602,8 +582,8 @@ Generated on #{Time.now}.
 }.gsub(/^/, "# ")
 
         # Add a section heading that matches our name.
-        if @config.include?(:name)
-            str += "[%s]\n" % self[:name]
+        if @config.include?(:mode)
+            str += "[%s]\n" % self[:mode]
         end
         eachsection do |section|
             persection(section) do |obj|
@@ -828,7 +808,7 @@ Generated on #{Time.now}.
     def each_source(environment)
         searchpath(environment).each do |source|
             # Modify the source as necessary.
-            source = self.name if source == :name
+            source = self.mode if source == :mode
             yield source
         end
     end

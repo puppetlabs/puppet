@@ -246,11 +246,9 @@ describe Puppet::Util::Settings do
             @settings.value(:one, "env2").should == "twoval"
         end
 
-        it "should have a name determined by the 'name' parameter" do
-            @settings.setdefaults(:whatever, :name => ["something", "yayness"])
-            @settings.name.should == :something
-            @settings[:name] = :other
-            @settings.name.should == :other
+        it "should have a mode determined by the 'mode' parameter" do
+            @settings.setdefaults(:whatever, :mode => ["something", "yayness"])
+            @settings.mode.should == :something
         end
     end
 
@@ -260,7 +258,7 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :section,
                 :config => ["/my/file", "a"],
                 :one => ["ONE", "a"],
-                :name => ["myname", "w"]
+                :mode => ["mymode", "w"]
             FileTest.stubs(:exist?).returns true
         end
 
@@ -283,12 +281,12 @@ describe Puppet::Util::Settings do
             @settings[:one].should == "clival"
         end
 
-        it "should return values set in the executable-specific section before values set in the main section" do
-            text = "[main]\none = mainval\n[myname]\none = nameval\n"
+        it "should return values set in the mode-specific section before values set in the main section" do
+            text = "[main]\none = mainval\n[mymode]\none = modeval\n"
             @settings.stubs(:read_file).returns(text)
             @settings.parse
 
-            @settings[:one].should == "nameval"
+            @settings[:one].should == "modeval"
         end
 
         it "should not return values outside of its search path" do
