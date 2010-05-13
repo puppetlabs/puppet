@@ -38,6 +38,10 @@ describe Puppet::Util::Settings do
             lambda { @settings.setdefaults(:section, :myvalue => {:default => "a value"}) }.should raise_error(ArgumentError)
         end
 
+        it "should raise an error if we can't guess the type" do
+            lambda { @settings.setdefaults(:section, :myvalue => {:default => Object.new, :desc => "An impossible object"}) }.should raise_error(ArgumentError)
+        end
+
         it "should support specifying owner, group, and mode when specifying files" do
             @settings.setdefaults(:section, :myvalue => {:default => "/some/file", :owner => "service", :mode => "boo", :group => "service", :desc => "whatever"})
         end

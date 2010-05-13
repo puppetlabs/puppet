@@ -386,7 +386,7 @@ class Puppet::Util::Settings
             when String, Integer, Float # nothing
                 klass = Setting
             else
-                raise Puppet::Error, "Invalid value '%s' for %s" % [value.inspect, hash[:name]]
+                raise ArgumentError, "Invalid value '%s' for %s" % [hash[:default].inspect, hash[:name]]
             end
         end
         hash[:settings] = self
