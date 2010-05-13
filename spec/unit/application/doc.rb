@@ -190,7 +190,6 @@ describe Puppet::Application::Doc do
 
             before :each do
                 @doc.options.stubs(:[]).returns(false)
-                Puppet.stubs(:[]=).with(:name, "puppetmasterd")
                 Puppet.stubs(:parse_config)
                 Puppet::Util::Log.stubs(:level=)
                 Puppet::Util::Log.stubs(:newdestination)
@@ -224,8 +223,8 @@ describe Puppet::Application::Doc do
                 end
             end
 
-            it "should pretend to be puppetmasterd" do
-                Puppet.expects(:[]=).with(:name, "puppetmasterd")
+            it "should operate in master mode" do
+                @doc.class.mode.name.should == :master
 
                 @doc.setup_rdoc
             end

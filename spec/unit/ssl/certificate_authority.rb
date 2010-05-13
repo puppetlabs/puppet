@@ -24,10 +24,10 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     describe "when finding an existing instance" do
-        describe "and the host is a CA host and the proces name is 'puppetmasterd'" do
+        describe "and the host is a CA host and the mode is master" do
             before do
                 Puppet.settings.stubs(:value).with(:ca).returns true
-                Puppet.settings.stubs(:value).with(:name).returns "puppetmasterd"
+                Puppet.mode.stubs(:master?).returns true
 
                 @ca = mock('ca')
                 Puppet::SSL::CertificateAuthority.stubs(:new).returns @ca
@@ -45,7 +45,7 @@ describe Puppet::SSL::CertificateAuthority do
         describe "and the host is not a CA host" do
             it "should return nil" do
                 Puppet.settings.stubs(:value).with(:ca).returns false
-                Puppet.settings.stubs(:value).with(:name).returns "puppetmasterd"
+                Puppet.mode.stubs(:master?).returns true
 
                 ca = mock('ca')
                 Puppet::SSL::CertificateAuthority.expects(:new).never
@@ -53,10 +53,10 @@ describe Puppet::SSL::CertificateAuthority do
             end
         end
 
-        describe "and the process name is not 'puppetmasterd'" do
+        describe "and the mode is not master" do
             it "should return nil" do
                 Puppet.settings.stubs(:value).with(:ca).returns true
-                Puppet.settings.stubs(:value).with(:name).returns "puppetd"
+                Puppet.mode.stubs(:master?).returns false
 
                 ca = mock('ca')
                 Puppet::SSL::CertificateAuthority.expects(:new).never

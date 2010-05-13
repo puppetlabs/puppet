@@ -4,7 +4,7 @@ require 'puppet/indirector/terminus'
 class Puppet::Indirector::File < Puppet::Indirector::Terminus
     # Where do we store our data?
     def data_directory
-        name = Puppet[:name] == "puppetmasterd" ? :server_datadir : :client_datadir
+        name = Puppet.mode.master? ? :server_datadir : :client_datadir
 
         File.join(Puppet.settings[name], self.class.indirection_name.to_s)
     end

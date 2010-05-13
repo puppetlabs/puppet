@@ -34,8 +34,7 @@ module Puppet::Network
                         return false
                     end
                 else
-                    # This is a hack way of seeing if we're a config master.
-                    if Puppet[:name] == "puppetmasterd"
+                    if Puppet.mode.master?
                         Puppet.debug "Allowing " + msg
                         return true
                     else

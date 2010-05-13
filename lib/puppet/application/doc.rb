@@ -207,8 +207,6 @@ class Puppet::Application::Doc < Puppet::Application
             end
         end
 
-        # hack to get access to puppetmasterd modulepath and manifestdir
-        Puppet[:name] = "puppetmasterd"
         # Now parse the config
         Puppet.parse_config
 

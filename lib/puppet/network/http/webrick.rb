@@ -70,7 +70,7 @@ class Puppet::Network::HTTP::WEBrick
         # Make sure the settings are all ready for us.
         Puppet.settings.use(:main, :ssl, Puppet[:name])
 
-        if Puppet[:name] == "puppetmasterd"
+        if Puppet.mode.master?
             file = Puppet[:masterhttplog]
         else
             file = Puppet[:httplog]

@@ -33,7 +33,7 @@ class Puppet::SSL::CertificateAuthority
 
     def self.ca?
         return false unless Puppet[:ca]
-        return false unless Puppet[:name] == "puppetmasterd"
+        return false unless Puppet.mode.master?
         return true
     end
 

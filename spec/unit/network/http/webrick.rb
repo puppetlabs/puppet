@@ -211,8 +211,8 @@ describe Puppet::Network::HTTP::WEBrick do
             @server.setup_logger
         end
 
-        it "should use the masterlog if the process name is 'puppetmasterd'" do
-            Puppet.settings.stubs(:value).with(:name).returns "puppetmasterd"
+        it "should use the masterlog if the process mode is master" do
+            Puppet.mode.stubs(:master?).returns(true)
             Puppet.settings.expects(:value).with(:masterhttplog).returns "/master/log"
 
             File.expects(:open).with("/master/log", "a+").returns @filehandle
@@ -220,8 +220,8 @@ describe Puppet::Network::HTTP::WEBrick do
             @server.setup_logger
         end
 
-        it "should use the httplog if the process name is not 'puppetmasterd'" do
-            Puppet.settings.stubs(:value).with(:name).returns "other"
+        it "should use the httplog if the process mode is not master" do
+            Puppet.mode.stubs(:master?).returns(false)
             Puppet.settings.expects(:value).with(:httplog).returns "/other/log"
 
             File.expects(:open).with("/other/log", "a+").returns @filehandle
