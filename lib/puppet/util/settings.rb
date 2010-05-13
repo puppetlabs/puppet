@@ -728,7 +728,7 @@ Generated on #{Time.now}.
     def writesub(default, file, *args, &bloc)
         obj = get_config_file_default(default)
         chown = nil
-        if Puppet::Util::SUIDManager.uid == 0
+        if Puppet.features.root?
             chown = [obj.owner, obj.group]
         else
             chown = [nil, nil]

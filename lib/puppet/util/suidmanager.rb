@@ -44,9 +44,13 @@ module Puppet::Util::SUIDManager
         alias :gid :egid
     end
 
+    def self.root?
+        Process.uid == 0
+    end
+
     # Runs block setting uid and gid if provided then restoring original ids
     def asuser(new_uid=nil, new_gid=nil)
-        return yield unless Process.uid == 0
+        return yield unless root?
         # We set both because some programs like to drop privs, i.e. bash.
         old_uid, old_gid = self.uid, self.gid
         old_euid, old_egid = self.euid, self.egid

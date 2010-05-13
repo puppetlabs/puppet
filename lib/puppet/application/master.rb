@@ -95,7 +95,7 @@ class Puppet::Application::Master < Puppet::Application
             Puppet::SSL::Host.ca_location = :only
         end
 
-        if Process.uid == 0
+        if Puppet.features.root?
             begin
                 Puppet::Util.chuser
             rescue => detail

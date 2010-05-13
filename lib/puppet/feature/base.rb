@@ -15,7 +15,7 @@ Puppet.features.add(:usage, :libs => %w{rdoc/ri/ri_paths rdoc/usage})
 Puppet.features.add(:libshadow, :libs => ["shadow"])
 
 # We're running as root.
-Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.uid == 0 }
+Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.root? }
 
 # We've got mongrel available
 Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http_server/mongrel})

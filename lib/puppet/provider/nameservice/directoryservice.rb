@@ -215,7 +215,7 @@ class DirectoryService < Puppet::Provider::NameService
         # stored in the user record. It is stored at a path that involves the
         # UUID of the user record for non-Mobile local acccounts.
         # Mobile Accounts are out of scope for this provider for now
-        if @resource_type.validproperties.include?(:password) and Process.uid == 0 
+        if @resource_type.validproperties.include?(:password) and Puppet.features.root?
             attribute_hash[:password] = self.get_password(attribute_hash[:guid])
         end
         return attribute_hash

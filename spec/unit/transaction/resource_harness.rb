@@ -101,7 +101,7 @@ describe Puppet::Transaction::ResourceHarness do
         before do
             @current_state = Puppet::Resource.new(:file, "/my/file")
             @resource.stubs(:retrieve).returns @current_state
-            Puppet::Util::SUIDManager.stubs(:uid).returns 0
+            Puppet.features.stubs(:root?).returns true
         end
 
         it "should retrieve the current values from the resource" do

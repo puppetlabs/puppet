@@ -56,7 +56,7 @@ describe property do
     describe "when determining if the file is in sync" do
         describe "and not running as root" do
             it "should warn once and return true" do
-                Puppet::Util::SUIDManager.expects(:uid).returns 1
+                Puppet.features.expects(:root?).returns false
 
                 @owner.expects(:warnonce)
 
@@ -66,7 +66,7 @@ describe property do
         end
 
         before do
-            Puppet::Util::SUIDManager.stubs(:uid).returns 0
+            Puppet.features.stubs(:root?).returns true
         end
 
         it "should be in sync if 'should' is not provided" do
