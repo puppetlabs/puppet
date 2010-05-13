@@ -330,8 +330,12 @@ class Puppet::Util::Settings
 
         unsafe_clear(true)
 
+        metas = {}
         data.each do |area, values|
-            @values[area] = values
+            metas[area] = values.delete(:_meta)
+            values.each do |key,value|
+                set_value(key, value, area, :dont_trigger_handles => true, :ignore_bad_settings => true )
+            end
         end
 
         # Determine our environment, if we have one.
@@ -360,7 +364,7 @@ class Puppet::Util::Settings
         # because multiple sections could set the same value
         # and I'm too lazy to only set the metadata once.
         searchpath.reverse.each do |source|
-            if meta = @values[source][:_meta]
+            if meta = metas[source]
                 set_metadata(meta)
             end
         end
@@ -470,16 +474,20 @@ class Puppet::Util::Settings
         return @service_user_available = user.exists?
     end
 
-    def set_value(param, value, type)
+    def set_value(param, value, type, options = {})
         param = param.to_sym
         unless setting = @config[param]
-            raise ArgumentError,
-                "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
+            if options[:ignore_bad_settings]
+                return
+            else
+                raise ArgumentError,
+                    "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
+            end
         end
         if setting.respond_to?(:munge)
             value = setting.munge(value)
         end
-        if setting.respond_to?(:handle)
+        if setting.respond_to?(:handle) and not options[:dont_trigger_handles]
             setting.handle(value)
         end
         if ReadOnly.include? param
