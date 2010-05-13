@@ -194,6 +194,30 @@ describe Puppet::Util::Settings do
             Puppet::Node::Environment.expects(:clear).at_least(1)
             @settings[:myval] = "memarg"
         end
+
+        it "should raise an error if we try to set 'name'" do
+            lambda{ @settings[:name] = "foo" }.should raise_error(ArgumentError)
+        end
+
+        it "should raise an error if we try to set 'mode'" do
+            lambda{ @settings[:mode] = "foo" }.should raise_error(ArgumentError)
+        end
+
+        it "should warn and use [master] if we ask for [puppetmasterd]" do
+            Puppet.expects(:warning)
+            @settings.set_value(:myval, "foo", :puppetmasterd)
+
+            @settings.stubs(:mode).returns(:master)
+            @settings.value(:myval).should == "foo"
+        end
+
+        it "should warn and use [agent] if we ask for [puppetd]" do
+            Puppet.expects(:warning)
+            @settings.set_value(:myval, "foo", :puppetd)
+
+            @settings.stubs(:mode).returns(:agent)
+            @settings.value(:myval).should == "foo"
+        end
     end
 
     describe "when returning values" do
@@ -250,9 +274,11 @@ describe Puppet::Util::Settings do
             @settings.value(:one, "env2").should == "twoval"
         end
 
-        it "should have a mode determined by the 'mode' parameter" do
+        it "should have a mode determined by the 'mode' parameter that cannot be edited" do
             @settings.setdefaults(:whatever, :mode => ["something", "yayness"])
             @settings.mode.should == :something
+
+            lambda{ @settings[:mode] = :other }.should raise_error
         end
     end
 

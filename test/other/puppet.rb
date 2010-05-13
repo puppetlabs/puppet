@@ -84,11 +84,5 @@ class TestPuppetModule < Test::Unit::TestCase
         assert($:.include?(two), "libdir was not added")
         assert(! $:.include?(one), "old libdir was not removed")
     end
-
-    def test_name
-        Puppet[:name] = "puppetca"
-
-        assert_equal("puppetca", Puppet[:name], "name reset did not take")
-    end
 end
 

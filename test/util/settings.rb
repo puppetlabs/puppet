@@ -449,8 +449,8 @@ yay = /a/path
     def test_configs_replace_in_url
         config = mkconfig
 
-        config.setdefaults(:mysection, :name => ["yayness", "yay"])
-        config.setdefaults(:mysection, :url => ["http://$name/rahness", "yay"])
+        config.setdefaults(:mysection, :host => ["yayness", "yay"])
+        config.setdefaults(:mysection, :url => ["http://$host/rahness", "yay"])
 
         val = nil
         assert_nothing_raised {

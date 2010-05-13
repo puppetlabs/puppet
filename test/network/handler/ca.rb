@@ -189,7 +189,7 @@ class TestCA < Test::Unit::TestCase
     # the puppetmasterd CA does not autostart.
     def test_caautosign
         server = nil
-        Puppet[:name] = "puppetmasterd"
+        Puppet.stubs(:master?).returns true
         assert_nothing_raised {
             server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,
