@@ -1,5 +1,13 @@
+0.25.5rc3
+=========
+9214400  WIP - trying to fix #3460
+9d3e98b  Minimal footprint fix for #3751 (serialization 0.25.5 <-> 0.24.8)
+d481340  Updated Template documentation link
+5a1a45c  Update Red Hat spec file for 0.25.5
+
 0.25.5rc2
 =========
+2257605  Updated CHANGELOG for 0.25.5rc2
 5258a0a  Fixing #3533 - Removing all transaction cleanup
 bcde541  Fix for #2910 -- Tidy/matches is too tricky to use
 5abe571  Bug #3451: Don't leak the terminus class setting from Puppet::Resource::Catalog's spec
