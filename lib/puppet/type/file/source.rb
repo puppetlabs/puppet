@@ -24,7 +24,7 @@ module Puppet
 
                 class sendmail {
                     file { \"/etc/mail/sendmail.cf\":
-                        source => \"puppet://server/module/sendmail.cf\"
+                        source => \"puppet://server/modules/module_name/sendmail.cf\"
                     }
                 }
 
@@ -51,9 +51,9 @@ module Puppet
 
                 file { \"/path/to/my/file\":
                     source => [
-                        \"/nfs/files/file.$host\",
-                        \"/nfs/files/file.$operatingsystem\",
-                        \"/nfs/files/file\"
+                        \"/modules/nfs/files/file.$host\",
+                        \"/modules/nfs/files/file.$operatingsystem\",
+                        \"/modules/nfs/files/file\"
                     ]
                 }
 
