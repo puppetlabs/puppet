@@ -95,7 +95,10 @@ class Puppet::Daemon
     # Trap a couple of the main signals.  This should probably be handled
     # in a way that anyone else can register callbacks for traps, but, eh.
     def set_signal_traps
-        {:INT => :stop, :TERM => :stop, :HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}.each do |signal, method|
+        signals = {:INT => :stop, :TERM => :stop }
+        # extended signals not supported under windows
+        signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.win32?
+        signals.each do |signal, method|
             trap(signal) do
                 Puppet.notice "Caught #{signal}; calling #{method}"
                 send(method)
