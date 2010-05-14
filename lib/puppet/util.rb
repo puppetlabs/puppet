@@ -275,31 +275,53 @@ module Util
             end
         end
 
-        oldverb = $VERBOSE
-        $VERBOSE = nil
-        child_pid = Kernel.fork
-        $VERBOSE = oldverb
-        if child_pid
-            # Parent process executes this
-            child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
-        else
-            # Child process executes this
-            Process.setsid
-            begin
-                $stdin.reopen(arguments[:stdinfile] || "/dev/null")
-                $stdout.reopen(output_file)
-                $stderr.reopen(error_file)
+        if Puppet.features.posix?
+            oldverb = $VERBOSE
+            $VERBOSE = nil
+            child_pid = Kernel.fork
+            $VERBOSE = oldverb
+            if child_pid
+                # Parent process executes this
+                child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
+            else
+                # Child process executes this
+                Process.setsid
+                begin
+                    if arguments[:stdinfile]
+                        $stdin.reopen(arguments[:stdinfile])
+                    else
+                        $stdin.reopen("/dev/null")
+                    end
+                    $stdout.reopen(output_file)
+                    $stderr.reopen(error_file)
 
-                3.upto(256){|fd| IO::new(fd).close rescue nil}
-                Process::GID.change_privilege arguments[:gid] if arguments[:gid]
-                Process::UID.change_privilege arguments[:uid] if arguments[:uid]
-                ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-                Kernel.exec(*command)
-            rescue => detail
-                puts detail.to_s
-                exit!(1)
-            end # begin; rescue
-        end # if child_pid
+                    3.upto(256){|fd| IO::new(fd).close rescue nil}
+                    if arguments[:gid]
+                        Process.egid = arguments[:gid]
+                        Process.gid = arguments[:gid] unless @@os == "Darwin"
+                    end
+                    if arguments[:uid]
+                        Process.euid = arguments[:uid]
+                        Process.uid = arguments[:uid] unless @@os == "Darwin"
+                    end
+                    ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
+                    if command.is_a?(Array)
+                        Kernel.exec(*command)
+                    else
+                        Kernel.exec(command)
+                    end
+                rescue => detail
+                    puts detail.to_s
+                    exit!(1)
+                end # begin; rescue
+            end # if child_pid
+        elsif Puppet.features.win32?
+            command = command.collect {|part| '"' + part.gsub(/"/, '\\"') + '"'}.join(" ") if command.is_a?(Array)
+            Puppet.debug "Creating process '%s'" % command
+            processinfo = Process.create(
+                :command_line => command )
+            child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
+        end # if posix or win32
 
         # read output in if required
         if ! arguments[:squelch]
