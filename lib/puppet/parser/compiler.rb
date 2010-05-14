@@ -51,15 +51,30 @@ class Puppet::Parser::Compiler
         # Note that this will fail if the resource is not unique.
         @catalog.add_resource(resource)
 
-        # And in the resource graph.  At some point, this might supercede
-        # the global resource table, but the table is a lot faster
-        # so it makes sense to maintain for now.
-        if resource.type.to_s.downcase == "class" and main = @catalog.resource(:class, :main)
-            @catalog.add_edge(main, resource)
-        else
-            @catalog.add_edge(scope.resource, resource)
-        end
+        set_container_resource(scope, resource)
     end
+
+    def set_container_resource(scope, resource)
+        # Add our container edge.  If we're a class, then we get treated specially - we can
+        # control the stage that the class is applied in.  Otherwise, we just
+        # get added to our parent container.
+        return if resource.type.to_s.downcase == "stage"
+
+        if resource.type.to_s.downcase != "class"
+            if resource[:stage]
+                raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
+            end
+            return @catalog.add_edge(scope.resource, resource)
+        end
+
+        unless stage = @catalog.resource(:stage, resource[:stage] || :main)
+            raise ArgumentError, "Could not find stage #{resource[:stage] || :main} specified by #{resource}"
+        end
+
+        @catalog.add_edge(stage, resource)
+    end
+
+    private :set_container_resource
 
     # Do we use nodes found in the code, vs. the external node sources?
     def ast_nodes?
@@ -169,7 +184,6 @@ class Puppet::Parser::Compiler
         end
 
         initvars()
-        init_main()
     end
 
     # Create a new scope, with either a specified parent scope or
@@ -407,12 +421,6 @@ class Puppet::Parser::Compiler
         data
     end
 
-    # Initialize the top-level scope, class, and resource.
-    def init_main
-        # Create our initial scope and a resource that will evaluate main.
-        @topscope = Puppet::Parser::Scope.new(:compiler => self)
-    end
-
     # Set up all of our internal variables.
     def initvars
         # The list of objects that will available for export.
@@ -434,6 +442,12 @@ class Puppet::Parser::Compiler
         # For maintaining the relationship between scopes and their resources.
         @catalog = Puppet::Resource::Catalog.new(@node.name)
         @catalog.version = known_resource_types.version
+
+        # Create our initial scope and a resource that will evaluate main.
+        @topscope = Puppet::Parser::Scope.new(:compiler => self)
+
+        @main_stage_resource = Puppet::Parser::Resource.new("stage", :main, :scope => @topscope)
+        @catalog.add_resource(@main_stage_resource)
 
         # local resource array to maintain resource ordering
         @resources = []

@@ -323,7 +323,8 @@ class Puppet::SimpleGraph
         # graph.  We could get a similar affect by only setting relationships
         # to container leaves, but that would result in many more
         # relationships.
-        containers = other.topsort.find_all { |v| v.is_a?(type) and vertex?(v) }
+        stage_class = Puppet::Type.type(:stage)
+        containers = other.topsort.find_all { |v| (v.is_a?(type) or v.is_a?(stage_class)) and vertex?(v) }
         containers.each do |container|
             # Get the list of children from the other graph.
             children = other.adjacent(container, :direction => :out)

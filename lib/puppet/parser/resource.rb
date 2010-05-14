@@ -22,9 +22,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     include Puppet::Parser::YamlTrimmer
 
     attr_accessor :source, :scope, :rails_id
-    attr_accessor :virtual, :override, :translated, :catalog
+    attr_accessor :virtual, :override, :translated, :catalog, :evaluated
 
-    attr_reader :exported, :evaluated, :parameters
+    attr_reader :exported, :parameters
 
     # Determine whether the provided parameter name is a relationship parameter.
     def self.relationship_parameter?(name)

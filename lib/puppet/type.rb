@@ -1402,6 +1402,36 @@ class Type
             This will restart the sshd service if the sshd config file changes.}
     end
 
+    newmetaparam(:stage) do
+        desc %{Which run stage a given resource should reside in.  This just creates
+            a dependency on or from the named milestone.  For instance, saying that
+            this is in the 'bootstrap' stage creates a dependency on the 'bootstrap'
+            milestone.
+        
+            By default, all classes get directly added to the
+            'main' stage.  You can create new stages as resources:
+            
+                stage { [pre, post]: }
+            
+            To order stages, use standard relationships:
+            
+                stage { pre: before => Stage[main] }
+            
+            Or use the new relationship syntax:
+            
+                Stage[pre] -> Stage[main] -> Stage[post]
+            
+            Then use the new class parameters to specify a stage:
+            
+                class { foo: stage => pre }
+            
+            Stages can only be set on classes, not individual resources.  This will
+            fail::
+
+                file { '/foo': stage => pre, ensure => file }
+        }
+    end
+
     ###############################
     # All of the provider plumbing for the resource types.
     require 'puppet/provider'

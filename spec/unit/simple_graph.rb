@@ -440,6 +440,8 @@ describe Puppet::SimpleGraph do
             @top = Container.new("top", ["g", "h", @middle, @one, @three])
             @empty = Container.new("empty", [])
 
+            @stage = Puppet::Type.type(:stage).new(:name => "foo")
+
             @contgraph = @top.to_graph
 
             # We have to add the container to the main graph, else it won't
@@ -475,6 +477,12 @@ describe Puppet::SimpleGraph do
         # relationship to a container gets copied to all of its children.
         it "should remove all Container objects from the dependency graph" do
             @depgraph.vertices.find_all { |v| v.is_a?(Container) }.should be_empty
+        end
+
+        # This is a bit hideous, but required to make stages work with relationships - they're
+        # the top of the graph.
+        it "should remove all Stage resources from the dependency graph" do
+            @depgraph.vertices.find_all { |v| v.is_a?(Puppet::Type.type(:stage)) }.should be_empty
         end
 
         it "should add container relationships to contained objects" do

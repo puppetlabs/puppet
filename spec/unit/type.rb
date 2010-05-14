@@ -445,7 +445,8 @@ describe Puppet::Type do
         end
     end
 
-    describe "when managing relationships" do
+    it "should have a 'stage' metaparam" do
+        Puppet::Type.metaparamclass(:stage).should be_instance_of(Class)
     end
 end
 

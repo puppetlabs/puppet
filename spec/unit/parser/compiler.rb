@@ -10,6 +10,11 @@ class CompilerTestResource
         @title = title
     end
 
+    def [](attr)
+        return nil if attr == :stage
+        :main
+    end
+
     def ref
         "%s[%s]" % [type.to_s.capitalize, title]
     end
@@ -31,12 +36,15 @@ class CompilerTestResource
 end
 
 describe Puppet::Parser::Compiler do
+    def resource(type, title)
+        Puppet::Parser::Resource.new(type, title, :scope => @scope)
+    end
+
     before :each do
         @node = Puppet::Node.new "testnode"
         @known_resource_types = Puppet::Resource::TypeCollection.new "development"
-
         @compiler = Puppet::Parser::Compiler.new(@node)
-        @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => "fake_source")
+        @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => stub('source'))
         @scope_resource = Puppet::Parser::Resource.new(:file, "/my/file", :scope => @scope)
         @scope.resource = @scope_resource
         @compiler.environment.stubs(:known_resource_types).returns @known_resource_types
@@ -99,6 +107,10 @@ describe Puppet::Parser::Compiler do
 
             compiler.classlist.should include("foo")
             compiler.classlist.should include("bar")
+        end
+
+        it "should add a 'main' stage to the catalog" do
+            @compiler.catalog.resource(:stage, :main).should be_instance_of(Puppet::Parser::Resource)
         end
     end
 
@@ -209,7 +221,7 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should ignore builtin resources" do
-            resource = stub 'builtin', :ref => "File[testing]", :builtin? => true, :type => "file"
+            resource = resource(:file, "testing")
 
             @compiler.add_resource(@scope, resource)
             resource.expects(:evaluate).never
@@ -229,7 +241,9 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should not evaluate already-evaluated resources" do
-            resource = stub 'already_evaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => true, :virtual? => false, :type => "file"
+            resource = resource(:file, "testing")
+            resource.stubs(:evaluated?).returns true
+
             @compiler.add_resource(@scope, resource)
             resource.expects(:evaluate).never
 
@@ -350,16 +364,16 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should return added resources in add order" do
-            resource1 = stub "1", :ref => "File[yay]", :type => "file"
+            resource1 = resource(:file, "yay")
             @compiler.add_resource(@scope, resource1)
-            resource2 = stub "2", :ref => "File[youpi]", :type => "file"
+            resource2 = resource(:file, "youpi")
             @compiler.add_resource(@scope, resource2)
 
             @compiler.resources.should == [resource1, resource2]
         end
 
         it "should add resources that do not conflict with existing resources" do
-            resource = CompilerTestResource.new(:file, "yay")
+            resource = resource(:file, "yay")
             @compiler.add_resource(@scope, resource)
 
             @compiler.catalog.should be_vertex(resource)
@@ -374,42 +388,90 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should add an edge from the scope resource to the added resource" do
-            resource = stub "noconflict", :ref => "File[yay]", :type => "file"
+            resource = resource(:file, "yay")
             @compiler.add_resource(@scope, resource)
 
             @compiler.catalog.should be_edge(@scope.resource, resource)
         end
 
-        it "should add edges from the class resources to the main class" do
-            main = CompilerTestResource.new(:class, :main)
-            @compiler.add_resource(@scope, main)
-            resource = CompilerTestResource.new(:class, "foo")
+        it "should add an edge to any specified stage for class resources" do
+            other_stage = resource(:stage, "other")
+            @compiler.add_resource(@scope, other_stage)
+            resource = resource(:class, "foo")
+            resource[:stage] = 'other'
+
+            @compiler.add_resource(@scope, resource)
+
+            @compiler.catalog.edge?(other_stage, resource).should be_true
+        end
+
+        it "should fail if a non-class resource attempts to set a stage" do
+            other_stage = resource(:stage, "other")
+            @compiler.add_resource(@scope, other_stage)
+            resource = resource(:file, "foo")
+            resource[:stage] = 'other'
+
+            lambda { @compiler.add_resource(@scope, resource) }.should raise_error(ArgumentError)
+        end
+
+        it "should fail if an unknown stage is specified" do
+            resource = resource(:class, "foo")
+            resource[:stage] = 'other'
+
+            lambda { @compiler.add_resource(@scope, resource) }.should raise_error(ArgumentError)
+        end
+
+        it "should add edges from the class resources to the main stage if no stage is specified" do
+            main = @compiler.catalog.resource(:stage, :main)
+            resource = resource(:class, "foo")
             @compiler.add_resource(@scope, resource)
 
             @compiler.catalog.should be_edge(main, resource)
         end
 
-        it "should just add edges to the scope resource for the class resources when no main class can be found" do
-            resource = CompilerTestResource.new(:class, "foo")
+        it "should not add non-class resources that don't specify a stage to the 'main' stage" do
+            main = @compiler.catalog.resource(:stage, :main)
+            resource = resource(:file, "foo")
             @compiler.add_resource(@scope, resource)
 
-            @compiler.catalog.should be_edge(@scope.resource, resource)
+            @compiler.catalog.should_not be_edge(main, resource)
+        end
+
+        it "should not add any parent-edges to stages" do
+            stage = resource(:stage, "other")
+            @compiler.add_resource(@scope, stage)
+
+            @scope.resource = resource(:class, "foo")
+
+            @compiler.catalog.edge?(@scope.resource, stage).should be_false
+        end
+
+        it "should not attempt to add stages to other stages" do
+            other_stage = resource(:stage, "other")
+            second_stage = resource(:stage, "second")
+            @compiler.add_resource(@scope, other_stage)
+            @compiler.add_resource(@scope, second_stage)
+
+            second_stage[:stage] = "other"
+
+            @compiler.catalog.edge?(other_stage, second_stage).should be_false
         end
 
         it "should have a method for looking up resources" do
-            resource = stub 'resource', :ref => "Yay[foo]", :type => "file"
+            resource = resource(:yay, "foo")
             @compiler.add_resource(@scope, resource)
             @compiler.findresource("Yay[foo]").should equal(resource)
         end
 
         it "should be able to look resources up by type and title" do
-            resource = stub 'resource', :ref => "Yay[foo]", :type => "file"
+            resource = resource(:yay, "foo")
             @compiler.add_resource(@scope, resource)
             @compiler.findresource("Yay", "foo").should equal(resource)
         end
 
         it "should not evaluate virtual defined resources" do
-            resource = stub 'notevaluated', :ref => "File[testing]", :builtin? => false, :evaluated? => false, :virtual? => true, :type => "file"
+            resource = resource(:file, "testing")
+            resource.virtual = true
             @compiler.add_resource(@scope, resource)
 
             resource.expects(:evaluate).never
@@ -643,8 +705,8 @@ describe Puppet::Parser::Compiler do
     describe "when managing resource overrides" do
 
         before do
-            @override = stub 'override', :ref => "My[ref]", :type => "my"
-            @resource = stub 'resource', :ref => "My[ref]", :builtin? => true, :type => "my"
+            @override = stub 'override', :ref => "File[/foo]", :type => "my"
+            @resource = resource(:file, "/foo")
         end
 
         it "should be able to store overrides" do
