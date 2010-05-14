@@ -198,7 +198,7 @@ class Puppet::Util::FileType
         # does not think I should be allowed to set the @path to my own user name
         def cmdbase
             cmd = nil
-            if @uid == Puppet::Util::SUIDManager.uid
+            if @uid == Puppet::Util::SUIDManager.uid || Facter.value(:operatingsystem) == "HP-UX"
                 return "crontab"
             else
                 return "crontab -u #{@path}"
