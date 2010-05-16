@@ -629,6 +629,7 @@ describe Puppet::SSL::Host do
             before do
                 @crl = stub 'crl', :content => "real_crl"
                 Puppet::SSL::CertificateRevocationList.stubs(:find).returns @crl
+                Puppet.settings.stubs(:value).with(:certificate_revocation).returns true
             end
 
             it "should add the CRL" do
