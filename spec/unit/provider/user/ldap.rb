@@ -143,10 +143,10 @@ describe provider_class do
             @instance = provider_class.new(:name => "myname")
         end
 
-        it "should show its group membership as the list of all groups returned by an ldap query of group memberships" do
+        it "should show its group membership as the sorted list of all groups returned by an ldap query of group memberships" do
             one = {:name => "one"}
             two = {:name => "two"}
-            @group_manager.expects(:search).with("memberUid=myname").returns([one, two])
+            @group_manager.expects(:search).with("memberUid=myname").returns([two, one])
 
             @instance.groups.should == "one,two"
         end
