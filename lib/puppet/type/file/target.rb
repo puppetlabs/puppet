@@ -23,6 +23,8 @@ module Puppet
 
         # Create our link.
         def mklink
+            raise Puppet::Error, "Cannot symlink on Win32" if Puppet.features.win32?
+
             target = self.should
 
             # Clean up any existing objects.  The argument is just for logging,

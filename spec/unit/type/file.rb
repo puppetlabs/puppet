@@ -5,6 +5,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 describe Puppet::Type.type(:file) do
     before do
         Puppet.settings.stubs(:use)
+        @real_posix = Puppet.features.posix?
+        Puppet.features.stubs("posix?").returns(true)
 
         @path = Tempfile.new("puppetspec")
         pathname = @path.path
@@ -151,127 +153,181 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when using POSIX filenames" do
-        it "should autorequire its parent directory" do
-            file = Puppet::Type::File.new(:path => "/foo/bar")
-            dir = Puppet::Type::File.new(:path => "/foo")
-            @catalog.add_resource file
-            @catalog.add_resource dir
-            reqs = file.autorequire
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
-        end
+        describe "on POSIX systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(true)
+                Puppet.features.stubs(:win32?).returns(false)
+            end
 
-        it "should not autorequire its parent dir if its parent dir is itself" do
-            file = Puppet::Type::File.new(:path => "/")
-            @catalog.add_resource file
-            file.autorequire.should be_empty
-        end
+            it "should autorequire its parent directory" do
+                file = Puppet::Type::File.new(:path => "/foo/bar")
+                dir = Puppet::Type::File.new(:path => "/foo")
+                @catalog.add_resource file
+                @catalog.add_resource dir
+                reqs = file.autorequire
+                reqs[0].source.must == dir
+                reqs[0].target.must == file
+            end
 
-        it "should remove trailing slashes" do
-            file = Puppet::Type::File.new(:path => "/foo/bar/baz/")
-            file[:path].should == "/foo/bar/baz"
-        end
+            it "should not autorequire its parent dir if its parent dir is itself" do
+                file = Puppet::Type::File.new(:path => "/")
+                @catalog.add_resource file
+                file.autorequire.should be_empty
+            end
 
-        it "should remove double slashes" do
-            file = Puppet::Type::File.new(:path => "/foo/bar//baz")
-            file[:path].should == "/foo/bar/baz"
-        end
+            it "should remove trailing slashes" do
+                file = Puppet::Type::File.new(:path => "/foo/bar/baz/")
+                file[:path].should == "/foo/bar/baz"
+            end
 
-        it "should remove trailing double slashes" do
-            file = Puppet::Type::File.new(:path => "/foo/bar/baz//")
-            file[:path].should == "/foo/bar/baz"
-        end
+            it "should remove double slashes" do
+                file = Puppet::Type::File.new(:path => "/foo/bar//baz")
+                file[:path].should == "/foo/bar/baz"
+            end
 
-        it "should leave a single slash alone" do
-            file = Puppet::Type::File.new(:path => "/")
-            file[:path].should == "/"
+            it "should remove trailing double slashes" do
+                file = Puppet::Type::File.new(:path => "/foo/bar/baz//")
+                file[:path].should == "/foo/bar/baz"
+            end
+
+            it "should leave a single slash alone" do
+                file = Puppet::Type::File.new(:path => "/")
+                file[:path].should == "/"
+            end
+        end
+        
+        describe "on Win32 systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(false)
+                Puppet.features.stubs(:win32?).returns(true)
+            end
+
+            it "should refuse to work" do
+                lambda { Puppet::Type::File.new(:path => "/foo/bar") }.should raise_error(Puppet::Error)
+            end
         end
     end
 
     describe "when using Win32 filenames" do
-        it "should autorequire its parent directory" do
-            file = Puppet::Type::File.new(:path => "X:/foo/bar")
-            dir = Puppet::Type::File.new(:path => "X:/foo")
-            @catalog.add_resource file
-            @catalog.add_resource dir
-            reqs = file.autorequire
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
+        describe "on Win32 systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(false)
+                Puppet.features.stubs(:win32?).returns(true)
+            end
+
+            it "should autorequire its parent directory" do
+                file = Puppet::Type::File.new(:path => "X:/foo/bar")
+                dir = Puppet::Type::File.new(:path => "X:/foo")
+                @catalog.add_resource file
+                @catalog.add_resource dir
+                reqs = file.autorequire
+                reqs[0].source.must == dir
+                reqs[0].target.must == file
+            end
+
+            it "should not autorequire its parent dir if its parent dir is itself" do
+                file = Puppet::Type::File.new(:path => "X:/")
+                @catalog.add_resource file
+                file.autorequire.should be_empty
+            end
+
+            it "should remove trailing slashes" do
+                file = Puppet::Type::File.new(:path => "X:/foo/bar/baz/")
+                file[:path].should == "X:/foo/bar/baz"
+            end
+
+            it "should remove double slashes" do
+                file = Puppet::Type::File.new(:path => "X:/foo/bar//baz")
+                file[:path].should == "X:/foo/bar/baz"
+            end
+
+            it "should remove trailing double slashes" do
+                file = Puppet::Type::File.new(:path => "X:/foo/bar/baz//")
+                file[:path].should == "X:/foo/bar/baz"
+            end
+
+            it "should leave a drive letter with a slash alone" do
+                file = Puppet::Type::File.new(:path => "X:/")
+                file[:path].should == "X:/"
+            end
+
+            it "should add a slash to a drive letter" do
+                file = Puppet::Type::File.new(:path => "X:")
+                file[:path].should == "X:/"
+            end
         end
 
-        it "should not autorequire its parent dir if its parent dir is itself" do
-            file = Puppet::Type::File.new(:path => "X:/")
-            @catalog.add_resource file
-            file.autorequire.should be_empty
-        end
+        describe "on POSIX systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(true)
+                Puppet.features.stubs(:win32?).returns(false)
+            end
 
-        it "should remove trailing slashes" do
-            file = Puppet::Type::File.new(:path => "X:/foo/bar/baz/")
-            file[:path].should == "X:/foo/bar/baz"
-        end
-
-        it "should remove double slashes" do
-            file = Puppet::Type::File.new(:path => "X:/foo/bar//baz")
-            file[:path].should == "X:/foo/bar/baz"
-        end
-
-        it "should remove trailing double slashes" do
-            file = Puppet::Type::File.new(:path => "X:/foo/bar/baz//")
-            file[:path].should == "X:/foo/bar/baz"
-        end
-
-        it "should leave a drive letter with a slash alone" do
-            file = Puppet::Type::File.new(:path => "X:/")
-            file[:path].should == "X:/"
-        end
-
-        it "should add a slash to a drive letter" do
-            file = Puppet::Type::File.new(:path => "X:")
-            file[:path].should == "X:/"
+            it "should refuse to work" do
+                lambda { Puppet::Type::File.new(:path => "X:/foo/bar") }.should raise_error(Puppet::Error)
+            end
         end
     end
 
     describe "when using UNC filenames" do
-        it "should autorequire its parent directory" do
-            file = Puppet::Type::File.new(:path => "//server/foo/bar")
-            dir = Puppet::Type::File.new(:path => "//server/foo")
-            @catalog.add_resource file
-            @catalog.add_resource dir
-            reqs = file.autorequire
-            reqs[0].source.must == dir
-            reqs[0].target.must == file
+        describe "on Win32 systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(false)
+                Puppet.features.stubs(:win32?).returns(true)
+            end
+
+            it "should autorequire its parent directory" do
+                file = Puppet::Type::File.new(:path => "//server/foo/bar")
+                dir = Puppet::Type::File.new(:path => "//server/foo")
+                @catalog.add_resource file
+                @catalog.add_resource dir
+                reqs = file.autorequire
+                reqs[0].source.must == dir
+                reqs[0].target.must == file
+            end
+
+            it "should not autorequire its parent dir if its parent dir is itself" do
+                file = Puppet::Type::File.new(:path => "//server/foo")
+                @catalog.add_resource file
+                puts file.autorequire
+                file.autorequire.should be_empty
+            end
+
+            it "should remove trailing slashes" do
+                file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/")
+                file[:path].should == "//server/foo/bar/baz"
+            end
+
+            it "should remove double slashes" do
+                file = Puppet::Type::File.new(:path => "//server/foo/bar//baz")
+                file[:path].should == "//server/foo/bar/baz"
+            end
+
+            it "should remove trailing double slashes" do
+                file = Puppet::Type::File.new(:path => "//server/foo/bar/baz//")
+                file[:path].should == "//server/foo/bar/baz"
+            end
+
+            it "should remove a trailing slash from a sharename" do
+                file = Puppet::Type::File.new(:path => "//server/foo/")
+                file[:path].should == "//server/foo"
+            end
+
+            it "should not modify a sharename" do
+                file = Puppet::Type::File.new(:path => "//server/foo")
+                file[:path].should == "//server/foo"
+            end
         end
 
-        it "should not autorequire its parent dir if its parent dir is itself" do
-            file = Puppet::Type::File.new(:path => "//server/foo")
-            @catalog.add_resource file
-            puts file.autorequire
-            file.autorequire.should be_empty
-        end
+        describe "on POSIX systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(true)
+                Puppet.features.stubs(:win32?).returns(false)
+            end
 
-        it "should remove trailing slashes" do
-            file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/")
-            file[:path].should == "//server/foo/bar/baz"
-        end
-
-        it "should remove double slashes" do
-            file = Puppet::Type::File.new(:path => "//server/foo/bar//baz")
-            file[:path].should == "//server/foo/bar/baz"
-        end
-
-        it "should remove trailing double slashes" do
-            file = Puppet::Type::File.new(:path => "//server/foo/bar/baz//")
-            file[:path].should == "//server/foo/bar/baz"
-        end
-
-        it "should remove a trailing slash from a sharename" do
-            file = Puppet::Type::File.new(:path => "//server/foo/")
-            file[:path].should == "//server/foo"
-        end
-
-        it "should not modify a sharename" do
-            file = Puppet::Type::File.new(:path => "//server/foo")
-            file[:path].should == "//server/foo"
+            it "should refuse to work" do
+                lambda { Puppet::Type::File.new(:path => "X:/foo/bar") }.should raise_error(Puppet::Error)
+            end
         end
     end
 
@@ -310,37 +366,54 @@ describe Puppet::Type.type(:file) do
         include PuppetTest
         require 'tempfile'
 
-        before do
-            @basedir = tempfile
-            Dir.mkdir(@basedir)
-            @file = File.join(@basedir, "file")
-            @link = File.join(@basedir, "link")
+        if @real_posix
+            describe "on POSIX systems" do
+                before do
+                    @basedir = tempfile
+                    Dir.mkdir(@basedir)
+                    @file = File.join(@basedir, "file")
+                    @link = File.join(@basedir, "link")
 
-            File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
-            File.symlink(@file, @link)
+                    File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
+                    File.symlink(@file, @link)
 
-            @resource = Puppet::Type.type(:file).new(
-                :path => @link,
-                :mode => "755"
-            )
-            @catalog.add_resource @resource
+                    @resource = Puppet::Type.type(:file).new(
+                        :path => @link,
+                        :mode => "755"
+                    )
+                    @catalog.add_resource @resource
+                end
+
+                after do
+                    remove_tmp_files
+                end
+
+                it "should default to managing the link" do
+                    @catalog.apply
+                    # I convert them to strings so they display correctly if there's an error.
+                    ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0644
+                end
+
+                it "should be able to follow links" do
+                    @resource[:links] = :follow
+                    @catalog.apply
+
+                    ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0755
+                end
+            end
+        else # @real_posix
+            # should recode tests using expectations instead of using the filesystem
         end
+        
+        describe "on Win32 systems" do
+            before do
+                Puppet.features.stubs(:posix?).returns(false)
+                Puppet.features.stubs(:win32?).returns(true)
+            end
 
-        after do
-            remove_tmp_files
-        end
-
-        it "should default to managing the link" do
-            @catalog.apply
-            # I convert them to strings so they display correctly if there's an error.
-            ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0644
-        end
-
-        it "should be able to follow links" do
-            @resource[:links] = :follow
-            @catalog.apply
-
-            ("%o" % (File.stat(@file).mode & 007777)).should == "%o" % 0755
+            it "should refuse to work with links" do
+                lambda { Puppet::Type.type(:file).new(:path => @link, :mode => "755") }.should raise_error(Puppet::Error)
+            end
         end
     end
 
