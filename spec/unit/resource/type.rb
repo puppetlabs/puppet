@@ -290,6 +290,14 @@ describe Puppet::Resource::Type do
             @scope.lookupvar("foo").should == "something"
         end
 
+        it "should set all default values as parameters in the resource" do
+            @type.set_arguments :foo => stub("value", :safeevaluate => "something")
+
+            @type.set_resource_parameters(@resource, @scope)
+
+            @resource[:foo].should == "something"
+        end
+
         it "should fail if the resource does not provide a value for a required argument" do
             @type.set_arguments :foo => nil
             @resource.expects(:to_hash).returns({})

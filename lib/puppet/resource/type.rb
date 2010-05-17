@@ -204,7 +204,11 @@ class Puppet::Resource::Type
             # Even if 'default' is a false value, it's an AST value, so this works fine
             fail Puppet::ParseError, "Must pass #{param} to #{resource.ref}" unless default
 
-            scope.setvar(param.to_s, default.safeevaluate(scope))
+            value = default.safeevaluate(scope)
+            scope.setvar(param.to_s, value)
+
+            # Set it in the resource, too, so the value makes it to the client.
+            resource[param] = value
         end
 
         scope.setvar("title", resource.title) unless set.include? :title
