@@ -250,46 +250,44 @@ describe Puppet::Resource::Type do
 
     describe "when setting its parameters in the scope" do
         before do
-            @scope = stub 'scope', :newscope => nil, :setvar => nil
-            @resource = stub 'resource', :title => "yay", :name => "yea", :ref => "Foo[bar]"
+            @scope = Puppet::Parser::Scope.new(:compiler => stub("compiler", :environment => Puppet::Node::Environment.new), :source => stub("source"))
+            @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
             @type = Puppet::Resource::Type.new(:hostclass, "foo")
         end
 
         it "should set each of the resource's parameters as variables in the scope" do
             @type.set_arguments :foo => nil, :boo => nil
-            @resource.expects(:to_hash).returns(:foo => "bar", :boo => "baz")
-
-            @scope.expects(:setvar).with("foo", "bar")
-            @scope.expects(:setvar).with("boo", "baz")
-            @scope.stubs(:class_set).with("foo",@scope)
+            @resource[:foo] = "bar"
+            @resource[:boo] = "baz"
 
             @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("foo").should == "bar"
+            @scope.lookupvar("boo").should == "baz"
         end
 
         it "should set the variables as strings" do
             @type.set_arguments :foo => nil
-            @resource.expects(:to_hash).returns(:foo => "bar")
-            @scope.expects(:setvar).with("foo", "bar")
-            @scope.stubs(:class_set).with("foo",@scope)
+            @resource[:foo] = "bar"
 
             @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("foo").should == "bar"
         end
 
         it "should fail if any of the resource's parameters are not valid attributes" do
             @type.set_arguments :foo => nil
-            @resource.expects(:to_hash).returns(:boo => "baz")
+            @resource[:boo] = "baz"
 
             lambda { @type.set_resource_parameters(@resource, @scope) }.should raise_error(Puppet::ParseError)
         end
 
         it "should evaluate and set its default values as variables for parameters not provided by the resource" do
             @type.set_arguments :foo => stub("value", :safeevaluate => "something")
-            @resource.expects(:to_hash).returns({})
-
-            @scope.expects(:setvar).with("foo", "something")
-            @scope.stubs(:class_set).with("foo",@scope)
 
             @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("foo").should == "something"
         end
 
         it "should fail if the resource does not provide a value for a required argument" do
@@ -300,23 +298,15 @@ describe Puppet::Resource::Type do
         end
 
         it "should set the resource's title as a variable if not otherwise provided" do
-            @resource.expects(:to_hash).returns({})
-
-            @resource.expects(:title).returns 'teetle'
-            @scope.expects(:setvar).with("title", "teetle")
-            @scope.stubs(:class_set).with("foo",@scope)
-
             @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("title").should == "bar"
         end
 
         it "should set the resource's name as a variable if not otherwise provided" do
-            @resource.expects(:to_hash).returns({})
-
-            @resource.expects(:name).returns 'nombre'
-            @scope.expects(:setvar).with("name", "nombre")
-            @scope.stubs(:class_set).with("foo",@scope)
-
             @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("name").should == "bar"
         end
     end
 
