@@ -207,6 +207,14 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @original.to_resource.version.should == "foo"
         end
 
+        it "should convert parser resources to plain resources" do
+            resource = Puppet::Parser::Resource.new(:file, "foo", :scope => stub("scope"), :source => stub("source"))
+            catalog = Puppet::Resource::Catalog.new("whev")
+            catalog.add_resource(resource)
+            new = catalog.to_resource
+            new.resource(:file, "foo").class.should == Puppet::Resource
+        end
+
         it "should add all resources as Puppet::Resource instances" do
             @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Resource) }
         end

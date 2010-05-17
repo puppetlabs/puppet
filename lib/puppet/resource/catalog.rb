@@ -551,7 +551,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             #Aliases aren't working in the ral catalog because the current instance of the resource
             #has a reference to the catalog being converted. . . So, give it a reference to the new one
             #problem solved. . .
-            if resource.is_a?(Puppet::Resource)
+            if resource.class == Puppet::Resource
                 resource = resource.dup
                 resource.catalog = result
             elsif resource.is_a?(Puppet::TransObject)
