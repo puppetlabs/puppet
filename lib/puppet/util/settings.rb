@@ -387,7 +387,7 @@ class Puppet::Util::Settings
             case hash[:default]
             when true, false, "true", "false"
                 klass = BooleanSetting
-            when /^\$\w+\//, /^\//
+            when /^\$\w+\//, /^\//, /^\w:\//
                 klass = FileSetting
             when String, Integer, Float # nothing
                 klass = Setting

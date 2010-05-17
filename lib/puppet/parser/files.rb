@@ -38,7 +38,7 @@ module Puppet::Parser::Files
     # In all cases, an absolute path is returned, which does not
     # necessarily refer to an existing file
     def find_template(template, environment = nil)
-        if template =~ /^#{File::SEPARATOR}/
+        if template == File.expand_path(template)
             return template
         end
 
@@ -76,7 +76,7 @@ module Puppet::Parser::Files
     # Return an array of paths by splitting the +templatedir+ config
     # parameter.
     def templatepath(environment = nil)
-        dirs = Puppet.settings.value(:templatedir, environment).split(":")
+        dirs = Puppet.settings.value(:templatedir, environment).split(File::PATH_SEPARATOR)
         dirs.select do |p|
             File::directory?(p)
         end
@@ -86,7 +86,7 @@ module Puppet::Parser::Files
     # nil if the path is empty or absolute (starts with a /).
     # This method can return nil & anyone calling it needs to handle that.
     def split_file_path(path)
-        path.split(File::SEPARATOR, 2) unless path =~ /^(#{File::SEPARATOR}|$)/
+        path.split(File::SEPARATOR, 2) unless path == "" or path == File.expand_path(path)
     end
 
 end

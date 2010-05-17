@@ -359,9 +359,10 @@ describe Puppet::Util::Settings do
         end
 
         it "should use its current ':config' value for the file to parse" do
-            @settings[:config] = "/my/file"
+            myfile = Puppet.features.posix? ? "/my/file" : "C:/myfile" # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
+            @settings[:config] = myfile
 
-            File.expects(:read).with("/my/file").returns("[main]")
+            File.expects(:read).with(myfile).returns "[main]"
 
             @settings.parse
         end
@@ -522,6 +523,7 @@ describe Puppet::Util::Settings do
                 filetimeout = -1
                 "
                 File.expects(:read).with(somefile).returns(text)
+                File.expects(:expand_path).with(somefile).returns somefile
                 @settings[:config] = somefile
             end
 
@@ -670,33 +672,39 @@ describe Puppet::Util::Settings do
         before do
             @settings = Puppet::Util::Settings.new
             @settings.stubs(:service_user_available?).returns true
+            @prefix = Puppet.features.posix? ? "" : "C:"
         end
 
         it "should add all file resources to the catalog if no sections have been specified" do
-            @settings.setdefaults :main, :maindir => ["/maindir", "a"], :seconddir => ["/seconddir", "a"]
-            @settings.setdefaults :other, :otherdir => ["/otherdir", "a"]
+            @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"], :seconddir => [@prefix+"/seconddir", "a"]
+            @settings.setdefaults :other, :otherdir => [@prefix+"/otherdir", "a"]
+
             catalog = @settings.to_catalog
-            %w{/maindir /seconddir /otherdir}.each do |path|
+            p "three dirs"
+            p catalog
+
+            [@prefix+"/maindir", @prefix+"/seconddir", @prefix+"/otherdir"].each do |path|
                 catalog.resource(:file, path).should be_instance_of(Puppet::Resource)
             end
         end
 
         it "should add only files in the specified sections if section names are provided" do
-            @settings.setdefaults :main, :maindir => ["/maindir", "a"]
-            @settings.setdefaults :other, :otherdir => ["/otherdir", "a"]
+            @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
+            @settings.setdefaults :other, :otherdir => [@prefix+"/otherdir", "a"]
             catalog = @settings.to_catalog(:main)
-            catalog.resource(:file, "/otherdir").should be_nil
-            catalog.resource(:file, "/maindir").should be_instance_of(Puppet::Resource)
+            p catalog
+            catalog.resource(:file, @prefix+"/otherdir").should be_nil
+            catalog.resource(:file, @prefix+"/maindir").should be_instance_of(Puppet::Resource)
         end
 
         it "should not try to add the same file twice" do
-            @settings.setdefaults :main, :maindir => ["/maindir", "a"]
-            @settings.setdefaults :other, :otherdir => ["/maindir", "a"]
+            @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
+            @settings.setdefaults :other, :otherdir => [@prefix+"/maindir", "a"]
             lambda { @settings.to_catalog }.should_not raise_error
         end
 
         it "should ignore files whose :to_resource method returns nil" do
-            @settings.setdefaults :main, :maindir => ["/maindir", "a"]
+            @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
             @settings.setting(:maindir).expects(:to_resource).returns nil
 
             Puppet::Resource::Catalog.any_instance.expects(:add_resource).never

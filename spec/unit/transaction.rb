@@ -13,6 +13,7 @@ end
 
 describe Puppet::Transaction do
     before do
+        @basepath = Puppet.features.posix? ? "/what/ever" : "C:/tmp"
         @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
     end
 
@@ -121,7 +122,7 @@ describe Puppet::Transaction do
             @transaction.stubs(:eval_children_and_apply_resource)
             @transaction.stubs(:skip?).returns false
 
-            @resource = Puppet::Type.type(:file).new :path => "/my/file"
+            @resource = Puppet::Type.type(:file).new :path => @basepath
         end
 
         it "should check whether the resource should be skipped" do
@@ -156,7 +157,7 @@ describe Puppet::Transaction do
 
     describe "when applying a resource" do
         before do
-            @resource = Puppet::Type.type(:file).new :path => "/my/file"
+            @resource = Puppet::Type.type(:file).new :path => @basepath
             @status = Puppet::Resource::Status.new(@resource)
 
             @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
@@ -296,7 +297,7 @@ describe Puppet::Transaction do
         @transaction = Puppet::Transaction.new(@catalog)
         names = []
         2.times do |i|
-            name = "/my/file#{i}"
+            name = File.join(@basepath, "file#{i}")
             resource = Puppet::Type.type(:file).new :path => name
             names << resource.to_s
             @catalog.add_resource resource

@@ -3,6 +3,11 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
+
+    before do
+        @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    end
+
     it "should be an Expirer" do
         Puppet::Resource::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
     end
@@ -254,11 +259,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @original.add_class *%w{four five six}
 
             @top            = Puppet::Resource.new :class, 'top'
-            @topobject      = Puppet::Resource.new :file, '/topobject'
+            @topobject      = Puppet::Resource.new :file, @basepath+'/topobject'
             @middle         = Puppet::Resource.new :class, 'middle'
-            @middleobject   = Puppet::Resource.new :file, '/middleobject'
+            @middleobject   = Puppet::Resource.new :file, @basepath+'/middleobject'
             @bottom         = Puppet::Resource.new :class, 'bottom'
-            @bottomobject   = Puppet::Resource.new :file, '/bottomobject'
+            @bottomobject   = Puppet::Resource.new :file, @basepath+'/bottomobject'
 
             @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
 
@@ -501,11 +506,11 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should create aliases for resources isomorphic resources whose names do not match their titles" do
-            resource = Puppet::Type::File.new(:title => "testing", :path => "/something")
+            resource = Puppet::Type::File.new(:title => "testing", :path => @basepath+"/something")
 
             @catalog.add_resource(resource)
 
-            @catalog.resource(:file, "/something").should equal(resource)
+            @catalog.resource(:file, @basepath+"/something").should equal(resource)
         end
 
         it "should not create aliases for resources non-isomorphic resources whose names do not match their titles" do
@@ -559,15 +564,15 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
 
         it "should add an alias for the namevar when the title and name differ on isomorphic resource types" do
-            resource = Puppet::Type.type(:file).new :path => "/something", :title => "other", :content => "blah"
+            resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
             resource.expects(:isomorphic?).returns(true)
             @catalog.add_resource(resource)
             @catalog.resource(:file, "other").should equal(resource)
-            @catalog.resource(:file, "/something").ref.should == resource.ref
+            @catalog.resource(:file, @basepath+"/something").ref.should == resource.ref
         end
 
         it "should not add an alias for the namevar when the title and name differ on non-isomorphic resource types" do
-            resource = Puppet::Type.type(:file).new :path => "/something", :title => "other", :content => "blah"
+            resource = Puppet::Type.type(:file).new :path => @basepath+"/something", :title => "other", :content => "blah"
             resource.expects(:isomorphic?).returns(false)
             @catalog.add_resource(resource)
             @catalog.resource(:file, resource.title).should equal(resource)
@@ -696,15 +701,15 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @compone = Puppet::Type::Component.new :name => "one"
             @comptwo = Puppet::Type::Component.new :name => "two", :require => "Class[one]"
             @file = Puppet::Type.type(:file)
-            @one = @file.new :path => "/one"
-            @two = @file.new :path => "/two"
-            @sub = @file.new :path => "/two/subdir"
+            @one = @file.new :path => @basepath+"/one"
+            @two = @file.new :path => @basepath+"/two"
+            @sub = @file.new :path => @basepath+"/two/subdir"
             @catalog.add_edge @compone, @one
             @catalog.add_edge @comptwo, @two
 
-            @three = @file.new :path => "/three"
-            @four = @file.new :path => "/four", :require => "File[/three]"
-            @five = @file.new :path => "/five"
+            @three = @file.new :path => @basepath+"/three"
+            @four = @file.new :path => @basepath+"/four", :require => "File[#{@basepath}/three]"
+            @five = @file.new :path => @basepath+"/five"
             @catalog.add_resource @compone, @comptwo, @one, @two, @three, @four, @five, @sub
 
             @relationships = @catalog.relationship_graph

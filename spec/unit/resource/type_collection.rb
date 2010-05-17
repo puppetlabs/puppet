@@ -378,6 +378,7 @@ describe Puppet::Resource::TypeCollection do
         end
 
         it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
+            File.stubs(:expand_path).with("/my/file").returns "/my/file"
             File.expects(:exist?).with("/my/file").returns true
             Puppet.settings[:manifest] = "/my/file"
             @parser.expects(:file=).with "/my/file"
@@ -386,6 +387,7 @@ describe Puppet::Resource::TypeCollection do
         end
 
         it "should not attempt to load a manifest if none is present" do
+            File.stubs(:expand_path).with("/my/file").returns "/my/file"
             File.expects(:exist?).with("/my/file").returns false
             Puppet.settings[:manifest] = "/my/file"
             @parser.expects(:file=).never

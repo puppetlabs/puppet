@@ -7,6 +7,7 @@ tidy = Puppet::Type.type(:tidy)
 
 describe tidy do
     before do
+        @basepath = Puppet.features.posix? ? "/what/ever" : "C:/tmp"
         Puppet.settings.stubs(:use)
 
         # for an unknown reason some of these specs fails when run individually
@@ -97,7 +98,7 @@ describe tidy do
 
         convertors.each do |unit, multiple|
             it "should consider a %s to be %s seconds" % [unit, multiple] do
-                tidy = Puppet::Type.type(:tidy).new :path => "/what/ever", :age => "5%s" % unit.to_s[0..0]
+                tidy = Puppet::Type.type(:tidy).new :path => @basepath, :age => "5%s" % unit.to_s[0..0]
 
                 tidy[:age].should == 5 * multiple
             end
@@ -114,7 +115,7 @@ describe tidy do
 
         convertors.each do |unit, multiple|
             it "should consider a %s to be 1024^%s bytes" % [unit, multiple] do
-                tidy = Puppet::Type.type(:tidy).new :path => "/what/ever", :size => "5%s" % unit
+                tidy = Puppet::Type.type(:tidy).new :path => @basepath, :size => "5%s" % unit
 
                 total = 5
                 multiple.times { total *= 1024 }
@@ -125,9 +126,9 @@ describe tidy do
 
     describe "when tidying" do
         before do
-            @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
+            @tidy = Puppet::Type.type(:tidy).new :path => @basepath
             @stat = stub 'stat', :ftype => "directory"
-            File.stubs(:lstat).with("/what/ever").returns @stat
+            File.stubs(:lstat).with(@basepath).returns @stat
         end
 
         describe "and generating files" do
@@ -135,29 +136,29 @@ describe tidy do
                 @tidy[:backup] = "whatever"
                 Puppet::Type.type(:file).expects(:new).with { |args| args[:backup] == "whatever" }
 
-                @tidy.mkfile("/what/ever")
+                @tidy.mkfile(@basepath)
             end
 
             it "should set the file's path to the tidy's path" do
-                Puppet::Type.type(:file).expects(:new).with { |args| args[:path] == "/what/ever" }
+                Puppet::Type.type(:file).expects(:new).with { |args| args[:path] == @basepath }
 
-                @tidy.mkfile("/what/ever")
+                @tidy.mkfile(@basepath)
             end
 
             it "should configure the file for deletion" do
                 Puppet::Type.type(:file).expects(:new).with { |args| args[:ensure] == :absent }
 
-                @tidy.mkfile("/what/ever")
+                @tidy.mkfile(@basepath)
             end
 
             it "should force deletion on the file" do
                 Puppet::Type.type(:file).expects(:new).with { |args| args[:force] == true }
 
-                @tidy.mkfile("/what/ever")
+                @tidy.mkfile(@basepath)
             end
 
             it "should do nothing if the targeted file does not exist" do
-                File.expects(:lstat).with("/what/ever").raises Errno::ENOENT
+                File.expects(:lstat).with(@basepath).raises Errno::ENOENT
 
                 @tidy.generate.should == []
             end
@@ -165,15 +166,15 @@ describe tidy do
 
         describe "and recursion is not used" do
             it "should generate a file resource if the file should be tidied" do
-                @tidy.expects(:tidy?).with("/what/ever").returns true
-                file = Puppet::Type.type(:file).new(:path => "/eh")
-                @tidy.expects(:mkfile).with("/what/ever").returns file
+                @tidy.expects(:tidy?).with(@basepath).returns true
+                file = Puppet::Type.type(:file).new(:path => @basepath+"/eh")
+                @tidy.expects(:mkfile).with(@basepath).returns file
 
                 @tidy.generate.should == [file]
             end
 
             it "should do nothing if the file should not be tidied" do
-                @tidy.expects(:tidy?).with("/what/ever").returns false
+                @tidy.expects(:tidy?).with(@basepath).returns false
                 @tidy.expects(:mkfile).never
 
                 @tidy.generate.should == []
@@ -184,12 +185,12 @@ describe tidy do
             before do
                 @tidy[:recurse] = true
                 Puppet::FileServing::Fileset.any_instance.stubs(:stat).returns mock("stat")
-                @fileset = Puppet::FileServing::Fileset.new("/what/ever")
+                @fileset = Puppet::FileServing::Fileset.new(@basepath)
                 Puppet::FileServing::Fileset.stubs(:new).returns @fileset
             end
 
             it "should use a Fileset for infinite recursion" do
-                Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true).returns @fileset
+                Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns @fileset
                 @fileset.expects(:files).returns %w{. one two}
                 @tidy.stubs(:tidy?).returns false
 
@@ -198,7 +199,7 @@ describe tidy do
 
             it "should use a Fileset for limited recursion" do
                 @tidy[:recurse] = 42
-                Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true, :recurselimit => 42).returns @fileset
+                Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true, :recurselimit => 42).returns @fileset
                 @fileset.expects(:files).returns %w{. one two}
                 @tidy.stubs(:tidy?).returns false
 
@@ -208,13 +209,13 @@ describe tidy do
             it "should generate a file resource for every file that should be tidied but not for files that should not be tidied" do
                 @fileset.expects(:files).returns %w{. one two}
 
-                @tidy.expects(:tidy?).with("/what/ever").returns true
-                @tidy.expects(:tidy?).with("/what/ever/one").returns true
-                @tidy.expects(:tidy?).with("/what/ever/two").returns false
+                @tidy.expects(:tidy?).with(@basepath).returns true
+                @tidy.expects(:tidy?).with(@basepath+"/one").returns true
+                @tidy.expects(:tidy?).with(@basepath+"/two").returns false
 
-                file = Puppet::Type.type(:file).new(:path => "/eh")
-                @tidy.expects(:mkfile).with("/what/ever").returns file
-                @tidy.expects(:mkfile).with("/what/ever/one").returns file
+                file = Puppet::Type.type(:file).new(:path => @basepath+"/eh")
+                @tidy.expects(:mkfile).with(@basepath).returns file
+                @tidy.expects(:mkfile).with(@basepath+"/one").returns file
 
                 @tidy.generate
             end
@@ -222,7 +223,7 @@ describe tidy do
 
         describe "and determining whether a file matches provided glob patterns" do
             before do
-                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever", :recurse => 1
+                @tidy = Puppet::Type.type(:tidy).new :path => @basepath, :recurse => 1
                 @tidy[:matches] = %w{*foo* *bar*}
 
                 @stat = mock 'stat'
@@ -248,7 +249,7 @@ describe tidy do
 
         describe "and determining whether a file is too old" do
             before do
-                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => @basepath
                 @stat = stub 'stat'
 
                 @tidy[:age] = "1s"
@@ -260,25 +261,25 @@ describe tidy do
                 @tidy[:type] = :ctime
                 @stat.expects(:ctime).returns(Time.now)
 
-                @ager.tidy?("/what/ever", @stat)
+                @ager.tidy?(@basepath, @stat)
             end
 
             it "should return false if the file is more recent than the specified age" do
                 @stat.expects(:mtime).returns(Time.now)
 
-                @ager.should_not be_tidy("/what/ever", @stat)
+                @ager.should_not be_tidy(@basepath, @stat)
             end
 
             it "should return true if the file is older than the specified age" do
                 @stat.expects(:mtime).returns(Time.now - 10)
 
-                @ager.must be_tidy("/what/ever", @stat)
+                @ager.must be_tidy(@basepath, @stat)
             end
         end
 
         describe "and determining whether a file is too large" do
             before do
-                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => @basepath
                 @stat = stub 'stat', :ftype => "file"
 
                 @tidy[:size] = "1kb"
@@ -288,54 +289,54 @@ describe tidy do
             it "should return false if the file is smaller than the specified size" do
                 @stat.expects(:size).returns(4) # smaller than a kilobyte
 
-                @sizer.should_not be_tidy("/what/ever", @stat)
+                @sizer.should_not be_tidy(@basepath, @stat)
             end
 
             it "should return true if the file is larger than the specified size" do
                 @stat.expects(:size).returns(1500) # larger than a kilobyte
 
-                @sizer.must be_tidy("/what/ever", @stat)
+                @sizer.must be_tidy(@basepath, @stat)
             end
 
             it "should return true if the file is equal to the specified size" do
                 @stat.expects(:size).returns(1024)
 
-                @sizer.must be_tidy("/what/ever", @stat)
+                @sizer.must be_tidy(@basepath, @stat)
             end
         end
 
         describe "and determining whether a file should be tidied" do
             before do
-                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => @basepath
                 @stat = stub 'stat', :ftype => "file"
-                File.stubs(:lstat).with("/what/ever").returns @stat
+                File.stubs(:lstat).with(@basepath).returns @stat
             end
 
             it "should not try to recurse if the file does not exist" do
                 @tidy[:recurse] = true
 
-                File.stubs(:lstat).with("/what/ever").returns nil
+                File.stubs(:lstat).with(@basepath).returns nil
 
                 @tidy.generate.should == []
             end
 
             it "should not be tidied if the file does not exist" do
-                File.expects(:lstat).with("/what/ever").raises Errno::ENOENT
+                File.expects(:lstat).with(@basepath).raises Errno::ENOENT
 
-                @tidy.should_not be_tidy("/what/ever")
+                @tidy.should_not be_tidy(@basepath)
             end
 
             it "should not be tidied if the user has no access to the file" do
-                File.expects(:lstat).with("/what/ever").raises Errno::EACCES
+                File.expects(:lstat).with(@basepath).raises Errno::EACCES
 
-                @tidy.should_not be_tidy("/what/ever")
+                @tidy.should_not be_tidy(@basepath)
             end
 
             it "should not be tidied if it is a directory and rmdirs is set to false" do
                 stat = mock 'stat', :ftype => "directory"
-                File.expects(:lstat).with("/what/ever").returns stat
+                File.expects(:lstat).with(@basepath).returns stat
 
-                @tidy.should_not be_tidy("/what/ever")
+                @tidy.should_not be_tidy(@basepath)
             end
 
             it "should return false if it does not match any provided globs" do
@@ -343,24 +344,24 @@ describe tidy do
                 @tidy[:matches] = "globs"
 
                 matches = @tidy.parameter(:matches)
-                matches.expects(:tidy?).with("/what/ever", @stat).returns false
-                @tidy.should_not be_tidy("/what/ever")
+                matches.expects(:tidy?).with(@basepath, @stat).returns false
+                @tidy.should_not be_tidy(@basepath)
             end
 
             it "should return false if it does not match aging requirements" do
                 @tidy[:age] = "1d"
 
                 ager = @tidy.parameter(:age)
-                ager.expects(:tidy?).with("/what/ever", @stat).returns false
-                @tidy.should_not be_tidy("/what/ever")
+                ager.expects(:tidy?).with(@basepath, @stat).returns false
+                @tidy.should_not be_tidy(@basepath)
             end
 
             it "should return false if it does not match size requirements" do
                 @tidy[:size] = "1b"
 
                 sizer = @tidy.parameter(:size)
-                sizer.expects(:tidy?).with("/what/ever", @stat).returns false
-                @tidy.should_not be_tidy("/what/ever")
+                sizer.expects(:tidy?).with(@basepath, @stat).returns false
+                @tidy.should_not be_tidy(@basepath)
             end
 
             it "should tidy a file if age and size are set but only size matches" do
@@ -369,7 +370,7 @@ describe tidy do
 
                 @tidy.parameter(:size).stubs(:tidy?).returns true
                 @tidy.parameter(:age).stubs(:tidy?).returns false
-                @tidy.should be_tidy("/what/ever")
+                @tidy.should be_tidy(@basepath)
             end
 
             it "should tidy a file if age and size are set but only age matches" do
@@ -378,23 +379,23 @@ describe tidy do
 
                 @tidy.parameter(:size).stubs(:tidy?).returns false
                 @tidy.parameter(:age).stubs(:tidy?).returns true
-                @tidy.should be_tidy("/what/ever")
+                @tidy.should be_tidy(@basepath)
             end
 
             it "should tidy all files if neither age nor size is set" do
-                @tidy.must be_tidy("/what/ever")
+                @tidy.must be_tidy(@basepath)
             end
 
             it "should sort the results inversely by path length, so files are added to the catalog before their directories" do
                 @tidy[:recurse] = true
                 @tidy[:rmdirs] = true
-                fileset = Puppet::FileServing::Fileset.new("/what/ever")
+                fileset = Puppet::FileServing::Fileset.new(@basepath)
                 Puppet::FileServing::Fileset.expects(:new).returns fileset
                 fileset.expects(:files).returns %w{. one one/two}
 
                 @tidy.stubs(:tidy?).returns true
 
-                @tidy.generate.collect { |r| r[:path] }.should == %w{/what/ever/one/two /what/ever/one /what/ever}
+                @tidy.generate.collect { |r| r[:path] }.should == [@basepath+"/one/two", @basepath+"/one", @basepath]
             end
         end
 
@@ -402,16 +403,16 @@ describe tidy do
             @tidy[:recurse] = true
             @tidy[:rmdirs] = true
             fileset = mock 'fileset'
-            Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true).returns fileset
+            Puppet::FileServing::Fileset.expects(:new).with(@basepath, :recurse => true).returns fileset
             fileset.expects(:files).returns %w{. one two one/subone two/subtwo one/subone/ssone}
             @tidy.stubs(:tidy?).returns true
 
             result = @tidy.generate.inject({}) { |hash, res| hash[res[:path]] = res; hash }
             {
-                "/what/ever" => %w{/what/ever/one /what/ever/two},
-                "/what/ever/one" => ["/what/ever/one/subone"],
-                "/what/ever/two" => ["/what/ever/two/subtwo"],
-                "/what/ever/one/subone" => ["/what/ever/one/subone/ssone"]
+                @basepath => [ @basepath+"/one", @basepath+"/two" ],
+                @basepath+"/one" => [@basepath+"/one/subone"],
+                @basepath+"/two" => [@basepath+"/two/subtwo"],
+                @basepath+"/one/subone" => [@basepath+"/one/subone/ssone"]
             }.each do |parent, children|
                 children.each do |child|
                     ref = Puppet::Resource.new(:file, child)

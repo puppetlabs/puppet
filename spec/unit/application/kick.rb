@@ -6,6 +6,9 @@ require 'puppet/util/ldap/connection'
 require 'puppet/application/kick'
 
 describe Puppet::Application::Kick do
+
+    confine "Kick's eventloops can only start on POSIX" => Puppet.features.posix?
+
     before :each do
         Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
         @kick = Puppet::Application[:kick]

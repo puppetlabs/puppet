@@ -10,6 +10,9 @@ describe Puppet::Application do
 
     before do
         @app = Class.new(Puppet::Application).new
+
+        # avoid actually trying to parse any settings
+        Puppet.settings.stubs(:parse)
     end
 
     it "should have a run entry-point" do
@@ -145,17 +148,21 @@ describe Puppet::Application do
             end
         end
 
-        it 'should signal process with HUP after block if restart requested during block execution' do
-            Puppet::Application.run_status = nil
-            target = mock 'target'
-            target.expects(:some_method).once
-            old_handler = trap('HUP') { target.some_method }
-            begin
-                Puppet::Application.controlled_run do
-                    Puppet::Application.run_status = :restart_requested
+        describe 'on POSIX systems' do
+            confine "HUP works only on POSIX systems" => Puppet.features.posix?
+            
+            it 'should signal process with HUP after block if restart requested during block execution' do
+                Puppet::Application.run_status = nil
+                target = mock 'target'
+                target.expects(:some_method).once
+                old_handler = trap('HUP') { target.some_method }
+                begin
+                    Puppet::Application.controlled_run do
+                        Puppet::Application.run_status = :restart_requested
+                    end
+                ensure
+                    trap('HUP', old_handler)
                 end
-            ensure
-                trap('HUP', old_handler)
             end
         end
 

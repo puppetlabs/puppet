@@ -5,6 +5,11 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/parser/files'
 
 describe Puppet::Parser::Files do
+
+    before do
+        @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    end
+
     it "should have a method for finding a template" do
         Puppet::Parser::Files.should respond_to(:find_template)
     end
@@ -16,7 +21,7 @@ describe Puppet::Parser::Files do
     describe "when searching for templates" do
         it "should return fully-qualified templates directly" do
             Puppet::Parser::Files.expects(:modulepath).never
-            Puppet::Parser::Files.find_template("/my/template").should == "/my/template"
+            Puppet::Parser::Files.find_template(@basepath + "/my/template").should == @basepath + "/my/template"
         end
 
         it "should return the template from the first found module" do
@@ -136,19 +141,19 @@ describe Puppet::Parser::Files do
 
         it "should not look for modules when paths are fully qualified" do
             Puppet.expects(:value).with(:modulepath).never
-            file = "/fully/qualified/file.pp"
+            file = @basepath + "/fully/qualified/file.pp"
             Dir.stubs(:glob).with(file).returns([file])
             Puppet::Parser::Files.find_manifests(file)
         end
 
         it "should directly return fully qualified files" do
-            file = "/fully/qualified/file.pp"
+            file = @basepath + "/fully/qualified/file.pp"
             Dir.stubs(:glob).with(file).returns([file])
             Puppet::Parser::Files.find_manifests(file).should == [file]
         end
 
         it "should match against provided fully qualified patterns" do
-            pattern = "/fully/qualified/pattern/*"
+            pattern = @basepath + "/fully/qualified/pattern/*"
             Dir.expects(:glob).with(pattern).returns(%w{my file list})
             Puppet::Parser::Files.find_manifests(pattern).should == %w{my file list}
         end
@@ -160,9 +165,9 @@ describe Puppet::Parser::Files do
         end
 
         it "should only return files, not directories" do
-            pattern = "/fully/qualified/pattern/*"
-            file = "/my/file"
-            dir = "/my/directory"
+            pattern = @basepath + "/fully/qualified/pattern/*"
+            file = @basepath + "/my/file"
+            dir = @basepath + "/my/directory"
             Dir.expects(:glob).with(pattern).returns([file, dir])
             FileTest.expects(:directory?).with(file).returns(false)
             FileTest.expects(:directory?).with(dir).returns(true)

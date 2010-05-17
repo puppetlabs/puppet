@@ -388,8 +388,9 @@ describe Puppet::Parser::Compiler do
         end
 
         it "should fail to add resources that conflict with existing resources" do
-            file1 = Puppet::Type.type(:file).new :path => "/foo"
-            file2 = Puppet::Type.type(:file).new :path => "/foo"
+            path = Puppet.features.posix? ? "/foo" : "C:/foo"
+            file1 = Puppet::Type.type(:file).new :path => path
+            file2 = Puppet::Type.type(:file).new :path => path
 
             @compiler.add_resource(@scope, file1)
             lambda { @compiler.add_resource(@scope, file2) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)

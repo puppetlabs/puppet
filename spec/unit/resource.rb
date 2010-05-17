@@ -4,6 +4,11 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
+
+    before do
+        @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    end
+
     [:catalog, :file, :line].each do |attr|
         it "should have an #{attr} attribute" do
             resource = Puppet::Resource.new("file", "/my/file")
@@ -13,7 +18,7 @@ describe Puppet::Resource do
     end
 
     it "should have a :title attribute" do
-        Puppet::Resource.new(:file, "foo").title.should == "foo"
+        Puppet::Resource.new(:user, "foo").title.should == "foo"
     end
 
     it "should require the type and title" do
@@ -21,7 +26,7 @@ describe Puppet::Resource do
     end
 
     it "should canonize types to capitalized strings" do
-        Puppet::Resource.new(:file, "foo").type.should == "File"
+        Puppet::Resource.new(:user, "foo").type.should == "User"
     end
 
     it "should canonize qualified types so all strings are capitalized" do
@@ -33,7 +38,7 @@ describe Puppet::Resource do
     end
 
     it "should tag itself with its title if the title is a valid tag" do
-        Puppet::Resource.new("file", "bar").should be_tagged("bar")
+        Puppet::Resource.new("user", "bar").should be_tagged("bar")
     end
 
     it "should not tag itself with its title if the title is a not valid tag" do
@@ -82,10 +87,10 @@ describe Puppet::Resource do
     end
 
     it "should be able to extract its information from a Puppet::Type instance" do
-        ral = Puppet::Type.type(:file).new :path => "/foo"
+        ral = Puppet::Type.type(:file).new :path => @basepath+"/foo"
         ref = Puppet::Resource.new(ral)
         ref.type.should == "File"
-        ref.title.should == "/foo"
+        ref.title.should == @basepath+"/foo"
     end
 
 
@@ -479,10 +484,10 @@ describe Puppet::Resource do
 
     describe "when converting to a RAL resource" do
         it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
-            resource = Puppet::Resource.new("file", "/my/file")
+            resource = Puppet::Resource.new("file", @basepath+"/my/file")
             result = resource.to_ral
             result.should be_instance_of(Puppet::Type.type(:file))
-            result[:path].should == "/my/file"
+            result[:path].should == @basepath+"/my/file"
         end
 
         it "should convert to a component instance if the resource type is not of a builtin type" do
@@ -691,7 +696,7 @@ describe Puppet::Resource do
         before do
             @data = {
                 'type' => "file",
-                'title' => "yay",
+                'title' => @basepath+"/yay",
             }
         end
 
@@ -700,7 +705,7 @@ describe Puppet::Resource do
         end
 
         it "should set its title to the provided title" do
-            Puppet::Resource.from_pson(@data).title.should == "yay"
+            Puppet::Resource.from_pson(@data).title.should == @basepath+"/yay"
         end
 
         it "should tag the resource with any provided tags" do

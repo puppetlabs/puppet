@@ -8,6 +8,10 @@ require 'puppet/util/settings/file_setting'
 describe Puppet::Util::Settings::FileSetting do
     FileSetting = Puppet::Util::Settings::FileSetting
 
+    before do
+        @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    end
+
     describe "when determining whether the service user should be used" do
         before do
             @settings = mock 'settings'
@@ -120,7 +124,7 @@ describe Puppet::Util::Settings::FileSetting do
         before do
             @settings = mock 'settings'
             @file = Puppet::Util::Settings::FileSetting.new(:settings => @settings, :desc => "eh", :name => :mydir, :section => "mysect")
-            @settings.stubs(:value).with(:mydir).returns "/my/file"
+            @settings.stubs(:value).with(:mydir).returns @basepath
         end
 
         it "should skip files that cannot determine their types" do
@@ -131,20 +135,24 @@ describe Puppet::Util::Settings::FileSetting do
         it "should skip non-existent files if 'create_files' is not enabled" do
             @file.expects(:create_files?).returns false
             @file.expects(:type).returns :file
-            File.expects(:exist?).with("/my/file").returns false
+            File.expects(:exist?).with(@basepath).returns false
             @file.to_resource.should be_nil
         end
 
         it "should manage existent files even if 'create_files' is not enabled" do
             @file.expects(:create_files?).returns false
             @file.expects(:type).returns :file
-            File.expects(:exist?).with("/my/file").returns true
+            File.expects(:exist?).with(@basepath).returns true
             @file.to_resource.should be_instance_of(Puppet::Resource)
         end
 
-        it "should skip files in /dev" do
-            @settings.stubs(:value).with(:mydir).returns "/dev/file"
-            @file.to_resource.should be_nil
+        describe "on POSIX systems" do
+            confine "no /dev on Win32" => Puppet.features.posix?
+
+            it "should skip files in /dev" do
+                @settings.stubs(:value).with(:mydir).returns "/dev/file"
+                @file.to_resource.should be_nil
+            end
         end
 
         it "should skip files whose paths are not strings" do
@@ -155,7 +163,7 @@ describe Puppet::Util::Settings::FileSetting do
         it "should return a file resource with the path set appropriately" do
             resource = @file.to_resource
             resource.type.should == "File"
-            resource.title.should == "/my/file"
+            resource.title.should == @basepath
         end
 
         it "should fully qualified returned files if necessary (#795)" do
