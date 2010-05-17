@@ -290,7 +290,9 @@ describe Puppet::Resource::Type do
 
         it "should set all default values as parameters in the resource" do
             @type.set_arguments :foo => stub("value", :safeevaluate => "something")
+
             @type.set_resource_parameters(@resource, @scope)
+
             @resource[:foo].should == "something"
         end
 
