@@ -284,17 +284,13 @@ describe Puppet::Resource::Type do
 
         it "should evaluate and set its default values as variables for parameters not provided by the resource" do
             @type.set_arguments :foo => stub("value", :safeevaluate => "something")
-
             @type.set_resource_parameters(@resource, @scope)
-
             @scope.lookupvar("foo").should == "something"
         end
 
         it "should set all default values as parameters in the resource" do
             @type.set_arguments :foo => stub("value", :safeevaluate => "something")
-
             @type.set_resource_parameters(@resource, @scope)
-
             @resource[:foo].should == "something"
         end
 
