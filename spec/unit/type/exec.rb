@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Type.type(:exec) do
 
-    def create_resource(command, output, exitstatus, returns = [0])
+    def create_resource(command, output, exitstatus, returns = 0)
         @user_name = 'some_user_name'
         @group_name = 'some_group_name'
         Puppet.features.stubs(:root?).returns(true)
@@ -16,8 +16,8 @@ describe Puppet::Type.type(:exec) do
         Puppet::Util::SUIDManager.expects(:run_and_capture).with([command], @user_name, @group_name).returns([output, status])
     end
 
-    def create_logging_resource(command, output, exitstatus, logoutput, loglevel)
-        create_resource(command, output, exitstatus)
+    def create_logging_resource(command, output, exitstatus, logoutput, loglevel, returns = 0)
+        create_resource(command, output, exitstatus, returns)
         @execer[:logoutput] = logoutput
         @execer[:loglevel] = loglevel
     end
@@ -104,6 +104,16 @@ describe Puppet::Type.type(:exec) do
             proc { @execer.refresh }.should raise_error(Puppet::Error)
         end
 
+        it "should log the output on failure when returns is specified as an array" do
+            #Puppet::Util::Log.newdestination :console
+            command = "false"
+            output = "output1\noutput2\n"
+            create_logging_resource(command, output, 1, :on_failure, :err, [0, 100])
+            expect_output(output, :err)
+
+            proc { @execer.refresh }.should raise_error(Puppet::Error)
+        end
+
         it "shouldn't log the output on success" do
             #Puppet::Util::Log.newdestination :console
             command = "true"
@@ -111,6 +121,31 @@ describe Puppet::Type.type(:exec) do
             create_logging_resource(command, output, 0, :on_failure, :err)
             @execer.property(:returns).expects(:err).never
             @execer.refresh
+        end
+    end
+
+    it "shouldn't log the output on success when non-zero exit status is in a returns array" do
+        #Puppet::Util::Log.newdestination :console
+        command = "true"
+        output = "output1\noutput2\n"
+        create_logging_resource(command, output, 100, :on_failure, :err, [1,100])
+        @execer.property(:returns).expects(:err).never
+        @execer.refresh
+    end
+
+    describe " when multiple tries are set," do
+
+        it "should repeat the command attempt 'tries' times on failure and produce an error" do
+            Puppet.features.stubs(:root?).returns(true)
+            command = "false"
+            user = "user"
+            group = "group"
+            tries = 5
+            retry_exec = Puppet::Type.type(:exec).new(:name => command, :path => %w{/usr/bin /bin}, :user => user, :group => group, :returns => 0, :tries => tries, :try_sleep => 0)
+            status = stub "process"
+            status.stubs(:exitstatus).returns(1)
+            Puppet::Util::SUIDManager.expects(:run_and_capture).with([command], user, group).times(tries).returns(["", status])
+            proc { retry_exec.refresh }.should raise_error(Puppet::Error)
         end
     end
 

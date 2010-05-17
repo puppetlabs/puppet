@@ -111,9 +111,20 @@ module Puppet
                 dir = self.resource[:cwd] || Dir.pwd
 
                 event = :executed_command
+                tries = self.resource[:tries]
+                try_sleep = self.resource[:try_sleep]
 
                 begin
-                    @output, status = @resource.run(self.resource[:command])
+                    tries.times do |try|
+                        # Only add debug messages for tries > 1 to reduce log spam.
+                        debug("Exec try #{try+1}/#{tries}") if tries > 1
+                        @output, @status = @resource.run(self.resource[:command])
+                        break if self.should.include?(@status.exitstatus.to_s)
+                        if try_sleep > 0 and tries > 1
+                          debug("Sleeping for #{try_sleep} seconds between tries")
+                          sleep try_sleep
+                        end
+                    end
                 rescue Timeout::Error
                     self.fail "Command exceeded timeout" % value.inspect
                 end
@@ -123,7 +134,7 @@ module Puppet
                     when :true
                         log = @resource[:loglevel]
                     when :on_failure
-                        if status.exitstatus.to_s != self.should.to_s
+                        unless self.should.include?(@status.exitstatus.to_s)
                             log = @resource[:loglevel]
                         else
                             log = :false
@@ -136,9 +147,9 @@ module Puppet
                     end
                 end
 
-                unless self.should.include?(status.exitstatus.to_s)
+                unless self.should.include?(@status.exitstatus.to_s)
                     self.fail("%s returned %s instead of one of [%s]" %
-                        [self.resource[:command], status.exitstatus, self.should.join(",")])
+                        [self.resource[:command], @status.exitstatus, self.should.join(",")])
                 end
 
                 return event
@@ -281,6 +292,49 @@ module Puppet
 
             defaultto 300
         end
+
+        newparam(:tries) do
+            desc "The number of times execution of the command should be tried.
+                Defaults to '1'. This many attempts will be made to execute
+                the command until an acceptable return code is returned.
+                Note that the timeout paramater applies to each try rather than
+                to the complete set of tries."
+
+            munge do |value|
+                if value.is_a?(String)
+                    unless value =~ /^[\d]+$/
+                        raise ArgumentError, "Tries must be an integer"
+                    end
+                    value = Integer(value)
+                end
+                if value < 1
+                    raise ArgumentError, "Tries must be an integer >= 1"
+                end
+                value
+            end
+
+            defaultto 1
+        end
+
+        newparam(:try_sleep) do
+            desc "The time to sleep in seconds between 'tries'."
+
+            munge do |value|
+                if value.is_a?(String)
+                    unless value =~ /^[-\d.]+$/
+                        raise ArgumentError, "try_sleep must be a number"
+                    end
+                    value = Float(value)
+                end
+                if value < 0
+                    raise ArgumentError, "try_sleep cannot be a negative number"
+                end
+                value
+            end
+
+            defaultto 0
+        end
+
 
         newcheck(:refreshonly) do
             desc "The command should only be run as a
