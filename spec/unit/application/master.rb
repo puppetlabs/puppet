@@ -287,6 +287,7 @@ describe Puppet::Application::Master do
                 Puppet.stubs(:[]).with(:environment)
                 Puppet.stubs(:[]).with(:manifest).returns("site.pp")
                 Puppet.stubs(:err)
+                @master.stubs(:jj)
                 @master.stubs(:exit)
                 Puppet.features.stubs(:pson?).returns true
             end
@@ -304,13 +305,15 @@ describe Puppet::Application::Master do
                 @master.compile
             end
 
-            it "should render the catalog to pson and print the output" do
-                @master.options[:node] = "foo"
+            it "should convert the catalog to a pure-resource catalog and use 'jj' to pretty-print the catalog" do
                 catalog = Puppet::Resource::Catalog.new
-                catalog.expects(:render).with(:pson).returns "mypson"
                 Puppet::Resource::Catalog.expects(:find).returns catalog
 
-                $stdout.expects(:puts).with("mypson")
+                catalog.expects(:to_resource).returns("rescat")
+
+                @master.options[:node] = "foo"
+                @master.expects(:jj).with("rescat")
+
                 @master.compile
             end
 

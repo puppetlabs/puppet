@@ -59,7 +59,7 @@ class Puppet::Application::Master < Puppet::Application
                 raise "Could not compile catalog for %s" % options[:node] 
             end
 
-            $stdout.puts catalog.render(:pson)
+            jj catalog.to_resource
         rescue => detail
             $stderr.puts detail
             exit(30)
