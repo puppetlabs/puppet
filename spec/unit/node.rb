@@ -2,6 +2,42 @@
 
 require File.dirname(__FILE__) + '/../spec_helper'
 
+describe Puppet::Node do
+    describe "when managing its environment" do
+        it "should use any set environment" do
+            Puppet::Node.new("foo", :environment => "bar").environment.name.should == :bar
+        end
+
+        it "should support providing an actual environment instance" do
+            Puppet::Node.new("foo", :environment => Puppet::Node::Environment.new(:bar)).environment.name.should == :bar
+        end
+
+        it "should determine its environment from its parameters if no environment is set" do
+            Puppet::Node.new("foo", :parameters => {"environment" => :bar}).environment.name.should == :bar
+        end
+
+        it "should use the default environment if no environment is provided" do
+            Puppet::Node.new("foo").environment.name.should == Puppet::Node::Environment.new.name
+        end
+
+        it "should always return an environment instance rather than a string" do
+            Puppet::Node.new("foo").environment.should be_instance_of(Puppet::Node::Environment)
+        end
+
+        it "should allow the environment to be set after initialization" do
+            node = Puppet::Node.new("foo")
+            node.environment = :bar
+            node.environment.name.should == :bar
+        end
+
+        it "should allow its environment to be set by parameters after initialization" do
+            node = Puppet::Node.new("foo")
+            node.parameters["environment"] = :bar
+            node.environment.name.should == :bar
+        end
+    end
+end
+
 describe Puppet::Node, "when initializing" do
     before do
         @node = Puppet::Node.new("testnode")
@@ -42,24 +78,6 @@ describe Puppet::Node, "when initializing" do
     it "should always return classes as an array" do
         @node = Puppet::Node.new("testing", :classes => "myclass")
         @node.classes.should == ["myclass"]
-    end
-
-    it "should use any specified environment" do
-        env = Puppet::Node::Environment.new("foo")
-
-        Puppet::Node.new("testnode", :environment => env).environment.should equal(env)
-    end
-
-    it "should convert an environment specified as a string into an Environment instance" do
-        Puppet::Node.new("testnode", :environment => "foo").environment.should be_instance_of(Puppet::Node::Environment)
-    end
-
-    it "should return the 'environment' parameter if present and there is no explicit environment" do
-        Puppet::Node.new("testnode", :parameters => {"environment" => "two"}).environment.name.should == Puppet::Node::Environment.new("two").name
-    end
-
-    it "should use the default environment if there is no environment fact nor explicit environment" do
-        @node.environment.name.should == Puppet::Node::Environment.new.name
     end
 end
 

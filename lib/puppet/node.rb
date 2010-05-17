@@ -9,12 +9,27 @@ class Puppet::Node
     # the node sources.
     extend Puppet::Indirector
 
+    # Adds the environment getter and setter, with some instance/string conversion
+    include Puppet::Node::Environment::Helper
+
     # Use the node source as the indirection terminus.
     indirects :node, :terminus_setting => :node_terminus, :doc => "Where to find node information.
         A node is composed of its name, its facts, and its environment."
 
-    attr_accessor :name, :classes, :source, :ipaddress, :environment
+    attr_accessor :name, :classes, :source, :ipaddress
     attr_reader :time, :parameters
+
+    def environment
+        return super if @environment
+
+        if env = parameters["environment"]
+            self.environment = env
+            return super
+        end
+
+        # Else, return the default
+        Puppet::Node::Environment.new
+    end
 
     def initialize(name, options = {})
         unless name
@@ -34,8 +49,9 @@ class Puppet::Node
 
         @parameters = options[:parameters] || {}
 
-        env = options[:environment] || @parameters[:environment] || @parameters["environment"] || Puppet::Node::Environment.new
-        @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
+        if env = options[:environment]
+            self.environment = env
+        end
 
         @time = Time.now
     end
