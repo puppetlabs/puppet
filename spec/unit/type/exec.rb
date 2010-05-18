@@ -2,12 +2,13 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-module ExecModuleTesting
+describe Puppet::Type.type(:exec) do
+
     def create_resource(command, output, exitstatus, returns = [0])
         @user_name = 'some_user_name'
         @group_name = 'some_group_name'
         Puppet.features.stubs(:root?).returns(true)
-        @execer = Puppet::Type.type(:exec).new(:name => command, :path => %w{/usr/bin /bin}, :user => @user_name, :group => @group_name, :returns => returns)
+        @execer = Puppet::Type.type(:exec).new(:name => command, :path => @example_path, :user => @user_name, :group => @group_name, :returns => returns)
 
         status = stub "process"
         status.stubs(:exitstatus).returns(exitstatus)
@@ -26,94 +27,97 @@ module ExecModuleTesting
             @execer.property(:returns).expects(loglevel).with(line)
         end
     end
-end
 
-describe Puppet::Type.type(:exec) do
+    before do
+        @executable = Puppet.features.posix? ? '/bin/true' : 'C:/Program Files/something.exe'
+        @command = Puppet.features.posix? ? '/bin/true whatever' : '"C:/Program Files/something.exe" whatever'
+        File.stubs(:exists?).returns false
+        File.stubs(:exists?).with(@executable).returns true
+        @example_path = Puppet.features.posix? ? %w{/usr/bin /bin} : [ "C:/Program Files/something/bin", "C:/Ruby/bin" ]
+        File.stubs(:exists?).with(File.join(@example_path[0],"true")).returns true
+        File.stubs(:exists?).with(File.join(@example_path[0],"false")).returns true
+    end
+
     it "should return :executed_command as its event" do
-        resource = Puppet::Type.type(:exec).new :command => "/bin/true"
+        resource = Puppet::Type.type(:exec).new :command => @command
         resource.parameter(:returns).event.name.should == :executed_command
     end
-end
 
-describe Puppet::Type.type(:exec), " when execing" do
-    include ExecModuleTesting
+    describe "when execing" do
 
-    it "should use the 'run_and_capture' method to exec" do
-        command = "true"
-        create_resource(command, "", 0)
+        it "should use the 'run_and_capture' method to exec" do
+            command = "true"
+            create_resource(command, "", 0)
 
-        @execer.refresh.should == :executed_command
+            @execer.refresh.should == :executed_command
+        end
+
+        it "should report a failure" do
+            command = "false"
+            create_resource(command, "", 1)
+
+            proc { @execer.refresh }.should raise_error(Puppet::Error)
+        end
+        
+        it "should not report a failure if the exit status is specified in a returns array" do
+            command = "false"
+            create_resource(command, "", 1, [0,1])
+            proc { @execer.refresh }.should_not raise_error(Puppet::Error)
+        end
+        
+        it "should report a failure if the exit status is not specified in a returns array" do
+            command = "false"
+            create_resource(command, "", 1, [0,100])
+            proc { @execer.refresh }.should raise_error(Puppet::Error)
+        end
+
+        it "should log the output on success" do
+            #Puppet::Util::Log.newdestination :console
+            command = "false"
+            output = "output1\noutput2\n"
+            create_logging_resource(command, output, 0, true, :err)
+            expect_output(output, :err)
+            @execer.refresh
+        end
+
+        it "should log the output on failure" do
+            #Puppet::Util::Log.newdestination :console
+            command = "false"
+            output = "output1\noutput2\n"
+            create_logging_resource(command, output, 1, true, :err)
+            expect_output(output, :err)
+
+            proc { @execer.refresh }.should raise_error(Puppet::Error)
+        end
+
     end
 
-    it "should report a failure" do
-        command = "false"
-        create_resource(command, "", 1)
+    describe "when logoutput=>on_failure is set" do
 
-        proc { @execer.refresh }.should raise_error(Puppet::Error)
-    end
-    
-    it "should not report a failure if the exit status is specified in a returns array" do
-        command = "false"
-        create_resource(command, "", 1, [0,1])
-        proc { @execer.refresh }.should_not raise_error(Puppet::Error)
-    end
-    
-    it "should report a failure if the exit status is not specified in a returns array" do
-        command = "false"
-        create_resource(command, "", 1, [0,100])
-        proc { @execer.refresh }.should raise_error(Puppet::Error)
-    end
+        it "should log the output on failure" do
+            #Puppet::Util::Log.newdestination :console
+            command = "false"
+            output = "output1\noutput2\n"
+            create_logging_resource(command, output, 1, :on_failure, :err)
+            expect_output(output, :err)
 
-    it "should log the output on success" do
-        #Puppet::Util::Log.newdestination :console
-        command = "false"
-        output = "output1\noutput2\n"
-        create_logging_resource(command, output, 0, true, :err)
-        expect_output(output, :err)
-        @execer.refresh
+            proc { @execer.refresh }.should raise_error(Puppet::Error)
+        end
+
+        it "shouldn't log the output on success" do
+            #Puppet::Util::Log.newdestination :console
+            command = "true"
+            output = "output1\noutput2\n"
+            create_logging_resource(command, output, 0, :on_failure, :err)
+            @execer.property(:returns).expects(:err).never
+            @execer.refresh
+        end
     end
 
-    it "should log the output on failure" do
-        #Puppet::Util::Log.newdestination :console
-        command = "false"
-        output = "output1\noutput2\n"
-        create_logging_resource(command, output, 1, true, :err)
-        expect_output(output, :err)
-
-        proc { @execer.refresh }.should raise_error(Puppet::Error)
-    end
-
-end
-
-
-describe Puppet::Type.type(:exec), " when logoutput=>on_failure is set," do
-    include ExecModuleTesting
-
-    it "should log the output on failure" do
-        #Puppet::Util::Log.newdestination :console
-        command = "false"
-        output = "output1\noutput2\n"
-        create_logging_resource(command, output, 1, :on_failure, :err)
-        expect_output(output, :err)
-
-        proc { @execer.refresh }.should raise_error(Puppet::Error)
-    end
-
-    it "shouldn't log the output on success" do
-        #Puppet::Util::Log.newdestination :console
-        command = "true"
-        output = "output1\noutput2\n"
-        create_logging_resource(command, output, 0, :on_failure, :err)
-        @execer.property(:returns).expects(:err).never
-        @execer.refresh
-    end
-end
-
-describe Puppet::Type.type(:exec) do
     it "should be able to autorequire files mentioned in the command" do
         catalog = Puppet::Resource::Catalog.new
-        catalog.add_resource Puppet::Type.type(:file).new(:name => "/bin/true")
-        @execer = Puppet::Type.type(:exec).new(:name => "/bin/true")
+        catalog.add_resource Puppet::Type.type(:file).new(:name => @executable)
+        @execer = Puppet::Type.type(:exec).new(:name => @command)
         catalog.add_resource @execer
 
         rels = @execer.autorequire

@@ -163,7 +163,13 @@ module Puppet
             # Support both arrays and colon-separated fields.
             def value=(*values)
                 @value = values.flatten.collect { |val|
-                    val.split(":")
+                    if val =~ /;/ # recognize semi-colon separated paths
+                        val.split(";")
+                    elsif val =~ /^\w:[^:]*$/ # heuristic to avoid splitting a driveletter away
+                        val
+                    else
+                        val.split(":")
+                    end
                 }.flatten
             end
         end
@@ -444,6 +450,10 @@ module Puppet
                 reqs << str
             }
 
+            self[:command].scan(/^"([^"]+)"/) { |str|
+                reqs << str
+            }
+
             [:onlyif, :unless].each { |param|
                 next unless tmp = self[param]
 
@@ -498,28 +508,39 @@ module Puppet
 
         # Verify that we have the executable
         def checkexe(cmd)
-            if cmd =~ /^\//
-                exe = cmd.split(/ /)[0]
-                unless FileTest.exists?(exe)
-                    raise ArgumentError, "Could not find executable %s" % exe
-                end
-                unless FileTest.executable?(exe)
-                    raise ArgumentError,
-                        "%s is not executable" % exe
-                end
-            elsif path = self[:path]
-                exe = cmd.split(/ /)[0]
-                withenv :PATH => self[:path].join(":") do
-                    path = %{which #{exe}}.chomp
-                    if path == ""
-                        raise ArgumentError,
-                            "Could not find command '%s'" % exe
+            exe = extractexe(cmd)
+
+            if self[:path]
+                if Puppet.features.posix? and !File.exists?(exe)
+                    withenv :PATH => self[:path].join(File::PATH_SEPARATOR) do
+                        path = %{which #{exe}}.chomp
+                        if path == ""
+                            raise ArgumentError,
+                                "Could not find command '%s'" % exe
+                        else
+                            exe = File.join(path, exe)
+                        end
+                    end
+                elsif Puppet.features.win32? and !File.exists?(exe)
+                    self[:path].each do |path|
+                        [".exe", ".ps1", ".bat", ".com", ""].each do |extension|
+                            file = File.join(path, exe+extension)
+                            return if File.exists?(file)
+                        end
                     end
                 end
             else
                 raise ArgumentError,
-                    "%s is somehow not qualified with no search path" %
+                    "'%s' is somehow not qualified with no search path" %
                         self[:command]
+            end
+            
+            unless FileTest.exists?(exe)
+                raise ArgumentError, "Could not find executable '%s'" % exe
+            end
+            unless FileTest.executable?(exe)
+                raise ArgumentError,
+                    "'%s' is not executable" % exe
             end
         end
 
@@ -616,11 +637,19 @@ module Puppet
         end
 
         def validatecmd(cmd)
+            exe = extractexe(cmd)
             # if we're not fully qualified, require a path
-            if cmd !~ /^\//
-                if self[:path].nil?
-                    self.fail "'%s' is both unqualifed and specified no search path" % cmd
-                end
+            if File.expand_path(exe) != exe and self[:path].nil?
+                self.fail "'%s' is both unqualifed and specified no search path" % cmd
+            end
+        end
+        
+        def extractexe(cmd)
+            # easy case: command was quoted
+            if cmd =~ /^"([^"]+)"/
+                $1
+            else
+                cmd.split(/ /)[0]
             end
         end
     end
