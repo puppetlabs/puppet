@@ -16,7 +16,7 @@ module Puppet
     else
         # Else, use system-wide directories.
         conf = "/etc/puppet"
-        var = "/var/puppet"
+        var = "/var/lib/puppet"
     end
 
     self.setdefaults(:main,
@@ -149,6 +149,8 @@ module Puppet
             huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
             slightly more useful way when that happens."],
         :node_terminus => ["plain", "Where to find information about nodes."],
+        :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
+            you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
         :httplog => { :default => "$logdir/http.log",
             :owner => "root",
             :mode => 0640,
@@ -159,9 +161,6 @@ module Puppet
             may need to use a FQDN for the server hostname when using a proxy."],
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
-        :http_enable_post_connection_check => [true,
-            "Boolean; whether or not puppetd should validate the server
-            SSL certificate against the request hostname."],
         :filetimeout => [ 15,
             "The minimum time to wait (in seconds) between checking for updates in
             configuration files.  This timeout determines how quickly Puppet checks whether
@@ -292,7 +291,9 @@ module Puppet
             :owner => "service",
             :desc => "Where the host's certificate revocation list can be found.
                 This is distinct from the certificate authority's CRL."
-        }
+        },
+        :certificate_revocation => [true, "Whether certificate revocation should be supported by downloading a Certificate Revocation List (CRL)
+            to all clients.  If enabled, CA chaining will almost definitely not work."]
     )
 
     setdefaults(:ca,
@@ -451,12 +452,12 @@ module Puppet
             directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-            to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            to the authenticated client's SSL DN (e.g., ``/CN=puppet.puppetlabs.com``).
+            See http://puppetlabs.com/puppet/trac/wiki/UsingMongrel for more information."],
         :ssl_client_verify_header => ["HTTP_X_CLIENT_VERIFY", "The header containing the status
             message of the client verification. Only used with Mongrel.  This header must be set by the proxy
             to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            See http://puppetlabs.com/puppet/trac/wiki/UsingMongrel for more information."],
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
         :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
@@ -559,6 +560,10 @@ module Puppet
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
         ],
+        :use_cached_catalog => [false,
+            "Whether to only use the cached catalog rather than compiling a new catalog
+            on every run.  Puppet can be run with this enabled by default and then selectively
+            disabled when a recompile is desired."],
         :ignorecache => [false,
             "Ignore cache and always recompile the configuration.  This is
             useful for testing new configurations, where the local cache may in
@@ -629,7 +634,7 @@ module Puppet
 
     # Central fact information.
     self.setdefaults(:main,
-        :factpath => {:default => "$vardir/facts/",
+        :factpath => {:default => "$vardir/lib/facter/:$vardir/facts",
             :desc => "Where Puppet should look for facts.  Multiple directories should
                 be colon-separated, like normal PATH variables.",
             :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
@@ -670,11 +675,11 @@ module Puppet
         :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbmigrate => [ false, "Whether to automatically migrate the database." ],
         :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "localhost", "The database server for Client caching. Only
+        :dbserver => [ "localhost", "The database server for caching. Only
             used when networked databases are used."],
-        :dbuser => [ "puppet", "The database user for Client caching. Only
+        :dbuser => [ "puppet", "The database user for caching. Only
             used when networked databases are used."],
-        :dbpassword => [ "puppet", "The database password for Client caching. Only
+        :dbpassword => [ "puppet", "The database password for caching. Only
             used when networked databases are used."],
         :dbsocket => [ "", "The database socket location. Only used when networked
             databases are used.  Will be ignored if the value is an empty string."],
@@ -724,7 +729,7 @@ module Puppet
     setdefaults(:ldap,
         :ldapnodes => [false,
             "Whether to search for node configurations in LDAP.  See
-            http://reductivelabs.com/trac/puppet/wiki/LDAPNodes for more information."],
+            http://puppetlabs.com/trac/puppet/wiki/LDAPNodes for more information."],
         :ldapssl => [false,
             "Whether SSL should be used when searching for nodes.
             Defaults to false because SSL usually requires certificates

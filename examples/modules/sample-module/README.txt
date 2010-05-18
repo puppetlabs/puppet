@@ -12,6 +12,6 @@ templates/sample.erb
 Note the consistent naming of files for Puppet::Util::Autoload
 
 Reference Documents:
-http://reductivelabs.com/trac/puppet/wiki/ModuleOrganisation
-http://reductivelabs.com/trac/puppet/wiki/WritingYourOwnFunctions
-http://reductivelabs.com/trac/puppet/wiki/FunctionReference
+http://puppetlabs.com/trac/puppet/wiki/ModuleOrganisation
+http://puppetlabs.com/trac/puppet/wiki/WritingYourOwnFunctions
+http://puppetlabs.com/trac/puppet/wiki/FunctionReference

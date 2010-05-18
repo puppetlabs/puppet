@@ -8,7 +8,7 @@ exec_prefix=/opt/csw
 sysconfdir=/opt/csw/etc
 sbindir=/opt/csw/sbin
 
-pidfile=/var/puppet/run/puppetmasterd.pid
+pidfile=/var/lib/puppet/run/puppetmasterd.pid
 
 case "$1" in
 start)

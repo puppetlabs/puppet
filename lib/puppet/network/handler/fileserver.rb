@@ -283,8 +283,8 @@ class Puppet::Network::Handler
                         when /\[([-\w]+)\]/
                             name = $1
                             if newmounts.include?(name)
-                                raise FileServerError, "%s is already mounted at %s" %
-                                    [newmounts[name], name], count, @configuration.file
+                                raise FileServerError, "%s is already mounted as %s in %s" %
+                                    [newmounts[name], name, @configuration.file]
                             end
                             mount = Mount.new(name)
                             newmounts[name] = mount

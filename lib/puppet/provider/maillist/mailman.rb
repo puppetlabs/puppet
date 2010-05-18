@@ -67,7 +67,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     end
 
     # Delete the list.
-    def delete(purge = false)
+    def destroy(purge = false)
         args = []
         if purge
             args << "--archives"
@@ -99,7 +99,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
 
     # Remove the list and its archives.
     def purge
-        delete(true)
+        destroy(true)
     end
 
     # Pull the current state of the list from the full list.  We're

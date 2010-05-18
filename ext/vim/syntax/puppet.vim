@@ -19,7 +19,7 @@ endif
 " match class/definition/node declarations
 syn region  puppetDefine        start="^\s*\(class\|define\|node\)\s" end="{" contains=puppetDefType,puppetDefName,puppetDefArguments,puppetNodeRe
 syn keyword puppetDefType       class define node inherits contained
-syn region  puppetDefArguments  start="(" end=")" contains=puppetArgument
+syn region  puppetDefArguments  start="(" end=")" contained contains=puppetArgument
 syn match   puppetArgument      "\w\+" contained
 syn match   puppetArgument      "\$\w\+" contained
 syn match   puppetArgument      "'[^']+'" contained
@@ -51,8 +51,10 @@ syn match   puppetParamDigits   "[0-9]\+"
 
 " match 'template' in 'content => template("...")'
 syn match   puppetParam         "\w\+\s*[=+]>\s*\w\+\s*(" contains=puppetFunction,puppetParamName
-syn keyword puppetFunction      debug info notice warning err alert emerg crit
-syn keyword puppetFunction      sprintf template fail tagged include generate search file tag versioncmp fqdn_rand realize split defined regsubst sha1 inline_template contained
+" statements
+syn region  puppetFunction      start="^\s*\(alert\|crit\|debug\|emerg\|err\|fail\|include\|info\|notice\|realize\|require\|search\|tag\|warning\)\s*(" end=")" contained contains=puppetString
+" rvalues
+syn region  puppetFunction      start="^\s*\(defined\|file\|fqdn_rand\|generate\|inline_template\|regsubst\|sha1\|shellquote\|split\|sprintf\|tagged\|template\|versioncmp\)\s*(" end=")" contained contains=puppetString
 
 syn match   puppetVariable      "$\w\+"
 syn match   puppetVariable      "${\w\+}"

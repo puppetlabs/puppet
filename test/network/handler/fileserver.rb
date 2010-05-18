@@ -947,12 +947,16 @@ allow *
          end
 
         # Now, check that they use Facter info
-        Puppet.notice "The following messages are normal"
         client = nil
-        Facter.stubs(:value).with(:ipaddress).returns("127.0.0.1")
         Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
         Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
-        Facter.stubs(:value).with(:domain).returns("mydomain.com")
+
+        Facter.stubs(:to_hash).returns({
+            :ipaddress => "127.0.0.1",
+            :hostname => "myhost",
+            :domain   => "mydomain.com",
+        })
+
 
         {"%h" => "myhost", # Short name
          "%H" => "myhost.mydomain.com", # Full name
@@ -979,13 +983,15 @@ allow *
 
         # When mocks attack, part 2
         kernel_fact = Facter.value(:kernel)
-        Facter.stubs(:value).with(:kernel).returns(kernel_fact)
 
-        Facter.stubs(:value).with(:ipaddress).returns("127.0.0.1")
-        Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
-        Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
-        Facter.stubs(:value).with(:domain).returns("mydomain.com")
-        ip = Facter.value(:ipaddress)
+        ip = '127.0.0.1'
+
+        Facter.stubs(:to_hash).returns({
+            :kernel => kernel_fact,
+            :ipaddress => "127.0.0.1",
+            :hostname => "myhost",
+            :domain   => "mydomain.com",
+        })
 
         Dir.mkdir(dir)
         host = "myhost.mydomain.com"

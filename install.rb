@@ -83,7 +83,7 @@ sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
-man   = glob(%w{man/man8/*})
+man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
 tests = glob(%w{test/**/*.rb})
 
@@ -238,7 +238,7 @@ def prepare_installation
     opts.parse!
   end
 
-  tmpdirs = [".", ENV['TMP'], ENV['TEMP'], "/tmp", "/var/tmp"]
+  tmpdirs = [ENV['TMP'], ENV['TEMP'], "/tmp", "/var/tmp", "."]
 
   version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
   libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
@@ -349,25 +349,27 @@ def build_ri(files)
     end
 end
 
-def build_man(bins)
+def build_man(bins, sbins)
     return unless $haveman
     begin
         # Locate rst2man
         rst2man = %x{which rst2man.py}
         rst2man.chomp!
-        # Create puppet.conf.8 man page
+        # Create puppet.conf.5 man page
         %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
-        %x{#{rst2man} ./puppet.conf.rst ./man/man8/puppet.conf.8}
+        %x{#{rst2man} ./puppet.conf.rst ./man/man5/puppet.conf.5}
         File.unlink("./puppet.conf.rst")
 
         # Create binary man pages
-        bins.each do |bin|
-          b = bin.gsub( "bin/", "")
+        binary = bins + sbins 
+        binary.each do |bin|
+          b = bin.gsub( /(bin|sbin)\//, "")
           %x{#{bin} --help > ./#{b}.rst}
           %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
           File.unlink("./#{b}.rst")
         end
-    rescue SystemCallError
+    
+rescue SystemCallError
         $stderr.puts "Couldn't build man pages: " + $!
         $stderr.puts "Continuing with install..."
     end
@@ -470,7 +472,7 @@ prepare_installation
 #run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-#build_man(bins) if InstallOptions.man
+#build_man(bins, sbins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)

@@ -381,6 +381,24 @@ describe Puppet::Parser::Resource do
             @resource[:testing].should == %w{other testing}
         end
 
+        it "should not merge parameter values when multiple resources are overriden with '+>' at once " do
+            @resource_2 = mkresource :source => @source
+
+            @resource.  set_parameter(:testing, "old_val_1")
+            @resource_2.set_parameter(:testing, "old_val_2")
+
+            @source.stubs(:child_of?).returns true
+            param = Puppet::Parser::Resource::Param.new(:name => :testing, :value => "new_val", :source => @resource.source)
+            param.add = true
+            @override.set_parameter(param)
+
+            @resource.  merge(@override)
+            @resource_2.merge(@override)
+
+            @resource  [:testing].should == %w{old_val_1 new_val}
+            @resource_2[:testing].should == %w{old_val_2 new_val}
+        end
+
         it "should promote tag overrides to real tags" do
             @source.stubs(:child_of?).returns true
             param = Puppet::Parser::Resource::Param.new(:name => :tag, :value => "testing", :source => @resource.source)

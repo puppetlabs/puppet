@@ -372,6 +372,20 @@ describe Puppet::SimpleGraph do
             edges.should be_include(@edges["a/b"])
             edges.should be_include(@edges["a/c"])
         end
+
+        describe "from generated resources" do
+            before :each do
+                @topsource = stub 'source'
+                @edges["a/topsource"] = Puppet::Relationship.new(@topsource, "a", {:event => :yay, :callback => :refresh})
+                @graph.add_edge(@edges["a/topsource"])
+            end
+
+            it "should not match with edges pointing back to events sources" do
+                @edges["a/b"].expects(:match?).never
+                @edges["a/topsource"].expects(:match?)
+                @graph.matching_edges([@event], @topsource)
+            end
+        end
     end
 
     describe "when determining dependencies" do

@@ -9,7 +9,7 @@ require 'puppet/file_serving/metadata'
 # Operate recursively on a path, returning a set of file paths.
 class Puppet::FileServing::Fileset
     attr_reader :path, :ignore, :links
-    attr_accessor :recurse, :recurselimit
+    attr_accessor :recurse, :recurselimit, :checksum_type
 
     # Produce a hash of files, with merged so that earlier files
     # with the same postfix win.  E.g., /dir1/subfile beats /dir2/subfile.
@@ -105,7 +105,7 @@ class Puppet::FileServing::Fileset
     end
 
     def initialize_from_request(request)
-        [:links, :ignore, :recurse, :recurselimit].each do |param|
+        [:links, :ignore, :recurse, :recurselimit, :checksum_type].each do |param|
             if request.options.include?(param) # use 'include?' so the values can be false
                 value = request.options[param]
             elsif request.options.include?(param.to_s)

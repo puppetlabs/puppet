@@ -36,7 +36,7 @@ describe Puppet::Network::HttpPool do
         end
 
         it "should return an http instance created with the passed host and port" do
-            http = stub 'http', :use_ssl= => nil, :read_timeout= => nil, :open_timeout= => nil, :enable_post_connection_check= => nil, :started? => false
+            http = stub 'http', :use_ssl= => nil, :read_timeout= => nil, :open_timeout= => nil, :started? => false
             Net::HTTP.expects(:new).with("me", 54321, nil, nil).returns(http)
             Puppet::Network::HttpPool.http_instance("me", 54321).should equal(http)
         end
@@ -53,16 +53,8 @@ describe Puppet::Network::HttpPool do
             Puppet::Network::HttpPool.http_instance("me", 54321).open_timeout.should == 120
         end
 
-        it "should default to http_enable_post_connection_check being enabled" do
-            Puppet.settings[:http_enable_post_connection_check].should be_true
-        end
-
-        it "should set enable_post_connection_check true " do
-            Puppet::Network::HttpPool.http_instance("me", 54321).instance_variable_get("@enable_post_connection_check").should be(Puppet.settings[:http_enable_post_connection_check])
-        end
-
         it "should create the http instance with the proxy host and port set if the http_proxy is not set to 'none'" do
-            stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+            stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
             Puppet::Network::HttpPool.http_instance("me", 54321).open_timeout.should == 120
         end
 
@@ -72,19 +64,19 @@ describe Puppet::Network::HttpPool do
             end
 
             it "should cache http instances" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
                 Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)
             end
 
             it "should have a mechanism for getting a new http instance instead of the cached instance" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
                 Puppet::Network::HttpPool.http_instance("me", 54321, true).should_not equal(old)
             end
 
             it "should close existing, open connections when requesting a new connection" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
                 old.expects(:started?).returns(true)
                 old.expects(:finish)
@@ -92,7 +84,7 @@ describe Puppet::Network::HttpPool do
             end
 
             it "should have a mechanism for clearing the http cache" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
                 Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
@@ -101,7 +93,7 @@ describe Puppet::Network::HttpPool do
             end
 
             it "should close open http connections when clearing the cache" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 one = Puppet::Network::HttpPool.http_instance("me", 54321)
                 one.expects(:started?).returns(true)
                 one.expects(:finish).returns(true)
@@ -109,7 +101,7 @@ describe Puppet::Network::HttpPool do
             end
 
             it "should not close unopened http connections when clearing the cache" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 one = Puppet::Network::HttpPool.http_instance("me", 54321)
                 one.expects(:started?).returns(false)
                 one.expects(:finish).never
@@ -123,7 +115,7 @@ describe Puppet::Network::HttpPool do
             end
 
             it "should not cache http instances" do
-                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120, :http_enable_post_connection_check => true
+                stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
                 old = Puppet::Network::HttpPool.http_instance("me", 54321)
                 Puppet::Network::HttpPool.http_instance("me", 54321).should_not equal(old)
             end

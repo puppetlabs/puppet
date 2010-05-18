@@ -183,9 +183,9 @@ module Puppet
 
             # interpolate a pattern to replace any
             # backreferences by the given match
-            # for instance if our pattern is $1.reductivelabs.com
+            # for instance if our pattern is $1.puppetlabs.com
             # and we're called with a MatchData whose capture 1 is puppet
-            # we'll return a pattern of puppet.reductivelabs.com
+            # we'll return a pattern of puppet.puppetlabs.com
             def interpolate(match)
                 clone = dup
                 clone.pattern = clone.pattern.reverse.collect do |p|
@@ -242,7 +242,7 @@ module Puppet
                 when /^\*(\.(\w[-\w]*)){1,}$/                             # *.domain.com
                     host_sans_star = munge_name(value)[0..-2]
                     [:domain,:inexact,host_sans_star.length,host_sans_star]
-                when /\$\d+/                                              # a backreference pattern ala $1.reductivelabs.com or 192.168.0.$1 or $1.$2
+                when /\$\d+/                                              # a backreference pattern ala $1.puppetlabs.com or 192.168.0.$1 or $1.$2
                     [:dynamic,:exact,nil,munge_name(value)]
                 when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
                     [:opaque,:exact,nil,[value]]

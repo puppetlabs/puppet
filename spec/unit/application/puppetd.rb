@@ -275,10 +275,10 @@ describe "puppetd" do
 
         it "should set a central log destination with --centrallogs" do
             @puppetd.options.stubs(:[]).with(:centrallogs).returns(true)
-            Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
+            Puppet.stubs(:[]).with(:server).returns("puppet.puppetlabs.com")
             Puppet::Util::Log.stubs(:newdestination).with(:syslog)
 
-            Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
+            Puppet::Util::Log.expects(:newdestination).with("puppet.puppetlabs.com")
 
             @puppetd.run_setup
         end
@@ -301,9 +301,8 @@ describe "puppetd" do
             @puppetd.run_setup
         end
 
-        it "should tell the catalog handler to use REST" do
-            Puppet::Resource::Catalog.expects(:terminus_class=).with(:rest)
-
+        it "should change the catalog_terminus setting to 'rest'" do
+            Puppet.expects(:[]=).with(:catalog_terminus, :rest)
             @puppetd.run_setup
         end
 

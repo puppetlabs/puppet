@@ -152,14 +152,6 @@ class Transaction
         }.uniq
     end
 
-    # Do any necessary cleanup.  If we don't get rid of the graphs, the
-    # contained resources might never get cleaned up.
-    def cleanup
-        if defined? @generated
-            catalog.remove_resource(*@generated)
-        end
-    end
-
     # Copy an important relationships from the parent to the newly-generated
     # child resource.
     def make_parent_child_relationship(resource, children)
@@ -215,14 +207,18 @@ class Transaction
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
-        relationship_graph.matching_edges(events, resource).each do |orig_edge|
-            # We have to dup the label here, else we modify the original edge label,
-            # which affects whether a given event will match on the next run, which is,
-            # of course, bad.
-            edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
-            edge.event = events.collect { |e| e.name }
-            set_trigger(edge)
+        duration = thinmark do
+            b = relationship_graph.matching_edges(events, resource)
+            b.each do |orig_edge|
+                # We have to dup the label here, else we modify the original edge label,
+                # which affects whether a given event will match on the next run, which is,
+                # of course, bad.
+                edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
+                edge.event = events.collect { |e| e.name }
+                set_trigger(edge)
+            end
         end
+        Puppet.debug("Time for triggering #{events.size} events to edges: #{duration}") if events.size > 0 and duration > 0
 
         # And return the events for collection
         events

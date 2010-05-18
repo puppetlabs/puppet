@@ -124,9 +124,9 @@ describe "Filebucket" do
         describe "with remote bucket" do
 
             it "should create a remote Client to the configured server" do
-                Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
+                Puppet.stubs(:[]).with(:server).returns("puppet.puppetlabs.com")
 
-                Puppet::Network::Client::Dipper.expects(:new).with { |h| h[:Server] == "puppet.reductivelabs.com" }
+                Puppet::Network::Client::Dipper.expects(:new).with { |h| h[:Server] == "puppet.puppetlabs.com" }
 
                 @filebucket.run_setup
             end

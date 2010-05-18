@@ -284,7 +284,7 @@ class Puppet::SSL::CertificateAuthority
         store.add_file Puppet[:cacert]
         store.add_crl crl.content if self.crl
         store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
-        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+        store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
 
         unless store.verify(cert.content)
             raise CertificateVerificationError.new(store.error), store.error_string
