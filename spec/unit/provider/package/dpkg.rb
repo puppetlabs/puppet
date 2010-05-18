@@ -8,6 +8,7 @@ describe provider do
     before do
         @resource = stub 'resource', :[] => "asdf"
         @provider = provider.new(@resource)
+        @provider.expects(:execute).never # forbid "manual" executions
 
         @fakeresult = "install ok installed asdf 1.0\n"
     end
@@ -131,6 +132,7 @@ describe provider do
 
         it "should use 'dpkg -i' to install the package" do
             @resource.expects(:[]).with(:source).returns "mypackagefile"
+            @provider.expects(:unhold)
             @provider.expects(:dpkg).with { |*command| command[-1] == "mypackagefile"  and command[-2] == "-i" }
 
             @provider.install
@@ -138,6 +140,7 @@ describe provider do
 
         it "should keep old config files if told to do so" do
             @resource.expects(:[]).with(:configfiles).returns :keep
+            @provider.expects(:unhold)
             @provider.expects(:dpkg).with { |*command| command[0] == "--force-confold" }
 
             @provider.install
@@ -145,6 +148,7 @@ describe provider do
 
         it "should replace old config files if told to do so" do
             @resource.expects(:[]).with(:configfiles).returns :replace
+            @provider.expects(:unhold)
             @provider.expects(:dpkg).with { |*command| command[0] == "--force-confnew" }
 
             @provider.install
