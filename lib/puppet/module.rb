@@ -211,6 +211,6 @@ class Puppet::Module
     end
 
     def assert_validity
-        raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-')" unless name =~ /^[-\w]+$/
+        raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-'), not '%s'" % name unless name =~ /^[-\w]+$/
     end
 end
