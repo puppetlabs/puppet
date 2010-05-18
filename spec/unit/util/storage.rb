@@ -8,7 +8,9 @@ require 'tempfile'
 require 'puppet/util/storage'
 
 describe Puppet::Util::Storage do
+
     before(:all) do
+        @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
         Puppet[:statedir] = Dir.tmpdir()
     end
 
@@ -41,8 +43,8 @@ describe Puppet::Util::Storage do
 
     describe "when caching a Puppet::Type" do
         before(:all) do
-            @file_test = Puppet::Type.type(:file).new(:name => "/yayness", :check => %w{checksum type})
-            @exec_test = Puppet::Type.type(:exec).new(:name => "/bin/ls /yayness")
+            @file_test = Puppet::Type.type(:file).new(:name => @basepath+"/yayness", :check => %w{checksum type})
+            @exec_test = Puppet::Type.type(:exec).new(:name => @basepath+"/bin/ls /yayness")
         end
 
         it "should return an empty hash" do
@@ -53,9 +55,9 @@ describe Puppet::Util::Storage do
         it "should add the resource ref to its internal state" do
             Puppet::Util::Storage.state().should == {}
             Puppet::Util::Storage.cache(@file_test)
-            Puppet::Util::Storage.state().should == {"File[/yayness]"=>{}}
+            Puppet::Util::Storage.state().should == {"File[#{@basepath}/yayness]"=>{}}
             Puppet::Util::Storage.cache(@exec_test)
-            Puppet::Util::Storage.state().should == {"File[/yayness]"=>{}, "Exec[/bin/ls /yayness]"=>{}}
+            Puppet::Util::Storage.state().should == {"File[#{@basepath}/yayness]"=>{}, "Exec[#{@basepath}/bin/ls /yayness]"=>{}}
         end
     end
 
@@ -173,7 +175,6 @@ describe Puppet::Util::Storage do
             it "should fail gracefully on load() if the state file is not a regular file" do
                 @state_file.close!()
                 Dir.mkdir(Puppet[:statefile])
-                File.expects(:rename).returns(0)
 
                 proc { Puppet::Util::Storage.load() }.should_not raise_error()
 

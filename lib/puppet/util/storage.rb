@@ -60,6 +60,10 @@ class Puppet::Util::Storage
             end
             return
         end
+        unless File.file?(Puppet[:statefile])
+            Puppet.warning("Checksumfile %s is not a file, ignoring" % Puppet[:statefile])
+            return
+        end
         Puppet::Util.benchmark(:debug, "Loaded state") do
             Puppet::Util::FileLocking.readlock(Puppet[:statefile]) do |file|
                 begin
