@@ -26,18 +26,23 @@ describe Puppet::Util::FileLocking do
     end
 
     describe "when acquiring a read lock" do
+        before do
+            File.stubs(:exists?).with('/file').returns true
+            File.stubs(:file?).with('/file').returns true
+        end
+        
         it "should use a global shared mutex" do
-            sync = mock 'sync'
-            sync.expects(:synchronize).with(Sync::SH)
-            Puppet::Util.expects(:sync).with("/file").returns sync
+            @sync = mock 'sync'
+            @sync.expects(:synchronize).with(Sync::SH).once
+            Puppet::Util.expects(:sync).with('/file').returns @sync
 
             Puppet::Util::FileLocking.readlock '/file'
         end
 
         it "should use a shared lock on the file" do
-            sync = mock 'sync'
-            sync.expects(:synchronize).yields
-            Puppet::Util.expects(:sync).with("/file").returns sync
+            @sync = mock 'sync'
+            @sync.stubs(:synchronize).yields
+            Puppet::Util.expects(:sync).with('/file').returns @sync
 
             fh = mock 'filehandle'
             File.expects(:open).with("/file").yields fh
@@ -47,6 +52,22 @@ describe Puppet::Util::FileLocking do
             Puppet::Util::FileLocking.readlock('/file') { |l| result = l }
             result.should == "locked_fh"
         end
+
+        it "should only work on regular files" do
+            File.expects(:file?).with('/file').returns false
+            proc { Puppet::Util::FileLocking.readlock('/file') }.should raise_error(ArgumentError)
+        end
+
+        it "should create missing files" do
+            @sync = mock 'sync'
+            @sync.stubs(:synchronize).yields
+            Puppet::Util.expects(:sync).with('/file').returns @sync
+
+            File.expects(:exists?).with('/file').returns false
+            File.expects(:open).with('/file').once
+
+            Puppet::Util::FileLocking.readlock('/file') 
+        end
     end
 
     describe "when acquiring a write lock" do
@@ -54,10 +75,14 @@ describe Puppet::Util::FileLocking do
             @sync = mock 'sync'
             Puppet::Util.stubs(:sync).returns @sync
             @sync.stubs(:synchronize).yields
+            File.stubs(:file?).with('/file').returns true
+            File.stubs(:exists?).with('/file').returns true
         end
 
         it "should fail if the parent directory does not exist" do
             FileTest.expects(:directory?).with("/my/dir").returns false
+            File.stubs(:file?).with('/my/dir/file').returns true
+            File.stubs(:exists?).with('/my/dir/file').returns true
 
             lambda { Puppet::Util::FileLocking.writelock('/my/dir/file') }.should raise_error(Puppet::DevError)
         end
@@ -110,6 +135,22 @@ describe Puppet::Util::FileLocking do
             Puppet::Util::FileLocking.writelock('/file') do |f|
                 f.print "foo"
             end
+        end
+
+        it "should only work on regular files" do
+            File.expects(:file?).with('/file').returns false
+            proc { Puppet::Util::FileLocking.writelock('/file') }.should raise_error(ArgumentError)
+        end
+
+        it "should create missing files" do
+            @sync = mock 'sync'
+            @sync.stubs(:synchronize).yields
+            Puppet::Util.expects(:sync).with('/file').returns @sync
+
+            File.expects(:exists?).with('/file').returns false
+            File.expects(:open).with('/file', 'w', 0600).once
+
+            Puppet::Util::FileLocking.writelock('/file') 
         end
     end
 end
