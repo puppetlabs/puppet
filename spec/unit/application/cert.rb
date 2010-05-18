@@ -56,8 +56,8 @@ describe Puppet::Application::Cert do
     end
 
     it "should set signed to true for --signed" do
-        @puppetca.handle_signed(0)
-        @puppetca.signed.should be_true
+        @cert_app.handle_signed(0)
+        @cert_app.signed.should be_true
     end
     
     Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|

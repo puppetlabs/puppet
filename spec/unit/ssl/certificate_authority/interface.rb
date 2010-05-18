@@ -219,7 +219,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
                 it "should print a string containing all signed certificate requests and certificates" do
                     @ca.expects(:list).returns %w{host1 host2}
 
-                    @applier = @class.new(:list, :signed)
+                    @applier = @class.new(:list, :to => :signed)
 
                     @applier.apply(@ca)
                 end
