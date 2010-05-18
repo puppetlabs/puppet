@@ -154,19 +154,26 @@ class Puppet::SSL::Host
     end
 
     def certificate
-        @certificate ||= (
+        unless @certificate
+            generate_key unless key
+
             # get the CA cert first, since it's required for the normal cert
             # to be of any use.
-            if not (key or generate_key) or not (ca? or Certificate.find("ca")) or not (cert = Certificate.find(name)) or cert.expired?
-                nil
-            elsif not cert.content.check_private_key(key.content)
-                Certificate.expire(name)
-                Puppet.warning "Retrieved certificate does not match private key"
-                nil
-            else
-                cert
+            return nil unless Certificate.find("ca") unless ca?
+            return nil unless @certificate = Certificate.find(name)
+
+            unless certificate_matches_key?
+                raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
             end
-            )
+        end
+        @certificate
+    end
+
+    def certificate_matches_key?
+        return false unless key
+        return false unless certificate
+
+        return certificate.content.check_private_key(key.content)
     end
 
     # Generate all necessary parts of our ssl host.
@@ -206,7 +213,7 @@ class Puppet::SSL::Host
 
             # If there's a CRL, add it to our store.
             if crl = Puppet::SSL::CertificateRevocationList.find("ca")
-                @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
                 @ssl_store.add_crl(crl.content)
             end
             return @ssl_store
@@ -225,7 +232,7 @@ class Puppet::SSL::Host
         rescue Exception => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
             if time < 1
-                puts "Exiting; failed to retrieve certificate and watiforcert is disabled"
+                puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
                 exit(1)
             else
                 sleep(time)

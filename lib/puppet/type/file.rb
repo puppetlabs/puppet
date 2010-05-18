@@ -22,7 +22,7 @@ module Puppet
 
             If you find that you are often copying files in from a central
             location, rather than using native resources, please contact
-            Reductive Labs and we can hopefully work with you to develop a
+            Puppet Labs and we can hopefully work with you to develop a
             native resource to support what you are doing."
 
         newparam(:path) do
@@ -592,7 +592,14 @@ module Puppet
         end
 
         def perform_recursion(path)
-            Puppet::FileServing::Metadata.search(path, :links => self[:links], :recurse => (self[:recurse] == :remote ? true : self[:recurse]), :recurselimit => self[:recurselimit], :ignore => self[:ignore])
+            params = {
+                :links => self[:links],
+                :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
+                :recurselimit => self[:recurselimit],
+                :ignore => self[:ignore]
+            }
+            params[:checksum_type] = self[:checksum] if self[:checksum] == :none
+            Puppet::FileServing::Metadata.search(path, params)
         end
 
         # Remove any existing data.  This is only used when dealing with

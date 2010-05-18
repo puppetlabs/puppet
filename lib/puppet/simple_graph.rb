@@ -64,6 +64,14 @@ class Puppet::SimpleGraph
             end
         end
 
+        def each_out_edges
+            @adjacencies[:out].values.each do |edges|
+                edges.each do |edge|
+                    yield edge
+                end
+            end
+        end
+
         # The other vertex in the edge.
         def other_vertex(direction, edge)
             case direction
@@ -146,20 +154,37 @@ class Puppet::SimpleGraph
     # Collect all of the edges that the passed events match.  Returns
     # an array of edges.
     def matching_edges(events, base = nil)
-        events.collect do |event|
-            source = base || event.source
+        # collect edges out from sources
+        if base
+            # consider only edges which are not pointing to any event sources
+            # which is what a recursive file resources produces
+            event_sources = events.inject({}) { |hash, event| hash[event.source] = event.source ; hash}
+            edges = (adjacent(base, :direction => :out, :type => :edges) - event_sources.keys)
+        else
+            edges = events.inject([]) do |edges,event|
+                if wrapper = @vertices[event.source]
+                    wrapper.each_out_edges do |edge|
+                        edges << edge
+                    end
+                else
+                    Puppet.warning "Got an event from invalid #{event.source.ref}"
+                end
+                edges
+            end
+        end
 
-            unless vertex?(source)
-                Puppet.warning "Got an event from invalid vertex %s" % source.ref
-                next
+        # find all the different event names, we assume there won't be that many
+        # which should greatly shorten the next loop and reduce the cross-join
+        # between events x out-edges
+        event_names = events.inject({}) { |hash, event| hash[event.name] = event.name ; hash }
+
+        # match all our events to the edges
+        event_names.keys.inject([]) do |matching, event_name|
+            edges.each do |edge|
+                matching << edge if edge.match?(event_name)
             end
-            # Get all of the edges that this vertex should forward events
-            # to, which is the same thing as saying all edges directly below
-            # This vertex in the graph.
-            adjacent(source, :direction => :out, :type => :edges).find_all do |edge|
-                edge.match?(event.name)
-            end
-        end.compact.flatten
+            matching
+        end
     end
 
     # Return a reversed version of this graph.

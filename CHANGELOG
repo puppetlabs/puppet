@@ -1,5 +1,104 @@
+0.25.5
+======
+d88b357  Fixes incorrect line in partial CRL fix
+dec84e5  Fixed documentation issues exposed in #3772
+
+0.25.5rc3
+=========
+4daf8c3  Updated CHANGELOG for 0.25.5rc3
+9214400  WIP - trying to fix #3460
+9d3e98b  Minimal footprint fix for #3751 (serialization 0.25.5 <-> 0.24.8)
+d481340  Updated Template documentation link
+5a1a45c  Update Red Hat spec file for 0.25.5
+
+0.25.5rc2
+=========
+2257605  Updated CHANGELOG for 0.25.5rc2
+5258a0a  Fixing #3533 - Removing all transaction cleanup
+bcde541  Fix for #2910 -- Tidy/matches is too tricky to use
+5abe571  Bug #3451: Don't leak the terminus class setting from Puppet::Resource::Catalog's spec
+ebd924c  Fix to the fix for #3295
+ce233aa  Write ssh_authorized_keys as user
+6739bab  Fix for #3558 -- source file reading speedup
+b0e3c61  Fix for #3556 Plussignment value melding
+8a30495  Fixed #3655  - Puppet doesn't find installed packages with portage provider
+e4130af  Fixed #3672 - Error message on duplicate fileserver mounts incorrect
+1275a47  conf/redhat: Add notifempty to logrotate config
+134204d  Fixed stored configuration documentation
+1aa98a6  Fixes #3653 - Changed default factpath value to better reflect plugins in modules
+44f6d64  Partial fix to #2837 - changed warning message to debug
+3a1b178  Fix #3555 - fix state of purged lists
+f6046ab  Fix for #3577 -- to_yaml parameter in 0.25.5rc1
+f351e2d  Renamed all references to Reductive Labs to Puppet Labs
+cf7e696  Updated Rake tasks to no longer load puppet.rb
+b93924e  Fix #3540 - name methods correctly
+9bc2f28  Fixes #3295 - generate() now sets the working directory to the directory containing the specified command.
+3ee6834  Added YARD task
+99818ef  Update man pages and partial doc fix to #3491
+f988af3  Fixed #3532 - Typo in lib/puppet/ssl/host.rb
+f0e12e5  Fix #3496 - suppress transaction debug message
+
+0.25.5rc1
+=========
+0eea2f5  Updated version and CHANGELOG to 0.25.5rc1
+57ae381  Modify SuSE spec file for 0.25.x and correct shebang lines for puppetd/puppetmasterd
+d90ec79  Fixes #3460 - Makes Puppet FHS compliant by moving /var/puppet to /var/lib/puppet
+ae0b0bf  Fix for #3101 (bug in MRI 1.8.7)
+9db066b  Fixes #3419. OS X 10.6 Ruby doesn't set supplementary groups
+306d082  Revert the guts of #2890
+4eea77a  Fail gracefully on packages that don't have the HOMEPAGE variable set (e.g. dev-lang/php).
+f5b8494  Fixed #3443 - Typo in mount type
+b0ef2c6  Fixes #3135 - darwin doesn't support 'mount -o remount'
+7018cf5  Adding :catalog_terminus setting
+978ab8a  fixing obsolete comment in puppetd
+6d13d0d  Adding support for only using cached catalogs
+bc28715  Refactoring Configurer to enable the next feature
+ba43d7b  Fix for #3366 - --tags '' treated as boolean 'true'
+5ab5e8a  Supressing warnings (not really failures) in test/unit
+e4df0b0  Fix test using wrong Puppet util filesetting group
+eeb3d74  Mock user in SUIDManager tests
+9ea27db  Removing resources generate tests
+218e3e9  Removing old test for service/debian provider
+1556938  Replace test/unit file write test with spec
+2defc00  Fix for #3424 and tests to prove it.
+44798b9  Fixed changelog Rake task
+5d10f65  Fix #3155 - prevent error when using two matching regex in cascade
+fbedb99  Fixing #3148 Settings#without_noop when run with no noop setting
+389c77b  Another trivial follow-up fix for #2604: invalid path to zaml.rb
+56b5753  Fix inefficient SimpleGraph#matching_edge
+4b2b9eb  Fix #3229 - use original value in case/selector regex matching
+19863c0  Fix #2929 - Allow checksum to be "none"
+fd76142  Fixed puppetlast typo
+3b4e782  Follow up for #2604, debug msg left behind.
+e44430b  Fix for #2604 Pure Ruby yaml generation
+74cd55f  Fixes #3113 - When importing a manifest puppet needs to chill
+7ec50a7  Fixes #3387 - Handle path elements with ticks and spaces
+d561a98  Fix for #3412 install.rb should not put "." first in the tmp_dirs
+751df45  Fix #3186 - require function set relationship only on the last class
+a1d216c  Fixed the return types were valid, and removed the copy paste error with the exception logic
+d532e6d  Fixing #3185 Rakefile is loading puppet.rb twice
+5aa596c  Fix #3150 - require function doesn't like ::class syntax
+3457b87  Added time module to tagmail report
+71653a7  Fixed #3162 - tidy does not remove empty files when "size => 0" is set
+efd0f76  Fixed #3128 - Updated man pages and moved puppet.conf.8 to puppet.conf.5
+ad4f94a  Add version number to puppetlast display.
+0533cea  Forgot fakedata called in spec
+6416f91  Fixing #2669 puppetmasterd integration has leaky state
+8a3a205  Fix for #2327, check the return types from augeas and fail where appropriate
+2ae7516  2047: Add a not_include into match
+55f6239  Minor unit test fixes
+b7b7a1c  vim: Improve function matching when functions contain ')'
+b3c363c  vim: puppetDefArguments is contained by puppetDefine
+f9e05a8  Fix for #3094 (libdir should take ":" delimited path)
+b473264  Fix #1842 Net::HTTP#enable_post_connection_check doesn't work anymore
+9419c2b  Fix for #3035 (redhat services use init for source)
+10becce  Fix for #3077 (unit tests broken in 0.25.1-->0.25.4)
+49a7185  Fix for #3085 (user_role_add pulls from same source as useradd)
+1f086c2  Fix for #3114 (ruby's arbitrary limit on process groups too low)
+
 0.25.4
 ======
+c5eef04  Updated CHANGELOG for 0.25.4
 0025e13  Partial reversion of patch for #3088 to fix #3104 (Exception misreported)
 bfc9e45  Updated CHANGELOG for 0.25.4rc3
 
@@ -10,10 +109,6 @@ a91c476  Fix for #3088 (catching Exception also traps SystemExit)
 75634b7  Fix for #3093 (also need to be able to call pkgget_with_cat on class)
 94e269c  Uncommeniting the fix for #3001
 9636b93  Updated CHANGELOG for 0.24.5rc2
-d4319a5  Minimal fix for #3001 (failing to fetch metadata on dangling symlink)
-cdcbdc7  Fixing #2914 - pre/post hooks now work for transactions
-67216aa  Fix for #3075 (sshkey host_aliases ignored)
-e4462c0  Updated version and CHANGELOG for 0.25.4
 
 0.25.4rc2
 =========
@@ -21,6 +116,9 @@ d4319a5  Minimal fix for #3001 (failing to fetch metadata on dangling symlink)
 cdcbdc7  Fixing #2914 - pre/post hooks now work for transactions
 67216aa  Fix for #3075 (sshkey host_aliases ignored)
 e4462c0  Updated version and CHANGELOG for 0.25.4
+
+0.25.4rc1
+=========
 441879f  Revert "Fix #2845 Cron entries using "special" parameter lose their title when changed"
 f7e1435  Updated rake task to fix gem build issue
 49013f0  Updated version and CHANGELOG for 0.25.3
@@ -35,22 +133,6 @@ dd22b71  Replaced ugly gem creation task with slightly less ugly task
 d0efcc6  Added tasks directory to Rakefile and gem task file lists
 8a6d66e  Added puppetpackages task description
 eada68a  Updated CHANGELOG for 0.25.2
-6111ba8  Fix for temporary file security whole
-e7d98cc  Fix for #2999 (absent package handling on solaris)
-87136b4  Fix typo in documentation: wheter vs. whether.
-cbc2ef0  Partial rollback of refinements to fix for #2994
-fd631b9  Do not close stdout or stderr in execute.
-f878fe8  Update Red Hat spec file for 0.25.2
-4394c48  Updated CHANGELOG for 0.25.2rc3
-13cbf04  ReFix 2675 ending slash in directory should get stripped off
-5c6f07b  Use a pipe instead of a temp file for command output.
-7e64393  Additional fix for #2994 (followed symlinks do not have checksums)
-7e2e12b  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
-c84186a  Revert "Fix for #2731 (problem communicating with processes in SELinux)"
-74d9693  Updated man pages for 0.25.2
-7e2b1e9  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
-d1ff4b3  Fix for #2994 (undefined method "_file" message)
-4d81511  fix #2987 - check correct hash entry
 
 0.25.2
 ======
@@ -61,6 +143,9 @@ cbc2ef0  Partial rollback of refinements to fix for #2994
 fd631b9  Do not close stdout or stderr in execute.
 f878fe8  Update Red Hat spec file for 0.25.2
 4394c48  Updated CHANGELOG for 0.25.2rc3
+
+0.25.2rc3
+=========
 13cbf04  ReFix 2675 ending slash in directory should get stripped off
 5c6f07b  Use a pipe instead of a temp file for command output.
 7e64393  Additional fix for #2994 (followed symlinks do not have checksums)
@@ -70,6 +155,9 @@ c84186a  Revert "Fix for #2731 (problem communicating with processes in SELinux)
 7e2b1e9  Fix for #2995 (don't fail to load PSON when UTF-8 missing)
 d1ff4b3  Fix for #2994 (undefined method "_file" message)
 4d81511  fix #2987 - check correct hash entry
+
+0.25.2rc2
+=========
 682000b  Updated CHANGELOG for 0.25.2rc2
 e4bb529  Fix for #2967 (RFC-1123 problem and regression on wildcarded domains)
 776be7c  Updated CHANGELOG
@@ -1196,7 +1284,7 @@ d0bf26e  Fixed install.rb typo
 2c7e189  Fixes incorrect detail variable in OS X version check, re-patches ralsh to work with Facter values and adds error check for missing password hash files.
 73a0757  Fix #1828 - Scope.number? wasn't strict enough and could produce wrong results
 
-0.24.7rc1
+0.24.8rc1
 =========
 84d6637  Fixed #2000 - No default specified for checksum
 a3bb201  Fixing change printing when list properties are absent
@@ -1282,8 +1370,91 @@ b7ab54c  Add methods to return hash instead of objects to params and tags
 b27fccd  Fixed #1852 - Correct behaviour when no SELinux bindings
 7403330  Updated Red Hat spec file 0.24.7
 
-0.24.7
-======
+0.24.7rc1
+=========
+84d6637  Fixed #2000 - No default specified for checksum
+a3bb201  Fixing change printing when list properties are absent
+67fc394  Fixed #2026 - Red Hat ignoring stop method
+cf64827  Bring in the documentation changes from the master branch
+01bc88c  Added a force option to ensure the change is always applied, and call augeas twice to reduce the chance that data is lost
+cedeb79  Backport the fix for #1835
+cf48ec0  First cut at the not running if augeas does not change any of the underlieing files
+9d36b58  Bug 1948: Added patch by jab to support the correct ins syntax. Updated the test cases as well
+61661b1  Fixing #1991 - ldap booleans get converted to booleans
+d5850dc  Refactored a method: extracted about five other methods
+1c7c8fe  dbfix - fix typo and close another possible inconsistency
+c55ac3f  Fix #2010 - add protection code for some storeconfig corruption
+a790ee3  Further fix to #1910
+9577d3a  Fixing #2013 - prefetching had a mismatch between type and title
+719a8df  Fixed to rake tests for reductivelabs build
+ac87600  Fixed report reference page
+0c16426  Fixing broken 0.24.x tests in test/.
+23066c1  Fixing every failing test I can find on the build server.
+ec56ddf  This script fixes the most common issues with inconsistent storeconfigs database (including duplicate resources record, duplicate param_values records, dangling records...).
+c052ff8  Make puppetd --waitforcert option behave as documented:
+e2b4062  Adding a performance optimization to the FileCollection.
+fa6494b  Using the FileCollection where appropriate.
+373d505  Adding a FileCollection and a lookup module for it.
+0e46786   Fixed #1963 - Failing to read /proc/mounts for selinux kills file downloads
+4170238  Fixed #2025 - gentoo service provider handle only default init level
+8c010e0  Fixed #1910 - updated logcheck
+7504b04  Updated useradd.rb managehome confine to include other RH-like distributions
+f07d928  Use Puppet.debug instead of own debug flag
+25a3f59  Fixing #558 - File checksums no longer refer to 'nosum'
+d758f45  Fixing #1871 once and for all - contents are never printed
+c0f4943  Minor fix to launchd tests
+24d48e6  Fix #1972 - ActiveRecord fixes resulted in broken tests
+446989b  Fix spec test for launchd service provider to work with new service status method and add two new status tests.
+3ef5849  Fixing a test I broke in commit:"897539e857b0da9145f15648b6aa2ef124ec1a19".
+72bd378  Removing a no-longer-valid test.
+682dd8b  Fixing password validation to support symbols.
+44f97aa  Only backing up within parsedfile when managing files
+04af7b4  Fixing a syntax error in the up2date provider
+1070b3c  Fixing a test broken by a log demotion
+ab84756  Cleaned up variable names to be more sane, clarified error messages and fixed incorrect use of 'value' variable rather than 'member'.
+7f41857  Provide dscl -url output support for OS X 10.4 clients using the directoryservice provider.
+0bc3c07  Fix launchd service provider so it is backwards compatible with OS X 10.4 as well
+2561c8e  Updated Augeas type code
+7d72186  Removed site from Puppet VIM syntax
+1bc7404  Fixed #1831 - Added sprintf function
+336b645  Fixed #1830 - Added regsubst function
+2a85551  Bug 1948: Add logic and testing for the command parsing logic
+2218611  Updated up2date and service confines to add support for Oracle EL and VM
+39a8b28  Fixing #1964 - Facts get loaded from plugins
+7cf085c  Adding tests for Puppet::Indirector::Facts::Facter.loadfacts
+70ea39a  Adding a post-processor for Nagios names.
+4dfa034  Revert "Refixing #1420 - _naginator_name is only used for services"
+d5a193a  Fixing #1541 - ParsedFile only backs up files once per transaction
+53f15b9  Removing the apparently obsolete netinfo filetype.
+4e89156  Migrated FileType tests to spec, and fleshed them out a bit.
+cc4d658  Bug #1948: Added patch by jab to support the correct ins syntax. Updated the test cases as well
+5e35166  Fixing #961 - closing the http connection after every xmlrpc call
+af3f3ae  Refactoring the XMLRPC::Client error-handling
+f0ac3ae  Fixed #1959 - Added column protection for environment schema migration
+319822a  Fixing #1869 - autoloaded files should never leak exceptions
+6b0c1b9  Fixing #1543 - Nagios parse errors no longer kill Puppet
+7fd5c7e  Moving the transaction specs to the right path
+efb5cc5  Refixing #1420 - _naginator_name is only used for services
+32c2be9  Fixed #1884 - exported defines are collected by the exporting host
+0e49159  Cleaning up the AST::Resource code a bit
+b22d148  Fix #1691 - Realize fails with array of Resource References
+6331bfc  Fix #1682 - Resource titles are not flattened as they should
+7e036eb  Fix #1922 - Functions squash all arguments into a single hash
+535fa89  Fixed #1538 - Yumrepo sets permissions wrongly on files in /etc/yum.repos.d
+f7b04df  Fixed #1936 - Added /* */ support to the vim file
+671d73c  Prefetching, and thus purging, Nagios resources now works *only* if you use the default configuration file locations.
+063871f  Adding some basic tests for the Naginator provider base class
+897539e  Removing a redundant instance prefect call.
+012efe3  Fixing #1912 - gid still works with no 'should' value.
+a9f34af  Fixing the Rakefile to use 'git format-patch'.
+db05c00  Fixing #1920 - user passwords no longer allow ':'
+aa219e7  Adding README.rst file
+1d3f117  Added Reductive Labs build library
+f01882d  Change the way the tags and params are handled in rails
+b7ab54c  Add methods to return hash instead of objects to params and tags
+5c64435  Rails serialization module to help serialize/unserialize some Puppet Objects
+b27fccd  Fixed #1852 - Correct behaviour when no SELinux bindings
+7403330  Updated Red Hat spec file 0.24.7
 8befc18  Updated to version 0.24.7
 cf19bd8  Not using a temporary file when locking files for writing.
 b966ea0  Modifying the corruption-checking test.
@@ -4571,4 +4742,489 @@ e611f2c  adding some better readme stuff
 b532a30  adding things to the change log, and modifying the order of the steps
 584652c  Disabling most documentation generation except for the API docs, and wrapping the StatusServer in the xmlrpc check
 0e0fdac  Updated to version 0.9.3
+
+0.9.3
+=====
+d4a9f3e  Adding release tag
+e2e2fb3  some updates to the typegen stuff, even though i may still not use it
+5302921  Fixing two reported bugs in cron jobs.  Cron jobs correctly change when fields other than the command are updated, and they do not continually refresh when the command has trailing spaces
+592c24d  adding some comments
+f9f84bf  removing "host" as a keyword; it was an alias for "node"
+4eaf13a  converting storage from Marshal to YAML
+3c14db1  adding Util.lock, and switching storage to using it
+5ce5b95  removing any direct references to /tmp in tests
+84bf289  fixing files being put directly into tmp
+a03b03f  removing ruby shebang at the top of all of the files
+2a5bbd0  final updates for 0.9.2
+58ef35d  updates
+dd727ef  removing marks
+9f942b0  fixing tests to work from any CWD
+58c0df1  fixing incredibly annoying bug where os x returns stupidly large uid when uid is below 0
+42c077f  updates from os x
+f815654  updates
+5082132  adding cfengine module, which required passing the cfengine classes all the way through the stack to the scope
+c205bf6  fixing filesources so that the first found file is copied, and adding a test case
+6960034  fixing puppet to default to using the console for output
+d5bd1bc  Mostly fixing exec so it either captures stderr or runs as a user; Process.euid was not working correctly
+a4562bf  Lots of refactoring, and added the capture_stderr method
+42a9d9a  Adding "isomorphic?" method to classes, and testing for isomorphism before throwing a conflict
+300a163  Further progress towards the next release.  Lots of small bugs fixed, the paths look much better now, and Transportable is much cleaner.
+14d8186  Making paths work a little more intelligently
+0335743  adding config file stuff, but not using it yet.  I have decided to release the next version without them.
+ba76eb2  Cleaning up tests resulting from the changes to the parser
+e605a5c  The language now verifies some resemblance to closurehood.  I now only need to fix the library to expect this behaviour.
+526deef  Fixed merging of state values, but I have not yet solved merging of parameter or metaparam values, since they are quite different.
+9e1c63a  Protecting from bug in Syslog, and fixing some more log messages
+76176a9  central logging is fully functional now, but it is painfully slow, so it is disabled by default
+b6c63f6  Central logging now works, although there appear to be a few kinks to work out.
+0ae5e33  Adding logging methods to all Puppet::Element instances, and converting all instance log statements to use those methods.  Additionally modified logging to take advantage of this by including the path of the logging object in the output.  Logs will still need some cleanup to avoid duplicate information.
+0d3db79  adding tags and path accessors
+a8645a4  Further small bug fixes towards running puppet on my network
+df8dbba  fixing sources so that they always have a corresponding checksum state
+e8912d5  files and directories are now created as the correct user and group if they are set
+1b74e8e  The Puppet::Util.asuser function now works; had to slightly modify user.rb to make checking work.  In addition, exec.rb now takes advantage of it.  I also decided to make a small change to type.rb -- validstates now only returns state names, not names and states.
+32d89ba  fixing certmgr tests
+f732880  Getting rid of the tc_ prefix to test cases
+8fe558c  general cleanup, as i move towards running it locally
+5ab12f9  fixing path to facter
+f036778  Apt-cache was showing more information that I thought, so I had to redo how I was collecting the most recent package version
+a232e5c  Made tweaks here and there to get it running better on my local network.  I am inches away from that happening.  All tests pass.
+a6d0292  adding better docs to packages
+3cd8ee9  "latest" is now a valid value for packages, and yum support is also included
+66db3d8  making service changes; it is still basically non-functional except in the degenerate case of using "init"
+194dab3  Adding some semantic tagging.  It is not exactly full-featured yet, and it is not used at all, but it was sufficient for some proof-of-concept stuff in preparation for the conference
+55d7bbd  adding tag support to scopes and the transportable class
+e563189  switching test classes back to modules -- making them classes causes too many empty tests to run every time
+9d3aaad  removing the redundant pfile from the pfile state file names
+ed42371  Switched @should to an array, so all objects can now handle that.  I have not yet gone through and done the other cool things that can result, but that will have to wait until tomorrow.  Also, I moved all of the pfile states into separate files, since the file was getting unweildy.
+6af0e0e  added overrides ability
+0d6241c  switching all relationships to be centrally maintained and to use symbolic references, rather than literal ones; also going through and making all tests pass again after mucking with services
+a96bdac  Okay, services are now managed, um, entirely differently.  I have the beginnings of a system for supporting different service management frameworks, although I currently only support <nothing> and init scripts
+47ba186  adding a test for includes
+9464224  moving specific packaging support into separate files
+f48f14a  fixing behaviour when files are missing
+5bb8c4a  fixing output in noop
+abcac81  Rearranging the packaging support a bit -- it is now more clear and significantly easier to understand, maintain, and enhance.
+8211df0  Many, many changes toward a completely functional system.  The only current problems with my home config are that apache's stupid init script does not do status and that packages are not working as non-root users (which makes sense).
+d20ac8e  Hoping this will get rid of the directory being printed
+4c13c10  Nodes now support inheritance, for better or for worse.
+781c69b  The new "include" syntax works now.
+400b103  fixing "ignore" documentation to parse RST correctly.
+5590148  Okay, all tests pass again.  The work done on nodes will take a little while to clarify and such, but it should work pretty well.
+f7d9b83  I am still somewhat in mid-change, but I have made the biggest changes to making nodes work correctly.  The core code works, but I still need to fix my various test cases
+03f5733  adding a ParsedFile class to handle figuring out whether a file has changed
+f757556  converting tc_relationships.rb to the test base class
+5dc3cb0  Okay, significant change -- classes no longer accept arguments (which makes things simpler but encourages the user of global variables, which is bad), and classes are finally singletons, meaning they will only ever be evaluated for each node a single time.  I still need to make nodes work correctly, but that is going to involve modifying the parsing system and a bit more
+0747b4c  adding stinkloads of comments to ast.rb (I am trying to go through and better comment my code over time), refactoring some of the AST classes, and working towards a more sensible class/definition/node distinction
+d6982d5  adding some new language tests
+48155b8  added log, metaloglevel and @metaparams to support setting loglevels
+041ca4b  switching log.rb to raise Puppet::DevError events
+16c9f83  My cfengine2puppet config now entirely parses.  The biggest problem I ran into is that my glob-based parsing was only returning the results of the last parsed file, instead of collecting all of the results.
+23d3c93  adding --noop to puppet executable, and removing some extraneous comments
+a345931  Successfully parsed my entire converted cfengine configuration; these are all fixes for bugs i found as a result.  I have not tried to execute the configuration yet.
+a8bdada  Users and groups now work on OS X.  I had to make some key changes to how transactions and state changes work -- the most important is that it is no longer an error to try to sync a state that is already in sync.  I could not find another way to handle all user states being out of sync but the first state actually syncs everything.
+6654c4c  fixing users on normal machines
+106d397  Users and groups now nearly work on normal machines and on os x, and I think I have a decent platform for expansion to some of the other important elements like hosts (probably most important after users and groups).  Some tests are still failing on os x, because netinfo sucks, but I will hopefully be able to figure out a solution soon.  Stupid OS X and NetInfo.
+42deabb  all tests for users and groups pass again on fedora, debian, and solaris
+e0d1d31  temporary commit so i can move to my workstation; groups and users are way b0rked
+29c291a  Creating a "change_to_s" method on State, so individual states can override and and determine how they get printed
+80a2808  Cron is now fully functional and tested on 3 platforms.  In order to make it work, I had to do some modifications to TransObject#to_type and Type.create, but all tests pass now.  Type.create is now handling errors on creating objects, so if you try to create an invalid object you will just get nil returned, rather than receiving an error.
+e25e8c6  adding keywords
+aebfef0  adding keywords
+11d3d24  cron is working, but i want to write quite a few more test cases
+036ba7a  small fixing to merge(), and changing output of statechange
+093963e  finishing up merge method
+ac0454a  making "Type.new" private, and switching to "Type.create", so that i can merge new objects with existing objects and such; converted all files, and tested them
+f7116e5  switching FileTesting to a class, and modifying test suites as appropriate
+7861269  removed directory output
+bf701dc  adding extra checks to make sure networking is secure, and refactoring a heckuva lot of test
+0c97bb1  fixed problem using arrays
+897de46  cleaning up tests a bit; mostly just making sure tests clean up after themselves, but also doing some rearrangement and fixing a list() call
+6767dd2  debugged ignore in fileserver, added tests to ignore tc and fixed server.list in tc for filesources and fileserver
+39aaa99  fixing some tests
+6c6ff03  moving some testing and debugging around
+192c07b  fixing non-netinfo group
+9ebb767  fixing non-netinfo group
+669ae38  modifications to eliminate code duplication in state creation, mostly to support cron
+ae00500  preparations for supporting netinfo in users
+610f95c  switching groups back to having namevar be a parameter instead of a state
+2a6710b  fileserver still has a bug
+ec66034  added ignore to fileserver and pfile
+3d5f5a1  adding cron stuff; it does not work at all yet
+0d3024f  adding globbing to import
+5438eff  removed comp.sync and replaced system mkdir -p
+79961e1  added test case for ignore
+157953a  added ignore to pfile
+51948bd  adding example configs
+d43dc86  tracked down some sticky bugs related to having false values and empty strings; all fixed now, and all tests pass again, including the new tests that cover the bugs i found
+aca4cf8  fixing error handling so that failed objects are completely destroyed; they were receiving events even though they were supposed to be gone
+0a4e392  fixing component flattening and sorting; it was not working for cases where objects inside of components had dependencies from other components
+58ca9d1  adding snippet test to verify correct behaviour with missing exec path; also, adding "creates" parameter to exec
+f9df523  intermediate commit so cron is not loaded
+4dd1dd8  adding more comments from talking to andy
+3306cc7  incorporating comments from talking to andrew
+29fa170  incorporating comments from talking to andrew
+d0eb566  some small fixes
+ee1eba2  small updates
+f69abc9  adding cfengine to puppet parser, but it is not even remotely close to functional yet
+8f7b191  fixing groups again after getting them to work with netinfo
+da6590d  group management now works on os x, although it is six shades of really nasty.  Netinfo is a nightmare.
+3726cee  adding debug setting to the top-level test class
+99db7bc  reverting changes in the reverse order of what i executed them
+8f0ef3f  removing debugging
+2213430  making states capable of being the namevar
+923226e  all tests now pass on solaris 10x86; i had to do some stupid hacking with base64 for it to work, and i am working getting a much better base class for all test classes
+edc392d  adding a break if randomization takes too long
+4cc12a8  finishing up user and group support for now
+9e4ed0c  rearranging some documentation
+24b1c67  adding scopetest
+b77d295  adding user and group classes (although user class is not yet functional), and added "is(state)" and "should(state)" methods for retrieving the respective values on a specified state
+4f2812a  changing rollback() to do event handling also
+72638e6  adding simple newcomp() method to base test class
+795a5a0  adding all of the work necessary for tidying
+f7a5f87  removing DEFAULTPORT stuff
+21244f4  fixing small bug in setting default port
+c0c958b  changing some documentation methods around
+3fb6f49  rearranging puppetdoc to not separate states and parameters, and to allow undocumented states
+75ec054  committing initial tidy stuff, so i can move to the laptop
+0d01770  cleaning up obviated methods
+747c3f6  defining $name in each component scope, and adding test case
+f49ffa3  defining configstatted
+750b880  removing if-related keywords
+008cea5  fixing error calls
+e1bf0e1  fixing bug where remote server name is ignored
+e1de002  Fixed small bug that caused the config files to be parsed on every connection
+5c0fb02  fixing documentation for file source state
+6a96fcc  adding file reread to master, although it is plenty hackish
+cff3a5b  fileserver config file now reloads when it is more than 60 seconds out of date
+998b415  correcting documentation on autosign in puppetmasterd, and switching the autosign.conf file to use the same authstore as fileserver.conf
+7f274a4  catching a potential security problem -- requiring that "path" always be set for a fileserver mount
+8a99636  adding a "--noop" option along with a test case for it
+f65563d  changing default hostname to "puppet", and adding --parseonly option along with a test case for it
+0629065  fixing puppet to use correct method and adding a real test case for it
+82ac86e  changing default manifest location to /etc/puppet/manifests/site.pp
+3087f85  changing version number for beta
+e28e11b  removing need for zip in rakefile
+fc20167  UPdated rakefile
+914764b  As Christian requested, I am no longer downcasing facts I receive from Facter.  Also, removing some outdated files
+eab7314  bumping up the default log level for changes from info to notice
+cc48367  I did not have good puppetd tests, so I missed the fact that I was calling the wrong class in puppetd.  Fixed.
+65d1375  disabling print of library warnings, since webrick and openssl have far too many warnings for comfort
+cdfaa5e  adding RDoc::usage documentation to all executables
+f279535  This should be the commit that brings us to Beta 1.  All tests pass, although I get some (gracefully handled) failures in tc_metrics.rb, and there is now a config file for the fileserver module, including authorization specification for it.  I have also reworked error handling in the xmlrpc client and server so errors should propagate more correctly.
+28be88c  Adding authorization store, initially just used for file serving but eventually for all authorization, most likely
+814a9b0  adding config file parsing
+9ec321e  recompiling parser after removing extraneous debugging
+773be96  Added GPL license
+48a2e0f  making array-as-name work in the language, and adding some more test snippets
+66b3355  Certificates now verify!
+386ebee  replacing if statements with case statement, and adding defaults for both selectors and case statements
+583a9c6  remote filecopying now works
+5b20c92  Have done a significant reorganization of how clients work, also, along with some interesting trouble shooting on components
+ba51e70  fixing checksum generation -- i was causing some weird bugs by using the same indicator in different cases, and i added a test for invalid checksum types
+fb3cff7  small comment change
+dde841f  Created a Handler base class for all of the server handlers, which allows a lot of the manual work to now be automatic
+49e3e37  splitting normal file tests and source tests into different files
+a8fff85  ignoring remote file owner when not running as root
+f68fe00  moving all server handlers into a specific server subdirectory
+129dad7  removing obsolete file
+51294a0  moving rake file to the trunk dir
+6029ef7  Moving all files into a consolidated trunk.  All tests pass except the known-failing certificate test, but there appear to be some errors that are incorrectly not resulting in failurs.  I will track those down ASAP.
+e87eb58  adding test to verify require does not kick off an event
+4741eef  Execution order is now based on dependency relationships, and those relationships correctly propagate up and descend into components.  There is also an event test suite now, along with a (currently simple) component test suite.
+63309c3  fixing test base class
+f026884  just fixed an incredibly ugly bug where @parent meant both parent array and parent class
+78939cc  passing file and line to all objects
+51ffd6f  trying to create a testing base class
+54e5eb4  moving
+4f0750b  adding
+9f84742  all tests pass except a certificate test i do not know how to fix
+163db7c  a basic first test of puppetmasterd now passes
+a3e03e2  all non-executable tests pass now
+d49a98e  further progress towards passing tests
+2be10b5  all tests pass except those related to puppetd; i am going to significantly reorganize how serving is done
+6eac358  updated version number to allow gem install
+8d71cd9  Added rake for Puppet, '--version' to puppet and test case for Puppet.version
+cfaee58  more progress towards a functional daemon
+3cb04cb  setting up http to log to a separate file
+adc10d8  setting up http to log to a separate file
+c7380c9  renaming
+cb1956d  adding daemon helper module
+bb4b5a5  done a lot of work on certificates; all tests except one puppetca test pass
+e2e2474  removing obsolete files
+0f7d185  fact.rb is obsolete
+af1b979  function.rb is obsolete
+fc0ba4b  fixing directory mode creation
+5bcae96  renaming again
+2687652  renaming openssl to certauthority
+aacd780  removing comments and making @csr a class attribute
+4b5c5bf  fixing error output
+c0b0975  adding creation rollback
+f654f2d  returning transaction from client.config()
+a6a1148  all tests now pass on os x
+f3c1487  adding better error handling for missing paths
+77e1cf0  fixing verbose output to be better and easier to manage
+9c7c71c  passing state, so more info can be extracted
+afcb2ee  adding a bit more output
+bc3a433  committing recent changes for testing
+7b14e39  a bit of refactoring, and a bit more functionality
+0fce775  okay, switch all cert management to the library, instead of using the openssl binary
+a1d206a  moving
+6ba0e10  certificate management; yay
+de4e5bf  oops; removing errant notice msg
+223cc9f  cleaning up the defaults system even more
+74dac8f  adding some consistency and tests to the whole puppet defaults system
+8bf85e2  adding tests for puppet defaults
+d14e1b4  uh
+4af2559  renaming to avoid name conflicts
+5fa0c20  all tests pass again
+edc2842  local filebuckets are now tested with files
+e041c8a  basic filebucketing is now working
+cf37c06  Moved documentation to project website.
+9f2aaac  more changes to documentation
+952a76c  working on documentation
+54895da  Updated README, moved the old one to documentation/
+2d1e643  Updated doc/big-picture doc/structures, Added rst formating to puppetdoc, and added doc strings for types, states, params, and metaparams.
+700b965  dpkg/apt package installation and removal now works
+e685ddb  fixing statefile creation
+01666f6  fixing lib loading test
+075ffd7  making changes necessary to pass tests on all available platforms
+b5f6a54  fixing solaris packaging
+ffe318c  fixing packaging to work with rpm, too
+64b55c1  creating FileTesting module in puppettest.rb, and getting recursion working with symlinks
+9d8f754  adding some attributes to errors
+dcbbef7  adding symlink back as a separate object
+e078329  adding symlink back as a separate object
+60965c5  removing silly message
+f624cd5  making the console output slightly less redundant
+848df27  okay, last try on sources hopefully -- no failures, and basic functionality all seems to be working
+cc67845  fixing package listing
+326b4ad  fixing exec tests to work with new event stuff
+fa6569d  okay, sources seem to be much more understandable here -- only the recursion function is recursive
+5351eb9  adding some error checking
+60e02de  not dump/loading for local client/server
+8ec8c8d  sources now pass all tests
+a33d5d4  everything seems to actually be working now, including getting the correct file list back
+2d34f8e  Ha! finally got recursion and sourcing working together
+bc38169  redoing how arguments are handled in type.rb -- it is much cleaner now
+973385f  first versions
+c577e57  reducing debugging
+99eedb3  reducing debugging
+8f718da  recursive file copying now works even with some limited number of errors
+aa59473  okay, file sourcing actually seems to work now
+9a5477b  checkpoint commit
+0e94644  moving setpath to parampath=, as a param method
+3a67efa  adding "=" to metaparam methods, and allowing types to use methods for params
+de91dbd  temp commit before i change the whole way that i am doing source + recursion
+9ba72f5  removing, since pfile now has link functionality
+311218b  removing, since pfile now has link functionality
+6f4f821  downcasing the values of all facts
+b1f3fb8  switching facts to be auto-provided by the client
+357afbb  removed type.method() syntax, and replaced it with Type { default => value} syntax -- i still need to add test cases
+f38bdef  changing path stuff to be service-specific
+84f721d  modifying failer stuff
+3d725d9  adding more validation methods
+f2b6762  reducing to one statefile definition
+ad9913b  converting debug() back to Puppet.debug()
+13945c5  converting debug() back to Puppet.debug()
+668b9de  converting debug() back to Puppet.debug()
+c04b337  converting debug() back to Puppet.debug()
+3c4181c  adding methods callable from language
+88071eb  making rpm the default package manager for all linuxes, with exceptions allowed
+ca87010  defaulting to rpm for everyone i don't know anything about
+ebe779f  adding rpm as the default type for Fedora
+fbafa84  updates
+b9c064e  Updated install script to include all bin files.
+96c37e3  using old name method, since it is required to make names unique given how classes currently work
+e97e2d9  fully qualifying warning method, because it is not being imported for some reason
+a984d66  disabling metrics tests on machines missing RRD
+78bcfdc  adding path stuff everywhere, although i had to keep component names kind of funky
+99a9f4b  adding link functionality
+d6e2102  toying with some doc stuff
+3f9bb25  removing an obsolete VERBOSE setting
+5ff4b02  removing some debugging
+bf09132  lots of refactoring
+cc78949  in the middle of a bunch of refactoring; committing so that others can try to replicate the segfault i am seeing
+1f2c866  doing some refactoring
+e19ca97  converting to "include Puppet" and not qualifing output methods
+8177700  hopefully, finally resolving recursive file creation problems
+01a9905  moving namevar translation to a method
+fffc09c  swapping console colors
+2062aac  changing comments
+75e27cf  cleaning up bugs in the tests, and adding more error checking around the bugs
+0417fb5  adding refreshonly parameter
+6e9975c  found a bunch of bugs in Puppet::Storage, plus some bugs in how file recursion was being tested and thus some real bugs in the system
+256b84e  adding a to_s method
+d14dc32  fixing storage class; it was not actually correctly retrieving state from disk
+96f3980  adding Puppet#recmkdir utility function, and making sure Log and Storage create their own files and directories as necessary
+649d59a  adding some more tests for recursion plus checksumming, because they are somewhat incompatible for directories
+cb95dc7  ok, verbose => info
+459287c  duh, somehow added Blink calls in there...
+600f272  adding cwd parameter to exec
+4157fa0  exec stuff all works now, end to end
+2c1f637  fixing some nasty bugs related to parameter checking
+05d59fd  fixing a nasty bug related to recursion and nonexistent files
+5b7fd63  fixing some nasty bugs related to parameter checking
+9e0ab28  adding string vs. symbol testing
+8f1da62  adding logdest config
+cf817e7  changing Log.destination to Log.destination=()
+d36b4c0  disabling debug by default
+420062d  changing Log.destination to Log.destination=()
+c718044  adding the exec stuff
+3441b82  finishing rename of file class
+f250d92  renaming to remove naming conflicts
+26bc12b  further output cleanup, and fixed the problem with tc_server.rb leaving sleeper processes lying around
+bb7e283  fixing debugging to severely reduce output but allow it when debugging a specific service
+c16ca53  changing warnings to debug
+00343e3  basic rpm stuff now works
+2b2975f  fixing metrics tests to work with everything else
+0ac91ef  correctly returning events
+0c4254a  metric testing and graphing now works in the library, although nothing has been done in the language
+573d301  adding some more tests for loglevel stuff
+0ba9d71  adding rpm as RedHat package manager
+b6b1f5a  logging now exactly supports the list of levels that syslog supports, and multiple destinations (syslog, files, and console) are now supported
+e3c3283  renaming message.rb to log.rb
+2b3b15e  temporary changes to prepare for a rename
+8395639  puppetest.rb should probably be puppettest.rb
+cd48af7  renaming blink to puppet
+60783f0  renaming blink to puppet
+8f95084  renaming blink to puppet
+6f07413  you can now at least test for whether a package is installed, although you still cannot do anything if it is not -- the barrier is knowing how to get the package
+65c2a69  adding validparam() to Blink::Type
+500a135  fixing file.rb so it works on Darwin, also
+90b9b2d  updates
+3f0687b  updates
+5324062  adding new classes and tests
+0dad57a  md5 summing now works, all the way through!
+d1f2187  checksums now work, but not all the way through yet
+18d755a  Rahh! component dependencies now work!
+922994e  everything passes all of the tests, but i do not think the component-level metaparams are working
+cdfdfb9  adding some more tests for Blink::Type
+d42efbe  done some more work on making components act like normal objects, but now i need to figure out how to spread events up the tree, rather than just point to point
+0ab9685  dependencies now work, although you cannot yet specify them for components
+2b97b47  there are now explicit tests for transactions, including rollback, and more tests involving querying
+b46135f  adding simple query syntax stuff
+7fecad3  i now have basic events: you can only specify simple object types as requirements, but hey, it works -- refresh() gets called
+02f1185  renaming events to event
+d70229b  update before rename
+c0d86a4  intermediate; no extra functionality yet, but moving away from discussing namevars outside of a given class
+d86e479  All tests pass again, and i have added Type.allclear to remove all existing type instances, thus making it much easier to run all of the parser and lexer and then server tests; i have also added remove server tests
+ebc02a8  okay, everything works again, although it still might be a touch fragile
+5477f36  i am giving up on fileparsing for now; it does not work yet
+576a031  okay, bin/blinker works again, and i have modified both client and server to be a bit easier to use non-networked
+03741b4  we now have networking it is very basic right now: the server gets passed a file name, and the client gets passed the server to which to connect.  The client gets its config, evaluates it, and exits
+4a4438d  okay, implicit iteration now occurs at least at object definition time
+4a9c1a2  enabling mucking with debug and noop
+f91451d  yep, arrays are always passed
+d0d8df9  final fixes on passing methods through to types
+3a07a4d  typesettings now correctly pass all the way through and can only run specified methods, using "allowedmethods"
+12418e1  the tree transformations work throughout the whole system now
+f9a223c  transformations from the client through to the transactional execution now works!
+00a620d  unmoving
+135134c  updates
+4da3b51  moving
+259692c  moving
+3b33738  switched to just passing scopes around, instead of passing the interpreter object around
+529b9a7  file recursion now works
+4e03ed1  i can now execute simple scripts manually!
+ec88acf  i can basically actually do work now
+42dadad  moving
+817f571  adding lots of verbosity, and starting to actually make sure things execute -- tests are failing, tho
+2cce619  basic components now work
+49da910  we now have nested scopes, and we've got the beginnings of components, although many tests are currently failing
+7689d19  simplifying argument parsing in Blink#message
+08d4260  initializing @noop in element.rb
+865dffe  dealing with having moved the examples to the language area
+a1a7ae4  moving to the language tree
+85b9f91  everything works again, including components
+9ea0c30  making components work
+1f95fe2  moving component.rb to type/
+7df572b  removing most functionality, since type.rb already has it
+565554f  finishing reorganization of base classes and such; there is now a clear tree heirarchy, with parents and children -- all tests pass on the types, but there are still some issues with client/server stuff
+9843da6  cleaning up object tree and adding a simple virtual base class for both types and states
+d0c6b0c  adding transactions
+89d2381  moving event info out of type.rb
+3c6c0f7  removing elements.rb
+e452f00  preparing to remove elements.rb
+cf08be1  renaming statetree to elements
+b6d0f0c  first version of finalized base classes
+f984192  noop seems to basically be working, but i need to reorganize the whole type/state structure -- that is starting after this commit
+c01bc81  using the example syslog.conf instead of the one in /etc
+57194eb  adding some example debian configs
+6cd71f8  filetypes now support multiple record types, and newlines can be escaped
+7378765  completed the first step to enabling multiple record types in filetypes
+490854a  the client now executes "evaluate", which might not be a good thing -- i am getting failures if files do not exist, for instance
+6127e43  filerecord.rb: duh, fixing a small debug string printing bug
+371235b  reorganizing the FileType/FileRecord into a base class (TypeGenerator) and basing them off it
+7deba97  adding typegenerator baseclass
+b18d071  fact.rb is no longer a subclass of Blink::Type
+43a63db  fixing filetype and component to take into account changes type interface.rb and type.rb
+a16493d  type.rb: adding methods to simplify type initialization, and adding eachtype() to simplify testing
+69a1276  adding some tests on the interface methods in Blink::Type
+de360c9  renaming objects to types, since they are just subclasses of Blink::Type
+b872b72  renaming types to type everywhere; all tests now pass
+a50d461  changing types to type internally
+c0bc63f  moving types to type
+b85ac7b  renaming types.rb to type.rb
+9d163d0  changing Types to Type
+68409ef  adding
+cb5f54c  deprecating interface.rb
+974969d  final changes before deprecating
+f8b08b2  adding an fqpath method to state.rb
+ae13f00  adding name information and a FileRecordState class
+a489639  moving some methods around
+14c2308  adding markers
+a1bd01d  changing type[param] to return the state instead of the value
+41b7fbd  renaming oparse to filetype
+98374bc  renaming oparse to filetype
+8ab03d0  renaming oparse to filetype
+c2e83c5  renaming oparse to filetype
+2360201  adding some comments
+3904d2e  fixing most of the function call stuff
+13f16b6  the client is now successfully creating objects from the hashes passed by the server
+6140bee  making fact a real type
+d94d7a3  moving state.rb to types/
+e86cf4c  renaming "value" to "is"
+d8e8b7b  renaming state, and adding modification class
+c0c1f1a  renaming attributes to states
+6dce8fc  renaming objects to types
+a90af49  renaming objects to types
+5e19d7d  renaming objects to types
+afd4349  updates
+67fae6d  updates
+b4bb680  removing link when done
+c6755f5  adding class collection and naming stuff
+e5676ab  testing keyword
+f3d1118  removing some excess libs from blink.rb
+585c4fc  cleaning up the start script
+61f8434  cleaning up a bit
+52fe914  removing evaluate test
+69651dd  removing bogus output
+8fd8d62  removing output, and fixing path so it is not hardcoded
+9da1485  temporarily removing inclusion of time in output
+4d7bbaa  creating extra message methods
+0187bf7  removing execute bit
+6a82d07  adding readme
+3824817  copy test script
+67b7b34  okay, all tests pass again
+35f742c  adding client stuff to the library tree
+02ed7d3  reorganizing tests
+8bc935e  adding comments
+a0d0fa8  adding
+11b0374  moving client.rb to the library tree
+cb785bd  moving client.rb to the library tree
+8788552  fixing [] method in function.rb
+c86a770  adding operatingsystemrelease
+21ca565  renaming tc_functions.rb, and adding to ts_other.rb
+1aab204  functions mostly work
+c45c5c4  renaming
+06734a9  updates so i can rename
+9bf82b6  adding package source, initially including only files as a source
+e40d5f2  returning value instead of fact
+9fa899d  reorganizing
+4642515  reorganizing
+5807dce  reorganizing
+6ee8b4e  reorganizing
+5416017  reorganizing
+54e9b5e  adding structure
 

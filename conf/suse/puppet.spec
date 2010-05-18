@@ -5,21 +5,18 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.24.1
-Release: 3%{?dist}
+Version: 0.25.4
+Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
 
-URL: http://reductivelabs.com/projects/puppet/
-Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tgz
+URL: http://puppetlabs.com/projects/puppet/
+Source: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 Patch0: puppet.suse.patch
-Patch1: puppet.service.patch
-
-Requires: ruby >= 1.8.6
+Requires: ruby >= 1.8.2
 Requires: facter >= 1.3.7
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArchitectures: noarch
-BuildRequires: ruby >= 1.8.6
+BuildRequires: ruby >= 1.8.2
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a
@@ -38,8 +35,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-%patch0 -p1
-%patch1 -p1
+%patch0 -p0
 
 %build
 for f in bin/* ; do
@@ -56,9 +52,11 @@ done
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-%{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
+%{__install} -Dp -m0755 %{pbuild}/bin/* %{pbuild}/sbin/* %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 %{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
+%{__mv} %{buildroot}%{_sbindir}/pi %{buildroot}%{_bindir}/pi
+%{__mv} %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
 %{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
 %{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
 find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
@@ -73,12 +71,15 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %files
 %defattr(-, root, root, 0755)
 %{_bindir}/puppet
+%{_bindir}/pi
+%{_bindir}/filebucket
+%{_sbindir}/ralsh
 %{_sbindir}/puppetd
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
-%doc CHANGELOG COPYING LICENSE README TODO examples
+%doc CHANGELOG COPYING LICENSE README examples
 %exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
 # These need to be owned by puppet so the server can
@@ -90,6 +91,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %files server
 %defattr(-, root, root, 0755)
 %{_sbindir}/puppetmasterd
+%{_sbindir}/puppetqd
 %{_bindir}/puppetrun
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
@@ -99,7 +101,7 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %pre
 /usr/sbin/groupadd -r puppet 2>/dev/null || :
 /usr/sbin/useradd -g puppet -c "Puppet" \
-    -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
+    -s /sbin/nologin -r -d /var/lib/puppet puppet 2> /dev/null || :
 
 %post
 /sbin/chkconfig --add puppet

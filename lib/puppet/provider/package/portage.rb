@@ -12,7 +12,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     defaultfor :operatingsystem => :gentoo
 
     def self.instances
-        result_format = /(\S+) (\S+) \[(\S+)\] \[(\S+)\] (\S+) (.*)/
+        result_format = /^(\S+)\s+(\S+)\s+\[(\S+)\]\s+\[(\S+)\]\s+(\S+)\s+(.*)$/
         result_fields = [:category, :name, :ensure, :version_available, :vendor, :description]
 
         version_format = "{last}<version>{}"
@@ -72,7 +72,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
     end
 
     def query
-        result_format = /(\S+) (\S+) \[(\S*)\] \[(\S+)\] (\S+) (.*)/
+        result_format = /^(\S+)\s+(\S+)\s+\[(\S*)\]\s+\[(\S+)\]\s+(\S+)\s+(.*)$/
         result_fields = [:category, :name, :ensure, :version_available, :vendor, :description]
 
         version_format = "{last}<version>{}"

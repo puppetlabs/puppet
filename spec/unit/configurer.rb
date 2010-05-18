@@ -141,7 +141,52 @@ describe Puppet::Configurer, "when retrieving a catalog" do
 
         @catalog = Puppet::Resource::Catalog.new
 
+        # this is the default when using a Configurer instance
+        Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :rest
+
         @agent.stubs(:convert_catalog).returns @catalog
+    end
+
+    describe "and configured to only retrieve a catalog from the cache" do
+        before do
+            Puppet.settings[:use_cached_catalog] = true
+        end
+
+        it "should first look in the cache for a catalog" do
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
+
+            @agent.retrieve_catalog.should == @catalog
+        end
+
+        it "should compile a new catalog if none is found in the cache" do
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
+
+            @agent.retrieve_catalog.should == @catalog
+        end
+    end
+
+    describe "when not using a REST terminus for catalogs" do
+        it "should not pass any facts when retrieving the catalog" do
+            @agent.expects(:facts_for_uploading).never
+            Puppet::Resource::Catalog.expects(:find).with { |name, options|
+                options[:facts].nil?
+            }.returns @catalog
+
+            @agent.retrieve_catalog
+        end
+    end
+
+    describe "when using a REST terminus for catalogs" do
+        it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
+            @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
+            Puppet::Resource::Catalog.expects(:find).with { |name, options|
+                options[:facts] == "myfacts" and options[:facts_format] == :foo
+            }.returns @catalog
+
+            @agent.retrieve_catalog
+        end
     end
 
     it "should use the Catalog class to get its catalog" do
@@ -152,15 +197,8 @@ describe Puppet::Configurer, "when retrieving a catalog" do
 
     it "should use its certname to retrieve the catalog" do
         Facter.stubs(:value).returns "eh"
-        Puppet.expects(:[]).with(:certname).returns "myhost.domain.com"
+        Puppet.settings[:certname] = "myhost.domain.com"
         Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
-
-        @agent.retrieve_catalog
-    end
-
-    it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
-        @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:facts] == "myfacts" and options[:facts_format] == :foo }.returns @catalog
 
         @agent.retrieve_catalog
     end

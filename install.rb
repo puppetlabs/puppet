@@ -238,7 +238,7 @@ def prepare_installation
     opts.parse!
   end
 
-  tmpdirs = [".", ENV['TMP'], ENV['TEMP'], "/tmp", "/var/tmp"]
+  tmpdirs = [ENV['TMP'], ENV['TEMP'], "/tmp", "/var/tmp", "."]
 
   version = [Config::CONFIG["MAJOR"], Config::CONFIG["MINOR"]].join(".")
   libdir = File.join(Config::CONFIG["libdir"], "ruby", version)
@@ -349,7 +349,7 @@ def build_ri(files)
     end
 end
 
-def build_man(bins)
+def build_man(bins, sbins)
     return unless $haveman
     begin
         # Locate rst2man
@@ -361,13 +361,15 @@ def build_man(bins)
         File.unlink("./puppet.conf.rst")
 
         # Create binary man pages
-        bins.each do |bin|
-          b = bin.gsub( "bin/", "")
+        binary = bins + sbins 
+        binary.each do |bin|
+          b = bin.gsub( /(bin|sbin)\//, "")
           %x{#{bin} --help > ./#{b}.rst}
           %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
           File.unlink("./#{b}.rst")
         end
-    rescue SystemCallError
+    
+rescue SystemCallError
         $stderr.puts "Couldn't build man pages: " + $!
         $stderr.puts "Continuing with install..."
     end
@@ -470,7 +472,7 @@ prepare_installation
 #run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-#build_man(bins) if InstallOptions.man
+#build_man(bins, sbins) if InstallOptions.man
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)

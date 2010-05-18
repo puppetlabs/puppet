@@ -40,16 +40,6 @@ describe Puppet::Parser::AST::Selector do
             @selector.evaluate(@scope)
         end
 
-        it "should downcase the evaluated param value if allowed" do
-            Puppet.stubs(:[]).with(:casesensitive).returns(false)
-            value = stub 'param'
-            @param.stubs(:safeevaluate).with(@scope).returns(value)
-
-            value.expects(:downcase)
-
-            @selector.evaluate(@scope)
-        end
-
         it "should scan each option" do
             @values.expects(:each).multiple_yields(@value1, @value2)
 
@@ -128,19 +118,21 @@ describe Puppet::Parser::AST::Selector do
             end
 
             it "should unset scope ephemeral variables after option evaluation" do
+                @scope.stubs(:ephemeral_level).returns(:level)
                 @param1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
                 @value1.stubs(:safeevaluate).with(@scope).returns(:result)
 
-                @scope.expects(:unset_ephemeral_var)
+                @scope.expects(:unset_ephemeral_var).with(:level)
 
                 @selector.evaluate(@scope)
             end
 
             it "should not leak ephemeral variables even if evaluation fails" do
+                @scope.stubs(:ephemeral_level).returns(:level)
                 @param1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
                 @value1.stubs(:safeevaluate).with(@scope).raises
 
-                @scope.expects(:unset_ephemeral_var)
+                @scope.expects(:unset_ephemeral_var).with(:level)
 
                 lambda { @selector.evaluate(@scope) }.should raise_error
             end

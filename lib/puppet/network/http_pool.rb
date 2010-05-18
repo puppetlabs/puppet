@@ -94,8 +94,6 @@ module Puppet::Network::HttpPool
         # Use configured timeout (#1176)
         http.read_timeout = Puppet[:configtimeout]
         http.open_timeout = Puppet[:configtimeout]
-        # JJM Configurable fix for #896.
-        http.enable_post_connection_check = Puppet[:http_enable_post_connection_check]
 
         cert_setup(http)
 

@@ -206,14 +206,15 @@ Puppet::Application.new(:puppetd) do
 
         Puppet.settings.use :main, :puppetd, :ssl
 
-        # We need to specify a ca location for things to work, but
-        # until the REST cert transfers are working, it needs to
-        # be local.
+        # This configures all of the SSL-related indirected classes.
         Puppet::SSL::Host.ca_location = :remote
 
         Puppet::Transaction::Report.terminus_class = :rest
 
-        Puppet::Resource::Catalog.terminus_class = :rest
+        # Override the default; puppetd needs this, usually.
+        # You can still override this on the command-line with, e.g., :compiler.
+        Puppet[:catalog_terminus] = :rest
+
         Puppet::Resource::Catalog.cache_class = :yaml
 
         Puppet::Node::Facts.terminus_class = :facter

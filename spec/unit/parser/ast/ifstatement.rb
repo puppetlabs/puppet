@@ -64,10 +64,11 @@ describe Puppet::Parser::AST::IfStatement do
         end
 
         it "should reset ephemeral statements after evaluation" do
+            @scope.expects(:ephemeral_level).returns(:level)
             Puppet::Parser::Scope.stubs(:true?).returns(true)
 
             @stmt.expects(:safeevaluate).with(@scope)
-            @scope.expects(:unset_ephemeral_var)
+            @scope.expects(:unset_ephemeral_var).with(:level)
 
             @ifstmt.evaluate(@scope)
         end

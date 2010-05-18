@@ -59,70 +59,6 @@ class TestResources < Test::Unit::TestCase
         @type = Puppet::Type.type(:resources)
     end
 
-    def test_purge
-        # Create a purgeable type
-        mkpurgertype
-
-        purger = nil
-        assert_nothing_raised do
-            purger = @type.new :name => "purgetest", :noop => true, :loglevel => :warning
-        end
-        assert(purger, "did not get purger manager")
-        add_purge_lister()
-
-        assert_equal($purgemembers.values.sort, @purgetype.instances.sort)
-
-        # and it should now succeed
-        assert_nothing_raised do
-            purger[:purge] = true
-        end
-        assert(purger.purge?, "purge boolean was not enabled")
-
-        # Okay, now let's try doing some purging, yo
-        managed = []
-        unmanned = []
-        3.times { managed << mk_purger(true) } # 3 managed
-        3.times { unmanned << mk_purger(false) } # 3 unmanaged
-
-        managed.each do |m|
-            assert(m.managed?, "managed resource was not considered managed")
-        end
-        unmanned.each do |u|
-            assert(! u.managed?, "unmanaged resource was considered managed")
-        end
-
-        # First make sure we get nothing back when purge is false
-        genned = nil
-        purger[:purge] = false
-        assert_nothing_raised do
-            genned = purger.generate
-        end
-        assert_equal([], genned, "Purged even when purge is false")
-
-        # Now make sure we can purge
-        purger[:purge] = true
-        assert_nothing_raised do
-            genned = purger.generate
-        end
-        assert(genned, "Did not get any generated resources")
-
-        genned.each do |res|
-            assert(res.purging, "did not mark resource for purging")
-        end
-        assert(! genned.empty?, "generated resource list was empty")
-
-        # Now make sure the generate method only finds the unmanaged resources
-        assert_equal(unmanned.collect { |r| r.title }.sort, genned.collect { |r| r.title },
-            "Did not return correct purge list")
-
-        # Now make sure our metaparams carried over
-        genned.each do |res|
-            [:noop, :loglevel].each do |param|
-                assert_equal(purger[param], res[param], "metaparam %s did not carry over" % param)
-            end
-        end
-    end
-
     # Part of #408.
     def test_check
         # First check a non-user
@@ -173,19 +109,5 @@ class TestResources < Test::Unit::TestCase
         end
     end
 
-    # The other half of #408.
-    def test_check_is_called
-        res = Puppet::Type.type(:resources).new :name => :user, :purge => true
-
-        list = nil
-        assert_nothing_raised { list = res.generate }
-
-        assert(! list.empty?, "did not get any users")
-
-        bad = list.find_all { |u|
-                %w{root bin nobody}.include?(u[:name]) or (cv = u.retrieve and cv[u.property(:uid)] < 500)
-            }
-        assert(bad.empty?, "incorrectly passed users %s" % bad.collect { |u| u[:name]}.join(", "))
-    end
 end
 

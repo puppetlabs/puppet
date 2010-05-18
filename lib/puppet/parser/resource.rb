@@ -377,10 +377,16 @@ class Puppet::Parser::Resource
 
         # If we've gotten this far, we're allowed to override.
 
-        # Merge with previous value, if the parameter was generated with the +> syntax.
-        # It's important that we use the new param instance here, not the old one,
-        # so that the source is registered correctly for later overrides.
-        param.value = [current.value, param.value].flatten if param.add
+        # Merge with previous value, if the parameter was generated with the +> 
+        # syntax.  It's important that we use a copy of the new param instance 
+        # here, not the old one, and not the original new one, so that the source 
+        # is registered correctly for later overrides but the values aren't 
+        # implcitly shared when multiple resources are overrriden at once (see
+        # ticket #3556).
+        if param.add
+            param = param.dup 
+            param.value = [current.value, param.value].flatten
+        end
 
         set_parameter(param)
     end

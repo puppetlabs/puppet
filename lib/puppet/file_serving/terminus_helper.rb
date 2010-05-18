@@ -16,6 +16,7 @@ module Puppet::FileServing::TerminusHelper
 
         Puppet::FileServing::Fileset.merge(*filesets).collect do |file, base_path|
             inst = model.new(base_path, :relative_path => file)
+            inst.checksum_type = request.options[:checksum_type] if request.options[:checksum_type]
             inst.links = request.options[:links] if request.options[:links]
             inst.collect
             inst

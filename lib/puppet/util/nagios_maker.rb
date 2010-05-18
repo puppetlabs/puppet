@@ -55,7 +55,7 @@ module Puppet::Util::NagiosMaker
             You can purge Nagios resources using the ``resources`` type, but *only*
             in the default file locations.  This is an architectural limitation.
 
-            .. _naginator: http://projects.reductivelabs.com/projects/naginator
+            .. _naginator: http://projects.puppetlabs.com/projects/naginator
         "
     end
 end

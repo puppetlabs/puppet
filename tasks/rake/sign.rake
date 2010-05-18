@@ -1,4 +1,4 @@
-desc "Sign to the package with the Reductive Labs release key"
+desc "Sign to the package with the Puppet Labs release key"
 task :sign_packages do
 
 version = Puppet::PUPPETVERSION

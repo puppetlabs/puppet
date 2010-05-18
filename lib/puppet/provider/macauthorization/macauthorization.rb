@@ -15,7 +15,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     confine :operatingsystem => :darwin
 
     # This should be confined based on macosx_productversion once
-    # http://projects.reductivelabs.com/issues/show/1796
+    # http://projects.puppetlabs.com/issues/show/1796
     # is resolved.
     if FileTest.exists?("/usr/bin/sw_vers")
         product_version = sw_vers "-productVersion"

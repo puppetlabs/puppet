@@ -76,6 +76,16 @@ describe Puppet::FileServing::TerminusHelper do
             @helper.path2instances(@request, "/my/file")
         end
 
+        it "should set the request checksum_type if one is provided" do
+            @one.expects(:checksum_type=).with :test
+            @two.expects(:checksum_type=).with :test
+            @model.expects(:new).returns(@one)
+            @model.expects(:new).returns(@two)
+
+            @request.options[:checksum_type] = :test
+            @helper.path2instances(@request, "/my/file")
+        end
+
         it "should collect the instance's attributes" do
             @one.expects(:collect)
             @two.expects(:collect)
