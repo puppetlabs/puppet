@@ -1,3 +1,9 @@
+puppet (0.25.5-1) UNRELEASED; urgency=low
+
+  * New upstream version: 0.25.5
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 18 May 2010 11:19:18 +0200
+
 puppet (0.25.4-6) unstable; urgency=low
 
   * clarify passenger options in default/puppetmaster 
