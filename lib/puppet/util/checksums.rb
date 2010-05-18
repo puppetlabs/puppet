@@ -103,6 +103,10 @@ module Puppet::Util::Checksums
         ""
     end
 
+    def none_stream
+        ""
+    end
+
     private
 
     # Perform an incremental checksum on a file.
