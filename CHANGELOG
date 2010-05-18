@@ -1,5 +1,11 @@
+0.25.5
+======
+d88b357  Fixes incorrect line in partial CRL fix
+dec84e5  Fixed documentation issues exposed in #3772
+
 0.25.5rc3
 =========
+4daf8c3  Updated CHANGELOG for 0.25.5rc3
 9214400  WIP - trying to fix #3460
 9d3e98b  Minimal footprint fix for #3751 (serialization 0.25.5 <-> 0.24.8)
 d481340  Updated Template documentation link
