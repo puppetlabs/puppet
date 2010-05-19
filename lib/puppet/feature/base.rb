@@ -39,6 +39,6 @@ Puppet.features.add(:posix) do
 end
 
 # We can use Win32 functions
-Puppet.features.add(:win32, :libs => ["sys/admin", "win32/process"])
+Puppet.features.add(:win32, :libs => ["sys/admin", "win32/process", "win32/dir"])
 
 raise Puppet::Error "Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.win32?
