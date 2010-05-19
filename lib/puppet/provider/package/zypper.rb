@@ -3,8 +3,8 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
 
     has_feature :versionable
 
-    commands :rug => "/usr/bin/zypper"
-    commands :rpm => "rpm"
+    commands :zypper => "/usr/bin/zypper"
+    commands :rpm    => "rpm"
 
     confine    :operatingsystem => [:suse, :sles, :sled, :opensuse]
 
@@ -39,14 +39,14 @@ Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
         if output =~ /#{Regexp.escape @resource[:name]}\s*\|\s*([^\s\|]+)/
             return $1
         else
-            # rug didn't find updates, pretend the current
+            # zypper didn't find updates, pretend the current
             # version is the latest
             return @property_hash[:ensure]
         end
     end
 
     def update
-        # rug install can be used for update, too
+        # zypper install can be used for update, too
         self.install
     end
 end
