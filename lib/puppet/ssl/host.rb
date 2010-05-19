@@ -230,6 +230,7 @@ class Puppet::SSL::Host
         rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Could not request certificate: %s" % detail.to_s
             if time < 1
                 puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
@@ -251,6 +252,7 @@ class Puppet::SSL::Host
                 break if certificate
                 Puppet.notice "Did not receive certificate"
             rescue StandardError => detail
+                puts detail.backtrace if Puppet[:trace]
                 Puppet.err "Could not request certificate: %s" % detail.to_s
             end
         end
