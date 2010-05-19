@@ -88,15 +88,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
         end
     end
 
-    describe "when extracting" do
-        it "should return extraction result as the method result" do
-            config = Puppet::Resource::Catalog.new("mynode")
-            config.expects(:extraction_format).returns(:whatever)
-            config.expects(:extract_to_whatever).returns(:result)
-            config.extract.should == :result
-        end
-    end
-
     describe "when extracting transobjects" do
 
         def mkscope
@@ -112,23 +103,39 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Parser::Resource.new(type, name, :source => @source, :scope => @scope)
         end
 
-        it "should always create a TransBucket for the 'main' class" do
+        it "should fail if no 'main' stage can be found" do
+            lambda { Puppet::Resource::Catalog.new("mynode").extract }.should raise_error(Puppet::DevError)
+        end
+
+        it "should warn if any non-main stages are present" do
             config = Puppet::Resource::Catalog.new("mynode")
 
             @scope = mkscope
             @source = mock 'source'
 
-            main = mkresource("class", :main)
-            config.add_vertex(main)
+            main = mkresource("stage", "main")
+            config.add_resource(main)
 
-            bucket = stub 'bucket', :file= => nil, :line= => nil, :classes= => nil
-            bucket.expects(:type=).with("Class")
-            bucket.expects(:name=).with(:main)
-            main.stubs(:builtin?).returns(false)
+            other = mkresource("stage", "other")
+            config.add_resource(other)
 
-            Puppet::TransBucket.expects(:new).returns bucket
+            Puppet.expects(:warning)
 
-            config.extract_to_transportable.should equal(bucket)
+            config.extract
+        end
+
+        it "should always create a TransBucket for the 'main' stage" do
+            config = Puppet::Resource::Catalog.new("mynode")
+
+            @scope = mkscope
+            @source = mock 'source'
+
+            main = mkresource("stage", "main")
+            config.add_resource(main)
+
+            result = config.extract
+            result.type.should == "Stage"
+            result.name.should == "main"
         end
 
         # Now try it with a more complicated graph -- a three tier graph, each tier
@@ -140,7 +147,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @source = mock 'source'
 
             # Create our scopes.
-            top = mkresource "class", :main
+            top = mkresource "stage", "main"
+
+            config.add_resource top
             topbucket = []
             topbucket.expects(:classes=).with([])
             top.expects(:to_trans).returns(topbucket)
@@ -162,7 +171,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             botres.expects(:to_trans).returns(:botres)
             config.add_edge bottom, botres
 
-            toparray = config.extract_to_transportable
+            toparray = config.extract
 
             # This is annoying; it should look like:
             #   [[[:botres], :midres], :topres]

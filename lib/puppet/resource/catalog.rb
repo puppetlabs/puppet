@@ -33,9 +33,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # How long this catalog took to retrieve.  Used for reporting stats.
     attr_accessor :retrieval_duration
 
-    # How we should extract the catalog for sending to the client.
-    attr_reader :extraction_format
-
     # Whether this is a host catalog, which behaves very differently.
     # In particular, reports are sent, graphs are made, and state is
     # stored in the state database.  If this is set incorrectly, then you often
@@ -201,33 +198,22 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         end
     end
 
-    # Make sure we support the requested extraction format.
-    def extraction_format=(value)
-        unless respond_to?("extract_to_%s" % value)
-            raise ArgumentError, "Invalid extraction format %s" % value
-        end
-        @extraction_format = value
-    end
-
-    # Turn our catalog graph into whatever the client is expecting.
-    def extract
-        send("extract_to_%s" % extraction_format)
-    end
-
-    # Create the traditional TransBuckets and TransObjects from our catalog
-    # graph.  LAK:NOTE(20081211): This is a  pre-0.25 backward compatibility method.
+    # Turn our catalog graph into an old-style tree of TransObjects and TransBuckets.
+    # LAK:NOTE(20081211): This is a  pre-0.25 backward compatibility method.
     # It can be removed as soon as xmlrpc is killed.
-    def extract_to_transportable
+    def extract
         top = nil
         current = nil
         buckets = {}
 
-        unless main = vertices.find { |res| res.type == "Class" and res.title == :main }
-            raise Puppet::DevError, "Could not find 'main' class; cannot generate catalog"
+        unless main = resource(:stage, "main")
+            raise Puppet::DevError, "Could not find 'main' stage; cannot generate catalog"
         end
 
-        # Create a proc for examining edges, which we'll use to build our tree
-        # of TransBuckets and TransObjects.
+        if stages = vertices.find_all { |v| v.type == "Stage" and v.title != "main" } and ! stages.empty?
+            Puppet.warning "Stages are not supported by 0.24.x client; stage(s) #{stages.collect { |s| s.to_s }.join(', ') } will be ignored"
+        end
+
         bucket = nil
         walk(main, :out) do |source, target|
             # The sources are always non-builtins.
@@ -285,7 +271,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     def initialize(name = nil)
         super()
         @name = name if name
-        @extraction_format ||= :transportable
         @classes = []
         @resource_table = {}
         @transient_resources = []

@@ -200,6 +200,14 @@ describe Puppet::Parser::Compiler do
             @known_resource_types.find_hostclass([""], "").should be_instance_of(Puppet::Resource::Type)
         end
 
+        it "should add an edge between the main stage and main class" do
+            @compiler.compile
+            (stage = @compiler.catalog.resource(:stage, "main")).should be_instance_of(Puppet::Parser::Resource)
+            (klass = @compiler.catalog.resource(:class, "")).should be_instance_of(Puppet::Parser::Resource)
+
+            @compiler.catalog.edge?(stage, klass).should be_true
+        end
+
         it "should evaluate any node classes" do
             @node.stubs(:classes).returns(%w{one two three four})
             @compiler.expects(:evaluate_classes).with(%w{one two three four}, @compiler.topscope)

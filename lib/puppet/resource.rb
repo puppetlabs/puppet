@@ -267,7 +267,7 @@ class Puppet::Resource
 
     # Translate our object to a backward-compatible transportable object.
     def to_trans
-        if builtin_type?
+        if builtin_type? and type.downcase.to_s != "stage"
             result = to_transobject
         else
             result = to_transbucket

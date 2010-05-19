@@ -201,13 +201,9 @@ Host <<||>>"
         node = mknode
         node.merge "hostname" => node.name
         2.times { |i|
-            config = Puppet::Parser::Compiler.new(node).compile
-
-            flat = config.extract.flatten
-
-            %w{puppet myhost}.each do |name|
-                assert(flat.find{|o| o.name == name }, "Did not find #{name}")
-            end
+            catalog = Puppet::Parser::Compiler.new(node).compile
+            assert_instance_of(Puppet::Parser::Resource, catalog.resource(:host, "puppet"))
+            assert_instance_of(Puppet::Parser::Resource, catalog.resource(:host, "myhost"))
         }
     ensure
         Puppet[:storeconfigs] = false

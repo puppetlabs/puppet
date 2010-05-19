@@ -297,21 +297,11 @@ module PuppetTest::ParserTesting
 
     # This assumes no nodes
     def assert_creates(manifest, *files)
-        interp = nil
         oldmanifest = Puppet[:manifest]
         Puppet[:manifest] = manifest
 
-        trans = nil
-        assert_nothing_raised {
-            trans = Puppet::Parser::Compiler.new(mknode).compile
-        }
-
-        config = nil
-        assert_nothing_raised {
-            config = trans.extract.to_catalog
-        }
-
-        config.apply
+        catalog = Puppet::Parser::Compiler.new(mknode).compile.to_ral
+        catalog.apply
 
         files.each do |file|
             assert(FileTest.exists?(file), "Did not create %s" % file)

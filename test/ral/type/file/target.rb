@@ -69,7 +69,6 @@ class TestFileTarget < Test::Unit::TestCase
         assert_equal(file, File.readlink(linkpath))
 
         # Use classes for comparison, because the resource inspection is so large
-        assert_equal(NilClass, catalog.resource(:file, sublink).class, "dynamically generated resources were not removed")
         assert_events([], link, "Link is not in sync")
     end
 

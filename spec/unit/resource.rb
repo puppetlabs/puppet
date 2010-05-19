@@ -533,6 +533,14 @@ describe Puppet::Resource do
                 bucket.name.should == @resource.title
             end
 
+            it "should return a simple TransBucket if it is a stage" do
+                @resource = Puppet::Resource.new("stage", "bar")
+                bucket = @resource.to_trans
+                bucket.should be_instance_of(Puppet::TransBucket)
+                bucket.type.should == @resource.type
+                bucket.name.should == @resource.title
+            end
+
             it "should copy over the resource's file" do
                 @resource.file = "/foo/bar"
                 @resource.to_trans.file.should == "/foo/bar"

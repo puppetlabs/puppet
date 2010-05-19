@@ -54,10 +54,10 @@ class Puppet::Parser::Compiler
         set_container_resource(scope, resource)
     end
 
+    # Add our container edge.  If we're a class, then we get treated specially - we can
+    # control the stage that the class is applied in.  Otherwise, we just
+    # get added to our parent container.
     def set_container_resource(scope, resource)
-        # Add our container edge.  If we're a class, then we get treated specially - we can
-        # control the stage that the class is applied in.  Otherwise, we just
-        # get added to our parent container.
         return if resource.type.to_s.downcase == "stage"
 
         if resource.type.to_s.downcase != "class"
@@ -304,6 +304,8 @@ class Puppet::Parser::Compiler
 
         @resources << @main_resource
         @catalog.add_resource(@main_resource)
+
+        set_container_resource(@topscope, @main_resource)
 
         @main_resource.evaluate
     end

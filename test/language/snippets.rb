@@ -204,11 +204,7 @@ class TestSnippets < Test::Unit::TestCase
         file = @catalog.resource(:file, path)
         assert(file, "did not create file %s" % path)
 
-        assert_nothing_raised {
-            assert_equal(
-                "//Testing/Mytype[componentname]/File[/tmp/classtest]",
-                file.path)
-        }
+        assert_equal( "/Stage[main]/Testing/Mytype[componentname]/File[/tmp/classtest]", file.path)
     end
 
     def snippet_argumentdefaults
