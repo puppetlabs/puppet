@@ -224,9 +224,7 @@ class Puppet::Resource::Type
 
     # Create a new subscope in which to evaluate our code.
     def subscope(scope, resource)
-        scope = scope.newscope :resource => resource, :namespace => self.namespace, :source => self
-        scope.nodescope = true if @type == :node
-        scope
+        scope.newscope :resource => resource, :namespace => self.namespace, :source => self
     end
 
     # Check whether a given argument is valid.

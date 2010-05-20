@@ -518,12 +518,6 @@ describe Puppet::Resource::Type do
                 @type.evaluate_code(@resource)
             end
 
-            it "should use a nodescope subscope" do
-                @type.evaluate_code(@resource)
-
-                @scope.class_scope(@type).nodescope.should be_true
-            end
-
             it "should use the parent's scope as its base scope" do
                 @type.evaluate_code(@resource)
 
