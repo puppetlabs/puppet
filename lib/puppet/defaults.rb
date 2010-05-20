@@ -436,13 +436,6 @@ module Puppet
             in puppet/reports/<name>.rb, and multiple report names should be
             comma-separated (whitespace is okay)."
         ],
-        :reportdir => {:default => "$vardir/reports",
-                :mode => 0750,
-                :owner => "service",
-                :group => "service",
-                :desc => "The directory in which to store reports
-                    received from the client.  Each client gets a separate
-                    subdirectory."},
         :fileserverconfig => ["$confdir/fileserver.conf",
             "Where the fileserver configuration is stored."],
         :rrddir => {:default => "$vardir/rrd",
@@ -629,6 +622,17 @@ module Puppet
         :factsignore => [".svn CVS",
             "What files to ignore when pulling down facts."]
     )
+
+    setdefaults :reports,
+        :reportdir => {:default => "$vardir/reports",
+                :mode => 0750,
+                :owner => "service",
+                :group => "service",
+                :desc => "The directory in which to store reports
+                    received from the client.  Each client gets a separate
+                    subdirectory."},
+        :reporturl => ["http://localhost:3000/reports",
+            "The URL used by the http reports processor to send reports"]
 
     setdefaults(:tagmail,
         :tagmap => ["$confdir/tagmail.conf",

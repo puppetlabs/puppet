@@ -244,4 +244,14 @@ describe "Puppet defaults" do
     it "should have an http_compression setting that defaults to false" do
         Puppet.settings[:http_compression].should be_false
     end
+
+    describe "reportdir" do
+        subject { Puppet.settings[:reportdir] }
+        it { should == "#{Puppet[:vardir]}/reports" }
+    end
+
+    describe "reporturl" do
+        subject { Puppet.settings[:reporturl] }
+        it { should == "http://localhost:3000/reports" }
+    end
 end
