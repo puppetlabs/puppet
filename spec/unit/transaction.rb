@@ -190,6 +190,21 @@ describe Puppet::Transaction do
     end
 
     describe "when generating resources" do
+        it "should call 'generate' on all created resources" do
+            first = Puppet::Type.type(:notify).new(:name => "first")
+            second = Puppet::Type.type(:notify).new(:name => "second")
+            third = Puppet::Type.type(:notify).new(:name => "third")
+
+            @catalog = Puppet::Resource::Catalog.new
+            @transaction = Puppet::Transaction.new(@catalog)
+
+            first.expects(:generate).returns [second]
+            second.expects(:generate).returns [third]
+            third.expects(:generate)
+
+            @transaction.generate_additional_resources(first, :generate)
+        end
+
         it "should finish all resources" do
             generator = stub 'generator', :depthfirst? => true, :tags => []
             resource = stub 'resource', :tag => nil

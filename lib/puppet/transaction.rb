@@ -198,6 +198,9 @@ class Puppet::Transaction
                 @catalog.add_resource(res) do |r|
                     r.finish
                     make_parent_child_relationship(resource, [r])
+
+                    # Call 'generate' recursively
+                    generate_additional_resources(r, method)
                 end
                 true
             rescue Puppet::Resource::Catalog::DuplicateResourceError
