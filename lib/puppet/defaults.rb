@@ -169,7 +169,10 @@ module Puppet
             return code, the entire Puppet run will fail."],
         :postrun_command => ["", "A command to run after every agent run.  If this command returns a non-zero
             return code, the entire Puppet run will be considered to have failed, even though it might have
-            performed work during the normal run."]
+            performed work during the normal run."],
+        :freeze_main => [false, "Freezes the 'main' class, disallowing any code to be added to it.  This
+            essentially means that you can't have any code outside of a node, class, or definition other
+            than in the site manifest."]
     )
 
     hostname = Facter["hostname"].value

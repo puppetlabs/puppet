@@ -586,6 +586,14 @@ describe Puppet::Resource::Type do
             lambda { code.hostclass("b").merge(code.hostclass("d")) }.should raise_error(Puppet::Error)
         end
 
+        it "should fail if it's named 'main' and 'freeze_main' is enabled" do
+            Puppet.settings[:freeze_main] = true
+            code = Puppet::Resource::TypeCollection.new("env")
+            code.add Puppet::Resource::Type.new(:hostclass, "")
+            other = Puppet::Resource::Type.new(:hostclass, "")
+            lambda { code.hostclass("").merge(other) }.should raise_error(Puppet::Error)
+        end
+
         it "should copy the other class's parent if it has not parent" do
             dest = Puppet::Resource::Type.new(:hostclass, "bar")
 

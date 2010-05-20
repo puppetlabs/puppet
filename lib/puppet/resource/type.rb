@@ -106,6 +106,7 @@ class Puppet::Resource::Type
     def merge(other)
         fail "#{name} is not a class; cannot add code to it" unless type == :hostclass
         fail "#{other.name} is not a class; cannot add code from it" unless other.type == :hostclass
+        fail "Cannot have code outside of a class/node/define because 'freeze_main' is enabled" if name == "" and Puppet.settings[:freeze_main]
 
         if parent and other.parent and parent != other.parent
             fail "Cannot merge classes with different parent classes (#{name} => #{parent} vs. #{other.name} => #{other.parent})"
