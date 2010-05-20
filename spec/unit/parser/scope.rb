@@ -43,25 +43,6 @@ describe Puppet::Parser::Scope do
         @scope.parent_module_name.should be_nil
     end
 
-    # #620 - Nodes and classes should conflict, else classes don't get evaluated
-    describe "when evaluating nodes and classes with the same name (#620)" do
-
-        before do
-            @node = stub :nodescope? => true
-            @class = stub :nodescope? => false
-        end
-
-        it "should fail if a node already exists with the same name as the class being evaluated" do
-            @scope.class_set("one", @node)
-            lambda { @scope.class_set("one", @class) }.should raise_error(Puppet::ParseError)
-        end
-
-        it "should fail if a class already exists with the same name as the node being evaluated" do
-            @scope.class_set("one", @class)
-            lambda { @scope.class_set("one", @node) }.should raise_error(Puppet::ParseError)
-        end
-    end
-
     it "should get its environment from its compiler" do
         env = stub 'environment'
         compiler = stub 'compiler', :environment => env

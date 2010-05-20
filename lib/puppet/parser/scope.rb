@@ -19,7 +19,7 @@ class Puppet::Parser::Scope
     include Enumerable
     include Puppet::Util::Errors
     attr_accessor :level, :source, :resource
-    attr_accessor :base, :keyword, :nodescope
+    attr_accessor :base, :keyword
     attr_accessor :top, :translated, :compiler
     attr_accessor :parent
     attr_reader :namespaces
@@ -176,13 +176,6 @@ class Puppet::Parser::Scope
     # the scope in which it was evaluated, so that we can look it up later.
     def class_set(name, scope)
         return parent.class_set(name,scope) if parent
-        if existing = @class_scopes[name]
-            if existing.nodescope? != scope.nodescope?
-                raise Puppet::ParseError, "Cannot have classes, nodes, or definitions with the same name"
-            else
-                raise Puppet::DevError, "Somehow evaluated %s %s twice" % [ existing.nodescope? ? "node" : "class", name]
-            end
-        end
         @class_scopes[name] = scope
     end
 
@@ -296,14 +289,6 @@ class Puppet::Parser::Scope
     # Create a new scope and set these options.
     def newscope(options = {})
         compiler.newscope(self, options)
-    end
-
-    # Is this class for a node?  This is used to make sure that
-    # nodes and classes with the same name conflict (#620), which
-    # is required because of how often the names are used throughout
-    # the system, including on the client.
-    def nodescope?
-        self.nodescope
     end
 
     def parent_module_name
