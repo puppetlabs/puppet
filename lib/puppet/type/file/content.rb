@@ -138,7 +138,6 @@ module Puppet
         end
 
         def write(file)
-            self.fail "Writing content that wasn't provided" unless actual_content || resource.parameter(:source)
             resource.parameter(:checksum).sum_stream { |sum|
                 each_chunk_from(actual_content || resource.parameter(:source)) { |chunk|
                     sum << chunk
@@ -151,27 +150,46 @@ module Puppet
             if source_or_content.is_a?(String)
                 yield source_or_content
             elsif source_or_content.nil?
-                nil
+                yield read_file_from_filebucket
             elsif source_or_content.local?
-                File.open(source_or_content.full_path, "r") do |src|
-                    while chunk = src.read(8192)
-                        yield chunk
-                    end
-                end
+                chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
             else
-                request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path)
-                connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
-                connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
-                    case response.code
-                    when "404"; nil
-                    when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
-                    else
-                        # Raise the http error if we didn't get a 'success' of some kind.
-                        message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : uncompress_body(response)]
-                        raise Net::HTTPError.new(message, response)
-                    end
+                chunk_file_from_source(source_or_content) { |chunk| yield chunk }
+            end
+        end
+
+        private
+
+        def chunk_file_from_disk(source_or_content)
+            File.open(source_or_content.full_path, "r") do |src|
+                while chunk = src.read(8192)
+                    yield chunk
                 end
             end
+        end
+
+        def chunk_file_from_source(source_or_content)
+            request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path)
+            connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
+            connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
+                case response.code
+                when "404"; nil
+                when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
+                else
+                    # Raise the http error if we didn't get a 'success' of some kind.
+                    message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : uncompress_body(response)]
+                    raise Net::HTTPError.new(message, response)
+                end
+            end
+        end
+
+        def read_file_from_filebucket
+            raise "Could not get filebucket from file" unless dipper = resource.bucket
+            sum = should.sub(/\{\w+\}/, '')
+
+            dipper.getfile(sum)
+        rescue => detail
+            fail "Could not retrieve content for #{should} from filebucket: #{detail}"
         end
     end
 end

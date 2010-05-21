@@ -13,10 +13,6 @@ describe content do
     end
 
     describe "when determining the checksum type" do
-        before do
-            @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
-        end
-
         it "should use the type specified in the source checksum if a source is set" do
             @resource[:source] = "/foo"
             @resource.parameter(:source).expects(:checksum).returns "{md5lite}eh"
@@ -34,10 +30,6 @@ describe content do
     end
 
     describe "when determining the actual content to write" do
-        before do
-            @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
-        end
-
         it "should use the set content if available" do
             @content = content.new(:resource => @resource)
             @content.should = "ehness"
@@ -254,8 +246,10 @@ describe content do
             @fh = stub_everything
         end
 
-        it "should fail if no actual content nor source exists" do
-            lambda { @content.write(@fh) }.should raise_error
+        it "should attempt to read from the filebucket if no actual content nor source exists" do
+            @content.should = "{md5}foo"
+            @content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
+            @content.write(@fh)
         end
 
         describe "from actual content" do
@@ -271,6 +265,32 @@ describe content do
             it "should return the current checksum value" do
                 @resource.parameter(:checksum).expects(:sum_stream).returns "checksum"
                 @content.write(@fh).should == "checksum"
+            end
+        end
+
+        describe "from a file bucket" do
+            it "should fail if a file bucket cannot be retrieved" do
+                @content.should = "{md5}foo"
+                @content.resource.expects(:bucket).returns nil
+                lambda { @content.write(@fh) }.should raise_error(Puppet::Error)
+            end
+
+            it "should fail if the file bucket cannot find any content" do
+                @content.should = "{md5}foo"
+                bucket = stub 'bucket'
+                @content.resource.expects(:bucket).returns bucket
+                bucket.expects(:getfile).with("foo").raises "foobar"
+                lambda { @content.write(@fh) }.should raise_error(Puppet::Error)
+            end
+
+            it "should write the returned content to the file" do
+                @content.should = "{md5}foo"
+                bucket = stub 'bucket'
+                @content.resource.expects(:bucket).returns bucket
+                bucket.expects(:getfile).with("foo").returns "mycontent"
+
+                @fh.expects(:print).with("mycontent")
+                @content.write(@fh)
             end
         end
 
@@ -431,6 +451,9 @@ describe content do
                 @digest.expects(:<<).with("uncompressed1").then.with("uncompressed2")
                 @content.write(@fh)
             end
+        end
+
+        describe "from a filebucket" do
         end
     end
 end
