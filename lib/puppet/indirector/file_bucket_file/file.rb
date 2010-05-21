@@ -68,7 +68,7 @@ module Puppet::FileBucketFile
                     end
                 end
 
-                Puppet.info "FileBucket adding #{bucket_file.path} (#{bucket_file.checksum_data})"
+                Puppet.info "FileBucket adding #{bucket_file.path} as #{bucket_file.checksum}"
 
                 # Write the file to disk.
                 Puppet::Util.withumask(0007) do
