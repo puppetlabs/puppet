@@ -27,7 +27,7 @@ describe Puppet::FileBucketFile::File do
             Puppet[:bucketdir] = "/dev/null/bucket"
 
             @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-            @checksum = "md5:4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
+            @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
             @dir = '/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0'
 
             @contents = "file contents"
@@ -36,7 +36,7 @@ describe Puppet::FileBucketFile::File do
         it "should return nil if a file doesn't exist" do
             ::File.expects(:exist?).with("#{@dir}/contents").returns false
 
-            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}", {})
+            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "{md5}#{@digest}", {})
             bucketfile.should == nil
         end
 
@@ -45,7 +45,7 @@ describe Puppet::FileBucketFile::File do
             ::File.expects(:exist?).with("#{@dir}/paths").returns false
             ::File.expects(:read).with("#{@dir}/contents").returns @contents
 
-            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}", {})
+            bucketfile = Puppet::FileBucketFile::File.new.send(:find_by_checksum, "{md5}#{@digest}", {})
             bucketfile.should_not == nil
         end
 
@@ -59,7 +59,7 @@ describe Puppet::FileBucketFile::File do
             mockfile.expects(:readlines).returns( paths )
             ::File.expects(:open).with("#{@dir}/paths").yields mockfile
 
-            Puppet::FileBucketFile::File.new.send(:find_by_checksum, "md5:#{@digest}", {}).paths.should == paths
+            Puppet::FileBucketFile::File.new.send(:find_by_checksum, "{md5}#{@digest}", {}).paths.should == paths
         end
 
     end
@@ -83,7 +83,7 @@ describe Puppet::FileBucketFile::File do
         end
 
         it "should call find_by_checksum" do
-            @store.expects(:find_by_checksum).with{|x,opts| x == "md5:#{@digest}"}.returns(false)
+            @store.expects(:find_by_checksum).with{|x,opts| x == "{md5}#{@digest}"}.returns(false)
             @store.find(@request)
         end
 
@@ -101,7 +101,7 @@ describe Puppet::FileBucketFile::File do
             bucketfile.stubs(:checksum).returns(@checksum)
 
             bucketfile.expects(:contents=).with(content)
-            Puppet::FileBucket::File.expects(:new).with(nil, {:checksum => "md5:#{@digest}"}).yields(bucketfile).returns(bucketfile)
+            Puppet::FileBucket::File.expects(:new).with(nil, {:checksum => "{md5}#{@digest}"}).yields(bucketfile).returns(bucketfile)
 
             ::File.expects(:exist?).with(@contents_path).returns(true)
             ::File.expects(:exist?).with(@paths_path).returns(false)
@@ -164,7 +164,7 @@ describe Puppet::FileBucketFile::File do
             Puppet[:bucketdir] = "/dev/null/bucket"
 
             @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-            @checksum = "md5:4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
+            @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
             @dir = '/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0'
 
             @contents = "file contents"
@@ -206,7 +206,7 @@ describe Puppet::FileBucketFile::File do
             Puppet[:bucketdir] = "/dev/null/bucket"
 
             @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-            @checksum = "md5:4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
+            @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
             @dir = '/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0'
 
             @contents = "file contents"

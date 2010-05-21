@@ -1,8 +1,11 @@
 require 'puppet/indirector/code'
 require 'puppet/file_bucket/file'
+require 'puppet/util/checksums'
 
 module Puppet::FileBucketFile
     class File < Puppet::Indirector::Code
+        include Puppet::Util::Checksums
+
         desc "Store files in a directory set based on their checksums."
 
         def initialize
@@ -80,9 +83,11 @@ module Puppet::FileBucketFile
         end
 
         def request_to_checksum_and_path( request )
-            checksum_type, checksum, path = request.key.split(/[:\/]/, 3)
+            return [request.key, nil] if checksum?(request.key)
+
+            checksum_type, checksum, path = request.key.split(/\//, 3)
             return nil if checksum_type.to_s == ""
-            return [ checksum_type + ":" + checksum, path ]
+            return [ "{#{checksum_type}}#{checksum}", path ]
         end
 
         def path_for(bucket_file, subfile = nil)

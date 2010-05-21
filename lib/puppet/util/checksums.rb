@@ -7,6 +7,15 @@ module Puppet::Util::Checksums
     end
 
     # Strip the checksum type from an existing checksum
+    def sumdata(checksum)
+        if checksum =~ /^\{(\w+)\}(.+)/
+            return $2
+        else
+            return nil
+        end
+    end
+
+    # Strip the checksum type from an existing checksum
     def sumtype(checksum)
         if checksum =~ /^\{(\w+)\}/
             return $1

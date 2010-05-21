@@ -12,66 +12,18 @@ describe Puppet::FileBucket::File do
         Puppet[:bucketdir] = "/dev/null/bucket"
 
         @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-        @checksum = "md5:4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
+        @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
         @dir = '/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0'
 
         @contents = "file contents"
-    end
-
-    it "should save a file" do
-        ::File.expects(:exist?).with("#{@dir}/contents").returns false
-        ::File.expects(:directory?).with(@dir).returns false
-        ::FileUtils.expects(:mkdir_p).with(@dir)
-        ::File.expects(:open).with("#{@dir}/contents",  ::File::WRONLY|::File::CREAT, 0440)
-
-        bucketfile = Puppet::FileBucket::File.new(@contents)
-        bucketfile.save
-
-    end
-
-    describe "using the indirector's find method" do
-        it "should return nil if a file doesn't exist" do
-            ::File.expects(:exist?).with("#{@dir}/contents").returns false
-
-            bucketfile = Puppet::FileBucket::File.find("md5:#{@digest}")
-            bucketfile.should == nil
-        end
-
-        it "should find a filebucket if the file exists" do
-            ::File.expects(:exist?).with("#{@dir}/contents").returns true
-            ::File.expects(:exist?).with("#{@dir}/paths").returns false
-            ::File.expects(:read).with("#{@dir}/contents").returns @contents
-
-            bucketfile = Puppet::FileBucket::File.find("md5:#{@digest}")
-            bucketfile.should_not == nil
-        end
-
-        describe "using RESTish digest notation" do
-            it "should return nil if a file doesn't exist" do
-                ::File.expects(:exist?).with("#{@dir}/contents").returns false
-
-                bucketfile = Puppet::FileBucket::File.find("md5/#{@digest}")
-                bucketfile.should == nil
-            end
-
-            it "should find a filebucket if the file exists" do
-                ::File.expects(:exist?).with("#{@dir}/contents").returns true
-                ::File.expects(:exist?).with("#{@dir}/paths").returns false
-                ::File.expects(:read).with("#{@dir}/contents").returns @contents
-
-                bucketfile = Puppet::FileBucket::File.find("md5/#{@digest}")
-                bucketfile.should_not == nil
-            end
-
-        end
     end
 
     it "should have a to_s method to return the contents" do
         Puppet::FileBucket::File.new(@contents).to_s.should == @contents
     end
 
-    it "should have a method that returns the digest algorithm" do
-        Puppet::FileBucket::File.new(@contents, :checksum => @checksum).checksum_type.should == :md5
+    it "should calculate the checksum type from the passed in checksum" do
+        Puppet::FileBucket::File.new(@contents, :checksum => @checksum).checksum_type.should == "md5"
     end
 
     it "should allow contents to be specified in a block" do
@@ -102,23 +54,21 @@ describe Puppet::FileBucket::File do
         Puppet::FileBucket::File.new(@contents).contents.should == @contents
     end
 
+    it "should default to 'md5' as the checksum algorithm if the algorithm is not in the name" do
+        Puppet::FileBucket::File.new(@contents).checksum_type.should == "md5"
+    end
+
     it "should calculate the checksum" do
-        Digest::MD5.expects(:hexdigest).with(@contents).returns('mychecksum')
-        Puppet::FileBucket::File.new(@contents).checksum.should == 'md5:mychecksum'
+        Puppet::FileBucket::File.new(@contents).checksum.should == @checksum
     end
 
     it "should remove the old checksum value if the algorithm is changed" do
-        Digest::MD5.expects(:hexdigest).with(@contents).returns('oldsum')
         sum = Puppet::FileBucket::File.new(@contents)
-        oldsum = sum.checksum
+        sum.checksum.should_not be_nil
 
+        newsum = Digest::SHA1.hexdigest(@contents).to_s
         sum.checksum_type = :sha1
-        Digest::SHA1.expects(:hexdigest).with(@contents).returns('newsum')
-        sum.checksum.should == 'sha1:newsum'
-    end
-
-    it "should default to 'md5' as the checksum algorithm if the algorithm is not in the name" do
-        Puppet::FileBucket::File.new(@contents).checksum_type.should == :md5
+        sum.checksum.should == "{sha1}#{newsum}"
     end
 
     it "should support specifying the checksum_type during initialization" do
@@ -130,20 +80,14 @@ describe Puppet::FileBucket::File do
         proc { Puppet::FileBucket::File.new(@contents, :checksum_type => :nope) }.should raise_error(ArgumentError)
     end
 
-    it "should fail if given an invalid checksum at initialization" do
-        proc { Puppet::FileBucket::File.new(@contents, :checksum => "md5:00000000000000000000000000000000") }.should raise_error(RuntimeError)
+    it "should fail if given an checksum at initialization that does not match the contents" do
+        proc { Puppet::FileBucket::File.new(@contents, :checksum => "{md5}00000000000000000000000000000000") }.should raise_error(RuntimeError)
     end
 
-    it "should fail if assigned an invalid checksum " do
+    it "should fail if assigned a checksum that does not match the contents" do
         bucket = Puppet::FileBucket::File.new(@contents)
-        proc { bucket.checksum = "md5:00000000000000000000000000000000" }.should raise_error(RuntimeError)
+        proc { bucket.checksum = "{md5}00000000000000000000000000000000" }.should raise_error(RuntimeError)
     end
-
-    it "should accept checksum_data without a prefix" do
-        bucket = Puppet::FileBucket::File.new(@contents)
-        bucket.checksum_data = @digest
-    end
-
 
     describe "when using back-ends" do
         it "should redirect using Puppet::Indirector" do
@@ -185,26 +129,26 @@ describe Puppet::FileBucket::File do
 
             Puppet::FileBucket::File.new(@contents).save
         end
+
+        it "should append the path to the paths file" do
+            remote_path = '/path/on/the/remote/box'
+
+            ::File.expects(:directory?).with(@dir).returns(true)
+            ::File.expects(:open).with("#{@dir}/contents", ::File::WRONLY|::File::CREAT, 0440)
+            ::File.expects(:exist?).with("#{@dir}/contents").returns false
+
+            mockfile = mock "file"
+            mockfile.expects(:puts).with('/path/on/the/remote/box')
+            ::File.expects(:exist?).with("#{@dir}/paths").returns false
+            ::File.expects(:open).with("#{@dir}/paths", ::File::WRONLY|::File::CREAT|::File::APPEND).yields mockfile
+            Puppet::FileBucket::File.new(@contents, :path => remote_path).save
+
+        end
     end
 
     it "should accept a path" do
         remote_path = '/path/on/the/remote/box'
         Puppet::FileBucket::File.new(@contents, :path => remote_path).path.should == remote_path
-    end
-
-    it "should append the path to the paths file" do
-        remote_path = '/path/on/the/remote/box'
-
-        ::File.expects(:directory?).with(@dir).returns(true)
-        ::File.expects(:open).with("#{@dir}/contents", ::File::WRONLY|::File::CREAT, 0440)
-        ::File.expects(:exist?).with("#{@dir}/contents").returns false
-
-        mockfile = mock "file"
-        mockfile.expects(:puts).with('/path/on/the/remote/box')
-        ::File.expects(:exist?).with("#{@dir}/paths").returns false
-        ::File.expects(:open).with("#{@dir}/paths", ::File::WRONLY|::File::CREAT|::File::APPEND).yields mockfile
-        Puppet::FileBucket::File.new(@contents, :path => remote_path).save
-
     end
 
     it "should return a url-ish name" do
@@ -219,7 +163,7 @@ describe Puppet::FileBucket::File do
     it "should accept a url-ish name" do
         bucket = Puppet::FileBucket::File.new(@contents)
         lambda { bucket.name = "sha1/034fa2ed8e211e4d20f20e792d777f4a30af1a93/new/path" }.should_not raise_error
-        bucket.checksum_type.should == :sha1
+        bucket.checksum_type.should == "sha1"
         bucket.checksum_data.should == '034fa2ed8e211e4d20f20e792d777f4a30af1a93'
         bucket.path.should == "new/path"
     end
@@ -236,4 +180,51 @@ describe Puppet::FileBucket::File do
         Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
     end
 
+    it "should save a file" do
+        ::File.expects(:exist?).with("#{@dir}/contents").returns false
+        ::File.expects(:directory?).with(@dir).returns false
+        ::FileUtils.expects(:mkdir_p).with(@dir)
+        ::File.expects(:open).with("#{@dir}/contents",  ::File::WRONLY|::File::CREAT, 0440)
+
+        bucketfile = Puppet::FileBucket::File.new(@contents)
+        bucketfile.save
+
+    end
+
+    describe "using the indirector's find method" do
+        it "should return nil if a file doesn't exist" do
+            ::File.expects(:exist?).with("#{@dir}/contents").returns false
+
+            bucketfile = Puppet::FileBucket::File.find("{md5}#{@digest}")
+            bucketfile.should == nil
+        end
+
+        it "should find a filebucket if the file exists" do
+            ::File.expects(:exist?).with("#{@dir}/contents").returns true
+            ::File.expects(:exist?).with("#{@dir}/paths").returns false
+            ::File.expects(:read).with("#{@dir}/contents").returns @contents
+
+            bucketfile = Puppet::FileBucket::File.find("{md5}#{@digest}")
+            bucketfile.should_not == nil
+        end
+
+        describe "using RESTish digest notation" do
+            it "should return nil if a file doesn't exist" do
+                ::File.expects(:exist?).with("#{@dir}/contents").returns false
+
+                bucketfile = Puppet::FileBucket::File.find("md5/#{@digest}")
+                bucketfile.should == nil
+            end
+
+            it "should find a filebucket if the file exists" do
+                ::File.expects(:exist?).with("#{@dir}/contents").returns true
+                ::File.expects(:exist?).with("#{@dir}/paths").returns false
+                ::File.expects(:read).with("#{@dir}/contents").returns @contents
+
+                bucketfile = Puppet::FileBucket::File.find("md5/#{@digest}")
+                bucketfile.should_not == nil
+            end
+
+        end
+    end
 end

@@ -54,6 +54,10 @@ describe Puppet::Util::Checksums do
         @summer.sumtype("{md5}asdfasdfa").should == "md5"
     end
 
+    it "should have a method for stripping the data from a checksum" do
+        @summer.sumdata("{md5}asdfasdfa").should == "asdfasdfa"
+    end
+
     it "should return a nil sumtype if the checksum does not mention a checksum type" do
         @summer.sumtype("asdfasdfa").should be_nil
     end
