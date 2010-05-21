@@ -32,10 +32,13 @@ Puppet.features.add(:rrd, :libs => ["RRDtool"])
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])
 
-# We can use POSIX user functions? The require returns false on Windows
+# We have a syslog implementation
+Puppet.features.add(:syslog, :libs => ["syslog"])
+
+# We can use POSIX user functions
 Puppet.features.add(:posix) do
     require 'etc'
-    Etc.getpwuid(0) != nil
+    Etc.getpwuid(0) != nil && Puppet.features.syslog?
 end
 
 # We can use Win32 functions

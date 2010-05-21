@@ -1,4 +1,3 @@
-require 'syslog'
 require 'puppet/util/tagging'
 require 'puppet/util/classgen'
 
