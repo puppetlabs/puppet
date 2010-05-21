@@ -113,10 +113,10 @@ describe Puppet::Util::Autoload do
         end
 
         [RuntimeError, LoadError, SyntaxError].each do |error|
-            it "should not die an if a #{error.to_s} exception is thrown" do
+            it "should die an if a #{error.to_s} exception is thrown" do
                 Kernel.expects(:require).raises error
 
-                lambda { @autoload.loadall }.should_not raise_error
+                lambda { @autoload.loadall }.should raise_error(Puppet::Error)
             end
         end
 

@@ -123,7 +123,7 @@ class Puppet::Util::Autoload
                     raise
                 rescue Exception => detail
                     puts detail.backtrace if Puppet[:trace]
-                    warn "Could not autoload #{file}: #{detail}"
+                    raise Puppet::Error, "Could not autoload #{file}: #{detail}"
                 end
             end
         end
