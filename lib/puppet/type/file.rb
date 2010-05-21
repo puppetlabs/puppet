@@ -29,8 +29,8 @@ Puppet::Type.newtype(:file) do
         isnamevar
 
         validate do |value|
-            # use underlying platform's convention to check for relative paths
-            unless File.expand_path(value) == value
+            # accept various path syntaxes: lone slash, posix, win32, unc
+            unless value =~ /^\/$/ or value =~ /^\/[^\/]/ or value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/
                 fail Puppet::Error,"File paths must be fully qualified, not '#{value}'"
             end
         end
@@ -44,13 +44,23 @@ Puppet::Type.newtype(:file) do
 
         # and the reverse
         unmunge do |value|
-            File.join( Puppet::FileCollection.collection.path(value[:index]), value[:name] )
+            basedir = Puppet::FileCollection.collection.path(value[:index])
+            # a lone slash as :name indicates a root dir on windows
+            if value[:name] == '/'
+                basedir
+            else
+                File.join( basedir, value[:name] )
+            end
         end
 
         to_canonicalize do |s|
-            # Get rid of any duplicate slashes, and remove any trailing slashes unless 
-            # the title is just a slash, in which case leave it.
-            s.gsub(/\/+/, "/").sub(/(.)\/$/,'\1')
+            # * if it looks like a windows path, replace all backslashes with forward slashes
+            # * get rid of any duplicate slashes
+            # * remove any trailing slashes unless the title is just a slash, or a
+            #   drive letter in which case leave it
+            # * UNCs in the form //server//share/... keep their initial double slash.
+            s = s.gsub(/\\/, '/') if s =~ /^.:\/\\/ or s =~ /^\/\/[^\/]+\/[^\/]+/
+            s.gsub(/(.)\/+/, '\1/').sub(/([^:])\/$/,'\1')
         end
     end
 
