@@ -72,26 +72,17 @@ describe Puppet::Util::Autoload do
         end
 
         [RuntimeError, LoadError, SyntaxError].each do |error|
-            it "should not die an if a #{error.to_s} exception is thrown" do
+            it "should die with Puppet::Error if a #{error.to_s} exception is thrown" do
                 @autoload.stubs(:file_exist?).returns true
 
                 Kernel.expects(:load).raises error
 
-                @autoload.load("foo")
+                lambda { @autoload.load("foo") }.should raise_error(Puppet::Error)
             end
         end
 
-        it "should skip files that it knows are missing" do
-            @autoload.expects(:named_file_missing?).with("foo").returns true
-            @autoload.expects(:eachdir).never
-
-            @autoload.load("foo")
-        end
-
-        it "should register that files are missing if they cannot be found" do
-            @autoload.load("foo")
-
-            @autoload.should be_named_file_missing("foo")
+        it "should not raise an error if the file is missing" do
+            @autoload.load("foo").should == false
         end
 
         it "should register loaded files with the main loaded file list so they are not reloaded by ruby" do

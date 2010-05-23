@@ -73,20 +73,6 @@ module Puppet::Util::Autoload::FileCache
         missing_files[path] = Time.now
     end
 
-    def named_file_missing?(name)
-        @named_files ||= {}
-        if time = @named_files[name] and ! data_expired?(time)
-            return true
-        end
-        false
-    end
-
-    def named_file_is_missing(name)
-        @named_files ||= {}
-        @named_files[name] = Time.now
-        false
-    end
-
     private
 
     def cached_data?(path, type = nil)
