@@ -50,27 +50,10 @@ describe "Puppet Network Format" do
             @yaml.render(instance).should == "foo"
         end
 
-        it "should fixup generated yaml on render" do
-            instance = mock 'instance', :to_yaml => "foo"
-
-            @yaml.expects(:fixup).with("foo").returns "bar"
-
-            @yaml.render(instance).should == "bar"
-        end
-
         it "should render multiple instances by calling 'to_yaml' on the array" do
             instances = [mock('instance')]
             instances.expects(:to_yaml).returns "foo"
             @yaml.render_multiple(instances).should == "foo"
-        end
-
-        it "should fixup generated yaml on render" do
-            instances = [mock('instance')]
-            instances.stubs(:to_yaml).returns "foo"
-
-            @yaml.expects(:fixup).with("foo").returns "bar"
-
-            @yaml.render(instances).should == "bar"
         end
 
         it "should intern by calling 'YAML.load'" do
@@ -83,10 +66,6 @@ describe "Puppet Network Format" do
             text = "foo"
             YAML.expects(:load).with("foo").returns "bar"
             @yaml.intern_multiple(String, text).should == "bar"
-        end
-
-        it "should fixup incorrect yaml to correct" do
-            @yaml.fixup("&id004 !ruby/object:Puppet::Relationship ?").should == "? &id004 !ruby/object:Puppet::Relationship"
         end
     end
 
@@ -108,14 +87,6 @@ describe "Puppet Network Format" do
             @yaml.render(instance)
         end
 
-        it "should fixup generated yaml on render" do
-            instance = mock 'instance', :to_yaml => "foo"
-
-            @yaml.expects(:fixup).with("foo").returns "bar"
-
-            @yaml.render(instance)
-        end
-
         it "should encode generated yaml on render" do
             instance = mock 'instance', :to_yaml => "foo"
 
@@ -128,15 +99,6 @@ describe "Puppet Network Format" do
             instances = [mock('instance')]
             instances.expects(:to_yaml).returns "foo"
             @yaml.render_multiple(instances)
-        end
-
-        it "should fixup generated yaml on render" do
-            instances = [mock('instance')]
-            instances.stubs(:to_yaml).returns "foo"
-
-            @yaml.expects(:fixup).with("foo").returns "bar"
-
-            @yaml.render(instances)
         end
 
         it "should encode generated yaml on render" do
@@ -171,10 +133,6 @@ describe "Puppet Network Format" do
             Zlib::Deflate.expects(:deflate).with("foo", Zlib::BEST_COMPRESSION).returns "bar"
             Base64.expects(:encode64).with("bar").returns "baz"
             @yaml.encode("foo").should == "baz"
-        end
-
-        it "should fixup incorrect yaml to correct" do
-            @yaml.fixup("&id004 !ruby/object:Puppet::Relationship ?").should == "? &id004 !ruby/object:Puppet::Relationship"
         end
 
         describe "when zlib is disabled" do

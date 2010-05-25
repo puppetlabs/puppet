@@ -12,30 +12,17 @@ Puppet::Network::FormatHandler.create(:yaml, :mime => "text/yaml") do
     end
 
     def render(instance)
-        yaml = instance.to_yaml
-
-        yaml = fixup(yaml) unless yaml.nil?
-        yaml
+        instance.to_yaml
     end
 
     # Yaml monkey-patches Array, so this works.
     def render_multiple(instances)
-        yaml = instances.to_yaml
-
-        yaml = fixup(yaml) unless yaml.nil?
-        yaml
+        instances.to_yaml
     end
 
-    # Everything's supported unless you're on 1.8.1
+    # Unlike core's yaml, ZAML should support 1.8.1 just fine
     def supported?(klass)
-        RUBY_VERSION != '1.8.1'
-    end
-
-    # fixup invalid yaml as per:
-    # http://redmine.ruby-lang.org/issues/show/1331
-    def fixup(yaml)
-        yaml.gsub!(/((?:&id\d+\s+)?!ruby\/object:.*?)\s*\?/) { "? #{$1}" }
-        yaml
+        true
     end
 end
 
@@ -66,29 +53,15 @@ Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_ya
     end
 
     def render(instance)
-        yaml = instance.to_yaml
-
-        yaml = encode(fixup(yaml)) unless yaml.nil?
-        yaml
+        encode(instance.to_yaml)
     end
 
     def render_multiple(instances)
-        yaml = instances.to_yaml
-
-        yaml = encode(fixup(yaml)) unless yaml.nil?
-        yaml
+        encode(instances.to_yaml)
     end
 
-    # Because of yaml issue in ruby 1.8.1...
     def supported?(klass)
-        RUBY_VERSION != '1.8.1' and use_zlib?
-    end
-
-    # fixup invalid yaml as per:
-    # http://redmine.ruby-lang.org/issues/show/1331
-    def fixup(yaml)
-        yaml.gsub!(/((?:&id\d+\s+)?!ruby\/object:.*?)\s*\?/) { "? #{$1}" }
-        yaml
+        true
     end
 
     def encode(text)
