@@ -51,8 +51,21 @@ module Puppet
                     require_application subcommand_name
                     Puppet::Application.find(subcommand_name).new(self).run
                 else
-                    abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}"
+                    unless execute_external_subcommand
+                        abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}"
+                    end
                 end
+            end
+
+            def execute_external_subcommand
+                    external_command = "puppet-#{subcommand_name}"
+
+                    require 'puppet/util'
+                    path_to_subcommand = Puppet::Util.binary( external_command )
+                    return false unless path_to_subcommand
+
+                    system( path_to_subcommand, *args )
+                    true
             end
 
             def legacy_executable_name
