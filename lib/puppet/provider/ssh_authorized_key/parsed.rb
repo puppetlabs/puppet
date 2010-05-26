@@ -32,48 +32,35 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
         :match    => /^(?:(.+) )?(\d+) (\d+) (\d+)(?: (.+))?$/
 
     def dir_perm
-        # Determine correct permission for created directory and file
-        # we can afford more restrictive permissions when the user is known
-        if target
-            if user
-                0700
-            else
-                0755
-            end
-        end
+        0700
     end
 
     def file_perm
-        if target
-            if user
-                0600
-            else
-                0644
-            end
-        end
+        0600
     end
 
     def target
         begin
-            @resource.should(:target) || File.expand_path("~%s/.ssh/authorized_keys" % user)
+            @resource.should(:target) || File.expand_path("~#{@resource.should(:user)}/.ssh/authorized_keys")
         rescue
             raise Puppet::Error, "Target not defined and/or specified user does not exist yet"
         end
     end
 
     def user
-        @resource.should(:user)
+        uid = File.stat(target).uid
+        Etc.getpwuid(uid).name
     end
 
     def flush
-        raise Puppet::Error, "Cannot write SSH authorized keys without user" unless user
-        raise Puppet::Error, "User '#{user}' does not exist"                 unless uid = Puppet::Util.uid(user)
+        raise Puppet::Error, "Cannot write SSH authorized keys without user"    unless @resource.should(:user)
+        raise Puppet::Error, "User '#{@resource.should(:user)}' does not exist" unless uid = Puppet::Util.uid(@resource.should(:user))
         unless File.exist?(dir = File.dirname(target))
             Puppet.debug "Creating #{dir}"
             Dir.mkdir(dir, dir_perm)
             File.chown(uid, nil, dir)
         end
-        Puppet::Util::SUIDManager.asuser(user) { super }
+        Puppet::Util::SUIDManager.asuser(@resource.should(:user)) { super }
         File.chown(uid, nil, target)
         File.chmod(file_perm, target)
     end
