@@ -55,6 +55,10 @@ module Puppet
             "Whether Puppet should manage the owner, group, and mode of files 
             it uses internally"
             ],
+        :onetime => [false,
+            "Run the configuration once, rather than as a long-running
+             daemon. This is useful for interactively running puppetd."
+            ],
         :path => {:default => "none",
             :desc => "The shell search path.  Defaults to whatever is inherited
                 from the parent process.",

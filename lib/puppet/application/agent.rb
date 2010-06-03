@@ -16,7 +16,6 @@ class Puppet::Application::Agent < Puppet::Application
 
         {
             :waitforcert => 120,  # Default to checking for certs every 5 minutes
-            :onetime => false,
             :detailed_exitcodes => false,
             :verbose => false,
             :debug => false,
@@ -63,8 +62,7 @@ class Puppet::Application::Agent < Puppet::Application
         options[:client] = false
     end
 
-    option("--onetime", "-o") do |arg|
-        options[:onetime] = true
+    if Puppet[:onetime]
         options[:waitforcert] = 0 unless @explicit_waitforcert
     end
 
@@ -95,7 +93,7 @@ class Puppet::Application::Agent < Puppet::Application
 
     def run_command
         return fingerprint if options[:fingerprint]
-        return onetime if options[:onetime]
+        return onetime if Puppet[:onetime]
         return main
     end
 
@@ -152,7 +150,7 @@ class Puppet::Application::Agent < Puppet::Application
         Puppet.settings.handlearg("--show_diff")
         Puppet.settings.handlearg("--no-daemonize")
         options[:verbose] = true
-        options[:onetime] = true
+        Puppet[:onetime] = true
         options[:detailed_exitcodes] = true
         options[:waitforcert] = 0 unless @explicit_waitforcert
     end
@@ -277,7 +275,7 @@ class Puppet::Application::Agent < Puppet::Application
 
         # This has to go after the certs are dealt with.
         if Puppet[:listen]
-            unless options[:onetime]
+            unless Puppet[:onetime]
                 setup_listen
             else
                 Puppet.notice "Ignoring --listen on onetime run"
