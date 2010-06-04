@@ -133,7 +133,7 @@ describe Puppet::Indirector::Indirection do
         it "should extend itself with any specified module" do
             mod = Module.new
             @indirection = Puppet::Indirector::Indirection.new(mock('model'), :test, :extend => mod)
-            @indirection.metaclass.included_modules.should include(mod)
+            @indirection.singleton_class.included_modules.should include(mod)
         end
 
         after do

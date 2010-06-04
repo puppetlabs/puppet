@@ -362,7 +362,7 @@ describe Puppet::Resource do
         end
 
         it "should include the pson util module" do
-            Puppet::Resource.metaclass.ancestors.should be_include(Puppet::Util::Pson)
+            Puppet::Resource.singleton_class.ancestors.should be_include(Puppet::Util::Pson)
         end
 
         # LAK:NOTE For all of these tests, we convert back to the resource so we can

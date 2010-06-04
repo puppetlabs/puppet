@@ -14,7 +14,7 @@ describe Puppet::SSL::Certificate do
     end
 
     it "should be extended with the Indirector module" do
-        @class.metaclass.should be_include(Puppet::Indirector)
+        @class.singleton_class.should be_include(Puppet::Indirector)
     end
 
     it "should indirect certificate" do

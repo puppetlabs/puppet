@@ -66,7 +66,7 @@ describe Puppet::Util::Tagging, "when adding tags" do
     end
 
     it "should provide a method for testing tag validity" do
-        @tagger.metaclass.publicize_methods(:valid_tag?)  { @tagger.should be_respond_to(:valid_tag?) }
+        @tagger.singleton_class.publicize_methods(:valid_tag?)  { @tagger.should be_respond_to(:valid_tag?) }
     end
 
     it "should add qualified classes as tags" do

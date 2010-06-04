@@ -20,7 +20,7 @@ require 'cgi'
 
 class Puppet::Provider::NameService
 class DirectoryService < Puppet::Provider::NameService
-    # JJM: Dive into the eigenclass
+    # JJM: Dive into the singleton_class
     class << self
         # JJM: This allows us to pass information when calling
         #      Puppet::Type.type
