@@ -42,7 +42,7 @@ module Manager
         newmethod = "new#{name.to_s}"
 
         # Used for method manipulation.
-        selfobj = metaclass()
+        selfobj = singleton_class()
 
         @types ||= {}
 
@@ -103,7 +103,7 @@ module Manager
         )
 
         if respond_to?("new" + name.to_s)
-            metaclass.send(:remove_method, "new" + name.to_s)
+            singleton_class.send(:remove_method, "new" + name.to_s)
         end
     end
 

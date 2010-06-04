@@ -950,7 +950,7 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
     end
 
     it "should be extended with the PSON utility module" do
-        Puppet::Resource::Catalog.metaclass.ancestors.should be_include(Puppet::Util::Pson)
+        Puppet::Resource::Catalog.singleton_class.ancestors.should be_include(Puppet::Util::Pson)
     end
 
     it "should create it with the provided name" do

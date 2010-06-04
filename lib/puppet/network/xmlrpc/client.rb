@@ -49,7 +49,7 @@ module Puppet::Network
 
         class ErrorHandler
             def initialize(&block)
-                metaclass.define_method(:execute, &block)
+                singleton_class.define_method(:execute, &block)
             end
         end
 

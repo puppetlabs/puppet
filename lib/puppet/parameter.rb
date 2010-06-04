@@ -87,8 +87,8 @@ class Puppet::Parameter
         # Optionaly convert the value to a canonical form so that it will
         # be found in hashes, etc.  Mostly useful for namevars.
         def to_canonicalize(&block)
-            metaclass = (class << self; self; end)
-            metaclass.send(:define_method,:canonicalize,&block)
+            singleton_class = (class << self; self; end)
+            singleton_class.send(:define_method,:canonicalize,&block)
         end
 
         # Mark whether we're the namevar.

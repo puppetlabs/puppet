@@ -109,7 +109,7 @@ class Puppet::Provider
     # Create the methods for a given command.
     def self.make_command_methods(name)
         # Now define a method for that command
-        unless metaclass.method_defined? name
+        unless singleton_class.method_defined? name
             meta_def(name) do |*args|
                 unless command(name)
                     raise Puppet::Error, "Command %s is missing" % name

@@ -16,7 +16,7 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
         @store = @store_class.new
 
         @subject = Object.new
-        @subject.metaclass.send(:attr_accessor, :name)
+        @subject.singleton_class.send(:attr_accessor, :name)
         @subject.name = :me
 
         @dir = "/what/ever"

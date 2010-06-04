@@ -40,7 +40,7 @@ end
 
 describe Puppet::Util::Cacher do
     it "should be extended with the Expirer module" do
-        Puppet::Util::Cacher.metaclass.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
+        Puppet::Util::Cacher.singleton_class.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
     end
 
     it "should support defining cached attributes" do
@@ -154,7 +154,7 @@ describe Puppet::Util::Cacher do
                 extend Puppet::Util::Cacher
             end
 
-            klass.metaclass.cached_attr(:myattr) { "eh" }
+            klass.singleton_class.cached_attr(:myattr) { "eh" }
             klass.myattr
         end
 

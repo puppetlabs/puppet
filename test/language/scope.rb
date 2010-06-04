@@ -228,6 +228,54 @@ Host <<||>>"
             "Did not add extra namespace correctly")
     end
 
+    def test_find_hostclass_and_find_definition
+        parser = mkparser
+
+        # Make sure our scope calls the parser find_hostclass method with
+        # the right namespaces
+        scope = mkscope :parser => parser
+
+        parser.singleton_class.send(:attr_accessor, :last)
+
+        methods = [:find_hostclass, :find_definition]
+        methods.each do |m|
+            parser.meta_def(m) do |namespace, name|
+                @checked ||= []
+                @checked << [namespace, name]
+
+                # Only return a value on the last call.
+                if @last == namespace
+                    ret = @checked.dup
+                    @checked.clear
+                    return ret
+                else
+                    return nil
+                end
+            end
+        end
+
+        test = proc do |should|
+            parser.last = scope.namespaces[-1]
+            methods.each do |method|
+                result = scope.send(method, "testing")
+                assert_equal(should, result,
+                    "did not get correct value from %s with namespaces %s" %
+                    [method, scope.namespaces.inspect])
+            end
+        end
+
+        # Start with the empty namespace
+        assert_nothing_raised { test.call([["", "testing"]]) }
+
+        # Now add a namespace
+        scope.add_namespace("a")
+        assert_nothing_raised { test.call([["a", "testing"]]) }
+
+        # And another
+        scope.add_namespace("b")
+        assert_nothing_raised { test.call([["a", "testing"], ["b", "testing"]]) }
+    end
+
     # #629 - undef should be "" or :undef
     def test_lookupvar_with_undef
         scope = mkscope

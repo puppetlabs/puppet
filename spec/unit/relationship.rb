@@ -213,7 +213,7 @@ describe Puppet::Relationship, "when converting from pson" do
     end
 
     it "should be extended with the PSON utility module" do
-        Puppet::Relationship.metaclass.ancestors.should be_include(Puppet::Util::Pson)
+        Puppet::Relationship.singleton_class.ancestors.should be_include(Puppet::Util::Pson)
     end
 
     # LAK:NOTE For all of these tests, we convert back to the edge so we can

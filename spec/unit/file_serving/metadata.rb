@@ -14,7 +14,7 @@ describe Puppet::FileServing::Metadata do
     end
 
     it "should should include the IndirectionHooks module in its indirection" do
-        Puppet::FileServing::Metadata.indirection.metaclass.included_modules.should include(Puppet::FileServing::IndirectionHooks)
+        Puppet::FileServing::Metadata.indirection.singleton_class.included_modules.should include(Puppet::FileServing::IndirectionHooks)
     end
 
     it "should have a method that triggers attribute collection" do

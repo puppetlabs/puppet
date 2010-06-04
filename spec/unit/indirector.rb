@@ -56,7 +56,7 @@ describe Puppet::Indirector, "when registering an indirection" do
 
     it "should extend the class with the Format Handler" do
         @indirection = @thingie.indirects :first
-        @thingie.metaclass.ancestors.should be_include(Puppet::Network::FormatHandler)
+        @thingie.singleton_class.ancestors.should be_include(Puppet::Network::FormatHandler)
     end
 
     after do
