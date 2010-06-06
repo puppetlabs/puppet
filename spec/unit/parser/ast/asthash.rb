@@ -78,6 +78,18 @@ describe Puppet::Parser::AST::ASTHash do
         operator.evaluate(@scope).should == { key1 => "b", key2 => "d" }
     end
 
+    describe "when being initialized without arguments" do
+        it "should evaluate to an empty hash" do
+            hash = Puppet::Parser::AST::ASTHash.new({})
+            hash.evaluate(@scope).should == {}
+        end
+
+        it "should support merging" do
+            hash = Puppet::Parser::AST::ASTHash.new({})
+            hash.merge({"a" => "b"}).should == {"a" => "b"}
+        end
+    end
+
     it "should return a valid string with to_s" do
         hash = Puppet::Parser::AST::ASTHash.new(:value => { "a" => "b", "c" => "d" })
 

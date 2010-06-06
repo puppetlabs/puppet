@@ -28,5 +28,10 @@ class Puppet::Parser::AST
         def to_s
             "{" + @value.collect { |v| v.collect { |a| a.to_s }.join(' => ') }.join(', ') + "}"
         end
+
+        def initialize(args)
+            super(args)
+            @value ||= {}
+        end
     end
 end
