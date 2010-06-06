@@ -60,7 +60,7 @@ describe Puppet::Application::Doc do
     end
 
     describe "when handling options" do
-        [:all, :outputdir, :verbose, :debug].each do |option|
+        [:all, :outputdir, :verbose, :debug, :charset].each do |option|
             it "should declare handle_#{option} method" do
                 @doc.should respond_to("handle_#{option}".to_sym)
             end
@@ -299,6 +299,7 @@ describe Puppet::Application::Doc do
                 Puppet.stubs(:[]).with(:manifestdir).returns('manifests')
                 @doc.options.stubs(:[]).with(:all).returns(false)
                 @doc.options.stubs(:[]).with(:outputdir).returns('doc')
+                @doc.options.stubs(:[]).with(:charset).returns(nil)
                 Puppet.settings.stubs(:[]=).with(:document_all, false)
                 Puppet.settings.stubs(:setdefaults)
                 Puppet::Util::RDoc.stubs(:rdoc)
@@ -316,13 +317,19 @@ describe Puppet::Application::Doc do
             end
 
             it "should call Puppet::Util::RDoc.rdoc in full mode" do
-                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'])
+                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'], nil)
+                @doc.rdoc
+            end
+
+            it "should call Puppet::Util::RDoc.rdoc with a charset if --charset has been provided" do
+                @doc.options.expects(:[]).with(:charset).returns("utf-8")
+                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'], "utf-8")
                 @doc.rdoc
             end
 
             it "should call Puppet::Util::RDoc.rdoc in full mode with outputdir set to doc if no --outputdir" do
                 @doc.options.expects(:[]).with(:outputdir).returns(false)
-                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'])
+                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'], nil)
                 @doc.rdoc
             end
 
@@ -336,7 +343,7 @@ describe Puppet::Application::Doc do
                 @env.expects(:modulepath).returns(['envmodules1','envmodules2'])
                 @env.expects(:[]).with(:manifest).returns('envmanifests/site.pp')
 
-                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'])
+                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'], nil)
 
                 @doc.rdoc
             end

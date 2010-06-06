@@ -9,7 +9,7 @@
 # = Usage
 #
 #   puppet doc [-a|--all] [-h|--help] [-o|--outputdir <rdoc outputdir>] [-m|--mode <text|pdf|markdown|trac|rdoc>]
-#              [-r|--reference <[type]|configuration|..>] [manifest-file]
+#              [-r|--reference <[type]|configuration|..>] [--charset CHARSET] [manifest-file]
 #
 # = Description
 #
@@ -41,6 +41,9 @@
 #
 # reference::
 #   Build a particular reference.  Get a list of references by running +puppet doc --list+.
+#
+# charset::
+#   Used only in 'rdoc' mode. It sets the charset used in the html files produced.
 #
 # = Example
 #

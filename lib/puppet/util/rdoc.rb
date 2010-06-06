@@ -5,7 +5,7 @@ module Puppet::Util::RDoc
 
     # launch a rdoc documenation process
     # with the files/dir passed in +files+
-    def rdoc(outputdir, files)
+    def rdoc(outputdir, files, charset = nil)
         begin
             Puppet[:ignoreimport] = true
 
@@ -26,6 +26,7 @@ module Puppet::Util::RDoc
                         "--exclude", "/modules/[^/]*/files/.*\.pp$",
                         "--op", outputdir ]
 
+            options += [ "--charset", charset] if charset
             options += files
 
             # launch the documentation process

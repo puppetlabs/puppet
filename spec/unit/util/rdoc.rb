@@ -37,6 +37,12 @@ describe Puppet::Util::RDoc do
             Puppet::Util::RDoc.rdoc("output", [])
         end
 
+        it "should pass charset to RDoc" do
+            @rdoc.expects(:document).with { |args| args.include?("--charset") and args.include?("utf-8") }
+
+            Puppet::Util::RDoc.rdoc("output", [], "utf-8")
+        end
+
         it "should tell RDoc to force updates of indices" do
             @rdoc.expects(:document).with { |args| args.include?("--force-update") }
 
