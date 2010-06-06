@@ -203,7 +203,8 @@ describe Puppet::Parser::Lexer::TOKENS do
         "or"   => :OR,
         "undef"   => :UNDEF,
         "false" => :FALSE,
-        "true" => :TRUE
+        "true" => :TRUE,
+        "in" => :IN,
     }.each do |string, name|
         it "should have a keyword named #{name.to_s}" do
             Puppet::Parser::Lexer::KEYWORDS[name].should_not be_nil

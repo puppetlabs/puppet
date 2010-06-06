@@ -12,11 +12,12 @@ token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
 token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
+token IN
 
 prechigh
     right NOT
     nonassoc UMINUS
-    left  MATCH NOMATCH
+    left  IN MATCH NOMATCH
     left  TIMES DIV
     left  MINUS PLUS
     left  LSHIFT RSHIFT
@@ -512,6 +513,9 @@ else:             # nothing
 # per operator :-(
 
 expression:   rvalue
+            | expression IN rvalue {
+    result = ast AST::InOperator, :lval => val[0], :rval => val[2]
+}
             | expression MATCH regex {
     result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }

@@ -266,7 +266,8 @@ class Puppet::Parser::Lexer
         "or"   => :OR,
         "undef"   => :UNDEF,
         "false" => :FALSE,
-        "true" => :TRUE
+        "true" => :TRUE,
+        "in" => :IN
     )
 
     def clear
