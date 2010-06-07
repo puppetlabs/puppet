@@ -151,6 +151,7 @@ module Puppet
         :node_terminus => ["plain", "Where to find information about nodes."],
         :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
             you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
+        :facts_terminus => ["facter", "Where to get node facts."],
         :httplog => { :default => "$logdir/http.log",
             :owner => "root",
             :mode => 0640,
@@ -692,6 +693,10 @@ module Puppet
         :rails_loglevel => ["info", "The log level for Rails connections.  The value must be
             a valid log level within Rails.  Production environments normally use ``info``
             and other environments normally use ``debug``."]
+    )
+
+    setdefaults(:couchdb,
+        :couchdb_url => ["http://127.0.0.1:5984/puppet", "The url where the puppet couchdb database will be created"]
     )
 
     setdefaults(:transaction,
