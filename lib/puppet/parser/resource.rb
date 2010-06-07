@@ -5,7 +5,6 @@ require 'puppet/resource'
 # parameters
 class Puppet::Parser::Resource < Puppet::Resource
     require 'puppet/parser/resource/param'
-    require 'puppet/resource'
     require 'puppet/util/tagging'
     require 'puppet/file_collection/lookup'
     require 'puppet/parser/yaml_trimmer'

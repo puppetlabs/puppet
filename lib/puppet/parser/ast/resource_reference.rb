@@ -1,6 +1,5 @@
 require 'puppet/parser/ast'
 require 'puppet/parser/ast/branch'
-require 'puppet/resource'
 
 class Puppet::Parser::AST::ResourceReference < Puppet::Parser::AST::Branch
     attr_accessor :title, :type

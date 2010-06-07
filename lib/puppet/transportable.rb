@@ -1,5 +1,4 @@
 require 'puppet'
-require 'puppet/resource'
 require 'yaml'
 
 module Puppet

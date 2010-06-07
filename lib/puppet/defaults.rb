@@ -749,7 +749,6 @@ module Puppet
             :hook => proc do |value|
                 require 'puppet/node'
                 require 'puppet/node/facts'
-                require 'puppet/resource/catalog'
                 if value
                     raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
                     Puppet::Resource::Catalog.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
