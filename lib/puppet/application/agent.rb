@@ -246,9 +246,11 @@ class Puppet::Application::Agent < Puppet::Application
         # You can still override this on the command-line with, e.g., :compiler.
         Puppet[:catalog_terminus] = :rest
 
+        # Override the default.
+        Puppet[:fact_terminus] = :facter
+
         Puppet::Resource::Catalog.cache_class = :yaml
 
-        Puppet::Node::Facts.terminus_class = :facter
 
         # We need tomake the client either way, we just don't start it
         # if --no-client is set.

@@ -16,8 +16,7 @@ class Puppet::Node::Facts
         end
     end
 
-    # Use the node source as the indirection terminus.
-    indirects :facts, :terminus_class => :facter, :extend => NodeExpirer
+    indirects :facts, :terminus_setting => :fact_terminus, :extend => NodeExpirer
 
     attr_accessor :name, :values
 

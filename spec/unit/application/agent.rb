@@ -183,6 +183,7 @@ describe Puppet::Application::Agent do
             Puppet.stubs(:info)
             FileTest.stubs(:exists?).returns(true)
             Puppet.stubs(:[])
+            Puppet.stubs(:[]=)
             Puppet.stubs(:[]).with(:libdir).returns("/dev/null/lib")
             Puppet.settings.stubs(:print_config?)
             Puppet.settings.stubs(:print_config)
@@ -333,8 +334,8 @@ describe Puppet::Application::Agent do
             @puppetd.setup
         end
 
-        it "should tell the facts to use facter" do
-            Puppet::Node::Facts.expects(:terminus_class=).with(:facter)
+        it "should change the fact_terminus setting to 'facter'" do
+            Puppet.expects(:[]=).with(:fact_terminus, :facter)
 
             @puppetd.setup
         end
