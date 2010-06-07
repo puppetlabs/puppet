@@ -108,12 +108,6 @@ class Puppet::Parser::Lexer
     end
 
     TOKENS = TokenList.new
-
-    TOKENS.add_token :VARIABLE, %r{(\w*::)*\w+}
-    def (TOKENS[:VARIABLE]).acceptable?(context={})
-        [:DQPRE,:DQMID].include? context[:after]
-    end
-
     TOKENS.add_tokens(
         '[' => :LBRACK,
         ']' => :RBRACK,
@@ -183,9 +177,11 @@ class Puppet::Parser::Lexer
         end
         [string_token, value]
     end
-    def (TOKENS[:NAME]).acceptable?(context={})
-        ![:DQPRE,:DQMID].include? context[:after]
-    end
+    [:NAME,:CLASSNAME,:CLASSREF].each { |name_token|
+        def (TOKENS[name_token]).acceptable?(context={})
+            ![:DQPRE,:DQMID].include? context[:after]
+        end
+    }
 
     TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
         value.sub!(/# ?/,'')
@@ -237,6 +233,10 @@ class Puppet::Parser::Lexer
         [TOKENS[:VARIABLE],value[1..-1]]
     end
 
+    TOKENS.add_token :VARIABLE, %r{(\w*::)*\w+}
+    def (TOKENS[:VARIABLE]).acceptable?(context={})
+        [:DQPRE,:DQMID].include? context[:after]
+    end
 
 
     TOKENS.sort_tokens
