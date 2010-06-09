@@ -130,7 +130,7 @@ describe Puppet::Parser::Files do
             Puppet.expects(:value).with(:modulepath).never
             Dir.stubs(:glob).returns %w{foo}
 
-            Puppet::Parser::Files.find_manifests("mymod/init.pp").should == %w{foo}
+            Puppet::Parser::Files.find_manifests("mymod/init.pp")
         end
     end
 
@@ -146,22 +146,22 @@ describe Puppet::Parser::Files do
             Puppet::Parser::Files.find_manifests(file)
         end
 
-        it "should directly return fully qualified files" do
+        it "should return nil and an array of fully qualified files" do
             file = @basepath + "/fully/qualified/file.pp"
             Dir.stubs(:glob).with(file).returns([file])
-            Puppet::Parser::Files.find_manifests(file).should == [file]
+            Puppet::Parser::Files.find_manifests(file).should == [nil, [file]]
         end
 
         it "should match against provided fully qualified patterns" do
             pattern = @basepath + "/fully/qualified/pattern/*"
             Dir.expects(:glob).with(pattern).returns(%w{my file list})
-            Puppet::Parser::Files.find_manifests(pattern).should == %w{my file list}
+            Puppet::Parser::Files.find_manifests(pattern)[1].should == %w{my file list}
         end
 
         it "should look for files relative to the current directory" do
             cwd = Dir.getwd
             Dir.expects(:glob).with("#{cwd}/foobar/init.pp").returns(["#{cwd}/foobar/init.pp"])
-            Puppet::Parser::Files.find_manifests("foobar/init.pp").should == ["#{cwd}/foobar/init.pp"]
+            Puppet::Parser::Files.find_manifests("foobar/init.pp")[1].should == ["#{cwd}/foobar/init.pp"]
         end
 
         it "should only return files, not directories" do
@@ -171,23 +171,23 @@ describe Puppet::Parser::Files do
             Dir.expects(:glob).with(pattern).returns([file, dir])
             FileTest.expects(:directory?).with(file).returns(false)
             FileTest.expects(:directory?).with(dir).returns(true)
-            Puppet::Parser::Files.find_manifests(pattern).should == [file]
+            Puppet::Parser::Files.find_manifests(pattern)[1].should == [file]
         end
     end
 
     describe "when searching for manifests in a found module" do
-        it "should return the manifests from the first found module" do
-            mod = mock 'module'
+        it "should return the name of the module and the manifests from the first found module" do
+            mod = Puppet::Module.new("mymod")
             Puppet::Node::Environment.new.expects(:module).with("mymod").returns mod
             mod.expects(:match_manifests).with("init.pp").returns(%w{/one/mymod/manifests/init.pp})
-            Puppet::Parser::Files.find_manifests("mymod/init.pp").should == ["/one/mymod/manifests/init.pp"]
+            Puppet::Parser::Files.find_manifests("mymod/init.pp").should == ["mymod", ["/one/mymod/manifests/init.pp"]]
         end
 
         it "should use the node environment if specified" do
-            mod = mock 'module'
+            mod = Puppet::Module.new("mymod")
             Puppet::Node::Environment.new("myenv").expects(:module).with("mymod").returns mod
             mod.expects(:match_manifests).with("init.pp").returns(%w{/one/mymod/manifests/init.pp})
-            Puppet::Parser::Files.find_manifests("mymod/init.pp", :environment => "myenv").should == ["/one/mymod/manifests/init.pp"]
+            Puppet::Parser::Files.find_manifests("mymod/init.pp", :environment => "myenv")[1].should == ["/one/mymod/manifests/init.pp"]
         end
 
         after { Puppet.settings.clear }

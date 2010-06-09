@@ -42,7 +42,7 @@ class Puppet::Parser::TypeLoader
         end
 
         pat = file
-        files = Puppet::Parser::Files.find_manifests(pat, :cwd => dir, :environment => environment)
+        modname, files = Puppet::Parser::Files.find_manifests(pat, :cwd => dir, :environment => environment)
         if files.size == 0
             raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
         end
@@ -54,6 +54,8 @@ class Puppet::Parser::TypeLoader
             @imported[file] = true
             parse_file(file)
         end
+
+        return modname
     end
 
     def imported?(file)
@@ -75,12 +77,14 @@ class Puppet::Parser::TypeLoader
     def load_until(namespaces, name)
         return nil if name == "" # special-case main.
         name2files(namespaces, name).each do |filename|
+            modname = nil
             import_if_possible(filename) do
-                  import(filename)
+                  modname = import(filename)
                   @loaded << filename
             end
             if result = yield(filename)
                 Puppet.info "Automatically imported #{name} from #{filename}"
+                result.module_name = modname if modname and result.respond_to?(:module_name=)
                 return result
             end
         end

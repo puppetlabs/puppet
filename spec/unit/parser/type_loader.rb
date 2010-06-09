@@ -83,6 +83,16 @@ describe Puppet::Parser::TypeLoader do
             @loader.load_until(["foo"], "bar") { |f| true }
             @loader.should be_loaded("file")
         end
+
+        it "should set the module name on any created resource types" do
+            type = Puppet::Resource::Type.new(:hostclass, "mytype")
+
+            Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{one}]
+            @loader.stubs(:parse_file)
+            @loader.load_until(["foo"], "one") { |f| type }
+
+            type.module_name.should == "modname"
+        end
     end
 
     describe "when mapping names to files" do
@@ -102,7 +112,7 @@ describe Puppet::Parser::TypeLoader do
 
     describe "when importing" do
         before do
-            Puppet::Parser::Files.stubs(:find_manifests).returns %w{file}
+            Puppet::Parser::Files.stubs(:find_manifests).returns ["modname", %w{file}]
             @loader.stubs(:parse_file)
         end
 
@@ -113,46 +123,46 @@ describe Puppet::Parser::TypeLoader do
         end
 
         it "should find all manifests matching the file or pattern" do
-            Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| pat == "myfile" }.returns %w{one}
+            Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| pat == "myfile" }.returns ["modname", %w{one}]
             @loader.import("myfile")
         end
 
         it "should use the directory of the current file if one is set" do
-            Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| opts[:cwd] == "/current" }.returns %w{one}
+            Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| opts[:cwd] == "/current" }.returns ["modname", %w{one}]
             @loader.import("myfile", "/current/file")
         end
 
         it "should pass the environment when looking for files" do
-            Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| opts[:environment] == @loader.environment }.returns %w{one}
+            Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| opts[:environment] == @loader.environment }.returns ["modname", %w{one}]
             @loader.import("myfile")
         end
 
         it "should fail if no files are found" do
-            Puppet::Parser::Files.expects(:find_manifests).returns []
+            Puppet::Parser::Files.expects(:find_manifests).returns [nil, []]
             lambda { @loader.import("myfile") }.should raise_error(Puppet::ImportError)
         end
 
         it "should parse each found file" do
-            Puppet::Parser::Files.expects(:find_manifests).returns %w{/one}
+            Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
             @loader.expects(:parse_file).with("/one")
             @loader.import("myfile")
         end
 
         it "should make each file qualified before attempting to parse it" do
-            Puppet::Parser::Files.expects(:find_manifests).returns %w{one}
+            Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{one}]
             @loader.expects(:parse_file).with("/current/one")
             @loader.import("myfile", "/current/file")
         end
 
         it "should know when a given file has been imported" do
-            Puppet::Parser::Files.expects(:find_manifests).returns %w{/one}
+            Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
             @loader.import("myfile")
 
             @loader.should be_imported("/one")
         end
 
         it "should not attempt to import files that have already been imported" do
-            Puppet::Parser::Files.expects(:find_manifests).returns %w{/one}
+            Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
             @loader.expects(:parse_file).once
             @loader.import("myfile")
 

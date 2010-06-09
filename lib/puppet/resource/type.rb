@@ -13,7 +13,7 @@ class Puppet::Resource::Type
 
     RESOURCE_SUPERTYPES = [:hostclass, :node, :definition]
 
-    attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
+    attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection, :module_name
     attr_reader :type, :namespace, :arguments, :behaves_like
 
     RESOURCE_SUPERTYPES.each do |t|
@@ -213,6 +213,7 @@ class Puppet::Resource::Type
 
         scope.setvar("title", resource.title) unless set.include? :title
         scope.setvar("name", resource.name) unless set.include? :name
+        scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
         scope.class_set(self.name,scope) if hostclass?
     end
 

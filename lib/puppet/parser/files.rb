@@ -18,7 +18,7 @@ module Puppet::Parser::Files
         module_name, pattern = split_file_path(start)
         begin
             if mod = Puppet::Module.find(module_name, options[:environment])
-                return mod.match_manifests(pattern)
+                return [mod.name, mod.match_manifests(pattern)]
             end
         rescue Puppet::Module::InvalidName
             # Than that would be a "no."
@@ -28,7 +28,7 @@ module Puppet::Parser::Files
         if files.size == 0
             files = Dir.glob(abspat + ".pp").reject { |f| FileTest.directory?(f) }
         end
-        return files
+        return [nil, files]
     end
 
     # Find the concrete file denoted by +file+. If +file+ is absolute,

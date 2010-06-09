@@ -314,6 +314,14 @@ describe Puppet::Resource::Type do
 
             @scope.lookupvar("name").should == "bar"
         end
+
+        it "should set its module name in the scope if available" do
+            @type.module_name = "mymod"
+
+            @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("module_name").should == "mymod"
+        end
     end
 
     describe "when describing and managing parent classes" do
