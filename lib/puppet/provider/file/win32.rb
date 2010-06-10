@@ -5,7 +5,7 @@ Puppet::Type.type(:file).provide :win32 do
 
     include Puppet::Util::Warnings
 
-    require 'sys/admin'
+    require 'sys/admin' if Puppet.features.win32?
     
     def id2name(id)
         return id.to_s if id.is_a?(Symbol)
