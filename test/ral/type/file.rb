@@ -682,7 +682,7 @@ class TestFile < Test::Unit::TestCase
 
     # Testing #309 -- //my/file => /my/file
     def test_slash_deduplication
-        ["/my/////file/for//testing", "//my/file/for/testing///",
+        ["/my/////file/for//testing", "/my/file/for/testing///",
             "/my/file/for/testing"].each do |path|
             file = nil
             assert_nothing_raised do
