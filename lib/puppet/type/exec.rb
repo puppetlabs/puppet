@@ -529,10 +529,6 @@ module Puppet
                         end
                     end
                 end
-            else
-                raise ArgumentError,
-                    "'%s' is somehow not qualified with no search path" %
-                        self[:command]
             end
             
             unless FileTest.exists?(exe)
