@@ -209,6 +209,7 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when using Win32 filenames" do
+        confine "Only works on Win32" => Puppet.features.win32?
         describe "on Win32 systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(false)
@@ -271,6 +272,7 @@ describe Puppet::Type.type(:file) do
 
     describe "when using UNC filenames" do
         describe "on Win32 systems" do
+            confine "Only works on Win32" => Puppet.features.win32?
             before do
                 Puppet.features.stubs(:posix?).returns(false)
                 Puppet.features.stubs(:win32?).returns(true)
