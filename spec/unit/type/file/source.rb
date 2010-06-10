@@ -148,7 +148,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
             end
 
             it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
-                Puppet::Util::SUIDManager.expects(:uid).returns 0
+                Puppet.features.expects(:root?).returns true
 
                 @source.copy_source_values
 
@@ -176,7 +176,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
             describe "and puppet is not running as root" do
                 it "should not try to set the owner" do
-                    Puppet::Util::SUIDManager.expects(:uid).returns 100
+                    Puppet.features.expects(:root?).returns false
 
                     @source.copy_source_values
                     @resource[:owner].should be_nil

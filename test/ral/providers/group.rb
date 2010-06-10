@@ -179,7 +179,7 @@ class TestGroupProvider < Test::Unit::TestCase
         }
     end
 
-    if Puppet::Util::SUIDManager.uid == 0
+    if Puppet.features.root?
         def test_mkgroup
             gobj = nil
             comp = nil

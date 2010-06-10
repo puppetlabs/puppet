@@ -294,7 +294,7 @@ class TestExec < Test::Unit::TestCase
         assert_events([:executed_command], comp)
     end
 
-    if Puppet::Util::SUIDManager.uid == 0
+    if Puppet.features.root?
         # Verify that we can execute commands as a special user
         def mknverify(file, user, group = nil, id = true)
             File.umask(0022)

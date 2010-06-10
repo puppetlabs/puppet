@@ -40,7 +40,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
     # we don't want user defaults in /, or root defaults in ~
     def testDefaultsInCorrectRoots
         notval = nil
-        if Puppet::Util::SUIDManager.uid == 0
+        if Puppet.features.root?
             notval = Regexp.new(File.expand_path("~"))
         else
             notval = /^\/var|^\/etc/

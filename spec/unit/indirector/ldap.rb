@@ -136,7 +136,7 @@ describe Puppet::Indirector::Ldap do
     end
 
     describe "when reconnecting to ldap" do
-        confine "Not running on culain as root" => (Puppet::Util::SUIDManager.uid == 0 and Facter.value("hostname") == "culain")
+        confine "Not running on culain as root" => (Puppet.features.root? and Facter.value("hostname") == "culain")
 
         it "should reconnect to ldap when connections are lost"
     end

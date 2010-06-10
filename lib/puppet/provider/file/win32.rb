@@ -29,7 +29,7 @@ Puppet::Type.type(:file).provide :win32 do
             return true if uid == current
         end
 
-        unless Puppet::Util::SUIDManager.uid == 0
+        unless Puppet.features.root?
             warnonce "Cannot manage ownership unless running as root"
             return true
         end
