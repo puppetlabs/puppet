@@ -181,8 +181,6 @@ describe Puppet::Transaction do
         catalog.apply
         FileTest.should be_exists(fname)
 
-        exec.should_not be_scheduled
-
         # Now remove it, so it can get created again
         File.unlink(fname)
 
@@ -233,5 +231,17 @@ describe Puppet::Transaction do
 
         FileTest.should_not be_exists(file1[:path])
         FileTest.should_not be_exists(file2[:path])
+    end
+
+    # #801 -- resources only checked in noop should be rescheduled immediately.
+    it "should immediately reschedule noop resources" do
+        Puppet::Type.type(:schedule).mkdefaultschedules
+        resource = Puppet::Type.type(:notify).new(:name => "mymessage", :noop => true)
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource resource
+
+        trans = catalog.apply
+
+        trans.resource_harness.should be_scheduled(resource)
     end
 end

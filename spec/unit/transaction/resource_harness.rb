@@ -265,4 +265,65 @@ describe Puppet::Transaction::ResourceHarness do
             @harness.should_not be_allow_changes(@resource)
         end
     end
+
+    describe "when finding the schedule" do
+        before do
+            @catalog = Puppet::Resource::Catalog.new
+            @resource.catalog = @catalog
+        end
+
+        it "should warn and return nil if the resource has no catalog" do
+            @resource.catalog = nil
+            @resource.expects(:warning)
+
+            @harness.schedule(@resource).should be_nil
+        end
+
+        it "should return nil if the resource specifies no schedule" do
+            @harness.schedule(@resource).should be_nil
+        end
+
+        it "should fail if the named schedule cannot be found" do
+            @resource[:schedule] = "whatever"
+            @resource.expects(:fail)
+            @harness.schedule(@resource)
+        end
+
+        it "should return the named schedule if it exists" do
+            sched = Puppet::Type.type(:schedule).new(:name => "sched")
+            @catalog.add_resource(sched)
+            @resource[:schedule] = "sched"
+            @harness.schedule(@resource).to_s.should == sched.to_s
+        end
+    end
+
+    describe "when determining if a resource is scheduled" do
+        before do
+            @catalog = Puppet::Resource::Catalog.new
+            @resource.catalog = @catalog
+        end
+
+        it "should return true if 'ignoreschedules' is set" do
+            Puppet[:ignoreschedules] = true
+            @resource[:schedule] = "meh"
+            @harness.should be_scheduled(@resource)
+        end
+
+        it "should return true if the resource has no schedule set" do
+            @harness.should be_scheduled(@resource)
+        end
+
+        it "should return the result of matching the schedule with the cached 'checked' time if a schedule is set" do
+            t = Time.now
+            @resource.expects(:cached).with(:checked).returns(t)
+
+            sched = Puppet::Type.type(:schedule).new(:name => "sched")
+            @catalog.add_resource(sched)
+            @resource[:schedule] = "sched"
+
+            sched.expects(:match?).with(t.to_i).returns "feh"
+
+            @harness.scheduled?(@resource).should == "feh"
+        end
+    end
 end

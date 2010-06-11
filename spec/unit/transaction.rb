@@ -241,39 +241,84 @@ describe Puppet::Transaction do
 
     describe "when skipping a resource" do
         before :each do
-            @resource = stub_everything 'res'
+            @resource = Puppet::Type.type(:notify).new :name => "foo"
             @catalog = Puppet::Resource::Catalog.new
+            @resource.catalog = @catalog
             @transaction = Puppet::Transaction.new(@catalog)
         end
 
         it "should skip resource with missing tags" do
             @transaction.stubs(:missing_tags?).returns(true)
-            @transaction.skip?(@resource).should be_true
+            @transaction.should be_skip(@resource)
         end
 
-        it "should ask the resource if it's tagged with any of the tags" do
-            tags = ['one', 'two']
-            @transaction.stubs(:ignore_tags?).returns(false)
-            @transaction.stubs(:tags).returns(tags)
-
-            @resource.expects(:tagged?).with(*tags).returns(true)
-
-            @transaction.missing_tags?(@resource).should be_false
-        end
-
-        it "should skip not scheduled resources" do
+        it "should skip unscheduled resources" do
             @transaction.stubs(:scheduled?).returns(false)
-            @transaction.skip?(@resource).should be_true
+            @transaction.should be_skip(@resource)
         end
 
         it "should skip resources with failed dependencies" do
-            @transaction.stubs(:failed_dependencies?).returns(false)
-            @transaction.skip?(@resource).should be_true
+            @transaction.stubs(:failed_dependencies?).returns(true)
+            @transaction.should be_skip(@resource)
         end
 
         it "should skip virtual resource" do
             @resource.stubs(:virtual?).returns true
-            @transaction.skip?(@resource).should be_true
+            @transaction.should be_skip(@resource)
+        end
+    end
+
+    describe "when determining if tags are missing" do
+        before :each do
+            @resource = Puppet::Type.type(:notify).new :name => "foo"
+            @catalog = Puppet::Resource::Catalog.new
+            @resource.catalog = @catalog
+            @transaction = Puppet::Transaction.new(@catalog)
+
+            @transaction.stubs(:ignore_tags?).returns false
+        end
+
+        it "should not be missing tags if tags are being ignored" do
+            @transaction.expects(:ignore_tags?).returns true
+
+            @resource.expects(:tagged?).never
+
+            @transaction.should_not be_missing_tags(@resource)
+        end
+
+        it "should not be missing tags if the transaction tags are empty" do
+            @transaction.tags = []
+            @resource.expects(:tagged?).never
+            @transaction.should_not be_missing_tags(@resource)
+        end
+
+        it "should otherwise let the resource determine if it is missing tags" do
+            tags = ['one', 'two']
+            @transaction.tags = tags
+            @resource.expects(:tagged?).with(*tags).returns(false)
+            @transaction.should be_missing_tags(@resource)
+        end
+    end
+
+    describe "when determining if a resource should be scheduled" do
+        before :each do
+            @resource = Puppet::Type.type(:notify).new :name => "foo"
+            @catalog = Puppet::Resource::Catalog.new
+            @resource.catalog = @catalog
+            @transaction = Puppet::Transaction.new(@catalog)
+        end
+
+        it "should always schedule resources if 'ignoreschedules' is set" do
+            @transaction.ignoreschedules = true
+            @transaction.resource_harness.expects(:scheduled?).never
+
+            @transaction.should be_scheduled(@resource)
+        end
+
+        it "should let the resource harness determine whether the resource should be scheduled" do
+            @transaction.resource_harness.expects(:scheduled?).with(@resource).returns "feh"
+
+            @transaction.scheduled?(@resource).should == "feh"
         end
     end
 

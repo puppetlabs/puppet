@@ -318,12 +318,11 @@ class Puppet::Transaction
 
     # Is the resource currently scheduled?
     def scheduled?(resource)
-        self.ignoreschedules or resource.scheduled?
+        self.ignoreschedules or resource_harness.scheduled?(resource)
     end
 
     # Should this resource be skipped?
     def skip?(resource)
-        skip = false
         if missing_tags?(resource)
             resource.debug "Not tagged with %s" % tags.join(", ")
         elsif ! scheduled?(resource)
@@ -356,11 +355,10 @@ class Puppet::Transaction
 
     # Is this resource tagged appropriately?
     def missing_tags?(resource)
-        not appropriately_tagged?(resource)
-    end
+        return false if ignore_tags?
+        return false if tags.empty?
 
-    def appropriately_tagged?(resource)
-        self.ignore_tags? or tags.empty? or resource.tagged?(*tags)
+        not resource.tagged?(*tags)
     end
 end
 
