@@ -13,7 +13,7 @@ class Puppet::Parser::AST
         def evaluate(scope)
 
             # Make sure it's a defined function
-            unless @fname
+            unless @fname = Puppet::Parser::Functions.function(@name)
                 raise Puppet::ParseError, "Unknown function %s" % @name
             end
 
@@ -48,7 +48,6 @@ class Puppet::Parser::AST
 
             super(hash)
 
-             @fname = Puppet::Parser::Functions.function(@name)
             # Lastly, check the parity
         end
 

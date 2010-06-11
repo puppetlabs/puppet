@@ -41,6 +41,18 @@ class Puppet::Node::Environment
         @seen[symbol] = obj
     end
 
+    def self.current
+        @current || root
+    end
+
+    def self.current=(env)
+        @current = new(env)
+    end
+
+    def self.root
+        @root ||= new(:'*root*') 
+    end
+
     # This is only used for testing.
     def self.clear
         @seen.clear

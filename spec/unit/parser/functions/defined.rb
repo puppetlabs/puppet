@@ -5,9 +5,9 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 describe "the 'defined' function" do
 
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        Puppet::Node::Environment.stubs(:current).returns(nil)
         @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
-        @scope.compiler = @compiler
+        @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
     end
 
     it "should exist" do

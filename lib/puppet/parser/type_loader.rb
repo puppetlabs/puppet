@@ -114,7 +114,7 @@ class Puppet::Parser::TypeLoader
     end
 
     def parse_file(file)
-        Puppet.debug("importing '#{file}'")
+        Puppet.debug("importing '#{file}' in environment #{environment}")
         parser = Puppet::Parser::Parser.new(environment)
         parser.file = file
         parser.parse

@@ -505,6 +505,7 @@ class Puppet::Parser::Scope
     private
 
     def extend_with_functions_module
-        extend Puppet::Parser::Functions.environment_module(compiler ? environment : nil)
+        extend Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.root)
+        extend Puppet::Parser::Functions.environment_module(compiler ? environment : nil )
     end
 end

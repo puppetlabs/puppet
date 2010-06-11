@@ -73,12 +73,12 @@ class Puppet::Util::Autoload
 
     # Load a single plugin by name.  We use 'load' here so we can reload a
     # given plugin.
-    def load(name)
+    def load(name,env=nil)
         return false if named_file_missing?(name)
 
         path = name.to_s + ".rb"
 
-        searchpath.each do |dir|
+        searchpath(env).each do |dir|
             file = File.join(dir, path)
             next unless file_exist?(file)
             begin
@@ -130,25 +130,22 @@ class Puppet::Util::Autoload
     end
 
     # The list of directories to search through for loadable plugins.
-    # We have to hard-code the ttl because this library is used by
-    # so many other classes it's hard to get the load-order such that
-    # the defaults load before this.
-    cached_attr(:searchpath, :ttl => 15) do
-        search_directories.collect { |d| File.join(d, @path) }.find_all { |d| FileTest.directory?(d) }
+    def searchpath(env=nil)
+        search_directories(env).collect { |d| File.join(d, @path) }.find_all { |d| FileTest.directory?(d) }
     end
 
-    def module_directories
+    def module_directories(env=nil)
         # We have to require this late in the process because otherwise we might have
         # load order issues.
         require 'puppet/node/environment'
-        Puppet::Node::Environment.new.modulepath.collect do |dir|
+        Puppet::Node::Environment.new(env).modulepath.collect do |dir|
             Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
         end.flatten.collect { |d| [File.join(d, "plugins"), File.join(d, "lib")] }.flatten.find_all do |d|
             FileTest.directory?(d)
         end
     end
 
-    def search_directories(dummy_argument=:work_arround_for_ruby_GC_bug)
-        [module_directories, Puppet[:libdir].split(File::PATH_SEPARATOR), $:].flatten
+    def search_directories(env=nil)
+        [module_directories(env), Puppet[:libdir].split(File::PATH_SEPARATOR), $:].flatten
     end
 end

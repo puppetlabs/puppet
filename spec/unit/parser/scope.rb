@@ -59,10 +59,12 @@ describe Puppet::Parser::Scope do
     end
 
     describe "when initializing" do
-        it "should extend itself with its environment's Functions module" do
+        it "should extend itself with its environment's Functions module as well as the default" do
             env = Puppet::Node::Environment.new("myenv")
             compiler = stub 'compiler', :environment => env
-            mod = Module.new
+            mod      = Module.new
+            root_mod = Module.new
+            Puppet::Parser::Functions.expects(:environment_module).with(Puppet::Node::Environment.root).returns root_mod
             Puppet::Parser::Functions.expects(:environment_module).with(env).returns mod
 
             Puppet::Parser::Scope.new(:compiler => compiler).metaclass.ancestors.should be_include(mod)
@@ -70,7 +72,7 @@ describe Puppet::Parser::Scope do
 
         it "should extend itself with the default Functions module if it has no environment" do
             mod = Module.new
-            Puppet::Parser::Functions.expects(:environment_module).with(nil).returns mod
+            Puppet::Parser::Functions.expects(:environment_module).with(Puppet::Node::Environment.root).returns(mod)
 
             Puppet::Parser::Scope.new().metaclass.ancestors.should be_include(mod)
         end

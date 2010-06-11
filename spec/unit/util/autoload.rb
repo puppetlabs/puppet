@@ -15,10 +15,6 @@ describe Puppet::Util::Autoload do
         Puppet::Util::Autoload.ancestors.should be_include(Puppet::Util::Cacher)
     end
 
-    it "should use a ttl of 15 for the search path" do
-        Puppet::Util::Autoload.attr_ttl(:searchpath).should == 15
-    end
-
     describe "when building the search path" do
         it "should collect all of the plugins and lib directories that exist in the current environment's module path" do
             Puppet.settings.expects(:value).with(:environment).returns "foo"

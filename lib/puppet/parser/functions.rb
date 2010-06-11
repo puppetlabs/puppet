@@ -6,7 +6,7 @@ require 'puppet/parser/scope'
 # class.
 module Puppet::Parser::Functions
 
-    @functions = {}
+    @functions = Hash.new { |h,k| h[k] = {} }
     @modules = {}
 
     class << self
@@ -24,15 +24,17 @@ module Puppet::Parser::Functions
         @autoloader
     end
 
+    Environment = Puppet::Node::Environment
+
     def self.environment_module(env = nil)
-        @module ||= Module.new
+        @modules[ env || Environment.current || Environment.root ] ||= Module.new
     end
 
     # Create a new function type.
     def self.newfunction(name, options = {}, &block)
         name = symbolize(name)
 
-        if @functions.include? name
+        if functions.include?(name)
             raise Puppet::DevError, "Function %s already defined" % name
         end
 
@@ -46,10 +48,10 @@ module Puppet::Parser::Functions
         environment_module.send(:define_method, fname, &block)
 
         # Someday we'll support specifying an arity, but for now, nope
-        #@functions[name] = {:arity => arity, :type => ftype}
-        @functions[name] = {:type => ftype, :name => fname}
+        #functions[name] = {:arity => arity, :type => ftype}
+        functions[name] = {:type => ftype, :name => fname}
         if options[:doc]
-            @functions[name][:doc] = options[:doc]
+            functions[name][:doc] = options[:doc]
         end
     end
 
@@ -57,11 +59,11 @@ module Puppet::Parser::Functions
     def self.rmfunction(name)
         name = symbolize(name)
 
-        unless @functions.include? name
+        unless functions.include? name
             raise Puppet::DevError, "Function %s is not defined" % name
         end
 
-        @functions.delete(name)
+        functions.delete name
 
         fname = "function_" + name.to_s
         environment_module.send(:remove_method, fname)
@@ -71,15 +73,11 @@ module Puppet::Parser::Functions
     def self.function(name)
         name = symbolize(name)
 
-        unless @functions.include? name
-            autoloader.load(name)
+        unless functions.include?(name) or functions(Puppet::Node::Environment.root).include?(name)
+            autoloader.load(name,Environment.current || Environment.root)
         end
 
-        if @functions.include? name
-            return @functions[name][:name]
-        else
-            return false
-        end
+        ( functions(Environment.root)[name] || functions[name] || {:name => false} )[:name]
     end
 
     def self.functiondocs
@@ -87,7 +85,7 @@ module Puppet::Parser::Functions
 
         ret = ""
 
-        @functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
+        functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
             #ret += "%s\n%s\n" % [name, hash[:type]]
             ret += "%s\n%s\n" % [name, "-" * name.to_s.length]
             if hash[:doc]
@@ -102,22 +100,13 @@ module Puppet::Parser::Functions
         return ret
     end
 
-    def self.functions
-        @functions.keys
+    def self.functions(env = nil)
+        @functions[ env || Environment.current || Environment.root ]
     end
 
     # Determine if a given function returns a value or not.
     def self.rvalue?(name)
-        name = symbolize(name)
-
-        if @functions.include? name
-            case @functions[name][:type]
-            when :statement; return false
-            when :rvalue; return true
-            end
-        else
-            return false
-        end
+        (functions[symbolize(name)] || {})[:type] == :rvalue
     end
 
     # Runs a newfunction to create a function for each of the log levels

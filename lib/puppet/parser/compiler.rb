@@ -127,6 +127,7 @@ class Puppet::Parser::Compiler
                 @environment = nil
             end
         end
+        Puppet::Node::Environment.current = @environment
         @environment
     end
 
