@@ -1020,55 +1020,55 @@ class Type
             configuration before objects that use it."
     end
 
-    newmetaparam(:check) do
-        desc "Properties which should have their values retrieved
-            but which should not actually be modified.  This is currently used
-            internally, but will eventually be used for querying, so that you
-            could specify that you wanted to check the install state of all
-            packages, and then query the Puppet client daemon to get reports
-            on all packages."
+    newmetaparam(:audit) do
+        desc "Audit specified attributes of resources over time, and report if any have changed.
+            This attribute can be used to track changes to any resource over time, and can
+            provide an audit trail of every change that happens on any given machine.
+
+            Note that you cannot both audit and manage an attribute - managing it guarantees
+            the value, and any changes already get logged."
+
+        validate do |list|
+            list = Array(list)
+            unless list == [:all]
+                list.each do |param|
+                    next if @resource.class.validattr?(param)
+                    fail "Cannot audit #{param}: not a valid attribute for #{resource}"
+                end
+            end
+        end
 
         munge do |args|
-            # If they've specified all, collect all known properties
-            if args == :all
-                args = @resource.class.properties.find_all do |property|
-                    # Only get properties supported by our provider
-                    if @resource.provider
-                        @resource.provider.class.supports_parameter?(property)
-                    else
-                        true
-                    end
-                end.collect do |property|
-                    property.name
-                end
+            properties_to_audit(args).each do |param|
+                next unless resource.class.validproperty?(param)
+                resource.newattr(param)
             end
+        end
 
-            unless args.is_a?(Array)
-                args = [args]
+        def all_properties
+            resource.class.properties.find_all do |property|
+                resource.provider.nil? or resource.provider.class.supports_parameter?(property)
+            end.collect do |property|
+                property.name
             end
-
-            unless defined? @resource
-                self.devfail "No parent for %s, %s?" %
-                    [self.class, self.name]
+        end
+        
+        def properties_to_audit(list)
+            if list == :all
+                list = all_properties() if list == :all
+            else
+                list = Array(list).collect { |p| p.to_sym }
             end
+        end
+    end
 
-            args.each { |property|
-                unless property.is_a?(Symbol)
-                    property = property.intern
-                end
-                next if @resource.propertydefined?(property)
+    newmetaparam(:check) do
+        desc "Audit specified attributes of resources over time, and report if any have changed.
+            This parameter has been deprecated in favor of 'audit'."
 
-                unless propertyklass = @resource.class.validproperty?(property)
-                    if @resource.class.validattr?(property)
-                        next
-                    else
-                        raise Puppet::Error, "%s is not a valid attribute for %s" %
-                            [property, self.class.name]
-                    end
-                end
-                next unless propertyklass.checkable?
-                @resource.newattr(property)
-            }
+        munge do |args|
+            resource.warning "'check' attribute is deprecated; use 'audit' instead"
+            resource[:audit] = args
         end
     end
 

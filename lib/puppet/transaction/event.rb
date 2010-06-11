@@ -13,7 +13,7 @@ class Puppet::Transaction::Event
     attr_accessor :time
     attr_reader :default_log_level
 
-    EVENT_STATUSES = %w{noop success failure}
+    EVENT_STATUSES = %w{noop success failure audit}
 
     def initialize(*args)
         options = args.last.is_a?(Hash) ? args.pop : ATTRIBUTES.inject({}) { |hash, attr| hash[attr] = args.pop; hash }

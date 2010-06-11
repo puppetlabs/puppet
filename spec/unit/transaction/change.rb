@@ -41,6 +41,11 @@ describe Puppet::Transaction::Change do
             @change.noop?.should be_true
         end
 
+        it "should be auditing if set so" do
+            @change.auditing = true
+            @change.must be_auditing
+        end
+
         it "should set its resource to the proxy if it has one" do
             @change.proxy = :myresource
             @change.resource.should == :myresource
@@ -102,6 +107,27 @@ describe Puppet::Transaction::Change do
                     @property.stub_everything
 
                     @event.expects(:status=).with("noop")
+
+                    @change.apply.should == @event
+                end
+            end
+
+            describe "in audit mode" do
+                before { @change.auditing = true }
+
+                it "should log that it is in audit mode" do
+                    @property.expects(:is_to_s)
+                    @property.expects(:should_to_s)
+
+                    @event.expects(:message=).with { |msg| msg.include?("audit") }
+
+                    @change.apply
+                end
+
+                it "should produce a :audit event and return" do
+                    @property.stub_everything
+
+                    @event.expects(:status=).with("audit")
 
                     @change.apply.should == @event
                 end

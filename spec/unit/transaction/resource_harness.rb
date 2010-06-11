@@ -25,6 +25,38 @@ describe Puppet::Transaction::ResourceHarness do
         Puppet::Transaction::ResourceHarness.new(@transaction).relationship_graph.should == "relgraph"
     end
 
+    describe "when copying audited parameters" do
+        before do
+            @resource = Puppet::Type.type(:file).new :path => "/foo/bar", :audit => :mode
+        end
+
+        it "should do nothing if no parameters are being audited" do
+            @resource[:audit] = []
+            @harness.expects(:cached).never
+            @harness.copy_audited_parameters(@resource, {}).should == []
+        end
+
+        it "should do nothing if an audited parameter already has a desired value set" do
+            @resource[:mode] = "755"
+            @harness.expects(:cached).never
+            @harness.copy_audited_parameters(@resource, {}).should == []
+        end
+
+        it "should copy any cached values to the 'should' values" do
+            @harness.cache(@resource, :mode, "755")
+            @harness.copy_audited_parameters(@resource, {}).should == [:mode]
+
+            @resource[:mode].should == 0755
+        end
+
+        it "should cache and log the current value if no cached values are present" do
+            @resource.expects(:notice)
+            @harness.copy_audited_parameters(@resource, {:mode => "755"}).should == []
+
+            @harness.cached(@resource, :mode).should == "755"
+        end
+    end
+
     describe "when evaluating a resource" do
         it "should create and return a resource status instance for the resource" do
             @harness.evaluate(@resource).should be_instance_of(Puppet::Resource::Status)
@@ -133,6 +165,20 @@ describe Puppet::Transaction::ResourceHarness do
             @harness.changes_to_perform(@status, @resource)
         end
 
+        it "should copy audited parameters" do
+            @resource[:audit] = :mode
+            @harness.cache(@resource, :mode, "755")
+            @harness.changes_to_perform(@status, @resource)
+            @resource[:mode].should == 0755
+        end
+
+        it "should mark changes created as a result of auditing as auditing changes" do
+            @current_state[:mode] = 0644
+            @resource[:audit] = :mode
+            @harness.cache(@resource, :mode, "755")
+            @harness.changes_to_perform(@status, @resource)[0].must be_auditing
+        end
+
         describe "and the 'ensure' parameter is present but not in sync" do
             it "should return a single change for the 'ensure' parameter" do
                 @resource[:ensure] = :present
@@ -204,8 +250,8 @@ describe Puppet::Transaction::ResourceHarness do
 
     describe "when applying changes" do
         before do
-            @change1 = stub 'change1', :apply => stub("event", :status => "success")
-            @change2 = stub 'change2', :apply => stub("event", :status => "success")
+            @change1 = stub 'change1', :apply => stub("event", :status => "success"), :auditing? => false
+            @change2 = stub 'change2', :apply => stub("event", :status => "success"), :auditing? => false
             @changes = [@change1, @change2]
         end
 
@@ -227,6 +273,17 @@ describe Puppet::Transaction::ResourceHarness do
 
             @status.events.should be_include(@change1.apply)
             @status.events.should be_include(@change2.apply)
+        end
+
+        it "should cache the new value if it is an auditing change" do
+            @change1.expects(:auditing?).returns true
+            property = stub 'property', :name => "foo", :resource => "myres"
+            @change1.stubs(:property).returns property
+            @change1.stubs(:is).returns "myval"
+
+            @harness.apply_changes(@status, @changes)
+
+            @harness.cached("myres", "foo").should == "myval"
         end
     end
 

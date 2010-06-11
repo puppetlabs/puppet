@@ -4,7 +4,11 @@ require 'puppet/transaction/event'
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
-    attr_accessor :is, :should, :property, :proxy
+    attr_accessor :is, :should, :property, :proxy, :auditing
+
+    def auditing?
+        auditing
+    end
 
     # Create our event object.
     def event
@@ -24,6 +28,7 @@ class Puppet::Transaction::Change
     end
 
     def apply
+        return audit_event if auditing?
         return noop_event if noop?
 
         property.sync
@@ -62,6 +67,15 @@ class Puppet::Transaction::Change
     end
 
     private
+
+    def audit_event
+        # This needs to store the appropriate value, and then produce a new event
+        result = event
+        result.message = "audit change: previously recorded value #{property.should_to_s(should)} has been changed to #{property.is_to_s(is)}"
+        result.status = "audit"
+        result.send_log
+        return result
+    end
 
     def noop_event
         result = event

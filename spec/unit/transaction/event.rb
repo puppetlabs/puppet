@@ -33,7 +33,7 @@ describe Puppet::Transaction::Event do
         event.status.should == "success"
     end
 
-    it "should fail if the status is not to 'noop', 'success', or 'failure" do
+    it "should fail if the status is not to 'audit', 'noop', 'success', or 'failure" do
         event = Puppet::Transaction::Event.new
         lambda { event.status = "foo" }.should raise_error(ArgumentError)
     end

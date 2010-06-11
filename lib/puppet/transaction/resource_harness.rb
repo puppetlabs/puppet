@@ -19,6 +19,10 @@ class Puppet::Transaction::ResourceHarness
     def apply_changes(status, changes)
         changes.each do |change|
             status << change.apply
+
+            if change.auditing?
+                cache(change.property.resource, change.property.name, change.is)
+            end
         end
         status.changed = true
     end
@@ -40,6 +44,8 @@ class Puppet::Transaction::ResourceHarness
 
         return [] if ! allow_changes?(resource)
 
+        audited = copy_audited_parameters(resource, current)
+
         if param = resource.parameter(:ensure)
             return [] if absent_and_not_being_created?(current, param)
             return [Puppet::Transaction::Change.new(param, current[:ensure])] unless ensure_is_insync?(current, param)
@@ -47,12 +53,33 @@ class Puppet::Transaction::ResourceHarness
         end
 
         resource.properties.reject { |p| p.name == :ensure }.reject do |param|
-            param.should.nil?
+            param.should.nil? 
         end.reject do |param|
             param_is_insync?(current, param)
         end.collect do |param|
-            Puppet::Transaction::Change.new(param, current[param.name])
+            change = Puppet::Transaction::Change.new(param, current[param.name])
+            change.auditing = true if audited.include?(param.name)
+            change
         end
+    end
+
+    def copy_audited_parameters(resource, current)
+        return [] unless audit = resource[:audit]
+        audit = Array(audit).collect { |p| p.to_sym }
+        audited = []
+        audit.find_all do |param|
+            next if resource[param]
+
+            if value = cached(resource, param)
+                resource[param] = value
+                audited << param
+            else
+                resource.notice "Storing newly-audited value #{current[param]} for #{param}"
+                cache(resource, param, current[param])
+            end
+        end
+
+        audited
     end
 
     def evaluate(resource)

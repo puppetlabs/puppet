@@ -482,3 +482,48 @@ describe Puppet::Type::RelationshipMetaparam do
         param.validate_relationship
     end
 end
+
+describe Puppet::Type.metaparamclass(:check) do
+    it "should warn and create an instance of ':audit'" do
+        file = Puppet::Type.type(:file).new :path => "/foo"
+        file.expects(:warning)
+        file[:check] = :mode
+        file[:audit].should == [:mode]
+    end
+end
+
+describe Puppet::Type.metaparamclass(:audit) do
+    before do
+        @resource = Puppet::Type.type(:file).new :path => "/foo"
+    end
+
+    it "should default to being nil" do
+        @resource[:audit].should be_nil
+    end
+
+    it "should specify all possible properties when asked to audit all properties" do
+        @resource[:audit] = :all
+
+        list = @resource.class.properties.collect { |p| p.name }
+        @resource[:audit].should == list
+    end
+
+    it "should fail if asked to audit an invalid property" do
+        lambda { @resource[:audit] = :foobar }.should raise_error(Puppet::Error)
+    end
+
+    it "should create an attribute instance for each auditable property" do
+        @resource[:audit] = :mode
+        @resource.parameter(:mode).should_not be_nil
+    end
+
+    it "should accept properties specified as a string" do
+        @resource[:audit] = "mode"
+        @resource.parameter(:mode).should_not be_nil
+    end
+
+    it "should not create attribute instances for parameters, only properties" do
+        @resource[:audit] = :noop
+        @resource.parameter(:noop).should be_nil
+    end
+end
