@@ -35,22 +35,6 @@ class Puppet::Property < Puppet::Parameter
             end
             @array_matching = value
         end
-
-        def checkable
-            @checkable = true
-        end
-
-        def uncheckable
-            @checkable = false
-        end
-
-        def checkable?
-            if defined? @checkable
-                return @checkable
-            else
-                return true
-            end
-        end
     end
 
     # Look up a value's name, so we can find options and such.
