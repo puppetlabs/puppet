@@ -116,8 +116,6 @@ class Puppet::Application::Apply < Puppet::Application
             # Translate it to a RAL catalog
             catalog = catalog.to_ral
 
-            catalog.host_config = true if Puppet[:graph] or Puppet[:report]
-
             catalog.finalize
 
             catalog.retrieval_duration = Time.now - starttime

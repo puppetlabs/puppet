@@ -628,8 +628,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
             end
         end
 
-        it "should default to not being a host catalog" do
-            @catalog.host_config.should be_nil
+        it "should default to being a host catalog" do
+            @catalog.host_config.should be_true
+        end
+
+        it "should be able to be set to a non-host_config" do
+            @catalog.host_config = false
+            @catalog.host_config.should be_false
         end
 
         it "should pass supplied tags on to the transaction" do

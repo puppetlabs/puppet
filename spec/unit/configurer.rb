@@ -147,28 +147,25 @@ describe Puppet::Configurer, "when executing a catalog run" do
     end
 
     it "should apply the catalog with all options to :run" do
-        catalog = stub 'catalog', :retrieval_duration= => nil
-        @agent.expects(:retrieve_catalog).returns catalog
+        @agent.expects(:retrieve_catalog).returns @catalog
 
-        catalog.expects(:apply).with { |args| args[:one] == true }
+        @catalog.expects(:apply).with { |args| args[:one] == true }
         @agent.run :one => true
     end
 
     it "should accept a catalog and use it instead of retrieving a different one" do
-        catalog = stub 'catalog', :retrieval_duration= => nil
         @agent.expects(:retrieve_catalog).never
 
-        catalog.expects(:apply)
-        @agent.run :one => true, :catalog => catalog
+        @catalog.expects(:apply)
+        @agent.run :one => true, :catalog => @catalog
     end
 
     it "should benchmark how long it takes to apply the catalog" do
         @agent.expects(:benchmark).with(:notice, "Finished catalog run")
 
-        catalog = stub 'catalog', :retrieval_duration= => nil
-        @agent.expects(:retrieve_catalog).returns catalog
+        @agent.expects(:retrieve_catalog).returns @catalog
 
-        catalog.expects(:apply).never # because we're not yielding
+        @catalog.expects(:apply).never # because we're not yielding
         @agent.run
     end
 
@@ -190,14 +187,12 @@ describe Puppet::Configurer, "when executing a catalog run" do
         report = stub 'report'
         @agent.expects(:initialize_report).returns report
 
-        catalog = stub 'catalog', :retrieval_duration= => nil
-
         trans = stub 'transaction'
-        catalog.expects(:apply).returns trans
+        @catalog.expects(:apply).returns trans
 
         @agent.expects(:send_report).with { |r, t| t == trans }
 
-        @agent.run :catalog => catalog
+        @agent.run :catalog => @catalog
     end
 
     it "should send the transaction report even if the catalog could not be retrieved" do
@@ -458,12 +453,6 @@ describe Puppet::Configurer, "when converting the catalog" do
 
     it "should write the RAL catalog's class file" do
         @catalog.expects(:write_class_file)
-
-        @agent.convert_catalog(@oldcatalog, 10)
-    end
-
-    it "should mark the RAL catalog as a host catalog" do
-        @catalog.expects(:host_config=).with true
 
         @agent.convert_catalog(@oldcatalog, 10)
     end

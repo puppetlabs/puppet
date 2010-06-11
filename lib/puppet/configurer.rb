@@ -122,7 +122,6 @@ class Puppet::Configurer
         catalog = result.to_ral
         catalog.finalize
         catalog.retrieval_duration = duration
-        catalog.host_config = true
         catalog.write_class_file
         return catalog
     end

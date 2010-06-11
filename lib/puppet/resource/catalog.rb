@@ -273,7 +273,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     def host_config?
-        host_config || false
+        host_config
     end
 
     def initialize(name = nil)
@@ -284,6 +284,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         @transient_resources = []
         @applying = false
         @relationship_graph = nil
+
+        @host_config = true
 
         @aliases = {}
 
