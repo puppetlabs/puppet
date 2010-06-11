@@ -39,6 +39,7 @@ Spec::Runner.configure do |config|
     config.prepend_after :each do
         Puppet.settings.clear
         Puppet::Node::Environment.clear
+        Puppet::Util::Storage.clear
 
         if defined?($tmpfiles)
             $tmpfiles.each do |file|
