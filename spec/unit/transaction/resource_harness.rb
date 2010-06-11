@@ -62,7 +62,7 @@ describe Puppet::Transaction::ResourceHarness do
             changes = %w{mychanges}
             @harness.stubs(:changes_to_perform).returns changes
             @harness.stubs(:apply_changes)
-            @resource.expects(:cache).with { |name, time| name == :synced and time.is_a?(Time) }
+            @harness.expects(:cache).with { |resource, name, time| name == :synced and time.is_a?(Time) }
             @harness.evaluate(@resource)
         end
 
@@ -110,7 +110,7 @@ describe Puppet::Transaction::ResourceHarness do
         end
 
         it "should cache that the resource was checked" do
-            @resource.expects(:cache).with { |name, time| name == :checked and time.is_a?(Time) }
+            @harness.expects(:cache).with { |resource, name, time| name == :checked and time.is_a?(Time) }
             @harness.changes_to_perform(@status, @resource)
         end
 
@@ -301,21 +301,22 @@ describe Puppet::Transaction::ResourceHarness do
         before do
             @catalog = Puppet::Resource::Catalog.new
             @resource.catalog = @catalog
+            @status = Puppet::Resource::Status.new(@resource)
         end
 
         it "should return true if 'ignoreschedules' is set" do
             Puppet[:ignoreschedules] = true
             @resource[:schedule] = "meh"
-            @harness.should be_scheduled(@resource)
+            @harness.should be_scheduled(@status, @resource)
         end
 
         it "should return true if the resource has no schedule set" do
-            @harness.should be_scheduled(@resource)
+            @harness.should be_scheduled(@status, @resource)
         end
 
         it "should return the result of matching the schedule with the cached 'checked' time if a schedule is set" do
             t = Time.now
-            @resource.expects(:cached).with(:checked).returns(t)
+            @harness.expects(:cached).with(@resource, :checked).returns(t)
 
             sched = Puppet::Type.type(:schedule).new(:name => "sched")
             @catalog.add_resource(sched)
@@ -323,7 +324,21 @@ describe Puppet::Transaction::ResourceHarness do
 
             sched.expects(:match?).with(t.to_i).returns "feh"
 
-            @harness.scheduled?(@resource).should == "feh"
+            @harness.scheduled?(@status, @resource).should == "feh"
         end
+    end
+
+    it "should be able to cache data in the Storage module" do
+        data = {}
+        Puppet::Util::Storage.expects(:cache).with(@resource).returns data
+        @harness.cache(@resource, :foo, "something")
+
+        data[:foo].should == "something"
+    end
+
+    it "should be able to retrieve data from the cache" do
+        data = {:foo => "other"}
+        Puppet::Util::Storage.expects(:cache).with(@resource).returns data
+        @harness.cached(@resource, :foo).should == "other"
     end
 end

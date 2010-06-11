@@ -1865,18 +1865,6 @@ class Type
         end.flatten.reject { |r| r.nil? }
     end
 
-    # Return a cached value
-    def cached(name)
-        Puppet::Util::Storage.cache(self)[name]
-        #@cache[name] ||= nil
-    end
-
-    # Cache a value
-    def cache(name, value)
-        Puppet::Util::Storage.cache(self)[name] = value
-        #@cache[name] = value
-    end
-
     # For now, leave the 'name' method functioning like it used to.  Once 'title'
     # works everywhere, I'll switch it.
     def name

@@ -242,6 +242,6 @@ describe Puppet::Transaction do
 
         trans = catalog.apply
 
-        trans.resource_harness.should be_scheduled(resource)
+        trans.resource_harness.should be_scheduled(trans.resource_status(resource), resource)
     end
 end

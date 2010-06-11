@@ -23,10 +23,20 @@ class Puppet::Transaction::ResourceHarness
         status.changed = true
     end
 
+    # Used mostly for scheduling at this point.
+    def cached(resource, name)
+        Puppet::Util::Storage.cache(resource)[name]
+    end
+
+    # Used mostly for scheduling at this point.
+    def cache(resource, name, value)
+        Puppet::Util::Storage.cache(resource)[name] = value
+    end
+
     def changes_to_perform(status, resource)
         current = resource.retrieve
 
-        resource.cache :checked, Time.now
+        cache resource, :checked, Time.now
 
         return [] if ! allow_changes?(resource)
 
@@ -54,7 +64,7 @@ class Puppet::Transaction::ResourceHarness
             status.change_count = changes.length
             apply_changes(status, changes)
             if ! resource.noop?
-                resource.cache(:synced, Time.now)
+                cache(resource, :synced, Time.now)
                 resource.flush if resource.respond_to?(:flush)
             end
         end
@@ -73,7 +83,7 @@ class Puppet::Transaction::ResourceHarness
         @transaction = transaction
     end
 
-    def scheduled?(resource)
+    def scheduled?(status, resource)
         return true if Puppet[:ignoreschedules]
         return true unless schedule = schedule(resource)
 
@@ -82,7 +92,7 @@ class Puppet::Transaction::ResourceHarness
         # have been synced a long time ago (e.g., a file only gets updated
         # once a month on the server and its schedule is daily; the last sync time
         # will have been a month ago, so we'd end up checking every run).
-        return schedule.match?(resource.cached(:checked).to_i)
+        return schedule.match?(cached(resource, :checked).to_i)
     end
 
     def schedule(resource)
