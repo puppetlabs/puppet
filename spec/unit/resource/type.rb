@@ -322,6 +322,14 @@ describe Puppet::Resource::Type do
 
             @scope.lookupvar("module_name").should == "mymod"
         end
+
+        it "should set its caller module name in the scope if available" do
+            @scope.expects(:parent_module_name).returns "mycaller"
+
+            @type.set_resource_parameters(@resource, @scope)
+
+            @scope.lookupvar("caller_module_name").should == "mycaller"
+        end
     end
 
     describe "when describing and managing parent classes" do

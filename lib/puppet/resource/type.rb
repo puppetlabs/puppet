@@ -214,6 +214,10 @@ class Puppet::Resource::Type
         scope.setvar("title", resource.title) unless set.include? :title
         scope.setvar("name", resource.name) unless set.include? :name
         scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
+
+        if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
+            scope.setvar("caller_module_name", caller_name)
+        end
         scope.class_set(self.name,scope) if hostclass?
     end
 

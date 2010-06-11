@@ -28,6 +28,21 @@ describe Puppet::Parser::Scope do
         @scope.class_scope(klass).should == "myscope"
     end
 
+    it "should be able to retrieve its parent module name from the source of its parent type" do
+        @topscope.source = Puppet::Resource::Type.new(:hostclass, :foo)
+        @topscope.source.module_name = "foo"
+
+        @scope.parent_module_name.should == "foo"
+    end
+
+    it "should return a nil parent module name if it has no parent" do
+        @topscope.parent_module_name.should be_nil
+    end
+
+    it "should return a nil parent module name if its parent has no source" do
+        @scope.parent_module_name.should be_nil
+    end
+
     # #620 - Nodes and classes should conflict, else classes don't get evaluated
     describe "when evaluating nodes and classes with the same name (#620)" do
 

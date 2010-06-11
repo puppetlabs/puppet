@@ -306,6 +306,12 @@ class Puppet::Parser::Scope
         self.nodescope
     end
 
+    def parent_module_name
+        return nil unless @parent
+        return nil unless @parent.source
+        @parent.source.module_name
+    end
+
     # Return the list of scopes up to the top scope, ordered with our own first.
     # This is used for looking up variables and defaults.
     def scope_path
