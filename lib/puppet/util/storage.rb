@@ -22,18 +22,10 @@ class Puppet::Util::Storage
     # types like exec, but it also means that if an object changes locations
     # in the configuration it will lose its cache.
     def self.cache(object)
-        if object.is_a? Puppet::Type
-            # We used to store things by path, now we store them by ref.
-            # In oscar(0.20.0) this changed to using the ref.
-            if @@state.include?(object.path)
-                @@state[object.ref] = @@state[object.path]
-                @@state.delete(object.path)
-            end
-            name = object.ref
-        elsif object.is_a?(Symbol)
+        if object.is_a?(Symbol)
             name = object
         else
-            raise ArgumentError, "You can only cache information for Types and symbols"
+            name = object.to_s
         end
 
         return @@state[name] ||= {}

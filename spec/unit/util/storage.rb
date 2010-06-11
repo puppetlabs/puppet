@@ -61,25 +61,11 @@ describe Puppet::Util::Storage do
         end
     end
 
-    describe "when caching invalid objects" do
-        before(:all) do
-            @bogus_objects = [ {}, [], "foo", 42, nil, Tempfile.new('storage_test') ]
-        end
-
-        it "should raise an ArgumentError" do
-            @bogus_objects.each do |object|
-                proc { Puppet::Util::Storage.cache(object) }.should raise_error()
-            end
-        end
-
-        it "should not add anything to its internal state" do
-            @bogus_objects.each do |object|
-                begin
-                    Puppet::Util::Storage.cache(object)
-                rescue
-                    Puppet::Util::Storage.state().should == {}
-                end
-            end
+    describe "when caching something other than a resource or symbol" do
+        it "should cache by converting to a string" do
+            data = Puppet::Util::Storage.cache(42)
+            data[:yay] = true
+            Puppet::Util::Storage.cache("42")[:yay].should be_true
         end
     end
 
