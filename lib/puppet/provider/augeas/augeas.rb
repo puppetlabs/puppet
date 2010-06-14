@@ -65,6 +65,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         if data.is_a?(String)
             data = data.split($/)
         end
+        data = data.flatten
         args = []
         data.each do |line|
             line.strip!
