@@ -49,6 +49,11 @@ class Puppet::Node::Facts
         end
     end
 
+    def ==(other)
+        return false unless self.name == other.name
+        strip_internal == other.send(:strip_internal)
+    end
+
     private
 
     # Add internal data to the facts for storage.

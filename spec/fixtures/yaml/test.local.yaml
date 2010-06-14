@@ -1,0 +1,16 @@
+--- !ruby/object:Puppet::Node::Facts
+  expiration: 2010-06-07 19:15:36.519351 -07:00
+  name: test.local
+  values: 
+    sp_number_processors: "2"
+    kernelmajversion: "10.3"
+    kernelversion: 10.3.1
+    sp_secure_vm: secure_vm_enabled
+    ps: ps auxwww
+    macosx_productversion_major: "10.6"
+    hostname: test
+    !ruby/sym _timestamp: Mon Jun 07 18:45:36 -0700 2010
+    facterversion: 1.5.7
+    sp_packages: "1"
+    timezone: PDT
+    environment: production

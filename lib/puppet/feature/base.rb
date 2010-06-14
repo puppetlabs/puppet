@@ -45,3 +45,6 @@ end
 Puppet.features.add(:win32, :libs => ["sys/admin", "win32/process", "win32/dir"])
 
 raise Puppet::Error "Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.win32?
+
+# We have CouchDB
+Puppet.features.add(:couchdb, :libs => ["couchrest"])

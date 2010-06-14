@@ -680,6 +680,10 @@ module Puppet
             and other environments normally use ``debug``."]
     )
 
+    setdefaults(:couchdb,
+        :couchdb_url => ["http://127.0.0.1:5984/puppet", "The url where the puppet couchdb database will be created"]
+    )
+
     setdefaults(:transaction,
         :tags => ["", "Tags to use to find resources.  If this is set, then
             only resources tagged with the specified tags will be applied.

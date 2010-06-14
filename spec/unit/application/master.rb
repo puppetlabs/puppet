@@ -176,12 +176,6 @@ describe Puppet::Application::Master do
             @master.setup
         end
 
-        it "should set node facst terminus to yaml" do
-            Puppet::Node::Facts.expects(:terminus_class=).with(:yaml)
-
-            @master.setup
-        end
-
         it "should cache class in yaml" do
             Puppet::Node.expects(:cache_class=).with(:yaml)
 
