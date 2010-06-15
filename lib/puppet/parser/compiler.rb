@@ -446,7 +446,7 @@ class Puppet::Parser::Compiler
         @catalog.version = known_resource_types.version
 
         # Create our initial scope and a resource that will evaluate main.
-        @topscope = Puppet::Parser::Scope.new(:compiler => self)
+        @topscope = Puppet::Parser::Scope.new(:compiler => self, :source => 'implicit')
 
         @main_stage_resource = Puppet::Parser::Resource.new("stage", :main, :scope => @topscope)
         @catalog.add_resource(@main_stage_resource)

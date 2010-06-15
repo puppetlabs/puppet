@@ -689,7 +689,7 @@ class TestFile < Test::Unit::TestCase
                 file = Puppet::Type.newfile(:path => path)
             end
 
-            assert_equal("/my/file/for/testing", file.title)
+            assert_equal("/my/file/for/testing", file[:path])
         end
     end
 

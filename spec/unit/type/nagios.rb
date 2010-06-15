@@ -23,8 +23,8 @@ describe "Nagios resource types" do
                 puppet_type.instance_variable_get("@doc").should_not == ""
             end
 
-            it "should have %s as its namevar" % nagios_type.namevar do
-                puppet_type.namevar.should == nagios_type.namevar
+            it "should have %s as its key attribute" % nagios_type.namevar do
+                puppet_type.key_attributes.should == [nagios_type.namevar]
             end
 
             it "should have documentation for its %s parameter" % nagios_type.namevar do

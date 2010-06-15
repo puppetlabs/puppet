@@ -56,6 +56,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         tag(*classes)
     end
 
+    def title_key_for_ref( ref )
+        ref =~ /^(.+)\[(.*)\]/
+        [$1, $2]
+    end
+
     # Add one or more resources to our graph and to our resource table.
     # This is actually a relatively complicated method, because it handles multiple
     # aspects of Catalog behaviour:
@@ -68,16 +73,16 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             unless resource.respond_to?(:ref)
                 raise ArgumentError, "Can only add objects that respond to :ref, not instances of %s" % resource.class
             end
-        end.each { |resource| fail_unless_unique(resource) }.each do |resource|
-            ref = resource.ref
+        end.each { |resource| fail_on_duplicate_type_and_title(resource) }.each do |resource|
+            title_key = title_key_for_ref(resource.ref)
 
             @transient_resources << resource if applying?
-            @resource_table[ref] = resource
+            @resource_table[title_key] = resource
 
             # If the name and title differ, set up an alias
 
             if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-                self.alias(resource, resource.name) if resource.isomorphic?
+                self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
             end
 
             resource.catalog = self if resource.respond_to?(:catalog=)
@@ -93,20 +98,24 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     # Create an alias for a resource.
-    def alias(resource, name)
-        #set $1
+    def alias(resource, key)
         resource.ref =~ /^(.+)\[/
+        class_name = $1 || resource.class.name
 
-        newref = "%s[%s]" % [$1 || resource.class.name, name]
+        newref = [class_name, key]
+
+        if key.is_a? String
+            ref_string = "%s[%s]" % [class_name, key]
+            return if ref_string == resource.ref
+        end
 
         # LAK:NOTE It's important that we directly compare the references,
         # because sometimes an alias is created before the resource is
         # added to the catalog, so comparing inside the below if block
         # isn't sufficient.
-        return if newref == resource.ref
         if existing = @resource_table[newref]
             return if existing == resource
-            raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, name, newref])
+            raise(ArgumentError, "Cannot alias %s to %s; resource %s already exists" % [resource.ref, key.inspect, newref.inspect])
         end
         @resource_table[newref] = resource
         @aliases[resource.ref] ||= []
@@ -360,18 +369,23 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         # Always create a resource reference, so that it always canonizes how we
         # are referring to them.
         if title
-            ref = Puppet::Resource.new(type, title).to_s
+            res = Puppet::Resource.new(type, title)
         else
             # If they didn't provide a title, then we expect the first
             # argument to be of the form 'Class[name]', which our
             # Reference class canonizes for us.
-            ref = Puppet::Resource.new(nil, type).to_s
+            res = Puppet::Resource.new(nil, type)
         end
-        @resource_table[ref]
+        title_key      = [res.type, res.title.to_s]
+        uniqueness_key = [res.type, res.uniqueness_key]
+        @resource_table[title_key] || @resource_table[uniqueness_key]
     end
 
-    # Return an array of all resources.
-    def resources
+    def resource_refs
+        resource_keys.collect{ |type, name| name.is_a?( String ) ? "#{type}[#{name}]" : nil}.compact
+    end
+
+    def resource_keys
         @resource_table.keys
     end
 
@@ -495,15 +509,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     end
 
     # Verify that the given resource isn't defined elsewhere.
-    def fail_unless_unique(resource)
+    def fail_on_duplicate_type_and_title(resource)
         # Short-curcuit the common case,
-        return unless existing_resource = @resource_table[resource.ref]
+        return unless existing_resource = @resource_table[title_key_for_ref(resource.ref)]
 
         # If we've gotten this far, it's a real conflict
-
-        # Either it's a defined type, which are never
-        # isomorphic, or it's a non-isomorphic type, so
-        # we should throw an exception.
         msg = "Duplicate definition: %s is already defined" % resource.ref
 
         if existing_resource.file and existing_resource.line

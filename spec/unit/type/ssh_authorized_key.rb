@@ -22,7 +22,7 @@ describe ssh_authorized_key do
     end
 
     it "should have :name be its namevar" do
-        @class.namevar.should == :name
+        @class.key_attributes.should == [:name]
     end
 
     it "should have a :provider parameter" do

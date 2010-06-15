@@ -38,27 +38,11 @@ class Type
         properties()
     end
 
-    # All parameters, in the appropriate order.  The namevar comes first, then
+    # All parameters, in the appropriate order.  The key_attributes come first, then
     # the provider, then the properties, and finally the params and metaparams
     # in the order they were specified in the files.
     def self.allattrs
-        # Cache this, since it gets called multiple times
-        namevar = self.namevar
-
-        order = [namevar]
-        if self.parameters.include?(:provider)
-            order << :provider
-        end
-        order << [self.properties.collect { |property| property.name },
-            self.parameters - [:provider],
-            self.metaparams].flatten.reject { |param|
-                # we don't want our namevar in there multiple times
-                param == namevar
-            }
-
-        order.flatten!
-
-        return order
+        key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
     end
 
     # Retrieve an attribute alias, if there is one.
@@ -103,23 +87,6 @@ class Type
         end
 
         @attrtypes[attr]
-    end
-
-    # Copy an existing class parameter.  This allows other types to avoid
-    # duplicating a parameter definition, and is mostly used by subclasses
-    # of the File class.
-    def self.copyparam(klass, name)
-        param = klass.attrclass(name)
-
-        unless param
-            raise Puppet::DevError, "Class %s has no param %s" % [klass, name]
-        end
-        @parameters << param
-        @parameters.each { |p| @paramhash[name] = p }
-
-        if param.isnamevar?
-            @namevar = param.name
-        end
     end
 
     def self.eachmetaparam
@@ -208,29 +175,31 @@ class Type
         return param
     end
 
-    # Find the namevar
-    def self.namevar_parameter
-        @namevar_parameter ||= (
+    def self.key_attribute_parameters
+        @key_attribute_parameters ||= (
             params = @parameters.find_all { |param|
                 param.isnamevar? or param.name == :name
             }
-
-            if params.length > 1
-                raise Puppet::DevError, "Found multiple namevars for %s" % self.name
-            elsif params.length == 1
-                params.first
-            else
-                raise Puppet::DevError, "No namevar for %s" % self.name
-            end
         )
     end
 
-    def self.namevar
-        @namevar ||= namevar_parameter.name
+    def self.key_attributes
+        key_attribute_parameters.collect { |p| p.name }
     end
 
-    def self.canonicalize_ref(s)
-        namevar_parameter.canonicalize(s)
+    def self.title_patterns
+        case key_attributes.length
+        when 0; []
+        when 1;
+            identity = lambda {|x| x}
+            [ [ /(.*)/, [ [key_attributes.first, identity ] ] ] ]
+        else
+            raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
+        end
+    end
+
+    def uniqueness_key
+        to_resource.uniqueness_key
     end
 
     # Create a new parameter.  Requires a block and a name, stores it in the
@@ -254,10 +223,6 @@ class Type
         end
 
         param.isnamevar if options[:namevar]
-
-        if param.isnamevar?
-            @namevar = param.name
-        end
 
         return param
     end
@@ -417,6 +382,14 @@ class Type
         return false
     end
 
+    #
+    # The name_var is the key_attribute in the case that there is only one.
+    #
+    def name_var
+        key_attributes = self.class.key_attributes
+        (key_attributes.length == 1) && key_attributes.first
+    end
+
     # abstract accessing parameters and properties, and normalize
     # access to always be symbols, not strings
     # This returns a value, not an object.  It returns the 'is'
@@ -430,7 +403,7 @@ class Type
         end
 
         if name == :name
-            name = self.class.namevar
+            name = name_var
         end
 
         if obj = @parameters[name]
@@ -453,7 +426,7 @@ class Type
         end
 
         if name == :name
-            name = self.class.namevar
+            name = name_var
         end
         if value.nil?
             raise Puppet::Error.new("Got nil value for %s" % name)
@@ -980,31 +953,15 @@ class Type
         end.compact
     end
 
-    # Convert a simple hash into a Resource instance.  This is a convenience method,
-    # so people can create RAL resources with a hash and get the same behaviour
-    # as we get internally when we use Resource instances.
-    #   This should only be used directly from Ruby -- it's not used when going through
-    # normal Puppet usage.
+    # Convert a simple hash into a Resource instance.
     def self.hash2resource(hash)
         hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; result }
 
-        if title = hash[:title]
-            hash.delete(:title)
-        else
-            if self.namevar != :name
-                if hash.include?(:name) and hash.include?(self.namevar)
-                    raise Puppet::Error, "Cannot provide both name and %s to resources of type %s" % [self.namevar, self.name]
-                end
-                if title = hash[self.namevar]
-                    hash.delete(self.namevar)
-                end
-            end
+        title = hash.delete(:title) 
+        title ||= hash[:name]
+        title ||= hash[key_attributes.first] if key_attributes.length == 1
 
-            unless title ||= hash[:name]
-                raise Puppet::Error, "You must specify a name or title for resources"
-            end
-        end
-
+        raise Puppet::Error, "Title or name must be provided" unless title
 
         # Now create our resource.
         resource = Puppet::Resource.new(self.name, title)
@@ -1902,9 +1859,7 @@ class Type
 
     # Set our resource's name.
     def set_name(hash)
-        n = self.class.namevar
-        self[n] = hash[n]
-        hash.delete(n)
+        self[name_var] = hash.delete(name_var) if name_var
     end
 
     # Set all of the parameters from a hash, in the appropriate order.
@@ -2015,14 +1970,13 @@ class Type
     # then use the object's name.
     def title
         unless defined? @title and @title
-            namevar = self.class.namevar
-            if self.class.validparameter?(namevar)
+            if self.class.validparameter?(name_var)
                 @title = self[:name]
-            elsif self.class.validproperty?(namevar)
-                @title = self.should(namevar)
+            elsif self.class.validproperty?(name_var)
+                @title = self.should(name_var)
             else
                 self.devfail "Could not find namevar %s for %s" %
-                    [namevar, self.class.name]
+                    [name_var, self.class.name]
             end
         end
 
@@ -2040,11 +1994,14 @@ class Type
 
         values = retrieve()
         values.each do |name, value|
-            trans[name.name] = value
+            # sometimes we get symbols and sometimes we get Properties
+            # I think it's a bug, but I can't find it. ~JW
+            name = name.name if name.respond_to? :name
+            trans[name] = value
         end
 
         @parameters.each do |name, param|
-            # Avoid adding each instance name as both the name and the namevar
+            # Avoid adding each instance name twice
             next if param.class.isnamevar? and param.value == self.title
 
             # We've already got property values

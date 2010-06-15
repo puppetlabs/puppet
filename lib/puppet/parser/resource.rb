@@ -144,13 +144,8 @@ class Puppet::Parser::Resource < Puppet::Resource
         ! (catalog and version = catalog.client_version and version = version.split(".") and version[0] == "0" and version[1].to_i >= 25)
     end
 
-    # Return the resource name, or the title if no name
-    # was specified.
     def name
-        unless defined? @name
-            @name = self[:name] || self.title
-        end
-        @name
+        self[:name] || self.title
     end
 
     def namespaces

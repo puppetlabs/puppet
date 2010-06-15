@@ -359,7 +359,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it "should have its 'path' attribute set as its namevar" do
-            Puppet::Type.type(:file).namevar.should == :path
+            Puppet::Type.type(:file).key_attributes.should == [:path]
         end
     end
 
@@ -413,9 +413,7 @@ describe Puppet::Type.type(:file) do
                 Puppet.features.stubs(:win32?).returns(true)
             end
 
-            it "should refuse to work with links" do
-                lambda { Puppet::Type.type(:file).new(:path => @link, :mode => "755") }.should raise_error(Puppet::Error)
-            end
+            it "should refuse to work with links"
         end
     end
 

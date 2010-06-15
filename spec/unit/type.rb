@@ -231,11 +231,6 @@ describe Puppet::Type do
                 Puppet::Type.type(:file).new(:path => "/yay").title.should == "/yay"
             end
 
-            it "should fail if the namevar is not equal to :name and both :name and the namevar are provided" do
-                lambda { Puppet::Type.type(:file).new(:path => "/yay", :name => "/foo") }.should raise_error(Puppet::Error)
-                @type.stubs(:namevar).returns :myname
-            end
-
             [:catalog].each do |param|
                 it "should extract '#{param}' from the hash if present" do
                     Puppet::Type.type(:mount).new(:name => "/yay", param => "foo").send(param).should == "foo"
@@ -333,15 +328,9 @@ describe Puppet::Type do
         end
 
         it "should use the Resource Type's namevar to determine how to find the name in the hash" do
-            @type.stubs(:namevar).returns :myname
+            @type.stubs(:key_attributes).returns([ :myname ])
 
             @type.hash2resource(:myname => "foo").title.should == "foo"
-        end
-
-        it "should fail if the namevar is not equal to :name and both :name and the namevar are provided" do
-            @type.stubs(:namevar).returns :myname
-
-            lambda { @type.hash2resource(:myname => "foo", :name => 'bar') }.should raise_error(Puppet::Error)
         end
 
         [:catalog].each do |attr|

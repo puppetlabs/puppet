@@ -194,28 +194,6 @@ class Puppet::Resource
         @title = nil
     end
 
-    def old_title
-        if type == "Class" and value == ""
-            @title = :main
-            return
-        end
-
-        if klass = resource_type
-            p klass
-            if type == "Class"
-                value = munge_type_name(resource_type.name)
-            end
-
-            if klass.respond_to?(:canonicalize_ref)
-                value = klass.canonicalize_ref(value)
-            end
-        elsif type == "Class"
-            value = munge_type_name(value)
-        end
-
-        @title = value
-    end
-
     def resource_type
         case type
         when "Class"; find_hostclass(title)
@@ -227,15 +205,24 @@ class Puppet::Resource
 
     # Produce a simple hash of our parameters.
     def to_hash
-        result = @parameters.dup
-        unless result.include?(namevar)
-            result[namevar] = title
-        end
-        result
+        parse_title.merge @parameters
     end
 
     def to_s
         "#{type}[#{title}]"
+    end
+
+    def uniqueness_key
+        h = {}
+        key_attributes.each do |attribute|
+            h[attribute] = self.to_hash[attribute]
+        end
+        return h
+    end
+
+    def key_attributes
+        return resource_type.key_attributes if resource_type.respond_to? :key_attributes
+        return [:name]
     end
 
     # Convert our resource to Puppet code.
@@ -395,8 +382,8 @@ class Puppet::Resource
     # The namevar for our resource type. If the type doesn't exist,
     # always use :name.
     def namevar
-        if builtin_type? and t = resource_type
-            t.namevar
+        if builtin_type? and t = resource_type and t.key_attributes.length == 1
+            t.key_attributes.first
         else
             :name
         end
@@ -471,7 +458,7 @@ class Puppet::Resource
         when "Class";
             resolve_title_for_class(@unresolved_title)
         else
-            resolve_title_for_resource(@unresolved_title)
+            @unresolved_title
         end
     end
 
@@ -482,19 +469,26 @@ class Puppet::Resource
 
         if klass = find_hostclass(title)
             result = klass.name
-
-            if klass.respond_to?(:canonicalize_ref)
-                result = klass.canonicalize_ref(result)
-            end
         end
         return munge_type_name(result || title)
     end
 
-    def resolve_title_for_resource(title)
-        if type = find_resource_type(@type) and type.respond_to?(:canonicalize_ref)
-            return type.canonicalize_ref(title)
+    def parse_title
+        h = {}
+        type = find_resource_type(@type)
+        if type.respond_to? :title_patterns
+            type.title_patterns.each { |regexp, symbols_and_lambdas|
+                if captures = regexp.match(title.to_s)
+                    symbols_and_lambdas.zip(captures[1..-1]).each { |symbol_and_lambda,capture|
+                        sym, lam = symbol_and_lambda
+                        #self[sym] = lam.call(capture)
+                        h[sym] = lam.call(capture)
+                    }
+                    return h
+                end
+            }
         else
-            return title
+            return { :name => title.to_s }
         end
     end
 end

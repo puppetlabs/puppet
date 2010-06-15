@@ -298,8 +298,8 @@ describe Puppet::Resource do
     describe "when referring to a resource with name canonicalization" do
         it "should canonicalize its own name" do
             res = Puppet::Resource.new("file", "/path/")
-            res.title.should == "/path"
-            res.ref.should == "File[/path]"
+            res.uniqueness_key.should == {:path => "/path"}
+            res.ref.should == "File[/path/]"
         end
     end
 
@@ -362,15 +362,17 @@ describe Puppet::Resource do
         end
 
         it "should set the namevar when asked to set the name" do
-            Puppet::Type.type(:file).stubs(:namevar).returns :myvar
-            @resource[:name] = "/foo"
-            @resource[:myvar].should == "/foo"
+            resource = Puppet::Resource.new("user", "bob")
+            Puppet::Type.type(:user).stubs(:key_attributes).returns [:myvar]
+            resource[:name] = "bob"
+            resource[:myvar].should == "bob"
         end
 
         it "should return the namevar when asked to return the name" do
-            Puppet::Type.type(:file).stubs(:namevar).returns :myvar
-            @resource[:myvar] = "/foo"
-            @resource[:name].should == "/foo"
+            resource = Puppet::Resource.new("user", "bob")
+            Puppet::Type.type(:user).stubs(:key_attributes).returns [:myvar]
+            resource[:myvar] = "test"
+            resource[:name].should == "test"
         end
 
         it "should be able to set the name for non-builtin types" do
@@ -446,8 +448,9 @@ describe Puppet::Resource do
         end
 
         it "should use the title as the namevar to the hash if no namevar is present" do
-            Puppet::Type.type(:file).stubs(:namevar).returns :myvar
-            @resource.to_hash[:myvar].should == "/my/file"
+            resource = Puppet::Resource.new("user", "bob")
+            Puppet::Type.type(:user).stubs(:key_attributes).returns [:myvar]
+            resource.to_hash[:myvar].should == "bob"
         end
 
         it "should set :name to the title if :name is not present for non-builtin types" do
@@ -786,6 +789,20 @@ describe Puppet::Resource do
             catalog.expects(:resource).with("Foo::Bar[yay]").returns(:myresource)
 
             resource.resolve.should == :myresource
+        end
+    end
+
+    describe "when generating the uniqueness key" do
+        it "should include all of the key_attributes" do
+            Puppet::Type.type(:file).stubs(:key_attributes).returns [:myvar, :owner, :path]
+            Puppet::Type.type(:file).stubs(:title_patterns).returns(
+                [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
+            )
+            Puppet::Resource.new("file", "/my/file", :parameters => {:owner => 'root', :content => 'hello'}).uniqueness_key.should == {
+                :myvar => nil,
+                :owner => 'root',
+                :path => '/my/file',
+            }
         end
     end
 end

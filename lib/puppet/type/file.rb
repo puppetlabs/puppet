@@ -24,6 +24,10 @@ Puppet::Type.newtype(:file) do
         Puppet Labs and we can hopefully work with you to develop a
         native resource to support what you are doing."
 
+    def self.title_patterns
+        [ [ /^(.*?)\/?$/, [ [ :path, lambda{|x| x} ] ] ] ]
+    end
+
     newparam(:path) do
         desc "The path to the file to manage.  Must be fully qualified."
         isnamevar
@@ -38,7 +42,7 @@ Puppet::Type.newtype(:file) do
         # convert the current path in an index into the collection and the last
         # path name. The aim is to use less storage for all common paths in a hierarchy
         munge do |value|
-            path, name = File.split(value)
+            path, name = File.split(value.gsub(/\/+/,'/'))
             { :index => Puppet::FileCollection.collection.index(path), :name => name }
         end
 
@@ -51,16 +55,6 @@ Puppet::Type.newtype(:file) do
             else
                 File.join( basedir, value[:name] )
             end
-        end
-
-        to_canonicalize do |s|
-            # * if it looks like a windows path, replace all backslashes with forward slashes
-            # * get rid of any duplicate slashes
-            # * remove any trailing slashes unless the title is just a slash, or a
-            #   drive letter in which case leave it
-            # * UNCs in the form //server//share/... keep their initial double slash.
-            s = s.gsub(/\\/, '/') if s =~ /^.:\/\\/ or s =~ /^\/\/[^\/]+\/[^\/]+/
-            s.gsub(/(.)\/+/, '\1/').sub(/([^:])\/$/,'\1')
         end
     end
 
@@ -425,7 +419,6 @@ Puppet::Type.newtype(:file) do
             end
         end
 
-        @title = self.class.canonicalize_ref(@title)
         @stat = nil
     end
 

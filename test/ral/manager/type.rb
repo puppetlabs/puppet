@@ -29,11 +29,6 @@ class TestType < Test::Unit::TestCase
             #end
 
             assert_nothing_raised {
-                assert(
-                    type.namevar,
-                    "Failed to retrieve namevar for %s" % name
-                )
-
                 assert_not_nil(
                     type.properties,
                     "Properties for %s are nil" % name

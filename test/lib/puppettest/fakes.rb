@@ -9,8 +9,8 @@ module PuppetTest
             @name = :fakeresource
         end
 
-        def self.namevar
-            @realresource.namevar
+        def self.key_attributes
+            @realresource.key_attributes
         end
 
         def self.validproperties
@@ -52,7 +52,7 @@ module PuppetTest
             @is = {}
             @should = {}
             @params = {}
-            self[@realresource.namevar] = name
+            self[@realresource.key_attributes.first] = name
         end
 
         def inspect

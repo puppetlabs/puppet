@@ -617,8 +617,7 @@ Generated on #{Time.now}.
     # Convert to a parseable manifest
     def to_manifest
         catalog = to_catalog
-        # The resource list is a list of references, not actual instances.
-        catalog.resources.collect do |ref|
+        catalog.resource_refs.collect do |ref|
             catalog.resource(ref).to_manifest
         end.join("\n\n")
     end

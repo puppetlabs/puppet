@@ -11,7 +11,7 @@ describe Puppet::Type.type(:filebucket) do
         end
 
         it "should have its 'name' attribute set as its namevar" do
-            Puppet::Type.type(:filebucket).namevar.should == :name
+            Puppet::Type.type(:filebucket).key_attributes.should == [:name]
         end
     end
 
