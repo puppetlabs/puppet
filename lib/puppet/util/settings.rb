@@ -894,13 +894,13 @@ Generated on #{Time.now}.
         text.split(/\n/).each { |line|
             count += 1
             case line
-            when /^\s*\[(\w+)\]$/
+            when /^\s*\[(\w+)\]\s*$/
                 section = $1.intern # Section names
                 # Add a meta section
                 result[section][:_meta] ||= {}
             when /^\s*#/; next # Skip comments
             when /^\s*$/; next # Skip blanks
-            when /^\s*(\w+)\s*=\s*(.*)$/ # settings
+            when /^\s*(\w+)\s*=\s*(.*?)\s*$/ # settings
                 var = $1.intern
 
                 # We don't want to munge modes, because they're specified in octal, so we'll
