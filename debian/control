@@ -84,7 +84,8 @@ Description: Emacs syntax highlighting for puppet manifests
 
 Package: puppet-testsuite
 Architecture: all
-Depends: ${misc:Depends}, ruby1.8, puppet (= ${source:Version}), facter, lsb-base, rails (>= 1.2.3-2), rdoc, libldap-ruby1.8, mongrel, librspec-ruby, puppetmaster, git-core
+Depends: ${misc:Depends}, ruby1.8, puppet (= ${source:Version}), facter, lsb-base, rails (>= 1.2.3-2), rdoc, libldap-ruby1.8, mongrel, librspec-ruby, puppetmaster, git-core, libmocha-ruby1.8
+Recommends: cron
 Suggests: ruby
 Description: centralized configuration management control for networks
  Puppet lets you centrally manage every important aspect of your system
