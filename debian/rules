@@ -79,6 +79,9 @@ install: build
 
 	dh_installexamples examples/*
 
+	$(INSTALL) -d -m0775 $(pkgconfdir)/templates
+	$(INSTALL) -d -m0775 $(pkgconfdir)/modules
+
 	# Logcheck rules.  Gee I wish you could specify a file to source
 	# in dh_installlogcheck.
 	ln ext/logcheck/puppet debian/puppet-common.logcheck.ignore.server
