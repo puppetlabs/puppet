@@ -5,9 +5,9 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 describe Puppet::Network::XMLRPCClient do
     describe "when performing the rpc call" do
         before do
+            Puppet::SSL::Host.any_instance.stubs(:certificate_matches_key?).returns true
             @client = Puppet::Network::Client.report.xmlrpc_client.new
             @client.stubs(:call).returns "foo"
-
         end
 
         it "should call the specified namespace and method, with the specified arguments" do
