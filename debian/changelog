@@ -6,8 +6,8 @@ puppet (0.25.5-1) UNRELEASED; urgency=low
 
   [ Mathias Gug ]
   * Add /etc/puppet/templates and /etc/puppet/modules to the puppet-
-    common package
-  * Add binary package "puppet-testsuite"
+    common package (Closes: #571129)
+  * Add binary package "puppet-testsuite" (Closes: #584480)
 
  -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 15 Jun 2010 09:27:53 +0200
 
