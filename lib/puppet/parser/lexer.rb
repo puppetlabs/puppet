@@ -361,7 +361,7 @@ class Puppet::Parser::Lexer
         @file = nil
         # AAARRGGGG! okay, regexes in ruby are bloody annoying
         # no one else has "\n" =~ /\s/
-        @skip = %r{[ \t]+}
+        @skip = %r{[ \t\r]+}
 
         @namestack = []
         @token_queue = []
