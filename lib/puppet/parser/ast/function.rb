@@ -13,7 +13,7 @@ class Puppet::Parser::AST
         def evaluate(scope)
 
             # Make sure it's a defined function
-            unless @fname = Puppet::Parser::Functions.function(@name)
+            unless Puppet::Parser::Functions.function(@name)
                 raise Puppet::ParseError, "Unknown function %s" % @name
             end
 
@@ -33,8 +33,6 @@ class Puppet::Parser::AST
             else
                 raise Puppet::DevError, "Invalid function type %s" % @ftype.inspect
             end
-
-
 
             # We don't need to evaluate the name, because it's plaintext
             args = @arguments.safeevaluate(scope)

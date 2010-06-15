@@ -1,13 +1,14 @@
 require 'puppet/util/autoload'
 require 'puppet/parser/scope'
+require 'monitor'
 
 # A module for managing parser functions.  Each specified function
 # is added to a central module that then gets included into the Scope
 # class.
 module Puppet::Parser::Functions
 
-    @functions = Hash.new { |h,k| h[k] = {} }
-    @modules = {}
+    (@functions = Hash.new { |h,k| h[k] = {} }).extend(MonitorMixin)
+    (@modules   = {}                          ).extend(MonitorMixin)
 
     class << self
         include Puppet::Util
@@ -27,7 +28,9 @@ module Puppet::Parser::Functions
     Environment = Puppet::Node::Environment
 
     def self.environment_module(env = nil)
-        @modules[ env || Environment.current || Environment.root ] ||= Module.new
+        @modules.synchronize { 
+            @modules[ env || Environment.current || Environment.root ] ||= Module.new 
+        }
     end
 
     # Create a new function type.
@@ -101,7 +104,9 @@ module Puppet::Parser::Functions
     end
 
     def self.functions(env = nil)
-        @functions[ env || Environment.current || Environment.root ]
+        @functions.synchronize { 
+            @functions[ env || Environment.current || Environment.root ] 
+        }
     end
 
     # Determine if a given function returns a value or not.

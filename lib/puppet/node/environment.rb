@@ -42,15 +42,15 @@ class Puppet::Node::Environment
     end
 
     def self.current
-        @current || root
+        Thread.current[:environment] || root
     end
 
     def self.current=(env)
-        @current = new(env)
+        Thread.current[:environment] = new(env)
     end
 
     def self.root
-        @root ||= new(:'*root*') 
+        @root
     end
 
     # This is only used for testing.
@@ -128,4 +128,5 @@ class Puppet::Node::Environment
         end
     end
 
+    @root = new(:'*root*') 
 end
