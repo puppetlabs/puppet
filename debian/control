@@ -81,3 +81,15 @@ Depends: ${misc:Depends}, emacsen-common
 Conflicts: puppet (<< ${source:Version})
 Description: Emacs syntax highlighting for puppet manifests
  The puppet-el package provides syntax highlighting for puppet manifests
+
+Package: puppet-testsuite
+Architecture: all
+Depends: ${misc:Depends}, ruby1.8, puppet (= ${source:Version}), facter, lsb-base, rails (>= 1.2.3-2), rdoc, libldap-ruby1.8, mongrel, librspec-ruby, puppetmaster, git-core
+Description: centralized configuration management control for networks
+ Puppet lets you centrally manage every important aspect of your system
+ using a cross-platform specification language that manages all the
+ seperate elements normally aggregated in different files, like users,
+ cron jobs, and hosts, along with obviously discrete elements like
+ packages, services, and files.
+ .
+ This package contains the testsuite for puppet.

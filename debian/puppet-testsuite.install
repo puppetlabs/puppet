@@ -1,0 +1,3 @@
+test/* /usr/share/puppet-testsuite/test
+spec/* /usr/share/puppet-testsuite/spec
+Rakefile /usr/share/puppet-testsuite/
