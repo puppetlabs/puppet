@@ -1,8 +1,15 @@
 puppet (0.25.5-1) UNRELEASED; urgency=low
 
+  [ Stig Sandbeck Mathisen ]
   * New upstream version: 0.25.5
+  * Adjust conflicts for puppet-common, to ensure upgrade goes well
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 18 May 2010 11:19:18 +0200
+  [ Mathias Gug ]
+  * Add /etc/puppet/templates and /etc/puppet/modules to the puppet-
+    common package
+  * Add binary package "puppet-testsuite"
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 15 Jun 2010 09:27:53 +0200
 
 puppet (0.25.4-6) unstable; urgency=low
 
