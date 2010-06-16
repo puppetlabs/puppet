@@ -27,6 +27,12 @@ describe Puppet::Type.type(:file) do
             lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
         end
 
+        it "should propagate failures encountered when a parent directory does not exist" do
+            file = Puppet::Type::File.new(:name => "/foo/bar")
+
+            lambda { file.write("something", :content) }.should raise_error(Puppet::Error, "Cannot create /foo/bar; parent directory /foo does not exist")
+        end
+
         describe "when validating the checksum" do
             before { @file.stubs(:validate_checksum?).returns(true) }
 

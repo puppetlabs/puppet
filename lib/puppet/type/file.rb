@@ -722,6 +722,13 @@ module Puppet
         # Write out the file.  Requires the content to be written,
         # the property name for logging, and the checksum for validation.
         def write(content, property, checksum = nil)
+            parent = File.dirname(self[:path])
+            unless FileTest.exists? parent
+                raise Puppet::Error,
+                    "Cannot create %s; parent directory %s does not exist" %
+                        [self[:path], parent]
+            end
+
             if validate = validate_checksum?
                 # Use the appropriate checksum type -- md5, md5lite, etc.
                 sumtype = property(:checksum).checktype
