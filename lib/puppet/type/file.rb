@@ -433,8 +433,16 @@ module Puppet
             # The right-side hash wins in the merge.
             options = @original_parameters.merge(:path => full_path).reject { |param, value| value.nil? }
 
+            # If we are recursive and ensure => absent, then our children should be too,
+            # so that they will go away like they should.
+            # Otherwise they shouldn't get those options
+            unless options[:ensure].to_s == "absent" and options[:recurse] == true
+                options.delete(:ensure)
+                options.delete(:recurse)
+            end
+
             # These should never be passed to our children.
-            [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].each do |param|
+            [:parent, :recurselimit, :target, :alias, :source].each do |param|
                 options.delete(param) if options.include?(param)
             end
 

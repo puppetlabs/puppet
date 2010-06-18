@@ -694,6 +694,14 @@ describe Puppet::Type.type(:file) do
                 end
             end
 
+            it "should pass on ensure and recurse to the sub resource if ensure is absent and recurse is true" do
+                @file = Puppet::Type::File.new(:name => "/foo/bar", :ensure => :absent, :recurse => true, :catalog => @catalog)
+                
+                @file.class.expects(:new).with { |params| params[:ensure] == :absent and params[:recurse] == true }
+
+                @file.newchild("my/path")
+            end
+
             it "should copy all of the parent resource's 'should' values that were set at initialization" do
                 file = @file.class.new(:path => "/foo/bar", :owner => "root", :group => "wheel")
                 @catalog.add_resource(file)
