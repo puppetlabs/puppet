@@ -106,7 +106,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
             {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host}},
             {:record_type => :blank, :line => "    "},
             {:record_type => :comment, :line => "# another comment"},
-            {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57"}
+            {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57", :host_aliases => []}
         ], instances)
 
         newtext = nil

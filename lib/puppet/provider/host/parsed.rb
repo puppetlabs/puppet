@@ -25,7 +25,9 @@ Puppet::Type.type(:host).provide(:parsed,
             hash[:ip] = $1
             hash[:name] = $2
 
-            unless line == ""
+            if line.empty?
+                hash[:host_aliases] = []
+            else
                 line.sub!(/\s*/, '')
                 line.sub!(/^([^#]+)\s*/) do |value|
                     aliases = $1
@@ -41,7 +43,7 @@ Puppet::Type.type(:host).provide(:parsed,
         end
 
         if hash[:host_aliases] == ""
-            hash.delete(:host_aliases)
+            hash[:host_aliases] = []
         end
 
         return hash
@@ -58,7 +60,7 @@ Puppet::Type.type(:host).provide(:parsed,
 
         str = "%s\t%s" % [hash[:ip], hash[:name]]
 
-        if hash.include? :host_aliases
+        if hash.include? :host_aliases and !hash[:host_aliases].empty?
             if hash[:host_aliases].is_a? Array
                 str += "\t%s" % hash[:host_aliases].join("\t")
             else
