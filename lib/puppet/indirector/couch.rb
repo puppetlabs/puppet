@@ -4,37 +4,43 @@ class Puppet::Indirector::Couch < Puppet::Indirector::Terminus
     # The CouchRest database instance. One database instance per Puppet runtime
     # should be sufficient.
     #
-    def self.db
-        @db ||= CouchRest.database! Puppet[:couchdb_url]
-    end
-
+    def self.db; @db ||= CouchRest.database! Puppet[:couchdb_url] end
     def db; self.class.db end
 
     def find(request)
-        attributes_of db.get(id_for(request))
+        attributes_of get(request)
+    end
+
+    # Create or update the couchdb document with the request's data hash.
+    #
+    def save(request)
+        raise ArgumentError, "PUT does not accept options" unless request.options.empty?
+        update(request) || create(request)
+    end
+
+    private
+
+    # RKH:TODO: Do not depend on error handling, check if the document exists
+    # first. (Does couchrest support this?)
+    #
+    def get(request)
+        db.get(id_for(request))
     rescue RestClient::ResourceNotFound
         Puppet.debug "No couchdb document with id: #{id_for(request)}"
         return nil
     end
 
-    # Create or update the couchdb document with the request's data hash.
-    #
-    # RKH:TODO: Do not depend on error handling, check if the document exists
-    # first. (Does couchrest support this?)
-    #
-    def save(request)
-        raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-
-        # Try to find an existing document.
-        doc = db.get(id_for(request))
-        doc.merge(hash_from(request))
+    def update(request)
+        doc = get request
+        return unless doc
+        doc.merge!(hash_from(request))
         doc.save
-    rescue RestClient::ResourceNotFound
-        # Document does not yet exist, create it
-        db.save_doc hash_from(request)
+        return true
     end
 
-    private
+    def create(request)
+        db.save_doc hash_from(request)
+    end
 
     # The attributes hash that is serialized to CouchDB as JSON. It includes
     # metadata that is used to help aggregate data in couchdb. Add
@@ -51,7 +57,7 @@ class Puppet::Indirector::Couch < Puppet::Indirector::Terminus
     # instance that is returned by save.
     #
     def attributes_of(response)
-        response.reject{|k,v| k =~ /^(_rev|puppet_)/ }
+        response && response.reject{|k,v| k =~ /^(_rev|puppet_)/ }
     end
 
     def document_type_for(request)
