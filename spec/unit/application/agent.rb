@@ -334,8 +334,8 @@ describe Puppet::Application::Agent do
             @puppetd.setup
         end
 
-        it "should change the fact_terminus setting to 'facter'" do
-            Puppet.expects(:[]=).with(:fact_terminus, :facter)
+        it "should change the facts_terminus setting to 'facter'" do
+            Puppet.expects(:[]=).with(:facts_terminus, :facter)
 
             @puppetd.setup
         end

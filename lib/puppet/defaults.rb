@@ -116,7 +116,7 @@ module Puppet
         :node_terminus => ["plain", "Where to find information about nodes."],
         :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
             you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
-        :fact_terminus => ["facter", "Where to get node facts."],
+        :facts_terminus => ["facter", "Where to get node facts."],
         :httplog => { :default => "$logdir/http.log",
             :owner => "root",
             :mode => 0640,

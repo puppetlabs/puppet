@@ -16,7 +16,7 @@ class Puppet::Node::Facts
         end
     end
 
-    indirects :facts, :terminus_setting => :fact_terminus, :extend => NodeExpirer
+    indirects :facts, :terminus_setting => :facts_terminus, :extend => NodeExpirer
 
     attr_accessor :name, :values
 

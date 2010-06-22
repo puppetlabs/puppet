@@ -247,7 +247,7 @@ class Puppet::Application::Agent < Puppet::Application
         Puppet[:catalog_terminus] = :rest
 
         # Override the default.
-        Puppet[:fact_terminus] = :facter
+        Puppet[:facts_terminus] = :facter
 
         Puppet::Resource::Catalog.cache_class = :yaml
 
