@@ -52,7 +52,7 @@ module Puppet
             "Whether to create the necessary user and group that puppet agent will
             run as."],
         :manage_internal_file_permissions => [true,
-            "Whether Puppet should manage the owner, group, and mode of files 
+            "Whether Puppet should manage the owner, group, and mode of files
             it uses internally"
             ],
         :onetime => [false,
@@ -166,7 +166,7 @@ module Puppet
             time that the configuration is parsed, but you can provide a shell script to override how the
             version is determined.  The output of this script will be added to every log message in the
             reports, allowing you to correlate changes on your hosts to the source version on the server."],
-        :zlib => [true, 
+        :zlib => [true,
             "Boolean; whether to use the zlib library",
         ],
         :prerun_command => ["", "A command to run before every agent run.  If this command returns a non-zero
@@ -426,12 +426,12 @@ module Puppet
             directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-            to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            to the authenticated client's SSL DN (e.g., ``/CN=puppet.puppetlabs.com``).
+            See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
         :ssl_client_verify_header => ["HTTP_X_CLIENT_VERIFY", "The header containing the status
             message of the client verification. Only used with Mongrel.  This header must be set by the proxy
             to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
         :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
@@ -440,7 +440,7 @@ module Puppet
             :desc => "The directory in which serialized data is stored, usually in a subdirectory."},
         :reports => ["store",
             "The list of reports to generate.  All reports are looked for
-            in puppet/reports/<name>.rb, and multiple report names should be
+            in puppet/reports/name.rb, and multiple report names should be
             comma-separated (whitespace is okay)."
         ],
         :fileserverconfig => ["$confdir/fileserver.conf",
@@ -571,7 +571,7 @@ module Puppet
               if value
                 Puppet.settings[:report_server] = value
               end
-            end   
+            end
         },
         :report_server => ["$server",
           "The server to which to send transaction reports."
@@ -715,7 +715,7 @@ module Puppet
     setdefaults(:ldap,
         :ldapnodes => [false,
             "Whether to search for node configurations in LDAP.  See
-            http://reductivelabs.com/trac/puppet/wiki/LDAPNodes for more information."],
+            http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes for more information."],
         :ldapssl => [false,
             "Whether SSL should be used when searching for nodes.
             Defaults to false because SSL usually requires certificates
