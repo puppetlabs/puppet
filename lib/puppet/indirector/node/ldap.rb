@@ -19,9 +19,30 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     # LAK:NOTE Unfortunately, the ldap support is too stupid to throw anything
     # but LDAP::ResultError, even on bad connections, so we are rough handed
     # with our error handling.
-    def name2hash(name)
+    def name2hash(name,name_env,node_type)
         info = nil
-        ldapsearch(search_filter(name)) { |entry| info = entry2hash(entry) }
+        ldapsearch(search_filter(name)) { 
+                   |entry| info = entry2hash(entry) 
+                   if info[:environment]
+                     if name_env == info[:environment]
+                        return info
+                     else
+                        info = nil
+                     end
+                   else
+                     info_env = "production"
+                     if name_env == info[:environment]
+                        return info
+                     else
+                        info = nil
+                     end
+                   end
+                  }
+        if node_type == 'parent'
+          raise Puppet::Error.new("Could not find node '%s' with environment '%s'" % [name,name_env])
+        end
+
+        info = name2hash('default',name_env,'parent')        
         return info
     end
 
@@ -35,9 +56,18 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
         node = nil
         names.each do |name|
-            next unless info = name2hash(name)
+            facts = Puppet::Node::Facts.find(name)
+            if facts.values["environment"]
+               name_env = facts.values["environment"]
+            else
+               name_env = "production"
+            end
+            info = name2hash(name,name_env,'child')
+            next if info == nil
 
-            break if node = info2node(request.key, info)
+            if info
+               break if node = info2node(request.key, info)
+            end
         end
 
         return node
@@ -173,19 +203,29 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
     # Find information for our parent and merge it into the current info.
     def find_and_merge_parent(parent, information)
-        unless parent_info = name2hash(parent)
-            raise Puppet::Error.new("Could not find parent node '%s'" % parent)
+
+        if information[:environment]
+          name_env = information[:environment]
+        else
+          name_env = production
         end
-        information[:classes] += parent_info[:classes]
-        parent_info[:parameters].each do |param, value|
+
+        parent_info = name2hash(parent,name_env,'parent')
+        if parent_info
+         information[:classes] += parent_info[:classes]
+         parent_info[:parameters].each do |param, value|
             # Specifically test for whether it's set, so false values are handled
             # correctly.
             information[:parameters][param] = value unless information[:parameters].include?(param)
-        end
+         end
 
-        information[:environment] ||= parent_info[:environment]
+         information[:environment] ||= parent_info[:environment]
+         parent_info[:parent]
+        else
+         raise Puppet::Error.new("Could not find parent node '%s'" % parent)
+         nil
+        end             
 
-        parent_info[:parent]
     end
 
     # Take a name and a hash, and return a node instance.
