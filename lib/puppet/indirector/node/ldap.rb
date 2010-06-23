@@ -207,7 +207,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         if information[:environment]
           name_env = information[:environment]
         else
-          name_env = production
+          name_env = 'production'
         end
 
         parent_info = name2hash(parent,name_env,'parent')
