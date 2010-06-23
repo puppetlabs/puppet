@@ -141,7 +141,7 @@ Puppet::Type.type(:service).provide :base do
         if c = @resource[type]
             cmd = [c]
         else
-            cmd = self.send("%scmd" % type)
+            cmd = [send("#{type}cmd")].flatten
         end
         return texecute(type, cmd, fof)
     end
