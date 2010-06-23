@@ -20,7 +20,7 @@ class Puppet::Util::Feature
         if block_given?
             begin
                 result = yield
-            rescue => detail
+            rescue Exception => detail
                 warn "Failed to load feature test for %s: %s" % [name, detail]
                 result = false
             end
