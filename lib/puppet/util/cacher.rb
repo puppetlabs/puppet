@@ -18,15 +18,6 @@ module Puppet::Util::Cacher
 
     extend Expirer
 
-    # Our module has been extended in a class; we can only add the Instance methods,
-    # which become *class* methods in the class.
-    def self.extended(other)
-        class << other
-            extend ClassMethods
-            include InstanceMethods
-        end
-    end
-
     # Our module has been included in a class, which means the class gets the class methods
     # and all of its instances get the instance methods.
     def self.included(other)

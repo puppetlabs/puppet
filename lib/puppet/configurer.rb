@@ -194,7 +194,6 @@ class Puppet::Configurer
         @duration = thinmark do
             result = Puppet::Resource::Catalog.find(Puppet[:certname], fact_options.merge(:ignore_terminus => true))
         end
-        Puppet.notice "Using cached catalog"
         result
     rescue => detail
         puts detail.backtrace if Puppet[:trace]

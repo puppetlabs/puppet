@@ -8,7 +8,7 @@ describe "Indirection Delegator", :shared => true do
     it "should create a request object with the appropriate method name and all of the passed arguments" do
         request = Puppet::Indirector::Request.new(:indirection, :find, "me")
 
-        @indirection.expects(:request).with(@method, "mystuff", :one => :two).returns request
+        @indirection.expects(:instantiate_request).with(@method, "mystuff", :one => :two).returns request
 
         @terminus.stubs(@method)
 
@@ -24,7 +24,7 @@ describe "Indirection Delegator", :shared => true do
 
         request = Puppet::Indirector::Request.new(:indirection, :find, "me")
 
-        @indirection.stubs(:request).returns request
+        @indirection.stubs(:instantiate_request).returns request
 
         @indirection.expects(:select_terminus).with(request).returns :test_terminus
 
@@ -43,7 +43,7 @@ describe "Indirection Delegator", :shared => true do
 
         request = stub 'request', :key => "me", :options => {}
 
-        @indirection.stubs(:request).returns request
+        @indirection.stubs(:instantiate_request).returns request
 
         @indirection.expects(:select_terminus).with(request).returns nil
 
@@ -179,34 +179,34 @@ describe Puppet::Indirector::Indirection do
         end
 
         it "should have a method for creating an indirection request instance" do
-            @indirection.should respond_to(:request)
+            @indirection.should respond_to(:instantiate_request)
         end
 
         describe "creates a request" do
             it "should create it with its name as the request's indirection name" do
                 Puppet::Indirector::Request.expects(:new).with { |name, *other| @indirection.name == name }
-                @indirection.request(:funtest, "yayness")
+                @indirection.instantiate_request(:funtest, "yayness")
             end
 
             it "should require a method and key" do
                 Puppet::Indirector::Request.expects(:new).with { |name, method, key, *other| method == :funtest and key == "yayness" }
-                @indirection.request(:funtest, "yayness")
+                @indirection.instantiate_request(:funtest, "yayness")
             end
 
             it "should support optional arguments" do
                 Puppet::Indirector::Request.expects(:new).with { |name, method, key, other| other == {:one => :two} }
-                @indirection.request(:funtest, "yayness", :one => :two)
+                @indirection.instantiate_request(:funtest, "yayness", :one => :two)
             end
 
             it "should default to the arguments being nil" do
                 Puppet::Indirector::Request.expects(:new).with { |name, method, key, args| args.nil? }
-                @indirection.request(:funtest, "yayness")
+                @indirection.instantiate_request(:funtest, "yayness")
             end
 
             it "should return the request" do
                 request = mock 'request'
                 Puppet::Indirector::Request.expects(:new).returns request
-                @indirection.request(:funtest, "yayness").should equal(request)
+                @indirection.instantiate_request(:funtest, "yayness").should equal(request)
             end
         end
 
@@ -405,7 +405,7 @@ describe Puppet::Indirector::Indirection do
                 it "should return the result of saving to the terminus" do
                     request = stub 'request', :instance => @instance, :node => nil
 
-                    @indirection.expects(:request).returns request
+                    @indirection.expects(:instantiate_request).returns request
 
                     @cache.stubs(:save)
                     @terminus.stubs(:save).returns @instance
@@ -415,7 +415,7 @@ describe Puppet::Indirector::Indirection do
                 it "should use a request to save the object to the cache" do
                     request = stub 'request', :instance => @instance, :node => nil
 
-                    @indirection.expects(:request).returns request
+                    @indirection.expects(:instantiate_request).returns request
 
                     @cache.expects(:save).with(request)
                     @terminus.stubs(:save)
@@ -425,7 +425,7 @@ describe Puppet::Indirector::Indirection do
                 it "should not save to the cache if the normal save fails" do
                     request = stub 'request', :instance => @instance, :node => nil
 
-                    @indirection.expects(:request).returns request
+                    @indirection.expects(:instantiate_request).returns request
 
                     @cache.expects(:save).never
                     @terminus.expects(:save).raises "eh"
@@ -457,8 +457,8 @@ describe Puppet::Indirector::Indirection do
                     destroy = stub 'destroy_request', :key => "/my/key", :node => nil
                     find = stub 'destroy_request', :key => "/my/key", :node => nil
 
-                    @indirection.expects(:request).with(:destroy, "/my/key").returns destroy
-                    @indirection.expects(:request).with(:find, "/my/key").returns find
+                    @indirection.expects(:instantiate_request).with(:destroy, "/my/key").returns destroy
+                    @indirection.expects(:instantiate_request).with(:find, "/my/key").returns find
 
                     cached = mock 'cache'
 

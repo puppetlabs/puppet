@@ -35,6 +35,13 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @catalog.write_class_file
     end
 
+    it "should not be expired if use_cached_catalog option is true" do
+        Puppet.settings[:use_cached_catalog] = true
+        @catalog = Puppet::Resource::Catalog.new("host")
+        @catalog.expiration = Time.now
+        @catalog.should_not be_expired
+    end
+
     it "should have a client_version attribute" do
         @catalog = Puppet::Resource::Catalog.new("host")
         @catalog.client_version = 5

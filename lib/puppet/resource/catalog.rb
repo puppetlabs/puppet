@@ -49,6 +49,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # Some metadata to help us compile and generally respond to the current state.
     attr_accessor :client_version, :server_version
 
+    def expired?
+        return false if Puppet[:use_cached_catalog]
+        super
+    end
+
     # Add classes to our class list.
     def add_class(*classes)
         classes.each do |klass|
