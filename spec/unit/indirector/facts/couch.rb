@@ -3,9 +3,11 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/node/facts'
-require 'puppet/indirector/facts/couch'
 
-describe Puppet::Node::Facts::Couch do
+describe "Puppet::Node::Facts::Couch" do
+    confine "couchrest gem is missing; cannot test couch terminus" => Puppet.features.couchdb?
+    require 'puppet/indirector/facts/couch' if Puppet.features.couchdb?
+
     before do
         @mock_db = mock('couch db')
         mock_document = CouchRest::Document.new(:_id => fake_request.key, :facts => fake_request.values)

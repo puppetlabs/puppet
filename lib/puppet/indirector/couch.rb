@@ -1,3 +1,5 @@
+raise "Couch terminus not supported without couchrest gem" unless Puppet.features.couchdb?
+
 require 'couchrest'
 class Puppet::Indirector::Couch < Puppet::Indirector::Terminus
 
