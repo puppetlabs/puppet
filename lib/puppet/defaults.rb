@@ -627,10 +627,7 @@ module Puppet
         :factsync => [false,
             "Whether facts should be synced with the central server."],
         :factsignore => [".svn CVS",
-            "What files to ignore when pulling down facts."]
-    )
-
-    setdefaults :reports,
+            "What files to ignore when pulling down facts."],
         :reportdir => {:default => "$vardir/reports",
                 :mode => 0750,
                 :owner => "service",
@@ -640,6 +637,7 @@ module Puppet
                     subdirectory."},
         :reporturl => ["http://localhost:3000/reports",
             "The URL used by the http reports processor to send reports"]
+   )
 
     setdefaults(:tagmail,
         :tagmap => ["$confdir/tagmail.conf",
