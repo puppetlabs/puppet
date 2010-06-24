@@ -173,6 +173,7 @@ describe Puppet::FileBucketFile::File do
             @bucket.stubs(:bucket_path)
             @bucket.stubs(:checksum_data).returns(@digest)
             @bucket.stubs(:path).returns(nil)
+            @bucket.stubs(:checksum).returns(nil)
             @bucket.stubs(:contents).returns("file contents")
         end
 
