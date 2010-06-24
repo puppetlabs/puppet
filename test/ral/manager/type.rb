@@ -49,7 +49,7 @@ class TestType < Test::Unit::TestCase
         )
         resource.stubs(:path).returns("")
 
-        catalog = stub 'catalog'
+        catalog = stubs 'catalog'
         catalog.stubs(:resource).returns(nil)
         catalog.expects(:alias).with(resource, "funtest")
         resource.catalog = catalog
