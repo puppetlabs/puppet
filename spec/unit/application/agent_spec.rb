@@ -2,6 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet/agent'
 require 'puppet/application/agent'
 require 'puppet/network/server'
 require 'puppet/daemon'
@@ -119,9 +120,9 @@ describe Puppet::Application::Agent do
             @puppetd.options[:client].should be_false
         end
 
-        it "should set onetime to ture with --onetime" do
+        it "should set onetime to true with --onetime" do
             @puppetd.handle_onetime(nil)
-            @puppetd.options[:onetime].should be_true
+            Puppet[:onetime].should be_true
         end
 
         it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
@@ -214,7 +215,7 @@ describe Puppet::Application::Agent do
                 @puppetd.setup_test
             end
             it "should set options[:onetime] to true" do
-                @puppetd.options.expects(:[]=).with(:onetime,true)
+                Puppet.expects(:[]=).with(:onetime,true)
                 @puppetd.setup_test
             end
             it "should set options[:detailed_exitcodes] to true" do

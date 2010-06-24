@@ -1,3 +1,4 @@
+require 'puppet'
 require 'puppet/application'
 
 class Puppet::Application::Agent < Puppet::Application
@@ -62,7 +63,8 @@ class Puppet::Application::Agent < Puppet::Application
         options[:client] = false
     end
 
-    if Puppet[:onetime]
+    option("--onetime", "-o") do |arg|
+        Puppet[:onetime] = true
         options[:waitforcert] = 0 unless @explicit_waitforcert
     end
 
