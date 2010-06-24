@@ -12,6 +12,7 @@ class TestLangFunctions < Test::Unit::TestCase
     include PuppetTest::ParserTesting
     include PuppetTest::ResourceTesting
     def test_functions
+        Puppet::Node::Environment.stubs(:current).returns nil
         assert_nothing_raised do
             Puppet::Parser::AST::Function.new(
                 :name => "fakefunction",
@@ -370,14 +371,14 @@ class TestLangFunctions < Test::Unit::TestCase
                 end
             }
         }
-
+        Puppet::Node::Environment.stubs(:current).returns nil
         obj = nil
         assert_nothing_raised {
             obj = Puppet::Parser::Functions.function(:autofunc)
         }
 
         assert(obj, "Did not autoload function")
-        assert(Puppet::Parser::Scope.method_defined?(:function_autofunc),
+        assert(Puppet::Parser::Functions.environment_module.method_defined?(:function_autofunc),
             "Did not set function correctly")
     end
 
@@ -465,6 +466,7 @@ class TestLangFunctions < Test::Unit::TestCase
         assert_equal("yay\n", %x{#{command}}, "command did not work")
         assert_equal("yay-foo\n", %x{#{command} foo}, "command did not work")
 
+        Puppet::Node::Environment.stubs(:current).returns nil
         generate = Puppet::Parser::Functions.function(:generate)
 
         scope = mkscope

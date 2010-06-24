@@ -70,6 +70,8 @@ describe Puppet::Parser::Scope do
             mod = Module.new
             Puppet::Parser::Functions.expects(:environment_module).with(Puppet::Node::Environment.root).returns(mod)
 
+            Puppet::Parser::Functions.expects(:environment_module).with(nil).returns mod
+
             Puppet::Parser::Scope.new().metaclass.ancestors.should be_include(mod)
         end
     end
