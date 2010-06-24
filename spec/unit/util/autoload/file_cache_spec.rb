@@ -156,28 +156,4 @@ describe Puppet::Util::Autoload::FileCache do
             other.should be_directory_exist("/my/file")
         end
     end
-
-    describe "when checking whether a named file exists" do
-        it "should have a method for testing whether a named file is missing" do
-            @cacher.should respond_to(:named_file_missing?)
-        end
-
-        it "should have a method for registering that a named file is missing" do
-            @cacher.should respond_to(:named_file_is_missing)
-        end
-
-        it "should cache that a file is missing for 15 seconds" do
-            now = Time.now
-
-            later = now + 16
-
-            Time.expects(:now).times(2).returns(now).then.returns(later)
-            @cacher.named_file_is_missing("foo")
-            @cacher.should_not be_named_file_missing("foo")
-        end
-
-        it "should return false when registering a file as missing" do
-            @cacher.named_file_is_missing("foo").should be_false
-        end
-    end
 end
