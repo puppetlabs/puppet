@@ -432,12 +432,8 @@ class Type
             raise Puppet::Error.new("Got nil value for %s" % name)
         end
 
-        if obj = @parameters[name]
-            obj.value = value
-            return nil
-        else
-            self.newattr(name, :value => value)
-        end
+        property = self.newattr(name)
+        property.value = value
 
         nil
     end
@@ -486,7 +482,7 @@ class Type
     # Create the actual attribute instance.  Requires either the attribute
     # name or class as the first argument, then an optional hash of
     # attributes to set during initialization.
-    def newattr(name, options = {})
+    def newattr(name)
         if name.is_a?(Class)
             klass = name
             name = klass.name
@@ -497,8 +493,7 @@ class Type
         end
 
         if @parameters.include?(name)
-            raise Puppet::Error, "Parameter '%s' is already defined in %s" %
-                [name, self.ref]
+            return @parameters[name]
         end
 
         if provider and ! provider.class.supports_parameter?(klass)
@@ -507,12 +502,9 @@ class Type
             return nil
         end
 
-        # Add resource information at creation time, so it's available
-        # during validation.
-        options[:resource] = self
         begin
             # make sure the parameter doesn't have any errors
-            return @parameters[name] = klass.new(options)
+            return @parameters[name] = klass.new(:resource => self)
         rescue => detail
             error = Puppet::Error.new("Parameter %s failed: %s" %
                 [name, detail])

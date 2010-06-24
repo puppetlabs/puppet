@@ -283,7 +283,7 @@ class Puppet::Parameter
     end
 
     def value
-        unmunge(@value)
+        unmunge(@value) if @value
     end
 
     # Store the value provided.  All of the checking should possibly be
