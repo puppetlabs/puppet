@@ -1,4 +1,4 @@
-puppet (0.25.5-1) UNRELEASED; urgency=low
+puppet (0.25.5-1) unstable; urgency=low
 
   [ Stig Sandbeck Mathisen ]
   * New upstream version: 0.25.5
@@ -9,7 +9,7 @@ puppet (0.25.5-1) UNRELEASED; urgency=low
     common package (Closes: #571129)
   * Add binary package "puppet-testsuite" (Closes: #584480)
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 15 Jun 2010 09:27:53 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 25 Jun 2010 17:27:05 +0200
 
 puppet (0.25.4-6) unstable; urgency=low
 
