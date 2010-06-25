@@ -40,7 +40,7 @@ describe "Puppet::Rails::Host" do
             Puppet::Rails::Host.expects(:find_by_name).with("foo").returns @host
 
             @node.environment = "production"
-            @host.expects(:environment=).with "production"
+            @host.expects(:environment=).with {|x| x.name.to_s == 'production' }
 
             Puppet::Rails::Host.from_puppet(@node)
         end
