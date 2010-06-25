@@ -3,9 +3,14 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet_spec/files'
+require 'puppet/file_bucket/dipper'
 
 describe Puppet::Type.type(:tidy) do
     include PuppetSpec::Files
+
+    before do
+        Puppet::Util::Storage.stubs(:store)
+    end
 
     # Testing #355.
     it "should be able to remove dead links" do
