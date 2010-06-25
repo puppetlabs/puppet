@@ -960,7 +960,7 @@ describe Puppet::Type.type(:file) do
         end
 
         it "should allow setting backup to 'false'" do
-            Puppet::Type::File.new(:name => "/my/file", :backup => false)[:backup].should be_false
+            (!Puppet::Type::File.new(:name => "/my/file", :backup => false)[:backup]).should be_true
         end
 
         it "should set the backup to '.puppet-bak' if it is set to true" do
