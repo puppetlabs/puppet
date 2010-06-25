@@ -496,12 +496,6 @@ class Type
             return @parameters[name]
         end
 
-        if provider and ! provider.class.supports_parameter?(klass)
-            missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
-            info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
-            return nil
-        end
-
         begin
             # make sure the parameter doesn't have any errors
             return @parameters[name] = klass.new(:resource => self)

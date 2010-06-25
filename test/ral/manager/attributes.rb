@@ -115,12 +115,16 @@ class TestTypeAttributes < Test::Unit::TestCase
 
         # Now set each of them
         attr_check(type) do |inst, klass|
-            inst.newattr(klass.name, :value => "value")
+            property = inst.newattr(klass.name)
+            property.value = "value"
+            property
         end
 
         # Now try it passing the class in
         attr_check(type) do |inst, klass|
-            inst.newattr(klass, :value => "value")
+            property = inst.newattr(klass)
+            property.value = "value"
+            property
         end
 
         # Lastly, make sure we can create and then set, separately
@@ -131,10 +135,9 @@ class TestTypeAttributes < Test::Unit::TestCase
             end
 
             # Make sure we can't create a new param object
-            assert_raise(Puppet::Error,
-                "Did not throw an error when replacing attr") do
-                    inst.newattr(klass.name, :value => "yay")
-            end
+            new_attr = inst.newattr(klass.name)
+            assert_equal(new_attr, obj, "newattr should return the same object if called a second time")
+
             obj
         end
     end
@@ -221,10 +224,7 @@ class TestTypeAttributes < Test::Unit::TestCase
             end
             yes.each { |a| assert(resource.should(a), "Did not get value for %s in %s" % [a, prov.name]) }
             no.each do |a|
-                assert_nil(resource.should(a), "Got value for unsupported %s in %s" % [a, prov.name])
-                if Puppet::Util::Log.sendlevel?(:info)
-                    assert(@logs.find { |l| l.message =~ /not managing attribute #{a}/ and l.level == :info }, "No warning about failed %s" % a)
-                end
+                # These may or may not get passed to the provider. We shouldn't care.
             end
 
             @logs.clear
@@ -288,6 +288,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         cleanup { Puppet::Type.rmtype(:unsupported) }
 
         obj = type.new(:name => "test", :check => :yep)
+        obj.stubs(:newattr).returns(stub_everything("newattr"))
         obj.expects(:newattr).with(:nope).never
         obj[:check] = :all
     end
