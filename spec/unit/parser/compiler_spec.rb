@@ -293,9 +293,9 @@ describe Puppet::Parser::Compiler do
                 @compiler.add_resource(@scope, resource)
 
                 # And one that does not
-                dnf = stub "dnf", :ref => "File[dnf]", :type => "file"
+                dnf_resource = stub_everything "dnf", :ref => "File[dnf]", :type => "file"
 
-                @compiler.add_resource(@scope, dnf)
+                @compiler.add_resource(@scope, dnf_resource)
 
                 @compiler.send(:finish)
             end
