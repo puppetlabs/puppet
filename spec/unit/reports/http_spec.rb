@@ -4,24 +4,38 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 
 require 'puppet/reports'
 
-class Net::HTTP
+# FakeHTTP fakes the behavior of Net::HTTP#request and acts as a sensor for an
+# otherwise difficult to trace method call.
+#
+class FakeHTTP
     REQUESTS = {}
-    alias_method :old_request, :request
-    def request(req, body=nil, &block)
+    def self.request(req)
         REQUESTS[req.path] = req
-        old_request(req, body, &block)
     end
 end
 
 processor = Puppet::Reports.report(:http)
 
 describe processor do
+    before  { Net::HTTP.any_instance.stubs(:start).yields(FakeHTTP) }
     subject { Puppet::Transaction::Report.new.extend(processor) }
 
     it { should respond_to(:process) }
 
+    it "should use the reporturl setting's host and port" do
+        uri = URI.parse(Puppet[:reporturl])
+        Net::HTTP.expects(:new).with(uri.host, uri.port).returns(stub_everything('http'))
+        subject.process
+    end
+
     describe "request" do
         before { subject.process }
+
+        describe "path" do
+            it "should use the path specified by the 'reporturl' setting" do
+                reports_request.path.should == URI.parse(Puppet[:reporturl]).path
+            end
+        end
 
         describe "body" do
             it "should be the report as YAML" do
@@ -38,5 +52,5 @@ describe processor do
 
     private
 
-    def reports_request; Net::HTTP::REQUESTS[URI.parse(Puppet[:reporturl]).path] end
+    def reports_request; FakeHTTP::REQUESTS[URI.parse(Puppet[:reporturl]).path] end
 end
