@@ -267,7 +267,7 @@ describe Puppet::Type do
             Puppet::Type.type(:mount).any_instance.stubs(:newattr).with do |param, hash|
                 set << param
                 true
-            end
+            end.returns(stub_everything "a property")
 
             Puppet::Type.type(:mount).new(resource)
 
@@ -284,7 +284,7 @@ describe Puppet::Type do
             Puppet::Type.type(:mount).any_instance.stubs(:newattr).with do |param, hash|
                 set << param
                 true
-            end
+            end.returns(stub_everything "a property")
 
             Puppet::Type.type(:mount).new(resource)
             set[0].should == :name
