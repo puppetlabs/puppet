@@ -103,6 +103,7 @@ binary-indep: build install
 	dh_installinit --name=puppetqd
 	dh_installinit -ppuppet --error-handler=true -- defaults 21 
 	dh_installlogrotate -i
+	dh_lintian -i
 	dh_compress -i
 	dh_fixperms -i
 	dh_installdeb -i
