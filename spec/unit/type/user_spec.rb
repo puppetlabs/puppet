@@ -265,9 +265,7 @@ describe user do
 
     describe "when user has roles" do
         it "should autorequire roles" do
-            #this is a little funky because the autorequire depends on a property with a feature
             testuser = Puppet::Type.type(:user).new(:name => "testuser")
-            testuser.provider.class.expects(:feature?).with(:manages_solaris_rbac).returns(true)
             testuser[:roles] = "testrole"
 
             testrole = Puppet::Type.type(:user).new(:name => "testrole")

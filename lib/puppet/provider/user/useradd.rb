@@ -60,11 +60,12 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
     # Retrieve the password using the Shadow Password library
     def password
-        if ent = Shadow::Passwd.getspnam(@resource.name)
-            return ent.sp_pwdp
-        else
-            return :absent
+        if Puppet.features.libshadow?
+            if ent = Shadow::Passwd.getspnam(@resource.name)
+                return ent.sp_pwdp
+            end
         end
+        return :absent
     end
 end
 
