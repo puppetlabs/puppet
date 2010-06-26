@@ -433,7 +433,16 @@ class Type
         end
 
         property = self.newattr(name)
-        property.value = value
+
+        begin
+            # make sure the parameter doesn't have any errors
+            property.value = value
+        rescue => detail
+            error = Puppet::Error.new("Parameter %s failed: %s" %
+                [name, detail])
+            error.set_backtrace(detail.backtrace)
+            raise error
+        end
 
         nil
     end
@@ -496,15 +505,7 @@ class Type
             return @parameters[name]
         end
 
-        begin
-            # make sure the parameter doesn't have any errors
-            return @parameters[name] = klass.new(:resource => self)
-        rescue => detail
-            error = Puppet::Error.new("Parameter %s failed: %s" %
-                [name, detail])
-            error.set_backtrace(detail.backtrace)
-            raise error
-        end
+        return @parameters[name] = klass.new(:resource => self)
     end
 
     # return the value of a parameter
