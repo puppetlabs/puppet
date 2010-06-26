@@ -65,7 +65,7 @@ class TestType < Test::Unit::TestCase
             :ensure => "file"
         )
 
-        assert_raise(Puppet::DevError, "It should fail to alias when no catalog was available") {
+        assert_raise(Puppet::Error, "It should fail to alias when no catalog was available") {
             resource[:alias] = "funtest"
         }
     end
