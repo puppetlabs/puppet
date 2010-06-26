@@ -138,11 +138,7 @@ class Puppet::Application::Apply < Puppet::Application
             end
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            if detail.is_a?(XMLRPC::FaultException)
-                $stderr.puts detail.message
-            else
-                $stderr.puts detail
-            end
+            $stderr.puts detail.message
             exit(1)
         end
     end
