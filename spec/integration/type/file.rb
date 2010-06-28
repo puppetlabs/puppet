@@ -58,7 +58,8 @@ describe Puppet::Type.type(:file) do
 
             File.open(file[:path], "w") { |f| f.puts "bar" }
 
-            File.chmod(0111, dir) # make it non-writeable
+            # Create a directory where the backup should be so that writing to it fails
+            Dir.mkdir(File.join(dir, "testfile.bak"))
 
             Puppet::Util::Log.stubs(:newmessage)
 
