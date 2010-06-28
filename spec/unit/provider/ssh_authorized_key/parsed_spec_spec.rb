@@ -17,7 +17,7 @@ describe provider_class do
     before :each do
         @sshauthkey_class = Puppet::Type.type(:ssh_authorized_key)
         @provider = @sshauthkey_class.provider(:parsed)
-        @keyfile = File.join(tmpdir, 'authorized_keys')
+        @keyfile = File.join(Dir.tmpdir, 'authorized_keys')
         @provider.any_instance.stubs(:target).returns @keyfile
         @user = 'random_bob'
         Puppet::Util.stubs(:uid).with(@user).returns 12345
