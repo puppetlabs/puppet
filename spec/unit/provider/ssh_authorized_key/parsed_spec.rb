@@ -44,6 +44,7 @@ describe provider_class do
         @provider.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
         File.stubs(:chown)
         File.stubs(:chmod)
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
         key.flush
         @provider.target_object(@keyfile).read
     end
@@ -99,6 +100,7 @@ describe provider_class do
 
         @provider = provider_class.new(@resource)
         provider_class.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
     end
 
     describe "when flushing" do

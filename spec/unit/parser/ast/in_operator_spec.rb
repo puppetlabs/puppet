@@ -36,13 +36,13 @@ describe Puppet::Parser::AST::InOperator do
     end
 
     it "should raise an argument error if rval doesn't support the include? method" do
-        @rval.expects(:safeevaluate).with(@scope).returns(stub 'value')
+        @rval.expects(:safeevaluate).with(@scope).returns(stub('value'))
 
         lambda { @operator.evaluate(@scope) }.should raise_error
     end
 
     it "should not raise an argument error if rval supports the include? method" do
-        @rval.expects(:safeevaluate).with(@scope).returns(stub 'value', :include? => true)
+        @rval.expects(:safeevaluate).with(@scope).returns(stub('value', :include? => true))
 
         lambda { @operator.evaluate(@scope) }.should_not raise_error
     end
