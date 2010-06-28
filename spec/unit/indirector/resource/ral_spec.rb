@@ -25,7 +25,7 @@ describe "Puppet::Resource::Ral" do
             require 'puppet/type/user'
             Puppet::Type::User.expects(:instances).returns([ wrong_instance, wrong_instance ])
             result = Puppet::Resource::Ral.new.find(@request)
-            result.should be_is_a Puppet::Resource
+            result.should be_is_a(Puppet::Resource)
             result.title.should == "root"
         end
     end

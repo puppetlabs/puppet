@@ -32,7 +32,7 @@ describe "http compression" do
         it "should yield an identity uncompressor" do
             response = stub 'response'
             @uncompressor.uncompress(response) { |u|
-                u.should be_instance_of Puppet::Network::HTTP::Compression::IdentityAdapter
+                u.should be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
             }
         end
     end
@@ -120,14 +120,14 @@ describe "http compression" do
 
             it "should yield an identity uncompressor with no content-encoding" do
                 @uncompressor.uncompress(@response) { |u|
-                    u.should be_instance_of Puppet::Network::HTTP::Compression::IdentityAdapter
+                    u.should be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
                 }
             end
 
             it "should yield an identity uncompressor with 'identity' content-encoding" do
                 @response.stubs(:[]).with('content-encoding').returns 'identity'
                 @uncompressor.uncompress(@response) { |u|
-                    u.should be_instance_of Puppet::Network::HTTP::Compression::IdentityAdapter
+                    u.should be_instance_of(Puppet::Network::HTTP::Compression::IdentityAdapter)
                 }
             end
 
@@ -135,7 +135,7 @@ describe "http compression" do
                 it "should yield a Zlib uncompressor with '#{c}' content-encoding" do
                     @response.stubs(:[]).with('content-encoding').returns c
                     @uncompressor.uncompress(@response) { |u|
-                        u.should be_instance_of Puppet::Network::HTTP::Compression::Active::ZlibAdapter
+                        u.should be_instance_of(Puppet::Network::HTTP::Compression::Active::ZlibAdapter)
                     }
                 end
             end
@@ -172,7 +172,7 @@ describe "http compression" do
             end
 
             it "should try a 'regular' inflater on Zlib::DataError" do
-                @inflater.expects(:inflate).raises(Zlib::DataError.new "not a zlib stream")
+                @inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
                 inflater = stub_everything 'inflater2'
                 inflater.expects(:inflate).with("chunk").returns("uncompressed")
                 Zlib::Inflate.expects(:new).with().returns(inflater)
@@ -180,7 +180,7 @@ describe "http compression" do
             end
 
             it "should raise the error the second time" do
-                @inflater.expects(:inflate).raises(Zlib::DataError.new "not a zlib stream")
+                @inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
                 Zlib::Inflate.expects(:new).with().returns(@inflater)
                 lambda { @adapter.uncompress("chunk") }.should raise_error
             end
