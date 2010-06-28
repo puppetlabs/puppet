@@ -98,9 +98,9 @@ describe tidy do
 
         convertors.each do |unit, multiple|
             it "should consider a %s to be %s seconds" % [unit, multiple] do
-                tidy = Puppet::Type.type(:tidy).new :path => @basepath, :age => "5%s" % unit.to_s[0..0]
+                @tidy = Puppet::Type.type(:tidy).new :path => @basepath, :age => "5%s" % unit.to_s[0..0]
 
-                tidy[:age].should == 5 * multiple
+                @tidy[:age].should == 5 * multiple
             end
         end
     end
@@ -115,11 +115,11 @@ describe tidy do
 
         convertors.each do |unit, multiple|
             it "should consider a %s to be 1024^%s bytes" % [unit, multiple] do
-                tidy = Puppet::Type.type(:tidy).new :path => @basepath, :size => "5%s" % unit
+                @tidy = Puppet::Type.type(:tidy).new :path => @basepath, :size => "5%s" % unit
 
                 total = 5
                 multiple.times { total *= 1024 }
-                tidy[:size].should == total
+                @tidy[:size].should == total
             end
         end
     end
