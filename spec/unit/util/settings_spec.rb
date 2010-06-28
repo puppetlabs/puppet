@@ -531,7 +531,6 @@ describe Puppet::Util::Settings do
                 EventLoop::Timer.expects(:new).never
 
                 @settings.parse
-                puts "2", @settings[:filetimeout]
             end
         end
     end
@@ -680,8 +679,6 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :other, :otherdir => [@prefix+"/otherdir", "a"]
 
             catalog = @settings.to_catalog
-            p "three dirs"
-            p catalog
 
             [@prefix+"/maindir", @prefix+"/seconddir", @prefix+"/otherdir"].each do |path|
                 catalog.resource(:file, path).should be_instance_of(Puppet::Resource)
@@ -692,7 +689,6 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :main, :maindir => [@prefix+"/maindir", "a"]
             @settings.setdefaults :other, :otherdir => [@prefix+"/otherdir", "a"]
             catalog = @settings.to_catalog(:main)
-            p catalog
             catalog.resource(:file, @prefix+"/otherdir").should be_nil
             catalog.resource(:file, @prefix+"/maindir").should be_instance_of(Puppet::Resource)
         end
