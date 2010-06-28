@@ -76,7 +76,7 @@ describe Puppet::Util::Logging do
 
         [:file, :line, :version, :tags].each do |attr|
             it "should include #{attr} if available" do
-                @logger.metaclass.send(:attr_accessor, attr)
+                @logger.singleton_class.send(:attr_accessor, attr)
 
                 @logger.send(attr.to_s + "=", "myval")
 
