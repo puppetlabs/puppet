@@ -48,3 +48,6 @@ raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.featur
 
 # We have CouchDB
 Puppet.features.add(:couchdb, :libs => ["couchrest"])
+
+# We have sqlite
+Puppet.features.add(:sqlite, :libs => ["sqlite3"])

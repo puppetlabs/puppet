@@ -6,6 +6,7 @@ require 'puppet/node'
 
 describe "Puppet::Node::ActiveRecord" do
     confine "Missing Rails" => Puppet.features.rails?
+    confine "Missing sqlite" => Puppet.features.sqlite?
     before do 
         require 'puppet/indirector/node/active_record'
     end
