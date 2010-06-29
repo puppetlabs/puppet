@@ -2,7 +2,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
     def find( request )
         # find by name
         res   = type(request).instances.find { |o| o.name == resource_name(request) }
-        res ||= type(request).new(:name => resource_name(request), :check => type(request).properties.collect { |s| s.name })
+        res ||= type(request).new(:name => resource_name(request), :audit => type(request).properties.collect { |s| s.name })
 
         return res.to_resource
     end

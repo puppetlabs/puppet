@@ -513,11 +513,11 @@ class Puppet::Network::Handler
                     # important one.  It'd be nice if we didn't just set
                     # the check params every time, but I'm not sure it's worth
                     # the effort.
-                    obj[:check] = CHECKPARAMS
+                    obj[:audit] = CHECKPARAMS
                 else
                     obj = Puppet::Type.type(:file).new(
                         :name => file_path(path, client),
-                        :check => CHECKPARAMS
+                        :audit => CHECKPARAMS
                     )
                     @files[file_path(path, client)] = obj
                 end

@@ -469,7 +469,7 @@ class Puppet::Util::Settings
 
         return @service_user_available = false unless user_name = self[:user]
 
-        user = Puppet::Type.type(:user).new :name => self[:user], :check => :ensure
+        user = Puppet::Type.type(:user).new :name => self[:user], :audit => :ensure
 
         return @service_user_available = user.exists?
     end

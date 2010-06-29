@@ -130,7 +130,7 @@ Puppet::Type.newtype(:resources) do
         return true unless self[:name] == "user"
         return true unless self[:unless_system_user]
 
-        resource[:check] = :uid
+        resource[:audit] = :uid
         current_values = resource.retrieve
 
         if system_users().include?(resource[:name])

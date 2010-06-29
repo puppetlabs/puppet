@@ -162,7 +162,7 @@ module Puppet
             checks = (pinparams + [:ensure])
             checks.delete(:checksum)
 
-            resource[:check] = checks
+            resource[:audit] = checks
             resource[:checksum] = :md5 unless resource.property(:checksum)
         end
 

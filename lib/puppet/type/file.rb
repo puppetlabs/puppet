@@ -311,11 +311,11 @@ Puppet::Type.newtype(:file) do
         }.each do |name|
             path = File.join(base, name)
             if obj = self[path]
-                obj[:check] = :all
+                obj[:audit] = :all
                 files << obj
             else
                 files << self.new(
-                    :name => path, :check => :all
+                    :name => path, :audit => :all
                 )
             end
         end
