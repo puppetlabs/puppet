@@ -6,16 +6,16 @@ Puppet::Application.new(:puppetca) do
 
     should_parse_config
 
-    attr_accessor :mode, :all, :signed, :ca
+    attr_accessor :cert_mode, :all, :signed, :ca
 
     def find_mode(opt)
         modes = Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS
         tmp = opt.sub("--", '').to_sym
-        @mode = modes.include?(tmp) ? tmp : nil
+        @cert_mode = modes.include?(tmp) ? tmp : nil
     end
 
     option("--clean", "-c") do
-        @mode = :destroy
+        @cert_mode = :destroy
     end
 
     option("--all", "-a") do
@@ -49,7 +49,7 @@ Puppet::Application.new(:puppetca) do
             hosts = ARGV.collect { |h| puts h; h.downcase }
         end
         begin
-            @ca.apply(@mode, :to => hosts)
+            @ca.apply(@cert_mode, :to => hosts)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             puts detail.to_s

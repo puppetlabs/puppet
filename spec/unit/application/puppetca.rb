@@ -39,9 +39,9 @@ describe "PuppetCA" do
         @puppetca.handle_debug(0)
     end
 
-    it "should set mode to :destroy for --clean" do
+    it "should set cert_mode to :destroy for --clean" do
         @puppetca.handle_clean(0)
-        @puppetca.mode.should == :destroy
+        @puppetca.cert_mode.should == :destroy
     end
 
     it "should set all to true for --all" do
@@ -55,10 +55,10 @@ describe "PuppetCA" do
     end
     
     Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|
-        it "should set mode to #{method} with option --#{method}" do
+        it "should set cert_mode to #{method} with option --#{method}" do
             @puppetca.send("handle_#{method}".to_sym, nil)
 
-            @puppetca.mode.should == method
+            @puppetca.cert_mode.should == method
         end
     end
 
@@ -121,7 +121,7 @@ describe "PuppetCA" do
         it "should delegate with :all if option --all was given" do
             @puppetca.handle_all(0)
 
-            @ca.expects(:apply).with { |mode,to| to[:to] == :all }
+            @ca.expects(:apply).with { |cert_mode,to| to[:to] == :all }
 
             @puppetca.main
         end
@@ -129,16 +129,16 @@ describe "PuppetCA" do
         it "should delegate to ca.apply with the hosts given on command line" do
             ARGV.stubs(:collect).returns(["host"])
 
-            @ca.expects(:apply).with { |mode,to| to[:to] == ["host"]}
+            @ca.expects(:apply).with { |cert_mode,to| to[:to] == ["host"]}
 
             @puppetca.main
         end
 
         it "should delegate to ca.apply with current set mode" do
-            @puppetca.mode = "currentmode"
+            @puppetca.cert_mode = "currentmode"
             ARGV.stubs(:collect).returns(["host"])
 
-            @ca.expects(:apply).with { |mode,to| mode == "currentmode" }
+            @ca.expects(:apply).with { |cert_mode,to| cert_mode == "currentmode" }
 
             @puppetca.main
         end
