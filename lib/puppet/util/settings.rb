@@ -284,9 +284,9 @@ class Puppet::Util::Settings
         end
     end
 
-    # Figure out the section name for the mode.
+    # Figure out the section name for the run_mode.
     def run_mode
-        convert(@config[:run_mode].default).intern if @config[:run_mode]
+        Puppet.run_mode.name
     end
 
     # Return all of the parameters associated with a given section.

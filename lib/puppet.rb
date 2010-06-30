@@ -93,7 +93,7 @@ module Puppet
 
     def self.run_mode
         require 'puppet/util/run_mode'
-        $puppet_application_mode ||= Puppet::Util::RunMode.new( :user )
+        $puppet_application_mode || Puppet::Util::RunMode.new( :user )
     end
 
     def self.application_name

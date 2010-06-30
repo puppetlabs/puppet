@@ -10,9 +10,21 @@ describe Puppet::Application do
 
     before do
         @app = Class.new(Puppet::Application).new
+        @appclass = @app.class
 
         # avoid actually trying to parse any settings
         Puppet.settings.stubs(:parse)
+    end
+
+    describe ".run_mode" do
+        it "should default to user" do
+            @appclass.run_mode.name.should == :user
+        end
+
+        it "should set and get a value" do
+            @appclass.run_mode :agent
+            @appclass.run_mode.name.should == :agent
+        end
     end
 
     it "should have a run entry-point" do
@@ -150,7 +162,7 @@ describe Puppet::Application do
 
         describe 'on POSIX systems' do
             confine "HUP works only on POSIX systems" => Puppet.features.posix?
-            
+
             it 'should signal process with HUP after block if restart requested during block execution' do
                 Puppet::Application.run_status = nil
                 target = mock 'target'

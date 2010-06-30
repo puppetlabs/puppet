@@ -8,6 +8,31 @@ require 'puppet/network/server'
 require 'puppet/daemon'
 
 describe Puppet::Application::Agent do
+    it "should ask Puppet::Application to parse Puppet configuration file" do
+        agent = Puppet::Application::Agent.new
+        agent.preinit
+
+        Puppet[:vardir].should == '/dev/null'
+        Puppet[:report].should be_false
+
+        text = <<-CONF
+            [main]
+                vardir='/foo/bar'
+            [puppetd]
+                report=true
+        CONF
+
+        FileTest.expects(:exist?).with('file').returns true
+        Puppet.settings.expects(:read_file).returns(text)
+
+        Puppet.settings.unsafe_parse('file')
+
+        Puppet[:vardir].should == '/foo/bar'
+        Puppet[:report].should be_true
+    end
+end
+
+describe Puppet::Application::Agent do
     before :each do
         @puppetd = Puppet::Application[:agent]
         @puppetd.stubs(:puts)

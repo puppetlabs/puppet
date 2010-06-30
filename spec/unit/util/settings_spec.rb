@@ -274,11 +274,18 @@ describe Puppet::Util::Settings do
             @settings.value(:one, "env2").should == "twoval"
         end
 
-        it "should have a run_mode determined by the 'run_mode' parameter that cannot be edited" do
-            @settings.setdefaults(:whatever, :run_mode => ["something", "yayness"])
-            @settings.run_mode.should == :something
+        it "should have a run_mode that defaults to user" do
+            @settings.run_mode.should == :user
+        end
 
-            lambda{ @settings[:run_mode] = :other }.should raise_error
+        it "should not give a shit if you set a default run_mode yourself" do
+            @settings.setdefaults(:whatever, :run_mode => ["something", "yayness"])
+            lambda{ @settings[:run_mode] = :other }.should raise_error(ArgumentError, /read-only/)
+        end
+
+        it "CURRENTLY should not allow the user to set a run_mode default" do
+            @settings.setdefaults(:whatever, :run_mode => ["something", "yayness"])
+            @settings.run_mode.should == :user
         end
     end
 
@@ -286,10 +293,10 @@ describe Puppet::Util::Settings do
         before do
             @settings = Puppet::Util::Settings.new
             @settings.setdefaults :section,
-                :config   => ["/my/file", "a"],
-                :one      => ["ONE", "a"     ],
-                :run_mode => ["mymode", "w"  ]
+                :config => ["/my/file", "a"],
+                :one => ["ONE", "a"]
             FileTest.stubs(:exist?).returns true
+            Puppet.stubs(:run_mode).returns stub('run_mode', :name => :mymode)
         end
 
         it "should return default values if no values have been set" do
@@ -356,6 +363,19 @@ describe Puppet::Util::Settings do
             @settings.setdefaults :section, :user => ["suser", "doc"], :group => ["sgroup", "doc"]
             @settings.setdefaults :section, :config => ["/some/file", "eh"], :one => ["ONE", "a"], :two => ["$one TWO", "b"], :three => ["$one $two THREE", "c"]
             FileTest.stubs(:exist?).returns true
+        end
+
+        it "should not ignore the report setting" do
+            @settings.setdefaults :section, :report => ["false", "a"]
+            myfile = stub "myfile"
+            @settings[:config] = myfile
+            text = <<-CONF
+                [puppetd]
+                    report=true
+            CONF
+            @settings.expects(:read_file).returns(text)
+            @settings.parse
+            @settings[:report].should be_true
         end
 
         it "should use its current ':config' value for the file to parse" do
@@ -464,9 +484,9 @@ describe Puppet::Util::Settings do
             values = []
             @settings.setdefaults :section, :mysetting => {:default => "defval", :desc => "a", :hook => proc { |v| values << v }}
 
-            text = "[main]
+            text = "[user]
             mysetting = setval
-            [puppet]
+            [main]
             mysetting = other
             "
             @settings.expects(:read_file).returns(text)

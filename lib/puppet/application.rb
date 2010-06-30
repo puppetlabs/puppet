@@ -221,10 +221,14 @@ class Application
             find(name).new
         end
 
+        # Sets or gets the run_mode name. Sets the run_mode name if a mode_name is
+        # passed. Otherwise, gets the run_mode or a default run_mode
+        #
         def run_mode( mode_name = nil)
-            @run_mode ||= mode_name || @run_mode || :user
+            return @run_mode if @run_mode and not mode_name
+
             require 'puppet/util/run_mode'
-            Puppet::Util::RunMode.new( @run_mode )
+            @run_mode = Puppet::Util::RunMode.new( mode_name || :user )
         end
     end
 
