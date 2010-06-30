@@ -64,7 +64,11 @@ Puppet::Application.new(:puppetca) do
 
         Puppet::Util::Log.newdestination :console
 
-        Puppet::SSL::Host.ca_location = :only
+        if @cert_mode == :generate
+            Puppet::SSL::Host.ca_location = :local
+        else
+            Puppet::SSL::Host.ca_location = :only
+        end
 
         begin
             @ca = Puppet::SSL::CertificateAuthority.new
