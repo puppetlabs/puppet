@@ -1,5 +1,4 @@
 require 'puppet/application'
-require 'facter'
 
 class Puppet::Application::Resource < Puppet::Application
 
@@ -83,7 +82,7 @@ class Puppet::Application::Resource < Puppet::Application
             if params.empty?
                 [ Puppet::Resource.find( key ) ]
             else
-                [ Puppet::Resource.new( type, name, params ).save( key ) ]
+                [ Puppet::Resource.new( type, name, :parameters => params ).save( key ) ]
             end
         else
             Puppet::Resource.search( key, {} )
