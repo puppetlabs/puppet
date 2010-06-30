@@ -277,16 +277,6 @@ describe Puppet::Util::Settings do
         it "should have a run_mode that defaults to user" do
             @settings.run_mode.should == :user
         end
-
-        it "should not give a shit if you set a default run_mode yourself" do
-            @settings.setdefaults(:whatever, :run_mode => ["something", "yayness"])
-            lambda{ @settings[:run_mode] = :other }.should raise_error(ArgumentError, /read-only/)
-        end
-
-        it "CURRENTLY should not allow the user to set a run_mode default" do
-            @settings.setdefaults(:whatever, :run_mode => ["something", "yayness"])
-            @settings.run_mode.should == :user
-        end
     end
 
     describe "when choosing which value to return" do

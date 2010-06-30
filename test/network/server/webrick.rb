@@ -93,7 +93,7 @@ class TestWebrickServer < Test::Unit::TestCase
         }
 
         pid = fork {
-            Puppet.mode.stubs(:master?).returns(true)
+            Puppet::Util::RunMode.any_instance.stubs(:master?).returns true
             assert_nothing_raised() {
                 trap(:INT) { server.shutdown }
                 server.start

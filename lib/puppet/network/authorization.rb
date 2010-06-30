@@ -34,7 +34,7 @@ module Puppet::Network
                         return false
                     end
                 else
-                    if Puppet.mode.master?
+                    if Puppet.run_mode.master?
                         Puppet.debug "Allowing " + msg
                         return true
                     else
