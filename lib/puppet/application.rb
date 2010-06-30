@@ -214,7 +214,12 @@ class Application
         end
 
         def find(name)
-            self.const_get(name.to_s.capitalize)
+            begin
+                self.const_get(name.to_s.capitalize)
+            rescue
+                puts "Const '#{name.to_s.capitalize}' appears to be undefined. Unable to continue without it."
+                Kernel::exit(1)
+            end
         end
 
         def [](name)
