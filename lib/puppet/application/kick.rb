@@ -38,6 +38,7 @@ class Puppet::Application::Kick < Puppet::Application
     end
 
     def run_command
+        @hosts += command_line.args
         options[:test] ? test : main
     end
 
@@ -143,6 +144,13 @@ class Puppet::Application::Kick < Puppet::Application
             exit(12)
         end
     end
+    
+    def initialize
+        super
+        @hosts = []
+        @classes = []
+        @tags = []
+    end
 
     def preinit
         [:INT, :TERM].each do |signal|
@@ -156,10 +164,6 @@ class Puppet::Application::Kick < Puppet::Application
         options[:fqdn] = true
         options[:ignoreschedules] = false
         options[:foreground] = false
-
-        @hosts = []
-        @classes = []
-        @tags = []
     end
 
     def setup

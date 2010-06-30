@@ -9,7 +9,7 @@
 #
 #   puppet kick [-a|--all] [-c|--class <class>] [-d|--debug] [-f|--foreground]
 #       [-h|--help] [--host <host>] [--no-fqdn] [--ignoreschedules]
-#       [-t|--tag <tag>] [--test] [-p|--ping]
+#       [-t|--tag <tag>] [--test] [-p|--ping] <host> [<host> [...]]
 #
 # = Description
 #
@@ -114,7 +114,7 @@
 #
 # = Example
 #
-#   sudo puppet kick -p 10 --host host1 --host host2 -t remotefile -t webserver
+#   sudo puppet kick -p 10 -t remotefile -t webserver host1 host2
 #
 # = Author
 #

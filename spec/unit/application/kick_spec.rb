@@ -2,7 +2,6 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet/util/ldap/connection'
 require 'puppet/application/kick'
 
 describe Puppet::Application::Kick do
@@ -10,6 +9,7 @@ describe Puppet::Application::Kick do
     confine "Kick's eventloops can only start on POSIX" => Puppet.features.posix?
 
     before :each do
+        require 'puppet/util/ldap/connection'
         Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
         @kick = Puppet::Application[:kick]
         Puppet::Util::Log.stubs(:newdestination)
@@ -230,7 +230,7 @@ describe Puppet::Application::Kick do
                 @kick.stubs(:print)
                 @kick.stubs(:exit)
                 @kick.preinit
-                @kick.parse_options
+                @kick.stubs(:parse_options)
                 @kick.setup
                 $stderr.stubs(:puts)
             end
