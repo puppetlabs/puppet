@@ -45,7 +45,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     # Get the yaml directory
     def base
-        Puppet.mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
+        Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
     end
 
     # Return the path to a given node's file.

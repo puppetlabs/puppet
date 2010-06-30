@@ -1,17 +1,17 @@
 # The majority of the system configuration parameters are set in this file.
 module Puppet
     setdefaults(:main,
-        :confdir => [Puppet.mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
+        :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
         is running as root or the user that ``puppet master`` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
         it defaults to being in ``~``."],
-        :vardir => [Puppet.mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
+        :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
         :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
             default is essentially $0 without the path or ``.rb``."],
-        :mode => [Puppet.mode.name.to_s, "The name of the application, if we are running as one.  The
+        :run_mode => [Puppet.run_mode.name.to_s, "The name of the application, if we are running as one.  The
             default is essentially $0 without the path or ``.rb``."]
     )
 
-    setdefaults(:main, :logdir => Puppet.mode.logopts)
+    setdefaults(:main, :logdir => Puppet.run_mode.logopts)
 
     setdefaults(:main,
         :trace => [false, "Whether to print stack traces on some errors"],
@@ -26,7 +26,7 @@ module Puppet
                 might result in spurious service restarts)."
         },
         :rundir => {
-            :default => Puppet.mode.run_dir,
+            :default => Puppet.run_mode.run_dir,
             :mode => 01777,
             :desc => "Where Puppet PID files are kept."
         },

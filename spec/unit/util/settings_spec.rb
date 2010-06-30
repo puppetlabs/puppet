@@ -199,15 +199,15 @@ describe Puppet::Util::Settings do
             lambda{ @settings[:name] = "foo" }.should raise_error(ArgumentError)
         end
 
-        it "should raise an error if we try to set 'mode'" do
-            lambda{ @settings[:mode] = "foo" }.should raise_error(ArgumentError)
+        it "should raise an error if we try to set 'run_mode'" do
+            lambda{ @settings[:run_mode] = "foo" }.should raise_error(ArgumentError)
         end
 
         it "should warn and use [master] if we ask for [puppetmasterd]" do
             Puppet.expects(:warning)
             @settings.set_value(:myval, "foo", :puppetmasterd)
 
-            @settings.stubs(:mode).returns(:master)
+            @settings.stubs(:run_mode).returns(:master)
             @settings.value(:myval).should == "foo"
         end
 
@@ -215,7 +215,7 @@ describe Puppet::Util::Settings do
             Puppet.expects(:warning)
             @settings.set_value(:myval, "foo", :puppetd)
 
-            @settings.stubs(:mode).returns(:agent)
+            @settings.stubs(:run_mode).returns(:agent)
             @settings.value(:myval).should == "foo"
         end
     end
@@ -274,11 +274,11 @@ describe Puppet::Util::Settings do
             @settings.value(:one, "env2").should == "twoval"
         end
 
-        it "should have a mode determined by the 'mode' parameter that cannot be edited" do
-            @settings.setdefaults(:whatever, :mode => ["something", "yayness"])
-            @settings.mode.should == :something
+        it "should have a run_mode determined by the 'run_mode' parameter that cannot be edited" do
+            @settings.setdefaults(:whatever, :run_mode => ["something", "yayness"])
+            @settings.run_mode.should == :something
 
-            lambda{ @settings[:mode] = :other }.should raise_error
+            lambda{ @settings[:run_mode] = :other }.should raise_error
         end
     end
 
@@ -286,9 +286,9 @@ describe Puppet::Util::Settings do
         before do
             @settings = Puppet::Util::Settings.new
             @settings.setdefaults :section,
-                :config => ["/my/file", "a"],
-                :one => ["ONE", "a"],
-                :mode => ["mymode", "w"]
+                :config   => ["/my/file", "a"],
+                :one      => ["ONE", "a"     ],
+                :run_mode => ["mymode", "w"  ]
             FileTest.stubs(:exist?).returns true
         end
 

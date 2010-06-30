@@ -30,15 +30,15 @@ describe Puppet::Indirector::File do
             @searcher.should respond_to(:find)
         end
 
-        it "should use the server data directory plus the indirection name if the process mode is master" do
-            Puppet.mode.expects(:master?).returns true
+        it "should use the server data directory plus the indirection name if the run_mode is master" do
+            Puppet.run_mode.expects(:master?).returns true
             Puppet.settings.expects(:value).with(:server_datadir).returns "/my/dir"
 
             @searcher.data_directory.should == File.join("/my/dir", "mystuff")
         end
 
-        it "should use the client data directory plus the indirection name if the process mode is not master" do
-            Puppet.mode.expects(:master?).returns false
+        it "should use the client data directory plus the indirection name if the run_mode is not master" do
+            Puppet.run_mode.expects(:master?).returns false
             Puppet.settings.expects(:value).with(:client_datadir).returns "/my/dir"
 
             @searcher.data_directory.should == File.join("/my/dir", "mystuff")

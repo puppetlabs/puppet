@@ -3,7 +3,7 @@ require 'puppet/application'
 class Puppet::Application::Master < Puppet::Application
 
     should_parse_config
-    mode :master
+    run_mode :master
 
     option("--debug", "-d")
     option("--verbose", "-v")

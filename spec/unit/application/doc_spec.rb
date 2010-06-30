@@ -223,8 +223,8 @@ describe Puppet::Application::Doc do
                 end
             end
 
-            it "should operate in master mode" do
-                @doc.class.mode.name.should == :master
+            it "should operate in master run_mode" do
+                @doc.class.run_mode.name.should == :master
 
                 @doc.setup_rdoc
             end

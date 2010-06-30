@@ -3,7 +3,7 @@ require 'puppet/application'
 class Puppet::Application::Cert < Puppet::Application
 
     should_parse_config
-    mode :server
+    run_mode :server
 
     attr_accessor :cert_mode, :all, :ca, :digest, :signed
 

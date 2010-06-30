@@ -1,6 +1,6 @@
 module Puppet
     module Util
-        class Mode
+        class RunMode
             def initialize(name)
                 @name = name.to_sym
             end

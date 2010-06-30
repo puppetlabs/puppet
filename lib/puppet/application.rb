@@ -155,7 +155,7 @@ class Application
             [:restart_requested, :stop_requested].include? run_status
         end
 
-        # Indicates that Puppet::Application believes that it's in usual running mode (no stop/restart request
+        # Indicates that Puppet::Application believes that it's in usual running run_mode (no stop/restart request
         # currently active).
         def clear?
             run_status.nil?
@@ -221,10 +221,10 @@ class Application
             find(name).new
         end
 
-        def mode( mode_name = nil)
-            @mode ||= mode_name || @mode || :user
-            require 'puppet/util/mode'
-            Puppet::Util::Mode.new( @mode )
+        def run_mode( mode_name = nil)
+            @run_mode ||= mode_name || @run_mode || :user
+            require 'puppet/util/run_mode'
+            Puppet::Util::RunMode.new( @run_mode )
         end
     end
 
@@ -266,10 +266,10 @@ class Application
     def initialize(command_line = nil)
         require 'puppet/util/command_line'
         @command_line = command_line || Puppet::Util::CommandLine.new
-        @mode = self.class.mode
+        @run_mode = self.class.run_mode
         @options = {}
 
-        $puppet_application_mode = @mode
+        $puppet_application_mode = @run_mode
         $puppet_application_name = name
         require 'puppet'
     end

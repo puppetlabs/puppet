@@ -53,7 +53,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # Is our compiler part of a network, or are we just local?
     def networked?
-        Puppet.mode.master?
+        Puppet.run_mode.master?
     end
 
     private

@@ -91,9 +91,9 @@ module Puppet
         @@settings
     end
 
-    def self.mode
-        require 'puppet/util/mode'
-        $puppet_application_mode ||= Puppet::Util::Mode.new( :user )
+    def self.run_mode
+        require 'puppet/util/run_mode'
+        $puppet_application_mode ||= Puppet::Util::RunMode.new( :user )
     end
 
     def self.application_name

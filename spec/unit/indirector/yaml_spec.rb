@@ -22,20 +22,20 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
         @dir = "/what/ever"
         Puppet.settings.stubs(:value).returns("fakesettingdata")
         Puppet.settings.stubs(:value).with(:clientyamldir).returns(@dir)
-        Puppet.mode.stubs(:master?).returns false
+        Puppet.run_mode.stubs(:master?).returns false
 
         @request = stub 'request', :key => :me, :instance => @subject
     end
 
     describe Puppet::Indirector::Yaml, " when choosing file location" do
-        it "should use the server_datadir if the mode is master" do
-            Puppet.mode.expects(:master?).returns true
+        it "should use the server_datadir if the run_mode is master" do
+            Puppet.run_mode.expects(:master?).returns true
             Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
             @store.path(:me).should =~ %r{^/server/yaml/dir}
         end
 
-        it "should use the client yamldir if the mode is not master" do
-            Puppet.mode.expects(:master?).returns false
+        it "should use the client yamldir if the run_mode is not master" do
+            Puppet.run_mode.expects(:master?).returns false
             Puppet.settings.expects(:value).with(:clientyamldir).returns "/client/yaml/dir"
             @store.path(:me).should =~ %r{^/client/yaml/dir}
         end

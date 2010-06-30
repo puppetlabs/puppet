@@ -17,7 +17,7 @@ class Puppet::Util::Settings
     attr_accessor :file
     attr_reader :timer
 
-    ReadOnly = [:mode, :name]
+    ReadOnly = [:run_mode, :name]
 
     # Retrieve a config value
     def [](param)
@@ -285,8 +285,8 @@ class Puppet::Util::Settings
     end
 
     # Figure out the section name for the mode.
-    def mode
-        convert(@config[:mode].default).intern if @config[:mode]
+    def run_mode
+        convert(@config[:run_mode].default).intern if @config[:run_mode]
     end
 
     # Return all of the parameters associated with a given section.
@@ -443,9 +443,9 @@ class Puppet::Util::Settings
     # The order in which to search for values.
     def searchpath(environment = nil)
         if environment
-            [:cli, :memory, environment, :mode, :main]
+            [:cli, :memory, environment, :run_mode, :main]
         else
-            [:cli, :memory, :mode, :main]
+            [:cli, :memory, :run_mode, :main]
         end
     end
 
@@ -499,7 +499,7 @@ class Puppet::Util::Settings
         legacy_to_mode = Puppet::Util::CommandLine::LegacyName.inject({}) do |hash, pair|
             app, legacy = pair
             command_line.require_application app
-            hash[legacy.to_sym] = Puppet::Application.find(app).mode.name
+            hash[legacy.to_sym] = Puppet::Application.find(app).run_mode.name
             hash
         end
         if new_type = legacy_to_mode[type]
@@ -602,8 +602,8 @@ Generated on #{Time.now}.
 }.gsub(/^/, "# ")
 
         # Add a section heading that matches our name.
-        if @config.include?(:mode)
-            str += "[%s]\n" % self[:mode]
+        if @config.include?(:run_mode)
+            str += "[%s]\n" % self[:run_mode]
         end
         eachsection do |section|
             persection(section) do |obj|
@@ -827,7 +827,7 @@ Generated on #{Time.now}.
     def each_source(environment)
         searchpath(environment).each do |source|
             # Modify the source as necessary.
-            source = self.mode if source == :mode
+            source = self.run_mode if source == :run_mode
             yield source
         end
     end
