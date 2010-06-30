@@ -5,17 +5,17 @@ class Puppet::Application::Cert < Puppet::Application
     should_parse_config
     mode :server
 
-    attr_accessor :mode, :all, :ca, :digest, :signed
+    attr_accessor :cert_mode, :all, :ca, :digest, :signed
 
     def find_mode(opt)
         require 'puppet/ssl/certificate_authority'
         modes = Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS
         tmp = opt.sub("--", '').to_sym
-        @mode = modes.include?(tmp) ? tmp : nil
+        @cert_mode = modes.include?(tmp) ? tmp : nil
     end
 
     option("--clean", "-c") do
-        @mode = :destroy
+        @cert_mode = :destroy
     end
 
     option("--all", "-a") do
@@ -54,8 +54,8 @@ class Puppet::Application::Cert < Puppet::Application
             hosts = command_line.args.collect { |h| puts h; h.downcase }
         end
         begin
-            @ca.apply(:revoke, :to => hosts) if @mode == :destroy
-            @ca.apply(@mode, :to => hosts, :digest => @digest)
+            @ca.apply(:revoke, :to => hosts) if @cert_mode == :destroy
+            @ca.apply(@cert_mode, :to => hosts, :digest => @digest)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             puts detail.to_s

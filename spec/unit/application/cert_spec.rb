@@ -45,9 +45,9 @@ describe Puppet::Application::Cert do
         @cert_app.digest.should == :digest
     end
 
-    it "should set mode to :destroy for --clean" do
+    it "should set cert_mode to :destroy for --clean" do
         @cert_app.handle_clean(0)
-        @cert_app.mode.should == :destroy
+        @cert_app.cert_mode.should == :destroy
     end
 
     it "should set all to true for --all" do
@@ -61,10 +61,10 @@ describe Puppet::Application::Cert do
     end
     
     Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|
-        it "should set mode to #{method} with option --#{method}" do
+        it "should set cert_mode to #{method} with option --#{method}" do
             @cert_app.send("handle_#{method}".to_sym, nil)
 
-            @cert_app.mode.should == method
+            @cert_app.cert_mode.should == method
         end
     end
 
@@ -127,7 +127,7 @@ describe Puppet::Application::Cert do
         it "should delegate with :all if option --all was given" do
             @cert_app.handle_all(0)
 
-            @ca.expects(:apply).with { |mode,to| to[:to] == :all }
+            @ca.expects(:apply).with { |cert_mode,to| to[:to] == :all }
 
             @cert_app.main
         end
@@ -135,7 +135,7 @@ describe Puppet::Application::Cert do
         it "should delegate to ca.apply with the hosts given on command line" do
             @cert_app.command_line.stubs(:args).returns(["host"])
 
-            @ca.expects(:apply).with { |mode,to| to[:to] == ["host"]}
+            @ca.expects(:apply).with { |cert_mode,to| to[:to] == ["host"]}
 
             @cert_app.main
         end
@@ -144,26 +144,26 @@ describe Puppet::Application::Cert do
             @cert_app.command_line.stubs(:args).returns(["host"])
             @cert_app.handle_digest(:digest)
 
-            @ca.expects(:apply).with { |mode,to| to[:digest] == :digest}
+            @ca.expects(:apply).with { |cert_mode,to| to[:digest] == :digest}
 
             @cert_app.main
         end
 
-        it "should delegate to ca.apply with current set mode" do
-            @cert_app.mode = "currentmode"
+        it "should delegate to ca.apply with current set cert_mode" do
+            @cert_app.cert_mode = "currentmode"
             @cert_app.command_line.stubs(:args).returns(["host"])
 
-            @ca.expects(:apply).with { |mode,to| mode == "currentmode" }
+            @ca.expects(:apply).with { |cert_mode,to| cert_mode == "currentmode" }
 
             @cert_app.main
         end
 
-        it "should revoke cert if mode is clean" do
-            @cert_app.mode = :destroy
+        it "should revoke cert if cert_mode is clean" do
+            @cert_app.cert_mode = :destroy
             @cert_app.command_line.stubs(:args).returns(["host"])
 
-            @ca.expects(:apply).with { |mode,to| mode == :revoke }
-            @ca.expects(:apply).with { |mode,to| mode == :destroy }
+            @ca.expects(:apply).with { |cert_mode,to| cert_mode == :revoke }
+            @ca.expects(:apply).with { |cert_mode,to| cert_mode == :destroy }
 
             @cert_app.main
         end
