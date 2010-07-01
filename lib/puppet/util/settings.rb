@@ -365,6 +365,7 @@ class Puppet::Util::Settings
         # and I'm too lazy to only set the metadata once.
         searchpath.reverse.each do |source|
             source = run_mode if source == :run_mode
+            source = @name if (@name && source == :name)
             if meta = metas[source]
                 set_metadata(meta)
             end
