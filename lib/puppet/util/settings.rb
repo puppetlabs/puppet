@@ -443,9 +443,9 @@ class Puppet::Util::Settings
     # The order in which to search for values.
     def searchpath(environment = nil)
         if environment
-            [:cli, :memory, environment, :run_mode, :main]
+            [:cli, :memory, environment, :run_mode, :main, :mutable_defaults]
         else
-            [:cli, :memory, :run_mode, :main]
+            [:cli, :memory, :run_mode, :main, :mutable_defaults]
         end
     end
 
@@ -490,7 +490,7 @@ class Puppet::Util::Settings
         if setting.respond_to?(:handle) and not options[:dont_trigger_handles]
             setting.handle(value)
         end
-        if ReadOnly.include? param
+        if ReadOnly.include? param and type != :mutable_defaults
             raise ArgumentError,
                 "You're attempting to set configuration parameter $#{param}, which is read-only."
         end

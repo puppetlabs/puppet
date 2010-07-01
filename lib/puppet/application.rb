@@ -280,6 +280,19 @@ class Application
 
         $puppet_application_mode = @run_mode
         $puppet_application_name = name
+        
+        if Puppet.respond_to? :settings
+            # This is to reduce the amount of confusion in rspec
+            # because it might have loaded defaults.rb before the globals were set
+            # and thus have the wrong defaults for the current application
+            Puppet.settings.set_value(:confdir, Puppet.run_mode.conf_dir, :mutable_defaults)
+            Puppet.settings.set_value(:vardir, Puppet.run_mode.var_dir, :mutable_defaults)
+            Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
+            Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
+            Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
+            Puppet.settings.set_value(:mode, Puppet.run_mode.name.to_s, :mutable_defaults)
+        end
+
         require 'puppet'
     end
 

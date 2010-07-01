@@ -6,7 +6,8 @@ module Puppet
         it defaults to being in ``~``."],
         :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
         :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
-            default is essentially $0 without the path or ``.rb``."]
+            default is essentially $0 without the path or ``.rb``."],
+        :mode => [Puppet.run_mode.name.to_s, "The effective 'run mode' of the application: master, agent, or user."]
     )
 
     setdefaults(:main, :logdir => Puppet.run_mode.logopts)
