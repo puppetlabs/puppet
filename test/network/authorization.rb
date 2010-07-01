@@ -83,7 +83,7 @@ class TestAuthConfig < Test::Unit::TestCase
         assert_logged(:notice, /Denying/, "did not log call")
 
         # Now set our run_mode to master, so calls are allowed
-        Puppet::Util::RunMode.any_instance.stubs(:master?).returns true
+        Puppet.run_mode.stubs(:master?).returns true
         assert(@obj.authorized?(@request),
             "Denied call with no config file and master")
         assert_logged(:debug, /Allowing/, "did not log call")

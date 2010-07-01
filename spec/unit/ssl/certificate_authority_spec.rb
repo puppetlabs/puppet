@@ -27,7 +27,7 @@ describe Puppet::SSL::CertificateAuthority do
         describe "and the host is a CA host and the run_mode is master" do
             before do
                 Puppet.settings.stubs(:value).with(:ca).returns true
-                Puppet::Util::RunMode.any_instance.stubs(:master?).returns true
+                Puppet.run_mode.stubs(:master?).returns true
 
                 @ca = mock('ca')
                 Puppet::SSL::CertificateAuthority.stubs(:new).returns @ca

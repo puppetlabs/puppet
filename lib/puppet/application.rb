@@ -228,7 +228,7 @@ class Application
             return @run_mode if @run_mode and not mode_name
 
             require 'puppet/util/run_mode'
-            @run_mode = Puppet::Util::RunMode.new( mode_name || :user )
+            @run_mode = Puppet::Util::RunMode[ mode_name || :user ]
         end
     end
 

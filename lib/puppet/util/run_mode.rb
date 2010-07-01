@@ -5,7 +5,13 @@ module Puppet
                 @name = name.to_sym
             end
 
+            @@run_modes = Hash.new {|h, k| h[k] = RunMode.new(k)}
+
             attr :name
+
+            def self.[](name)
+                @@run_modes[name]
+            end
 
             def master?
                 name == :master
