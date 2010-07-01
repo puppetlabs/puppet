@@ -67,7 +67,7 @@ statement:    resource
             | collection
             | assignment
             | casestatement
-            | ifstatement
+            | ifstatement_begin
             | import
             | fstatement
             | definition
@@ -463,24 +463,15 @@ resourceref: NAME LBRACK rvalues RBRACK {
     result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }
 
-ifstatement:      IF expression LBRACE statements RBRACE else {
-    @lexer.commentpop
-    args = {
-        :test => val[1],
-        :statements => val[3]
-    }
-
-    if val[5]
-        args[:else] = val[5]
-    end
-
-    result = ast AST::IfStatement, args
+ifstatement_begin: IF ifstatement {
+    result = val[1]
 }
-                | IF expression LBRACE RBRACE else {
+
+ifstatement:      expression LBRACE statements RBRACE else {
     @lexer.commentpop
     args = {
-        :test => val[1],
-        :statements => ast(AST::Nop)
+        :test => val[0],
+        :statements => val[2]
     }
 
     if val[4]
@@ -489,8 +480,24 @@ ifstatement:      IF expression LBRACE statements RBRACE else {
 
     result = ast AST::IfStatement, args
 }
+                | expression LBRACE RBRACE else {
+    @lexer.commentpop
+    args = {
+        :test => val[0],
+        :statements => ast(AST::Nop)
+    }
+
+    if val[3]
+        args[:else] = val[3]
+    end
+
+    result = ast AST::IfStatement, args
+}
 
 else:             # nothing
+                | ELSIF ifstatement {
+    result = ast AST::Else, :statements => val[1]
+}
                 | ELSE LBRACE statements RBRACE {
     @lexer.commentpop
     result = ast AST::Else, :statements => val[2]

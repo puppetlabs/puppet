@@ -192,6 +192,12 @@ describe Puppet::Parser do
             @parser.parse("if true { notice('test') } else { }")
         end
 
+        it "should build a chain of 'ifs' if there's an 'elsif'" do
+            ast = @parser.parse(<<-PP)
+              if true { notice('test') } elsif true {} else { }
+            PP
+        end
+
     end
 
     describe "when parsing function calls" do
