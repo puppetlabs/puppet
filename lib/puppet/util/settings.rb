@@ -474,6 +474,24 @@ class Puppet::Util::Settings
         return @service_user_available = user.exists?
     end
 
+    def legacy_to_mode(type, param)
+        if not defined? @app_names then
+            require 'puppet/util/command_line'
+            command_line = Puppet::Util::CommandLine.new
+            @app_names = Puppet::Util::CommandLine::LegacyName.inject({}) do |hash, pair|
+                app, legacy = pair
+                command_line.require_application app
+                hash[legacy.to_sym] = Puppet::Application.find(app).run_mode.name
+                hash
+            end
+        end
+        if new_type = @app_names[type]
+            Puppet.warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
+            return new_type
+        end
+        return type
+    end
+
     def set_value(param, value, type, options = {})
         param = param.to_sym
         unless setting = @config[param]
@@ -494,18 +512,7 @@ class Puppet::Util::Settings
             raise ArgumentError,
                 "You're attempting to set configuration parameter $#{param}, which is read-only."
         end
-        require 'puppet/util/command_line'
-        command_line = Puppet::Util::CommandLine.new
-        legacy_to_mode = Puppet::Util::CommandLine::LegacyName.inject({}) do |hash, pair|
-            app, legacy = pair
-            command_line.require_application app
-            hash[legacy.to_sym] = Puppet::Application.find(app).run_mode.name
-            hash
-        end
-        if new_type = legacy_to_mode[type]
-            Puppet.warning "You have configuration parameter $#{param} specified in [#{type}], which is a deprecated section. I'm assuming you meant [#{new_type}]"
-            type = new_type
-        end
+        type = legacy_to_mode(type, param)
         @sync.synchronize do # yay, thread-safe
             @values[type][param] = value
             @cache.clear
