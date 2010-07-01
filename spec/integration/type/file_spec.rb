@@ -7,6 +7,11 @@ require 'puppet_spec/files'
 describe Puppet::Type.type(:file) do
     include PuppetSpec::Files
 
+    before do
+        # stub this to not try to create state.yaml
+        Puppet::Util::Storage.stubs(:store)
+    end
+
     it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
         file = Puppet::Type.type(:file).new :path => "/my/file", :mode => "755"
         catalog = Puppet::Resource::Catalog.new
@@ -128,6 +133,8 @@ describe Puppet::Type.type(:file) do
 
         it "should propagate failures encountered when renaming the temporary file" do
             file = Puppet::Type.type(:file).new :path => tmpfile("fail_rename"), :content => "foo"
+            file.stubs(:remove_existing) # because it tries to make a backup
+
             catalog = Puppet::Resource::Catalog.new
             catalog.add_resource file
 
