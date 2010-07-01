@@ -6,6 +6,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     before do
         @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+        # stub this to not try to create state.yaml
+        Puppet::Util::Storage.stubs(:store)
     end
 
     it "should be an Expirer" do
@@ -599,6 +601,8 @@ describe Puppet::Resource::Catalog, "when compiling" do
             Puppet::Transaction.stubs(:new).returns(@transaction)
             @transaction.stubs(:evaluate)
             @transaction.stubs(:add_times)
+
+            Puppet.settings.stubs(:use)
         end
 
         it "should create and evaluate a transaction" do
