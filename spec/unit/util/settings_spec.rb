@@ -864,6 +864,7 @@ describe Puppet::Util::Settings do
 
         it "should specify that it is not managing a host catalog" do
             catalog = Puppet::Resource::Catalog.new("foo")
+            catalog.expects(:apply)
             @settings.expects(:to_catalog).returns catalog
 
             catalog.stubs(:to_ral).returns catalog
