@@ -9,6 +9,10 @@ require 'puppet_spec/files'
 describe Puppet::Transaction do
     include PuppetSpec::Files
 
+    before do
+        Puppet::Util::Storage.stubs(:store)
+    end
+
     def mk_catalog(*resources)
         catalog = Puppet::Resource::Catalog.new(Puppet::Node.new("mynode"))
         resources.each { |res| catalog.add_resource res }
