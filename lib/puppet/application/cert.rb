@@ -3,7 +3,7 @@ require 'puppet/application'
 class Puppet::Application::Cert < Puppet::Application
 
     should_parse_config
-    run_mode :server
+    run_mode :master
 
     attr_accessor :cert_mode, :all, :ca, :digest, :signed
 
@@ -51,7 +51,7 @@ class Puppet::Application::Cert < Puppet::Application
         elsif @signed
             hosts = :signed
         else
-            hosts = command_line.args.collect { |h| puts h; h.downcase }
+            hosts = command_line.args.collect { |h| h.downcase }
         end
         begin
             @ca.apply(:revoke, :to => hosts) if @cert_mode == :destroy

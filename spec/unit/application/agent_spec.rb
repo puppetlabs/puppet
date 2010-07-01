@@ -49,6 +49,10 @@ describe Puppet::Application::Agent do
         Puppet::Node::Facts.stubs(:terminus_class=)
     end
 
+    it "should operate in agent run_mode" do
+        @puppetd.class.run_mode.name.should == :agent
+    end
+
     it "should ask Puppet::Application to parse Puppet configuration file" do
         @puppetd.should_parse_config?.should be_true
     end

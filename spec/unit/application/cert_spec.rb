@@ -11,6 +11,10 @@ describe Puppet::Application::Cert do
         Puppet::Util::Log.stubs(:level=)
     end
 
+    it "should operate in master run_mode" do
+        @cert_app.class.run_mode.name.should equal :master
+    end
+
     it "should ask Puppet::Application to parse Puppet configuration file" do
         @cert_app.should_parse_config?.should be_true
     end
@@ -59,7 +63,7 @@ describe Puppet::Application::Cert do
         @cert_app.handle_signed(0)
         @cert_app.signed.should be_true
     end
-    
+
     Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject { |m| m == :destroy }.each do |method|
         it "should set cert_mode to #{method} with option --#{method}" do
             @cert_app.send("handle_#{method}".to_sym, nil)

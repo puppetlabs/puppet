@@ -13,6 +13,7 @@ require 'puppet/util/autoload'
 require 'puppet/util/settings'
 require 'puppet/util/feature'
 require 'puppet/util/suidmanager'
+require 'puppet/util/run_mode'
 
 #------------------------------------------------------------
 # the top-level module
@@ -92,7 +93,6 @@ module Puppet
     end
 
     def self.run_mode
-        require 'puppet/util/run_mode'
         $puppet_application_mode || Puppet::Util::RunMode[:user]
     end
 

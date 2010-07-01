@@ -3,6 +3,8 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/master'
+require 'puppet/daemon'
+require 'puppet/network/server'
 
 describe Puppet::Application::Master do
     before :each do
@@ -18,6 +20,10 @@ describe Puppet::Application::Master do
         Puppet::Node::Facts.stubs(:cache_class=)
         Puppet::Transaction::Report.stubs(:terminus_class=)
         Puppet::Resource::Catalog.stubs(:terminus_class=)
+    end
+
+    it "should operate in master run_mode" do
+        @master.class.run_mode.name.should equal :master
     end
 
     it "should ask Puppet::Application to parse Puppet configuration file" do
