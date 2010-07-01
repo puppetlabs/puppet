@@ -1,3 +1,6 @@
+unless defined? SPEC_HELPER_IS_LOADED
+SPEC_HELPER_IS_LOADED = 1
+
 dir = File.expand_path(File.dirname(__FILE__))
 
 $LOAD_PATH.unshift("#{dir}/")
@@ -74,4 +77,6 @@ Puppet[:vardir] = "/dev/null"
 # allows us the same behaviour but with a different method name.
 class Object
     alias :must :should
+end
+
 end
