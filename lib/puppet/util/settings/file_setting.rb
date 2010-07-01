@@ -3,7 +3,7 @@ require 'puppet/util/settings/setting'
 # A file.
 class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     AllowedOwners = %w{root service}
-    AllowedGroups = %w{service}
+    AllowedGroups = %w{root service}
 
     class SettingError < StandardError; end
 

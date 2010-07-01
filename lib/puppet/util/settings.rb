@@ -380,6 +380,7 @@ class Puppet::Util::Settings
         # because multiple sections could set the same value
         # and I'm too lazy to only set the metadata once.
         searchpath.reverse.each do |source|
+            source = @name if (@name && source == :name)
             if meta = @values[source][:_meta]
                 set_metadata(meta)
             end
