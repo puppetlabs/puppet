@@ -66,12 +66,18 @@ Spec::Runner.configure do |config|
             $tmpfiles.clear
         end
     end
-end
 
-# Set the confdir and vardir to gibberish so that tests
-# have to be correctly mocked.
-Puppet[:confdir] = "/dev/null"
-Puppet[:vardir] = "/dev/null"
+    config.prepend_before :each do
+        # these globals are set by Application
+        $puppet_application_mode = nil
+        $puppet_application_name = nil
+
+        # Set the confdir and vardir to gibberish so that tests
+        # have to be correctly mocked.
+        Puppet[:confdir] = "/dev/null"
+        Puppet[:vardir] = "/dev/null"
+    end
+end
 
 # We need this because the RAL uses 'should' as a method.  This
 # allows us the same behaviour but with a different method name.
