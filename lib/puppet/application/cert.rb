@@ -70,7 +70,7 @@ class Puppet::Application::Cert < Puppet::Application
 
         Puppet::Util::Log.newdestination :console
 
-        if @cert_mode == :generate
+        if [:generate, :destroy].include? @cert_mode
             Puppet::SSL::Host.ca_location = :local
         else
             Puppet::SSL::Host.ca_location = :only

@@ -112,6 +112,24 @@ describe Puppet::Application::Cert do
 
             @cert_app.setup
         end
+
+        it "should set the ca_location to :local if the cert_mode is generate" do
+            @cert_app.find_mode('--generate')
+            Puppet::SSL::Host.expects(:ca_location=).with(:local)
+            @cert_app.setup
+        end
+
+        it "should set the ca_location to :local if the cert_mode is destroy" do
+            @cert_app.find_mode('--destroy')
+            Puppet::SSL::Host.expects(:ca_location=).with(:local)
+            @cert_app.setup
+        end
+
+        it "should set the ca_location to :only if the cert_mode is print" do
+            @cert_app.find_mode('--print')
+            Puppet::SSL::Host.expects(:ca_location=).with(:only)
+            @cert_app.setup
+        end
     end
 
     describe "when running" do
