@@ -145,7 +145,7 @@ class Puppet::Application::Kick < Puppet::Application
         end
     end
     
-    def initialize
+    def initialize(*args)
         super
         @hosts = []
         @classes = []

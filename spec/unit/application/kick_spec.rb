@@ -16,6 +16,13 @@ describe Puppet::Application::Kick do
         Puppet::Util::Log.stubs(:level=)
     end
 
+    describe ".new" do
+        it "should take a command-line object as an argument" do
+            command_line = stub_everything "command_line"
+            lambda{ Puppet::Application::Kick.new( command_line ) }.should_not raise_error
+        end
+    end
+
     it "should ask Puppet::Application to not parse Puppet configuration file" do
         @kick.should_parse_config?.should be_false
     end
