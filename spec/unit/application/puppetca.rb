@@ -102,6 +102,24 @@ describe "PuppetCA" do
 
             @puppetca.run_setup
         end
+
+        it "should set the ca_location to :local if the cert_mode is generate" do
+            @puppetca.find_mode('--generate')
+            Puppet::SSL::Host.expects(:ca_location=).with(:local)
+            @puppetca.run_setup
+        end
+
+        it "should set the ca_location to :local if the cert_mode is destroy" do
+            @puppetca.find_mode('--destroy')
+            Puppet::SSL::Host.expects(:ca_location=).with(:local)
+            @puppetca.run_setup
+        end
+
+        it "should set the ca_location to :only if the cert_mode is print" do
+            @puppetca.find_mode('--print')
+            Puppet::SSL::Host.expects(:ca_location=).with(:only)
+            @puppetca.run_setup
+        end
     end
 
     describe "when running" do
