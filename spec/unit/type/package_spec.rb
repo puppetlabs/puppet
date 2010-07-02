@@ -7,7 +7,6 @@ describe Puppet::Type.type(:package) do
         Puppet::Util::Storage.stubs(:store)
     end
 
-
     it "should have an :installable feature that requires the :install method" do
         Puppet::Type.type(:package).provider_feature(:installable).methods.should == [:install]
     end

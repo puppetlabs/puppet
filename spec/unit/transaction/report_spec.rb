@@ -5,6 +5,10 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/transaction/report'
 
 describe Puppet::Transaction::Report do
+    before do
+        Puppet::Util::Storage.stubs(:store)
+    end
+
     it "should set its host name to the certname" do
         Puppet.settings.expects(:value).with(:certname).returns "myhost"
         Puppet::Transaction::Report.new.host.should == "myhost"
