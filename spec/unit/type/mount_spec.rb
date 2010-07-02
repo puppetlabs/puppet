@@ -196,6 +196,9 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
 
         @mount.provider.stubs(:mounted?).returns true
 
+        # stub this to not try to create state.yaml
+        Puppet::Util::Storage.stubs(:store)
+
         @catalog = Puppet::Resource::Catalog.new
         @catalog.add_resource @mount
     end
