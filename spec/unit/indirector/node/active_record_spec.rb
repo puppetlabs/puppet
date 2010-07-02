@@ -3,8 +3,11 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/node'
+require 'spec/lib/puppet_spec/files.rb'
 
 describe "Puppet::Node::ActiveRecord" do
+    include PuppetSpec::Files
+
     confine "Missing Rails" => Puppet.features.rails?
     confine "Missing sqlite" => Puppet.features.sqlite?
     before do 
@@ -25,6 +28,9 @@ describe "Puppet::Node::ActiveRecord" do
 
         node = Puppet::Node.new("foo")
         db_instance.expects(:to_puppet).returns node
+
+        Puppet[:statedir] = tmpdir('active_record_tmp')
+        Puppet[:railslog] = '$statedir/rails.log'
         ar = Puppet::Node::ActiveRecord.new
 
         node.expects(:fact_merge)
