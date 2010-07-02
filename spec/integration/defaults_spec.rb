@@ -85,6 +85,7 @@ describe "Puppet defaults" do
     end
 
     it "should use a bind address of ''" do
+        Puppet.settings.clear
         Puppet.settings[:bindaddress].should == ""
     end
 

@@ -76,6 +76,9 @@ Spec::Runner.configure do |config|
         # have to be correctly mocked.
         Puppet[:confdir] = "/dev/null"
         Puppet[:vardir] = "/dev/null"
+
+        # Avoid opening ports to the outside world
+        Puppet.settings[:bindaddress] = "127.0.0.1"
     end
 end
 

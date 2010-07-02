@@ -48,10 +48,9 @@ describe Puppet::Network::Server do
             end
 
             it "should default to '0.0.0.0' as its bind address" do
-                @server = Puppet::Network::Server.new(@params.merge(:port => 34343))
-                @server.stubs(:unlisten) # we're breaking listening internally, so we have to keep it from unlistening
-                @server.send(:http_server).expects(:listen).with { |args| args[:address] == "0.0.0.0" }
-                @server.listen
+                Puppet.settings.clear
+                Puppet[:servertype] = 'webrick'
+                Puppet[:bindaddress].should == '0.0.0.0'
             end
 
             it "should use any specified bind address" do
@@ -70,7 +69,7 @@ describe Puppet::Network::Server do
             end
 
             after :each do
-                @server.unlisten if @server.listening?
+                @server.unlisten if @server && @server.listening?
             end
         end
 
