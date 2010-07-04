@@ -147,12 +147,8 @@ class Parser
 
     # create documentation for include statements we can find in +code+
     # and associate it with +container+
-<<<<<<< HEAD
-    def scan_for_include_or_require(container, code)
-=======
     def scan_for_include(container, code)
         code = [code] unless code.is_a?(Array)
->>>>>>> upstream-0.25/0.25.x
         code.each do |stmt|
             scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
