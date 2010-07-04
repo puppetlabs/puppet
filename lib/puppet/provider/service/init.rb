@@ -28,11 +28,13 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
     # List all services of this type.
     def self.instances
-        self.defpath = [self.defpath] unless self.defpath.is_a? Array
+        get_services(self.defpath)
+    end
 
+    def self.get_services(defpath, exclude=[])
+        defpath = [defpath] unless defpath.is_a? Array
         instances = []
-
-        self.defpath.each do |path|
+        defpath.each do |path|
             unless FileTest.directory?(path)
                 Puppet.debug "Service path %s does not exist" % path
                 next
@@ -47,6 +49,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
             Dir.entries(path).each do |name|
                 fullpath = File.join(path, name)
                 next if name =~ /^\./
+                next if exclude.include? name 
                 next if not FileTest.executable?(fullpath)
                 instances << new(:name => name, :path => path)
             end
