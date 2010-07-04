@@ -24,7 +24,7 @@ module Puppet
 
                 class sendmail {
                     file { \"/etc/mail/sendmail.cf\":
-                        source => \"puppet://server/module/sendmail.cf\"
+                        source => \"puppet://server/modules/module_name/sendmail.cf\"
                     }
                 }
 
@@ -51,9 +51,9 @@ module Puppet
 
                 file { \"/path/to/my/file\":
                     source => [
-                        \"/nfs/files/file.$host\",
-                        \"/nfs/files/file.$operatingsystem\",
-                        \"/nfs/files/file\"
+                        \"/modules/nfs/files/file.$host\",
+                        \"/modules/nfs/files/file.$operatingsystem\",
+                        \"/modules/nfs/files/file\"
                     ]
                 }
 
@@ -93,11 +93,7 @@ module Puppet
         end
 
         def checksum
-            if metadata
-                metadata.checksum
-            else
-                nil
-            end
+            metadata && metadata.checksum
         end
 
         # Look up (if necessary) and return remote content.
@@ -119,16 +115,20 @@ module Puppet
             [:owner, :mode, :group, :checksum].each do |param|
                 next if param == :owner and Puppet::Util::SUIDManager.uid != 0
                 next if param == :checksum and metadata.ftype == "directory"
-                unless value = @resource[param] and value != :absent
-                    @resource[param] = metadata.send(param)
+                unless value = resource[param] and value != :absent
+                    resource[param] = metadata.send(param)
                 end
             end
 
-            # Set the 'ensure' value, unless we're trying to delete the file.
-            @resource[:ensure] = metadata.ftype unless @resource[:ensure] == :absent
-
-            if metadata.ftype == "link"
-                @resource[:target] = metadata.destination
+            if resource[:ensure] == :absent 
+                # We know all we need to
+            elsif metadata.ftype != "link"
+                resource[:ensure] = metadata.ftype
+            elsif @resource[:links] == :follow
+                resource[:ensure] = :present
+            else
+                resource[:ensure] = "link"
+                resource[:target] = metadata.destination
             end
         end
 

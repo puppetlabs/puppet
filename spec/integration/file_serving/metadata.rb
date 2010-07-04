@@ -7,6 +7,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/file_serving/metadata'
 require 'shared_behaviours/file_serving'
+require 'puppet/indirector/file_metadata/file_server'
 
 describe Puppet::FileServing::Metadata, " when finding files" do
     it_should_behave_like "Puppet::FileServing::Files"

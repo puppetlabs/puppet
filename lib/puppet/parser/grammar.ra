@@ -160,6 +160,7 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
     error "All resource specifications require names"
 }           | classref LBRACE params endcomma RBRACE {
     # a defaults setting for a type
+    @lexer.commentpop
     result = ast(AST::ResourceDefaults, :type => val[0], :params => val[2])
 }
 
@@ -202,6 +203,7 @@ at:   AT { result = :virtual }
 # A collection statement.  Currently supports no arguments at all, but eventually
 # will, I assume.
 collection:     classref collectrhand LBRACE anyparams endcomma RBRACE {
+    @lexer.commentpop
     if val[0] =~ /^[a-z]/
         Puppet.warning addcontext("Collection names must now be capitalized")
     end

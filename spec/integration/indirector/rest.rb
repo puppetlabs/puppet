@@ -40,7 +40,6 @@ describe Puppet::Indirector::REST do
         Puppet.settings[:vardir] = @dir
         Puppet.settings[:server] = "127.0.0.1"
         Puppet.settings[:masterport] = "34343"
-        Puppet.settings[:http_enable_post_connection_check] = false
 
         Puppet::SSL::Host.ca_location = :local
 

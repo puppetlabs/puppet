@@ -80,13 +80,9 @@ module Puppet
 
 
         newvalue(:link) do
-            if property = @resource.property(:target)
-                property.retrieve
-
-                return property.mklink
-            else
-                self.fail "Cannot create a symlink without a target"
-            end
+            fail "Cannot create a symlink without a target" unless property = resource.property(:target)
+            property.retrieve
+            property.mklink
         end
 
         # Symlinks.
@@ -97,16 +93,9 @@ module Puppet
 
         munge do |value|
             value = super(value)
-
-            # It doesn't make sense to try to manage links unless, well,
-            # we're managing links.
-            resource[:links] = :manage if value == :link
-            return value if value.is_a? Symbol
-
-            @resource[:target] = value
-            resource[:links] = :manage
-
-            return :link
+            value,resource[:target] = :link,value unless value.is_a? Symbol
+            resource[:links] = :manage if value == :link and resource[:links] != :follow
+            value 
         end
 
         def change_to_s(currentvalue, newvalue)

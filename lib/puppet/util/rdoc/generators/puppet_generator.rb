@@ -1,5 +1,7 @@
 require 'rdoc/generators/html_generator'
 require 'puppet/util/rdoc/code_objects'
+require 'digest/md5'
+
 module Generators
 
     # This module holds all the classes needed to generate the HTML documentation
@@ -364,7 +366,7 @@ module Generators
             resources.each do |r|
                 res << {
                   "name" => CGI.escapeHTML(r.name),
-                  "aref" => "#{path_prefix}\##{r.aref}"
+                  "aref" => CGI.escape(path_prefix)+"\#"+CGI.escape(r.aref)
                 }
             end
             res
@@ -458,7 +460,7 @@ module Generators
             if path['<<']
                 path.gsub!(/<<\s*(\w*)/) { "from-#$1" }
             end
-            File.join(prefix, path.split("::")) + ".html"
+            File.join(prefix, path.split("::").collect { |p| Digest::MD5.hexdigest(p) }) + ".html"
         end
 
         def parent_name
@@ -558,7 +560,7 @@ module Generators
             h_name = CGI.escapeHTML(name)
 
             @values["classmod"]  = "Node"
-            @values["title"]     = "#{@values['classmod']}: #{h_name}"
+            @values["title"]     = CGI.escapeHTML("#{@values['classmod']}: #{h_name}")
 
             c = @context
             c = c.parent while c and !c.diagram

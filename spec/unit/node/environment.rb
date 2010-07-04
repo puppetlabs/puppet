@@ -22,6 +22,10 @@ describe Puppet::Node::Environment do
         Puppet::Node::Environment.attr_ttl(:modules).should == Integer(Puppet[:filetimeout])
     end
 
+    it "should use the filetimeout for the ttl for the manifestdir" do
+        Puppet::Node::Environment.attr_ttl(:manifestdir).should == Integer(Puppet[:filetimeout])
+    end
+
     it "should use the default environment if no name is provided while initializing an environment" do
         Puppet.settings.expects(:value).with(:environment).returns("one")
         Puppet::Node::Environment.new().name.should == :one
@@ -39,45 +43,57 @@ describe Puppet::Node::Environment do
         Puppet::Node::Environment.new(:one).to_s.should == "one"
     end
 
-    it "should consider its module path to be the environment-specific modulepath setting" do
-        FileTest.stubs(:directory?).returns true
-        env = Puppet::Node::Environment.new("testing")
-        module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-        env.expects(:[]).with(:modulepath).returns module_path
+    [:modulepath, :manifestdir].each do |setting|
+        it "should validate the #{setting} directories" do
+            path = %w{/one /two}.join(File::PATH_SEPARATOR)
 
-        env.modulepath.should == %w{/one /two}
+            env = Puppet::Node::Environment.new("testing")
+            env.stubs(:[]).with(setting).returns path
+
+            env.expects(:validate_dirs).with(%w{/one /two})
+
+            env.send(setting)
+        end
+
+        it "should return the validated dirs for #{setting}" do
+            path = %w{/one /two}.join(File::PATH_SEPARATOR)
+
+            env = Puppet::Node::Environment.new("testing")
+            env.stubs(:[]).with(setting).returns path
+            env.stubs(:validate_dirs).returns %w{/one /two}
+
+            env.send(setting).should == %w{/one /two}
+        end
     end
 
     it "should prefix the value of the 'PUPPETLIB' environment variable to the module path if present" do
-        FileTest.stubs(:directory?).returns true
         Puppet::Util::Execution.withenv("PUPPETLIB" => %w{/l1 /l2}.join(File::PATH_SEPARATOR)) do
             env = Puppet::Node::Environment.new("testing")
             module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
+            env.expects(:validate_dirs).with(%w{/l1 /l2 /one /two}).returns %w{/l1 /l2 /one /two}
             env.expects(:[]).with(:modulepath).returns module_path
 
             env.modulepath.should == %w{/l1 /l2 /one /two}
         end
     end
 
-    it "should not return non-directories in the module path" do
-        env = Puppet::Node::Environment.new("testing")
-        module_path = %w{/one /two}.join(File::PATH_SEPARATOR)
-        env.expects(:[]).with(:modulepath).returns module_path
+    describe "when validating modulepath or manifestdir directories" do
+        it "should not return non-directories" do
+            env = Puppet::Node::Environment.new("testing")
 
-        FileTest.expects(:directory?).with("/one").returns true
-        FileTest.expects(:directory?).with("/two").returns false
+            FileTest.expects(:directory?).with("/one").returns true
+            FileTest.expects(:directory?).with("/two").returns false
 
-        env.modulepath.should == %w{/one}
-    end
+            env.validate_dirs(%w{/one /two}).should == %w{/one}
+        end
 
-    it "should use the current working directory to fully-qualify unqualified paths" do
-        FileTest.stubs(:directory?).returns true
-        env = Puppet::Node::Environment.new("testing")
-        module_path = %w{/one two}.join(File::PATH_SEPARATOR)
-        env.expects(:[]).with(:modulepath).returns module_path
+        it "should use the current working directory to fully-qualify unqualified paths" do
+            FileTest.stubs(:directory?).returns true
+            env = Puppet::Node::Environment.new("testing")
 
-        two = File.join(Dir.getwd, "two")
-        env.modulepath.should == ["/one", two]
+            two = File.join(Dir.getwd, "two")
+            env.validate_dirs(%w{/one two}).should == ["/one", two]
+        end
     end
 
     describe "when modeling a specific environment" do
@@ -155,7 +171,7 @@ describe Puppet::Node::Environment do
                 env.expects(:modulepath).returns %w{/a}
                 Dir.expects(:entries).with("/a").returns %w{foo}
 
-                env.modules.should be_all{|mod| mod.environment == "testing" }
+                env.modules.each {|mod| mod.environment.should == env }
             end
 
             it "should cache the module list" do

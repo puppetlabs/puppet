@@ -69,7 +69,7 @@ class TestCA < Test::Unit::TestCase
         newtext = nil
         assert_nothing_raised {
             newtext, cacerttext = ca.getcert(
-                cert.csr.to_s, "test.reductivelabs.com", "127.0.0.1"
+                cert.csr.to_s, "test.puppetlabs.com", "127.0.0.1"
             )
         }
 
@@ -110,7 +110,7 @@ class TestCA < Test::Unit::TestCase
         certtext = nil
         assert_nothing_raised {
             certtext, cacerttext = caserv.getcert(
-                cert.csr.to_s, "test.reductivelabs.com", "127.0.0.1"
+                cert.csr.to_s, "test.puppetlabs.com", "127.0.0.1"
             )
         }
 
@@ -167,7 +167,7 @@ class TestCA < Test::Unit::TestCase
         # make sure we know what's going on
         assert(caserv.autosign?("hostmatch.domain.com"))
         assert(caserv.autosign?("fakehost.other.com"))
-        assert(!caserv.autosign?("kirby.reductivelabs.com"))
+        assert(!caserv.autosign?("kirby.puppetlabs.com"))
         assert(!caserv.autosign?("culain.domain.com"))
     end
 
@@ -181,7 +181,7 @@ class TestCA < Test::Unit::TestCase
         # make sure we know what's going on
         assert(!caserv.autosign?("hostmatch.domain.com"))
         assert(!caserv.autosign?("fakehost.other.com"))
-        assert(!caserv.autosign?("kirby.reductivelabs.com"))
+        assert(!caserv.autosign?("kirby.puppetlabs.com"))
         assert(!caserv.autosign?("culain.domain.com"))
     end
 

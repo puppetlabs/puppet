@@ -282,9 +282,9 @@ class Puppet::Util::Log
 
         def colorize(level, str)
             case Puppet[:color]
-            when false; str
-            when true, :ansi, "ansi"; console_color(level, str)
+            when true, :ansi, "ansi", :yes, "yes"; console_color(level, str)
             when :html, "html"; html_color(level, str)
+            else str
             end
         end
 
@@ -511,11 +511,16 @@ class Puppet::Util::Log
     # If they pass a source in to us, we make sure it is a string, and
     # we retrieve any tags we can.
     def source=(source)
-        # We can't store the actual source, we just store the path.
-        # We can't just check for whether it responds to :path, because
-        # plenty of providers respond to that in their normal function.
-        if (source.is_a?(Puppet::Type) or source.is_a?(Puppet::Parameter)) and source.respond_to?(:path)
-            set_source_from_ral(source)
+        if source.respond_to?(:source_descriptors)
+            descriptors = source.source_descriptors
+            @source = descriptors[:path]
+
+            descriptors[:tags].each { |t| tag(t) }
+
+            [:file, :line, :version].each do |param|
+                next unless descriptors[param]
+                send(param.to_s + "=", descriptors[param])
+            end
         else
             @source = source.to_s
         end
@@ -527,19 +532,6 @@ class Puppet::Util::Log
 
     def to_s
         return @message
-    end
-
-    private
-
-    def set_source_from_ral(source)
-        @source = source.path
-
-        source.tags.each { |t| tag(t) }
-
-        [:file, :line, :version].each do |param|
-            next unless value = source.send(param)
-            send(param.to_s + "=", value)
-        end
     end
 end
 

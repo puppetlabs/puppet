@@ -173,6 +173,9 @@ describe "Puppet" do
         describe "the main command" do
             before :each do
                 Puppet.stubs(:[])
+                Puppet.settings.stubs(:use)
+                Puppet.stubs(:[]).with(:prerun_command).returns ""
+                Puppet.stubs(:[]).with(:postrun_command).returns ""
                 Puppet.stubs(:[]).with(:trace).returns(true)
 
                 @puppet.options.stubs(:[])
@@ -277,6 +280,16 @@ describe "Puppet" do
                 @puppet.main
             end
 
+            it "should call the prerun and postrun commands on a Configurer instance" do
+                configurer = stub 'configurer'
+
+                Puppet::Configurer.expects(:new).returns configurer
+                configurer.expects(:execute_prerun_command)
+                configurer.expects(:execute_postrun_command)
+
+                @puppet.main
+            end
+
             it "should apply the catalog" do
                 @catalog.expects(:apply)
 
@@ -332,70 +345,51 @@ describe "Puppet" do
         end
 
         describe "the 'apply' command" do
-            confine "PSON library is missing; cannot test applying catalogs" => Puppet.features.pson?
-
-            before do
-                #Puppet::Resource::Catalog.stubs(:pson_create).returns Puppet::Resource::Catalog.new
-                PSON.stubs(:parse).returns Puppet::Resource::Catalog.new
-            end
-
             it "should read the catalog in from disk if a file name is provided" do
                 @puppet.options[:catalog] = "/my/catalog.pson"
-
                 File.expects(:read).with("/my/catalog.pson").returns "something"
-
+                Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
                 @puppet.apply
             end
 
             it "should read the catalog in from stdin if '-' is provided" do
                 @puppet.options[:catalog] = "-"
-
                 $stdin.expects(:read).returns "something"
-
+                Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns Puppet::Resource::Catalog.new
                 @puppet.apply
             end
 
-            it "should deserialize the catalog from pson" do
+            it "should deserialize the catalog from the default format" do
                 @puppet.options[:catalog] = "/my/catalog.pson"
-
-                File.expects(:read).returns "something"
-                PSON.expects(:parse).with("something").returns Puppet::Resource::Catalog.new
-
+                File.stubs(:read).with("/my/catalog.pson").returns "something"
+                Puppet::Resource::Catalog.stubs(:default_format).returns :rot13_piglatin
+                Puppet::Resource::Catalog.stubs(:convert_from).with(:rot13_piglatin,'something').returns Puppet::Resource::Catalog.new
                 @puppet.apply
             end
 
             it "should fail helpfully if deserializing fails" do
                 @puppet.options[:catalog] = "/my/catalog.pson"
-
-                File.expects(:read).returns "something"
-                PSON.expects(:parse).raises ArgumentError
-
+                File.stubs(:read).with("/my/catalog.pson").returns "something syntacically invalid"
                 lambda { @puppet.apply }.should raise_error(Puppet::Error)
             end
 
             it "should convert plain data structures into a catalog if deserialization does not do so" do
                 @puppet.options[:catalog] = "/my/catalog.pson"
-
-                File.expects(:read).returns "something"
-                PSON.expects(:parse).with("something").returns({:foo => "bar"})
+                File.stubs(:read).with("/my/catalog.pson").returns "something"
+                Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,"something").returns({:foo => "bar"})
                 Puppet::Resource::Catalog.expects(:pson_create).with({:foo => "bar"}).returns(Puppet::Resource::Catalog.new)
-
                 @puppet.apply
             end
 
             it "should convert the catalog to a RAL catalog and use a Configurer instance to apply it" do
                 @puppet.options[:catalog] = "/my/catalog.pson"
-
-                File.expects(:read).returns "something"
-
+                File.stubs(:read).with("/my/catalog.pson").returns "something"
                 catalog = Puppet::Resource::Catalog.new
-                PSON.expects(:parse).returns catalog
-
+                Puppet::Resource::Catalog.stubs(:convert_from).with(:pson,'something').returns catalog
                 catalog.expects(:to_ral).returns "mycatalog"
 
                 configurer = stub 'configurer'
                 Puppet::Configurer.expects(:new).returns configurer
-
                 configurer.expects(:run).with(:catalog => "mycatalog")
 
                 @puppet.apply

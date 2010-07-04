@@ -16,7 +16,7 @@ module Puppet
     else
         # Else, use system-wide directories.
         conf = "/etc/puppet"
-        var = "/var/puppet"
+        var = "/var/lib/puppet"
     end
 
     self.setdefaults(:main,
@@ -86,6 +86,10 @@ module Puppet
         :mkusers => [false,
             "Whether to create the necessary user and group that puppetd will
             run as."],
+        :manage_internal_file_permissions => [true,
+            "Whether Puppet should manage the owner, group, and mode of files
+            it uses internally"
+            ],
         :path => {:default => "none",
             :desc => "The shell search path.  Defaults to whatever is inherited
                 from the parent process.",
@@ -145,6 +149,9 @@ module Puppet
             huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
             slightly more useful way when that happens."],
         :node_terminus => ["plain", "Where to find information about nodes."],
+        :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
+            you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
+        :facts_terminus => ["facter", "Where to get node facts."],
         :httplog => { :default => "$logdir/http.log",
             :owner => "root",
             :mode => 0640,
@@ -155,9 +162,6 @@ module Puppet
             may need to use a FQDN for the server hostname when using a proxy."],
         :http_proxy_port => [3128,
             "The HTTP proxy port to use for outgoing connections"],
-        :http_enable_post_connection_check => [true,
-            "Boolean; wheter or not puppetd should validate the server
-            SSL certificate against the request hostname."],
         :filetimeout => [ 15,
             "The minimum time to wait (in seconds) between checking for updates in
             configuration files.  This timeout determines how quickly Puppet checks whether
@@ -192,7 +196,15 @@ module Puppet
         :config_version => ["", "How to determine the configuration version.  By default, it will be the
             time that the configuration is parsed, but you can provide a shell script to override how the
             version is determined.  The output of this script will be added to every log message in the
-            reports, allowing you to correlate changes on your hosts to the source version on the server."]
+            reports, allowing you to correlate changes on your hosts to the source version on the server."],
+        :zlib => [true,
+            "Boolean; whether to use the zlib library",
+        ],
+        :prerun_command => ["", "A command to run before every agent run.  If this command returns a non-zero
+            return code, the entire Puppet run will fail."],
+        :postrun_command => ["", "A command to run after every agent run.  If this command returns a non-zero
+            return code, the entire Puppet run will be considered to have failed, even though it might have
+            performed work during the normal run."]
     )
 
     hostname = Facter["hostname"].value
@@ -280,7 +292,9 @@ module Puppet
             :owner => "service",
             :desc => "Where the host's certificate revocation list can be found.
                 This is distinct from the certificate authority's CRL."
-        }
+        },
+        :certificate_revocation => [true, "Whether certificate revocation should be supported by downloading a Certificate Revocation List (CRL)
+            to all clients.  If enabled, CA chaining will almost definitely not work."]
     )
 
     setdefaults(:ca,
@@ -439,19 +453,19 @@ module Puppet
             directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
         :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
             client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-            to the authenticated client's SSL DN (e.g., ``/CN=puppet.reductivelabs.com``).
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            to the authenticated client's SSL DN (e.g., ``/CN=puppet.puppetlabs.com``).
+            See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
         :ssl_client_verify_header => ["HTTP_X_CLIENT_VERIFY", "The header containing the status
             message of the client verification. Only used with Mongrel.  This header must be set by the proxy
             to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
-            See http://reductivelabs.com/puppet/trac/wiki/UsingMongrel for more information."],
+            See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
         # To make sure this directory is created before we try to use it on the server, we need
         # it to be in the server section (#1138).
         :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
             :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
         :reports => ["store",
             "The list of reports to generate.  All reports are looked for
-            in puppet/reports/<name>.rb, and multiple report names should be
+            in puppet/reports/name.rb, and multiple report names should be
             comma-separated (whitespace is okay)."
         ],
         :reportdir => {:default => "$vardir/reports",
@@ -522,6 +536,18 @@ module Puppet
             authority requests.  It's a separate server because it cannot
             and does not need to horizontally scale."],
         :ca_port => ["$masterport", "The port to use for the certificate authority."],
+        :catalog_format => {
+            :default => "",
+            :desc => "(Deprecated for 'preferred_serialization_format') What format to
+                     use to dump the catalog.  Only supports 'marshal' and 'yaml'.  Only
+                     matters on the client, since it asks the server for a specific format.",
+            :hook => proc { |value|
+                if value
+                    Puppet.warning "Setting 'catalog_format' is deprecated; use 'preferred_serialization_format' instead."
+                    Puppet.settings[:preferred_serialization_format] = value
+                end
+            }
+        },
         :preferred_serialization_format => ["pson", "The preferred means of serializing
             ruby instances for passing over the wire.  This won't guarantee that all
             instances will be serialized using this method, since not all classes
@@ -535,6 +561,10 @@ module Puppet
             new configurations, where you want to fix the broken configuration
             rather than reverting to a known-good one."
         ],
+        :use_cached_catalog => [false,
+            "Whether to only use the cached catalog rather than compiling a new catalog
+            on every run.  Puppet can be run with this enabled by default and then selectively
+            disabled when a recompile is desired."],
         :ignorecache => [false,
             "Ignore cache and always recompile the configuration.  This is
             useful for testing new configurations, where the local cache may in
@@ -571,7 +601,7 @@ module Puppet
               if value
                 Puppet.settings[:report_server] = value
               end
-            end   
+            end
         },
         :report_server => ["$server",
           "The server to which to send transaction reports."
@@ -605,7 +635,7 @@ module Puppet
 
     # Central fact information.
     self.setdefaults(:main,
-        :factpath => {:default => "$vardir/facts/",
+        :factpath => {:default => "$vardir/lib/facter/:$vardir/facts",
             :desc => "Where Puppet should look for facts.  Multiple directories should
                 be colon-separated, like normal PATH variables.",
             :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
@@ -646,11 +676,11 @@ module Puppet
         :dbadapter => [ "sqlite3", "The type of database to use." ],
         :dbmigrate => [ false, "Whether to automatically migrate the database." ],
         :dbname => [ "puppet", "The name of the database to use." ],
-        :dbserver => [ "localhost", "The database server for Client caching. Only
+        :dbserver => [ "localhost", "The database server for caching. Only
             used when networked databases are used."],
-        :dbuser => [ "puppet", "The database user for Client caching. Only
+        :dbuser => [ "puppet", "The database user for caching. Only
             used when networked databases are used."],
-        :dbpassword => [ "puppet", "The database password for Client caching. Only
+        :dbpassword => [ "puppet", "The database password for caching. Only
             used when networked databases are used."],
         :dbsocket => [ "", "The database socket location. Only used when networked
             databases are used.  Will be ignored if the value is an empty string."],
@@ -663,6 +693,10 @@ module Puppet
         :rails_loglevel => ["info", "The log level for Rails connections.  The value must be
             a valid log level within Rails.  Production environments normally use ``info``
             and other environments normally use ``debug``."]
+    )
+
+    setdefaults(:couchdb,
+        :couchdb_url => ["http://127.0.0.1:5984/puppet", "The url where the puppet couchdb database will be created"]
     )
 
     setdefaults(:transaction,
@@ -700,7 +734,7 @@ module Puppet
     setdefaults(:ldap,
         :ldapnodes => [false,
             "Whether to search for node configurations in LDAP.  See
-            http://reductivelabs.com/trac/puppet/wiki/LDAPNodes for more information."],
+            http://projects.puppetlabs.com/projects/puppet/wiki/LDAP_Nodes for more information."],
         :ldapssl => [false,
             "Whether SSL should be used when searching for nodes.
             Defaults to false because SSL usually requires certificates

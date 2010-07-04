@@ -11,8 +11,8 @@ module PSON
     UTF8toUTF16 = Iconv.new('utf-16be', 'utf-8') # :nodoc:
     UTF8toUTF16.iconv('no bom')
   rescue LoadError
-    raise MissingUnicodeSupport,
-      "iconv couldn't be loaded, which is required for UTF-8/UTF-16 conversions"
+    # We actually don't care
+    Puppet.warning "iconv couldn't be loaded, which is required for UTF-8/UTF-16 conversions"
   rescue Errno::EINVAL, Iconv::InvalidEncoding
     # Iconv doesn't support big endian utf-16. Let's try to hack this manually
     # into the converters.
@@ -50,7 +50,7 @@ module PSON
         UTF16toUTF8 = swapper.new(UTF16toUTF8) # :nodoc:
       end
     rescue Errno::EINVAL, Iconv::InvalidEncoding
-      raise MissingUnicodeSupport, "iconv doesn't seem to support UTF-8/UTF-16 conversions"
+      Puppet.warning "iconv doesn't seem to support UTF-8/UTF-16 conversions"
     ensure
       $VERBOSE = old_verbose
     end

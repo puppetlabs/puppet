@@ -16,6 +16,7 @@ class Puppet::Parser::AST
             if ! options[:sensitive] && obj.respond_to?(:downcase)
                 obj = obj.downcase
             end
+            value = value.downcase if not options[:sensitive] and value.respond_to?(:downcase)
             obj == value
         end
 
@@ -101,7 +102,7 @@ class Puppet::Parser::AST
             end
         end
 
-        def to_classname
+        def to_classname(dummy_argument=:work_arround_for_ruby_GC_bug)
             to_s.downcase.gsub(/[^-\w:.]/,'').sub(/^\.+/,'')
         end
 
@@ -149,6 +150,10 @@ class Puppet::Parser::AST
             parsewrap do
                 return scope.lookupvar(@value)
             end
+        end
+
+        def to_s
+            "\$#{value}"
         end
     end
 

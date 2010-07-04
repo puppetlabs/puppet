@@ -45,7 +45,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         attr_writer :defpath
 
         # Determine the daemon path.
-        def defpath
+        def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
             unless defined?(@defpath) and @defpath
                 ["/var/lib/service", "/etc"].each do |path|
                     if FileTest.exist?(path)

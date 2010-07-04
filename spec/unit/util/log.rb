@@ -13,6 +13,42 @@ describe Puppet::Util::Log do
         Puppet::Util::Log.close_all
     end
 
+    describe Puppet::Util::Log::DestConsole do
+        before do
+            @console = Puppet::Util::Log::DestConsole.new 
+        end
+
+        it "should colorize if Puppet[:color] is :ansi" do
+            Puppet[:color] = :ansi
+
+            @console.colorize(:alert, "abc").should == "\e[0;31mabc\e[0m"
+        end
+
+        it "should colorize if Puppet[:color] is 'yes'" do
+            Puppet[:color] = "yes"
+
+            @console.colorize(:alert, "abc").should == "\e[0;31mabc\e[0m"
+        end
+
+        it "should htmlize if Puppet[:color] is :html" do
+            Puppet[:color] = :html
+
+            @console.colorize(:alert, "abc").should == "<span style=\"color: FFA0A0\">abc</span>"
+        end
+
+        it "should do nothing if Puppet[:color] is false" do
+            Puppet[:color] = false
+
+            @console.colorize(:alert, "abc").should == "abc"
+        end
+
+        it "should do nothing if Puppet[:color] is invalid" do
+            Puppet[:color] = "invalid option"
+
+            @console.colorize(:alert, "abc").should == "abc"
+        end
+    end
+
     describe "instances" do
         before do
             Puppet::Util::Log.stubs(:newmessage)
@@ -119,6 +155,20 @@ describe Puppet::Util::Log do
                 source.tags.each do |tag|
                     log.tags.should be_include(tag)
                 end
+            end
+
+            it "should use the source_descriptors" do
+                source = stub "source"
+                source.stubs(:source_descriptors).returns(:tags => ["tag","tag2"], :path => "path", :version => 100)
+                
+                log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
+                log.expects(:tag).with("tag")
+                log.expects(:tag).with("tag2")
+                log.expects(:version=).with(100)
+
+                log.source = source
+
+                log.source.should == "path"
             end
 
             it "should copy over any version information" do

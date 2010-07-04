@@ -1,17 +1,18 @@
 # Augeas and SELinux requirements may be disabled at build time by passing
 # --without augeas and/or --without selinux to rpmbuild or mock
 
-%{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
-%define confdir conf/redhat
+%{!?ruby_sitelibdir: %global ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
+%global confdir conf/redhat
 
 Name:           puppet
-Version:        0.25.1
+Version:        0.25.5
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
-URL:            http://puppet.reductivelabs.com/
-Source0:        http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tar.gz
-Patch0:         rundir-perms.patch
+URL:            http://puppetlabs.com
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.sign
+
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -26,10 +27,10 @@ Requires:       ruby-shadow
 %endif
 
 # Pull in ruby selinux bindings where available
-%if 0%{?fedora}
-%if 0%{?fedora} >= 12
+%if 0%{?fedora} >= 12 || 0%{?rhel} >= 6
 %{!?_without_selinux:Requires: ruby(selinux)}
 %else
+%if 0%{?fedora} || 0%{?rhel} >= 5
 %{!?_without_selinux:Requires: libselinux-ruby}
 %endif
 %endif
@@ -65,7 +66,7 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-%patch0 -p1
+patch -p1 < conf/redhat/rundir-perms.patch
 
 %build
 # Fix some rpmlint complaints
@@ -82,6 +83,9 @@ chmod +x ext/puppetstoredconfigclean.rb
 find examples/ -type f -empty | xargs rm
 find examples/ -type f | xargs chmod a-x
 
+# puppet-queue.conf is more of an example, used for stompserver
+mv conf/puppet-queue.conf examples/etc/puppet/
+
 %install
 rm -rf %{buildroot}
 ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
@@ -96,6 +100,7 @@ install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/syscon
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+install -Dp -m0644 conf/auth.conf %{buildroot}%{_sysconfdir}/puppet/auth.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 # We need something for these ghosted files, otherwise rpmbuild
@@ -123,7 +128,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 
 %files
 %defattr(-, root, root, 0755)
-%doc CHANGELOG COPYING LICENSE README examples
+%doc CHANGELOG COPYING LICENSE README README.queueing examples
 %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
@@ -136,6 +141,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %dir %{_sysconfdir}/puppet
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
+%config(noreplace) %{_sysconfdir}/puppet/auth.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetca.conf
 %ghost %config(noreplace,missingok) %{_sysconfdir}/puppet/puppetd.conf
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
@@ -148,9 +154,9 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/log/puppet
 %attr(-, puppet, puppet) %{_localstatedir}/lib/puppet
+%{_mandir}/man5/puppet.conf.5.gz
 %{_mandir}/man8/pi.8.gz
 %{_mandir}/man8/puppet.8.gz
-%{_mandir}/man8/puppet.conf.8.gz
 %{_mandir}/man8/puppetca.8.gz
 %{_mandir}/man8/puppetd.8.gz
 %{_mandir}/man8/ralsh.8.gz
@@ -169,6 +175,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %{_mandir}/man8/filebucket.8.gz
 %{_mandir}/man8/puppetmasterd.8.gz
 %{_mandir}/man8/puppetrun.8.gz
+%{_mandir}/man8/puppetqd.8.gz
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
@@ -214,6 +221,15 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Mon May 03 2010 Todd Zullinger <tmz@pobox.com> - 0.25.5-1
+- Update to 0.25.5
+- Adjust selinux conditional for EL-6
+- Apply rundir-perms patch from tarball rather than including it separately
+
+* Fri Jan 01 2010 Todd Zullinger <tmz@pobox.com> - 0.25.2-1
+- Update to 0.25.2
+- Install auth.conf, puppetqd manpage, and queuing examples/docs
+
 * Tue Oct 20 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-1
 - Update to 0.25.1
 - Include the pi program and man page (R.I.Pienaar)

@@ -40,7 +40,9 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
                 found = true
                 yield entry
             end
-        rescue => detail
+        rescue SystemExit,NoMemoryError
+            raise
+        rescue Exception => detail
             if count == 0
                 # Try reconnecting to ldap if we get an exception and we haven't yet retried.
                 count += 1

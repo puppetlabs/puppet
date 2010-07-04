@@ -25,7 +25,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
         str += ""
         val = object.default
         if name.to_s == "vardir"
-            val = "/var/puppet"
+            val = "/var/lib/puppet"
         elsif name.to_s == "confdir"
             val = "/etc/puppet"
         end

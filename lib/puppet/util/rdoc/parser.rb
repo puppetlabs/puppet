@@ -147,7 +147,12 @@ class Parser
 
     # create documentation for include statements we can find in +code+
     # and associate it with +container+
+<<<<<<< HEAD
     def scan_for_include_or_require(container, code)
+=======
+    def scan_for_include(container, code)
+        code = [code] unless code.is_a?(Array)
+>>>>>>> upstream-0.25/0.25.x
         code.each do |stmt|
             scan_for_include_or_require(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
@@ -163,6 +168,7 @@ class Parser
     # create documentation for global variables assignements we can find in +code+
     # and associate it with +container+
     def scan_for_vardef(container, code)
+        code = [code] unless code.is_a?(Array)
         code.each do |stmt|
             scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
@@ -176,24 +182,29 @@ class Parser
     # create documentation for resources we can find in +code+
     # and associate it with +container+
     def scan_for_resource(container, code)
+        code = [code] unless code.is_a?(Array)
         code.each do |stmt|
             scan_for_resource(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
             if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
-                type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-                title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
-                Puppet.debug "rdoc: found resource: %s[%s]" % [type,title]
+                begin
+                    type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
+                    title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
+                    Puppet.debug "rdoc: found resource: %s[%s]" % [type,title]
 
-                param = []
-                stmt.params.children.each do |p|
-                    res = {}
-                    res["name"] = p.param
-                    res["value"] = "#{p.value.to_s}" unless p.value.nil?
+                    param = []
+                    stmt.params.children.each do |p|
+                        res = {}
+                        res["name"] = p.param
+                        res["value"] = "#{p.value.to_s}" unless p.value.nil?
 
-                    param << res
+                        param << res
+                    end
+
+                    container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
+                rescue => detail
+                    raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
                 end
-
-                container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
             end
         end
     end
@@ -225,6 +236,8 @@ class Parser
         end
 
         cls.comment = comment
+    rescue => detail
+        raise Puppet::ParseError, "impossible to parse class '#{name}' in #{klass.file} at line #{klass.line}: #{detail}"
     end
 
     # create documentation for a node
@@ -247,6 +260,8 @@ class Parser
         end
 
         n.comment = comment
+    rescue => detail
+        raise Puppet::ParseError, "impossible to parse node '#{name}' in #{node.file} at line #{node.line}: #{detail}"
     end
 
     # create documentation for a define
@@ -263,12 +278,15 @@ class Parser
         declaration = ""
         define.arguments.each do |arg,value|
             declaration << "\$#{arg}"
-            if !value.nil?
+            unless value.nil?
                 declaration << " => "
-                if !value.is_a?(Puppet::Parser::AST::ASTArray)
+                case value
+                when Puppet::Parser::AST::Leaf
                     declaration << "'#{value.value}'"
-                else
+                when Puppet::Parser::AST::ASTArray
                     declaration << "[%s]" % value.children.collect { |v| "'#{v}'" }.join(", ")
+                else
+                    declaration << "#{value.to_s}"
                 end
             end
             declaration << ", "
@@ -284,6 +302,8 @@ class Parser
         meth.visibility = :public
         meth.document_self = true
         meth.singleton = false
+    rescue => detail
+        raise Puppet::ParseError, "impossible to parse definition '#{name}' in #{define.file} at line #{define.line}: #{detail}"
     end
 
     # Traverse the AST tree and produce code-objects node

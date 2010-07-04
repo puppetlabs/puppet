@@ -115,20 +115,7 @@ module Puppet
                 value = [value] unless value.is_a?(Array)
                 # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
                 # It affects stand-alone blocks, too.
-                paths = value.flatten.collect { |p| x = p.split(":") }.flatten.find_all do |path|
-                    if FileTest.directory?(path)
-                        true
-                    else
-                        if FileTest.exist?(path) and ! FileTest.directory?(path)
-                            @resource.debug "Search path %s is not a directory" % [path]
-                        else
-                            @resource.debug("Search path %s does not exist" % [path])
-                        end
-                        false
-                    end
-                end
-
-                paths
+                paths = value.flatten.collect { |p| x = p.split(":") }.flatten
             end
 
             defaultto { provider.class.defpath if provider.class.respond_to?(:defpath) }

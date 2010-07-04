@@ -12,12 +12,11 @@ class Puppet::Parser::AST
 
         # Find the value that corresponds with the test.
         def evaluate(scope)
+            level = scope.ephemeral_level
             # Get our parameter.
             paramvalue = @param.safeevaluate(scope)
 
             sensitive = Puppet[:casesensitive]
-
-            paramvalue = paramvalue.downcase if not sensitive and paramvalue.respond_to?(:downcase)
 
             default = nil
 
@@ -39,7 +38,11 @@ class Puppet::Parser::AST
 
             self.fail Puppet::ParseError, "No matching value for selector param '%s'" % paramvalue
         ensure
-            scope.unset_ephemeral_var
+            scope.unset_ephemeral_var(level)
+        end
+
+        def to_s
+            param.to_s + " ? { " + values.collect { |v| v.to_s }.join(', ') + " }"
         end
     end
 end

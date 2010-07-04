@@ -66,7 +66,7 @@ class Puppet::Network::Handler
 
             case format
             when "yaml"
-                return CGI.escape(catalog.extract.to_yaml(:UseBlock => true))
+                return CGI.escape(catalog.extract.to_yaml)
             when "marshal"
                 return CGI.escape(Marshal.dump(catalog.extract))
             else

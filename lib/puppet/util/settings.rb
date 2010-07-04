@@ -64,20 +64,25 @@ class Puppet::Util::Settings
     # Remove all set values, potentially skipping cli values.
     def clear(exceptcli = false)
         @sync.synchronize do
-            @values.each do |name, values|
-                @values.delete(name) unless exceptcli and name == :cli
-            end
-
-            # Don't clear the 'used' in this case, since it's a config file reparse,
-            # and we want to retain this info.
-            unless exceptcli
-                @used = []
-            end
-
-            @cache.clear
-
-            @name = nil
+            unsafe_clear(exceptcli)
         end
+    end
+
+    # Remove all set values, potentially skipping cli values.
+    def unsafe_clear(exceptcli = false)
+        @values.each do |name, values|
+            @values.delete(name) unless exceptcli and name == :cli
+        end
+
+        # Don't clear the 'used' in this case, since it's a config file reparse,
+        # and we want to retain this info.
+        unless exceptcli
+            @used = []
+        end
+
+        @cache.clear
+
+        @name = nil
     end
 
     # This is mostly just used for testing.
@@ -142,6 +147,7 @@ class Puppet::Util::Settings
         @cache.clear
         value = munge_value(value) if value
         str = opt.sub(/^--/,'')
+
         bool = true
         newstr = str.sub(/^no-/, '')
         if newstr != str
@@ -150,11 +156,20 @@ class Puppet::Util::Settings
         end
         str = str.intern
 
-        if value == "" or value.nil?
-            value = bool
+        if @config[str].is_a?(Puppet::Util::Settings::BooleanSetting)
+            if value == "" or value.nil?
+                value = bool
+            end
         end
 
         set_value(str, value, :cli)
+    end
+
+    def without_noop
+        old_noop = value(:noop,:cli) and set_value(:noop, false, :cli) if valid?(:noop)
+        yield
+    ensure
+        set_value(:noop, old_noop, :cli) if valid?(:noop)
     end
 
     def include?(name)
@@ -317,23 +332,25 @@ class Puppet::Util::Settings
         # and reparsed if necessary.
         set_filetimeout_timer()
 
-        # Retrieve the value now, so that we don't lose it in the 'clear' call.
-        file = self[:config]
-
-        return unless FileTest.exist?(file)
-
-        # We have to clear outside of the sync, because it's
-        # also using synchronize().
-        clear(true)
-
         @sync.synchronize do
-            unsafe_parse(file)
+            unsafe_parse(self[:config])
         end
     end
 
     # Unsafely parse the file -- this isn't thread-safe and causes plenty of problems if used directly.
     def unsafe_parse(file)
-        parse_file(file).each do |area, values|
+        return unless FileTest.exist?(file)
+        begin
+            data = parse_file(file)
+        rescue => details
+            puts details.backtrace if Puppet[:trace]
+            Puppet.err "Could not parse #{file}: #{details}"
+            return
+        end
+
+        unsafe_clear(true)
+
+        data.each do |area, values|
             @values[area] = values
         end
 
@@ -363,6 +380,7 @@ class Puppet::Util::Settings
         # because multiple sections could set the same value
         # and I'm too lazy to only set the metadata once.
         searchpath.reverse.each do |source|
+            source = @name if (@name && source == :name)
             if meta = @values[source][:_meta]
                 set_metadata(meta)
             end
@@ -425,9 +443,7 @@ class Puppet::Util::Settings
     def reparse
         if file and file.changed?
             Puppet.notice "Reparsing %s" % file.file
-            @sync.synchronize do
-                parse
-            end
+            parse
             reuse()
         end
     end
@@ -670,7 +686,7 @@ Generated on #{Time.now}.
             end
             throw :foundval, nil
         end
-        
+
         # If we didn't get a value, use the default
         val = @config[param].default if val.nil?
 

@@ -7,6 +7,10 @@ tidy = Puppet::Type.type(:tidy)
 describe tidy do
     before do
         Puppet.settings.stubs(:use)
+
+        # for an unknown reason some of these specs fails when run individually
+        # with a failed expectation on File.lstat in the autoloader.
+        File.stubs(:lstat)
     end
 
     it "should use :lstat when stating a file" do
@@ -54,6 +58,28 @@ describe tidy do
 
             it "should not allow arbitrary values" do
                 lambda { @tidy[:recurse] = "whatever" }.should raise_error
+            end
+        end
+
+        describe "for 'matches'" do
+            before do
+                @tidy = Puppet::Type.type(:tidy).new :path => "/tmp", :age => "100d"
+            end
+
+            it "should object if matches is given with recurse is not specified" do
+                lambda { @tidy[:matches] = '*.doh' }.should raise_error
+            end
+            it "should object if matches is given and recurse is 0" do
+                lambda { @tidy[:recurse] = 0; @tidy[:matches] = '*.doh' }.should raise_error
+            end
+            it "should object if matches is given and recurse is false" do
+                lambda { @tidy[:recurse] = false; @tidy[:matches] = '*.doh' }.should raise_error
+            end
+            it "should not object if matches is given and recurse is > 0" do
+                lambda { @tidy[:recurse] = 1; @tidy[:matches] = '*.doh' }.should_not raise_error
+            end
+            it "should not object if matches is given and recurse is true" do
+                lambda { @tidy[:recurse] = true; @tidy[:matches] = '*.doh' }.should_not raise_error
             end
         end
     end
@@ -161,8 +187,17 @@ describe tidy do
                 Puppet::FileServing::Fileset.stubs(:new).returns @fileset
             end
 
-            it "should use a Fileset for recursion" do
+            it "should use a Fileset for infinite recursion" do
                 Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true).returns @fileset
+                @fileset.expects(:files).returns %w{. one two}
+                @tidy.stubs(:tidy?).returns false
+
+                @tidy.generate
+            end
+
+            it "should use a Fileset for limited recursion" do
+                @tidy[:recurse] = 42
+                Puppet::FileServing::Fileset.expects(:new).with("/what/ever", :recurse => true, :recurselimit => 42).returns @fileset
                 @fileset.expects(:files).returns %w{. one two}
                 @tidy.stubs(:tidy?).returns false
 
@@ -186,7 +221,7 @@ describe tidy do
 
         describe "and determining whether a file matches provided glob patterns" do
             before do
-                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever"
+                @tidy = Puppet::Type.type(:tidy).new :path => "/what/ever", :recurse => 1
                 @tidy[:matches] = %w{*foo* *bar*}
 
                 @stat = mock 'stat'
@@ -260,6 +295,12 @@ describe tidy do
 
                 @sizer.must be_tidy("/what/ever", @stat)
             end
+
+            it "should return true if the file is equal to the specified size" do
+                @stat.expects(:size).returns(1024)
+
+                @sizer.must be_tidy("/what/ever", @stat)
+            end
         end
 
         describe "and determining whether a file should be tidied" do
@@ -297,6 +338,7 @@ describe tidy do
             end
 
             it "should return false if it does not match any provided globs" do
+                @tidy[:recurse] = 1
                 @tidy[:matches] = "globs"
 
                 matches = @tidy.parameter(:matches)

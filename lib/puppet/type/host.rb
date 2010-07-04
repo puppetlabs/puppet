@@ -13,12 +13,11 @@ module Puppet
 
         end
 
-        newproperty(:alias) do
-            desc "Any alias the host might have.  Multiple values must be
-                specified as an array.  Note that this state has the same name
-                as one of the metaparams; using this state to set aliases will
-                make those aliases available in your Puppet scripts and also on
-                disk."
+        newproperty(:host_aliases) do
+            desc 'Any aliases the host might have.  Multiple values must be
+                specified as an array.  Note that this property is not the same as
+                the "alias" metaparam; use this property to add aliases to a host
+                on disk, and "alias" to aliases for use in your Puppet scripts.'
 
            def insync?(is)
                 is == @should
@@ -63,9 +62,7 @@ module Puppet
             end
 
             validate do |value|
-                if value =~ /\s/
-                    raise Puppet::Error, "Aliases cannot include whitespace"
-                end
+                raise Puppet::Error, "Host aliases cannot include whitespace" if value =~ /\s/
             end
         end
 

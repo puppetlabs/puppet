@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
     def latest
         output = urpmq "-S", @resource[:name]
 
-        if output =~ /^#{@resource[:name]}\s+:\s+.*\(\s+(\S+)\s+\)/
+        if output =~ /^#{Regexp.escape @resource[:name]}\s+:\s+.*\(\s+(\S+)\s+\)/
             return $1
         else
             # urpmi didn't find updates, pretend the current

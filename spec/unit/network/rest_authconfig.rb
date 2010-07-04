@@ -84,7 +84,7 @@ describe Puppet::Network::RestAuthConfig do
     end
 
     DEFAULT_ACL.each do |acl|
-        it "should insert #{acl} if not present" do
+        it "should insert #{acl[:acl]} if not present" do
             @authconfig.rights.stubs(:[]).returns(true)
             @authconfig.rights.stubs(:[]).with(acl[:acl]).returns(nil)
 
@@ -93,7 +93,7 @@ describe Puppet::Network::RestAuthConfig do
             @authconfig.insert_default_acl
         end
 
-        it "should not insert #{acl} if present" do
+        it "should not insert #{acl[:acl]} if present" do
             @authconfig.rights.stubs(:[]).returns(true)
             @authconfig.rights.stubs(:[]).with(acl).returns(true)
 

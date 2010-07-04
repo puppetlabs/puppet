@@ -355,20 +355,12 @@ class Puppet::Property < Puppet::Parameter
     end
 
     def should_to_s(newvalue)
-        newvalue = [newvalue] unless newvalue.is_a? Array
-        if defined? newvalue
-            newvalue.join(" ")
-        else
-            return nil
-        end
+        [newvalue].flatten.join(" ")
     end
 
     def sync
-        if value = self.should
-            set(value)
-        else
-            self.devfail "Got a nil value for should"
-        end
+        devfail "Got a nil value for should" unless should
+        set(should)
     end
 
     def to_s

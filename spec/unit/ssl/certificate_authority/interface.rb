@@ -204,6 +204,16 @@ describe Puppet::SSL::CertificateAuthority::Interface do
                 end
             end
 
+           describe "and :signed was provided" do
+                it "should print a string containing all signed certificate requests and certificates" do
+                    @ca.expects(:list).returns %w{host1 host2}
+
+                    @applier = @class.new(:list, :signed)
+
+                    @applier.apply(@ca)
+                end
+            end
+
             describe "and an array of names was provided" do
                 it "should print a string of all named hosts that have a waiting request" do
                     @ca.expects(:waiting?).returns %w{host1 host2}

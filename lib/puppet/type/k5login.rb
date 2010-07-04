@@ -56,7 +56,7 @@ Puppet::Type.newtype(:k5login) do
         end
 
         # Return the principals
-        def principals
+        def principals(dummy_argument=:work_arround_for_ruby_GC_bug)
             if File.exists?(@resource[:name])
                 File.readlines(@resource[:name]).collect { |line| line.chomp }
             else

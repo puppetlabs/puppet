@@ -16,8 +16,7 @@ class Puppet::Node::Facts
         end
     end
 
-    # Use the node source as the indirection terminus.
-    indirects :facts, :terminus_class => :facter, :extend => NodeExpirer
+    indirects :facts, :terminus_setting => :facts_terminus, :extend => NodeExpirer
 
     attr_accessor :name, :values
 
@@ -47,6 +46,11 @@ class Puppet::Node::Facts
         values.each do |fact, value|
             values[fact] = value.to_s
         end
+    end
+
+    def ==(other)
+        return false unless self.name == other.name
+        strip_internal == other.send(:strip_internal)
     end
 
     private

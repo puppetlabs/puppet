@@ -7,6 +7,11 @@ require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/configurer'
 
 describe Puppet::Configurer do
+    before do
+        Puppet.settings.stubs(:use).returns(true)
+        @agent = Puppet::Configurer.new
+    end
+
     it "should include the Plugin Handler module" do
         Puppet::Configurer.ancestors.should be_include(Puppet::Configurer::PluginHandler)
     end
@@ -18,6 +23,52 @@ describe Puppet::Configurer do
     it "should use the puppetdlockfile as its lockfile path" do
         Puppet.settings.expects(:value).with(:puppetdlockfile).returns("/my/lock")
         Puppet::Configurer.lockfile_path.should == "/my/lock"
+    end
+
+    describe "when executing a pre-run hook" do
+        it "should do nothing if the hook is set to an empty string" do
+            Puppet.settings[:prerun_command] = ""
+            Puppet::Util.expects(:exec).never
+
+            @agent.execute_prerun_command
+        end
+
+        it "should execute any pre-run command provided via the 'prerun_command' setting" do
+            Puppet.settings[:prerun_command] = "/my/command"
+            Puppet::Util.expects(:execute).with { |args| args[0] == "/my/command" }
+
+            @agent.execute_prerun_command
+        end
+
+        it "should fail if the command fails" do
+            Puppet.settings[:prerun_command] = "/my/command"
+            Puppet::Util.expects(:execute).raises Puppet::ExecutionFailure
+
+            lambda { @agent.execute_prerun_command }.should raise_error(Puppet::Configurer::CommandHookError)
+        end
+    end
+
+    describe "when executing a post-run hook" do
+        it "should do nothing if the hook is set to an empty string" do
+            Puppet.settings[:postrun_command] = ""
+            Puppet::Util.expects(:exec).never
+
+            @agent.execute_postrun_command
+        end
+
+        it "should execute any post-run command provided via the 'postrun_command' setting" do
+            Puppet.settings[:postrun_command] = "/my/command"
+            Puppet::Util.expects(:execute).with { |args| args[0] == "/my/command" }
+
+            @agent.execute_postrun_command
+        end
+
+        it "should fail if the command fails" do
+            Puppet.settings[:postrun_command] = "/my/command"
+            Puppet::Util.expects(:execute).raises Puppet::ExecutionFailure
+
+            lambda { @agent.execute_postrun_command }.should raise_error(Puppet::Configurer::CommandHookError)
+        end
     end
 end
 
@@ -74,6 +125,12 @@ describe Puppet::Configurer, "when executing a catalog run" do
         catalog.expects(:apply).never # because we're not yielding
         @agent.run
     end
+
+    it "should execute post-run hooks after the run" do
+        @agent.expects(:execute_postrun_command)
+
+        @agent.run
+    end
 end
 
 describe Puppet::Configurer, "when retrieving a catalog" do
@@ -84,7 +141,52 @@ describe Puppet::Configurer, "when retrieving a catalog" do
 
         @catalog = Puppet::Resource::Catalog.new
 
+        # this is the default when using a Configurer instance
+        Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :rest
+
         @agent.stubs(:convert_catalog).returns @catalog
+    end
+
+    describe "and configured to only retrieve a catalog from the cache" do
+        before do
+            Puppet.settings[:use_cached_catalog] = true
+        end
+
+        it "should first look in the cache for a catalog" do
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
+
+            @agent.retrieve_catalog.should == @catalog
+        end
+
+        it "should compile a new catalog if none is found in the cache" do
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+            Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
+
+            @agent.retrieve_catalog.should == @catalog
+        end
+    end
+
+    describe "when not using a REST terminus for catalogs" do
+        it "should not pass any facts when retrieving the catalog" do
+            @agent.expects(:facts_for_uploading).never
+            Puppet::Resource::Catalog.expects(:find).with { |name, options|
+                options[:facts].nil?
+            }.returns @catalog
+
+            @agent.retrieve_catalog
+        end
+    end
+
+    describe "when using a REST terminus for catalogs" do
+        it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
+            @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
+            Puppet::Resource::Catalog.expects(:find).with { |name, options|
+                options[:facts] == "myfacts" and options[:facts_format] == :foo
+            }.returns @catalog
+
+            @agent.retrieve_catalog
+        end
     end
 
     it "should use the Catalog class to get its catalog" do
@@ -95,15 +197,8 @@ describe Puppet::Configurer, "when retrieving a catalog" do
 
     it "should use its certname to retrieve the catalog" do
         Facter.stubs(:value).returns "eh"
-        Puppet.expects(:[]).with(:certname).returns "myhost.domain.com"
+        Puppet.settings[:certname] = "myhost.domain.com"
         Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
-
-        @agent.retrieve_catalog
-    end
-
-    it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
-        @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
-        Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:facts] == "myfacts" and options[:facts_format] == :foo }.returns @catalog
 
         @agent.retrieve_catalog
     end
@@ -183,6 +278,12 @@ describe Puppet::Configurer, "when converting the catalog" do
         @agent.convert_catalog(@oldcatalog, 10).should equal(@catalog)
     end
 
+    it "should finalize the catalog" do
+        @catalog.expects(:finalize)
+
+        @agent.convert_catalog(@oldcatalog, 10)
+    end
+
     it "should record the passed retrieval time with the RAL catalog" do
         @catalog.expects(:retrieval_duration=).with 10
 
@@ -207,6 +308,9 @@ describe Puppet::Configurer, "when preparing for a run" do
         Puppet.settings.stubs(:use).returns(true)
         @agent = Puppet::Configurer.new
         @agent.stubs(:dostorage)
+        @agent.stubs(:download_fact_plugins)
+        @agent.stubs(:download_plugins)
+        @agent.stubs(:execute_prerun_command)
         @facts = {"one" => "two", "three" => "four"}
     end
 
@@ -217,16 +321,19 @@ describe Puppet::Configurer, "when preparing for a run" do
     end
 
     it "should download fact plugins" do
-        @agent.stubs(:dostorage)
         @agent.expects(:download_fact_plugins)
 
         @agent.prepare
     end
 
     it "should download plugins" do
-        @agent.stubs(:dostorage)
         @agent.expects(:download_plugins)
 
+        @agent.prepare
+    end
+
+    it "should perform the pre-run commands" do
+        @agent.expects(:execute_prerun_command)
         @agent.prepare
     end
 end

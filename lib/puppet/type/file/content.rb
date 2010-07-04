@@ -96,7 +96,7 @@ module Puppet
             return true if ! @resource.replace?
 
             if self.should
-                return super
+                result = super
             elsif source = resource.parameter(:source)
                 fail "Got a remote source with no checksum" unless source.checksum
                 result = (is == source.checksum)
@@ -114,14 +114,14 @@ module Puppet
 
         def retrieve
             return :absent unless stat = @resource.stat
-
+            ftype = stat.ftype
             # Don't even try to manage the content on directories or links
-            return nil if stat.ftype == "directory"
+            return nil if ["directory","link"].include? ftype or checksum_type.nil?
 
             begin
-                return "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path]).to_s
+                "{#{checksum_type}}" + send(checksum_type.to_s + "_file", resource[:path]).to_s
             rescue => detail
-                raise Puppet::Error, "Could not read %s: %s" % [@resource.title, detail]
+                raise Puppet::Error, "Could not read #{ftype} #{@resource.title}: #{detail}"
             end
         end
 

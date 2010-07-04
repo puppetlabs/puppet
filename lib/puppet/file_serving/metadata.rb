@@ -22,18 +22,15 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
     def attributes_with_tabs
+        raise(ArgumentError, "Cannot manage files of type #{ftype}") unless ['file','directory','link'].include? ftype
         desc = []
         PARAM_ORDER.each { |check|
             check = :ftype if check == :type
             desc << send(check)
         }
 
-        case ftype
-        when "file", "directory"; desc << checksum
-        when "link"; desc << @destination
-        else
-            raise ArgumentError, "Cannot manage files of type %s" % ftype
-        end
+        desc << checksum
+        desc << @destination rescue nil if ftype == 'link'
 
         return desc.join("\t")
     end
@@ -66,13 +63,53 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
             @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path).to_s
         when "link"
             @destination = File.readlink(real_path)
+            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s rescue nil
         else
             raise ArgumentError, "Cannot manage files of type %s" % stat.ftype
         end
     end
 
-    def initialize(*args)
-        @checksum_type = "md5"
-        super
+    def initialize(path,data={})
+        @owner       = data.delete('owner')
+        @group       = data.delete('group')
+        @mode        = data.delete('mode')
+        if checksum = data.delete('checksum')
+            @checksum_type = checksum['type']
+            @checksum      = checksum['value']
+        end
+        @checksum_type ||= "md5"
+        @ftype       = data.delete('type')
+        @destination = data.delete('destination')
+        super(path,data)
     end
+
+    PSON.register_document_type('FileMetadata',self)
+    def to_pson_data_hash
+        {
+            'document_type' => 'FileMetadata',
+            'data'       => super['data'].update({
+                'owner'        => owner,
+                'group'        => group,
+                'mode'         => mode,
+                'checksum'     => {
+                    'type'   => checksum_type,
+                    'value'  => checksum
+                },
+                'type'         => ftype,
+                'destination'  => destination,
+                }),
+            'metadata' => {
+                'api_version' => 1
+                }
+       }
+    end
+
+    def to_pson(*args)
+       to_pson_data_hash.to_pson(*args)
+    end
+
+    def self.from_pson(data)
+       new(data.delete('path'), data)
+    end
+
 end

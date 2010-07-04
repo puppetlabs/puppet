@@ -19,18 +19,16 @@ Puppet::Type.type(:sshkey).provide(:parsed,
 
     record_line :parsed, :fields => %w{name type key},
         :post_parse => proc { |hash|
-            if hash[:name] =~ /,/
-                names = hash[:name].split(",")
-                hash[:name] = names.shift
-                hash[:alias] = names
-            end
+            names = hash[:name].split(",", -1)
+            hash[:name]  = names.shift
+            hash[:host_aliases] = names
         },
         :pre_gen => proc { |hash|
-            if hash[:alias]
-                names = [hash[:name], hash[:alias]].flatten
+            if hash[:host_aliases]
+                names = [hash[:name], hash[:host_aliases]].flatten
 
-                hash[:name] = [hash[:name], hash[:alias]].flatten.join(",")
-                hash.delete(:alias)
+                hash[:name] = [hash[:name], hash[:host_aliases]].flatten.join(",")
+                hash.delete(:host_aliases)
             end
         }
 end

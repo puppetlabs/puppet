@@ -63,22 +63,28 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         unserialize_value(self[:title])
     end
 
-    def add_param_to_hash(param)
-        @params_hash ||= []
-        @params_hash << param
+    def params_list
+        @params_list ||= []
     end
 
-    def add_tag_to_hash(tag)
-        @tags_hash ||= []
-        @tags_hash << tag
+    def params_list=(params)
+        @params_list = params
     end
 
-    def params_hash=(hash)
-        @params_hash = hash
+    def add_param_to_list(param)
+        params_list << param
     end
 
-    def tags_hash=(hash)
-        @tags_hash = hash
+    def tags_list
+        @tags_list ||= []
+    end
+
+    def tags_list=(tags)
+        @tags_list = tags
+    end
+
+    def add_tag_to_list(tag)
+        tags_list << tag
     end
 
     def [](param)
@@ -116,7 +122,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         db_params = {}
 
         deletions = []
-        @params_hash.each do |value|
+        params_list.each do |value|
             # First remove any parameters our catalog resource doesn't have at all.
             deletions << value['id'] and next unless catalog_params.include?(value['name'])
 
@@ -142,7 +148,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
         # Lastly, add any new parameters.
         catalog_params.each do |name, value|
-            next if db_params.include?(name)
+            next if db_params.include?(name) && ! db_params[name].find{ |val| deletions.include?( val["id"] ) }
             values = value.is_a?(Array) ? value : [value]
 
             values.each do |v|
@@ -156,7 +162,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         in_db = []
         deletions = []
         resource_tags = resource.tags
-        @tags_hash.each do |tag|
+        tags_list.each do |tag|
             deletions << tag['id'] and next unless resource_tags.include?(tag['name'])
             in_db << tag['name']
         end
@@ -187,19 +193,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         end
     end
 
-    def parameters
-        result = get_params_hash
-        result.each do |param, value|
-            if value.is_a?(Array)
-                result[param] = value.collect { |v| v['value'] }
-            else
-                result[param] = value.value
-            end
-        end
-        result
-    end
-
-    def ref
+    def ref(dummy_argument=:work_arround_for_ruby_GC_bug)
         "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self.title.to_s]
     end
 

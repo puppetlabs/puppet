@@ -7,11 +7,9 @@
 # was abysmal.  At this time (2008-11-02) the only distribution providing
 # these Ruby SELinux bindings which I am aware of is Fedora (in libselinux-ruby).
 
-begin
-    require 'selinux'
-rescue LoadError
-    # Nothing
-end
+Puppet.features.selinux? # check, but continue even if it's not
+
+require 'pathname'
 
 module Puppet::Util::SELinux
 
@@ -71,7 +69,7 @@ module Puppet::Util::SELinux
         if context.nil? or context == "unlabeled"
             return nil
         end
-        unless context =~ /^([a-z0-9_]+):([a-z0-9_]+):([a-z0-9_]+)(?::([a-zA-Z0-9:,._-]+))?/
+        unless context =~ /^([a-z0-9_]+):([a-z0-9_]+):([a-zA-Z0-9_]+)(?::([a-zA-Z0-9:,._-]+))?/
             raise Puppet::Error, "Invalid context to parse: #{context}"
         end
         ret = {
@@ -91,7 +89,7 @@ module Puppet::Util::SELinux
     # I believe that the OS should always provide at least a fall-through context
     # though on any well-running system.
     def set_selinux_context(file, value, component = false)
-        unless selinux_support?
+        unless selinux_support? && selinux_label_support?(file) 
             return nil
         end
 
@@ -168,8 +166,8 @@ module Puppet::Util::SELinux
             # that's expected
         rescue
             return nil
-        ensure        
-            mountfh.close
+        ensure
+            mountfh.close if mountfh
         end
 
         mntpoint = {}
@@ -185,9 +183,19 @@ module Puppet::Util::SELinux
         return mntpoint
     end
 
+    def realpath(path)
+        path, rest = Pathname.new(path), []
+        path, rest = path.dirname, [path.basename] + rest while ! path.exist?
+        File.join( path.realpath, *rest )
+    end
+
+    def parent_directory(path)
+        Pathname.new(path).dirname.to_s
+    end
+
     # Internal helper function to return which type of filesystem a
     # given file path resides on
-    def find_fs(file)
+    def find_fs(path)
         unless mnts = read_mounts()
             return nil
         end
@@ -198,13 +206,12 @@ module Puppet::Util::SELinux
         # Just in case: return something if you're down to "/" or ""
         # Remove the last slash and everything after it,
         #   and repeat with that as the file for the next loop through.
-        ary = file.split('/')
-        while not ary.empty? do
-            path = ary.join('/')
+        path = realpath(path)
+        while not path.empty? do
             if mnts.has_key?(path)
                 return mnts[path]
             end
-            ary.pop
+            path = parent_directory(path)
         end
         return mnts['/']
     end

@@ -40,7 +40,7 @@ describe "puppetd" do
 
     describe "in preinit" do
         before :each do
-            @pupetd.stubs(:trap)
+            @puppetd.stubs(:trap)
         end
 
         it "should catch INT" do
@@ -173,6 +173,8 @@ describe "puppetd" do
             Puppet.stubs(:info)
             FileTest.stubs(:exists?).returns(true)
             Puppet.stubs(:[])
+            Puppet.stubs(:[]=)
+            Puppet.stubs(:[]).with(:libdir).returns("/dev/null/lib")
             Puppet.settings.stubs(:print_config?)
             Puppet.settings.stubs(:print_config)
             Puppet::SSL::Host.stubs(:ca_location=)
@@ -274,10 +276,10 @@ describe "puppetd" do
 
         it "should set a central log destination with --centrallogs" do
             @puppetd.options.stubs(:[]).with(:centrallogs).returns(true)
-            Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
+            Puppet.stubs(:[]).with(:server).returns("puppet.puppetlabs.com")
             Puppet::Util::Log.stubs(:newdestination).with(:syslog)
 
-            Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
+            Puppet::Util::Log.expects(:newdestination).with("puppet.puppetlabs.com")
 
             @puppetd.run_setup
         end
@@ -300,9 +302,8 @@ describe "puppetd" do
             @puppetd.run_setup
         end
 
-        it "should tell the catalog handler to use REST" do
-            Puppet::Resource::Catalog.expects(:terminus_class=).with(:rest)
-
+        it "should change the catalog_terminus setting to 'rest'" do
+            Puppet.expects(:[]=).with(:catalog_terminus, :rest)
             @puppetd.run_setup
         end
 
@@ -312,8 +313,8 @@ describe "puppetd" do
             @puppetd.run_setup
         end
 
-        it "should tell the facts to use facter" do
-            Puppet::Node::Facts.expects(:terminus_class=).with(:facter)
+        it "should change the facts_terminus setting to 'facter'" do
+            Puppet.expects(:[]=).with(:facts_terminus, :facter)
 
             @puppetd.run_setup
         end

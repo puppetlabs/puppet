@@ -16,12 +16,26 @@ describe provider_class do
 #        @resource.stubs(:[]).with(:ensure).returns :enabled
         @resource.stubs(:[]).with(:path).returns ["/service/path","/alt/service/path"]
 #        @resource.stubs(:ref).returns "Service[myservice]"
+        File.stubs(:directory?).returns(true)
         
         @provider = provider_class.new
         @provider.resource = @resource
     end
 
-    describe "when serching for the init script" do
+
+    describe "when searching for the init script" do
+        it "should discard paths that do not exist" do
+            File.stubs(:exist?).returns(false)
+            File.stubs(:directory?).returns(false)
+            @provider.paths.should be_empty
+        end
+
+        it "should discard paths that are not directories" do
+            File.stubs(:exist?).returns(true)
+            File.stubs(:directory?).returns(false)
+            @provider.paths.should be_empty
+        end
+
         it "should be able to find the init script in the service path" do
             File.expects(:stat).with("/service/path/myservice").returns true
             @provider.initscript.should == "/service/path/myservice"
@@ -102,5 +116,6 @@ describe provider_class do
                 @provider.restart
             end
         end
+
     end
 end

@@ -22,7 +22,7 @@ module Puppet
 
             If you find that you are often copying files in from a central
             location, rather than using native resources, please contact
-            Reductive Labs and we can hopefully work with you to develop a
+            Puppet Labs and we can hopefully work with you to develop a
             native resource to support what you are doing."
 
         newparam(:path) do
@@ -31,7 +31,7 @@ module Puppet
 
             validate do |value|
                 unless value =~ /^#{File::SEPARATOR}/
-                    raise Puppet::Error, "File paths must be fully qualified, not '%s'" % value
+                    fail Puppet::Error,"File paths must be fully qualified, not '#{value}'"
                 end
             end
 
@@ -45,6 +45,12 @@ module Puppet
             # and the reverse
             unmunge do |value|
                 File.join( Puppet::FileCollection.collection.path(value[:index]), value[:name] )
+            end
+ 
+            to_canonicalize do |s|
+                # Get rid of any duplicate slashes, and remove any trailing slashes unless 
+                # the title is just a slash, in which case leave it.
+                s.gsub(/\/+/, "/").sub(/(.)\/$/,'\1')
             end
         end
 
@@ -120,10 +126,10 @@ module Puppet
             munge do |value|
                 newval = super(value)
                 case newval
-                when :true, :inf: true
-                when :false: false
-                when :remote: :remote
-                when Integer, Fixnum, Bignum:
+                when :true, :inf; true
+                when :false; false
+                when :remote; :remote
+                when Integer, Fixnum, Bignum
                     self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
 
                     # recurse == 0 means no recursion
@@ -131,7 +137,7 @@ module Puppet
 
                     resource[:recurselimit] = value
                     true
-                when /^\d+$/:
+                when /^\d+$/
                     self.warning "Setting recursion depth with the recurse parameter is now deprecated, please use recurselimit"
                     value = Integer(value)
 
@@ -141,7 +147,7 @@ module Puppet
                     resource[:recurselimit] = value
                     true
                 else
-                    raise ArgumentError, "Invalid recurse value %s" % value.inspect
+                    self.fail "Invalid recurse value #{value.inspect}"
                 end
             end
         end
@@ -154,10 +160,10 @@ module Puppet
             munge do |value|
                 newval = super(value)
                 case newval
-                when Integer, Fixnum, Bignum: value
-                when /^\d+$/: Integer(value)
+                when Integer, Fixnum, Bignum; value
+                when /^\d+$/; Integer(value)
                 else
-                    raise ArgumentError, "Invalid recurselimit value %s" % value.inspect
+                    self.fail "Invalid recurselimit value #{value.inspect}"
                 end
             end
         end
@@ -399,11 +405,7 @@ module Puppet
 
             super
 
-            # Get rid of any duplicate slashes, and remove any trailing slashes.
-            @title = @title.gsub(/\/+/, "/")
-
-            @title.sub!(/\/$/, "") unless @title == "/"
-
+            @title = self.class.canonicalize_ref(@title)
             @stat = nil
         end
 
@@ -431,8 +433,16 @@ module Puppet
             # The right-side hash wins in the merge.
             options = @original_parameters.merge(:path => full_path).reject { |param, value| value.nil? }
 
+            # If we are recursive and ensure => absent, then our children should be too,
+            # so that they will go away like they should.
+            # Otherwise they shouldn't get those options
+            unless options[:ensure].to_s == "absent" and options[:recurse] == true
+                options.delete(:ensure)
+                options.delete(:recurse)
+            end
+
             # These should never be passed to our children.
-            [:parent, :ensure, :recurse, :recurselimit, :target, :alias, :source].each do |param|
+            [:parent, :recurselimit, :target, :alias, :source].each do |param|
                 options.delete(param) if options.include?(param)
             end
 
@@ -494,26 +504,18 @@ module Puppet
         # not likely to have many actual conflicts, which is good, because
         # this is a pretty inefficient implementation.
         def remove_less_specific_files(files)
-            # We sort the paths so we can short-circuit some tests.
-            mypath = self[:path]
-            other_paths = catalog.vertices.find_all do |r|
-                r.is_a?(self.class) and r[:path][0..(mypath.length - 1)] == mypath
-            end.collect { |r| r[:path] }.sort { |a, b| a.length <=> b.length } - [self[:path]]
+            mypath = self[:path].split(File::Separator)
+            other_paths = catalog.vertices.
+              select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
+              collect { |r| r[:path].split(File::Separator) }.
+              select  { |p| p[0,mypath.length]  == mypath }
 
             return files if other_paths.empty?
 
-            remove = []
-            files.each do |file|
-                path = file[:path]
-                other_paths.each do |p|
-                    if path[0..(p.length - 1)] == p
-                        remove << file
-                        break
-                    end
-                end
-            end
-
-            files - remove
+            files.reject { |file|
+                path = file[:path].split(File::Separator)
+                other_paths.any? { |p| path[0,p.length] == p }
+                }
         end
 
         # A simple method for determining whether we should be recursing.
@@ -598,7 +600,14 @@ module Puppet
         end
 
         def perform_recursion(path)
-            Puppet::FileServing::Metadata.search(path, :links => self[:links], :recurse => (self[:recurse] == :remote ? true : self[:recurse]), :recurselimit => self[:recurselimit], :ignore => self[:ignore])
+            params = {
+                :links => self[:links],
+                :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
+                :recurselimit => self[:recurselimit],
+                :ignore => self[:ignore]
+            }
+            params[:checksum_type] = self[:checksum] if self[:checksum] == :none
+            Puppet::FileServing::Metadata.search(path, params)
         end
 
         # Remove any existing data.  This is only used when dealing with
@@ -713,6 +722,13 @@ module Puppet
         # Write out the file.  Requires the content to be written,
         # the property name for logging, and the checksum for validation.
         def write(content, property, checksum = nil)
+            parent = File.dirname(self[:path])
+            unless FileTest.exists? parent
+                raise Puppet::Error,
+                    "Cannot create %s; parent directory %s does not exist" %
+                        [self[:path], parent]
+            end
+
             if validate = validate_checksum?
                 # Use the appropriate checksum type -- md5, md5lite, etc.
                 sumtype = property(:checksum).checktype

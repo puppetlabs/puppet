@@ -5,7 +5,24 @@ module Puppet
     Puppet::Type.type(:file).newproperty(:mode) do
         require 'etc'
         desc "Mode the file should be.  Currently relatively limited:
-            you must specify the exact mode the file should be."
+            you must specify the exact mode the file should be.
+ 
+            Note that when you set the mode of a directory, Puppet always
+            sets the search/traverse (1) bit anywhere the read (4) bit is set. 
+            This is almost always what you want: read allows you to list the
+            entries in a directory, and search/traverse allows you to access 
+            (read/write/execute) those entries.)  Because of this feature, you 
+            can recursively make a directory and all of the files in it 
+            world-readable by setting e.g.::
+
+                file { '/some/dir':
+                  mode => 644,
+                  recurse => true,
+                }
+
+            In this case all of the files underneath ``/some/dir`` will have 
+            mode 644, and all of the directories will have mode 755."
+
         @event = :file_changed
 
         # Our modes are octal, so make sure they print correctly.  Other

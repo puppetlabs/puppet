@@ -16,6 +16,10 @@ describe "puppetmasterd" do
         Puppet[:certdnsnames] = "localhost"
 
         @@port = 12345
+
+        Puppet::SSL::Host.instance_eval{
+            @value_cache = {}
+        }
     end
 
     after {
@@ -48,16 +52,30 @@ describe "puppetmasterd" do
             f.puts { "notify { testing: }" }
         end
 
-        args = arguments + addl_args
+        args = arguments + " " + addl_args
 
         bin = File.join(File.dirname(__FILE__), "..", "..", "..", "sbin", "puppetmasterd")
-        output = %x{#{bin} #{args}}.chomp
+        lib = File.join(File.dirname(__FILE__), "..", "..", "..", "lib")
+        output = %x{/usr/bin/env ruby -I #{lib} #{bin} #{args}}.chomp
     end
 
     def stop
-        if @pidfile and FileTest.exist?(@pidfile)
+        if @pidfile and File.exist?(@pidfile)
             pid = File.read(@pidfile).chomp.to_i
             Process.kill(:TERM, pid)
+            10.times do
+                break unless File.exist?(@pidfile)
+                sleep 1
+            end
+            begin
+                # sigkill and report if process was still running
+                Process.kill(:KILL, pid)
+
+                raise "Process didn't die from SIGTERM after 10 seconds"
+            rescue Errno::ESRCH
+                # process wasn't running. good.
+            end
+
         end
     end
 
@@ -72,16 +90,10 @@ describe "puppetmasterd" do
     it "should be serving status information over xmlrpc" do
         start
 
-        sleep 0.5
+        sleep 6
 
         client = Puppet::Network::Client.status.new(:Server => "localhost", :Port => @@port)
 
-        FileUtils.mkdir_p(File.dirname(Puppet[:autosign]))
-        File.open(Puppet[:autosign], "w") { |f|
-            f.puts Puppet[:certname]
-        }
-
-        client.cert
         retval = client.status
 
         retval.should == 1

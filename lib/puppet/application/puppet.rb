@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/application'
+require 'puppet/configurer'
 require 'puppet/network/handler'
 require 'puppet/network/client'
 
@@ -49,7 +50,7 @@ Puppet::Application.new(:puppet) do
         end
 
         begin
-            catalog = PSON.parse(text)
+            catalog = Puppet::Resource::Catalog.convert_from(Puppet::Resource::Catalog.default_format,text)
             unless catalog.is_a?(Puppet::Resource::Catalog)
                 catalog = Puppet::Resource::Catalog.pson_create(catalog)
             end
@@ -124,8 +125,13 @@ Puppet::Application.new(:puppet) do
 
             catalog.retrieval_duration = Time.now - starttime
 
+            configurer = Puppet::Configurer.new
+            configurer.execute_prerun_command
+
             # And apply it
             transaction = catalog.apply
+
+            configurer.execute_postrun_command
 
             status = 0
             if not Puppet[:noop] and options[:detailed_exitcodes] then
@@ -135,9 +141,7 @@ Puppet::Application.new(:puppet) do
             end
             exit(status)
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             if detail.is_a?(XMLRPC::FaultException)
                 $stderr.puts detail.message
             else

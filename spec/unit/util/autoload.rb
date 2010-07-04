@@ -51,8 +51,9 @@ describe Puppet::Util::Autoload do
         end
 
         it "should include the module directories, the Puppet libdir, and all of the Ruby load directories" do
+            Puppet.stubs(:[]).with(:libdir).returns(%w{/libdir1 /lib/dir/two /third/lib/dir}.join(File::PATH_SEPARATOR))
             @autoload.expects(:module_directories).returns %w{/one /two}
-            @autoload.search_directories.should == ["/one", "/two", Puppet[:libdir], $:].flatten
+            @autoload.search_directories.should == %w{/one /two /libdir1 /lib/dir/two /third/lib/dir} + $:
         end
 
         it "should include in its search path all of the search directories that have a subdirectory matching the autoload path" do
@@ -111,6 +112,8 @@ describe Puppet::Util::Autoload do
         before do
             @autoload.stubs(:searchpath).returns %w{/a}
             Dir.stubs(:glob).returns "/path/to/file.rb"
+
+            @autoload.class.stubs(:loaded?).returns(false)
         end
 
         [RuntimeError, LoadError, SyntaxError].each do |error|

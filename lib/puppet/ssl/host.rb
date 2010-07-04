@@ -94,12 +94,7 @@ class Puppet::SSL::Host
 
     # Remove all traces of a given host
     def self.destroy(name)
-        [Key, Certificate, CertificateRequest].inject(false) do |result, klass|
-            if klass.destroy(name)
-                result = true
-            end
-            result
-        end
+        [Key, Certificate, CertificateRequest].collect { |part| part.destroy(name) }.any? { |x| x }
     end
 
     # Search for more than one host, optionally only specifying
@@ -107,12 +102,7 @@ class Puppet::SSL::Host
     # This just allows our non-indirected class to have one of
     # indirection methods.
     def self.search(options = {})
-        classes = [Key, CertificateRequest, Certificate]
-        if klass = options[:for]
-            classlist = [klass].flatten
-        else
-            classlist = [Key, CertificateRequest, Certificate]
-        end
+        classlist = [options[:for] || [Key, CertificateRequest, Certificate]].flatten
 
         # Collect the results from each class, flatten them, collect all of the names, make the name list unique,
         # then create a Host instance for each one.
@@ -127,8 +117,7 @@ class Puppet::SSL::Host
     end
 
     def key
-        return nil unless @key ||= Key.find(name)
-        @key
+        @key ||= Key.find(name)
     end
 
     # This is the private key; we can create it from scratch
@@ -146,8 +135,7 @@ class Puppet::SSL::Host
     end
 
     def certificate_request
-        return nil unless @certificate_request ||= CertificateRequest.find(name)
-        @certificate_request
+        @certificate_request ||= CertificateRequest.find(name)
     end
 
     # Our certificate request requires the key but that's all.
@@ -225,7 +213,7 @@ class Puppet::SSL::Host
 
             # If there's a CRL, add it to our store.
             if crl = Puppet::SSL::CertificateRevocationList.find("ca")
-                @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
                 @ssl_store.add_crl(crl.content)
             end
             return @ssl_store
@@ -235,15 +223,16 @@ class Puppet::SSL::Host
 
     # Attempt to retrieve a cert, if we don't already have one.
     def wait_for_cert(time)
-        return if certificate
         begin
-            generate
-
             return if certificate
-        rescue StandardError => detail
+            generate
+            return if certificate
+        rescue SystemExit,NoMemoryError
+            raise
+        rescue Exception => detail
             Puppet.err "Could not request certificate: %s" % detail.to_s
             if time < 1
-                puts "Exiting; failed to retrieve certificate and watiforcert is disabled"
+                puts "Exiting; failed to retrieve certificate and waitforcert is disabled"
                 exit(1)
             else
                 sleep(time)

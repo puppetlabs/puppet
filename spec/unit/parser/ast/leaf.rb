@@ -33,6 +33,13 @@ describe Puppet::Parser::AST::Leaf do
 
             @leaf.evaluate_match("value", @scope, :insensitive => true)
         end
+
+        it "should downcase the parameter value if wanted" do
+            parameter = stub 'parameter'
+            parameter.expects(:downcase).returns("value")
+
+            @leaf.evaluate_match(parameter, @scope, :insensitive => true)
+        end
     end
 
     describe "when converting to string" do
@@ -68,6 +75,15 @@ describe Puppet::Parser::AST::String do
         it "should transform its value to a quoted string" do
             value = stub 'value', :is_a? => true, :to_s => "ab"
             Puppet::Parser::AST::String.new( :value => value ).to_s.should == "\"ab\""
+        end
+    end
+end
+
+describe Puppet::Parser::AST::Variable do
+    describe "when converting to string" do
+        it "should transform its value to a variable" do
+            value = stub 'value', :is_a? => true, :to_s => "myvar"
+            Puppet::Parser::AST::Variable.new( :value => value ).to_s.should == "\$myvar"
         end
     end
 end
@@ -112,6 +128,12 @@ describe Puppet::Parser::AST::Regex do
             @value.expects(:match).with("value")
 
             @regex.evaluate_match("value", @scope)
+        end
+
+        it "should not downcase the paramater value" do
+            @value.expects(:match).with("VaLuE")
+
+            @regex.evaluate_match("VaLuE", @scope)
         end
 
         it "should set ephemeral scope vars if there is a match" do
@@ -211,8 +233,8 @@ describe Puppet::Parser::AST::HostName do
     end
 
     it "should return a string usable as a tag when calling to_classname" do
-        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/.+.reductivelabs\.com/") )
-        host.to_classname.should == "reductivelabs.com"
+        host = Puppet::Parser::AST::HostName.new( :value => Puppet::Parser::AST::Regex.new(:value => "/.+.puppetlabs\.com/") )
+        host.to_classname.should == "puppetlabs.com"
     end
 
     it "should delegate 'match' to the underlying value if it is an HostName" do

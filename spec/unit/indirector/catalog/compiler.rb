@@ -61,7 +61,7 @@ describe Puppet::Resource::Catalog::Compiler do
     describe "when finding catalogs" do
         before do
             Facter.stubs(:value).returns("whatever")
-            env = stub 'environment', :name => "yay"
+            env = stub 'environment', :name => "yay", :modulepath => []
             Puppet::Node::Environment.stubs(:new).returns(env)
 
             @compiler = Puppet::Resource::Catalog::Compiler.new
@@ -111,6 +111,7 @@ describe Puppet::Resource::Catalog::Compiler do
         end
 
         it "should extract and save any facts from the request" do
+            Puppet::Node.expects(:find).with(@name).returns @node
             @compiler.expects(:extract_facts_from_request).with(@request)
             @compiler.interpreter.stubs(:compile)
             @compiler.find(@request)

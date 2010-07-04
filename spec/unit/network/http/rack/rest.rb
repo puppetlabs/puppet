@@ -46,8 +46,8 @@ describe "Puppet::Network::HTTP::RackREST" do
             end
 
             it "should use the REQUEST_METHOD as the http method" do
-                req = mk_req('/', :method => 'mymethod')
-                @handler.http_method(req).should == "mymethod"
+                req = mk_req('/', :method => 'MYMETHOD')
+                @handler.http_method(req).should == "MYMETHOD"
             end
 
             it "should return the request path as the path" do

@@ -19,14 +19,22 @@ end
 
 mod = Puppet::Util::Queue
 client_classes = { :default => make_test_client_class('Bogus::Default'), :setup => make_test_client_class('Bogus::Setup') }
-mod.register_queue_type(client_classes[:default], :default)
-mod.register_queue_type(client_classes[:setup], :setup)
 
 describe Puppet::Util::Queue do
+    before :all do
+        mod.register_queue_type(client_classes[:default], :default)
+        mod.register_queue_type(client_classes[:setup], :setup)
+    end
+
     before :each do
         @class = Class.new do
             extend mod
         end
+    end
+
+    after :all do
+        instances = mod.instance_hash(:queue_clients)
+        [:default, :setup, :bogus, :aardvark, :conflict, :test_a, :test_b].each{ |x| instances.delete(x) }
     end
 
     context 'when determining a type name from a class' do

@@ -66,6 +66,8 @@ module Puppet::Network::HTTP::Handler
         check_authorization(indirection_request)
 
         send("do_%s" % indirection_request.method, indirection_request, request, response)
+    rescue SystemExit,NoMemoryError
+        raise
     rescue Exception => e
         return do_exception(response, e)
     end
@@ -97,6 +99,7 @@ module Puppet::Network::HTTP::Handler
     # Execute our find.
     def do_find(indirection_request, request, response)
         unless result = indirection_request.model.find(indirection_request.key, indirection_request.to_hash)
+            Puppet.info("Could not find %s for '%s'" % [indirection_request.indirection_name, indirection_request.key])
             return do_exception(response, "Could not find %s %s" % [indirection_request.indirection_name, indirection_request.key], 404)
         end
 

@@ -39,6 +39,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       "match" => [ :path, :glob ],
       "size" => [:comparator, :int],
       "include" => [:string],
+      "not_include" => [:string],
       "==" => [:glob],
       "!=" => [:glob]
     }
@@ -64,6 +65,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         if data.is_a?(String)
             data = data.split($/)
         end
+        data = data.flatten
         args = []
         data.each do |line|
             line.strip!
@@ -81,18 +83,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 if f == :path
                     start = sc.pos
                     nbracket = 0
+                    inSingleTick = false
+                    inDoubleTick = false
                     begin
-                        sc.skip(/([^\]\[\s\\]|\\.)+/)
+                        sc.skip(/([^\]\[\s\\'"]|\\.)+/)
                         ch = sc.getch
                         nbracket += 1 if ch == "["
                         nbracket -= 1 if ch == "]"
+                        inSingleTick = !inSingleTick if ch == "'"
+                        inDoubleTick = !inDoubleTick if ch == "\""
                         fail("unmatched [") if nbracket < 0
-                    end until nbracket == 0 && (sc.eos? || ch =~ /\s/)
+                    end until ((nbracket == 0 && !inSingleTick && !inDoubleTick && (ch =~ /\s/)) || sc.eos?)
                         len = sc.pos - start
                         len -= 1 unless sc.eos?
                     unless p = sc.string[start, len]
                         fail("missing path argument #{narg} for #{cmd}")
                     end
+                    # Rip off any ticks if they are there.
+                    p = p[1, (p.size - 2)] if p[0,1] == "'" || p[0,1] == "\""
                     p.chomp!("/")
                     if p[0,1] != "$" && p[0,1] != "/"
                         argline << context + p
@@ -203,6 +211,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
         #Get the values from augeas
         result = @aug.match(path) || []
+        fail("Error trying to match path '#{path}'") if (result == -1)
+
         # Now do the work
         case verb
         when "size"
@@ -213,6 +223,9 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         when "include"
             arg = clause_array.shift
             return_value = result.include?(arg)
+        when "not_include"
+            arg = clause_array.shift
+            return_value = !result.include?(arg)
         when "=="
             begin
                 arg = clause_array.shift
@@ -261,6 +274,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     when "get"; return_value = process_get(cmd_array)
                     when "match"; return_value = process_match(cmd_array)
                     end
+                rescue SystemExit,NoMemoryError
+                    raise
                 rescue Exception => e
                     fail("Error sending command '#{command}' with params #{cmd_array[1..-1].inspect}/#{e.message}")
                 end
@@ -277,7 +292,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     save_result = @aug.save
                     saved_files = @aug.match("/augeas/events/saved")
                     if save_result and not files_changed?
-                        debug("Skipping becuase no files were changed")
+                        debug("Skipping because no files were changed")
                         return_value = false
                     else
                         debug("Files changed, should execute")
@@ -322,13 +337,16 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                 case command
                     when "set"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        aug.set(cmd_array[0], cmd_array[1])
+                        rv = aug.set(cmd_array[0], cmd_array[1])
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
                     when "rm", "remove"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        aug.rm(cmd_array[0])
+                        rv = aug.rm(cmd_array[0])
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
                     when "clear"
                         debug("sending command '#{command}' with params #{cmd_array.inspect}")
-                        @aug.clear(cmd_array[0])
+                        rv = aug.clear(cmd_array[0])
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
                     when "insert", "ins"
                         label = cmd_array[0]
                         where = cmd_array[1]
@@ -339,9 +357,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                             else fail("Invalid value '#{where}' for where param")
                         end
                         debug("sending command '#{command}' with params #{[label, where, path].inspect}")
-                        aug.insert(path, label, before)
+                        rv = aug.insert(path, label, before)
+                        fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
                     else fail("Command '#{command}' is not supported")
                 end
+            rescue SystemExit,NoMemoryError
+                raise
             rescue Exception => e
                 fail("Error sending command '#{command}' with params #{cmd_array.inspect}/#{e.message}")
             end

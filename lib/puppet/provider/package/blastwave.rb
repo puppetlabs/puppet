@@ -10,8 +10,9 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
     commands :pkgget => pkgget
 
-    # This is so stupid, but then, so is blastwave.
-    ENV["PAGER"] = "/usr/bin/cat"
+    def pkgget_with_cat(*args)
+        Puppet::Util::Execution::withenv(:PAGER => "/usr/bin/cat") { pkgget(*args) }
+    end
 
     def self.extended(mod)
         unless command(:pkgget) != "pkg-get"
@@ -40,7 +41,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
             command << hash[:justme]
         end
 
-        output = pkgget command
+        output = Puppet::Util::Execution::withenv(:PAGER => "/usr/bin/cat") { pkgget command }
 
         list = output.split("\n").collect do |line|
             next if line =~ /^#/
@@ -88,7 +89,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     end
 
     def install
-        pkgget "-f", :install, @resource[:name]
+        pkgget_with_cat "-f", :install, @resource[:name]
     end
 
     # Retrieve the version from the current package file.
@@ -107,11 +108,11 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
     # Remove the old package, and install the new one
     def update
-        pkgget "-f", :upgrade, @resource[:name]
+        pkgget_with_cat "-f", :upgrade, @resource[:name]
     end
 
     def uninstall
-        pkgget "-f", :remove, @resource[:name]
+        pkgget_with_cat "-f", :remove, @resource[:name]
     end
 end
 

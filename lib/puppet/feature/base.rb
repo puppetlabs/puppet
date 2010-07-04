@@ -28,3 +28,9 @@ Puppet.features.add(:augeas, :libs => ["augeas"])
 
 # We have RRD available
 Puppet.features.add(:rrd, :libs => ["RRDtool"])
+
+# We have OpenSSL
+Puppet.features.add(:openssl, :libs => ["openssl"])
+
+# We have CouchDB
+Puppet.features.add(:couchdb, :libs => ["couchrest"])

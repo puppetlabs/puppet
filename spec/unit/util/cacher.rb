@@ -40,7 +40,7 @@ end
 
 describe Puppet::Util::Cacher do
     it "should be extended with the Expirer module" do
-        Puppet::Util::Cacher.metaclass.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
+        Puppet::Util::Cacher.singleton_class.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
     end
 
     it "should support defining cached attributes" do
@@ -151,11 +151,11 @@ describe Puppet::Util::Cacher do
 
         it "should not check for a ttl expiration if the class does not support that method" do
             klass = Class.new do
-                extend Puppet::Util::Cacher
+                include Puppet::Util::Cacher
             end
 
-            klass.metaclass.cached_attr(:myattr) { "eh" }
-            klass.myattr
+            klass.cached_attr(:myattr) { "eh" }
+            lambda { klass.new.myattr }.should_not raise_error
         end
 
         it "should automatically expire cached attributes whose ttl has expired, even if no expirer is present" do

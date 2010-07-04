@@ -116,7 +116,7 @@ class Puppet::Indirector::Indirection
     end
 
     # Set up our request object.
-    def request(method, key, arguments = nil)
+    def instantiate_request(method, key, arguments = nil)
         Puppet::Indirector::Request.new(self.name, method, key, arguments)
     end
 
@@ -145,6 +145,10 @@ class Puppet::Indirector::Indirection
         @terminus_class
     end
 
+    def reset_terminus_class
+        @terminus_class = nil
+    end
+
     # Specify the terminus class to use.
     def terminus_class=(klass)
         validate_terminus_class(klass)
@@ -165,24 +169,24 @@ class Puppet::Indirector::Indirection
     # remove it, we expire it and write it back out to disk.  This way people
     # can still use the expired object if they want.
     def expire(key, *args)
-        request = request(:expire, key, *args)
+        request = instantiate_request(:expire, key, *args)
 
         return nil unless cache?
 
-        return nil unless instance = cache.find(request(:find, key, *args))
+        return nil unless instance = cache.find(instantiate_request(:find, key, *args))
 
         Puppet.info "Expiring the %s cache of %s" % [self.name, instance.name]
 
         # Set an expiration date in the past
         instance.expiration = Time.now - 60
 
-        cache.save(request(:save, instance, *args))
+        cache.save(instantiate_request(:save, instance, *args))
     end
 
     # Search for an instance in the appropriate terminus, caching the
     # results if caching is configured..
     def find(key, *args)
-        request = request(:find, key, *args)
+        request = instantiate_request(:find, key, *args)
         terminus = prepare(request)
 
         begin
@@ -199,7 +203,7 @@ class Puppet::Indirector::Indirection
             result.expiration ||= self.expiration
             if cache? and request.use_cache?
                 Puppet.info "Caching %s for %s" % [self.name, request.key]
-                cache.save request(:save, result, *args)
+                cache.save instantiate_request(:save, result, *args)
             end
 
             return terminus.respond_to?(:filter) ? terminus.filter(result) : result
@@ -222,12 +226,12 @@ class Puppet::Indirector::Indirection
 
     # Remove something via the terminus.
     def destroy(key, *args)
-        request = request(:destroy, key, *args)
+        request = instantiate_request(:destroy, key, *args)
         terminus = prepare(request)
 
         result = terminus.destroy(request)
 
-        if cache? and cached = cache.find(request(:find, key, *args))
+        if cache? and cached = cache.find(instantiate_request(:find, key, *args))
             # Reuse the existing request, since it's equivalent.
             cache.destroy(request)
         end
@@ -237,7 +241,7 @@ class Puppet::Indirector::Indirection
 
     # Search for more than one instance.  Should always return an array.
     def search(key, *args)
-        request = request(:search, key, *args)
+        request = instantiate_request(:search, key, *args)
         terminus = prepare(request)
 
         if result = terminus.search(request)
@@ -252,7 +256,7 @@ class Puppet::Indirector::Indirection
     # Save the instance in the appropriate terminus.  This method is
     # normally an instance method on the indirected class.
     def save(instance, *args)
-        request = request(:save, instance, *args)
+        request = instantiate_request(:save, instance, *args)
         terminus = prepare(request)
 
         result = terminus.save(request)

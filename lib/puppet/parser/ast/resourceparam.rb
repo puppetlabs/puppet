@@ -18,5 +18,9 @@ class Puppet::Parser::AST
                 :add => self.add
             )
         end
+
+        def to_s
+            "#{@param} => #{@value.to_s}"
+        end
     end
 end

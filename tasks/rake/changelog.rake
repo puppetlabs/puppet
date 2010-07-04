@@ -8,7 +8,7 @@ task :changelog do
 
     CHANGELOG_DIR = "#{Dir.pwd}"
     mkdir(CHANGELOG_DIR) unless File.directory?(CHANGELOG_DIR)
-    change_body = `git-changelog --no-limit -a`
+    change_body = `git-changelog --limit=99999`
     File.open(File.join(CHANGELOG_DIR, "CHANGELOG"), 'w') do |f|
         f << change_body
     end

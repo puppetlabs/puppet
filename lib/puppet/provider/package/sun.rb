@@ -94,7 +94,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
             execpipe(cmd) { |process|
                 # we're using the long listing, so each line is a separate
                 # piece of information
-                process.each { |line|
+                process.readlines.each { |line|
                     case line
                     when /^$/  # ignore
                     when /\s*([A-Z]+):\s+(.+)/
@@ -111,8 +111,10 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                 }
             }
             return hash
-        rescue Puppet::ExecutionFailure
-            return nil
+        rescue Puppet::ExecutionFailure => detail
+            return {:ensure => :absent} if detail.message =~ /information for "#{Regexp.escape(@resource[:name])}" was not found/
+            puts detail.backtrace if Puppet[:trace]
+            raise Puppet::Error, "Unable to get information about package #{@resource[:name]} because of: #{detail}"
         end
     end
 

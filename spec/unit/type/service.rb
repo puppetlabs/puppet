@@ -88,20 +88,6 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
         svc.should(:enable).should be_nil
     end
 
-    it "should discard paths that do not exist" do
-        FileTest.stubs(:exist?).returns(false)
-        FileTest.stubs(:directory?).returns(false)
-        svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two")
-        svc[:path].should be_empty
-    end
-
-    it "should discard paths that are not directories" do
-        FileTest.stubs(:exist?).returns(true)
-        FileTest.stubs(:directory?).returns(false)
-        svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two")
-        svc[:path].should be_empty
-    end
-
     it "should split paths on ':'" do
         FileTest.stubs(:exist?).returns(true)
         FileTest.stubs(:directory?).returns(true)

@@ -2,6 +2,7 @@
 # and performs them
 
 require 'puppet'
+require 'puppet/util/tagging'
 
 module Puppet
 class Transaction
@@ -18,6 +19,7 @@ class Transaction
     attr_reader :events
 
     include Puppet::Util
+    include Puppet::Util::Tagging
 
     # Add some additional times for reporting
     def addtimes(hash)
@@ -150,14 +152,6 @@ class Transaction
         }.uniq
     end
 
-    # Do any necessary cleanup.  If we don't get rid of the graphs, the
-    # contained resources might never get cleaned up.
-    def cleanup
-        if defined? @generated
-            catalog.remove_resource(*@generated)
-        end
-    end
-
     # Copy an important relationships from the parent to the newly-generated
     # child resource.
     def make_parent_child_relationship(resource, children)
@@ -213,14 +207,18 @@ class Transaction
         # Collect the targets of any subscriptions to those events.  We pass
         # the parent resource in so it will override the source in the events,
         # since eval_generated children can't have direct relationships.
-        relationship_graph.matching_edges(events, resource).each do |orig_edge|
-            # We have to dup the label here, else we modify the original edge label,
-            # which affects whether a given event will match on the next run, which is,
-            # of course, bad.
-            edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
-            edge.event = events.collect { |e| e.name }
-            set_trigger(edge)
+        duration = thinmark do
+            b = relationship_graph.matching_edges(events, resource)
+            b.each do |orig_edge|
+                # We have to dup the label here, else we modify the original edge label,
+                # which affects whether a given event will match on the next run, which is,
+                # of course, bad.
+                edge = orig_edge.class.new(orig_edge.source, orig_edge.target, orig_edge.label)
+                edge.event = events.collect { |e| e.name }
+                set_trigger(edge)
+            end
         end
+        Puppet.debug("Time for triggering #{events.size} events to edges: #{duration}") if events.size > 0 and duration > 0
 
         # And return the events for collection
         events
@@ -353,6 +351,7 @@ class Transaction
         made = [made] unless made.is_a?(Array)
         made.uniq.find_all do |res|
             begin
+                res.tag(*resource.tags)
                 @catalog.add_resource(res) do |r|
                     r.finish
                     make_parent_child_relationship(resource, [r])
@@ -601,26 +600,26 @@ class Transaction
     # The tags we should be checking.
     def tags
         unless defined? @tags
-            tags = Puppet[:tags]
-            if tags.nil? or tags == ""
-                @tags = []
-            else
-                @tags = tags.split(/\s*,\s*/)
-            end
+            self.tags = Puppet[:tags]
         end
 
-        @tags
+        super
     end
 
-    def tags=(tags)
-        tags = [tags] unless tags.is_a?(Array)
-        @tags = tags
+    def handle_qualified_tags( qualified )
+        # The default behavior of Puppet::Util::Tagging is
+        # to split qualified tags into parts. That would cause
+        # qualified tags to match too broadly here.
+        return
     end
 
     # Is this resource tagged appropriately?
     def missing_tags?(resource)
-        return false if self.ignore_tags? or tags.empty?
-        return true unless resource.tagged?(tags)
+        not appropriately_tagged?(resource)
+    end
+
+    def appropriately_tagged?(resource)
+        self.ignore_tags? or tags.empty? or resource.tagged?(*tags)
     end
 
     # Are there any edges that target this resource?

@@ -14,7 +14,7 @@ describe Puppet::FileServing::Content do
     end
 
     it "should should include the IndirectionHooks module in its indirection" do
-        Puppet::FileServing::Content.indirection.metaclass.included_modules.should include(Puppet::FileServing::IndirectionHooks)
+        Puppet::FileServing::Content.indirection.singleton_class.included_modules.should include(Puppet::FileServing::IndirectionHooks)
     end
 
     it "should only support the raw format" do

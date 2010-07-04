@@ -290,16 +290,16 @@ describe "puppetdoc" do
                 @puppetdoc.manifest = false
                 Puppet.stubs(:info)
                 Puppet.stubs(:[]).with(:trace).returns(false)
-                Puppet.stubs(:[]).with(:modulepath).returns('modules')
-                Puppet.stubs(:[]).with(:manifestdir).returns('manifests')
+                @env = stub 'env'
+                Puppet::Node::Environment.stubs(:new).returns(@env)
+                @env.stubs(:modulepath).returns(['modules'])
+                @env.stubs(:[]).with(:manifest).returns('manifests/site.pp')
                 @puppetdoc.options.stubs(:[]).with(:all).returns(false)
                 @puppetdoc.options.stubs(:[]).with(:outputdir).returns('doc')
                 Puppet.settings.stubs(:[]=).with(:document_all, false)
                 Puppet.settings.stubs(:setdefaults)
                 Puppet::Util::RDoc.stubs(:rdoc)
                 @puppetdoc.stubs(:exit)
-                File.stubs(:expand_path).with('modules').returns('modules')
-                File.stubs(:expand_path).with('manifests').returns('manifests')
                 @old = ARGV.dup
                 ARGV.clear
             end
@@ -329,6 +329,15 @@ describe "puppetdoc" do
             it "should call Puppet::Util::RDoc.manifestdoc in manifest mode" do
                 @puppetdoc.manifest = true
                 Puppet::Util::RDoc.expects(:manifestdoc)
+                @puppetdoc.rdoc
+            end
+
+            it "should get modulepath and manifestdir values from the environment" do
+                @env.expects(:modulepath).returns(['envmodules1','envmodules2'])
+                @env.expects(:[]).with(:manifest).returns('envmanifests/site.pp')
+
+                Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'])
+
                 @puppetdoc.rdoc
             end
         end

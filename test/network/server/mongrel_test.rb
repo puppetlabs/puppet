@@ -18,7 +18,7 @@ class TestMongrelServer < PuppetTest::TestCase
     # Make sure client info is correctly extracted.
     def test_client_info
         obj = Object.new
-        obj.metaclass.send(:attr_accessor, :params)
+        obj.singleton_class.send(:attr_accessor, :params)
         params = {}
         obj.params = params
 

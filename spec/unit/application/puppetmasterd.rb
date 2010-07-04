@@ -182,12 +182,6 @@ describe "PuppetMaster" do
             @puppetmasterd.run_setup
         end
 
-        it "should set node facst terminus to yaml" do
-            Puppet::Node::Facts.expects(:terminus_class=).with(:yaml)
-
-            @puppetmasterd.run_setup
-        end
-
         it "should cache class in yaml" do
             Puppet::Node.expects(:cache_class=).with(:yaml)
 
@@ -237,6 +231,7 @@ describe "PuppetMaster" do
 
         it "should dispatch to parseonly if parseonly is set" do
             Puppet.stubs(:[]).with(:parseonly).returns(true)
+            @puppetmasterd.options[:node] = nil
 
             @puppetmasterd.get_command.should == :parseonly
         end

@@ -29,7 +29,9 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
                     Timeout::timeout(self.timeout) do
                         load file
                     end
-                rescue => detail
+                rescue SystemExit,NoMemoryError
+                    raise
+                rescue Exception => detail
                     Puppet.warning "Could not load fact file %s: %s" % [fqfile, detail]
                 end
             end

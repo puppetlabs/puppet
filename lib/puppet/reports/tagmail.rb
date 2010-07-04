@@ -2,6 +2,7 @@ require 'puppet'
 require 'pp'
 
 require 'net/smtp'
+require 'time'
 
 Puppet::Reports.register_report(:tagmail) do
     desc "This report sends specific log messages to specific email addresses

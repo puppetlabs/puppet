@@ -4,6 +4,36 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/network/authconfig'
 
+describe Puppet::Network::AuthStore do
+    describe "when checking if the acl has some entries" do
+        before :each do
+            @authstore = Puppet::Network::AuthStore.new
+        end
+
+        it "should be empty if no ACE have been entered" do
+            @authstore.should be_empty
+        end
+
+        it "should not be empty if it is a global allow" do
+            @authstore.allow('*')
+
+            @authstore.should_not be_empty
+        end
+
+        it "should not be empty if at least one allow has been entered" do
+            @authstore.allow('1.1.1.*')
+
+            @authstore.should_not be_empty
+        end
+
+        it "should not be empty if at least one deny has been entered" do
+            @authstore.deny('1.1.1.*')
+
+            @authstore.should_not be_empty
+        end
+    end
+end
+
 describe Puppet::Network::AuthStore::Declaration do
 
     ['100.101.99.98','100.100.100.100','1.2.3.4','11.22.33.44'].each { |ip|
@@ -53,6 +83,181 @@ describe Puppet::Network::AuthStore::Declaration do
         end
     end
 
+    [
+        "02001:0000:1234:0000:0000:C1C0:ABCD:0876",
+        "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
+        " 2001:0000:1234:0000:0000:C1C0:ABCD:0876  0",
+        "2001:0000:1234: 0000:0000:C1C0:ABCD:0876",
+        "3ffe:0b00:0000:0001:0000:0000:000a",
+        "FF02:0000:0000:0000:0000:0000:0000:0000:0001",
+        "3ffe:b00::1::a",
+        "1:2:3::4:5::7:8",
+        "12345::6:7:8",
+        "1::5:400.2.3.4", 
+        "1::5:260.2.3.4", 
+        "1::5:256.2.3.4", 
+        "1::5:1.256.3.4", 
+        "1::5:1.2.256.4", 
+        "1::5:1.2.3.256", 
+        "1::5:300.2.3.4", 
+        "1::5:1.300.3.4", 
+        "1::5:1.2.300.4", 
+        "1::5:1.2.3.300", 
+        "1::5:900.2.3.4", 
+        "1::5:1.900.3.4", 
+        "1::5:1.2.900.4", 
+        "1::5:1.2.3.900", 
+        "1::5:300.300.300.300", 
+        "1::5:3000.30.30.30", 
+        "1::400.2.3.4", 
+        "1::260.2.3.4", 
+        "1::256.2.3.4", 
+        "1::1.256.3.4", 
+        "1::1.2.256.4", 
+        "1::1.2.3.256", 
+        "1::300.2.3.4", 
+        "1::1.300.3.4", 
+        "1::1.2.300.4", 
+        "1::1.2.3.300", 
+        "1::900.2.3.4", 
+        "1::1.900.3.4", 
+        "1::1.2.900.4", 
+        "1::1.2.3.900", 
+        "1::300.300.300.300", 
+        "1::3000.30.30.30", 
+        "::400.2.3.4", 
+        "::260.2.3.4", 
+        "::256.2.3.4", 
+        "::1.256.3.4", 
+        "::1.2.256.4", 
+        "::1.2.3.256", 
+        "::300.2.3.4", 
+        "::1.300.3.4", 
+        "::1.2.300.4", 
+        "::1.2.3.300", 
+        "::900.2.3.4", 
+        "::1.900.3.4", 
+        "::1.2.900.4", 
+        "::1.2.3.900", 
+        "::300.300.300.300", 
+        "::3000.30.30.30", 
+        "2001:DB8:0:0:8:800:200C:417A:221", # unicast, full 
+        "FF01::101::2" # multicast, compressed 
+    ].each { |invalid_ip|
+        describe "when the pattern is an invalid IPv6 address such as #{invalid_ip}" do
+            it "should raise an exception" do
+                lambda { Puppet::Network::AuthStore::Declaration.new(:allow,invalid_ip) }.should raise_error
+            end
+        end
+    }
+
+    [
+        "1.2.3.4", 
+        "2001:0000:1234:0000:0000:C1C0:ABCD:0876", 
+        "3ffe:0b00:0000:0000:0001:0000:0000:000a", 
+        "FF02:0000:0000:0000:0000:0000:0000:0001", 
+        "0000:0000:0000:0000:0000:0000:0000:0001", 
+        "0000:0000:0000:0000:0000:0000:0000:0000", 
+        "::ffff:192.168.1.26", 
+        "2::10", 
+        "ff02::1", 
+        "fe80::", 
+        "2002::", 
+        "2001:db8::", 
+        "2001:0db8:1234::", 
+        "::ffff:0:0", 
+        "::1", 
+        "::ffff:192.168.1.1", 
+        "1:2:3:4:5:6:7:8", 
+        "1:2:3:4:5:6::8", 
+        "1:2:3:4:5::8", 
+        "1:2:3:4::8", 
+        "1:2:3::8", 
+        "1:2::8", 
+        "1::8", 
+        "1::2:3:4:5:6:7", 
+        "1::2:3:4:5:6", 
+        "1::2:3:4:5", 
+        "1::2:3:4", 
+        "1::2:3", 
+        "1::8", 
+        "::2:3:4:5:6:7:8", 
+        "::2:3:4:5:6:7", 
+        "::2:3:4:5:6", 
+        "::2:3:4:5", 
+        "::2:3:4", 
+        "::2:3", 
+        "::8", 
+        "1:2:3:4:5:6::", 
+        "1:2:3:4:5::", 
+        "1:2:3:4::", 
+        "1:2:3::", 
+        "1:2::", 
+        "1::", 
+        "1:2:3:4:5::7:8", 
+        "1:2:3:4::7:8", 
+        "1:2:3::7:8", 
+        "1:2::7:8", 
+        "1::7:8", 
+        "1:2:3:4:5:6:1.2.3.4", 
+        "1:2:3:4:5::1.2.3.4", 
+        "1:2:3:4::1.2.3.4", 
+        "1:2:3::1.2.3.4", 
+        "1:2::1.2.3.4", 
+        "1::1.2.3.4", 
+        "1:2:3:4::5:1.2.3.4", 
+        "1:2:3::5:1.2.3.4", 
+        "1:2::5:1.2.3.4", 
+        "1::5:1.2.3.4", 
+        "1::5:11.22.33.44", 
+        "fe80::217:f2ff:254.7.237.98", 
+        "fe80::217:f2ff:fe07:ed62", 
+        "2001:DB8:0:0:8:800:200C:417A", # unicast, full 
+        "FF01:0:0:0:0:0:0:101", # multicast, full 
+        "0:0:0:0:0:0:0:1", # loopback, full 
+        "0:0:0:0:0:0:0:0", # unspecified, full 
+        "2001:DB8::8:800:200C:417A", # unicast, compressed 
+        "FF01::101", # multicast, compressed 
+        "::1", # loopback, compressed, non-routable 
+        "::", # unspecified, compressed, non-routable 
+        "0:0:0:0:0:0:13.1.68.3", # IPv4-compatible IPv6 address, full, deprecated 
+        "0:0:0:0:0:FFFF:129.144.52.38", # IPv4-mapped IPv6 address, full 
+        "::13.1.68.3", # IPv4-compatible IPv6 address, compressed, deprecated 
+        "::FFFF:129.144.52.38", # IPv4-mapped IPv6 address, compressed 
+        "2001:0DB8:0000:CD30:0000:0000:0000:0000/60", # full, with prefix 
+        "2001:0DB8::CD30:0:0:0:0/60", # compressed, with prefix 
+        "2001:0DB8:0:CD30::/60", # compressed, with prefix #2 
+        "::/128", # compressed, unspecified address type, non-routable 
+        "::1/128", # compressed, loopback address type, non-routable 
+        "FF00::/8", # compressed, multicast address type 
+        "FE80::/10", # compressed, link-local unicast, non-routable 
+        "FEC0::/10", # compressed, site-local unicast, deprecated 
+        "127.0.0.1", # standard IPv4, loopback, non-routable 
+        "0.0.0.0", # standard IPv4, unspecified, non-routable 
+        "255.255.255.255", # standard IPv4 
+        "fe80:0000:0000:0000:0204:61ff:fe9d:f156", 
+        "fe80:0:0:0:204:61ff:fe9d:f156", 
+        "fe80::204:61ff:fe9d:f156", 
+        "fe80:0000:0000:0000:0204:61ff:254.157.241.086", 
+        "fe80:0:0:0:204:61ff:254.157.241.86", 
+        "fe80::204:61ff:254.157.241.86", 
+        "::1", 
+        "fe80::", 
+        "fe80::1"
+    ].each { |ip|
+        describe "when the pattern is a valid IP such as #{ip}" do
+            before :each do
+                @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,ip)
+            end
+            it "should match the specified IP" do
+                @declaration.should be_match('www.testsite.org',ip)
+            end
+            it "should not match other IPs" do
+                @declaration.should_not be_match('www.testsite.org','200.101.99.98')
+            end
+        end unless ip =~ /:.*\./ # Hybrid IPs aren't supported by ruby's ipaddr
+    }
+
     {
     'spirit.mars.nasa.gov' => 'a PQDN',
     'ratchet.2ndsiteinc.com' => 'a PQDN with digits',
@@ -71,6 +276,28 @@ describe Puppet::Network::AuthStore::Declaration do
                 @declaration.should_not be_match(@host+'.','200.101.99.98')
             end
         end
+    }
+
+    ['abc.12seps.edu.phisher.biz','www.google.com','slashdot.org'].each { |host|
+        (1...(host.split('.').length)).each { |n|
+            describe "when the pattern is #{"*."+host.split('.')[-n,n].join('.')}" do
+                before :each do
+                    @pattern = "*."+host.split('.')[-n,n].join('.')
+                    @declaration = Puppet::Network::AuthStore::Declaration.new(:allow,@pattern)
+                end
+                it "should match #{host}" do
+                    @declaration.should be_match(host,'1.2.3.4')
+                end
+                it "should not match www.testsite.gov" do
+                    @declaration.should_not be_match('www.testsite.gov','200.101.99.98')
+                end
+                it "should not match hosts that differ in the first non-wildcard segment" do
+                    other = host.split('.')
+                    other[-n].succ!
+                    @declaration.should_not be_match(other.join('.'),'1.2.3.4')
+                end
+            end
+        }
     }
 
     describe "when the pattern is a FQDN" do

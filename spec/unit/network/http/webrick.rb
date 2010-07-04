@@ -15,7 +15,7 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
     before do
-        @mock_webrick = stub('webrick', :[] => {})
+        @mock_webrick = stub('webrick', :[] => {}, :listeners => [], :status => :Running)
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new
@@ -162,7 +162,7 @@ end
 
 describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
     before do
-        @mock_webrick = stub('webrick', :[] => {})
+        @mock_webrick = stub('webrick', :[] => {}, :listeners => [], :status => :Running)
         [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
         WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
         @server = Puppet::Network::HTTP::WEBrick.new

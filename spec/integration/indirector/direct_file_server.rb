@@ -18,7 +18,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
     it "should return an instance of the model" do
         FileTest.expects(:exists?).with(@filepath).returns(true)
 
-        @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}")).should be_instance_of(Puppet::FileServing::Content)
+        @terminus.find(@terminus.indirection.instantiate_request(:find, "file://host#{@filepath}")).should be_instance_of(Puppet::FileServing::Content)
     end
 
     it "should return an instance capable of returning its content" do
@@ -26,7 +26,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
         File.stubs(:lstat).with(@filepath).returns(stub("stat", :ftype => "file"))
         File.expects(:read).with(@filepath).returns("my content")
 
-        instance = @terminus.find(@terminus.indirection.request(:find, "file://host#{@filepath}"))
+        instance = @terminus.find(@terminus.indirection.instantiate_request(:find, "file://host#{@filepath}"))
 
         instance.content.should == "my content"
     end
@@ -45,7 +45,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
         File.open(File.join(@path, "one"), "w") { |f| f.print "one content" }
         File.open(File.join(@path, "two"), "w") { |f| f.print "two content" }
 
-        @request = @terminus.indirection.request(:search, "file:///%s" % @path, :recurse => true)
+        @request = @terminus.indirection.instantiate_request(:search, "file:///%s" % @path, :recurse => true)
     end
 
     after do

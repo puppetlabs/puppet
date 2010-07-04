@@ -21,17 +21,14 @@ module Puppet
             # with them, with flags appropriate for checking client
             # certificates for revocation
             def x509store
-                if Puppet[:cacrl] == 'false'
+                unless File.exist?(Puppet[:cacrl])
                     # No CRL, no store needed
                     return nil
-                end
-                unless File.exist?(Puppet[:cacrl])
-                    raise Puppet::Error, "Could not find CRL; set 'cacrl' to 'false' to disable CRL usage"
                 end
                 crl = OpenSSL::X509::CRL.new(File.read(Puppet[:cacrl]))
                 store = OpenSSL::X509::Store.new
                 store.purpose = OpenSSL::X509::PURPOSE_ANY
-                store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK
+                store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
                 unless self.ca_cert
                     raise Puppet::Error, "Could not find CA certificate"
                 end

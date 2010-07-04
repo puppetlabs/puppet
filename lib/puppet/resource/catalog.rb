@@ -16,7 +16,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     class DuplicateResourceError < Puppet::Error; end
 
     extend Puppet::Indirector
-    indirects :catalog, :terminus_class => :compiler
+    indirects :catalog, :terminus_setting => :catalog_terminus
 
     include Puppet::Util::Tagging
     extend Puppet::Util::Pson
@@ -49,6 +49,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # Some metadata to help us compile and generally respond to the current state.
     attr_accessor :client_version, :server_version
 
+    def expired?
+        return false if Puppet[:use_cached_catalog]
+        super
+    end
+
     # Add classes to our class list.
     def add_class(*classes)
         classes.each do |klass|
@@ -78,7 +83,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             @resource_table[ref] = resource
 
             # If the name and title differ, set up an alias
-            #self.alias(resource, resource.name) if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
+
             if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.name != resource.title
                 self.alias(resource, resource.name) if resource.isomorphic?
             end
@@ -160,7 +165,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     ensure
         @applying = false
         cleanup()
-        transaction.cleanup if defined? transaction and transaction
     end
 
     # Are we in the middle of applying the catalog?
@@ -430,12 +434,12 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         # the class.
         edge = Puppet::Relationship.from_pson(edge) if edge.is_a?(Hash)
         unless source = result.resource(edge.source)
-            raise ArgumentError, "Could not convert from pson: Could not find relationship source '%s'" % source
+            raise ArgumentError, "Could not convert from pson: Could not find relationship source #{edge.source.inspect}"
         end
         edge.source = source
 
         unless target = result.resource(edge.target)
-            raise ArgumentError, "Could not convert from pson: Could not find relationship target '%s'" % target
+            raise ArgumentError, "Could not convert from pson: Could not find relationship target #{edge.target.inspect}"
         end
         edge.target = target
 
@@ -508,12 +512,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     private
 
     def cleanup
-        unless @transient_resources.empty?
-            remove_resource(*@transient_resources)
-            @transient_resources.clear
-            @relationship_graph = nil
-        end
-
         # Expire any cached data the resources are keeping.
         expire()
     end

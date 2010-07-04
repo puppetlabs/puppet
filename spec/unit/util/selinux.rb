@@ -27,7 +27,12 @@ describe Puppet::Util::SELinux do
              Selinux.expects(:is_selinux_enabled).returns 0
              selinux_support?.should be_false
         end
-    end
+ 
+        it "should return nil if /proc/mounts does not exist" do
+            File.stubs(:open).with("/proc/mounts").raises("No such file or directory - /proc/mounts")
+            read_mounts.should == nil
+        end
+   end
 
     describe "filesystem detection" do
         before :each do
@@ -61,6 +66,42 @@ describe Puppet::Util::SELinux do
             selinux_label_support?('/mnt/nfs/testfile').should be_false
         end
 
+        it "should follow symlinks when determining file systems" do
+            self.stubs(:realpath).with('/mnt/symlink/testfile').returns('/mnt/nfs/dest/testfile')
+
+            selinux_label_support?('/mnt/symlink/testfile').should be_false
+        end
+
+    end
+
+    describe "realpath" do
+        it "should handle files that don't exist" do
+
+            # Since I'm stubbing Pathname.new for this test, 
+            # I need to also stub the internal calls to Pathname.new,
+            # which happen in Pathname.dirname and Parthname.basename
+            # I want those to return real Pathname objects,
+            # so I'm creating them before the stub is in place.
+            realpaths = Hash.new {|hash, path| hash[path] = Pathname.new(path) }
+            paths = ['symlink', '/mnt']
+            paths.each { |path| realpaths[path] }
+
+            realpaths['/mnt/symlink'] = stubs "Pathname"
+            realpaths['/mnt/symlink'].stubs(:realpath).returns(realpaths['/mnt/nfs/dest'])
+            realpaths['/mnt/symlink'].stubs(:exist?).returns(true)
+
+            realpaths['/mnt/symlink/nonexistant'] = stubs "Pathname"
+            realpaths['/mnt/symlink/nonexistant'].stubs(:realpath).raises(Errno::ENOENT)
+            realpaths['/mnt/symlink/nonexistant'].stubs(:exist?).returns(false)
+            realpaths['/mnt/symlink/nonexistant'].stubs(:dirname).returns(realpaths['/mnt/symlink'])
+            realpaths['/mnt/symlink/nonexistant'].stubs(:basename).returns(realpaths['nonexistant'])
+
+            realpaths.each do |path, value|
+                Pathname.stubs(:new).with(path).returns(value)
+            end
+
+            realpath('/mnt/symlink/nonexistant').should == '/mnt/nfs/dest/nonexistant'
+        end
     end
 
     describe "get_selinux_current_context" do
@@ -153,8 +194,26 @@ describe Puppet::Util::SELinux do
     end
 
     describe "set_selinux_context" do
-        it "should return nil if there is no SELinux support" do
+         before :each do
+            fh = stub 'fh', :close => nil
+            File.stubs(:open).with("/proc/mounts").returns fh
+            fh.stubs(:read_nonblock).returns(
+                "rootfs / rootfs rw 0 0\n"+
+                "/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n"+
+                "/dev /dev tmpfs rw,relatime,mode=755 0 0\n"+
+                "/proc /proc proc rw,relatime 0 0\n"+
+                "/sys /sys sysfs rw,relatime 0 0\n"
+                ).then.raises EOFError
+        end
+
+       it "should return nil if there is no SELinux support" do
             self.expects(:selinux_support?).returns false
+            set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
+        end
+
+        it "should return nil if selinux_label_support returns false" do
+            self.expects(:selinux_support?).returns true
+            self.expects(:selinux_label_support?).with("/foo").returns false
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
         end
 

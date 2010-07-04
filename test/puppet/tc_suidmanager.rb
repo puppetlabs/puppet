@@ -11,7 +11,10 @@ class TestSUIDManager < Test::Unit::TestCase
     include PuppetTest
 
     def setup
-        @user = nonrootuser
+        the_id = 42
+        Puppet::Util::SUIDManager.stubs(:convert_xid).returns(the_id)
+        Puppet::Util::SUIDManager.stubs(:initgroups)
+        @user = stub('user', :uid => the_id, :gid => the_id, :name => 'name')
         super
     end
 
@@ -39,13 +42,14 @@ class TestSUIDManager < Test::Unit::TestCase
     end
 
     def test_utiluid
-        assert_not_equal(nil, Puppet::Util.uid(@user.name))
+        assert_not_equal(nil, Puppet::Util.uid(nonrootuser.name))
     end
 
     def test_asuser_as_root
         Process.stubs(:uid).returns(0)
         expects_id_set_and_revert @user.uid, @user.gid
         Puppet::Util::SUIDManager.asuser @user.uid, @user.gid do end
+    rescue Errno::EPERM
     end
 
     def test_asuser_as_nonroot
@@ -96,6 +100,7 @@ class TestSUIDManager < Test::Unit::TestCase
     private
 
     def expects_id_set_and_revert(uid, gid)
+        Process.stubs(:groups=)
         Process.expects(:euid).returns(99997)
         Process.expects(:egid).returns(99996)
 

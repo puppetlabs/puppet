@@ -107,6 +107,14 @@ describe Puppet::FileServing::Mount::File, "when determining the complete file p
         @mount.complete_path("/my/path", nil).should be_nil
     end
 
+    it "should write a log message if the file is absent" do
+        FileTest.stubs(:exist?).returns(false)
+
+        Puppet.expects(:info).with("File does not exist or is not accessible: /mount/my/path")
+
+        @mount.complete_path("/my/path", nil)
+    end
+
     it "should return the file path if the file is present" do
         FileTest.stubs(:exist?).with("/my/path").returns(true)
         @mount.complete_path("/my/path", nil).should == "/mount/my/path"

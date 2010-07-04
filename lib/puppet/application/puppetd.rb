@@ -125,7 +125,7 @@ Puppet::Application.new(:puppetd) do
         Puppet.settings.handlearg("--no-daemonize")
         options[:verbose] = true
         options[:onetime] = true
-        options[:waitforcert] = 0
+        options[:waitforcert] = 0 unless @explicit_waitforcert
     end
 
     # Handle the logging settings.
@@ -158,13 +158,6 @@ Puppet::Application.new(:puppetd) do
             Puppet.err "Will not start without authorization file %s" %
                 Puppet[:authconfig]
             exit(14)
-        end
-
-        # FIXME: we should really figure out how to distribute the CRL
-        # to clients. In the meantime, we just disable CRL checking if
-        # the CRL file doesn't exist
-        unless File::exist?(Puppet[:cacrl])
-            Puppet[:cacrl] = 'false'
         end
 
         handlers = nil
@@ -213,17 +206,20 @@ Puppet::Application.new(:puppetd) do
 
         Puppet.settings.use :main, :puppetd, :ssl
 
-        # We need to specify a ca location for things to work, but
-        # until the REST cert transfers are working, it needs to
-        # be local.
+        # This configures all of the SSL-related indirected classes.
         Puppet::SSL::Host.ca_location = :remote
 
         Puppet::Transaction::Report.terminus_class = :rest
 
-        Puppet::Resource::Catalog.terminus_class = :rest
+        # Override the default; puppetd needs this, usually.
+        # You can still override this on the command-line with, e.g., :compiler.
+        Puppet[:catalog_terminus] = :rest
+
+        # Override the default.
+        Puppet[:facts_terminus] = :facter
+
         Puppet::Resource::Catalog.cache_class = :yaml
 
-        Puppet::Node::Facts.terminus_class = :facter
 
         # We need tomake the client either way, we just don't start it
         # if --no-client is set.

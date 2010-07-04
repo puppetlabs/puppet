@@ -17,8 +17,8 @@ Puppet::Type.type(:host).provide(:parsed,
     text_line :comment, :match => /^#/
     text_line :blank, :match => /^\s*$/
 
-    record_line :parsed, :fields => %w{ip name alias},
-        :optional => %w{alias},
+    record_line :parsed, :fields => %w{ip name host_aliases},
+        :optional => %w{host_aliases},
         :rts => true do |line|
         hash = {}
         if line.sub!(/^(\S+)\s+(\S+)\s*/, '')
@@ -30,7 +30,7 @@ Puppet::Type.type(:host).provide(:parsed,
                 line.sub!(/^([^#]+)\s*/) do |value|
                     aliases = $1
                     unless aliases =~ /^\s*$/
-                        hash[:alias] = aliases.split(/\s+/)
+                        hash[:host_aliases] = aliases.split(/\s+/)
                     end
 
                     ""
@@ -40,8 +40,8 @@ Puppet::Type.type(:host).provide(:parsed,
             raise Puppet::Error, "Could not match '%s'" % line
         end
 
-        if hash[:alias] == ""
-            hash.delete(:alias)
+        if hash[:host_aliases] == ""
+            hash.delete(:host_aliases)
         end
 
         return hash
@@ -58,11 +58,11 @@ Puppet::Type.type(:host).provide(:parsed,
 
         str = "%s\t%s" % [hash[:ip], hash[:name]]
 
-        if hash.include? :alias
-            if hash[:alias].is_a? Array
-                str += "\t%s" % hash[:alias].join("\t")
+        if hash.include? :host_aliases
+            if hash[:host_aliases].is_a? Array
+                str += "\t%s" % hash[:host_aliases].join("\t")
             else
-                raise ArgumentError, "Aliases must be specified as an array"
+                raise ArgumentError, "Host aliases must be specified as an array"
             end
         end
 

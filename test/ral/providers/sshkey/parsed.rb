@@ -32,7 +32,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
         args = {
             :name => name || "/fspuppet%s" % @pcount,
             :key => "thisismykey%s" % @pcount,
-            :alias => ["host1.domain.com","192.168.0.1"],
+            :host_aliases => ["host1.domain.com","192.168.0.1"],
             :type => "dss",
             :ensure => :present
         }
@@ -68,11 +68,11 @@ class TestParsedSSHKey < Test::Unit::TestCase
             key.flush
         end
 
-        assert(key.alias, "No alias set for key")
+        assert(key.host_aliases, "No host_aliases set for key")
 
         hash = key.property_hash.dup
         text = @provider.target_object(file).read
-        names = [key.name, key.alias].flatten.join(",")
+        names = [key.name, key.host_aliases].flatten.join(",")
 
         assert_equal("#{names} #{key.type} #{key.key}\n", text)
 
@@ -94,12 +94,12 @@ class TestParsedSSHKey < Test::Unit::TestCase
             result = @provider.parse_line("one,two type key")
         end
         assert_equal("one", result[:name], "Did not call post hook")
-        assert_equal(%w{two}, result[:alias], "Did not call post hook")
+        assert_equal(%w{two}, result[:host_aliases], "Did not call post hook")
 
         assert_equal("one,two type key",
             @provider.to_line(:record_type => :parsed,
             :name => "one",
-            :alias => %w{two},
+            :host_aliases => %w{two},
             :type => "type",
             :key => "key"),
             "Did not use pre-hook when generating line"

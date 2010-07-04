@@ -80,7 +80,7 @@ to other machines.
     newproperty(:content, :required_features => :manages_content) do
         desc "The XML Plist.  The value of MCXSettings in DirectoryService.
         This is the standard output from the system command:
-        dscl localhost -mcxexport /Local/Default/<ds_type>/<ds_name>
+        dscl localhost -mcxexport /Local/Default/<ds_type>/ds_name
         Note that ds_type is capitalized and plural in the dscl command."
     end
 

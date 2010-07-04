@@ -38,36 +38,20 @@ Puppet::Application.new(:ralsh) do
     end
 
     command(:main) do
-        if ARGV.length > 0
-            type = ARGV.shift
-        else
-            raise "You must specify the type to display"
-        end
-
-        name = nil
+        type = ARGV.shift or raise "You must specify the type to display"
+        typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
+        name = ARGV.shift
         params = {}
-        if ARGV.length > 0
-            name = ARGV.shift
-        end
-
-        if ARGV.length > 0
-            ARGV.each do |setting|
-                if setting =~ /^(\w+)=(.+)$/
-                    params[$1] = $2
-                else
-                    raise "Invalid parameter setting %s" % setting
-                end
+        ARGV.each do |setting|
+            if setting =~ /^(\w+)=(.+)$/
+                params[$1] = $2
+            else
+                raise "Invalid parameter setting %s" % setting
             end
         end
 
         if options[:edit] and @host
             raise "You cannot edit a remote host"
-        end
-
-        typeobj = nil
-
-        unless typeobj = Puppet::Type.type(type)
-            raise "Could not find type %s" % type
         end
 
         properties = typeobj.properties.collect { |s| s.name }
@@ -106,7 +90,7 @@ Puppet::Application.new(:ralsh) do
             transbucket.sort { |a,b| a.name <=> b.name }.collect(&format)
         else
             if name
-                obj = typeobj.new(:name => name, :check => properties)
+                obj = typeobj.instances.find { |o| o.name == name } || typeobj.new(:name => name, :check => properties)
                 vals = obj.retrieve
 
                 unless params.empty?

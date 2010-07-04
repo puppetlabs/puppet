@@ -20,24 +20,12 @@ class Puppet::Resource::Reference
     end
 
     def initialize(argtype, argtitle = nil)
-        if argtitle.nil?
-            if argtype.is_a?(Puppet::Type)
-                self.title = argtype.title
-                self.type = argtype.class.name
-            else
-                self.title = argtype
-                if self.title == argtype
-                    raise ArgumentError, "No title provided and title '%s' is not a valid resource reference" % argtype.inspect
-                end
-            end
-        else
-            # This will set @type if it looks like a resource reference.
-            self.title = argtitle
-
-            # Don't override whatever was done by setting the title.
-            self.type ||= argtype
-        end
-
+        self.type,self.title = 
+	    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
+	    elsif argtitle                                         then [ argtype,            argtitle      ]
+	    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
+	    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+	    end
         @builtin_type = nil
     end
 
@@ -47,15 +35,11 @@ class Puppet::Resource::Reference
         return nil
     end
 
-    # If the title has square brackets, treat it like a reference and
-    # set things appropriately; else, just set it.
     def title=(value)
-        if value =~ /^([^\[\]]+)\[(.+)\]$/
-            self.type = $1
-            @title = $2
-        else
-            @title = value
+        if @type and klass = Puppet::Type.type(@type.to_s.downcase)
+            value = klass.canonicalize_ref(value)
         end
+        @title = value
     end
 
     # Canonize the type so we know it's always consistent.
@@ -65,6 +49,10 @@ class Puppet::Resource::Reference
         else
             # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
             x = @type = value.to_s.split("::").collect { |s| s.capitalize }.join("::")
+        end
+
+        if @title
+            self.title = @title
         end
     end
 

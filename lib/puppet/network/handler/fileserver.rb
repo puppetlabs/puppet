@@ -283,8 +283,8 @@ class Puppet::Network::Handler
                         when /\[([-\w]+)\]/
                             name = $1
                             if newmounts.include?(name)
-                                raise FileServerError, "%s is already mounted at %s" %
-                                    [newmounts[name], name], count, @configuration.file
+                                raise FileServerError, "%s is already mounted as %s in %s" %
+                                    [newmounts[name], name, @configuration.file]
                             end
                             mount = Mount.new(name)
                             newmounts[name] = mount
@@ -310,6 +310,7 @@ class Puppet::Network::Handler
                                         mount.info "allowing %s access" % val
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
+                                        puts detail.backtrace if Puppet[:trace]
                                         raise FileServerError.new(detail.to_s,
                                             count, @configuration.file)
                                     end

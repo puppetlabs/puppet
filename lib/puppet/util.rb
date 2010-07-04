@@ -55,10 +55,11 @@ module Util
             end
             unless Puppet::Util::SUIDManager.uid == user
                 begin
+                    Puppet::Util::SUIDManager.initgroups(user)
                     Puppet::Util::SUIDManager.uid = user
                     Puppet::Util::SUIDManager.euid = user
-                rescue
-                    $stderr.puts "could not change to user %s" % user
+                rescue => detail
+                    $stderr.puts "Could not change to user %s: %s" % [user, detail]
                     exit(74)
                 end
             end
@@ -284,29 +285,15 @@ module Util
             # Child process executes this
             Process.setsid
             begin
-                if arguments[:stdinfile]
-                    $stdin.reopen(arguments[:stdinfile])
-                else
-                    $stdin.reopen("/dev/null")
-                end
+                $stdin.reopen(arguments[:stdinfile] || "/dev/null")
                 $stdout.reopen(output_file)
                 $stderr.reopen(error_file)
 
                 3.upto(256){|fd| IO::new(fd).close rescue nil}
-                if arguments[:gid]
-                    Process.egid = arguments[:gid]
-                    Process.gid = arguments[:gid] unless @@os == "Darwin"
-                end
-                if arguments[:uid]
-                    Process.euid = arguments[:uid]
-                    Process.uid = arguments[:uid] unless @@os == "Darwin"
-                end
+                Process::GID.change_privilege arguments[:gid] if arguments[:gid]
+                Process::UID.change_privilege arguments[:uid] if arguments[:uid]
                 ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-                if command.is_a?(Array)
-                    Kernel.exec(*command)
-                else
-                    Kernel.exec(command)
-                end
+                Kernel.exec(*command)
             rescue => detail
                 puts detail.to_s
                 exit!(1)
@@ -421,6 +408,28 @@ module Util
     end
 
     module_function :memory, :thinmark
+
+    def secure_open(file,must_be_w,&block)
+        raise Puppet::DevError,"secure_open only works with mode 'w'" unless must_be_w == 'w'
+        raise Puppet::DevError,"secure_open only requires a block"    unless block_given?
+        Puppet.warning "#{file} was a symlink to #{File.readlink(file)}" if File.symlink?(file)
+        if File.exists?(file) or File.symlink?(file)
+            wait = File.symlink?(file) ? 5.0 : 0.1
+            File.delete(file)
+            sleep wait # give it a chance to reappear, just in case someone is actively trying something.
+        end
+        begin
+            File.open(file,File::CREAT|File::EXCL|File::TRUNC|File::WRONLY,&block)
+        rescue Errno::EEXIST
+            desc = File.symlink?(file) ? "symlink to #{File.readlink(file)}" : File.stat(file).ftype
+            puts "Warning: #{file} was apparently created by another process (as"
+            puts "a #{desc}) as soon as it was deleted by this process.  Someone may be trying"
+            puts "to do something objectionable (such as tricking you into overwriting system"
+            puts "files if you are running as root)."
+            raise
+        end
+    end
+    module_function :secure_open
 end
 end
 

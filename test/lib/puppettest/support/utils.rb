@@ -154,11 +154,12 @@ end
 module PuppetTest
     include PuppetTest::Support::Utils
 
-    def self.fakedata(dir,pat='*')
+    def fakedata(dir,pat='*')
         glob = "#{basedir}/test/#{dir}/#{pat}"
         files = Dir.glob(glob,File::FNM_PATHNAME)
         raise Puppet::DevError, "No fakedata matching #{glob}" if files.empty?
         files
     end
+    module_function :fakedata
 
 end

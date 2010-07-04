@@ -368,7 +368,7 @@ class TestTransactions < Test::Unit::TestCase
 
         # 'subscribe' expects an array of arrays
         #component[:require] = [[file.class.name,file.name]]
-        ecomp[:subscribe] = fcomp
+        ecomp[:subscribe] = fcomp.ref
         exec[:refreshonly] = true
 
         trans = assert_events([], config)
@@ -554,11 +554,6 @@ class TestTransactions < Test::Unit::TestCase
             assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
                 "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
-        end
-
-        # Now make sure that cleanup gets rid of those generated types.
-        assert_nothing_raised do
-            trans.cleanup
         end
     end
 

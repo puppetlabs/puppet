@@ -21,11 +21,11 @@ module Puppet
 
         # FIXME This should automagically check for aliases to the hosts, just
         # to see if we can automatically glean any aliases.
-        newproperty(:alias) do
-            desc "Any alias the host might have.  Multiple values must be
-                specified as an array.  Note that this parameter has the same name
-                as one of the metaparams; using this parameter to set aliases will
-                make those aliases available in your Puppet scripts."
+        newproperty(:host_aliases) do
+           desc 'Any aliases the host might have.  Multiple values must be
+                specified as an array.  Note that this property is not the same as
+                the "alias" metaparam; use this property to add aliases to a host
+                on disk, and "alias" to aliases for use in your Puppet scripts.'
 
             attr_accessor :meta
 

@@ -16,6 +16,48 @@ describe Puppet::Type.type(:file) do
         @file.catalog = @catalog
     end
 
+    describe "#write" do
+
+        it "should propagate failures encountered when renaming the temporary file" do
+            File.stubs(:open)
+
+            File.expects(:rename).raises ArgumentError
+            file = Puppet::Type::File.new(:name => "/my/file", :backup => "puppet")
+
+            lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
+        end
+
+        it "should propagate failures encountered when a parent directory does not exist" do
+            file = Puppet::Type::File.new(:name => "/foo/bar")
+
+            lambda { file.write("something", :content) }.should raise_error(Puppet::Error, "Cannot create /foo/bar; parent directory /foo does not exist")
+        end
+
+        describe "when validating the checksum" do
+            before { @file.stubs(:validate_checksum?).returns(true) }
+
+            it "should fail if the checksum property and content checksums do not match" do
+                property = stub('checksum_property', :checktype => :md5, :md5 => 'checksum_a', :getsum => 'checksum_b')
+                @file.stubs(:property).with(:checksum).returns(property)
+
+                @file.stubs(:validate_checksum?).returns(true)
+                lambda { @file.write "something", :NOTUSED }.should raise_error(Puppet::Error)
+            end
+        end
+
+        describe "when not validating the checksum" do
+            before { @file.stubs(:validate_checksum?).returns(false) }
+
+            it "should not fail if the checksum property and content checksums do not match" do
+                property = stub('checksum_property', :checktype => :md5, :md5 => 'checksum_a', :getsum => 'checksum_b')
+                @file.stubs(:property).with(:checksum).returns(property)
+
+                lambda { @file.write "something", :NOTUSED }.should_not raise_error(Puppet::Error)
+            end
+
+        end
+    end
+
     it "should have a method for determining if the file is present" do
         @file.must respond_to(:exist?)
     end
@@ -319,6 +361,13 @@ describe Puppet::Type.type(:file) do
             @file.expects(:perform_recursion).returns [@metadata]
             @file.expects(:newchild).with("my/file").returns "fiebar"
             @file.recurse_local.should == {"my/file" => "fiebar"}
+        end
+
+        it "should set checksum_type to none if this file checksum is none" do
+            @file[:checksum] = :none
+            Puppet::FileServing::Metadata.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
+            @file.expects(:newchild).with("my/file").returns "fiebar"
+            @file.recurse_local
         end
     end
 
@@ -651,6 +700,14 @@ describe Puppet::Type.type(:file) do
                 end
             end
 
+            it "should pass on ensure and recurse to the sub resource if ensure is absent and recurse is true" do
+                @file = Puppet::Type::File.new(:name => "/foo/bar", :ensure => :absent, :recurse => true, :catalog => @catalog)
+                
+                @file.class.expects(:new).with { |params| params[:ensure] == :absent and params[:recurse] == true }
+
+                @file.newchild("my/path")
+            end
+
             it "should copy all of the parent resource's 'should' values that were set at initialization" do
                 file = @file.class.new(:path => "/foo/bar", :owner => "root", :group => "wheel")
                 @catalog.add_resource(file)
@@ -762,17 +819,6 @@ describe Puppet::Type.type(:file) do
             file = Puppet::Type::File.new(:name => "/my/file", :backup => ".foo")
             file.expects(:bucket)
             file.finish
-        end
-    end
-
-    describe "when writing the file" do
-        it "should propagate failures encountered when renaming the temporary file" do
-            File.stubs(:open)
-
-            File.expects(:rename).raises ArgumentError
-            file = Puppet::Type::File.new(:name => "/my/file", :backup => "puppet")
-
-            lambda { file.write("something", :content) }.should raise_error(Puppet::Error)
         end
     end
 end

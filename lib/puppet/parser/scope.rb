@@ -20,6 +20,30 @@ class Puppet::Parser::Scope
     attr_accessor :top, :translated, :compiler
     attr_writer :parent
 
+    # thin wrapper around an ephemeral
+    # symbol table.
+    # when a symbol
+    class Ephemeral
+        def initialize(parent=nil)
+            @symbols = {}
+            @parent = parent
+        end
+
+        [:include?, :delete, :[]=].each do |m|
+            define_method(m) do |*args|
+                @symbols.send(m, *args)
+            end
+        end
+
+        def [](name)
+            unless @symbols.include?(name) or @parent.nil?
+                @parent[name]
+            else
+                @symbols[name]
+            end
+        end
+    end
+
     # A demeterific shortcut to the catalog.
     def catalog
         compiler.catalog
@@ -131,7 +155,9 @@ class Puppet::Parser::Scope
         # the ephemeral symbol tables
         # those should not persist long, and are used for the moment only
         # for $0..$xy capture variables of regexes
-        @ephemeral = {}
+        # this is actually implemented as a stack, with each ephemeral scope
+        # shadowing the previous one
+        @ephemeral = [ Ephemeral.new ]
 
         # All of the defaults set for types.  It's a hash of hashes,
         # with the first key being the type, then the second key being
@@ -194,13 +220,13 @@ class Puppet::Parser::Scope
     # Look up a variable.  The simplest value search we do.  Default to returning
     # an empty string for missing values, but support returning a constant.
     def lookupvar(name, usestring = true)
-        table = ephemeral?(name) ? @ephemeral : @symtable
+        table = ephemeral?(name) ? @ephemeral.last : @symtable
         # If the variable is qualified, then find the specified scope and look the variable up there instead.
         if name =~ /::/
             return lookup_qualified_var(name, usestring)
         end
         # We can't use "if table[name]" here because the value might be false
-        if table.include?(name)
+        if ephemeral_include?(name) or table.include?(name)
             if usestring and table[name] == :undef
                 return ""
             else
@@ -293,7 +319,7 @@ class Puppet::Parser::Scope
     # in scopes above, but will not allow variables in the current scope
     # to be reassigned.
     def setvar(name,value, options = {})
-        table = options[:ephemeral] ? @ephemeral : @symtable
+        table = options[:ephemeral] ? @ephemeral.last : @symtable
         #Puppet.debug "Setting %s to '%s' at level %s mode append %s" %
         #    [name.inspect,value,self.level, append]
         if table.include?(name)
@@ -338,7 +364,7 @@ class Puppet::Parser::Scope
                 else # look the variable up
                     # make sure $0-$9 are lookupable only if ephemeral
                     var = ss[1] || ss[3] || ss[4]
-                    if var and var =~ /^[0-9]+$/ and not ephemeral?(var)
+                    if var and var =~ /^[0-9]+$/ and not ephemeral_include?(var)
                         next
                     end
                     out << lookupvar(var).to_s || ""
@@ -403,22 +429,48 @@ class Puppet::Parser::Scope
 
     # Undefine a variable; only used for testing.
     def unsetvar(var)
-        table = ephemeral?(var) ? @ephemeral : @symtable
+        table = ephemeral?(var) ? @ephemeral.last : @symtable
         if table.include?(var)
             table.delete(var)
         end
     end
 
-    def unset_ephemeral_var
-        @ephemeral = {}
+    # remove ephemeral scope up to level
+    def unset_ephemeral_var(level=:all)
+        if level == :all
+            @ephemeral = [ Ephemeral.new ]
+        else
+            (@ephemeral.size - level).times do 
+                @ephemeral.pop
+            end
+        end
     end
 
+    # check if name exists in one of the ephemeral scope.
+    def ephemeral_include?(name)
+        @ephemeral.reverse.each do |eph|
+            return true if eph.include?(name)
+        end
+        false
+    end
+
+    # is name an ephemeral variable?
     def ephemeral?(name)
-        @ephemeral.include?(name)
+        name =~ /^\d+$/
+    end
+
+    def ephemeral_level
+        @ephemeral.size
+    end
+
+    def new_ephemeral
+        @ephemeral.push(Ephemeral.new(@ephemeral.last))
     end
 
     def ephemeral_from(match, file = nil, line = nil)
         raise(ArgumentError,"Invalid regex match data") unless match.is_a?(MatchData)
+
+        new_ephemeral
 
         setvar("0", match[0], :file => file, :line => line, :ephemeral => true)
         match.captures.each_with_index do |m,i|

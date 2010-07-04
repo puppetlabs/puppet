@@ -66,8 +66,9 @@ Puppet::Application.new(:puppetdoc) do
         exit_code = 0
         files = []
         unless @manifest
-            files += Puppet[:modulepath].split(':').collect { |p| File.expand_path(p) }
-            files += Puppet[:manifestdir].split(':').collect { |p| File.expand_path(p) }
+            env = Puppet::Node::Environment.new
+            files += env.modulepath
+            files << File.dirname(env[:manifest])
         end
         files += ARGV
         Puppet.info "scanning: %s" % files.inspect
@@ -191,7 +192,7 @@ Puppet::Application.new(:puppetdoc) do
         end
     end
 
-    def setup_rdoc
+    def setup_rdoc(dummy_argument=:work_arround_for_ruby_GC_bug)
         # consume the unknown options
         # and feed them as settings
         if @unknown_args.size > 0

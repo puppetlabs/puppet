@@ -116,13 +116,13 @@ class TestSSHKey < Test::Unit::TestCase
     end
 
     def test_aliasisproperty
-        assert_equal(:property, @sshkeytype.attrtype(:alias))
+        assert_equal(:property, @sshkeytype.attrtype(:host_aliases))
     end
 
     def test_multivalues
         key = mkkey
         assert_raise(Puppet::Error) {
-            key[:alias] = "puppetmasterd yayness"
+            key[:host_aliases] = "puppetmasterd yayness"
         }
     end
 

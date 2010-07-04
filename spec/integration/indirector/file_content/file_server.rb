@@ -29,9 +29,10 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
         file = File.join(modpath, "lib", "file.rb")
         File.open(file, "w") { |f| f.puts "1" }
 
+        Puppet.settings[:modulepath] = "/no/such/file"
+
         env = Puppet::Node::Environment.new("foo")
         env.stubs(:modulepath).returns [path]
-        Puppet.settings[:modulepath] = "/no/such/file"
 
         result = Puppet::FileServing::Content.search("plugins", :environment => "foo", :recurse => true)
 

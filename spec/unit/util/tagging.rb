@@ -66,7 +66,7 @@ describe Puppet::Util::Tagging, "when adding tags" do
     end
 
     it "should provide a method for testing tag validity" do
-        @tagger.metaclass.publicize_methods(:valid_tag?)  { @tagger.should be_respond_to(:valid_tag?) }
+        @tagger.singleton_class.publicize_methods(:valid_tag?)  { @tagger.should be_respond_to(:valid_tag?) }
     end
 
     it "should add qualified classes as tags" do
@@ -88,5 +88,15 @@ describe Puppet::Util::Tagging, "when adding tags" do
 
     it "should indicate when the object is not tagged with a provided tag" do
         @tagger.should_not be_tagged("one")
+    end
+
+    it "should indicate when the object is tagged with any tag in an array" do
+        @tagger.tag("one")
+        @tagger.should be_tagged("one","two","three")
+    end
+
+    it "should indicate when the object is not tagged with any tag in an array" do
+        @tagger.tag("one")
+        @tagger.should_not be_tagged("two","three")
     end
 end

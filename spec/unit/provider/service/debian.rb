@@ -60,7 +60,7 @@ describe provider_class do
     
     describe "when checking whether it is enabled" do
         it "should call Kernel.system() with the appropriate parameters" do
-            @provider.expects(:system).with("/usr/sbin/invoke-rc.d", "--query", @resource[:name], "start").once
+            @provider.expects(:system).with("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start").once
             @provider.enabled?
         end
         

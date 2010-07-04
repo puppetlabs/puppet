@@ -26,8 +26,9 @@ module Puppet::Util::Backups
             info "Recursively backing up to filebucket"
             Find.find(self[:path]) { |f| backup_file_with_filebucket(f) if File.file?(f) }
         when "file"; backup_file_with_filebucket(file)
-        when "link"; return true
+        when "link";
         end
+        true
     end
 
     def perform_backup_with_backuplocal(fileobj, backup)

@@ -424,7 +424,7 @@ Host <<||>>"
         # the right namespaces
         scope = mkscope :parser => parser
 
-        parser.metaclass.send(:attr_accessor, :last)
+        parser.singleton_class.send(:attr_accessor, :last)
 
         methods = [:find_hostclass, :find_definition]
         methods.each do |m|
