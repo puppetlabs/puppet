@@ -61,8 +61,9 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
         raise Puppet::Error, "Do not directly call the init script for '%s'; use 'service' instead" % @resource[:name]
     end
 
+    # use hasstatus=>true when its set for the provider.
     def statuscmd
-        (@resource[:hasstatus] == :true) && [command(:service), @resource[:name], "status"]
+        ((@resource.provider.get(:hasstatus) == true) || (@resource[:hasstatus] == :true)) && [command(:service), @resource[:name], "status"]
     end
 
     def restartcmd

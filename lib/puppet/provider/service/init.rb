@@ -51,7 +51,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
                 next if name =~ /^\./
                 next if exclude.include? name 
                 next if not FileTest.executable?(fullpath)
-                instances << new(:name => name, :path => path)
+                instances << new(:name => name, :path => path, :hasstatus => true)
             end
         end
         instances
