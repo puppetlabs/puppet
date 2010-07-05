@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
 
     def self.instances
         # this exclude list is all from /sbin/service (5.x), but I did not exclude kudzu
-        self.get_services(['/etc/init.d/'], ['functions', 'halt', 'killall', 'single', 'linuxconf'])
+        self.get_services(['/etc/init.d'], ['functions', 'halt', 'killall', 'single', 'linuxconf'])
     end
 
     def self.defpath

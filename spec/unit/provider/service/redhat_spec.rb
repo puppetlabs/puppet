@@ -2,7 +2,6 @@
 #
 # Unit testing for the RedHat service Provider
 #
-
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:redhat)
@@ -10,14 +9,40 @@ provider_class = Puppet::Type.type(:service).provider(:redhat)
 describe provider_class do
 
     before :each do
+        @class = Puppet::Type.type(:service).provider(:redhat)
         @resource = stub 'resource'
         @resource.stubs(:[]).returns(nil)
         @resource.stubs(:[]).with(:name).returns "myservice"
-
         @provider = provider_class.new
+        @resource.stubs(:provider).returns @provider
         @provider.resource = @resource
+        @provider.stubs(:get).with(:hasstatus).returns false
         FileTest.stubs(:file?).with('/sbin/service').returns true
         FileTest.stubs(:executable?).with('/sbin/service').returns true
+    end
+    
+    # test self.instances
+    describe "when getting all service instances" do
+        before :each do 
+            @services = ['one', 'two', 'three', 'four', 'kudzu', 'functions', 'halt', 'killall', 'single', 'linuxconf']
+            @not_services = ['functions', 'halt', 'killall', 'single', 'linuxconf']
+            Dir.stubs(:entries).returns @services
+            FileTest.stubs(:directory?).returns(true)
+            FileTest.stubs(:executable?).returns(true)
+        end
+        it "should return instances for all services" do
+            (@services-@not_services).each do |inst|
+                @class.expects(:new).with{|hash| hash[:name] == inst && hash[:path] == '/etc/init.d'}.returns("#{inst}_instance")
+            end
+            results = (@services-@not_services).collect {|x| "#{x}_instance"}
+            @class.instances.should == results
+        end
+        it "should call service status when initialized from provider" do
+            @resource.stubs(:[]).with(:status).returns nil
+            @provider.stubs(:get).with(:hasstatus).returns true
+            @provider.expects(:execute).with{|command, *args| command == ['/sbin/service', 'myservice', 'status']}
+            @provider.send(:status)
+        end
     end
 
     it "should have an enabled? method" do
