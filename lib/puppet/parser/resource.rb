@@ -141,7 +141,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # Unless we're running >= 0.25, we're in compat mode.
     def metaparam_compatibility_mode?
-        ! (catalog and version = catalog.client_version and version = version.split(".") and version[0] == "0" and version[1].to_i >= 25)
+        ! (catalog and ver = (catalog.client_version||'0.0.0').split(".") and (ver[0] > "0" or ver[1].to_i >= 25))
     end
 
     def name
