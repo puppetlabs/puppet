@@ -109,7 +109,7 @@ class Puppet::Module
     end
 
     def load_metadata
-        data = JSON.parse File.read(metadata_file)
+        data = PSON.parse File.read(metadata_file)
         [:source, :author, :version, :license, :puppetversion].each do |attr|
             unless value = data[attr.to_s]
                 unless attr == :puppetversion
