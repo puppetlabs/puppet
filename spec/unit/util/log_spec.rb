@@ -5,8 +5,19 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 require 'puppet/util/log'
 
 describe Puppet::Util::Log do
+    it "should write a given message to the specified destination" do
+        Puppet::Util::Log.newdestination(:array)
+        Puppet::Util::Log.new(:level => :notice, :message => "foo")
+        message = Puppet::Util::Log.destinations[:array].messages.shift.message
+        message.should == "foo"
+
+        Puppet::Util::Log.close_all
+    end
+
     it "should be able to close all log destinations" do
-        Puppet::Util::Log.expects(:destinations).returns %w{foo bar}
+        destinations = stub_everything('destinations')
+        destinations.stubs(:keys).returns %w{foo bar}
+        Puppet::Util::Log.expects(:destinations).returns(destinations)
         Puppet::Util::Log.expects(:close).with("foo")
         Puppet::Util::Log.expects(:close).with("bar")
 
@@ -82,6 +93,12 @@ describe Puppet::Util::Log do
         # at least at first.
         it "should always convert messages to strings" do
             Puppet::Util::Log.new(:level => :notice, :message => :foo).message.should == "foo"
+        end
+
+        it "should flush the log queue when the first destination is specified" do
+            Puppet::Util::Log.expects(:flushqueue)
+            Puppet::Util::Log.newdestination(:array)
+            Puppet::Util::Log.close_all
         end
 
         it "should convert the level to a symbol if it's passed in as a string" do

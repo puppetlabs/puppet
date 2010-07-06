@@ -31,6 +31,8 @@ class Puppet::Util::Log
 
     @destinations = {}
 
+    @queued = []
+
     class << self
         include Puppet::Util
         include Puppet::Util::ClassGen
@@ -38,34 +40,24 @@ class Puppet::Util::Log
         attr_reader :desttypes
     end
 
-    # Reset all logs to basics.  Basically just closes all files and undefs
-    # all of the other objects.
-    def Log.close(dest = nil)
-        if dest
-            if @destinations.include?(dest)
-                if @destinations.respond_to?(:close)
-                    @destinations[dest].close
-                end
-                @destinations.delete(dest)
+    # Reset log to basics.  Basically just flushes and closes files and
+    # undefs other objects.
+    def Log.close(destination)
+        if @destinations.include?(destination)
+            if @destinations[destination].respond_to?(:flush)
+                @destinations[destination].flush
             end
-        else
-            @destinations.each { |name, dest|
-                if dest.respond_to?(:flush)
-                    dest.flush
-                end
-                if dest.respond_to?(:close)
-                    dest.close
-                end
-            }
-            @destinations = {}
+            if @destinations[destination].respond_to?(:close)
+                @destinations[destination].close
+            end
+            @destinations.delete(destination)
         end
     end
 
     def self.close_all
-        # And close all logs except the console.
-        destinations.each do |dest|
+        destinations.keys.each { |dest|
             close(dest)
-        end
+        }
     end
 
     # Flush any log destinations that support such operations.
@@ -94,7 +86,7 @@ class Puppet::Util::Log
     end
 
     def Log.destinations
-        return @destinations.keys
+        @destinations
     end
 
     # Yield each valid level in turn
@@ -145,6 +137,8 @@ class Puppet::Util::Log
             else
                 @destinations[dest] = type.new()
             end
+            flushqueue
+            @destinations[dest]
         rescue => detail
             if Puppet[:debug]
                 puts detail.backtrace
@@ -158,20 +152,33 @@ class Puppet::Util::Log
     end
 
     # Route the actual message. FIXME There are lots of things this method
-    # should do, like caching, storing messages when there are not yet
-    # destinations, a bit more.  It's worth noting that there's a potential
-    # for a loop here, if the machine somehow gets the destination set as
+    # should do, like caching and a bit more.  It's worth noting that there's
+    # a potential for a loop here, if the machine somehow gets the destination set as
     # itself.
     def Log.newmessage(msg)
         if @levels.index(msg.level) < @loglevel
             return
         end
 
+        queuemessage(msg) if @destinations.length == 0
+
         @destinations.each do |name, dest|
             threadlock(dest) do
                 dest.handle(msg)
             end
         end
+    end
+
+    def Log.queuemessage(msg)
+        @queued.push(msg)
+    end
+
+    def Log.flushqueue
+        return unless @destinations.size >= 1
+        @queued.each do |msg|
+            Log.newmessage(msg)
+        end
+        @queued.clear
     end
 
     def Log.sendlevel?(level)

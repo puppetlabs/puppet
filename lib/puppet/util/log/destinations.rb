@@ -218,12 +218,17 @@ end
 Puppet::Util::Log.newdesttype :array do
     match "Array"
 
-    def initialize(array)
-        @array = array
+    attr_accessor :messages
+    def initialize
+        @messages = []
     end
 
     def handle(msg)
-        @array << msg
+        @messages << msg
+    end
+
+    def close
+        @messages.clear
     end
 end
 

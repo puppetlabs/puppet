@@ -40,6 +40,12 @@ describe Puppet::Util::Logging do
             @logger.notice "foo"
         end
 
+        it "should queue logs sent without a specified destination" do
+            Puppet::Util::Log.expects(:queuemessage)
+
+            @logger.notice "foo"
+        end
+
         it "should use the path of any provided resource type" do
             resource = Puppet::Type.type(:mount).new :name => "foo"
 
