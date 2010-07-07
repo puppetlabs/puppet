@@ -10,19 +10,21 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     defaultfor :operatingsystem => :openbsd
     confine :operatingsystem => :openbsd
 
+    has_feature :versionable
+
     def self.instances
         packages = []
 
         begin
             execpipe(listcmd()) do |process|
                 # our regex for matching pkg_info output
-                regex = %r{^(\S+)-([^-\s]+)\s+(.+)}
-                fields = [:name, :ensure, :description]
+                regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
+                fields = [:name, :ensure, :flavor ]
                 hash = {}
 
                 # now turn each returned line into a package object
                 process.each { |line|
-                    if match = regex.match(line)
+                    if match = regex.match(line.split()[0])
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
                         }
@@ -59,14 +61,46 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
                 "You must specify a package source for BSD packages"
         end
 
+        old_ensure = @resource[:ensure]
+
         if @resource[:source] =~ /\/$/
             withenv :PKG_PATH => @resource[:source] do
-                pkgadd @resource[:name]
+                if (@resource[:ensure] = get_version) == nil
+                    @resource[:ensure] = old_ensure
+                end
+                full_name = [ @resource[:name], @resource[:ensure], @resource[:flavor] ]
+                pkgadd full_name.join('-').chomp('-')
             end
         else
             pkgadd @resource[:source]
         end
 
+    end
+
+    def get_version
+        begin 
+            execpipe([command(:pkginfo), " -I ", @resource[:name]]) do |process|
+                # our regex for matching pkg_info output
+                regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
+                fields = [ :name, :version, :flavor ]
+                master_version = 0
+    
+                process.each do |line|
+                    if match = regex.match(line.split()[0]) 
+                        # now we return the first version, unless ensure is latest
+                        version = match.captures[1]
+                        return version unless @resource[:ensure] == "latest"
+    
+                        master_version = version unless master_version > version
+                    end
+                end
+    
+                return master_version unless master_version == 0 
+                raise Puppet::Error, "#{version} is not available for this package"
+            end
+        rescue Puppet::ExecutionFailure
+            return nil
+        end
     end
 
     def query
@@ -78,11 +112,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             hash[:ensure] = $2
         else
             return nil
-        end
-
-        # And the description
-        if info =~ /Comment:\s*\n(.+)/
-            hash[:description] = $1
         end
 
         return hash

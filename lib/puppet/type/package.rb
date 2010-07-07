@@ -287,6 +287,11 @@ module Puppet
             newvalues(:true, :false)
         end
 
+        newparam(:flavor) do
+            desc "Newer versions of OpenBSD support 'flavors', which are
+                further specifications for which type of package you want."
+        end
+
         autorequire(:file) do
             autos = []
             [:responsefile, :adminfile].each { |param|
