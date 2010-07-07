@@ -319,7 +319,7 @@ module PuppetTest
         end
 
         # reset all of the logs
-        Puppet::Util::Log.close
+        Puppet::Util::Log.close_all
         @logs.clear
 
         # Just in case there are processes waiting to die...

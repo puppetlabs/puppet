@@ -12,14 +12,13 @@ class TestLog < Test::Unit::TestCase
     def setup
         super
         @oldloglevel = Puppet::Util::Log.level
-        Puppet::Util::Log.close
+        Puppet::Util::Log.close_all
     end
 
     def teardown
         super
-        Puppet::Util::Log.close
+        Puppet::Util::Log.close_all
         Puppet::Util::Log.level = @oldloglevel
-        Puppet::Util::Log.newdestination(:console)
     end
 
     def getlevels
@@ -57,7 +56,7 @@ class TestLog < Test::Unit::TestCase
         }
         msgs = mkmsgs(levels)
         assert(msgs.length == levels.length)
-        Puppet::Util::Log.close
+        Puppet::Util::Log.close_all
         count = 0
 
         assert(FileTest.exists?(logfile), "Did not create logfile")

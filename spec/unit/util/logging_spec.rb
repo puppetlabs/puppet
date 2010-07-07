@@ -41,6 +41,7 @@ describe Puppet::Util::Logging do
         end
 
         it "should queue logs sent without a specified destination" do
+            Puppet::Util::Log.close_all
             Puppet::Util::Log.expects(:queuemessage)
 
             @logger.notice "foo"

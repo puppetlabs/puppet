@@ -65,6 +65,8 @@ Spec::Runner.configure do |config|
             end
             $tmpfiles.clear
         end
+
+        Puppet::Util::Log.close_all
     end
 
     config.prepend_before :each do
@@ -79,6 +81,9 @@ Spec::Runner.configure do |config|
 
         # Avoid opening ports to the outside world
         Puppet.settings[:bindaddress] = "127.0.0.1"
+
+        @logs = []
+        Puppet::Util::Log.newdestination(@logs)
     end
 end
 
