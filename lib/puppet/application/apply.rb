@@ -67,7 +67,7 @@ class Puppet::Application::Apply < Puppet::Application
             Puppet[:manifest] = command_line.args.shift
         end
         begin
-            Puppet::Resource::TypeCollection.new(Puppet[:environment]).perform_initial_import
+            Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types
         rescue => detail
             Puppet.err detail
             exit 1
