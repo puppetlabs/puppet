@@ -1405,7 +1405,7 @@ class Type
                         alias => nagconf # just to make things easier for me
                     }
                     service { nagios:
-                        running => true,
+                        ensure => running,
                         subscribe => File[nagconf]
                     }
                 }
