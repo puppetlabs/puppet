@@ -66,6 +66,7 @@ Spec::Runner.configure do |config|
             $tmpfiles.clear
         end
 
+        @logs.clear
         Puppet::Util::Log.close_all
     end
 

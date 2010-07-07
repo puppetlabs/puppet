@@ -87,7 +87,7 @@ describe Puppet::Util::Log do
         it "should flush the log queue when the first destination is specified" do
             Puppet::Util::Log.close_all
             Puppet::Util::Log.expects(:flushqueue)
-            Puppet::Util::Log.newdestination(:array)
+            Puppet::Util::Log.newdestination([])
         end
 
         it "should convert the level to a symbol if it's passed in as a string" do
