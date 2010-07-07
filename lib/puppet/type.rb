@@ -743,6 +743,14 @@ class Type
         result
     end
 
+    def retrieve_resource
+        resource = retrieve
+        if resource.is_a? Hash
+            resource = Resource.new(type, title, :parameters => resource)
+        end
+        resource
+    end
+
     # Get a hash of the current properties.  Returns a hash with
     # the actual property instance as the key and the current value
     # as the, um, value.
@@ -1924,10 +1932,8 @@ class Type
     def to_trans(ret = true)
         trans = TransObject.new(self.title, self.class.name)
 
-        values = retrieve()
+        values = retrieve_resource
         values.each do |name, value|
-            # sometimes we get symbols and sometimes we get Properties
-            # I think it's a bug, but I can't find it. ~JW
             name = name.name if name.respond_to? :name
             trans[name] = value
         end

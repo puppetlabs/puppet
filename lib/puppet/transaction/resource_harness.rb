@@ -38,7 +38,7 @@ class Puppet::Transaction::ResourceHarness
     end
 
     def changes_to_perform(status, resource)
-        current = resource.retrieve
+        current = resource.retrieve_resource
 
         cache resource, :checked, Time.now
 

@@ -368,11 +368,11 @@ describe Puppet::Type do
         it "should fail if its provider is unsuitable" do
             @resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
             @resource.provider.class.expects(:suitable?).returns false
-            lambda { @resource.retrieve }.should raise_error(Puppet::Error)
+            lambda { @resource.retrieve_resource }.should raise_error(Puppet::Error)
         end
 
         it "should return a Puppet::Resource instance with its type and title set appropriately" do
-            result = @resource.retrieve
+            result = @resource.retrieve_resource
             result.should be_instance_of(Puppet::Resource)
             result.type.should == "Mount"
             result.title.should == "foo"
@@ -381,11 +381,11 @@ describe Puppet::Type do
         it "should set the name of the returned resource if its own name and title differ" do
             @resource[:name] = "my name"
             @resource.title = "other name"
-            @resource.retrieve[:name].should == "my name"
+            @resource.retrieve_resource[:name].should == "my name"
         end
 
         it "should provide a value for all set properties" do
-            values = @resource.retrieve
+            values = @resource.retrieve_resource
             [:ensure, :fstype, :pass].each { |property| values[property].should_not be_nil }
         end
 
@@ -396,13 +396,13 @@ describe Puppet::Type do
         it "should not call retrieve on non-ensure properties if the resource is absent and should consider the property absent" do
             @resource.property(:ensure).expects(:retrieve).returns :absent
             @resource.property(:fstype).expects(:retrieve).never
-            @resource.retrieve[:fstype].should == :absent
+            @resource.retrieve_resource[:fstype].should == :absent
         end
 
         it "should include the result of retrieving each property's current value if the resource is present" do
             @resource.property(:ensure).expects(:retrieve).returns :present
             @resource.property(:fstype).expects(:retrieve).returns 15
-            @resource.retrieve[:fstype] == 15
+            @resource.retrieve_resource[:fstype] == 15
         end
     end
 
