@@ -103,11 +103,11 @@ Resource Types
             docs[name] = scrub(type.paramdoc(name))
         }
 
+        additional_key_attributes = type.key_attributes - [:name]
         docs.sort { |a, b|
             a[0].to_s <=> b[0].to_s
         }.each { |name, doc|
-            namevar = type.namevar == name and name != :name
-            str += paramwrap(name, doc, :namevar => namevar)
+            str += paramwrap(name, doc, :namevar => additional_key_attributes.include?(name))
         }
         str += "\n"
     }
