@@ -58,6 +58,20 @@ module Puppet::Network::HttpPool
         http.cert = ssl_host.certificate.content
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
         http.key = ssl_host.key.content
+        if Puppet[:debug]
+            http.verify_callback = self.method(:ssl_verify_callback).to_proc
+        end
+    end
+    
+    def self.ssl_verify_callback(peer_ok, x509_store_ctx)
+        if not peer_ok
+            Puppet.debug "OpenSSL: Error(#{x509_store_ctx.error}): #{x509_store_ctx.error_string}"
+            Puppet.debug "OpenSSL: Cert: #{x509_store_ctx.current_cert.issuer}"
+            Puppet.debug "OpenSSL: Current CRL: #{x509_store_ctx.current_crl}"
+            Puppet.debug "OpenSSL: Chain:"
+            x509_store_ctx.chain.each_index { |i| Puppet.debug "OpenSSL: \t#{i} #{x509_store_ctx.chain[i].issuer}" }
+        end
+        peer_ok
     end
 
     # Retrieve a cached http instance if caching is enabled, else return
