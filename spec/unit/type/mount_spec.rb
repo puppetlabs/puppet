@@ -33,13 +33,14 @@ describe Puppet::Type.type(:mount)::Ensure, "when validating values" do
         Puppet::Type.type(:mount).defaultprovider.expects(:new).returns(@provider)
     end
 
-    it "should support :present as a value to :ensure" do
-        Puppet::Type.type(:mount).new(:name => "yay", :ensure => :present)
+    it "should alias :present to :defined as a value to :ensure" do
+        mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :present)
+        mount.should(:ensure).should == :defined
     end
 
-    it "should alias :unmounted to :present as a value to :ensure" do
+    it "should support :unmounted as a value to :ensure" do
         mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :unmounted)
-        mount.should(:ensure).should == :present
+        mount.should(:ensure).should == :unmounted
     end
 
     it "should support :absent as a value to :ensure" do
@@ -86,10 +87,10 @@ describe Puppet::Type.type(:mount)::Ensure do
             @ensure.retrieve.should == :mounted
         end
 
-        it "should return :present if the provider indicates it is not mounted and the value is not :absent" do
+        it "should return :unmounted if the provider indicates it is not mounted and the value is not :absent" do
             @provider.expects(:ensure).returns(:present)
             @provider.expects(:mounted?).returns(false)
-            @ensure.retrieve.should == :present
+            @ensure.retrieve.should == :unmounted
         end
     end
 
@@ -110,20 +111,46 @@ describe Puppet::Type.type(:mount)::Ensure do
             @ensure.sync
         end
 
-        it "should create itself if it is absent and should be present" do
+        it "should create itself if it is absent and should be defined" do
+            @provider.stubs(:ensure).returns(:absent)
+            @provider.stubs(:mounted?).returns(true)
+
             @provider.stubs(:mounted?).returns(false)
             @provider.expects(:create)
+            @ensure.should = :defined
+            @ensure.sync
+        end
+        
+        it "should not unmount itself if it is mounted and should be defined" do
+            @provider.stubs(:ensure).returns(:mounted)
+            @provider.stubs(:mounted?).returns(true)
+
+            @provider.stubs(:create)
+            @provider.expects(:mount).never
+            @provider.expects(:unmount).never
+            @ensure.should = :defined
+            @ensure.sync
+        end
+        
+        it "should not mount itself if it is unmounted and should be defined" do
+            @provider.stubs(:ensure).returns(:unmounted)
+            @provider.stubs(:mounted?).returns(false)
+
+            @ensure.stubs(:syncothers)
+            @provider.stubs(:create)
+            @provider.expects(:mount).never
+            @provider.expects(:unmount).never
             @ensure.should = :present
             @ensure.sync
         end
 
-        it "should unmount itself if it is mounted and should be present" do
+        it "should unmount itself if it is mounted and should be unmounted" do
+            @provider.stubs(:ensure).returns(:present)
             @provider.stubs(:mounted?).returns(true)
 
-            # The interface here is just too much work to test right now.
             @ensure.stubs(:syncothers)
             @provider.expects(:unmount)
-            @ensure.should = :present
+            @ensure.should = :unmounted
             @ensure.sync
         end
 
@@ -153,6 +180,26 @@ describe Puppet::Type.type(:mount)::Ensure do
             @provider.expects(:create)
             @ensure.should = :mounted
             @ensure.sync
+        end
+
+        it "should be insync if it is mounted and should be defined" do
+            @ensure.should = :defined
+            @ensure.insync?(:mounted).should == true
+        end
+        
+        it "should be insync if it is unmounted and should be defined" do
+            @ensure.should = :defined
+            @ensure.insync?(:unmounted).should == true
+        end
+
+        it "should be insync if it is mounted and should be present" do
+            @ensure.should = :present
+            @ensure.insync?(:mounted).should == true
+        end
+        
+        it "should be insync if it is unmounted and should be present" do
+            @ensure.should = :present
+            @ensure.insync?(:unmounted).should == true
         end
     end
 
