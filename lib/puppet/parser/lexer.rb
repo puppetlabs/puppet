@@ -161,9 +161,11 @@ class Puppet::Parser::Lexer
     TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
         [TOKENS[:NAME], value]
     end
+    #:stopdoc: # Issue #4161
     def (TOKENS[:NUMBER]).acceptable?(context={})
         ![:DQPRE,:DQMID].include? context[:after]
     end
+    #:startdoc:
 
     TOKENS.add_token :NAME, %r{[a-z0-9][-\w]*} do |lexer, value|
         string_token = self
@@ -178,9 +180,11 @@ class Puppet::Parser::Lexer
         [string_token, value]
     end
     [:NAME,:CLASSNAME,:CLASSREF].each { |name_token|
+        #:stopdoc: # Issue #4161
         def (TOKENS[name_token]).acceptable?(context={})
             ![:DQPRE,:DQMID].include? context[:after]
         end
+        #:startdoc:
     }
 
     TOKENS.add_token :COMMENT, %r{#.*}, :accumulate => true, :skip => true do |lexer,value|
@@ -205,9 +209,11 @@ class Puppet::Parser::Lexer
         [self, Regexp.new(regex)]
     end
 
+    #:stopdoc: # Issue #4161
     def (TOKENS[:REGEX]).acceptable?(context={})
         [:NODE,:LBRACE,:RBRACE,:MATCH,:NOMATCH,:COMMA].include? context[:after]
     end
+    #:startdoc:
 
     TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
@@ -225,18 +231,22 @@ class Puppet::Parser::Lexer
     TOKENS.add_token :DQCONT, /\}/ do |lexer, value|
         lexer.tokenize_interpolated_string(DQ_continuation_token_types)
     end
+    #:stopdoc: # Issue #4161
     def (TOKENS[:DQCONT]).acceptable?(context={})
         context[:string_interpolation_depth] > 0
     end
+    #:startdoc:
 
     TOKENS.add_token :DOLLAR_VAR, %r{\$(\w*::)*\w+} do |lexer, value|
         [TOKENS[:VARIABLE],value[1..-1]]
     end
 
     TOKENS.add_token :VARIABLE, %r{(\w*::)*\w+}
+    #:stopdoc: # Issue #4161
     def (TOKENS[:VARIABLE]).acceptable?(context={})
         [:DQPRE,:DQMID].include? context[:after]
     end
+    #:startdoc:
 
 
     TOKENS.sort_tokens

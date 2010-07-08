@@ -382,10 +382,12 @@ class Application
         if Puppet.features.usage?
             # RH:FIXME: My goodness, this is ugly.
             ::RDoc.const_set("PuppetSourceFile", name)
+            #:stopdoc: # Issue #4161
             def (::RDoc).caller
                 docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{BINDIRS}`.chomp
                 super << "#{docfile}:0"
             end
+            #:startdoc:
             ::RDoc::usage && exit
         else
             puts "No help available unless you have RDoc::usage installed"
