@@ -97,6 +97,7 @@ class Puppet::Parser::Compiler
     def compile
         # Set the client's parameters into the top scope.
         set_node_parameters()
+        create_settings_scope
 
         evaluate_main()
 
@@ -447,7 +448,7 @@ class Puppet::Parser::Compiler
         @catalog.version = known_resource_types.version
 
         # Create our initial scope and a resource that will evaluate main.
-        @topscope = Puppet::Parser::Scope.new(:compiler => self, :source => 'implicit')
+        @topscope = Puppet::Parser::Scope.new(:compiler => self)
 
         @main_stage_resource = Puppet::Parser::Resource.new("stage", :main, :scope => @topscope)
         @catalog.add_resource(@main_stage_resource)
@@ -468,6 +469,25 @@ class Puppet::Parser::Compiler
         # These might be nil.
         catalog.client_version = node.parameters["clientversion"]
         catalog.server_version = node.parameters["serverversion"]
+    end
+
+    def create_settings_scope
+        unless settings_type = environment.known_resource_types.hostclass("settings")
+            settings_type = Puppet::Resource::Type.new :hostclass, "settings"
+            environment.known_resource_types.add(settings_type)
+        end
+
+        settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
+        settings_type.evaluate_code(settings_resource)
+
+        @catalog.add_resource(settings_resource)
+
+        scope = @topscope.class_scope(settings_type)
+
+        Puppet.settings.each do |name, setting|
+            next if name.to_s == "name"
+            scope.setvar name.to_s, environment[name]
+        end
     end
 
     # Return an array of all of the unevaluated resources.  These will be definitions,

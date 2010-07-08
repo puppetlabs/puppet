@@ -704,6 +704,7 @@ describe Puppet::Parser::Compiler do
             scope = stub 'scope', :source => "mysource"
             @compiler.topscope.expects(:class_scope).with(node_class).returns(scope)
             node_resource.stubs(:evaluate)
+            @compiler.stubs :create_settings_scope
 
             @compiler.compile
 
