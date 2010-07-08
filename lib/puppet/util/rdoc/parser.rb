@@ -82,7 +82,7 @@ class Parser
         # find a module
         fullpath = File.expand_path(path)
         Puppet.debug "rdoc: testing %s" % fullpath
-        if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins)\/.+\.(pp|rb)$/
+        if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins|lib)\/.+\.(pp|rb)$/
             modpath = $1
             name = $2
             Puppet.debug "rdoc: module %s into %s ?" % [name, modpath]

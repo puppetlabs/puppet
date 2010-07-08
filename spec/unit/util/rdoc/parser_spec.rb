@@ -109,7 +109,7 @@ describe RDoc::Parser do
         end
 
         it "should defer plugins parsing to parse_plugins for this module" do
-            @parser.input_file_name = "module/plugins/puppet/parser/function.rb"
+            @parser.input_file_name = "module/lib/puppet/parser/function.rb"
 
             @parser.expects(:parse_plugins).with(@module)
 
@@ -462,14 +462,14 @@ describe RDoc::Parser do
         end
 
         it "should delegate parsing custom facts to parse_facts" do
-            @parser = RDoc::Parser.new(@top_level, "module/manifests/plugins/puppet/facter/test.rb", nil, Options.instance, RDoc::Stats.new)
+            @parser = RDoc::Parser.new(@top_level, "module/manifests/lib/puppet/facter/test.rb", nil, Options.instance, RDoc::Stats.new)
 
             @parser.expects(:parse_fact).with(@container)
             @parser.parse_plugins(@container)
         end
 
         it "should delegate parsing plugins to parse_plugins" do
-            @parser = RDoc::Parser.new(@top_level, "module/manifests/plugins/puppet/functions/test.rb", nil, Options.instance, RDoc::Stats.new)
+            @parser = RDoc::Parser.new(@top_level, "module/manifests/lib/puppet/functions/test.rb", nil, Options.instance, RDoc::Stats.new)
 
             @parser.expects(:parse_puppet_plugin).with(@container)
             @parser.parse_plugins(@container)
