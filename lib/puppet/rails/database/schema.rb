@@ -59,7 +59,7 @@ class Puppet::Rails::Schema
                 create_table :hosts do |t|
                     t.column :name, :string, :null => false
                     t.column :ip, :string
-                    t.column :environment, :string
+                    t.column :environment, :text
                     t.column :last_compile, :datetime
                     t.column :last_freshcheck, :datetime
                     t.column :last_report, :datetime
