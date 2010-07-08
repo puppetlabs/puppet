@@ -128,8 +128,8 @@ describe Puppet::Node::Facts::Facter do
 
             Puppet.settings.expects(:value).with(:modulepath).returns("one%stwo" % File::PATH_SEPARATOR)
 
-            Dir.expects(:glob).with("one/*/plugins/facter").returns %w{oneA oneB}
-            Dir.expects(:glob).with("two/*/plugins/facter").returns %w{twoA twoB}
+            Dir.expects(:glob).with("one/*/lib/facter").returns %w{oneA oneB}
+            Dir.expects(:glob).with("two/*/lib/facter").returns %w{twoA twoB}
 
             Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("oneA")
             Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("oneB")
