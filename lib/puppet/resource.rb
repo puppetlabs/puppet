@@ -351,7 +351,8 @@ class Puppet::Resource
     end
 
     def find_resource_type(type)
-        find_builtin_resource_type(type) || find_defined_resource_type(type)
+        # It still works fine without the type == 'class' short-cut, but it is a lot slower.
+        find_builtin_resource_type(type) || find_defined_resource_type(type) unless type.to_s.downcase == 'class'
     end
 
     def find_builtin_resource_type(type)
@@ -432,18 +433,12 @@ class Puppet::Resource
     end
 
     def resolve_type
-        type = munge_type_name(@unresolved_type)
-
-        case type
+        case type = munge_type_name(@unresolved_type)
         when "Class", "Node";
-            return type
+            type
         else
             # Otherwise, some kind of builtin or defined resource type
-            return munge_type_name(if r = find_resource_type(type)
-                r.name
-            else
-                type
-            end)
+            munge_type_name( (r = find_resource_type(type)) ? r.name : type)
         end
     end
 

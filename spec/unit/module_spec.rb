@@ -401,46 +401,47 @@ describe Puppet::Module, "when finding matching manifests" do
     before do
         @mod = Puppet::Module.new("mymod")
         @mod.stubs(:path).returns "/a"
+        @pq_glob_with_extension = "yay/*.xx"
+        @fq_glob_with_extension = "/a/manifests/" + @pq_glob_with_extension
     end
 
     it "should return all manifests matching the glob pattern" do
-        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{foo bar})
+        Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
         FileTest.stubs(:directory?).returns false
 
-        @mod.match_manifests("yay/*.pp").should == %w{foo bar}
+        @mod.match_manifests(@pq_glob_with_extension).should == %w{foo bar}
     end
 
     it "should not return directories" do
-        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{foo bar})
+        Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{foo bar})
 
         FileTest.expects(:directory?).with("foo").returns false
         FileTest.expects(:directory?).with("bar").returns true
-        @mod.match_manifests("yay/*.pp").should == %w{foo}
+        @mod.match_manifests(@pq_glob_with_extension).should == %w{foo}
     end
 
-    it "should default to the 'init.pp' file if no glob pattern is specified" do
-        FileTest.stubs(:exist?).returns true
+    it "should default to the 'init' file if no glob pattern is specified" do
+        Dir.expects(:glob).with("/a/manifests/init.{pp,rb}").returns(%w{/a/manifests/init.pp})
 
         @mod.match_manifests(nil).should == %w{/a/manifests/init.pp}
     end
 
     it "should return all manifests matching the glob pattern in all existing paths" do
-        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns(%w{a b})
+        Dir.expects(:glob).with(@fq_glob_with_extension).returns(%w{a b})
 
-        @mod.match_manifests("yay/*.pp").should == %w{a b}
+        @mod.match_manifests(@pq_glob_with_extension).should == %w{a b}
     end
 
-    it "should match the glob pattern plus '.pp' if no results are found" do
-        Dir.expects(:glob).with("/a/manifests/yay/foo").returns([])
-        Dir.expects(:glob).with("/a/manifests/yay/foo.pp").returns(%w{yay})
+    it "should match the glob pattern plus '.{pp,rb}' if no extention is specified" do
+        Dir.expects(:glob).with("/a/manifests/yay/foo.{pp,rb}").returns(%w{yay})
 
         @mod.match_manifests("yay/foo").should == %w{yay}
     end
 
     it "should return an empty array if no manifests matched" do
-        Dir.expects(:glob).with("/a/manifests/yay/*.pp").returns([])
+        Dir.expects(:glob).with(@fq_glob_with_extension).returns([])
 
-        @mod.match_manifests("yay/*.pp").should == []
+        @mod.match_manifests(@pq_glob_with_extension).should == []
     end
 end
 

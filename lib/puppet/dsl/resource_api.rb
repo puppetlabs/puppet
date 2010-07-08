@@ -44,6 +44,8 @@ class Puppet::DSL::ResourceAPI
         resource.eachparam do |param|
             instance_variable_set("@#{param.name}", param.value)
         end
+        @title = resource.title
+        @name ||= resource.title
     end
 
     def create_resource(type, names, arguments = nil)

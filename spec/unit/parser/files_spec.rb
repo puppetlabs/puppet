@@ -154,7 +154,7 @@ describe Puppet::Parser::Files do
 
         it "should match against provided fully qualified patterns" do
             pattern = @basepath + "/fully/qualified/pattern/*"
-            Dir.expects(:glob).with(pattern).returns(%w{my file list})
+            Dir.expects(:glob).with(pattern+'{,.pp,.rb}').returns(%w{my file list})
             Puppet::Parser::Files.find_manifests(pattern)[1].should == %w{my file list}
         end
 
@@ -168,7 +168,7 @@ describe Puppet::Parser::Files do
             pattern = @basepath + "/fully/qualified/pattern/*"
             file = @basepath + "/my/file"
             dir = @basepath + "/my/directory"
-            Dir.expects(:glob).with(pattern).returns([file, dir])
+            Dir.expects(:glob).with(pattern+'{,.pp,.rb}').returns([file, dir])
             FileTest.expects(:directory?).with(file).returns(false)
             FileTest.expects(:directory?).with(dir).returns(true)
             Puppet::Parser::Files.find_manifests(pattern)[1].should == [file]

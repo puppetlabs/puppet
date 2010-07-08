@@ -121,17 +121,12 @@ class Puppet::Module
     end
 
     # Return the list of manifests matching the given glob pattern,
-    # defaulting to 'init.pp' for empty modules.
+    # defaulting to 'init.{pp,rb}' for empty modules.
     def match_manifests(rest)
-        return find_init_manifest unless rest # Use init.pp
-
-        rest ||= "init.pp"
-        full_path = File::join(path, MANIFESTS, rest)
-        result = Dir.glob(full_path).reject { |f| FileTest.directory?(f) }
-        if result.size == 0 and rest !~ /\.pp$/
-            result = Dir.glob(full_path + ".pp")
-        end
-        result.flatten.compact
+        pat = File.join(path, MANIFESTS, rest || 'init')
+        Dir.
+            glob(pat + (File.extname(pat).empty? ? '.{pp,rb}' : '')).
+            reject { |f| FileTest.directory?(f) }
     end
 
     def metadata_file
@@ -189,11 +184,6 @@ class Puppet::Module
     end
 
     private
-
-    def find_init_manifest
-        return [] unless file = manifest("init.pp")
-        return [file]
-    end
 
     def subpath(type)
         return File.join(path, type) unless type.to_s == "plugins"

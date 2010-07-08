@@ -24,11 +24,7 @@ module Puppet::Parser::Files
             # Than that would be a "no."
         end
         abspat = File::expand_path(start, cwd)
-        files = Dir.glob(abspat).reject { |f| FileTest.directory?(f) }
-        if files.size == 0
-            files = Dir.glob(abspat + ".pp").reject { |f| FileTest.directory?(f) }
-        end
-        return [nil, files]
+        return [nil, Dir.glob(abspat + (File.extname(abspat).empty? ? '{,.pp,.rb}' : '' )).reject { |f| FileTest.directory?(f) }]
     end
 
     # Find the concrete file denoted by +file+. If +file+ is absolute,
