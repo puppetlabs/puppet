@@ -717,6 +717,11 @@ Generated on #{Time.now}.
 
         val = uninterpolated_value(param, environment)
 
+        if param == :code
+            # if we interpolate code, all hell breaks loose.
+            return val
+        end
+
         # Convert it if necessary
         val = convert(val, environment)
 
