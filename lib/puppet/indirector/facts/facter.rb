@@ -10,7 +10,9 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
     def self.load_fact_plugins
         # Add any per-module fact directories to the factpath
         module_fact_dirs = Puppet[:modulepath].split(":").collect do |d|
-            Dir.glob("%s/*/lib/facter" % d)
+            ["lib", "plugins"].map do |subdirectory|
+                Dir.glob("%s/*/#{subdirectory}/facter" % d)
+            end
         end.flatten
         dirs = module_fact_dirs + Puppet[:factpath].split(":")
         x = dirs.each do |dir|

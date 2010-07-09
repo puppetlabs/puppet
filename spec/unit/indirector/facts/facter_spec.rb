@@ -128,6 +128,7 @@ describe Puppet::Node::Facts::Facter do
 
             Puppet.settings.expects(:value).with(:modulepath).returns("one%stwo" % File::PATH_SEPARATOR)
 
+            Dir.stubs(:glob).returns []
             Dir.expects(:glob).with("one/*/lib/facter").returns %w{oneA oneB}
             Dir.expects(:glob).with("two/*/lib/facter").returns %w{twoA twoB}
 
