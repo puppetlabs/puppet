@@ -1,4 +1,5 @@
 require 'find'
+require 'fileutils'
 module Puppet::Util::Backups
 
     # Deal with backups.

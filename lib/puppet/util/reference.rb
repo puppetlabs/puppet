@@ -1,4 +1,5 @@
 require 'puppet/util/instance_loader'
+require 'fileutils'
 
 # Manage Reference Documentation.
 class Puppet::Util::Reference

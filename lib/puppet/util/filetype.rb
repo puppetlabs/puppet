@@ -2,6 +2,7 @@
 # to see here.
 
 require 'puppet/util/selinux'
+require 'fileutils'
 
 class Puppet::Util::FileType
     attr_accessor :loaded, :path, :synced

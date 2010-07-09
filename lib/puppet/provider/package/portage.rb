@@ -1,4 +1,5 @@
 require 'puppet/provider/package'
+require 'fileutils'
 
 Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Package do
     desc "Provides packaging support for Gentoo's portage system."

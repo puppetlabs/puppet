@@ -1,6 +1,7 @@
 require 'puppet/indirector/code'
 require 'puppet/file_bucket/file'
 require 'puppet/util/checksums'
+require 'fileutils'
 
 module Puppet::FileBucketFile
     class File < Puppet::Indirector::Code
