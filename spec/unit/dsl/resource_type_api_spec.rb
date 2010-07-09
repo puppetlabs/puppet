@@ -14,7 +14,7 @@ describe Puppet::DSL::ResourceTypeAPI do
     end
 
     [:definition, :node, :hostclass].each do |type|
-        method = type == :definition ? "resource_type" : type
+        method = type == :definition ? "define" : type
         it "should be able to create a #{type}" do
             newtype = Puppet::Resource::Type.new(:hostclass, "foo")
             Puppet::Resource::Type.expects(:new).with { |t, n, args| t == type }.returns newtype

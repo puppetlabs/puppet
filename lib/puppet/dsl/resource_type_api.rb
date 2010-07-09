@@ -1,7 +1,7 @@
 require 'puppet/resource/type'
 
 module Puppet::DSL::ResourceTypeAPI
-    def resource_type(name, *args, &block)
+    def define(name, *args, &block)
         result = mk_resource_type(:definition, name, Hash.new, block)
         result.set_arguments(munge_type_arguments(args))
         result
