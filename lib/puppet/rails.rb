@@ -50,22 +50,22 @@ module Puppet::Rails
         when "sqlite3"
             args[:database] = Puppet[:dblocation]
         when "mysql", "postgresql"
-            args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].empty?
-            args[:port]     = Puppet[:dbport] unless Puppet[:dbport].empty?
-            args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
-            args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
+            args[:host]     = Puppet[:dbserver] unless Puppet[:dbserver].to_s.empty?
+            args[:port]     = Puppet[:dbport] unless Puppet[:dbport].to_s.empty?
+            args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
+            args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
             args[:database] = Puppet[:dbname]
             args[:reconnect]= true
 
             socket          = Puppet[:dbsocket]
-            args[:socket]   = socket unless socket.empty?
+            args[:socket]   = socket unless socket.to_s.empty?
 	        
             connections     = Puppet[:dbconnections].to_i
             args[:pool]     = connections if connections > 0 
         when "oracle_enhanced":
-	        args[:database] = Puppet[:dbname] unless Puppet[:dbname].empty?
-	        args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].empty?
-	        args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].empty?
+	        args[:database] = Puppet[:dbname] unless Puppet[:dbname].to_s.empty?
+	        args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
+	        args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
 
             connections     = Puppet[:dbconnections].to_i
             args[:pool]     = connections if connections > 0
