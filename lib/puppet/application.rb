@@ -118,7 +118,7 @@ class Application
     require 'puppet/util'
     include Puppet::Util
 
-    BINDIRS = %w{sbin bin}.map{|dir| File.expand_path(File.dirname(__FILE__)) + "/../../#{dir}/*"}.join(" ")
+    DOCPATTERN = File.expand_path(File.dirname(__FILE__) + "/util/command_line/*" )
 
     class << self
         include Puppet::Util
@@ -384,7 +384,7 @@ class Application
             ::RDoc.const_set("PuppetSourceFile", name)
             #:stopdoc: # Issue #4161
             def (::RDoc).caller
-                docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{BINDIRS}`.chomp
+                docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{DOCPATTERN}`.chomp
                 super << "#{docfile}:0"
             end
             #:startdoc:
