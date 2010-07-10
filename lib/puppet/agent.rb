@@ -82,7 +82,6 @@ class Puppet::Agent
 
     def sync
         @sync ||= Sync.new
-        @sync
     end
 
     private

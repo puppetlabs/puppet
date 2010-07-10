@@ -43,6 +43,5 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
         # Only use the first result.
         group = result[0]
         gid = group[:gid][0]
-        gid
     end
 end

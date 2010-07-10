@@ -49,19 +49,16 @@ class Puppet::Network::Client
     # client/server stuff.  E.g., you could call Client::CA.new(:CA => ca).
     def self.drivername
         @drivername ||= self.name
-        @drivername
     end
 
     # Figure out the handler for our client.
     def self.handler
         @handler ||= Puppet::Network::Handler.handler(self.name)
-        @handler
     end
 
     # The class that handles xmlrpc interaction for us.
     def self.xmlrpc_client
         @xmlrpc_client ||= Puppet::Network::XMLRPCClient.handler_class(self.handler)
-        @xmlrpc_client
     end
 
     # Create our client.

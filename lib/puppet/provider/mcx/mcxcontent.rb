@@ -178,7 +178,6 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
             return false
         end
         has_mcx = ! mcx.empty?
-        has_mcx
     end
 
     def content

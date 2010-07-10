@@ -7,7 +7,6 @@ module Puppet
 
         def self.main
             @main ||= self.new()
-            @main
         end
 
         # Just proxy the setting methods to our rights stuff

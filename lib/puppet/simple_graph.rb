@@ -135,7 +135,6 @@ class Puppet::SimpleGraph
     def leaves(vertex, direction = :out)
         tree = tree_from_vertex(vertex, direction)
         l = tree.keys.find_all { |c| adjacent(c, :direction => direction).empty? }
-        l
     end
 
     # Collect all of the edges that the passed events match.  Returns

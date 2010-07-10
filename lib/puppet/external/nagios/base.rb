@@ -293,7 +293,6 @@ class Nagios::Base
             str += ldapname + ": #{value}\n"
         }
         str += "\n"
-        str
     end
 
     def to_s

@@ -151,7 +151,6 @@ module Puppet::Network
 
         def http
             @http ||= Puppet::Network::HttpPool.http_instance(host, port, true)
-            @http
         end
 
         attr_reader :host, :port

@@ -89,7 +89,6 @@ module Puppet::Util::Cacher
 
         def cache_timestamp
             @cache_timestamp ||= Time.now
-            @cache_timestamp
         end
 
         def cached_value(name)
@@ -123,7 +122,6 @@ module Puppet::Util::Cacher
 
         def value_cache
             @value_cache ||= {}
-            @value_cache
         end
     end
 end

@@ -43,7 +43,6 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         end
 
         info = name2hash('default',name_env,'parent')
-        info
     end
 
     # Look for our node in ldap.

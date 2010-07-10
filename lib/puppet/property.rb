@@ -22,7 +22,6 @@ class Puppet::Property < Puppet::Parameter
         # the first value.
         def array_matching
             @array_matching ||= :first
-            @array_matching
         end
 
         # Set whether properties should match all values or just the first one.

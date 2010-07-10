@@ -23,7 +23,6 @@ Puppet::Reports.register_report(:rrdgraph) do
 
     def hostdir
         @hostdir ||= File.join(Puppet[:rrddir], self.host)
-        @hostdir
     end
 
     def htmlfile(type, graphs, field)

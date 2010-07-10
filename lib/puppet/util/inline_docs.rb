@@ -16,7 +16,6 @@ module Puppet::Util::InlineDocs
 
         def doc
             @doc ||= ""
-            @doc
         end
 
         # don't fetch lexer comment by default

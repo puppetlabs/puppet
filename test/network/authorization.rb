@@ -48,7 +48,6 @@ class TestAuthConfig < Test::Unit::TestCase
         class << @obj
             def authconfig
                 @authconfig ||= FakeAuth.new
-                @authconfig
             end
         end
         @request = Puppet::Network::ClientRequest.new("host", "ip", false)

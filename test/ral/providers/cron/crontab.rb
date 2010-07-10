@@ -24,7 +24,6 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # parsed, so all they
     def sample_crons
         @sample_crons ||= YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml")))
-        @sample_crons
     end
 
     # These are simple lines that can appear in the files; there is a one to one
@@ -32,7 +31,6 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # we use these records to build up our complex, multi-line cron jobs below.
     def sample_records
         @sample_records ||= YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml")))
-        @sample_records
     end
 
     def setup

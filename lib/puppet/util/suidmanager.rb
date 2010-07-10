@@ -24,7 +24,6 @@ module Puppet::Util::SUIDManager
         # But 'macosx_productversion_major' requires it.
         Facter.loadfacts
         @osx_maj_ver = Facter.value('macosx_productversion_major')
-        @osx_maj_ver
     end
     module_function :osx_maj_ver
 

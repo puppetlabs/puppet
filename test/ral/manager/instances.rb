@@ -40,7 +40,6 @@ class TestTypeInstances < Test::Unit::TestCase
             end
             def self.instances
                 @instances ||= names.collect { |name| instance(name) }
-                @instances
             end
 
             @names = [:one, :five, :six]

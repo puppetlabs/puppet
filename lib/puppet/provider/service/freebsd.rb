@@ -18,7 +18,6 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     def rcvar
         rcvar = execute([self.initscript, :rcvar], :failonfail => true, :squelch => false)
         rcvar = rcvar.split("\n")
-        rcvar
     end
 
     # Extract service name

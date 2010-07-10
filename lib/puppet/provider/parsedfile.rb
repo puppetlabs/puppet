@@ -35,7 +35,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     def self.filetype
         @filetype ||= Puppet::Util::FileType.filetype(:flat)
-        @filetype
     end
 
     def self.filetype=(type)
