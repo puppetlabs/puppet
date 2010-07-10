@@ -74,7 +74,7 @@ class Puppet::Transaction::ResourceHarness
                 resource[param] = value
                 audited << param
             else
-                resource.notice "Storing newly-audited value #{current[param]} for #{param}"
+                resource.info "Storing newly-audited value #{current[param]} for #{param}"
                 cache(resource, param, current[param])
             end
         end
