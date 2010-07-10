@@ -5,7 +5,7 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 require 'puppet/indirector/resource/rest'
 
 describe Puppet::Resource::Rest do
-    it "should be a sublcass of Puppet::Indirector::REST" do
-        Puppet::Resource::Rest.superclass.should equal(Puppet::Indirector::REST)
-    end
+  it "should be a sublcass of Puppet::Indirector::REST" do
+    Puppet::Resource::Rest.superclass.should equal(Puppet::Indirector::REST)
+  end
 end

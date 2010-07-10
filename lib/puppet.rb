@@ -1,6 +1,6 @@
 # Try to load rubygems.  Hey rubygems, I hate you.
 begin
-    require 'rubygems'
+  require 'rubygems'
 rescue LoadError
 end
 
@@ -24,134 +24,134 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-    PUPPETVERSION = '2.6.0'
+  PUPPETVERSION = '2.6.0'
 
-    def Puppet.version
-        PUPPETVERSION
+  def Puppet.version
+    PUPPETVERSION
+  end
+
+  class << self
+    include Puppet::Util
+    attr_reader :features
+    attr_writer :name
+  end
+
+  # the hash that determines how our system behaves
+  @@settings = Puppet::Util::Settings.new
+
+  # The services running in this process.
+  @services ||= []
+
+  require 'puppet/util/logging'
+
+  extend Puppet::Util::Logging
+
+  # The feature collection
+  @features = Puppet::Util::Feature.new('puppet/feature')
+
+  # Load the base features.
+  require 'puppet/feature/base'
+
+  # Store a new default value.
+  def self.setdefaults(section, hash)
+    @@settings.setdefaults(section, hash)
+  end
+
+  # configuration parameter access and stuff
+  def self.[](param)
+    case param
+    when :debug
+      return Puppet::Util::Log.level == :debug
+    else
+      return @@settings[param]
     end
+  end
 
-    class << self
-        include Puppet::Util
-        attr_reader :features
-        attr_writer :name
+  # configuration parameter access and stuff
+  def self.[]=(param,value)
+    @@settings[param] = value
+  end
+
+  def self.clear
+    @@settings.clear
+  end
+
+  def self.debug=(value)
+    if value
+      Puppet::Util::Log.level=(:debug)
+    else
+      Puppet::Util::Log.level=(:notice)
     end
+  end
 
-    # the hash that determines how our system behaves
-    @@settings = Puppet::Util::Settings.new
+  def self.settings
+    @@settings
+  end
 
-    # The services running in this process.
-    @services ||= []
+  def self.run_mode
+    $puppet_application_mode || Puppet::Util::RunMode[:user]
+  end
 
-    require 'puppet/util/logging'
+  def self.application_name
+    $puppet_application_name ||= "apply"
+  end
 
-    extend Puppet::Util::Logging
+  # Load all of the configuration parameters.
+  require 'puppet/defaults'
 
-    # The feature collection
-    @features = Puppet::Util::Feature.new('puppet/feature')
-
-    # Load the base features.
-    require 'puppet/feature/base'
-
-    # Store a new default value.
-    def self.setdefaults(section, hash)
-        @@settings.setdefaults(section, hash)
+  def self.genmanifest
+    if Puppet[:genmanifest]
+      puts Puppet.settings.to_manifest
+      exit(0)
     end
+  end
 
-    # configuration parameter access and stuff
-    def self.[](param)
-        case param
-        when :debug
-            return Puppet::Util::Log.level == :debug
-        else
-            return @@settings[param]
-        end
-    end
+  # Parse the config file for this process.
+  def self.parse_config
+    Puppet.settings.parse
+  end
 
-    # configuration parameter access and stuff
-    def self.[]=(param,value)
-        @@settings[param] = value
-    end
-
-    def self.clear
-        @@settings.clear
-    end
-
-    def self.debug=(value)
-        if value
-            Puppet::Util::Log.level=(:debug)
-        else
-            Puppet::Util::Log.level=(:notice)
-        end
-    end
-
-    def self.settings
-        @@settings
-    end
-
-    def self.run_mode
-        $puppet_application_mode || Puppet::Util::RunMode[:user]
-    end
-
-    def self.application_name
-        $puppet_application_name ||= "apply"
-    end
-
-    # Load all of the configuration parameters.
-    require 'puppet/defaults'
-
-    def self.genmanifest
-        if Puppet[:genmanifest]
-            puts Puppet.settings.to_manifest
-            exit(0)
-        end
-    end
-
-    # Parse the config file for this process.
-    def self.parse_config
-        Puppet.settings.parse
-    end
-
-    # XXX this should all be done using puppet objects, not using
-    # normal mkdir
-    def self.recmkdir(dir,mode = 0755)
-        if FileTest.exist?(dir)
+  # XXX this should all be done using puppet objects, not using
+  # normal mkdir
+  def self.recmkdir(dir,mode = 0755)
+    if FileTest.exist?(dir)
+      return false
+    else
+      tmp = dir.sub(/^\//,'')
+      path = [File::SEPARATOR]
+      tmp.split(File::SEPARATOR).each { |dir|
+        path.push dir
+        if ! FileTest.exist?(File.join(path))
+          begin
+            Dir.mkdir(File.join(path), mode)
+          rescue Errno::EACCES => detail
+            Puppet.err detail.to_s
             return false
-        else
-            tmp = dir.sub(/^\//,'')
-            path = [File::SEPARATOR]
-            tmp.split(File::SEPARATOR).each { |dir|
-                path.push dir
-                if ! FileTest.exist?(File.join(path))
-                    begin
-                        Dir.mkdir(File.join(path), mode)
-                    rescue Errno::EACCES => detail
-                        Puppet.err detail.to_s
-                        return false
-                    rescue => detail
-                        Puppet.err "Could not create #{path}: #{detail}"
-                        return false
-                    end
-                elsif FileTest.directory?(File.join(path))
-                    next
-                else FileTest.exist?(File.join(path))
-                    raise Puppet::Error, "Cannot create #{dir}: basedir #{File.join(path)} is a file"
-                end
-            }
-            return true
+          rescue => detail
+            Puppet.err "Could not create #{path}: #{detail}"
+            return false
+          end
+        elsif FileTest.directory?(File.join(path))
+          next
+        else FileTest.exist?(File.join(path))
+          raise Puppet::Error, "Cannot create #{dir}: basedir #{File.join(path)} is a file"
         end
+      }
+      return true
     end
+  end
 
-    # Create a new type.  Just proxy to the Type class.
-    def self.newtype(name, options = {}, &block)
-        Puppet::Type.newtype(name, options, &block)
-    end
+  # Create a new type.  Just proxy to the Type class.
+  def self.newtype(name, options = {}, &block)
+    Puppet::Type.newtype(name, options, &block)
+  end
 
-    # Retrieve a type by name.  Just proxy to the Type class.
-    def self.type(name)
-        # LAK:DEP Deprecation notice added 12/17/2008
-        Puppet.warning "Puppet.type is deprecated; use Puppet::Type.type"
-        Puppet::Type.type(name)
-    end
+  # Retrieve a type by name.  Just proxy to the Type class.
+  def self.type(name)
+    # LAK:DEP Deprecation notice added 12/17/2008
+    Puppet.warning "Puppet.type is deprecated; use Puppet::Type.type"
+    Puppet::Type.type(name)
+  end
 end
 
 require 'puppet/type'

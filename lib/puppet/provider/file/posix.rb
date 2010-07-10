@@ -1,99 +1,99 @@
 Puppet::Type.type(:file).provide :posix do
-    desc "Uses POSIX functionality to manage file's users and rights."
+  desc "Uses POSIX functionality to manage file's users and rights."
 
-    confine :feature => :posix
+  confine :feature => :posix
 
-    include Puppet::Util::POSIX
-    include Puppet::Util::Warnings
+  include Puppet::Util::POSIX
+  include Puppet::Util::Warnings
 
-    require 'etc'
+  require 'etc'
 
-    def id2name(id)
-        return id.to_s if id.is_a?(Symbol)
-        return nil if id > Puppet[:maximum_uid].to_i
+  def id2name(id)
+    return id.to_s if id.is_a?(Symbol)
+    return nil if id > Puppet[:maximum_uid].to_i
 
-        begin
-            user = Etc.getpwuid(id)
-        rescue TypeError
-            return nil
-        rescue ArgumentError
-            return nil
-        end
-
-        if user.uid == ""
-            return nil
-        else
-            return user.name
-        end
+    begin
+      user = Etc.getpwuid(id)
+    rescue TypeError
+      return nil
+    rescue ArgumentError
+      return nil
     end
 
-    def insync?(current, should)
-        return true unless should
+    if user.uid == ""
+      return nil
+    else
+      return user.name
+    end
+  end
 
-        should.each do |value|
-            if value =~ /^\d+$/
-                uid = Integer(value)
-            elsif value.is_a?(String)
-                fail "Could not find user #{value}" unless uid = uid(value)
-            else
-                uid = value
-            end
+  def insync?(current, should)
+    return true unless should
 
-            return true if uid == current
-        end
+    should.each do |value|
+      if value =~ /^\d+$/
+        uid = Integer(value)
+      elsif value.is_a?(String)
+        fail "Could not find user #{value}" unless uid = uid(value)
+      else
+        uid = value
+      end
 
-        unless Puppet.features.root?
-            warnonce "Cannot manage ownership unless running as root"
-            return true
-        end
-
-        false
+      return true if uid == current
     end
 
-    # Determine if the user is valid, and if so, return the UID
-    def validuser?(value)
-        Integer(value) rescue uid(value) || false
+    unless Puppet.features.root?
+      warnonce "Cannot manage ownership unless running as root"
+      return true
     end
 
-    def retrieve(resource)
-        unless stat = resource.stat(false)
-            return :absent
-        end
+    false
+  end
 
-        currentvalue = stat.uid
+  # Determine if the user is valid, and if so, return the UID
+  def validuser?(value)
+    Integer(value) rescue uid(value) || false
+  end
 
-        # On OS X, files that are owned by -2 get returned as really
-        # large UIDs instead of negative ones.  This isn't a Ruby bug,
-        # it's an OS X bug, since it shows up in perl, too.
-        if currentvalue > Puppet[:maximum_uid].to_i
-            self.warning "Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them"
-            currentvalue = :silly
-        end
-
-        currentvalue
+  def retrieve(resource)
+    unless stat = resource.stat(false)
+      return :absent
     end
 
-    def sync(path, links, should)
-        # Set our method appropriately, depending on links.
-        if links == :manage
-            method = :lchown
-        else
-            method = :chown
-        end
+    currentvalue = stat.uid
 
-        uid = nil
-        should.each do |user|
-            break if uid = validuser?(user)
-        end
-
-        raise Puppet::Error, "Could not find user(s) #{should.join(",")}" unless uid
-
-        begin
-            File.send(method, uid, nil, path)
-        rescue => detail
-            raise Puppet::Error, "Failed to set owner to '#{uid}': #{detail}"
-        end
-
-        :file_changed
+    # On OS X, files that are owned by -2 get returned as really
+    # large UIDs instead of negative ones.  This isn't a Ruby bug,
+    # it's an OS X bug, since it shows up in perl, too.
+    if currentvalue > Puppet[:maximum_uid].to_i
+      self.warning "Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them"
+      currentvalue = :silly
     end
+
+    currentvalue
+  end
+
+  def sync(path, links, should)
+    # Set our method appropriately, depending on links.
+    if links == :manage
+      method = :lchown
+    else
+      method = :chown
+    end
+
+    uid = nil
+    should.each do |user|
+      break if uid = validuser?(user)
+    end
+
+    raise Puppet::Error, "Could not find user(s) #{should.join(",")}" unless uid
+
+    begin
+      File.send(method, uid, nil, path)
+    rescue => detail
+      raise Puppet::Error, "Failed to set owner to '#{uid}': #{detail}"
+    end
+
+    :file_changed
+  end
 end

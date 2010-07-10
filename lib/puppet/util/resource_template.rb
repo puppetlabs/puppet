@@ -36,26 +36,26 @@ require 'erb'
 # parameters, which is generally most useful, since it allows you to configure
 # the generated resource via the generating resource.
 class Puppet::Util::ResourceTemplate
-    include Puppet::Util::Logging
+  include Puppet::Util::Logging
 
-    def evaluate
-        set_resource_variables
-        ERB.new(File.read(@file), 0, "-").result(binding)
+  def evaluate
+    set_resource_variables
+    ERB.new(File.read(@file), 0, "-").result(binding)
+  end
+
+  def initialize(file, resource)
+    raise ArgumentError, "Template #{file} does not exist" unless FileTest.exist?(file)
+    @file = file
+    @resource = resource
+  end
+
+  private
+
+  def set_resource_variables
+    @resource.to_hash.each do |param, value|
+      var = "@#{param.to_s}"
+      instance_variable_set(var, value)
     end
-
-    def initialize(file, resource)
-        raise ArgumentError, "Template #{file} does not exist" unless FileTest.exist?(file)
-        @file = file
-        @resource = resource
-    end
-
-    private
-
-    def set_resource_variables
-        @resource.to_hash.each do |param, value|
-            var = "@#{param.to_s}"
-            instance_variable_set(var, value)
-        end
-    end
+  end
 end
 

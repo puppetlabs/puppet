@@ -5,73 +5,73 @@ require 'puppet/indirector'
 # A basic class for running the agent.  Used by
 # puppetrun to kick off agents remotely.
 class Puppet::Run
-    extend Puppet::Indirector
-    indirects :run, :terminus_class => :local
+  extend Puppet::Indirector
+  indirects :run, :terminus_class => :local
 
-    attr_reader :status, :background, :options
+  attr_reader :status, :background, :options
 
-    def agent
-        Puppet::Agent.new(Puppet::Configurer)
+  def agent
+    Puppet::Agent.new(Puppet::Configurer)
+  end
+
+  def background?
+    background
+  end
+
+  def initialize(options = {})
+    if options.include?(:background)
+      @background = options[:background]
+      options.delete(:background)
     end
 
-    def background?
-        background
+    valid_options = [:tags, :ignoreschedules]
+    options.each do |key, value|
+      raise ArgumentError, "Run does not accept #{key}" unless valid_options.include?(key)
     end
 
-    def initialize(options = {})
-        if options.include?(:background)
-            @background = options[:background]
-            options.delete(:background)
-        end
+    @options = options
+  end
 
-        valid_options = [:tags, :ignoreschedules]
-        options.each do |key, value|
-            raise ArgumentError, "Run does not accept #{key}" unless valid_options.include?(key)
-        end
-
-        @options = options
+  def log_run
+    msg = ""
+    msg += "triggered run" % if options[:tags]
+      msg += " with tags #{options[:tags].inspect}"
     end
 
-    def log_run
-        msg = ""
-        msg += "triggered run" % if options[:tags]
-            msg += " with tags #{options[:tags].inspect}"
-        end
+    msg += " ignoring schedules" if options[:ignoreschedules]
 
-        msg += " ignoring schedules" if options[:ignoreschedules]
+    Puppet.notice msg
+  end
 
-        Puppet.notice msg
+  def run
+    if agent.running?
+      @status = "running"
+      return self
     end
 
-    def run
-        if agent.running?
-            @status = "running"
-            return self
-        end
+    log_run
 
-        log_run
-
-        if background?
-            Thread.new { agent.run(options) }
-        else
-            agent.run(options)
-        end
-
-        @status = "success"
-
-        self
+    if background?
+      Thread.new { agent.run(options) }
+    else
+      agent.run(options)
     end
 
-    def self.from_pson( pson )
-        options = {}
-        pson.each do |key, value|
-            options[key.to_sym] = value
-        end
+    @status = "success"
 
-        new(options)
+    self
+  end
+
+  def self.from_pson( pson )
+    options = {}
+    pson.each do |key, value|
+      options[key.to_sym] = value
     end
 
-    def to_pson
-        @options.merge(:background => @background).to_pson
-    end
+    new(options)
+  end
+
+  def to_pson
+    @options.merge(:background => @background).to_pson
+  end
 end

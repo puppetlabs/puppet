@@ -12,14 +12,14 @@ require 'puppettest/resourcetesting'
 require 'puppettest/railstesting'
 
 class TestRails < Test::Unit::TestCase
-    include PuppetTest::ParserTesting
-    include PuppetTest::ResourceTesting
-    include PuppetTest::RailsTesting
+  include PuppetTest::ParserTesting
+  include PuppetTest::ResourceTesting
+  include PuppetTest::RailsTesting
 
-    def test_includerails
-        assert_nothing_raised {
-            require 'puppet/rails'
-        }
-    end
+  def test_includerails
+    assert_nothing_raised {
+      require 'puppet/rails'
+    }
+  end
 end
 

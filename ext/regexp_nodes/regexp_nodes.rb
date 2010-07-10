@@ -58,129 +58,129 @@ WORKINGDIR = Dir.pwd
 # and a special version of to_yaml
 
 class ExternalNode
-    # Make these instance variables get/set-able with eponymous methods
-    attr_accessor :classes, :parameters, :hostname
+  # Make these instance variables get/set-able with eponymous methods
+  attr_accessor :classes, :parameters, :hostname
 
-    # initialize takes three arguments:
-    # hostname:: usually passed in via ARGV[0] but it could be anything
-    # classdir:: directory under WORKINGDIR to look for files named after
-    # classes
-    # parameterdir:: directory under WORKINGDIR to look for directories to set
-    # parameters
-    def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/')
-        # instance variables that contain the lists of classes and parameters
-        @hostname
-        @classes = Set.new ["baseclass"]
-        @parameters = Hash.new("unknown")    # sets a default value of "unknown"
+  # initialize takes three arguments:
+  # hostname:: usually passed in via ARGV[0] but it could be anything
+  # classdir:: directory under WORKINGDIR to look for files named after
+  # classes
+  # parameterdir:: directory under WORKINGDIR to look for directories to set
+  # parameters
+  def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/')
+    # instance variables that contain the lists of classes and parameters
+    @hostname
+    @classes = Set.new ["baseclass"]
+    @parameters = Hash.new("unknown")    # sets a default value of "unknown"
 
-        self.parse_argv(hostname)
-        self.match_classes(WORKINGDIR + "/#{classdir}")
-        self.match_parameters(WORKINGDIR + "/#{parameterdir}")
+    self.parse_argv(hostname)
+    self.match_classes(WORKINGDIR + "/#{classdir}")
+    self.match_parameters(WORKINGDIR + "/#{parameterdir}")
+  end
+
+  # private method called by initialize which sanity-checks our hostname.
+  # good candidate for overriding in a subclass if you need different checks
+  def parse_argv(hostname)
+    if hostname =~ /^([-\w]+?)\.([-\w\.]+)/    # non-greedy up to the first . is hostname
+      @hostname = $1
+    elsif hostname =~ /^([-\w]+)$/       # sometimes puppet's @name is just a name
+      @hostname = hostname
+    else
+      $LOG.fatal("didn't receive parsable hostname, got: [#{hostname}]")
+      exit(1)
+    end
+  end
+
+  # to_yaml massages a copy of the object and outputs clean yaml so we don't
+  # feed weird things back to puppet []<
+  def to_yaml
+    classes = self.classes.to_a
+    if self.parameters.empty? # otherwise to_yaml prints "parameters: {}"
+      parameters = nil
+    else
+      parameters = self.parameters
+    end
+    ({ 'classes' => classes, 'parameters' => parameters}).to_yaml
+  end
+
+  # Private method that expects an absolute path to a file and a string to
+  # match - it returns true if the string was matched by any of the lines in
+  # the file
+  def matched_in_patternfile?(filepath, matchthis)
+
+    patternlist = []
+
+    begin
+      open(filepath).each { |l|
+        pattern = %r{#{l.chomp!}}
+        patternlist <<  pattern
+        $LOG.debug("appending [#{pattern}] to patternlist for [#{filepath}]")
+      }
+    rescue Exception
+      $LOG.fatal("Problem reading #{filepath}: #{$ERROR_INFO}")
+      exit(1)
     end
 
-    # private method called by initialize which sanity-checks our hostname.
-    # good candidate for overriding in a subclass if you need different checks
-    def parse_argv(hostname)
-        if hostname =~ /^([-\w]+?)\.([-\w\.]+)/    # non-greedy up to the first . is hostname
-            @hostname = $1
-        elsif hostname =~ /^([-\w]+)$/       # sometimes puppet's @name is just a name
-            @hostname = hostname
-        else
-            $LOG.fatal("didn't receive parsable hostname, got: [#{hostname}]")
-            exit(1)
-        end
+    $LOG.debug("list of patterns for #{filepath}: #{patternlist}")
+
+    if matchthis =~ Regexp.union(patternlist)
+      $LOG.debug("matched #{$~.to_s} in #{matchthis}, returning true")
+      return true
+
+    else    # hostname didn't match anything in patternlist
+      $LOG.debug("#{matchthis} unmatched, returning false")
+      return nil
     end
 
-    # to_yaml massages a copy of the object and outputs clean yaml so we don't
-    # feed weird things back to puppet []<
-    def to_yaml
-        classes = self.classes.to_a
-        if self.parameters.empty? # otherwise to_yaml prints "parameters: {}"
-            parameters = nil
-        else
-            parameters = self.parameters
-        end
-        ({ 'classes' => classes, 'parameters' => parameters}).to_yaml
+  end
+
+  # private method - takes a path to look for files, iterates through all
+  # readable, regular files it finds, and matches this instance's @hostname
+  # against each line; if any match, the class will be set for this node.
+  def match_classes(fullpath)
+    Dir.foreach(fullpath) do |patternfile|
+      filepath = "#{fullpath}/#{patternfile}"
+      next unless File.file?(filepath) and
+        File.readable?(filepath)
+      $LOG.debug("Attempting to match [#{@hostname}] in [#{filepath}]")
+      if matched_in_patternfile?(filepath,@hostname)
+        @classes << patternfile.to_s
+        $LOG.debug("Appended #{patternfile.to_s} to classes instance variable")
+      end
     end
+  end
 
-    # Private method that expects an absolute path to a file and a string to
-    # match - it returns true if the string was matched by any of the lines in
-    # the file
-    def matched_in_patternfile?(filepath, matchthis)
+  # Parameters are handled slightly differently; we make another level of
+  # directories to get the parameter name, then use the names of the files
+  # contained in there for the values of those parameters.
+  #
+  # ex: cat /var/lib/puppet/bin/parameters/environment/production
+  # ^prodweb
+  # would set parameters["environment"] = "production" for prodweb001
+  def match_parameters(fullpath)
+    Dir.foreach(fullpath) do |parametername|
 
-        patternlist = []
+      filepath = "#{fullpath}/#{parametername}"
+      next if File.basename(filepath) =~ /^\./     # skip over dotfiles
 
-        begin
-            open(filepath).each { |l|
-                pattern = %r{#{l.chomp!}}
-                patternlist <<  pattern
-                $LOG.debug("appending [#{pattern}] to patternlist for [#{filepath}]")
-            }
-        rescue Exception
-            $LOG.fatal("Problem reading #{filepath}: #{$ERROR_INFO}")
-            exit(1)
+      next unless File.directory?(filepath) and
+        File.readable?(filepath)        # skip over non-directories
+
+      $LOG.debug "Considering contents of #{filepath}"
+
+      Dir.foreach("#{filepath}") do |patternfile|
+        secondlevel = "#{filepath}/#{patternfile}"
+        $LOG.debug "Found parameters patternfile at #{secondlevel}"
+        next unless File.file?(secondlevel) and
+          File.readable?(secondlevel)
+        $LOG.debug("Attempting to match [#{@hostname}] in [#{secondlevel}]")
+        if matched_in_patternfile?(secondlevel, @hostname)
+          @parameters[ parametername.to_s ] = patternfile.to_s
+          $LOG.debug("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
         end
-
-        $LOG.debug("list of patterns for #{filepath}: #{patternlist}")
-
-        if matchthis =~ Regexp.union(patternlist)
-            $LOG.debug("matched #{$~.to_s} in #{matchthis}, returning true")
-            return true
-
-        else    # hostname didn't match anything in patternlist
-            $LOG.debug("#{matchthis} unmatched, returning false")
-            return nil
-        end
-
+      end
     end
-
-    # private method - takes a path to look for files, iterates through all
-    # readable, regular files it finds, and matches this instance's @hostname
-    # against each line; if any match, the class will be set for this node.
-    def match_classes(fullpath)
-        Dir.foreach(fullpath) do |patternfile|
-            filepath = "#{fullpath}/#{patternfile}"
-            next unless File.file?(filepath) and
-                File.readable?(filepath)
-            $LOG.debug("Attempting to match [#{@hostname}] in [#{filepath}]")
-            if matched_in_patternfile?(filepath,@hostname)
-                @classes << patternfile.to_s
-                $LOG.debug("Appended #{patternfile.to_s} to classes instance variable")
-            end
-        end
-    end
-
-    # Parameters are handled slightly differently; we make another level of
-    # directories to get the parameter name, then use the names of the files
-    # contained in there for the values of those parameters.
-    #
-    # ex: cat /var/lib/puppet/bin/parameters/environment/production
-    # ^prodweb
-    # would set parameters["environment"] = "production" for prodweb001
-    def match_parameters(fullpath)
-        Dir.foreach(fullpath) do |parametername|
-
-            filepath = "#{fullpath}/#{parametername}"
-            next if File.basename(filepath) =~ /^\./     # skip over dotfiles
-
-            next unless File.directory?(filepath) and
-                File.readable?(filepath)        # skip over non-directories
-
-            $LOG.debug "Considering contents of #{filepath}"
-
-            Dir.foreach("#{filepath}") do |patternfile|
-                secondlevel = "#{filepath}/#{patternfile}"
-                $LOG.debug "Found parameters patternfile at #{secondlevel}"
-                next unless File.file?(secondlevel) and
-                    File.readable?(secondlevel)
-                $LOG.debug("Attempting to match [#{@hostname}] in [#{secondlevel}]")
-                if matched_in_patternfile?(secondlevel, @hostname)
-                    @parameters[ parametername.to_s ] = patternfile.to_s
-                    $LOG.debug("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
-                end
-            end
-        end
-    end
+  end
 
 end
 
@@ -188,22 +188,22 @@ end
 # happen as we initialize a subclass
 class MyExternalNode < ExternalNode
 
-    def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/')
+  def initialize(hostname, classdir = 'classes/', parameterdir = 'parameters/')
 
-        super
+    super
 
-        # Set "hostclass" parameter based on hostname,
-        # stripped of leading environment prefix and numeric suffix
-        if @hostname =~ /^(\w*?)-?(\D+)(\d{2,3})$/
-            match = Regexp.last_match
+    # Set "hostclass" parameter based on hostname,
+    # stripped of leading environment prefix and numeric suffix
+    if @hostname =~ /^(\w*?)-?(\D+)(\d{2,3})$/
+      match = Regexp.last_match
 
-            hostclass = match[2]
-            $LOG.debug("matched hostclass #{hostclass}")
-            @parameters[ "hostclass" ] = hostclass
-        else
-            $LOG.debug("hostclass couldn't figure out class from #{@hostname}")
-        end
+      hostclass = match[2]
+      $LOG.debug("matched hostclass #{hostclass}")
+      @parameters[ "hostclass" ] = hostclass
+    else
+      $LOG.debug("hostclass couldn't figure out class from #{@hostname}")
     end
+  end
 
 end
 

@@ -7,92 +7,92 @@ require 'puppet/network/http/compression'
 
 # Access objects via REST
 class Puppet::Indirector::REST < Puppet::Indirector::Terminus
-    include Puppet::Network::HTTP::API::V1
-    include Puppet::Network::HTTP::Compression.module
+  include Puppet::Network::HTTP::API::V1
+  include Puppet::Network::HTTP::Compression.module
 
-    class << self
-        attr_reader :server_setting, :port_setting
+  class << self
+    attr_reader :server_setting, :port_setting
+  end
+
+  # Specify the setting that we should use to get the server name.
+  def self.use_server_setting(setting)
+    @server_setting = setting
+  end
+
+  def self.server
+    Puppet.settings[server_setting || :server]
+  end
+
+  # Specify the setting that we should use to get the port.
+  def self.use_port_setting(setting)
+    @port_setting = setting
+  end
+
+  def self.port
+    Puppet.settings[port_setting || :masterport].to_i
+  end
+
+  # Figure out the content type, turn that into a format, and use the format
+  # to extract the body of the response.
+  def deserialize(response, multiple = false)
+    case response.code
+    when "404"
+      return nil
+    when /^2/
+      raise "No content type in http response; cannot parse" unless response['content-type']
+
+      content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
+
+      body = uncompress_body(response)
+
+      # Convert the response to a deserialized object.
+      if multiple
+        model.convert_from_multiple(content_type, body)
+      else
+        model.convert_from(content_type, body)
+      end
+    else
+      # Raise the http error if we didn't get a 'success' of some kind.
+      message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+      raise Net::HTTPError.new(message, response)
     end
+  end
 
-    # Specify the setting that we should use to get the server name.
-    def self.use_server_setting(setting)
-        @server_setting = setting
+  # Provide appropriate headers.
+  def headers
+    add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
+  end
+
+  def network(request)
+    Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
+  end
+
+  def find(request)
+    return nil unless result = deserialize(network(request).get(indirection2uri(request), headers))
+    result.name = request.key if result.respond_to?(:name=)
+    result
+  end
+
+  def search(request)
+    unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
+      return []
     end
+    result
+  end
 
-    def self.server
-        Puppet.settings[server_setting || :server]
-    end
+  def destroy(request)
+    raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
+    deserialize network(request).delete(indirection2uri(request), headers)
+  end
 
-    # Specify the setting that we should use to get the port.
-    def self.use_port_setting(setting)
-        @port_setting = setting
-    end
+  def save(request)
+    raise ArgumentError, "PUT does not accept options" unless request.options.empty?
+    deserialize network(request).put(indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+  end
 
-    def self.port
-        Puppet.settings[port_setting || :masterport].to_i
-    end
+  private
 
-    # Figure out the content type, turn that into a format, and use the format
-    # to extract the body of the response.
-    def deserialize(response, multiple = false)
-        case response.code
-        when "404"
-            return nil
-        when /^2/
-            raise "No content type in http response; cannot parse" unless response['content-type']
-
-            content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
-
-            body = uncompress_body(response)
-
-            # Convert the response to a deserialized object.
-            if multiple
-                model.convert_from_multiple(content_type, body)
-            else
-                model.convert_from(content_type, body)
-            end
-        else
-            # Raise the http error if we didn't get a 'success' of some kind.
-            message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
-            raise Net::HTTPError.new(message, response)
-        end
-    end
-
-    # Provide appropriate headers.
-    def headers
-        add_accept_encoding({"Accept" => model.supported_formats.join(", ")})
-    end
-
-    def network(request)
-        Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
-    end
-
-    def find(request)
-        return nil unless result = deserialize(network(request).get(indirection2uri(request), headers))
-        result.name = request.key if result.respond_to?(:name=)
-        result
-    end
-
-    def search(request)
-        unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
-            return []
-        end
-        result
-    end
-
-    def destroy(request)
-        raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-        deserialize network(request).delete(indirection2uri(request), headers)
-    end
-
-    def save(request)
-        raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-        deserialize network(request).put(indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
-    end
-
-    private
-
-    def environment
-        Puppet::Node::Environment.new
-    end
+  def environment
+    Puppet::Node::Environment.new
+  end
 end

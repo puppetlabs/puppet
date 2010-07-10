@@ -3,43 +3,43 @@
 #
 
 module Puppet
-    newtype(:notify) do
-        @doc = "Sends an arbitrary message to the agent run-time log."
+  newtype(:notify) do
+    @doc = "Sends an arbitrary message to the agent run-time log."
 
-        newproperty(:message) do
-            desc "The message to be sent to the log."
-            def sync
-                case @resource["withpath"]
-                when :true
-                    send(@resource[:loglevel], self.should)
-                else
-                    Puppet.send(@resource[:loglevel], self.should)
-                end
-                return
-            end
-
-            def retrieve
-                :absent
-            end
-
-            def insync?(is)
-                false
-            end
-
-            defaultto { @resource[:name] }
+    newproperty(:message) do
+      desc "The message to be sent to the log."
+      def sync
+        case @resource["withpath"]
+        when :true
+          send(@resource[:loglevel], self.should)
+        else
+          Puppet.send(@resource[:loglevel], self.should)
         end
+        return
+      end
 
-        newparam(:withpath) do
-            desc "Whether to not to show the full object path."
-            defaultto :false
+      def retrieve
+        :absent
+      end
 
-            newvalues(:true, :false)
-        end
+      def insync?(is)
+        false
+      end
 
-        newparam(:name) do
-            desc "An arbitrary tag for your own reference; the name of the message."
-            isnamevar
-        end
+      defaultto { @resource[:name] }
     end
+
+    newparam(:withpath) do
+      desc "Whether to not to show the full object path."
+      defaultto :false
+
+      newvalues(:true, :false)
+    end
+
+    newparam(:name) do
+      desc "An arbitrary tag for your own reference; the name of the message."
+      isnamevar
+    end
+  end
 end
 

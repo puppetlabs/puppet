@@ -25,24 +25,24 @@ ctx.ca_file = Puppet[:localcacert]
 allowed_servers = Array.new
 runner = false;
 File.open(Puppet[:authconfig]).each do |line|
-    case line
-    when /^\s*#/: next # skip comments
-    when /^\s*$/: next # skip blank lines
-    when /\[puppetrunner\]/: # puppetrunner section
-        runner=true
-    when /^\s*(\w+)\s+(.+)$/:
-        var = $1
-        value = $2
-        case var
-        when "allow":
-            value.split(/\s*,\s*/).each { |val|
-            allowed_servers << val
-            puts "allowing #{val} access"
-        } if runner==true
-        end
-    else
-        runner=false
+  case line
+  when /^\s*#/: next # skip comments
+  when /^\s*$/: next # skip blank lines
+  when /\[puppetrunner\]/: # puppetrunner section
+    runner=true
+  when /^\s*(\w+)\s+(.+)$/:
+    var = $1
+    value = $2
+    case var
+    when "allow":
+      value.split(/\s*,\s*/).each { |val|
+      allowed_servers << val
+      puts "allowing #{val} access"
+    } if runner==true
     end
+  else
+    runner=false
+  end
 end
 
 # be a daemon
@@ -50,27 +50,27 @@ sock = TCPServer.new(port)
 ssls = OpenSSL::SSL::SSLServer.new(sock, ctx)
 
 loop do
-    begin
-        ns = ssls.accept # start SSL session
-        af, port, host, ip = ns.peeraddr
-        print "connection from #{host+"("+ip+")"} "
-        if allowed_servers.include?(host)
-            #TODO add support for tags and other command line arguments
-            puts "accepted"
-            ns.puts "Executing #{cmd} on #{Facter.fqdn}.\n*******OUTPUT********\n\n"
-            IO.popen(cmd) do |f|
-                while line = f.gets
-                    ns.puts line
-                end
-            end
-            ns.puts "\n*********DONE**********"
-        else
-            ns.puts "denied\n"
-            puts "denied"
+  begin
+    ns = ssls.accept # start SSL session
+    af, port, host, ip = ns.peeraddr
+    print "connection from #{host+"("+ip+")"} "
+    if allowed_servers.include?(host)
+      #TODO add support for tags and other command line arguments
+      puts "accepted"
+      ns.puts "Executing #{cmd} on #{Facter.fqdn}.\n*******OUTPUT********\n\n"
+      IO.popen(cmd) do |f|
+        while line = f.gets
+          ns.puts line
         end
-        ns.close
-    rescue
-        ns.close
-        next
+      end
+      ns.puts "\n*********DONE**********"
+    else
+      ns.puts "denied\n"
+      puts "denied"
     end
+    ns.close
+  rescue
+    ns.close
+    next
+  end
 end

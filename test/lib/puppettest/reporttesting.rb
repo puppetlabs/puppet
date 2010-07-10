@@ -1,16 +1,16 @@
 module PuppetTest::Reporttesting
-    def fakereport
-        # Create a bunch of log messages in an array.
-        report = Puppet::Transaction::Report.new
+  def fakereport
+    # Create a bunch of log messages in an array.
+    report = Puppet::Transaction::Report.new
 
-        3.times { |i|
-            # We have to use warning so that the logs always happen
-            log = Puppet.warning("Report test message #{i}")
+    3.times { |i|
+      # We have to use warning so that the logs always happen
+      log = Puppet.warning("Report test message #{i}")
 
-            report << log
-        }
+      report << log
+    }
 
-        report
-    end
+    report
+  end
 end
 

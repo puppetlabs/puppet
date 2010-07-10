@@ -80,102 +80,102 @@
 require 'csv'
 
 module Puppet::Parser::Functions
-    newfunction(:extlookup, :type => :rvalue) do |args|
-        key = args[0]
-        default = "_ExtUNSET_"
-        datafile = "_ExtUNSET_"
+  newfunction(:extlookup, :type => :rvalue) do |args|
+    key = args[0]
+    default = "_ExtUNSET_"
+    datafile = "_ExtUNSET_"
 
-        default = args[1] if args[1]
-        datafile = args[2] if args[2]
+    default = args[1] if args[1]
+    datafile = args[2] if args[2]
 
-        extlookup_datadir = lookupvar('extlookup_datadir')
-        extlookup_precedence = Array.new
+    extlookup_datadir = lookupvar('extlookup_datadir')
+    extlookup_precedence = Array.new
 
-        # precedence values can have variables embedded in them
-        # in the form %{fqdn}, you could for example do
-        #
-        #    $extlookup_precedence = ["hosts/%{fqdn}", "common"]
-        #
-        # this will result in /path/to/extdata/hosts/your.box.com.csv
-        # being searched.
-        #
-        # we parse the precedence here because the best place to specify
-        # it would be in site.pp but site.pp is only evaluated at startup
-        # so $fqdn etc would have no meaning there, this way it gets evaluated
-        # each run and has access to the right variables for that run
-        lookupvar('extlookup_precedence').each do |prec|
-            while prec =~ /%\{(.+?)\}/
-                prec.gsub!(/%\{#{$1}\}/, lookupvar($1))
-            end
+    # precedence values can have variables embedded in them
+    # in the form %{fqdn}, you could for example do
+    #
+    #    $extlookup_precedence = ["hosts/%{fqdn}", "common"]
+    #
+    # this will result in /path/to/extdata/hosts/your.box.com.csv
+    # being searched.
+    #
+    # we parse the precedence here because the best place to specify
+    # it would be in site.pp but site.pp is only evaluated at startup
+    # so $fqdn etc would have no meaning there, this way it gets evaluated
+    # each run and has access to the right variables for that run
+    lookupvar('extlookup_precedence').each do |prec|
+      while prec =~ /%\{(.+?)\}/
+        prec.gsub!(/%\{#{$1}\}/, lookupvar($1))
+      end
 
-            extlookup_precedence << prec
-        end
-
-
-        datafiles = Array.new
-
-        # if we got a custom data file, put it first in the array of search files
-        if datafile != ""
-            datafiles << extlookup_datadir + "/#{datafile}.csv" if File.exists?(extlookup_datadir + "/#{datafile}.csv")
-        end
-
-        extlookup_precedence.each do |d|
-            datafiles << extlookup_datadir + "/#{d}.csv"
-        end
-
-        desired = "_ExtUNSET_"
-
-        datafiles.each do |file|
-            parser.watch_file(file) if File.exists?(file)
-
-            if desired == "_ExtUNSET_"
-                if File.exists?(file)
-                    result = CSV.read(file).find_all do |r|
-                        r[0] == key
-                    end
-
-
-                    # return just the single result if theres just one,
-                    # else take all the fields in the csv and build an array
-                    if result.length > 0
-                        if result[0].length == 2
-                            val = result[0][1].to_s
-
-                            # parse %{}'s in the CSV into local variables using lookupvar()
-                            while val =~ /%\{(.+?)\}/
-                                val.gsub!(/%\{#{$1}\}/, lookupvar($1))
-                            end
-
-                            desired = val
-                        elsif result[0].length > 1
-                            length = result[0].length
-                            cells = result[0][1,length]
-
-                            # Individual cells in a CSV result are a weird data type and throws
-                            # puppets yaml parsing, so just map it all to plain old strings
-                            desired = cells.map do |c|
-                                # parse %{}'s in the CSV into local variables using lookupvar()
-                                while c =~ /%\{(.+?)\}/
-                                    c.gsub!(/%\{#{$1}\}/, lookupvar($1))
-                                end
-
-                                c.to_s
-                            end
-                        end
-                    end
-                end
-            end
-        end
-
-        # don't accidently return nil's and such rather throw a parse error
-        if desired == "_ExtUNSET_" && default == "_ExtUNSET_"
-            raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
-        else
-            desired = default if desired == "_ExtUNSET_"
-        end
-
-        desired
+      extlookup_precedence << prec
     end
+
+
+    datafiles = Array.new
+
+    # if we got a custom data file, put it first in the array of search files
+    if datafile != ""
+      datafiles << extlookup_datadir + "/#{datafile}.csv" if File.exists?(extlookup_datadir + "/#{datafile}.csv")
+    end
+
+    extlookup_precedence.each do |d|
+      datafiles << extlookup_datadir + "/#{d}.csv"
+    end
+
+    desired = "_ExtUNSET_"
+
+    datafiles.each do |file|
+      parser.watch_file(file) if File.exists?(file)
+
+      if desired == "_ExtUNSET_"
+        if File.exists?(file)
+          result = CSV.read(file).find_all do |r|
+            r[0] == key
+          end
+
+
+          # return just the single result if theres just one,
+          # else take all the fields in the csv and build an array
+          if result.length > 0
+            if result[0].length == 2
+              val = result[0][1].to_s
+
+              # parse %{}'s in the CSV into local variables using lookupvar()
+              while val =~ /%\{(.+?)\}/
+                val.gsub!(/%\{#{$1}\}/, lookupvar($1))
+              end
+
+              desired = val
+            elsif result[0].length > 1
+              length = result[0].length
+              cells = result[0][1,length]
+
+              # Individual cells in a CSV result are a weird data type and throws
+              # puppets yaml parsing, so just map it all to plain old strings
+              desired = cells.map do |c|
+                # parse %{}'s in the CSV into local variables using lookupvar()
+                while c =~ /%\{(.+?)\}/
+                  c.gsub!(/%\{#{$1}\}/, lookupvar($1))
+                end
+
+                c.to_s
+              end
+            end
+          end
+        end
+      end
+    end
+
+    # don't accidently return nil's and such rather throw a parse error
+    if desired == "_ExtUNSET_" && default == "_ExtUNSET_"
+      raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
+    else
+      desired = default if desired == "_ExtUNSET_"
+    end
+
+    desired
+  end
 end
 
 # vi:tabstop=4:expandtab:ai

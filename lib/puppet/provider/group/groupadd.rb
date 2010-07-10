@@ -1,29 +1,29 @@
 require 'puppet/provider/nameservice/objectadd'
 
 Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameService::ObjectAdd do
-    desc "Group management via ``groupadd`` and its ilk.
+  desc "Group management via ``groupadd`` and its ilk.
 
-    The default for most platforms
+  The default for most platforms
 
-    "
+  "
 
-    commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
+  commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 
-    verify :gid, "GID must be an integer" do |value|
-        value.is_a? Integer
+  verify :gid, "GID must be an integer" do |value|
+    value.is_a? Integer
+  end
+
+  def addcmd
+    cmd = [command(:add)]
+    if gid = @resource.should(:gid)
+      unless gid == :absent
+        cmd << flag(:gid) << gid
+      end
     end
+    cmd << "-o" if @resource.allowdupe?
+    cmd << @resource[:name]
 
-    def addcmd
-        cmd = [command(:add)]
-        if gid = @resource.should(:gid)
-            unless gid == :absent
-                cmd << flag(:gid) << gid
-            end
-        end
-        cmd << "-o" if @resource.allowdupe?
-        cmd << @resource[:name]
-
-        cmd
-    end
+    cmd
+  end
 end
 

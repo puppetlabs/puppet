@@ -3,21 +3,21 @@ require 'puppet/network/rest_authconfig'
 
 module Puppet::Network
 
-    module RestAuthorization
+  module RestAuthorization
 
 
-        # Create our config object if necessary. If there's no configuration file
-        # we install our defaults
-        def authconfig
-            @authconfig ||= Puppet::Network::RestAuthConfig.main
+    # Create our config object if necessary. If there's no configuration file
+    # we install our defaults
+    def authconfig
+      @authconfig ||= Puppet::Network::RestAuthConfig.main
 
-            @authconfig
-        end
-
-        # Verify that our client has access.
-        def check_authorization(request)
-            authconfig.allowed?(request)
-        end
+      @authconfig
     end
+
+    # Verify that our client has access.
+    def check_authorization(request)
+      authconfig.allowed?(request)
+    end
+  end
 end
 

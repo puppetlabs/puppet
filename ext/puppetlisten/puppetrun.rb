@@ -6,10 +6,10 @@
 
 port = 8139
 if ARGV[0].nil?
-    warn "Usage: hostname to run against"
-    exit 1
+  warn "Usage: hostname to run against"
+  exit 1
 else
-    host = ARGV[0]
+  host = ARGV[0]
 end
 
 require 'puppet/sslcertificates/support'
@@ -33,7 +33,7 @@ ssl.connect # start SSL session
 ssl.sync_close = true  # if true the underlying socket will be
 #                        closed in SSLSocket#close. (default: false)
 while (line = ssl.gets)
-    puts line
+  puts line
 end
 
 ssl.close

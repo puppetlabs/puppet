@@ -5,27 +5,27 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/certificate/rest'
 
 describe Puppet::SSL::Certificate::Rest do
-    before do
-        @searcher = Puppet::SSL::Certificate::Rest.new
-    end
+  before do
+    @searcher = Puppet::SSL::Certificate::Rest.new
+  end
 
-    it "should be a sublcass of Puppet::Indirector::REST" do
-        Puppet::SSL::Certificate::Rest.superclass.should equal(Puppet::Indirector::REST)
-    end
+  it "should be a sublcass of Puppet::Indirector::REST" do
+    Puppet::SSL::Certificate::Rest.superclass.should equal(Puppet::Indirector::REST)
+  end
 
-    it "should set server_setting to :ca_server" do
-        Puppet::SSL::Certificate::Rest.server_setting.should == :ca_server
-    end
+  it "should set server_setting to :ca_server" do
+    Puppet::SSL::Certificate::Rest.server_setting.should == :ca_server
+  end
 
-    it "should set port_setting to :ca_port" do
-        Puppet::SSL::Certificate::Rest.port_setting.should == :ca_port
-    end
+  it "should set port_setting to :ca_port" do
+    Puppet::SSL::Certificate::Rest.port_setting.should == :ca_port
+  end
 
-    it "should make sure found certificates have their names set to the search string" do
-        terminus = Puppet::SSL::Certificate::Rest.new
+  it "should make sure found certificates have their names set to the search string" do
+    terminus = Puppet::SSL::Certificate::Rest.new
 
-        # This has 'boo.com' in the CN
-        cert_string = "-----BEGIN CERTIFICATE-----
+    # This has 'boo.com' in the CN
+    cert_string = "-----BEGIN CERTIFICATE-----
 MIICPzCCAaigAwIBAgIBBDANBgkqhkiG9w0BAQUFADAWMRQwEgYDVQQDDAtidWNr
 eS5sb2NhbDAeFw0wOTA5MTcxNzI1MzJaFw0xNDA5MTYxNzI1MzJaMBIxEDAOBgNV
 BAMMB2Jvby5jb20wgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBAKG9B+DkTCNh
@@ -42,17 +42,17 @@ rn/G
 -----END CERTIFICATE-----
 "
 
-        network = stub 'network'
-        terminus.stubs(:network).returns network
+    network = stub 'network'
+    terminus.stubs(:network).returns network
 
-        response = stub 'response', :code => "200", :body => cert_string
-        response.stubs(:[]).with('content-type').returns "text/plain"
-        response.stubs(:[]).with('content-encoding')
-        network.expects(:get).returns response
+    response = stub 'response', :code => "200", :body => cert_string
+    response.stubs(:[]).with('content-type').returns "text/plain"
+    response.stubs(:[]).with('content-encoding')
+    network.expects(:get).returns response
 
-        request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com")
-        result = terminus.find(request)
-        result.should_not be_nil
-        result.name.should == "foo.com"
-    end
+    request = Puppet::Indirector::Request.new(:certificate, :find, "foo.com")
+    result = terminus.find(request)
+    result.should_not be_nil
+    result.name.should == "foo.com"
+  end
 end

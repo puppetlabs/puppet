@@ -9,130 +9,130 @@ require 'puppettest'
 require 'puppettest/reporttesting'
 
 class TestReports < Test::Unit::TestCase
-    include PuppetTest
-    include PuppetTest::Reporttesting
+  include PuppetTest
+  include PuppetTest::Reporttesting
 
-    def mkreport
-        # First do some work
-        objects = []
-        6.times do |i|
-            file = tempfile
+  def mkreport
+    # First do some work
+    objects = []
+    6.times do |i|
+      file = tempfile
 
-            # Make every third file
-            File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
+      # Make every third file
+      File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
 
 
-                        objects << Puppet::Type.type(:file).new(
+            objects << Puppet::Type.type(:file).new(
                 
-                :path => file,
+        :path => file,
         
-                :ensure => "file"
-            )
-        end
-
-        config = mk_catalog(*objects)
-        # So the report works out.
-        config.retrieval_duration = 0.001
-        trans = config.apply
-
-        report = Puppet::Transaction::Report.new
-        trans.add_metrics_to_report(report)
-
-        report
+        :ensure => "file"
+      )
     end
 
-    # Make sure we can use reports as log destinations.
-    def test_reports_as_log_destinations
-        report = fakereport
+    config = mk_catalog(*objects)
+    # So the report works out.
+    config.retrieval_duration = 0.001
+    trans = config.apply
 
-        assert_nothing_raised {
-            Puppet::Util::Log.newdestination(report)
-        }
+    report = Puppet::Transaction::Report.new
+    trans.add_metrics_to_report(report)
 
-        # Now make a file for testing logging
-        file = Puppet::Type.type(:file).new(:path => tempfile, :ensure => "file")
-        file.finish
+    report
+  end
 
-        log = nil
-        assert_nothing_raised {
-            log = file.log "This is a message, yo"
-        }
+  # Make sure we can use reports as log destinations.
+  def test_reports_as_log_destinations
+    report = fakereport
 
-        assert(report.logs.include?(log), "Report did not get log message")
+    assert_nothing_raised {
+      Puppet::Util::Log.newdestination(report)
+    }
 
-        assert_nothing_raised {
-            Puppet::Util::Log.close(report)
-        }
+    # Now make a file for testing logging
+    file = Puppet::Type.type(:file).new(:path => tempfile, :ensure => "file")
+    file.finish
 
-        log = file.log "This is another message, yo"
+    log = nil
+    assert_nothing_raised {
+      log = file.log "This is a message, yo"
+    }
 
-        assert(! report.logs.include?(log), "Report got log message after close")
+    assert(report.logs.include?(log), "Report did not get log message")
+
+    assert_nothing_raised {
+      Puppet::Util::Log.close(report)
+    }
+
+    log = file.log "This is another message, yo"
+
+    assert(! report.logs.include?(log), "Report got log message after close")
+  end
+
+  def test_store_report
+    # Create a bunch of log messages in an array.
+    report = Puppet::Transaction::Report.new
+
+    # We have to reuse reporting here because of something going on in the
+    # server/report.rb file
+    Puppet.settings.use(:main, :master)
+
+    3.times { |i|
+      log = Puppet.warning("Report test message #{i}")
+
+      report << log
+    }
+
+    assert_nothing_raised do
+      report.extend(Puppet::Reports.report(:store))
     end
 
-    def test_store_report
-        # Create a bunch of log messages in an array.
-        report = Puppet::Transaction::Report.new
+    yaml = YAML.dump(report)
 
-        # We have to reuse reporting here because of something going on in the
-        # server/report.rb file
-        Puppet.settings.use(:main, :master)
+    file = report.process
 
-        3.times { |i|
-            log = Puppet.warning("Report test message #{i}")
+    assert(FileTest.exists?(file), "report file did not get created")
+    assert_equal(yaml, File.read(file), "File did not get written")
+  end
 
-            report << log
-        }
+  if Puppet.features.rrd?
+  def test_rrdgraph_report
+    Puppet.settings.use(:main, :metrics)
+    report = mkreport
 
-        assert_nothing_raised do
-            report.extend(Puppet::Reports.report(:store))
-        end
+    assert(! report.metrics.empty?, "Did not receive any metrics")
 
-        yaml = YAML.dump(report)
-
-        file = report.process
-
-        assert(FileTest.exists?(file), "report file did not get created")
-        assert_equal(yaml, File.read(file), "File did not get written")
+    assert_nothing_raised do
+      report.extend(Puppet::Reports.report(:rrdgraph))
     end
 
-    if Puppet.features.rrd?
-    def test_rrdgraph_report
-        Puppet.settings.use(:main, :metrics)
-        report = mkreport
+    assert_nothing_raised {
+      report.process
+    }
 
-        assert(! report.metrics.empty?, "Did not receive any metrics")
-
-        assert_nothing_raised do
-            report.extend(Puppet::Reports.report(:rrdgraph))
-        end
-
-        assert_nothing_raised {
-            report.process
-        }
-
-        hostdir = nil
-        assert_nothing_raised do
-            hostdir = report.hostdir
-        end
-
-        assert(hostdir, "Did not get hostdir back")
-
-        assert(FileTest.directory?(hostdir), "Host rrd dir did not get created")
-        index = File.join(hostdir, "index.html")
-        assert(FileTest.exists?(index), "index file was not created")
-
-        # Now make sure it creaets each of the rrd files
-        %w{changes resources time}.each do |type|
-            file = File.join(hostdir, "#{type}.rrd")
-            assert(FileTest.exists?(file), "Did not create rrd file for #{type}")
-
-            daily = file.sub ".rrd", "-daily.png"
-            assert(FileTest.exists?(daily), "Did not make daily graph for #{type}")
-        end
-
+    hostdir = nil
+    assert_nothing_raised do
+      hostdir = report.hostdir
     end
-    else
-    $stderr.puts "Install RRD for metric reporting tests"
+
+    assert(hostdir, "Did not get hostdir back")
+
+    assert(FileTest.directory?(hostdir), "Host rrd dir did not get created")
+    index = File.join(hostdir, "index.html")
+    assert(FileTest.exists?(index), "index file was not created")
+
+    # Now make sure it creaets each of the rrd files
+    %w{changes resources time}.each do |type|
+      file = File.join(hostdir, "#{type}.rrd")
+      assert(FileTest.exists?(file), "Did not create rrd file for #{type}")
+
+      daily = file.sub ".rrd", "-daily.png"
+      assert(FileTest.exists?(daily), "Did not make daily graph for #{type}")
     end
+
+  end
+  else
+  $stderr.puts "Install RRD for metric reporting tests"
+  end
 end
 

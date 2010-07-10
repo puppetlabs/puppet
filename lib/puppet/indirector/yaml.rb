@@ -3,66 +3,66 @@ require 'puppet/util/file_locking'
 
 # The base class for YAML indirection termini.
 class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
-    include Puppet::Util::FileLocking
+  include Puppet::Util::FileLocking
 
-    # Read a given name's file in and convert it from YAML.
-    def find(request)
-        file = path(request.key)
-        return nil unless FileTest.exist?(file)
+  # Read a given name's file in and convert it from YAML.
+  def find(request)
+    file = path(request.key)
+    return nil unless FileTest.exist?(file)
 
-        yaml = nil
-        begin
-            readlock(file) { |fh| yaml = fh.read }
-        rescue => detail
-            raise Puppet::Error, "Could not read YAML data for #{indirection.name} #{request.key}: #{detail}"
-        end
-        begin
-            return from_yaml(yaml)
-        rescue => detail
-            raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
-        end
+    yaml = nil
+    begin
+      readlock(file) { |fh| yaml = fh.read }
+    rescue => detail
+      raise Puppet::Error, "Could not read YAML data for #{indirection.name} #{request.key}: #{detail}"
     end
-
-    # Convert our object to YAML and store it to the disk.
-    def save(request)
-        raise ArgumentError.new("You can only save objects that respond to :name") unless request.instance.respond_to?(:name)
-
-        file = path(request.key)
-
-        basedir = File.dirname(file)
-
-        # This is quite likely a bad idea, since we're not managing ownership or modes.
-        Dir.mkdir(basedir) unless FileTest.exist?(basedir)
-
-        begin
-            writelock(file, 0660) { |f| f.print to_yaml(request.instance) }
-        rescue TypeError => detail
-            Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
-        end
+    begin
+      return from_yaml(yaml)
+    rescue => detail
+      raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
     end
+  end
 
-    # Get the yaml directory
-    def base
-        Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
+  # Convert our object to YAML and store it to the disk.
+  def save(request)
+    raise ArgumentError.new("You can only save objects that respond to :name") unless request.instance.respond_to?(:name)
+
+    file = path(request.key)
+
+    basedir = File.dirname(file)
+
+    # This is quite likely a bad idea, since we're not managing ownership or modes.
+    Dir.mkdir(basedir) unless FileTest.exist?(basedir)
+
+    begin
+      writelock(file, 0660) { |f| f.print to_yaml(request.instance) }
+    rescue TypeError => detail
+      Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
     end
+  end
 
-    # Return the path to a given node's file.
-    def path(name)
-        File.join(base, self.class.indirection_name.to_s, name.to_s + ".yaml")
-    end
+  # Get the yaml directory
+  def base
+    Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
+  end
 
-    # Do a glob on the yaml directory, loading each file found
-    def search(request)
-        Dir.glob(File.join(base, self.class.indirection_name.to_s, request.key)).collect { |f| YAML.load_file(f) }
-    end
+  # Return the path to a given node's file.
+  def path(name)
+    File.join(base, self.class.indirection_name.to_s, name.to_s + ".yaml")
+  end
 
-    private
+  # Do a glob on the yaml directory, loading each file found
+  def search(request)
+    Dir.glob(File.join(base, self.class.indirection_name.to_s, request.key)).collect { |f| YAML.load_file(f) }
+  end
 
-    def from_yaml(text)
-        YAML.load(text)
-    end
+  private
 
-    def to_yaml(object)
-        YAML.dump(object)
-    end
+  def from_yaml(text)
+    YAML.load(text)
+  end
+
+  def to_yaml(object)
+    YAML.dump(object)
+  end
 end

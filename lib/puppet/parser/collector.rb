@@ -1,223 +1,223 @@
 # An object that collects stored objects from the central cache and returns
 # them to the current host, yo.
 class Puppet::Parser::Collector
-    attr_accessor :type, :scope, :vquery, :equery, :form, :resources, :overrides, :collected
+  attr_accessor :type, :scope, :vquery, :equery, :form, :resources, :overrides, :collected
 
-    # Call the collection method, mark all of the returned objects as non-virtual,
-    # optionally applying parameter overrides. The collector can also delete himself
-    # from the compiler if there is no more resources to collect (valid only for resource fixed-set collector
-    # which get their resources from +collect_resources+ and not from the catalog)
-    def evaluate
-        # Shortcut if we're not using storeconfigs and they're trying to collect
-        # exported resources.
-        if form == :exported and Puppet[:storeconfigs] != true
-            Puppet.warning "Not collecting exported resources without storeconfigs"
-            return false
-        end
+  # Call the collection method, mark all of the returned objects as non-virtual,
+  # optionally applying parameter overrides. The collector can also delete himself
+  # from the compiler if there is no more resources to collect (valid only for resource fixed-set collector
+  # which get their resources from +collect_resources+ and not from the catalog)
+  def evaluate
+    # Shortcut if we're not using storeconfigs and they're trying to collect
+    # exported resources.
+    if form == :exported and Puppet[:storeconfigs] != true
+      Puppet.warning "Not collecting exported resources without storeconfigs"
+      return false
+    end
 
-        if self.resources
-            unless objects = collect_resources and ! objects.empty?
-                return false
-            end
-        else
-            method = "collect_#{@form.to_s}"
-            objects = send(method).each do |obj|
-                obj.virtual = false
-            end
-            return false if objects.empty?
-        end
+    if self.resources
+      unless objects = collect_resources and ! objects.empty?
+        return false
+      end
+    else
+      method = "collect_#{@form.to_s}"
+      objects = send(method).each do |obj|
+        obj.virtual = false
+      end
+      return false if objects.empty?
+    end
 
-        # we have an override for the collected resources
-        if @overrides and !objects.empty?
+    # we have an override for the collected resources
+    if @overrides and !objects.empty?
 
-            # force the resource to be always child of any other resource
-            overrides[:source].meta_def(:child_of?) do
-                true
-            end
+      # force the resource to be always child of any other resource
+      overrides[:source].meta_def(:child_of?) do
+        true
+      end
 
-            # tell the compiler we have some override for him unless we already
-            # overrided those resources
-            objects.each do |res|
-                unless @collected.include?(res.ref)
+      # tell the compiler we have some override for him unless we already
+      # overrided those resources
+      objects.each do |res|
+        unless @collected.include?(res.ref)
 
-                                newres = Puppet::Parser::Resource.new(
-                res.type, res.title,
-                        :parameters => overrides[:parameters],
-                        :file => overrides[:file],
-                        :line => overrides[:line],
-                        :source => overrides[:source],
+                newres = Puppet::Parser::Resource.new(
+        res.type, res.title,
+            :parameters => overrides[:parameters],
+            :file => overrides[:file],
+            :line => overrides[:line],
+            :source => overrides[:source],
         
-                        :scope => overrides[:scope]
-                    )
+            :scope => overrides[:scope]
+          )
 
-                    scope.compiler.add_override(newres)
-                end
-            end
+          scope.compiler.add_override(newres)
         end
-
-        # filter out object that already have been collected by ourself
-        objects.reject! { |o| @collected.include?(o.ref) }
-
-        return false if objects.empty?
-
-        # keep an eye on the resources we have collected
-        objects.inject(@collected) { |c,o| c[o.ref]=o; c }
-
-        # return our newly collected resources
-        objects
+      end
     end
 
-    def initialize(scope, type, equery, vquery, form)
-        @scope = scope
+    # filter out object that already have been collected by ourself
+    objects.reject! { |o| @collected.include?(o.ref) }
 
-        # initialisation
-        @collected = {}
+    return false if objects.empty?
 
-        # Canonize the type
-        @type = Puppet::Resource.new(type, "whatever").type
-        @equery = equery
-        @vquery = vquery
+    # keep an eye on the resources we have collected
+    objects.inject(@collected) { |c,o| c[o.ref]=o; c }
 
-        raise(ArgumentError, "Invalid query form #{form}") unless [:exported, :virtual].include?(form)
-        @form = form
+    # return our newly collected resources
+    objects
+  end
+
+  def initialize(scope, type, equery, vquery, form)
+    @scope = scope
+
+    # initialisation
+    @collected = {}
+
+    # Canonize the type
+    @type = Puppet::Resource.new(type, "whatever").type
+    @equery = equery
+    @vquery = vquery
+
+    raise(ArgumentError, "Invalid query form #{form}") unless [:exported, :virtual].include?(form)
+    @form = form
+  end
+
+  # add a resource override to the soon to be exported/realized resources
+  def add_override(hash)
+    raise ArgumentError, "Exported resource try to override without parameters" unless hash[:parameters]
+
+    # schedule an override for an upcoming collection
+    @overrides = hash
+  end
+
+  private
+
+  # Create our active record query.
+  def build_active_record_query
+    Puppet::Rails.init unless ActiveRecord::Base.connected?
+
+    raise Puppet::DevError, "Cannot collect resources for a nil host" unless @scope.host
+    host = Puppet::Rails::Host.find_by_name(@scope.host)
+
+    search = "(exported=? AND restype=?)"
+    values = [true, @type]
+
+    search += " AND (#{@equery})" if @equery
+
+    # note:
+    # we're not eagerly including any relations here because
+    # it can creates so much objects we'll throw out later.
+    # We used to eagerly include param_names/values but the way
+    # the search filter is built ruined those efforts and we
+    # were eagerly loading only the searched parameter and not
+    # the other ones.
+    query = {}
+    case search
+    when /puppet_tags/
+      query = {:joins => {:resource_tags => :puppet_tag}}
+    when /param_name/
+      query = {:joins => {:param_values => :param_name}}
     end
 
-    # add a resource override to the soon to be exported/realized resources
-    def add_override(hash)
-        raise ArgumentError, "Exported resource try to override without parameters" unless hash[:parameters]
+    # We're going to collect objects from rails, but we don't want any
+    # objects from this host.
+    search = ("host_id != ? AND #{search}") and values.unshift(host.id) if host
 
-        # schedule an override for an upcoming collection
-        @overrides = hash
-    end
+    query[:conditions] = [search, *values]
 
-    private
+    query
+  end
 
-    # Create our active record query.
-    def build_active_record_query
-        Puppet::Rails.init unless ActiveRecord::Base.connected?
+  # Collect exported objects.
+  def collect_exported
+    # First get everything from the export table.  Just reuse our
+    # collect_virtual method but tell it to use 'exported? for the test.
+    resources = collect_virtual(true).reject { |r| ! r.virtual? }
 
-        raise Puppet::DevError, "Cannot collect resources for a nil host" unless @scope.host
-        host = Puppet::Rails::Host.find_by_name(@scope.host)
+    count = resources.length
 
-        search = "(exported=? AND restype=?)"
-        values = [true, @type]
+    query = build_active_record_query
 
-        search += " AND (#{@equery})" if @equery
-
-        # note:
-        # we're not eagerly including any relations here because
-        # it can creates so much objects we'll throw out later.
-        # We used to eagerly include param_names/values but the way
-        # the search filter is built ruined those efforts and we
-        # were eagerly loading only the searched parameter and not
-        # the other ones.
-        query = {}
-        case search
-        when /puppet_tags/
-            query = {:joins => {:resource_tags => :puppet_tag}}
-        when /param_name/
-            query = {:joins => {:param_values => :param_name}}
+    # Now look them up in the rails db.  When we support attribute comparison
+    # and such, we'll need to vary the conditions, but this works with no
+    # attributes, anyway.
+    time = Puppet::Util.thinmark do
+      Puppet::Rails::Resource.find(:all, query).each do |obj|
+        if resource = exported_resource(obj)
+          count += 1
+          resources << resource
         end
-
-        # We're going to collect objects from rails, but we don't want any
-        # objects from this host.
-        search = ("host_id != ? AND #{search}") and values.unshift(host.id) if host
-
-        query[:conditions] = [search, *values]
-
-        query
+      end
     end
 
-    # Collect exported objects.
-    def collect_exported
-        # First get everything from the export table.  Just reuse our
-        # collect_virtual method but tell it to use 'exported? for the test.
-        resources = collect_virtual(true).reject { |r| ! r.virtual? }
+    scope.debug("Collected %s %s resource%s in %.2f seconds" % [count, @type, count == 1 ? "" : "s", time])
 
-        count = resources.length
+    resources
+  end
 
-        query = build_active_record_query
+  def collect_resources
+    @resources = [@resources] unless @resources.is_a?(Array)
+    method = "collect_#{form.to_s}_resources"
+    send(method)
+  end
 
-        # Now look them up in the rails db.  When we support attribute comparison
-        # and such, we'll need to vary the conditions, but this works with no
-        # attributes, anyway.
-        time = Puppet::Util.thinmark do
-            Puppet::Rails::Resource.find(:all, query).each do |obj|
-                if resource = exported_resource(obj)
-                    count += 1
-                    resources << resource
-                end
-            end
-        end
+  def collect_exported_resources
+    raise Puppet::ParseError, "realize() is not yet implemented for exported resources"
+  end
 
-        scope.debug("Collected %s %s resource%s in %.2f seconds" % [count, @type, count == 1 ? "" : "s", time])
-
-        resources
+  # Collect resources directly; this is the result of using 'realize',
+  # which specifies resources, rather than using a normal collection.
+  def collect_virtual_resources
+    return [] unless defined?(@resources) and ! @resources.empty?
+    result = @resources.dup.collect do |ref|
+      if res = @scope.findresource(ref.to_s)
+        @resources.delete(ref)
+        res
+      end
+    end.reject { |r| r.nil? }.each do |res|
+      res.virtual = false
     end
 
-    def collect_resources
-        @resources = [@resources] unless @resources.is_a?(Array)
-        method = "collect_#{form.to_s}_resources"
-        send(method)
+    # If there are no more resources to find, delete this from the list
+    # of collections.
+    @scope.compiler.delete_collection(self) if @resources.empty?
+
+    result
+  end
+
+  # Collect just virtual objects, from our local compiler.
+  def collect_virtual(exported = false)
+    scope.compiler.resources.find_all do |resource|
+      resource.type == @type and (exported ? resource.exported? : true) and match?(resource)
+    end
+  end
+
+  # Seek a specific exported resource.
+  def exported_resource(obj)
+    if existing = @scope.findresource(obj.restype, obj.title)
+      # Next see if we've already collected this resource
+      return nil if existing.rails_id == obj.id
+
+      # This is the one we've already collected
+      raise Puppet::ParseError, "Exported resource #{obj.ref} cannot override local resource"
     end
 
-    def collect_exported_resources
-        raise Puppet::ParseError, "realize() is not yet implemented for exported resources"
+    resource = obj.to_resource(self.scope)
+
+    resource.exported = false
+
+    scope.compiler.add_resource(scope, resource)
+
+    resource
+  end
+
+  # Does the resource match our tests?  We don't yet support tests,
+  # so it's always true at the moment.
+  def match?(resource)
+    if self.vquery
+      return self.vquery.call(resource)
+    else
+      return true
     end
-
-    # Collect resources directly; this is the result of using 'realize',
-    # which specifies resources, rather than using a normal collection.
-    def collect_virtual_resources
-        return [] unless defined?(@resources) and ! @resources.empty?
-        result = @resources.dup.collect do |ref|
-            if res = @scope.findresource(ref.to_s)
-                @resources.delete(ref)
-                res
-            end
-        end.reject { |r| r.nil? }.each do |res|
-            res.virtual = false
-        end
-
-        # If there are no more resources to find, delete this from the list
-        # of collections.
-        @scope.compiler.delete_collection(self) if @resources.empty?
-
-        result
-    end
-
-    # Collect just virtual objects, from our local compiler.
-    def collect_virtual(exported = false)
-        scope.compiler.resources.find_all do |resource|
-            resource.type == @type and (exported ? resource.exported? : true) and match?(resource)
-        end
-    end
-
-    # Seek a specific exported resource.
-    def exported_resource(obj)
-        if existing = @scope.findresource(obj.restype, obj.title)
-            # Next see if we've already collected this resource
-            return nil if existing.rails_id == obj.id
-
-            # This is the one we've already collected
-            raise Puppet::ParseError, "Exported resource #{obj.ref} cannot override local resource"
-        end
-
-        resource = obj.to_resource(self.scope)
-
-        resource.exported = false
-
-        scope.compiler.add_resource(scope, resource)
-
-        resource
-    end
-
-    # Does the resource match our tests?  We don't yet support tests,
-    # so it's always true at the moment.
-    def match?(resource)
-        if self.vquery
-            return self.vquery.call(resource)
-        else
-            return true
-        end
-    end
+  end
 end

@@ -3,159 +3,159 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::CaseStatement do
+  before :each do
+    @scope = Puppet::Parser::Scope.new
+  end
+
+  describe "when evaluating" do
+
     before :each do
-        @scope = Puppet::Parser::Scope.new
+      @test = stub 'test'
+      @test.stubs(:safeevaluate).with(@scope).returns("value")
+
+      @option1 = stub 'option1', :eachopt => nil, :default? => false
+      @option2 = stub 'option2', :eachopt => nil, :default? => false
+
+      @options = stub 'options'
+      @options.stubs(:each).multiple_yields(@option1, @option2)
+
+      @casestmt = Puppet::Parser::AST::CaseStatement.new :test => @test, :options => @options
     end
 
-    describe "when evaluating" do
+    it "should evaluate test" do
+      @test.expects(:safeevaluate).with(@scope)
 
-        before :each do
-            @test = stub 'test'
-            @test.stubs(:safeevaluate).with(@scope).returns("value")
-
-            @option1 = stub 'option1', :eachopt => nil, :default? => false
-            @option2 = stub 'option2', :eachopt => nil, :default? => false
-
-            @options = stub 'options'
-            @options.stubs(:each).multiple_yields(@option1, @option2)
-
-            @casestmt = Puppet::Parser::AST::CaseStatement.new :test => @test, :options => @options
-        end
-
-        it "should evaluate test" do
-            @test.expects(:safeevaluate).with(@scope)
-
-            @casestmt.evaluate(@scope)
-        end
-
-        it "should scan each option" do
-            @options.expects(:each).multiple_yields(@option1, @option2)
-
-            @casestmt.evaluate(@scope)
-        end
-
-        describe "when scanning options" do
-            before :each do
-                @opval1 = stub_everything 'opval1'
-                @option1.stubs(:eachopt).yields(@opval1)
-
-                @opval2 = stub_everything 'opval2'
-                @option2.stubs(:eachopt).yields(@opval2)
-            end
-
-            it "should evaluate each sub-option" do
-                @option1.expects(:eachopt)
-                @option2.expects(:eachopt)
-
-                @casestmt.evaluate(@scope)
-            end
-
-            it "should evaluate first matching option" do
-                @opval2.stubs(:evaluate_match).with { |*arg| arg[0] == "value" }.returns(true)
-                @option2.expects(:safeevaluate).with(@scope)
-
-                @casestmt.evaluate(@scope)
-            end
-
-            it "should return the first matching evaluated option" do
-                @opval2.stubs(:evaluate_match).with { |*arg| arg[0] == "value" }.returns(true)
-                @option2.stubs(:safeevaluate).with(@scope).returns(:result)
-
-                @casestmt.evaluate(@scope).should == :result
-            end
-
-            it "should evaluate the default option if none matched" do
-                @option1.stubs(:default?).returns(true)
-                @option1.expects(:safeevaluate).with(@scope)
-
-                @casestmt.evaluate(@scope)
-            end
-
-            it "should return the default evaluated option if none matched" do
-                @option1.stubs(:default?).returns(true)
-                @option1.stubs(:safeevaluate).with(@scope).returns(:result)
-
-                @casestmt.evaluate(@scope).should == :result
-            end
-
-            it "should return nil if nothing matched" do
-                @casestmt.evaluate(@scope).should be_nil
-            end
-
-            it "should match and set scope ephemeral variables" do
-                @opval1.expects(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }
-
-                @casestmt.evaluate(@scope)
-            end
-
-            it "should evaluate this regex option if it matches" do
-                @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
-
-                @option1.expects(:safeevaluate).with(@scope)
-
-                @casestmt.evaluate(@scope)
-            end
-
-            it "should return this evaluated regex option if it matches" do
-                @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
-                @option1.stubs(:safeevaluate).with(@scope).returns(:result)
-
-                @casestmt.evaluate(@scope).should == :result
-            end
-
-            it "should unset scope ephemeral variables after option evaluation" do
-                @scope.stubs(:ephemeral_level).returns(:level)
-                @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
-                @option1.stubs(:safeevaluate).with(@scope).returns(:result)
-
-                @scope.expects(:unset_ephemeral_var).with(:level)
-
-                @casestmt.evaluate(@scope)
-            end
-
-            it "should not leak ephemeral variables even if evaluation fails" do
-                @scope.stubs(:ephemeral_level).returns(:level)
-                @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
-                @option1.stubs(:safeevaluate).with(@scope).raises
-
-                @scope.expects(:unset_ephemeral_var).with(:level)
-
-                lambda { @casestmt.evaluate(@scope) }.should raise_error
-            end
-        end
-
+      @casestmt.evaluate(@scope)
     end
 
-    it "should match if any of the provided options evaluate as true" do
-        ast = nil
-        AST = Puppet::Parser::AST
+    it "should scan each option" do
+      @options.expects(:each).multiple_yields(@option1, @option2)
 
-        tests = {
-            "one" => %w{a b c},
-            "two" => %w{e f g}
-        }
-        options = tests.collect do |result, values|
-            values = values.collect { |v| AST::Leaf.new :value => v }
+      @casestmt.evaluate(@scope)
+    end
 
-                        AST::CaseOpt.new(
-                :value => AST::ASTArray.new(:children => values),
+    describe "when scanning options" do
+      before :each do
+        @opval1 = stub_everything 'opval1'
+        @option1.stubs(:eachopt).yields(@opval1)
+
+        @opval2 = stub_everything 'opval2'
+        @option2.stubs(:eachopt).yields(@opval2)
+      end
+
+      it "should evaluate each sub-option" do
+        @option1.expects(:eachopt)
+        @option2.expects(:eachopt)
+
+        @casestmt.evaluate(@scope)
+      end
+
+      it "should evaluate first matching option" do
+        @opval2.stubs(:evaluate_match).with { |*arg| arg[0] == "value" }.returns(true)
+        @option2.expects(:safeevaluate).with(@scope)
+
+        @casestmt.evaluate(@scope)
+      end
+
+      it "should return the first matching evaluated option" do
+        @opval2.stubs(:evaluate_match).with { |*arg| arg[0] == "value" }.returns(true)
+        @option2.stubs(:safeevaluate).with(@scope).returns(:result)
+
+        @casestmt.evaluate(@scope).should == :result
+      end
+
+      it "should evaluate the default option if none matched" do
+        @option1.stubs(:default?).returns(true)
+        @option1.expects(:safeevaluate).with(@scope)
+
+        @casestmt.evaluate(@scope)
+      end
+
+      it "should return the default evaluated option if none matched" do
+        @option1.stubs(:default?).returns(true)
+        @option1.stubs(:safeevaluate).with(@scope).returns(:result)
+
+        @casestmt.evaluate(@scope).should == :result
+      end
+
+      it "should return nil if nothing matched" do
+        @casestmt.evaluate(@scope).should be_nil
+      end
+
+      it "should match and set scope ephemeral variables" do
+        @opval1.expects(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }
+
+        @casestmt.evaluate(@scope)
+      end
+
+      it "should evaluate this regex option if it matches" do
+        @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
+
+        @option1.expects(:safeevaluate).with(@scope)
+
+        @casestmt.evaluate(@scope)
+      end
+
+      it "should return this evaluated regex option if it matches" do
+        @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
+        @option1.stubs(:safeevaluate).with(@scope).returns(:result)
+
+        @casestmt.evaluate(@scope).should == :result
+      end
+
+      it "should unset scope ephemeral variables after option evaluation" do
+        @scope.stubs(:ephemeral_level).returns(:level)
+        @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
+        @option1.stubs(:safeevaluate).with(@scope).returns(:result)
+
+        @scope.expects(:unset_ephemeral_var).with(:level)
+
+        @casestmt.evaluate(@scope)
+      end
+
+      it "should not leak ephemeral variables even if evaluation fails" do
+        @scope.stubs(:ephemeral_level).returns(:level)
+        @opval1.stubs(:evaluate_match).with { |*arg| arg[0] == "value" and arg[1] == @scope }.returns(true)
+        @option1.stubs(:safeevaluate).with(@scope).raises
+
+        @scope.expects(:unset_ephemeral_var).with(:level)
+
+        lambda { @casestmt.evaluate(@scope) }.should raise_error
+      end
+    end
+
+  end
+
+  it "should match if any of the provided options evaluate as true" do
+    ast = nil
+    AST = Puppet::Parser::AST
+
+    tests = {
+      "one" => %w{a b c},
+      "two" => %w{e f g}
+    }
+    options = tests.collect do |result, values|
+      values = values.collect { |v| AST::Leaf.new :value => v }
+
+            AST::CaseOpt.new(
+        :value => AST::ASTArray.new(:children => values),
         
-                :statements => AST::Leaf.new(:value => result))
-        end
-        options << AST::CaseOpt.new(:value => AST::Default.new(:value => "default"), :statements => AST::Leaf.new(:value => "default"))
-
-        ast = nil
-        param = AST::Variable.new(:value => "testparam")
-        ast = AST::CaseStatement.new(:test => param, :options => options)
-
-        tests.each do |should, values|
-            values.each do |value|
-                @scope = Puppet::Parser::Scope.new
-                @scope.setvar("testparam", value)
-                result = ast.evaluate(@scope)
-
-                result.should == should
-            end
-        end
+        :statements => AST::Leaf.new(:value => result))
     end
+    options << AST::CaseOpt.new(:value => AST::Default.new(:value => "default"), :statements => AST::Leaf.new(:value => "default"))
+
+    ast = nil
+    param = AST::Variable.new(:value => "testparam")
+    ast = AST::CaseStatement.new(:test => param, :options => options)
+
+    tests.each do |should, values|
+      values.each do |value|
+        @scope = Puppet::Parser::Scope.new
+        @scope.setvar("testparam", value)
+        result = ast.evaluate(@scope)
+
+        result.should == should
+      end
+    end
+  end
 end
