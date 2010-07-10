@@ -331,7 +331,7 @@ module Puppet
         def match?(previous = nil, now = nil)
 
             # If we've got a value, then convert it to a Time instance
-            previous = Time.at(previous) if previous
+            previous &&= Time.at(previous)
 
             now ||= Time.now
 

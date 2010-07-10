@@ -873,7 +873,7 @@ module Generators
 
         def find_symbol(symbol, method=nil)
             res = @context.parent.find_symbol(symbol, method)
-            res = res.viewer if res
+            res &&= res.viewer
             res
         end
 

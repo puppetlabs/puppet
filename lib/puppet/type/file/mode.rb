@@ -99,7 +99,7 @@ module Puppet
 
             if stat = @resource.stat(false)
                 unless defined?(@fixed)
-                    @should = @should.collect { |s| self.dirmask(s) } if @should
+                    @should &&= @should.collect { |s| self.dirmask(s) }
                 end
                 return stat.mode & 007777
             else
