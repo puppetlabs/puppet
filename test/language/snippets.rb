@@ -55,7 +55,7 @@ class TestSnippets < Test::Unit::TestCase
         parser.file = file
         ast = parser.parse
 
-        return ast
+        ast
     end
 
     def snippet2ast(text)
@@ -63,7 +63,7 @@ class TestSnippets < Test::Unit::TestCase
         parser.string = text
         ast = parser.parse
 
-        return ast
+        ast
     end
 
     def client
@@ -77,7 +77,7 @@ class TestSnippets < Test::Unit::TestCase
         scope = Puppet::Parser::Scope.new()
         ast.evaluate(scope)
 
-        return scope
+        scope
     end
 
     def scope2objs(scope)

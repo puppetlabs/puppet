@@ -19,14 +19,14 @@ class ObjectAdd < Puppet::Provider::NameService
         end
         cmd << @resource[:name]
 
-        return cmd
+        cmd
     end
 
     def posixmethod(name)
         name = name.intern if name.is_a? String
         method = self.class.option(name, :method) || name
 
-        return method
+        method
     end
 end
 end

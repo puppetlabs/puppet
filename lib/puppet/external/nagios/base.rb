@@ -129,7 +129,7 @@ class Nagios::Base
     # Is the specified name a valid parameter?
     def self.parameter?(name)
         name = name.intern if name.is_a? String
-        return @parameters.include?(name)
+        @parameters.include?(name)
     end
 
     # Manually set the namevar
@@ -237,7 +237,7 @@ class Nagios::Base
     end
 
     def namevar
-        return (self.type + "_name").intern
+        (self.type + "_name").intern
     end
 
     def parammap(param)

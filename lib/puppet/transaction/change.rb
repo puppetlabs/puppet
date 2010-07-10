@@ -50,7 +50,7 @@ class Puppet::Transaction::Change
 
     # Is our property noop?  This is used for generating special events.
     def noop?
-        return @property.noop
+        @property.noop
     end
 
     # The resource that generated this change.  This is used for handling events,
@@ -63,7 +63,7 @@ class Puppet::Transaction::Change
     end
 
     def to_s
-        return "change #{@property.change_to_s(@is, @should)}"
+        "change #{@property.change_to_s(@is, @should)}"
     end
 
     private
@@ -74,7 +74,7 @@ class Puppet::Transaction::Change
         result.message = "audit change: previously recorded value #{property.should_to_s(should)} has been changed to #{property.is_to_s(is)}"
         result.status = "audit"
         result.send_log
-        return result
+        result
     end
 
     def noop_event
@@ -82,6 +82,6 @@ class Puppet::Transaction::Change
         result.message = "is #{property.is_to_s(is)}, should be #{property.should_to_s(should)} (noop)"
         result.status = "noop"
         result.send_log
-        return result
+        result
     end
 end

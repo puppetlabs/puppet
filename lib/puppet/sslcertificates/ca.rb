@@ -86,7 +86,7 @@ class Puppet::SSLCertificates::CA
         rescue Errno::EACCES => detail
             raise Puppet::Error, detail.to_s
         end
-        return pass
+        pass
     end
 
     # Get the CA password.
@@ -114,7 +114,7 @@ class Puppet::SSLCertificates::CA
         csrfile = host2csrfile(host)
         return nil unless File.exists?(csrfile)
 
-        return OpenSSL::X509::Request.new(File.read(csrfile))
+        OpenSSL::X509::Request.new(File.read(csrfile))
     end
 
     # Retrieve a client's certificate.
@@ -122,7 +122,7 @@ class Puppet::SSLCertificates::CA
         certfile = host2certfile(host)
         return [nil, nil] unless File.exists?(certfile)
 
-        return [OpenSSL::X509::Certificate.new(File.read(certfile)), @cert]
+        [OpenSSL::X509::Certificate.new(File.read(certfile)), @cert]
     end
 
     # List certificates waiting to be signed.  This returns a list of hostnames, not actual
@@ -175,7 +175,7 @@ class Puppet::SSLCertificates::CA
         Puppet.settings.write(:capub) do |f|
             f.puts @cert.public_key
         end
-        return cert
+        cert
     end
 
     def removeclientcsr(host)
@@ -258,7 +258,7 @@ class Puppet::SSLCertificates::CA
 
         self.storeclientcert(newcert)
 
-        return [newcert, @cert]
+        [newcert, @cert]
     end
 
     # Store the client's CSR for later signing.  This is called from

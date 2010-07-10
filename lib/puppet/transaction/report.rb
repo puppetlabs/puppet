@@ -20,7 +20,7 @@ class Puppet::Transaction::Report
 
     def <<(msg)
         @logs << msg
-        return self
+        self
     end
 
     def add_times(name, value)
@@ -83,7 +83,7 @@ class Puppet::Transaction::Report
                 ret += "   %15s %s\n" % [label + ":", value]
             end
         end
-        return ret
+        ret
     end
 
     # Based on the contents of this report's metrics, compute a single number
@@ -93,7 +93,7 @@ class Puppet::Transaction::Report
         status = 0
         status |= 2 if @metrics["changes"][:total] > 0
         status |= 4 if @metrics["resources"][:failed] > 0
-        return status
+        status
     end
 
     private

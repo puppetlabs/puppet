@@ -63,14 +63,14 @@ module Puppet::Util::SubclassLoader
             super
         end
         return nil unless defined?(@subclassname)
-        return self.send(@subclassname, method) || nil
+        self.send(@subclassname, method) || nil
     end
 
     # Retrieve or calculate a name.
     def name(dummy_argument=:work_arround_for_ruby_GC_bug)
         @name = self.to_s.sub(/.+::/, '').intern unless defined?(@name)
 
-        return @name
+        @name
     end
 
     # Provide a list of all subclasses.

@@ -14,7 +14,7 @@ class PW < ObjectAdd
             flag(param),
             value
         ]
-        return cmd
+        cmd
     end
 end
 end

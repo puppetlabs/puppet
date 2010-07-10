@@ -38,7 +38,7 @@ class TestReports < Test::Unit::TestCase
         report = Puppet::Transaction::Report.new
         trans.add_metrics_to_report(report)
 
-        return report
+        report
     end
 
     # Make sure we can use reports as log destinations.

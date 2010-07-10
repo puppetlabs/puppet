@@ -37,7 +37,7 @@ class Puppet::Indirector::Couch < Puppet::Indirector::Terminus
         return unless doc
         doc.merge!(hash_from(request))
         doc.save
-        return true
+        true
     end
 
     def create(request)

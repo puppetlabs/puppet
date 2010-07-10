@@ -58,7 +58,7 @@ module Puppet
 
                 return true if gid == current
             end
-            return false
+            false
         end
 
         def retrieve
@@ -74,7 +74,7 @@ module Puppet
                 currentvalue = :silly
             end
 
-            return currentvalue
+            currentvalue
         end
 
         # Determine if the group is valid, and if so, return the GID
@@ -107,7 +107,7 @@ module Puppet
                 error = Puppet::Error.new( "failed to chgrp #{resource[:path]} to #{gid}: #{detail.message}")
                 raise error
             end
-            return :file_changed
+            :file_changed
         end
     end
 end

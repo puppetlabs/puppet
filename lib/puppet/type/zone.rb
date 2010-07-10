@@ -172,7 +172,7 @@ Puppet::Type.newtype(:zone) do
                 end
             end
 
-            return ("zone_#{self.should}").intern
+            ("zone_#{self.should}").intern
         end
 
         # Are we moving up the property tree?
@@ -441,6 +441,6 @@ Puppet::Type.newtype(:zone) do
                 self[param] = value
             end
         end
-        return prophash
+        prophash
     end
 end

@@ -45,7 +45,7 @@ module Puppet
             end
 
             def retrieve
-                return provider.enabled?
+                provider.enabled?
             end
         end
 
@@ -65,7 +65,7 @@ module Puppet
             aliasvalue(:true, :running)
 
             def retrieve
-                return provider.status
+                provider.status
             end
 
             def sync
@@ -76,7 +76,7 @@ module Puppet
                     property.sync unless property.insync?(val)
                 end
 
-                return event
+                event
             end
         end
 

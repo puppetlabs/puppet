@@ -16,7 +16,7 @@ class Puppet::FileServing::Mount::Modules < Puppet::FileServing::Mount
         return nil unless mod = request.environment.module(module_name)
 
         return nil unless path = mod.file(relative_path)
-        return [path]
+        [path]
     end
 
     def valid?

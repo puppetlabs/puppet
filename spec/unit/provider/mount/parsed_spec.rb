@@ -23,7 +23,7 @@ module ParsedMountTesting
             name = "linux.fstab"
         end
         oldpath = @provider_class.default_target
-        return fakefile(File::join("data/types/mount", name))
+        fakefile(File::join("data/types/mount", name))
     end
 
     def mkmountargs
@@ -43,7 +43,7 @@ module ParsedMountTesting
             args[field] = "fake#{field}#{@pcount}" unless args.include? field
         end
 
-        return args
+        args
     end
 
     def mkmount
@@ -59,7 +59,7 @@ module ParsedMountTesting
         hash[:ensure] = :present
         mount.property_hash = hash
 
-        return mount
+        mount
     end
 
     # Here we just create a fake host type that answers to all of the methods

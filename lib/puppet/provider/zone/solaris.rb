@@ -21,7 +21,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
         properties[:ensure] = symbolize(properties[:ensure])
 
-        return properties
+        properties
     end
 
     def self.instances
@@ -132,7 +132,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
             end
         end
 
-        return hash
+        hash
     end
 
     # Execute a configuration string.  Can't be private because it's called

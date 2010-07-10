@@ -35,7 +35,7 @@ module Puppet
             # We actually want to return the whole array here, not just the first
             # value.
             def should
-                return defined?(@should) ? @should : nil
+                defined?(@should) ? @should : nil
             end
 
             validate do |value|

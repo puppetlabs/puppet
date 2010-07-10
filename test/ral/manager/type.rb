@@ -177,10 +177,10 @@ class TestType < Test::Unit::TestCase
         # Create a type with a fake provider
         providerclass = Class.new do
             def self.supports_parameter?(prop)
-                return true
+                true
             end
             def method_missing(method, *args)
-                return method
+                method
             end
         end
         self.class.const_set("ProviderClass", providerclass)

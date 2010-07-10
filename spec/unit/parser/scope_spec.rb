@@ -125,7 +125,7 @@ describe Puppet::Parser::Scope do
                 klass = newclass(name)
                 Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
 
-                return @scope.class_scope(klass)
+                @scope.class_scope(klass)
             end
 
             it "should be able to look up explicitly fully qualified variables from main" do

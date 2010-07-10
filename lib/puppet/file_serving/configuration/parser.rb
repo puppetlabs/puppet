@@ -46,7 +46,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
         validate()
 
-        return @mounts
+        @mounts
     end
 
     private
@@ -97,7 +97,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
             mount = Mount::File.new(name)
         end
         @mounts[name] = mount
-        return mount
+        mount
     end
 
     # Set the path for a mount.

@@ -26,7 +26,7 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
             persist = "-P"
         end
         execoutput("#{command(:setsebool)} #{persist} #{@resource[:name]} #{new}")
-        return :file_changed
+        :file_changed
     end
 
     # Required workaround, since SELinux policy prevents setsebool
@@ -42,6 +42,6 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
         rescue Puppet::ExecutionFailure
             raise Puppet::ExecutionFailure, output.split("\n")[0]
         end
-        return output
+        output
     end
 end

@@ -42,7 +42,7 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
             return :false
         end
 
-        return :true
+        :true
     end
 
     # Don't support them specifying runlevels; always use the runlevels

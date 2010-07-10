@@ -30,7 +30,7 @@ class TestImpl < Test::Unit::TestCase
         assert_nothing_raised("Could not create provider") do
             provider = type.provide(name) {}
         end
-        return provider
+        provider
     end
 
     def test_provider_default

@@ -28,17 +28,17 @@ class Puppet::Parser::TemplateWrapper
 
     # Allow templates to access the defined classes
     def classes
-        return scope.catalog.classes
+        scope.catalog.classes
     end
 
     # Allow templates to access the tags defined in the current scope
     def tags
-        return scope.tags
+        scope.tags
     end
 
     # Allow templates to access the all the defined tags
     def all_tags
-        return scope.catalog.tags
+        scope.catalog.tags
     end
 
     # Ruby treats variables like methods, so we used to expose variables

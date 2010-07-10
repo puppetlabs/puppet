@@ -34,7 +34,7 @@ class Puppet::SSL::CertificateAuthority
     def self.ca?
         return false unless Puppet[:ca]
         return false unless Puppet.run_mode.master?
-        return true
+        true
     end
 
     # If this process can function as a CA, then return a singleton
@@ -75,7 +75,7 @@ class Puppet::SSL::CertificateAuthority
         return true if ['true', true].include?(auto)
 
         raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless auto =~ /^\//
-        return FileTest.exist?(auto) && auto
+        FileTest.exist?(auto) && auto
     end
 
     # Create an AuthStore for autosigning.
@@ -165,7 +165,7 @@ class Puppet::SSL::CertificateAuthority
 
         @password = pass
 
-        return pass
+        pass
     end
 
     # List all signed certificates.
@@ -190,7 +190,7 @@ class Puppet::SSL::CertificateAuthority
             f << "%04X" % (serial + 1)
         }
 
-        return serial
+        serial
     end
 
     # Does the password file exist?
@@ -200,7 +200,7 @@ class Puppet::SSL::CertificateAuthority
 
     # Print a given host's certificate as text.
     def print(name)
-        return (cert = Puppet::SSL::Certificate.find(name)) ? cert.to_text : nil
+        (cert = Puppet::SSL::Certificate.find(name)) ? cert.to_text : nil
     end
 
     # Revoke a given certificate.
@@ -254,7 +254,7 @@ class Puppet::SSL::CertificateAuthority
         # And remove the CSR if this wasn't self signed.
         Puppet::SSL::CertificateRequest.destroy(csr.name) unless self_signing_csr
 
-        return cert
+        cert
     end
 
     # Verify a given host's certificate.

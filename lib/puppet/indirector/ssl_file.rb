@@ -146,7 +146,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         Puppet.notice "Fixing case in #{full_file}; renaming to #{file}"
         File.rename(full_file, file)
 
-        return true
+        true
     end
 
     # Yield a filehandle set up appropriately, either with our settings doing

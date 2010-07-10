@@ -43,7 +43,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         end
 
         info = name2hash('default',name_env,'parent')
-        return info
+        info
     end
 
     # Look for our node in ldap.
@@ -68,7 +68,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             end
         end
 
-        return node
+        node
     end
 
     # Find more than one node.  LAK:NOTE This is a bit of a clumsy API, because the 'search'
@@ -251,7 +251,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
             parent = find_and_merge_parent(parent, info)
         end
 
-        return info
+        info
     end
 
     def get_classes_from_entry(entry)

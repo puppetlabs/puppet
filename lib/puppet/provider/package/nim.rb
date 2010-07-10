@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
     attr_accessor :latest_info
 
     def self.srclistcmd(source)
-        return [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
+        [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
     end
 
     def install(useversion = true)

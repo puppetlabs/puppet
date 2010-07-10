@@ -50,7 +50,7 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
         Puppet.settings.write(:hostcert) do |f| f.print cert end
         Puppet.settings.write(:localcacert) do |f| f.print cacert end
 
-        return @cert
+        @cert
     end
 end
 

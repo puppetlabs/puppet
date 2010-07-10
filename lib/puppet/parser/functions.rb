@@ -97,7 +97,7 @@ module Puppet::Parser::Functions
             ret += "\n\n- **Type**: #{hash[:type]}\n\n"
         end
 
-        return ret
+        ret
     end
 
     def self.functions(env = nil)

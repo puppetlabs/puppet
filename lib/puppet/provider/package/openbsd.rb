@@ -112,7 +112,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
             return nil
         end
 
-        return hash
+        hash
     end
 
     def uninstall

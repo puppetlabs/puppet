@@ -13,7 +13,7 @@ class Puppet::Indirector::DirectFileServer < Puppet::Indirector::Terminus
         return nil unless FileTest.exists?(request.key)
         instance = model.new(request.key)
         instance.links = request.options[:links] if request.options[:links]
-        return instance
+        instance
     end
 
     def search(request)

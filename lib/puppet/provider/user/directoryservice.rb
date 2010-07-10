@@ -40,7 +40,7 @@ Puppet::Type.type(:user).provide :directoryservice, :parent => Puppet::Provider:
     end
 
     def autogen_comment
-        return @resource[:name].capitalize
+        @resource[:name].capitalize
     end
 
     # The list of all groups the user is a member of.

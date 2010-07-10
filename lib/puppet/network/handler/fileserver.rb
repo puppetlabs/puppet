@@ -84,7 +84,7 @@ class Puppet::Network::Handler
                 return ""
             end
 
-            return metadata.attributes_with_tabs
+            metadata.attributes_with_tabs
         end
 
         # Create a new fileserving module.
@@ -159,7 +159,7 @@ class Puppet::Network::Handler
             @mounts[name] = Mount.new(name, path)
             @mounts[name].info "Mounted #{path}"
 
-            return @mounts[name]
+            @mounts[name]
         end
 
         # Retrieve a file from the local disk and pass it to the remote
@@ -235,7 +235,7 @@ class Puppet::Network::Handler
             env = (node = Puppet::Node.find(hostname)) ? node.environment : nil
 
             # And use the environment to look up the module.
-            return (mod = Puppet::Node::Environment.new(env).module(module_name) and mod.files?) ? @mounts[MODULES].copy(mod.name, mod.file_directory) : nil
+            (mod = Puppet::Node::Environment.new(env).module(module_name) and mod.files?) ? @mounts[MODULES].copy(mod.name, mod.file_directory) : nil
         end
 
         # Read the configuration file.
@@ -458,7 +458,7 @@ class Puppet::Network::Handler
                 # If there's no relative path name, then we're serving the mount itself.
                 return full_path unless relative_path and relative_path != "/"
 
-                return File.join(full_path, relative_path)
+                File.join(full_path, relative_path)
             end
 
             # Create out object.  It must have a name.
@@ -505,7 +505,7 @@ class Puppet::Network::Handler
                 # This, ah, might be completely redundant
                 obj[:links] = links unless obj[:links] == links
 
-                return obj
+                obj
             end
 
             # Read the contents of the file at the relative path given.
@@ -602,7 +602,7 @@ class Puppet::Network::Handler
                 result = self.clone
                 result.path = path
                 result.instance_variable_set(:@name, name)
-                return result
+                result
             end
 
             # List the contents of the relative path +relpath+ of this mount.
@@ -635,7 +635,7 @@ class Puppet::Network::Handler
                         return [["/", File.stat(abspath).ftype]]
                     end
                 end
-                return nil
+                nil
             end
 
             def reclist(abspath, recurse, ignore)
@@ -659,7 +659,7 @@ class Puppet::Network::Handler
                     [ file, stat.ftype ]
                 end
 
-                return ary.compact
+                ary.compact
             end
 
         end

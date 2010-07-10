@@ -23,7 +23,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
         cmd << "-o" if @resource.allowdupe?
         cmd << @resource[:name]
 
-        return cmd
+        cmd
     end
 end
 

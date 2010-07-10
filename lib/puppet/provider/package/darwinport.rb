@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
             packages << new(hash)
         end
 
-        return packages
+        packages
     end
 
     def install
@@ -59,7 +59,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
             return hash if hash[:name] == @resource[:name]
         end
 
-        return nil
+        nil
     end
 
     def latest
@@ -72,7 +72,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
         ary = info.split(/\s+/)
         version = ary[2].sub(/^@/, '')
 
-        return version
+        version
     end
 
     def uninstall
@@ -80,7 +80,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
     end
 
     def update
-        return install()
+        install()
     end
 end
 

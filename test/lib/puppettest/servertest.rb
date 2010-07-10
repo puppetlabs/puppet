@@ -27,7 +27,7 @@ module PuppetTest::ServerTest
         @@tmpfiles << @createdfile
         @@tmpfiles << file
 
-        return file
+        file
     end
 
     # create a server, forked into the background
@@ -67,7 +67,7 @@ module PuppetTest::ServerTest
 
         # give the server a chance to do its thing
         sleep 1
-        return spid
+        spid
     end
 
 end

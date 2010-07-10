@@ -15,7 +15,7 @@ module Puppet::FileBucketFile
 
         def find( request )
             checksum, path = request_to_checksum_and_path( request )
-            return find_by_checksum( checksum, request.options )
+            find_by_checksum( checksum, request.options )
         end
 
         def save( request )
@@ -78,7 +78,7 @@ module Puppet::FileBucketFile
             end
 
             save_path_to_paths_file(bucket_file)
-            return bucket_file.checksum_data
+            bucket_file.checksum_data
         end
 
         def request_to_checksum_and_path( request )
@@ -96,7 +96,7 @@ module Puppet::FileBucketFile
             basedir = ::File.join(bucket_path, dir, digest)
 
             return basedir unless subfile
-            return ::File.join(basedir, subfile)
+            ::File.join(basedir, subfile)
         end
 
         def contents_path_for(bucket_file)

@@ -86,7 +86,7 @@ class TestSettings < Test::Unit::TestCase
     def mkconfig
         c = Puppet::Util::Settings.new
         c.setdefaults :main, :noop => [false, "foo"]
-        return c
+        c
     end
 
     def test_addbools

@@ -51,7 +51,7 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
 
         fakeparser = Class.new do
             def parseMethodCall(data)
-                return data
+                data
             end
         end
 

@@ -80,7 +80,7 @@ class Puppet::Node::Environment
     def module(name)
         mod = Puppet::Module.new(name, self)
         return nil unless mod.exist?
-        return mod
+        mod
     end
 
     # Cache the modulepath, so that we aren't searching through

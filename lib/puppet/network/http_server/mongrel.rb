@@ -137,7 +137,7 @@ module Puppet::Network
 
             info = Puppet::Network::ClientRequest.new(client, ip, valid)
 
-            return info
+            info
         end
 
         # Taken from XMLRPC::ParseContentType

@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
         source, newversion = $1, $2
 
         debug "Newer version in #{source}"
-        return newversion
+        newversion
     end
 
     def query
@@ -81,7 +81,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
             end
         end
 
-        return nil
+        nil
     end
 
     def uninstall

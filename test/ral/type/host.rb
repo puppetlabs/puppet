@@ -54,7 +54,7 @@ class TestHost < Test::Unit::TestCase
             )
         }
 
-        return host
+        host
     end
 
     def test_list

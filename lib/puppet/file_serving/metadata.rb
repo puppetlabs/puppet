@@ -32,7 +32,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
         desc << checksum
         desc << @destination rescue nil if ftype == 'link'
 
-        return desc.join("\t")
+        desc.join("\t")
     end
 
     def checksum_type=(type)

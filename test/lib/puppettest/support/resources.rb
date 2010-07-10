@@ -19,7 +19,7 @@ module PuppetTest::Support::Resources
             config.add_edge(comp, resource)
             config.add_resource resource unless config.resource(resource.ref)
         end
-        return comp
+        comp
     end
 
     def mktree
@@ -30,6 +30,6 @@ module PuppetTest::Support::Resources
             top = treenode(config, "top", "g", "h", middle, one)
         end
 
-        return catalog
+        catalog
     end
 end

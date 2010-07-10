@@ -31,7 +31,7 @@ class Puppet::Parser::AST
 
             @default = false unless defined?(@default)
 
-            return @default
+            @default
         end
 
         # You can specify a list of values; return each in turn.
@@ -58,7 +58,7 @@ class Puppet::Parser::AST
         # Evaluate the actual statements; this only gets called if
         # our option matched.
         def evaluate(scope)
-            return @statements.safeevaluate(scope)
+            @statements.safeevaluate(scope)
         end
     end
 end

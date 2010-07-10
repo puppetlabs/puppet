@@ -30,7 +30,7 @@ class Puppet::SimpleGraph
 
             return send(direction.to_s + "_edges") if options[:type] == :edges
 
-            return @adjacencies[direction].keys.reject { |vertex| @adjacencies[direction][vertex].empty? }
+            @adjacencies[direction].keys.reject { |vertex| @adjacencies[direction][vertex].empty? }
         end
 
         # Add an edge to our list.
@@ -135,7 +135,7 @@ class Puppet::SimpleGraph
     def leaves(vertex, direction = :out)
         tree = tree_from_vertex(vertex, direction)
         l = tree.keys.find_all { |c| adjacent(c, :direction => direction).empty? }
-        return l
+        l
     end
 
     # Collect all of the edges that the passed events match.  Returns
@@ -205,7 +205,7 @@ class Puppet::SimpleGraph
             raise Puppet::Error, "Found dependency cycles in the following relationships: #{message}; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz"
         end
 
-        return result
+        result
     end
 
     # Add a new vertex to the graph.
@@ -285,7 +285,7 @@ class Puppet::SimpleGraph
     # Find adjacent edges.
     def adjacent(vertex, options = {})
         return [] unless wrapper = @vertices[vertex]
-        return wrapper.adjacent(options)
+        wrapper.adjacent(options)
     end
 
     private

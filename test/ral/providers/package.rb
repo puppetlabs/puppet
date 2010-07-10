@@ -33,7 +33,7 @@ class TestPackageProvider < Test::Unit::TestCase
             end
         }
 
-        return array
+        array
     end
 
     def self.suitable_test_packages

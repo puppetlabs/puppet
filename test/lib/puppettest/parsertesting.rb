@@ -17,7 +17,7 @@ module PuppetTest::ParserTesting
 
         def evaluate(*args)
             @evaluated = true
-            return @evaluate
+            @evaluate
         end
 
         def initialize(val = nil)
@@ -46,7 +46,7 @@ module PuppetTest::ParserTesting
 
     def mkcompiler(parser = nil)
         node = mknode
-        return Compiler.new(node)
+        Compiler.new(node)
     end
 
     def mknode(name = nil)
@@ -330,7 +330,7 @@ module PuppetTest::ParserTesting
             )
         end
 
-        return func
+        func
     end
 
     # This assumes no nodes
@@ -356,7 +356,7 @@ module PuppetTest::ParserTesting
             obj["mode"] = "644"
         }
 
-        return obj
+        obj
     end
 
     def mk_transbucket(*resources)
@@ -369,7 +369,7 @@ module PuppetTest::ParserTesting
 
         resources.each { |o| bucket << o }
 
-        return bucket
+        bucket
     end
 
     # Make a tree of resources, yielding if desired
@@ -404,7 +404,7 @@ module PuppetTest::ParserTesting
             bucket = newbucket
         end
 
-        return top
+        top
     end
 
     # Take a list of AST resources, evaluate them, and return the results
@@ -423,6 +423,6 @@ module PuppetTest::ParserTesting
             trans = scope.evaluate(:ast => top)
         }
 
-        return trans
+        trans
     end
 end

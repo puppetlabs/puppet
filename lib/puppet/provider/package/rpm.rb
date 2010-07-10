@@ -45,7 +45,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
             raise Puppet::Error, "Failed to list packages"
         end
 
-        return packages
+        packages
     end
 
     # Find the fully versioned package name and the version alone. Returns
@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         # for multilib
         @property_hash.update(self.class.nevra_to_hash(output))
 
-        return @property_hash.dup
+        @property_hash.dup
     end
 
     # Here we just retrieve the version from the file specified in the source.
@@ -78,7 +78,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
         cmd = [command(:rpm), "-q", "--qf", "#{NEVRAFORMAT}\n", "-p", "#{@resource[:source]}"]
         h = self.class.nevra_to_hash(execfail(cmd, Puppet::Error))
-        return h[:ensure]
+        h[:ensure]
     end
 
     def install
@@ -126,7 +126,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         NEVRA_FIELDS.zip(line.split) { |f, v| hash[f] = v }
         hash[:provider] = self.name
         hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
-        return hash
+        hash
     end
 end
 

@@ -81,7 +81,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             end
         end
 
-        return config
+        config
     end
 
     # Turn our host name into a node object.

@@ -29,7 +29,7 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def exists?
-        return FileTest.exists?(@certfile)
+        FileTest.exists?(@certfile)
     end
 
     def getkey
@@ -136,7 +136,7 @@ class Puppet::SSLCertificates::Certificate
 
         raise Puppet::Error, "CSR sign verification failed" unless @csr.verify(@key.public_key)
 
-        return @csr
+        @csr
     end
 
     def mkkey
@@ -198,7 +198,7 @@ class Puppet::SSLCertificates::Certificate
 
         @cert.sign(@key, OpenSSL::Digest::SHA1.new) if @selfsign
 
-        return @cert
+        @cert
     end
 
     def subject(string = false)

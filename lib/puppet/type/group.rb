@@ -34,7 +34,7 @@ module Puppet
                 GID is picked according to local system standards."
 
             def retrieve
-                return provider.gid
+                provider.gid
             end
 
             def sync

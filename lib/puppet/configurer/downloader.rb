@@ -19,7 +19,7 @@ class Puppet::Configurer::Downloader
             raise ArgumentError, "Configuration timeout must be an integer"
         end
 
-        return timeout
+        timeout
     end
 
     # Evaluate our download, returning the list of changed values.
@@ -41,7 +41,7 @@ class Puppet::Configurer::Downloader
             Puppet.err "Could not retrieve #{name}: #{detail}"
         end
 
-        return files
+        files
     end
 
     def initialize(name, path, source, ignore = nil)

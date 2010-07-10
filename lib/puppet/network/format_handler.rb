@@ -55,7 +55,7 @@ module Puppet::Network::FormatHandler
         @formats.each do |name, format|
             return format if format.extension == ext
         end
-        return nil
+        nil
     end
 
     # Provide a list of all formats.

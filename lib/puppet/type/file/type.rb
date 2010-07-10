@@ -14,7 +14,7 @@ module Puppet
             end
             # so this state is never marked out of sync
             @should = [currentvalue]
-            return currentvalue
+            currentvalue
         end
 
 

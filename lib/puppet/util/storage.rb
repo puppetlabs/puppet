@@ -9,7 +9,7 @@ class Puppet::Util::Storage
     include Puppet::Util
 
     def self.state
-        return @@state
+        @@state
     end
 
     def initialize
@@ -28,7 +28,7 @@ class Puppet::Util::Storage
             name = object.to_s
         end
 
-        return @@state[name] ||= {}
+        @@state[name] ||= {}
     end
 
     def self.clear

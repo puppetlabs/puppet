@@ -7,7 +7,7 @@ module Puppet::Util::LogPaths
     def path
         @path = pathbuilder unless defined?(@path)
 
-        return "/" + @path.join("/")
+        "/" + @path.join("/")
     end
 
     def source_descriptors
@@ -20,7 +20,7 @@ module Puppet::Util::LogPaths
             descriptors[param] = value
         end
 
-        return descriptors
+        descriptors
     end
 
 end

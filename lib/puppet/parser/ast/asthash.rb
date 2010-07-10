@@ -13,7 +13,7 @@ class Puppet::Parser::AST
                 items.merge!({ key => v.safeevaluate(scope) })
             end
 
-            return items
+            items
         end
 
         def merge(hash)

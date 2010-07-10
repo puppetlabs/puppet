@@ -125,7 +125,7 @@ class Puppet::Parser::Collector
 
         query[:conditions] = [search, *values]
 
-        return query
+        query
     end
 
     # Collect exported objects.
@@ -152,7 +152,7 @@ class Puppet::Parser::Collector
 
         scope.debug("Collected %s %s resource%s in %.2f seconds" % [count, @type, count == 1 ? "" : "s", time])
 
-        return resources
+        resources
     end
 
     def collect_resources
@@ -182,7 +182,7 @@ class Puppet::Parser::Collector
         # of collections.
         @scope.compiler.delete_collection(self) if @resources.empty?
 
-        return result
+        result
     end
 
     # Collect just virtual objects, from our local compiler.
@@ -208,7 +208,7 @@ class Puppet::Parser::Collector
 
         scope.compiler.add_resource(scope, resource)
 
-        return resource
+        resource
     end
 
     # Does the resource match our tests?  We don't yet support tests,

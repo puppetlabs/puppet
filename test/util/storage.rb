@@ -20,7 +20,7 @@ class TestStorage < Test::Unit::TestCase
             :check => %w{checksum type}
         )
 
-        return f
+        f
     end
 
     def test_storeandretrieve

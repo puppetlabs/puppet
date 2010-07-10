@@ -13,7 +13,7 @@ module Puppet::Util::Warnings
 
     def clear_warnings()
         @stampwarnings = {}
-        return nil
+        nil
     end
 
     protected
@@ -24,6 +24,6 @@ module Puppet::Util::Warnings
         return nil if @stampwarnings[klass].include? message
         yield
         @stampwarnings[klass] << message
-        return nil
+        nil
     end
 end

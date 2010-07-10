@@ -89,7 +89,7 @@ class TestYumRepo < Test::Unit::TestCase
     def all_sections(inifile)
         sections = []
         inifile.each_section { |section| sections << section.name }
-        return sections.sort
+        sections.sort
     end
 
     def copy_datafiles

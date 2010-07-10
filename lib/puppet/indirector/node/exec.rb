@@ -19,7 +19,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
         # Translate the output to ruby.
         result = translate(request.key, output)
 
-        return create_node(request.key, result)
+        create_node(request.key, result)
     end
 
     private
@@ -36,7 +36,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
         end
 
         node.fact_merge
-        return node
+        node
     end
 
     # Translate the yaml string into Ruby objects.

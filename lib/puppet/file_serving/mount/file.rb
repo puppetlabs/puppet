@@ -30,7 +30,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
             return nil
         end
 
-        return file
+        file
     end
 
     # Return an instance of the appropriate class.
@@ -64,7 +64,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
 
     def search(path, request)
         return nil unless path = complete_path(path, request.node)
-        return [path]
+        [path]
     end
 
     # Verify our configuration is valid.  This should really check to

@@ -20,7 +20,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def self.server
-        return Puppet.settings[server_setting || :server]
+        Puppet.settings[server_setting || :server]
     end
 
     # Specify the setting that we should use to get the port.
@@ -29,7 +29,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     end
 
     def self.port
-        return Puppet.settings[port_setting || :masterport].to_i
+        Puppet.settings[port_setting || :masterport].to_i
     end
 
     # Figure out the content type, turn that into a format, and use the format
@@ -77,7 +77,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
             return []
         end
-        return result
+        result
     end
 
     def destroy(request)

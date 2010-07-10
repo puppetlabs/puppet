@@ -121,7 +121,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "Could not get status for service #{resource.ref}: #{detail}" )
         end
-        return :stopped
+        :stopped
     end
 
     def setupservice

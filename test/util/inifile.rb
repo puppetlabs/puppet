@@ -127,12 +127,12 @@ class TestFileType < Test::Unit::TestCase
     def get_section(name)
         result = @file[name]
         assert_not_nil(result)
-        return result
+        result
     end
 
     def mkfile(content)
         file = tempfile()
         File.open(file, "w") { |f| f.print(content) }
-        return file
+        file
     end
 end

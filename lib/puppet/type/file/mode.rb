@@ -81,7 +81,7 @@ module Puppet
                 value |= 01 if value & 04 != 0
             end
 
-            return value
+            value
         end
 
         def insync?(currentvalue)
@@ -117,7 +117,7 @@ module Puppet
                 error.set_backtrace detail.backtrace
                 raise error
             end
-            return :file_changed
+            :file_changed
         end
     end
 end

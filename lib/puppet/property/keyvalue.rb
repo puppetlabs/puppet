@@ -81,7 +81,7 @@ module Puppet
 
                 return true unless is
 
-                return (is == self.should)
+                (is == self.should)
             end
         end
     end

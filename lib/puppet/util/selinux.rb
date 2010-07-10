@@ -18,7 +18,7 @@ module Puppet::Util::SELinux
         if Selinux.is_selinux_enabled == 1
             return true
         end
-        return false
+        false
     end
 
     # Retrieve and return the full context of the file.  If we don't have
@@ -29,7 +29,7 @@ module Puppet::Util::SELinux
         if retval == -1
             return nil
         end
-        return retval[1]
+        retval[1]
     end
 
     # Retrieve and return the default context of the file.  If we don't have
@@ -51,7 +51,7 @@ module Puppet::Util::SELinux
         if retval == -1
             return nil
         end
-        return retval[1]
+        retval[1]
     end
 
     # Take the full SELinux context returned from the tools and parse it
@@ -70,7 +70,7 @@ module Puppet::Util::SELinux
             :seltype => $3,
             :selrange => $4,
         }
-        return ret[component]
+        ret[component]
     end
 
     # This updates the actual SELinux label on the file.  You can update
@@ -133,7 +133,7 @@ module Puppet::Util::SELinux
             set_selinux_context(file, new_context)
             return new_context
         end
-        return nil
+        nil
     end
 
     # Internal helper function to read and parse /proc/mounts
@@ -168,7 +168,7 @@ module Puppet::Util::SELinux
             next if params[2] == 'rootfs'
             mntpoint[params[1]] = params[2]
         end
-        return mntpoint
+        mntpoint
     end
 
     def realpath(path)
@@ -199,7 +199,7 @@ module Puppet::Util::SELinux
             return mnts[path] if mnts.has_key?(path)
             path = parent_directory(path)
         end
-        return mnts['/']
+        mnts['/']
     end
 
     # Check filesystem a path resides on for SELinux support against
@@ -210,7 +210,7 @@ module Puppet::Util::SELinux
         fstype = find_fs(file)
         return false if fstype.nil?
         filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs']
-        return filesystems.include?(fstype)
+        filesystems.include?(fstype)
     end
 
 end

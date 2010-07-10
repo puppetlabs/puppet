@@ -90,7 +90,7 @@ class Puppet::Parameter
 
         # Is this parameter the namevar?  Defaults to false.
         def isnamevar?
-            return defined?(@isnamevar) && @isnamevar
+            defined?(@isnamevar) && @isnamevar
         end
 
         # This parameter is required.
@@ -105,7 +105,7 @@ class Puppet::Parameter
 
         # Is this parameter required?  Defaults to false.
         def required?
-            return defined?(@required) && @required
+            defined?(@required) && @required
         end
 
         # Verify that we got a good value
@@ -198,7 +198,7 @@ class Puppet::Parameter
     # object can only have one parameter instance of a given parameter
     # class
     def name
-        return self.class.name
+        self.class.name
     end
 
     # for testing whether we should actually do anything
@@ -206,7 +206,7 @@ class Puppet::Parameter
         @noop = false unless defined?(@noop)
         tmp = @noop || self.resource.noop || Puppet[:noop] || false
         #debug "noop is #{tmp}"
-        return tmp
+        tmp
     end
 
     # return the full path to us, for logging and rollback; not currently

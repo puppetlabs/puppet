@@ -23,7 +23,7 @@ class Puppet::Network::Handler
         # Tell a client whether there's a fresh config for it
         def freshness(client = nil, clientip = nil)
             # Always force a recompile.  Newer clients shouldn't do this (as of April 2008).
-            return Time.now.to_i
+            Time.now.to_i
         end
 
         def initialize(hash = {})
@@ -79,7 +79,7 @@ class Puppet::Network::Handler
                 end
             end
 
-            return facts
+            facts
         end
 
         # Translate our configuration appropriately for sending back to a client.

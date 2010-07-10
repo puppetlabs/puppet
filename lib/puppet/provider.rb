@@ -43,7 +43,7 @@ class Puppet::Provider
             raise Puppet::DevError, "No command #{name} defined for provider #{self.name}"
         end
 
-        return binary(command)
+        binary(command)
     end
 
     # Define commands that are not optional.
@@ -189,7 +189,7 @@ class Puppet::Provider
         end
         return true unless features = klass.required_features
 
-        return !!satisfies?(*features)
+        !!satisfies?(*features)
     end
 
 #    def self.to_s

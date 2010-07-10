@@ -86,7 +86,7 @@ class Puppet::SSL::CertificateFactory
 
         raise ArgumentError, "Invalid ca_ttl #{ttl}" unless ttl =~ /^(\d+)(y|d|h|s)$/
 
-        return $1.to_i * UNITMAP[$2]
+        $1.to_i * UNITMAP[$2]
     end
 
     def set_ttl

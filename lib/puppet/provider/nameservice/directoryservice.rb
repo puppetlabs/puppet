@@ -98,7 +98,7 @@ class DirectoryService < Puppet::Provider::NameService
         #       Remember this is a class method, so self.class is Class
         #       Also, @resource_type seems to be the reference to the
         #       Puppet::Type this class object is providing for.
-        return @resource_type.name.to_s.capitalize + "s"
+        @resource_type.name.to_s.capitalize + "s"
     end
 
     def self.get_macosx_version_major
@@ -132,7 +132,7 @@ class DirectoryService < Puppet::Provider::NameService
         rescue Puppet::ExecutionFailure => detail
             fail("Could not get #{@resource_type.name} list from DirectoryService")
         end
-        return dscl_output.split("\n")
+        dscl_output.split("\n")
     end
 
     def self.parse_dscl_url_data(dscl_output)
@@ -172,11 +172,11 @@ class DirectoryService < Puppet::Provider::NameService
                 dscl_plist[key] = [value]
             end
         end
-        return dscl_plist
+        dscl_plist
     end
 
     def self.parse_dscl_plist_data(dscl_output)
-        return Plist.parse_xml(dscl_output)
+        Plist.parse_xml(dscl_output)
     end
 
     def self.generate_attribute_hash(input_hash, *type_properties)
@@ -208,7 +208,7 @@ class DirectoryService < Puppet::Provider::NameService
         # UUID of the user record for non-Mobile local acccounts.
         # Mobile Accounts are out of scope for this provider for now
         attribute_hash[:password] = self.get_password(attribute_hash[:guid]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
-        return attribute_hash
+        attribute_hash
     end
 
     def self.single_report(resource_name, *type_properties)
@@ -242,7 +242,7 @@ class DirectoryService < Puppet::Provider::NameService
             dscl_plist = self.parse_dscl_plist_data(dscl_output)
         end
 
-        return self.generate_attribute_hash(dscl_plist, *type_properties)
+        self.generate_attribute_hash(dscl_plist, *type_properties)
     end
 
     def self.get_exec_preamble(ds_action, resource_name = nil)
@@ -275,7 +275,7 @@ class DirectoryService < Puppet::Provider::NameService
         end
         # JJM:  This returns most of the preamble of the command.
         #       e.g. 'dscl / -create /Users/mccune'
-        return command_vector
+        command_vector
     end
 
     def self.set_password(resource_name, guid, password_hash)
@@ -510,7 +510,7 @@ class DirectoryService < Puppet::Provider::NameService
                 @property_value_cache_hash[param] = @property_value_cache_hash[param].to_i if @property_value_cache_hash and @property_value_cache_hash.include?(param)
             end
         end
-        return @property_value_cache_hash
+        @property_value_cache_hash
     end
 end
 end

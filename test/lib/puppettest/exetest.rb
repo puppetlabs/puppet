@@ -39,7 +39,7 @@ module PuppetTest::ExeTest
         Dir.chdir(bindir()) {
             out = %x{#{@ruby} #{cmd}}
         }
-        return out
+        out
     end
 
     def startmasterd(args = "")
@@ -75,7 +75,7 @@ module PuppetTest::ExeTest
             sleep(1)
         end
 
-        return manifest
+        manifest
     end
 
     def stopmasterd(running = true)

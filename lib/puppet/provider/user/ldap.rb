@@ -63,7 +63,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
             return @property_hash[:groups] = result.collect { |r| r[:name] }.sort.join(",")
         end
-        return @property_hash[:groups]
+        @property_hash[:groups]
     end
 
     # Manage the list of groups this user is a member of.

@@ -51,7 +51,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
             return nil
         end
 
-        return hash
+        hash
     end
 
     # return the version of the package
@@ -102,7 +102,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
         raise Puppet::Error.new( "Package #{hash[:name]}, version #{hash[:version]} is in error state: #{hash[:error]}") if hash[:error] != "ok"
 
-        return hash
+        hash
     end
 
 end

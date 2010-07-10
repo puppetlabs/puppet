@@ -24,7 +24,7 @@ module Puppet::Parser::Files
             # Than that would be a "no."
         end
         abspat = File::expand_path(start, cwd)
-        return [nil, Dir.glob(abspat + (File.extname(abspat).empty? ? '{,.pp,.rb}' : '' )).reject { |f| FileTest.directory?(f) }]
+        [nil, Dir.glob(abspat + (File.extname(abspat).empty? ? '{,.pp,.rb}' : '' )).reject { |f| FileTest.directory?(f) }]
     end
 
     # Find the concrete file denoted by +file+. If +file+ is absolute,
@@ -52,7 +52,7 @@ module Puppet::Parser::Files
             return td_file
         end
 
-        return nil
+        nil
     end
 
     def find_template_in_module(template, environment = nil)

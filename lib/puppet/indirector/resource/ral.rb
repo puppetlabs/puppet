@@ -4,7 +4,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
         res   = type(request).instances.find { |o| o.name == resource_name(request) }
         res ||= type(request).new(:name => resource_name(request), :audit => type(request).properties.collect { |s| s.name })
 
-        return res.to_resource
+        res.to_resource
     end
 
     def search( request )
@@ -29,7 +29,7 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
         catalog.add_resource ral_res
         catalog.apply
 
-        return ral_res.to_resource
+        ral_res.to_resource
     end
 
     private

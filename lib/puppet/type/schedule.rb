@@ -173,7 +173,7 @@ module Puppet
 
                 # Else, return false, since our current time isn't between
                 # any valid times
-                return false
+                false
             end
         end
 
@@ -345,7 +345,7 @@ module Puppet
 
             # If we haven't returned false, then return true; in other words,
             # any provided schedules need to all match
-            return true
+            true
         end
     end
 end

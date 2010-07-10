@@ -76,7 +76,7 @@ class TestCron < Test::Unit::TestCase
             cron = @crontype.new(args)
         }
 
-        return cron
+        cron
     end
 
     # Run the cron through its paces -- install it then remove it.

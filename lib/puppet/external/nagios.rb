@@ -38,7 +38,7 @@ module Nagios
                 }
             }
             parser = Nagios::Parser.new
-            return parser.parse(text)
+            parser.parse(text)
         end
 
         def Config.each

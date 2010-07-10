@@ -33,7 +33,7 @@ module Puppet
 
                 store.add_file(Puppet[:localcacert])
                 store.add_crl(crl)
-                return store
+                store
             end
 
             # Set up the http log.
@@ -60,7 +60,7 @@ module Puppet
                 log = WEBrick::Log.new(*args)
 
 
-                return log
+                log
             end
 
             # Create our server, yo.

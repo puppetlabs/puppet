@@ -19,7 +19,7 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
         # If we're not serving this mount, then access is denied.
         return false unless mount
-        return mount.allowed?(request.node, request.ip)
+        mount.allowed?(request.node, request.ip)
     end
 
     # Find our key using the fileserver.

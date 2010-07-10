@@ -20,7 +20,7 @@ module Puppet
                 store(:allow, pattern)
             end
 
-            return nil
+            nil
         end
 
         # Is a given combination of name and ip address allowed?  If either input
@@ -46,7 +46,7 @@ module Puppet
             end
 
             info "defaulting to no access for #{name}"
-            return false
+            false
         end
 
         # Deny a given pattern.
@@ -97,7 +97,7 @@ module Puppet
             @declarations << Declaration.new(type, pattern)
             @declarations.sort!
 
-            return nil
+            nil
         end
 
         # A single declaration.  Stores the info for a given declaration,

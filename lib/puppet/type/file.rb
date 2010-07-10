@@ -326,7 +326,7 @@ Puppet::Type.newtype(:file) do
             asuser = self.should(:owner) if writeable
         end
 
-        return asuser
+        asuser
     end
 
     def bucket
@@ -348,7 +348,7 @@ Puppet::Type.newtype(:file) do
 
         @bucket = filebucket.bucket
 
-        return @bucket
+        @bucket
     end
 
     def default_bucket
@@ -438,7 +438,7 @@ Puppet::Type.newtype(:file) do
             options.delete(param) if options.include?(param)
         end
 
-        return self.class.new(options)
+        self.class.new(options)
     end
 
     # Files handle paths specially, because they just lengthen their
@@ -514,7 +514,7 @@ Puppet::Type.newtype(:file) do
 
         val = @parameters[:recurse].value
 
-        return !!(val and (val == true or val == :remote))
+        !!(val and (val == true or val == :remote))
     end
 
     # Recurse the target of the link.
@@ -668,7 +668,7 @@ Puppet::Type.newtype(:file) do
         # If we've gotten here, then :ensure isn't set
         return true if self[:content]
         return true if stat and stat.ftype == "file"
-        return false
+        false
     end
 
     # Stat our file.  Depending on the value of the 'links' attribute, we

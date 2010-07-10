@@ -23,7 +23,7 @@ module Puppet::SSLCertificates
             Dir.glob(File::join(Puppet[:signeddir], "*.pem")) do |f|
                 inv += format(OpenSSL::X509::Certificate.new(File::read(f))) + "\n"
             end
-            return inv
+            inv
         end
 
         def self.format(cert)

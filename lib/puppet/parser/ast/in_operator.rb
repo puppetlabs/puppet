@@ -18,7 +18,7 @@ class Puppet::Parser::AST
             unless rval.respond_to?(:include?)
                 raise ArgumentError, "'#{rval}' from right operand of 'in' expression is not of a supported type (string, array or hash)"
             end
-            return rval.include?(lval)
+            rval.include?(lval)
         end
     end
 end

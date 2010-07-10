@@ -63,7 +63,7 @@ module Puppet::Util::ClassGen
         end
 
         # Let them know whether we did actually delete a subclass.
-        return retval
+        retval
     end
 
     private
@@ -75,7 +75,7 @@ module Puppet::Util::ClassGen
             const = prefix + name2const(name)
         end
 
-        return const
+        const
     end
 
     # This does the actual work of creating our class or module.  It's just a
@@ -121,7 +121,7 @@ module Puppet::Util::ClassGen
         # Store the class in hashes or arrays or whatever.
         storeclass(klass, name, options)
 
-        return klass
+        klass
     end
 
     # Handle the setting and/or removing of the associated constant.
@@ -139,7 +139,7 @@ module Puppet::Util::ClassGen
         end
         const_set(const, klass)
 
-        return const
+        const
     end
 
     # Perform the initializations on the class.

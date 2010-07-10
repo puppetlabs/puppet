@@ -79,7 +79,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
                 end
             end
         end
-        return mcx_list
+        mcx_list
     end
 
     private
@@ -122,7 +122,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
             raise MCXContentProviderException,
             "Coult not parse ds_type from resource name '#{name}'.  Specify with ds_type parameter."
         end
-        return tmp
+        tmp
     end
 
     # Given the resource name string, parse ds_name out.
@@ -132,7 +132,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
             raise MCXContentProviderException,
             "Could not parse ds_name from resource name '#{name}'.  Specify with ds_name parameter."
         end
-        return ds_name
+        ds_name
     end
 
     # Gather ds_type and ds_name from resource or
@@ -178,7 +178,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
             return false
         end
         has_mcx = ! mcx.empty?
-        return has_mcx
+        has_mcx
     end
 
     def content
@@ -188,7 +188,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
                 ds_parms[:ds_type],
 
                     ds_parms[:ds_name])
-        return mcx
+        mcx
     end
 
     def content=(value)
@@ -200,7 +200,7 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
                     ds_parms[:ds_name],
 
                     resource[:content])
-        return mcx
+        mcx
     end
 
 end

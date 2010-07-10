@@ -40,7 +40,7 @@ module Puppet
                 else
                     raise Puppet::DevError, "Invalid @is type #{is.class}"
                 end
-                return is
+                is
             end
 
             # We actually want to return the whole array here, not just the first

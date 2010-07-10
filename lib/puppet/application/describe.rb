@@ -25,7 +25,7 @@ class Formatter
             end
         end
         res << work if work.length.nonzero?
-        return prefix + res.join("\n#{prefix}")
+        prefix + res.join("\n#{prefix}")
     end
 
     def header(txt, sep = "-")

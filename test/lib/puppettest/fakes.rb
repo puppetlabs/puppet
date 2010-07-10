@@ -149,7 +149,7 @@ module PuppetTest
                 end
             end
 
-            return ret
+            ret
         end
 
         def store(hash)

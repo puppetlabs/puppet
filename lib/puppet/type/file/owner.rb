@@ -41,11 +41,11 @@ module Puppet
                     end
                 end
             end
-            return provider.retrieve(@resource)
+            provider.retrieve(@resource)
         end
 
         def sync
-            return provider.sync(resource[:path], resource[:links], @should)
+            provider.sync(resource[:path], resource[:links], @should)
         end
     end
 end

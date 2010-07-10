@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
             }
         end
 
-        return packages
+        packages
     end
 
     self::REGEX = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
@@ -58,7 +58,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
             return nil
         end
 
-        return hash
+        hash
     end
 
     def install
@@ -122,7 +122,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
             )
         end
 
-        return hash
+        hash
     end
 
     def uninstall

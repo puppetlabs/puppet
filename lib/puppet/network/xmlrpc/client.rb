@@ -40,7 +40,7 @@ module Puppet::Network
                 }
             }
 
-            return newclient
+            newclient
         end
 
         def self.handler_class(handler)

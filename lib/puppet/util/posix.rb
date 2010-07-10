@@ -55,7 +55,7 @@ module Puppet::Util::POSIX
         when :passwd; Etc.send(:endpwent)
         when :group; Etc.send(:endgrent)
         end
-        return nil
+        nil
     end
 
     # Determine what the field name is for users and groups.

@@ -17,7 +17,7 @@ class Puppet::Parser::AST
             if val == nil
                 raise ArgumentError, "minus operand #{val} is not a number"
             end
-            return -val
+            -val
         end
     end
 end

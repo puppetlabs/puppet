@@ -24,7 +24,7 @@ module Puppet::Util::Package
                 return a.upcase <=> b.upcase
             end
         end
-        return version_a <=> version_b;
+        version_a <=> version_b;
     end
 
     module_function :versioncmp

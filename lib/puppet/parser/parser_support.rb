@@ -26,7 +26,7 @@ class Puppet::Parser::Parser
             message += " in file #{file}"
         end
 
-        return message
+        message
     end
 
     # Create an AST array out of all of the args
@@ -40,7 +40,7 @@ class Puppet::Parser::Parser
             result = ast AST::ASTArray, :children => args
         end
 
-        return result
+        result
     end
 
     # Create an AST object, and automatically add the file and line information if

@@ -9,7 +9,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not load policy module: #{detail}";
         end
-        return :true
+        :true
     end
 
     def destroy
@@ -29,7 +29,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
                 end
             end
         end
-        return nil
+        nil
     end
 
     def syncversion
@@ -43,7 +43,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
                 return :true
             end
         end
-        return :false
+        :false
     end
 
     def syncversion= (dosync)
@@ -65,7 +65,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         rescue Puppet::ExecutionFailure
             raise Puppet::ExecutionFailure, output.split("\n")[0]
         end
-        return output
+        output
     end
 
     def selmod_name_to_filename
@@ -78,7 +78,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
     def selmod_readnext (handle)
         len = handle.read(4).unpack('L')[0]
-        return handle.read(len)
+        handle.read(len)
     end
 
     def selmodversion_file
@@ -114,7 +114,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         v = selmod_readnext(mod)
 
         self.debug "file version #{v}"
-        return v
+        v
     end
 
     def selmodversion_loaded
@@ -134,6 +134,6 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         rescue Puppet::ExecutionFailure
             raise Puppet::ExecutionFailure, "Could not list policy modules: #{lines.join(' ').chomp!}"
         end
-        return nil
+        nil
     end
 end

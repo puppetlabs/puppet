@@ -87,7 +87,7 @@ class Puppet::Parser::Compiler
 
     # Return a list of all of the defined classes.
     def classlist
-        return @catalog.classes
+        @catalog.classes
     end
 
     # Compiler our catalog.  This mostly revolves around finding and evaluating classes.
@@ -109,7 +109,7 @@ class Puppet::Parser::Compiler
 
         fail_on_unevaluated()
 
-        return @catalog
+        @catalog
     end
 
     # LAK:FIXME There are no tests for this.
@@ -243,7 +243,7 @@ class Puppet::Parser::Compiler
             end
         end
 
-        return found_something
+        found_something
     end
 
     # Make sure all of our resources have been evaluated into native resources.

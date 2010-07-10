@@ -50,7 +50,7 @@ class Puppet::FileBucket::Dipper
         file_bucket_file = Puppet::FileBucket::File.find(source_path, :bucket_path => @local_path)
 
         raise Puppet::Error, "File not found" unless file_bucket_file
-        return file_bucket_file.to_s
+        file_bucket_file.to_s
     end
 
     # Restore the file

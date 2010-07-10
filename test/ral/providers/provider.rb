@@ -13,7 +13,7 @@ class TestProvider < Test::Unit::TestCase
 
         raise "Could not find 'echo' binary; cannot complete test" unless echo
 
-        return echo
+        echo
     end
 
     def newprovider
@@ -23,7 +23,7 @@ class TestProvider < Test::Unit::TestCase
         end
         provider.initvars
 
-        return provider
+        provider
     end
 
     def setup

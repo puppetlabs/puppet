@@ -64,7 +64,7 @@ Puppet::Reports.register_report(:tagmail) do
             end
         end
 
-        return matching_logs
+        matching_logs
     end
 
     # Load the config file
@@ -100,7 +100,7 @@ Puppet::Reports.register_report(:tagmail) do
             emails = emails.sub(/\s+$/,'').split(/\s*,\s*/)
             taglists << [emails, pos, neg]
         end
-        return taglists
+        taglists
     end
 
     # Process the report.  This just calls the other associated messages.

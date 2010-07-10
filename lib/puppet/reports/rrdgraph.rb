@@ -42,7 +42,7 @@ Puppet::Reports.register_report(:rrdgraph) do
             of.puts "</body></html>"
         end
 
-        return file
+        file
     end
 
     def mkhtml

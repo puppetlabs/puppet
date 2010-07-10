@@ -41,6 +41,6 @@ Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package 
     end
 
     def standard_args
-        return ["-x", "mount_all_filesystems=false"]
+        ["-x", "mount_all_filesystems=false"]
     end
 end

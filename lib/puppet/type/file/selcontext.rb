@@ -28,7 +28,7 @@ module Puppet
         def retrieve
             return :absent unless @resource.stat(false)
             context = self.get_selinux_current_context(@resource[:path])
-            return parse_selinux_context(name, context)
+            parse_selinux_context(name, context)
         end
 
         def retrieve_default_context(property)
@@ -37,7 +37,7 @@ module Puppet
             end
             property_default = self.parse_selinux_context(property, context)
             self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" if not property_default.nil?
-            return property_default
+            property_default
         end
 
         def insync?(value)
@@ -50,7 +50,7 @@ module Puppet
 
         def sync
             self.set_selinux_context(@resource[:path], @should, name)
-            return :file_changed
+            :file_changed
         end
     end
 

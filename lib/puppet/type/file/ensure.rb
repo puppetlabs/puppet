@@ -113,7 +113,7 @@ module Puppet
                 is = :absent
             end
 
-            return property.change_to_s(is, should)
+            property.change_to_s(is, should)
         end
 
         # Check that we can actually create anything
@@ -163,7 +163,7 @@ module Puppet
 
             event = super
 
-            return event
+            event
         end
     end
 end

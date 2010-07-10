@@ -20,7 +20,7 @@ class Puppet::SSL::Inventory
     # Format our certificate for output.
     def format(cert)
         iso = '%Y-%m-%dT%H:%M:%S%Z'
-        return "0x%04x %s %s %s\n" % [cert.serial,  cert.not_before.strftime(iso), cert.not_after.strftime(iso), cert.subject]
+        "0x%04x %s %s %s\n" % [cert.serial,  cert.not_before.strftime(iso), cert.not_after.strftime(iso), cert.subject]
     end
 
     def initialize

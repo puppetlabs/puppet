@@ -18,7 +18,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     def rcvar
         rcvar = execute([self.initscript, :rcvar], :failonfail => true, :squelch => false)
         rcvar = rcvar.split("\n")
-        return rcvar
+        rcvar
     end
 
     # Extract service name
@@ -28,7 +28,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
         name = name.gsub!(/# (.*)/, '\1')
         self.error("Service name is empty") if name.nil?
         self.debug("Service name is #{name}")
-        return name
+        name
     end
 
     # Extract rcvar name
@@ -38,7 +38,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
         name = name.gsub!(/(.*)_enable=(.*)/, '\1')
         self.error("rcvar name is empty") if name.nil?
         self.debug("rcvar name is #{name}")
-        return name
+        name
     end
 
     # Extract rcvar value
@@ -48,7 +48,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
         value = value.gsub!(/(.*)_enable=\"?(.*)\"?/, '\2')
         self.error("rcvar value is empty") if value.nil?
         self.debug("rcvar value is #{value}")
-        return value
+        value
     end
 
     # Edit rc files and set the service to yes/no
@@ -74,7 +74,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
                 end
             end
         end
-        return success
+        success
     end
 
     # Add a new setting to the rc files
@@ -109,7 +109,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
             return :true
         end
         self.debug("Is disabled")
-        return :false
+        :false
     end
 
     def enable

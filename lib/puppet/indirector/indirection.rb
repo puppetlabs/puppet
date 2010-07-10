@@ -121,7 +121,7 @@ class Puppet::Indirector::Indirection
         # Get the name of the terminus.
         raise Puppet::DevError, "No terminus specified for #{self.name}; cannot redirect" unless terminus_name ||= terminus_class
 
-        return termini[terminus_name] ||= make_terminus(terminus_name)
+        termini[terminus_name] ||= make_terminus(terminus_name)
     end
 
     # This can be used to select the terminus class.
@@ -201,7 +201,7 @@ class Puppet::Indirector::Indirection
             return terminus.respond_to?(:filter) ? terminus.filter(result) : result
         end
 
-        return nil
+        nil
     end
 
     def find_in_cache(request)
@@ -213,7 +213,7 @@ class Puppet::Indirector::Indirection
         end
 
         Puppet.debug "Using cached #{self.name} for #{request.key}"
-        return cached
+        cached
     end
 
     # Remove something via the terminus.
@@ -292,7 +292,7 @@ class Puppet::Indirector::Indirection
         dest_terminus = terminus(terminus_name)
         check_authorization(request, dest_terminus)
 
-        return dest_terminus
+        dest_terminus
     end
 
     # Create a new terminus instance.
@@ -301,7 +301,7 @@ class Puppet::Indirector::Indirection
         unless klass = Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
             raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
         end
-        return klass.new
+        klass.new
     end
 
     # Cache our terminus instances indefinitely, but make it easy to clean them up.

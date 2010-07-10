@@ -29,6 +29,6 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
 
     def expiration
         return nil unless content
-        return content.not_after
+        content.not_after
     end
 end

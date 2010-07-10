@@ -75,7 +75,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
                 raise Puppet::Error.new( "Could not get status for service #{resource.ref}: #{detail}" )
             end
         end
-        return :stopped
+        :stopped
     end
 
     def stop

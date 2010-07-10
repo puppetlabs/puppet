@@ -57,7 +57,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
             @type = :directory
             return value.sub(/\/$/, '')
         end
-        return value
+        value
     end
 
     # Return the appropriate type.

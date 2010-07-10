@@ -107,7 +107,7 @@ class Puppet::DSL::ResourceAPI
     end
 
     def map_function(name)
-        return FUNCTION_MAP[name] || name
+        FUNCTION_MAP[name] || name
     end
 
     def searching_for_method?

@@ -57,7 +57,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                 end
             }
         }
-        return packages
+        packages
     end
 
     # Get info on a package, optionally specifying a device.

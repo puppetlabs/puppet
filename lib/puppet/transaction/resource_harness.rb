@@ -13,7 +13,7 @@ class Puppet::Transaction::ResourceHarness
         deplabel = deps.collect { |r| r.ref }.join(",")
         plurality = deps.length > 1 ? "":"s"
         resource.warning "#{deplabel} still depend#{plurality} on me -- not purging"
-        return false
+        false
     end
 
     def apply_changes(status, changes)
@@ -117,7 +117,7 @@ class Puppet::Transaction::ResourceHarness
         # have been synced a long time ago (e.g., a file only gets updated
         # once a month on the server and its schedule is daily; the last sync time
         # will have been a month ago, so we'd end up checking every run).
-        return schedule.match?(cached(resource, :checked).to_i)
+        schedule.match?(cached(resource, :checked).to_i)
     end
 
     def schedule(resource)

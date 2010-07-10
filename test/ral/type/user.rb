@@ -78,7 +78,7 @@ class TestUser < Test::Unit::TestCase
 
         assert(user, "Did not create user")
 
-        return user
+        user
     end
 
     def test_autorequire

@@ -48,7 +48,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def file
-        return (f = self.source_file) ? f.filename : nil
+        (f = self.source_file) ? f.filename : nil
     end
 
     def file=(file)
@@ -84,7 +84,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def [](param)
-        return super || parameter(param)
+        super || parameter(param)
     end
 
     # Make sure this resource is equivalent to the provided Parser resource.
@@ -226,6 +226,6 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         # Store the ID, so we can check if we're re-collecting the same resource.
         obj.rails_id = self.id
 
-        return obj
+        obj
     end
 end

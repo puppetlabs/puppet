@@ -7,7 +7,7 @@ class Puppet::Parser::AST
 
         # Return our value.
         def evaluate(scope)
-            return @value
+            @value
         end
 
         # evaluate ourselves, and match
@@ -26,7 +26,7 @@ class Puppet::Parser::AST
         end
 
         def to_s
-            return @value.to_s unless @value.nil?
+            @value.to_s unless @value.nil?
         end
     end
 
@@ -64,7 +64,7 @@ class Puppet::Parser::AST
     # An uninterpreted string.
     class FlatString < AST::Leaf
         def evaluate(scope)
-            return @value
+            @value
         end
 
         def to_s
@@ -116,11 +116,11 @@ class Puppet::Parser::AST
         # in a hash it has the same hashing properties as the underlying value
         def eql?(value)
             value = value.value if value.is_a?(HostName)
-            return @value.eql?(value)
+            @value.eql?(value)
         end
 
         def hash
-            return @value.hash
+            @value.hash
         end
 
         def to_s
@@ -164,7 +164,7 @@ class Puppet::Parser::AST
 
             raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) or object.is_a?(Array)
 
-            return object[evaluate_key(scope)]
+            object[evaluate_key(scope)]
         end
 
         # Assign value to this hashkey or array index
@@ -201,7 +201,7 @@ class Puppet::Parser::AST
         # this way, we don't have to modify this test specifically for handling
         # regexes.
         def evaluate(scope)
-            return self
+            self
         end
 
         def evaluate_match(value, scope, options = {})
@@ -218,7 +218,7 @@ class Puppet::Parser::AST
         end
 
         def to_s
-            return "/#{@value.source}/"
+            "/#{@value.source}/"
         end
     end
 end

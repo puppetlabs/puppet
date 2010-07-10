@@ -117,7 +117,7 @@ Puppet::Type.newtype(:tidy) do
 
         def tidy?(path, stat)
             # If the file's older than we allow, we should get rid of it.
-            return (Time.now.to_i - stat.send(resource[:type]).to_i) > value
+            (Time.now.to_i - stat.send(resource[:type]).to_i) > value
         end
 
         munge do |age|
@@ -162,7 +162,7 @@ Puppet::Type.newtype(:tidy) do
         end
 
         def tidy?(path, stat)
-            return stat.size >= value
+            stat.size >= value
         end
 
         munge do |size|
@@ -276,7 +276,7 @@ Puppet::Type.newtype(:tidy) do
             end
         end
 
-        return result
+        result
     end
 
     # Does a given path match our glob patterns, if any?  Return true
@@ -313,7 +313,7 @@ Puppet::Type.newtype(:tidy) do
 
         # If they don't specify either, then the file should always be removed.
         return true unless tested
-        return false
+        false
     end
 
     def stat(path)

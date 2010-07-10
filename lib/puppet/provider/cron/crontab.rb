@@ -134,7 +134,7 @@ tab = case Facter.value(:operatingsystem)
             return resource if matched
         end
 
-        return false
+        false
     end
 
     # Collapse name and env records.
@@ -191,7 +191,7 @@ tab = case Facter.value(:operatingsystem)
             text.sub!(tz, '')
             text = tz + text
         end
-        return text
+        text
     end
 
     def user=(user)

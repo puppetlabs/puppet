@@ -4,7 +4,7 @@ require 'puppet/util/ldap/connection'
 class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
     # Perform our ldap search and process the result.
     def find(request)
-        return ldapsearch(search_filter(request.key)) { |entry| return process(entry) } || nil
+        ldapsearch(search_filter(request.key)) { |entry| return process(entry) } || nil
     end
 
     # Process the found entry.  We assume that we don't just want the
@@ -56,7 +56,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
             end
         end
 
-        return found
+        found
     end
 
     # Create an ldap connection.
@@ -73,6 +73,6 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
             end
         end
 
-        return @connection
+        @connection
     end
 end

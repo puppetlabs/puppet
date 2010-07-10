@@ -108,7 +108,7 @@ module Puppet
                     return true if number = Puppet::Util.gid(value) and is == number
                 end
 
-                return false
+                false
             end
 
             def sync

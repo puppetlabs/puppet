@@ -106,7 +106,7 @@ module Puppet::SSLCertificates
         # for some reason this _must_ be the last extension added
         ex << ef.create_extension("authorityKeyIdentifier", "keyid:always,issuer:always") if hash[:type] == :ca
 
-        return cert
+        cert
     end
 
     def self.mkhash(dir, cert, certfile)
@@ -137,7 +137,7 @@ module Puppet::SSLCertificates
         }
 
 
-        return hashpath
+        hashpath
     end
     require 'puppet/sslcertificates/certificate'
     require 'puppet/sslcertificates/inventory'

@@ -35,7 +35,7 @@ module PuppetTest::Support::Utils
             config = Puppet::Resource::Catalog.new
             resources.each { |res| config.add_resource res }
         end
-        return config
+        config
     end
 
     # stop any services that might be hanging around
@@ -80,7 +80,7 @@ module PuppetTest::Support::Utils
 
         assert_equal(events, newevents, "Incorrect #{type} #{msg} events")
 
-        return trans
+        trans
     end
 
     def fakefile(name)
@@ -88,7 +88,7 @@ module PuppetTest::Support::Utils
         ary += name.split("/")
         file = File.join(ary)
         raise Puppet::DevError, "No fakedata file #{file}" unless FileTest.exists?(file)
-        return file
+        file
     end
 
     # wrap how to retrieve the masked mode
@@ -137,7 +137,7 @@ module PuppetTest::Support::Utils
             resources.each { |resource| conf.add_resource resource }
         end
 
-        return config
+        config
     end
 end
 

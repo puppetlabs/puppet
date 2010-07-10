@@ -16,6 +16,6 @@ class UserAttr
                 break
             end
         end
-        return attributes
+        attributes
     end
 end

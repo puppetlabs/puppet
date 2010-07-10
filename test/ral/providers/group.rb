@@ -41,7 +41,7 @@ class TestGroupProvider < Test::Unit::TestCase
         }
         assert(group, "Could not create provider group")
 
-        return group
+        group
     end
 
     case Facter["operatingsystem"].value
@@ -63,7 +63,7 @@ class TestGroupProvider < Test::Unit::TestCase
                 end
             }
 
-            return nil
+            nil
         end
 
         def remove(group)
@@ -85,7 +85,7 @@ class TestGroupProvider < Test::Unit::TestCase
                 return obj.gid
             }
 
-            return nil
+            nil
         end
 
         def remove(group)

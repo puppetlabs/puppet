@@ -69,7 +69,7 @@ class Parser
             container = find_object_named(container, name)
             container = prev_container.add_class(PuppetClass, name, nil) unless container
         end
-        return [container, final_name]
+        [container, final_name]
     end
 
     # split_module tries to find if +path+ belongs to the module path
@@ -105,7 +105,7 @@ class Parser
         end
         # we are under a global manifests
         Puppet.debug "rdoc: global manifests"
-        return "<site>"
+        "<site>"
     end
 
     # create documentation for the top level +container+

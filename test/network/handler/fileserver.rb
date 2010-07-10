@@ -19,7 +19,7 @@ class TestFileServer < Test::Unit::TestCase
             mount = Puppet::Network::Handler.fileserver::Mount.new(name, base)
         }
 
-        return mount
+        mount
     end
     # make a simple file source
     def mktestdir
@@ -36,7 +36,7 @@ class TestFileServer < Test::Unit::TestCase
             }
         }
 
-        return [testdir, %r{#{pattern}}, tmpfile]
+        [testdir, %r{#{pattern}}, tmpfile]
     end
 
     # make a bunch of random test files

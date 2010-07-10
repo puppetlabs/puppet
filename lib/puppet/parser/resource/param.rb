@@ -18,7 +18,7 @@ class Puppet::Parser::Resource::Param
     end
 
     def line_to_i
-        return line ? Integer(line) : nil
+        line ? Integer(line) : nil
     end
 
     def to_s

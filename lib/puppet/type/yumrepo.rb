@@ -10,7 +10,7 @@ module Puppet
             if is.nil? && (should.nil? || should == :absent)
                 return true
             end
-            return super(is)
+            super(is)
         end
 
         def sync
@@ -24,11 +24,11 @@ module Puppet
                     resource.section[inikey] = should
                 end
             end
-            return result
+            result
         end
 
         def retrieve
-            return resource.section[inikey]
+            resource.section[inikey]
         end
 
         def inikey
@@ -121,7 +121,7 @@ module Puppet
                     end
                 end
             end
-            return @inifile
+            @inifile
         end
 
         # Parse the yum config files. Only exposed for the tests
@@ -148,7 +148,7 @@ module Puppet
                     end
                 end
             end
-            return result
+            result
         end
 
         # Return the Puppet::Util::IniConfig::Section with name NAME
@@ -162,7 +162,7 @@ module Puppet
                 Puppet::info "create new repo #{name} in file #{path}"
                 result = inifile.add_section(name, path)
             end
-            return result
+            result
         end
 
         # Store all modifications back to disk

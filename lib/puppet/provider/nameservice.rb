@@ -6,7 +6,7 @@ require 'puppet'
 class Puppet::Provider::NameService < Puppet::Provider
     class << self
         def autogen_default(param)
-            return defined?(@autogen_defaults) ? @autogen_defaults[symbolize(param)] : nil
+            defined?(@autogen_defaults) ? @autogen_defaults[symbolize(param)] : nil
         end
 
         def autogen_defaults(hash)
@@ -32,7 +32,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         def option(name, option)
             name = name.intern if name.is_a? String
-            return (defined?(@options) and @options.include? name and @options[name].include? option) ? @options[name][option] : nil
+            (defined?(@options) and @options.include? name and @options[name].include? option) ? @options[name][option] : nil
         end
 
         def options(name, hash)
@@ -61,7 +61,7 @@ class Puppet::Provider::NameService < Puppet::Provider
                 Etc.send("end#{section()}ent")
             end
 
-            return names
+            names
         end
 
         def resource_type=(resource_type)
@@ -153,7 +153,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             @@prevauto = highest + 1
         end
 
-        return @@prevauto
+        @@prevauto
     end
 
     def create
@@ -194,12 +194,12 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     # Does our object exist?
     def exists?
-        return !!getinfo(true)
+        !!getinfo(true)
     end
 
     # Retrieve a specific value by name.
     def get(param)
-        return (hash = getinfo(false)) ? hash[param] : nil
+        (hash = getinfo(false)) ? hash[param] : nil
     end
 
     # Retrieve what we can about our object
@@ -214,7 +214,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         # Now convert our Etc struct into a hash.
-        return @objectinfo ? info2hash(@objectinfo) : nil
+        @objectinfo ? info2hash(@objectinfo) : nil
     end
 
     # The list of all groups the user is a member of.  Different
@@ -250,7 +250,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             hash[param] = info.send(posixmethod(param)) if info.respond_to? method
         end
 
-        return hash
+        hash
     end
 
     def initialize(resource)

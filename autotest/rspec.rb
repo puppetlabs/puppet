@@ -34,11 +34,11 @@ class Autotest::Rspec < Autotest
                 break
             end
         end
-        return filters
+        filters
     end
 
     def make_test_cmd(files_to_test)
-        return "#{ruby} -S #{spec_command} #{add_options_if_present} #{files_to_test.keys.flatten.join(' ')}"
+        "#{ruby} -S #{spec_command} #{add_options_if_present} #{files_to_test.keys.flatten.join(' ')}"
     end
 
     def add_options_if_present

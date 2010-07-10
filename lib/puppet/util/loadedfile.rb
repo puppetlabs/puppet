@@ -54,7 +54,7 @@ module Puppet
                     @stamp = Time.now
                 end
             end
-            return @stamp
+            @stamp
         end
 
         def to_s

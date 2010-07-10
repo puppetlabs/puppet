@@ -29,6 +29,6 @@ module Puppet::FileServing::IndirectionHooks
         end
 
         # If we're still here, we're using the file_server or modules.
-        return :file_server
+        :file_server
     end
 end

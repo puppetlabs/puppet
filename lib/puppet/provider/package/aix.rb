@@ -18,7 +18,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     attr_accessor   :latest_info
 
     def self.srclistcmd(source)
-        return [ command(:installp), "-L", "-d", source ]
+        [ command(:installp), "-L", "-d", source ]
     end
 
     def self.prefetch(packages)
@@ -119,7 +119,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     def query
-        return self.class.pkglist(:pkgname => @resource[:name])
+        self.class.pkglist(:pkgname => @resource[:name])
     end
 
     def update

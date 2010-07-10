@@ -51,7 +51,7 @@ class TestTransactions < Test::Unit::TestCase
             Puppet::Type.rmtype(:generator)
         end
 
-        return type
+        type
     end
 
     # Create a new type that generates instances with shorter names.
@@ -70,7 +70,7 @@ class TestTransactions < Test::Unit::TestCase
 
         type.class_eval(&block) if block
 
-        return type
+        type
     end
 
     def test_prefetch

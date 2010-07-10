@@ -54,7 +54,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
             raise ArgumentError, "Configuration timeout must be an integer"
         end
 
-        return timeout
+        timeout
     end
 
     def initialize(*args)

@@ -36,7 +36,7 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
     end
 
     def query
-        return FileTest.exists?("/Library/Receipts/#{@resource[:name]}.pkg") ? {:name => @resource[:name], :ensure => :present} : nil
+        FileTest.exists?("/Library/Receipts/#{@resource[:name]}.pkg") ? {:name => @resource[:name], :ensure => :present} : nil
     end
 
     def install

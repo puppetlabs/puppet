@@ -93,7 +93,7 @@ class Puppet::Application::Agent < Puppet::Application
     def run_command
         return fingerprint if options[:fingerprint]
         return onetime if Puppet[:onetime]
-        return main
+        main
     end
 
     def fingerprint

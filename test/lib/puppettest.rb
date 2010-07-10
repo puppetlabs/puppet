@@ -90,7 +90,7 @@ module PuppetTest
         # what makes things like '-n' work).
         opts.each { |o| ARGV << o }
 
-        return args
+        args
     end
 
     # Find the root of the Puppet tree; this is not the test directory, but
@@ -237,17 +237,17 @@ module PuppetTest
         f = File.join(self.tmpdir(), "tempfile_" + @@tmpfilenum.to_s)
         @@tmpfiles ||= []
         @@tmpfiles << f
-        return f
+        f
     end
 
     def textmate?
-        return !!ENV["TM_FILENAME"]
+        !!ENV["TM_FILENAME"]
     end
 
     def tstdir
         dir = tempfile()
         Dir.mkdir(dir)
-        return dir
+        dir
     end
 
     def tmpdir

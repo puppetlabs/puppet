@@ -59,7 +59,7 @@ module Puppet::Util::Autoload::FileCache
     end
 
     def missing_file?(path)
-        return !!(time = missing_files[path] and ! data_expired?(time))
+        !!(time = missing_files[path] and ! data_expired?(time))
     end
 
     def missing_file(path)

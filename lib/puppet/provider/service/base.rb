@@ -32,7 +32,7 @@ Puppet::Type.type(:service).provide :base do
             }
         }
 
-        return nil
+        nil
     end
 
     # How to restart the process.
@@ -128,7 +128,7 @@ Puppet::Type.type(:service).provide :base do
         rescue Puppet::ExecutionFailure => detail
             @resource.fail "Could not #{type} #{@resource.ref}: #{detail}"
         end
-        return nil
+        nil
     end
 
     # Use either a specified command or the default for our provider.
@@ -138,7 +138,7 @@ Puppet::Type.type(:service).provide :base do
         else
             cmd = [send("#{type}cmd")].flatten
         end
-        return texecute(type, cmd, fof)
+        texecute(type, cmd, fof)
     end
 end
 

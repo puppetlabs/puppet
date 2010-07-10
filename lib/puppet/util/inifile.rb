@@ -71,7 +71,7 @@ module Puppet::Util::IniConfig
                     text << entry
                 end
             end
-            return text
+            text
         end
 
         private
@@ -79,7 +79,7 @@ module Puppet::Util::IniConfig
             @entries.each do |entry|
                 return entry if entry.is_a?(Array) && entry[0] == key
             end
-            return nil
+            nil
         end
 
     end
@@ -182,12 +182,12 @@ module Puppet::Util::IniConfig
             each_section do |section|
                 return section if section.name == name
             end
-            return nil
+            nil
         end
 
         # Return true if the file contains a section with name NAME
         def include?(name)
-            return ! self[name].nil?
+            ! self[name].nil?
         end
 
         # Add a section to be stored in FILE when store is called
@@ -196,7 +196,7 @@ module Puppet::Util::IniConfig
             result = Section.new(name, file)
             @files[file] ||= []
             @files[file] << result
-            return result
+            result
         end
     end
 end

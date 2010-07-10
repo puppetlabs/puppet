@@ -26,7 +26,7 @@ class Puppet::Util::Log
         )
         dest.match(dest.name)
 
-        return dest
+        dest
     end
 
     require 'puppet/util/log/destination'
@@ -71,7 +71,7 @@ class Puppet::Util::Log
     def Log.create(hash)
         raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
         raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
-        return @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
+        @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
     end
 
     def Log.destinations
@@ -85,7 +85,7 @@ class Puppet::Util::Log
 
     # Return the current log level.
     def Log.level
-        return @levels[@loglevel]
+        @levels[@loglevel]
     end
 
     # Set the current log level.

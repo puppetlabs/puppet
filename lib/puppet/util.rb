@@ -23,7 +23,7 @@ module Util
     # Return the sync object associated with a given resource.
     def self.sync(resource)
         @@syncresources[resource] ||= Sync.new
-        return @@syncresources[resource]
+        @@syncresources[resource]
     end
 
     # Change the process to a different user
@@ -190,7 +190,7 @@ module Util
                 return dest if FileTest.file? dest and FileTest.executable? dest
             end
         end
-        return nil
+        nil
     end
     module_function :binary
 
@@ -212,7 +212,7 @@ module Util
             end
         end
 
-        return output
+        output
     end
 
     def execfail(command, exception)
@@ -346,7 +346,7 @@ module Util
             end
         end
 
-        return output
+        output
     end
 
     module_function :execute
@@ -406,7 +406,7 @@ module Util
             end
         end
 
-        return hash
+        hash
     end
     module_function :symbolize, :symbolizehash, :symbolizehash!
 
@@ -416,7 +416,7 @@ module Util
             yield
         }
 
-        return seconds
+        seconds
     end
 
     module_function :memory, :thinmark

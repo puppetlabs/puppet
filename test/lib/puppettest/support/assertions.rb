@@ -50,7 +50,7 @@ module PuppetTest
 
         run_events(:evaluate, transaction, events, msg)
 
-        return transaction
+        transaction
     end
 
     # A simpler method that just applies what we have.

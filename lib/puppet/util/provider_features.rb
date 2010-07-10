@@ -42,7 +42,7 @@ module Puppet::Util::ProviderFeatures
                     return false unless obj.respond_to?(m)
                 end
             end
-            return true
+            true
         end
     end
 

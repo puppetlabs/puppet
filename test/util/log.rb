@@ -28,7 +28,7 @@ class TestLog < Test::Unit::TestCase
             Puppet::Util::Log.eachlevel { |level| levels << level }
         }
         # Don't test the top levels; too annoying
-        return levels.reject { |level| level == :emerg or level == :crit }
+        levels.reject { |level| level == :emerg or level == :crit }
     end
 
     def mkmsgs(levels)

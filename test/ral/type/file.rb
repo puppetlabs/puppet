@@ -16,7 +16,7 @@ class TestFile < Test::Unit::TestCase
         assert_nothing_raised {
             file = Puppet::Type.type(:file).new(hash)
         }
-        return file
+        file
     end
 
     def mktestfile

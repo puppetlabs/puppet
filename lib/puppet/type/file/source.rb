@@ -169,7 +169,7 @@ module Puppet
         end
 
         def full_path
-            return URI.unescape(uri.path) if found? and uri
+            URI.unescape(uri.path) if found? and uri
         end
 
         def server

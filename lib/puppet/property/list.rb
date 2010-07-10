@@ -70,7 +70,7 @@ module Puppet
 
                 return true unless is
 
-                return (prepare_is_for_comparison(is) == self.should)
+                (prepare_is_for_comparison(is) == self.should)
             end
         end
     end

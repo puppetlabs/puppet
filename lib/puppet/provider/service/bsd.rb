@@ -25,7 +25,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
         rcfile = File.join(@@rcconf_dir, @model[:name])
         return :true if File.exists?(rcfile)
 
-        return :false
+        :false
     end
 
     # enable service by creating a service file under rc.conf.d with the

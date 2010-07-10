@@ -31,7 +31,7 @@ class Puppet::Parser::AST
             # We don't need to evaluate the name, because it's plaintext
             args = @arguments.safeevaluate(scope)
 
-            return scope.send("function_#{@name}", args)
+            scope.send("function_#{@name}", args)
         end
 
         def initialize(hash)

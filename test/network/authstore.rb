@@ -15,7 +15,7 @@ class TestAuthStore < Test::Unit::TestCase
             store = Puppet::Network::AuthStore.new
         }
 
-        return store
+        store
     end
 
     def setup

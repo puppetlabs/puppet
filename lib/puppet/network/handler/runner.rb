@@ -24,7 +24,7 @@ class Puppet::Network::Handler
 
             runner.run
 
-            return runner.status
+            runner.status
         end
     end
 end

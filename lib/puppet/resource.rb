@@ -255,7 +255,7 @@ class Puppet::Resource
         result.file = self.file
         result.line = self.line
 
-        return result
+        result
     end
 
     def to_trans_ref
@@ -289,7 +289,7 @@ class Puppet::Resource
 
         result.tags = self.tags
 
-        return result
+        result
     end
 
     def name
@@ -388,7 +388,7 @@ class Puppet::Resource
         bucket.name = self.title
 
         # TransBuckets don't support parameters, which is why they're being deprecated.
-        return bucket
+        bucket
     end
 
     def extract_parameters(params)
@@ -455,7 +455,7 @@ class Puppet::Resource
         if klass = find_hostclass(title)
             result = klass.name
         end
-        return munge_type_name(result || title)
+        munge_type_name(result || title)
     end
 
     def parse_title

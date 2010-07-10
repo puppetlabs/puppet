@@ -9,13 +9,13 @@ class Puppet::Util::Ldap::Manager
 
     # A null-op that just returns the config.
     def and
-        return self
+        self
     end
 
     # Set the offset from the search base and return the config.
     def at(location)
         @location = location
-        return self
+        self
     end
 
     # The basic search base.
@@ -69,7 +69,7 @@ class Puppet::Util::Ldap::Manager
         ensure
             @connection.close
         end
-        return nil
+        nil
     end
 
     # Convert the name to a dn, then pass the args along to
@@ -160,7 +160,7 @@ class Puppet::Util::Ldap::Manager
     # Specify what classes this provider models.
     def manages(*classes)
         @objectclasses = classes
-        return self
+        self
     end
 
     # Specify the attribute map.  Assumes the keys are the puppet
@@ -173,7 +173,7 @@ class Puppet::Util::Ldap::Manager
         # and the ldap attributes as the keys.
         @ldap2puppet = attributes.inject({}) { |map, ary| map[ary[1]] = ary[0]; map }
 
-        return self
+        self
     end
 
     # Return the ldap name for a puppet attribute.

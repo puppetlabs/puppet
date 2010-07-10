@@ -114,7 +114,7 @@ module Puppet::SSLCertificates::Support
         end
 
         raise Puppet::DevError, "Received invalid certificate" unless @cert.check_private_key(@key)
-        return retrieved
+        retrieved
     end
 
     # A hack method to deal with files that exist with a different case.
@@ -141,6 +141,6 @@ module Puppet::SSLCertificates::Support
         Puppet.notice "Fixing case in #{full_file}; renaming to #{file}"
         File.rename(full_file, file)
 
-        return true
+        true
     end
 end

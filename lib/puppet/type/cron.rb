@@ -77,7 +77,7 @@ Puppet::Type.newtype(:cron) do
         # Verify that a number is within the specified limits.  Return the
         # number if it is, or false if it is not.
         def limitcheck(num, lower, upper)
-            return (num >= lower and num <= upper) && num
+            (num >= lower and num <= upper) && num
         end
 
         # Verify that a value falls within the specified array.  Does case
@@ -98,7 +98,7 @@ Puppet::Type.newtype(:cron) do
                 return ary.index(tmp) if ary.include?(tmp)
             end
 
-            return false
+            false
         end
 
         def should_to_s(newvalue = @should)
@@ -213,7 +213,7 @@ Puppet::Type.newtype(:cron) do
             return_value = super
             return_value = return_value[0] if return_value && return_value.is_a?(Array)
 
-            return return_value
+            return_value
         end
 
         def should

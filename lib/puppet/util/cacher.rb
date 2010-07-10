@@ -12,7 +12,7 @@ module Puppet::Util::Cacher
         def dependent_data_expired?(ts)
             return false unless timestamp
 
-            return timestamp > ts
+            timestamp > ts
         end
     end
 
@@ -108,7 +108,7 @@ module Puppet::Util::Cacher
             if expirer.nil?
                 return true unless self.class.attr_ttl(name)
             end
-            return expirer.dependent_data_expired?(cache_timestamp)
+            expirer.dependent_data_expired?(cache_timestamp)
         end
 
         def expired_by_ttl?(name)
@@ -118,7 +118,7 @@ module Puppet::Util::Cacher
             @ttl_timestamps ||= {}
             @ttl_timestamps[name] ||= Time.now
 
-            return (Time.now - @ttl_timestamps[name]) > ttl
+            (Time.now - @ttl_timestamps[name]) > ttl
         end
 
         def value_cache

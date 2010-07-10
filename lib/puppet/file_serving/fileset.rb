@@ -153,7 +153,7 @@ class Puppet::FileServing::Fileset
             end
         end
 
-        return result
+        result
     end
     public
     # Stat a given file, using the links-appropriate method.

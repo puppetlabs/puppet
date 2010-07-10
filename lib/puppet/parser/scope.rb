@@ -65,7 +65,7 @@ class Puppet::Parser::Scope
     # Is the value true?  This allows us to control the definition of truth
     # in one place.
     def self.true?(value)
-        return (value != false and value != "" and value != :undef)
+        (value != false and value != "" and value != :undef)
     end
 
     # Is the value a number?, return the correct object or nil if not a number
@@ -86,7 +86,7 @@ class Puppet::Parser::Scope
             end
         end
         # it is one of Fixnum,Bignum or Float
-        return value
+        value
     end
 
     # Add to our list of namespaces.
@@ -207,7 +207,7 @@ class Puppet::Parser::Scope
 
         #Puppet.debug "Got defaults for %s: %s" %
         #    [type,values.inspect]
-        return values
+        values
     end
 
     # Look up a defined type.
@@ -228,7 +228,7 @@ class Puppet::Parser::Scope
             warning "Could not look up qualified variable '#{name}'; class #{klassname} has not been evaluated"
             return usestring ? "" : :undefined
         end
-        return kscope.lookupvar(shortname, usestring)
+        kscope.lookupvar(shortname, usestring)
     end
 
     private :lookup_qualified_var
@@ -271,7 +271,7 @@ class Puppet::Parser::Scope
                 target[name] = value
             end
         }
-        return target
+        target
     end
 
     def namespaces
@@ -410,7 +410,7 @@ class Puppet::Parser::Scope
             end
         end
 
-        return out
+        out
     end
 
     # Return the tags associated with this scope.  It's basically

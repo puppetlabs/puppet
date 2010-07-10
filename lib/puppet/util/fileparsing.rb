@@ -137,7 +137,7 @@ module Puppet::Util::FileParsing
 
     # Try to match a specific text line.
     def handle_text_line(line, record)
-        return line =~ record.match ? {:record_type => record.name, :line => line} : nil
+        line =~ record.match ? {:record_type => record.name, :line => line} : nil
     end
 
     # Try to match a record.
@@ -248,7 +248,7 @@ module Puppet::Util::FileParsing
             end
         end
 
-        return nil
+        nil
     end
 
     # Define a new type of record.  These lines get split into hashes.  Valid
@@ -295,7 +295,7 @@ module Puppet::Util::FileParsing
 
         text += line_separator if trailing_separator
 
-        return text
+        text
     end
 
     # Convert our parsed record into a text record.
@@ -362,7 +362,7 @@ module Puppet::Util::FileParsing
         @record_types[record.name] = record
         @record_order << record
 
-        return record
+        record
     end
 
     # Retrieve the record object.

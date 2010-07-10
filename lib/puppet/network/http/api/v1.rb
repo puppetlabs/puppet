@@ -45,7 +45,7 @@ module Puppet::Network::HTTP::API::V1
             raise ArgumentError, "No support for plural #{http_method} operations"
         end
 
-        return method
+        method
     end
 
     def pluralize(indirection)

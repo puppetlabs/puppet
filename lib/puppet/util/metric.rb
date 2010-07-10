@@ -105,7 +105,7 @@ class Puppet::Util::Metric
     end
 
     def path
-        return File.join(self.basedir, @name + ".rrd")
+        File.join(self.basedir, @name + ".rrd")
     end
 
     def newvalue(name,value,label = nil)

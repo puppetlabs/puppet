@@ -169,7 +169,7 @@ class Puppet::Property < Puppet::Parameter
         @should.each { |val| return true if is == val or is == val.to_s }
 
         # otherwise, return false
-        return false
+        false
     end
 
     # because the @should and @is vars might be in weird formats,
@@ -209,7 +209,7 @@ class Puppet::Property < Puppet::Parameter
     # this implicitly means that a given object can only have one property
     # instance of a given property class
     def name
-        return self.class.name
+        self.class.name
     end
 
     # for testing whether we should actually do anything

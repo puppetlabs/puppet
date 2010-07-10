@@ -25,7 +25,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             newhash.delete(p) if newhash.include?(p)
         end
 
-        return newhash
+        newhash
     end
 
     def self.clear
@@ -35,7 +35,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     def self.filetype
         @filetype = Puppet::Util::FileType.filetype(:flat) unless defined?(@filetype)
-        return @filetype
+        @filetype
     end
 
     def self.filetype=(type)
@@ -312,17 +312,17 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             end
         end
         mark_target_modified()
-        return (@resource.class.name.to_s + "_created").intern
+        (@resource.class.name.to_s + "_created").intern
     end
 
     def destroy
         # We use the method here so it marks the target as modified.
         self.ensure = :absent
-        return (@resource.class.name.to_s + "_deleted").intern
+        (@resource.class.name.to_s + "_deleted").intern
     end
 
     def exists?
-        return !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
+        !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
     end
 
     # Write our data to disk.

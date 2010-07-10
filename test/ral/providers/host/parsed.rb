@@ -62,7 +62,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
             host.send(name.to_s + "=", val)
         end
 
-        return host
+        host
     end
 
     # Make sure we convert both directlys correctly using a simple host.

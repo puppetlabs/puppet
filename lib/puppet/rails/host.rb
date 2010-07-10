@@ -78,7 +78,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         # This only runs if time debugging is enabled.
         write_benchmarks
 
-        return host
+        host
     end
 
     # Return the value of a fact.
@@ -238,7 +238,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
         db_resource.save
 
-        return db_resource
+        db_resource
     end
 
 
@@ -256,7 +256,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
         log_accumulated_marks "Resource merger"
 
-        return additions
+        additions
     end
 
     def remove_unneeded_resources(compiled, existing)
@@ -284,7 +284,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         # dependent objects get removed, too.
         Puppet::Rails::Resource.destroy(deletions) unless deletions.empty?
 
-        return resources
+        resources
     end
 
     def find_resources_parameters(resources)

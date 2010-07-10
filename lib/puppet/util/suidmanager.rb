@@ -24,7 +24,7 @@ module Puppet::Util::SUIDManager
         # But 'macosx_productversion_major' requires it.
         Facter.loadfacts
         @osx_maj_ver = Facter.value('macosx_productversion_major')
-        return @osx_maj_ver
+        @osx_maj_ver
     end
     module_function :osx_maj_ver
 
@@ -76,7 +76,7 @@ module Puppet::Util::SUIDManager
         if ret == nil
             raise Puppet::Error, "Invalid #{map[type]}: #{id}"
         end
-        return ret
+        ret
     end
     module_function :convert_xid
 

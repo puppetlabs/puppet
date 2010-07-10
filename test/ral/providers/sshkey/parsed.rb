@@ -44,7 +44,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
             key.send(p.to_s + "=", v)
         end
 
-        return key
+        key
     end
 
     def test_keysparse

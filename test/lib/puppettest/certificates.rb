@@ -13,7 +13,7 @@ module PuppetTest::Certificates
             f.print "as;dklj23rlkjzdflij23wr"
         }
 
-        return keyfile
+        keyfile
     end
 
     def mkCA
@@ -22,7 +22,7 @@ module PuppetTest::Certificates
             ca = Puppet::SSLCertificates::CA.new()
         }
 
-        return ca
+        ca
     end
 
     def mkStore(ca)
@@ -41,7 +41,7 @@ module PuppetTest::Certificates
             cert.mkcsr
         }
 
-        return cert
+        cert
     end
 
     def mksignedcert(ca = nil, hostname = nil)
@@ -52,7 +52,7 @@ module PuppetTest::Certificates
         assert_nothing_raised {
             cert, cacert = ca.sign(mkcert(hostname).mkcsr)
         }
-        return cert
+        cert
     end
 end
 

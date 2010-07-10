@@ -55,7 +55,7 @@ class Puppet::Network::Handler
             }
 
             # for now, just cheat and pass a fake IP address to allowed?
-            return auth.allowed?(hostname, "127.1.1.1")
+            auth.allowed?(hostname, "127.1.1.1")
         end
 
         def initialize(hash = {})

@@ -12,7 +12,7 @@ module Rake
                 file = find_file('rake/puppet_test_loader') or
                     fail "unable to find rake test loader"
             end
-            return file
+            file
         end
     end
 end

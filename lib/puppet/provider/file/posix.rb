@@ -47,7 +47,7 @@ Puppet::Type.type(:file).provide :posix do
             return true
         end
 
-        return false
+        false
     end
 
     # Determine if the user is valid, and if so, return the UID
@@ -70,7 +70,7 @@ Puppet::Type.type(:file).provide :posix do
             currentvalue = :silly
         end
 
-        return currentvalue
+        currentvalue
     end
 
     def sync(path, links, should)
@@ -94,6 +94,6 @@ Puppet::Type.type(:file).provide :posix do
             raise Puppet::Error, "Failed to set owner to '#{uid}': #{detail}"
         end
 
-        return :file_changed
+        :file_changed
     end
 end

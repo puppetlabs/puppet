@@ -33,7 +33,7 @@ class TestZone < PuppetTest::TestCase
 
         @@zones << name
 
-        return zone
+        zone
     end
 
     def test_instances

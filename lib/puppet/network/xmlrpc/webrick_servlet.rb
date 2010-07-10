@@ -107,7 +107,7 @@ module Puppet::Network::XMLRPC
 
             info = Puppet::Network::ClientRequest.new(client, clientip, valid)
 
-            return info
+            info
         end
     end
 end

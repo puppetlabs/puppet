@@ -76,7 +76,7 @@ module SignalEmitter
     def add_signal_handler (name, &handler)
         __maybe_initialize_signal_emitter
         @signal_handlers[name] << handler
-        return handler
+        handler
     end
 
     define_soft_aliases [:on, :on_signal] => :add_signal_handler

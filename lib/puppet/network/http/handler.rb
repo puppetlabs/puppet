@@ -152,7 +152,7 @@ module Puppet::Network::HTTP::Handler
         rescue => detail
             Puppet.err "Could not resolve #{result[:ip]}: #{detail}"
         end
-        return result[:ip]
+        result[:ip]
     end
 
     private

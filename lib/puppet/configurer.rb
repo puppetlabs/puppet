@@ -120,7 +120,7 @@ class Puppet::Configurer
         catalog.finalize
         catalog.retrieval_duration = duration
         catalog.write_class_file
-        return catalog
+        catalog
     end
 
     # The code that actually runs the catalog.
@@ -195,7 +195,7 @@ class Puppet::Configurer
             raise ArgumentError, "Configuration timeout must be an integer"
         end
 
-        return timeout
+        timeout
     end
 
     def execute_from_setting(setting)

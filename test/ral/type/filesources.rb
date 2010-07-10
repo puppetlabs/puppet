@@ -93,7 +93,7 @@ class TestFileSources < Test::Unit::TestCase
         source = "puppet://localhost/#{networked}#{fromdir}" if networked
         recursive_source_test(source, todir)
 
-        return [fromdir,todir, File.join(todir, "one"), File.join(todir, "two")]
+        [fromdir,todir, File.join(todir, "one"), File.join(todir, "two")]
     end
 
     def test_complex_sources_twice
@@ -226,7 +226,7 @@ class TestFileSources < Test::Unit::TestCase
         }
 
         @@tmpfiles << file
-        return file
+        file
     end
 
     def test_unmountedNetworkSources

@@ -28,7 +28,7 @@ Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService:
         #    cmd << "-o"
         #end
 
-        return cmd
+        cmd
     end
 end
 

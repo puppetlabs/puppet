@@ -19,7 +19,7 @@ module Puppet
             end
 
             def retrieve
-                return :absent
+                :absent
             end
 
             def insync?(is)

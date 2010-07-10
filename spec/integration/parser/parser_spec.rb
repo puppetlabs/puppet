@@ -17,7 +17,7 @@ describe Puppet::Parser::Parser do
             def matches?(string)
                 @string = string
                 @result = @parser.parse(string)
-                return result_instance.instance_of?(@class)
+                result_instance.instance_of?(@class)
             end
 
             def description
@@ -50,7 +50,7 @@ describe Puppet::Parser::Parser do
             def matches?(string)
                 @string = string
                 @result = @parser.parse(string)
-                return @block.call(result_instance)
+                @block.call(result_instance)
             end
 
             def description

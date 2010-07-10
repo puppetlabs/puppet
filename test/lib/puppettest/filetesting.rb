@@ -26,7 +26,7 @@ module PuppetTest::FileTesting
 
             ret.push item
         }
-        return ret
+        ret
     end
 
     def mkranddirsandfiles(dirs = nil,files = nil,depth = 3)
@@ -63,7 +63,7 @@ module PuppetTest::FileTesting
         FileUtils.cd(dir) {
             list = %x{find . 2>/dev/null}.chomp.split(/\n/)
         }
-        return list
+        list
     end
 
     def assert_trees_equal(fromdir,todir)
@@ -145,7 +145,7 @@ module PuppetTest::FileTesting
             end
         }
 
-        return deleted
+        deleted
     end
 
     def add_random_files(dir)
@@ -168,7 +168,7 @@ module PuppetTest::FileTesting
                 false
             end
         }
-        return added
+        added
     end
 
     def modify_random_files(dir)
@@ -191,7 +191,7 @@ module PuppetTest::FileTesting
                 false
             end
         }
-        return modded
+        modded
     end
 
     def readonly_random_files(dir)
@@ -211,7 +211,7 @@ module PuppetTest::FileTesting
                 false
             end
         }
-        return modded
+        modded
     end
 
     def conffile

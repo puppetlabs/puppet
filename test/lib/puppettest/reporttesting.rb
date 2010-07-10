@@ -10,7 +10,7 @@ module PuppetTest::Reporttesting
             report << log
         }
 
-        return report
+        report
     end
 end
 

@@ -23,7 +23,7 @@ class Puppet::Provider::Ldap < Puppet::Provider
 
         # Set up our getter/setter methods.
         mk_resource_methods
-        return @manager
+        @manager
     end
 
     # Query all of our resources from ldap.
@@ -128,6 +128,6 @@ class Puppet::Provider::Ldap < Puppet::Provider
         end
 
         @ldap_properties = attributes
-        return @ldap_properties.dup
+        @ldap_properties.dup
     end
 end

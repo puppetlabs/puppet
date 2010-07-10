@@ -7,7 +7,7 @@ class Puppet::Util::Ldap::Generator
     # Declare the attribute we'll use to generate the value.
     def from(source)
         @source = source
-        return self
+        self
     end
 
     # Actually do the generation.
@@ -40,6 +40,6 @@ class Puppet::Util::Ldap::Generator
     # Provide the code that does the generation.
     def with(&block)
         @generator = block
-        return self
+        self
     end
 end

@@ -40,7 +40,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
                 return provider.properties
             end
         end
-        return nil
+        nil
     end
 
     def uninstall

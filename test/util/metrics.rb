@@ -37,7 +37,7 @@ class TestMetric < PuppetTest::TestCase
             eventdata[event] = rand(eventmax)
         }
 
-        return {:typedata => typedata, :eventdata => eventdata}
+        {:typedata => typedata, :eventdata => eventdata}
     end
 
     def rundata(report, time)

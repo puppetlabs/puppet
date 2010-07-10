@@ -150,7 +150,7 @@ class Puppet::SSL::Host
             raise
         end
 
-        return true
+        true
     end
 
     def certificate
@@ -173,7 +173,7 @@ class Puppet::SSL::Host
         return false unless key
         return false unless certificate
 
-        return certificate.content.check_private_key(key.content)
+        certificate.content.check_private_key(key.content)
     end
 
     # Generate all necessary parts of our ssl host.

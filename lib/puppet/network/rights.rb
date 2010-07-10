@@ -35,7 +35,7 @@ class Rights
             # if we didn't find the right acl
             raise
         end
-        return true
+        true
     end
 
     def fail_on_deny(name, args = {})
@@ -235,7 +235,7 @@ class Rights
             return self.key == namespace_to_key(key) if acl_type == :name
 
             # otherwise match with the regex
-            return self.key.match(key)
+            self.key.match(key)
         end
 
         def namespace_to_key(key)
@@ -254,7 +254,7 @@ class Rights
             # sort by creation order (ie first match appearing in the file will win)
             # that is don't sort, in which case the sort algorithm will order in the
             # natural array order (ie the creation order)
-            return 0
+            0
         end
 
         def ==(name)

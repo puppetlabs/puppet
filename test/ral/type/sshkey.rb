@@ -59,7 +59,7 @@ class TestSSHKey < Test::Unit::TestCase
 
         @catalog.add_resource(key)
 
-        return key
+        key
     end
 
     def test_instances

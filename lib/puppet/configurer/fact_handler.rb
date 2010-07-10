@@ -37,7 +37,7 @@ module Puppet::Configurer::FactHandler
 
         text = facts.render(format)
 
-        return {:facts_format => format, :facts => CGI.escape(text)}
+        {:facts_format => format, :facts => CGI.escape(text)}
     end
 
     # Retrieve facts from the central server.

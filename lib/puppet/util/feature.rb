@@ -48,7 +48,7 @@ class Puppet::Util::Feature
         feature = method.to_s.sub(/\?$/, '')
         @loader.load(feature)
 
-        return respond_to?(method) && self.send(method)
+        respond_to?(method) && self.send(method)
     end
 
     # Actually test whether the feature is present.  We only want to test when
@@ -63,7 +63,7 @@ class Puppet::Util::Feature
         end
 
         # We loaded all of the required libraries
-        return true
+        true
     end
 
     private
@@ -79,6 +79,6 @@ class Puppet::Util::Feature
             Puppet.debug "Failed to load library '#{lib}' for feature '#{name}'"
             return false
         end
-        return true
+        true
     end
 end

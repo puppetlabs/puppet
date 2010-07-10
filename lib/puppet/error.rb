@@ -32,7 +32,7 @@ module Puppet # :nodoc:
                 str = @message.to_s
             end
 
-            return str
+            str
         end
     end
 

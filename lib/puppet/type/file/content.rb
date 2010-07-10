@@ -105,7 +105,7 @@ module Puppet
                     print diff(@resource[:path], path)
                 end
             end
-            return result
+            result
         end
 
         def retrieve
@@ -136,7 +136,7 @@ module Puppet
             # one valid value somewhere.
             @resource.write(:content)
 
-            return return_event
+            return_event
         end
 
         def write_temporarily

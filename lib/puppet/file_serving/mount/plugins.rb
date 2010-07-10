@@ -10,7 +10,7 @@ class Puppet::FileServing::Mount::Plugins < Puppet::FileServing::Mount
 
         path = mod.plugin(relative_path)
 
-        return path
+        path
     end
 
     def search(relative_path, request)

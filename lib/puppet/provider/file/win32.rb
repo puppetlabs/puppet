@@ -11,7 +11,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
         return id.to_s if id.is_a?(Symbol)
         return nil if id > Puppet[:maximum_uid].to_i
         # should translate ID numbers to usernames
-        return id
+        id
     end
 
     def insync?(current, should)
@@ -34,7 +34,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
             return true
         end
 
-        return false
+        false
     end
 
     # Determine if the user is valid, and if so, return the UID
@@ -47,7 +47,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
         rescue ArgumentError
             number = nil
         end
-        return (number = uid(value)) && number
+        (number = uid(value)) && number
     end
 
     def retrieve(resource)
@@ -65,7 +65,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
             currentvalue = :silly
         end
 
-        return currentvalue
+        currentvalue
     end
 
     def sync(path, links, should)

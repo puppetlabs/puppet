@@ -55,7 +55,7 @@ class Puppet::Parser::TypeLoader
             parse_file(file)
         end
 
-        return modname
+        modname
     end
 
     def imported?(file)

@@ -50,11 +50,11 @@ class Puppet::Util::Settings::Setting
     end
 
     def iscreated?
-        return defined?(@iscreated) && @iscreated
+        defined?(@iscreated) && @iscreated
     end
 
     def set?
-        return !!(defined?(@value) and ! @value.nil?)
+        !!(defined?(@value) and ! @value.nil?)
     end
 
     # short name for the celement

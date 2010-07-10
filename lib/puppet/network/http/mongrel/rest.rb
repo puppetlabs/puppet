@@ -87,6 +87,6 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
             result[:authenticated] = false
         end
 
-        return result
+        result
     end
 end

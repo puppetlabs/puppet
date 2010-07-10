@@ -9,7 +9,7 @@ class Puppet::Network::Handler
         }
 
         def status(client = nil, clientip = nil)
-            return 1
+            1
         end
     end
 end

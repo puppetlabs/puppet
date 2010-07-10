@@ -57,7 +57,7 @@ class TestUserProvider < Test::Unit::TestCase
                 end
             }
 
-            return nil
+            nil
         end
 
         def remove(user)
@@ -83,7 +83,7 @@ class TestUserProvider < Test::Unit::TestCase
                 return obj.send(user.posixmethod(param))
             }
 
-            return nil
+            nil
         end
 
         def remove(user)
@@ -146,7 +146,7 @@ class TestUserProvider < Test::Unit::TestCase
         }
         assert(user, "Could not create provider user")
 
-        return user
+        user
     end
 
     def test_list

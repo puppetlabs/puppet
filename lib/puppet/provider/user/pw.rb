@@ -35,7 +35,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
 
         cmd << "-m" if @resource.managehome?
 
-        return cmd
+        cmd
     end
 end
 

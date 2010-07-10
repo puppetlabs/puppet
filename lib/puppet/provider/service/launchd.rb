@@ -216,7 +216,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         elsif overrides_disabled == false
             return :true
         end
-        return :false
+        :false
     end
 
 

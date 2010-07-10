@@ -25,7 +25,7 @@ class Puppet::Util::Log::Destination
             # Search for direct matches or class matches
             return true if thing === obj or thing == obj.class.to_s
         end
-        return false
+        false
     end
 
     def name

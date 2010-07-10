@@ -10,7 +10,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
         end
 
         # Translate the output to ruby.
-        return output
+        output
     end
 
     private

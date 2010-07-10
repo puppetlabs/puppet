@@ -12,7 +12,7 @@ module Puppet::Util::Errors
 
         error.set_backtrace other.backtrace if other and other.respond_to?(:backtrace)
 
-        return error
+        error
     end
 
     def error_context
@@ -44,7 +44,7 @@ module Puppet::Util::Errors
             raise adderrorcontext(error, detail)
         end
 
-        return retval
+        retval
     end
 
     # Throw an error, defaulting to a Puppet::Error.

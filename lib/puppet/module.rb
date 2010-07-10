@@ -186,7 +186,7 @@ class Puppet::Module
     def subpath(type)
         return File.join(path, type) unless type.to_s == "plugins"
 
-        return backward_compatible_plugins_dir
+        backward_compatible_plugins_dir
     end
 
     def backward_compatible_plugins_dir

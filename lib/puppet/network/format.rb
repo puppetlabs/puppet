@@ -81,7 +81,7 @@ class Puppet::Network::Format
 
         return false unless required_method_present?(:render_method, klass, :instance)
 
-        return true
+        true
     end
 
     def supported?(klass)

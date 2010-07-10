@@ -31,7 +31,7 @@ class Puppet::Provider::Confine
                 # Could not find file
             end
         end
-        return @tests[name]
+        @tests[name]
     end
 
     attr_reader :values
