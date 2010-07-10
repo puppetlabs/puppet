@@ -402,7 +402,7 @@ class TestLangFunctions < Test::Unit::TestCase
         #    "Got told autofunc already exists")
 
         dir = tempfile()
-        $: << dir
+        $LOAD_PATH << dir
         newpath = File.join(dir, "puppet", "parser", "functions")
         FileUtils.mkdir_p(newpath)
 

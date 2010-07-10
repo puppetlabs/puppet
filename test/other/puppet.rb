@@ -55,11 +55,11 @@ class TestPuppetModule < Test::Unit::TestCase
     end
 
     def test_libdir
-        oldlibs = $:.dup
+        oldlibs = $LOAD_PATH.dup
         cleanup do
-            $:.each do |dir|
+            $LOAD_PATH.each do |dir|
                 unless oldlibs.include?(dir)
-                    $:.delete(dir)
+                    $LOAD_PATH.delete(dir)
                 end
             end
         end
@@ -68,12 +68,12 @@ class TestPuppetModule < Test::Unit::TestCase
         Dir.mkdir(one)
         Dir.mkdir(two)
 
-        # Make sure setting the libdir gets the dir added to $:
+        # Make sure setting the libdir gets the dir added to $LOAD_PATH
         assert_nothing_raised do
             Puppet[:libdir] = one
         end
 
-        assert($:.include?(one), "libdir was not added")
+        assert($LOAD_PATH.include?(one), "libdir was not added")
 
         # Now change it, make sure it gets added and the old one gets
         # removed
@@ -81,8 +81,8 @@ class TestPuppetModule < Test::Unit::TestCase
             Puppet[:libdir] = two
         end
 
-        assert($:.include?(two), "libdir was not added")
-        assert(! $:.include?(one), "old libdir was not removed")
+        assert($LOAD_PATH.include?(two), "libdir was not added")
+        assert(! $LOAD_PATH.include?(one), "old libdir was not removed")
     end
 end
 

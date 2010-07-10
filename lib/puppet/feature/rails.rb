@@ -14,9 +14,9 @@ Puppet.features.add(:rails) do
             count = 0
             Dir.entries("/usr/share/rails").each do |dir|
                 libdir = File.join("/usr/share/rails", dir, "lib")
-                if FileTest.exists?(libdir) and ! $:.include?(libdir)
+                if FileTest.exists?(libdir) and ! $LOAD_PATH.include?(libdir)
                     count += 1
-                    $: << libdir
+                    $LOAD_PATH << libdir
                 end
             end
 

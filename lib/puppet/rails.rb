@@ -97,7 +97,7 @@ module Puppet::Rails
     # Migrate to the latest db schema.
     def self.migrate
         dbdir = nil
-        $:.each { |d|
+        $LOAD_PATH.each { |d|
             tmp = File.join(d, "puppet/rails/database")
             if FileTest.directory?(tmp)
                 dbdir = tmp

@@ -177,7 +177,7 @@ module Generators
                 File.makedirs(NODE_DIR)
                 File.makedirs(PLUGIN_DIR)
             rescue
-                $stderr.puts $!.message
+                $stderr.puts $ERROR_INFO.message
                 exit 1
             end
         end

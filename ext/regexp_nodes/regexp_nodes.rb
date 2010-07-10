@@ -117,7 +117,7 @@ class ExternalNode
                 $LOG.debug("appending [#{pattern}] to patternlist for [#{filepath}]")
             }
         rescue Exception
-            $LOG.fatal("Problem reading #{filepath}: #{$!}")
+            $LOG.fatal("Problem reading #{filepath}: #{$ERROR_INFO}")
             exit(1)
         end
 

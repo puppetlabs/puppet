@@ -122,8 +122,8 @@ class TestSUIDManager < Test::Unit::TestCase
     end
 
     def set_exit_status!
-        # We want to make sure $? is set, this is the only way I know how.
-        Kernel.system '' if $?.nil?
+        # We want to make sure $CHILD_STATUS is set, this is the only way I know how.
+        Kernel.system '' if $CHILD_STATUS.nil?
     end
 end
 

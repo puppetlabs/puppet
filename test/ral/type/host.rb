@@ -130,7 +130,7 @@ class TestHost < Test::Unit::TestCase
         host = mkhost()
 
         assert_raise(Puppet::Error) {
-            host[:name] = "!invalid.hostname.$$$"
+            host[:name] = "!invalid.hostname.$PID$"
         }
 
         assert_raise(Puppet::Error) {

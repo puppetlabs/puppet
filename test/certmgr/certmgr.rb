@@ -170,7 +170,7 @@ class TestCertMgr < Test::Unit::TestCase
             #output = %x{openssl verify -CApath #{Puppet[:certdir]} -purpose sslserver #{cert.certfile}}
         }
 
-        assert_equal($?,0)
+        assert_equal($CHILD_STATUS,0)
         assert_equal(File.join(Puppet[:certdir], "signedcertest.pem: OK\n"), output)
     end
 

@@ -132,7 +132,7 @@ module PSON
                 if scan(STRING)
                     return '' if self[1].empty?
                     string = self[1].gsub(%r{(?:\\[\\bfnrt"/]|(?:\\u(?:[A-Fa-f\d]{4}))+|\\[\x20-\xff])}n) do |c|
-                        if u = UNESCAPE_MAP[$&[1]]
+                        if u = UNESCAPE_MAP[$MATCH[1]]
                             u
                         else # \uXXXX
                             bytes = ''

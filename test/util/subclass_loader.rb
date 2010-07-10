@@ -17,8 +17,8 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
         # Make a fake client
         unless defined?(@basedir)
             @basedir ||= tempfile()
-            $: << @basedir
-            cleanup { $:.delete(@basedir) if $:.include?(@basedir) }
+            $LOAD_PATH << @basedir
+            cleanup { $LOAD_PATH.delete(@basedir) if $LOAD_PATH.include?(@basedir) }
         end
 
         libdir = File.join([@basedir, path.split(File::SEPARATOR)].flatten)

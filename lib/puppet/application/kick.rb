@@ -77,12 +77,12 @@ class Puppet::Application::Kick < Puppet::Application
                         # Remove our host from the list of children, so the parallelization
                         # continues working.
                         @children.delete(pid)
-                        if $?.exitstatus != 0
+                        if $CHILD_STATUS.exitstatus != 0
                             failures << host
                         end
-                        print "%s finished with exit code %s\n" % [host, $?.exitstatus]
+                        print "%s finished with exit code %s\n" % [host, $CHILD_STATUS.exitstatus]
                     else
-                        $stderr.puts "Could not find host for PID %s with status %s" % [pid, $?.exitstatus]
+                        $stderr.puts "Could not find host for PID %s with status %s" % [pid, $CHILD_STATUS.exitstatus]
                     end
                 rescue Errno::ECHILD
                     # There are no children left, so just exit unless there are still
@@ -104,7 +104,7 @@ class Puppet::Application::Kick < Puppet::Application
     def run_for_host(host)
         if options[:ping]
             out = %x{ping -c 1 #{host}}
-            unless $? == 0
+            unless $CHILD_STATUS == 0
                 $stderr.print "Could not contact %s\n" % host
                 next
             end

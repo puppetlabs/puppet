@@ -90,7 +90,7 @@ module Puppet::Util::SUIDManager
 
     def run_and_capture(command, new_uid=nil, new_gid=nil)
         output = Puppet::Util.execute(command, :failonfail => false, :uid => new_uid, :gid => new_gid)
-        [output, $?.dup]
+        [output, $CHILD_STATUS.dup]
     end
     module_function :run_and_capture
 
@@ -98,7 +98,7 @@ module Puppet::Util::SUIDManager
         status = nil
         asuser(new_uid, new_gid) do
             Kernel.system(command)
-            status = $?.dup
+            status = $CHILD_STATUS.dup
         end
         status
     end

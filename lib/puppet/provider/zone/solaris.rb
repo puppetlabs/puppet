@@ -150,7 +150,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
             pipe.puts str
         end
 
-        unless $? == 0
+        unless $CHILD_STATUS == 0
             raise ArgumentError, "Failed to apply configuration"
         end
     end

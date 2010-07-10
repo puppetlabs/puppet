@@ -132,13 +132,13 @@ describe provider_class do
                 end
                 it "should consider the process running if the command returns 0" do
                     @provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
-                    $?.stubs(:exitstatus).returns(0)
+                    $CHILD_STATUS.stubs(:exitstatus).returns(0)
                     @provider.status.should == :running
                 end
                 [-10,-1,1,10].each { |ec|
                     it "should consider the process stopped if the command returns something non-0" do
                         @provider.expects(:texecute).with(:status, ['/service/path/myservice', :status], false).returns("")
-                        $?.stubs(:exitstatus).returns(ec)
+                        $CHILD_STATUS.stubs(:exitstatus).returns(ec)
                         @provider.status.should == :stopped
                     end
                 }
@@ -159,7 +159,7 @@ describe provider_class do
             it "should stop and restart the process" do
                 @provider.expects(:texecute).with(:stop, ['/service/path/myservice', :stop ], true).returns("")
                 @provider.expects(:texecute).with(:start,['/service/path/myservice', :start], true).returns("")
-                $?.stubs(:exitstatus).returns(0)
+                $CHILD_STATUS.stubs(:exitstatus).returns(0)
                 @provider.restart
             end
         end

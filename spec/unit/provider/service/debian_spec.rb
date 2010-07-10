@@ -66,13 +66,13 @@ describe provider_class do
 
         it "should return true when invoke-rc.d exits with 104 status" do
             @provider.stubs(:system)
-            $?.stubs(:exitstatus).returns(104)
+            $CHILD_STATUS.stubs(:exitstatus).returns(104)
             @provider.enabled?.should == :true
         end
 
         it "should return true when invoke-rc.d exits with 106 status" do
             @provider.stubs(:system)
-            $?.stubs(:exitstatus).returns(106)
+            $CHILD_STATUS.stubs(:exitstatus).returns(106)
             @provider.enabled?.should == :true
         end
 
@@ -80,7 +80,7 @@ describe provider_class do
         [-100, -1, 0, 1, 100, "foo", "", :true, :false].each do |exitstatus|
             it "should return false when invoke-rc.d exits with #{exitstatus} status" do
                 @provider.stubs(:system)
-                $?.stubs(:exitstatus).returns(exitstatus)
+                $CHILD_STATUS.stubs(:exitstatus).returns(exitstatus)
                 @provider.enabled?.should == :false
             end
         end

@@ -41,10 +41,10 @@ class Puppet::Util::Reference
             f.puts text
         end
         rst2latex = %x{which rst2latex}
-        if $? != 0 or rst2latex =~ /no /
+        if $CHILD_STATUS != 0 or rst2latex =~ /no /
             rst2latex = %x{which rst2latex.py}
         end
-        if $? != 0 or rst2latex =~ /no /
+        if $CHILD_STATUS != 0 or rst2latex =~ /no /
             raise "Could not find rst2latex"
         end
         rst2latex.chomp!
@@ -53,7 +53,7 @@ class Puppet::Util::Reference
             # If we get here without an error, /tmp/puppetdoc.tex isn't a tricky cracker's symlink
         end
         output = %x{#{cmd}}
-        unless $? == 0
+        unless $CHILD_STATUS == 0
             $stderr.puts "rst2latex failed"
             $stderr.puts output
             exit(1)
@@ -75,16 +75,16 @@ class Puppet::Util::Reference
             f.puts text
         end
         pandoc = %x{which pandoc}
-        if $? != 0 or pandoc =~ /no /
+        if $CHILD_STATUS != 0 or pandoc =~ /no /
             pandoc = %x{which pandoc}
         end
-        if $? != 0 or pandoc =~ /no /
+        if $CHILD_STATUS != 0 or pandoc =~ /no /
             raise "Could not find pandoc"
         end
         pandoc.chomp!
         cmd = %{#{pandoc} -s -r rst -w markdown #{dir}/#{name}.rst -o #{dir}/#{name}.mdwn}
         output = %x{#{cmd}}
-        unless $? == 0
+        unless $CHILD_STATUS == 0
             $stderr.puts "Pandoc failed to create #{name} reference."
             $stderr.puts output
             exit(1)
@@ -201,7 +201,7 @@ class Puppet::Util::Reference
         puts "Writing %s reference to trac as %s" % [@name, @page]
         cmd = %{sudo trac-admin /opt/rl/trac/puppet wiki import %s /tmp/puppetdoc.txt} % self.page
         output = %x{#{cmd}}
-        unless $? == 0
+        unless $CHILD_STATUS == 0
             $stderr.puts "trac-admin failed"
             $stderr.puts output
             exit(1)

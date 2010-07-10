@@ -133,7 +133,7 @@ module PuppetTest
     # Rails clobbers RUBYLIB, thanks
     def libsetup
         curlibs = ENV["RUBYLIB"].split(":")
-        $:.reject do |dir| dir =~ /^\/usr/ end.each do |dir|
+        $LOAD_PATH.reject do |dir| dir =~ /^\/usr/ end.each do |dir|
             unless curlibs.include?(dir)
                 curlibs << dir
             end

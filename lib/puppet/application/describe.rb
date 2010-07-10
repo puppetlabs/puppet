@@ -19,7 +19,7 @@ class Formatter
         while work.length > textLen
             if work =~ patt
                 res << $1
-                work.slice!(0, $&.length)
+                work.slice!(0, $MATCH.length)
             else
                 res << work.slice!(0, textLen)
             end

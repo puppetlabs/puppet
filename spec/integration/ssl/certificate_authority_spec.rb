@@ -128,7 +128,7 @@ describe Puppet::SSL::CertificateAuthority do
                 ca_cert = Puppet[:cacert]
                 client_cert = File.join(Puppet[:signeddir], "luke.madstop.com.pem")
                 output = %x{openssl verify -CAfile #{ca_cert} #{client_cert}}
-                $?.should == 0
+                $CHILD_STATUS.should == 0
             end
         end
     end

@@ -249,7 +249,7 @@ end
 }
     end
 
-    assert_equal(0, $?, "Did not successfully create zone")
+    assert_equal(0, $CHILD_STATUS, "Did not successfully create zone")
 
     hash = nil
     assert_nothing_raised {

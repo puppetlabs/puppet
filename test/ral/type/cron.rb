@@ -40,7 +40,7 @@ class TestCron < Test::Unit::TestCase
             tab = Puppet::Type.type(:cron).filetype.read(@me)
         }
 
-        if $? == 0
+        if $CHILD_STATUS == 0
             @currenttab = tab
         else
             @currenttab = nil

@@ -22,7 +22,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         begin
             if resource[:manifest]
                 [command(:svcs), "-l", @resource[:name]]
-                if $?.exitstatus == 1
+                if $CHILD_STATUS.exitstatus == 1
                     Puppet.notice "Importing %s for %s" % [ @resource[:manifest], @resource[:name] ]
                     svccfg :import, resource[:manifest]
                 end

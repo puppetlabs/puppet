@@ -37,7 +37,7 @@ describe Puppet::Util::Autoload do
 
     def with_loader(name, path)
         dir = tmpfile(name + path)
-        $: << dir
+        $LOAD_PATH << dir
         Dir.mkdir(dir)
         rbdir = File.join(dir, path.to_s)
         Dir.mkdir(rbdir)
@@ -45,7 +45,7 @@ describe Puppet::Util::Autoload do
         yield rbdir, loader
         Dir.rmdir(rbdir)
         Dir.rmdir(dir)
-        $:.pop
+        $LOAD_PATH.pop
         AutoloadIntegrator.clear
     end
 

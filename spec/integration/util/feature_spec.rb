@@ -12,7 +12,7 @@ describe Puppet::Util::Feature do
         libdir = tmpfile("feature_lib")
         Dir.mkdir(libdir)
 
-        $: << libdir
+        $LOAD_PATH << libdir
 
         $features = Puppet::Util::Feature.new("feature_lib")
 

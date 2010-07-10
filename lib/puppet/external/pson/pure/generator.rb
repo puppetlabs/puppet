@@ -43,7 +43,7 @@ module PSON
             string = string.dup
             string << '' # XXX workaround: avoid buffer sharing
             string.force_encoding(Encoding::ASCII_8BIT)
-            string.gsub!(/["\\\x0-\x1f]/) { MAP[$&] }
+            string.gsub!(/["\\\x0-\x1f]/) { MAP[$MATCH] }
             string.gsub!(/(
                 (?:
                     [\xc2-\xdf][\x80-\xbf]    |
@@ -63,7 +63,7 @@ module PSON
         end
     else
         def utf8_to_pson(string) # :nodoc:
-            string = string.gsub(/["\\\x0-\x1f]/) { MAP[$&] }
+            string = string.gsub(/["\\\x0-\x1f]/) { MAP[$MATCH] }
             string.gsub!(/(
                 (?:
                     [\xc2-\xdf][\x80-\xbf]    |

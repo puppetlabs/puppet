@@ -64,7 +64,7 @@ Puppet::Type.type(:service).provide :base do
             ucommand(:status, false)
 
             # Expicitly calling exitstatus to facilitate testing
-            if $?.exitstatus == 0
+            if $CHILD_STATUS.exitstatus == 0
                 return :running
             else
                 return :stopped

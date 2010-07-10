@@ -270,7 +270,7 @@ def prepare_installation
     else
         sitelibdir = Config::CONFIG["sitelibdir"]
         if sitelibdir.nil?
-            sitelibdir = $:.find { |x| x =~ /site_ruby/ }
+            sitelibdir = $LOAD_PATH.find { |x| x =~ /site_ruby/ }
             if sitelibdir.nil?
                 sitelibdir = File.join(libdir, "site_ruby")
             elsif sitelibdir !~ Regexp.quote(version)
@@ -369,7 +369,7 @@ def build_man(bins, sbins)
         end
 
 rescue SystemCallError
-    $stderr.puts "Couldn't build man pages: " + $!
+    $stderr.puts "Couldn't build man pages: " + $ERROR_INFO
     $stderr.puts "Continuing with install..."
     end
 end
@@ -377,7 +377,7 @@ end
 def run_tests(test_list)
     begin
         require 'test/unit/ui/console/testrunner'
-        $:.unshift "lib"
+        $LOAD_PATH.unshift "lib"
         test_list.each do |test|
             next if File.directory?(test)
             require test
@@ -389,7 +389,7 @@ def run_tests(test_list)
         tests.delete_if { |o| o == Test::Unit::TestCase }
 
         tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
-        $:.shift
+        $LOAD_PATH.shift
     rescue LoadError
         puts "Missing testrunner library; skipping tests"
     end

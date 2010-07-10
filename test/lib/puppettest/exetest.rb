@@ -27,7 +27,7 @@ module PuppetTest::ExeTest
     end
 
     def setlibdir
-        ENV["RUBYLIB"] = $:.find_all { |dir|
+        ENV["RUBYLIB"] = $LOAD_PATH.find_all { |dir|
             dir =~ /puppet/ or dir =~ /\.\./
         }.join(":")
     end
@@ -71,7 +71,7 @@ module PuppetTest::ExeTest
             output = %x{#{cmd}}.chomp
         }
         assert_equal("", output, "Puppetmasterd produced output %s" % output)
-        assert($? == 0, "Puppetmasterd exit status was %s" % $?)
+        assert($CHILD_STATUS == 0, "Puppetmasterd exit status was %s" % $CHILD_STATUS)
         sleep(1)
 
         cleanup do
@@ -110,7 +110,7 @@ module PuppetTest::ExeTest
         # we default to mandating that it's running, but teardown
         # doesn't require that
         if pid
-            if pid == $$
+            if pid == $PID
                 raise Puppet::Error, "Tried to kill own pid"
             end
             begin

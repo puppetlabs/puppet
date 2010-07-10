@@ -215,7 +215,7 @@ module Util
         end
 
         if failonfail
-            unless $? == 0
+            unless $CHILD_STATUS == 0
                 raise ExecutionFailure, output
             end
         end
@@ -380,7 +380,7 @@ module Util
     def memory
         unless defined?(@pmap)
             pmap = %x{which pmap 2>/dev/null}.chomp
-            if $? != 0 or pmap =~ /^no/
+            if $CHILD_STATUS != 0 or pmap =~ /^no/
                 @pmap = nil
             else
                 @pmap = pmap

@@ -67,7 +67,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
     def latest
         info = port :search, "^#{@resource[:name]}$"
 
-        if $? != 0 or info =~ /^Error/
+        if $CHILD_STATUS != 0 or info =~ /^Error/
             return nil
         end
 

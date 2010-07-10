@@ -143,6 +143,6 @@ class Puppet::Util::Autoload
     end
 
     def search_directories(env=nil)
-        [module_directories(env), Puppet[:libdir].split(File::PATH_SEPARATOR), $:].flatten
+        [module_directories(env), Puppet[:libdir].split(File::PATH_SEPARATOR), $LOAD_PATH].flatten
     end
 end

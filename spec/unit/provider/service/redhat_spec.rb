@@ -88,13 +88,13 @@ describe provider_class do
             end
             it "should consider the process running if the command returns 0" do
                 @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
-                $?.stubs(:exitstatus).returns(0)
+                $CHILD_STATUS.stubs(:exitstatus).returns(0)
                 @provider.status.should == :running
             end
             [-10,-1,1,10].each { |ec|
                 it "should consider the process stopped if the command returns something non-0" do
                     @provider.expects(:texecute).with(:status, ['/sbin/service', 'myservice', 'status'], false)
-                    $?.stubs(:exitstatus).returns(ec)
+                    $CHILD_STATUS.stubs(:exitstatus).returns(ec)
                     @provider.status.should == :stopped
                 end
             }

@@ -34,7 +34,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
         # 104 is the exit status when you query start an enabled service.
         # 106 is the exit status when the policy layer supplies a fallback action
         # See x-man-page://invoke-rc.d
-        if [104, 106].include?($?.exitstatus)
+        if [104, 106].include?($CHILD_STATUS.exitstatus)
             return :true
         else
             return :false

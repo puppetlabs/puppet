@@ -169,7 +169,7 @@ class Application
         def controlled_run(&block)
             return unless clear?
             result = block.call
-            Process.kill(:HUP, $$) if restart_requested?
+            Process.kill(:HUP, $PID) if restart_requested?
             result
         end
 
