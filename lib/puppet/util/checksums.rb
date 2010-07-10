@@ -8,20 +8,12 @@ module Puppet::Util::Checksums
 
     # Strip the checksum type from an existing checksum
     def sumdata(checksum)
-        if checksum =~ /^\{(\w+)\}(.+)/
-            return $2
-        else
-            return nil
-        end
+        return checksum =~ /^\{(\w+)\}(.+)/ ? $2 : nil
     end
 
     # Strip the checksum type from an existing checksum
     def sumtype(checksum)
-        if checksum =~ /^\{(\w+)\}/
-            return $1
-        else
-            return nil
-        end
+        return checksum =~ /^\{(\w+)\}/ ? $1 : nil
     end
 
     # Calculate a checksum using Digest::MD5.

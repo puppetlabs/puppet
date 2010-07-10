@@ -29,19 +29,11 @@ class Puppet::Network::Handler
         def initialize(hash = {})
             args = {}
 
-            if hash[:Local]
-                @local = hash[:Local]
-            else
-                @local = false
-            end
+            @local = hash[:Local]
 
             args[:Local] = true
 
-            if hash.include?(:CA) and hash[:CA]
-                @ca = Puppet::SSLCertificates::CA.new()
-            else
-                @ca = nil
-            end
+            @ca = (hash.include?(:CA) and hash[:CA]) ? Puppet::SSLCertificates::CA.new() : nil
 
             # This is only used by the cfengine module, or if --loadclasses was
             # specified in +puppet+.

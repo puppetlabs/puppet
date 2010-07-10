@@ -157,11 +157,7 @@ def prepare_installation
     # Only try to do docs if we're sure they have rdoc
     if $haverdoc
         InstallOptions.rdoc  = true
-        if RUBY_PLATFORM == "i386-mswin32"
-            InstallOptions.ri  = false
-        else
-            InstallOptions.ri  = true
-        end
+        InstallOptions.ri  = RUBY_PLATFORM != "i386-mswin32"
     else
         InstallOptions.rdoc  = false
         InstallOptions.ri  = false

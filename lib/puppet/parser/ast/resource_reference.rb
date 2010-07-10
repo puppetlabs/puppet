@@ -8,8 +8,7 @@ class Puppet::Parser::AST::ResourceReference < Puppet::Parser::AST::Branch
     # and name.
     def evaluate(scope)
         titles = Array(title.safeevaluate(scope)).collect { |t| Puppet::Resource.new(type, t, :namespaces => scope.namespaces) }
-        return titles.pop if titles.length == 1
-        return titles
+        return(titles.length == 1 ? titles.pop : titles)
     end
 
     def to_s

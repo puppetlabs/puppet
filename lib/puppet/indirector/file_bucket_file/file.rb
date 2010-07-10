@@ -85,8 +85,7 @@ module Puppet::FileBucketFile
             return [request.key, nil] if checksum?(request.key)
 
             checksum_type, checksum, path = request.key.split(/\//, 3)
-            return nil if checksum_type.to_s == ""
-            return [ "{#{checksum_type}}#{checksum}", path ]
+            return(checksum_type.to_s == "" ? nil : [ "{#{checksum_type}}#{checksum}", path ])
         end
 
         def path_for(bucket_file, subfile = nil)

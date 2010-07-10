@@ -48,11 +48,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def file
-        if f = self.source_file
-            return f.filename
-        else
-            return nil
-        end
+        return (f = self.source_file) ? f.filename : nil
     end
 
     def file=(file)
@@ -179,11 +175,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
 
     def parameter(param)
         if pn = param_names.find_by_name(param)
-            if pv = param_values.find(:first, :conditions => [ 'param_name_id = ?', pn])
-                return pv.value
-            else
-                return nil
-            end
+            return (pv = param_values.find(:first, :conditions => [ 'param_name_id = ?', pn])) ? pv.value : nil
         end
     end
 

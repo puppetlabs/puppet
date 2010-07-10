@@ -40,11 +40,7 @@ class TestCron < Test::Unit::TestCase
             tab = Puppet::Type.type(:cron).filetype.read(@me)
         }
 
-        if $CHILD_STATUS == 0
-            @currenttab = tab
-        else
-            @currenttab = nil
-        end
+        @currenttab = $CHILD_STATUS == 0 ? tab : nil
     end
 
     # Restore the cron tab to its original form.

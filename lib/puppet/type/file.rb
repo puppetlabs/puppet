@@ -514,11 +514,7 @@ Puppet::Type.newtype(:file) do
 
         val = @parameters[:recurse].value
 
-        if val and (val == true or val == :remote)
-            return true
-        else
-            return false
-        end
+        return !!(val and (val == true or val == :remote))
     end
 
     # Recurse the target of the link.
@@ -666,8 +662,7 @@ Puppet::Type.newtype(:file) do
         # The user doesn't really care, apparently
         if self[:ensure] == :present
             return true unless s = stat
-            return true if s.ftype == "file"
-            return false
+            return(s.ftype == "file" ? true : false)
         end
 
         # If we've gotten here, then :ensure isn't set

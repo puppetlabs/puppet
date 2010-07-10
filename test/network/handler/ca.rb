@@ -6,11 +6,7 @@ require 'puppettest'
 require 'puppet/network/handler/ca'
 require 'mocha'
 
-if ARGV.length > 0 and ARGV[0] == "short"
-    $short = true
-else
-    $short = false
-end
+$short = (ARGV.length > 0 and ARGV[0] == "short")
 
 class TestCA < Test::Unit::TestCase
     include PuppetTest::ServerTest

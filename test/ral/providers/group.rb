@@ -49,11 +49,7 @@ class TestGroupProvider < Test::Unit::TestCase
         def missing?(group)
             output = %x{nidump -r /groups/#{group} / 2>/dev/null}.chomp
 
-            if output == ""
-                return true
-            else
-                return false
-            end
+            return output == ""
 
             assert_equal("", output, "Group #{group} is present:\n#{output}")
         end

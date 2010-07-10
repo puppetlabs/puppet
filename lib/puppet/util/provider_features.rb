@@ -15,11 +15,7 @@ module Puppet::Util::ProviderFeatures
         # Are all of the requirements met?
         def available?(obj)
             if self.methods
-                if methods_available?(obj)
-                    return true
-                else
-                    return false
-                end
+                return !!methods_available?(obj)
             else
                 # In this case, the provider has to declare support for this
                 # feature, and that's been checked before we ever get to the
@@ -116,11 +112,7 @@ module Puppet::Util::ProviderFeatures
             # determine if the feature is present.
             @feature_module.send(:define_method, :feature?) do |name|
                 method = name.to_s + "?"
-                if respond_to?(method) and send(method)
-                    return true
-                else
-                    return false
-                end
+                return !!(respond_to?(method) and send(method))
             end
 
             # Create a method that will list all functional features.

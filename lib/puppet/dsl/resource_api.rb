@@ -97,8 +97,7 @@ class Puppet::DSL::ResourceAPI
     def valid_type?(name)
         return true if [:class, :node].include?(name)
         return true if Puppet::Type.type(name)
-        return true if known_resource_types.definition(name)
-        return false
+        return(known_resource_types.definition(name) ? true : false)
     end
 
     private

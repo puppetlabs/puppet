@@ -48,8 +48,7 @@ module Puppet::Util::Autoload::FileCache
 
     def found_file?(path, type = nil)
         if data = found_files[path] and ! data_expired?(data[:time])
-            return false if type and ! data[:stat].send(type)
-            return true
+            return(type and ! data[:stat].send(type)) ? false : true
         else
             return false
         end
@@ -60,11 +59,7 @@ module Puppet::Util::Autoload::FileCache
     end
 
     def missing_file?(path)
-        if time = missing_files[path] and ! data_expired?(time)
-            return true
-        else
-            return false
-        end
+        return !!(time = missing_files[path] and ! data_expired?(time))
     end
 
     def missing_file(path)

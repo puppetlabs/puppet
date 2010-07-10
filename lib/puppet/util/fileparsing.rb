@@ -137,11 +137,7 @@ module Puppet::Util::FileParsing
 
     # Try to match a specific text line.
     def handle_text_line(line, record)
-        if line =~ record.match
-            return {:record_type => record.name, :line => line}
-        else
-            return nil
-        end
+        return line =~ record.match ? {:record_type => record.name, :line => line} : nil
     end
 
     # Try to match a record.

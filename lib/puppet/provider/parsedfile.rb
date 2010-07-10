@@ -322,11 +322,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     def exists?
-        if @property_hash[:ensure] == :absent or @property_hash[:ensure].nil?
-            return false
-        else
-            return true
-        end
+        return !(@property_hash[:ensure] == :absent or @property_hash[:ensure].nil?)
     end
 
     # Write our data to disk.

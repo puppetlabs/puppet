@@ -47,11 +47,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
         rescue ArgumentError
             number = nil
         end
-        if number = uid(value)
-            return number
-        else
-            return false
-        end
+        return (number = uid(value)) && number
     end
 
     def retrieve(resource)

@@ -75,11 +75,7 @@ class Puppet::SSL::CertificateAuthority
         return true if ['true', true].include?(auto)
 
         raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless auto =~ /^\//
-        if FileTest.exist?(auto)
-            return auto
-        else
-            return false
-        end
+        return FileTest.exist?(auto) && auto
     end
 
     # Create an AuthStore for autosigning.
@@ -204,11 +200,7 @@ class Puppet::SSL::CertificateAuthority
 
     # Print a given host's certificate as text.
     def print(name)
-        if cert = Puppet::SSL::Certificate.find(name)
-            return cert.to_text
-        else
-            return nil
-        end
+        return (cert = Puppet::SSL::Certificate.find(name)) ? cert.to_text : nil
     end
 
     # Revoke a given certificate.

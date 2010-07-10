@@ -309,11 +309,7 @@ class Type
         @validattrs ||= {}
 
         unless @validattrs.include?(name)
-            if self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name)
-                @validattrs[name] = true
-            else
-                @validattrs[name] = false
-            end
+            @validattrs[name] = !!(self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name))
         end
 
         @validattrs[name]
@@ -322,11 +318,7 @@ class Type
     # does the name reflect a valid property?
     def self.validproperty?(name)
         name = symbolize(name)
-        if @validproperties.include?(name)
-            return @validproperties[name]
-        else
-            return false
-        end
+        return @validproperties.include?(name) && @validproperties[name]
     end
 
     # Return the list of validproperties
@@ -339,11 +331,7 @@ class Type
     # does the name reflect a valid parameter?
     def self.validparameter?(name)
         raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
-        if @paramhash.include?(name) or @@metaparamhash.include?(name)
-            return true
-        else
-            return false
-        end
+        return !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
     end
 
     # This is a forward-compatibility method - it's the validity interface we'll use in Puppet::Resource.
@@ -468,11 +456,7 @@ class Type
     # retrieve the 'should' value for a specified property
     def should(name)
         name = attr_alias(name)
-        if prop = @parameters[name] and prop.is_a?(Puppet::Property)
-            return prop.should
-        else
-            return nil
-        end
+        return (prop = @parameters[name] and prop.is_a?(Puppet::Property)) ? prop.should : nil
     end
 
     # Create the actual attribute instance.  Requires either the attribute
@@ -512,11 +496,7 @@ class Type
     # LAK:NOTE(20081028) Since the 'parameter' method is now a superset of this method,
     # this one should probably go away at some point.
     def property(name)
-        if obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Property)
-            return obj
-        else
-            return nil
-        end
+        return (obj = @parameters[symbolize(name)] and obj.is_a?(Puppet::Property)) ? obj : nil
     end
 
     # For any parameters or properties that have defaults and have not yet been
@@ -555,11 +535,7 @@ class Type
     def value(name)
         name = attr_alias(name)
 
-        if obj = @parameters[name] and obj.respond_to?(:value)
-            return obj.value
-        else
-            return nil
-        end
+        return (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
     end
 
     def version
@@ -617,11 +593,7 @@ class Type
     # this is a retarded hack method to get around the difference between
     # component children and file children
     def self.depthfirst?
-        if defined?(@depthfirst)
-            return @depthfirst
-        else
-            return false
-        end
+        return defined?(@depthfirst) && @depthfirst
     end
 
     def depthfirst?

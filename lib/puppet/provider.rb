@@ -189,11 +189,7 @@ class Puppet::Provider
         end
         return true unless features = klass.required_features
 
-        if satisfies?(*features)
-            return true
-        else
-            return false
-        end
+        return !!satisfies?(*features)
     end
 
 #    def self.to_s

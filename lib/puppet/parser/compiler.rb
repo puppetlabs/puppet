@@ -120,11 +120,7 @@ class Puppet::Parser::Compiler
     # Return the node's environment.
     def environment
         unless defined?(@environment)
-            if node.environment and node.environment != ""
-                @environment = node.environment
-            else
-                @environment = nil
-            end
+            @environment = (node.environment and node.environment != "") ? node.environment : nil
         end
         Puppet::Node::Environment.current = @environment
         @environment

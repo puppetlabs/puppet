@@ -6,11 +6,7 @@ require 'puppet'
 class Puppet::Provider::NameService < Puppet::Provider
     class << self
         def autogen_default(param)
-            if defined?(@autogen_defaults)
-                return @autogen_defaults[symbolize(param)]
-            else
-                return nil
-            end
+            return defined?(@autogen_defaults) ? @autogen_defaults[symbolize(param)] : nil
         end
 
         def autogen_defaults(hash)
@@ -36,11 +32,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         def option(name, option)
             name = name.intern if name.is_a? String
-            if defined?(@options) and @options.include? name and @options[name].include? option
-                return @options[name][option]
-            else
-                return nil
-            end
+            return (defined?(@options) and @options.include? name and @options[name].include? option) ? @options[name][option] : nil
         end
 
         def options(name, hash)
@@ -202,20 +194,12 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     # Does our object exist?
     def exists?
-        if getinfo(true)
-            return true
-        else
-            return false
-        end
+        return !!getinfo(true)
     end
 
     # Retrieve a specific value by name.
     def get(param)
-        if hash = getinfo(false)
-            return hash[param]
-        else
-            return nil
-        end
+        return (hash = getinfo(false)) ? hash[param] : nil
     end
 
     # Retrieve what we can about our object
@@ -230,11 +214,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         # Now convert our Etc struct into a hash.
-        if @objectinfo
-            return info2hash(@objectinfo)
-        else
-            return nil
-        end
+        return @objectinfo ? info2hash(@objectinfo) : nil
     end
 
     # The list of all groups the user is a member of.  Different

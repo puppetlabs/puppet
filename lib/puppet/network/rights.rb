@@ -258,8 +258,7 @@ class Rights
         end
 
         def ==(name)
-            return self.key == namespace_to_key(name) if acl_type == :name
-            return self.name == name.gsub(/^~\s+/,'')
+            return(acl_type == :name ? self.key == namespace_to_key(name) : self.name == name.gsub(/^~\s+/,''))
         end
 
     end

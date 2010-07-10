@@ -109,11 +109,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     end
 
     def exists?
-        if self.class.parsed_auth_db.has_key?(resource[:name])
-            return true
-        else
-            return false
-        end
+        return !!self.class.parsed_auth_db.has_key?(resource[:name])
     end
 
 

@@ -48,11 +48,7 @@ class Puppet::Util::Feature
         feature = method.to_s.sub(/\?$/, '')
         @loader.load(feature)
 
-        if respond_to?(method)
-            return self.send(method)
-        else
-            return false
-        end
+        return respond_to?(method) && self.send(method)
     end
 
     # Actually test whether the feature is present.  We only want to test when

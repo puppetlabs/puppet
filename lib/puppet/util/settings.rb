@@ -54,11 +54,7 @@ class Puppet::Util::Settings
     # Is our parameter a boolean parameter?
     def boolean?(param)
         param = param.to_sym
-        if @config.include?(param) and @config[param].kind_of? BooleanSetting
-            return true
-        else
-            return false
-        end
+        return !!(@config.include?(param) and @config[param].kind_of? BooleanSetting)
     end
 
     # Remove all set values, potentially skipping cli values.

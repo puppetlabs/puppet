@@ -92,11 +92,7 @@ class Puppet::Network::Handler
             @mounts = {}
             @files = {}
 
-            if hash[:Local]
-                @local = hash[:Local]
-            else
-                @local = false
-            end
+            @local = hash[:Local]
 
             @noreadconfig = true if hash[:Config] == false
 
@@ -236,18 +232,10 @@ class Puppet::Network::Handler
             unless hostname = (client || Facter.value("hostname"))
                 raise ArgumentError, "Could not find hostname"
             end
-            if node = Puppet::Node.find(hostname)
-                env = node.environment
-            else
-                env = nil
-            end
+            env = (node = Puppet::Node.find(hostname)) ? node.environment : nil
 
             # And use the environment to look up the module.
-            if mod = Puppet::Node::Environment.new(env).module(module_name) and mod.files?
-                return @mounts[MODULES].copy(mod.name, mod.file_directory)
-            else
-                return nil
-            end
+            return (mod = Puppet::Node::Environment.new(env).module(module_name) and mod.files?) ? @mounts[MODULES].copy(mod.name, mod.file_directory) : nil
         end
 
         # Read the configuration file.

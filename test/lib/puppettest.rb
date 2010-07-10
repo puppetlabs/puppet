@@ -241,11 +241,7 @@ module PuppetTest
     end
 
     def textmate?
-        if ENV["TM_FILENAME"]
-            return true
-        else
-            return false
-        end
+        return !!ENV["TM_FILENAME"]
     end
 
     def tstdir

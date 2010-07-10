@@ -4,7 +4,6 @@ require 'puppet/file_bucket/file'
 # in filebucket indirections.
 module Puppet::FileBucket::File::IndirectionHooks
     def select_terminus(request)
-        return :rest if request.protocol == 'https'
-        return Puppet::FileBucket::File.indirection.terminus_class
+        return(request.protocol == 'https' ? :rest : Puppet::FileBucket::File.indirection.terminus_class)
     end
 end

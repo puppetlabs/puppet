@@ -183,8 +183,7 @@ class Puppet::Resource
 
     # Find our resource.
     def resolve
-        return catalog.resource(to_s) if catalog
-        return nil
+        return(catalog ? catalog.resource(to_s) : nil)
     end
 
     def title=(value)
@@ -215,8 +214,7 @@ class Puppet::Resource
     end
 
     def key_attributes
-        return resource_type.key_attributes if resource_type.respond_to? :key_attributes
-        return [:name]
+        return(resource_type.respond_to? :key_attributes) ? resource_type.key_attributes : [:name]
     end
 
     # Convert our resource to Puppet code.

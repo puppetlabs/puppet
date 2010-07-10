@@ -21,11 +21,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     def checkforcdrom
         unless defined?(@@checkedforcdrom)
             if FileTest.exists? "/etc/apt/sources.list"
-                if File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/
-                    @@checkedforcdrom = true
-                else
-                    @@checkedforcdrom = false
-                end
+                @@checkedforcdrom = !!(File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/)
             else
                 # This is basically a pathalogical case, but we'll just
                 # ignore it

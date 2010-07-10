@@ -54,8 +54,7 @@ class Puppet::Parser::AST
                 res
             end
             # decapsulate array in case of only one item
-            return resource.pop if resource.length == 1
-            return resource
+            return(resource.length == 1 ? resource.pop : resource)
         end
 
         # Create our ResourceDef.  Handles type checking for us.

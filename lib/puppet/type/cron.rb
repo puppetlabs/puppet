@@ -77,11 +77,7 @@ Puppet::Type.newtype(:cron) do
         # Verify that a number is within the specified limits.  Return the
         # number if it is, or false if it is not.
         def limitcheck(num, lower, upper)
-            if num >= lower and num <= upper
-                return num
-            else
-                return false
-            end
+            return (num >= lower and num <= upper) && num
         end
 
         # Verify that a value falls within the specified array.  Does case

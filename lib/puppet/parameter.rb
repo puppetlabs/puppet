@@ -90,11 +90,7 @@ class Puppet::Parameter
 
         # Is this parameter the namevar?  Defaults to false.
         def isnamevar?
-            if defined?(@isnamevar)
-                return @isnamevar
-            else
-                return false
-            end
+            return defined?(@isnamevar) && @isnamevar
         end
 
         # This parameter is required.
@@ -109,11 +105,7 @@ class Puppet::Parameter
 
         # Is this parameter required?  Defaults to false.
         def required?
-            if defined?(@required)
-                return @required
-            else
-                return false
-            end
+            return defined?(@required) && @required
         end
 
         # Verify that we got a good value

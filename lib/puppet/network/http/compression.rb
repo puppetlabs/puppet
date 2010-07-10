@@ -5,8 +5,7 @@ module Puppet::Network::HTTP::Compression
     # this module function allows to use the right underlying
     # methods depending on zlib presence
     def module
-        return Active if Puppet.features.zlib?
-        return None
+        return(Puppet.features.zlib? ? Active : None)
     end
     module_function :module
 

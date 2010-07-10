@@ -61,11 +61,7 @@ module Puppet
     def self.[](param)
         case param
         when :debug
-            if Puppet::Util::Log.level == :debug
-                return true
-            else
-                return false
-            end
+            return Puppet::Util::Log.level == :debug
         else
             return @@settings[param]
         end

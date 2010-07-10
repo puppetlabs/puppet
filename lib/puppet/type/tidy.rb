@@ -80,8 +80,7 @@ Puppet::Type.newtype(:tidy) do
         def tidy?(path, stat)
             basename = File.basename(path)
             flags = File::FNM_DOTMATCH | File::FNM_PATHNAME
-            return true if value.find {|pattern| File.fnmatch(pattern, basename, flags) }
-            return false
+            return(value.find {|pattern| File.fnmatch(pattern, basename, flags) } ? true : false)
         end
     end
 
@@ -118,11 +117,7 @@ Puppet::Type.newtype(:tidy) do
 
         def tidy?(path, stat)
             # If the file's older than we allow, we should get rid of it.
-            if (Time.now.to_i - stat.send(resource[:type]).to_i) > value
-                return true
-            else
-                return false
-            end
+            return (Time.now.to_i - stat.send(resource[:type]).to_i) > value
         end
 
         munge do |age|
@@ -167,11 +162,7 @@ Puppet::Type.newtype(:tidy) do
         end
 
         def tidy?(path, stat)
-            if stat.size >= value
-                return true
-            else
-                return false
-            end
+            return stat.size >= value
         end
 
         munge do |size|

@@ -71,11 +71,7 @@ class Puppet::Util::Log
     def Log.create(hash)
         raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
         raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
-        if @levels.index(hash[:level]) >= @loglevel
-            return Puppet::Util::Log.new(hash)
-        else
-            return nil
-        end
+        return @levels.index(hash[:level]) >= @loglevel ? Puppet::Util::Log.new(hash) : nil
     end
 
     def Log.destinations

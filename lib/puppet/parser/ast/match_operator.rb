@@ -16,8 +16,7 @@ class Puppet::Parser::AST
         def evaluate(scope)
             lval = @lval.safeevaluate(scope)
 
-            return @operator == "=~" if rval.evaluate_match(lval, scope)
-            return @operator == "!~"
+            return(rval.evaluate_match(lval, scope) ? @operator == "=~" : @operator == "!~")
         end
 
         def initialize(hash)

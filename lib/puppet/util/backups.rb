@@ -12,8 +12,7 @@ module Puppet::Util::Backups
         file ||= self[:path]
         return true unless FileTest.exists?(file)
 
-        return perform_backup_with_bucket(file) if self.bucket
-        return perform_backup_with_backuplocal(file, self[:backup])
+        return(self.bucket ? perform_backup_with_bucket(file) : perform_backup_with_backuplocal(file, self[:backup]))
     end
 
     private

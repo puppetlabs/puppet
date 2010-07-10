@@ -52,17 +52,7 @@ Puppet::Type.type(:file).provide :posix do
 
     # Determine if the user is valid, and if so, return the UID
     def validuser?(value)
-        begin
-            number = Integer(value)
-            return number
-        rescue ArgumentError
-            number = nil
-        end
-        if number = uid(value)
-            return number
-        else
-            return false
-        end
+        Integer(value) rescue uid(value) || false
     end
 
     def retrieve(resource)

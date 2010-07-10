@@ -115,11 +115,7 @@ class Puppet::SSLCertificates::Certificate
             @password = nil
         end
 
-        if hash.include?(:selfsign)
-            @selfsign = hash[:selfsign]
-        else
-            @selfsign = false
-        end
+        @selfsign = hash.include?(:selfsign) && hash[:selfsign]
     end
 
     # this only works for servers, not for users

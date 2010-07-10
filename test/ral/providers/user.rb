@@ -34,11 +34,7 @@ class TestUserProvider < Test::Unit::TestCase
         def missing?(user)
             output = %x{nidump -r /users/#{user} / 2>/dev/null}.chomp
 
-            if output == ""
-                return true
-            else
-                return false
-            end
+            return output == ""
 
             assert_equal("", output, "User #{user} is present:\n#{output}")
         end
