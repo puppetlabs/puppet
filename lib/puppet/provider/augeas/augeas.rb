@@ -102,7 +102,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     # Rip off any ticks if they are there.
                     p = p[1, (p.size - 2)] if p[0,1] == "'" || p[0,1] == "\""
                     p.chomp!("/")
-                    if p[0,1] != "$" && p[0,1] != "/"
+                    if p[0,1] != '$' && p[0,1] != "/"
                         argline << context + p
                     else
                         argline << p
