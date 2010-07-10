@@ -150,7 +150,7 @@ module Puppet::Network
         end
 
         def http
-            @http = Puppet::Network::HttpPool.http_instance(host, port, true) unless @http
+            @http ||= Puppet::Network::HttpPool.http_instance(host, port, true)
             @http
         end
 

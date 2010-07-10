@@ -112,7 +112,7 @@ module Puppet
             def insync?(is)
                 @should ||= []
 
-                @latest = nil unless defined?(@latest)
+                @latest ||= nil
                 @lateststamp ||= (Time.now.to_i - 1000)
                 # Iterate across all of the should values, and see how they
                 # turn out.

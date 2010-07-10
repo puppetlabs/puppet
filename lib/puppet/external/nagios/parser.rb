@@ -70,9 +70,9 @@ module Racc
 
         def _racc_setup
             @yydebug = false unless self.class::Racc_debug_parser
-            @yydebug = false unless defined?(@yydebug)
+            @yydebug ||= false
             if @yydebug
-                @racc_debug_out = $stderr unless defined?(@racc_debug_out)
+                @racc_debug_out ||= $stderr
                 @racc_debug_out ||= $stderr
             end
             arg = self.class::Racc_arg

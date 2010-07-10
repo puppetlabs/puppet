@@ -32,9 +32,9 @@ module PuppetTest::FileTesting
     def mkranddirsandfiles(dirs = nil,files = nil,depth = 3)
         return if depth < 0
 
-        dirs = %w{This Is A Set Of Directories} unless dirs
+        dirs ||= %w{This Is A Set Of Directories}
 
-        files = %w{and this is a set of files} unless files
+        files ||= %w{and this is a set of files}
 
         tfiles = randlist(files)
         tdirs = randlist(dirs)

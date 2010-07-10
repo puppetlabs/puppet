@@ -67,7 +67,7 @@ class Parser
         names.each do |name|
             prev_container = container
             container = find_object_named(container, name)
-            container = prev_container.add_class(PuppetClass, name, nil) unless container
+            container ||= prev_container.add_class(PuppetClass, name, nil)
         end
         [container, final_name]
     end

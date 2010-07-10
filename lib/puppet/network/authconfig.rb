@@ -6,7 +6,7 @@ module Puppet
     class Network::AuthConfig < Puppet::Util::LoadedFile
 
         def self.main
-            @main = self.new() unless defined?(@main)
+            @main ||= self.new()
             @main
         end
 

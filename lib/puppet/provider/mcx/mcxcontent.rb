@@ -140,11 +140,11 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     # This is a private instance method, not a class method.
     def get_dsparams
         ds_type = resource[:ds_type]
-        ds_type = parse_type(resource[:name]) if ds_type.nil?
+        ds_type ||= parse_type(resource[:name])
         raise MCXContentProviderException unless TypeMap.keys.include? ds_type.to_sym
 
         ds_name = resource[:ds_name]
-        ds_name = parse_name(resource[:name]) if ds_name.nil?
+        ds_name ||= parse_name(resource[:name])
 
         rval = {
             :ds_type => ds_type.to_sym,

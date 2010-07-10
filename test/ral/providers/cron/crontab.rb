@@ -23,7 +23,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # a full cron job.  These tests assume individual record types will always be correctly
     # parsed, so all they
     def sample_crons
-        @sample_crons = YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml"))) unless defined?(@sample_crons)
+        @sample_crons ||= YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml")))
         @sample_crons
     end
 
@@ -31,7 +31,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # mapping between records and lines.  We have plenty of redundancy here because
     # we use these records to build up our complex, multi-line cron jobs below.
     def sample_records
-        @sample_records = YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml"))) unless defined?(@sample_records)
+        @sample_records ||= YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml")))
         @sample_records
     end
 

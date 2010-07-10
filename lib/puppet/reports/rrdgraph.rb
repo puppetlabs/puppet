@@ -22,7 +22,7 @@ Puppet::Reports.register_report(:rrdgraph) do
         which defaults to the ``runinterval``."
 
     def hostdir
-        @hostdir = File.join(Puppet[:rrddir], self.host) unless defined?(@hostdir)
+        @hostdir ||= File.join(Puppet[:rrddir], self.host)
         @hostdir
     end
 

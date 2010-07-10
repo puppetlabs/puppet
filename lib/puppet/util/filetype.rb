@@ -72,7 +72,7 @@ class Puppet::Util::FileType
 
     # Pick or create a filebucket to use.
     def bucket
-        @bucket = Puppet::Type.type(:filebucket).mkdefaultbucket.bucket unless defined?(@bucket)
+        @bucket ||= Puppet::Type.type(:filebucket).mkdefaultbucket.bucket
         @bucket
     end
 

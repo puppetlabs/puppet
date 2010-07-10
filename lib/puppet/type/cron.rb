@@ -387,7 +387,7 @@ Puppet::Type.newtype(:cron) do
         if obj = @parameters[name]
             ret = obj.should
 
-            ret = obj.retrieve if ret.nil?
+            ret ||= obj.retrieve
 
             if ret == :absent
                 ret = nil

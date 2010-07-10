@@ -29,7 +29,7 @@ class Puppet::Parser::AST
                 @default = true if @value.is_a?(AST::Default)
             end
 
-            @default = false unless defined?(@default)
+            @default ||= false
 
             @default
         end

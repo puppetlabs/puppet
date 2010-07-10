@@ -29,7 +29,7 @@ module Puppet::Agent::Locker
     end
 
     def lockfile
-        @lockfile = Puppet::Util::Pidlock.new(lockfile_path) unless defined?(@lockfile)
+        @lockfile ||= Puppet::Util::Pidlock.new(lockfile_path)
 
         @lockfile
     end

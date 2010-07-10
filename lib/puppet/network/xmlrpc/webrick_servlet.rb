@@ -10,7 +10,7 @@ module Puppet::Network::XMLRPC
         # This is a hackish way to avoid an auth message every time we have a
         # normal operation
         def self.log(msg)
-            @logs = {} unless defined?(@logs)
+            @logs ||= {}
             if @logs.include?(msg)
                 @logs[msg] += 1
             else

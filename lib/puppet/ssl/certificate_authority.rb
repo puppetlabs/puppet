@@ -148,7 +148,7 @@ class Puppet::SSL::CertificateAuthority
 
     # Retrieve (or create, if necessary) our inventory manager.
     def inventory
-        @inventory = Puppet::SSL::Inventory.new unless defined?(@inventory)
+        @inventory ||= Puppet::SSL::Inventory.new
         @inventory
     end
 

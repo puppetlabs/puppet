@@ -68,8 +68,8 @@ Puppet::Type.newtype(:resources) do
     end
 
     def check(resource)
-        @checkmethod = "#{self[:name]}_check" unless defined?(@checkmethod)
-        @hascheck = respond_to?(@checkmethod) unless defined?(@hascheck)
+        @checkmethod ||= "#{self[:name]}_check"
+        @hascheck ||= respond_to?(@checkmethod)
         if @hascheck
             return send(@checkmethod, resource)
         else

@@ -157,7 +157,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         cmds << :security << "authorizationdb" << "read" << resource[:name]
         output = execute(cmds, :combine => false)
         current_values = Plist::parse_xml(output)
-        current_values = {} if current_values.nil?
+        current_values ||= {}
         specified_values = convert_plist_to_native_attributes(@property_hash)
 
         # take the current values, merge the specified values to obtain a

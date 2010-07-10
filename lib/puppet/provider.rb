@@ -174,7 +174,7 @@ class Puppet::Provider
 
     # Retrieve the data source.  Defaults to the provider name.
     def self.source
-        @source = self.name unless defined?(@source)
+        @source ||= self.name
         @source
     end
 

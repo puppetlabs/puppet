@@ -701,7 +701,7 @@ class Puppet::Network::Handler
                     if modpath = mod.plugin(relpath)
                         if FileTest.directory?(modpath) and recurse
                             ary = reclist(modpath, recurse, ignore)
-                            ary = [] if ary.nil?
+                            ary ||= []
                             result += ary
                         else
                             result += [["/", File.stat(modpath).ftype]]

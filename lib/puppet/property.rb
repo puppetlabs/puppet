@@ -21,7 +21,7 @@ class Puppet::Property < Puppet::Parameter
         # Return array matching info, defaulting to just matching
         # the first value.
         def array_matching
-            @array_matching = :first unless defined?(@array_matching)
+            @array_matching ||= :first
             @array_matching
         end
 

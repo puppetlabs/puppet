@@ -158,7 +158,7 @@ class Puppet::FileServing::Fileset
     public
     # Stat a given file, using the links-appropriate method.
     def stat(path)
-        @stat_method = self.links == :manage ? :lstat : :stat unless defined?(@stat_method)
+        @stat_method ||= self.links == :manage ? :lstat : :stat
 
         begin
             return File.send(@stat_method, path)

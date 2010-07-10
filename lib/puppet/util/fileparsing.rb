@@ -203,7 +203,7 @@ module Puppet::Util::FileParsing
     end
 
     def line_separator
-        @line_separator = "\n" unless defined?(@line_separator)
+        @line_separator ||= "\n"
 
         @line_separator
     end

@@ -203,7 +203,7 @@ class Puppet::Parameter
 
     # for testing whether we should actually do anything
     def noop
-        @noop = false unless defined?(@noop)
+        @noop ||= false
         tmp = @noop || self.resource.noop || Puppet[:noop] || false
         #debug "noop is #{tmp}"
         tmp

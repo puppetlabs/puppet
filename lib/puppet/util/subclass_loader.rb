@@ -68,7 +68,7 @@ module Puppet::Util::SubclassLoader
 
     # Retrieve or calculate a name.
     def name(dummy_argument=:work_arround_for_ruby_GC_bug)
-        @name = self.to_s.sub(/.+::/, '').intern unless defined?(@name)
+        @name ||= self.to_s.sub(/.+::/, '').intern
 
         @name
     end

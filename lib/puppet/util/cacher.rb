@@ -88,7 +88,7 @@ module Puppet::Util::Cacher
         private
 
         def cache_timestamp
-            @cache_timestamp = Time.now unless defined?(@cache_timestamp)
+            @cache_timestamp ||= Time.now
             @cache_timestamp
         end
 
@@ -122,7 +122,7 @@ module Puppet::Util::Cacher
         end
 
         def value_cache
-            @value_cache = {} unless @value_cache
+            @value_cache ||= {}
             @value_cache
         end
     end

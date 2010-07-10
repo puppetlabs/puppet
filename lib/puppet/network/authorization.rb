@@ -10,7 +10,7 @@ module Puppet::Network
         # Create our config object if necessary.  This works even if
         # there's no configuration file.
         def authconfig
-            @authconfig = Puppet::Network::AuthConfig.main() unless defined?(@authconfig)
+            @authconfig ||= Puppet::Network::AuthConfig.main()
 
             @authconfig
         end

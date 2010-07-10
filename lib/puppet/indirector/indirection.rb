@@ -64,7 +64,7 @@ class Puppet::Indirector::Indirection
 
     # Default to the runinterval for the ttl.
     def ttl
-        @ttl = Puppet[:runinterval].to_i unless defined?(@ttl)
+        @ttl ||= Puppet[:runinterval].to_i
         @ttl
     end
 

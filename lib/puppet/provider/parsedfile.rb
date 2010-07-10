@@ -34,7 +34,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     def self.filetype
-        @filetype = Puppet::Util::FileType.filetype(:flat) unless defined?(@filetype)
+        @filetype ||= Puppet::Util::FileType.filetype(:flat)
         @filetype
     end
 
@@ -79,7 +79,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.backup_target(target)
         return nil unless target_object(target).respond_to?(:backup)
 
-        @backup_stats = {} unless defined?(@backup_stats)
+        @backup_stats ||= {}
         return nil if @backup_stats[target] == @records.object_id
 
         target_object(target).backup

@@ -21,7 +21,7 @@ class Puppet::Indirector::Request
     end
 
     def environment
-        @environment = Puppet::Node::Environment.new() unless @environment
+        @environment ||= Puppet::Node::Environment.new()
         @environment
     end
 
@@ -69,7 +69,7 @@ class Puppet::Indirector::Request
         if key_or_instance.is_a?(String) || key_or_instance.is_a?(Symbol)
             key = key_or_instance
         else
-            @instance = key_or_instance if ! @instance
+            @instance ||= key_or_instance
         end
 
         if key
