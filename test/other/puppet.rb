@@ -58,9 +58,7 @@ class TestPuppetModule < Test::Unit::TestCase
         oldlibs = $LOAD_PATH.dup
         cleanup do
             $LOAD_PATH.each do |dir|
-                unless oldlibs.include?(dir)
-                    $LOAD_PATH.delete(dir)
-                end
+                $LOAD_PATH.delete(dir) unless oldlibs.include?(dir)
             end
         end
         one = tempfile()

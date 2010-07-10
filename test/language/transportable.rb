@@ -50,9 +50,7 @@ class TestTransportable < Test::Unit::TestCase
     # Make sure our 'delve' command is working
     def test_delve
         top = mk_transtree do |object, depth, width|
-            if width % 2 == 1
-                object.file = :funtest
-            end
+            object.file = :funtest if width % 2 == 1
         end
 
         objects = []

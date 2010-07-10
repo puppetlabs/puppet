@@ -29,7 +29,7 @@ class Autotest::Rspec < Autotest
     def consolidate_failures(failed)
         filters = Hash.new { |h,k| h[k] = [] }
         failed.each do |spec, failed_trace|
-            if f = test_files_for(failed).find { |f| failed_trace =~ Regexp.new(f) } then
+            if f = test_files_for(failed).find { |f| failed_trace =~ Regexp.new(f) }
                 filters[f] << spec
                 break
             end
@@ -50,7 +50,7 @@ class Autotest::Rspec < Autotest
     # ~/.autotest to provide a different spec command then the default
     # paths provided.
     def spec_command(separator=File::ALT_SEPARATOR)
-        unless defined?(@spec_command) then
+        unless defined?(@spec_command)
             @spec_command = spec_commands.find { |cmd| File.exists? cmd }
 
             raise RspecCommandError, "No spec command could be found!" unless @spec_command

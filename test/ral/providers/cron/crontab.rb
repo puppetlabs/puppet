@@ -23,9 +23,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # a full cron job.  These tests assume individual record types will always be correctly
     # parsed, so all they
     def sample_crons
-        unless defined?(@sample_crons)
-            @sample_crons = YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml")))
-        end
+        @sample_crons = YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml"))) unless defined?(@sample_crons)
         @sample_crons
     end
 
@@ -33,9 +31,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # mapping between records and lines.  We have plenty of redundancy here because
     # we use these records to build up our complex, multi-line cron jobs below.
     def sample_records
-        unless defined?(@sample_records)
-            @sample_records = YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml")))
-        end
+        @sample_records = YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml"))) unless defined?(@sample_records)
         @sample_records
     end
 
@@ -62,25 +58,19 @@ class TestCronParsedProvider < Test::Unit::TestCase
             assert_equal(value, cron.send(param), "#{param} was not equal in #{msg}")
         end
         %w{command environment minute hour month monthday weekday}.each do |var|
-            unless options.include?(var.intern)
-                assert_equal(:absent, cron.send(var), "#{var} was not parsed absent in #{msg}")
-            end
+            assert_equal(:absent, cron.send(var), "#{var} was not parsed absent in #{msg}") unless options.include?(var.intern)
         end
     end
 
     # Make sure a cron record matches.  This only works for crontab records.
     def assert_record_equal(msg, record, options)
-        unless options.include?(:record_type)
-            raise ArgumentError, "You must pass the required record type"
-        end
+        raise ArgumentError, "You must pass the required record type" unless options.include?(:record_type)
         assert_instance_of(Hash, record, "not an instance of a hash in #{msg}")
         options.each do |param, value|
             assert_equal(value, record[param], "#{param} was not equal in #{msg}")
         end
         FIELDS[record[:record_type]].each do |var|
-            unless options.include?(var)
-                assert_equal(:absent, record[var], "#{var} was not parsed absent in #{msg}")
-            end
+            assert_equal(:absent, record[var], "#{var} was not parsed absent in #{msg}") unless options.include?(var)
         end
     end
 

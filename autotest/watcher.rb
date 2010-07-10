@@ -13,7 +13,7 @@ def run_comp(cmd)
                 c = f.getc
                 putc c
                 line << c
-                if c == ?\n then
+                if c == ?\n
                     results << if RUBY_VERSION >= "1.9" then
                         line.join
                             else
@@ -125,7 +125,7 @@ end
 
 # Ctrl-C
 Signal.trap 'INT' do
-    if @interrupted then
+    if @interrupted
         @wants_to_quit = true
         abort("\n")
     else

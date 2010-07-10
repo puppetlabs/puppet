@@ -15,9 +15,7 @@ module Puppet::Util::InlineDocs
         attr_writer :doc
 
         def doc
-            unless defined?(@doc) and @doc
-                @doc = ""
-            end
+            @doc = "" unless defined?(@doc) and @doc
             @doc
         end
 

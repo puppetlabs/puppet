@@ -24,9 +24,7 @@ class Puppet::Parser::Collector
             objects = send(method).each do |obj|
                 obj.virtual = false
             end
-            if objects.empty?
-                return false
-            end
+            return false if objects.empty?
         end
 
         # we have an override for the collected resources
@@ -86,9 +84,7 @@ class Puppet::Parser::Collector
 
     # add a resource override to the soon to be exported/realized resources
     def add_override(hash)
-        unless hash[:parameters]
-            raise ArgumentError, "Exported resource try to override without parameters"
-        end
+        raise ArgumentError, "Exported resource try to override without parameters" unless hash[:parameters]
 
         # schedule an override for an upcoming collection
         @overrides = hash
@@ -160,9 +156,7 @@ class Puppet::Parser::Collector
     end
 
     def collect_resources
-        unless @resources.is_a?(Array)
-            @resources = [@resources]
-        end
+        @resources = [@resources] unless @resources.is_a?(Array)
         method = "collect_#{form.to_s}_resources"
         send(method)
     end
@@ -186,9 +180,7 @@ class Puppet::Parser::Collector
 
         # If there are no more resources to find, delete this from the list
         # of collections.
-        if @resources.empty?
-            @scope.compiler.delete_collection(self)
-        end
+        @scope.compiler.delete_collection(self) if @resources.empty?
 
         return result
     end

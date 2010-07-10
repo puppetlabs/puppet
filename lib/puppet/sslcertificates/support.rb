@@ -92,9 +92,7 @@ module Puppet::SSLCertificates::Support
         begin
             cert, cacert = caclient.getcert(@csr.to_pem)
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             raise Puppet::Error.new("Certificate retrieval failed: #{detail}")
         end
 
@@ -115,9 +113,7 @@ module Puppet::SSLCertificates::Support
             )
         end
 
-        unless @cert.check_private_key(@key)
-            raise Puppet::DevError, "Received invalid certificate"
-        end
+        raise Puppet::DevError, "Received invalid certificate" unless @cert.check_private_key(@key)
         return retrieved
     end
 

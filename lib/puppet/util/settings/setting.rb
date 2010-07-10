@@ -37,16 +37,12 @@ class Puppet::Util::Settings::Setting
 
         args.each do |param, value|
             method = param.to_s + "="
-            unless self.respond_to? method
-                raise ArgumentError, "#{self.class} does not accept #{param}"
-            end
+            raise ArgumentError, "#{self.class} does not accept #{param}" unless self.respond_to? method
 
             self.send(method, value)
         end
 
-        unless self.desc
-            raise ArgumentError, "You must provide a description for the #{self.name} config option"
-        end
+        raise ArgumentError, "You must provide a description for the #{self.name} config option" unless self.desc
     end
 
     def iscreated
@@ -71,9 +67,7 @@ class Puppet::Util::Settings::Setting
 
     # short name for the celement
     def short=(value)
-        if value.to_s.length != 1
-            raise ArgumentError, "Short names can only be one character."
-        end
+        raise ArgumentError, "Short names can only be one character." if value.to_s.length != 1
         @short = value.to_s
     end
 
@@ -82,9 +76,7 @@ class Puppet::Util::Settings::Setting
         str = @desc.gsub(/^/, "# ") + "\n"
 
         # Add in a statement about the default.
-        if defined?(@default) and @default
-            str += "# The default value is '#{@default}'.\n"
-        end
+        str += "# The default value is '#{@default}'.\n" if defined?(@default) and @default
 
         # If the value has not been overridden, then print it out commented
         # and unconverted, so it's clear that that's the default and how it

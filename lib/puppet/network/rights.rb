@@ -197,27 +197,21 @@ class Rights
         def restrict_method(m)
             m = m.intern if m.is_a?(String)
 
-            unless ALL.include?(m)
-                raise ArgumentError, "'#{m}' is not an allowed value for method directive"
-            end
+            raise ArgumentError, "'#{m}' is not an allowed value for method directive" unless ALL.include?(m)
 
             # if we were allowing all methods, then starts from scratch
             if @methods === ALL
                 @methods = []
             end
 
-            if @methods.include?(m)
-                raise ArgumentError, "'#{m}' is already in the '#{name}' ACL"
-            end
+            raise ArgumentError, "'#{m}' is already in the '#{name}' ACL" if @methods.include?(m)
 
             @methods << m
         end
 
         def restrict_environment(env)
             env = Puppet::Node::Environment.new(env)
-            if @environment.include?(env)
-                raise ArgumentError, "'#{env}' is already in the '#{name}' ACL"
-            end
+            raise ArgumentError, "'#{env}' is already in the '#{name}' ACL" if @environment.include?(env)
 
             @environment << env
         end
@@ -255,9 +249,7 @@ class Rights
         #  * regex path rights are then all queued in file order
         def <=>(rhs)
             # move namespace rights at front
-            if self.acl_type != rhs.acl_type
-                return self.acl_type == :name ? -1 : 1
-            end
+            return self.acl_type == :name ? -1 : 1 if self.acl_type != rhs.acl_type
 
             # sort by creation order (ie first match appearing in the file will win)
             # that is don't sort, in which case the sort algorithm will order in the

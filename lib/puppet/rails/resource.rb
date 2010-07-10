@@ -102,15 +102,11 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     def merge_attributes(resource)
         args = self.class.rails_resource_initial_args(resource)
         args.each do |param, value|
-            unless resource[param] == value
-                self[param] = value
-            end
+            self[param] = value unless resource[param] == value
         end
 
         # Handle file specially
-        if (resource.file and  (!resource.file or self.file != resource.file))
-            self.file = resource.file
-        end
+        self.file = resource.file if (resource.file and  (!resource.file or self.file != resource.file))
     end
 
     def merge_parameters(resource)
@@ -138,9 +134,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         db_params.each do |name, value_hashes|
             values = value_hashes.collect { |v| v['value'] }
 
-            unless value_compare(catalog_params[name], values)
-                value_hashes.each { |v| deletions << v['id'] }
-            end
+            value_hashes.each { |v| deletions << v['id'] } unless value_compare(catalog_params[name], values)
         end
 
         # Perform our deletions.

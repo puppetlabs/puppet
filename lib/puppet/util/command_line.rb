@@ -54,9 +54,7 @@ module Puppet
                     require_application subcommand_name
                     Puppet::Application.find(subcommand_name).new(self).run
                 else
-                    unless execute_external_subcommand
-                        abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}"
-                    end
+                    abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}" unless execute_external_subcommand
                 end
             end
 

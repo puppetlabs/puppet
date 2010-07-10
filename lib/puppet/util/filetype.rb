@@ -44,9 +44,7 @@ class Puppet::Util::FileType
                 rescue Puppet::Error => detail
                     raise
                 rescue => detail
-                    if Puppet[:trace]
-                        puts detail.backtrace
-                    end
+                    puts detail.backtrace if Puppet[:trace]
                     raise Puppet::Error, "#{self.class} could not read #{@path}: #{detail}"
                 end
             end
@@ -61,9 +59,7 @@ class Puppet::Util::FileType
                 rescue Puppet::Error => detail
                     raise
                 rescue => detail
-                    if Puppet[:debug]
-                        puts detail.backtrace
-                    end
+                    puts detail.backtrace if Puppet[:debug]
                     raise Puppet::Error, "#{self.class} could not write #{@path}: #{detail}"
                 end
             end
@@ -76,9 +72,7 @@ class Puppet::Util::FileType
 
     # Pick or create a filebucket to use.
     def bucket
-        unless defined?(@bucket)
-            @bucket = Puppet::Type.type(:filebucket).mkdefaultbucket.bucket
-        end
+        @bucket = Puppet::Type.type(:filebucket).mkdefaultbucket.bucket unless defined?(@bucket)
         @bucket
     end
 
@@ -105,9 +99,7 @@ class Puppet::Util::FileType
 
         # Remove the file.
         def remove
-            if File.exist?(@path)
-                File.unlink(@path)
-            end
+            File.unlink(@path) if File.exist?(@path)
         end
 
         # Overwrite the file.
@@ -260,9 +252,7 @@ class Puppet::Util::FileType
         def read
             begin
                 output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
-                if output.include?("You are not authorized to use the cron command")
-                    raise Puppet::Error, "User #{@path} not authorized to use cron"
-                end
+                raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("You are not authorized to use the cron command")
                 return output
             rescue => detail
                 raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}"

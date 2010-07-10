@@ -144,9 +144,7 @@ module PSON
                             PSON::UTF16toUTF8.iconv(bytes)
                         end
                     end
-                    if string.respond_to?(:force_encoding)
-                        string.force_encoding(Encoding::UTF_8)
-                    end
+                    string.force_encoding(Encoding::UTF_8) if string.respond_to?(:force_encoding)
                     string
                 else
                     UNPARSED
@@ -209,9 +207,7 @@ module PSON
                             raise ParserError, "expected ',' or ']' in array at '#{peek(20)}'!"
                         end
                     when scan(ARRAY_CLOSE)
-                        if delim
-                            raise ParserError, "expected next element in array at '#{peek(20)}'!"
-                        end
+                        raise ParserError, "expected next element in array at '#{peek(20)}'!" if delim
                         break
                     when skip(IGNORE)
                         ;
@@ -231,9 +227,7 @@ module PSON
                     case
                     when (string = parse_string) != UNPARSED
                         skip(IGNORE)
-                        unless scan(PAIR_DELIMITER)
-                            raise ParserError, "expected ':' in object at '#{peek(20)}'!"
-                        end
+                        raise ParserError, "expected ':' in object at '#{peek(20)}'!" unless scan(PAIR_DELIMITER)
                         skip(IGNORE)
                         unless (value = parse_value).equal? UNPARSED
                             result[string] = value
@@ -250,9 +244,7 @@ module PSON
                             raise ParserError, "expected value in object at '#{peek(20)}'!"
                         end
                     when scan(OBJECT_CLOSE)
-                        if delim
-                            raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!"
-                        end
+                        raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!" if delim
                         if @create_id and klassname = result[@create_id]
                             klass = PSON.deep_const_get klassname
                             break unless klass and klass.pson_creatable?

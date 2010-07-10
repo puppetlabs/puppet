@@ -178,9 +178,7 @@ class TestSnippets < Test::Unit::TestCase
         %w{a b c d}.each { |letter|
             path = "/tmp/create#{letter}test"
             assert_file(path)
-            if %w{a b}.include?(letter)
-                assert_mode_equal(0755, path)
-            end
+            assert_mode_equal(0755, path) if %w{a b}.include?(letter)
         }
     end
 

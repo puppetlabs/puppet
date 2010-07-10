@@ -16,9 +16,7 @@ module Puppet::Util::FileLocking
     # Create an exclusive lock for writing, and do the writing in a
     # tmp file.
     def writelock(file, mode = nil)
-        unless FileTest.directory?(File.dirname(file))
-            raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist"
-        end
+        raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist" unless FileTest.directory?(File.dirname(file))
         raise ArgumentError, "#{file} is not a file" unless !File.exists?(file) or File.file?(file)
         tmpfile = file + ".tmp"
 

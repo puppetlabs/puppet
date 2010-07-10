@@ -105,9 +105,7 @@ class TestZone < PuppetTest::TestCase
         assert_nothing_raised {
             property.class.state_sequence(:absent, :running).each do |st|
                 [:up, :down].each do |m|
-                    if st[m]
-                        methods << st[m]
-                    end
+                    methods << st[m] if st[m]
                 end
             end
         }

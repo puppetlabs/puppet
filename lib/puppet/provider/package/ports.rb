@@ -10,9 +10,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
 
     # I hate ports
     %w{INTERACTIVE UNAME}.each do |var|
-        if ENV.include?(var)
-            ENV.delete(var)
-        end
+        ENV.delete(var) if ENV.include?(var)
     end
 
     def install

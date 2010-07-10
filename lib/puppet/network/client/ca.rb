@@ -25,9 +25,7 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
         begin
             cert, cacert = @driver.getcert(csr.to_pem)
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             raise Puppet::Error.new("Certificate retrieval failed: #{detail}")
         end
 

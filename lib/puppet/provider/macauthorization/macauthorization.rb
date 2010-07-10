@@ -63,9 +63,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
         def populate_rules_rights
             auth_plist = Plist::parse_xml(AuthDB)
-            if not auth_plist
-                raise Puppet::Error.new("Cannot parse: #{AuthDB}")
-            end
+            raise Puppet::Error.new("Cannot parse: #{AuthDB}") if not auth_plist
             self.rights = auth_plist["rights"].dup
             self.rules = auth_plist["rules"].dup
             self.parsed_auth_db = self.rights.dup
@@ -163,9 +161,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         cmds << :security << "authorizationdb" << "read" << resource[:name]
         output = execute(cmds, :combine => false)
         current_values = Plist::parse_xml(output)
-        if current_values.nil?
-            current_values = {}
-        end
+        current_values = {} if current_values.nil?
         specified_values = convert_plist_to_native_attributes(@property_hash)
 
         # take the current values, merge the specified values to obtain a
@@ -178,9 +174,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
         authdb = Plist::parse_xml(AuthDB)
         authdb_rules = authdb["rules"].dup
         current_values = {}
-        if authdb_rules[resource[:name]]
-            current_values = authdb_rules[resource[:name]]
-        end
+        current_values = authdb_rules[resource[:name]] if authdb_rules[resource[:name]]
         specified_values = convert_plist_to_native_attributes(@property_hash)
         new_values = current_values.merge(specified_values)
         set_rule(resource[:name], new_values)
@@ -254,9 +248,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
 
     def retrieve_value(resource_name, attribute)
         # We set boolean values to symbols when retrieving values
-        if not self.class.parsed_auth_db.has_key?(resource_name)
-            raise Puppet::Error.new("Cannot find #{resource_name} in auth db")
-        end
+        raise Puppet::Error.new("Cannot find #{resource_name} in auth db") if not self.class.parsed_auth_db.has_key?(resource_name)
 
         if PuppetToNativeAttributeMap.has_key?(attribute)
             native_attribute = PuppetToNativeAttributeMap[attribute]

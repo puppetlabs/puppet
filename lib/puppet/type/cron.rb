@@ -99,9 +99,7 @@ Puppet::Type.newtype(:cron) do
                     end
                 }
             else
-                if ary.include?(tmp)
-                    return ary.index(tmp)
-                end
+                return ary.index(tmp) if ary.include?(tmp)
             end
 
             return false
@@ -109,9 +107,7 @@ Puppet::Type.newtype(:cron) do
 
         def should_to_s(newvalue = @should)
             if newvalue
-                unless newvalue.is_a?(Array)
-                    newvalue = [newvalue]
-                end
+                newvalue = [newvalue] unless newvalue.is_a?(Array)
                 if self.name == :command or newvalue[0].is_a? Symbol
                     newvalue[0]
                 else
@@ -124,9 +120,7 @@ Puppet::Type.newtype(:cron) do
 
         def is_to_s(currentvalue = @is)
             if currentvalue
-                unless currentvalue.is_a?(Array)
-                    return currentvalue
-                end
+                return currentvalue unless currentvalue.is_a?(Array)
 
                 if self.name == :command or currentvalue[0].is_a? Symbol
                     currentvalue[0]
@@ -221,9 +215,7 @@ Puppet::Type.newtype(:cron) do
 
         def retrieve
             return_value = super
-            if return_value && return_value.is_a?(Array)
-                return_value = return_value[0]
-            end
+            return_value = return_value[0] if return_value && return_value.is_a?(Array)
 
             return return_value
         end
@@ -249,9 +241,7 @@ Puppet::Type.newtype(:cron) do
         end
 
         validate do |value|
-            unless specials().include?(value)
-                raise ArgumentError, "Invalid special schedule #{value.inspect}"
-            end
+            raise ArgumentError, "Invalid special schedule #{value.inspect}" unless specials().include?(value)
         end
     end
 
@@ -401,9 +391,7 @@ Puppet::Type.newtype(:cron) do
         if obj = @parameters[name]
             ret = obj.should
 
-            if ret.nil?
-                ret = obj.retrieve
-            end
+            ret = obj.retrieve if ret.nil?
 
             if ret == :absent
                 ret = nil

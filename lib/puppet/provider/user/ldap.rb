@@ -39,9 +39,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
             existing.each do |hash|
                 next unless value = hash[:uid]
                 num = value[0].to_i
-                if num > largest
-                    largest = num
-                end
+                largest = num if num > largest
             end
         end
         largest + 1
@@ -49,9 +47,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
 
     # Convert our gid to a group name, if necessary.
     def gid=(value)
-        unless [Fixnum, Bignum].include?(value.class)
-            value = group2id(value)
-        end
+        value = group2id(value) unless [Fixnum, Bignum].include?(value.class)
 
         @property_hash[:gid] = value
     end

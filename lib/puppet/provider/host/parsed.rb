@@ -45,9 +45,7 @@ end
             raise Puppet::Error, "Could not match '#{line}'"
         end
 
-        if hash[:host_aliases] == ""
-            hash[:host_aliases] = []
-        end
+        hash[:host_aliases] = [] if hash[:host_aliases] == ""
 
         return hash
     end
@@ -56,9 +54,7 @@ end
     def self.to_line(hash)
         return super unless hash[:record_type] == :parsed
         [:ip, :name].each do |n|
-            unless hash[n] and hash[n] != :absent
-                raise ArgumentError, "#{n} is a required attribute for hosts"
-            end
+            raise ArgumentError, "#{n} is a required attribute for hosts" unless hash[n] and hash[n] != :absent
         end
 
         str = "#{hash[:ip]}\t#{hash[:name]}"

@@ -114,13 +114,9 @@ module Puppet::Util::ClassGen
 
         # Evaluate the passed block if there is one.  This should usually
         # define all of the work.
-        if block
-            klass.send(evalmethod, &block)
-        end
+        klass.send(evalmethod, &block) if block
 
-        if klass.respond_to? :postinit
-            klass.postinit
-        end
+        klass.postinit if klass.respond_to? :postinit
 
         # Store the class in hashes or arrays or whatever.
         storeclass(klass, name, options)
@@ -148,16 +144,12 @@ module Puppet::Util::ClassGen
 
     # Perform the initializations on the class.
     def initclass(klass, options)
-        if klass.respond_to? :initvars
-            klass.initvars
-        end
+        klass.initvars if klass.respond_to? :initvars
 
         if attrs = options[:attributes]
             attrs.each do |param, value|
                 method = param.to_s + "="
-                if klass.respond_to? method
-                    klass.send(method, value)
-                end
+                klass.send(method, value) if klass.respond_to? method
             end
         end
 
@@ -170,9 +162,7 @@ module Puppet::Util::ClassGen
             end
         end
 
-        if klass.respond_to? :preinit
-            klass.preinit
-        end
+        klass.preinit if klass.respond_to? :preinit
     end
 
     # Convert our name to a constant.

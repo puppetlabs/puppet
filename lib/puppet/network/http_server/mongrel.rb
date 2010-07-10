@@ -75,27 +75,27 @@ module Puppet::Network
         def process(request, response)
             # Make sure this has been a POST as required for XMLRPC.
             request_method = request.params[Mongrel::Const::REQUEST_METHOD] || Mongrel::Const::GET
-            if request_method != "POST" then
+            if request_method != "POST"
                 response.start(405) { |head, out| out.write("Method Not Allowed") }
                 return
             end
 
             # Make sure the user has sent text/xml data.
             request_mime = request.params["CONTENT_TYPE"] || "text/plain"
-            if parse_content_type(request_mime).first != "text/xml" then
+            if parse_content_type(request_mime).first != "text/xml"
                 response.start(400) { |head, out| out.write("Bad Request") }
                 return
             end
 
             # Make sure there is data in the body at all.
             length = request.params[Mongrel::Const::CONTENT_LENGTH].to_i
-            if length <= 0 then
+            if length <= 0
                 response.start(411) { |head, out| out.write("Length Required") }
                 return
             end
 
             # Check the body to be valid.
-            if request.body.nil? or request.body.size != length then
+            if request.body.nil? or request.body.size != length
                 response.start(400) { |head, out| out.write("Bad Request") }
                 return
             end

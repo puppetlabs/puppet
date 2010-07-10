@@ -28,9 +28,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
         pkg = @resource[:name]
 
-        if (! @resource.should(:ensure).is_a? Symbol) and useversion
-            pkg << " " << @resource.should(:ensure)
-        end
+        pkg << " " << @resource.should(:ensure) if (! @resource.should(:ensure).is_a? Symbol) and useversion
 
         nimclient "-o", "cust", "-a", "installp_flags=acgwXY", "-a", "lpp_source=#{source}", "-a", "filesets='#{pkg}'"
     end

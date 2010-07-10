@@ -40,9 +40,7 @@ module Puppet
             defaultto :absent
 
             def should
-                if defined?(@should) and @should[0] != :absent
-                    return super
-                end
+                return super if defined?(@should) and @should[0] != :absent
 
                 return nil unless user = resource[:user]
 
@@ -83,9 +81,7 @@ module Puppet
         end
 
         autorequire(:user) do
-            if should(:user)
-                should(:user)
-            end
+            should(:user) if should(:user)
         end
 
         validate do

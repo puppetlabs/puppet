@@ -56,9 +56,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
         service = self.service_name
         rcvar = self.rcvar_name
         self.debug("Editing rc files: setting #{rcvar} to #{yesno} for #{service}")
-        if not self.rc_replace(service, rcvar, yesno)
-            self.rc_add(service, rcvar, yesno)
-        end
+        self.rc_add(service, rcvar, yesno) if not self.rc_replace(service, rcvar, yesno)
     end
 
     # Try to find an existing setting in the rc files
@@ -106,7 +104,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
     end
 
     def enabled?
-        if /YES$/ =~ self.rcvar_value then
+        if /YES$/ =~ self.rcvar_value
             self.debug("Is enabled")
             return :true
         end

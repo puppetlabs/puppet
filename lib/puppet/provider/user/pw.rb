@@ -31,13 +31,9 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
             end
         end
 
-        if @resource.allowdupe?
-            cmd << "-o"
-        end
+        cmd << "-o" if @resource.allowdupe?
 
-        if @resource.managehome?
-            cmd << "-m"
-        end
+        cmd << "-m" if @resource.managehome?
 
         return cmd
     end

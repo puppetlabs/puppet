@@ -105,17 +105,13 @@ module Puppet
             if @inifile.nil?
                 @inifile = read()
                 main = @inifile['main']
-                if main.nil?
-                    raise Puppet::Error, "File #{yumconf} does not contain a main section"
-                end
+                raise Puppet::Error, "File #{yumconf} does not contain a main section" if main.nil?
                 reposdir = main['reposdir']
                 reposdir ||= "/etc/yum.repos.d, /etc/yum/repos.d"
                 reposdir.gsub!(/[\n,]/, " ")
                 reposdir.split.each do |dir|
                     Dir::glob("#{dir}/*.repo").each do |file|
-                        if File.file?(file)
-                            @inifile.read(file)
-                        end
+                        @inifile.read(file) if File.file?(file)
                     end
                 end
                 reposdir.split.each do |dir|
@@ -135,17 +131,13 @@ module Puppet
             result = Puppet::Util::IniConfig::File.new()
             result.read(yumconf)
             main = result['main']
-            if main.nil?
-                raise Puppet::Error, "File #{yumconf} does not contain a main section"
-            end
+            raise Puppet::Error, "File #{yumconf} does not contain a main section" if main.nil?
             reposdir = main['reposdir']
             reposdir ||= "/etc/yum.repos.d, /etc/yum/repos.d"
             reposdir.gsub!(/[\n,]/, " ")
             reposdir.split.each do |dir|
                 Dir::glob("#{dir}/*.repo").each do |file|
-                    if File.file?(file)
-                        result.read(file)
-                    end
+                    result.read(file) if File.file?(file)
                 end
             end
             if @defaultrepodir.nil?
@@ -166,9 +158,7 @@ module Puppet
             if result.nil?
                 # Brand new section
                 path = yumconf
-                unless @defaultrepodir.nil?
-                    path = File::join(@defaultrepodir, "#{name}.repo")
-                end
+                path = File::join(@defaultrepodir, "#{name}.repo") unless @defaultrepodir.nil?
                 Puppet::info "create new repo #{name} in file #{path}"
                 result = inifile.add_section(name, path)
             end

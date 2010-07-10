@@ -75,9 +75,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         end
 
         # if we didn't find the job above and we should have, error.
-        if label
-            raise Puppet::Error.new("Unable to find launchd plist for job: #{label}")
-        end
+        raise Puppet::Error.new("Unable to find launchd plist for job: #{label}") if label
         # if returning all jobs
         label_to_path_map
     end
@@ -92,9 +90,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
     def self.get_macosx_version_major
-        if defined?(@macosx_version_major)
-            return @macosx_version_major
-        end
+        return @macosx_version_major if defined?(@macosx_version_major)
         begin
             # Make sure we've loaded all of the facts
             Facter.loadfacts
@@ -105,14 +101,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                 # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
                 Puppet.warning("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
                 product_version = Facter.value(:macosx_productversion)
-                if product_version.nil?
-                    fail("Could not determine OS X version from Facter")
-                end
+                fail("Could not determine OS X version from Facter") if product_version.nil?
                 product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
             end
-            if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
-                fail("#{product_version_major} is not supported by the launchd provider")
-            end
+            fail("#{product_version_major} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
             @macosx_version_major = product_version_major
             return @macosx_version_major
         rescue Puppet::ExecutionFailure => detail
@@ -127,9 +119,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         job = self.class.jobsearch(label)
         job_path = job[label]
         job_plist = Plist::parse_xml(job_path)
-        if not job_plist
-            raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}")
-        end
+        raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}") if not job_plist
         [job_path, job_plist]
     end
 
@@ -142,9 +132,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         # between 10.4 and 10.5, thus the necessity for splitting
         begin
             output = launchctl :list
-            if output.nil?
-                raise Puppet::Error.new("launchctl list failed to return any data.")
-            end
+            raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
             output.split("\n").each do |j|
                 return :running if j.split(/\s/).last == resource[:name]
             end
@@ -174,9 +162,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
             raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}")
         end
         # As load -w clears the Disabled flag, we need to add it in after
-        if did_enable_job and resource[:enable] == :false
-            self.disable
-        end
+        self.disable if did_enable_job and resource[:enable] == :false
     end
 
 
@@ -196,9 +182,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
             raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}")
         end
         # As unload -w sets the Disabled flag, we need to add it in after
-        if did_disable_job and resource[:enable] == :true
-            self.enable
-        end
+        self.enable if did_disable_job and resource[:enable] == :true
     end
 
 
@@ -213,18 +197,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         overrides_disabled = nil
 
         job_path, job_plist = plist_from_label(resource[:name])
-        if job_plist.has_key?("Disabled")
-            job_plist_disabled = job_plist["Disabled"]
-        end
+        job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
         if self.class.get_macosx_version_major == "10.6":
             overrides = Plist::parse_xml(Launchd_Overrides)
 
             unless overrides.nil?
                 if overrides.has_key?(resource[:name])
-                    if overrides[resource[:name]].has_key?("Disabled")
-                        overrides_disabled = overrides[resource[:name]]["Disabled"]
-                    end
+                    overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
                 end
             end
         end

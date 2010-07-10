@@ -21,9 +21,7 @@ class Resource < AST::ResourceReference
         resource_titles = @title.safeevaluate(scope)
 
         # it's easier to always use an array, even for only one name
-        unless resource_titles.is_a?(Array)
-            resource_titles = [resource_titles]
-        end
+        resource_titles = [resource_titles] unless resource_titles.is_a?(Array)
 
         # We want virtual to be true if exported is true.  We can't
         # just set :virtual => self.virtual in the initialization,

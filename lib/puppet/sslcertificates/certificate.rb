@@ -20,15 +20,11 @@ class Puppet::SSLCertificates::Certificate
 
     def delete
         [@certfile,@keyfile].each { |file|
-            if FileTest.exists?(file)
-                File.unlink(file)
-            end
+            File.unlink(file) if FileTest.exists?(file)
         }
 
         if defined?(@hash) and @hash
-            if FileTest.symlink?(@hash)
-                File.unlink(@hash)
-            end
+            File.unlink(@hash) if FileTest.symlink?(@hash)
         end
     end
 
@@ -37,9 +33,7 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def getkey
-        unless FileTest.exists?(@keyfile)
-            self.mkkey()
-        end
+        self.mkkey() unless FileTest.exists?(@keyfile)
         if @password
 
             @key = OpenSSL::PKey::RSA.new(
@@ -56,9 +50,7 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def initialize(hash)
-        unless hash.include?(:name)
-            raise Puppet::Error, "You must specify the common name for the certificate"
-        end
+        raise Puppet::Error, "You must specify the common name for the certificate" unless hash.include?(:name)
         @name = hash[:name]
 
         # init a few variables
@@ -74,9 +66,7 @@ class Puppet::SSLCertificates::Certificate
 
         @cacertfile ||= File.join(Puppet[:certdir], "ca.pem")
 
-        unless FileTest.directory?(@dir)
-            Puppet.recmkdir(@dir)
-        end
+        Puppet.recmkdir(@dir) unless FileTest.directory?(@dir)
 
         unless @certfile =~ /\.pem$/
             @certfile += ".pem"
@@ -84,16 +74,12 @@ class Puppet::SSLCertificates::Certificate
         @keyfile = hash[:key] || File.join(
             Puppet[:privatekeydir], [@name,"pem"].join(".")
         )
-        unless FileTest.directory?(@dir)
-            Puppet.recmkdir(@dir)
-        end
+        Puppet.recmkdir(@dir) unless FileTest.directory?(@dir)
 
         [@keyfile].each { |file|
             dir = File.dirname(file)
 
-            unless FileTest.directory?(dir)
-                Puppet.recmkdir(dir)
-            end
+            Puppet.recmkdir(dir) unless FileTest.directory?(dir)
         }
 
         @ttl = hash[:ttl] || 365 * 24 * 60 * 60
@@ -114,9 +100,7 @@ class Puppet::SSLCertificates::Certificate
 
         @params = {:name => @name}
         [:state, :country, :email, :org, :ou].each { |param|
-            if hash.include?(param)
-                @params[param] = hash[param]
-            end
+            @params[param] = hash[param] if hash.include?(param)
         }
 
         if @encrypt
@@ -140,9 +124,7 @@ class Puppet::SSLCertificates::Certificate
 
     # this only works for servers, not for users
     def mkcsr
-        unless defined?(@key) and @key
-            self.getkey
-        end
+        self.getkey unless defined?(@key) and @key
 
         name = OpenSSL::X509::Name.new self.subject
 
@@ -156,9 +138,7 @@ class Puppet::SSLCertificates::Certificate
         #    f << @csr.to_pem
         #}
 
-        unless @csr.verify(@key.public_key)
-            raise Puppet::Error, "CSR sign verification failed"
-        end
+        raise Puppet::Error, "CSR sign verification failed" unless @csr.verify(@key.public_key)
 
         return @csr
     end
@@ -202,13 +182,9 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def mkselfsigned
-        unless defined?(@key) and @key
-            self.getkey
-        end
+        self.getkey unless defined?(@key) and @key
 
-        if defined?(@cert) and @cert
-            raise Puppet::Error, "Cannot replace existing certificate"
-        end
+        raise Puppet::Error, "Cannot replace existing certificate" if defined?(@cert) and @cert
 
         args = {
             :name => self.certname,
@@ -231,9 +207,7 @@ class Puppet::SSLCertificates::Certificate
 
     def subject(string = false)
         subj = @@params2names.collect { |param, name|
-            if @params.include?(param)
-                [name, @params[param]]
-            end
+            [name, @params[param]] if @params.include?(param)
         }.reject { |ary| ary.nil? }
 
         if string
@@ -255,15 +229,11 @@ class Puppet::SSLCertificates::Certificate
             @certfile => @cert,
             @keyfile => @key,
         }
-        if defined?(@cacert)
-            files[@cacertfile] = @cacert
-        end
+        files[@cacertfile] = @cacert if defined?(@cacert)
 
         files.each { |file,thing|
             if defined?(thing) and thing
-                if FileTest.exists?(file)
-                    next
-                end
+                next if FileTest.exists?(file)
 
                 text = nil
 
@@ -283,9 +253,7 @@ class Puppet::SSLCertificates::Certificate
             end
         }
 
-        if defined?(@cacert)
-            SSLCertificates.mkhash(Puppet[:certdir], @cacert, @cacertfile)
-        end
+        SSLCertificates.mkhash(Puppet[:certdir], @cacert, @cacertfile) if defined?(@cacert)
     end
 end
 

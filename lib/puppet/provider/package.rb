@@ -20,9 +20,7 @@ class Puppet::Provider::Package < Puppet::Provider
     def properties
         if @property_hash.empty?
             @property_hash = query || {:ensure => :absent}
-            if @property_hash.empty?
-                @property_hash[:ensure] = :absent
-            end
+            @property_hash[:ensure] = :absent if @property_hash.empty?
         end
         @property_hash.dup
     end

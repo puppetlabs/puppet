@@ -84,9 +84,7 @@ module Puppet::Util::Docs
         # Stupid markdown
         #text = text.gsub("<%=", "&lt;%=")
         # For text with no carriage returns, there's nothing to do.
-        if text !~ /\n/
-            return text
-        end
+        return text if text !~ /\n/
         indent = nil
 
         # If we can match an indentation, then just remove that same level of

@@ -105,9 +105,7 @@ class Puppet::Network::HTTP::WEBrick
         results[:SSLStartImmediately] = true
         results[:SSLEnable] = true
 
-        unless Puppet::SSL::Certificate.find(Puppet::SSL::CA_NAME)
-            raise Puppet::Error, "Could not find CA certificate"
-        end
+        raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.find(Puppet::SSL::CA_NAME)
 
         results[:SSLCACertificateFile] = Puppet[:localcacert]
         results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER
@@ -125,9 +123,7 @@ class Puppet::Network::HTTP::WEBrick
         @server.mount('/', klass, :this_value_is_apparently_necessary_but_unused)
 
         # And then set up xmlrpc, if configured.
-        if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
-            @server.mount("/RPC2", xmlrpc_servlet)
-        end
+        @server.mount("/RPC2", xmlrpc_servlet) if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
     end
 
     # Create our xmlrpc servlet, which provides backward compatibility.

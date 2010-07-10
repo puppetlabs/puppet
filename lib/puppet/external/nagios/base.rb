@@ -245,9 +245,7 @@ class Nagios::Base
             map = {
                 self.namevar => "cn"
             }
-            if self.class.map
-                map.update(self.class.map)
-            end
+            map.update(self.class.map) if self.class.map
         end
         if map.include?(param)
             return map[param]
@@ -290,9 +288,7 @@ class Nagios::Base
             str += "objectclass: #{oc}\n"
         }
         @parameters.each { |name,value|
-            if self.class.suppress.include?(name)
-                next
-            end
+            next if self.class.suppress.include?(name)
             ldapname = self.parammap(name)
             str += ldapname + ": #{value}\n"
         }

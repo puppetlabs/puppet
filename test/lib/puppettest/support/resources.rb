@@ -15,9 +15,7 @@ module PuppetTest::Support::Resources
     def treenode(config, name, *resources)
         comp = tree_container name
         resources.each do |resource|
-            if resource.is_a?(String)
-                resource = tree_resource(resource)
-            end
+            resource = tree_resource(resource) if resource.is_a?(String)
             config.add_edge(comp, resource)
             config.add_resource resource unless config.resource(resource.ref)
         end

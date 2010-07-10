@@ -22,9 +22,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.clean(hash)
         newhash = hash.dup
         [:record_type, :on_disk].each do |p|
-            if newhash.include?(p)
-                newhash.delete(p)
-            end
+            newhash.delete(p) if newhash.include?(p)
         end
 
         return newhash
@@ -36,9 +34,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     def self.filetype
-        unless defined?(@filetype)
-            @filetype = Puppet::Util::FileType.filetype(:flat)
-        end
+        @filetype = Puppet::Util::FileType.filetype(:flat) unless defined?(@filetype)
         return @filetype
     end
 
@@ -83,9 +79,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.backup_target(target)
         return nil unless target_object(target).respond_to?(:backup)
 
-        unless defined?(@backup_stats)
-            @backup_stats = {}
-        end
+        @backup_stats = {} unless defined?(@backup_stats)
         return nil if @backup_stats[target] == @records.object_id
 
         target_object(target).backup
@@ -229,13 +223,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             r[:ensure] = :present
         end
 
-        if respond_to?(:prefetch_hook)
-            target_records = prefetch_hook(target_records)
-        end
+        target_records = prefetch_hook(target_records) if respond_to?(:prefetch_hook)
 
-        unless target_records
-            raise Puppet::DevError, "Prefetching #{target} for provider #{self.name} returned nil"
-        end
+        raise Puppet::DevError, "Prefetching #{target} for provider #{self.name} returned nil" unless target_records
 
         target_records
     end
@@ -292,9 +282,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     def self.targets(resources = nil)
         targets = []
         # First get the default target
-        unless self.default_target
-            raise Puppet::DevError, "Parsed Providers must define a default target"
-        end
+        raise Puppet::DevError, "Parsed Providers must define a default target" unless self.default_target
         targets << self.default_target
 
         # Then get each of the file objects
@@ -364,16 +352,12 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         # The 'record' could be a resource or a record, depending on how the provider
         # is initialized.  If we got an empty property hash (probably because the resource
         # is just being initialized), then we want to set up some defualts.
-        if @property_hash.empty?
-            @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :ensure => :absent}
-        end
+        @property_hash = self.class.record?(resource[:name]) || {:record_type => self.class.name, :ensure => :absent} if @property_hash.empty?
     end
 
     # Retrieve the current state from disk.
     def prefetch
-        unless @resource
-            raise Puppet::DevError, "Somehow got told to prefetch with no resource set"
-        end
+        raise Puppet::DevError, "Somehow got told to prefetch with no resource set" unless @resource
         self.class.prefetch(@resource[:name] => @resource)
     end
 
@@ -388,8 +372,6 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
             self.class.modified(restarget)
         end
-        if @property_hash[:target] != :absent and @property_hash[:target]
-            self.class.modified(@property_hash[:target])
-        end
+        self.class.modified(@property_hash[:target]) if @property_hash[:target] != :absent and @property_hash[:target]
     end
 end

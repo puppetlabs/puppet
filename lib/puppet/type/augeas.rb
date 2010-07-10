@@ -146,9 +146,7 @@ Puppet::Type.newtype(:augeas) do
     validate do
         has_lens = !self[:lens].nil?
         has_incl = !self[:incl].nil?
-        if has_lens != has_incl
-            self.fail "You must specify both the lens and incl parameters, or neither"
-        end
+        self.fail "You must specify both the lens and incl parameters, or neither" if has_lens != has_incl
     end
 
     # This is the acutal meat of the code. It forces

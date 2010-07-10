@@ -39,9 +39,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
         when "404"
             return nil
         when /^2/
-            unless response['content-type']
-                raise "No content type in http response; cannot parse"
-            end
+            raise "No content type in http response; cannot parse" unless response['content-type']
 
             content_type = response['content-type'].gsub(/\s*;.*$/,'') # strip any appended charset
 

@@ -28,9 +28,7 @@ class Puppet::SimpleGraph
             direction = options[:direction] || :out
             options[:type] ||= :vertices
 
-            if options[:type] == :edges
-                return send(direction.to_s + "_edges")
-            end
+            return send(direction.to_s + "_edges") if options[:type] == :edges
 
             return @adjacencies[direction].keys.reject { |vertex| @adjacencies[direction][vertex].empty? }
         end
@@ -122,9 +120,7 @@ class Puppet::SimpleGraph
     def dependencies(resource)
         # Cache the reversal graph, because it's somewhat expensive
         # to create.
-        unless defined?(@reversal) and @reversal
-            @reversal = reversal
-        end
+        @reversal = reversal unless defined?(@reversal) and @reversal
         # Strangely, it's significantly faster to search a reversed
         # tree in the :out direction than to search a normal tree
         # in the :in direction.
@@ -196,7 +192,7 @@ class Puppet::SimpleGraph
 
         # Iterate over each 0-degree vertex, decrementing the degree of
         # each of its out-edges.
-        while wrapper = zeros.pop do
+        while wrapper = zeros.pop
             result << wrapper.vertex
             wrapper.out_edges.each do |edge|
                 degree[edge.target].delete(edge)

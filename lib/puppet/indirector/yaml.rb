@@ -32,9 +32,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
         basedir = File.dirname(file)
 
         # This is quite likely a bad idea, since we're not managing ownership or modes.
-        unless FileTest.exist?(basedir)
-            Dir.mkdir(basedir)
-        end
+        Dir.mkdir(basedir) unless FileTest.exist?(basedir)
 
         begin
             writelock(file, 0660) { |f| f.print to_yaml(request.instance) }

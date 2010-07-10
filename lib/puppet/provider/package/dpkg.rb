@@ -52,9 +52,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
             elsif ['config-files', 'half-installed', 'unpacked', 'half-configured'].include?(hash[:status])
                 hash[:ensure] = :absent
             end
-            if hash[:desired] == 'hold'
-                hash[:ensure] = :held
-            end
+            hash[:ensure] = :held if hash[:desired] == 'hold'
         else
             Puppet.warning "Failed to match dpkg-query line #{line.inspect}"
             return nil
@@ -91,9 +89,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
     def latest
         output = dpkg_deb "--show", @resource[:source]
         matches = /^(\S+)\t(\S+)$/.match(output).captures
-        unless matches[0].match( Regexp.escape(@resource[:name]) )
-            warning "source doesn't contain named package, but #{matches[0]}"
-        end
+        warning "source doesn't contain named package, but #{matches[0]}" unless matches[0].match( Regexp.escape(@resource[:name]) )
         matches[1]
     end
 

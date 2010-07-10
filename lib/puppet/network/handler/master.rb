@@ -45,9 +45,7 @@ class Puppet::Network::Handler
 
             # This is only used by the cfengine module, or if --loadclasses was
             # specified in +puppet+.
-            if hash.include?(:Classes)
-                args[:Classes] = hash[:Classes]
-            end
+            args[:Classes] = hash[:Classes] if hash.include?(:Classes)
         end
 
         # Call our various handlers; this handler is getting deprecated.

@@ -174,9 +174,7 @@ class Puppet::Resource
         tag(self.type)
         tag(self.title) if valid_tag?(self.title)
 
-        if strict? and ! resource_type
-            raise ArgumentError, "Invalid resource type #{type}"
-        end
+        raise ArgumentError, "Invalid resource type #{type}" if strict? and ! resource_type
     end
 
     def ref
@@ -275,9 +273,7 @@ class Puppet::Resource
                 v = v.to_trans_ref
             elsif v.is_a?(Array)
                 v = v.collect { |av|
-                    if av.is_a?(Puppet::Resource)
-                        av = av.to_trans_ref
-                    end
+                    av = av.to_trans_ref if av.is_a?(Puppet::Resource)
                     av
                 }
             end

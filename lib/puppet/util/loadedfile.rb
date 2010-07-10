@@ -16,9 +16,7 @@ module Puppet
         # be reparsed.
         def changed?
             # Allow the timeout to be disabled entirely.
-            if Puppet[:filetimeout] < 0
-                return true
-            end
+            return true if Puppet[:filetimeout] < 0
             tmp = stamp()
 
             # We use a different internal variable than the stamp method

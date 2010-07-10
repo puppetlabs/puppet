@@ -167,9 +167,7 @@ module Puppet
                 if value =~ /^\d+$/
                     raise ArgumentError, "Group names must be provided, not numbers"
                 end
-                if value.include?(",")
-                    raise ArgumentError, "Group names must be provided as an array, not a comma-separated list"
-                end
+                raise ArgumentError, "Group names must be provided as an array, not a comma-separated list" if value.include?(",")
             end
         end
 
@@ -207,9 +205,7 @@ module Puppet
 
             validate do |val|
                 if val.to_s == "true"
-                    unless provider.class.manages_homedir?
-                        raise ArgumentError, "User provider #{provider.class.name} can not manage home directories"
-                    end
+                    raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" unless provider.class.manages_homedir?
                 end
             end
         end
@@ -281,9 +277,7 @@ module Puppet
                 if value =~ /^\d+$/
                     raise ArgumentError, "Role names must be provided, not numbers"
                 end
-                if value.include?(",")
-                    raise ArgumentError, "Role names must be provided as an array, not a comma-separated list"
-                end
+                raise ArgumentError, "Role names must be provided as an array, not a comma-separated list" if value.include?(",")
             end
         end
 
@@ -320,9 +314,7 @@ module Puppet
                 if value =~ /^\d+$/
                     raise ArgumentError, "Auth names must be provided, not numbers"
                 end
-                if value.include?(",")
-                    raise ArgumentError, "Auth names must be provided as an array, not a comma-separated list"
-                end
+                raise ArgumentError, "Auth names must be provided as an array, not a comma-separated list" if value.include?(",")
             end
         end
 
@@ -348,9 +340,7 @@ module Puppet
                 if value =~ /^\d+$/
                     raise ArgumentError, "Profile names must be provided, not numbers"
                 end
-                if value.include?(",")
-                    raise ArgumentError, "Profile names must be provided as an array, not a comma-separated list"
-                end
+                raise ArgumentError, "Profile names must be provided as an array, not a comma-separated list" if value.include?(",")
             end
         end
 
@@ -372,9 +362,7 @@ module Puppet
             end
 
             validate do |value|
-                unless value.include?("=")
-                    raise ArgumentError, "key value pairs must be seperated by an ="
-                end
+                raise ArgumentError, "key value pairs must be seperated by an =" unless value.include?("=")
             end
         end
 

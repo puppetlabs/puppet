@@ -4,9 +4,7 @@ Puppet::Util::Log.newdesttype :syslog do
     end
 
     def initialize
-        if Syslog.opened?
-            Syslog.close
-        end
+        Syslog.close if Syslog.opened?
         name = Puppet[:name]
         name = "puppet-#{name}" unless name =~ /puppet/
 
@@ -49,9 +47,7 @@ Puppet::Util::Log.newdesttype :file do
     end
 
     def flush
-        if defined?(@file)
-            @file.flush
-        end
+        @file.flush if defined?(@file)
     end
 
     def initialize(path)
@@ -158,14 +154,10 @@ Puppet::Util::Log.newdesttype :host do
 
     def handle(msg)
         unless msg.is_a?(String) or msg.remote
-            unless defined?(@hostname)
-                @hostname = Facter["hostname"].value
-            end
+            @hostname = Facter["hostname"].value unless defined?(@hostname)
             unless defined?(@domain)
                 @domain = Facter["domain"].value
-                if @domain
-                    @hostname += ".#{@domain}"
-                end
+                @hostname += ".#{@domain}" if @domain
             end
             if msg.source =~ /^\//
                 msg.source = @hostname + ":#{msg.source}"
@@ -187,9 +179,7 @@ Puppet::Util::Log.newdesttype :host do
                 # Add the hostname to the source
                 @driver.addlog(tmp)
             rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
+                puts detail.backtrace if Puppet[:trace]
                 Puppet.err detail
                 Puppet::Util::Log.close(self)
             end

@@ -4,9 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Type.type(:group) do
     before do
-        unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
-            ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin"
-        end
+        ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
         @class = Puppet::Type.type(:group)
     end
 

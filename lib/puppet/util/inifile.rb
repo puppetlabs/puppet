@@ -56,9 +56,7 @@ module Puppet::Util::IniConfig
         # exists, return nil
         def [](key)
             entry = find_entry(key)
-            if entry.nil?
-                return nil
-            end
+            return nil if entry.nil?
             return entry[1]
         end
 
@@ -69,9 +67,7 @@ module Puppet::Util::IniConfig
             @entries.each do |entry|
                 if entry.is_a?(Array)
                     key, value = entry
-                    unless value.nil?
-                        text << "#{key}=#{value}\n"
-                    end
+                    text << "#{key}=#{value}\n" unless value.nil?
                 else
                     text << entry
                 end
@@ -82,9 +78,7 @@ module Puppet::Util::IniConfig
         private
         def find_entry(key)
             @entries.each do |entry|
-                if entry.is_a?(Array) && entry[0] == key
-                    return entry
-                end
+                return entry if entry.is_a?(Array) && entry[0] == key
             end
             return nil
         end
@@ -102,9 +96,7 @@ module Puppet::Util::IniConfig
         # already existing sections
         def read(file)
             text = Puppet::Util::FileType.filetype(:flat).new(file).read
-            if text.nil?
-                raise "Could not find #{file}"
-            end
+            raise "Could not find #{file}" if text.nil?
 
             section = nil   # The name of the current section
             optname = nil   # The name of the last option in section
@@ -172,9 +164,7 @@ module Puppet::Util::IniConfig
         def each_section(&block)
             @files.each do |file, list|
                 list.each do |entry|
-                    if entry.is_a?(Section)
-                        yield(entry)
-                    end
+                    yield(entry) if entry.is_a?(Section)
                 end
             end
         end
@@ -203,9 +193,7 @@ module Puppet::Util::IniConfig
 
         # Add a section to be stored in FILE when store is called
         def add_section(name, file)
-            if include?(name)
-                raise "A section with name #{name} already exists"
-            end
+            raise "A section with name #{name} already exists" if include?(name)
             result = Section.new(name, file)
             @files[file] ||= []
             @files[file] << result

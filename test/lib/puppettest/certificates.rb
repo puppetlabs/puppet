@@ -8,9 +8,7 @@ module PuppetTest::Certificates
     def mkPassFile()
         keyfile = File.join(@dir, "tmpkeyfile")
         @@tmpfiles << keyfile
-        unless FileTest.exists?(@dir)
-            system("mkdir -p #{@dir}")
-        end
+        system("mkdir -p #{@dir}") unless FileTest.exists?(@dir)
         File.open(keyfile, "w", 0600) { |f|
             f.print "as;dklj23rlkjzdflij23wr"
         }

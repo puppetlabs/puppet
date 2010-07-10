@@ -16,9 +16,7 @@ class Puppet::Parser::AST
         # Are we the default option?
         def default?
             # Cache the @default value.
-            if defined?(@default)
-                return @default
-            end
+            return @default if defined?(@default)
 
             if @value.is_a?(AST::ASTArray)
                 @value.each { |subval|
@@ -28,14 +26,10 @@ class Puppet::Parser::AST
                     end
                 }
             else
-                if @value.is_a?(AST::Default)
-                    @default = true
-                end
+                @default = true if @value.is_a?(AST::Default)
             end
 
-            unless defined?(@default)
-                @default = false
-            end
+            @default = false unless defined?(@default)
 
             return @default
         end

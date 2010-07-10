@@ -62,9 +62,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             context << "/" if context[-1, 1] != "/"
         end
 
-        if data.is_a?(String)
-            data = data.split($/)
-        end
+        data = data.split($/) if data.is_a?(String)
         data = data.flatten
         args = []
         data.each do |line|
@@ -116,9 +114,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
                     else
                         argline << sc.scan(/[^\s]+/)
                     end
-                    unless argline[-1]
-                        fail("missing string argument #{narg} for #{cmd}")
-                    end
+                    fail("missing string argument #{narg} for #{cmd}") unless argline[-1]
                 elsif f == :comparator
                     argline << sc.scan(/(==|!=|=~|<|<=|>|>=)/)
                     unless argline[-1]
@@ -147,9 +143,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
             @aug = Augeas::open(root, load_path,flags)
 
-            if get_augeas_version >= "0.3.6"
-                debug("Augeas version #{get_augeas_version} is installed")
-            end
+            debug("Augeas version #{get_augeas_version} is installed") if get_augeas_version >= "0.3.6"
 
             if resource[:incl]
                 aug.set("/augeas/load/Xfm/lens", resource[:lens])
@@ -309,16 +303,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         # Re-connect to augeas, and re-execute the changes
         begin
             open_augeas
-            if get_augeas_version >= "0.3.6"
-                set_augeas_save_mode(SAVE_OVERWRITE)
-            end
+            set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
 
             do_execute_changes
 
             success = @aug.save
-            if success != true
-                fail("Save failed with return code #{success}")
-            end
+            fail("Save failed with return code #{success}") if success != true
         ensure
             close_augeas
         end

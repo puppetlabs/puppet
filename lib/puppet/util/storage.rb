@@ -47,9 +47,7 @@ class Puppet::Util::Storage
         Puppet.settings.use(:main) unless FileTest.directory?(Puppet[:statedir])
 
         unless File.exists?(Puppet[:statefile])
-            unless defined?(@@state) and ! @@state.nil?
-                self.init
-            end
+            self.init unless defined?(@@state) and ! @@state.nil?
             return
         end
         unless File.file?(Puppet[:statefile])
@@ -87,9 +85,7 @@ class Puppet::Util::Storage
     def self.store
         Puppet.debug "Storing state"
 
-        unless FileTest.exist?(Puppet[:statefile])
-            Puppet.info "Creating state file #{Puppet[:statefile]}"
-        end
+        Puppet.info "Creating state file #{Puppet[:statefile]}" unless FileTest.exist?(Puppet[:statefile])
 
         Puppet::Util.benchmark(:debug, "Stored state") do
             Puppet::Util::FileLocking.writelock(Puppet[:statefile], 0660) do |file|

@@ -50,9 +50,7 @@ class Puppet::Util::Autoload
 
     def initialize(obj, path, options = {})
         @path = path.to_s
-        if @path !~ /^\w/
-            raise ArgumentError, "Autoload paths cannot be fully qualified"
-        end
+        raise ArgumentError, "Autoload paths cannot be fully qualified" if @path !~ /^\w/
         @object = obj
 
         self.class[obj] = self
@@ -66,9 +64,7 @@ class Puppet::Util::Autoload
             end
         end
 
-        unless defined?(@wrap)
-            @wrap = true
-        end
+        @wrap = true unless defined?(@wrap)
     end
 
     # Load a single plugin by name.  We use 'load' here so we can reload a

@@ -26,9 +26,7 @@ module PuppetTest::Support::Utils
     def resources2catalog(*resources)
         if resources[0].is_a?(Puppet::Resource::Catalog)
             config = resources.shift
-            unless resources.empty?
-                resources.each { |r| config.add_resource r }
-            end
+            resources.each { |r| config.add_resource r } unless resources.empty?
         elsif resources[0].is_a?(Puppet::Type.type(:component))
             raise ArgumentError, "resource2config() no longer accpts components"
             comp = resources.shift
@@ -55,18 +53,14 @@ module PuppetTest::Support::Utils
         else
             puts id
         end
-        unless defined?(@me)
-            raise "Could not retrieve user name; 'id' did not work"
-        end
+        raise "Could not retrieve user name; 'id' did not work" unless defined?(@me)
     end
 
     # Define a variable that contains a group I'm in.
     def set_mygroup
         # retrieve the user name
         group = %x{groups}.chomp.split(/ /)[0]
-        unless group
-            raise "Could not find group to set in @mygroup"
-        end
+        raise "Could not find group to set in @mygroup" unless group
         @mygroup = group
     end
 
@@ -93,9 +87,7 @@ module PuppetTest::Support::Utils
         ary = [PuppetTest.basedir, "test"]
         ary += name.split("/")
         file = File.join(ary)
-        unless FileTest.exists?(file)
-            raise Puppet::DevError, "No fakedata file #{file}"
-        end
+        raise Puppet::DevError, "No fakedata file #{file}" unless FileTest.exists?(file)
         return file
     end
 

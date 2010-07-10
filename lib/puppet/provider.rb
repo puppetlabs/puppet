@@ -110,9 +110,7 @@ class Puppet::Provider
         # Now define a method for that command
         unless singleton_class.method_defined?(name)
             meta_def(name) do |*args|
-                unless command(name)
-                    raise Puppet::Error, "Command #{name} is missing"
-                end
+                raise Puppet::Error, "Command #{name} is missing" unless command(name)
                 if args.empty?
                     cmd = [command(name)]
                 else
@@ -167,9 +165,7 @@ class Puppet::Provider
             name = symbolize(name)
             @commands[name] = path
 
-            if block_given?
-                yield(name, path)
-            end
+            yield(name, path) if block_given?
 
             # Now define the class and instance methods.
             make_command_methods(name)
@@ -178,9 +174,7 @@ class Puppet::Provider
 
     # Retrieve the data source.  Defaults to the provider name.
     def self.source
-        unless defined?(@source)
-            @source = self.name
-        end
+        @source = self.name unless defined?(@source)
         @source
     end
 

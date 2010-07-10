@@ -23,9 +23,7 @@ module PuppetTest
         # is used directly by Rspec and is not intended for develper use.
         #
         def runnable?
-            if superclass.respond_to?(:runnable?) and not superclass.runnable?
-                return false
-            end
+            return false if superclass.respond_to?(:runnable?) and not superclass.runnable?
 
             confines.each do |message, is_runnable|
                 is_runnable = is_runnable.call if is_runnable.respond_to?(:call)

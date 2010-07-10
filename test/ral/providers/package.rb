@@ -17,9 +17,7 @@ class TestPackageProvider < Test::Unit::TestCase
     def self.load_test_packages
         require 'yaml'
         file = File.join(PuppetTest.datadir(), "providers", "package", "testpackages.yaml")
-        unless FileTest.exists?(file)
-            raise "Could not find file #{file}"
-        end
+        raise "Could not find file #{file}" unless FileTest.exists?(file)
         array = YAML::load(File.read(file)).collect { |hash|
             # Stupid ruby 1.8.1.  YAML is sometimes broken such that
             # symbols end up being strings with the : in them.
@@ -163,9 +161,7 @@ class TestPackageProvider < Test::Unit::TestCase
                     end
                 end
             else
-                if cleancmd
-                    system(cleancmd)
-                end
+                system(cleancmd) if cleancmd
             end
         end
 

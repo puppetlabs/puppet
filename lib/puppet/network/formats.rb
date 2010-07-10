@@ -153,9 +153,7 @@ Puppet::Network::FormatHandler.create(:pson, :mime => "text/pson", :weight => 10
         if data.is_a?(Hash) and d = data['data']
             data = d
         end
-        if data.is_a?(klass)
-            return data
-        end
+        return data if data.is_a?(klass)
         klass.from_pson(data)
     end
 end

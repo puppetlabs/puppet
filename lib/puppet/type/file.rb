@@ -277,20 +277,12 @@ Puppet::Type.newtype(:file) do
         CREATORS.each do |param|
             count += 1 if self.should(param)
         end
-        if @parameters.include?(:source)
-            count += 1
-        end
-        if count > 1
-            self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}"
-        end
+        count += 1 if @parameters.include?(:source)
+        self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if count > 1
 
-        if !self[:source] and self[:recurse] == :remote
-            self.fail "You cannot specify a remote recursion without a source"
-        end
+        self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
 
-        if !self[:recurse] and self[:recurselimit]
-            self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen"
-        end
+        self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
     end
 
     def self.[](path)
@@ -300,9 +292,7 @@ Puppet::Type.newtype(:file) do
 
     # List files, but only one level deep.
     def self.instances(base = "/")
-        unless FileTest.directory?(base)
-            return []
-        end
+        return [] unless FileTest.directory?(base)
 
         files = []
         Dir.entries(base).reject { |e|
@@ -333,9 +323,7 @@ Puppet::Type.newtype(:file) do
             # If the parent directory is writeable, then we execute
             # as the user in question.  Otherwise we'll rely on
             # the 'owner' property to do things.
-            if writeable
-                asuser = self.should(:owner)
-            end
+            asuser = self.should(:owner) if writeable
         end
 
         return asuser
@@ -485,9 +473,7 @@ Puppet::Type.newtype(:file) do
     # to map to another directory.
     def recurse
         children = {}
-        if self[:recurse] != :remote
-            children = recurse_local
-        end
+        children = recurse_local if self[:recurse] != :remote
 
         if self[:target]
             recurse_link(children)
@@ -718,9 +704,7 @@ Puppet::Type.newtype(:file) do
     # the far side.
     def to_trans(retrieve = true)
         obj = super
-        if obj[:target] == :notlink
-            obj.delete(:target)
-        end
+        obj.delete(:target) if obj[:target] == :notlink
         obj
     end
 
@@ -732,9 +716,7 @@ Puppet::Type.newtype(:file) do
         use_temporary_file = write_temporary_file?
         if use_temporary_file
             path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-            while File.exists?(path) or File.symlink?(path)
-                path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-            end
+            path = "#{self[:path]}.puppettmp_#{rand(10000)}" while File.exists?(path) or File.symlink?(path)
         else
             path = self[:path]
         end
@@ -801,9 +783,7 @@ Puppet::Type.newtype(:file) do
             # Make sure we get a new stat objct
             expire
             currentvalue = thing.retrieve
-            unless thing.insync?(currentvalue)
-                thing.sync
-            end
+            thing.sync unless thing.insync?(currentvalue)
         end
     end
 end

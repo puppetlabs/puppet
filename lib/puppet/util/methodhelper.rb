@@ -2,9 +2,7 @@
 module Puppet::Util::MethodHelper
     def requiredopts(*names)
         names.each do |name|
-            if self.send(name).nil?
-                devfail("#{name} is a required option for #{self.class}")
-            end
+            devfail("#{name} is a required option for #{self.class}") if self.send(name).nil?
         end
     end
 

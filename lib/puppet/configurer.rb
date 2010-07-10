@@ -54,9 +54,7 @@ class Puppet::Configurer
             Puppet::Util::Storage.load
             @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err "Corrupt state file #{Puppet[:statefile]}: #{detail}"
             begin
                 ::File.unlink(Puppet[:statefile])

@@ -22,9 +22,7 @@ Puppet::Reports.register_report(:rrdgraph) do
         which defaults to the ``runinterval``."
 
     def hostdir
-        unless defined?(@hostdir)
-            @hostdir = File.join(Puppet[:rrddir], self.host)
-        end
+        @hostdir = File.join(Puppet[:rrddir], self.host) unless defined?(@hostdir)
         @hostdir
     end
 
@@ -118,9 +116,7 @@ Puppet::Reports.register_report(:rrdgraph) do
             metric.graph
         end
 
-        unless FileTest.exists?(File.join(hostdir, "index.html"))
-            mkhtml()
-        end
+        mkhtml() unless FileTest.exists?(File.join(hostdir, "index.html"))
     end
 
     # Unfortunately, RRD does not deal well with changing lists of values,

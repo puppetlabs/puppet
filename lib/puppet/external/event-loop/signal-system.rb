@@ -63,9 +63,7 @@ SignalEmitterClass = SignalEmitterModule
 
 module SignalEmitter
     def self.included (includer)
-        if not includer.kind_of? SignalEmitterClass
-            includer.extend SignalEmitterClass
-        end
+        includer.extend SignalEmitterClass if not includer.kind_of? SignalEmitterClass
     end
 
     def __maybe_initialize_signal_emitter

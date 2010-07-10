@@ -76,9 +76,7 @@ class Puppet::Application::Agent < Puppet::Application
             Puppet::Util::Log.newdestination(arg)
             options[:setdest] = true
         rescue => detail
-            if Puppet[:debug]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:debug]
             $stderr.puts detail.to_s
         end
     end
@@ -122,9 +120,7 @@ class Puppet::Application::Agent < Puppet::Application
         begin
             report = @agent.run
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             Puppet.err detail.to_s
         end
 
@@ -167,9 +163,7 @@ class Puppet::Application::Agent < Puppet::Application
             end
         end
 
-        unless options[:setdest]
-            Puppet::Util::Log.newdestination(:syslog)
-        end
+        Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
     end
 
     def enable_disable_client(agent)
@@ -207,14 +201,10 @@ class Puppet::Application::Agent < Puppet::Application
 
         setup_logs
 
-        if Puppet.settings.print_configs?
-            exit(Puppet.settings.print_configs ? 0 : 1)
-        end
+        exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
         # If noop is set, then also enable diffs
-        if Puppet[:noop]
-            Puppet[:show_diff] = true
-        end
+        Puppet[:show_diff] = true if Puppet[:noop]
 
         args[:Server] = Puppet[:server]
         if options[:fqdn]
@@ -225,9 +215,7 @@ class Puppet::Application::Agent < Puppet::Application
         if options[:centrallogs]
             logdest = args[:Server]
 
-            if args.include?(:Port)
-                logdest += ":" + args[:Port]
-            end
+            logdest += ":" + args[:Port] if args.include?(:Port)
             Puppet::Util::Log.newdestination(logdest)
         end
 
@@ -262,14 +250,10 @@ class Puppet::Application::Agent < Puppet::Application
 
         # It'd be nice to daemonize later, but we have to daemonize before the
         # waitforcert happens.
-        if Puppet[:daemonize]
-            @daemon.daemonize
-        end
+        @daemon.daemonize if Puppet[:daemonize]
 
         @host = Puppet::SSL::Host.new
-        unless options[:fingerprint]
-            cert = @host.wait_for_cert(options[:waitforcert])
-        end
+        cert = @host.wait_for_cert(options[:waitforcert]) unless options[:fingerprint]
 
         @objects = []
 

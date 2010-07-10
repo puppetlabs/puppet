@@ -17,17 +17,13 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
     # remove service file from rc.conf.d to disable it
     def disable
         rcfile = File.join(@@rcconf_dir, @model[:name])
-        if File.exists?(rcfile)
-            File.delete(rcfile)
-        end
+        File.delete(rcfile) if File.exists?(rcfile)
     end
 
     # if the service file exists in rc.conf.d then it's already enabled
     def enabled?
         rcfile = File.join(@@rcconf_dir, @model[:name])
-        if File.exists?(rcfile)
-            return :true
-        end
+        return :true if File.exists?(rcfile)
 
         return :false
     end
@@ -35,9 +31,7 @@ Puppet::Type.type(:service).provide :bsd, :parent => :init do
     # enable service by creating a service file under rc.conf.d with the
     # proper contents
     def enable
-        if not File.exists?(@@rcconf_dir)
-            Dir.mkdir(@@rcconf_dir)
-        end
+        Dir.mkdir(@@rcconf_dir) if not File.exists?(@@rcconf_dir)
         rcfile = File.join(@@rcconf_dir, @model[:name])
         open(rcfile, 'w') { |f| f << "%s_enable=\"YES\"\n" % @model[:name] }
     end

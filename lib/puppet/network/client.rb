@@ -23,9 +23,7 @@ class Net::HTTP
 
     # JJM: This is a "backport" of sorts to older ruby versions which
     # do not have this accessor.  See #896 for more information.
-    unless Net::HTTP.instance_methods.include? "enable_post_connection_check"
-        attr_accessor :enable_post_connection_check
-    end
+    attr_accessor :enable_post_connection_check unless Net::HTTP.instance_methods.include? "enable_post_connection_check"
 end
 
 # The base class for all of the clients.  Many clients just directly
@@ -50,25 +48,19 @@ class Puppet::Network::Client
     # Determine what clients look for when being passed an object for local
     # client/server stuff.  E.g., you could call Client::CA.new(:CA => ca).
     def self.drivername
-        unless defined?(@drivername)
-            @drivername = self.name
-        end
+        @drivername = self.name unless defined?(@drivername)
         @drivername
     end
 
     # Figure out the handler for our client.
     def self.handler
-        unless defined?(@handler)
-            @handler = Puppet::Network::Handler.handler(self.name)
-        end
+        @handler = Puppet::Network::Handler.handler(self.name) unless defined?(@handler)
         @handler
     end
 
     # The class that handles xmlrpc interaction for us.
     def self.xmlrpc_client
-        unless defined?(@xmlrpc_client)
-            @xmlrpc_client = Puppet::Network::XMLRPCClient.handler_class(self.handler)
-        end
+        @xmlrpc_client = Puppet::Network::XMLRPCClient.handler_class(self.handler) unless defined?(@xmlrpc_client)
         @xmlrpc_client
     end
 
@@ -156,9 +148,7 @@ class Puppet::Network::Client
             Puppet.notice "Already in shutdown"
         else
             self.stopping = true
-            if self.respond_to? :running? and self.running?
-                Puppet::Util::Storage.store
-            end
+            Puppet::Util::Storage.store if self.respond_to? :running? and self.running?
             rmpidfile()
         end
     end

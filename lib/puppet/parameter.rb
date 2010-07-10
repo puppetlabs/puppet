@@ -53,9 +53,7 @@ class Puppet::Parameter
         end
 
         def nodefault
-            if public_method_defined? :default
-                undef_method :default
-            end
+            undef_method :default if public_method_defined? :default
         end
 
         # Store documentation for this parameter.
@@ -174,13 +172,9 @@ class Puppet::Parameter
 
         error = type.new(args.join(" "))
 
-        if defined?(@resource) and @resource and @resource.line
-            error.line = @resource.line
-        end
+        error.line = @resource.line if defined?(@resource) and @resource and @resource.line
 
-        if defined?(@resource) and @resource and @resource.file
-            error.file = @resource.file
-        end
+        error.file = @resource.file if defined?(@resource) and @resource and @resource.file
 
         raise error
     end
@@ -217,9 +211,7 @@ class Puppet::Parameter
 
     # for testing whether we should actually do anything
     def noop
-        unless defined?(@noop)
-            @noop = false
-        end
+        @noop = false unless defined?(@noop)
         tmp = @noop || self.resource.noop || Puppet[:noop] || false
         #debug "noop is #{tmp}"
         return tmp
@@ -306,9 +298,7 @@ class Puppet::Parameter
         unless defined?(@tags)
             @tags = []
             # This might not be true in testing
-            if @resource.respond_to? :tags
-                @tags = @resource.tags
-            end
+            @tags = @resource.tags if @resource.respond_to? :tags
             @tags << self.name.to_s
         end
         @tags

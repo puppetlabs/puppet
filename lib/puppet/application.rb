@@ -182,9 +182,7 @@ class Application
         end
 
         def should_parse_config?
-            if ! defined?(@parse_config)
-                @parse_config = true
-            end
+            @parse_config = true if ! defined?(@parse_config)
             return @parse_config
         end
 
@@ -324,9 +322,7 @@ class Application
             end
         end
 
-        unless options[:setdest]
-            Puppet::Util::Log.newdestination(:syslog)
-        end
+        Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
     end
 
     def parse_options

@@ -26,9 +26,7 @@ class Puppet::Network::Handler # :nodoc:
         # Accept a file from a client and store it by md5 sum, returning
         # the sum.
         def addfile(contents, path, client = nil, clientip = nil)
-            if client
-                contents = Base64.decode64(contents)
-            end
+            contents = Base64.decode64(contents) if client
             bucket = Puppet::FileBucket::File.new(contents)
             return bucket.save
         end

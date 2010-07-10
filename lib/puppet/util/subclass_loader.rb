@@ -15,9 +15,7 @@ module Puppet::Util::SubclassLoader
     # The hook method that sets up subclass loading.  We need the name
     # of the method to create and the path in which to look for them.
     def handle_subclasses(name, path)
-        unless self.is_a?(Class)
-            raise ArgumentError, "Must be a class to use SubclassLoader"
-        end
+        raise ArgumentError, "Must be a class to use SubclassLoader" unless self.is_a?(Class)
         @subclasses = []
 
                     @loader = Puppet::Util::Autoload.new(
@@ -41,9 +39,7 @@ module Puppet::Util::SubclassLoader
 
                 # Now make the method that returns this subclass.  This way we
                 # normally avoid the method_missing method.
-                if c and ! respond_to?(subname)
-                    define_method(subname) { c }
-                end
+                define_method(subname) { c } if c and ! respond_to?(subname)
             end
             return c
         end
@@ -76,9 +72,7 @@ module Puppet::Util::SubclassLoader
 
     # Retrieve or calculate a name.
     def name(dummy_argument=:work_arround_for_ruby_GC_bug)
-        unless defined?(@name)
-            @name = self.to_s.sub(/.+::/, '').intern
-        end
+        @name = self.to_s.sub(/.+::/, '').intern unless defined?(@name)
 
         return @name
     end

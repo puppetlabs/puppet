@@ -87,9 +87,7 @@ class Puppet::Node::Environment
     # all known directories all the time.
     cached_attr(:modulepath, :ttl => Puppet[:filetimeout]) do
         dirs = self[:modulepath].split(File::PATH_SEPARATOR)
-        if ENV["PUPPETLIB"]
-            dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs
-        end
+        dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs if ENV["PUPPETLIB"]
         validate_dirs(dirs)
     end
 

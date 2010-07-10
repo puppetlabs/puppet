@@ -40,9 +40,7 @@ module Puppet
             end
 
             newvalue(:absent, :event => :mount_deleted) do
-                if provider.mounted?
-                    provider.unmount
-                end
+                provider.unmount if provider.mounted?
 
                 provider.destroy
             end
@@ -94,9 +92,7 @@ module Puppet
                         ! prop.insync?(currentvalues[prop])
                     end
                 end.each { |prop| prop.sync }.length
-                if oos > 0
-                    @resource.flush
-                end
+                @resource.flush if oos > 0
             end
         end
 
@@ -142,9 +138,7 @@ module Puppet
             desc "The pass in which the mount is checked."
 
             defaultto {
-                if @resource.managed?
-                    0
-                end
+                0 if @resource.managed?
             }
         end
 
@@ -166,9 +160,7 @@ module Puppet
             newvalue(%r{(0|1)})
 
             defaultto {
-                if @resource.managed?
-                    0
-                end
+                0 if @resource.managed?
             }
         end
 

@@ -42,9 +42,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
 
             check = [:ensure]
 
-            if public_method_defined? :enabled?
-                check << :enable
-            end
+            check << :enable if public_method_defined? :enabled?
 
             Dir.entries(path).each do |name|
                 fullpath = File.join(path, name)

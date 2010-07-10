@@ -33,9 +33,7 @@ Puppet::Reports.register_report(:store) do
 
         dir = File.join(Puppet[:reportdir], client)
 
-        unless FileTest.exists?(dir)
-            mkclientdir(client, dir)
-        end
+        mkclientdir(client, dir) unless FileTest.exists?(dir)
 
         # Now store the report.
         now = Time.now.gmtime
@@ -51,9 +49,7 @@ Puppet::Reports.register_report(:store) do
                 f.print to_yaml
             end
         rescue => detail
-            if Puppet[:trace]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:trace]
             Puppet.warning "Could not write report for #{client} at #{file}: #{detail}"
         end
 

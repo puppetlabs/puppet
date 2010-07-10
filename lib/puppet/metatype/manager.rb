@@ -83,9 +83,7 @@ module Manager
 
         # If they've got all the necessary methods defined and they haven't
         # already added the property, then do so now.
-        if klass.ensurable? and ! klass.validproperty?(:ensure)
-            klass.ensurable
-        end
+        klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
 
         # Now set up autoload any providers that might exist for this type.
 
@@ -111,9 +109,7 @@ module Manager
             :hash => @types
         )
 
-        if respond_to?("new#{name}")
-            singleton_class.send(:remove_method, "new#{name}")
-        end
+        singleton_class.send(:remove_method, "new#{name}") if respond_to?("new#{name}")
     end
 
     # Return a Type instance by name.
@@ -126,9 +122,7 @@ module Manager
             return t
         else
             if typeloader.load(name)
-                unless @types.include? name
-                    Puppet.warning "Loaded puppet/type/#{name} but no class was created"
-                end
+                Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
             end
 
             return @types[name]

@@ -40,9 +40,7 @@ class Puppet::Network::HTTP::Mongrel
         klass = class_for_protocol(:rest)
         @server.register('/', klass.new(:server => @server))
 
-        if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
-            setup_xmlrpc_handlers
-        end
+        setup_xmlrpc_handlers if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
     end
 
     # Use our existing code to provide the xmlrpc backward compatibility.

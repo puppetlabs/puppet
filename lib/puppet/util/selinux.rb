@@ -14,9 +14,7 @@ require 'pathname'
 module Puppet::Util::SELinux
 
     def selinux_support?
-        unless defined?(Selinux)
-            return false
-        end
+        return false unless defined?(Selinux)
         if Selinux.is_selinux_enabled == 1
             return true
         end
@@ -26,9 +24,7 @@ module Puppet::Util::SELinux
     # Retrieve and return the full context of the file.  If we don't have
     # SELinux support or if the SELinux call fails then return nil.
     def get_selinux_current_context(file)
-        unless selinux_support?
-            return nil
-        end
+        return nil unless selinux_support?
         retval = Selinux.lgetfilecon(file)
         if retval == -1
             return nil
@@ -39,14 +35,10 @@ module Puppet::Util::SELinux
     # Retrieve and return the default context of the file.  If we don't have
     # SELinux support or if the SELinux call fails to file a default then return nil.
     def get_selinux_default_context(file)
-        unless selinux_support?
-            return nil
-        end
+        return nil unless selinux_support?
         # If the filesystem has no support for SELinux labels, return a default of nil
         # instead of what matchpathcon would return
-        unless selinux_label_support?(file)
-            return nil
-        end
+        return nil unless selinux_label_support?(file)
         # If the file exists we should pass the mode to matchpathcon for the most specific
         # matching.  If not, we can pass a mode of 0.
         begin
@@ -89,9 +81,7 @@ module Puppet::Util::SELinux
     # I believe that the OS should always provide at least a fall-through context
     # though on any well-running system.
     def set_selinux_context(file, value, component = false)
-        unless selinux_support? && selinux_label_support?(file)
-            return nil
-        end
+        return nil unless selinux_support? && selinux_label_support?(file)
 
         if component
             # Must first get existing context to replace a single component
@@ -137,9 +127,7 @@ module Puppet::Util::SELinux
     # the file.
     def set_selinux_default_context(file)
         new_context = get_selinux_default_context(file)
-        unless new_context
-            return nil
-        end
+        return nil unless new_context
         cur_context = get_selinux_current_context(file)
         if new_context != cur_context
             set_selinux_context(file, new_context)
@@ -207,10 +195,8 @@ module Puppet::Util::SELinux
         # Remove the last slash and everything after it,
         #   and repeat with that as the file for the next loop through.
         path = realpath(path)
-        while not path.empty? do
-            if mnts.has_key?(path)
-                return mnts[path]
-            end
+        while not path.empty?
+            return mnts[path] if mnts.has_key?(path)
             path = parent_directory(path)
         end
         return mnts['/']
@@ -222,9 +208,7 @@ module Puppet::Util::SELinux
     # false if not.
     def selinux_label_support?(file)
         fstype = find_fs(file)
-        if fstype.nil?
-            return false
-        end
+        return false if fstype.nil?
         filesystems = ['ext2', 'ext3', 'ext4', 'gfs', 'gfs2', 'xfs', 'jfs']
         return filesystems.include?(fstype)
     end

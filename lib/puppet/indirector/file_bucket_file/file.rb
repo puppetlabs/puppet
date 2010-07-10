@@ -36,9 +36,7 @@ module Puppet::FileBucketFile
                 bucket_file.bucket_path = options[:bucket_path]
                 filename = contents_path_for( bucket_file )
 
-                if ! ::File.exist? filename
-                    return nil
-                end
+                return nil if ! ::File.exist? filename
 
                 begin
                     contents = ::File.read filename

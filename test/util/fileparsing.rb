@@ -422,9 +422,7 @@ assert_nothing_raised do
                     ret[:description] = desc unless desc == ""
                 end
 
-                if line != ""
-                    ret[:alias] = line.split(/\s+/)
-                end
+                ret[:alias] = line.split(/\s+/) if line != ""
 
                 return ret
             end

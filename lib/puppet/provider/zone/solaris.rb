@@ -17,9 +17,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
         }
 
         # Configured but not installed zones do not have IDs
-        if properties[:id] == "-"
-            properties.delete(:id)
-        end
+        properties.delete(:id) if properties[:id] == "-"
 
         properties[:ensure] = symbolize(properties[:ensure])
 
@@ -42,9 +40,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
         # Then perform all of our configuration steps.  It's annoying
         # that we need this much internal info on the resource.
         @resource.send(:properties).each do |property|
-            if property.is_a? ZoneConfigProperty and ! property.insync?(properties[property.name])
-                str += property.configtext + "\n"
-            end
+            str += property.configtext + "\n" if property.is_a? ZoneConfigProperty and ! property.insync?(properties[property.name])
         end
 
         str += "commit\n"
@@ -121,9 +117,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
                 hash[$1.intern] = $2
             when /^\s+(\S+):\s*(.+)$/
                 if name
-                    unless hash.include? name
-                        hash[name] = []
-                    end
+                    hash[name] = [] unless hash.include? name
 
                     unless current
                         current = {}
@@ -171,9 +165,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
                         f.puts cfg
                     end
                 rescue => detail
-                    if Puppet[:debug]
-                        puts detail.stacktrace
-                    end
+                    puts detail.stacktrace if Puppet[:debug]
                     raise Puppet::Error, "Could not create sysidcfg: #{detail}"
                 end
             end

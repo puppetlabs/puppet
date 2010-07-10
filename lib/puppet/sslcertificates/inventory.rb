@@ -8,9 +8,7 @@ module Puppet::SSLCertificates
         # certificates that have been signed so far
         def self.add(cert)
             inited = false
-            if FileTest.exists?(Puppet[:cert_inventory])
-                inited = true
-            end
+            inited = true if FileTest.exists?(Puppet[:cert_inventory])
 
             Puppet.settings.write(:cert_inventory, "a") do |f|
                 f.puts((inited ? nil : self.init).to_s + format(cert))

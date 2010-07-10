@@ -50,9 +50,7 @@ class Puppet::SSL::CertificateAuthority
     # Create and run an applicator.  I wanted to build an interface where you could do
     # something like 'ca.apply(:generate).to(:all) but I don't think it's really possible.
     def apply(method, options)
-        unless options[:to]
-            raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all"
-        end
+        raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
         applier = Interface.new(method, options)
 
         applier.apply(self)
@@ -63,9 +61,7 @@ class Puppet::SSL::CertificateAuthority
         return unless auto = autosign?
 
         store = nil
-        if auto != true
-            store = autosign_store(auto)
-        end
+        store = autosign_store(auto) if auto != true
 
         Puppet::SSL::CertificateRequest.search("*").each do |csr|
             sign(csr.name) if auto == true or store.allowed?(csr.name, "127.1.1.1")
@@ -156,9 +152,7 @@ class Puppet::SSL::CertificateAuthority
 
     # Retrieve (or create, if necessary) our inventory manager.
     def inventory
-        unless defined?(@inventory)
-            @inventory = Puppet::SSL::Inventory.new
-        end
+        @inventory = Puppet::SSL::Inventory.new unless defined?(@inventory)
         @inventory
     end
 
@@ -191,14 +185,10 @@ class Puppet::SSL::CertificateAuthority
         # This is slightly odd.  If the file doesn't exist, our readwritelock creates
         # it, but with a mode we can't actually read in some cases.  So, use
         # a default before the lock.
-        unless FileTest.exist?(Puppet[:serial])
-            serial = 0x1
-        end
+        serial = 0x1 unless FileTest.exist?(Puppet[:serial])
 
         Puppet.settings.readwritelock(:serial) { |f|
-            if FileTest.exist?(Puppet[:serial])
-                serial ||= File.read(Puppet.settings[:serial]).chomp.hex
-            end
+            serial ||= File.read(Puppet.settings[:serial]).chomp.hex if FileTest.exist?(Puppet[:serial])
 
             # We store the next valid serial, not the one we just used.
             f << "%04X" % (serial + 1)
@@ -286,9 +276,7 @@ class Puppet::SSL::CertificateAuthority
         store.purpose = OpenSSL::X509::PURPOSE_SSL_CLIENT
         store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
 
-        unless store.verify(cert.content)
-            raise CertificateVerificationError.new(store.error), store.error_string
-        end
+        raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
     end
 
     def fingerprint(name, md = :MD5)

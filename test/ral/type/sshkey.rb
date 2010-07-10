@@ -32,9 +32,7 @@ class TestSSHKey < Test::Unit::TestCase
 
     def teardown
         super
-        if @provider.respond_to?(:clear)
-            @provider.clear
-        end
+        @provider.clear if @provider.respond_to?(:clear)
     end
 
     def mkkey

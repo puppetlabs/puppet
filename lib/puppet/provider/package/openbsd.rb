@@ -65,9 +65,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
         if @resource[:source] =~ /\/$/
             withenv :PKG_PATH => @resource[:source] do
-                if (@resource[:ensure] = get_version) == nil
-                    @resource[:ensure] = old_ensure
-                end
+                @resource[:ensure] = old_ensure if (@resource[:ensure] = get_version) == nil
                 full_name = [ @resource[:name], @resource[:ensure], @resource[:flavor] ]
                 pkgadd full_name.join('-').chomp('-')
             end

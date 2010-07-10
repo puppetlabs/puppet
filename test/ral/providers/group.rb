@@ -22,9 +22,7 @@ class TestGroupProvider < Test::Unit::TestCase
     def teardown
         super
         @@tmpgroups.each { |group|
-            unless missing?(group)
-                remove(group)
-            end
+            remove(group) unless missing?(group)
         }
     end
 

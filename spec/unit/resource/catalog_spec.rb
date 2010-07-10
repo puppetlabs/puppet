@@ -579,9 +579,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
             @catalog.add_resource(resource)
             @catalog.resource(:file, resource.title).should equal(resource)
             # We can't use .should here, because the resources respond to that method.
-            if @catalog.resource(:file, resource.name)
-                raise "Aliased non-isomorphic resource"
-            end
+            raise "Aliased non-isomorphic resource" if @catalog.resource(:file, resource.name)
         end
 
         it "should provide a method to create additional resources that also registers the resource" do

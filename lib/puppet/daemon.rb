@@ -44,9 +44,7 @@ class Puppet::Daemon
     # don't try to start.
     def create_pidfile
         Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
-            unless Puppet::Util::Pidlock.new(pidfile).lock
-                raise "Could not create PID file: #{pidfile}"
-            end
+            raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
         end
     end
 
@@ -77,9 +75,7 @@ class Puppet::Daemon
     def remove_pidfile
         Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
             locker = Puppet::Util::Pidlock.new(pidfile)
-            if locker.locked?
-                locker.unlock or Puppet.err "Could not remove PID file #{pidfile}"
-            end
+            locker.unlock or Puppet.err "Could not remove PID file #{pidfile}" if locker.locked?
         end
     end
 

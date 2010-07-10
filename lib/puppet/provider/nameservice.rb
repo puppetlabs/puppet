@@ -44,9 +44,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         def options(name, hash)
-            unless resource_type.valid_parameter?(name)
-                raise Puppet::DevError, "#{name} is not a valid attribute for #{resource_type.name}"
-            end
+            raise Puppet::DevError, "#{name} is not a valid attribute for #{resource_type.name}" unless resource_type.valid_parameter?(name)
             @options ||= {}
             @options[name] ||= {}
 
@@ -65,9 +63,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             begin
                 while ent = Etc.send("get#{section()}ent")
                     names << ent.name
-                    if block_given?
-                        yield ent.name
-                    end
+                    yield ent.name if block_given?
                 end
             ensure
                 Etc.send("end#{section()}ent")
@@ -80,12 +76,8 @@ class Puppet::Provider::NameService < Puppet::Provider
             super
             @resource_type.validproperties.each do |prop|
                 next if prop == :ensure
-                unless public_method_defined?(prop)
-                    define_method(prop) { get(prop) || :absent}
-                end
-                unless public_method_defined?(prop.to_s + "=")
-                    define_method(prop.to_s + "=") { |*vals| set(prop, *vals) }
-                end
+                define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
+                define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
             end
         end
 
@@ -109,9 +101,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             name = name.intern if name.is_a? String
             if @checks.include? name
                 block = @checks[name][:block]
-                unless block.call(value)
-                    raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}"
-                end
+                raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}" unless block.call(value)
             end
         end
 
@@ -164,9 +154,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         else
             Etc.send(group) { |obj|
                 if obj.gid > highest
-                    unless obj.send(method) > 65000
-                        highest = obj.send(method)
-                    end
+                    highest = obj.send(method) unless obj.send(method) > 65000
                 end
             }
 
@@ -264,9 +252,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         while group = Etc.getgrent
             members = group.mem
 
-            if members.include? user
-                groups << group.name
-            end
+            groups << group.name if members.include? user
         end
 
         # We have to close the file, so each listing is a separate
@@ -281,9 +267,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         hash = {}
         self.class.resource_type.validproperties.each do |param|
             method = posixmethod(param)
-            if info.respond_to? method
-                hash[param] = info.send(posixmethod(param))
-            end
+            hash[param] = info.send(posixmethod(param)) if info.respond_to? method
         end
 
         return hash
@@ -298,9 +282,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     def set(param, value)
         self.class.validate(param, value)
         cmd = modifycmd(param, value)
-        unless cmd.is_a?(Array)
-            raise Puppet::DevError, "Nameservice command must be an array"
-        end
+        raise Puppet::DevError, "Nameservice command must be an array" unless cmd.is_a?(Array)
         begin
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail

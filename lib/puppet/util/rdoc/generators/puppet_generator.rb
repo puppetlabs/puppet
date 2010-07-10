@@ -232,17 +232,13 @@ module Generators
             res1 = []
             collection['classes'].sort.each do |f|
                 if f.document_self
-                    unless f.context.is_module?
-                        res1 << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) }
-                    end
+                    res1 << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.index_name) } unless f.context.is_module?
                 end
             end
 
             res2 = []
             collection['methods'].sort.each do |f|
-                if f.document_self
-                    res2 << { "href" => "../#{f.path}", "name" => f.index_name.sub(/\(.*\)$/,'') }
-                end
+                res2 << { "href" => "../#{f.path}", "name" => f.index_name.sub(/\(.*\)$/,'') } if f.document_self
             end
 
             module_name = []
@@ -264,9 +260,7 @@ module Generators
 
             res5 = []
             collection['nodes'].sort.each do |f|
-                if f.document_self
-                    res5 << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.name) }
-                end
+                res5 << { "href" => "../"+CGI.escapeHTML(f.path), "name" => CGI.escapeHTML(f.name) } if f.document_self
             end
 
             values = {
@@ -467,9 +461,7 @@ module Generators
         # which is also its url
         def http_url(full_name, prefix)
             path = full_name.dup
-            if path['<<']
-                path.gsub!(/<<\s*(\w*)/) { "from-#$1" }
-            end
+            path.gsub!(/<<\s*(\w*)/) { "from-#$1" } if path['<<']
             File.join(prefix, path.split("::").collect { |p| Digest::MD5.hexdigest(p) }) + ".html"
         end
 
@@ -581,9 +573,7 @@ module Generators
             c = @context
             c = c.parent while c and !c.diagram
 
-            if c && c.diagram
-                @values["diagram"] = diagram_reference(c.diagram)
-            end
+            @values["diagram"] = diagram_reference(c.diagram) if c && c.diagram
 
             @values["full_name"] = h_name
 
@@ -599,9 +589,7 @@ module Generators
                 end
                 lookup = "NODE(#{lookup})"
                 parent_url = AllReferences[lookup] || AllReferences[parent_class]
-                if parent_url and parent_url.document_self
-                    @values["par_url"] = aref_to(parent_url.path)
-                end
+                @values["par_url"] = aref_to(parent_url.path) if parent_url and parent_url.document_self
             end
 
             files = []
@@ -612,9 +600,7 @@ module Generators
                 res["full_path"]     = full_path
                 res["full_path_url"] = aref_to(f.viewer.path) if f.document_self
 
-                if @options.webcvs
-                    res["cvsurl"] = cvs_url( @options.webcvs, full_path )
-                end
+                res["cvsurl"] = cvs_url( @options.webcvs, full_path ) if @options.webcvs
 
                 files << res
             end
@@ -723,9 +709,7 @@ module Generators
         # which is also its url
         def http_url(full_name, prefix)
             path = full_name.dup
-            if path['<<']
-                path.gsub!(/<<\s*(\w*)/) { "from-#$1" }
-            end
+            path.gsub!(/<<\s*(\w*)/) { "from-#$1" } if path['<<']
             File.join(prefix, path.split("::")) + ".html"
         end
 
@@ -802,9 +786,7 @@ module Generators
                 res["full_path"]     = full_path
                 res["full_path_url"] = aref_to(f.viewer.path) if f.document_self
 
-                if @options.webcvs
-                    res["cvsurl"] = cvs_url( @options.webcvs, full_path )
-                end
+                res["cvsurl"] = cvs_url( @options.webcvs, full_path ) if @options.webcvs
 
                 files << res
             end
@@ -895,9 +877,7 @@ module Generators
 
         def find_symbol(symbol, method=nil)
             res = @context.parent.find_symbol(symbol, method)
-            if res
-                res = res.viewer
-            end
+            res = res.viewer if res
             res
         end
 

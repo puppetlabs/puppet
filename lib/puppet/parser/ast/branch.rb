@@ -23,9 +23,7 @@ class Puppet::Parser::AST
             super(arghash)
 
             # Create the hash, if it was not set at initialization time.
-            unless defined?(@children)
-                @children = []
-            end
+            @children = [] unless defined?(@children)
 
             # Verify that we only got valid AST nodes.
             @children.each { |child|

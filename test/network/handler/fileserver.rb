@@ -12,9 +12,7 @@ class TestFileServer < Test::Unit::TestCase
         mount = nil
         name = "yaytest"
         base = path || tempfile()
-        unless FileTest.exists?(base)
-            Dir.mkdir(base)
-        end
+        Dir.mkdir(base) unless FileTest.exists?(base)
         # Create a test file
         File.open(File.join(base, "file"), "w") { |f| f.puts "bazoo" }
         assert_nothing_raised {

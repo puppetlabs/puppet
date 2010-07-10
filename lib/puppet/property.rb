@@ -21,18 +21,14 @@ class Puppet::Property < Puppet::Parameter
         # Return array matching info, defaulting to just matching
         # the first value.
         def array_matching
-            unless defined?(@array_matching)
-                @array_matching = :first
-            end
+            @array_matching = :first unless defined?(@array_matching)
             @array_matching
         end
 
         # Set whether properties should match all values or just the first one.
         def array_matching=(value)
             value = value.intern if value.is_a?(String)
-            unless [:first, :all].include?(value)
-                raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'"
-            end
+            raise ArgumentError, "Supported values for Property#array_matching are 'first' and 'all'" unless [:first, :all].include?(value)
             @array_matching = value
         end
     end
@@ -67,9 +63,7 @@ class Puppet::Property < Puppet::Parameter
     def self.newvalue(name, options = {}, &block)
         value = value_collection.newvalue(name, options, &block)
 
-        if value.method and value.block
-            define_method(value.method, &value.block)
-        end
+        define_method(value.method, &value.block) if value.method and value.block
         value
     end
 
@@ -164,9 +158,7 @@ class Puppet::Property < Puppet::Parameter
     def insync?(is)
         return true unless @should
 
-        unless @should.is_a?(Array)
-            self.devfail "#{self.class.name}'s should is not array"
-        end
+        self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
         # an empty array is analogous to no should values
         return true if @should.empty?
@@ -278,9 +270,7 @@ class Puppet::Property < Puppet::Parameter
     def should
         return nil unless defined?(@should)
 
-        unless @should.is_a?(Array)
-            self.devfail "should for #{self.class.name} on #{resource.name} is not an array"
-        end
+        self.devfail "should for #{self.class.name} on #{resource.name} is not an array" unless @should.is_a?(Array)
 
         if match_all?
             return @should.collect { |val| self.unmunge(val) }
@@ -291,9 +281,7 @@ class Puppet::Property < Puppet::Parameter
 
     # Set the should value.
     def should=(values)
-        unless values.is_a?(Array)
-            values = [values]
-        end
+        values = [values] unless values.is_a?(Array)
 
         @shouldorig = values
 

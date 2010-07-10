@@ -22,9 +22,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
 
     def self.prefetch(packages)
-        if Process.euid != 0
-            raise Puppet::Error, "The yum provider can only be used as root"
-        end
+        raise Puppet::Error, "The yum provider can only be used as root" if Process.euid != 0
         super
         return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
@@ -68,15 +66,11 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         output = yum "-d", "0", "-e", "0", "-y", :install, wanted
 
         is = self.query
-        unless is
-            raise Puppet::Error, "Could not find package #{self.name}"
-        end
+        raise Puppet::Error, "Could not find package #{self.name}" unless is
 
         # FIXME: Should we raise an exception even if should == :latest
         # and yum updated us to a version other than @param_hash[:ensure] ?
-        if should && should != is[:ensure]
-            raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead"
-        end
+        raise Puppet::Error, "Failed to update to version #{should}, got version #{is[:ensure]} instead" if should && should != is[:ensure]
     end
 
     # What's the latest package version available?
@@ -89,9 +83,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         else
             # Yum didn't find updates, pretend the current
             # version is the latest
-            if properties[:ensure] == :absent
-                raise Puppet::DevError, "Tried to get latest on a missing package"
-            end
+            raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
             return properties[:ensure]
         end
     end

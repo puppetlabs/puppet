@@ -30,9 +30,7 @@ class Puppet::FileBucket::Dipper
 
     # Back up a file to our bucket
     def backup(file)
-        unless ::File.exist?(file)
-            raise(ArgumentError, "File #{file} does not exist")
-        end
+        raise(ArgumentError, "File #{file} does not exist") unless ::File.exist?(file)
         contents = ::File.read(file)
         begin
             file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => absolutize_path(file) )
@@ -80,9 +78,7 @@ class Puppet::FileBucket::Dipper
                 ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
                     of.print(newcontents)
                 }
-                if changed
-                    ::File.chmod(changed, file)
-                end
+                ::File.chmod(changed, file) if changed
             else
                 Puppet.err "Could not find file with checksum #{sum}"
                 return nil

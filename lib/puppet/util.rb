@@ -30,9 +30,7 @@ module Util
     def self.chuser
         if group = Puppet[:group]
             group = self.gid(group)
-            unless group
-                raise Puppet::Error, "No such group #{Puppet[:group]}"
-            end
+            raise Puppet::Error, "No such group #{Puppet[:group]}" unless group
             unless Puppet::Util::SUIDManager.gid == group
                 begin
                     Puppet::Util::SUIDManager.egid = group
@@ -50,9 +48,7 @@ module Util
 
         if user = Puppet[:user]
             user = self.uid(user)
-            unless user
-                raise Puppet::Error, "No such user #{Puppet[:user]}"
-            end
+            raise Puppet::Error, "No such user #{Puppet[:user]}" unless user
             unless Puppet::Util::SUIDManager.uid == user
                 begin
                     Puppet::Util::SUIDManager.initgroups(user)
@@ -72,9 +68,7 @@ module Util
     def self.logmethods(klass, useself = true)
         Puppet::Util::Log.eachlevel { |level|
             klass.send(:define_method, level, proc { |args|
-                if args.is_a?(Array)
-                    args = args.join(" ")
-                end
+                args = args.join(" ") if args.is_a?(Array)
                 if useself
 
                     Puppet::Util::Log.create(
@@ -168,9 +162,7 @@ module Util
             object = args.pop
         end
 
-        unless level
-            raise Puppet::DevError, "Failed to provide level to :benchmark"
-        end
+        raise Puppet::DevError, "Failed to provide level to :benchmark" unless level
 
         unless level == :none or object.respond_to? level
             raise Puppet::DevError, "Benchmarked object does not respond to #{level}"
@@ -254,12 +246,8 @@ module Util
             Puppet.debug "Executing '#{str}'"
         end
 
-        if arguments[:uid]
-            arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid])
-        end
-        if arguments[:gid]
-            arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid])
-        end
+        arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid]) if arguments[:uid]
+        arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid]) if arguments[:gid]
 
         @@os ||= Facter.value(:operatingsystem)
         output = nil
@@ -274,9 +262,7 @@ module Util
         if ! arguments[:squelch]
             require "tempfile"
             output_file = Tempfile.new("puppet")
-            if arguments[:combine]
-                error_file=output_file
-            end
+            error_file=output_file if arguments[:combine]
         end
 
         if Puppet.features.posix?

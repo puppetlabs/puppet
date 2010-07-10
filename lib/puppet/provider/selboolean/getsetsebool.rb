@@ -9,7 +9,7 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
 
         status = getsebool(@resource[:name])
 
-        if status =~ / off$/ then
+        if status =~ / off$/
             return :off
         elsif status =~ / on$/ then
             return :on

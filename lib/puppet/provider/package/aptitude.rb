@@ -11,9 +11,7 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt, :source => :dpkg
     def aptget(*args)
         args.flatten!
         # Apparently aptitude hasn't always supported a -q flag.
-        if args.include?("-q")
-            args.delete("-q")
-        end
+        args.delete("-q") if args.include?("-q")
         output = aptitude(*args)
 
         # Yay, stupid aptitude doesn't throw an error when the package is missing.

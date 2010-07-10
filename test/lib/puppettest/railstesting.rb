@@ -8,9 +8,7 @@ module PuppetTest::RailsTesting
 
         # If we don't clean up the connection list, then the rails
         # lib will still think it's connected.
-        if Puppet.features.rails?
-            ActiveRecord::Base.clear_active_connections!
-        end
+        ActiveRecord::Base.clear_active_connections! if Puppet.features.rails?
     end
 
     def railsinit
@@ -18,9 +16,7 @@ module PuppetTest::RailsTesting
     end
 
     def railsteardown
-        if Puppet[:dbadapter] != "sqlite3"
-            Puppet::Rails.teardown
-        end
+        Puppet::Rails.teardown if Puppet[:dbadapter] != "sqlite3"
     end
 
     def railsresource(type = "file", title = "/tmp/testing", params = {})

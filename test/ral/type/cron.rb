@@ -197,9 +197,7 @@ class TestCron < Test::Unit::TestCase
                             cron[param] = value
                         }
 
-                        if value.is_a?(Integer)
-                            assert_equal([value.to_s], cron.should(param), "Cron value was not set correctly")
-                        end
+                        assert_equal([value.to_s], cron.should(param), "Cron value was not set correctly") if value.is_a?(Integer)
                     when :invalid
                         assert_raise(Puppet::Error, "#{value} is incorrectly a valid #{param}") {
                             cron[param] = value

@@ -64,9 +64,7 @@ class UserAddProviderTest < PuppetTest::TestCase
             end
 
             options = {}
-            while params.length > 0
-                options[params.shift] = params.shift
-            end
+            options[params.shift] = params.shift while params.length > 0
 
             @vals[:groups] = @vals[:groups].join(",")
 
@@ -118,9 +116,7 @@ class UserAddProviderTest < PuppetTest::TestCase
 
         @user.provider.expects(:execute).with do |params|
             assert_equal(params[0], @provider.command(:add), "useradd was not called")
-            if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
-                assert(params.include?("-M"), "Did not add -M on Red Hat")
-            end
+            assert(params.include?("-M"), "Did not add -M on Red Hat") if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
             assert(! params.include?("-m"), "Added -m when managehome was disabled")
 
             true
@@ -171,9 +167,7 @@ class UserAddProviderTest < PuppetTest::TestCase
     end
 
     def test_manages_password
-        unless @provider.feature?(:manages_passwords)
-            return
-        end
+        return unless @provider.feature?(:manages_passwords)
         @vals[:password] = "somethingorother"
         setup_user
 

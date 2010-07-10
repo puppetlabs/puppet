@@ -59,7 +59,7 @@ loop do
             puts "accepted"
             ns.puts "Executing #{cmd} on #{Facter.fqdn}.\n*******OUTPUT********\n\n"
             IO.popen(cmd) do |f|
-                while line = f.gets do
+                while line = f.gets
                     ns.puts line
                 end
             end

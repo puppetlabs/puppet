@@ -49,9 +49,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     # Look for our node in ldap.
     def find(request)
         names = [request.key]
-        if request.key.include?(".") # we assume it's an fqdn
-            names << request.key.sub(/\..+/, '')
-        end
+        names << request.key.sub(/\..+/, '') if request.key.include?(".") # we assume it's an fqdn
         names << "default"
 
         node = nil
@@ -248,9 +246,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         # Preload the parent array with the node name.
         parents = [info[:name]]
         while parent
-            if parents.include?(parent)
-                raise ArgumentError, "Found loop in LDAP node parents; #{parent} appears twice"
-            end
+            raise ArgumentError, "Found loop in LDAP node parents; #{parent} appears twice" if parents.include?(parent)
             parents << parent
             parent = find_and_merge_parent(parent, info)
         end

@@ -22,9 +22,7 @@ module PuppetTest::FileTesting
         ret = []
         num.times { |index|
             item = list[rand(list.length)]
-            if set.include?(item)
-                redo
-            end
+            redo if set.include?(item)
 
             ret.push item
         }
@@ -32,17 +30,11 @@ module PuppetTest::FileTesting
     end
 
     def mkranddirsandfiles(dirs = nil,files = nil,depth = 3)
-        if depth < 0
-            return
-        end
+        return if depth < 0
 
-        unless dirs
-            dirs = %w{This Is A Set Of Directories}
-        end
+        dirs = %w{This Is A Set Of Directories} unless dirs
 
-        unless files
-            files = %w{and this is a set of files}
-        end
+        files = %w{and this is a set of files} unless files
 
         tfiles = randlist(files)
         tdirs = randlist(dirs)
@@ -128,9 +120,7 @@ module PuppetTest::FileTesting
             path = File.join(dir,file)
             stat = File.stat(dir)
             if checked < 10 and (i % 3) == 2
-                unless yield path
-                    next
-                end
+                next unless yield path
                 checked += 1
             end
         }

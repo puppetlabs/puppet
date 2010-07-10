@@ -21,9 +21,7 @@ tab = case Facter.value(:operatingsystem)
     commands :crontab => "crontab"
 
     text_line :comment, :match => %r{^#}, :post_parse => proc { |record|
-        if record[:line] =~ /Puppet Name: (.+)\s*$/
-            record[:name] = $1
-        end
+        record[:name] = $1 if record[:line] =~ /Puppet Name: (.+)\s*$/
     }
 
     text_line :blank, :match => %r{^\s*$}
@@ -66,9 +64,7 @@ tab = case Facter.value(:operatingsystem)
         # Add name and environments as necessary.
         def to_line(record)
             str = ""
-            if record[:name]
-                str = "# Puppet Name: #{record[:name]}\n"
-            end
+            str = "# Puppet Name: #{record[:name]}\n" if record[:name]
             if record[:environment] and record[:environment] != :absent and record[:environment] != [:absent]
                 record[:environment].each do |env|
                     str += env + "\n"

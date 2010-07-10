@@ -1,7 +1,7 @@
 require 'puppet/provider/parsedfile'
 
 Puppet::Type.type(:maillist).provide(:mailman) do
-    if [ "CentOS", "RedHat", "Fedora" ].any? { |os|  Facter.value(:operatingsystem) == os } then
+    if [ "CentOS", "RedHat", "Fedora" ].any? { |os|  Facter.value(:operatingsystem) == os }
         commands :list_lists => "/usr/lib/mailman/bin/list_lists", :rmlist => "/usr/lib/mailman/bin/rmlist", :newlist => "/usr/lib/mailman/bin/newlist"
         commands :mailman => "/usr/lib/mailman/mail/mailman"
     else
@@ -16,9 +16,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     def self.instances
         list_lists.split("\n").reject { |line| line.include?("matching mailing lists") }.collect do |line|
             name, description = line.sub(/^\s+/, '').sub(/\s+$/, '').split(/\s+-\s+/)
-            if description.include?("no description available")
-                description = :absent
-            end
+            description = :absent if description.include?("no description available")
             new(:ensure => :present, :name => name, :description => description)
         end
     end
@@ -69,9 +67,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     # Delete the list.
     def destroy(purge = false)
         args = []
-        if purge
-            args << "--archives"
-        end
+        args << "--archives" if purge
         args << self.name
         rmlist(*args)
     end
@@ -90,9 +86,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
     def properties
         if @property_hash.empty?
             @property_hash = query || {:ensure => :absent}
-            if @property_hash.empty?
-                @property_hash[:ensure] = :absent
-            end
+            @property_hash[:ensure] = :absent if @property_hash.empty?
         end
         @property_hash.dup
     end

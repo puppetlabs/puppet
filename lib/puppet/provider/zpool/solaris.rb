@@ -46,9 +46,7 @@ Puppet::Type.type(:zpool).provide(:solaris) do
     end
 
     def current_pool
-        unless (defined?(@current_pool) and @current_pool)
-            @current_pool = process_zpool_data(get_pool_data)
-        end
+        @current_pool = process_zpool_data(get_pool_data) unless (defined?(@current_pool) and @current_pool)
         @current_pool
     end
 

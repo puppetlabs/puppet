@@ -60,9 +60,7 @@ class Puppet::Network::Handler
 
         def initialize(hash = {})
             Puppet.settings.use(:main, :ssl, :ca)
-            if hash.include? :autosign
-                @autosign = hash[:autosign]
-            end
+            @autosign = hash[:autosign] if hash.include? :autosign
 
             @ca = Puppet::SSLCertificates::CA.new(hash)
         end
@@ -109,9 +107,7 @@ class Puppet::Network::Handler
                 return [cert.to_pem, cacert.to_pem]
             elsif @ca
                 if self.autosign?(hostname) or client.nil?
-                    if client.nil?
-                        Puppet.info "Signing certificate for CA server"
-                    end
+                    Puppet.info "Signing certificate for CA server" if client.nil?
                     # okay, we don't have a signed cert
                     # if we're a CA and autosign is turned on, then go ahead and sign
                     # the csr and return the results

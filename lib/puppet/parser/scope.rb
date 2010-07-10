@@ -74,9 +74,7 @@ class Puppet::Parser::Scope
 
     # Is the value a number?, return the correct object or nil if not a number
     def self.number?(value)
-        unless value.is_a?(Fixnum) or value.is_a?(Bignum) or value.is_a?(Float) or value.is_a?(String)
-            return nil
-        end
+        return nil unless value.is_a?(Fixnum) or value.is_a?(Bignum) or value.is_a?(Float) or value.is_a?(String)
 
         if value.is_a?(String)
             if value =~ /^-?\d+(:?\.\d+|(:?\.\d+)?e\d+)$/
@@ -267,13 +265,11 @@ class Puppet::Parser::Scope
     # by default) including the values defined in our parent.  Local values
     # shadow parent values.
     def to_hash(recursive = true)
-        if recursive and parent then
-            target = parent.to_hash(recursive)
-        end
+        target = parent.to_hash(recursive) if recursive and parent
         target ||= Hash.new
         @symtable.keys.each { |name|
             value = @symtable[name]
-            if value == :undef then
+            if value == :undef
                 target.delete(name)
             else
                 target[name] = value
@@ -339,12 +335,8 @@ class Puppet::Parser::Scope
             else
                 error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
             end
-            if options[:file]
-                error.file = options[:file]
-            end
-            if options[:line]
-                error.line = options[:line]
-            end
+            error.file = options[:file] if options[:file]
+            error.line = options[:line] if options[:line]
             raise error
         end
 
@@ -399,12 +391,8 @@ class Puppet::Parser::Scope
                     out << '$'
                 else
                     str = "Unrecognised escape sequence '#{ss.matched}'"
-                    if file
-                        str += " in file #{file}"
-                    end
-                    if line
-                        str += " at line #{line}"
-                    end
+                    str += " in file #{file}" if file
+                    str += " at line #{line}" if line
                     Puppet.warning str
                     out << ss.matched
                 end
@@ -444,9 +432,7 @@ class Puppet::Parser::Scope
     # Undefine a variable; only used for testing.
     def unsetvar(var)
         table = ephemeral?(var) ? @ephemeral.last : @symtable
-        if table.include?(var)
-            table.delete(var)
-        end
+        table.delete(var) if table.include?(var)
     end
 
     # remove ephemeral scope up to level

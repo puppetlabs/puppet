@@ -8,9 +8,7 @@ module Puppet::SSLCertificates
     #def self.mkcert(type, name, dnsnames, ttl, issuercert, issuername, serial, publickey)
     def self.mkcert(hash)
         [:type, :name, :ttl, :issuer, :serial, :publickey].each { |param|
-            unless hash.include?(param)
-                raise ArgumentError, "mkcert called without #{param}"
-            end
+            raise ArgumentError, "mkcert called without #{param}" unless hash.include?(param)
         }
 
         cert = OpenSSL::X509::Certificate.new

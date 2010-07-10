@@ -141,16 +141,12 @@ class EventLoop
 
     def monitor_io (io, *events)
         for event in events do
-            unless monitoring_io?(io, event)
-                @ios[event] << io ; wake_up
-            end
+            @ios[event] << io ; wake_up unless monitoring_io?(io, event)
         end
     end
 
     def monitor_timer (timer)
-        unless monitoring_timer? timer
-            @timers << timer
-        end
+        @timers << timer unless monitoring_timer? timer
     end
 
     def check_timer (timer)
@@ -264,9 +260,7 @@ class EventLoop::Timer
         @running = false
         @start_time = nil
 
-        if options.kind_of? Numeric
-            options = { :interval => options }
-        end
+        options = { :interval => options } if options.kind_of? Numeric
 
         if options[:interval]
             @interval = options[:interval].to_f
@@ -301,9 +295,7 @@ class EventLoop::Timer
     def interval= (new_interval)
         old_interval = @interval
         @interval = new_interval
-        if new_interval < old_interval
-            @event_loop.check_timer(self)
-        end
+        @event_loop.check_timer(self) if new_interval < old_interval
     end
 
     def end_time

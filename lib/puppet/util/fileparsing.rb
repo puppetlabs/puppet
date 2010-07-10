@@ -43,18 +43,14 @@ module Puppet::Util::FileParsing
         def fields=(fields)
             @fields = fields.collect do |field|
                 r = symbolize(field)
-                if INVALID_FIELDS.include?(r)
-                    raise ArgumentError.new("Cannot have fields named #{r}")
-                end
+                raise ArgumentError.new("Cannot have fields named #{r}") if INVALID_FIELDS.include?(r)
                 r
             end
         end
 
         def initialize(type, options = {}, &block)
             @type = symbolize(type)
-            unless [:record, :text].include?(@type)
-                raise ArgumentError, "Invalid record type #{@type}"
-            end
+            raise ArgumentError, "Invalid record type #{@type}" unless [:record, :text].include?(@type)
 
             set_options(options)
 
@@ -64,9 +60,7 @@ module Puppet::Util::FileParsing
                 self.separator ||= /\s+/
                 self.joiner ||= " "
                 self.optional ||= []
-                unless defined?(@rollup)
-                    @rollup = true
-                end
+                @rollup = true unless defined?(@rollup)
             end
 
             if block_given?
@@ -213,9 +207,7 @@ module Puppet::Util::FileParsing
     end
 
     def line_separator
-        unless defined?(@line_separator)
-            @line_separator = "\n"
-        end
+        @line_separator = "\n" unless defined?(@line_separator)
 
         @line_separator
     end
@@ -244,18 +236,14 @@ module Puppet::Util::FileParsing
 
     # Handle parsing a single line.
     def parse_line(line)
-        unless records?
-            raise Puppet::DevError, "No record types defined; cannot parse lines"
-        end
+        raise Puppet::DevError, "No record types defined; cannot parse lines" unless records?
 
         @record_order.each do |record|
             # These are basically either text or record lines.
             method = "handle_#{record.type}_line"
             if respond_to?(method)
                 if result = send(method, line, record)
-                    if record.respond_to?(:post_parse)
-                        record.send(:post_parse, result)
-                    end
+                    record.send(:post_parse, result) if record.respond_to?(:post_parse)
                     return result
                 end
             else
@@ -282,9 +270,7 @@ module Puppet::Util::FileParsing
     #   the regex will be removed.
     # * <tt>:separator</tt>: The record separator.  Defaults to /\s+/.
     def record_line(name, options, &block)
-        unless options.include?(:fields)
-            raise ArgumentError, "Must include a list of fields"
-        end
+        raise ArgumentError, "Must include a list of fields" unless options.include?(:fields)
 
         record = FileRecord.new(:record, options, &block)
         record.name = symbolize(name)
@@ -299,9 +285,7 @@ module Puppet::Util::FileParsing
 
     # Define a new type of text record.
     def text_line(name, options, &block)
-        unless options.include?(:match)
-            raise ArgumentError, "You must provide a :match regex for text lines"
-        end
+        raise ArgumentError, "You must provide a :match regex for text lines" unless options.include?(:match)
 
         record = FileRecord.new(:text, options, &block)
         record.name = symbolize(name)
@@ -313,9 +297,7 @@ module Puppet::Util::FileParsing
     def to_file(records)
         text = records.collect { |record| to_line(record) }.join(line_separator)
 
-        if trailing_separator
-            text += line_separator
-        end
+        text += line_separator if trailing_separator
 
         return text
     end
@@ -334,9 +316,7 @@ module Puppet::Util::FileParsing
         case record.type
         when :text; return details[:line]
         else
-            if record.respond_to?(:to_line)
-                return record.to_line(details)
-            end
+            return record.to_line(details) if record.respond_to?(:to_line)
 
             line = record.join(details)
 
@@ -381,9 +361,7 @@ module Puppet::Util::FileParsing
         @record_types ||= {}
         @record_order ||= []
 
-        if @record_types.include?(record.name)
-            raise ArgumentError, "Line type #{record.name} is already defined"
-        end
+        raise ArgumentError, "Line type #{record.name} is already defined" if @record_types.include?(record.name)
 
         @record_types[record.name] = record
         @record_order << record

@@ -9,9 +9,7 @@ module Puppet::Network
         # Create our config object if necessary. If there's no configuration file
         # we install our defaults
         def authconfig
-            unless defined?(@authconfig)
-                @authconfig = Puppet::Network::RestAuthConfig.main
-            end
+            @authconfig = Puppet::Network::RestAuthConfig.main unless defined?(@authconfig)
 
             @authconfig
         end

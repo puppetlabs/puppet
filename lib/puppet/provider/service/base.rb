@@ -18,13 +18,9 @@ Puppet::Type.type(:service).provide :base do
     # Get the process ID for a running process. Requires the 'pattern'
     # parameter.
     def getpid
-        unless @resource[:pattern]
-            @resource.fail "Either stop/status commands or a pattern must be specified"
-        end
+        @resource.fail "Either stop/status commands or a pattern must be specified" unless @resource[:pattern]
         ps = Facter["ps"].value
-        unless ps and ps != ""
-            @resource.fail "You must upgrade Facter to a version that includes 'ps'"
-        end
+        @resource.fail "You must upgrade Facter to a version that includes 'ps'" unless ps and ps != ""
         regex = Regexp.new(@resource[:pattern])
         self.debug "Executing '#{ps}'"
         IO.popen(ps) { |table|

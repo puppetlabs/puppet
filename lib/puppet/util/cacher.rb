@@ -88,9 +88,7 @@ module Puppet::Util::Cacher
         private
 
         def cache_timestamp
-            unless defined?(@cache_timestamp)
-                @cache_timestamp = Time.now
-            end
+            @cache_timestamp = Time.now unless defined?(@cache_timestamp)
             @cache_timestamp
         end
 
@@ -102,9 +100,7 @@ module Puppet::Util::Cacher
             elsif expired_by_ttl?(name)
                 value_cache.delete(name)
             end
-            unless value_cache.include?(name)
-                value_cache[name] = send("init_#{name}")
-            end
+            value_cache[name] = send("init_#{name}") unless value_cache.include?(name)
             value_cache[name]
         end
 
@@ -126,9 +122,7 @@ module Puppet::Util::Cacher
         end
 
         def value_cache
-            unless defined?(@value_cache) and @value_cache
-                @value_cache = {}
-            end
+            @value_cache = {} unless defined?(@value_cache) and @value_cache
             @value_cache
         end
     end

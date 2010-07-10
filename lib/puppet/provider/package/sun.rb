@@ -50,9 +50,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                     name = $1
                     value = $2
                     if names.include?(name)
-                        unless names[name].nil?
-                            hash[names[name]] = value
-                        end
+                        hash[names[name]] = value unless names[name].nil?
                     end
                 when /\s+\d+.+/
                     # nothing; we're ignoring the FILES info
@@ -84,9 +82,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
 
         hash = {}
         cmd = "#{command(:pkginfo)} -l"
-        if device
-            cmd += " -d #{device}"
-        end
+        cmd += " -d #{device}" if device
         cmd += " #{@resource[:name]}"
 
         begin
@@ -101,9 +97,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
                         name = $1
                         value = $2
                         if names.include?(name)
-                            unless names[name].nil?
-                                hash[names[name]] = value
-                            end
+                            hash[names[name]] = value unless names[name].nil?
                         end
                     when /\s+\d+.+/
                         # nothing; we're ignoring the FILES info
@@ -119,18 +113,12 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     end
 
     def install
-        unless @resource[:source]
-            raise Puppet::Error, "Sun packages must specify a package source"
-        end
+        raise Puppet::Error, "Sun packages must specify a package source" unless @resource[:source]
         cmd = []
 
-        if @resource[:adminfile]
-            cmd << "-a" << @resource[:adminfile]
-        end
+        cmd << "-a" << @resource[:adminfile] if @resource[:adminfile]
 
-        if @resource[:responsefile]
-            cmd << "-r" << @resource[:responsefile]
-        end
+        cmd << "-r" << @resource[:responsefile] if @resource[:responsefile]
 
         cmd << "-d" << @resource[:source]
         cmd << "-n" << @resource[:name]
@@ -151,9 +139,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     def uninstall
         command  = ["-n"]
 
-        if @resource[:adminfile]
-            command << "-a" << @resource[:adminfile]
-        end
+        command << "-a" << @resource[:adminfile] if @resource[:adminfile]
 
         command << @resource[:name]
         pkgrm command
@@ -162,9 +148,7 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     # Remove the old package, and install the new one.  This will probably
     # often fail.
     def update
-        if (@property_hash[:ensure] || info2hash()[:ensure]) != :absent
-            self.uninstall
-        end
+        self.uninstall if (@property_hash[:ensure] || info2hash()[:ensure]) != :absent
         self.install
     end
 end

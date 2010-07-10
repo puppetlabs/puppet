@@ -18,12 +18,8 @@ module PuppetTest::ExeTest
     end
 
     def setbindir
-        unless ENV["PATH"].split(":").include?(bindir)
-            ENV["PATH"] = [bindir, ENV["PATH"]].join(":")
-        end
-        unless ENV["PATH"].split(":").include?(sbindir)
-            ENV["PATH"] = [sbindir, ENV["PATH"]].join(":")
-        end
+        ENV["PATH"] = [bindir, ENV["PATH"]].join(":") unless ENV["PATH"].split(":").include?(bindir)
+        ENV["PATH"] = [sbindir, ENV["PATH"]].join(":") unless ENV["PATH"].split(":").include?(sbindir)
     end
 
     def setlibdir

@@ -18,12 +18,12 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
     def process(request, response)
         # errors are sent as text/plain
         response['Content-Type'] = 'text/plain'
-        if not request.post? then
+        if not request.post?
             response.status = 405
             response.write 'Method Not Allowed'
             return
         end
-        if request.media_type() != "text/xml" then
+        if request.media_type() != "text/xml"
             response.status = 400
             response.write 'Bad Request'
             return

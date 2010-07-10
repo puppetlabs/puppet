@@ -6,9 +6,7 @@ module Puppet
     class Network::AuthConfig < Puppet::Util::LoadedFile
 
         def self.main
-            unless defined?(@main)
-                @main = self.new()
-            end
+            @main = self.new() unless defined?(@main)
             @main
         end
 
@@ -45,18 +43,14 @@ module Puppet
         def initialize(file = nil, parsenow = true)
             @file = file || Puppet[:authconfig]
 
-            unless @file
-                raise Puppet::DevError, "No authconfig file defined"
-            end
+            raise Puppet::DevError, "No authconfig file defined" unless @file
             return unless self.exists?
             super(@file)
             @rights = Puppet::Network::Rights.new
             @configstamp = @configstatted = nil
             @configtimeout = 60
 
-            if parsenow
-                read()
-            end
+            read() if parsenow
         end
 
         # Read the configuration file.
@@ -106,9 +100,7 @@ module Puppet
                             next
                         when /^(?:(\[[\w.]+\])|(path)\s+((?:~\s+)?[^ ]+))\s*$/ # "namespace" or "namespace.method" or "path /path" or "path ~ regex"
                             name = $1
-                            if $2 == "path"
-                                name = $3
-                            end
+                            name = $3 if $2 == "path"
                             name.chomp!
                             right = newrights.newright(name, count, @file)
                         when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+)$/

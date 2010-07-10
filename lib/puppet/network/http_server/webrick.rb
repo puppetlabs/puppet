@@ -29,9 +29,7 @@ module Puppet
                 store = OpenSSL::X509::Store.new
                 store.purpose = OpenSSL::X509::PURPOSE_ANY
                 store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
-                unless self.ca_cert
-                    raise Puppet::Error, "Could not find CA certificate"
-                end
+                raise Puppet::Error, "Could not find CA certificate" unless self.ca_cert
 
                 store.add_file(Puppet[:localcacert])
                 store.add_crl(crl)
@@ -57,9 +55,7 @@ module Puppet
                 file_io.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
 
                 args << file_io
-                if Puppet[:debug]
-                    args << WEBrick::Log::DEBUG
-                end
+                args << WEBrick::Log::DEBUG if Puppet[:debug]
 
                 log = WEBrick::Log.new(*args)
 
@@ -115,16 +111,12 @@ module Puppet
             # Create a ca client to set up our cert for us.
             def request_cert(ca)
                 client = Puppet::Network::Client.ca.new(:CA => ca)
-                unless client.request_cert
-                    raise Puppet::Error, "Could get certificate"
-                end
+                raise Puppet::Error, "Could get certificate" unless client.request_cert
             end
 
             # Create all of our handler instances.
             def setup_handlers(handlers)
-                unless handlers.is_a?(Hash)
-                    raise ServerError, "Handlers must have arguments"
-                end
+                raise ServerError, "Handlers must have arguments" unless handlers.is_a?(Hash)
 
                 handlers.collect { |handler, args|
                     hclass = nil

@@ -52,9 +52,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         response.status = status
         if status >= 200 and status != 304
             response.body = result
-            if result.is_a?(File)
-                response["content-length"] = result.stat.size
-            end
+            response["content-length"] = result.stat.size if result.is_a?(File)
         end
         response.reason_phrase = result if status < 200 or status >= 300
     end

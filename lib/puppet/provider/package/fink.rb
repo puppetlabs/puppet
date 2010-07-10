@@ -22,9 +22,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
-        if @resource[:responsefile]
-            self.run_preseed
-        end
+        self.run_preseed if @resource[:responsefile]
         should = @resource.should(:ensure)
 
         str = @resource[:name]

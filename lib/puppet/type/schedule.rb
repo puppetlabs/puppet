@@ -98,21 +98,15 @@ module Puppet
                         range << val.split(":").collect { |n| n.to_i }
                     }
 
-                    if range.length != 2
-                        self.fail "Invalid range #{value}"
-                    end
+                    self.fail "Invalid range #{value}" if range.length != 2
 
                     # Make sure the hours are valid
                     [range[0][0], range[1][0]].each do |n|
-                        if n < 0 or n > 23
-                            raise ArgumentError, "Invalid hour '#{n}'"
-                        end
+                        raise ArgumentError, "Invalid hour '#{n}'" if n < 0 or n > 23
                     end
 
                     [range[0][1], range[1][1]].each do |n|
-                        if n and (n < 0 or n > 59)
-                            raise ArgumentError, "Invalid minute '#{n}'"
-                        end
+                        raise ArgumentError, "Invalid minute '#{n}'" if n and (n < 0 or n > 59)
                     end
                     if range[0][0] > range[1][0]
                         self.fail(("Invalid range #{value}; ") +
@@ -130,9 +124,7 @@ module Puppet
                 # The lowest-level array is of the hour, minute, second triad
                 # then it's an array of two of those, to present the limits
                 # then it's array of those ranges
-                unless @value[0][0].is_a?(Array)
-                    @value = [@value]
-                end
+                @value = [@value] unless @value[0][0].is_a?(Array)
 
                 @value.each do |value|
                     limits = value.collect do |range|
@@ -296,9 +288,7 @@ module Puppet
             end
 
             munge do |value|
-                unless value.is_a?(Integer)
-                    value = Integer(value)
-                end
+                value = Integer(value) unless value.is_a?(Integer)
 
                 value
             end
@@ -341,9 +331,7 @@ module Puppet
         def match?(previous = nil, now = nil)
 
             # If we've got a value, then convert it to a Time instance
-            if previous
-                previous = Time.at(previous)
-            end
+            previous = Time.at(previous) if previous
 
             now ||= Time.now
 

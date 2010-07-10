@@ -20,9 +20,7 @@ Puppet.features.add(:rails) do
                 end
             end
 
-            if count > 0
-                retry
-            end
+            retry if count > 0
         end
     end
 

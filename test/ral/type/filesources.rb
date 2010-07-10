@@ -90,9 +90,7 @@ class TestFileSources < Test::Unit::TestCase
 
         todir = File.join(path, "todir")
         source = fromdir
-        if networked
-            source = "puppet://localhost/#{networked}#{fromdir}"
-        end
+        source = "puppet://localhost/#{networked}#{fromdir}" if networked
         recursive_source_test(source, todir)
 
         return [fromdir,todir, File.join(todir, "one"), File.join(todir, "two")]

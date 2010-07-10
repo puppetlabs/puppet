@@ -56,9 +56,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
     def query
         version = nil
         self.class.eachpkgashash do |hash|
-            if hash[:name] == @resource[:name]
-                return hash
-            end
+            return hash if hash[:name] == @resource[:name]
         end
 
         return nil

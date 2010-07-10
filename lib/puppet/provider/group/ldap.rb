@@ -30,9 +30,7 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
                 existing.each do |hash|
                 next unless value = hash[:gid]
                 num = value[0].to_i
-                if num > largest
-                    largest = num
-                end
+                largest = num if num > largest
             end
         end
         largest + 1

@@ -11,9 +11,7 @@ Puppet::Parser::Functions::newfunction(:generate, :type => :rvalue,
         generators, so all shell metacharacters are passed directly to
         the generator.") do |args|
 
-            unless args[0] =~ /^#{File::SEPARATOR}/
-                raise Puppet::ParseError, "Generators must be fully qualified"
-            end
+            raise Puppet::ParseError, "Generators must be fully qualified" unless args[0] =~ /^#{File::SEPARATOR}/
 
             unless args[0] =~ /^[-#{File::SEPARATOR}\w.]+$/
                 raise Puppet::ParseError,

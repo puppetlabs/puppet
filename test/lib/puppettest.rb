@@ -113,9 +113,7 @@ module PuppetTest
     end
 
     def exampledir(*args)
-        unless defined?(@@exampledir)
-            @@exampledir = File.join(basedir, "examples")
-        end
+        @@exampledir = File.join(basedir, "examples") unless defined?(@@exampledir)
 
         if args.empty?
             return @@exampledir
@@ -134,9 +132,7 @@ module PuppetTest
     def libsetup
         curlibs = ENV["RUBYLIB"].split(":")
         $LOAD_PATH.reject do |dir| dir =~ /^\/usr/ end.each do |dir|
-            unless curlibs.include?(dir)
-                curlibs << dir
-            end
+            curlibs << dir unless curlibs.include?(dir)
         end
 
         ENV["RUBYLIB"] = curlibs.join(":")
@@ -169,9 +165,7 @@ module PuppetTest
     end
 
     def setup
-        unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
-            ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin"
-        end
+        ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
         @memoryatstart = Puppet::Util.memory
         if defined?(@@testcount)
             @@testcount += 1
@@ -198,9 +192,7 @@ module PuppetTest
         Puppet[:confdir] = @configpath
         Puppet[:vardir] = @configpath
 
-        unless File.exists?(@configpath)
-            Dir.mkdir(@configpath)
-        end
+        Dir.mkdir(@configpath) unless File.exists?(@configpath)
 
         @@tmpfiles << @configpath << tmpdir()
         @@tmppids = []
@@ -212,9 +204,7 @@ module PuppetTest
         # If we're running under rake, then disable debugging and such.
         #if rake? or ! Puppet[:debug]
         #if defined?($puppet_debug) or ! rake?
-            if textmate?
-                Puppet[:color] = false
-            end
+            Puppet[:color] = false if textmate?
             Puppet::Util::Log.newdestination(@logs)
             if defined? $console
                 Puppet.info @method_name
@@ -319,9 +309,7 @@ module PuppetTest
         @memoryatend = Puppet::Util.memory
         diff = @memoryatend - @memoryatstart
 
-        if diff > 1000
-            Puppet.info "#{self.class}##{@method_name} memory growth (#{@memoryatstart} to #{@memoryatend}): #{diff}"
-        end
+        Puppet.info "#{self.class}##{@method_name} memory growth (#{@memoryatstart} to #{@memoryatend}): #{diff}" if diff > 1000
 
         # reset all of the logs
         Puppet::Util::Log.close_all

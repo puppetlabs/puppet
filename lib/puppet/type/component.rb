@@ -30,9 +30,7 @@ Puppet::Type.newtype(:component) do
         @extra_parameters = {}
         super
 
-        if catalog and ! catalog.resource(ref)
-            catalog.alias(self, ref)
-        end
+        catalog.alias(self, ref) if catalog and ! catalog.resource(ref)
     end
 
     # Component paths are special because they function as containers.

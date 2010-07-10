@@ -24,18 +24,14 @@ class Puppet::Network::Handler
         # Accept a report from a client.
         def report(report, client = nil, clientip = nil)
             # Unescape the report
-            unless @local
-                report = CGI.unescape(report)
-            end
+            report = CGI.unescape(report) unless @local
 
             Puppet.info "Processing reports #{reports().join(", ")} for #{client}"
             begin
                 process(report)
             rescue => detail
                 Puppet.err "Could not process report for #{client}: #{detail}"
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
+                puts detail.backtrace if Puppet[:trace]
             end
         end
 
@@ -65,9 +61,7 @@ class Puppet::Network::Handler
                         newrep.extend(mod)
                         newrep.process
                     rescue => detail
-                        if Puppet[:trace]
-                            puts detail.backtrace
-                        end
+                        puts detail.backtrace if Puppet[:trace]
                         Puppet.err "Report #{name} failed: #{detail}"
                     end
                 else

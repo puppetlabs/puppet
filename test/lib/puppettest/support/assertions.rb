@@ -42,12 +42,8 @@ module PuppetTest
         comp = nil
         msg = nil
 
-        unless events.is_a? Array
-            raise Puppet::DevError, "Incorrect call of assert_events"
-        end
-        if resources[-1].is_a? String
-            msg = resources.pop
-        end
+        raise Puppet::DevError, "Incorrect call of assert_events" unless events.is_a? Array
+        msg = resources.pop if resources[-1].is_a? String
 
         config = resources2catalog(*resources)
         transaction = Puppet::Transaction.new(config)

@@ -2,9 +2,7 @@ class Puppet::Network::Client::Report < Puppet::Network::Client
     @handler = Puppet::Network::Handler.handler(:report)
 
     def initialize(hash = {})
-        if hash.include?(:Report)
-            hash[:Report] = self.class.handler.new
-        end
+        hash[:Report] = self.class.handler.new if hash.include?(:Report)
 
         super(hash)
     end
@@ -14,9 +12,7 @@ class Puppet::Network::Client::Report < Puppet::Network::Client
     def report(transreport)
         report = YAML.dump(transreport)
 
-        unless self.local
-            report = CGI.escape(report)
-        end
+        report = CGI.escape(report) unless self.local
 
         # Now send the report
         file = nil

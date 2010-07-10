@@ -22,9 +22,7 @@ module Puppet
             end
 
             def add_should_with_current(should, current)
-                if current.is_a?(Array)
-                    should += current
-                end
+                should += current if current.is_a?(Array)
                 should.uniq
             end
 
@@ -38,15 +36,11 @@ module Puppet
             end
 
             def should
-                unless defined?(@should) and @should
-                    return nil
-                end
+                return nil unless defined?(@should) and @should
 
                 members = @should
                 #inclusive means we are managing everything so if it isn't in should, its gone
-                if ! inclusive?
-                    members = add_should_with_current(members, retrieve)
-                end
+                members = add_should_with_current(members, retrieve) if ! inclusive?
 
                 dearrayify(members)
             end
@@ -72,13 +66,9 @@ module Puppet
             end
 
             def insync?(is)
-                unless defined?(@should) and @should
-                    return true
-                end
+                return true unless defined?(@should) and @should
 
-                unless is
-                    return true
-                end
+                return true unless is
 
                 return (prepare_is_for_comparison(is) == self.should)
             end

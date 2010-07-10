@@ -64,9 +64,7 @@ class Puppet::Indirector::Indirection
 
     # Default to the runinterval for the ttl.
     def ttl
-        unless defined?(@ttl)
-            @ttl = Puppet[:runinterval].to_i
-        end
+        @ttl = Puppet[:runinterval].to_i unless defined?(@ttl)
         @ttl
     end
 
@@ -79,9 +77,7 @@ class Puppet::Indirector::Indirection
     def doc
         text = ""
 
-        if defined?(@doc) and @doc
-            text += scrub(@doc) + "\n\n"
-        end
+        text += scrub(@doc) + "\n\n" if defined?(@doc) and @doc
 
         if s = terminus_setting()
             text += "* **Terminus Setting**: #{terminus_setting}"
@@ -123,9 +119,7 @@ class Puppet::Indirector::Indirection
     # Return the singleton terminus for this indirection.
     def terminus(terminus_name = nil)
         # Get the name of the terminus.
-        unless terminus_name ||= terminus_class
-            raise Puppet::DevError, "No terminus specified for #{self.name}; cannot redirect"
-        end
+        raise Puppet::DevError, "No terminus specified for #{self.name}; cannot redirect" unless terminus_name ||= terminus_class
 
         return termini[terminus_name] ||= make_terminus(terminus_name)
     end
@@ -157,9 +151,7 @@ class Puppet::Indirector::Indirection
 
     # This is used by terminus_class= and cache=.
     def validate_terminus_class(terminus_class)
-        unless terminus_class and terminus_class.to_s != ""
-            raise ArgumentError, "Invalid terminus name #{terminus_class.inspect}"
-        end
+        raise ArgumentError, "Invalid terminus name #{terminus_class.inspect}" unless terminus_class and terminus_class.to_s != ""
         unless Puppet::Indirector::Terminus.terminus_class(self.name, terminus_class)
             raise ArgumentError, "Could not find terminus #{terminus_class} for indirection #{self.name}"
         end
@@ -281,9 +273,7 @@ class Puppet::Indirector::Indirection
 
         unless terminus.authorized?(request)
             msg = "Not authorized to call #{request.method} on #{request}"
-            unless request.options.empty?
-                msg += " with #{request.options.inspect}"
-            end
+            msg += " with #{request.options.inspect}" unless request.options.empty?
             raise ArgumentError, msg
         end
     end

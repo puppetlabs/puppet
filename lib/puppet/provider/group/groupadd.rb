@@ -20,9 +20,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
                 cmd << flag(:gid) << gid
             end
         end
-        if @resource.allowdupe?
-            cmd << "-o"
-        end
+        cmd << "-o" if @resource.allowdupe?
         cmd << @resource[:name]
 
         return cmd

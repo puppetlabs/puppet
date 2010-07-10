@@ -5,9 +5,7 @@ module Puppet::Util::LogPaths
     # return the full path to us, for logging and rollback
     # some classes (e.g., FileTypeRecords) will have to override this
     def path
-        unless defined?(@path)
-            @path = pathbuilder
-        end
+        @path = pathbuilder unless defined?(@path)
 
         return "/" + @path.join("/")
     end

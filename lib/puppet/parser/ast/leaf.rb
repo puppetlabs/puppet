@@ -162,9 +162,7 @@ class Puppet::Parser::AST
         def evaluate(scope)
             object = evaluate_container(scope)
 
-            unless object.is_a?(Hash) or object.is_a?(Array)
-                raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}"
-            end
+            raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) or object.is_a?(Array)
 
             return object[evaluate_key(scope)]
         end

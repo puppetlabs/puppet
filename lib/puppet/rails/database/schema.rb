@@ -52,9 +52,7 @@ class Puppet::Rails::Schema
                 end
 
                 # Oracle automatically creates a primary key index
-                if Puppet[:dbadapter] != "oracle_enhanced"
-                    add_index :puppet_tags, :id, :integer => true
-                end
+                add_index :puppet_tags, :id, :integer => true if Puppet[:dbadapter] != "oracle_enhanced"
 
                 create_table :hosts do |t|
                     t.column :name, :string, :null => false

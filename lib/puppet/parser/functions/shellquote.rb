@@ -26,9 +26,7 @@ module Puppet::Parser::Functions
             else
                 r = '"'
                 word.each_byte() do |c|
-                    if Dangerous.include?(c)
-                        r += "\\"
-                    end
+                    r += "\\" if Dangerous.include?(c)
                     r += c.chr()
                 end
                 r += '"'

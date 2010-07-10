@@ -10,9 +10,7 @@ module Puppet::Util::Errors
         error.line ||= self.line if self.respond_to?(:line) and self.line
         error.file ||= self.file if self.respond_to?(:file) and self.file
 
-        if other and other.respond_to?(:backtrace)
-            error.set_backtrace other.backtrace
-        end
+        error.set_backtrace other.backtrace if other and other.respond_to?(:backtrace)
 
         return error
     end

@@ -246,7 +246,7 @@ class Puppet::SSL::Host
             exit(1)
         end
 
-        while true do
+        while true
             sleep time
             begin
                 break if certificate

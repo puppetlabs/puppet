@@ -22,9 +22,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
     end
 
     def self.prefetch(packages)
-        if Process.euid != 0
-            raise Puppet::Error, "The aix provider can only be used by root"
-        end
+        raise Puppet::Error, "The aix provider can only be used by root" if Process.euid != 0
 
         return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
@@ -42,9 +40,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
                     if updates.key?(current[:name])
                         previous = updates[current[:name]]
 
-                        unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
-                            updates[ current[:name] ] = current
-                        end
+                        updates[ current[:name] ] = current unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
 
                     else
                         updates[current[:name]] = current
@@ -73,9 +69,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
 
         pkg = @resource[:name]
 
-        if (! @resource.should(:ensure).is_a? Symbol) and useversion
-            pkg << " #{@resource.should(:ensure)}"
-        end
+        pkg << " #{@resource.should(:ensure)}" if (! @resource.should(:ensure).is_a? Symbol) and useversion
 
         installp "-acgwXY", "-d", source, pkg
     end
@@ -118,9 +112,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
         unless upd.nil?
             return "#{upd[:version]}"
         else
-            if properties[:ensure] == :absent
-                raise Puppet::DevError, "Tried to get latest on a missing package"
-            end
+            raise Puppet::DevError, "Tried to get latest on a missing package" if properties[:ensure] == :absent
 
             return properties[:ensure]
         end

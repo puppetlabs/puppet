@@ -46,9 +46,7 @@ class TestTransactions < Test::Unit::TestCase
                 $finished << self.name
             end
         end
-        if block
-            type.class_eval(&block)
-        end
+        type.class_eval(&block) if block
         cleanup do
             Puppet::Type.rmtype(:generator)
         end
@@ -70,9 +68,7 @@ class TestTransactions < Test::Unit::TestCase
             end
         end
 
-        if block
-            type.class_eval(&block)
-        end
+        type.class_eval(&block) if block
 
         return type
     end

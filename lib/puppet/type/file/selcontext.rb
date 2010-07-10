@@ -26,9 +26,7 @@ module Puppet
         include Puppet::Util::SELinux
 
         def retrieve
-            unless @resource.stat(false)
-                return :absent
-            end
+            return :absent unless @resource.stat(false)
             context = self.get_selinux_current_context(@resource[:path])
             return parse_selinux_context(name, context)
         end
@@ -38,9 +36,7 @@ module Puppet
                 return nil
             end
             property_default = self.parse_selinux_context(property, context)
-            if not property_default.nil?
-                self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}"
-            end
+            self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" if not property_default.nil?
             return property_default
         end
 

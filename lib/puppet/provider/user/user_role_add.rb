@@ -53,9 +53,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     end
 
     def command(cmd)
-        if is_role? or (!exists? and @resource[:ensure] == :role)
-            cmd = ("role_#{cmd}").intern
-        end
+        cmd = ("role_#{cmd}").intern if is_role? or (!exists? and @resource[:ensure] == :role)
         super(cmd)
     end
 
@@ -85,9 +83,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
             run(addcmd, "create")
         end
         # added to handle case when password is specified
-        if @resource[:password]
-            self.password = @resource[:password]
-        end
+        self.password = @resource[:password] if @resource[:password]
     end
 
     def destroy
@@ -103,27 +99,19 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     end
 
     def roles
-        if user_attributes
-            user_attributes[:roles]
-        end
+        user_attributes[:roles] if user_attributes
     end
 
     def auths
-        if user_attributes
-            user_attributes[:auths]
-        end
+        user_attributes[:auths] if user_attributes
     end
 
     def profiles
-        if user_attributes
-            user_attributes[:profiles]
-        end
+        user_attributes[:profiles] if user_attributes
     end
 
     def project
-        if user_attributes
-            user_attributes[:project]
-        end
+        user_attributes[:project] if user_attributes
     end
 
     def managed_attributes
@@ -170,7 +158,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
         begin
             File.open("/etc/shadow", "r") do |shadow|
                 File.open("/etc/shadow_tmp", "w", 0600) do |shadow_tmp|
-                    while line = shadow.gets do
+                    while line = shadow.gets
                         line_arr = line.split(':')
                         if line_arr[0] == @resource[:name]
                             line_arr[1] = cryptopw

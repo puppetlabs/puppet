@@ -122,9 +122,7 @@ class Puppet::Indirector::Terminus
         private
 
         def setup_instance_loading(type)
-            unless instance_loading?(type)
-                instance_load type, "puppet/indirector/#{type}"
-            end
+            instance_load type, "puppet/indirector/#{type}" unless instance_loading?(type)
         end
     end
 
@@ -133,9 +131,7 @@ class Puppet::Indirector::Terminus
     end
 
     def initialize
-        if self.class.abstract_terminus?
-            raise Puppet::DevError, "Cannot create instances of abstract terminus types"
-        end
+        raise Puppet::DevError, "Cannot create instances of abstract terminus types" if self.class.abstract_terminus?
     end
 
     def model

@@ -22,9 +22,7 @@ Puppet::Type.newtype(:zone) do
                 if current_value.is_a? Array
                     list += current_value
                 else
-                    if current_value
-                        list << current_value
-                    end
+                    list << current_value if current_value
                 end
             end
 
@@ -87,9 +85,7 @@ Puppet::Type.newtype(:zone) do
         end
 
         def self.newvalue(name, hash)
-            if @parametervalues.is_a? Hash
-                @parametervalues = []
-            end
+            @parametervalues = [] if @parametervalues.is_a? Hash
 
             @parametervalues << name
 
@@ -410,9 +406,7 @@ Puppet::Type.newtype(:zone) do
                 self.fail "ip must contain interface name and ip address separated by a \":\""
             end
         else
-            unless interface && address.nil? && defrouter.nil?
-                self.fail "only interface may be specified when using exclusive IP stack: #{value}"
-            end
+            self.fail "only interface may be specified when using exclusive IP stack: #{value}" unless interface && address.nil? && defrouter.nil?
         end
 
         self.fail "zone path is required" unless self[:path]

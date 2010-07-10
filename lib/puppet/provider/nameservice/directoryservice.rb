@@ -93,9 +93,7 @@ class DirectoryService < Puppet::Provider::NameService
         #      For example, if we're working with an user type, this will be /Users
         #      with a group type, this will be /Groups.
         #   @ds_path is an attribute of the class itself.
-        if defined?(@ds_path)
-            return @ds_path
-        end
+        return @ds_path if defined?(@ds_path)
         # JJM: "Users" or "Groups" etc ...  (Based on the Puppet::Type)
         #       Remember this is a class method, so self.class is Class
         #       Also, @resource_type seems to be the reference to the
@@ -104,9 +102,7 @@ class DirectoryService < Puppet::Provider::NameService
     end
 
     def self.get_macosx_version_major
-        if defined?(@macosx_version_major)
-            return @macosx_version_major
-        end
+        return @macosx_version_major if defined?(@macosx_version_major)
         begin
             # Make sure we've loaded all of the facts
             Facter.loadfacts
@@ -117,14 +113,10 @@ class DirectoryService < Puppet::Provider::NameService
                 # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
                 Puppet.warning("DEPRECATION WARNING: Future versions of the directoryservice provider will require Facter 1.5.5 or newer.")
                 product_version = Facter.value(:macosx_productversion)
-                if product_version.nil?
-                    fail("Could not determine OS X version from Facter")
-                end
+                fail("Could not determine OS X version from Facter") if product_version.nil?
                 product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
             end
-            if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
-                fail("#{product_version_major} is not supported by the directoryservice provider")
-            end
+            fail("#{product_version_major} is not supported by the directoryservice provider") if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
             @macosx_version_major = product_version_major
             return @macosx_version_major
         rescue Puppet::ExecutionFailure => detail
@@ -215,9 +207,7 @@ class DirectoryService < Puppet::Provider::NameService
         # stored in the user record. It is stored at a path that involves the
         # UUID of the user record for non-Mobile local acccounts.
         # Mobile Accounts are out of scope for this provider for now
-        if @resource_type.validproperties.include?(:password) and Puppet.features.root?
-            attribute_hash[:password] = self.get_password(attribute_hash[:guid])
-        end
+        attribute_hash[:password] = self.get_password(attribute_hash[:guid]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
         return attribute_hash
     end
 
@@ -323,9 +313,7 @@ class DirectoryService < Puppet::Provider::NameService
         password_hash = nil
         password_hash_file = "#{@@password_hash_dir}/#{guid}"
         if File.exists?(password_hash_file) and File.file?(password_hash_file)
-            if not File.readable?(password_hash_file)
-                fail("Could not read password hash file at #{password_hash_file}")
-            end
+            fail("Could not read password hash file at #{password_hash_file}") if not File.readable?(password_hash_file)
             f = File.new(password_hash_file)
             password_hash = f.read
             f.close
@@ -383,9 +371,7 @@ class DirectoryService < Puppet::Provider::NameService
             # If we are meant to be authoritative for the group membership
             # then remove all existing members who haven't been specified
             # in the manifest.
-            if @resource[:auth_membership] and not current_members.nil?
-                remove_unwanted_members(current_members, value)
-            end
+            remove_unwanted_members(current_members, value) if @resource[:auth_membership] and not current_members.nil?
 
             # if they're not a member, make them one.
             add_members(current_members, value)

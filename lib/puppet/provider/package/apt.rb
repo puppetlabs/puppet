@@ -42,9 +42,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     # Install a package using 'apt-get'.  This function needs to support
     # installing a specific version.
     def install
-        if @resource[:responsefile]
-            self.run_preseed
-        end
+        self.run_preseed if @resource[:responsefile]
         should = @resource[:ensure]
 
         checkforcdrom()
@@ -100,16 +98,12 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     end
 
     def uninstall
-        if @resource[:responsefile]
-            self.run_preseed
-        end
+        self.run_preseed if @resource[:responsefile]
         aptget "-y", "-q", :remove, @resource[:name]
     end
 
     def purge
-        if @resource[:responsefile]
-            self.run_preseed
-        end
+        self.run_preseed if @resource[:responsefile]
         aptget '-y', '-q', :remove, '--purge', @resource[:name]
         # workaround a "bug" in apt, that already removed packages are not purged
         super

@@ -24,9 +24,7 @@ class TestUserProvider < Test::Unit::TestCase
 
     def teardown
         @@tmpusers.each { |user|
-            unless missing?(user)
-                remove(user)
-            end
+            remove(user) unless missing?(user)
         }
         super
     end
@@ -376,9 +374,7 @@ class TestUserProvider < Test::Unit::TestCase
         Etc.setgrent
         max = 0
         while group = Etc.getgrent
-            if group.gid > max and group.gid < 5000
-                max = group.gid
-            end
+            max = group.gid if group.gid > max and group.gid < 5000
         end
 
         groups = []

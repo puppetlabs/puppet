@@ -10,15 +10,11 @@ module Puppet
 
         # Anything else, basically
         newvalue(/./) do
-            if ! @resource.should(:ensure)
-                @resource[:ensure] = :link
-            end
+            @resource[:ensure] = :link if ! @resource.should(:ensure)
 
             # Only call mklink if ensure() didn't call us in the first place.
             currentensure  = @resource.property(:ensure).retrieve
-            if @resource.property(:ensure).insync?(currentensure)
-                mklink()
-            end
+            mklink() if @resource.property(:ensure).insync?(currentensure)
         end
 
         # Create our link.
@@ -31,9 +27,7 @@ module Puppet
             # it doesn't determine what's removed.
             @resource.remove_existing(target)
 
-            if FileTest.exists?(@resource[:path])
-                raise Puppet::Error, "Could not remove existing file"
-            end
+            raise Puppet::Error, "Could not remove existing file" if FileTest.exists?(@resource[:path])
 
             Dir.chdir(File.dirname(@resource[:path])) do
                 Puppet::Util::SUIDManager.asuser(@resource.asuser()) do

@@ -79,9 +79,7 @@ class Puppet::Transaction::Report
                 end
             }.each do |name, label, value|
                 next if value == 0
-                if value.is_a?(Float)
-                    value = "%0.2f" % value
-                end
+                value = "%0.2f" % value if value.is_a?(Float)
                 ret += "   %15s %s\n" % [label + ":", value]
             end
         end

@@ -13,9 +13,7 @@ class Puppet::Util::Feature
     # successfully.
     def add(name, options = {})
         method = name.to_s + "?"
-        if self.class.respond_to?(method)
-            raise ArgumentError, "Feature #{name} is already defined"
-        end
+        raise ArgumentError, "Feature #{name} is already defined" if self.class.respond_to?(method)
 
         if block_given?
             begin
@@ -28,9 +26,7 @@ class Puppet::Util::Feature
         end
 
         meta_def(method) do
-            unless @results.include?(name)
-                @results[name] = test(name, options)
-            end
+            @results[name] = test(name, options) unless @results.include?(name)
             @results[name]
         end
     end
@@ -77,9 +73,7 @@ class Puppet::Util::Feature
     private
 
     def load_library(lib, name)
-        unless lib.is_a?(String)
-            raise ArgumentError, "Libraries must be passed as strings not #{lib.class}"
-        end
+        raise ArgumentError, "Libraries must be passed as strings not #{lib.class}" unless lib.is_a?(String)
 
         begin
             require lib

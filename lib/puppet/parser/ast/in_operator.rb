@@ -12,9 +12,7 @@ class Puppet::Parser::AST
 
             # evaluate the operands, should return a boolean value
             lval = @lval.safeevaluate(scope)
-            unless lval.is_a?(::String)
-                raise ArgumentError, "'#{lval}' from left operand of 'in' expression is not a string"
-            end
+            raise ArgumentError, "'#{lval}' from left operand of 'in' expression is not a string" unless lval.is_a?(::String)
 
             rval = @rval.safeevaluate(scope)
             unless rval.respond_to?(:include?)

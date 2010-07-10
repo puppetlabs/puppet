@@ -21,9 +21,7 @@ module PuppetTest::ParserTesting
         end
 
         def initialize(val = nil)
-            if val
-                @evaluate = val
-            end
+            @evaluate = val if val
         end
 
         def reset
@@ -66,9 +64,7 @@ module PuppetTest::ParserTesting
         compiler ||= mkcompiler
         compiler.topscope.source = (parser.find_hostclass("", "") || parser.newclass(""))
 
-        unless compiler.topscope.source
-            raise "Could not find source for scope"
-        end
+        raise "Could not find source for scope" unless compiler.topscope.source
         # Make the 'main' stuff
         compiler.send(:evaluate_main)
         compiler.topscope
@@ -97,9 +93,7 @@ module PuppetTest::ParserTesting
     end
 
     def resourcedef(type, title, params)
-        unless title.is_a?(AST)
-            title = stringobj(title)
-        end
+        title = stringobj(title) unless title.is_a?(AST)
         assert_nothing_raised("Could not create #{type} #{title}") {
 
             return AST::Resource.new(
@@ -221,9 +215,7 @@ module PuppetTest::ParserTesting
 
     def resourceparam(param, value)
         # Allow them to pass non-strings in
-        if value.is_a?(String)
-            value = stringobj(value)
-        end
+        value = stringobj(value) if value.is_a?(String)
         assert_nothing_raised("Could not create param #{param}") {
 
             return AST::ResourceParam.new(
@@ -249,9 +241,7 @@ module PuppetTest::ParserTesting
     end
 
     def varobj(name, value)
-        unless value.is_a? AST
-            value = stringobj(value)
-        end
+        value = stringobj(value) unless value.is_a? AST
         assert_nothing_raised("Could not create #{name} code") {
 
             return AST::VarDef.new(
@@ -403,9 +393,7 @@ module PuppetTest::ParserTesting
                 obj["mode"] = "644"
 
                 # Yield, if they want
-                if block_given?
-                    yield(obj, i, j)
-                end
+                yield(obj, i, j) if block_given?
 
                 resources << obj
             end

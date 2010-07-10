@@ -116,9 +116,7 @@ module Puppet::Parser::Functions
 
         # if we got a custom data file, put it first in the array of search files
         if datafile != ""
-            if File.exists?(extlookup_datadir + "/#{datafile}.csv")
-                datafiles << extlookup_datadir + "/#{datafile}.csv"
-            end
+            datafiles << extlookup_datadir + "/#{datafile}.csv" if File.exists?(extlookup_datadir + "/#{datafile}.csv")
         end
 
         extlookup_precedence.each do |d|

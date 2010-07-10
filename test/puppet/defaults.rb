@@ -48,9 +48,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
         [@@dirs,@@files].flatten.each { |param|
             value = Puppet[param]
 
-            unless value !~ notval
-                assert_nothing_raised { raise "#{param} is incorrectly set to #{value}" }
-            end
+            assert_nothing_raised { raise "#{param} is incorrectly set to #{value}" } unless value !~ notval
         }
     end
 

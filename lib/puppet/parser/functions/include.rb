@@ -12,9 +12,7 @@ Puppet::Parser::Functions::newfunction(:include, :doc => "Evaluate one or more c
         unless missing.empty?
             # Throw an error if we didn't evaluate all of the classes.
             str = "Could not find class"
-            if missing.length > 1
-                str += "es"
-            end
+            str += "es" if missing.length > 1
 
             str += " " + missing.join(", ")
 

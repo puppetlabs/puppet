@@ -94,9 +94,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
         end
 
         flag = "-i"
-        if @property_hash[:ensure] and @property_hash[:ensure] != :absent
-            flag = "-U"
-        end
+        flag = "-U" if @property_hash[:ensure] and @property_hash[:ensure] != :absent
 
         rpm flag, "--oldpackage", source
     end

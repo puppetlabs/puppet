@@ -27,9 +27,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # Determine whether the provided parameter name is a relationship parameter.
     def self.relationship_parameter?(name)
-        unless defined?(@relationship_names)
-            @relationship_names = Puppet::Type.relationship_params.collect { |p| p.name }
-        end
+        @relationship_names = Puppet::Type.relationship_params.collect { |p| p.name } unless defined?(@relationship_names)
         @relationship_names.include?(name)
     end
 
@@ -110,9 +108,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     def initialize(*args)
         super
 
-        unless scope
-            raise ArgumentError, "Resources require a scope"
-        end
+        raise ArgumentError, "Resources require a scope" unless scope
         @source ||= scope.source
     end
 
@@ -179,9 +175,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         @parameters.inject({}) do |hash, ary|
             param = ary[1]
             # Skip "undef" values.
-            if param.value != :undef
-                hash[param.name] = param.value
-            end
+            hash[param.name] = param.value if param.value != :undef
             hash
         end
     end
@@ -198,13 +192,9 @@ class Puppet::Parser::Resource < Puppet::Resource
                 v = Puppet::Resource.new(v.type, v.title)
             elsif v.is_a?(Array)
                 # flatten resource references arrays
-                if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
-                    v = v.flatten
-                end
+                v = v.flatten if v.flatten.find { |av| av.is_a?(Puppet::Resource) }
                 v = v.collect do |av|
-                    if av.is_a?(Puppet::Resource)
-                        av = Puppet::Resource.new(av.type, av.title)
-                    end
+                    av = Puppet::Resource.new(av.type, av.title) if av.is_a?(Puppet::Resource)
                     av
                 end
             end
@@ -287,9 +277,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         unless param.source.child_of?(current.source)
             puts caller if Puppet[:trace]
             msg = "Parameter '#{param.name}' is already set on #{self}"
-            if current.source.to_s != ""
-                msg += " by #{current.source}"
-            end
+            msg += " by #{current.source}" if current.source.to_s != ""
             if current.file or current.line
                 fields = []
                 fields << current.file if current.file
@@ -330,9 +318,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     def extract_parameters(params)
         params.each do |param|
             # Don't set the same parameter twice
-            if @parameters[param.name]
-                self.fail Puppet::ParseError, "Duplicate parameter '#{param.name}' for on #{self}"
-            end
+            self.fail Puppet::ParseError, "Duplicate parameter '#{param.name}' for on #{self}" if @parameters[param.name]
 
             set_parameter(param)
         end

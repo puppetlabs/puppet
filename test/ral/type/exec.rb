@@ -391,9 +391,7 @@ class TestExec < Test::Unit::TestCase
             assert_events([:executed_command], comp, "usertest")
 
             assert(FileTest.exists?(file), "File does not exist")
-            if user
-                assert_equal(user.uid, File.stat(file).uid, "File UIDs do not match")
-            end
+            assert_equal(user.uid, File.stat(file).uid, "File UIDs do not match") if user
 
             # We can't actually test group ownership, unfortunately, because
             # behaviour changes wildlly based on platform.

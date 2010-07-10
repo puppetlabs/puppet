@@ -24,9 +24,7 @@ class TestResources < Test::Unit::TestCase
         @purgenum += 1
         obj = @purgetype.create :name => "purger#{@purgenum}"
         $purgemembers[obj[:name]] = obj
-        if managed
-            obj[:fake] = "testing"
-        end
+        obj[:fake] = "testing" if managed
         obj
     end
 
@@ -100,9 +98,7 @@ class TestResources < Test::Unit::TestCase
             end
         }
 
-        if low
-            assert(! res.check(@user.create(:name => low)), "low user #{low} passed check")
-        end
+        assert(! res.check(@user.create(:name => low)), "low user #{low} passed check") if low
         if high
             res[:unless_system_user] = 50
             assert(res.check(@user.create(:name => high)), "high user #{high} failed check")

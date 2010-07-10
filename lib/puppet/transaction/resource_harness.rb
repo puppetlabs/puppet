@@ -20,9 +20,7 @@ class Puppet::Transaction::ResourceHarness
         changes.each do |change|
             status << change.apply
 
-            if change.auditing?
-                cache(change.property.resource, change.property.name, change.is)
-            end
+            cache(change.property.resource, change.property.name, change.is) if change.auditing?
         end
         status.changed = true
     end

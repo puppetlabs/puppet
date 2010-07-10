@@ -8,9 +8,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
     def command
         command = Puppet[:external_nodes]
-        unless command != "none"
-            raise ArgumentError, "You must set the 'external_nodes' parameter to use the external node terminus"
-        end
+        raise ArgumentError, "You must set the 'external_nodes' parameter to use the external node terminus" unless command != "none"
         command.split
     end
 

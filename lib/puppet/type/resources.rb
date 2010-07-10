@@ -14,9 +14,7 @@ Puppet::Type.newtype(:resources) do
         desc "The name of the type to be managed."
 
         validate do |name|
-            unless Puppet::Type.type(name)
-                raise ArgumentError, "Could not find resource type '#{name}'"
-            end
+            raise ArgumentError, "Could not find resource type '#{name}'" unless Puppet::Type.type(name)
         end
 
         munge { |v| v.to_s }
@@ -34,9 +32,7 @@ Puppet::Type.newtype(:resources) do
                 unless @resource.resource_type.respond_to?(:instances)
                     raise ArgumentError, "Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system"
                 end
-                unless @resource.resource_type.validproperty?(:ensure)
-                    raise ArgumentError, "Purging is only supported on types that accept 'ensure'"
-                end
+                raise ArgumentError, "Purging is only supported on types that accept 'ensure'" unless @resource.resource_type.validproperty?(:ensure)
             end
         end
     end
@@ -72,12 +68,8 @@ Puppet::Type.newtype(:resources) do
     end
 
     def check(resource)
-        unless defined?(@checkmethod)
-            @checkmethod = "#{self[:name]}_check"
-        end
-        unless defined?(@hascheck)
-            @hascheck = respond_to?(@checkmethod)
-        end
+        @checkmethod = "#{self[:name]}_check" unless defined?(@checkmethod)
+        @hascheck = respond_to?(@checkmethod) unless defined?(@hascheck)
         if @hascheck
             return send(@checkmethod, resource)
         else
@@ -133,9 +125,7 @@ Puppet::Type.newtype(:resources) do
         resource[:audit] = :uid
         current_values = resource.retrieve_resource
 
-        if system_users().include?(resource[:name])
-            return false
-        end
+        return false if system_users().include?(resource[:name])
 
         if current_values[resource.property(:uid)] <= self[:unless_system_user]
             return false

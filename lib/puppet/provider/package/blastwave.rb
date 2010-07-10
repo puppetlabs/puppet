@@ -2,9 +2,7 @@
 Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun do
     desc "Package management using Blastwave.org's ``pkg-get`` command on Solaris."
     pkgget = "pkg-get"
-    if FileTest.executable?("/opt/csw/bin/pkg-get")
-        pkgget = "/opt/csw/bin/pkg-get"
-    end
+    pkgget = "/opt/csw/bin/pkg-get" if FileTest.executable?("/opt/csw/bin/pkg-get")
 
     confine :operatingsystem => :solaris
 
@@ -37,9 +35,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     def self.blastlist(hash)
         command = ["-c"]
 
-        if hash[:justme]
-            command << hash[:justme]
-        end
+        command << hash[:justme] if hash[:justme]
 
         output = Puppet::Util::Execution::withenv(:PAGER => "/usr/bin/cat") { pkgget command }
 
@@ -74,9 +70,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
             end
             hash[:avail] = $5
 
-            if hash[:avail] == "SAME"
-                hash[:avail] = hash[:ensure]
-            end
+            hash[:avail] = hash[:ensure] if hash[:avail] == "SAME"
 
             # Use the name method, so it works with subclasses.
             hash[:provider] = self.name

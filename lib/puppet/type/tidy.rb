@@ -221,9 +221,7 @@ Puppet::Type.newtype(:tidy) do
         super
 
         # only allow backing up into filebuckets
-        unless self[:backup].is_a? Puppet::FileBucket::Dipper
-            self[:backup] = false
-        end
+        self[:backup] = false unless self[:backup].is_a? Puppet::FileBucket::Dipper
     end
 
     # Make a file resource to remove a given file.

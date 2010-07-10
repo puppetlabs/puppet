@@ -18,9 +18,7 @@ class Puppet::Provider::Confine::Variable < Puppet::Provider::Confine
 
     # Retrieve the value from facter
     def facter_value
-        unless defined?(@facter_value) and @facter_value
-            @facter_value = ::Facter.value(name).to_s.downcase
-        end
+        @facter_value = ::Facter.value(name).to_s.downcase unless defined?(@facter_value) and @facter_value
         @facter_value
     end
 

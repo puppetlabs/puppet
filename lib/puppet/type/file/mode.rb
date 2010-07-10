@@ -76,15 +76,9 @@ module Puppet
         # that are readable.  This should probably be selectable, but eh.
         def dirmask(value)
             if FileTest.directory?(@resource[:path])
-                if value & 0400 != 0
-                    value |= 0100
-                end
-                if value & 040 != 0
-                    value |= 010
-                end
-                if value & 04 != 0
-                    value |= 01
-                end
+                value |= 0100 if value & 0400 != 0
+                value |= 010 if value & 040 != 0
+                value |= 01 if value & 04 != 0
             end
 
             return value
@@ -105,9 +99,7 @@ module Puppet
 
             if stat = @resource.stat(false)
                 unless defined?(@fixed)
-                    if defined?(@should) and @should
-                        @should = @should.collect { |s| self.dirmask(s) }
-                    end
+                    @should = @should.collect { |s| self.dirmask(s) } if defined?(@should) and @should
                 end
                 return stat.mode & 007777
             else

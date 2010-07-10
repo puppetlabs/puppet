@@ -34,9 +34,7 @@ module Puppet
         end
 
         def ref
-            unless defined?(@ref)
-                @ref = Puppet::Resource.new(@type, @name)
-            end
+            @ref = Puppet::Resource.new(@type, @name) unless defined?(@ref)
             @ref.to_s
         end
 
@@ -159,9 +157,7 @@ module Puppet
         # Convert to a parseable manifest
         def to_manifest
             unless self.top
-                unless defined?(@keyword) and @keyword
-                    raise Puppet::DevError, "No keyword; cannot convert to manifest"
-                end
+                raise Puppet::DevError, "No keyword; cannot convert to manifest" unless defined?(@keyword) and @keyword
             end
 
             str = "#{@keyword} #{@name} {\n%s\n}"
@@ -201,9 +197,7 @@ module Puppet
                     end
 
                     catalog.add_edge(container, resource)
-                    if child.is_a?(self.class)
-                        delver.call(child)
-                    end
+                    delver.call(child) if child.is_a?(self.class)
                 end
             end
 
@@ -245,9 +239,7 @@ module Puppet
         end
 
         def param(param,value)
-            unless defined?(@parameters)
-                @parameters = {}
-            end
+            @parameters = {} unless defined?(@parameters)
             @parameters[param] = value
         end
 

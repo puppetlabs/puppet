@@ -39,7 +39,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
         if(loadver) then
             filever = selmodversion_file
-            if (filever == loadver) then
+            if (filever == loadver)
                 return :true
             end
         end
@@ -89,13 +89,9 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
 
         (hdr, ver, numsec) = mod.read(12).unpack('LLL')
 
-        if hdr != magic
-            raise Puppet::Error, "Found #{hdr} instead of magic #{magic} in #{filename}"
-        end
+        raise Puppet::Error, "Found #{hdr} instead of magic #{magic} in #{filename}" if hdr != magic
 
-        if ver != 1
-            raise Puppet::Error, "Unknown policy file version #{ver} in #{filename}"
-        end
+        raise Puppet::Error, "Unknown policy file version #{ver} in #{filename}" if ver != 1
 
         # Read through (and throw away) the file section offsets, and also
         # the magic header for the first section.
@@ -129,7 +125,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
                 lines.each do |line|
                     line.chomp!
                     bits = line.split
-                    if bits[0] == @resource[:name] then
+                    if bits[0] == @resource[:name]
                         self.debug "load version #{bits[1]}"
                         return bits[1]
                     end

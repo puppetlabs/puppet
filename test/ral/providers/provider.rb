@@ -11,9 +11,7 @@ class TestProvider < Test::Unit::TestCase
     def echo
         echo = Puppet::Util.binary("echo")
 
-        unless echo
-            raise "Could not find 'echo' binary; cannot complete test"
-        end
+        raise "Could not find 'echo' binary; cannot complete test" unless echo
 
         return echo
     end

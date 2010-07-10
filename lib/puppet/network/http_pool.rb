@@ -58,9 +58,7 @@ module Puppet::Network::HttpPool
         http.cert = ssl_host.certificate.content
         http.verify_mode = OpenSSL::SSL::VERIFY_PEER
         http.key = ssl_host.key.content
-        if Puppet[:debug]
-            http.verify_callback = self.method(:ssl_verify_callback).to_proc
-        end
+        http.verify_callback = self.method(:ssl_verify_callback).to_proc if Puppet[:debug]
     end
 
     def self.ssl_verify_callback(peer_ok, x509_store_ctx)

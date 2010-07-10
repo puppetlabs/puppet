@@ -80,9 +80,7 @@ class CollExpr < AST::Branch
     def initialize(hash = {})
         super
 
-        unless %w{== != and or}.include?(@oper)
-            raise ArgumentError, "Invalid operator #{@oper}"
-        end
+        raise ArgumentError, "Invalid operator #{@oper}" unless %w{== != and or}.include?(@oper)
     end
 end
 end

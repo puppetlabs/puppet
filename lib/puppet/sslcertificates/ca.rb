@@ -63,9 +63,7 @@ class Puppet::SSLCertificates::CA
                 @config[:password] = self.getpass
             else
                 # Don't create a password if the cert already exists
-                unless FileTest.exists?(@config[:cacert])
-                    @config[:password] = self.genpass
-                end
+                @config[:password] = self.genpass unless FileTest.exists?(@config[:cacert])
             end
         end
 
@@ -114,9 +112,7 @@ class Puppet::SSLCertificates::CA
     # Retrieve a client's CSR.
     def getclientcsr(host)
         csrfile = host2csrfile(host)
-        unless File.exists?(csrfile)
-            return nil
-        end
+        return nil unless File.exists?(csrfile)
 
         return OpenSSL::X509::Request.new(File.read(csrfile))
     end
@@ -124,9 +120,7 @@ class Puppet::SSLCertificates::CA
     # Retrieve a client's certificate.
     def getclientcert(host)
         certfile = host2certfile(host)
-        unless File.exists?(certfile)
-            return [nil, nil]
-        end
+        return [nil, nil] unless File.exists?(certfile)
 
         return [OpenSSL::X509::Certificate.new(File.read(certfile)), @cert]
     end
@@ -186,9 +180,7 @@ class Puppet::SSLCertificates::CA
 
     def removeclientcsr(host)
         csrfile = host2csrfile(host)
-        unless File.exists?(csrfile)
-            raise Puppet::Error, "No certificate request for #{host}"
-        end
+        raise Puppet::Error, "No certificate request for #{host}" unless File.exists?(csrfile)
 
         File.unlink(csrfile)
     end
@@ -226,14 +218,10 @@ class Puppet::SSLCertificates::CA
             hash.delete(:password)
         end
 
-        if hash.length > 0
-            raise ArgumentError, "Unknown parameters #{hash.keys.join(",")}"
-        end
+        raise ArgumentError, "Unknown parameters #{hash.keys.join(",")}" if hash.length > 0
 
         [:cadir, :csrdir, :signeddir].each { |dir|
-            unless @config[dir]
-                raise Puppet::DevError, "#{dir} is undefined"
-            end
+            raise Puppet::DevError, "#{dir} is undefined" unless @config[dir]
         }
     end
 
@@ -244,9 +232,7 @@ class Puppet::SSLCertificates::CA
                 "CA#sign only accepts OpenSSL::X509::Request objects, not #{csr.class}"
         end
 
-        unless csr.verify(csr.public_key)
-            raise Puppet::Error, "CSR sign verification failed"
-        end
+        raise Puppet::Error, "CSR sign verification failed" unless csr.verify(csr.public_key)
 
         serial = nil
         Puppet.settings.readwritelock(:serial) { |f|
@@ -282,9 +268,7 @@ class Puppet::SSLCertificates::CA
         host = thing2name(csr)
 
         csrfile = host2csrfile(host)
-        if File.exists?(csrfile)
-            raise Puppet::Error, "Certificate request for #{host} already exists"
-        end
+        raise Puppet::Error, "Certificate request for #{host} already exists" if File.exists?(csrfile)
 
         Puppet.settings.writesub(:csrdir, csrfile) do |f|
             f.print csr.to_pem
@@ -296,9 +280,7 @@ class Puppet::SSLCertificates::CA
         host = thing2name(cert)
 
         certfile = host2certfile(host)
-        if File.exists?(certfile)
-            Puppet.notice "Overwriting signed certificate #{certfile} for #{host}"
-        end
+        Puppet.notice "Overwriting signed certificate #{certfile} for #{host}" if File.exists?(certfile)
 
         Puppet::SSLCertificates::Inventory::add(cert)
         Puppet.settings.writesub(:signeddir, certfile) do |f|
@@ -391,9 +373,7 @@ class Puppet::SSLCertificates::CA
             )
         end
 
-        unless @cert.check_private_key(cakey)
-            raise Puppet::Error, "CA Certificate is invalid"
-        end
+        raise Puppet::Error, "CA Certificate is invalid" unless @cert.check_private_key(cakey)
 
         signable.sign(cakey, digest)
     end

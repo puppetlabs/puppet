@@ -153,16 +153,12 @@ namestring:       name
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
     @lexer.commentpop
     array = val[2]
-    if array.instance_of?(AST::ResourceInstance)
-        array = [array]
-    end
+    array = [array] if array.instance_of?(AST::ResourceInstance)
     result = ast AST::ASTArray
 
     # this iterates across each specified resourceinstance
     array.each { |instance|
-        unless instance.instance_of?(AST::ResourceInstance)
-            raise Puppet::Dev, "Got something that isn't an instance"
-        end
+        raise Puppet::Dev, "Got something that isn't an instance" unless instance.instance_of?(AST::ResourceInstance)
         # now, i need to somehow differentiate between those things with
         # arrays in their names, and normal things
 
@@ -197,9 +193,7 @@ virtualresource:  at resource {
         Puppet.warning addcontext("You cannot collect without storeconfigs being set")
     end
 
-    if val[1].is_a? AST::ResourceDefaults
-        error "Defaults are not virtualizable"
-    end
+    error "Defaults are not virtualizable" if val[1].is_a? AST::ResourceDefaults
 
     method = type.to_s + "="
 
@@ -222,9 +216,7 @@ at:   AT { result = :virtual }
 # will, I assume.
 collection:     classref collectrhand LBRACE anyparams endcomma RBRACE {
     @lexer.commentpop
-    if val[0] =~ /^[a-z]/
-        Puppet.warning addcontext("Collection names must now be capitalized")
-    end
+    Puppet.warning addcontext("Collection names must now be capitalized") if val[0] =~ /^[a-z]/
     type = val[0].downcase
     args = {:type => type}
 
@@ -348,9 +340,7 @@ resourcename:   quotedtext
     | hasharrayaccesses
 
 assignment:     VARIABLE EQUALS expression {
-    if val[0][:value] =~ /::/
-        raise Puppet::ParseError, "Cannot assign to variables in other namespaces"
-    end
+    raise Puppet::ParseError, "Cannot assign to variables in other namespaces" if val[0][:value] =~ /::/
     # this is distinct from referencing a variable
     variable = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
     result = ast AST::VarDef, :name => variable, :value => val[2], :line => val[0][:line]
@@ -477,9 +467,7 @@ ifstatement:      expression LBRACE statements RBRACE else {
         :statements => val[2]
     }
 
-    if val[4]
-        args[:else] = val[4]
-    end
+    args[:else] = val[4] if val[4]
 
     result = ast AST::IfStatement, args
 }
@@ -490,9 +478,7 @@ ifstatement:      expression LBRACE statements RBRACE else {
             :statements => ast(AST::Nop)
     }
 
-    if val[3]
-        args[:else] = val[3]
-    end
+    args[:else] = val[3] if val[3]
 
     result = ast AST::IfStatement, args
 }
@@ -587,9 +573,7 @@ expression:   rvalue
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
     @lexer.commentpop
     options = val[3]
-    unless options.instance_of?(AST::ASTArray)
-        options = ast AST::ASTArray, :children => [val[3]]
-    end
+    options = ast AST::ASTArray, :children => [val[3]] unless options.instance_of?(AST::ASTArray)
     result = ast AST::CaseStatement, :test => val[1], :options => options
 }
 

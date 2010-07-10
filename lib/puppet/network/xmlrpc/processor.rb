@@ -58,9 +58,7 @@ module Puppet::Network
                     1, detail.to_s
                 )
             rescue Puppet::Error => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
+                puts detail.backtrace if Puppet[:trace]
                 Puppet.err detail.to_s
                 error = ::XMLRPC::FaultException.new(
                     1, detail.to_s
@@ -68,9 +66,7 @@ module Puppet::Network
                 error.set_backtrace detail.backtrace
                 raise error
             rescue => detail
-                if Puppet[:trace]
-                    puts detail.backtrace
-                end
+                puts detail.backtrace if Puppet[:trace]
                 Puppet.err "Could not call: #{detail}"
                 error = ::XMLRPC::FaultException.new(1, detail.to_s)
                 error.set_backtrace detail.backtrace

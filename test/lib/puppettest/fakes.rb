@@ -35,9 +35,7 @@ module PuppetTest
 
         def []=(param, value)
             param = symbolize(param)
-            unless @realresource.valid_parameter?(param)
-                raise Puppet::DevError, "Invalid attribute #{param} for #{@realresource.name}"
-            end
+            raise Puppet::DevError, "Invalid attribute #{param} for #{@realresource.name}" unless @realresource.valid_parameter?(param)
             if @realresource.attrtype(param) == :property
                 @should[param] = value
             else
@@ -157,9 +155,7 @@ module PuppetTest
         def store(hash)
             hash.each do |n, v|
                 method = n.to_s + "="
-                if respond_to? method
-                    send(method, v)
-                end
+                send(method, v) if respond_to? method
             end
         end
     end

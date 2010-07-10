@@ -45,16 +45,12 @@ module Puppet
                 return {} if current == :absent
 
                 #inclusive means we are managing everything so if it isn't in should, its gone
-                if inclusive?
-                    current.each_key { |key| current[key] = nil }
-                end
+                current.each_key { |key| current[key] = nil } if inclusive?
                 current
             end
 
             def should
-                unless defined?(@should) and @should
-                    return nil
-                end
+                return nil unless defined?(@should) and @should
 
                 members = hashify(@should)
                 current = process_current_hash(retrieve)
@@ -81,13 +77,9 @@ module Puppet
             end
 
             def insync?(is)
-                unless defined?(@should) and @should
-                    return true
-                end
+                return true unless defined?(@should) and @should
 
-                unless is
-                    return true
-                end
+                return true unless is
 
                 return (is == self.should)
             end

@@ -69,9 +69,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
     def install(useversion = true)
         command = [command(:gemcmd), "install"]
-        if (! resource[:ensure].is_a? Symbol) and useversion
-            command << "-v" << resource[:ensure]
-        end
+        command << "-v" << resource[:ensure] if (! resource[:ensure].is_a? Symbol) and useversion
         # Always include dependencies
         command << "--include-dependencies"
 
@@ -101,9 +99,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
 
         output = execute(command)
         # Apparently some stupid gem versions don't exit non-0 on failure
-        if output.include?("ERROR")
-            self.fail "Could not install: #{output.chomp}"
-        end
+        self.fail "Could not install: #{output.chomp}" if output.include?("ERROR")
     end
 
     def latest

@@ -31,9 +31,7 @@ module Puppet
                 # This is probably unnecessary, and can cause some weirdnesses in
                 # cases where we're operating over localhost but don't have a real
                 # IP defined.
-                unless name and ip
-                    raise Puppet::DevError, "Name and IP must be passed to 'allowed?'"
-                end
+                raise Puppet::DevError, "Name and IP must be passed to 'allowed?'" unless name and ip
                 # else, we're networked and such
             else
                 # we're local
@@ -41,9 +39,7 @@ module Puppet
             end
 
             # yay insecure overrides
-            if globalallow?
-                return true
-            end
+            return true if globalallow?
 
             if decl = declarations.find { |d| d.match?(name, ip) }
                 return decl.result
@@ -175,9 +171,7 @@ module Puppet
             # Set the declaration type.  Either :allow or :deny.
             def type=(type)
                 type = symbolize(type)
-                unless [:allow, :deny].include?(type)
-                    raise ArgumentError, "Invalid declaration type #{type}"
-                end
+                raise ArgumentError, "Invalid declaration type #{type}" unless [:allow, :deny].include?(type)
                 @type = type
             end
 

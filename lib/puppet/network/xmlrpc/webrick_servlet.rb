@@ -10,9 +10,7 @@ module Puppet::Network::XMLRPC
         # This is a hackish way to avoid an auth message every time we have a
         # normal operation
         def self.log(msg)
-            unless defined?(@logs)
-                @logs = {}
-            end
+            @logs = {} unless defined?(@logs)
             if @logs.include?(msg)
                 @logs[msg] += 1
             else
@@ -51,9 +49,7 @@ module Puppet::Network::XMLRPC
                     "unsupported method `#{request.request_method}'."
             end
 
-            if parse_content_type(request['Content-type']).first != "text/xml"
-                raise WEBrick::HTTPStatus::BadRequest
-            end
+            raise WEBrick::HTTPStatus::BadRequest if parse_content_type(request['Content-type']).first != "text/xml"
 
             length = (request['Content-length'] || 0).to_i
 
@@ -61,14 +57,10 @@ module Puppet::Network::XMLRPC
 
             data = request.body
 
-            if data.nil? or data.size != length
-                raise WEBrick::HTTPStatus::BadRequest
-            end
+            raise WEBrick::HTTPStatus::BadRequest if data.nil? or data.size != length
 
             resp = process(data, client_request(request))
-            if resp.nil? or resp.size <= 0
-                raise WEBrick::HTTPStatus::InternalServerError
-            end
+            raise WEBrick::HTTPStatus::InternalServerError if resp.nil? or resp.size <= 0
 
             response.status = 200
             response['Content-Length'] = resp.size

@@ -11,14 +11,10 @@ module Puppet::Provider::Mount
         # Manually pass the mount options in, since some OSes *cough*OS X*cough* don't
         # read from /etc/fstab but still want to use this type.
         args = []
-        if self.options and self.options != :absent
-            args << "-o" << self.options
-        end
+        args << "-o" << self.options if self.options and self.options != :absent
         args << resource[:name]
 
-        if respond_to?(:flush)
-            flush
-        end
+        flush if respond_to?(:flush)
         mountcmd(*args)
     end
 

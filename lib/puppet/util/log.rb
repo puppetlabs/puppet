@@ -47,12 +47,8 @@ class Puppet::Util::Log
     # undefs other objects.
     def Log.close(destination)
         if @destinations.include?(destination)
-            if @destinations[destination].respond_to?(:flush)
-                @destinations[destination].flush
-            end
-            if @destinations[destination].respond_to?(:close)
-                @destinations[destination].close
-            end
+            @destinations[destination].flush if @destinations[destination].respond_to?(:flush)
+            @destinations[destination].close if @destinations[destination].respond_to?(:close)
             @destinations.delete(destination)
         end
     end
@@ -66,21 +62,15 @@ class Puppet::Util::Log
     # Flush any log destinations that support such operations.
     def Log.flush
         @destinations.each { |type, dest|
-            if dest.respond_to?(:flush)
-                dest.flush
-            end
+            dest.flush if dest.respond_to?(:flush)
         }
     end
 
     # Create a new log message.  The primary role of this method is to
     # avoid creating log messages below the loglevel.
     def Log.create(hash)
-        unless hash.include?(:level)
-            raise Puppet::DevError, "Logs require a level"
-        end
-        unless @levels.index(hash[:level])
-            raise Puppet::DevError, "Invalid log level #{hash[:level]}"
-        end
+        raise Puppet::DevError, "Logs require a level" unless hash.include?(:level)
+        raise Puppet::DevError, "Invalid log level #{hash[:level]}" unless @levels.index(hash[:level])
         if @levels.index(hash[:level]) >= @loglevel
             return Puppet::Util::Log.new(hash)
         else
@@ -104,13 +94,9 @@ class Puppet::Util::Log
 
     # Set the current log level.
     def Log.level=(level)
-        unless level.is_a?(Symbol)
-            level = level.intern
-        end
+        level = level.intern unless level.is_a?(Symbol)
 
-        unless @levels.include?(level)
-            raise Puppet::DevError, "Invalid loglevel #{level}"
-        end
+        raise Puppet::DevError, "Invalid loglevel #{level}" unless @levels.include?(level)
 
         @loglevel = @levels.index(level)
     end
@@ -130,9 +116,7 @@ class Puppet::Util::Log
             klass.match?(dest)
         end
 
-        unless type
-            raise Puppet::DevError, "Unknown destination type #{dest}"
-        end
+        raise Puppet::DevError, "Unknown destination type #{dest}" unless type
 
         begin
             if type.instance_method(:initialize).arity == 1
@@ -143,14 +127,10 @@ class Puppet::Util::Log
             flushqueue
             @destinations[dest]
         rescue => detail
-            if Puppet[:debug]
-                puts detail.backtrace
-            end
+            puts detail.backtrace if Puppet[:debug]
 
             # If this was our only destination, then add the console back in.
-            if @destinations.empty? and (dest != :console and dest != "console")
-                newdestination(:console)
-            end
+            newdestination(:console) if @destinations.empty? and (dest != :console and dest != "console")
         end
     end
 
@@ -159,9 +139,7 @@ class Puppet::Util::Log
     # a potential for a loop here, if the machine somehow gets the destination set as
     # itself.
     def Log.newmessage(msg)
-        if @levels.index(msg.level) < @loglevel
-            return
-        end
+        return if @levels.index(msg.level) < @loglevel
 
         queuemessage(msg) if @destinations.length == 0
 
@@ -193,9 +171,7 @@ class Puppet::Util::Log
         Puppet.notice "Reopening log files"
         types = @destinations.keys
         @destinations.each { |type, dest|
-            if dest.respond_to?(:close)
-                dest.close
-            end
+            dest.close if dest.respond_to?(:close)
         }
         @destinations.clear
         # We need to make sure we always end up with some kind of destination

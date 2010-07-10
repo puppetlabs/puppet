@@ -18,9 +18,7 @@ class Puppet::Reports
 
         mod = genmodule(name, :extend => Puppet::Util::Docs, :hash => instance_hash(:report), :block => block)
 
-        if options[:useyaml]
-            mod.useyaml = true
-        end
+        mod.useyaml = true if options[:useyaml]
 
         mod.send(:define_method, :report_name) do
             name

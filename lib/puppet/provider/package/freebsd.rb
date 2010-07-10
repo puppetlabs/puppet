@@ -29,9 +29,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
                 end
             end
         else
-            if @resource[:source]
-                Puppet.warning "source is defined but does not have trailing slash, ignoring #{@resource[:source]}"
-            end
+            Puppet.warning "source is defined but does not have trailing slash, ignoring #{@resource[:source]}" if @resource[:source]
             pkgadd "-r", @resource[:name]
         end
     end

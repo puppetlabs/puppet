@@ -79,9 +79,7 @@ module Puppet::Network
                 return :retry
             end
             ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
-                if detail.message.include?(str)
-                    Puppet.warning "Certificate validation failed; consider using the certname configuration option"
-                end
+                Puppet.warning "Certificate validation failed; consider using the certname configuration option" if detail.message.include?(str)
             end
             raise XMLRPCClientError, "Certificates were not trusted: #{detail}"
         end
@@ -104,9 +102,7 @@ module Puppet::Network
                 return :retry
             end
             ["certificate verify failed", "hostname was not match", "hostname not match"].each do |str|
-                if detail.message.include?(str)
-                    Puppet.warning "Certificate validation failed; consider using the certname configuration option"
-                end
+                Puppet.warning "Certificate validation failed; consider using the certname configuration option" if detail.message.include?(str)
             end
             raise XMLRPCClientError, "Certificates were not trusted: #{detail}"
         end
@@ -154,9 +150,7 @@ module Puppet::Network
         end
 
         def http
-            unless @http
-                @http = Puppet::Network::HttpPool.http_instance(host, port, true)
-            end
+            @http = Puppet::Network::HttpPool.http_instance(host, port, true) unless @http
             @http
         end
 
@@ -196,9 +190,7 @@ module Puppet::Network
         # or we've just downloaded certs and we need to create new http instances
         # with the certs added.
         def recycle_connection
-            if http.started?
-                http.finish
-            end
+            http.finish if http.started?
             @http = nil
             self.http # force a new one
         end

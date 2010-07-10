@@ -192,9 +192,7 @@ module Puppet
 
             # Most validation is handled by the SUIDManager class.
             validate do |user|
-                unless Puppet.features.root?
-                    self.fail "Only root can execute commands as other users"
-                end
+                self.fail "Only root can execute commands as other users" unless Puppet.features.root?
             end
         end
 
@@ -217,9 +215,7 @@ module Puppet
             end
 
             munge do |dir|
-                if dir.is_a?(Array)
-                    dir = dir[0]
-                end
+                dir = dir[0] if dir.is_a?(Array)
 
                 dir
             end
@@ -305,9 +301,7 @@ module Puppet
                     end
                     value = Integer(value)
                 end
-                if value < 1
-                    raise ArgumentError, "Tries must be an integer >= 1"
-                end
+                raise ArgumentError, "Tries must be an integer >= 1" if value < 1
                 value
             end
 
@@ -324,9 +318,7 @@ module Puppet
                     end
                     value = Float(value)
                 end
-                if value < 0
-                    raise ArgumentError, "try_sleep cannot be a negative number"
-                end
+                raise ArgumentError, "try_sleep cannot be a negative number" if value < 0
                 value
             end
 
@@ -494,9 +486,7 @@ module Puppet
             reqs = []
 
             # Stick the cwd in there if we have it
-            if self[:cwd]
-                reqs << self[:cwd]
-            end
+            reqs << self[:cwd] if self[:cwd]
 
             self[:command].scan(/^(#{File::SEPARATOR}\S+)/) { |str|
                 reqs << str
@@ -548,9 +538,7 @@ module Puppet
                     val = @parameters[check].value
                     val = [val] unless val.is_a? Array
                     val.each do |value|
-                        unless @parameters[check].check(value)
-                            return false
-                        end
+                        return false unless @parameters[check].check(value)
                     end
                 end
             }
@@ -583,9 +571,7 @@ module Puppet
                 end
             end
 
-            unless FileTest.exists?(exe)
-                raise ArgumentError, "Could not find executable '#{exe}'"
-            end
+            raise ArgumentError, "Could not find executable '#{exe}'" unless FileTest.exists?(exe)
             unless FileTest.executable?(exe)
                 raise ArgumentError,
                     "'#{exe}' is not executable"
@@ -642,9 +628,7 @@ module Puppet
                 Dir.chdir(dir) do
                     environment = {}
 
-                    if self[:path]
-                        environment[:PATH] = self[:path].join(":")
-                    end
+                    environment[:PATH] = self[:path].join(":") if self[:path]
 
                     if envlist = self[:environment]
                         envlist = [envlist] unless envlist.is_a? Array
@@ -686,9 +670,7 @@ module Puppet
         def validatecmd(cmd)
             exe = extractexe(cmd)
             # if we're not fully qualified, require a path
-            if File.expand_path(exe) != exe and self[:path].nil?
-                self.fail "'#{cmd}' is both unqualifed and specified no search path"
-            end
+            self.fail "'#{cmd}' is both unqualifed and specified no search path" if File.expand_path(exe) != exe and self[:path].nil?
         end
 
         def extractexe(cmd)

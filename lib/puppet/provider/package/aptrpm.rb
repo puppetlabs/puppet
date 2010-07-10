@@ -59,9 +59,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
 
             if available_versions.length == 0
                 self.debug "No latest version"
-                if Puppet[:debug]
-                    print output
-                end
+                print output if Puppet[:debug]
             end
 
             # Get the latest and greatest version number

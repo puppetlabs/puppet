@@ -24,22 +24,16 @@ self.class.module_eval <<'..end racc/parser.rb modeval..id5256434e8a', 'racc/par
 # without restriction.
 #
 
-unless defined?(NotImplementedError)
-    NotImplementedError = NotImplementError
-end
+NotImplementedError = NotImplementError unless defined?(NotImplementedError)
 
 module Racc
     class ParseError < StandardError; end
 end
-unless defined?(::ParseError)
-    ParseError = Racc::ParseError
-end
+ParseError = Racc::ParseError unless defined?(::ParseError)
 
 module Racc
 
-    unless defined?(Racc_No_Extentions)
-        Racc_No_Extentions = false
-    end
+    Racc_No_Extentions = false unless defined?(Racc_No_Extentions)
 
     class Parser
 
@@ -52,12 +46,8 @@ module Racc
             require 'racc/cparse'
         # Racc_Runtime_Core_Version_C  = (defined in extention)
             Racc_Runtime_Core_Revision_C = Racc_Runtime_Core_Id_C.split[2]
-            unless new.respond_to?(:_racc_do_parse_c, true)
-                raise LoadError, 'old cparse.so'
-            end
-            if Racc_No_Extentions
-                raise LoadError, 'selecting ruby version of racc runtime core'
-            end
+            raise LoadError, 'old cparse.so' unless new.respond_to?(:_racc_do_parse_c, true)
+            raise LoadError, 'selecting ruby version of racc runtime core' if Racc_No_Extentions
 
             Racc_Main_Parsing_Routine    = :_racc_do_parse_c
             Racc_YY_Parse_Method         = :_racc_yyparse_c
@@ -487,22 +477,16 @@ def token
         return [ :RETURN, "\n" ]
         end
 
-        if @done
-            return nil
-        end
+        return nil if @done
         yytext = String.new
 
 
         # remove comments from this line
         @src.sub!(/\A[ \t]*;.*\n/,"\n")
-        if $MATCH
-            return [:INLINECOMMENT, ""]
-        end
+        return [:INLINECOMMENT, ""] if $MATCH
 
         @src.sub!(/\A#.*\n/,"\n")
-        if $MATCH
-            return [:COMMENT, ""]
-        end
+        return [:COMMENT, ""] if $MATCH
 
         @src.sub!(/#.*/,'')
 
@@ -582,9 +566,7 @@ def on_error(token, value, vstack )
         else
             msg = "line #{@line}: syntax error at '#{token}'"
         end
-        unless @src.size > 0
-            msg = "line #{@line}: Unexpected end of file"
-        end
+        msg = "line #{@line}: Unexpected end of file" unless @src.size > 0
         if token == '$end'.intern
             puts "okay, this is silly"
         else

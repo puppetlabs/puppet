@@ -40,9 +40,7 @@ module Puppet::Parser::Functions
     def self.newfunction(name, options = {}, &block)
         name = symbolize(name)
 
-        if functions.include?(name)
-            raise Puppet::DevError, "Function #{name} already defined"
-        end
+        raise Puppet::DevError, "Function #{name} already defined" if functions.include?(name)
 
         ftype = options[:type] || :statement
 
@@ -56,18 +54,14 @@ module Puppet::Parser::Functions
         # Someday we'll support specifying an arity, but for now, nope
         #functions[name] = {:arity => arity, :type => ftype}
         functions[name] = {:type => ftype, :name => fname}
-        if options[:doc]
-            functions[name][:doc] = options[:doc]
-        end
+        functions[name][:doc] = options[:doc] if options[:doc]
     end
 
     # Remove a function added by newfunction
     def self.rmfunction(name)
         name = symbolize(name)
 
-        unless functions.include? name
-            raise Puppet::DevError, "Function #{name} is not defined"
-        end
+        raise Puppet::DevError, "Function #{name} is not defined" unless functions.include? name
 
         functions.delete name
 
