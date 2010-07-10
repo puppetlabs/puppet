@@ -114,6 +114,13 @@ class Puppet::Node::Environment
     name.to_s
   end
 
+  # The only thing we care about when serializing an environment is its 
+  # identity; everything else is ephemeral and should not be stored or
+  # transmitted.
+  def to_zaml(z)
+    self.to_s.to_zaml(z)
+  end
+
   def validate_dirs(dirs)
     dirs.collect do |dir|
       if dir !~ /^#{File::SEPARATOR}/
