@@ -147,7 +147,7 @@ describe Puppet::Util::Settings::FileSetting do
         end
 
         describe "on POSIX systems" do
-            confine "no /dev on Win32" => Puppet.features.posix?
+            confine "no /dev on Microsoft Windows" => Puppet.features.posix?
 
             it "should skip files in /dev" do
                 @settings.stubs(:value).with(:mydir).returns "/dev/file"

@@ -575,7 +575,7 @@ module Puppet
                             exe = path
                         end
                     end
-                elsif Puppet.features.win32? and !File.exists?(exe)
+                elsif Puppet.features.microsoft_windows? and !File.exists?(exe)
                     self[:path].each do |path|
                         [".exe", ".ps1", ".bat", ".com", ""].each do |extension|
                             file = File.join(path, exe+extension)

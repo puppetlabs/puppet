@@ -22,7 +22,7 @@
 # 2) Build Rdoc documentation from all files in bin/ (excluding .bat and .cmd),
 #    all .rb files in lib/, ./README, ./ChangeLog, and ./Install.
 # 3) Build ri documentation from all files in bin/ (excluding .bat and .cmd),
-#    and all .rb files in lib/. This is disabled by default on Win32.
+#    and all .rb files in lib/. This is disabled by default on Microsoft Windows.
 # 4) Install commands from bin/ into the Ruby bin directory. On Windows, if a
 #    if a corresponding batch file (.bat or .cmd) exists in the bin directory,
 #    it will be copied over as well. Otherwise, a batch file (always .bat) will

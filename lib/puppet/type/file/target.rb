@@ -23,7 +23,7 @@ module Puppet
 
         # Create our link.
         def mklink
-            raise Puppet::Error, "Cannot symlink on Win32" if Puppet.features.win32?
+            raise Puppet::Error, "Cannot symlink on Microsoft Windows" if Puppet.features.microsoft_windows?
 
             target = self.should
 

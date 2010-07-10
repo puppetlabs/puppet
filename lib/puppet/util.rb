@@ -315,7 +315,7 @@ module Util
                     exit!(1)
                 end # begin; rescue
             end # if child_pid
-        elsif Puppet.features.win32?
+        elsif Puppet.features.microsoft_windows?
             command = command.collect {|part| '"' + part.gsub(/"/, '\\"') + '"'}.join(" ") if command.is_a?(Array)
             Puppet.debug "Creating process '%s'" % command
             processinfo = Process.create(

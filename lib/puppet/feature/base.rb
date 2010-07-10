@@ -41,10 +41,10 @@ Puppet.features.add(:posix) do
     Etc.getpwuid(0) != nil && Puppet.features.syslog?
 end
 
-# We can use Win32 functions
-Puppet.features.add(:win32, :libs => ["sys/admin", "win32/process", "win32/dir"])
+# We can use Microsoft Windows functions
+Puppet.features.add(:microsoft_windows, :libs => ["sys/admin", "win32/process", "win32/dir"])
 
-raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.win32?
+raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.microsoft_windows?
 
 # We have CouchDB
 Puppet.features.add(:couchdb, :libs => ["couchrest"])

@@ -51,7 +51,7 @@ Spec::Runner.configure do |config|
                 if Puppet.features.posix? and file !~ /^\/tmp/ and file !~ /^\/var\/folders/
                     puts "Not deleting tmpfile #{file} outside of /tmp or /var/folders"
                     next
-                elsif Puppet.features.win32? 
+                elsif Puppet.features.microsoft_windows? 
                     tempdir = File.expand_path(File.join(Dir::LOCAL_APPDATA, "Temp"))
                     if file !~ /^#{tempdir}/
                         puts "Not deleting tmpfile #{file} outside of #{tempdir}"

@@ -97,7 +97,7 @@ class Puppet::Daemon
     def set_signal_traps
         signals = {:INT => :stop, :TERM => :stop }
         # extended signals not supported under windows
-        signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.win32?
+        signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.microsoft_windows?
         signals.each do |signal, method|
             trap(signal) do
                 Puppet.notice "Caught #{signal}; calling #{method}"

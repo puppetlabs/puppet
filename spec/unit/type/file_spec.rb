@@ -156,7 +156,7 @@ describe Puppet::Type.type(:file) do
         describe "on POSIX systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(true)
-                Puppet.features.stubs(:win32?).returns(false)
+                Puppet.features.stubs(:microsoft_windows?).returns(false)
             end
 
             it "should autorequire its parent directory" do
@@ -196,10 +196,10 @@ describe Puppet::Type.type(:file) do
             end
         end
         
-        describe "on Win32 systems" do
+        describe "on Microsoft Windows systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(false)
-                Puppet.features.stubs(:win32?).returns(true)
+                Puppet.features.stubs(:microsoft_windows?).returns(true)
             end
 
             it "should refuse to work" do
@@ -208,12 +208,12 @@ describe Puppet::Type.type(:file) do
         end
     end
 
-    describe "when using Win32 filenames" do
-        confine "Only works on Win32" => Puppet.features.win32?
-        describe "on Win32 systems" do
+    describe "when using Microsoft Windows filenames" do
+        confine "Only works on Microsoft Windows" => Puppet.features.microsoft_windows?
+        describe "on Microsoft Windows systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(false)
-                Puppet.features.stubs(:win32?).returns(true)
+                Puppet.features.stubs(:microsoft_windows?).returns(true)
             end
 
             it "should autorequire its parent directory" do
@@ -261,7 +261,7 @@ describe Puppet::Type.type(:file) do
         describe "on POSIX systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(true)
-                Puppet.features.stubs(:win32?).returns(false)
+                Puppet.features.stubs(:microsoft_windows?).returns(false)
             end
 
             it "should refuse to work" do
@@ -271,11 +271,11 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "when using UNC filenames" do
-        describe "on Win32 systems" do
-            confine "Only works on Win32" => Puppet.features.win32?
+        describe "on Microsoft Windows systems" do
+            confine "Only works on Microsoft Windows" => Puppet.features.microsoft_windows?
             before do
                 Puppet.features.stubs(:posix?).returns(false)
-                Puppet.features.stubs(:win32?).returns(true)
+                Puppet.features.stubs(:microsoft_windows?).returns(true)
             end
 
             it "should autorequire its parent directory" do
@@ -324,7 +324,7 @@ describe Puppet::Type.type(:file) do
         describe "on POSIX systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(true)
-                Puppet.features.stubs(:win32?).returns(false)
+                Puppet.features.stubs(:microsoft_windows?).returns(false)
             end
 
             it "should refuse to work" do
@@ -407,10 +407,10 @@ describe Puppet::Type.type(:file) do
             # should recode tests using expectations instead of using the filesystem
         end
         
-        describe "on Win32 systems" do
+        describe "on Microsoft Windows systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(false)
-                Puppet.features.stubs(:win32?).returns(true)
+                Puppet.features.stubs(:microsoft_windows?).returns(true)
             end
 
             it "should refuse to work with links"

@@ -34,7 +34,7 @@ Puppet::Type.newtype(:file) do
 
         validate do |value|
             # accept various path syntaxes: lone slash, posix, win32, unc
-            unless (Puppet.features.posix? and (value =~ /^\/$/ or value =~ /^\/[^\/]/)) or (Puppet.features.win32? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
+            unless (Puppet.features.posix? and (value =~ /^\/$/ or value =~ /^\/[^\/]/)) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
                 fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
             end
         end

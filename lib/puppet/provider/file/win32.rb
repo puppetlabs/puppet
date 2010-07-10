@@ -1,11 +1,11 @@
-Puppet::Type.type(:file).provide :win32 do
-    desc "Uses Win32 functionality to manage file's users and rights."
+Puppet::Type.type(:file).provide :microsoft_windows do
+    desc "Uses Microsoft Windows functionality to manage file's users and rights."
 
-    confine :feature => :win32
+    confine :feature => :microsoft_windows
 
     include Puppet::Util::Warnings
 
-    require 'sys/admin' if Puppet.features.win32?
+    require 'sys/admin' if Puppet.features.microsoft_windows?
     
     def id2name(id)
         return id.to_s if id.is_a?(Symbol)

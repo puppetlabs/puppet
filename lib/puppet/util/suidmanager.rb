@@ -50,7 +50,7 @@ module Puppet::Util::SUIDManager
 
     # Runs block setting uid and gid if provided then restoring original ids
     def asuser(new_uid=nil, new_gid=nil)
-        return yield if Puppet.features.win32? or !root?
+        return yield if Puppet.features.microsoft_windows? or !root?
 
         # We set both because some programs like to drop privs, i.e. bash.
         old_uid, old_gid = self.uid, self.gid
