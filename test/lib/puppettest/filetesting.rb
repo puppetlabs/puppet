@@ -88,7 +88,7 @@ module PuppetTest::FileTesting
         tolist = file_list(todir).sort
 
         fromlist.sort.zip(tolist.sort).each { |a,b|
-            assert_equal(a, b, "Fromfile %s with length %s does not match tofile %s with length %s" % [a, fromlist.length, b, tolist.length])
+            assert_equal(a, b, "Fromfile #{a} with length #{fromlist.length} does not match tofile #{b} with length #{tolist.length}")
         }
         #assert_equal(fromlist,tolist)
 

@@ -108,7 +108,7 @@ Puppet::Type.type(:zpool).provide(:solaris) do
         end
 
         define_method(field.to_s + "=") do |should|
-            Puppet.warning "NO CHANGES BEING MADE: zpool %s does not match, should be '%s' currently is '%s'" % [field, should, current_pool[field]]
+            Puppet.warning "NO CHANGES BEING MADE: zpool #{field} does not match, should be '#{should}' currently is '#{current_pool[field]}'"
         end
     end
 

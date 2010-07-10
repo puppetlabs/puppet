@@ -106,7 +106,7 @@ module Puppet::Network::XMLRPC
                     Puppet.warning "Could not retrieve server name from cert"
                 else
                     unless client == nameary[1]
-                        Puppet.debug "Overriding %s with cert name %s" % [client, nameary[1]]
+                        Puppet.debug "Overriding #{client} with cert name #{nameary[1]}"
                         client = nameary[1]
                     end
                     valid = true

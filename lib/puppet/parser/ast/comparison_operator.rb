@@ -34,7 +34,7 @@ class Puppet::Parser::AST
             super
 
             unless %w{== != < > <= >=}.include?(@operator)
-                raise ArgumentError, "Invalid comparison operator %s" % @operator
+                raise ArgumentError, "Invalid comparison operator #{@operator}"
             end
         end
     end

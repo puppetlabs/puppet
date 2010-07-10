@@ -157,9 +157,9 @@ class Puppet::Module
     end
 
     def to_s
-        result = "Module %s" % name
+        result = "Module #{name}"
         if path
-            result += "(%s)" % path
+            result += "(#{path})"
         end
         result
     end
@@ -201,6 +201,6 @@ class Puppet::Module
     end
 
     def assert_validity
-        raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-'), not '%s'" % name unless name =~ /^[-\w]+$/
+        raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-'), not '#{name}'" unless name =~ /^[-\w]+$/
     end
 end

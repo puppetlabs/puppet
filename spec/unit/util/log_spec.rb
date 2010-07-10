@@ -55,7 +55,7 @@ describe Puppet::Util::Log do
         end
 
         [:level, :message, :time, :remote].each do |attr|
-            it "should have a %s attribute" % attr do
+            it "should have a #{attr} attribute" do
                 log = Puppet::Util::Log.new :level => :notice, :message => "A test message"
                 log.should respond_to(attr)
                 log.should respond_to(attr.to_s + "=")

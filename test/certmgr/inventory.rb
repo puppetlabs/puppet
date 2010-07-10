@@ -45,7 +45,7 @@ class TestCertInventory < Test::Unit::TestCase
         end
 
         [cert1, cert2].each do |cert|
-            assert(init.include?(cert.subject.to_s), "Did not catch %s" % cert.subject.to_s)
+            assert(init.include?(cert.subject.to_s), "Did not catch #{cert.subject}")
         end
     end
 

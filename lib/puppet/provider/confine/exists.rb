@@ -13,7 +13,7 @@ class Puppet::Provider::Confine::Exists < Puppet::Provider::Confine
     end
 
     def message(value)
-        "file %s does not exist" % value
+        "file #{value} does not exist"
     end
 
     def summary

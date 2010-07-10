@@ -42,7 +42,7 @@ class TestCA < Test::Unit::TestCase
                 ca.clean(host)
             end
             files.each do |f|
-                assert(! FileTest.exists?(f), "File %s was not deleted" % f)
+                assert(! FileTest.exists?(f), "File #{f} was not deleted")
             end
         end
     end
@@ -56,7 +56,7 @@ class TestCA < Test::Unit::TestCase
                     val = ca.send(method, host)
                 end
                 assert_equal(File.join(Puppet[dir], host.downcase + ".pem"), val,
-                    "incorrect response from %s" % method)
+                    "incorrect response from #{method}")
             end
         end
     end

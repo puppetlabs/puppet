@@ -102,8 +102,8 @@ describe provider_class do
 
     describe "when calling the getters and setters" do
         [:disk, :mirror, :raidz, :log, :spare].each do |field|
-            describe "when calling %s" % field do
-                it "should get the %s value from the current_pool hash" % field do
+            describe "when calling #{field}" do
+                it "should get the #{field} value from the current_pool hash" do
                     pool_hash = mock "pool hash"
                     pool_hash.expects(:[]).with(field)
                     @provider.stubs(:current_pool).returns(pool_hash)
@@ -111,9 +111,9 @@ describe provider_class do
                 end
             end
 
-            describe "when setting the %s" % field do
-                it "should warn the %s values were not in sync" % field do
-                    Puppet.expects(:warning).with("NO CHANGES BEING MADE: zpool %s does not match, should be 'shouldvalue' currently is 'currentvalue'" % field)
+            describe "when setting the #{field}" do
+                it "should warn the #{field} values were not in sync" do
+                    Puppet.expects(:warning).with("NO CHANGES BEING MADE: zpool #{field} does not match, should be 'shouldvalue' currently is 'currentvalue'")
                     @provider.stubs(:current_pool).returns(Hash.new("currentvalue"))
                     @provider.send((field.to_s + "=").intern, "shouldvalue")
                 end

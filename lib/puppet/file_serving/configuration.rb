@@ -41,7 +41,7 @@ class Puppet::FileServing::Configuration
         end
 
         if environment.module(mount_name)
-            Puppet::Util::Warnings.notice_once "DEPRECATION NOTICE: Files found in modules without specifying 'modules' in file path will be deprecated in the next major release.  Please fix module '%s' when no 0.24.x clients are present" % mount_name
+            Puppet::Util::Warnings.notice_once "DEPRECATION NOTICE: Files found in modules without specifying 'modules' in file path will be deprecated in the next major release.  Please fix module '#{mount_name}' when no 0.24.x clients are present"
             return mounts["modules"]
         end
 
@@ -70,12 +70,12 @@ class Puppet::FileServing::Configuration
 
         mount_name, path = request.key.split(File::Separator, 2)
 
-        raise(ArgumentError, "Cannot find file: Invalid path '%s'" % mount_name) unless mount_name =~ %r{^[-\w]+$}
+        raise(ArgumentError, "Cannot find file: Invalid path '#{mount_name}'") unless mount_name =~ %r{^[-\w]+$}
 
         return nil unless mount = find_mount(mount_name, request.environment)
         if mount.name == "modules" and mount_name != "modules"
             # yay backward-compatibility
-            path = "%s/%s" % [mount_name, path]
+            path = "#{mount_name}/#{path}"
         end
 
         if path == ""
@@ -119,7 +119,7 @@ class Puppet::FileServing::Configuration
             @mounts = newmounts
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Error parsing fileserver configuration: %s; using old configuration" % detail
+            Puppet.err "Error parsing fileserver configuration: #{detail}; using old configuration"
         end
 
     ensure

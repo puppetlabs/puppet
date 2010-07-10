@@ -54,7 +54,7 @@ class Puppet::Application::Agent < Puppet::Application
         if Puppet::Network::Handler.handler(arg)
             options[:serve] << arg.to_sym
         else
-            raise "Could not find handler for %s" % arg
+            raise "Could not find handler for #{arg}"
         end
     end
 
@@ -138,7 +138,7 @@ class Puppet::Application::Agent < Puppet::Application
     end
 
     def main
-        Puppet.notice "Starting Puppet client version %s" % [Puppet.version]
+        Puppet.notice "Starting Puppet client version #{Puppet.version}"
 
         @daemon.start
     end
@@ -183,7 +183,7 @@ class Puppet::Application::Agent < Puppet::Application
 
     def setup_listen
         unless FileTest.exists?(Puppet[:authconfig])
-            Puppet.err "Will not start without authorization file %s" % Puppet[:authconfig]
+            Puppet.err "Will not start without authorization file #{Puppet[:authconfig]}"
             exit(14)
         end
 

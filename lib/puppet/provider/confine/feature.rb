@@ -11,7 +11,7 @@ class Puppet::Provider::Confine::Feature < Puppet::Provider::Confine
     end
 
     def message(value)
-        "feature %s is missing" % value
+        "feature #{value} is missing"
     end
 end
 

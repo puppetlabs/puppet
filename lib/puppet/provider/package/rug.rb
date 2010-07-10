@@ -20,13 +20,13 @@ Puppet::Type.type(:package).provide :rug, :parent => :rpm do
             # pass
         else
             # Add the package version
-            wanted += "-%s" % should
+            wanted += "-#{should}"
         end
         output = rug "--quiet", :install, "-y", wanted
 
         unless self.query
             raise Puppet::ExecutionFailure.new(
-                "Could not find package %s" % self.name
+                "Could not find package #{self.name}"
             )
         end
     end

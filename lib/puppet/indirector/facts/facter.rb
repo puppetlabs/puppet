@@ -11,7 +11,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
         # Add any per-module fact directories to the factpath
         module_fact_dirs = Puppet[:modulepath].split(":").collect do |d|
             ["lib", "plugins"].map do |subdirectory|
-                Dir.glob("%s/*/#{subdirectory}/facter" % d)
+                Dir.glob("#{d}/*/#{subdirectory}/facter")
             end
         end.flatten
         dirs = module_fact_dirs + Puppet[:factpath].split(":")
@@ -27,14 +27,14 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
             Dir.glob("*.rb").each do |file|
                 fqfile = ::File.join(dir, file)
                 begin
-                    Puppet.info "Loading facts in %s" % [::File.basename(file.sub(".rb",''))]
+                    Puppet.info "Loading facts in #{::File.basename(file.sub(".rb",''))}"
                     Timeout::timeout(self.timeout) do
                         load file
                     end
                 rescue SystemExit,NoMemoryError
                     raise
                 rescue Exception => detail
-                    Puppet.warning "Could not load fact file %s: %s" % [fqfile, detail]
+                    Puppet.warning "Could not load fact file #{fqfile}: #{detail}"
                 end
             end
         end

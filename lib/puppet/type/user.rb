@@ -121,7 +121,7 @@ module Puppet
                     end
                 end
 
-                fail "Could not find group(s) %s" % @should.join(",") unless found
+                fail "Could not find group(s) #{@should.join(",")}" unless found
 
                 # Use the default event.
             end
@@ -208,7 +208,7 @@ module Puppet
             validate do |val|
                 if val.to_s == "true"
                     unless provider.class.manages_homedir?
-                        raise ArgumentError, "User provider %s can not manage home directories" % provider.class.name
+                        raise ArgumentError, "User provider #{provider.class.name} can not manage home directories"
                     end
                 end
             end

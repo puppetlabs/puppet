@@ -38,14 +38,14 @@ class Puppet::Util::Settings::Setting
         args.each do |param, value|
             method = param.to_s + "="
             unless self.respond_to? method
-                raise ArgumentError, "%s does not accept %s" % [self.class, param]
+                raise ArgumentError, "#{self.class} does not accept #{param}"
             end
 
             self.send(method, value)
         end
 
         unless self.desc
-            raise ArgumentError, "You must provide a description for the %s config option" % self.name
+            raise ArgumentError, "You must provide a description for the #{self.name} config option"
         end
     end
 
@@ -83,7 +83,7 @@ class Puppet::Util::Settings::Setting
 
         # Add in a statement about the default.
         if defined?(@default) and @default
-            str += "# The default value is '%s'.\n" % @default
+            str += "# The default value is '#{@default}'.\n"
         end
 
         # If the value has not been overridden, then print it out commented
@@ -92,9 +92,9 @@ class Puppet::Util::Settings::Setting
         value = @settings.value(self.name)
 
         if value != @default
-            line = "%s = %s" % [@name, value]
+            line = "#{@name} = #{value}"
         else
-            line = "# %s = %s" % [@name, @default]
+            line = "# #{@name} = #{@default}"
         end
 
         str += line + "\n"

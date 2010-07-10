@@ -13,7 +13,7 @@ module Puppet::Network::FormatHandler
                 Puppet::Network::FormatHandler.format(format).send(method, *args)
             rescue => details
                 direction = method.to_s.include?("intern") ? "from" : "to"
-                error = FormatError.new("Could not %s %s %s: %s" % [method, direction, format, details])
+                error = FormatError.new("Could not #{method} #{direction} #{format}: #{details}")
                 error.set_backtrace(details.backtrace)
                 raise error
             end
@@ -91,7 +91,7 @@ module Puppet::Network::FormatHandler
         else
             out = format(format)
         end
-        raise ArgumentError, "No format match the given format name or mime-type (%s)" % format if out.nil?
+        raise ArgumentError, "No format match the given format name or mime-type (#{format})" if out.nil?
         out.name
     end
 

@@ -49,7 +49,7 @@ class Puppet::Application::Apply < Puppet::Application
                 catalog = Puppet::Resource::Catalog.pson_create(catalog)
             end
         rescue => detail
-            raise Puppet::Error, "Could not deserialize catalog from pson: %s" % detail
+            raise Puppet::Error, "Could not deserialize catalog from pson: #{detail}"
         end
 
         catalog = catalog.to_ral
@@ -85,12 +85,12 @@ class Puppet::Application::Apply < Puppet::Application
 
         # Collect our facts.
         unless facts = Puppet::Node::Facts.find(Puppet[:certname])
-            raise "Could not find facts for %s" % Puppet[:certname]
+            raise "Could not find facts for #{Puppet[:certname]}"
         end
 
         # Find our Node
         unless node = Puppet::Node.find(Puppet[:certname])
-            raise "Could not find node %s" % Puppet[:certname]
+            raise "Could not find node #{Puppet[:certname]}"
         end
 
         # Merge in the facts.
@@ -101,7 +101,7 @@ class Puppet::Application::Apply < Puppet::Application
             file = Puppet[:classfile]
             if FileTest.exists?(file)
                 unless FileTest.readable?(file)
-                    $stderr.puts "%s is not readable" % file
+                    $stderr.puts "#{file} is not readable"
                     exit(63)
                 end
                 node.classes = File.read(file).split(/[\s\n]+/)

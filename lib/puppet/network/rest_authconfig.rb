@@ -63,7 +63,7 @@ module Puppet
         def insert_default_acl
             DEFAULT_ACL.each do |acl|
                 unless rights[acl[:acl]]
-                    Puppet.info "Inserting default '#{acl[:acl]}'(%s) acl because %s" % [acl[:authenticated] ? "auth" : "non-auth" , ( !exists? ? "#{Puppet[:rest_authconfig]} doesn't exist" : "none where found in '#{@file}'")]
+                    Puppet.info "Inserting default '#{acl[:acl]}'(#{acl[:authenticated] ? "auth" : "non-auth"}) acl because #{( !exists? ? "#{Puppet[:rest_authconfig]} doesn't exist" : "none where found in '#{@file}'")}"
                     mk_acl(acl)
                 end
             end

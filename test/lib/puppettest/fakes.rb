@@ -22,7 +22,7 @@ module PuppetTest
         end
 
         def self.to_s
-            "Fake%s" % @name.to_s.capitalize
+            "Fake#{@name.to_s.capitalize}"
         end
 
         def [](param)
@@ -36,7 +36,7 @@ module PuppetTest
         def []=(param, value)
             param = symbolize(param)
             unless @realresource.valid_parameter?(param)
-                raise Puppet::DevError, "Invalid attribute %s for %s" % [param, @realresource.name]
+                raise Puppet::DevError, "Invalid attribute #{param} for #{@realresource.name}"
             end
             if @realresource.attrtype(param) == :property
                 @should[param] = value
@@ -55,7 +55,7 @@ module PuppetTest
         end
 
         def inspect
-            "%s(%s)" % [self.class.to_s.sub(/.+::/, ''), super()]
+            "#{self.class.to_s.sub(/.+::/, '')}(#{super()})"
         end
 
         def is(param)
@@ -174,7 +174,7 @@ module PuppetTest
             @@fakeresources[type].name = type
 
             resource = Puppet::Type.type(type)
-            raise("Could not find type %s" % type) unless resource
+            raise("Could not find type #{type}") unless resource
             @@fakeresources[type].realresource = resource
         end
 

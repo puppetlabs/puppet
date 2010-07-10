@@ -42,7 +42,7 @@ module Puppet::Util::InstanceLoader
         # Use this method so they all get loaded
         loaded_instances(type).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
             mod = self.loaded_instance(name)
-            docs += "%s\n%s\n" % [name, "-" * name.to_s.length]
+            docs += "#{name}\n#{"-" * name.to_s.length}\n"
 
             docs += Puppet::Util::Docs.scrub(mod.doc) + "\n\n"
         end
@@ -68,7 +68,7 @@ module Puppet::Util::InstanceLoader
             if instance_loader(type).load(name)
                 unless instances.include? name
                     Puppet.warning(
-                        "Loaded %s file for %s but %s was not defined" % [type, name, type]
+                        "Loaded #{type} file for #{name} but #{type} was not defined"
                     )
                     return nil
                 end

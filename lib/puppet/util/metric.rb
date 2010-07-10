@@ -37,14 +37,14 @@ class Puppet::Util::Metric
         values.each { |value|
             # the 7200 is the heartbeat -- this means that any data that isn't
             # more frequently than every two hours gets thrown away
-            args.push "DS:%s:GAUGE:7200:U:U" % [value[0]]
+            args.push "DS:#{value[0]}:GAUGE:7200:U:U"
         }
         args.push "RRA:AVERAGE:0.5:1:300"
 
         begin
             @rrd.create( Puppet[:rrdinterval].to_i, start, args)
         rescue => detail
-            raise "Could not create RRD file %s: %s" % [path,detail]
+            raise "Could not create RRD file #{path}: #{detail}"
         end
     end
 
@@ -62,7 +62,7 @@ class Puppet::Util::Metric
         colorstack = %w{#00ff00 #ff0000 #0000ff #ffff00 #ff99ff #ff9966 #66ffff #990000 #099000 #000990 #f00990 #0f0f0f #555555 #333333 #ffffff}
 
         {:daily => unit, :weekly => unit * 7, :monthly => unit * 30, :yearly => unit * 365}.each do |name, time|
-            file = self.path.sub(/\.rrd$/, "-%s.png" % name)
+            file = self.path.sub(/\.rrd$/, "-#{name}.png")
             args = [file]
 
             args.push("--title",self.label)
@@ -75,8 +75,8 @@ class Puppet::Util::Metric
             values.zip(colorstack).each { |value,color|
                 next if value.nil?
                 # this actually uses the data label
-                defs.push("DEF:%s=%s:%s:AVERAGE" % [value[0],self.path,value[0]])
-                lines.push("LINE2:%s%s:%s" % [value[0],color,value[1]])
+                defs.push("DEF:#{value[0]}=#{self.path}:#{value[0]}:AVERAGE")
+                lines.push("LINE2:#{value[0]}#{color}:#{value[1]}")
             }
             args << defs
             args << lines
@@ -91,7 +91,7 @@ class Puppet::Util::Metric
                 #Puppet.warning "args = #{args}"
                 RRDtool.graph( args )
             rescue => detail
-                Puppet.err "Failed to graph %s: %s" % [self.name,detail]
+                Puppet.err "Failed to graph #{self.name}: #{detail}"
             end
         end
     end
@@ -136,9 +136,9 @@ class Puppet::Util::Metric
         template = temps.join(":")
         begin
             @rrd.update( template, [ arg ] )
-            #system("rrdtool updatev %s '%s'" % [self.path, arg])
+            #system("rrdtool updatev #{self.path} '#{arg}'")
         rescue => detail
-            raise Puppet::Error, "Failed to update %s: %s" % [self.name,detail]
+            raise Puppet::Error, "Failed to update #{self.name}: #{detail}"
         end
     end
 

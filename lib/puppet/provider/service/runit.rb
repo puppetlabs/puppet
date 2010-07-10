@@ -72,7 +72,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
             return :running if output =~ /^run: /
         rescue Puppet::ExecutionFailure => detail
             unless detail.message =~ /(warning: |runsv not running$)/
-                raise Puppet::Error.new( "Could not get status for service %s: %s" % [ resource.ref, detail] )
+                raise Puppet::Error.new( "Could not get status for service #{resource.ref}: #{detail}" )
             end
         end
         return :stopped

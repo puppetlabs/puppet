@@ -142,7 +142,7 @@ class Puppet::Parser::Scope
             if self.respond_to? method
                 self.send(method, val)
             else
-                raise Puppet::DevError, "Invalid scope argument %s" % name
+                raise Puppet::DevError, "Invalid scope argument #{name}"
             end
         }
 
@@ -227,11 +227,11 @@ class Puppet::Parser::Scope
         klassname = parts.join("::")
         klass = find_hostclass(klassname)
         unless klass
-            warning "Could not look up qualified variable '%s'; class %s could not be found" % [name, klassname]
+            warning "Could not look up qualified variable '#{name}'; class #{klassname} could not be found"
             return usestring ? "" : :undefined
         end
         unless kscope = class_scope(klass)
-            warning "Could not look up qualified variable '%s'; class %s has not been evaluated" % [name, klassname]
+            warning "Could not look up qualified variable '#{name}'; class #{klassname} has not been evaluated"
             return usestring ? "" : :undefined
         end
         return kscope.lookupvar(shortname, usestring)
@@ -320,7 +320,7 @@ class Puppet::Parser::Scope
             #Puppet.debug "Default for %s is %s => %s" %
             #    [type,ary[0].inspect,ary[1].inspect]
             if table.include?(param.name)
-                raise Puppet::ParseError.new("Default already defined for %s { %s }; cannot redefine" % [type, param.name], param.line, param.file)
+                raise Puppet::ParseError.new("Default already defined for #{type} { #{param.name} }; cannot redefine", param.line, param.file)
             end
             table[param.name] = param
         }
@@ -335,9 +335,9 @@ class Puppet::Parser::Scope
         #    [name.inspect,value,self.level, append]
         if table.include?(name)
             unless options[:append]
-                error = Puppet::ParseError.new("Cannot reassign variable %s" % name)
+                error = Puppet::ParseError.new("Cannot reassign variable #{name}")
             else
-                error = Puppet::ParseError.new("Cannot append, variable %s is defined in this scope" % name)
+                error = Puppet::ParseError.new("Cannot append, variable #{name} is defined in this scope")
             end
             if options[:file]
                 error.file = options[:file]
@@ -400,10 +400,10 @@ class Puppet::Parser::Scope
                 else
                     str = "Unrecognised escape sequence '#{ss.matched}'"
                     if file
-                        str += " in file %s" % file
+                        str += " in file #{file}"
                     end
                     if line
-                        str += " at line %s" % line
+                        str += " at line #{line}"
                     end
                     Puppet.warning str
                     out << ss.matched
@@ -416,7 +416,7 @@ class Puppet::Parser::Scope
                 tmp = ss.scan(/[^\\$]+/)
                 # Puppet.debug("Got other: pos:%d; m:%s" % [ss.pos, tmp])
                 unless tmp
-                    error = Puppet::ParseError.new("Could not parse string %s" % string.inspect)
+                    error = Puppet::ParseError.new("Could not parse string #{string.inspect}")
                     {:file= => file, :line= => line}.each do |m,v|
                         error.send(m, v) if v
                     end
@@ -438,7 +438,7 @@ class Puppet::Parser::Scope
 
     # Used mainly for logging
     def to_s
-        "Scope(%s)" % @resource.to_s
+        "Scope(#{@resource})"
     end
 
     # Undefine a variable; only used for testing.

@@ -39,7 +39,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
                     end
                 }
         if node_type == 'parent'
-            raise Puppet::Error.new("Could not find node '%s' with environment '%s'" % [name,name_env])
+            raise Puppet::Error.new("Could not find node '#{name}' with environment '#{name_env}'")
         end
 
         info = name2hash('default',name_env,'parent')
@@ -222,7 +222,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         information[:environment] ||= parent_info[:environment]
         parent_info[:parent]
         else
-        raise Puppet::Error.new("Could not find parent node '%s'" % parent)
+        raise Puppet::Error.new("Could not find parent node '#{parent}'")
         nil
         end
 
@@ -249,7 +249,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         parents = [info[:name]]
         while parent
             if parents.include?(parent)
-                raise ArgumentError, "Found loop in LDAP node parents; %s appears twice" % parent
+                raise ArgumentError, "Found loop in LDAP node parents; #{parent} appears twice"
             end
             parents << parent
             parent = find_and_merge_parent(parent, info)
@@ -289,7 +289,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
         if values.length > 1
             raise Puppet::Error,
-                "Node entry %s specifies more than one parent: %s" % [entry.dn, values.inspect]
+                "Node entry #{entry.dn} specifies more than one parent: #{values.inspect}"
         end
         return nil if values.empty?
         return values.shift

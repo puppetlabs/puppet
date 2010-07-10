@@ -38,7 +38,7 @@ class Puppet::FileServing::Base
             begin
                 send param.to_s + "=", value
             rescue NoMethodError
-                raise ArgumentError, "Invalid option %s for %s" % [param, self.class]
+                raise ArgumentError, "Invalid option #{param} for #{self.class}"
             end
         end
     end

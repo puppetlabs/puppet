@@ -197,7 +197,7 @@ Puppet::Type.newtype(:cron) do
             if retval
                 return retval.to_s
             else
-                self.fail "%s is not a valid %s" % [value, self.class.name]
+                self.fail "#{value} is not a valid #{self.class.name}"
             end
         end
     end
@@ -250,7 +250,7 @@ Puppet::Type.newtype(:cron) do
 
         validate do |value|
             unless specials().include?(value)
-                raise ArgumentError, "Invalid special schedule %s" % value.inspect
+                raise ArgumentError, "Invalid special schedule #{value.inspect}"
             end
         end
     end
@@ -311,7 +311,7 @@ Puppet::Type.newtype(:cron) do
 
         validate do |value|
             unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"
-                raise ArgumentError, "Invalid environment setting %s" % value.inspect
+                raise ArgumentError, "Invalid environment setting #{value.inspect}"
             end
         end
 

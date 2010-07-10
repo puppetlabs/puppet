@@ -6,9 +6,9 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
     def initialize(handlers)
         @xmlrpc_server = Puppet::Network::XMLRPCServer.new
         handlers.each do |name|
-            Puppet.debug "  -> register xmlrpc namespace %s" % name
+            Puppet.debug "  -> register xmlrpc namespace #{name}"
             unless handler = Puppet::Network::Handler.handler(name)
-                raise ArgumentError, "Invalid XMLRPC handler %s" % name
+                raise ArgumentError, "Invalid XMLRPC handler #{name}"
             end
             @xmlrpc_server.add_handler(handler.interface, handler.new({}))
         end
@@ -52,7 +52,7 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
             begin
                 node = Resolv.getname(ip)
             rescue => detail
-                Puppet.err "Could not resolve %s: %s" % [ip, detail]
+                Puppet.err "Could not resolve #{ip}: #{detail}"
                 node = "unknown"
             end
             authenticated = false

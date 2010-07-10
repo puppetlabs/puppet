@@ -59,7 +59,7 @@ Puppet::Type.type(:user).provide :directoryservice, :parent => Puppet::Provider:
         # when String
         #     groups = groups.split(/\s*,\s*/)
         # else
-        #     raise Puppet::DevError, "got invalid groups value %s of type %s" % [groups.class, groups]
+        #     raise Puppet::DevError, "got invalid groups value #{groups.class} of type #{groups}"
         # end
         # # Get just the groups we need to modify
         # diff = groups - (@is || [])

@@ -21,7 +21,7 @@ class Puppet::Indirector::Terminus
 
         # Convert a constant to a short name.
         def const2name(const)
-            const.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_" + i.downcase }.intern
+            const.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }.intern
         end
 
         # Look up the indirection if we were only provided a name.
@@ -31,7 +31,7 @@ class Puppet::Indirector::Terminus
             elsif ind = Puppet::Indirector::Indirection.instance(name)
                 @indirection = ind
             else
-                raise ArgumentError, "Could not find indirection instance %s for %s" % [name, self.name]
+                raise ArgumentError, "Could not find indirection instance #{name} for #{self.name}"
             end
         end
 
@@ -50,7 +50,7 @@ class Puppet::Indirector::Terminus
             names = longname.split("::")
 
             # Convert everything to a lower-case symbol, converting camelcase to underscore word separation.
-            name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_" + i.downcase }.intern
+            name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }.intern
 
             subclass.name = name
 
@@ -66,8 +66,8 @@ class Puppet::Indirector::Terminus
             subclass.terminus_type = self.name
 
             # Our subclass is specifically associated with an indirection.
-            raise("Invalid name %s" % longname) unless names.length > 0
-            indirection_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_" + i.downcase }.intern
+            raise("Invalid name #{longname}") unless names.length > 0
+            indirection_name = names.pop.sub(/^[A-Z]/) { |i| i.downcase }.gsub(/[A-Z]/) { |i| "_#{i.downcase}" }.intern
 
             if indirection_name == "" or indirection_name.nil?
                 raise Puppet::DevError, "Could not discern indirection model from class constant"
@@ -123,7 +123,7 @@ class Puppet::Indirector::Terminus
 
         def setup_instance_loading(type)
             unless instance_loading?(type)
-                instance_load type, "puppet/indirector/%s" % type
+                instance_load type, "puppet/indirector/#{type}"
             end
         end
     end

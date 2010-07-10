@@ -49,7 +49,7 @@ module Puppet
                 return decl.result
             end
 
-            info "defaulting to no access for %s" % name
+            info "defaulting to no access for #{name}"
             return false
         end
 
@@ -176,7 +176,7 @@ module Puppet
             def type=(type)
                 type = symbolize(type)
                 unless [:allow, :deny].include?(type)
-                    raise ArgumentError, "Invalid declaration type %s" % type
+                    raise ArgumentError, "Invalid declaration type #{type}"
                 end
                 @type = type
             end
@@ -247,7 +247,7 @@ module Puppet
                 when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
                     [:opaque,:exact,nil,[value]]
                 else
-                    raise AuthStoreError, "Invalid pattern %s" % value
+                    raise AuthStoreError, "Invalid pattern #{value}"
                 end
             end
         end

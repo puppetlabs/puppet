@@ -24,7 +24,7 @@ module Puppet::Network # :nodoc:
         end
 
         def to_s
-            "%s(%s)" % [self.name, self.ip]
+            "#{self.name}(#{self.ip})"
         end
     end
 end

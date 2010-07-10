@@ -35,7 +35,7 @@ class TestFile < Test::Unit::TestCase
     end
 
     def teardown
-        system("rm -rf %s" % Puppet[:statefile])
+        system("rm -rf #{Puppet[:statefile]}")
         super
     end
 
@@ -325,7 +325,7 @@ class TestFile < Test::Unit::TestCase
     def test_create_dir
         basedir = tempfile()
         Dir.mkdir(basedir)
-        %w{a b c d}.collect { |name| "#{basedir}/%s" % name }.each { |path|
+        %w{a b c d}.collect { |name| "#{basedir}/#{name}" }.each { |path|
             file = nil
             assert_nothing_raised() {
 
@@ -336,7 +336,7 @@ class TestFile < Test::Unit::TestCase
                     :ensure => "directory"
                 )
             }
-            assert(! FileTest.directory?(path), "Directory %s already exists" % [path])
+            assert(! FileTest.directory?(path), "Directory #{path} already exists")
             assert_events([:directory_created], file)
             assert_events([], file)
             assert(FileTest.directory?(path))
@@ -463,7 +463,7 @@ class TestFile < Test::Unit::TestCase
 
         assert(file, "Could not retrieve file object")
 
-        assert_equal("/%s" % file.ref, file.path)
+        assert_equal("/#{file.ref}", file.path)
     end
 
     def test_autorequire
@@ -812,12 +812,12 @@ class TestFile < Test::Unit::TestCase
         catalog = mk_catalog obj
         transaction = Puppet::Transaction.new(catalog)
 
-        assert_equal("/%s" % obj.ref, obj.path)
+        assert_equal("/#{obj.ref}", obj.path)
 
         list = transaction.eval_generate(obj)
         fileobj = catalog.resource(:file, file)
         assert(fileobj, "did not generate file object")
-        assert_equal("/%s" % fileobj.ref, fileobj.path, "did not generate correct subfile path")
+        assert_equal("/#{fileobj.ref}", fileobj.path, "did not generate correct subfile path")
     end
 
     # Testing #403
@@ -837,12 +837,12 @@ class TestFile < Test::Unit::TestCase
         second = tempfile()
         params = [:content, :source, :target]
         params.each do |param|
-            assert_nothing_raised("%s conflicted with ensure" % [param]) do
+            assert_nothing_raised("#{param} conflicted with ensure") do
                 Puppet::Type.newfile(:path => file, param => first, :ensure => :file)
             end
             params.each do |other|
                 next if other == param
-                assert_raise(Puppet::Error, "%s and %s did not conflict" % [param, other]) do
+                assert_raise(Puppet::Error, "#{param} and #{other} did not conflict") do
                     Puppet::Type.newfile(:path => file, other => first, param => second)
                 end
             end
@@ -871,7 +871,7 @@ class TestFile < Test::Unit::TestCase
                 else
                     current = stat.send(should)
                 end
-                assert_equal(sval, current, "Attr %s was not correct %s" % [should, msg])
+                assert_equal(sval, current, "Attr #{should} was not correct #{msg}")
             end
         end
 
@@ -883,7 +883,7 @@ class TestFile < Test::Unit::TestCase
         {:source => source, :content => "some content"}.each do |attr, value|
             file[attr] = value
             # First create the file
-            run.call(file, "upon creation with %s" % attr)
+            run.call(file, "upon creation with #{attr}")
 
             # Now change something so that we replace the file
             case attr
@@ -891,11 +891,11 @@ class TestFile < Test::Unit::TestCase
                     File.open(source, "w") { |f| f.puts "some different text" }
             when :content; file[:content] = "something completely different"
             else
-                raise "invalid attr %s" % attr
+                raise "invalid attr #{attr}"
             end
 
             # Run it again
-            run.call(file, "after modification with %s" % attr)
+            run.call(file, "after modification with #{attr}")
 
             # Now remove the file and the attr
             file.delete(attr)

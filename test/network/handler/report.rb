@@ -38,7 +38,7 @@ class TestReportServer < Test::Unit::TestCase
         reports = []
         $run = []
         2.times do |i|
-            name = "processtest%s" % i
+            name = "processtest#{i}"
             reports << name
 
             Report.newreport(name) do
@@ -57,7 +57,7 @@ class TestReportServer < Test::Unit::TestCase
         }
 
         reports.each do |name|
-            assert($run.include?(name.intern), "Did not run %s" % name)
+            assert($run.include?(name.intern), "Did not run #{name}")
         end
 
         # Now make sure our server doesn't die on missing reports

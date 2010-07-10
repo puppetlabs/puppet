@@ -40,7 +40,7 @@ Puppet::Type.type(:group).provide :ldap, :parent => Puppet::Provider::Ldap do
 
     # Convert a group name to an id.
     def self.name2id(group)
-        return nil unless result = manager.search("cn=%s" % group) and result.length > 0
+        return nil unless result = manager.search("cn=#{group}") and result.length > 0
 
         # Only use the first result.
         group = result[0]

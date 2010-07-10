@@ -51,11 +51,11 @@ module Puppet
                     if gid =~ /^[-0-9]+$/
                         gid = Integer(gid)
                     else
-                        self.fail "Invalid GID %s" % gid
+                        self.fail "Invalid GID #{gid}"
                     end
                 when Symbol
                     unless gid == :absent
-                        self.devfail "Invalid GID %s" % gid
+                        self.devfail "Invalid GID #{gid}"
                     end
                 end
 

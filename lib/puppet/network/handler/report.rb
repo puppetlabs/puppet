@@ -12,7 +12,7 @@ class Puppet::Network::Handler
 
         # Add a new report type.
         def self.newreport(name, options = {}, &block)
-            Puppet.warning "The interface for registering report types has changed; use Puppet::Reports.register_report for report type %s" % name
+            Puppet.warning "The interface for registering report types has changed; use Puppet::Reports.register_report for report type #{name}"
             Puppet::Reports.register_report(name, options, &block)
         end
 
@@ -28,11 +28,11 @@ class Puppet::Network::Handler
                 report = CGI.unescape(report)
             end
 
-            Puppet.info "Processing reports %s for %s" % [reports().join(", "), client]
+            Puppet.info "Processing reports #{reports().join(", ")} for #{client}"
             begin
                 process(report)
             rescue => detail
-                Puppet.err "Could not process report for %s: %s" % [client, detail]
+                Puppet.err "Could not process report for #{client}: #{detail}"
                 if Puppet[:trace]
                     puts detail.backtrace
                 end
@@ -49,7 +49,7 @@ class Puppet::Network::Handler
             begin
                 report = YAML.load(yaml)
             rescue => detail
-                Puppet.warning "Could not load report: %s" % detail
+                Puppet.warning "Could not load report: #{detail}"
                 return
             end
 
@@ -68,10 +68,10 @@ class Puppet::Network::Handler
                         if Puppet[:trace]
                             puts detail.backtrace
                         end
-                        Puppet.err "Report %s failed: %s" % [name, detail]
+                        Puppet.err "Report #{name} failed: #{detail}"
                     end
                 else
-                    Puppet.warning "No report named '%s'" % name
+                    Puppet.warning "No report named '#{name}'"
                 end
             end
         end

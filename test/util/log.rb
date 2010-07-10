@@ -41,7 +41,7 @@ class TestLog < Test::Unit::TestCase
                     :level => level,
                     :source => "Test",
         
-                    :message => "Unit test for %s" % level
+                    :message => "Unit test for #{level}"
                 )
             }
         }
@@ -93,7 +93,7 @@ class TestLog < Test::Unit::TestCase
         }
         getlevels.each { |level|
             assert_nothing_raised() {
-                Puppet.send(level,"Testing for %s" % level)
+                Puppet.send(level,"Testing for #{level}")
             }
         }
     end
@@ -163,7 +163,7 @@ class TestLog < Test::Unit::TestCase
         }
 
         [:destine, "Destine", "destine"].each do |name|
-            assert(dest.match?(name), "Did not match %s" % name.inspect)
+            assert(dest.match?(name), "Did not match #{name.inspect}")
         end
 
         assert_nothing_raised {

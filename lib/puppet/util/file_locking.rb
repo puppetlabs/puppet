@@ -5,7 +5,7 @@ module Puppet::Util::FileLocking
 
     # Create a shared lock for reading
     def readlock(file)
-        raise ArgumentError, "%s is not a file" % file unless !File.exists?(file) or File.file?(file)
+        raise ArgumentError, "#{file} is not a file" unless !File.exists?(file) or File.file?(file)
         Puppet::Util.sync(file).synchronize(Sync::SH) do
             File.open(file) { |f|
                 f.lock_shared { |lf| yield lf }
@@ -17,9 +17,9 @@ module Puppet::Util::FileLocking
     # tmp file.
     def writelock(file, mode = nil)
         unless FileTest.directory?(File.dirname(file))
-            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" % [file, File.dirname(file)]
+            raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist"
         end
-        raise ArgumentError, "%s is not a file" % file unless !File.exists?(file) or File.file?(file)
+        raise ArgumentError, "#{file} is not a file" unless !File.exists?(file) or File.file?(file)
         tmpfile = file + ".tmp"
 
         unless mode

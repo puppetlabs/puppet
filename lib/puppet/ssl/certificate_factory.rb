@@ -61,7 +61,7 @@ class Puppet::SSL::CertificateFactory
         begin
             send(method)
         rescue NoMethodError
-            raise ArgumentError, "%s is an invalid certificate type" % @cert_type
+            raise ArgumentError, "#{@cert_type} is an invalid certificate type"
         end
 
         @extensions << @ef.create_extension("nsComment", "Puppet Ruby/OpenSSL Generated Certificate")

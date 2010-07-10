@@ -80,7 +80,7 @@ class Puppet::Util::Ldap::Manager
 
     # Calculate the dn for a given resource.
     def dn(name)
-        ["%s=%s" % [rdn, name], base].join(",")
+        ["#{rdn}=#{name}", base].join(",")
     end
 
     # Convert an ldap-style entry hash to a provider-style hash.
@@ -103,7 +103,7 @@ class Puppet::Util::Ldap::Manager
 
     # Create our normal search filter.
     def filter
-        return "objectclass=%s" % objectclasses[0] if objectclasses.length == 1
+        return "objectclass=#{objectclasses[0]}" if objectclasses.length == 1
         return "(&(objectclass=" + objectclasses.join(")(objectclass=") + "))"
     end
 
@@ -139,7 +139,7 @@ class Puppet::Util::Ldap::Manager
 
             if generator.source
                 unless value = values[generator.source]
-                    raise ArgumentError, "%s must be defined to generate %s" % [generator.source, generator.name]
+                    raise ArgumentError, "#{generator.source} must be defined to generate #{generator.name}"
                 end
                 result = generator.generate(value)
             else
@@ -216,14 +216,14 @@ class Puppet::Util::Ldap::Manager
     # Update the ldap entry with the desired state.
     def update(name, is, should)
         if should[:ensure] == :absent
-            Puppet.info "Removing %s from ldap" % dn(name)
+            Puppet.info "Removing #{dn(name)} from ldap"
             delete(name)
             return
         end
 
         # We're creating a new entry
         if is.empty? or is[:ensure] == :absent
-            Puppet.info "Creating %s in ldap" % dn(name)
+            Puppet.info "Creating #{dn(name)} in ldap"
             # Remove any :absent params and :ensure, then convert the names to ldap names.
             attrs = ldap_convert(should)
             create(name, attrs)

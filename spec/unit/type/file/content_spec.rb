@@ -119,7 +119,7 @@ describe content do
             time = Time.now
             @resource.parameter(:checksum).expects(:mtime_file).with(@resource[:path]).returns time
 
-            @content.retrieve.should == "{mtime}%s" % time
+            @content.retrieve.should == "{mtime}#{time}"
         end
 
         it "should return the checksum of the file if it exists and is a normal file" do

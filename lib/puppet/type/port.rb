@@ -44,7 +44,7 @@
 #                valids = ["udp", "tcp", "ddp", :absent]
 #                unless valids.include? value
 #                    raise Puppet::Error,
-#                        "Protocols can be either 'udp' or 'tcp', not %s" % value
+#                        "Protocols can be either 'udp' or 'tcp', not #{value}"
 #                end
 #            end
 #        end

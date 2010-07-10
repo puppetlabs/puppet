@@ -69,7 +69,7 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
 
         mk_subclass("multipletest", "puppet/other", "OtherLoader")
         mk_subclass("multipletest", "puppet/fakeloaders", "TestPuppetUtilSubclassLoader::LoadTest")
-        #system("find %s" % @basedir)
+        #system("find #{@basedir}")
         #puts File.read(File.join(@basedir, "puppet/fakeloaders/multipletest.rb"))
         #puts File.read(File.join(@basedir, "puppet/other/multipletest.rb"))
 

@@ -41,11 +41,11 @@ require 'puppettest'
 #        end
 #        assert_nothing_raised {
 #            port = Puppet::Type.type(:port).new(
-#                :name => "puppet%s" % @pcount,
-#                :number => "813%s" % @pcount,
+#                :name => "puppet#{@pcount}",
+#                :number => "813#{@pcount}",
 #                :protocols => "tcp",
 #                :description => "The port that Puppet runs on",
-#                :alias => "coolness%s" % @pcount
+#                :alias => "coolness#{@pcount}"
 #            )
 #        }
 #

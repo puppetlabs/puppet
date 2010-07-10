@@ -14,7 +14,7 @@ class TestCertMgr < Test::Unit::TestCase
         super
         #@dir = File.join(Puppet[:certdir], "testing")
         @dir = File.join(@configpath, "certest")
-        system("mkdir -p %s" % @dir)
+        system("mkdir -p #{@dir}")
 
         Puppet::Util::SUIDManager.stubs(:asuser).yields
     end
@@ -161,8 +161,8 @@ class TestCertMgr < Test::Unit::TestCase
             cert.cacert = cacert
             cert.write
         }
-        #system("find %s" % Puppet[:ssldir])
-        #system("cp -R %s /tmp/ssltesting" % Puppet[:ssldir])
+        #system("find #{Puppet[:ssldir]}")
+        #system("cp -R #{Puppet[:ssldir]} /tmp/ssltesting")
 
         output = nil
         assert_nothing_raised {

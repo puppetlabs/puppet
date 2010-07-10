@@ -248,7 +248,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     def add_defaults
         scope.lookupdefaults(self.type).each do |name, param|
             unless @parameters.include?(name)
-                self.debug "Adding default for %s" % name
+                self.debug "Adding default for #{name}"
 
                 @parameters[name] = param.dup
             end
@@ -286,15 +286,15 @@ class Puppet::Parser::Resource < Puppet::Resource
         # The parameter is already set.  Fail if they're not allowed to override it.
         unless param.source.child_of?(current.source)
             puts caller if Puppet[:trace]
-            msg = "Parameter '%s' is already set on %s" % [param.name, self.to_s]
+            msg = "Parameter '#{param.name}' is already set on #{self}"
             if current.source.to_s != ""
-                msg += " by %s" % current.source
+                msg += " by #{current.source}"
             end
             if current.file or current.line
                 fields = []
                 fields << current.file if current.file
                 fields << current.line.to_s if current.line
-                msg += " at %s" % fields.join(":")
+                msg += " at #{fields.join(":")}"
             end
             msg += "; cannot redefine"
             raise Puppet::ParseError.new(msg, param.line, param.file)
@@ -331,7 +331,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         params.each do |param|
             # Don't set the same parameter twice
             if @parameters[param.name]
-                self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" % [param.name, self.to_s]
+                self.fail Puppet::ParseError, "Duplicate parameter '#{param.name}' for on #{self}"
             end
 
             set_parameter(param)

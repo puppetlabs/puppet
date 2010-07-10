@@ -46,7 +46,7 @@ class TestFileServer < Test::Unit::TestCase
         @@tmpfiles << testdir
         assert_nothing_raised {
             files = %w{a b c d e}.collect { |l|
-                name = File.join(testdir, "file%s" % l)
+                name = File.join(testdir, "file#{l}")
                 File.open(name, "w") { |f|
                     f.puts rand(100)
                 }
@@ -62,9 +62,9 @@ class TestFileServer < Test::Unit::TestCase
         file = File.basename(file)
         assert_nothing_raised {
             desc = server.describe(base + file)
-            assert(desc, "Got no description for %s" % file)
-            assert(desc != "", "Got no description for %s" % file)
-            assert_match(/^\d+/, desc, "Got invalid description %s" % desc)
+            assert(desc, "Got no description for #{file}")
+            assert(desc != "", "Got no description for #{file}")
+            assert_match(/^\d+/, desc, "Got invalid description #{desc}")
         }
     end
 
@@ -82,8 +82,8 @@ class TestFileServer < Test::Unit::TestCase
         }
 
         [" ", "=" "+", "&", "#", "*"].each do |char|
-            assert_raise(Puppet::Network::Handler::FileServerError, "'%s' did not throw a failure in fileserver module names" % char) {
-                server.mount("/tmp", "invalid%sname" % char)
+            assert_raise(Puppet::Network::Handler::FileServerError, "'#{char}' did not throw a failure in fileserver module names") {
+                server.mount("/tmp", "invalid#{char}name")
             }
         end
     end
@@ -250,12 +250,12 @@ class TestFileServer < Test::Unit::TestCase
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/root/" + testdir, :manage, true, false)
+            list = server.list("/root/#{testdir}", :manage, true, false)
         }
 
         assert(list =~ pattern)
         assert_nothing_raised {
-            list = server.list("/root" + testdir, :manage, true, false)
+            list = server.list("/root#{testdir}", :manage, true, false)
         }
 
         assert(list =~ pattern)
@@ -276,10 +276,10 @@ class TestFileServer < Test::Unit::TestCase
 
         # make our deep recursion
         basedir = File.join(tmpdir(), "recurseremotetesting")
-        testdir = "%s/with/some/sub/directories/for/the/purposes/of/testing" % basedir
+        testdir = "#{basedir}/with/some/sub/directories/for/the/purposes/of/testing"
         oldfile = File.join(testdir, "oldfile")
         assert_nothing_raised {
-            system("mkdir -p %s" % testdir)
+            system("mkdir -p #{testdir}")
             File.open(oldfile, "w") { |f|
                 3.times { f.puts rand(100) }
             }
@@ -331,10 +331,10 @@ class TestFileServer < Test::Unit::TestCase
 
         # create a deep dir
         basedir = tempfile()
-        testdir = "%s/with/some/sub/directories/for/testing" % basedir
+        testdir = "#{basedir}/with/some/sub/directories/for/testing"
         oldfile = File.join(testdir, "oldfile")
         assert_nothing_raised {
-            system("mkdir -p %s" % testdir)
+            system("mkdir -p #{testdir}")
             File.open(oldfile, "w") { |f|
                 3.times { f.puts rand(100) }
             }
@@ -457,7 +457,7 @@ class TestFileServer < Test::Unit::TestCase
                 Puppet::Network::Handler::FileServerError,
 
             "Describing non-existent mount did not raise an error") {
-            retval = server.describe("/notmounted/" + "noexisties")
+            retval = server.describe("/notmounted/noexisties")
         }
 
         assert_nil(retval, "Description of non-existent mounts returned a value")
@@ -582,11 +582,11 @@ class TestFileServer < Test::Unit::TestCase
                         assert_raise(
                             Puppet::AuthorizationError,
 
-                            "Host %s, ip %s, allowed %s" % [host, ip, mount]) {
+                            "Host #{host}, ip #{ip}, allowed #{mount}") {
                                 list = server.list(mount, :manage, true, false, host, ip)
                         }
                     when :allow
-                        assert_nothing_raised("Host %s, ip %s, denied %s" % [host, ip, mount]) {
+                        assert_nothing_raised("Host #{host}, ip #{ip}, denied #{mount}") {
                             list = server.list(mount, :manage, true, false, host, ip)
                         }
                     end
@@ -662,7 +662,7 @@ class TestFileServer < Test::Unit::TestCase
                 assert_raise(
                     Puppet::Network::Handler::FileServerError,
 
-                    "Invalid config %s did not raise error" % i) {
+                    "Invalid config #{i} did not raise error") {
 
                         server = Puppet::Network::Handler.fileserver.new(
 
@@ -799,8 +799,8 @@ class TestFileServer < Test::Unit::TestCase
         assert_equal("link", results[:type])
 
         results.each { |p,v|
-            assert(v, "%s has no value" % p)
-            assert(v != "", "%s has no value" % p)
+            assert(v, "#{p} has no value")
+            assert(v != "", "#{p} has no value")
         }
     end
 
@@ -1063,7 +1063,7 @@ allow *
         }.each do |pattern, string|
             file = File.join(dir, string)
             mount = File.join(dir, pattern)
-            File.open(file, "w") do |f| f.puts "yayness: %s" % string end
+            File.open(file, "w") do |f| f.puts "yayness: #{string}" end
             name = "name"
             obj = nil
             assert_nothing_raised {
@@ -1229,7 +1229,7 @@ allow *
         "[valid]\nallow one.two.com\ndeny *.testing something.com", # invalid deny
         ].each do |failer|
             File.open(config, "w") { |f| f.puts failer }
-            assert_raise(Puppet::Network::Handler::FileServerError, "Did not fail on %s" % failer.inspect) {
+            assert_raise(Puppet::Network::Handler::FileServerError, "Did not fail on #{failer.inspect}") {
 
                 server = Puppet::Network::Handler::FileServer.new(
 

@@ -49,7 +49,7 @@ module Puppet
             trans = TransObject.new(ref, :component)
             @params.each { |param,value|
                 next unless Puppet::Type::Component.valid_parameter?(param)
-                Puppet.debug "Defining %s on %s" % [param, ref]
+                Puppet.debug "Defining #{param} on #{ref}"
                 trans[param] = value
             }
             trans.catalog = self.catalog
@@ -61,7 +61,7 @@ module Puppet
         end
 
         def to_s
-            return "%s(%s) => %s" % [@type,@name,super]
+            return "#{@type}(#{@name}) => #{super}"
         end
 
         def to_manifest
@@ -106,7 +106,7 @@ module Puppet
 
         %w{delete shift include? length empty? << []}.each { |method|
             define_method(method) do |*args|
-                #Puppet.warning "Calling %s with %s" % [method, args.inspect]
+                #Puppet.warning "Calling #{method} with #{args.inspect}"
                 @children.send(method, *args)
                 #Puppet.warning @params.inspect
             end
@@ -150,7 +150,7 @@ module Puppet
                     # nada
                 else
                     raise Puppet::DevError,
-                        "TransBuckets cannot handle objects of type %s" % arg.class
+                        "TransBuckets cannot handle objects of type #{arg.class}"
                 end
             }
             @children += args

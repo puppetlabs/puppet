@@ -41,7 +41,7 @@ class Puppet::Parser::AST
             super
 
             unless %w{and or}.include?(@operator)
-                raise ArgumentError, "Invalid boolean operator %s" % @operator
+                raise ArgumentError, "Invalid boolean operator #{@operator}"
             end
         end
     end

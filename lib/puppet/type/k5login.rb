@@ -76,7 +76,7 @@ Puppet::Type.newtype(:k5login) do
 
         # Set the file mode, converting from a string to an integer.
         def mode=(value)
-            File.chmod(Integer("0" + value), @resource[:name])
+            File.chmod(Integer("0#{value}"), @resource[:name])
         end
 
         private

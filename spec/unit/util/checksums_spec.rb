@@ -17,19 +17,19 @@ describe Puppet::Util::Checksums do
     file_only = [:ctime, :mtime, :none]
 
     content_sums.each do |sumtype|
-        it "should be able to calculate %s sums from strings" % sumtype do
+        it "should be able to calculate #{sumtype} sums from strings" do
             @summer.should be_respond_to(sumtype)
         end
     end
 
     [content_sums, file_only].flatten.each do |sumtype|
-        it "should be able to calculate %s sums from files" % sumtype do
+        it "should be able to calculate #{sumtype} sums from files" do
             @summer.should be_respond_to(sumtype.to_s + "_file")
         end
     end
 
     [content_sums, file_only].flatten.each do |sumtype|
-        it "should be able to calculate %s sums from stream" % sumtype do
+        it "should be able to calculate #{sumtype} sums from stream" do
             @summer.should be_respond_to(sumtype.to_s + "_stream")
         end
     end
@@ -63,7 +63,7 @@ describe Puppet::Util::Checksums do
     end
 
     {:md5 => Digest::MD5, :sha1 => Digest::SHA1}.each do |sum, klass|
-        describe("when using %s" % sum) do
+        describe("when using #{sum}") do
             it "should use #{klass} to calculate string checksums" do
                 klass.expects(:hexdigest).with("mycontent").returns "whatever"
                 @summer.send(sum, "mycontent").should == "whatever"
@@ -102,7 +102,7 @@ describe Puppet::Util::Checksums do
     end
 
     {:md5lite => Digest::MD5, :sha1lite => Digest::SHA1}.each do |sum, klass|
-        describe("when using %s" % sum) do
+        describe("when using #{sum}") do
             it "should use #{klass} to calculate string checksums from the first 512 characters of the string" do
                 content = "this is a test" * 100
                 klass.expects(:hexdigest).with(content[0..511]).returns "whatever"
@@ -129,7 +129,7 @@ describe Puppet::Util::Checksums do
     end
 
     [:ctime, :mtime].each do |sum|
-        describe("when using %s" % sum) do
+        describe("when using #{sum}") do
             it "should use the '#{sum}' on the file to determine the ctime" do
                 file = "/my/file"
                 stat = mock 'stat', sum => "mysum"

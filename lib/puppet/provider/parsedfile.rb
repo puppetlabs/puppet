@@ -48,7 +48,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         elsif klass = Puppet::Util::FileType.filetype(type)
             @filetype = klass
         else
-            raise ArgumentError, "Invalid filetype %s" % type
+            raise ArgumentError, "Invalid filetype #{type}"
         end
     end
 
@@ -70,7 +70,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
         flushed = []
         @modified.sort { |a,b| a.to_s <=> b.to_s }.uniq.each do |target|
-            Puppet.debug "Flushing %s provider target %s" % [@resource_type.name, target]
+            Puppet.debug "Flushing #{@resource_type.name} provider target #{target}"
             flush_target(target)
             flushed << target
         end
@@ -234,7 +234,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
         end
 
         unless target_records
-            raise Puppet::DevError, "Prefetching %s for provider %s returned nil" % [target, self.name]
+            raise Puppet::DevError, "Prefetching #{target} for provider #{self.name} returned nil"
         end
 
         target_records

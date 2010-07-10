@@ -39,7 +39,7 @@ module Puppet::Util::Cacher
         # Provide a means of defining an attribute whose value will be cached.
         # Must provide a block capable of defining the value if it's flushed..
         def cached_attr(name, options = {}, &block)
-            init_method = "init_" + name.to_s
+            init_method = "init_#{name}"
             define_method(init_method, &block)
 
             define_method(name) do
@@ -103,7 +103,7 @@ module Puppet::Util::Cacher
                 value_cache.delete(name)
             end
             unless value_cache.include?(name)
-                value_cache[name] = send("init_%s" % name)
+                value_cache[name] = send("init_#{name}")
             end
             value_cache[name]
         end

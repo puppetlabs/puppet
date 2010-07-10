@@ -14,7 +14,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
     @@booleans = %w{noop}
 
     def testVersion
-        assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*/, "got invalid version number %s" % Puppet.version )
+        assert( Puppet.version =~ /^[0-9]+(\.[0-9]+)*/, "got invalid version number #{Puppet.version}")
     end
 
     def testStringOrParam
@@ -49,7 +49,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
             value = Puppet[param]
 
             unless value !~ notval
-                assert_nothing_raised { raise "%s is incorrectly set to %s" % [param,value] }
+                assert_nothing_raised { raise "#{param} is incorrectly set to #{value}" }
             end
         }
     end

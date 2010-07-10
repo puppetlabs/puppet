@@ -56,10 +56,10 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
             @expandable = true
         else
             unless FileTest.directory?(path)
-                raise ArgumentError, "%s does not exist or is not a directory" % path
+                raise ArgumentError, "#{path} does not exist or is not a directory"
             end
             unless FileTest.readable?(path)
-                raise ArgumentError, "%s is not readable" % path
+                raise ArgumentError, "#{path} is not readable"
             end
             @expandable = false
         end
@@ -96,7 +96,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
         if node
             map = clientmap(node)
         else
-            Puppet.notice "No client; expanding '%s' with local host" % path
+            Puppet.notice "No client; expanding '#{path}' with local host"
             # Else, use the local information
             map = localmap()
         end

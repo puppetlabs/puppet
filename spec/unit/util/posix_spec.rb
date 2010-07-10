@@ -14,29 +14,29 @@ describe Puppet::Util::POSIX do
     end
 
     [:group, :gr].each do |name|
-        it "should return :gid as the field for %s" % name do
+        it "should return :gid as the field for #{name}" do
             @posix.idfield(name).should == :gid
         end
 
-        it "should return :getgrgid as the id method for %s" % name do
+        it "should return :getgrgid as the id method for #{name}" do
             @posix.methodbyid(name).should == :getgrgid
         end
 
-        it "should return :getgrnam as the name method for %s" % name do
+        it "should return :getgrnam as the name method for #{name}" do
             @posix.methodbyname(name).should == :getgrnam
         end
     end
 
     [:user, :pw, :passwd].each do |name|
-        it "should return :uid as the field for %s" % name do
+        it "should return :uid as the field for #{name}" do
             @posix.idfield(name).should == :uid
         end
 
-        it "should return :getpwuid as the id method for %s" % name do
+        it "should return :getpwuid as the id method for #{name}" do
             @posix.methodbyid(name).should == :getpwuid
         end
 
-        it "should return :getpwnam as the name method for %s" % name do
+        it "should return :getpwnam as the name method for #{name}" do
             @posix.methodbyname(name).should == :getpwnam
         end
     end

@@ -80,7 +80,7 @@ module Puppet
                 begin
                     provider.update
                 rescue => detail
-                    self.fail "Could not update: %s" % detail
+                    self.fail "Could not update: #{detail}"
                 end
 
                 if current == :absent
@@ -94,7 +94,7 @@ module Puppet
                 begin
                     provider.install
                 rescue => detail
-                    self.fail "Could not update: %s" % detail
+                    self.fail "Could not update: #{detail}"
                 end
 
                 if self.retrieve == :absent
@@ -133,7 +133,7 @@ module Puppet
                                 @latest = provider.latest
                                 @lateststamp = Time.now.to_i
                             rescue => detail
-                                error = Puppet::Error.new("Could not get latest version: %s" % detail.to_s)
+                                error = Puppet::Error.new("Could not get latest version: #{detail}")
                                 error.set_backtrace(detail.backtrace)
                                 raise error
                             end
@@ -147,7 +147,7 @@ module Puppet
                             # that can't query versions.
                             return true
                         else
-                            self.debug "%s %s is installed, latest is %s" % [@resource.name, is.inspect, @latest.inspect]
+                            self.debug "#{@resource.name} #{is.inspect} is installed, latest is #{@latest.inspect}"
                         end
                     when :absent
                         return true if is == :absent or is == :purged

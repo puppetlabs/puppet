@@ -16,7 +16,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
         # list out all of the packages
         cmd = "#{command(:dpkgquery)} -W --showformat '${Status} ${Package} ${Version}\\n'"
-        Puppet.debug "Executing '%s'" % cmd
+        Puppet.debug "Executing '#{cmd}'"
         execpipe(cmd) do |process|
             # our regex for matching dpkg output
             regex = %r{^(\S+) +(\S+) +(\S+) (\S+) (\S*)$}
@@ -56,7 +56,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
                 hash[:ensure] = :held
             end
         else
-            Puppet.warning "Failed to match dpkg-query line %s" % line.inspect
+            Puppet.warning "Failed to match dpkg-query line #{line.inspect}"
             return nil
         end
 
@@ -92,7 +92,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
         output = dpkg_deb "--show", @resource[:source]
         matches = /^(\S+)\t(\S+)$/.match(output).captures
         unless matches[0].match( Regexp.escape(@resource[:name]) )
-            warning "source doesn't contain named package, but %s" % matches[0]
+            warning "source doesn't contain named package, but #{matches[0]}"
         end
         matches[1]
     end
@@ -122,7 +122,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
         if hash[:error] != "ok"
             raise Puppet::Error.new(
-                "Package %s, version %s is in error state: %s" % [hash[:name], hash[:ensure], hash[:error]]
+                "Package #{hash[:name]}, version #{hash[:ensure]} is in error state: #{hash[:error]}"
             )
         end
 

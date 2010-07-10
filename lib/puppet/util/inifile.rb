@@ -122,7 +122,7 @@ module Puppet::Util::IniConfig
                     end
                 elsif " \t\r\n\f".include?(l[0,1]) && section && optname
                     # continuation line
-                    section[optname] += "\n" + l.chomp
+                    section[optname] += "\n#{l.chomp}"
                 elsif l =~ /^\[([^\]]+)\]/
                     # section heading
                     section.mark_clean unless section.nil?

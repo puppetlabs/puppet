@@ -19,7 +19,7 @@ Puppet::Parser::Functions::newfunction(:include, :doc => "Evaluate one or more c
             str += " " + missing.join(", ")
 
             if n = namespaces and ! n.empty? and n != [""]
-                str += " in namespaces %s" % @namespaces.join(", ")
+                str += " in namespaces #{@namespaces.join(", ")}"
             end
             self.fail Puppet::ParseError, str
         end

@@ -8,7 +8,7 @@ class Puppet::SSL::CertificateRequest::Ca < Puppet::Indirector::SslFile
 
     def save(request)
         result = super
-        Puppet.notice "%s has a waiting certificate request" % request.key
+        Puppet.notice "#{request.key} has a waiting certificate request"
         result
     end
 end

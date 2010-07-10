@@ -4,7 +4,7 @@ module PuppetTest::Support
 end
 module PuppetTest::Support::Utils
     def gcdebug(type)
-        Puppet.warning "%s: %s" % [type, ObjectSpace.each_object(type) { |o| }]
+        Puppet.warning "#{type}: #{ObjectSpace.each_object(type) { |o| }}"
     end
 
     #
@@ -84,7 +84,7 @@ module PuppetTest::Support::Utils
             e.name
         }
 
-        assert_equal(events, newevents, "Incorrect %s %s events" % [type, msg])
+        assert_equal(events, newevents, "Incorrect #{type} #{msg} events")
 
         return trans
     end
@@ -94,7 +94,7 @@ module PuppetTest::Support::Utils
         ary += name.split("/")
         file = File.join(ary)
         unless FileTest.exists?(file)
-            raise Puppet::DevError, "No fakedata file %s" % file
+            raise Puppet::DevError, "No fakedata file #{file}"
         end
         return file
     end
@@ -130,7 +130,7 @@ module PuppetTest::Support::Utils
         }.find_all { |file|
             FileTest.file?(file)
         }.sort.each { |file|
-            Puppet.debug "Processing %s" % file
+            Puppet.debug "Processing #{file}"
             yield file
         }
     end

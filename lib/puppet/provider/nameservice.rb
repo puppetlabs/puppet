@@ -45,7 +45,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         def options(name, hash)
             unless resource_type.valid_parameter?(name)
-                raise Puppet::DevError, "%s is not a valid attribute for %s" % [name, resource_type.name]
+                raise Puppet::DevError, "#{name} is not a valid attribute for #{resource_type.name}"
             end
             @options ||= {}
             @options[name] ||= {}
@@ -61,16 +61,16 @@ class Puppet::Provider::NameService < Puppet::Provider
         # for both users and groups.
         def listbyname
             names = []
-            Etc.send("set%sent" % section())
+            Etc.send("set#{section()}ent")
             begin
-                while ent = Etc.send("get%sent" % section())
+                while ent = Etc.send("get#{section()}ent")
                     names << ent.name
                     if block_given?
                         yield ent.name
                     end
                 end
             ensure
-                Etc.send("end%sent" % section())
+                Etc.send("end#{section()}ent")
             end
 
             return names
@@ -110,7 +110,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             if @checks.include? name
                 block = @checks[name][:block]
                 unless block.call(value)
-                    raise ArgumentError, "Invalid value %s: %s" % [value, @checks[name][:error]]
+                    raise ArgumentError, "Invalid value #{value}: #{@checks[name][:error]}"
                 end
             end
         end
@@ -123,7 +123,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         private
 
         def op(property)
-            @ops[property.name] || ("-" + property.name)
+            @ops[property.name] || ("-#{property.name}")
         end
     end
 
@@ -137,8 +137,8 @@ class Puppet::Provider::NameService < Puppet::Provider
         else
             if value = self.class.autogen_default(field)
                 return value
-            elsif respond_to?("autogen_%s" % [field])
-                return send("autogen_%s" % field)
+            elsif respond_to?("autogen_#{field}")
+                return send("autogen_#{field}")
             else
                 return nil
             end
@@ -155,7 +155,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         when :user; group = :passwd; method = :uid
         when :group; group = :group; method = :gid
         else
-            raise Puppet::DevError, "Invalid resource name %s" % resource
+            raise Puppet::DevError, "Invalid resource name #{resource}"
         end
 
         # Make sure we don't use the same value multiple times
@@ -186,7 +186,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         begin
             execute(self.addcmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not create %s %s: %s" % [@resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}"
         end
     end
 
@@ -200,7 +200,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         begin
             execute(self.deletecmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not delete %s %s: %s" % [@resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not delete #{@resource.class.name} #{@resource.name}: #{detail}"
         end
     end
 
@@ -304,7 +304,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         begin
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
         end
     end
 end

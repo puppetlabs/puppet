@@ -46,9 +46,9 @@ class TestHost < Test::Unit::TestCase
 
                         host = Puppet::Type.type(:host).new(
                 
-                :name => "fakehost%s" % @hcount,
-                :ip => "192.168.27.%s" % @hcount,
-                :alias => "alias%s" % @hcount,
+                :name => "fakehost#{@hcount}",
+                :ip => "192.168.27.#{@hcount}",
+                :alias => "alias#{@hcount}",
         
                 :catalog => @catalog
             )

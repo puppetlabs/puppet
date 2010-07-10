@@ -170,12 +170,12 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
     end
 
     it "should set the checksum to the file's current checksum" do
-        @metadata.checksum.should == "{md5}" + @checksum
+        @metadata.checksum.should == "{md5}#{@checksum}"
     end
 
     describe "when managing files" do
         it "should default to a checksum of type MD5" do
-            @metadata.checksum.should == "{md5}" + @checksum
+            @metadata.checksum.should == "{md5}#{@checksum}"
         end
 
         it "should give a mtime checksum when checksum_type is set" do
@@ -183,7 +183,7 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
             @metadata.checksum_type = "mtime"
             @metadata.expects(:mtime_file).returns(@time)
             @metadata.collect
-            @metadata.checksum.should == "{mtime}" + @time.to_s
+            @metadata.checksum.should == "{mtime}#{@time}"
         end
 
         it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
@@ -200,14 +200,14 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
 
         it "should only use checksums of type 'ctime' for directories" do
             @metadata.collect
-            @metadata.checksum.should == "{ctime}" + @time.to_s
+            @metadata.checksum.should == "{ctime}#{@time}"
         end
 
         it "should only use checksums of type 'ctime' for directories even if checksum_type set" do
             @metadata.checksum_type = "mtime"
             @metadata.expects(:mtime_file).never
             @metadata.collect
-            @metadata.checksum.should == "{ctime}" + @time.to_s
+            @metadata.checksum.should == "{ctime}#{@time}"
         end
 
         it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do

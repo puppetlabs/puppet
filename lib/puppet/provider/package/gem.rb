@@ -35,7 +35,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
                 end
             end.compact
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not list gems: %s" % detail
+            raise Puppet::Error, "Could not list gems: #{detail}"
         end
 
         if hash[:justme]
@@ -56,7 +56,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
                 :ensure => version
             }
         else
-            Puppet.warning "Could not match %s" % desc
+            Puppet.warning "Could not match #{desc}"
             nil
         end
     end
@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
             begin
                 uri = URI.parse(source)
             rescue => detail
-                fail "Invalid source '%s': %s" % [uri, detail]
+                fail "Invalid source '#{uri}': #{detail}"
             end
 
             case uri.scheme
@@ -102,7 +102,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         output = execute(command)
         # Apparently some stupid gem versions don't exit non-0 on failure
         if output.include?("ERROR")
-            self.fail "Could not install: %s" % output.chomp
+            self.fail "Could not install: #{output.chomp}"
         end
     end
 

@@ -36,12 +36,12 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
     def save(request)
         begin
             result = nil
-            benchmark :info, "Queued %s for %s" % [indirection.name, request.key] do
+            benchmark :info, "Queued #{indirection.name} for #{request.key}" do
                 result = client.send_message(queue, request.instance.render(:pson))
             end
             result
         rescue => detail
-            raise Puppet::Error, "Could not write %s to queue: %s\nInstance::%s\n client : %s" % [request.key, detail,request.instance.to_s,client.to_s]
+            raise Puppet::Error, "Could not write #{request.key} to queue: #{detail}\nInstance::#{request.instance}\n client : #{client}"
         end
     end
 
@@ -61,7 +61,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
     # converts the _message_ from deserialized format to an actual model instance.
     def self.intern(message)
         result = nil
-        benchmark :info, "Loaded queued %s" % [indirection.name] do
+        benchmark :info, "Loaded queued #{indirection.name}" do
             result = model.convert_from(:pson, message)
         end
         result
@@ -76,7 +76,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
                 yield(self.intern(msg))
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Error occured with subscription to queue %s for indirection %s: %s" % [queue, indirection_name, detail]
+                Puppet.err "Error occured with subscription to queue #{queue} for indirection #{indirection_name}: #{detail}"
             end
         end
     end

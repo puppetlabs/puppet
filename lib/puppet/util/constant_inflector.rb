@@ -10,6 +10,6 @@ module Puppet::Util::ConstantInflector
     end
 
     def constant2file(constant)
-        constant.to_s.gsub(/([a-z])([A-Z])/) { |term| $1 + "_" + $2 }.gsub("::", "/").downcase
+        constant.to_s.gsub(/([a-z])([A-Z])/) { |term| $1 + "_#{$2}" }.gsub("::", "/").downcase
     end
 end

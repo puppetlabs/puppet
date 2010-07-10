@@ -32,9 +32,9 @@ class Puppet::Daemon
             $stderr.reopen $stdout
             Puppet::Util::Log.reopen
         rescue => detail
-            Puppet.err "Could not start %s: %s" % [Puppet[:name], detail]
+            Puppet.err "Could not start #{Puppet[:name]}: #{detail}"
             Puppet::Util::secure_open("/tmp/daemonout", "w") { |f|
-                f.puts "Could not start %s: %s" % [Puppet[:name], detail]
+                f.puts "Could not start #{Puppet[:name]}: #{detail}"
             }
             exit(12)
         end
@@ -45,7 +45,7 @@ class Puppet::Daemon
     def create_pidfile
         Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
             unless Puppet::Util::Pidlock.new(pidfile).lock
-                raise "Could not create PID file: %s" % [pidfile]
+                raise "Could not create PID file: #{pidfile}"
             end
         end
     end
@@ -58,7 +58,7 @@ class Puppet::Daemon
     def reexec
         raise Puppet::DevError, "Cannot reexec unless ARGV arguments are set" unless argv
         command = $0 + " " + argv.join(" ")
-        Puppet.notice "Restarting with '%s'" % command
+        Puppet.notice "Restarting with '#{command}'"
         stop(:exit => false)
         exec(command)
     end
@@ -78,7 +78,7 @@ class Puppet::Daemon
         Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
             locker = Puppet::Util::Pidlock.new(pidfile)
             if locker.locked?
-                locker.unlock or Puppet.err "Could not remove PID file %s" % [pidfile]
+                locker.unlock or Puppet.err "Could not remove PID file #{pidfile}"
             end
         end
     end

@@ -123,10 +123,10 @@ Puppet::Type.newtype(:zone) do
         def self.state_sequence(first, second)
             findex = sindex = nil
             unless findex = @parametervalues.index(state_name(first))
-                raise ArgumentError, "'%s' is not a valid zone state" % first
+                raise ArgumentError, "'#{first}' is not a valid zone state"
             end
             unless sindex = @parametervalues.index(state_name(second))
-                raise ArgumentError, "'%s' is not a valid zone state" % first
+                raise ArgumentError, "'#{first}' is not a valid zone state"
             end
             list = nil
 
@@ -172,11 +172,11 @@ Puppet::Type.newtype(:zone) do
                     end
                     provider.send(method)
                 else
-                    raise Puppet::DevError, "Cannot move %s from %s" % [direction, st[:name]]
+                    raise Puppet::DevError, "Cannot move #{direction} from #{st[:name]}"
                 end
             end
 
-            return ("zone_" + self.should.to_s).intern
+            return ("zone_#{self.should}").intern
         end
 
         # Are we moving up the property tree?
@@ -394,7 +394,7 @@ Puppet::Type.newtype(:zone) do
         begin
             IPAddr.new(ip) if ip
         rescue ArgumentError
-            self.fail "'%s' is an invalid %s" % [ip, name]
+            self.fail "'#{ip}' is an invalid #{name}"
         end
     end
 
@@ -411,7 +411,7 @@ Puppet::Type.newtype(:zone) do
             end
         else
             unless interface && address.nil? && defrouter.nil?
-                self.fail "only interface may be specified when using exclusive IP stack: %s" % value
+                self.fail "only interface may be specified when using exclusive IP stack: #{value}"
             end
         end
 

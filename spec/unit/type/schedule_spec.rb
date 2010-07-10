@@ -86,17 +86,17 @@ describe Puppet::Type.type(:schedule) do
         include ScheduleTesting
 
         it "should match when the start time is before the current time and the end time is after the current time" do
-            @schedule[:range] = "%s - %s" % [format(Time.now - 10), format(Time.now + 10)]
+            @schedule[:range] = "#{format(Time.now - 10)} - #{format(Time.now + 10)}"
             @schedule.match?.should be_true
         end
 
         it "should not match when the start time is after the current time" do
-            @schedule[:range] = "%s - %s" % [format(Time.now + 5), format(Time.now + 10)]
+            @schedule[:range] = "#{format(Time.now + 5)} - #{format(Time.now + 10)}"
             @schedule.match?.should be_false
         end
 
         it "should not match when the end time is previous to the current time" do
-            @schedule[:range] = "%s - %s" % [format(Time.now - 10), format(Time.now - 5)]
+            @schedule[:range] = "#{format(Time.now - 10)} - #{format(Time.now - 5)}"
             @schedule.match?.should be_false
         end
     end

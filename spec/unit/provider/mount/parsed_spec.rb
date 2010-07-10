@@ -35,13 +35,13 @@ module ParsedMountTesting
             @pcount = 1
         end
         args = {
-            :name => "/fspuppet%s" % @pcount,
-            :device => "/dev/dsk%s" % @pcount,
+            :name => "/fspuppet#{@pcount}",
+            :device => "/dev/dsk#{@pcount}",
         }
 
         @provider_class.fields(:parsed).each do |field|
             unless args.include? field
-                args[field] = "fake%s%s" % [field, @pcount]
+                args[field] = "fake#{field}#{@pcount}"
             end
         end
 

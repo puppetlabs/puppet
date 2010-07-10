@@ -24,7 +24,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
 
     # How to create a certificate request with our system defaults.
     def generate(key)
-        Puppet.info "Creating a new SSL certificate request for %s" % name
+        Puppet.info "Creating a new SSL certificate request for #{name}"
 
         # Support either an actual SSL key, or a Puppet key.
         key = key.content if key.is_a?(Puppet::SSL::Key)
@@ -40,7 +40,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         csr.public_key = key.public_key
         csr.sign(key, OpenSSL::Digest::MD5.new)
 
-        raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for %s on the server" % name unless csr.verify(key.public_key)
+        raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
 
         @content = csr
         Puppet.info "Certificate Request fingerprint (md5): #{fingerprint}"

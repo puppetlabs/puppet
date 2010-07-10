@@ -169,7 +169,7 @@ module RDoc
         end
 
         def to_s
-            res = self.class.name + ": " + @name + " (" + @type + ")\n"
+            res = self.class.name + ": #{@name} (#{@type})\n"
             res << @comment.to_s
             res
         end
@@ -200,7 +200,7 @@ module RDoc
         end
 
         def to_s
-            res = self.class.name + ": " + @name + "\n"
+            res = self.class.name + ": #{@name}\n"
             res << @comment.to_s
             res
         end
@@ -225,7 +225,7 @@ module RDoc
         end
 
         def full_name
-            @type + "[" + @title + "]"
+            @type + "[#{@title}]"
         end
 
         def name
@@ -233,7 +233,7 @@ module RDoc
         end
 
         def to_s
-            res = @type + "[" + @title + "]\n"
+            res = @type + "[#{@title}]\n"
             res << @comment.to_s
             res
         end

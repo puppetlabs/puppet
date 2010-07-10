@@ -29,12 +29,12 @@ describe Puppet::FileCollection do
 
     it "should always correctly relate a file name and its index even when multiple files are in the collection" do
         indexes = %w{a b c d e f}.inject({}) do |hash, letter|
-            hash[letter] = @collection.index("/path/to/file/%s" % letter)
+            hash[letter] = @collection.index("/path/to/file/#{letter}")
             hash
         end
 
         indexes.each do |letter, index|
-            @collection.index("/path/to/file/%s" % letter).should == indexes[letter]
+            @collection.index("/path/to/file/#{letter}").should == indexes[letter]
             @collection.path(index).should == @collection.path(index)
         end
     end

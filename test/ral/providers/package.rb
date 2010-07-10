@@ -18,7 +18,7 @@ class TestPackageProvider < Test::Unit::TestCase
         require 'yaml'
         file = File.join(PuppetTest.datadir(), "providers", "package", "testpackages.yaml")
         unless FileTest.exists?(file)
-            raise "Could not find file %s" % file
+            raise "Could not find file #{file}"
         end
         array = YAML::load(File.read(file)).collect { |hash|
             # Stupid ruby 1.8.1.  YAML is sometimes broken such that
@@ -74,7 +74,7 @@ class TestPackageProvider < Test::Unit::TestCase
         elsif result.is_a?(Hash)
             assert (result[:ensure] == :absent or result[:ensure] == :purged), msg
         else
-            raise "dunno how to handle %s" % result.inspect
+            raise "dunno how to handle #{result.inspect}"
         end
     end
 
@@ -122,7 +122,7 @@ class TestPackageProvider < Test::Unit::TestCase
 
         if hash[:source]
             unless FileTest.exists?(hash[:source])
-                $stderr.puts "Create a package at %s for testing" % hash[:source]
+                $stderr.puts "Create a package at #{hash[:source]} for testing"
                 return
             end
         end
@@ -133,7 +133,7 @@ class TestPackageProvider < Test::Unit::TestCase
 
         pkg = nil
         assert_nothing_raised(
-            "Could not turn %s into a package" % hash.inspect
+            "Could not turn #{hash.inspect} into a package"
         ) do
             pkg = Puppet::Type.newpackage(hash)
         end
@@ -191,7 +191,7 @@ class TestPackageProvider < Test::Unit::TestCase
             end
             provider.flush
             new = provider.properties
-            assert(current != new, "package was not upgraded: %s did not change" % current.inspect)
+            assert(current != new, "package was not upgraded: #{current.inspect} did not change")
         end
 
         unless versions.empty?
@@ -202,7 +202,7 @@ class TestPackageProvider < Test::Unit::TestCase
             end
             provider.flush
             new = provider.properties
-            assert(current != new, "package was not upgraded: %s did not change" % current.inspect)
+            assert(current != new, "package was not upgraded: #{current.inspect} did not change")
         end
 
         # Now call 'latest' after the package is installed
@@ -227,7 +227,7 @@ class TestPackageProvider < Test::Unit::TestCase
         mname = ["test", hash[:name].to_s, hash[:provider].to_s].join("_").intern
 
         if method_defined?(mname)
-            warn "Already a test method defined for %s" % mname
+            warn "Already a test method defined for #{mname}"
         else
             define_method(mname) do
                 run_package_installation_test(hash)

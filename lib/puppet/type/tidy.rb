@@ -36,7 +36,7 @@ Puppet::Type.newtype(:tidy) do
             when Integer, Fixnum, Bignum; value
             when /^\d+$/; Integer(value)
             else
-                raise ArgumentError, "Invalid recurse value %s" % value.inspect
+                raise ArgumentError, "Invalid recurse value #{value.inspect}"
             end
         end
     end
@@ -112,7 +112,7 @@ Puppet::Type.newtype(:tidy) do
             if num = @@ageconvertors[unit]
                 return num * multi
             else
-                self.fail "Invalid age unit '%s'" % unit
+                self.fail "Invalid age unit '#{unit}'"
             end
         end
 
@@ -135,7 +135,7 @@ Puppet::Type.newtype(:tidy) do
                 multi = Integer($1)
                 unit = :d
             else
-                self.fail "Invalid tidy age %s" % age
+                self.fail "Invalid tidy age #{age}"
             end
 
             convert(unit, multi)
@@ -162,7 +162,7 @@ Puppet::Type.newtype(:tidy) do
                 num.times do result *= 1024 end
                 return result
             else
-                self.fail "Invalid size unit '%s'" % unit
+                self.fail "Invalid size unit '#{unit}'"
             end
         end
 
@@ -183,7 +183,7 @@ Puppet::Type.newtype(:tidy) do
                 multi = Integer($1)
                 unit = :k
             else
-                self.fail "Invalid tidy size %s" % age
+                self.fail "Invalid tidy size #{age}"
             end
 
             convert(unit, multi)
@@ -267,7 +267,7 @@ Puppet::Type.newtype(:tidy) do
         else
             files = [self[:path]]
         end
-        result = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }.each { |file| notice "Tidying %s" % file.ref }.sort { |a,b| b[:path] <=> a[:path] }
+        result = files.find_all { |path| tidy?(path) }.collect { |path| mkfile(path) }.each { |file| notice "Tidying #{file.ref}" }.sort { |a,b| b[:path] <=> a[:path] }
 
         # No need to worry about relationships if we don't have rmdirs; there won't be
         # any directories.
@@ -300,7 +300,7 @@ Puppet::Type.newtype(:tidy) do
         if self[:matches].find {|pattern| File.fnmatch(pattern, basename, flags) }
             return true
         else
-            debug "No specified patterns match %s, not tidying" % path
+            debug "No specified patterns match #{path}, not tidying"
             return false
         end
     end

@@ -28,7 +28,7 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            raise Puppet::Error.new("Certificate retrieval failed: %s" % detail)
+            raise Puppet::Error.new("Certificate retrieval failed: #{detail}")
         end
 
         if cert.nil? or cert == ""
@@ -40,12 +40,12 @@ class Puppet::Network::Client::CA < Puppet::Network::Client
             @cacert = OpenSSL::X509::Certificate.new(cacert)
         rescue => detail
             raise InvalidCertificate.new(
-                "Invalid certificate: %s" % detail
+                "Invalid certificate: #{detail}"
             )
         end
 
         unless @cert.check_private_key(key)
-            raise InvalidCertificate, "Certificate does not match private key.  Try 'puppetca --clean %s' on the server." % Puppet[:certname]
+            raise InvalidCertificate, "Certificate does not match private key.  Try 'puppetca --clean #{Puppet[:certname]}' on the server."
         end
 
         # Only write the cert out if it passes validating.

@@ -114,7 +114,7 @@ describe Puppet::Node::Facts::Facter do
     describe Puppet::Node::Facts::Facter, "when loading fact plugins from disk" do
         it "should load each directory in the Fact path" do
             Puppet.settings.stubs(:value).returns "foo"
-            Puppet.settings.expects(:value).with(:factpath).returns("one%stwo" % File::PATH_SEPARATOR)
+            Puppet.settings.expects(:value).with(:factpath).returns("one#{File::PATH_SEPARATOR}two")
 
             Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("one")
             Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("two")
@@ -126,7 +126,7 @@ describe Puppet::Node::Facts::Facter do
             Puppet.settings.stubs(:value).returns "foo"
             Puppet::Node::Facts::Facter.stubs(:load_facts_in_dir)
 
-            Puppet.settings.expects(:value).with(:modulepath).returns("one%stwo" % File::PATH_SEPARATOR)
+            Puppet.settings.expects(:value).with(:modulepath).returns("one#{File::PATH_SEPARATOR}two")
 
             Dir.stubs(:glob).returns []
             Dir.expects(:glob).with("one/*/lib/facter").returns %w{oneA oneB}

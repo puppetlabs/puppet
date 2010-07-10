@@ -14,12 +14,12 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
         begin
             readlock(file) { |fh| yaml = fh.read }
         rescue => detail
-            raise Puppet::Error, "Could not read YAML data for %s %s: %s" % [indirection.name, request.key, detail]
+            raise Puppet::Error, "Could not read YAML data for #{indirection.name} #{request.key}: #{detail}"
         end
         begin
             return from_yaml(yaml)
         rescue => detail
-            raise Puppet::Error, "Could not parse YAML data for %s %s: %s" % [indirection.name, request.key, detail]
+            raise Puppet::Error, "Could not parse YAML data for #{indirection.name} #{request.key}: #{detail}"
         end
     end
 
@@ -39,7 +39,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
         begin
             writelock(file, 0660) { |f| f.print to_yaml(request.instance) }
         rescue TypeError => detail
-            Puppet.err "Could not save %s %s: %s" % [self.name, request.key, detail]
+            Puppet.err "Could not save #{self.name} #{request.key}: #{detail}"
         end
     end
 

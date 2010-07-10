@@ -198,10 +198,8 @@ describe Puppet::Util::SELinux do
             fh = stub 'fh', :close => nil
             File.stubs(:open).with("/proc/mounts").returns fh
             fh.stubs(:read_nonblock).returns(
-                "rootfs / rootfs rw 0 0\n"+
-                "/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n"+
-                "/dev /dev tmpfs rw,relatime,mode=755 0 0\n"+
-                "/proc /proc proc rw,relatime 0 0\n"+
+                "rootfs / rootfs rw 0 0\n/dev/root / ext3 rw,relatime,errors=continue,user_xattr,acl,data=ordered 0 0\n"+
+                "/dev /dev tmpfs rw,relatime,mode=755 0 0\n/proc /proc proc rw,relatime 0 0\n"+
                 "/sys /sys sysfs rw,relatime 0 0\n"
                 ).then.raises EOFError
         end

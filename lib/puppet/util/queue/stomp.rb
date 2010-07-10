@@ -15,16 +15,16 @@ class Puppet::Util::Queue::Stomp
         begin
             uri = URI.parse(Puppet[:queue_source])
         rescue => detail
-            raise ArgumentError, "Could not create Stomp client instance - queue source %s is invalid: %s" % [Puppet[:queue_source], detail]
+            raise ArgumentError, "Could not create Stomp client instance - queue source #{Puppet[:queue_source]} is invalid: #{detail}"
         end
         unless uri.scheme == "stomp"
-            raise ArgumentError, "Could not create Stomp client instance - queue source %s is not a Stomp URL: %s" % [Puppet[:queue_source], detail]
+            raise ArgumentError, "Could not create Stomp client instance - queue source #{Puppet[:queue_source]} is not a Stomp URL: #{detail}"
         end
 
         begin
             self.stomp_client = Stomp::Client.new(uri.user, uri.password, uri.host, uri.port, true)
         rescue => detail
-            raise ArgumentError, "Could not create Stomp client instance with queue source %s: got internal Stomp client error %s" % [Puppet[:queue_source], detail]
+            raise ArgumentError, "Could not create Stomp client instance with queue source #{Puppet[:queue_source]}: got internal Stomp client error #{detail}"
         end
     end
 

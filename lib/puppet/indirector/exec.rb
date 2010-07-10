@@ -39,12 +39,12 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
         begin
             output = execute(external_command)
         rescue Puppet::ExecutionFailure => detail
-            Puppet.err "Failed to find %s via exec: %s" % [name, detail]
+            Puppet.err "Failed to find #{name} via exec: #{detail}"
             return nil
         end
 
         if output =~ /\A\s*\Z/ # all whitespace
-            Puppet.debug "Empty response for %s from exec %s terminus" % [name, self.name]
+            Puppet.debug "Empty response for #{name} from exec #{self.name} terminus"
             return nil
         else
             return output

@@ -70,7 +70,7 @@ class TestRailsParameter < Test::Unit::TestCase
 
             assert_instance_of(Puppet::Parser::Resource::Param, pp)
             assert_equal(name.to_sym, pp.name, "parameter name was not equal")
-            assert_equal(value,  pp.value, "value was not equal for %s" % value.inspect)
+            assert_equal(value,  pp.value, "value was not equal for #{value.inspect}")
         end
     end
 end

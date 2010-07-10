@@ -16,7 +16,7 @@ describe zone do
     parameters = [:create_args, :install_args, :sysidcfg, :path, :realhostname]
 
     parameters.each do |parameter|
-        it "should have a %s parameter" % parameter do
+        it "should have a #{parameter} parameter" do
             zone.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
         end
     end
@@ -24,7 +24,7 @@ describe zone do
     properties = [:ip, :iptype, :autoboot, :pool, :shares, :inherit]
 
     properties.each do |property|
-        it "should have a %s property" % property do
+        it "should have a #{property} property" do
             zone.attrclass(property).ancestors.should be_include(Puppet::Property)
         end
     end

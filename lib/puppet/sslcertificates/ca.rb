@@ -21,13 +21,13 @@ class Puppet::SSLCertificates::CA
             if FileTest.exists?(file)
                 begin
                     if Puppet[:name] == "cert"
-                        puts "Removing %s" % file
+                        puts "Removing #{file}"
                     else
-                        Puppet.info "Removing %s" % file
+                        Puppet.info "Removing #{file}"
                     end
                     File.unlink(file)
                 rescue => detail
-                    raise Puppet::Error, "Could not delete %s: %s" % [file, detail]
+                    raise Puppet::Error, "Could not delete #{file}: #{detail}"
                 end
             end
 
@@ -57,8 +57,8 @@ class Puppet::SSLCertificates::CA
 
         if Puppet[:capass]
             if FileTest.exists?(Puppet[:capass])
-                #puts "Reading %s" % Puppet[:capass]
-                #system "ls -al %s" % Puppet[:capass]
+                #puts "Reading #{Puppet[:capass]}"
+                #system "ls -al #{Puppet[:capass]}"
                 #File.read Puppet[:capass]
                 @config[:password] = self.getpass
             else
@@ -96,7 +96,7 @@ class Puppet::SSLCertificates::CA
         if @config[:capass] and File.readable?(@config[:capass])
             return File.read(@config[:capass])
         else
-            raise Puppet::Error, "Could not decrypt CA key with password: %s" % detail
+            raise Puppet::Error, "Could not decrypt CA key with password: #{detail}"
         end
     end
 
@@ -156,7 +156,7 @@ class Puppet::SSLCertificates::CA
         # Make the root cert's name the FQDN of the host running the CA.
         name = Facter["hostname"].value
         if domain = Facter["domain"].value
-            name += "." + domain
+            name += ".#{domain}"
         end
 
                     cert = Certificate.new(
@@ -187,7 +187,7 @@ class Puppet::SSLCertificates::CA
     def removeclientcsr(host)
         csrfile = host2csrfile(host)
         unless File.exists?(csrfile)
-            raise Puppet::Error, "No certificate request for %s" % host
+            raise Puppet::Error, "No certificate request for #{host}"
         end
 
         File.unlink(csrfile)
@@ -227,12 +227,12 @@ class Puppet::SSLCertificates::CA
         end
 
         if hash.length > 0
-            raise ArgumentError, "Unknown parameters %s" % hash.keys.join(",")
+            raise ArgumentError, "Unknown parameters #{hash.keys.join(",")}"
         end
 
         [:cadir, :csrdir, :signeddir].each { |dir|
             unless @config[dir]
-                raise Puppet::DevError, "%s is undefined" % dir
+                raise Puppet::DevError, "#{dir} is undefined"
             end
         }
     end
@@ -241,7 +241,7 @@ class Puppet::SSLCertificates::CA
     def sign(csr)
         unless csr.is_a?(OpenSSL::X509::Request)
             raise Puppet::Error,
-                "CA#sign only accepts OpenSSL::X509::Request objects, not %s" % csr.class
+                "CA#sign only accepts OpenSSL::X509::Request objects, not #{csr.class}"
         end
 
         unless csr.verify(csr.public_key)
@@ -283,7 +283,7 @@ class Puppet::SSLCertificates::CA
 
         csrfile = host2csrfile(host)
         if File.exists?(csrfile)
-            raise Puppet::Error, "Certificate request for %s already exists" % host
+            raise Puppet::Error, "Certificate request for #{host} already exists"
         end
 
         Puppet.settings.writesub(:csrdir, csrfile) do |f|
@@ -297,7 +297,7 @@ class Puppet::SSLCertificates::CA
 
         certfile = host2certfile(host)
         if File.exists?(certfile)
-            Puppet.notice "Overwriting signed certificate %s for %s" % [certfile, host]
+            Puppet.notice "Overwriting signed certificate #{certfile} for #{host}"
         end
 
         Puppet::SSLCertificates::Inventory::add(cert)

@@ -38,7 +38,7 @@ module Puppet
                 when Array
                     # nothing
                 else
-                    raise Puppet::DevError, "Invalid @is type %s" % is.class
+                    raise Puppet::DevError, "Invalid @is type #{is.class}"
                 end
                 return is
             end

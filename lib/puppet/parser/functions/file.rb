@@ -18,6 +18,6 @@
             if ret
                 ret
             else
-                raise Puppet::ParseError, "Could not find any files from %s" % vals.join(", ")
+                raise Puppet::ParseError, "Could not find any files from #{vals.join(", ")}"
             end
 end

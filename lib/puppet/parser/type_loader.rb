@@ -99,7 +99,7 @@ class Puppet::Parser::TypeLoader
         return [name.sub(/^::/, '').gsub("::", File::SEPARATOR)] if name =~ /^::/
 
         result = namespaces.inject([]) do |names_to_try, namespace|
-            fullname = (namespace + "::" + name).sub(/^::/, '')
+            fullname = (namespace + "::#{name}").sub(/^::/, '')
 
             # Try to load the module init file if we're a qualified name
             if fullname.include?("::")

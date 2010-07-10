@@ -37,7 +37,7 @@ File.open(Puppet[:authconfig]).each do |line|
         when "allow":
             value.split(/\s*,\s*/).each { |val|
             allowed_servers << val
-            puts "allowing %s access" % val
+            puts "allowing #{val} access"
         } if runner==true
         end
     else

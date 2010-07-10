@@ -22,7 +22,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
 
         output = portupgrade(*cmd)
         if output =~ /\*\* No such /
-            raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
+            raise Puppet::ExecutionFailure, "Could not find package #{@resource[:name]}"
         end
     end
 
@@ -48,7 +48,7 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
 
         unless pkgstuff =~ /^(\S+)-([^-\s]+)$/
             raise Puppet::Error,
-                "Could not match package info '%s'" % pkgstuff
+                "Could not match package info '#{pkgstuff}'"
         end
 
         name, version = $1, $2
@@ -62,12 +62,12 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
 
         unless info =~ /\((\w+) has (.+)\)/
             raise Puppet::Error,
-                "Could not match version info '%s'" % info
+                "Could not match version info '#{info}'"
         end
 
         source, newversion = $1, $2
 
-        debug "Newer version in %s" % source
+        debug "Newer version in #{source}"
         return newversion
     end
 

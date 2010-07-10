@@ -42,7 +42,7 @@ end
                 end
             end
         else
-            raise Puppet::Error, "Could not match '%s'" % line
+            raise Puppet::Error, "Could not match '#{line}'"
         end
 
         if hash[:host_aliases] == ""
@@ -57,15 +57,15 @@ end
         return super unless hash[:record_type] == :parsed
         [:ip, :name].each do |n|
             unless hash[n] and hash[n] != :absent
-                raise ArgumentError, "%s is a required attribute for hosts" % n
+                raise ArgumentError, "#{n} is a required attribute for hosts"
             end
         end
 
-        str = "%s\t%s" % [hash[:ip], hash[:name]]
+        str = "#{hash[:ip]}\t#{hash[:name]}"
 
         if hash.include? :host_aliases and !hash[:host_aliases].empty?
             if hash[:host_aliases].is_a? Array
-                str += "\t%s" % hash[:host_aliases].join("\t")
+                str += "\t#{hash[:host_aliases].join("\t")}"
             else
                 raise ArgumentError, "Host aliases must be specified as an array"
             end

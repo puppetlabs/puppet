@@ -13,7 +13,7 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
         unless defined?(@nagios_type) and @nagios_type
             name = resource_type.name.to_s.sub(/^nagios_/, '')
             unless @nagios_type = Nagios::Base.type(name.to_sym)
-                raise Puppet::DevError, "Could not find nagios type '%s'" % name
+                raise Puppet::DevError, "Could not find nagios type '#{name}'"
             end
 
             # And add our 'ensure' settings, since they aren't a part of
@@ -27,7 +27,7 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
         begin
             Nagios::Parser.new.parse(text.gsub(NAME_STRING, "_naginator_name"))
         rescue => detail
-            raise Puppet::Error, "Could not parse configuration for %s: %s" % [resource_type.name, detail]
+            raise Puppet::Error, "Could not parse configuration for #{resource_type.name}: #{detail}"
         end
     end
 

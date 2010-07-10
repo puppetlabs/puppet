@@ -15,7 +15,7 @@ Puppet::Reports.register_report(:store) do
                 "reportclient-#{client}".to_sym,
             "client-#{client}-dir" => { :default => dir,
                 :mode => 0750,
-                :desc => "Client dir for %s" % client,
+                :desc => "Client dir for #{client}",
                 :owner => 'service',
                 :group => 'service'
             },
@@ -54,7 +54,7 @@ Puppet::Reports.register_report(:store) do
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            Puppet.warning "Could not write report for %s at %s: %s" % [client, file, detail]
+            Puppet.warning "Could not write report for #{client} at #{file}: #{detail}"
         end
 
         # Only testing cares about the return value

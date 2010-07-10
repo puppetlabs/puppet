@@ -23,11 +23,11 @@ module Puppet # :nodoc:
         def to_s
             str = nil
             if self.file and self.line
-                str = "%s at %s:%s" % [@message.to_s, @file, @line]
+                str = "#{@message} at #{@file}:#{@line}"
             elsif self.line
-                str = "%s at line %s" % [@message.to_s, @line]
+                str = "#{@message} at line #{@line}"
             elsif self.file
-                str = "%s in %s" % [@message.to_s, self.file]
+                str = "#{@message} in #{self.file}"
             else
                 str = @message.to_s
             end

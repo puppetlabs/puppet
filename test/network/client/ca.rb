@@ -23,7 +23,7 @@ class TestClientCA < Test::Unit::TestCase
         end
 
         [:hostprivkey, :hostcert, :localcacert].each do |name|
-            assert(FileTest.exists?(Puppet.settings[name]), "Did not create cert %s" % name)
+            assert(FileTest.exists?(Puppet.settings[name]), "Did not create cert #{name}")
         end
     end
 

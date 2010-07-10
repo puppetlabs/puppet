@@ -43,7 +43,7 @@ fail if used with earlier clients.
             if classobj = find_hostclass(klass)
                 klass = classobj.name
             else
-                raise Puppet::ParseError, "Could not find class %s" % klass
+                raise Puppet::ParseError, "Could not find class #{klass}"
             end
 
             # This is a bit hackish, in some ways, but it's the only way

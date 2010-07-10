@@ -61,7 +61,7 @@ class TestCron < Test::Unit::TestCase
     # Create a cron job with all fields filled in.
     def mkcron(name, addargs = true)
         cron = nil
-        command = "date > %s/crontest%s" % [tmpdir(), name]
+        command = "date > #{tmpdir()}/crontest#{name}"
         args = nil
         if addargs
             args = {
@@ -101,7 +101,7 @@ class TestCron < Test::Unit::TestCase
 
         curtext = obj.read
         text.split("\n").each do |line|
-            assert(curtext.include?(line), "Missing '%s'" % line)
+            assert(curtext.include?(line), "Missing '#{line}'")
         end
         obj = Puppet::Type::Cron.cronobj(@me)
 
@@ -201,7 +201,7 @@ class TestCron < Test::Unit::TestCase
                             assert_equal([value.to_s], cron.should(param), "Cron value was not set correctly")
                         end
                     when :invalid
-                        assert_raise(Puppet::Error, "%s is incorrectly a valid %s" % [value, param]) {
+                        assert_raise(Puppet::Error, "#{value} is incorrectly a valid #{param}") {
                             cron[param] = value
                         }
                     end
@@ -348,7 +348,7 @@ class TestCron < Test::Unit::TestCase
 
     def provider_set(cron, param, value)
         unless param =~ /=$/
-            param = "%s=" % param
+            param = "#{param}="
         end
 
         cron.provider.send(param, value)
@@ -362,7 +362,7 @@ class TestCron < Test::Unit::TestCase
             cron.newattr(param)
             property = cron.property(param)
 
-            assert(property, "Did not get %s property" % param)
+            assert(property, "Did not get #{param} property")
 
             assert_nothing_raised {
                 #                property.is = :absent
@@ -444,7 +444,7 @@ class TestCron < Test::Unit::TestCase
             crons << cron
 
             assert_equal(cron.should(:user), cron.should(:target),
-                "Target was not set correctly for %s" % user)
+                "Target was not set correctly for #{user}")
         end
         provider = crons[0].provider.class
 
@@ -459,7 +459,7 @@ class TestCron < Test::Unit::TestCase
                     assert(
                         text !~ /testcron-#{user}/,
 
-                        "%s's cron job is in %s's tab" % [user, other])
+                        "#{user}'s cron job is in #{other}'s tab")
             end
         end
     end

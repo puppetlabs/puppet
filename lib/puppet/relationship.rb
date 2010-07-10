@@ -70,7 +70,7 @@ class Puppet::Relationship
     end
 
     def ref
-        "%s => %s" % [source, target]
+        "#{source} => #{target}"
     end
 
     def to_pson_data_hash

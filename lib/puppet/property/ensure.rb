@@ -49,12 +49,12 @@ class Puppet::Property::Ensure < Puppet::Property
             elsif newvalue == :absent
                 return "removed"
             else
-                return "%s changed '%s' to '%s'" % [self.name, self.is_to_s(currentvalue), self.should_to_s(newvalue)]
+                return "#{self.name} changed '#{self.is_to_s(currentvalue)}' to '#{self.should_to_s(newvalue)}'"
             end
         rescue Puppet::Error, Puppet::DevError
             raise
         rescue => detail
-            raise Puppet::DevError, "Could not convert change %s to string: %s" % [self.name, detail]
+            raise Puppet::DevError, "Could not convert change #{self.name} to string: #{detail}"
         end
     end
 
@@ -69,7 +69,7 @@ class Puppet::Property::Ensure < Puppet::Property
         elsif @resource.respond_to?(:exists?)
             result = @resource.exists?
         else
-            raise Puppet::DevError, "No ability to determine if %s exists" % @resource.class.name
+            raise Puppet::DevError, "No ability to determine if #{@resource.class.name} exists"
         end
         if result
             return :present

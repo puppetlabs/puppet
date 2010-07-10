@@ -30,8 +30,8 @@ class TestParsedSSHKey < Test::Unit::TestCase
             @pcount = 1
         end
         args = {
-            :name => name || "/fspuppet%s" % @pcount,
-            :key => "thisismykey%s" % @pcount,
+            :name => name || "/fspuppet#{@pcount}",
+            :key => "thisismykey#{@pcount}",
             :host_aliases => ["host1.domain.com","192.168.0.1"],
             :type => "dss",
             :ensure => :present
@@ -82,7 +82,7 @@ class TestParsedSSHKey < Test::Unit::TestCase
 
         hash.each do |p, v|
             next unless key.respond_to?(p)
-            assert_equal(v, key.send(p), "%s did not match" % p)
+            assert_equal(v, key.send(p), "#{p} did not match")
         end
 
         assert(key.name !~ /,/, "Aliases were not split out during parsing")

@@ -50,28 +50,28 @@ module PuppetTest::ExeTest
         output = nil
 
         manifest = mktestmanifest()
-        args += " --manifest %s" % manifest
-        args += " --confdir %s" % Puppet[:confdir]
-        args += " --rundir %s" % File.join(Puppet[:vardir], "run")
-        args += " --vardir %s" % Puppet[:vardir]
-        args += " --certdnsnames %s" % Puppet[:certdnsnames]
-        args += " --masterport %s" % @@port
-        args += " --user %s" % Puppet::Util::SUIDManager.uid
-        args += " --group %s" % Puppet::Util::SUIDManager.gid
+        args += " --manifest #{manifest}"
+        args += " --confdir #{Puppet[:confdir]}"
+        args += " --rundir #{File.join(Puppet[:vardir], "run")}"
+        args += " --vardir #{Puppet[:vardir]}"
+        args += " --certdnsnames #{Puppet[:certdnsnames]}"
+        args += " --masterport #{@@port}"
+        args += " --user #{Puppet::Util::SUIDManager.uid}"
+        args += " --group #{Puppet::Util::SUIDManager.gid}"
         args += " --autosign true"
 
         #if Puppet[:debug]
         #    args += " --debug"
         #end
 
-        cmd = "puppetmasterd %s" % args
+        cmd = "puppetmasterd #{args}"
 
 
         assert_nothing_raised {
             output = %x{#{cmd}}.chomp
         }
-        assert_equal("", output, "Puppetmasterd produced output %s" % output)
-        assert($CHILD_STATUS == 0, "Puppetmasterd exit status was %s" % $CHILD_STATUS)
+        assert_equal("", output, "Puppetmasterd produced output #{output}")
+        assert($CHILD_STATUS == 0, "Puppetmasterd exit status was #{$CHILD_STATUS}")
         sleep(1)
 
         cleanup do

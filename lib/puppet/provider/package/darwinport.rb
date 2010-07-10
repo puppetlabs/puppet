@@ -27,7 +27,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
                     yield hash.dup
                 else
                     raise Puppet::DevError,
-                        "Failed to match dpkg line %s" % line
+                        "Failed to match dpkg line #{line}"
                 end
             }
         }
@@ -49,7 +49,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
         # Seems like you can always say 'upgrade'
         output = port "upgrade", @resource[:name]
         if output =~ /^Error: No port/
-            raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
+            raise Puppet::ExecutionFailure, "Could not find package #{@resource[:name]}"
         end
     end
 

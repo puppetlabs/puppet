@@ -61,7 +61,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
         # We want to cache the current result, so we know if we
         # have to remove old values.
         unless @property_hash[:groups]
-            unless result = group_manager.search("memberUid=%s" % name)
+            unless result = group_manager.search("memberUid=#{name}")
                 return @property_hash[:groups] = :absent
             end
 
@@ -93,7 +93,7 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
         end
 
         modes.each do |group, form|
-            self.fail "Could not find ldap group %s" % group unless ldap_group = group_manager.find(group)
+            self.fail "Could not find ldap group #{group}" unless ldap_group = group_manager.find(group)
 
             current = ldap_group[:members]
 

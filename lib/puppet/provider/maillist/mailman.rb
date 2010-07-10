@@ -37,7 +37,7 @@ Puppet::Type.type(:maillist).provide(:mailman) do
         name = self.name.downcase
         aliases = {name => "| #{mailman} post #{name}"}
         %w{admin bounces confirm join leave owner request subscribe unsubscribe}.each do |address|
-            aliases["%s-%s" % [name, address]] = "| %s %s %s" % [mailman, address, name]
+            aliases["#{name}-#{address}"] = "| #{mailman} #{address} #{name}"
         end
         aliases
     end

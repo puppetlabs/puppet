@@ -7,16 +7,16 @@ module Puppet::Util::NagiosMaker
     # from the parser.
     def self.create_nagios_type(name)
         name = name.to_sym
-        full_name = ("nagios_" + name.to_s).to_sym
+        full_name = ("nagios_#{name}").to_sym
 
-        raise(Puppet::DevError, "No nagios type for %s" % name) unless nagtype = Nagios::Base.type(name)
+        raise(Puppet::DevError, "No nagios type for #{name}") unless nagtype = Nagios::Base.type(name)
 
         type = Puppet::Type.newtype(full_name) {}
 
         type.ensurable
 
         type.newparam(nagtype.namevar, :namevar => true) do
-            desc "The name parameter for Nagios type %s" % nagtype.name
+            desc "The name parameter for Nagios type #{nagtype.name}"
         end
 
         # We deduplicate the parameters because it makes sense to allow Naginator to have dupes.

@@ -9,7 +9,7 @@ describe Puppet::Util::Warnings do
     end
 
     {:notice => "notice_once", :warning => "warnonce"}.each do |log, method|
-        describe "when registring '%s' messages" % log do
+        describe "when registring '#{log}' messages" do
             it "should always return nil" do
                 Puppet::Util::Warnings.send(method, @msg1).should be(nil)
             end

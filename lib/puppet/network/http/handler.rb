@@ -37,14 +37,14 @@ module Puppet::Network::HTTP::Handler
             return format
         end
 
-        raise "No specified acceptable formats (%s) are functional on this machine" % header
+        raise "No specified acceptable formats (#{header}) are functional on this machine"
     end
 
     def request_format(request)
         if header = content_type_header(request)
             header.gsub!(/\s*;.*$/,'') # strip any charset
             format = Puppet::Network::FormatHandler.mime(header)
-            raise "Client sent a mime-type (%s) that doesn't correspond to a format we support" % header if format.nil?
+            raise "Client sent a mime-type (#{header}) that doesn't correspond to a format we support" if format.nil?
             return format.name.to_s if format.suitable?
         end
 
@@ -65,7 +65,7 @@ module Puppet::Network::HTTP::Handler
 
         check_authorization(indirection_request)
 
-        send("do_%s" % indirection_request.method, indirection_request, request, response)
+        send("do_#{indirection_request.method}", indirection_request, request, response)
     rescue SystemExit,NoMemoryError
         raise
     rescue Exception => e
@@ -99,8 +99,8 @@ module Puppet::Network::HTTP::Handler
     # Execute our find.
     def do_find(indirection_request, request, response)
         unless result = indirection_request.model.find(indirection_request.key, indirection_request.to_hash)
-            Puppet.info("Could not find %s for '%s'" % [indirection_request.indirection_name, indirection_request.key])
-            return do_exception(response, "Could not find %s %s" % [indirection_request.indirection_name, indirection_request.key], 404)
+            Puppet.info("Could not find #{indirection_request.indirection_name} for '#{indirection_request.key}'")
+            return do_exception(response, "Could not find #{indirection_request.indirection_name} #{indirection_request.key}", 404)
         end
 
         # The encoding of the result must include the format to use,
@@ -117,7 +117,7 @@ module Puppet::Network::HTTP::Handler
         result = indirection_request.model.search(indirection_request.key, indirection_request.to_hash)
 
         if result.nil? or (result.is_a?(Array) and result.empty?)
-            return do_exception(response, "Could not find instances in %s with '%s'" % [indirection_request.indirection_name, indirection_request.to_hash.inspect], 404)
+            return do_exception(response, "Could not find instances in #{indirection_request.indirection_name} with '#{indirection_request.to_hash.inspect}'", 404)
         end
 
         format = format_to_use(request)
@@ -150,7 +150,7 @@ module Puppet::Network::HTTP::Handler
         begin
             return Resolv.getname(result[:ip])
         rescue => detail
-            Puppet.err "Could not resolve %s: %s" % [result[:ip], detail]
+            Puppet.err "Could not resolve #{result[:ip]}: #{detail}"
         end
         return result[:ip]
     end

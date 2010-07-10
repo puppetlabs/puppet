@@ -46,7 +46,7 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
         begin
             YAML.load(output).inject({}) { |hash, data| hash[symbolize(data[0])] = data[1]; hash }
         rescue => detail
-            raise Puppet::Error, "Could not load external node results for %s: %s" % [name, detail]
+            raise Puppet::Error, "Could not load external node results for #{name}: #{detail}"
         end
     end
 end

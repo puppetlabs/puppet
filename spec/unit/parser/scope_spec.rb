@@ -471,7 +471,7 @@ describe Puppet::Parser::Scope do
         # #523
         %w{d f h l w z}.each do |l|
             it "should parse '#{l}' when escaped" do
-                string = "\\" + l
+                string = "\\#{l}"
                 @scope.strinterp(string).should == string
             end
         end
@@ -494,12 +494,12 @@ describe Puppet::Parser::Scope do
             klass = parser.newclass(name)
             Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
             scopes[name] = scope.class_scope(klass)
-            scopes[name].setvar("test", "value-%s" % name.sub(/.+::/,''))
+            scopes[name].setvar("test", "value-#{name.sub(/.+::/,'')}")
         end
 
         assert_equal("value", scope.lookupvar("::test"), "did not look up qualified value correctly")
         tests.each do |input, output|
-            assert_nothing_raised("Failed to scan %s" % input.inspect) do
+            assert_nothing_raised("Failed to scan #{input.inspect}") do
                 assert_equal(output, scope.strinterp(input), 'did not parserret %s correctly' % input.inspect)
             end
         end
@@ -510,7 +510,7 @@ describe Puppet::Parser::Scope do
 
         # #523
         %w{d f h l w z}.each do |l|
-            string = "\\" + l
+            string = "\\#{l}"
             assert_nothing_raised do
 
                             assert_equal(
@@ -523,7 +523,7 @@ describe Puppet::Parser::Scope do
                         assert(
                 logs.detect { |m| m.message =~ /Unrecognised escape/ },
         
-                "Did not get warning about escape sequence with %s" % string)
+                "Did not get warning about escape sequence with #{string}")
             logs.clear
         end
     end

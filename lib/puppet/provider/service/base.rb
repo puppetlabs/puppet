@@ -70,7 +70,7 @@ Puppet::Type.type(:service).provide :base do
                 return :stopped
             end
         elsif pid = self.getpid
-            self.debug "PID is %s" % pid
+            self.debug "PID is #{pid}"
             return :running
         else
             return :stopped
@@ -108,13 +108,13 @@ Puppet::Type.type(:service).provide :base do
         else
             pid = getpid
             unless pid
-                self.info "%s is not running" % self.name
+                self.info "#{self.name} is not running"
                 return false
             end
             begin
                 output = kill pid
             rescue Puppet::ExecutionFailure => detail
-                @resource.fail "Could not kill %s, PID %s: %s" % [self.name, pid, output]
+                @resource.fail "Could not kill #{self.name}, PID #{pid}: #{output}"
             end
             return true
         end
@@ -130,7 +130,7 @@ Puppet::Type.type(:service).provide :base do
             # #565: Services generally produce no output, so squelch them.
             execute(command, :failonfail => fof, :squelch => true)
         rescue Puppet::ExecutionFailure => detail
-            @resource.fail "Could not %s %s: %s" % [type, @resource.ref, detail]
+            @resource.fail "Could not #{type} #{@resource.ref}: #{detail}"
         end
         return nil
     end

@@ -20,31 +20,31 @@ module Puppet::Network
         # Verify that our client has access.  We allow untrusted access to
         # puppetca methods but no others.
         def authorized?(request)
-            msg = "%s client %s access to %s" % [request.authenticated? ? "authenticated" : "unauthenticated", request, request.call]
+            msg = "#{request.authenticated? ? "authenticated" : "unauthenticated"} client #{request} access to #{request.call}"
 
             if request.authenticated?
                 if authconfig.exists?
                     if authconfig.allowed?(request)
-                        Puppet.debug "Allowing " + msg
+                        Puppet.debug "Allowing #{msg}"
                         return true
                     else
-                        Puppet.notice "Denying " + msg
+                        Puppet.notice "Denying #{msg}"
                         return false
                     end
                 else
                     if Puppet.run_mode.master?
-                        Puppet.debug "Allowing " + msg
+                        Puppet.debug "Allowing #{msg}"
                         return true
                     else
-                        Puppet.notice "Denying " + msg
+                        Puppet.notice "Denying #{msg}"
                         return false
                     end
                 end
             else
                 if request.handler == "puppetca"
-                    Puppet.notice "Allowing " + msg
+                    Puppet.notice "Allowing #{msg}"
                 else
-                    Puppet.notice "Denying " + msg
+                    Puppet.notice "Denying #{msg}"
                     return false
                 end
             end
@@ -55,7 +55,7 @@ module Puppet::Network
             if handler_loaded?(request.handler)
                 return true
             else
-                Puppet.warning "Client %s requested unavailable functionality %s" % [request, request.handler]
+                Puppet.warning "Client #{request} requested unavailable functionality #{request.handler}"
                 return false
             end
         end
@@ -64,12 +64,12 @@ module Puppet::Network
         def verify(request)
             unless available?(request)
                 raise InvalidClientRequest.new(
-                    "Functionality %s not available" % request.handler
+                    "Functionality #{request.handler} not available"
                 )
             end
             unless authorized?(request)
                 raise InvalidClientRequest.new(
-                    "Host %s not authorized to call %s" % [request, request.call]
+                    "Host #{request} not authorized to call #{request.call}"
                 )
             end
         end

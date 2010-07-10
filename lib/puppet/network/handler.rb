@@ -22,7 +22,7 @@ module Puppet::Network
             if defined?(@interface)
                 return @interface
             else
-                raise Puppet::DevError, "Handler %s has no defined interface" % self
+                raise Puppet::DevError, "Handler #{self} has no defined interface"
             end
         end
 
@@ -31,7 +31,7 @@ module Puppet::Network
             if side
                 side = side.intern if side.is_a?(String)
                 unless [:client, :server].include?(side)
-                    raise ArgumentError, "Invalid side registration '%s' for %s" % [side, self.name]
+                    raise ArgumentError, "Invalid side registration '#{side}' for #{self.name}"
                 end
                 @side = side
             else

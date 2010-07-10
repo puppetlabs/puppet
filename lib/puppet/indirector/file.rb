@@ -14,7 +14,7 @@ class Puppet::Indirector::File < Puppet::Indirector::Terminus
     end
 
     def file_path(request)
-        File.join(data_directory, request.key + "." + serialization_format)
+        File.join(data_directory, request.key + ".#{serialization_format}")
     end
 
     def latest_path(request)

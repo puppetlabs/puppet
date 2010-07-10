@@ -57,13 +57,13 @@ class TestGroupProvider < Test::Unit::TestCase
                 return false
             end
 
-            assert_equal("", output, "Group %s is present:\n%s" % [group, output])
+            assert_equal("", output, "Group #{group} is present:\n#{output}")
         end
 
         def gid(name)
             %x{nireport / /groups name gid}.split("\n").each { |line|
                 group, id = line.chomp.split(/\s+/)
-                assert(id =~ /^-?\d+$/, "Group id %s for %s is not a number" % [id.inspect, group])
+                assert(id =~ /^-?\d+$/, "Group id #{id.inspect} for #{group} is not a number")
                 if group == name
                     return Integer(id)
                 end
@@ -73,7 +73,7 @@ class TestGroupProvider < Test::Unit::TestCase
         end
 
         def remove(group)
-            system("niutil -destroy / /groups/%s" % group)
+            system("niutil -destroy / /groups/#{group}")
         end
     else
         def missing?(group)
@@ -95,7 +95,7 @@ class TestGroupProvider < Test::Unit::TestCase
         end
 
         def remove(group)
-            system("groupdel %s" % group)
+            system("groupdel #{group}")
         end
     end
 
@@ -183,7 +183,7 @@ class TestGroupProvider < Test::Unit::TestCase
             gobj = nil
             comp = nil
             name = "pptestgr"
-            assert(missing?(name), "Group %s is still present" % name)
+            assert(missing?(name), "Group #{name} is still present")
             group = mkgroup(name)
 
             @@tmpgroups << name
@@ -192,15 +192,15 @@ class TestGroupProvider < Test::Unit::TestCase
             assert_nothing_raised {
                 group.create
             }
-            assert(!missing?(name), "Group %s is missing" % name)
+            assert(!missing?(name), "Group #{name} is missing")
 
             tests = Puppet::Type.type(:group).validproperties
 
             tests.each { |test|
-                if self.respond_to?("attrtest_%s" % test)
-                    self.send("attrtest_%s" % test, group)
+                if self.respond_to?("attrtest_#{test}")
+                    self.send("attrtest_#{test}", group)
                 else
-                    $stderr.puts "Not testing attr %s of group" % test
+                    $stderr.puts "Not testing attr #{test} of group"
                 end
             }
 

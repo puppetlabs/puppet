@@ -55,12 +55,12 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
                     end
                     return :true
                 rescue Puppet::ExecutionFailure => detail
-                    raise Puppet::Error.new("Unable to restart service %s, error was: %s" % [ @resource[:name], detail ] )
+                    raise Puppet::Error.new("Unable to restart service #{@resource[:name]}, error was: #{detail}" )
                 end
             end
             self.fail("No such service found")
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error.new("Cannot get status of %s, error was: %s" % [ @resource[:name], detail ] )
+            raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}" )
         end
     end
 
@@ -83,7 +83,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
             end
             self.fail("No such service found")
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error.new("Cannot get status of %s, error was: %s" % [ @resource[:name], detail ] )
+            raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}" )
         end
     end
 

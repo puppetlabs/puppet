@@ -35,7 +35,7 @@ module Puppet::Util::RDoc
             # launch the documentation process
             r.document(options)
         rescue RDoc::RDocError => e
-            raise Puppet::ParseError.new("RDoc error %s" % e)
+            raise Puppet::ParseError.new("RDoc error #{e}")
         end
     end
 

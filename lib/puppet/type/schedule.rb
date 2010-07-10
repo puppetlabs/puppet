@@ -81,7 +81,7 @@ module Puppet
                 values.each { |value|
                     unless  value.is_a?(String) and
                             value =~ /\d+(:\d+){0,2}\s*-\s*\d+(:\d+){0,2}/
-                        self.fail "Invalid range value '%s'" % value
+                        self.fail "Invalid range value '#{value}'"
                     end
                 }
             end
@@ -99,23 +99,23 @@ module Puppet
                     }
 
                     if range.length != 2
-                        self.fail "Invalid range %s" % value
+                        self.fail "Invalid range #{value}"
                     end
 
                     # Make sure the hours are valid
                     [range[0][0], range[1][0]].each do |n|
                         if n < 0 or n > 23
-                            raise ArgumentError, "Invalid hour '%s'" % n
+                            raise ArgumentError, "Invalid hour '#{n}'"
                         end
                     end
 
                     [range[0][1], range[1][1]].each do |n|
                         if n and (n < 0 or n > 59)
-                            raise ArgumentError, "Invalid minute '%s'" % n
+                            raise ArgumentError, "Invalid minute '#{n}'"
                         end
                     end
                     if range[0][0] > range[1][0]
-                        self.fail(("Invalid range %s; " % value) +
+                        self.fail(("Invalid range #{value}; ") +
                             "ranges cannot span days."
                         )
                     end
@@ -153,7 +153,7 @@ module Puppet
 
                         unless time.hour == range[0]
                             self.devfail(
-                                "Incorrectly converted time: %s: %s vs %s" % [time, time.hour, range[0]]
+                                "Incorrectly converted time: #{time}: #{time.hour} vs #{range[0]}"
                             )
                         end
 
@@ -291,7 +291,7 @@ module Puppet
 
                 if value != 1 and @resource[:periodmatch] != :distance
                     raise Puppet::Error,
-                        "Repeat must be 1 unless periodmatch is 'distance', not '%s'" % @resource[:periodmatch]
+                        "Repeat must be 1 unless periodmatch is 'distance', not '#{@resource[:periodmatch]}'"
                 end
             end
 

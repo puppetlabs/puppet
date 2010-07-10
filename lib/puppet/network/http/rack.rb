@@ -54,7 +54,7 @@ class Puppet::Network::HTTP::Rack
             # log what happened
             Puppet.err "Puppet Server (Rack): Internal Server Error: Unhandled Exception: \"%s\"" % detail.message
             Puppet.err "Backtrace:"
-            detail.backtrace.each { |line| Puppet.err " > %s" % line }
+            detail.backtrace.each { |line| Puppet.err " > #{line}" }
         end
         response.finish()
     end

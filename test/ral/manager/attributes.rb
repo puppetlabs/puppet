@@ -42,15 +42,15 @@ class TestTypeAttributes < Test::Unit::TestCase
             end
 
             if param == :property
-                assert(inst.property(param), "did not get obj for %s" % param)
+                assert(inst.property(param), "did not get obj for #{param}")
 
                             assert_equal(
                 true, inst.should(param),
         
                     "should value did not get set")
             else
-                assert_equal(true, inst[param], "did not get correct value for %s from symbol" % param)
-                assert_equal(true, inst[param.to_s], "did not get correct value for %s from string" % param)
+                assert_equal(true, inst[param], "did not get correct value for #{param} from symbol")
+                assert_equal(true, inst[param.to_s], "did not get correct value for #{param} from string")
             end
         end
     end
@@ -88,11 +88,11 @@ class TestTypeAttributes < Test::Unit::TestCase
     def attr_check(type)
         @num ||= 0
         @num += 1
-        name = "name%s" % @num
+        name = "name#{@num}"
         inst = type.new(:name => name)
         [:meta, :param, :prop].each do |name|
             klass = type.attrclass(name)
-            assert(klass, "did not get class for %s" % name)
+            assert(klass, "did not get class for #{name}")
             obj = yield inst, klass
             assert_instance_of(klass, obj, "did not get object back")
 
@@ -112,7 +112,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         {
             :meta => :newmetaparam, :param => :newparam, :prop => :newproperty
         }.each do |name, method|
-            assert_nothing_raised("Could not make %s of type %s" % [name, method]) do
+            assert_nothing_raised("Could not make #{name} of type #{method}") do
                 type.send(method, name) {}
             end
         end
@@ -157,13 +157,13 @@ class TestTypeAttributes < Test::Unit::TestCase
             :four => :two
         }
         aliases.each do |new, old|
-            assert_nothing_raised("Could not create alias parameter %s" % new) do
+            assert_nothing_raised("Could not create alias parameter #{new}") do
                 type.set_attr_alias new => old
             end
         end
 
         aliases.each do |new, old|
-            assert_equal(old, type.attr_alias(new), "did not return alias info for %s" % new)
+            assert_equal(old, type.attr_alias(new), "did not return alias info for #{new}")
         end
 
         assert_nil(type.attr_alias(:name), "got invalid alias info for name")
@@ -172,7 +172,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         assert(inst, "could not create instance")
 
         aliases.each do |new, old|
-            val = "value %s" % new
+            val = "value #{new}"
             assert_nothing_raised do
                 inst[new] = val
             end
@@ -183,12 +183,12 @@ class TestTypeAttributes < Test::Unit::TestCase
                             assert_equal(
                 val, inst[new],
         
-                    "Incorrect alias value for %s in []" % new)
+                    "Incorrect alias value for #{new} in []")
             else
-                assert_equal(val, inst.should(new), "Incorrect alias value for %s in should" % new)
+                assert_equal(val, inst.should(new), "Incorrect alias value for #{new} in should")
             end
-            assert_equal(val, inst.value(new), "Incorrect alias value for %s" % new)
-            assert_equal(val, inst.value(old), "Incorrect orig value for %s" % old)
+            assert_equal(val, inst.value(new), "Incorrect alias value for #{new}")
+            assert_equal(val, inst.value(old), "Incorrect orig value for #{old}")
         end
     end
 
@@ -214,7 +214,7 @@ class TestTypeAttributes < Test::Unit::TestCase
 
         # Now make sure that we get warnings and no properties in those cases where our providers do not support the features requested
         [nope, maybe, yep].each_with_index do |prov, i|
-            resource = type.new(:provider => prov.name, :name => "test%s" % i, :none => "a", :one => "b", :two => "c")
+            resource = type.new(:provider => prov.name, :name => "test#{i}", :none => "a", :one => "b", :two => "c")
 
             case prov.name
             when :nope
@@ -227,7 +227,7 @@ class TestTypeAttributes < Test::Unit::TestCase
                 yes = [:none, :one, :two]
                 no = []
             end
-            yes.each { |a| assert(resource.should(a), "Did not get value for %s in %s" % [a, prov.name]) }
+            yes.each { |a| assert(resource.should(a), "Did not get value for #{a} in #{prov.name}") }
             no.each do |a|
                 # These may or may not get passed to the provider. We shouldn't care.
             end
@@ -245,14 +245,14 @@ class TestTypeAttributes < Test::Unit::TestCase
         inst = klass.new(:resource => resource)
 
         {:property => [:owner, :group], :parameter => [:ignore, :recurse], :metaparam => [:require, :subscribe]}.each do |attrtype, attrs|
-            assert_nothing_raised("Could not set check to a single %s value" % attrtype) do
+            assert_nothing_raised("Could not set check to a single #{attrtype} value") do
                 inst.value = attrs[0]
             end
 
             if attrtype == :property
                 assert(resource.property(attrs[0]), "Check did not create property instance during single check")
             end
-            assert_nothing_raised("Could not set check to multiple %s values" % attrtype) do
+            assert_nothing_raised("Could not set check to multiple #{attrtype} values") do
                 inst.value = attrs
             end
             if attrtype == :property

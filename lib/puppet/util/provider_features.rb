@@ -55,13 +55,13 @@ module Puppet::Util::ProviderFeatures
     # required to determine if the feature is present.
     def feature(name, docs, hash = {})
         @features ||= {}
-        raise(Puppet::DevError, "Feature %s is already defined" % name) if @features.include?(name)
+        raise(Puppet::DevError, "Feature #{name} is already defined") if @features.include?(name)
         begin
             obj = ProviderFeature.new(name, docs, hash)
             @features[obj.name] = obj
         rescue ArgumentError => detail
             error = ArgumentError.new(
-                "Could not create feature %s: %s" % [name, detail]
+                "Could not create feature #{name}: #{detail}"
             )
             error.set_backtrace(detail.backtrace)
             raise error
@@ -76,7 +76,7 @@ module Puppet::Util::ProviderFeatures
         names = @features.keys.sort { |a,b| a.to_s <=> b.to_s }
         names.each do |name|
             doc = @features[name].docs.gsub(/\n\s+/, " ")
-            str += "- **%s**: %s\n" % [name, doc]
+            str += "- **#{name}**: #{doc}\n"
         end
 
         if providers.length > 0

@@ -125,7 +125,7 @@ module Puppet::Util::SELinux
         if retval == 0
             return true
         else
-            Puppet.warning "Failed to set SELinux context %s on %s" % [context, file]
+            Puppet.warning "Failed to set SELinux context #{context} on #{file}"
             return false
         end
     end

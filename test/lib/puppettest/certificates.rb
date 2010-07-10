@@ -9,7 +9,7 @@ module PuppetTest::Certificates
         keyfile = File.join(@dir, "tmpkeyfile")
         @@tmpfiles << keyfile
         unless FileTest.exists?(@dir)
-            system("mkdir -p %s" % @dir)
+            system("mkdir -p #{@dir}")
         end
         File.open(keyfile, "w", 0600) { |f|
             f.print "as;dklj23rlkjzdflij23wr"

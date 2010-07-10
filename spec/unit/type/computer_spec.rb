@@ -29,11 +29,11 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     params = [:name]
 
     properties.each do |property|
-        it "should have a %s property" % property do
+        it "should have a #{property} property" do
             computer.attrclass(property).ancestors.should be_include(Puppet::Property)
         end
 
-        it "should have documentation for its %s property" % property do
+        it "should have documentation for its #{property} property" do
             computer.attrclass(property).doc.should be_instance_of(String)
         end
 
@@ -45,11 +45,11 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     end
 
     params.each do |param|
-        it "should have a %s parameter" % param do
+        it "should have a #{param} parameter" do
             computer.attrclass(param).ancestors.should be_include(Puppet::Parameter)
         end
 
-        it "should have documentation for its %s parameter" % param do
+        it "should have documentation for its #{param} parameter" do
             computer.attrclass(param).doc.should be_instance_of(String)
         end
     end

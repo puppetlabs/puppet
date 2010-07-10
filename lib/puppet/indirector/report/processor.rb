@@ -34,10 +34,10 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
                     if Puppet[:trace]
                         puts detail.backtrace
                     end
-                    Puppet.err "Report %s failed: %s" % [name, detail]
+                    Puppet.err "Report #{name} failed: #{detail}"
                 end
             else
-                Puppet.warning "No report named '%s'" % name
+                Puppet.warning "No report named '#{name}'"
             end
         end
     end

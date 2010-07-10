@@ -106,7 +106,7 @@ class Puppet::Network::Client
             end
             @local = true
         else
-            raise Puppet::Network::ClientError, "%s must be passed a Server or %s" % [self.class, driverparam]
+            raise Puppet::Network::ClientError, "#{self.class} must be passed a Server or #{driverparam}"
         end
     end
 
@@ -135,12 +135,12 @@ class Puppet::Network::Client
             self.lastrun = Time.now.to_i
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Could not run %s: %s" % [self.class, detail]
+            Puppet.err "Could not run #{self.class}: #{detail}"
         end
     end
 
     def run
-        raise Puppet::DevError, "Client type %s did not override run" % self.class
+        raise Puppet::DevError, "Client type #{self.class} did not override run"
     end
 
     def scheduled?
@@ -179,7 +179,7 @@ class Puppet::Network::Client
                 self.runnow if self.scheduled?
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not run client; got otherwise uncaught exception: %s" % detail
+                Puppet.err "Could not run client; got otherwise uncaught exception: #{detail}"
             end
         end
 

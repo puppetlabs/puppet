@@ -30,7 +30,7 @@ describe Puppet::SSL::CertificateRequest do
     end
 
     after do
-        system("rm -rf %s" % @dir)
+        system("rm -rf #{@dir}")
         Puppet.settings.clear
 
         # This is necessary so the terminus instances don't lie around.

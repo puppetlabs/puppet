@@ -27,7 +27,7 @@ describe Puppet::SSL::Host do
     after {
         Puppet::SSL::Host.ca_location = :none
 
-        system("rm -rf %s" % @dir)
+        system("rm -rf #{@dir}")
         Puppet.settings.clear
         Puppet::Util::Cacher.expire
     }

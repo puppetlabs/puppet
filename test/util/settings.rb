@@ -79,7 +79,7 @@ class TestSettings < Test::Unit::TestCase
         }
 
         @config.each do |name, object|
-            assert_equal(@config[name], newc[name], "Parameter %s is not the same" % name)
+            assert_equal(@config[name], newc[name], "Parameter #{name} is not the same")
         end
     end
 
@@ -226,7 +226,7 @@ class TestSettings < Test::Unit::TestCase
             :four => "five",
             :six => "seven"
         }.each do |param, value|
-            assert_equal(value, main[param], "Param %s was not set correctly in main" % param)
+            assert_equal(value, main[param], "Param #{param} was not set correctly in main")
         end
 
         section1 = result[:section1]
@@ -239,7 +239,7 @@ class TestSettings < Test::Unit::TestCase
             :attrdir => "/some/dir",
             :attr3 => "$attrdir/other"
         }.each do |param, value|
-            assert_equal(value, section1[param], "Param %s was not set correctly in section1" % param)
+            assert_equal(value, section1[param], "Param #{param} was not set correctly in section1")
         end
     end
 
@@ -270,16 +270,16 @@ class TestSettings < Test::Unit::TestCase
                 arg = nil
                 if @config.boolean?(param)
                     if val
-                        opt = "--%s" % param
+                        opt = "--#{param}"
                     else
-                        opt = "--no-%s" % param
+                        opt = "--no-#{param}"
                     end
                 else
-                    opt = "--%s" % param
+                    opt = "--#{param}"
                     arg = val
                 end
 
-                assert_nothing_raised("Could not handle arg %s with value %s" % [opt, val]) {
+                assert_nothing_raised("Could not handle arg #{opt} with value #{val}") {
 
                     @config.handlearg(opt, arg)
                 }
@@ -512,7 +512,7 @@ class TestSettings < Test::Unit::TestCase
                 assert_instance_of(
                     type, elem,
 
-                    "%s got created as wrong type" % value.inspect)
+                    "#{value.inspect} got created as wrong type")
         end
     end
 
@@ -541,7 +541,7 @@ class TestSettings < Test::Unit::TestCase
         }
 
         %w{singleq doubleq none}.each do |p|
-            assert_equal("one", config[p], "%s did not match" % p)
+            assert_equal("one", config[p], "#{p} did not match")
         end
         assert_equal('mid"quote', config["middle"], "middle did not match")
     end

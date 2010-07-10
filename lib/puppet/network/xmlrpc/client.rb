@@ -83,7 +83,7 @@ module Puppet::Network
                     Puppet.warning "Certificate validation failed; consider using the certname configuration option"
                 end
             end
-            raise XMLRPCClientError, "Certificates were not trusted: %s" % detail
+            raise XMLRPCClientError, "Certificates were not trusted: #{detail}"
         end
 
         handle_error(:default) do |client, detail, namespace, method|
@@ -91,7 +91,7 @@ module Puppet::Network
                 Puppet.warning "XMLRPC returned wrong size.  Retrying."
                 return :retry
             end
-            Puppet.err "Could not call %s.%s: %s" % [namespace, method, detail.inspect]
+            Puppet.err "Could not call #{namespace}.#{method}: #{detail.inspect}"
             error = XMLRPCClientError.new(detail.to_s)
             error.set_backtrace detail.backtrace
             raise error
@@ -108,7 +108,7 @@ module Puppet::Network
                     Puppet.warning "Certificate validation failed; consider using the certname configuration option"
                 end
             end
-            raise XMLRPCClientError, "Certificates were not trusted: %s" % detail
+            raise XMLRPCClientError, "Certificates were not trusted: #{detail}"
         end
 
         handle_error(::XMLRPC::FaultException) do |client, detail, namespace, method|
@@ -116,13 +116,13 @@ module Puppet::Network
         end
 
         handle_error(Errno::ECONNREFUSED) do |client, detail, namespace, method|
-            msg = "Could not connect to %s on port %s" % [client.host, client.port]
+            msg = "Could not connect to #{client.host} on port #{client.port}"
             raise XMLRPCClientError, msg
         end
 
         handle_error(SocketError) do |client, detail, namespace, method|
-            Puppet.err "Could not find server %s: %s" % [@host, detail.to_s]
-            error = XMLRPCClientError.new("Could not find server %s" % client.host)
+            Puppet.err "Could not find server #{@host}: #{detail}"
+            error = XMLRPCClientError.new("Could not find server #{client.host}")
             error.set_backtrace detail.backtrace
             raise error
         end
@@ -134,16 +134,16 @@ module Puppet::Network
         end
 
         handle_error(Timeout::Error) do |client, detail, namespace, method|
-            Puppet.err "Connection timeout calling %s.%s: %s" % [namespace, method, detail.to_s]
+            Puppet.err "Connection timeout calling #{namespace}.#{method}: #{detail}"
             error = XMLRPCClientError.new("Connection Timeout")
             error.set_backtrace(detail.backtrace)
             raise error
         end
 
         def make_rpc_call(namespace, method, *args)
-            Puppet.debug "Calling %s.%s" % [namespace, method]
+            Puppet.debug "Calling #{namespace}.#{method}"
             begin
-                call("%s.%s" % [namespace, method.to_s],*args)
+                call("#{namespace}.#{method}",*args)
             rescue SystemExit,NoMemoryError
                 raise
             rescue Exception => detail
@@ -207,7 +207,7 @@ module Puppet::Network
             begin
                 @http.start unless @http.started?
             rescue => detail
-                Puppet.err "Could not connect to server: %s" % detail
+                Puppet.err "Could not connect to server: #{detail}"
             end
         end
 

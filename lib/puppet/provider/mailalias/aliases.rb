@@ -37,7 +37,7 @@ require 'puppet/provider/parsedfile'
                     d
                 end
             end.join(",")
-            return "%s: %s" % [record[:name], dest]
+            return "#{record[:name]}: #{dest}"
         end
     end
 end

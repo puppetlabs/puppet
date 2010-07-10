@@ -19,7 +19,7 @@ Puppet::Type.type(:package).provide :aptitude, :parent => :apt, :source => :dpkg
         # Yay, stupid aptitude doesn't throw an error when the package is missing.
         if args.include?(:install) and output =~ /Couldn't find any package/
             raise Puppet::Error.new(
-                "Could not find package %s" % self.name
+                "Could not find package #{self.name}"
             )
         end
     end

@@ -63,7 +63,7 @@ class Puppet::Parser::Lexer
         # Create a new token.
         def add_token(name, regex, options = {}, &block)
             token = Token.new(regex, name)
-            raise(ArgumentError, "Token %s already exists" % name) if @tokens.include?(name)
+            raise(ArgumentError, "Token #{name} already exists") if @tokens.include?(name)
             @tokens[token.name] = token
             if token.string
                 @string_tokens << token
@@ -487,7 +487,7 @@ class Puppet::Parser::Lexer
 
                 if @previous_token.name == :DEFINE
                     if indefine?
-                        msg = "Cannot nest definition %s inside %s" % [value, @indefine]
+                        msg = "Cannot nest definition #{value} inside #{@indefine}"
                         self.indefine = false
                         raise Puppet::ParseError, msg
                     end

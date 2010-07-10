@@ -27,13 +27,13 @@ class Puppet::Network::Format
         define_method_names()
 
         method_list = {
-            :intern_method => "from_%s" % name,
-            :intern_multiple_method => "from_multiple_%s" % name,
-            :render_multiple_method => "to_multiple_%s" % name,
-            :render_method => "to_%s" % name
+            :intern_method => "from_#{name}",
+            :intern_multiple_method => "from_multiple_#{name}",
+            :render_multiple_method => "to_multiple_#{name}",
+            :render_method => "to_#{name}"
         }
 
-        init_attribute(:mime, "text/%s" % name)
+        init_attribute(:mime, "text/#{name}")
         init_attribute(:weight, 5)
         init_attribute(:required_methods, method_list.keys)
         init_attribute(:extension, name.to_s)
@@ -43,7 +43,7 @@ class Puppet::Network::Format
         end
 
         unless @options.empty?
-            raise ArgumentError, "Unsupported option(s) %s" % @options.keys
+            raise ArgumentError, "Unsupported option(s) #{@options.keys}"
         end
 
         @options = nil
@@ -53,12 +53,12 @@ class Puppet::Network::Format
 
     def intern(klass, text)
         return klass.send(intern_method, text) if klass.respond_to?(intern_method)
-        raise NotImplementedError, "%s does not respond to %s; can not intern instances from %s" % [klass, intern_method, mime]
+        raise NotImplementedError, "#{klass} does not respond to #{intern_method}; can not intern instances from #{mime}"
     end
 
     def intern_multiple(klass, text)
         return klass.send(intern_multiple_method, text) if klass.respond_to?(intern_multiple_method)
-        raise NotImplementedError, "%s does not respond to %s; can not intern multiple instances from %s" % [klass, intern_multiple_method, mime]
+        raise NotImplementedError, "#{klass} does not respond to #{intern_multiple_method}; can not intern multiple instances from #{mime}"
     end
 
     def mime=(mime)
@@ -67,13 +67,13 @@ class Puppet::Network::Format
 
     def render(instance)
         return instance.send(render_method) if instance.respond_to?(render_method)
-        raise NotImplementedError, "%s does not respond to %s; can not render instances to %s" % [instance.class, render_method, mime]
+        raise NotImplementedError, "#{instance.class} does not respond to #{render_method}; can not render instances to #{mime}"
     end
 
     def render_multiple(instances)
         # This method implicitly assumes that all instances are of the same type.
         return instances[0].class.send(render_multiple_method, instances) if instances[0].class.respond_to?(render_multiple_method)
-        raise NotImplementedError, "%s does not respond to %s; can not intern multiple instances to %s" % [instances[0].class, render_multiple_method, mime]
+        raise NotImplementedError, "#{instances[0].class} does not respond to #{render_multiple_method}; can not intern multiple instances to #{mime}"
     end
 
     def required_methods_present?(klass)
@@ -91,16 +91,16 @@ class Puppet::Network::Format
     end
 
     def to_s
-        "Puppet::Network::Format[%s]" % name
+        "Puppet::Network::Format[#{name}]"
     end
 
     private
 
     def define_method_names
-        @intern_method = "from_%s" % name
-        @render_method = "to_%s" % name
-        @intern_multiple_method = "from_multiple_%s" % name
-        @render_multiple_method = "to_multiple_%s" % name
+        @intern_method = "from_#{name}"
+        @render_method = "to_#{name}"
+        @intern_multiple_method = "from_multiple_#{name}"
+        @render_multiple_method = "to_multiple_#{name}"
     end
 
     def required_method_present?(name, klass, type)

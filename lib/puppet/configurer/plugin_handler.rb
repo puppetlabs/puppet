@@ -17,12 +17,12 @@ module Puppet::Configurer::PluginHandler
         return if FileTest.directory?(file)
 
         begin
-            Puppet.info "Loading downloaded plugin %s" % file
+            Puppet.info "Loading downloaded plugin #{file}"
             load file
         rescue SystemExit,NoMemoryError
             raise
         rescue Exception => detail
-            Puppet.err "Could not load downloaded file %s: %s" % [file, detail]
+            Puppet.err "Could not load downloaded file #{file}: #{detail}"
         end
     end
 end

@@ -194,7 +194,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def ref(dummy_argument=:work_arround_for_ruby_GC_bug)
-        "%s[%s]" % [self[:restype].split("::").collect { |s| s.capitalize }.join("::"), self.title.to_s]
+        "#{self[:restype].split("::").collect { |s| s.capitalize }.join("::")}[#{self.title}]"
     end
 
     # Returns a hash of parameter names and values, no ActiveRecord instances.

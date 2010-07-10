@@ -80,7 +80,7 @@ class Puppet::Parser::Collector
         @equery = equery
         @vquery = vquery
 
-        raise(ArgumentError, "Invalid query form %s" % form) unless [:exported, :virtual].include?(form)
+        raise(ArgumentError, "Invalid query form #{form}") unless [:exported, :virtual].include?(form)
         @form = form
     end
 
@@ -106,7 +106,7 @@ class Puppet::Parser::Collector
         search = "(exported=? AND restype=?)"
         values = [true, @type]
 
-        search += " AND (%s)" % @equery if @equery
+        search += " AND (#{@equery})" if @equery
 
         # note:
         # we're not eagerly including any relations here because
@@ -125,7 +125,7 @@ class Puppet::Parser::Collector
 
         # We're going to collect objects from rails, but we don't want any
         # objects from this host.
-        search = ("host_id != ? AND %s" % search) and values.unshift(host.id) if host
+        search = ("host_id != ? AND #{search}") and values.unshift(host.id) if host
 
         query[:conditions] = [search, *values]
 
@@ -207,7 +207,7 @@ class Puppet::Parser::Collector
             return nil if existing.rails_id == obj.id
 
             # This is the one we've already collected
-            raise Puppet::ParseError, "Exported resource %s cannot override local resource" % [obj.ref]
+            raise Puppet::ParseError, "Exported resource #{obj.ref} cannot override local resource"
         end
 
         resource = obj.to_resource(self.scope)

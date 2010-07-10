@@ -106,7 +106,7 @@ class Puppet::SSLCertificates::Certificate
             case hash[:type]
             when :ca, :client, :server; @type = hash[:type]
             else
-                raise "Invalid Cert type %s" % hash[:type]
+                raise "Invalid Cert type #{hash[:type]}"
             end
         else
             @type = :client

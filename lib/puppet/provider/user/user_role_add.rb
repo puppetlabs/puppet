@@ -54,7 +54,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
     def command(cmd)
         if is_role? or (!exists? and @resource[:ensure] == :role)
-            cmd = ("role_" + cmd.to_s).intern
+            cmd = ("role_#{cmd}").intern
         end
         super(cmd)
     end
@@ -67,7 +67,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
         begin
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not %s %s %s: %s" % [msg, @resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not #{msg} #{@resource.class.name} #{@resource.name}: #{detail}"
         end
     end
 
@@ -182,7 +182,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
             end
             File.rename("/etc/shadow_tmp", "/etc/shadow")
         rescue => detail
-            fail "Could not write temporary shadow file: %s" % detail
+            fail "Could not write temporary shadow file: #{detail}"
         ensure
             # Make sure this *always* gets deleted
             File.unlink("/etc/shadow_tmp") if File.exist?("/etc/shadow_tmp")

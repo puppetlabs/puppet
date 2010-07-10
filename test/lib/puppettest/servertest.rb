@@ -15,9 +15,9 @@ module PuppetTest::ServerTest
 
     # create a simple manifest that just creates a file
     def mktestmanifest
-        file = File.join(Puppet[:confdir], "%ssite.pp" % (self.class.to_s + "test"))
+        file = File.join(Puppet[:confdir], "#{(self.class.to_s + "test")}site.pp")
         #@createdfile = File.join(tmpdir(), self.class.to_s + "manifesttesting" +
-        #    "_" + @method_name)
+        #    "_#{@method_name}")
         @createdfile = tempfile()
 
         File.open(file, "w") { |f|

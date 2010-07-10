@@ -44,7 +44,7 @@ class Puppet::Util::ResourceTemplate
     end
 
     def initialize(file, resource)
-        raise ArgumentError, "Template %s does not exist" % file unless FileTest.exist?(file)
+        raise ArgumentError, "Template #{file} does not exist" unless FileTest.exist?(file)
         @file = file
         @resource = resource
     end

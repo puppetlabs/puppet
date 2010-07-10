@@ -14,14 +14,14 @@ class Puppet::Util::Feature
     def add(name, options = {})
         method = name.to_s + "?"
         if self.class.respond_to?(method)
-            raise ArgumentError, "Feature %s is already defined" % name
+            raise ArgumentError, "Feature #{name} is already defined"
         end
 
         if block_given?
             begin
                 result = yield
             rescue Exception => detail
-                warn "Failed to load feature test for %s: %s" % [name, detail]
+                warn "Failed to load feature test for #{name}: #{detail}"
                 result = false
             end
             @results[name] = result
@@ -78,7 +78,7 @@ class Puppet::Util::Feature
 
     def load_library(lib, name)
         unless lib.is_a?(String)
-            raise ArgumentError, "Libraries must be passed as strings not %s" % lib.class
+            raise ArgumentError, "Libraries must be passed as strings not #{lib.class}"
         end
 
         begin
@@ -86,7 +86,7 @@ class Puppet::Util::Feature
         rescue SystemExit,NoMemoryError
             raise
         rescue Exception
-            Puppet.debug "Failed to load library '%s' for feature '%s'" % [lib, name]
+            Puppet.debug "Failed to load library '#{lib}' for feature '#{name}'"
             return false
         end
         return true

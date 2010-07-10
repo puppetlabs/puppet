@@ -18,7 +18,7 @@ module Puppet::Rails
             loglevel = Logger.const_get(Puppet[:rails_loglevel].upcase)
             ActiveRecord::Base.logger.level = loglevel
         rescue => detail
-            Puppet.warning "'%s' is not a valid Rails log level; using debug" % Puppet[:rails_loglevel]
+            Puppet.warning "'#{Puppet[:rails_loglevel]}' is not a valid Rails log level; using debug"
             ActiveRecord::Base.logger.level = Logger::DEBUG
         end
 
@@ -36,7 +36,7 @@ module Puppet::Rails
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            raise Puppet::Error, "Could not connect to database: %s" % detail
+            raise Puppet::Error, "Could not connect to database: #{detail}"
         end
     end
 
@@ -70,7 +70,7 @@ module Puppet::Rails
             connections     = Puppet[:dbconnections].to_i
             args[:pool]     = connections if connections > 0
         else
-            raise ArgumentError, "Invalid db adapter %s" % adapter
+            raise ArgumentError, "Invalid db adapter #{adapter}"
         end
         args
     end
@@ -121,7 +121,7 @@ module Puppet::Rails
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            raise Puppet::Error, "Could not migrate database: %s" % detail
+            raise Puppet::Error, "Could not migrate database: #{detail}"
         end
     end
 
@@ -139,7 +139,7 @@ module Puppet::Rails
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            raise Puppet::Error, "Could not connect to database: %s" % detail
+            raise Puppet::Error, "Could not connect to database: #{detail}"
         end
 
         ActiveRecord::Base.connection.tables.each do |t|

@@ -19,14 +19,14 @@ module Puppet::Network::HTTP::API::V1
     def uri2indirection(http_method, uri, params)
         environment, indirection, key = uri.split("/", 4)[1..-1] # the first field is always nil because of the leading slash
 
-        raise ArgumentError, "The environment must be purely alphanumeric, not '%s'" % environment unless environment =~ /^\w+$/
-        raise ArgumentError, "The indirection name must be purely alphanumeric, not '%s'" % indirection unless indirection =~ /^\w+$/
+        raise ArgumentError, "The environment must be purely alphanumeric, not '#{environment}'" unless environment =~ /^\w+$/
+        raise ArgumentError, "The indirection name must be purely alphanumeric, not '#{indirection}'" unless indirection =~ /^\w+$/
 
         method = indirection_method(http_method, indirection)
 
         params[:environment] = environment
 
-        raise ArgumentError, "No request key specified in %s" % uri if key == "" or key.nil?
+        raise ArgumentError, "No request key specified in #{uri}" if key == "" or key.nil?
 
         key = URI.unescape(key)
 
@@ -40,11 +40,11 @@ module Puppet::Network::HTTP::API::V1
 
     def indirection_method(http_method, indirection)
         unless METHOD_MAP[http_method]
-            raise ArgumentError, "No support for http method %s" % http_method
+            raise ArgumentError, "No support for http method #{http_method}"
         end
 
         unless method = METHOD_MAP[http_method][plurality(indirection)]
-            raise ArgumentError, "No support for plural %s operations" % http_method
+            raise ArgumentError, "No support for plural #{http_method} operations"
         end
 
         return method

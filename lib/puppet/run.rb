@@ -26,7 +26,7 @@ class Puppet::Run
 
         valid_options = [:tags, :ignoreschedules]
         options.each do |key, value|
-            raise ArgumentError, "Run does not accept %s" % key unless valid_options.include?(key)
+            raise ArgumentError, "Run does not accept #{key}" unless valid_options.include?(key)
         end
 
         @options = options

@@ -33,7 +33,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
             # pass
         else
             # Add the package version
-            str += "=%s" % should
+            str += "=#{should}"
         end
         cmd = %w{-b -q -y}
 
@@ -61,7 +61,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     #
     def run_preseed
         if response = @resource[:responsefile] and FileTest.exists?(response)
-            self.info("Preseeding %s to debconf-set-selections" % response)
+            self.info("Preseeding #{response} to debconf-set-selections")
 
             preseed response
         else

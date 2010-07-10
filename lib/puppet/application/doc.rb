@@ -22,12 +22,12 @@ class Puppet::Application::Doc < Puppet::Application
     option("--charset CHARSET")
 
     option("--format FORMAT", "-f") do |arg|
-        method = "to_%s" % arg
+        method = "to_#{arg}"
         require 'puppet/util/reference'
         if Puppet::Util::Reference.method_defined?(method)
             options[:format] = method
         else
-            raise "Invalid output format %s" % arg
+            raise "Invalid output format #{arg}"
         end
     end
 
@@ -36,7 +36,7 @@ class Puppet::Application::Doc < Puppet::Application
         if Puppet::Util::Reference.modes.include?(arg) or arg.intern==:rdoc
             options[:mode] = arg.intern
         else
-            raise "Invalid output mode %s" % arg
+            raise "Invalid output mode #{arg}"
         end
     end
 
@@ -69,7 +69,7 @@ class Puppet::Application::Doc < Puppet::Application
             files << File.dirname(env[:manifest])
         end
         files += command_line.args
-        Puppet.info "scanning: %s" % files.inspect
+        Puppet.info "scanning: #{files.inspect}"
 
                     Puppet.settings.setdefaults(
                 "puppetdoc",
@@ -89,7 +89,7 @@ class Puppet::Application::Doc < Puppet::Application
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            $stderr.puts "Could not generate documentation: %s" % detail
+            $stderr.puts "Could not generate documentation: #{detail}"
             exit_code = 1
         end
         exit exit_code
@@ -98,7 +98,7 @@ class Puppet::Application::Doc < Puppet::Application
     def trac
         require 'puppet/util/reference'
         options[:references].each do |name|
-            section = Puppet::Util::Reference.reference(name) or raise "Could not find section %s" % name
+            section = Puppet::Util::Reference.reference(name) or raise "Could not find section #{name}"
             unless options[:mode] == :pdf
                 section.trac
             end
@@ -111,7 +111,7 @@ class Puppet::Application::Doc < Puppet::Application
         exit_code = 0
         require 'puppet/util/reference'
         options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-            raise "Could not find reference %s" % name unless section = Puppet::Util::Reference.reference(name)
+            raise "Could not find reference #{name}" unless section = Puppet::Util::Reference.reference(name)
 
             begin
                 # Add the per-section text, but with no ToC
@@ -122,7 +122,7 @@ class Puppet::Application::Doc < Puppet::Application
                 text = ""
             rescue => detail
                 puts detail.backtrace
-                $stderr.puts "Could not generate reference %s: %s" % [name, detail]
+                $stderr.puts "Could not generate reference #{name}: #{detail}"
                 exit_code = 1
                 next
             end
@@ -141,14 +141,14 @@ class Puppet::Application::Doc < Puppet::Application
         exit_code = 0
         require 'puppet/util/reference'
         options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-            raise "Could not find reference %s" % name unless section = Puppet::Util::Reference.reference(name)
+            raise "Could not find reference #{name}" unless section = Puppet::Util::Reference.reference(name)
 
             begin
                 # Add the per-section text, but with no ToC
                 text += section.send(options[:format], with_contents)
             rescue => detail
                 puts detail.backtrace
-                $stderr.puts "Could not generate reference %s: %s" % [name, detail]
+                $stderr.puts "Could not generate reference #{name}: #{detail}"
                 exit_code = 1
                 next
             end

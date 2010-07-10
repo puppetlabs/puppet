@@ -40,21 +40,21 @@ describe augeas do
         params = [:name, :context, :onlyif, :changes, :root, :load_path, :type_check]
 
         properties.each do |property|
-            it "should have a %s property" % property do
+            it "should have a #{property} property" do
                 augeas.attrclass(property).ancestors.should be_include(Puppet::Property)
             end
 
-            it "should have documentation for its %s property" % property do
+            it "should have documentation for its #{property} property" do
                 augeas.attrclass(property).doc.should be_instance_of(String)
             end
         end
 
         params.each do |param|
-            it "should have a %s parameter" % param do
+            it "should have a #{param} parameter" do
                 augeas.attrclass(param).ancestors.should be_include(Puppet::Parameter)
             end
 
-            it "should have documentation for its %s parameter" % param do
+            it "should have documentation for its #{param} parameter" do
                 augeas.attrclass(param).doc.should be_instance_of(String)
             end
         end

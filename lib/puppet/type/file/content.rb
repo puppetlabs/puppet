@@ -56,11 +56,11 @@ module Puppet
                 newvalue = tmp
             end
             if currentvalue == :absent
-                return "defined content as '%s'" % [newvalue]
+                return "defined content as '#{newvalue}'"
             elsif newvalue == :absent
-                return "undefined content from '%s'" % [currentvalue]
+                return "undefined content from '#{currentvalue}'"
             else
-                return "content changed '%s' to '%s'" % [currentvalue, newvalue]
+                return "content changed '#{currentvalue}' to '#{newvalue}'"
             end
         end
 
@@ -192,7 +192,7 @@ module Puppet
                 when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
                 else
                     # Raise the http error if we didn't get a 'success' of some kind.
-                    message = "Error %s on SERVER: %s" % [response.code, (response.body||'').empty? ? response.message : uncompress_body(response)]
+                    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
                     raise Net::HTTPError.new(message, response)
                 end
             end

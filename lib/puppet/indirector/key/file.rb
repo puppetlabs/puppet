@@ -25,7 +25,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
         begin
             File.unlink(public_key_path(request.key))
         rescue => detail
-            raise Puppet::Error, "Could not remove %s public key: %s" % [request.key, detail]
+            raise Puppet::Error, "Could not remove #{request.key} public key: #{detail}"
         end
     end
 
@@ -36,7 +36,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
         begin
             Puppet.settings.writesub(:publickeydir, public_key_path(request.key)) { |f| f.print request.instance.content.public_key.to_pem }
         rescue => detail
-            raise Puppet::Error, "Could not write %s: %s" % [request.key, detail]
+            raise Puppet::Error, "Could not write #{request.key}: #{detail}"
         end
     end
 end

@@ -24,7 +24,7 @@ class Puppet::Util::Autoload
     # List all loaded files.
     def self.list_loaded
         @loaded.sort { |a,b| a[0] <=> b[0] }.collect do |path, hash|
-            "%s: %s" % [path, hash[:file]]
+            "#{path}: #{hash[:file]}"
         end
     end
 
@@ -62,7 +62,7 @@ class Puppet::Util::Autoload
             begin
                 self.send(opt.to_s + "=", value)
             rescue NoMethodError
-                raise ArgumentError, "%s is not a valid option" % opt
+                raise ArgumentError, "#{opt} is not a valid option"
             end
         end
 

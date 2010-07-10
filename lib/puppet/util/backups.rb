@@ -49,7 +49,7 @@ module Puppet::Util::Backups
         rescue => detail
             # since they said they want a backup, let's error out
             # if we couldn't make one
-            self.fail "Could not back %s up: %s" % [file, detail.message]
+            self.fail "Could not back #{file} up: #{detail.message}"
         end
     end
 
@@ -67,22 +67,22 @@ module Puppet::Util::Backups
         end
 
         if stat.ftype == "directory"
-            raise Puppet::Error, "Will not remove directory backup %s; use a filebucket" % newfile
+            raise Puppet::Error, "Will not remove directory backup #{newfile}; use a filebucket"
         end
 
-        info "Removing old backup of type %s" % stat.ftype
+        info "Removing old backup of type #{stat.ftype}"
 
         begin
             File.unlink(newfile)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            self.fail "Could not remove old backup: %s" % detail
+            self.fail "Could not remove old backup: #{detail}"
         end
     end
 
     def backup_file_with_filebucket(f)
         sum = self.bucket.backup(f)
-        self.info "Filebucketed %s to %s with sum %s" % [f, self.bucket.name, sum]
+        self.info "Filebucketed #{f} to #{self.bucket.name} with sum #{sum}"
         return sum
         end
 end

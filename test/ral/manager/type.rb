@@ -10,11 +10,11 @@ class TestType < Test::Unit::TestCase
     def test_typemethods
         Puppet::Type.eachtype { |type|
             name = nil
-            assert_nothing_raised("Searching for name for %s caused failure" % type.to_s) {
+            assert_nothing_raised("Searching for name for #{type} caused failure") {
                     name = type.name
             }
 
-            assert(name, "Could not find name for %s" % type.to_s)
+            assert(name, "Could not find name for #{type}")
 
 
                         assert_equal(
@@ -22,7 +22,7 @@ class TestType < Test::Unit::TestCase
                 type,
                 Puppet::Type.type(name),
         
-                "Failed to retrieve %s by name" % name
+                "Failed to retrieve #{name} by name"
             )
 
             # Skip types with no parameters or valid properties
@@ -36,7 +36,7 @@ class TestType < Test::Unit::TestCase
                 
                     type.properties,
         
-                    "Properties for %s are nil" % name
+                    "Properties for #{name} are nil"
                 )
 
 
@@ -44,7 +44,7 @@ class TestType < Test::Unit::TestCase
                 
                     type.validproperties,
         
-                    "Valid properties for %s are nil" % name
+                    "Valid properties for #{name} are nil"
                 )
             }
         }
@@ -345,7 +345,7 @@ class TestType < Test::Unit::TestCase
         end
 
         [:path, :owner, :recurse, :loglevel].each do |param|
-            assert(hash[param], "Hash did not include %s" % param)
+            assert(hash[param], "Hash did not include #{param}")
         end
     end
 

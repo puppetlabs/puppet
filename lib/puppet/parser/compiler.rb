@@ -158,7 +158,7 @@ class Puppet::Parser::Compiler
                 resource.evaluate unless lazy_evaluate
                 found << name
             else
-                Puppet.info "Could not find class %s for %s" % [name, node.name]
+                Puppet.info "Could not find class #{name} for #{node.name}"
                 @catalog.tag(name)
             end
         end
@@ -181,7 +181,7 @@ class Puppet::Parser::Compiler
             begin
                 send(param.to_s + "=", value)
             rescue NoMethodError
-                raise ArgumentError, "Compiler objects do not accept %s" % param
+                raise ArgumentError, "Compiler objects do not accept #{param}"
             end
         end
 
@@ -222,7 +222,7 @@ class Puppet::Parser::Compiler
         end
 
         unless (astnode ||= known_resource_types.node("default"))
-            raise Puppet::ParseError, "Could not find default node or by name with '%s'" % node.names.join(", ")
+            raise Puppet::ParseError, "Could not find default node or by name with '#{node.names.join(", ")}'"
         end
 
         # Create a resource to model this node, and then add it to the list
@@ -355,7 +355,7 @@ class Puppet::Parser::Compiler
         end
 
         unless remaining.empty?
-            raise Puppet::ParseError, "Failed to realize virtual resources %s" % remaining.join(', ')
+            raise Puppet::ParseError, "Failed to realize virtual resources #{remaining.join(', ')}"
         end
     end
 

@@ -23,7 +23,7 @@ module Puppet
             when String
                 newvalue
             else
-                raise Puppet::DevError, "Invalid uid type %s(%s)" % [newvalue.class, newvalue]
+                raise Puppet::DevError, "Invalid uid type #{newvalue.class}(#{newvalue})"
             end
         end
 
@@ -34,7 +34,7 @@ module Puppet
                         if tmp = provider.validuser?(val)
                             val = tmp
                         else
-                            raise "Could not find user %s" % val
+                            raise "Could not find user #{val}"
                         end
                     else
                         val

@@ -25,7 +25,7 @@ class Formatter
             end
         end
         res << work if work.length.nonzero?
-        return prefix + res.join("\n" + prefix)
+        return prefix + res.join("\n#{prefix}")
     end
 
     def header(txt, sep = "-")
@@ -133,7 +133,7 @@ class TypeDoc
         docs.sort { |a,b|
             a[0].to_s <=> b[0].to_s
         }.each { |name, doc|
-            print "\n- **%s**" % name
+            print "\n- **#{name}**"
             if type.namevar == name and name != :name
                 puts " (*namevar*)"
             else
@@ -159,7 +159,7 @@ class TypeDoc
         type.providers.sort { |a,b|
             a.to_s <=> b.to_s
         }.each { |prov|
-            puts "\n- **%s**" % prov
+            puts "\n- **#{prov}**"
             puts @format.wrap(type.provider(prov).doc, :indent => 4, :scrub => true)
         }
     end

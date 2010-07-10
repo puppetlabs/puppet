@@ -78,7 +78,7 @@ class TestReports < Test::Unit::TestCase
         Puppet.settings.use(:main, :master)
 
         3.times { |i|
-            log = Puppet.warning("Report test message %s" % i)
+            log = Puppet.warning("Report test message #{i}")
 
             report << log
         }
@@ -123,11 +123,11 @@ class TestReports < Test::Unit::TestCase
 
         # Now make sure it creaets each of the rrd files
         %w{changes resources time}.each do |type|
-            file = File.join(hostdir, "%s.rrd" % type)
-            assert(FileTest.exists?(file), "Did not create rrd file for %s" % type)
+            file = File.join(hostdir, "#{type}.rrd")
+            assert(FileTest.exists?(file), "Did not create rrd file for #{type}")
 
             daily = file.sub ".rrd", "-daily.png"
-            assert(FileTest.exists?(daily), "Did not make daily graph for %s" % type)
+            assert(FileTest.exists?(daily), "Did not make daily graph for #{type}")
         end
 
     end

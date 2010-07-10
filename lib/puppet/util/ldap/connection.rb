@@ -43,7 +43,7 @@ class Puppet::Util::Ldap::Connection
             begin
                 send(param.to_s + "=", value)
             rescue
-                raise ArgumentError, "LDAP connections do not support %s parameters" % param
+                raise ArgumentError, "LDAP connections do not support #{param} parameters"
             end
         end
     end
@@ -73,7 +73,7 @@ class Puppet::Util::Ldap::Connection
             @connection.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
             @connection.simple_bind(user, password)
         rescue => detail
-            raise Puppet::Error, "Could not connect to LDAP: %s" % detail
+            raise Puppet::Error, "Could not connect to LDAP: #{detail}"
         end
     end
 end

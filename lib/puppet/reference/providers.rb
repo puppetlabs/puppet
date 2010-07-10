@@ -53,31 +53,31 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
                 suit = true
                 functional = true
             else
-                data << "[%s]_" % [count] # A pointer to the appropriate footnote
+                data << "[#{count}]_" # A pointer to the appropriate footnote
                 suit = false
             end
 
             # Add a footnote with the details about why this provider is unsuitable, if that's the case
             unless suit
-                details = ".. [%s]\n" % count
+                details = ".. [#{count}]\n"
                 missing.each do |test, values|
                     case test
                     when :exists
-                        details += "  - Missing files %s\n" % values.join(", ")
+                        details += "  - Missing files #{values.join(", ")}\n"
                     when :variable
                         values.each do |name, facts|
                             if Puppet.settings.valid?(name)
-                                details += "  - Setting %s (currently %s) not in list %s\n" % [name, Puppet.settings.value(name).inspect, facts.join(", ")]
+                                details += "  - Setting #{name} (currently #{Puppet.settings.value(name).inspect}) not in list #{facts.join(", ")}\n"
                             else
-                                details += "  - Fact %s (currently %s) not in list %s\n" % [name, Facter.value(name).inspect, facts.join(", ")]
+                                details += "  - Fact #{name} (currently #{Facter.value(name).inspect}) not in list #{facts.join(", ")}\n"
                             end
                         end
                     when :true
-                        details += "  - Got %s true tests that should have been false\n" % values
+                        details += "  - Got #{values} true tests that should have been false\n"
                     when :false
-                        details += "  - Got %s false tests that should have been true\n" % values
+                        details += "  - Got #{values} false tests that should have been true\n"
                     when :feature
-                        details += "  - Missing features %s\n" % values.collect { |f| f.to_s }.join(",")
+                        details += "  - Missing features #{values.collect { |f| f.to_s }.join(",")}\n"
                     end
                 end
                 notes << details
@@ -97,7 +97,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
         ret += h(type.name.to_s + "_", 2)
 
-        ret += ".. _%s: %s\n\n" % [type.name, "http://reductivelabs.com/trac/puppet/wiki/TypeReference#%s" % type.name]
+        ret += ".. _#{type.name}: #{"http://reductivelabs.com/trac/puppet/wiki/TypeReference##{type.name}"}\n\n"
         ret += option("Default provider", default)
         ret += doctable(headers, table_data)
 

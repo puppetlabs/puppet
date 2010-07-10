@@ -25,7 +25,7 @@ module Puppet::FileServing::IndirectionHooks
         end
 
         if request.protocol and PROTOCOL_MAP[request.protocol].nil?
-            raise(ArgumentError, "URI protocol '%s' is not currently supported for file serving" % request.protocol)
+            raise(ArgumentError, "URI protocol '#{request.protocol}' is not currently supported for file serving")
         end
 
         # If we're still here, we're using the file_server or modules.

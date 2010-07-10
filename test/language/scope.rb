@@ -42,14 +42,14 @@ class TestScope < Test::Unit::TestCase
         # Set a variable in the top and make sure all three can get it
         topscope.setvar("first", "topval")
         scopes.each do |name, scope|
-            assert_equal("topval", scope.lookupvar("first", false), "Could not find var in %s" % name)
+            assert_equal("topval", scope.lookupvar("first", false), "Could not find var in #{name}")
         end
 
         # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
         midscope.setvar("second", "midval")
         assert_equal(:undefined, scopes[:top].lookupvar("second", false), "Found child var in top scope")
         [:mid, :bot].each do |name|
-            assert_equal("midval", scopes[name].lookupvar("second", false), "Could not find var in %s" % name)
+            assert_equal("midval", scopes[name].lookupvar("second", false), "Could not find var in #{name}")
         end
 
         # And set something in the bottom, and make sure we only find it there.

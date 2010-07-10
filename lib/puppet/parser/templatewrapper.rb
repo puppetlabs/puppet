@@ -62,13 +62,13 @@ class Puppet::Parser::TemplateWrapper
         else
             # Just throw an error immediately, instead of searching for
             # other missingmethod things or whatever.
-            raise Puppet::ParseError, "Could not find value for '%s'" % name
+            raise Puppet::ParseError, "Could not find value for '#{name}'"
         end
     end
 
     def file=(filename)
         unless @file = Puppet::Parser::Files.find_template(filename, scope.compiler.environment.to_s)
-            raise Puppet::ParseError, "Could not find template '%s'" % filename
+            raise Puppet::ParseError, "Could not find template '#{filename}'"
         end
 
         # We'll only ever not have a parser in testing, but, eh.
@@ -109,6 +109,6 @@ class Puppet::Parser::TemplateWrapper
     end
 
     def to_s
-        "template[%s]" % (file ? file : "inline")
+        "template[#{(file ? file : "inline")}]"
     end
 end

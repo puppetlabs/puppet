@@ -13,7 +13,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     def extract_facts_from_request(request)
         return unless text_facts = request.options[:facts]
-        raise ArgumentError, "Facts but no fact format provided for %s" % request.name unless format = request.options[:facts_format]
+        raise ArgumentError, "Facts but no fact format provided for #{request.name}" unless format = request.options[:facts_format]
 
         # If the facts were encoded as yaml, then the param reconstitution system
         # in Network::HTTP::Handler will automagically deserialize the value.
@@ -66,15 +66,15 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     # Compile the actual catalog.
     def compile(node)
-        str = "Compiled catalog for %s" % node.name
+        str = "Compiled catalog for #{node.name}"
         if node.environment
-            str += " in environment %s" % node.environment
+            str += " in environment #{node.environment}"
         end
         config = nil
 
         loglevel = networked? ? :notice : :none
 
-        benchmark(loglevel, "Compiled catalog for %s" % node.name) do
+        benchmark(loglevel, "Compiled catalog for #{node.name}") do
             begin
                 return Puppet::Parser::Compiler.compile(node)
             rescue Puppet::Error => detail
@@ -92,7 +92,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             return nil unless node = Puppet::Node.find(name)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            raise Puppet::Error, "Failed when searching for node %s: %s" % [name, detail]
+            raise Puppet::Error, "Failed when searching for node #{name}: #{detail}"
         end
 
 
@@ -117,7 +117,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             return node
         end
 
-        raise ArgumentError, "Could not find node '%s'; cannot compile" % name
+        raise ArgumentError, "Could not find node '#{name}'; cannot compile"
     end
 
     # Initialize our server fact hash; we add these to each client, and they
@@ -135,7 +135,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
             if value = Facter.value(fact)
                 @server_facts[var] = value
             else
-                Puppet.warning "Could not retrieve fact %s" % fact
+                Puppet.warning "Could not retrieve fact #{fact}"
             end
         end
 

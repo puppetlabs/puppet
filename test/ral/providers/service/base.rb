@@ -26,10 +26,10 @@ class TestBaseServiceProvider < Test::Unit::TestCase
                     service = Puppet::Type.type(:service).new(
                 
             :name => "yaytest", :provider => :base,
-            :start => "%s %s" % [commands[:touch], running],
-            :status => "%s -f %s" % [commands[:test], running],
+            :start => "#{commands[:touch]} #{running}",
+            :status => "#{commands[:test]} -f #{running}",
         
-            :stop => "%s %s" % [commands[:rm], running]
+            :stop => "#{commands[:rm]} #{running}"
         )
 
         provider = service.provider
@@ -71,7 +71,7 @@ class TestBaseServiceProvider < Test::Unit::TestCase
         # We can't fail well when status is messed up, because we depend on the return code
         # of the command for data.
         %w{start stop restart}.each do |command|
-            assert_raise(Puppet::Error, "did not throw error when %s failed" % command) do
+            assert_raise(Puppet::Error, "did not throw error when #{command} failed") do
                 provider.send(command)
             end
         end

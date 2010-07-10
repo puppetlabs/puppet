@@ -52,7 +52,7 @@ module Puppet::Util::Queue
     # each registration.
     def self.register_queue_type(klass, type = nil)
         type ||= queue_type_from_class(klass)
-        raise Puppet::Error, "Queue type %s is already registered" % type.to_s if instance_hash(:queue_clients).include?(type)
+        raise Puppet::Error, "Queue type #{type} is already registered" if instance_hash(:queue_clients).include?(type)
         instance_hash(:queue_clients)[type] = klass
     end
 
@@ -60,7 +60,7 @@ module Puppet::Util::Queue
     # (meaning it hasn't been registered with this module), an exception is thrown.
     def self.queue_type_to_class(type)
         c = loaded_instance :queue_clients, type
-        raise Puppet::Error, "Queue type %s is unknown." % type unless c
+        raise Puppet::Error, "Queue type #{type} is unknown." unless c
         c
     end
 

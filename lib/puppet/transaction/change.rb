@@ -63,7 +63,7 @@ class Puppet::Transaction::Change
     end
 
     def to_s
-        return "change %s" % @property.change_to_s(@is, @should)
+        return "change #{@property.change_to_s(@is, @should)}"
     end
 
     private

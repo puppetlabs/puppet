@@ -49,7 +49,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     def initialize
         Puppet.settings.use(:main, :ssl)
 
-        (collection_directory || file_location) or raise Puppet::DevError, "No file or directory setting provided; terminus %s cannot function" % self.class.name
+        (collection_directory || file_location) or raise Puppet::DevError, "No file or directory setting provided; terminus #{self.class.name} cannot function"
     end
 
     # Use a setting to determine our path.
@@ -68,11 +68,11 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         path = path(request.key)
         return false unless FileTest.exist?(path)
 
-        Puppet.notice "Removing file %s %s at '%s'" % [model, request.key, path]
+        Puppet.notice "Removing file #{model} #{request.key} at '#{path}'"
         begin
             File.unlink(path)
         rescue => detail
-            raise Puppet::Error, "Could not remove %s: %s" % [request.key, detail]
+            raise Puppet::Error, "Could not remove #{request.key}: #{detail}"
         end
     end
 
@@ -92,8 +92,8 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
         path = path(request.key)
         dir = File.dirname(path)
 
-        raise Puppet::Error.new("Cannot save %s; parent directory %s does not exist" % [request.key, dir]) unless FileTest.directory?(dir)
-        raise Puppet::Error.new("Cannot save %s; parent directory %s is not writable" % [request.key, dir]) unless FileTest.writable?(dir)
+        raise Puppet::Error.new("Cannot save #{request.key}; parent directory #{dir} does not exist") unless FileTest.directory?(dir)
+        raise Puppet::Error.new("Cannot save #{request.key}; parent directory #{dir} is not writable") unless FileTest.writable?(dir)
 
         write(request.key, path) { |f| f.print request.instance.to_s }
     end
@@ -143,7 +143,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
         full_file = File.join(dir, real_file)
 
-        Puppet.notice "Fixing case in %s; renaming to %s" % [full_file, file]
+        Puppet.notice "Fixing case in #{full_file}; renaming to #{file}"
         File.rename(full_file, file)
 
         return true
@@ -160,7 +160,7 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
             begin
                 Puppet.settings.writesub(setting, path) { |f| yield f }
             rescue => detail
-                raise Puppet::Error, "Could not write %s to %s: %s" % [path, setting, detail]
+                raise Puppet::Error, "Could not write #{path} to #{setting}: #{detail}"
             end
         else
             raise Puppet::DevError, "You must provide a setting to determine where the files are stored"

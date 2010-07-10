@@ -67,7 +67,7 @@ class Puppet::Network::Handler
             when "marshal"
                 return CGI.escape(Marshal.dump(catalog.extract))
             else
-                raise "Invalid markup format '%s'" % format
+                raise "Invalid markup format '#{format}'"
             end
         end
 

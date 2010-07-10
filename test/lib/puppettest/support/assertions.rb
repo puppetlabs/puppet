@@ -20,7 +20,7 @@ module PuppetTest
             Puppet::Util::SUIDManager.gid = gid
             Puppet::Util::SUIDManager.uid = uid
             # FIXME: use the tempfile method from puppettest.rb
-            system("mkfifo "+filename)
+            system("mkfifo #{filename}")
             f = File.open(filename, "w")
             f << "#{Puppet::Util::SUIDManager.uid}\n#{Puppet::Util::SUIDManager.gid}\n"
             yield if block_given?

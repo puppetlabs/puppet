@@ -52,8 +52,8 @@ class TestFileTarget < Test::Unit::TestCase
         subdir = File.join(source, "subdir")
         file = File.join(subdir, "file")
 
-        system("mkdir -p %s" % subdir)
-        system("touch %s" % file)
+        system("mkdir -p #{subdir}")
+        system("touch #{file}")
 
 
                     link = Puppet::Type.type(:file).new(
@@ -88,13 +88,13 @@ class TestFileTarget < Test::Unit::TestCase
         # Make a bunch of files and dirs
         Dir.mkdir(source)
         Dir.chdir(source) do
-            system("mkdir -p %s" % "some/path/of/dirs")
-            system("mkdir -p %s" % "other/path/of/dirs")
-            system("touch %s" % "file")
-            system("touch %s" % "other/file")
-            system("touch %s" % "some/path/of/file")
-            system("touch %s" % "some/path/of/dirs/file")
-            system("touch %s" % "other/path/of/file")
+            system("mkdir -p #{"some/path/of/dirs"}")
+            system("mkdir -p #{"other/path/of/dirs"}")
+            system("touch #{"file"}")
+            system("touch #{"other/file"}")
+            system("touch #{"some/path/of/file"}")
+            system("touch #{"some/path/of/dirs/file"}")
+            system("touch #{"other/path/of/file"}")
 
             files = %x{find . -type f}.chomp.split(/\n/)
             dirs = %x{find . -type d}.chomp.split(/\n/).reject{|d| d =~ /^\.+$/ }
@@ -117,8 +117,8 @@ class TestFileTarget < Test::Unit::TestCase
         files.each do |f|
             f.sub!(/^\.#{File::SEPARATOR}/, '')
             path = File.join(dest, f)
-            assert(FileTest.exists?(path), "Link %s was not created" % path)
-            assert(FileTest.symlink?(path), "%s is not a link" % f)
+            assert(FileTest.exists?(path), "Link #{path} was not created")
+            assert(FileTest.symlink?(path), "#{f} is not a link")
             target = File.readlink(path)
             assert_equal(File.join(source, f), target)
         end
@@ -126,8 +126,8 @@ class TestFileTarget < Test::Unit::TestCase
         dirs.each do |d|
             d.sub!(/^\.#{File::SEPARATOR}/, '')
             path = File.join(dest, d)
-            assert(FileTest.exists?(path), "Dir %s was not created" % path)
-            assert(FileTest.directory?(path), "%s is not a directory" % d)
+            assert(FileTest.exists?(path), "Dir #{path} was not created")
+            assert(FileTest.directory?(path), "#{d} is not a directory")
         end
     end
 
@@ -163,7 +163,7 @@ class TestFileTarget < Test::Unit::TestCase
 
                     resources << Puppet::Type.type(:exec).new(
                 
-            :command => "mkdir %s; touch %s/file" % [source, source],
+            :command => "mkdir #{source}; touch #{source}/file",
             :title => "yay",
         
             :path => ENV["PATH"]

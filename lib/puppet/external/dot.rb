@@ -311,7 +311,7 @@ module DOT
                     i[1] && i[0] != 'label' ?
                         t + $tab + "#{i[0]} = #{i[1]}" :
                         i[1] ? t + $tab + "#{i[0]} = \"#{i[1]}\"" : nil
-                }.compact.join( "\n" ) + "\n" + t + "]\n"
+                }.compact.join( "\n" ) + "\n#{t}]\n"
         end
 
     end # class DOTEdge

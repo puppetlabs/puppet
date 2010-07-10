@@ -23,9 +23,9 @@ class Puppet::Network::Server
             Puppet::Util::Log.reopen
         rescue => detail
             Puppet::Util.secure_open("/tmp/daemonout", "w") { |f|
-                f.puts "Could not start %s: %s" % [Puppet[:name], detail]
+                f.puts "Could not start #{Puppet[:name]}: #{detail}"
             }
-            raise "Could not start %s: %s" % [Puppet[:name], detail]
+            raise "Could not start #{Puppet[:name]}: #{detail}"
         end
     end
 
@@ -34,7 +34,7 @@ class Puppet::Network::Server
     def create_pidfile
         Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
             unless Puppet::Util::Pidlock.new(pidfile).lock
-                raise "Could not create PID file: %s" % [pidfile]
+                raise "Could not create PID file: #{pidfile}"
             end
         end
     end
@@ -44,7 +44,7 @@ class Puppet::Network::Server
         Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
             locker = Puppet::Util::Pidlock.new(pidfile)
             if locker.locked?
-                locker.unlock or Puppet.err "Could not remove PID file %s" % [pidfile]
+                locker.unlock or Puppet.err "Could not remove PID file #{pidfile}"
             end
         end
     end
@@ -57,7 +57,7 @@ class Puppet::Network::Server
     def initialize(args = {})
         valid_args = [:handlers, :xmlrpc_handlers, :port]
         bad_args = args.keys.find_all { |p| ! valid_args.include?(p) }.collect { |p| p.to_s }.join(",")
-        raise ArgumentError, "Invalid argument(s) %s" % bad_args unless bad_args == ""
+        raise ArgumentError, "Invalid argument(s) #{bad_args}" unless bad_args == ""
         @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
         http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
 
@@ -90,7 +90,7 @@ class Puppet::Network::Server
         indirections = @routes.keys if indirections.empty?
 
         indirections.flatten.each do |i|
-            raise(ArgumentError, "Indirection [%s] is unknown." % i) unless @routes[i.to_sym]
+            raise(ArgumentError, "Indirection [#{i}] is unknown.") unless @routes[i.to_sym]
         end
 
         indirections.flatten.each do |i|
@@ -113,7 +113,7 @@ class Puppet::Network::Server
         namespaces = @xmlrpc_routes.keys if namespaces.empty?
 
         namespaces.flatten.each do |i|
-            raise(ArgumentError, "XMLRPC handler '%s' is unknown." % i) unless @xmlrpc_routes[i.to_sym]
+            raise(ArgumentError, "XMLRPC handler '#{i}' is unknown.") unless @xmlrpc_routes[i.to_sym]
         end
 
         namespaces.flatten.each do |i|

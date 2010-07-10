@@ -43,9 +43,9 @@ class TestParsedHostProvider < Test::Unit::TestCase
         end
 
         return {
-            :name => "fakehost%s" % @hcount,
-            :ip => "192.168.27.%s" % @hcount,
-            :host_aliases => ["alias%s" % @hcount],
+            :name => "fakehost#{@hcount}",
+            :ip => "192.168.27.#{@hcount}",
+            :host_aliases => ["alias#{@hcount}"],
             :ensure => :present
         }
     end
@@ -224,10 +224,10 @@ class TestParsedHostProvider < Test::Unit::TestCase
         # And verify that we have data for everything
         hosts.each { |host|
             name = host.resource[:name]
-            assert(text.include?(name), "Host %s is not in file" % name)
+            assert(text.include?(name), "Host #{name} is not in file")
             hash = host.property_hash
-            assert(! hash.empty?, "Could not find host %s" % name)
-            assert(hash[:ip], "Could not find ip for host %s" % name)
+            assert(! hash.empty?, "Could not find host #{name}")
+            assert(hash[:ip], "Could not find ip for host #{name}")
         }
     end
 end

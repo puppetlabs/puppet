@@ -9,7 +9,7 @@ module Puppet::SSLCertificates
     def self.mkcert(hash)
         [:type, :name, :ttl, :issuer, :serial, :publickey].each { |param|
             unless hash.include?(param)
-                raise ArgumentError, "mkcert called without %s" % param
+                raise ArgumentError, "mkcert called without #{param}"
             end
         }
 
@@ -79,7 +79,7 @@ module Puppet::SSLCertificates
             ext_key_usage = %w{clientAuth emailProtection}
             ex << ef.create_extension("nsCertType", "client,email")
         else
-            raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
+            raise Puppet::Error, "unknown cert type '#{hash[:type]}'"
         end
 
 
@@ -116,7 +116,7 @@ module Puppet::SSLCertificates
         hash = "%08x" % cert.issuer.hash
         hashpath = nil
         10.times { |i|
-            path = File.join(dir, "%s.%s" % [hash, i])
+            path = File.join(dir, "#{hash}.#{i}")
             if FileTest.exists?(path)
                 if FileTest.symlink?(path)
                     dest = File.readlink(path)

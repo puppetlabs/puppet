@@ -8,7 +8,7 @@ describe zfs do
     properties = [:ensure, :mountpoint, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir]
 
     properties.each do |property|
-        it "should have a %s property" % property do
+        it "should have a #{property} property" do
             zfs.attrclass(property).ancestors.should be_include(Puppet::Property)
         end
     end
@@ -16,7 +16,7 @@ describe zfs do
     parameters = [:name]
 
     parameters.each do |parameter|
-        it "should have a %s parameter" % parameter do
+        it "should have a #{parameter} parameter" do
             zfs.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
         end
     end

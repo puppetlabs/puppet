@@ -100,7 +100,7 @@ class Puppet::Util::Settings
             elsif pval = self.value(varname)
                 pval
             else
-                raise Puppet::DevError, "Could not find value for %s" % value
+                raise Puppet::DevError, "Could not find value for #{value}"
             end
         end
 
@@ -220,7 +220,7 @@ class Puppet::Util::Settings
                 hash[name] = val
             end
             hash.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, val|
-                puts "%s = %s" % [name, val]
+                puts "#{name} = #{val}"
             end
         else
             val.split(/\s*,\s*/).sort.each do |v|
@@ -230,9 +230,9 @@ class Puppet::Util::Settings
                         puts value(val,env)
                         break
                     end
-                    puts "%s = %s" % [v, value(v,env)]
+                    puts "#{v} = #{value(v,env)}"
                 else
-                    puts "invalid parameter: %s" % v
+                    puts "invalid parameter: #{v}"
                     return false
                 end
             end
@@ -382,7 +382,7 @@ class Puppet::Util::Settings
         end
         if type = hash[:type]
             unless klass = {:setting => Setting, :file => FileSetting, :boolean => BooleanSetting}[type]
-                raise ArgumentError, "Invalid setting type '%s'" % type
+                raise ArgumentError, "Invalid setting type '#{type}'"
             end
             hash.delete(:type)
         else
@@ -394,7 +394,7 @@ class Puppet::Util::Settings
             when String, Integer, Float # nothing
                 klass = Setting
             else
-                raise ArgumentError, "Invalid value '%s' for %s" % [hash[:default].inspect, hash[:name]]
+                raise ArgumentError, "Invalid value '#{hash[:default].inspect}' for #{hash[:name]}"
             end
         end
         hash[:settings] = self
@@ -427,7 +427,7 @@ class Puppet::Util::Settings
     # Reparse our config file, if necessary.
     def reparse
         if file and file.changed?
-            Puppet.notice "Reparsing %s" % file.file
+            Puppet.notice "Reparsing #{file.file}"
             parse
             reuse()
         end
@@ -501,7 +501,7 @@ class Puppet::Util::Settings
                 return
             else
                 raise ArgumentError,
-                    "Attempt to assign a value to unknown configuration parameter %s" % param.inspect
+                    "Attempt to assign a value to unknown configuration parameter #{param.inspect}"
             end
         end
         if setting.respond_to?(:munge)
@@ -550,12 +550,12 @@ class Puppet::Util::Settings
             hash[:name] = name
             hash[:section] = section
             if @config.include?(name)
-                raise ArgumentError, "Parameter %s is already defined" % name
+                raise ArgumentError, "Parameter #{name} is already defined"
             end
             tryconfig = newsetting(hash)
             if short = tryconfig.short
                 if other = @shortnames[short]
-                    raise ArgumentError, "Parameter %s is already using short name '%s'" % [other.name, short]
+                    raise ArgumentError, "Parameter #{other.name} is already using short name '#{short}'"
                 end
                 @shortnames[short] = tryconfig
             end
@@ -612,7 +612,7 @@ Generated on #{Time.now}.
 
 #         Add a section heading that matches our name.
 if @config.include?(:run_mode)
-    str += "[%s]\n" % self[:run_mode]
+    str += "[#{self[:run_mode]}]\n"
         end
         eachsection do |section|
             persection(section) do |obj|
@@ -644,7 +644,7 @@ if @config.include?(:run_mode)
                 catalog = to_catalog(*sections).to_ral
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                Puppet.err "Could not create resources for managing Puppet's files and directories in sections %s: %s" % [sections.inspect, detail]
+                Puppet.err "Could not create resources for managing Puppet's files and directories in sections #{sections.inspect}: #{detail}"
 
                 # We need some way to get rid of any resources created during the catalog creation
                 # but not cleaned up.
@@ -657,7 +657,7 @@ if @config.include?(:run_mode)
                     if transaction.any_failed?
                         report = transaction.report
                         failures = report.logs.find_all { |log| log.level == :err }
-                        raise "Got %s failure(s) while initializing: %s" % [failures.length, failures.collect { |l| l.to_s }.join("; ")]
+                        raise "Got #{failures.length} failure(s) while initializing: #{failures.collect { |l| l.to_s }.join("; ")}"
                     end
                 end
             end
@@ -769,14 +769,14 @@ if @config.include?(:run_mode)
         tmpfile = file + ".tmp"
         sync = Sync.new
         unless FileTest.directory?(File.dirname(tmpfile))
-            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" % [file, File.dirname(file)]
+            raise Puppet::DevError, "Cannot create #{file}; directory #{File.dirname(file)} does not exist"
         end
 
         sync.synchronize(Sync::EX) do
             File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
                 rf.lock_exclusive do
                     if File.exist?(tmpfile)
-                        raise Puppet::Error, ".tmp file already exists for %s; Aborting locked write. Check the .tmp file and delete if appropriate" % [file]
+                        raise Puppet::Error, ".tmp file already exists for #{file}; Aborting locked write. Check the .tmp file and delete if appropriate"
                     end
 
                     # If there's a failure, remove our tmpfile
@@ -790,7 +790,7 @@ if @config.include?(:run_mode)
                     begin
                         File.rename(tmpfile, file)
                     rescue => detail
-                        Puppet.err "Could not rename %s to %s: %s" % [file, tmpfile, detail]
+                        Puppet.err "Could not rename #{file} to #{tmpfile}: #{detail}"
                         File.unlink(tmpfile) if FileTest.exist?(tmpfile)
                     end
                 end
@@ -803,11 +803,11 @@ if @config.include?(:run_mode)
     def get_config_file_default(default)
         obj = nil
         unless obj = @config[default]
-            raise ArgumentError, "Unknown default %s" % default
+            raise ArgumentError, "Unknown default #{default}"
         end
 
         unless obj.is_a? FileSetting
-            raise ArgumentError, "Default %s is not a file" % default
+            raise ArgumentError, "Default #{default} is not a file"
         end
 
         return obj
@@ -860,14 +860,14 @@ if @config.include?(:run_mode)
                     param, value = $1.intern, $2
                     result[param] = value
                     unless [:owner, :mode, :group].include?(param)
-                        raise ArgumentError, "Invalid file option '%s'" % param
+                        raise ArgumentError, "Invalid file option '#{param}'"
                     end
 
                     if param == :mode and value !~ /^\d+$/
                         raise ArgumentError, "File modes must be numbers"
                     end
                 else
-                    raise ArgumentError, "Could not parse '%s'" % string
+                    raise ArgumentError, "Could not parse '#{string}'"
                 end
             end
             ''
@@ -937,7 +937,7 @@ if @config.include?(:run_mode)
                     raise
                 end
             else
-                error = Puppet::Error.new("Could not match line %s" % line)
+                error = Puppet::Error.new("Could not match line #{line}")
                 error.file = file
                 error.line = line
                 raise error
@@ -952,9 +952,9 @@ if @config.include?(:run_mode)
         begin
             return File.read(file)
         rescue Errno::ENOENT
-            raise ArgumentError, "No such file %s" % file
+            raise ArgumentError, "No such file #{file}"
         rescue Errno::EACCES
-            raise ArgumentError, "Permission denied to file %s" % file
+            raise ArgumentError, "Permission denied to file #{file}"
         end
     end
 

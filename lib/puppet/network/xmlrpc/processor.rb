@@ -53,7 +53,7 @@ module Puppet::Network
             rescue ::XMLRPC::FaultException
                 raise
             rescue Puppet::AuthorizationError => detail
-                Puppet.err "Permission denied: %s" % detail.to_s
+                Puppet.err "Permission denied: #{detail}"
                 raise ::XMLRPC::FaultException.new(
                     1, detail.to_s
                 )
@@ -71,7 +71,7 @@ module Puppet::Network
                 if Puppet[:trace]
                     puts detail.backtrace
                 end
-                Puppet.err "Could not call: %s" % detail.to_s
+                Puppet.err "Could not call: #{detail}"
                 error = ::XMLRPC::FaultException.new(1, detail.to_s)
                 error.set_backtrace detail.backtrace
                 raise error

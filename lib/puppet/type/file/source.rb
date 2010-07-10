@@ -69,11 +69,11 @@ module Puppet
                 begin
                     uri = URI.parse(URI.escape(source))
                 rescue => detail
-                    self.fail "Could not understand source %s: %s" % [source, detail.to_s]
+                    self.fail "Could not understand source #{source}: #{detail}"
                 end
 
                 unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
-                    self.fail "Cannot use URLs of type '%s' as source for fileserving" % [uri.scheme]
+                    self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving"
                 end
             end
         end
@@ -84,11 +84,11 @@ module Puppet
         end
 
         def change_to_s(currentvalue, newvalue)
-            # newvalue = "{md5}" + @metadata.checksum
+            # newvalue = "{md5}#{@metadata.checksum}"
             if @resource.property(:ensure).retrieve == :absent
-                return "creating from source %s with contents %s" % [metadata.source, metadata.checksum]
+                return "creating from source #{metadata.source} with contents #{metadata.checksum}"
             else
-                return "replacing from source %s with contents %s" % [metadata.source, metadata.checksum]
+                return "replacing from source #{metadata.source} with contents #{metadata.checksum}"
             end
         end
 
@@ -148,10 +148,10 @@ module Puppet
                         break
                     end
                 rescue => detail
-                    fail detail, "Could not retrieve file metadata for %s: %s" % [source, detail]
+                    fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
                 end
             end
-            fail "Could not retrieve information from source(s) %s" % value.join(", ") unless result
+            fail "Could not retrieve information from source(s) #{value.join(", ")}" unless result
             result
         end
 

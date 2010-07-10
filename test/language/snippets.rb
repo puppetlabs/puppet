@@ -24,21 +24,21 @@ class TestSnippets < Test::Unit::TestCase
 
     def assert_file(path, msg = nil)
         unless file = @catalog.resource(:file, path)
-            msg ||= "Could not find file %s" % path
+            msg ||= "Could not find file #{path}"
             raise msg
         end
     end
 
     def assert_not_file(path, msg = nil)
         if file = @catalog.resource(:file, path)
-            msg ||= "File %s exists!" % path
+            msg ||= "File #{path} exists!"
             raise msg
         end
     end
 
     def assert_mode_equal(mode, path)
         unless file = @catalog.resource(:file, path)
-            raise "Could not find file %s" % path
+            raise "Could not find file #{path}"
         end
 
         unless mode == file.should(:mode)
@@ -145,10 +145,10 @@ class TestSnippets < Test::Unit::TestCase
             [0..1, 0..2].each { |range|
                 params = rands[range]
                 paramstr = params.collect { |param|
-                    "%s => fake" % param
+                    "#{param} => fake"
                 }.join(", ")
 
-                str = "%s { %s }" % [name, paramstr]
+                str = "#{name} { #{paramstr} }"
 
                 scope = nil
                 assert_nothing_raised {
@@ -163,7 +163,7 @@ class TestSnippets < Test::Unit::TestCase
                 p defaults
 
                 params.each { |param|
-                    puts "%s => '%s'" % [name,param]
+                    puts "#{name} => '#{param}'"
                     assert(defaults.include?(param))
                 }
             }
@@ -176,7 +176,7 @@ class TestSnippets < Test::Unit::TestCase
 
     def snippet_filecreate
         %w{a b c d}.each { |letter|
-            path = "/tmp/create%stest" % letter
+            path = "/tmp/create#{letter}test"
             assert_file(path)
             if %w{a b}.include?(letter)
                 assert_mode_equal(0755, path)
@@ -192,7 +192,7 @@ class TestSnippets < Test::Unit::TestCase
 
     def snippet_simpleselector
         files = %w{a b c d}.collect { |letter|
-            path = "/tmp/snippetselect%stest" % letter
+            path = "/tmp/snippetselect#{letter}test"
             assert_file(path)
             assert_mode_equal(0755, path)
         }
@@ -202,7 +202,7 @@ class TestSnippets < Test::Unit::TestCase
         path = "/tmp/classtest"
 
         file = @catalog.resource(:file, path)
-        assert(file, "did not create file %s" % path)
+        assert(file, "did not create file #{path}")
 
         assert_equal( "/Stage[main]/Testing/Mytype[componentname]/File[/tmp/classtest]", file.path)
     end
@@ -233,13 +233,13 @@ class TestSnippets < Test::Unit::TestCase
 
         paths.each { |path|
             file = @catalog.resource(:file, path)
-            assert(file, "File %s is missing" % path)
+            assert(file, "File #{path} is missing")
             assert_mode_equal(0755, path)
         }
     end
 
     def snippet_implicititeration
-        paths = %w{a b c d e f g h}.collect { |l| "/tmp/iteration%stest" % l }
+        paths = %w{a b c d e f g h}.collect { |l| "/tmp/iteration#{l}test" }
 
         paths.each { |path|
             file = @catalog.resource(:file, path)
@@ -249,7 +249,7 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def snippet_multipleinstances
-        paths = %w{a b c}.collect { |l| "/tmp/multipleinstances%s" % l }
+        paths = %w{a b c}.collect { |l| "/tmp/multipleinstances#{l}" }
 
         paths.each { |path|
             assert_file(path)
@@ -275,7 +275,7 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_selectorvalues
         nums = %w{1 2 3 4 5 6 7}
         files = nums.collect { |n|
-            "/tmp/selectorvalues%s" % n
+            "/tmp/selectorvalues#{n}"
         }
 
         files.each { |f|
@@ -287,7 +287,7 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_singleselector
         nums = %w{1 2 3}
         files = nums.collect { |n|
-            "/tmp/singleselector%s" % n
+            "/tmp/singleselector#{n}"
         }
 
         files.each { |f|
@@ -303,7 +303,7 @@ class TestSnippets < Test::Unit::TestCase
 
     def disabled_snippet_classargtest
         [1,2].each { |num|
-            file = "/tmp/classargtest%s" % num
+            file = "/tmp/classargtest#{num}"
             assert_file(file)
             assert_mode_equal(0755, file)
         }
@@ -311,7 +311,7 @@ class TestSnippets < Test::Unit::TestCase
 
     def snippet_classheirarchy
         [1,2,3].each { |num|
-            file = "/tmp/classheir%s" % num
+            file = "/tmp/classheir#{num}"
             assert_file(file)
             assert_mode_equal(0755, file)
         }
@@ -319,14 +319,14 @@ class TestSnippets < Test::Unit::TestCase
 
     def snippet_singleary
         [1,2,3,4].each { |num|
-            file = "/tmp/singleary%s" % num
+            file = "/tmp/singleary#{num}"
             assert_file(file)
         }
     end
 
     def snippet_classincludes
         [1,2,3].each { |num|
-            file = "/tmp/classincludes%s" % num
+            file = "/tmp/classincludes#{num}"
             assert_file(file)
             assert_mode_equal(0755, file)
         }
@@ -348,7 +348,7 @@ class TestSnippets < Test::Unit::TestCase
         {   1 => 'a $quote',
             2 => 'some "\yayness\"'
         }.each { |count, str|
-            path = "/tmp/singlequote%s" % count
+            path = "/tmp/singlequote#{count}"
             assert_file(path)
             assert_equal(str, @catalog.resource(:file, path).parameter(:content).actual_content)
         }
@@ -378,7 +378,7 @@ class TestSnippets < Test::Unit::TestCase
     def snippet_deepclassheirarchy
         5.times { |i|
             i += 1
-            file = "/tmp/deepclassheir%s" % i
+            file = "/tmp/deepclassheir#{i}"
             assert_file(file)
         }
     end
@@ -487,8 +487,8 @@ class TestSnippets < Test::Unit::TestCase
 
         mname = "snippet_" + file.sub(/\.pp$/, '')
         if self.method_defined?(mname)
-            #eval("alias %s %s" % [testname, mname])
-            testname = ("test_" + mname).intern
+            #eval("alias #{testname} #{mname}")
+            testname = ("test_#{mname}").intern
             self.send(:define_method, testname) {
                 Puppet[:manifest] = snippet(file)
                 facts = {

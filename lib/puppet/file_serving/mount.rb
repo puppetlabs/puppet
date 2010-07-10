@@ -23,7 +23,7 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     # Create our object.  It must have a name.
     def initialize(name)
         unless name =~ %r{^[-\w]+$}
-            raise ArgumentError, "Invalid mount name format '%s'" % name
+            raise ArgumentError, "Invalid mount name format '#{name}'"
         end
         @name = name
 
@@ -35,7 +35,7 @@ class Puppet::FileServing::Mount < Puppet::Network::AuthStore
     end
 
     def to_s
-        "mount[%s]" % @name
+        "mount[#{@name}]"
     end
 
     # A noop.

@@ -234,7 +234,7 @@ class Type
     end
 
     def self.newstate(name, options = {}, &block)
-        Puppet.warning "newstate() has been deprecrated; use newproperty(%s)" % name
+        Puppet.warning "newstate() has been deprecrated; use newproperty(#{name})"
         newproperty(name, options, &block)
     end
 
@@ -251,11 +251,11 @@ class Type
         # a parent class.
         unless options.is_a? Hash
             raise Puppet::DevError,
-                "Options must be a hash, not %s" % options.inspect
+                "Options must be a hash, not #{options.inspect}"
         end
 
         if @validproperties.include?(name)
-            raise Puppet::DevError, "Class %s already has a property named %s" % [self.name, name]
+            raise Puppet::DevError, "Class #{self.name} already has a property named #{name}"
         end
 
         if parent = options[:parent]
@@ -347,7 +347,7 @@ class Type
     # does the name reflect a valid parameter?
     def self.validparameter?(name)
         unless defined?(@parameters)
-            raise Puppet::DevError, "Class %s has not defined parameters" % self
+            raise Puppet::DevError, "Class #{self} has not defined parameters"
         end
         if @paramhash.include?(name) or @@metaparamhash.include?(name)
             return true
@@ -403,7 +403,7 @@ class Type
         name = attr_alias(name)
 
         unless self.class.validattr?(name)
-            fail("Invalid parameter %s(%s)" % [name, name.inspect])
+            fail("Invalid parameter #{name}(#{name.inspect})")
         end
 
         if name == :name
@@ -426,14 +426,14 @@ class Type
         name = attr_alias(name)
 
         unless self.class.validattr?(name)
-            fail("Invalid parameter %s" % [name])
+            fail("Invalid parameter #{name}")
         end
 
         if name == :name
             name = name_var
         end
         if value.nil?
-            raise Puppet::Error.new("Got nil value for %s" % name)
+            raise Puppet::Error.new("Got nil value for #{name}")
         end
 
         property = self.newattr(name)
@@ -442,7 +442,7 @@ class Type
             # make sure the parameter doesn't have any errors
             property.value = value
         rescue => detail
-            error = Puppet::Error.new("Parameter %s failed: %s" % [name, detail])
+            error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
             error.set_backtrace(detail.backtrace)
             raise error
         end
@@ -501,7 +501,7 @@ class Type
         end
 
         unless klass = self.class.attrclass(name)
-            raise Puppet::Error, "Resource type %s does not support parameter %s" % [self.class.name, name]
+            raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
         end
 
         if @parameters.include?(name)
@@ -687,7 +687,7 @@ class Type
         if property = @parameters[:ensure]
             unless is.include? property
                 raise Puppet::DevError,
-                    "The is value is not in the is array for '%s'" % [property.name]
+                    "The is value is not in the is array for '#{property.name}'"
             end
             ensureis = is[property]
             if property.insync?(ensureis) and property.should == :absent
@@ -698,19 +698,19 @@ class Type
         properties.each { |property|
             unless is.include? property
                 raise Puppet::DevError,
-                    "The is value is not in the is array for '%s'" % [property.name]
+                    "The is value is not in the is array for '#{property.name}'"
             end
 
             propis = is[property]
             unless property.insync?(propis)
-                property.debug("Not in sync: %s vs %s" % [propis.inspect, property.should.inspect])
+                property.debug("Not in sync: #{propis.inspect} vs #{property.should.inspect}")
                 insync = false
             #else
             #    property.debug("In sync")
             end
         }
 
-        #self.debug("%s sync status is %s" % [self,insync])
+        #self.debug("#{self} sync status is #{insync}")
         return insync
     end
 
@@ -809,13 +809,13 @@ class Type
         end
 
         if exobj = @objects[name] and self.isomorphic?
-            msg = "Object '%s[%s]' already exists" % [newobj.class.name, name]
+            msg = "Object '#{newobj.class.name}[#{name}]' already exists"
 
             if exobj.file and exobj.line
-                msg += ("in file %s at line %s" % [object.file, object.line])
+                msg += ("in file #{object.file} at line #{object.line}")
             end
             if object.file and object.line
-                msg += ("and cannot be redefined in file %s at line %s" % [object.file, object.line])
+                msg += ("and cannot be redefined in file #{object.file} at line #{object.line}")
             end
             error = Puppet::Error.new(msg)
             raise error
@@ -833,7 +833,7 @@ class Type
         if @objects.include?(name)
             unless @objects[name] == obj
                 raise Puppet::Error.new(
-                    "Cannot create alias %s: object already exists" % [name]
+                    "Cannot create alias #{name}: object already exists"
                 )
             end
         end
@@ -841,7 +841,7 @@ class Type
         if @aliases.include?(name)
             unless @aliases[name] == obj
                 raise Puppet::Error.new(
-                    "Object %s already has alias %s" % [@aliases[name].name, name]
+                    "Object #{@aliases[name].name} already has alias #{name}"
                 )
             end
         end
@@ -910,7 +910,7 @@ class Type
     # Retrieve all known instances.  Either requires providers or must be overridden.
     def self.instances
         if provider_hash.empty?
-            raise Puppet::DevError, "%s has no providers and has not overridden 'instances'" % self.name
+            raise Puppet::DevError, "#{self.name} has no providers and has not overridden 'instances'"
         end
 
         # Put the default provider first, then the rest of the suitable providers.
@@ -1129,7 +1129,7 @@ class Type
             aliases.each do |other|
                 if obj = @resource.catalog.resource(@resource.class.name, other)
                     unless obj.object_id == @resource.object_id
-                        self.fail("%s can not create alias %s: object already exists" % [@resource.title, other])
+                        self.fail("#{@resource.title} can not create alias #{other}: object already exists")
                     end
                     next
                 end
@@ -1189,7 +1189,7 @@ class Type
             @value.each do |ref|
                 unless @resource.catalog.resource(ref.to_s)
                     description = self.class.direction == :in ? "dependency" : "dependent"
-                    fail "Could not find %s %s for %s" % [description, ref.to_s, resource.ref]
+                    fail "Could not find #{description} #{ref} for #{resource.ref}"
                 end
             end
         end
@@ -1209,7 +1209,7 @@ class Type
                 # Either of the two retrieval attempts could have returned
                 # nil.
                 unless related_resource = reference.resolve
-                    self.fail "Could not retrieve dependency '%s' of %s" % [reference, @resource.ref]
+                    self.fail "Could not retrieve dependency '#{reference}' of #{@resource.ref}"
                 end
 
                 # Are we requiring them, or vice versa?  See the method docs
@@ -1227,12 +1227,12 @@ class Type
                         :event => self.class.events,
                         :callback => method
                     }
-                    self.debug("subscribes to %s" % [related_resource.ref])
+                    self.debug("subscribes to #{related_resource.ref}")
                 else
                     # If there's no callback, there's no point in even adding
                     # a label.
                     subargs = nil
-                    self.debug("requires %s" % [related_resource.ref])
+                    self.debug("requires #{related_resource.ref}")
                 end
 
                 rel = Puppet::Relationship.new(source, target, subargs)
@@ -1410,13 +1410,13 @@ class Type
             retval = nil
             if defaults.length > 1
                 Puppet.warning(
-                    "Found multiple default providers for %s: %s; using %s" % [self.name, defaults.collect { |i| i.name.to_s }.join(", "), defaults[0].name]
+                    "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
                 )
                 retval = defaults.shift
             elsif defaults.length == 1
                 retval = defaults.shift
             else
-                raise Puppet::DevError, "Could not find a default provider for %s" % self.name
+                raise Puppet::DevError, "Could not find a default provider for #{self.name}"
             end
 
             @defaultprovider = retval
@@ -1462,7 +1462,7 @@ class Type
         name = Puppet::Util.symbolize(name)
 
         if obj = provider_hash[name]
-            Puppet.debug "Reloading %s %s provider" % [name, self.name]
+            Puppet.debug "Reloading #{name} #{self.name} provider"
             unprovide(name)
         end
 
@@ -1475,7 +1475,7 @@ class Type
                     provider
                 else
                     raise Puppet::DevError,
-                        "Could not find parent provider %s of %s" % [pname, name]
+                        "Could not find parent provider #{pname} of #{name}"
                 end
             end
         else
@@ -1523,7 +1523,7 @@ class Type
                 @doc + "  Available providers are:\n\n" + parenttype().providers.sort { |a,b|
                     a.to_s <=> b.to_s
                 }.collect { |i|
-                    "* **%s**: %s" % [i, parenttype().provider(i).doc]
+                    "* **#{i}**: #{parenttype().provider(i).doc}"
                 }.join("\n")
             end
 
@@ -1538,7 +1538,7 @@ class Type
                 end
 
                 unless provider = @resource.class.provider(provider_class)
-                    raise ArgumentError, "Invalid %s provider '%s'" % [@resource.class.name, provider_class]
+                    raise ArgumentError, "Invalid #{@resource.class.name} provider '#{provider_class}'"
                 end
             end
 
@@ -1592,7 +1592,7 @@ class Type
         elsif klass = self.class.provider(name)
             @provider = klass.new(self)
         else
-            raise ArgumentError, "Could not find %s provider of %s" % [name, self.class.name]
+            raise ArgumentError, "Could not find #{name} provider of #{self.class.name}"
         end
     end
 
@@ -1720,7 +1720,7 @@ class Type
             if hash.include?(key)
                 hash[key]
             else
-                "Param Documentation for %s not found" % key
+                "Param Documentation for #{key} not found"
             end
         }
 
@@ -1732,7 +1732,7 @@ class Type
 
     def self.to_s
         if defined?(@name)
-            "Puppet::Type::" + @name.to_s.capitalize
+            "Puppet::Type::#{@name.to_s.capitalize}"
         else
             super
         end
@@ -1836,7 +1836,7 @@ class Type
             rescue ArgumentError, Puppet::Error, TypeError
                 raise
             rescue => detail
-                error = Puppet::DevError.new( "Could not set %s on %s: %s" % [attr, self.class.name, detail])
+                error = Puppet::DevError.new( "Could not set #{attr} on #{self.class.name}: #{detail}")
                 error.set_backtrace(detail.backtrace)
                 raise error
             end
@@ -1883,7 +1883,7 @@ class Type
 
     # Return the "type[name]" style reference.
     def ref
-        "%s[%s]" % [self.class.name.to_s.capitalize, self.title]
+        "#{self.class.name.to_s.capitalize}[#{self.title}]"
     end
 
     def self_refresh?
@@ -1914,7 +1914,7 @@ class Type
             elsif self.class.validproperty?(name_var)
                 @title = self.should(name_var)
             else
-                self.devfail "Could not find namevar %s for %s" % [name_var, self.class.name]
+                self.devfail "Could not find namevar #{name_var} for #{self.class.name}"
             end
         end
 

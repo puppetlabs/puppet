@@ -537,10 +537,10 @@ def token
                     if yytext =~ /\W/
                         giveback = yytext.dup
                         giveback.sub!(/^\w+/,'')
-                        #puts "giveback " + giveback
-                        #puts "yytext " + yytext
+                        #puts "giveback #{giveback}"
+                        #puts "yytext #{yytext}"
                         yytext.sub!(/\W.*$/,'')
-                        #puts "yytext " + yytext
+                        #puts "yytext #{yytext}"
                         #puts "all [#{giveback} #{yytext} #{orig}]"
                         @src = giveback + @src
                     end

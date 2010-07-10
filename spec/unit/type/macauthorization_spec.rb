@@ -24,21 +24,21 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
             :session_owner, :shared, :timeout, :tries]
 
         parameters.each do |parameter|
-            it "should have a %s parameter" % parameter do
+            it "should have a #{parameter} parameter" do
                 macauth_type.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
             end
 
-            it "should have documentation for its %s parameter" % parameter do
+            it "should have documentation for its #{parameter} parameter" do
                 macauth_type.attrclass(parameter).doc.should be_instance_of(String)
             end
         end
 
         properties.each do |property|
-            it "should have a %s property" % property do
+            it "should have a #{property} property" do
                 macauth_type.attrclass(property).ancestors.should be_include(Puppet::Property)
             end
 
-            it "should have documentation for its %s property" % property do
+            it "should have documentation for its #{property} property" do
                 macauth_type.attrclass(property).doc.should be_instance_of(String)
             end
         end

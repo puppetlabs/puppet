@@ -81,7 +81,7 @@ class Puppet::FileServing::Fileset
 
     def links=(links)
         links = links.to_sym
-        raise(ArgumentError, "Invalid :links value '%s'" % links) unless [:manage, :follow].include?(links)
+        raise(ArgumentError, "Invalid :links value '#{links}'") unless [:manage, :follow].include?(links)
         @links = links
         @stat_method = links == :manage ? :lstat : :stat
     end
@@ -99,7 +99,7 @@ class Puppet::FileServing::Fileset
             begin
                 send(method, value)
             rescue NoMethodError
-                raise ArgumentError, "Invalid option '%s'" % option
+                raise ArgumentError, "Invalid option '#{option}'"
             end
         end
     end

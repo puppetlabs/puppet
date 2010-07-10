@@ -40,7 +40,7 @@ begin
             printusage(0)
 
         when "--version"
-            puts "%s" % Puppet.version
+            puts "#{Puppet.version}"
             exit
         end
     end
@@ -73,7 +73,7 @@ case adapter
         connections     = pm_conf[:dbconnections].to_i
         args[:pool]     = connections if connections > 0
     else
-        raise ArgumentError, "Invalid db adapter %s" % adapter
+        raise ArgumentError, "Invalid db adapter #{adapter}"
 end
 
 args[:database] = "puppet" unless not args[:database].to_s.empty?

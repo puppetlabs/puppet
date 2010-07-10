@@ -53,7 +53,7 @@ describe Puppet::Indirector::SslFile do
             @searcher = @file_class.new
 
             @cert = stub 'certificate', :name => "myname"
-            @certpath = File.join(@path, "myname" + ".pem")
+            @certpath = File.join(@path, "myname.pem")
 
             @request = stub 'request', :key => @cert.name, :instance => @cert
         end

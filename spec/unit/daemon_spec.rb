@@ -298,7 +298,7 @@ describe Puppet::Daemon do
 
         it "should call 'exec' with the original executable and arguments" do
             @daemon.argv = %w{foo}
-            @daemon.expects(:exec).with($0 + " " + "foo")
+            @daemon.expects(:exec).with($0 + " foo")
 
             @daemon.reexec
         end

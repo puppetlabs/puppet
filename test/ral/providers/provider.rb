@@ -64,7 +64,7 @@ class TestProvider < Test::Unit::TestCase
                 end
             end
 
-            assert_equal(result, provider.suitable?, "Failed for %s" % [hash.inspect])
+            assert_equal(result, provider.suitable?, "Failed for #{hash.inspect}")
 
             provider.initvars
         end
@@ -106,7 +106,7 @@ class TestProvider < Test::Unit::TestCase
     def test_command
         {:echo => "echo", :echo_with_path => echo, :missing => "nosuchcommand", :missing_qualified => "/path/to/nosuchcommand"}.each do |name, command|
             provider = newprovider
-            assert_nothing_raised("Could not define command %s with argument %s for provider" % [name, command]) do
+            assert_nothing_raised("Could not define command #{name} with argument #{command} for provider") do
                 provider.commands(name => command)
             end
 
@@ -122,7 +122,7 @@ class TestProvider < Test::Unit::TestCase
             # Now make sure they both work
             inst = provider.new(nil)
             [provider, inst].each do |thing|
-                assert_nothing_raised("Could not call %s on %s" % [command, thing]) do
+                assert_nothing_raised("Could not call #{command} on #{thing}") do
                     out = thing.send(name, "some", "text")
                     assert_equal("some text\n", out)
                 end
@@ -239,23 +239,23 @@ class TestProvider < Test::Unit::TestCase
         obj = prov.new(nil)
 
         %w{prop1 prop2 param1 param2}.each do |param|
-            assert(prov.public_method_defined?(param), "no getter for %s" % param)
-            assert(prov.public_method_defined?(param + "="), "no setter for %s" % param)
+            assert(prov.public_method_defined?(param), "no getter for #{param}")
+            assert(prov.public_method_defined?(param + "="), "no setter for #{param}")
 
 
                 assert_equal(
                     :absent, obj.send(param),
 
                     "%s did not default to :absent")
-            val = "testing %s" % param
-            assert_nothing_raised("Could not call setter for %s" % param) do
+            val = "testing #{param}"
+            assert_nothing_raised("Could not call setter for #{param}") do
                 obj.send(param + "=", val)
             end
 
                 assert_equal(
                     val, obj.send(param),
 
-                    "did not get correct value for %s" % param)
+                    "did not get correct value for #{param}")
         end
     end
 
@@ -384,7 +384,7 @@ class TestProviderFeatures < Test::Unit::TestCase
         @providers[:neither] = [:something, :else]
 
         @providers.each do |name, methods|
-            assert_nothing_raised("Could not create provider %s" % name) do
+            assert_nothing_raised("Could not create provider #{name}") do
                 @type.provide(name) do
                     methods.each do |name|
                         define_method(name) {}
@@ -397,29 +397,29 @@ class TestProviderFeatures < Test::Unit::TestCase
         {:numbers => [:numeric], :letters => [:alpha], :both => [:numeric, :alpha], :mixed => [], :neither => []}.each do |name, should|
             should.sort! { |a,b| a.to_s <=> b.to_s }
             provider = @type.provider(name)
-            assert(provider, "Could not find provider %s" % name)
-            assert_equal(should, provider.features, "Provider %s has incorrect features" % name)
+            assert(provider, "Could not find provider #{name}")
+            assert_equal(should, provider.features, "Provider #{name} has incorrect features")
 
             inst = provider.new(resource)
             # Make sure the boolean methods work on both the provider and
             # instance.
             @features.keys.each do |feature|
                 method = feature.to_s + "?"
-                assert(inst.respond_to?(method), "No boolean instance method for %s on %s" % [name, feature])
-                assert(provider.respond_to?(method), "No boolean class method for %s on %s" % [name, feature])
+                assert(inst.respond_to?(method), "No boolean instance method for #{name} on #{feature}")
+                assert(provider.respond_to?(method), "No boolean class method for #{name} on #{feature}")
 
                 if should.include?(feature)
-                    assert(provider.feature?(feature), "class missing feature? %s" % feature)
-                    assert(inst.feature?(feature), "instance missing feature? %s" % feature)
-                    assert(provider.send(method), "class missing feature %s" % feature)
-                    assert(inst.send(method), "instance missing feature %s" % feature)
-                    assert(inst.satisfies?(feature), "instance.satisfy %s returned false" % feature)
+                    assert(provider.feature?(feature), "class missing feature? #{feature}")
+                    assert(inst.feature?(feature), "instance missing feature? #{feature}")
+                    assert(provider.send(method), "class missing feature #{feature}")
+                    assert(inst.send(method), "instance missing feature #{feature}")
+                    assert(inst.satisfies?(feature), "instance.satisfy #{feature} returned false")
                     else
-                        assert(! provider.feature?(feature), "class has feature? %s" % feature)
-                        assert(! inst.feature?(feature), "instance has feature? %s" % feature)
-                        assert(! provider.send(method), "class has feature %s" % feature)
-                        assert(! inst.send(method), "instance has feature %s" % feature)
-                        assert(! inst.satisfies?(feature), "instance.satisfy %s returned true" % feature)
+                        assert(! provider.feature?(feature), "class has feature? #{feature}")
+                        assert(! inst.feature?(feature), "instance has feature? #{feature}")
+                        assert(! provider.send(method), "class has feature #{feature}")
+                        assert(! inst.send(method), "instance has feature #{feature}")
+                        assert(! inst.satisfies?(feature), "instance.satisfy #{feature} returned true")
                     end
                 end
 
@@ -428,7 +428,7 @@ class TestProviderFeatures < Test::Unit::TestCase
         Puppet[:trace] = true
         Puppet::Type.loadall
         Puppet::Type.eachtype do |type|
-            assert(type.respond_to?(:feature), "No features method defined for %s" % type.name)
+            assert(type.respond_to?(:feature), "No features method defined for #{type.name}")
         end
     end
 
@@ -482,13 +482,13 @@ class TestProviderFeatures < Test::Unit::TestCase
             provider_class = @type.provider(name)
             provider = provider_class.new({})
 
-            assert(provider, "did not get provider named %s" % name)
+            assert(provider, "did not get provider named #{name}")
             features.sort! { |a,b| a.to_s <=> b.to_s }
-            assert_equal(features, provider.features, "Got incorrect feature list for provider instance %s" % name)
-            assert_equal(features, provider_class.features, "Got incorrect feature list for provider class %s" % name)
+            assert_equal(features, provider.features, "Got incorrect feature list for provider instance #{name}")
+            assert_equal(features, provider_class.features, "Got incorrect feature list for provider class #{name}")
             features.each do |feat|
-                assert(provider.feature?(feat), "Provider instance %s did not have feature %s" % [name, feat])
-                assert(provider_class.feature?(feat), "Provider class %s did not have feature %s" % [name, feat])
+                assert(provider.feature?(feat), "Provider instance #{name} did not have feature #{feat}")
+                assert(provider_class.feature?(feat), "Provider class #{name} did not have feature #{feat}")
             end
         end
     end
@@ -506,7 +506,7 @@ class TestProviderFeatures < Test::Unit::TestCase
 
         # Now make sure our providers answer correctly.
         [nope, maybe, yep].each do |prov|
-            assert(prov.respond_to?(:supports_parameter?), "%s does not respond to :supports_parameter?" % prov.name)
+            assert(prov.respond_to?(:supports_parameter?), "#{prov.name} does not respond to :supports_parameter?")
             case prov.name
             when :nope
                 supported = [:neither]
@@ -520,10 +520,10 @@ class TestProviderFeatures < Test::Unit::TestCase
             end
 
             supported.each do |param|
-                assert(prov.supports_parameter?(param), "%s was not supported by %s" % [param, prov.name])
+                assert(prov.supports_parameter?(param), "#{param} was not supported by #{prov.name}")
             end
             un.each do |param|
-                assert(! prov.supports_parameter?(param), "%s was incorrectly supported by %s" % [param, prov.name])
+                assert(! prov.supports_parameter?(param), "#{param} was incorrectly supported by #{prov.name}")
             end
         end
     end

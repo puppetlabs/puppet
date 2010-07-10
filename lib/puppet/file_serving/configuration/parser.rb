@@ -7,8 +7,8 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
 
     # Parse our configuration file.
     def parse
-        raise("File server configuration %s does not exist" % self.file) unless FileTest.exists?(self.file)
-        raise("Cannot read file server configuration %s" % self.file) unless FileTest.readable?(self.file)
+        raise("File server configuration #{self.file} does not exist") unless FileTest.exists?(self.file)
+        raise("Cannot read file server configuration #{self.file}") unless FileTest.readable?(self.file)
 
         @mounts = {}
         @count = 0
@@ -36,10 +36,10 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
                     when "deny"
                         deny(mount, value)
                     else
-                        raise ArgumentError.new("Invalid argument '%s'" % var, @count, file)
+                        raise ArgumentError.new("Invalid argument '#{var}'", @count, file)
                     end
                 else
-                    raise ArgumentError.new("Invalid line '%s'" % line.chomp, @count, file)
+                    raise ArgumentError.new("Invalid line '#{line.chomp}'", @count, file)
                 end
             }
         }
@@ -56,7 +56,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         x = value.split(/\s*,\s*/).each { |val|
             begin
-                mount.info "allowing %s access" % val
+                mount.info "allowing #{val} access"
                 mount.allow(val)
             rescue AuthStoreError => detail
 
@@ -73,7 +73,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
         # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
         x = value.split(/\s*,\s*/).each { |val|
             begin
-                mount.info "denying %s access" % val
+                mount.info "denying #{val} access"
                 mount.deny(val)
             rescue AuthStoreError => detail
 
@@ -88,7 +88,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
     # Create a new mount.
     def newmount(name)
         if @mounts.include?(name)
-            raise ArgumentError, "%s is already mounted at %s" % [@mounts[name], name], @count, file
+            raise ArgumentError, "#{@mounts[name]} is already mounted at #{name}", @count, file
         end
         case name
         when "modules"
@@ -108,7 +108,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
             begin
                 mount.path = value
             rescue ArgumentError => detail
-                Puppet.err "Removing mount %s: %s" % [mount.name, detail]
+                Puppet.err "Removing mount #{mount.name}: #{detail}"
                 @mounts.delete(mount.name)
             end
         else

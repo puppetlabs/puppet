@@ -32,7 +32,7 @@ class Nagios::Base
     # Uncamelcase a parameter.
     def self.decamelcase(param)
         param.gsub(/[A-Z]/) do |match|
-            "_" + match.downcase
+            "_#{match.downcase}"
         end
     end
 
@@ -43,7 +43,7 @@ class Nagios::Base
         if @types.include?(name)
             @types[name].new(args)
         else
-            raise UnknownNagiosType, "Unknown type %s" % name
+            raise UnknownNagiosType, "Unknown type #{name}"
         end
     end
 
@@ -81,7 +81,7 @@ class Nagios::Base
                 @namevar = tmp
                 return @namevar
             else
-                raise "Type %s has no name var" % self.name
+                raise "Type #{self.name} has no name var"
             end
         end
     end
@@ -287,14 +287,14 @@ class Nagios::Base
         oc.sub!(/::/,'')
         ocs.push oc
         ocs.each { |oc|
-            str += "objectclass: " + oc + "\n"
+            str += "objectclass: #{oc}\n"
         }
         @parameters.each { |name,value|
             if self.class.suppress.include?(name)
                 next
             end
             ldapname = self.parammap(name)
-            str += ldapname + ": " + value + "\n"
+            str += ldapname + ": #{value}\n"
         }
         str += "\n"
         str

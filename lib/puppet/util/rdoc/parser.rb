@@ -31,7 +31,7 @@ class Parser
 
     # main entry point
     def scan
-        Puppet.info "rdoc: scanning %s" % @input_file_name
+        Puppet.info "rdoc: scanning #{@input_file_name}"
         if @input_file_name =~ /\.pp$/
             @parser = Puppet::Parser::Parser.new(Puppet[:environment])
             @parser.file = @input_file_name
@@ -81,14 +81,14 @@ class Parser
     def split_module(path)
         # find a module
         fullpath = File.expand_path(path)
-        Puppet.debug "rdoc: testing %s" % fullpath
+        Puppet.debug "rdoc: testing #{fullpath}"
         if fullpath =~ /(.*)\/([^\/]+)\/(?:manifests|plugins|lib)\/.+\.(pp|rb)$/
             modpath = $1
             name = $2
-            Puppet.debug "rdoc: module %s into %s ?" % [name, modpath]
+            Puppet.debug "rdoc: module #{name} into #{modpath} ?"
             Puppet::Module.modulepath().each do |mp|
                 if File.identical?(modpath,mp)
-                    Puppet.debug "rdoc: found module %s" % name
+                    Puppet.debug "rdoc: found module #{name}"
                     return name
                 end
             end
@@ -127,7 +127,7 @@ class Parser
             return
         end
 
-        Puppet.debug "rdoc: scanning for %s" % name
+        Puppet.debug "rdoc: scanning for #{name}"
 
         container.module_name = name
         container.global=true if name == "<site>"
@@ -185,7 +185,7 @@ class Parser
             scan_for_vardef(container,stmt.children) if stmt.is_a?(Puppet::Parser::AST::ASTArray)
 
             if stmt.is_a?(Puppet::Parser::AST::VarDef)
-                Puppet.debug "rdoc: found constant: %s = %s" % [stmt.name.to_s, stmt.value.to_s]
+                Puppet.debug "rdoc: found constant: #{stmt.name} = #{stmt.value}"
                 container.add_constant(Constant.new(stmt.name.to_s, stmt.value.to_s, stmt.doc))
             end
         end
@@ -202,7 +202,7 @@ class Parser
                 begin
                     type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
                     title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
-                    Puppet.debug "rdoc: found resource: %s[%s]" % [type,title]
+                    Puppet.debug "rdoc: found resource: #{type}[#{title}]"
 
                     param = []
                     stmt.params.children.each do |p|
@@ -233,7 +233,7 @@ class Parser
 
     # create documentation for a class named +name+
     def document_class(name, klass, container)
-        Puppet.debug "rdoc: found new class %s" % name
+        Puppet.debug "rdoc: found new class #{name}"
         container, name = get_class_or_module(container, name)
 
         superclass = klass.parent
@@ -265,7 +265,7 @@ class Parser
 
     # create documentation for a node
     def document_node(name, node, container)
-        Puppet.debug "rdoc: found new node %s" % name
+        Puppet.debug "rdoc: found new node #{name}"
         superclass = node.parent
         superclass = "" if superclass.nil? or superclass.empty?
 
@@ -290,7 +290,7 @@ class Parser
 
     # create documentation for a define
     def document_define(name, define, container)
-        Puppet.debug "rdoc: found new definition %s" % name
+        Puppet.debug "rdoc: found new definition #{name}"
         # find superclas if any
         @stats.num_methods += 1
 
@@ -308,7 +308,7 @@ class Parser
                 when Puppet::Parser::AST::Leaf
                     declaration << "'#{value.value}'"
                 when Puppet::Parser::AST::ASTArray
-                    declaration << "[%s]" % value.children.collect { |v| "'#{v}'" }.join(", ")
+                    declaration << "[#{value.children.collect { |v| "'#{v}'" }.join(", ")}]"
                 else
                     declaration << "#{value.to_s}"
                 end
@@ -322,7 +322,7 @@ class Parser
         meth.comment = define.doc
         container.add_method(meth)
         look_for_directives_in(container, meth.comment) unless meth.comment.empty?
-        meth.params = "( " + declaration + " )"
+        meth.params = "( #{declaration} )"
         meth.visibility = :public
         meth.document_self = true
         meth.singleton = false
@@ -386,7 +386,7 @@ class Parser
                     container.add_fact(current_fact)
                     current_fact.record_location(@top_level)
                     comments = ""
-                    Puppet.debug "rdoc: found custom fact %s" % current_fact.name
+                    Puppet.debug "rdoc: found custom fact #{current_fact.name}"
                 elsif line =~ /^[ \t]*confine[ \t]*:(.*?)[ \t]*=>[ \t]*(.*)$/
                     current_fact.confine = { :type => $1, :value => $2 } unless current_fact.nil?
                 else # unknown line type
@@ -414,7 +414,7 @@ class Parser
                     current_plugin.comment = comments
                     current_plugin.record_location(@top_level)
                     comments = ""
-                    Puppet.debug "rdoc: found new function plugins %s" % current_plugin.name
+                    Puppet.debug "rdoc: found new function plugins #{current_plugin.name}"
                 elsif line =~ /^[ \t]*Puppet::Type.newtype[ \t]*\([ \t]*:(.*?)\)/
                     current_plugin = Plugin.new($1, "type")
                     container.add_plugin(current_plugin)
@@ -422,7 +422,7 @@ class Parser
                     current_plugin.comment = comments
                     current_plugin.record_location(@top_level)
                     comments = ""
-                    Puppet.debug "rdoc: found new type plugins %s" % current_plugin.name
+                    Puppet.debug "rdoc: found new type plugins #{current_plugin.name}"
                 elsif line =~ /module Puppet::Parser::Functions/
                     # skip
                 else # unknown line type

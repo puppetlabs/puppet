@@ -24,7 +24,7 @@ describe Puppet::SSL::CertificateRevocationList do
     after {
         Puppet::SSL::Host.ca_location = :none
 
-        system("rm -rf %s" % @dir)
+        system("rm -rf #{@dir}")
         Puppet.settings.clear
 
         # This is necessary so the terminus instances don't lie around.

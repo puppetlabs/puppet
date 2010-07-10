@@ -78,7 +78,7 @@ class Puppet::SSL::CertificateAuthority
         return false if ['false', false].include?(auto)
         return true if ['true', true].include?(auto)
 
-        raise ArgumentError, "The autosign configuration '%s' must be a fully qualified file" % auto unless auto =~ /^\//
+        raise ArgumentError, "The autosign configuration '#{auto}' must be a fully qualified file" unless auto =~ /^\//
         if FileTest.exist?(auto)
             return auto
         else
@@ -117,7 +117,7 @@ class Puppet::SSL::CertificateAuthority
 
     # Generate a new certificate.
     def generate(name)
-        raise ArgumentError, "A Certificate already exists for %s" % name if Puppet::SSL::Certificate.find(name)
+        raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.find(name)
         host = Puppet::SSL::Host.new(name)
 
         host.generate_certificate_request
@@ -170,7 +170,7 @@ class Puppet::SSL::CertificateAuthority
         begin
             Puppet.settings.write(:capass) { |f| f.print pass }
         rescue Errno::EACCES => detail
-            raise Puppet::Error, "Could not write CA password: %s" % detail.to_s
+            raise Puppet::Error, "Could not write CA password: #{detail}"
         end
 
         @password = pass
@@ -228,7 +228,7 @@ class Puppet::SSL::CertificateAuthority
         if cert = Puppet::SSL::Certificate.find(name)
             serial = cert.content.serial
         elsif ! serial = inventory.serial(name)
-            raise ArgumentError, "Could not find a serial number for %s" % name
+            raise ArgumentError, "Could not find a serial number for #{name}"
         end
         crl.revoke(serial, host.key.content)
     end
@@ -249,7 +249,7 @@ class Puppet::SSL::CertificateAuthority
             issuer = csr.content
         else
             unless csr = Puppet::SSL::CertificateRequest.find(hostname)
-                raise ArgumentError, "Could not find certificate request for %s" % hostname
+                raise ArgumentError, "Could not find certificate request for #{hostname}"
             end
             issuer = host.certificate.content
         end
@@ -258,7 +258,7 @@ class Puppet::SSL::CertificateAuthority
         cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
         cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
 
-        Puppet.notice "Signed certificate request for %s" % hostname
+        Puppet.notice "Signed certificate request for #{hostname}"
 
         # Add the cert to the inventory before we save it, since
         # otherwise we could end up with it being duplicated, if
@@ -278,7 +278,7 @@ class Puppet::SSL::CertificateAuthority
     # Verify a given host's certificate.
     def verify(name)
         unless cert = Puppet::SSL::Certificate.find(name)
-            raise ArgumentError, "Could not find a certificate for %s" % name
+            raise ArgumentError, "Could not find a certificate for #{name}"
         end
         store = OpenSSL::X509::Store.new
         store.add_file Puppet[:cacert]
@@ -293,7 +293,7 @@ class Puppet::SSL::CertificateAuthority
 
     def fingerprint(name, md = :MD5)
         unless cert = Puppet::SSL::Certificate.find(name) || Puppet::SSL::CertificateRequest.find(name)
-            raise ArgumentError, "Could not find a certificate or csr for %s" % name
+            raise ArgumentError, "Could not find a certificate or csr for #{name}"
         end
         cert.fingerprint(md)
     end

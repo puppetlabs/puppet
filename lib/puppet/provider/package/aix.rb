@@ -95,7 +95,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
             if hash[:pkgname]
                 return nil
             else
-                raise Puppet::Error, "Could not list installed Packages: %s" % detail
+                raise Puppet::Error, "Could not list installed Packages: #{detail}"
             end
         end
 

@@ -44,7 +44,7 @@ class Puppet::Parameter
                 @doc += value_collection.doc
 
                 if f = self.required_features
-                    @doc += "  Requires features %s." % f.flatten.collect { |f| f.to_s }.join(" ")
+                    @doc += "  Requires features #{f.flatten.collect { |f| f.to_s }.join(" ")}."
                 end
                 @addeddocvals = true
             end
@@ -192,7 +192,7 @@ class Puppet::Parameter
             self.resource = resource
             options.delete(:resource)
         else
-            raise Puppet::DevError, "No resource set for %s" % self.class.name
+            raise Puppet::DevError, "No resource set for #{self.class.name}"
         end
 
         set_options(options)
@@ -221,7 +221,7 @@ class Puppet::Parameter
             @noop = false
         end
         tmp = @noop || self.resource.noop || Puppet[:noop] || false
-        #debug "noop is %s" % tmp
+        #debug "noop is #{tmp}"
         return tmp
     end
 
@@ -251,10 +251,10 @@ class Puppet::Parameter
         begin
             ret = unsafe_munge(value)
         rescue Puppet::Error => detail
-            Puppet.debug "Reraising %s" % detail
+            Puppet.debug "Reraising #{detail}"
             raise
         rescue => detail
-            raise Puppet::DevError, "Munging failed for value %s in class %s: %s" % [value.inspect, self.name, detail], detail.backtrace
+            raise Puppet::DevError, "Munging failed for value #{value.inspect} in class #{self.name}: #{detail}", detail.backtrace
         end
         ret
     end
@@ -274,7 +274,7 @@ class Puppet::Parameter
         rescue Puppet::Error, TypeError
             raise
         rescue => detail
-            raise Puppet::DevError, "Validate method failed for class %s: %s" % [self.name, detail], detail.backtrace
+            raise Puppet::DevError, "Validate method failed for class #{self.name}: #{detail}", detail.backtrace
         end
     end
 

@@ -134,11 +134,11 @@ module Puppet::Util::ClassGen
 
         if const_defined?(const)
             if options[:overwrite]
-                Puppet.info "Redefining %s in %s" % [name, self]
+                Puppet.info "Redefining #{name} in #{self}"
                 remove_const(const)
             else
                 raise Puppet::ConstantAlreadyDefined,
-                    "Class %s is already defined in %s" % [const, self]
+                    "Class #{const} is already defined in #{self}"
             end
         end
         const_set(const, klass)
@@ -185,7 +185,7 @@ module Puppet::Util::ClassGen
         if hash = options[:hash]
             if hash.include? klassname and ! options[:overwrite]
                 raise Puppet::SubclassAlreadyDefined,
-                    "Already a generated class named %s" % klassname
+                    "Already a generated class named #{klassname}"
             end
 
             hash[klassname] = klass
@@ -197,7 +197,7 @@ module Puppet::Util::ClassGen
                             array.find { |c| c.name == klassname } and
                             ! options[:overwrite])
                 raise Puppet::SubclassAlreadyDefined,
-                    "Already a generated class named %s" % klassname
+                    "Already a generated class named #{klassname}"
             end
 
             array << klass

@@ -7,7 +7,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         begin
             execoutput("#{command(:semodule)} --install #{selmod_name_to_filename}")
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not load policy module: %s" % [detail];
+            raise Puppet::Error, "Could not load policy module: #{detail}";
         end
         return :true
     end
@@ -16,7 +16,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         begin
             execoutput("#{command(:semodule)} --remove #{@resource[:name]}")
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not remove policy module: %s" % [detail];
+            raise Puppet::Error, "Could not remove policy module: #{detail}";
         end
     end
 
@@ -50,7 +50,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         begin
             execoutput("#{command(:semodule)} --upgrade #{selmod_name_to_filename}")
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not upgrade policy module: %s" % [detail];
+            raise Puppet::Error, "Could not upgrade policy module: #{detail}";
         end
     end
 
@@ -136,7 +136,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
                 end
             end
         rescue Puppet::ExecutionFailure
-            raise Puppet::ExecutionFailure, "Could not list policy modules: %s" % [lines.join(' ').chomp!]
+            raise Puppet::ExecutionFailure, "Could not list policy modules: #{lines.join(' ').chomp!}"
         end
         return nil
     end

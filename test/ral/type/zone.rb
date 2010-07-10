@@ -118,7 +118,7 @@ class TestZone < PuppetTest::TestCase
                 assert(
                     prov.method_defined?(m),
 
-                    "Zone provider %s does not define method %s" % [prov.name, m])
+                    "Zone provider #{prov.name} does not define method #{m}")
             end
         end
 
@@ -398,7 +398,7 @@ end
             [:uninstall, :configured],
             [:unconfigure, :absent]
         ].each do |method, property|
-            Puppet.info "Testing %s" % method
+            Puppet.info "Testing #{method}"
             current_values = nil
             assert_nothing_raised {
                 current_values = zone.retrieve
@@ -410,7 +410,7 @@ end
             assert_nothing_raised {
                 current_values = zone.retrieve
             }
-            assert_equal(property, current_values[zone.property(:ensure)], "Method %s did not correctly set property %s" % [method, property])
+            assert_equal(property, current_values[zone.property(:ensure)], "Method #{method} did not correctly set property #{property}")
         end
     end
 

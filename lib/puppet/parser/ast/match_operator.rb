@@ -24,7 +24,7 @@ class Puppet::Parser::AST
             super
 
             unless %w{!~ =~}.include?(@operator)
-                raise ArgumentError, "Invalid regexp operator %s" % @operator
+                raise ArgumentError, "Invalid regexp operator #{@operator}"
             end
         end
     end

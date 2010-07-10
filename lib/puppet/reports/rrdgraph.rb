@@ -29,9 +29,9 @@ Puppet::Reports.register_report(:rrdgraph) do
     end
 
     def htmlfile(type, graphs, field)
-        file = File.join(hostdir, "%s.html" % type)
+        file = File.join(hostdir, "#{type}.html")
         File.open(file, "w") do |of|
-            of.puts "<html><head><title>%s graphs for %s</title></head><body>" % [type.capitalize, host]
+            of.puts "<html><head><title>#{type.capitalize} graphs for #{host}</title></head><body>"
 
             graphs.each do |graph|
                 if field == :first
@@ -39,7 +39,7 @@ Puppet::Reports.register_report(:rrdgraph) do
                 else
                     name = graph.sub(/\w+-/, '').sub(".png", '').capitalize
                 end
-                of.puts "<img src=%s><br>" % graph
+                of.puts "<img src=#{graph}><br>"
             end
             of.puts "</body></html>"
         end
@@ -66,7 +66,7 @@ Puppet::Reports.register_report(:rrdgraph) do
         # Make the period html files
         periodorder.each do |period|
             unless ary = periods[period]
-                raise Puppet::Error, "Could not find graphs for %s" % period
+                raise Puppet::Error, "Could not find graphs for #{period}"
             end
             files << htmlfile(period, ary, :first)
         end
@@ -75,10 +75,10 @@ Puppet::Reports.register_report(:rrdgraph) do
         types.sort { |a,b| a[0] <=> b[0] }.each do |type, ary|
             newary = []
             periodorder.each do |period|
-                if graph = ary.find { |g| g.include?("-%s.png" % period) }
+                if graph = ary.find { |g| g.include?("-#{period}.png") }
                     newary << graph
                 else
-                    raise "Could not find %s-%s graph" % [type, period]
+                    raise "Could not find #{type}-#{period} graph"
                 end
             end
 
@@ -86,9 +86,9 @@ Puppet::Reports.register_report(:rrdgraph) do
         end
 
         File.open(File.join(hostdir, "index.html"), "w") do |of|
-            of.puts "<html><head><title>Report graphs for %s</title></head><body>" % host
+            of.puts "<html><head><title>Report graphs for #{host}</title></head><body>"
             files.each do |file|
-                of.puts "<a href='%s'>%s</a><br/>" % [File.basename(file), File.basename(file).sub(".html",'').capitalize]
+                of.puts "<a href='#{File.basename(file)}'>#{File.basename(file).sub(".html",'').capitalize}</a><br/>"
             end
             of.puts "</body></html>"
         end

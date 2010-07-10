@@ -67,7 +67,7 @@ tab = case Facter.value(:operatingsystem)
         def to_line(record)
             str = ""
             if record[:name]
-                str = "# Puppet Name: %s\n" % record[:name]
+                str = "# Puppet Name: #{record[:name]}\n"
             end
             if record[:environment] and record[:environment] != :absent and record[:environment] != [:absent]
                 record[:environment].each do |env|
@@ -76,7 +76,7 @@ tab = case Facter.value(:operatingsystem)
             end
 
             if record[:special]
-                str += "@%s %s" % [record[:special], record[:command]]
+                str += "@#{record[:special]} #{record[:command]}"
             else
                 str += join(record)
             end

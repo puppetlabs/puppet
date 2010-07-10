@@ -44,7 +44,7 @@ module Puppet::Util::FileParsing
             @fields = fields.collect do |field|
                 r = symbolize(field)
                 if INVALID_FIELDS.include?(r)
-                    raise ArgumentError.new("Cannot have fields named %s" % r)
+                    raise ArgumentError.new("Cannot have fields named #{r}")
                 end
                 r
             end
@@ -53,7 +53,7 @@ module Puppet::Util::FileParsing
         def initialize(type, options = {}, &block)
             @type = symbolize(type)
             unless [:record, :text].include?(@type)
-                raise ArgumentError, "Invalid record type %s" % @type
+                raise ArgumentError, "Invalid record type #{@type}"
             end
 
             set_options(options)
@@ -92,7 +92,7 @@ module Puppet::Util::FileParsing
                     if self.optional.include?(field)
                         self.absent
                     else
-                        raise ArgumentError, "Field '%s' is required" % field
+                        raise ArgumentError, "Field '#{field}' is required"
                     end
                 else
                     details[field].to_s
@@ -157,7 +157,7 @@ module Puppet::Util::FileParsing
             if ret = record.send(:process, line.dup)
                 unless ret.is_a?(Hash)
                     raise Puppet::DevError,
-                        "Process record type %s returned non-hash" % record.name
+                        "Process record type #{record.name} returned non-hash"
                 end
             else
                 return nil
@@ -235,7 +235,7 @@ module Puppet::Util::FileParsing
             if val = parse_line(line)
                 val
             else
-                error = Puppet::Error.new("Could not parse line %s" % line.inspect)
+                error = Puppet::Error.new("Could not parse line #{line.inspect}")
                 error.line = count
                 raise error
             end
@@ -250,7 +250,7 @@ module Puppet::Util::FileParsing
 
         @record_order.each do |record|
             # These are basically either text or record lines.
-            method = "handle_%s_line" % record.type
+            method = "handle_#{record.type}_line"
             if respond_to?(method)
                 if result = send(method, line, record)
                     if record.respond_to?(:post_parse)
@@ -260,7 +260,7 @@ module Puppet::Util::FileParsing
                 end
             else
                 raise Puppet::DevError,
-                    "Somehow got invalid line type %s" % record.type
+                    "Somehow got invalid line type #{record.type}"
             end
         end
 
@@ -323,7 +323,7 @@ module Puppet::Util::FileParsing
     # Convert our parsed record into a text record.
     def to_line(details)
         unless record = record_type(details[:record_type])
-            raise ArgumentError, "Invalid record type %s" % details[:record_type].inspect
+            raise ArgumentError, "Invalid record type #{details[:record_type].inspect}"
         end
 
         if record.respond_to?(:pre_gen)
@@ -382,7 +382,7 @@ module Puppet::Util::FileParsing
         @record_order ||= []
 
         if @record_types.include?(record.name)
-            raise ArgumentError, "Line type %s is already defined" % record.name
+            raise ArgumentError, "Line type #{record.name} is already defined"
         end
 
         @record_types[record.name] = record

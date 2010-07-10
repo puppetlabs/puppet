@@ -58,7 +58,7 @@ def read_node(node)
     if FileTest.exist?(nodefile)
         return YAML.load_file(nodefile)
     else
-        raise "Could not find information for %s" % node
+        raise "Could not find information for #{node}"
     end
 end
 
@@ -69,7 +69,7 @@ info = read_node(node)
 # Iterate over any provided parents, merging in there information.
 parents_seen = []
 while parent = info["parent"]
-    raise "Found inheritance loop with parent %s" % parent if parents_seen.include?(parent)
+    raise "Found inheritance loop with parent #{parent}" if parents_seen.include?(parent)
 
     parents_seen << parent
 

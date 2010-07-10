@@ -36,7 +36,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     end
 
     def checksum_type=(type)
-        raise(ArgumentError, "Unsupported checksum type %s" % type) unless respond_to?("%s_file" % type)
+        raise(ArgumentError, "Unsupported checksum type #{type}") unless respond_to?("#{type}_file")
 
         @checksum_type = type
     end
@@ -57,15 +57,15 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
         case stat.ftype
         when "file"
-            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s
+            @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s
         when "directory" # Always just timestamp the directory.
             @checksum_type = "ctime"
-            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, path).to_s
+            @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", path).to_s
         when "link"
             @destination = File.readlink(real_path)
-            @checksum = ("{%s}" % @checksum_type) + send("%s_file" % @checksum_type, real_path).to_s rescue nil
+            @checksum = ("{#{@checksum_type}}") + send("#{@checksum_type}_file", real_path).to_s rescue nil
         else
-            raise ArgumentError, "Cannot manage files of type %s" % stat.ftype
+            raise ArgumentError, "Cannot manage files of type #{stat.ftype}"
         end
     end
 

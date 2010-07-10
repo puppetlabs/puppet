@@ -40,7 +40,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
         assert_nothing_raised do
             Puppet::Parser::Functions.newfunction(:fakefunction, :type => :rvalue) do |input|
-                return "output %s" % input[0]
+                return "output #{input[0]}"
             end
         end
 
@@ -80,7 +80,7 @@ class TestLangFunctions < Test::Unit::TestCase
                 val = func.evaluate(scope)
             end
 
-            assert_equal(retval, val, "'tagged' returned %s for %s" % [val, tag])
+            assert_equal(retval, val, "'tagged' returned #{val} for #{tag}")
         end
 
         # Now make sure we correctly get tags.
@@ -118,8 +118,7 @@ class TestLangFunctions < Test::Unit::TestCase
         twop = File.join(Puppet[:templatedir], "two")
 
         File.open(onep, "w") do |f|
-            f.puts "<%- if @one.nil? then raise '@one undefined' end -%>" +
-                "template <%= @one %>"
+            f.puts "<%- if @one.nil? then raise '@one undefined' end -%>template <%= @one %>"
         end
 
         File.open(twop, "w") do |f|
@@ -393,7 +392,7 @@ class TestLangFunctions < Test::Unit::TestCase
                 assert_equal(
                     "template #{value}\n", scope.lookupvar("output"),
 
-                        "%s did not get evaluated correctly" % string.inspect)
+                        "#{string.inspect} did not get evaluated correctly")
         end
     end
 

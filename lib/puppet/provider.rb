@@ -40,7 +40,7 @@ class Puppet::Provider
         elsif superclass.respond_to? :command and command = superclass.command(name)
             # nothing
         else
-            raise Puppet::DevError, "No command %s defined for provider %s" % [name, self.name]
+            raise Puppet::DevError, "No command #{name} defined for provider #{self.name}"
         end
 
         return binary(command)
@@ -102,7 +102,7 @@ class Puppet::Provider
     # The method for returning a list of provider instances.  Note that it returns providers, preferably with values already
     # filled in, not resources.
     def self.instances
-        raise Puppet::DevError, "Provider %s has not defined the 'instances' class method" % self.name
+        raise Puppet::DevError, "Provider #{self.name} has not defined the 'instances' class method"
     end
 
     # Create the methods for a given command.
@@ -111,7 +111,7 @@ class Puppet::Provider
         unless singleton_class.method_defined?(name)
             meta_def(name) do |*args|
                 unless command(name)
-                    raise Puppet::Error, "Command %s is missing" % name
+                    raise Puppet::Error, "Command #{name} is missing"
                 end
                 if args.empty?
                     cmd = [command(name)]
@@ -190,7 +190,7 @@ class Puppet::Provider
             klass = param
         else
             unless klass = resource_type.attrclass(param)
-                raise Puppet::DevError, "'%s' is not a valid parameter for %s" % [param, resource_type.name]
+                raise Puppet::DevError, "'#{param}' is not a valid parameter for #{resource_type.name}"
             end
         end
         return true unless features = klass.required_features
@@ -205,9 +205,9 @@ class Puppet::Provider
 #    def self.to_s
 #        unless defined?(@str)
 #            if self.resource_type
-#                @str = "%s provider %s" % [resource_type.name, self.name]
+#                @str = "#{resource_type.name} provider #{self.name}"
 #            else
-#                @str = "unattached provider %s" % [self.name]
+#                @str = "unattached provider #{self.name}"
 #            end
 #        end
 #        @str
@@ -274,7 +274,7 @@ class Puppet::Provider
         elsif self.resource
             resource.name
         else
-            raise Puppet::DevError, "No resource and no name in property hash in %s instance" % self.class.name
+            raise Puppet::DevError, "No resource and no name in property hash in #{self.class.name} instance"
         end
     end
 
@@ -286,7 +286,7 @@ class Puppet::Provider
     end
 
     def to_s
-        "%s(provider=%s)" % [@resource.to_s, self.class.name]
+        "#{@resource}(provider=#{self.class.name})"
     end
 end
 

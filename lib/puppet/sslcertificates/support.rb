@@ -10,10 +10,10 @@ module Puppet::SSLCertificates::Support
     # Some metaprogramming to create methods for retrieving and creating keys.
     # This probably isn't fewer lines than defining each separately...
     def self.keytype(name, options, &block)
-        var = "@%s" % name
+        var = "@#{name}"
 
-        maker = "mk_%s" % name
-        reader = "read_%s" % name
+        maker = "mk_#{name}"
+        reader = "read_#{name}"
 
         unless param = options[:param]
             raise ArgumentError, "You must specify the parameter for the key"
@@ -33,7 +33,7 @@ module Puppet::SSLCertificates::Support
             begin
                 instance_variable_set(var, klass.new(File.read(Puppet[param])))
             rescue => detail
-                raise InvalidCertificate, "Could not read %s: %s" % [param, detail]
+                raise InvalidCertificate, "Could not read #{param}: #{detail}"
             end
         end
 
@@ -53,7 +53,7 @@ module Puppet::SSLCertificates::Support
 
     # The key pair.
     keytype :key, :param => :hostprivkey, :class => OpenSSL::PKey::RSA do
-        Puppet.info "Creating a new SSL key at %s" % Puppet[:hostprivkey]
+        Puppet.info "Creating a new SSL key at #{Puppet[:hostprivkey]}"
         key = OpenSSL::PKey::RSA.new(Puppet[:keylength])
 
         # Our key meta programming can only handle one file, so we have
@@ -66,7 +66,7 @@ module Puppet::SSLCertificates::Support
 
     # Our certificate request
     keytype :csr, :param => :hostcsr, :class => OpenSSL::X509::Request do
-        Puppet.info "Creating a new certificate request for %s" % Puppet[:certname]
+        Puppet.info "Creating a new certificate request for #{Puppet[:certname]}"
 
         csr = OpenSSL::X509::Request.new
         csr.version = 0
@@ -95,7 +95,7 @@ module Puppet::SSLCertificates::Support
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            raise Puppet::Error.new("Certificate retrieval failed: %s" % detail)
+            raise Puppet::Error.new("Certificate retrieval failed: #{detail}")
         end
 
         if cert.nil? or cert == ""
@@ -111,7 +111,7 @@ module Puppet::SSLCertificates::Support
             retrieved = true
         rescue => detail
             raise Puppet::Error.new(
-                "Invalid certificate: %s" % detail
+                "Invalid certificate: #{detail}"
             )
         end
 
@@ -142,7 +142,7 @@ module Puppet::SSLCertificates::Support
 
         full_file = File.join(dir, real_file)
 
-        Puppet.notice "Fixing case in %s; renaming to %s" % [full_file, file]
+        Puppet.notice "Fixing case in #{full_file}; renaming to #{file}"
         File.rename(full_file, file)
 
         return true

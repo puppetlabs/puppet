@@ -117,7 +117,7 @@ describe Puppet::Transaction do
                     exec1 = Puppet::Type.type(:exec).new(
                 
             :path => ENV["PATH"],
-            :command => "touch %s" % file1,
+            :command => "touch #{file1}",
             :refreshonly => true,
         
             :subscribe => Puppet::Resource.new(:file, path)
@@ -126,7 +126,7 @@ describe Puppet::Transaction do
                     exec2 = Puppet::Type.type(:exec).new(
                 
             :path => ENV["PATH"],
-            :command => "touch %s" % file2,
+            :command => "touch #{file2}",
             :refreshonly => true,
         
             :subscribe => Puppet::Resource.new(:file, path)
@@ -163,7 +163,7 @@ describe Puppet::Transaction do
                     exec2 = Puppet::Type.type(:exec).new(
                 
             :path => ENV["PATH"],
-            :command => "touch %s" % newfile,
+            :command => "touch #{newfile}",
             :logoutput => true,
             :refreshonly => true,
             :subscribe => [file, exec1],

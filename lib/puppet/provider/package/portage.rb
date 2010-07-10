@@ -54,14 +54,14 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
         name = package_name
         unless should == :present or should == :latest
             # We must install a specific version
-            name = "=%s-%s" % [name, should]
+            name = "=#{name}-#{should}"
         end
         emerge name
     end
 
     # The common package name format.
     def package_name
-        @resource[:category] ? "%s/%s" % [@resource[:category], @resource[:name]] : @resource[:name]
+        @resource[:category] ? "#{@resource[:category]}/#{@resource[:name]}" : @resource[:name]
     end
 
     def uninstall
@@ -108,7 +108,7 @@ Puppet::Type.type(:package).provide :portage, :parent => Puppet::Provider::Packa
 
             case packages.size
                 when 0
-                    not_found_value = "%s/%s" % [@resource[:category] ? @resource[:category] : "<unspecified category>", @resource[:name]]
+                    not_found_value = "#{@resource[:category] ? @resource[:category] : "<unspecified category>"}/#{@resource[:name]}"
                     raise Puppet::Error.new("No package found with the specified name [#{not_found_value}]")
                 when 1
                     return packages[0]

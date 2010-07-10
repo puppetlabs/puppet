@@ -10,7 +10,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
     # Process the found entry.  We assume that we don't just want the
     # ldap object.
     def process(entry)
-        raise Puppet::DevError, "The 'process' method has not been overridden for the LDAP terminus for %s" % self.name
+        raise Puppet::DevError, "The 'process' method has not been overridden for the LDAP terminus for #{self.name}"
     end
 
     # Default to all attributes.
@@ -24,7 +24,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
 
     # The ldap search filter to use.
     def search_filter(name)
-        raise Puppet::DevError, "No search string set for LDAP terminus for %s" % self.name
+        raise Puppet::DevError, "No search string set for LDAP terminus for #{self.name}"
     end
 
     # Find the ldap node, return the class list and parent node specially,
@@ -71,7 +71,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
                 @connection = conn.connection
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                raise Puppet::Error, "Could not connect to LDAP: %s" % detail
+                raise Puppet::Error, "Could not connect to LDAP: #{detail}"
             end
         end
 

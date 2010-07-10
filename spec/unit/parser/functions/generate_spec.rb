@@ -28,7 +28,7 @@ describe "the generate function" do
     it "should not accept a command containing illegal characters"
 
     it "should not accept a command containing '..'" do
-        command = File::SEPARATOR + "command" + File::SEPARATOR + ".." + File::SEPARATOR
+        command = File::SEPARATOR + "command#{File::SEPARATOR}..#{File::SEPARATOR}"
         lambda { @scope.function_generate([command]) }.should raise_error(Puppet::ParseError)
     end
 

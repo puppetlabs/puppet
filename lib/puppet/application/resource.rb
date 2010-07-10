@@ -45,7 +45,7 @@ class Puppet::Application::Resource < Puppet::Application
             if setting =~ /^(\w+)=(.+)$/
                 params[$1] = $2
             else
-                raise "Invalid parameter setting %s" % setting
+                raise "Invalid parameter setting #{setting}"
             end
         end
 
@@ -96,7 +96,7 @@ class Puppet::Application::Resource < Puppet::Application
                 end
                 ENV["EDITOR"] ||= "vi"
                 system(ENV["EDITOR"], file)
-                system("puppet -v " + file)
+                system("puppet -v #{file}")
             ensure
                 #if FileTest.exists? file
                 #    File.unlink(file)

@@ -9,7 +9,7 @@ class Puppet::Network::Client::ProxyClient < Puppet::Network::Client
 
         interface.methods.each { |ary|
             method = ary[0]
-            Puppet.debug "%s: defining %s.%s" % [self, namespace, method]
+            Puppet.debug "#{self}: defining #{namespace}.#{method}"
             define_method(method) { |*args|
                 begin
                     @driver.send(method, *args)
@@ -17,7 +17,7 @@ class Puppet::Network::Client::ProxyClient < Puppet::Network::Client
                     #Puppet.err "Could not call %s.%s: %s" %
                     #    [namespace, method, detail.faultString]
                     #raise NetworkClientError,
-                    #    "XMLRPC Error: %s" % detail.faultString
+                    #    "XMLRPC Error: #{detail.faultString}"
                     raise NetworkClientError, detail.faultString
                 end
             }

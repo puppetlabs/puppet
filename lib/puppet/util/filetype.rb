@@ -47,7 +47,7 @@ class Puppet::Util::FileType
                     if Puppet[:trace]
                         puts detail.backtrace
                     end
-                    raise Puppet::Error, "%s could not read %s: %s" % [self.class, @path, detail]
+                    raise Puppet::Error, "#{self.class} could not read #{@path}: #{detail}"
                 end
             end
 
@@ -64,7 +64,7 @@ class Puppet::Util::FileType
                     if Puppet[:debug]
                         puts detail.backtrace
                     end
-                    raise Puppet::Error, "%s could not write %s: %s" % [self.class, @path, detail]
+                    raise Puppet::Error, "#{self.class} could not write #{@path}: #{detail}"
                 end
             end
         end
@@ -137,19 +137,19 @@ class Puppet::Util::FileType
 
         # Read the file.
         def read
-            Puppet.info "Reading %s from RAM" % @path
+            Puppet.info "Reading #{@path} from RAM"
             @@tabs[@path]
         end
 
         # Remove the file.
         def remove
-            Puppet.info "Removing %s from RAM" % @path
+            Puppet.info "Removing #{@path} from RAM"
             @@tabs[@path] = ""
         end
 
         # Overwrite the file.
         def write(text)
-            Puppet.info "Writing %s to RAM" % @path
+            Puppet.info "Writing #{@path} to RAM"
             @@tabs[@path] = text
         end
     end
@@ -164,7 +164,7 @@ class Puppet::Util::FileType
             begin
                 @uid = Puppet::Util.uid(user)
             rescue Puppet::Error => detail
-                raise Puppet::Error, "Could not retrieve user %s" % user
+                raise Puppet::Error, "Could not retrieve user #{user}"
             end
 
             # XXX We have to have the user name, not the uid, because some
@@ -216,10 +216,10 @@ class Puppet::Util::FileType
             begin
                 output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
                 return "" if output.include?("can't open your crontab")
-                raise Puppet::Error, "User %s not authorized to use cron" % @path if output.include?("you are not authorized to use cron")
+                raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("you are not authorized to use cron")
                 return output
             rescue => detail
-                raise Puppet::Error, "Could not read crontab for %s: %s" % [@path, detail]
+                raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}"
             end
         end
 
@@ -228,7 +228,7 @@ class Puppet::Util::FileType
             begin
                 Puppet::Util.execute(%w{crontab -r}, :uid => @path)
             rescue => detail
-                raise Puppet::Error, "Could not remove crontab for %s: %s" % [@path, detail]
+                raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
             end
         end
 
@@ -248,7 +248,7 @@ class Puppet::Util::FileType
             begin
                 Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
             rescue => detail
-                raise Puppet::Error, "Could not write crontab for %s: %s" % [@path, detail]
+                raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}"
             end
             output_file.delete
         end
@@ -261,11 +261,11 @@ class Puppet::Util::FileType
             begin
                 output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
                 if output.include?("You are not authorized to use the cron command")
-                    raise Puppet::Error, "User %s not authorized to use cron" % @path
+                    raise Puppet::Error, "User #{@path} not authorized to use cron"
                 end
                 return output
             rescue => detail
-                raise Puppet::Error, "Could not read crontab for %s: %s" % [@path, detail]
+                raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}"
             end
         end
 
@@ -274,7 +274,7 @@ class Puppet::Util::FileType
             begin
                 Puppet::Util.execute(%w{crontab -r}, :uid => @path)
             rescue => detail
-                raise Puppet::Error, "Could not remove crontab for %s: %s" % [@path, detail]
+                raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
             end
         end
 
@@ -293,7 +293,7 @@ class Puppet::Util::FileType
             begin
                 Puppet::Util.execute(["crontab", output_file.path], :uid => @path)
             rescue => detail
-                raise Puppet::Error, "Could not write crontab for %s: %s" % [@path, detail]
+                raise Puppet::Error, "Could not write crontab for #{@path}: #{detail}"
             ensure
                 output_file.delete
             end

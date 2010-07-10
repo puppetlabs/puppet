@@ -64,7 +64,7 @@ class TestMetric < PuppetTest::TestCase
         File.open(File.join(Puppet[:rrddir],"index.html"),"w") { |of|
             of.puts "<html><body>"
             report.metrics.each { |name, metric|
-                of.puts "<img src=%s.png><br>" % metric.name
+                of.puts "<img src=#{metric.name}.png><br>"
             }
         }
     end

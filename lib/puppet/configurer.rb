@@ -57,12 +57,12 @@ class Puppet::Configurer
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            Puppet.err "Corrupt state file %s: %s" % [Puppet[:statefile], detail]
+            Puppet.err "Corrupt state file #{Puppet[:statefile]}: #{detail}"
             begin
                 ::File.unlink(Puppet[:statefile])
                 retry
             rescue => detail
-                raise Puppet::Error.new("Cannot remove %s: %s" % [Puppet[:statefile], detail])
+                raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
             end
         end
     end
@@ -135,7 +135,7 @@ class Puppet::Configurer
             raise
         rescue Exception => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Failed to prepare catalog: %s" % detail
+            Puppet.err "Failed to prepare catalog: #{detail}"
         end
 
         options[:report] ||= initialize_report()
@@ -158,7 +158,7 @@ class Puppet::Configurer
             report
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            Puppet.err "Failed to apply catalog: %s" % detail
+            Puppet.err "Failed to apply catalog: #{detail}"
             return
         end
     ensure
@@ -219,7 +219,7 @@ class Puppet::Configurer
         result
     rescue => detail
         puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not retrieve catalog from cache: %s" % detail
+        Puppet.err "Could not retrieve catalog from cache: #{detail}"
         return nil
     end
 
@@ -233,7 +233,7 @@ class Puppet::Configurer
         raise
     rescue Exception => detail
         puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not retrieve catalog from remote server: %s" % detail
+        Puppet.err "Could not retrieve catalog from remote server: #{detail}"
         return nil
     end
 end

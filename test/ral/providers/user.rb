@@ -42,7 +42,7 @@ class TestUserProvider < Test::Unit::TestCase
                 return false
             end
 
-            assert_equal("", output, "User %s is present:\n%s" % [user, output])
+            assert_equal("", output, "User #{user} is present:\n#{output}")
         end
 
         def current?(param, user)
@@ -67,7 +67,7 @@ class TestUserProvider < Test::Unit::TestCase
         end
 
         def remove(user)
-            system("niutil -destroy / /users/%s" % user)
+            system("niutil -destroy / /users/#{user}")
         end
     else
         def missing?(user)
@@ -93,7 +93,7 @@ class TestUserProvider < Test::Unit::TestCase
         end
 
         def remove(user)
-            system("userdel %s" % user)
+            system("userdel #{user}")
         end
     end
 
@@ -120,10 +120,10 @@ class TestUserProvider < Test::Unit::TestCase
         case param
         when :name; name
         when :ensure; :present
-        when :comment; "Puppet's Testing User %s" % name # use a single quote a la #375
+        when :comment; "Puppet's Testing User #{name}" # use a single quote a la #375
         when :gid; nonrootgroup.gid
         when :shell; findshell()
-        when :home; "/home/%s" % name
+        when :home; "/home/#{name}"
         else
             return nil
         end
@@ -196,9 +196,9 @@ class TestUserProvider < Test::Unit::TestCase
                 assert(
                     val != :absent,
 
-                    "Property %s is missing" % property)
+                    "Property #{property} is missing")
 
-            assert(val, "Did not get value for %s" % property)
+            assert(val, "Did not get value for #{property}")
         end
     end
 
@@ -386,7 +386,7 @@ class TestUserProvider < Test::Unit::TestCase
         extra = []
         5.times do |i|
             i += 1
-            name = "pptstgr%s" % i
+            name = "pptstgr#{i}"
 
                 tmpgroup = Puppet::Type.type(:group).new(
 
@@ -443,7 +443,7 @@ class TestUserProvider < Test::Unit::TestCase
         def test_simpleuser
             name = "pptest"
 
-            assert(missing?(name), "User %s is present" % name)
+            assert(missing?(name), "User #{name} is present")
 
             user = mkuser(name)
 
@@ -474,7 +474,7 @@ class TestUserProvider < Test::Unit::TestCase
             user = nil
             name = "pptest"
 
-            assert(missing?(name), "User %s is present" % name)
+            assert(missing?(name), "User #{name} is present")
 
             user = mkuser(name)
 
@@ -496,10 +496,10 @@ class TestUserProvider < Test::Unit::TestCase
 
             just = nil
             tests.each { |test|
-                if self.respond_to?("attrtest_%s" % test)
-                    self.send("attrtest_%s" % test, user)
+                if self.respond_to?("attrtest_#{test}")
+                    self.send("attrtest_#{test}", user)
                 else
-                    Puppet.err "Not testing attr %s of user" % test
+                    Puppet.err "Not testing attr #{test} of user"
                 end
             }
 
@@ -586,9 +586,9 @@ class TestUserProvider < Test::Unit::TestCase
 
         should.each do |param, value|
             if darwin
-                assert_equal(value, provider.autogen(param), "did not autogen %s for darwin correctly" % param)
+                assert_equal(value, provider.autogen(param), "did not autogen #{param} for darwin correctly")
             else
-                assert_nil(provider.autogen(param), "autogenned %s for non-darwin os" % param)
+                assert_nil(provider.autogen(param), "autogenned #{param} for non-darwin os")
             end
         end
     end

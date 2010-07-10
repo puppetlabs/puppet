@@ -274,7 +274,7 @@ module PuppetTest
                         end
 
 
-            @tmpdir = File.join(@tmpdir, "puppettesting" + Process.pid.to_s)
+            @tmpdir = File.join(@tmpdir, "puppettesting#{Process.pid}")
 
             unless File.exists?(@tmpdir)
                 FileUtils.mkdir_p(@tmpdir)
@@ -287,12 +287,12 @@ module PuppetTest
     def remove_tmp_files
         @@tmpfiles.each { |file|
             unless file =~ /tmp/
-                puts "Not deleting tmpfile %s" % file
+                puts "Not deleting tmpfile #{file}"
                 next
             end
             if FileTest.exists?(file)
-                system("chmod -R 755 %s" % file)
-                system("rm -rf %s" % file)
+                system("chmod -R 755 #{file}")
+                system("rm -rf #{file}")
             end
         }
         @@tmpfiles.clear
@@ -320,7 +320,7 @@ module PuppetTest
         diff = @memoryatend - @memoryatstart
 
         if diff > 1000
-            Puppet.info "%s#%s memory growth (%s to %s): %s" % [self.class, @method_name, @memoryatstart, @memoryatend, diff]
+            Puppet.info "#{self.class}##{@method_name} memory growth (#{@memoryatstart} to #{@memoryatend}): #{diff}"
         end
 
         # reset all of the logs

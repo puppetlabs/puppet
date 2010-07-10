@@ -36,7 +36,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         instances = []
         defpath.each do |path|
             unless FileTest.directory?(path)
-                Puppet.debug "Service path %s does not exist" % path
+                Puppet.debug "Service path #{path} does not exist"
                 next
             end
 
@@ -63,7 +63,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
         when true, "true"; @parameters[:hasstatus] = true
         when false, "false"; @parameters[:hasstatus] = false
         else
-            raise Puppet::Error, "Invalid 'hasstatus' value %s" % value.inspect
+            raise Puppet::Error, "Invalid 'hasstatus' value #{value.inspect}"
         end
     end
 
@@ -94,7 +94,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
                 stat = File.stat(fqname)
             rescue
                 # should probably rescue specific errors...
-                self.debug("Could not find %s in %s" % [name,path])
+                self.debug("Could not find #{name} in #{path}")
                 next
             end
 
@@ -108,14 +108,14 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
                 stat = File.stat(fqname_sh)
             rescue
                 # should probably rescue specific errors...
-                self.debug("Could not find %s.sh in %s" % [name,path])
+                self.debug("Could not find #{name}.sh in #{path}")
                 next
             end
 
             # if we've gotten this far, we found a valid script
             return fqname_sh
         }
-        raise Puppet::Error, "Could not find init script for '%s'" % name
+        raise Puppet::Error, "Could not find init script for '#{name}'"
     end
 
     # The start command is just the init scriptwith 'start'.

@@ -27,7 +27,7 @@ require 'puppet/provider/parsedfile'
 #    record_line :parsed, :fields => %w{name port protocols alias description},
 #        :optional => %w{alias description} do |line|
 #        if line =~ /\/ddp/
-#            raise "missed ddp in %s" % line
+#            raise "missed ddp in #{line}"
 #        end
 #        # The record might contain multiple port lines separated by \n.
 #        hashes = line.split("\n").collect { |l| parse_port(l) }
@@ -113,7 +113,7 @@ require 'puppet/provider/parsedfile'
 #                    #    line.inspect
 #                    next
 #            end
-#            Puppet.notice "Ignoring unparseable line '%s' in %s" % [line, self.target]
+#            Puppet.notice "Ignoring unparseable line '#{line}' in #{self.target}"
 #        end
 #
 #        if hash.empty?
@@ -157,14 +157,14 @@ require 'puppet/provider/parsedfile'
 #
 #        # Strangely, most sites seem to use tabs as separators.
 #        hash[:protocols].collect { |proto|
-#            str = "%s\t\t%s/%s" % [hash[:name], hash[:number], proto]
+#            str = "#{hash[:name]}\t\t#{hash[:number]}/#{proto}"
 #
 #            if value = hash[:alias] and value != :absent
-#                str += "\t\t%s" % value.join(" ")
+#                str += "\t\t#{value.join(" ")}"
 #            end
 #
 #            if value = hash[:description] and value != :absent
-#                str += "\t# %s" % value
+#                str += "\t# #{value}"
 #            end
 #            str
 #        }.join("\n")

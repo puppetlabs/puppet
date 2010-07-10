@@ -46,7 +46,7 @@ class Puppet::Parser::AST
     # of the contained children and evaluates them in turn, returning a
     # list of all of the collected values, rejecting nil values
     def evaluate(*options)
-        raise Puppet::DevError, "Did not override #evaluate in %s" % self.class
+        raise Puppet::DevError, "Did not override #evaluate in #{self.class}"
     end
 
     # Throw a parse error.

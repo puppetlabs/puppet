@@ -123,12 +123,12 @@ class DirectoryService < Puppet::Provider::NameService
                 product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
             end
             if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
-                fail("%s is not supported by the directoryservice provider" % product_version_major)
+                fail("#{product_version_major} is not supported by the directoryservice provider")
             end
             @macosx_version_major = product_version_major
             return @macosx_version_major
         rescue Puppet::ExecutionFailure => detail
-            fail("Could not determine OS X version: %s" % detail)
+            fail("Could not determine OS X version: #{detail}")
         end
     end
 
@@ -138,7 +138,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             dscl_output = execute(get_exec_preamble("-list"))
         rescue Puppet::ExecutionFailure => detail
-            fail("Could not get %s list from DirectoryService" % [ @resource_type.name.to_s ])
+            fail("Could not get #{@resource_type.name} list from DirectoryService")
         end
         return dscl_output.split("\n")
     end
@@ -279,9 +279,9 @@ class DirectoryService < Puppet::Provider::NameService
         # JJM: get_ds_path will spit back "Users" or "Groups",
         # etc...  Depending on the Puppet::Type of our self.
         if resource_name
-            command_vector << "/%s/%s" % [ get_ds_path, resource_name ]
+            command_vector << "/#{get_ds_path}/#{resource_name}"
         else
-            command_vector << "/%s" % [ get_ds_path ]
+            command_vector << "/#{get_ds_path}"
         end
         # JJM:  This returns most of the preamble of the command.
         #       e.g. 'dscl / -create /Users/mccune'
@@ -368,7 +368,7 @@ class DirectoryService < Puppet::Provider::NameService
             guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
             self.class.set_password(@resource.name, guid, passphrase)
         rescue Puppet::ExecutionFailure => detail
-            fail("Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail])
+            fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
         end
     end
 
@@ -399,7 +399,7 @@ class DirectoryService < Puppet::Provider::NameService
             begin
                 execute(exec_arg_vector)
             rescue Puppet::ExecutionFailure => detail
-                fail("Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail])
+                fail("Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}")
             end
         end
     end
@@ -426,7 +426,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             execute(exec_arg_vector)
         rescue Puppet::ExecutionFailure => detail
-            fail("Could not set GeneratedUID for %s %s: %s" % [@resource.class.name, @resource.name, detail])
+            fail("Could not set GeneratedUID for #{@resource.class.name} #{@resource.name}: #{detail}")
         end
 
         if value = @resource.should(:password) and value != ""
@@ -447,7 +447,7 @@ class DirectoryService < Puppet::Provider::NameService
                     begin
                         execute(exec_arg_vector)
                     rescue Puppet::ExecutionFailure => detail
-                        fail("Could not create %s %s: %s" % [@resource.class.name, @resource.name, detail])
+                        fail("Could not create #{@resource.class.name} #{@resource.name}: #{detail}")
                     end
                 end
             end
@@ -461,7 +461,7 @@ class DirectoryService < Puppet::Provider::NameService
                 begin
                     execute(cmd)
                 rescue Puppet::ExecutionFailure => detail
-                    fail("Could not remove %s from group: %s, %s" % [member, @resource.name, detail])
+                    fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
                 end
             end
         end
@@ -474,7 +474,7 @@ class DirectoryService < Puppet::Provider::NameService
                 begin
                     execute(cmd)
                 rescue Puppet::ExecutionFailure => detail
-                    fail("Could not add %s to group: %s, %s" % [new_member, @resource.name, detail])
+                    fail("Could not add #{new_member} to group: #{@resource.name}, #{detail}")
                 end
             end
         end

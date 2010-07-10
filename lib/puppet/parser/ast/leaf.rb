@@ -40,7 +40,7 @@ class Puppet::Parser::AST
 
             unless @value == true or @value == false
                 raise Puppet::DevError,
-                    "'%s' is not a boolean" % @value
+                    "'#{@value}' is not a boolean"
             end
             @value
         end
@@ -108,7 +108,7 @@ class Puppet::Parser::AST
             @value = @value.to_s.downcase unless @value.is_a?(Regex)
             if @value =~ /[^-\w.]/
                 raise Puppet::DevError,
-                    "'%s' is not a valid hostname" % @value
+                    "'#{@value}' is not a valid hostname"
             end
         end
 

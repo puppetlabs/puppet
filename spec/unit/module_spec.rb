@@ -402,7 +402,7 @@ describe Puppet::Module, "when finding matching manifests" do
         @mod = Puppet::Module.new("mymod")
         @mod.stubs(:path).returns "/a"
         @pq_glob_with_extension = "yay/*.xx"
-        @fq_glob_with_extension = "/a/manifests/" + @pq_glob_with_extension
+        @fq_glob_with_extension = "/a/manifests/#{@pq_glob_with_extension}"
     end
 
     it "should return all manifests matching the glob pattern" do

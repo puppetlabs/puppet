@@ -30,7 +30,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
             end
         else
             if @resource[:source]
-                Puppet.warning "source is defined but does not have trailing slash, ignoring %s" % @resource[:source]
+                Puppet.warning "source is defined but does not have trailing slash, ignoring #{@resource[:source]}"
             end
             pkgadd "-r", @resource[:name]
         end
@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     end
 
     def uninstall
-        pkgdelete "%s-%s" % [@resource[:name], @resource.should(:ensure)]
+        pkgdelete "#{@resource[:name]}-#{@resource.should(:ensure)}"
     end
 end
 

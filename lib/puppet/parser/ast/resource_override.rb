@@ -13,7 +13,7 @@ class Puppet::Parser::AST
         # Iterate across all of our children.
         def each
             [@object,@parameters].flatten.each { |param|
-                #Puppet.debug("yielding param %s" % param)
+                #Puppet.debug("yielding param #{param}")
                 yield param
             }
         end

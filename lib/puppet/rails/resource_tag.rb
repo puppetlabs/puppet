@@ -8,7 +8,7 @@ class Puppet::Rails::ResourceTag < ActiveRecord::Base
 
     # returns an array of hash containing tags of resource
     def self.find_all_tags_from_resource(db_resource)
-        tags = db_resource.connection.select_all("SELECT t.id, t.resource_id, p.name FROM resource_tags t INNER JOIN puppet_tags p ON t.puppet_tag_id=p.id WHERE t.resource_id=%s" % db_resource.id)
+        tags = db_resource.connection.select_all("SELECT t.id, t.resource_id, p.name FROM resource_tags t INNER JOIN puppet_tags p ON t.puppet_tag_id=p.id WHERE t.resource_id=#{db_resource.id}")
         tags.each do |val|
             val['resource_id'] = Integer(val['resource_id'])
         end
@@ -17,7 +17,7 @@ class Puppet::Rails::ResourceTag < ActiveRecord::Base
 
     # returns an array of hash containing tags of a host
     def self.find_all_tags_from_host(db_host)
-        tags = db_host.connection.select_all("SELECT t.id, t.resource_id, p.name FROM resource_tags t INNER JOIN resources r ON t.resource_id=r.id INNER JOIN puppet_tags p ON t.puppet_tag_id=p.id WHERE r.host_id=%s" % db_host.id)
+        tags = db_host.connection.select_all("SELECT t.id, t.resource_id, p.name FROM resource_tags t INNER JOIN resources r ON t.resource_id=r.id INNER JOIN puppet_tags p ON t.puppet_tag_id=p.id WHERE r.host_id=#{db_host.id}")
         tags.each do |val|
             val['resource_id'] = Integer(val['resource_id'])
         end

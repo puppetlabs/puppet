@@ -91,7 +91,7 @@ module PuppetTest::ParserTesting
             end
         end
         args[:type] = astarray(*newnames)
-        assert_nothing_raised("Could not create tag %s" % names.inspect) {
+        assert_nothing_raised("Could not create tag #{names.inspect}") {
             return AST::Tag.new(args)
         }
     end
@@ -100,7 +100,7 @@ module PuppetTest::ParserTesting
         unless title.is_a?(AST)
             title = stringobj(title)
         end
-        assert_nothing_raised("Could not create %s %s" % [type, title]) {
+        assert_nothing_raised("Could not create #{type} #{title}") {
 
             return AST::Resource.new(
 
@@ -121,7 +121,7 @@ module PuppetTest::ParserTesting
     end
 
     def resourceoverride(type, title, params)
-        assert_nothing_raised("Could not create %s %s" % [type, name]) {
+        assert_nothing_raised("Could not create #{type} #{name}") {
 
             return AST::ResourceOverride.new(
 
@@ -136,7 +136,7 @@ module PuppetTest::ParserTesting
     end
 
     def resourceref(type, title)
-        assert_nothing_raised("Could not create %s %s" % [type, title]) {
+        assert_nothing_raised("Could not create #{type} #{title}") {
 
             return AST::ResourceReference.new(
 
@@ -150,13 +150,13 @@ module PuppetTest::ParserTesting
     end
 
     def fileobj(path, hash = {"owner" => "root"})
-        assert_nothing_raised("Could not create file %s" % path) {
+        assert_nothing_raised("Could not create file #{path}") {
             return resourcedef("file", path, hash)
         }
     end
 
     def nameobj(name)
-        assert_nothing_raised("Could not create name %s" % name) {
+        assert_nothing_raised("Could not create name #{name}") {
 
             return AST::Name.new(
 
@@ -169,7 +169,7 @@ module PuppetTest::ParserTesting
     end
 
     def typeobj(name)
-        assert_nothing_raised("Could not create type %s" % name) {
+        assert_nothing_raised("Could not create type #{name}") {
 
             return AST::Type.new(
 
@@ -182,7 +182,7 @@ module PuppetTest::ParserTesting
     end
 
     def nodedef(name)
-        assert_nothing_raised("Could not create node %s" % name) {
+        assert_nothing_raised("Could not create node #{name}") {
 
             return AST::NodeDef.new(
 
@@ -194,9 +194,9 @@ module PuppetTest::ParserTesting
                     :code => AST::ASTArray.new(
 
                         :children => [
-                            varobj("%svar" % name, "%svalue" % name),
+                            varobj("#{name}var", "#{name}value"),
 
-                            fileobj("/%s" % name)
+                            fileobj("/#{name}")
                     ]
                 )
             )
@@ -224,7 +224,7 @@ module PuppetTest::ParserTesting
         if value.is_a?(String)
             value = stringobj(value)
         end
-        assert_nothing_raised("Could not create param %s" % param) {
+        assert_nothing_raised("Could not create param #{param}") {
 
             return AST::ResourceParam.new(
 
@@ -252,7 +252,7 @@ module PuppetTest::ParserTesting
         unless value.is_a? AST
             value = stringobj(value)
         end
-        assert_nothing_raised("Could not create %s code" % name) {
+        assert_nothing_raised("Could not create #{name} code") {
 
             return AST::VarDef.new(
 
@@ -266,7 +266,7 @@ module PuppetTest::ParserTesting
     end
 
     def varref(name)
-        assert_nothing_raised("Could not create %s variable" % name) {
+        assert_nothing_raised("Could not create #{name} variable") {
 
             return AST::Variable.new(
 
@@ -279,7 +279,7 @@ module PuppetTest::ParserTesting
     end
 
     def argobj(name, value)
-        assert_nothing_raised("Could not create %s compargument" % name) {
+        assert_nothing_raised("Could not create #{name} compargument") {
             return AST::CompArgument.new(
                 :children => [nameobj(name), stringobj(value)]
                     )
@@ -308,7 +308,7 @@ module PuppetTest::ParserTesting
                 :children => pary
                     )
 
-        assert_nothing_raised("Could not create defaults for %s" % type) {
+        assert_nothing_raised("Could not create defaults for #{type}") {
 
             return AST::ResourceDefaults.new(
 
@@ -352,7 +352,7 @@ module PuppetTest::ParserTesting
         catalog.apply
 
         files.each do |file|
-            assert(FileTest.exists?(file), "Did not create %s" % file)
+            assert(FileTest.exists?(file), "Did not create #{file}")
         end
     ensure
         Puppet[:manifest] = oldmanifest

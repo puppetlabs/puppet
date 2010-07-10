@@ -25,9 +25,9 @@ class TestCertSupport < Test::Unit::TestCase
     # Yay, metaprogramming
     def test_keytype
         [:key, :csr, :cert, :ca_cert].each do |name|
-            assert(Puppet::SSLCertificates::Support.method_defined?(name), "No retrieval method for %s" % name)
-            maker = "mk_%s" % name
-            assert(Puppet::SSLCertificates::Support.method_defined?(maker), "No maker method for %s" % name)
+            assert(Puppet::SSLCertificates::Support.method_defined?(name), "No retrieval method for #{name}")
+            maker = "mk_#{name}"
+            assert(Puppet::SSLCertificates::Support.method_defined?(maker), "No maker method for #{name}")
         end
     end
 
@@ -45,7 +45,7 @@ class TestCertSupport < Test::Unit::TestCase
                         assert(
                 FileTest.exists?(Puppet[file]),
         
-                "Did not create %s key file" % file)
+                "Did not create #{file} key file")
         end
 
         # Make sure it's a valid key

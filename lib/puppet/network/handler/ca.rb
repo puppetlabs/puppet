@@ -35,13 +35,13 @@ class Puppet::Network::Handler
 
             # we only otherwise know how to handle files
             unless autosign =~ /^\//
-                raise Puppet::Error, "Invalid autosign value %s" % autosign.inspect
+                raise Puppet::Error, "Invalid autosign value #{autosign.inspect}"
             end
 
             unless FileTest.exists?(autosign)
                 unless defined?(@@warnedonautosign)
                     @@warnedonautosign = true
-                    Puppet.info "Autosign is enabled but %s is missing" % autosign
+                    Puppet.info "Autosign is enabled but #{autosign} is missing"
                 end
                 return false
             end
@@ -89,7 +89,7 @@ class Puppet::Network::Handler
             hostname = nameary[1]
 
             unless @ca
-                Puppet.notice "Host %s asked for signing from non-CA master" % hostname
+                Puppet.notice "Host #{hostname} asked for signing from non-CA master"
                 return ""
             end
 
@@ -102,9 +102,9 @@ class Puppet::Network::Handler
             # first check to see if we already have a signed cert for the host
             cert, cacert = ca.getclientcert(hostname)
             if cert and cacert
-                Puppet.info "Retrieving existing certificate for %s" % hostname
+                Puppet.info "Retrieving existing certificate for #{hostname}"
                 unless csr.public_key.to_s == cert.public_key.to_s
-                    raise Puppet::Error, "Certificate request does not match existing certificate; run 'puppetca --clean %s'." % hostname
+                    raise Puppet::Error, "Certificate request does not match existing certificate; run 'puppetca --clean #{hostname}'."
                 end
                 return [cert.to_pem, cacert.to_pem]
             elsif @ca
@@ -115,15 +115,15 @@ class Puppet::Network::Handler
                     # okay, we don't have a signed cert
                     # if we're a CA and autosign is turned on, then go ahead and sign
                     # the csr and return the results
-                    Puppet.info "Signing certificate for %s" % hostname
+                    Puppet.info "Signing certificate for #{hostname}"
                     cert, cacert = @ca.sign(csr)
-                    #Puppet.info "Cert: %s; Cacert: %s" % [cert.class, cacert.class]
+                    #Puppet.info "Cert: #{cert.class}; Cacert: #{cacert.class}"
                     return [cert.to_pem, cacert.to_pem]
                 else # just write out the csr for later signing
                     if @ca.getclientcsr(hostname)
-                        Puppet.info "Not replacing existing request from %s" % hostname
+                        Puppet.info "Not replacing existing request from #{hostname}"
                     else
-                        Puppet.notice "Host %s has a waiting certificate request" % hostname
+                        Puppet.notice "Host #{hostname} has a waiting certificate request"
                         @ca.storeclientcsr(csr)
                     end
                     return ["", ""]
@@ -142,7 +142,7 @@ class Puppet::Network::Handler
             if FileTest.exists?(pkeyfile)
                 currentkey = File.open(pkeyfile) { |k| k.read }
                 unless currentkey == public_key.to_s
-                    raise Puppet::Error, "public keys for %s differ" % hostname
+                    raise Puppet::Error, "public keys for #{hostname} differ"
                 end
             else
                 File.open(pkeyfile, "w", 0644) { |f|

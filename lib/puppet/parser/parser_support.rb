@@ -21,9 +21,9 @@ class Puppet::Parser::Parser
     def addcontext(message, obj = nil)
         obj ||= @lexer
 
-        message += " on line %s" % obj.line
+        message += " on line #{obj.line}"
         if file = obj.file
-            message += " in file %s" % file
+            message += " in file #{file}"
         end
 
         return message
@@ -91,7 +91,7 @@ class Puppet::Parser::Parser
                 file = file + ".pp"
             end
             unless FileTest.exist?(file)
-                raise Puppet::Error, "Could not find file %s" % file
+                raise Puppet::Error, "Could not find file #{file}"
             end
         end
         raise Puppet::AlreadyImportedError, "Import loop detected" if known_resource_types.watching_file?(file)
@@ -161,12 +161,12 @@ class Puppet::Parser::Parser
         if token == 0 # denotes end of file
             value = 'end of file'
         else
-            value = "'%s'" % value[:value]
+            value = "'#{value[:value]}'"
         end
-        error = "Syntax error at %s" % [value]
+        error = "Syntax error at #{value}"
 
         if brace = @lexer.expected
-            error += "; expected '%s'" % brace
+            error += "; expected '#{brace}'"
         end
 
         except = Puppet::ParseError.new(error)

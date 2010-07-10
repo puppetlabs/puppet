@@ -64,7 +64,7 @@ module Puppet::Network
             @xmlrpc_server = Puppet::Network::XMLRPCServer.new
             handlers.each do |name|
                 unless handler = Puppet::Network::Handler.handler(name)
-                    raise ArgumentError, "Invalid handler %s" % name
+                    raise ArgumentError, "Invalid handler #{name}"
                 end
                 @xmlrpc_server.add_handler(handler.interface, handler.new({}))
             end
@@ -129,7 +129,7 @@ module Puppet::Network
                 begin
                     client = Resolv.getname(ip)
                 rescue => detail
-                    Puppet.err "Could not resolve %s: %s" % [ip, detail]
+                    Puppet.err "Could not resolve #{ip}: #{detail}"
                     client = "unknown"
                 end
                 valid = false

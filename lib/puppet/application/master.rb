@@ -54,7 +54,7 @@ class Puppet::Application::Master < Puppet::Application
         raise ArgumentError, "Cannot render compiled catalogs without pson support" unless Puppet.features.pson?
         begin
             unless catalog = Puppet::Resource::Catalog.find(options[:node])
-                raise "Could not compile catalog for %s" % options[:node]
+                raise "Could not compile catalog for #{options[:node]}"
             end
 
             jj catalog.to_resource
@@ -100,7 +100,7 @@ class Puppet::Application::Master < Puppet::Application
                 Puppet::Util.chuser
             rescue => detail
                 puts detail.backtrace if Puppet[:trace]
-                $stderr.puts "Could not change user to %s: %s" % [Puppet[:user], detail]
+                $stderr.puts "Could not change user to #{Puppet[:user]}: #{detail}"
                 exit(39)
             end
         end
@@ -114,7 +114,7 @@ class Puppet::Application::Master < Puppet::Application
             @app = Puppet::Network::HTTP::Rack.new(:xmlrpc_handlers => xmlrpc_handlers, :protocols => [:rest, :xmlrpc])
         end
 
-        Puppet.notice "Starting Puppet master version %s" % [Puppet.version]
+        Puppet.notice "Starting Puppet master version #{Puppet.version}"
 
         unless options[:rack]
             @daemon.start

@@ -57,13 +57,13 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     # Make sure a cron job matches up.  Any non-passed fields are considered absent.
     def assert_cron_equal(msg, cron, options)
-        assert_instance_of(@provider, cron, "not an instance of provider in %s" % msg)
+        assert_instance_of(@provider, cron, "not an instance of provider in #{msg}")
         options.each do |param, value|
-            assert_equal(value, cron.send(param), "%s was not equal in %s" % [param, msg])
+            assert_equal(value, cron.send(param), "#{param} was not equal in #{msg}")
         end
         %w{command environment minute hour month monthday weekday}.each do |var|
             unless options.include?(var.intern)
-                assert_equal(:absent, cron.send(var), "%s was not parsed absent in %s" % [var, msg])
+                assert_equal(:absent, cron.send(var), "#{var} was not parsed absent in #{msg}")
             end
         end
     end
@@ -73,13 +73,13 @@ class TestCronParsedProvider < Test::Unit::TestCase
         unless options.include?(:record_type)
             raise ArgumentError, "You must pass the required record type"
         end
-        assert_instance_of(Hash, record, "not an instance of a hash in %s" % msg)
+        assert_instance_of(Hash, record, "not an instance of a hash in #{msg}")
         options.each do |param, value|
-            assert_equal(value, record[param], "%s was not equal in %s" % [param, msg])
+            assert_equal(value, record[param], "#{param} was not equal in #{msg}")
         end
         FIELDS[record[:record_type]].each do |var|
             unless options.include?(var)
-                assert_equal(:absent, record[var], "%s was not parsed absent in %s" % [var, msg])
+                assert_equal(:absent, record[var], "#{var} was not parsed absent in #{msg}")
             end
         end
     end
@@ -100,10 +100,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
         # First just do each sample record one by one
         sample_records.each do |name, options|
             result = nil
-            assert_nothing_raised("Could not parse %s: '%s'" % [name, options[:text]]) do
+            assert_nothing_raised("Could not parse #{name}: '#{options[:text]}'") do
                 result = @provider.parse_line(options[:text])
             end
-            assert_record_equal("record for %s" % name, result, options[:record])
+            assert_record_equal("record for #{name}", result, options[:record])
         end
 
         # Then do them all at once.
@@ -120,7 +120,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         end
 
         records.zip(result).each do |should, record|
-            assert_record_equal("record for %s in full match" % should.inspect, record, should)
+            assert_record_equal("record for #{should.inspect} in full match", record, should)
         end
     end
 
@@ -129,10 +129,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
         # First just do each sample record one by one
         sample_records.each do |name, options|
             result = nil
-            assert_nothing_raised("Could not generate %s: '%s'" % [name, options[:record]]) do
+            assert_nothing_raised("Could not generate #{name}: '#{options[:record]}'") do
                 result = @provider.to_line(options[:record])
             end
-            assert_equal(options[:text], result, "Did not generate correct text for %s" % name)
+            assert_equal(options[:text], result, "Did not generate correct text for #{name}")
         end
 
         # Then do them all at once.
@@ -160,7 +160,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         sample_crons.each do |name, record_names|
             records = record_names.collect do |record_name|
                 unless record = sample_records[record_name]
-                    raise "Could not find sample record %s" % record_name
+                    raise "Could not find sample record #{record_name}"
                 end
                 record
             end
@@ -174,18 +174,18 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
             # First make sure we generate each one correctly
             result = nil
-            assert_nothing_raised("Could not generate multi-line cronjob %s" % [name]) do
+            assert_nothing_raised("Could not generate multi-line cronjob #{name}") do
                 result = @provider.to_file(record_list)
             end
             assert_header(result)
-            assert_equal(text, result, "Did not generate correct text for multi-line cronjob %s" % name)
+            assert_equal(text, result, "Did not generate correct text for multi-line cronjob #{name}")
 
             # Now make sure we parse each one correctly
-            assert_nothing_raised("Could not parse multi-line cronjob %s" % [name]) do
+            assert_nothing_raised("Could not parse multi-line cronjob #{name}") do
                 result = @provider.parse(text)
             end
             record_list.zip(result).each do |should, record|
-                assert_record_equal("multiline cronjob %s" % name, record, should)
+                assert_record_equal("multiline cronjob #{name}", record, should)
             end
         end
 
@@ -211,14 +211,14 @@ class TestCronParsedProvider < Test::Unit::TestCase
     def test_parse_and_generate_sample_files
         @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
         crondir = datadir(File.join(%w{providers cron}))
-        files = Dir.glob("%s/crontab.*" % crondir)
+        files = Dir.glob("#{crondir}/crontab.*")
 
         setme
         @provider.default_target = @me
         target = @provider.target_object(@me)
         files.each do |file|
             str = args = nil
-            assert_nothing_raised("could not load %s" % file) do
+            assert_nothing_raised("could not load #{file}") do
                 str, args = YAML.load(File.read(file))
             end
 
@@ -238,7 +238,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
                 end
             end
             target.write(str)
-            assert_nothing_raised("could not parse %s" % file) do
+            assert_nothing_raised("could not parse #{file}") do
                 @provider.prefetch
             end
             records = @provider.send(:instance_variable_get, "@records")
@@ -257,14 +257,14 @@ class TestCronParsedProvider < Test::Unit::TestCase
                             assert_equal(
                 should, is,
         
-                    "Did not parse %s correctly" % file)
+                    "Did not parse #{file} correctly")
             end
 
-            assert_nothing_raised("could not generate %s" % file) do
+            assert_nothing_raised("could not generate #{file}") do
                 @provider.flush_target(@me)
             end
 
-            assert_equal(str, target.read, "%s changed" % file)
+            assert_equal(str, target.read, "#{file} changed")
             @provider.clear
         end
     end
@@ -345,7 +345,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         assert(is, "Did not get record")
 
         should.each do |p, v|
-            assert_equal(v, is[p], "did not parse %s correctly" % p)
+            assert_equal(v, is[p], "did not parse #{p} correctly")
         end
     end
 
@@ -403,10 +403,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
                 str, target.read,
         
                 "Did not write correctly")
-            assert_nothing_raised("Could not prefetch with %s" % str.inspect) do
+            assert_nothing_raised("Could not prefetch with #{str.inspect}") do
                 @provider.prefetch
             end
-            assert_nothing_raised("Could not flush with %s" % str.inspect) do
+            assert_nothing_raised("Could not flush with #{str.inspect}") do
                 @provider.flush_target(@me)
             end
 
@@ -494,16 +494,16 @@ class TestCronParsedProvider < Test::Unit::TestCase
         end
 
         matchers.each do |cron|
-            assert_equal(:present, cron.provider.ensure, "Cron %s was not matched" % cron.name)
+            assert_equal(:present, cron.provider.ensure, "Cron #{cron.name} was not matched")
             if value = cron.value(:minute) and value == "*"
                 value = :absent
             end
             assert_equal(value, cron.provider.minute, "Minutes were not retrieved, so cron was not matched")
-            assert_equal(cron.value(:target), cron.provider.target, "Cron %s was matched from the wrong target" % cron.name)
+            assert_equal(cron.value(:target), cron.provider.target, "Cron #{cron.name} was matched from the wrong target")
         end
 
         nonmatchers.each do |cron|
-            assert_equal(:absent, cron.provider.ensure, "Cron %s was incorrectly matched" % cron.name)
+            assert_equal(:absent, cron.provider.ensure, "Cron #{cron.name} was incorrectly matched")
         end
     end
 
@@ -515,7 +515,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             text = File.read(file)
             target.write(text)
 
-            assert_nothing_raised("Could not parse %s" % file) do
+            assert_nothing_raised("Could not parse #{file}") do
                 @provider.prefetch
             end
             # mark the provider modified
@@ -525,7 +525,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             target.write("")
 
             result = nil
-            assert_nothing_raised("Could not generate %s" % file) do
+            assert_nothing_raised("Could not generate #{file}") do
                 @provider.flush_target(@me)
             end
 
@@ -552,7 +552,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             @provider.initvars
             str += "\n"
             target.write(str)
-            assert_nothing_raised("Could not prefetch with %s" % str.inspect) do
+            assert_nothing_raised("Could not prefetch with #{str.inspect}") do
                 @provider.prefetch
             end
             records = @provider.send(:instance_variable_get, "@records")
@@ -563,7 +563,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         
                     "Did not create lines as freebsd lines")
             end
-            assert_nothing_raised("Could not flush with %s" % str.inspect) do
+            assert_nothing_raised("Could not flush with #{str.inspect}") do
                 @provider.flush_target(@me)
             end
 
@@ -654,7 +654,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         assert(is, "Did not get record")
 
         should.each do |p, v|
-            assert_equal(v, is[p], "did not parse %s correctly" % p)
+            assert_equal(v, is[p], "did not parse #{p} correctly")
         end
     end
 end

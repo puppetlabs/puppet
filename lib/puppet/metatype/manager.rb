@@ -33,7 +33,7 @@ module Manager
     def newtype(name, options = {}, &block)
         # Handle backward compatibility
         unless options.is_a?(Hash)
-            Puppet.warning "Puppet::Type.newtype(%s) now expects a hash as the second argument, not %s" % [name, options.inspect]
+            Puppet.warning "Puppet::Type.newtype(#{name}) now expects a hash as the second argument, not #{options.inspect}"
             options = {:parent => options}
         end
 
@@ -111,8 +111,8 @@ module Manager
             :hash => @types
         )
 
-        if respond_to?("new" + name.to_s)
-            singleton_class.send(:remove_method, "new" + name.to_s)
+        if respond_to?("new#{name}")
+            singleton_class.send(:remove_method, "new#{name}")
         end
     end
 

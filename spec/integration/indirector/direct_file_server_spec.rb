@@ -45,11 +45,11 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
         File.open(File.join(@path, "one"), "w") { |f| f.print "one content" }
         File.open(File.join(@path, "two"), "w") { |f| f.print "two content" }
 
-        @request = @terminus.indirection.request(:search, "file:///%s" % @path, :recurse => true)
+        @request = @terminus.indirection.request(:search, "file:///#{@path}", :recurse => true)
     end
 
     after do
-        system("rm -rf %s" % @path)
+        system("rm -rf #{@path}")
     end
 
     it "should return an instance for every file in the fileset" do
@@ -66,7 +66,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
             when /two/; instance.content.should == "two content"
             when @path
             else
-                raise "No valid key for %s" % instance.path.inspect
+                raise "No valid key for #{instance.path.inspect}"
             end
         end
     end

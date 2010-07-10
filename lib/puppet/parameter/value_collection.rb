@@ -7,7 +7,7 @@ class Puppet::Parameter::ValueCollection
     def aliasvalue(name, other)
         other = other.to_sym
         unless value = match?(other)
-            raise Puppet::DevError, "Cannot alias nonexistent value %s" % other
+            raise Puppet::DevError, "Cannot alias nonexistent value #{other}"
         end
 
         value.alias(name)
@@ -21,9 +21,9 @@ class Puppet::Parameter::ValueCollection
                 @doc += "  Valid values are "
                 @doc += @strings.collect do |value|
                     if aliases = value.aliases and ! aliases.empty?
-                        "``%s`` (also called ``%s``)" % [value.name, aliases.join(", ")]
+                        "``#{value.name}`` (also called ``#{aliases.join(", ")}``)"
                     else
-                        "``%s``" % value.name
+                        "``#{value.name}``"
                     end
                 end.join(", ") + "."
             end
@@ -105,7 +105,7 @@ class Puppet::Parameter::ValueCollection
         end
 
         if block_given? and ! value.regex?
-            value.method ||= "set_" + value.name.to_s
+            value.method ||= "set_#{value.name}"
         end
 
         value
@@ -125,14 +125,14 @@ class Puppet::Parameter::ValueCollection
         return if empty?
 
         unless @values.detect { |name, v| v.match?(value) }
-            str = "Invalid value %s. " % [value.inspect]
+            str = "Invalid value #{value.inspect}. "
 
             unless values.empty?
-                str += "Valid values are %s. " % values.join(", ")
+                str += "Valid values are #{values.join(", ")}. "
             end
 
             unless regexes.empty?
-                str += "Valid values match %s." % regexes.join(", ")
+                str += "Valid values match #{regexes.join(", ")}."
             end
 
             raise ArgumentError, str

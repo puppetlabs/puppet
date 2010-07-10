@@ -27,14 +27,14 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
             # pass
         else
             # Add the package version
-            wanted += "-%s" % should
+            wanted += "-#{should}"
         end
 
         output = urpmi "--auto", wanted
 
         unless self.query
             raise Puppet::Error.new(
-                "Could not find package %s" % self.name
+                "Could not find package #{self.name}"
             )
         end
     end

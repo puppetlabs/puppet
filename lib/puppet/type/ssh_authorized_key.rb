@@ -47,7 +47,7 @@ module Puppet
                 return nil unless user = resource[:user]
 
                 begin
-                    return File.expand_path("~%s/.ssh/authorized_keys" % user)
+                    return File.expand_path("~#{user}/.ssh/authorized_keys")
                 rescue
                     Puppet.debug "The required user is not yet present on the system"
                     return nil

@@ -78,7 +78,7 @@ module Puppet::Network::HttpPool
     # a new one.
     def self.http_instance(host, port, reset = false)
         # We overwrite the uninitialized @http here with a cached one.
-        key = "%s:%s" % [host, port]
+        key = "#{host}:#{port}"
 
         # Return our cached instance if we've got a cache, as long as we're not
         # resetting the instance.

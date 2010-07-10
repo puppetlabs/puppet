@@ -69,7 +69,7 @@ module Puppet
 
             # Create our server, yo.
             def initialize(hash = {})
-                Puppet.info "Starting server for Puppet version %s" % Puppet.version
+                Puppet.info "Starting server for Puppet version #{Puppet.version}"
 
                 if handlers = hash[:Handlers]
                     handler_instances = setup_handlers(handlers)
@@ -91,7 +91,7 @@ module Puppet
                     super(hash)
                 rescue => detail
                     puts detail.backtrace if Puppet[:trace]
-                    raise Puppet::Error, "Could not start WEBrick: %s" % detail
+                    raise Puppet::Error, "Could not start WEBrick: #{detail}"
                 end
 
                 # make sure children don't inherit the sockets
@@ -99,7 +99,7 @@ module Puppet
                     sock.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
                 }
 
-                Puppet.info "Listening on port %s" % hash[:Port]
+                Puppet.info "Listening on port #{hash[:Port]}"
 
                 # this creates a new servlet for every connection,
                 # but all servlets have the same list of handlers
@@ -129,7 +129,7 @@ module Puppet
                 handlers.collect { |handler, args|
                     hclass = nil
                     unless hclass = Puppet::Network::Handler.handler(handler)
-                        raise ServerError, "Invalid handler %s" % handler
+                        raise ServerError, "Invalid handler #{handler}"
                     end
                     hclass.new(args)
                 }

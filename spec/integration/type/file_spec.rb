@@ -164,7 +164,7 @@ describe Puppet::Type.type(:file) do
                 %w{three}.each do |file|
                     ffile = File.join(fdir, file)
                     @files << ffile
-                    File.open(ffile, "w") { |f| f.puts "test %s" % file }
+                    File.open(ffile, "w") { |f| f.puts "test #{file}" }
                     File.chmod(0640, ffile)
                 end
             end

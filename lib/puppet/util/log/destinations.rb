@@ -17,7 +17,7 @@ Puppet::Util::Log.newdesttype :syslog do
         begin
             facility = Syslog.const_get("LOG_#{str.upcase}")
         rescue NameError
-            raise Puppet::Error, "Invalid syslog facility %s" % str
+            raise Puppet::Error, "Invalid syslog facility #{str}"
         end
 
         @syslog = Syslog.open(name, options, facility)
@@ -61,7 +61,7 @@ Puppet::Util::Log.newdesttype :file do
         # specified a "special" destination.
         unless FileTest.exist?(File.dirname(path))
             Puppet.recmkdir(File.dirname(path))
-            Puppet.info "Creating log directory %s" % File.dirname(path)
+            Puppet.info "Creating log directory #{File.dirname(path)}"
         end
 
         # create the log file, if it doesn't already exist
@@ -73,7 +73,7 @@ Puppet::Util::Log.newdesttype :file do
     end
 
     def handle(msg)
-        @file.puts("%s %s (%s): %s" % [msg.time, msg.source, msg.level, msg.to_s])
+        @file.puts("#{msg.time} #{msg.source} (#{msg.level}): #{msg}")
 
         @file.flush if @autoflush
     end
@@ -133,16 +133,16 @@ Puppet::Util::Log.newdesttype :console do
 
     def handle(msg)
         if msg.source == "Puppet"
-            puts colorize(msg.level, "%s: %s" % [msg.level, msg.to_s])
+            puts colorize(msg.level, "#{msg.level}: #{msg}")
         else
-            puts colorize(msg.level, "%s: %s: %s" % [msg.level, msg.source, msg.to_s])
+            puts colorize(msg.level, "#{msg.level}: #{msg.source}: #{msg}")
         end
     end
 end
 
 Puppet::Util::Log.newdesttype :host do
     def initialize(host)
-        Puppet.info "Treating %s as a hostname" % host
+        Puppet.info "Treating #{host} as a hostname"
         args = {}
         if host =~ /:(\d+)/
             args[:Port] = $1
@@ -164,24 +164,24 @@ Puppet::Util::Log.newdesttype :host do
             unless defined?(@domain)
                 @domain = Facter["domain"].value
                 if @domain
-                    @hostname += "." + @domain
+                    @hostname += ".#{@domain}"
                 end
             end
             if msg.source =~ /^\//
-                msg.source = @hostname + ":" + msg.source
+                msg.source = @hostname + ":#{msg.source}"
             elsif msg.source == "Puppet"
-                msg.source = @hostname + " " + msg.source
+                msg.source = @hostname + " #{msg.source}"
             else
-                msg.source = @hostname + " " + msg.source
+                msg.source = @hostname + " #{msg.source}"
             end
             begin
-                #puts "would have sent %s" % msg
+                #puts "would have sent #{msg}"
                 #puts "would have sent %s" %
                 #    CGI.escape(YAML.dump(msg))
                 begin
                     tmp = CGI.escape(YAML.dump(msg))
                 rescue => detail
-                    puts "Could not dump: %s" % detail.to_s
+                    puts "Could not dump: #{detail}"
                     return
                 end
                 # Add the hostname to the source

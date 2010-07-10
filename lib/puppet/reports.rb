@@ -35,7 +35,7 @@ class Puppet::Reports
         instance_loader(:report).loadall
         loaded_instances(:report).sort { |a,b| a.to_s <=> b.to_s }.each do |name|
             mod = self.report(name)
-            docs += "%s\n%s\n" % [name, "-" * name.to_s.length]
+            docs += "#{name}\n#{"-" * name.to_s.length}\n"
 
             docs += Puppet::Util::Docs.scrub(mod.doc) + "\n\n"
         end

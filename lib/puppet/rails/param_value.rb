@@ -48,7 +48,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
 
     # returns an array of hash containing all the parameters of a given resource
     def self.find_all_params_from_resource(db_resource)
-        params = db_resource.connection.select_all("SELECT v.id, v.value, v.line, v.resource_id, v.param_name_id, n.name FROM param_values v INNER JOIN param_names n ON v.param_name_id=n.id WHERE v.resource_id=%s" % db_resource.id)
+        params = db_resource.connection.select_all("SELECT v.id, v.value, v.line, v.resource_id, v.param_name_id, n.name FROM param_values v INNER JOIN param_names n ON v.param_name_id=n.id WHERE v.resource_id=#{db_resource.id}")
         params.each do |val|
             val['value'] = unserialize_value(val['value'])
             val['line'] = val['line'] ? Integer(val['line']) : nil
@@ -59,7 +59,7 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
 
     # returns an array of hash containing all the parameters of a given host
     def self.find_all_params_from_host(db_host)
-        params = db_host.connection.select_all("SELECT v.id, v.value,  v.line, v.resource_id, v.param_name_id, n.name FROM param_values v INNER JOIN resources r ON v.resource_id=r.id INNER JOIN param_names n ON v.param_name_id=n.id WHERE r.host_id=%s" % db_host.id)
+        params = db_host.connection.select_all("SELECT v.id, v.value,  v.line, v.resource_id, v.param_name_id, n.name FROM param_values v INNER JOIN resources r ON v.resource_id=r.id INNER JOIN param_names n ON v.param_name_id=n.id WHERE r.host_id=#{db_host.id}")
         params.each do |val|
             val['value'] = unserialize_value(val['value'])
             val['line'] = val['line'] ? Integer(val['line']) : nil
@@ -69,6 +69,6 @@ class Puppet::Rails::ParamValue < ActiveRecord::Base
     end
 
     def to_s
-        "%s => %s" % [self.name, self.value]
+        "#{self.name} => #{self.value}"
     end
 end

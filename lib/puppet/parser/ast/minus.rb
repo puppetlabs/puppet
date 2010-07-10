@@ -15,7 +15,7 @@ class Puppet::Parser::AST
             val = @value.safeevaluate(scope)
             val = Puppet::Parser::Scope.number?(val)
             if val == nil
-                raise ArgumentError, "minus operand %s is not a number" % val
+                raise ArgumentError, "minus operand #{val} is not a number"
             end
             return -val
         end

@@ -43,11 +43,11 @@ class TestAuthStore < Test::Unit::TestCase
             192.168.0.5
             7.0.48.7
         }.each { |ip|
-            assert_nothing_raised("Failed to @store IP address %s" % ip) {
+            assert_nothing_raised("Failed to @store IP address #{ip}") {
                 @store.allow(ip)
             }
 
-            assert(@store.allowed?("hosttest.com", ip), "IP %s not allowed" % ip)
+            assert(@store.allowed?("hosttest.com", ip), "IP #{ip} not allowed")
         }
 
         #assert_raise(Puppet::AuthStoreError) {
@@ -62,7 +62,7 @@ class TestAuthStore < Test::Unit::TestCase
             192.178.*
             193.179.0.0/8
         }.each { |range|
-            assert_nothing_raised("Failed to @store IP range %s" % range) {
+            assert_nothing_raised("Failed to @store IP range #{range}") {
                 @store.allow(range)
             }
         }
@@ -73,7 +73,7 @@ class TestAuthStore < Test::Unit::TestCase
             192.178.0.5
             193.0.0.1
         }.each { |ip|
-            assert(@store.allowed?("fakename.com", ip), "IP %s is not allowed" % ip)
+            assert(@store.allowed?("fakename.com", ip), "IP #{ip} is not allowed")
         }
     end
 
@@ -134,7 +134,7 @@ class TestAuthStore < Test::Unit::TestCase
             %w{localhost 127.0.0.1}
 
         ].each { |ary|
-            assert(@store.allowed?(*ary), "Failed to allow %s" % [ary.join(",")])
+            assert(@store.allowed?(*ary), "Failed to allow #{ary.join(",")}")
         }
     end
 
@@ -202,10 +202,10 @@ class TestAuthStore < Test::Unit::TestCase
             luke.madstop.net
             name-other.madstop.net
         }.each { |name|
-            assert_nothing_raised("Failed to @store simple name %s" % name) {
+            assert_nothing_raised("Failed to @store simple name #{name}") {
                 @store.allow(name)
             }
-            assert(@store.allowed?(name, "192.168.0.1"), "Name %s not allowed" % name)
+            assert(@store.allowed?(name, "192.168.0.1"), "Name #{name} not allowed")
         }
 
         %w{
@@ -217,7 +217,7 @@ class TestAuthStore < Test::Unit::TestCase
             assert_raise(
                 Puppet::AuthStoreError,
 
-                "name '%s' was allowed" % pat) {
+                "name '#{pat}' was allowed") {
                 @store.allow(pat)
             }
         }
@@ -239,7 +239,7 @@ class TestAuthStore < Test::Unit::TestCase
             ya-test.madstop.com
             some.much.much.longer.more-other.net
         }.each { |name|
-            assert(@store.allowed?(name, "192.168.0.1"), "Host %s not allowed" % name)
+            assert(@store.allowed?(name, "192.168.0.1"), "Host #{name} not allowed")
         }
 
         assert_raise(Puppet::AuthStoreError) {
@@ -262,7 +262,7 @@ class TestAuthStore < Test::Unit::TestCase
         @store.allow("hostname.com")
 
         %w{hostname.com Hostname.COM hostname.Com HOSTNAME.COM}.each do |name|
-            assert(@store.allowed?(name, "127.0.0.1"), "did not allow %s" % name)
+            assert(@store.allowed?(name, "127.0.0.1"), "did not allow #{name}")
         end
     end
 
@@ -385,18 +385,18 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             end
 
             [:name, :pattern, :length].zip(output).each do |method, value|
-                assert_equal(value, @decl.send(method), "Got incorrect value for %s from %s" % [method, input])
+                assert_equal(value, @decl.send(method), "Got incorrect value for #{method} from #{input}")
             end
         end
 
         %w{-hostname.com hostname.*}.each do |input|
-            assert_raise(Puppet::AuthStoreError, "Did not fail on %s" % input) do
+            assert_raise(Puppet::AuthStoreError, "Did not fail on #{input}") do
                 @decl.pattern = input
             end
         end
 
         ["hostname .com", "192.168 .0.1"].each do |input|
-            assert_raise(Puppet::AuthStoreError, "Did not fail on %s" % input) do
+            assert_raise(Puppet::AuthStoreError, "Did not fail on #{input}") do
                 @decl.pattern = input
             end
         end
@@ -405,7 +405,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
     def test_result
         ["allow", :allow].each do |val|
             assert_nothing_raised { @decl.type = val }
-            assert_equal(true, @decl.result, "did not result to true with %s" % val.inspect)
+            assert_equal(true, @decl.result, "did not result to true with #{val.inspect}")
         end
 
         [:deny, "deny"].each do |val|
@@ -414,11 +414,11 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
                 assert_equal(
                     false, @decl.result,
 
-                    "did not result to false with %s" % val.inspect)
+                    "did not result to false with #{val.inspect}")
         end
 
         ["yay", 1, nil, false, true].each do |val|
-            assert_raise(ArgumentError, "Did not fail on %s" % val.inspect) do
+            assert_raise(ArgumentError, "Did not fail on #{val.inspect}") do
                 @decl.type = val
             end
         end
@@ -433,7 +433,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             "*.HOSTNAME.Com" => %w{com hostname *},
 
         }.each do |input, output|
-            assert_equal(output, @decl.send(:munge_name, input), "munged %s incorrectly" % input)
+            assert_equal(output, @decl.send(:munge_name, input), "munged #{input} incorrectly")
         end
     end
 
@@ -510,7 +510,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
         %w{host.com *.domain.com 192.168.0.1 192.168.0.1/24}.each do |decl|
             assert_equal(0, Declaration.new(:allow, decl) <=>
                 Declaration.new(:allow, decl),
-                "Equivalent declarations for %s were considered different" % decl
+                "Equivalent declarations for #{decl} were considered different"
             )
         end
     end
@@ -532,7 +532,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
 
         domain = Declaration.new(:allow, "*.domain.com")
         %w{host.domain.com domain.com very.long.domain.com very-long.domain.com }.each do |name|
-            assert(domain.send(:matchname?, name), "Did not match %s" % name)
+            assert(domain.send(:matchname?, name), "Did not match #{name}")
         end
     end
 end

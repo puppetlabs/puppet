@@ -11,7 +11,7 @@ module Puppet::Util::Tagging
         qualified = []
 
         ary.collect { |tag| tag.to_s.downcase }.each do |tag|
-            fail(Puppet::ParseError, "Invalid tag %s" % tag.inspect) unless valid_tag?(tag)
+            fail(Puppet::ParseError, "Invalid tag #{tag.inspect}") unless valid_tag?(tag)
             qualified << tag if tag.include?("::")
             @tags << tag unless @tags.include?(tag)
         end

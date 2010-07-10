@@ -21,7 +21,7 @@ class PuppetTest::TestCase < Test::Unit::TestCase
             return super
         else
             if defined? $console
-                puts "Skipping %s: %s" % [name, @messages.join(", ")]
+                puts "Skipping #{name}: #{@messages.join(", ")}"
             end
             suite = Test::Unit::TestSuite.new(name)
             return suite

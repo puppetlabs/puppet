@@ -39,7 +39,7 @@ class UserAddProviderTest < PuppetTest::TestCase
                         assert(
                 @provider.feature?(feature),
         
-                "useradd provider is missing %s" % feature)
+                "useradd provider is missing #{feature}")
         end
     end
 
@@ -74,7 +74,7 @@ class UserAddProviderTest < PuppetTest::TestCase
                 :uid => "-u", :comment => "-c"}
 
             flags.each do |param, flag|
-                assert_equal(@vals[param], options[flag], "Got incorrect value for %s" % param)
+                assert_equal(@vals[param], options[flag], "Got incorrect value for #{param}")
             end
 
             true

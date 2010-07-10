@@ -19,12 +19,9 @@ class CheckPuppet
     o = OptionParser.new do |o|
         o.set_summary_indent('  ')
         o.banner =    "Usage: #{script_name} [OPTIONS]"
-        o.define_head "The check_puppet Nagios plug-in checks that specified " +
-            "Puppet process is running and the state file is no " +
-            "older than specified interval."
+        o.define_head "The check_puppet Nagios plug-in checks that specified Puppet process is running and the state file is no older than specified interval."
             o.separator   ""
-            o.separator   "Mandatory arguments to long options are mandatory for " +
-            "short options too."
+            o.separator   "Mandatory arguments to long options are mandatory for short options too."
 
 
                 o.on(
@@ -114,7 +111,7 @@ class CheckPuppet
             exitcide = 3
         end
 
-        puts "PUPPET " + status + ": " + process + ", " + state
+        puts "PUPPET #{status}: #{process}, #{state}"
         exit(exitcode)
     end
 end

@@ -33,7 +33,7 @@ class TestFileSources < Test::Unit::TestCase
         begin
             initstorage
         rescue
-            system("rm -rf %s" % Puppet[:statefile])
+            system("rm -rf #{Puppet[:statefile]}")
         end
     end
 
@@ -71,7 +71,7 @@ class TestFileSources < Test::Unit::TestCase
         catalog = mk_catalog(tofile)
         catalog.apply
 
-        assert(FileTest.exists?(todir), "Created dir %s does not exist" % todir)
+        assert(FileTest.exists?(todir), "Created dir #{todir} does not exist")
     end
 
     def run_complex_sources(networked = false)
@@ -91,7 +91,7 @@ class TestFileSources < Test::Unit::TestCase
         todir = File.join(path, "todir")
         source = fromdir
         if networked
-            source = "puppet://localhost/%s%s" % [networked, fromdir]
+            source = "puppet://localhost/#{networked}#{fromdir}"
         end
         recursive_source_test(source, todir)
 
@@ -245,7 +245,7 @@ class TestFileSources < Test::Unit::TestCase
         Puppet[:certdnsnames] = "localhost"
 
         serverpid = nil
-        assert_nothing_raised("Could not start on port %s" % @port) {
+        assert_nothing_raised("Could not start on port #{@port}") {
 
                         server = Puppet::Network::HTTPServer::WEBrick.new(
                 
@@ -410,7 +410,7 @@ class TestFileSources < Test::Unit::TestCase
             i = i + 1
             source = tempfile()
             sources << source
-            file = File.join(source, "file%s" % i)
+            file = File.join(source, "file#{i}")
             Dir.mkdir(source)
             File.open(file, "w") { |f| f.print "yay" }
         }
@@ -463,12 +463,12 @@ class TestFileSources < Test::Unit::TestCase
         [source1, source2, File.join(source1, "subdir"), File.join(source2, "subdir")].each_with_index do |dir, i|
             Dir.mkdir(dir)
             # Make a single file in each directory
-            file = File.join(dir, "file%s" % i)
-            File.open(file, "w") { |f| f.puts "yay%s" % i}
+            file = File.join(dir, "file#{i}")
+            File.open(file, "w") { |f| f.puts "yay#{i}"}
 
             # Now make a second one in each directory
-            file = File.join(dir, "second-file%s" % i)
-            File.open(file, "w") { |f| f.puts "yaysecond-%s" % i}
+            file = File.join(dir, "second-file#{i}")
+            File.open(file, "w") { |f| f.puts "yaysecond-#{i}"}
             files << file
         end
 
@@ -478,9 +478,9 @@ class TestFileSources < Test::Unit::TestCase
 
         ["file0", "file1", "second-file0", "second-file1", "subdir/file2", "subdir/second-file2", "subdir/file3", "subdir/second-file3"].each do |file|
             path = File.join(dest, file)
-            assert(FileTest.exists?(path), "did not create %s" % file)
+            assert(FileTest.exists?(path), "did not create #{file}")
 
-            assert_equal("yay%s\n" % File.basename(file).sub("file", ''), File.read(path), "file was not copied correctly")
+            assert_equal("yay#{File.basename(file).sub("file", '')}\n", File.read(path), "file was not copied correctly")
         end
     end
 

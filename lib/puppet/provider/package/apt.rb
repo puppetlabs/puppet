@@ -65,7 +65,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
             # pass
         else
             # Add the package version and --force-yes option
-            str += "=%s" % should
+            str += "=#{should}"
             cmd << "--force-yes"
         end
 
@@ -91,7 +91,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     #
     def run_preseed
         if response = @resource[:responsefile] and FileTest.exist?(response)
-            self.info("Preseeding %s to debconf-set-selections" % response)
+            self.info("Preseeding #{response} to debconf-set-selections")
 
             preseed response
         else

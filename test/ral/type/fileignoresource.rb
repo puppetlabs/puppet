@@ -16,7 +16,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         begin
             initstorage
         rescue
-            system("rm -rf %s" % Puppet[:statefile])
+            system("rm -rf #{Puppet[:statefile]}")
         end
 
         Facter.stubs(:to_hash).returns({})

@@ -146,8 +146,8 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         %w{ya ra y r}.each do |name|
-            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]), "Generated %s was not a vertex" % name)
-            assert($finished.include?(name), "%s was not finished" % name)
+            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]), "Generated #{name} was not a vertex")
+            assert($finished.include?(name), "#{name} was not finished")
         end
     end
 
@@ -304,15 +304,15 @@ class TestTransactions < Test::Unit::TestCase
         rels.each do |after, before|
             config = mk_catalog(before, after)
             trans = Puppet::Transaction.new(config)
-            str = "from %s to %s" % [before, after]
+            str = "from #{before} to #{after}"
 
-            assert_nothing_raised("Failed to create graph %s" % str) do
+            assert_nothing_raised("Failed to create graph #{str}") do
                 trans.prepare
             end
 
             graph = trans.relationship_graph
-            assert(graph.edge?(before, after), "did not create manual relationship %s" % str)
-            assert(! graph.edge?(after, before), "created automatic relationship %s" % str)
+            assert(graph.edge?(before, after), "did not create manual relationship #{str}")
+            assert(! graph.edge?(after, before), "created automatic relationship #{str}")
         end
     end
 
@@ -329,13 +329,13 @@ class TestTransactions < Test::Unit::TestCase
             :title => "file")
 
                     exec = Puppet::Type.type(:exec).new(
-                :command => "touch %s" % epath,
+                :command => "touch #{epath}",
             :path => ENV["PATH"], :subscribe => file, :refreshonly => true,
         
             :title => 'exec1')
 
                     exec2 = Puppet::Type.type(:exec).new(
-                :command => "touch %s" % spath,
+                :command => "touch #{spath}",
             :path => ENV["PATH"], :subscribe => exec, :refreshonly => true,
         
             :title => 'exec2')
@@ -379,7 +379,7 @@ class TestTransactions < Test::Unit::TestCase
                         file = Puppet::Type.type(:file).new(
                 :path => path, :ensure => :absent,
         
-                :backup => false, :title => "file%s" % i)
+                :backup => false, :title => "file#{i}")
             File.open(path, "w") { |f| f.puts "" }
             files << file
         end

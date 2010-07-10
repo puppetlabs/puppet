@@ -111,12 +111,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                 product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
             end
             if %w{10.0 10.1 10.2 10.3}.include?(product_version_major)
-                fail("%s is not supported by the launchd provider" % product_version_major)
+                fail("#{product_version_major} is not supported by the launchd provider")
             end
             @macosx_version_major = product_version_major
             return @macosx_version_major
         rescue Puppet::ExecutionFailure => detail
-            fail("Could not determine OS X version: %s" % detail)
+            fail("Could not determine OS X version: #{detail}")
         end
     end
 
@@ -171,7 +171,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         begin
             execute(cmds)
         rescue Puppet::ExecutionFailure
-            raise Puppet::Error.new("Unable to start service: %s at path: %s" % [resource[:name], job_path])
+            raise Puppet::Error.new("Unable to start service: #{resource[:name]} at path: #{job_path}")
         end
         # As load -w clears the Disabled flag, we need to add it in after
         if did_enable_job and resource[:enable] == :false
@@ -193,7 +193,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         begin
             execute(cmds)
         rescue Puppet::ExecutionFailure
-            raise Puppet::Error.new("Unable to stop service: %s at path: %s" % [resource[:name], job_path])
+            raise Puppet::Error.new("Unable to stop service: #{resource[:name]} at path: #{job_path}")
         end
         # As unload -w sets the Disabled flag, we need to add it in after
         if did_disable_job and resource[:enable] == :true

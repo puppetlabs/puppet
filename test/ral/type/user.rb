@@ -72,7 +72,7 @@ class TestUser < Test::Unit::TestCase
                 :gid => Puppet::Util::SUIDManager.gid,
                 :shell => findshell(),
         
-                :home => "/home/%s" % name
+                :home => "/home/#{name}"
             )
         }
 

@@ -42,7 +42,7 @@ class TestRelationships < Test::Unit::TestCase
         sources.each do |source|
             targets.each do |target|
                 edge = deps.find { |e| e.source == source and e.target == target }
-                assert(edge, "Could not find edge for %s => %s" % [source.ref, target.ref])
+                assert(edge, "Could not find edge for #{source.ref} => #{target.ref}")
 
                 if refresher
                     assert_equal(:ALL_EVENTS, edge.event)

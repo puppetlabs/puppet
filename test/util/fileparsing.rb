@@ -36,7 +36,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
                     "Did not set separator")
 
             tests.each do |test|
-                assert_equal(["one two", "three four"], @parser.lines(test), "Incorrectly parsed %s" % test.inspect)
+                assert_equal(["one two", "three four"], @parser.lines(test), "Incorrectly parsed #{test.inspect}")
             end
         end
     end
@@ -177,7 +177,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         # Make sure we always require an appropriate set of options
         [{:separator => "\t"}, {}, {:fields => %w{record_type}}].each do |opts|
-            assert_raise(ArgumentError, "Accepted %s" % opts.inspect) do
+            assert_raise(ArgumentError, "Accepted #{opts.inspect}") do
                 @parser.record_line :record, opts
             end
         end
@@ -334,11 +334,11 @@ class TestUtilFileParsing < Test::Unit::TestCase
                 assert_equal(
                     record[param], result[param],
 
-                    "Did not correctly parse %s" % start.inspect)
+                    "Did not correctly parse #{start.inspect}")
             end
 
             # And generating
-            assert_equal(final, @parser.to_line(result), "Did not correctly generate %s from %s" % [final.inspect, record.inspect])
+            assert_equal(final, @parser.to_line(result), "Did not correctly generate #{final.inspect} from #{record.inspect}")
         end
 
         # First try it with symmetric characters
@@ -452,12 +452,12 @@ assert_nothing_raised do
             assert_nothing_raised do
                 result = @parser.handle_record_line(line, options)
             end
-            assert(result, "Did not get a result back for '%s'" % line)
+            assert(result, "Did not get a result back for '#{line}'")
             should.each do |field|
                 if field == :alias and line =~ /null/
-                    assert_equal(%w{sink null}, result[field], "Field %s was not right in '%s'" % [field, line])
+                    assert_equal(%w{sink null}, result[field], "Field #{field} was not right in '#{line}'")
                 else
-                    assert_equal(values[field], result[field], "Field %s was not right in '%s'" % [field, line])
+                    assert_equal(values[field], result[field], "Field #{field} was not right in '#{line}'")
                 end
             end
         end
@@ -644,7 +644,7 @@ class TestUtilFileRecord < Test::Unit::TestCase
         [   [:fake, {}],
             [nil, ]
         ].each do |args|
-            assert_raise(ArgumentError, "Did not fail on %s" % args.inspect) do
+            assert_raise(ArgumentError, "Did not fail on #{args.inspect}") do
                 Record.new(*args)
             end
         end
@@ -658,7 +658,7 @@ class TestUtilFileRecord < Test::Unit::TestCase
 
         # Make sure we fail on invalid fields
         [:record_type, :target, :on_disk].each do |field|
-            assert_raise(ArgumentError, "Did not fail on invalid field %s" % field) {
+            assert_raise(ArgumentError, "Did not fail on invalid field #{field}") {
                 Record.new(:record, :fields => [field])
             }
         end
@@ -667,12 +667,12 @@ class TestUtilFileRecord < Test::Unit::TestCase
     def test_defaults
         record = Record.new(:text, :match => %r{^#})
         [:absent, :separator, :joiner, :optional].each do |field|
-            assert_nil(record.send(field), "%s was not nil" % field)
+            assert_nil(record.send(field), "#{field} was not nil")
         end
 
         record = Record.new(:record, :fields => %w{fields})
         {:absent => "", :separator => /\s+/, :joiner => " ", :optional => []}.each do |field, default|
-            assert_equal(default, record.send(field), "%s was not default" % field)
+            assert_equal(default, record.send(field), "#{field} was not default")
         end
     end
 

@@ -139,12 +139,12 @@ def check_prereqs
                 # enough for this purpose.
                 facter_version = Facter.version.to_f
                 if facter_version < MIN_FACTER_VERSION
-                    puts "Facter version: %s; minimum required: %s; cannot install" % [facter_version, MIN_FACTER_VERSION]
+                    puts "Facter version: #{facter_version}; minimum required: #{MIN_FACTER_VERSION}; cannot install"
                     exit -1
                 end
             end
         rescue LoadError
-            puts "Could not load %s; cannot install" % pre
+            puts "Could not load #{pre}; cannot install"
             exit -1
         end
     }

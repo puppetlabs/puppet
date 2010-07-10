@@ -68,11 +68,10 @@ class CollExpr < AST::Branch
             when "tag"
                 str = "puppet_tags.name #{oper} '#{str2}'"
             else
-                str = "param_values.value #{oper} '#{str2}' and " +
-                    "param_names.name = '#{str1}'"
+                str = "param_values.value #{oper} '#{str2}' and param_names.name = '#{str1}'"
             end
         else
-            str = "(%s) %s (%s)" % [str1, oper, str2]
+            str = "(#{str1}) #{oper} (#{str2})"
         end
 
         return str, code
@@ -82,7 +81,7 @@ class CollExpr < AST::Branch
         super
 
         unless %w{== != and or}.include?(@oper)
-            raise ArgumentError, "Invalid operator %s" % @oper
+            raise ArgumentError, "Invalid operator #{@oper}"
         end
     end
 end

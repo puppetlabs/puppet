@@ -59,7 +59,7 @@ class Puppet::SimpleGraph
             # a false impression of what the degree is.  That's just
             # as expensive as just getting the edge list, so I've decided
             # to only add this method.
-            define_method("%s_edges" % direction) do
+            define_method("#{direction}_edges") do
                 @adjacencies[direction].values.inject([]) { |total, adjacent| total += adjacent.to_a; total }
             end
         end
@@ -207,7 +207,7 @@ class Puppet::SimpleGraph
         # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
         if cycles = degree.find_all { |vertex, edges| edges.length > 0 } and cycles.length > 0
             message = cycles.collect { |vertex, edges| edges.collect { |e| e.to_s }.join(", ") }.join(", ")
-            raise Puppet::Error, "Found dependency cycles in the following relationships: %s; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz" % message
+            raise Puppet::Error, "Found dependency cycles in the following relationships: #{message}; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz"
         end
 
         return result
@@ -447,7 +447,7 @@ class Puppet::SimpleGraph
 
         Puppet.settings.use(:graphing)
 
-        file = File.join(Puppet[:graphdir], "%s.dot" % name.to_s)
+        file = File.join(Puppet[:graphdir], "#{name}.dot")
         File.open(file, "w") { |f|
             f.puts to_dot("name" => name.to_s.capitalize)
         }

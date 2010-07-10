@@ -18,7 +18,7 @@ class Puppet::SSL::Key < Puppet::SSL::Base
 
     # Knows how to create keys with our system defaults.
     def generate
-        Puppet.info "Creating a new SSL key for %s" % name
+        Puppet.info "Creating a new SSL key for #{name}"
         @content = OpenSSL::PKey::RSA.new(Puppet[:keylength].to_i)
     end
 

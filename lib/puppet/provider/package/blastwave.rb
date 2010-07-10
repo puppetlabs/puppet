@@ -83,7 +83,7 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
 
             return hash
         else
-            Puppet.warning "Cannot match %s" % line
+            Puppet.warning "Cannot match #{line}"
             return nil
         end
     end

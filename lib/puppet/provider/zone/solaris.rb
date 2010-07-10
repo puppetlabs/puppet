@@ -37,7 +37,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     def configure
         # If the thing is entirely absent, then we need to create the config.
         # Is there someway to get this on one line?
-        str = "create -b #{@resource[:create_args]}\nset zonepath=%s\n" % @resource[:path]
+        str = "create -b #{@resource[:create_args]}\nset zonepath=#{@resource[:path]}\n"
 
         # Then perform all of our configuration steps.  It's annoying
         # that we need this much internal info on the resource.
@@ -131,10 +131,10 @@ Puppet::Type.type(:zone).provide(:solaris) do
                     end
                     current[$1.intern] = $2
                 else
-                    err "Ignoring '%s'" % line
+                    err "Ignoring '#{line}'"
                 end
             else
-                debug "Ignoring zone output '%s'" % line
+                debug "Ignoring zone output '#{line}'"
             end
         end
 
@@ -144,8 +144,8 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # Execute a configuration string.  Can't be private because it's called
     # by the properties.
     def setconfig(str)
-        command = "#{command(:cfg)} -z %s -f -" % @resource[:name]
-        debug "Executing '%s' in zone %s with '%s'" % [command, @resource[:name], str]
+        command = "#{command(:cfg)} -z #{@resource[:name]} -f -"
+        debug "Executing '#{command}' in zone #{@resource[:name]} with '#{str}'"
         IO.popen(command, "w") do |pipe|
             pipe.puts str
         end
@@ -174,7 +174,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
                     if Puppet[:debug]
                         puts detail.stacktrace
                     end
-                    raise Puppet::Error, "Could not create sysidcfg: %s" % detail
+                    raise Puppet::Error, "Could not create sysidcfg: #{detail}"
                 end
             end
         end
@@ -233,9 +233,9 @@ Puppet::Type.type(:zone).provide(:solaris) do
         if net = config["net"]
             result[:ip] = net.collect do |params|
                 if params[:defrouter]
-                    "%s:%s:%s" % [params[:physical], params[:address], params[:defrouter]]
+                    "#{params[:physical]}:#{params[:address]}:#{params[:defrouter]}"
                 elsif params[:address]
-                    "%s:%s" % [params[:physical], params[:address]]
+                    "#{params[:physical]}:#{params[:address]}"
                 else
                     params[:physical]
                 end
@@ -249,7 +249,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
         begin
             adm("-z", @resource[:name], *cmd)
         rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not %s zone: %s" % [cmd[0], detail]
+            self.fail "Could not #{cmd[0]} zone: #{detail}"
         end
     end
 
@@ -260,7 +260,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
         begin
             cfg("-z", self.name, *cmd)
         rescue Puppet::ExecutionFailure => detail
-            self.fail "Could not %s zone: %s" % [cmd[0], detail]
+            self.fail "Could not #{cmd[0]} zone: #{detail}"
         end
     end
 end

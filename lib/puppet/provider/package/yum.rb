@@ -62,14 +62,14 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
             should = nil
         else
             # Add the package version
-            wanted += "-%s" % should
+            wanted += "-#{should}"
         end
 
         output = yum "-d", "0", "-e", "0", "-y", :install, wanted
 
         is = self.query
         unless is
-            raise Puppet::Error, "Could not find package %s" % self.name
+            raise Puppet::Error, "Could not find package #{self.name}"
         end
 
         # FIXME: Should we raise an exception even if should == :latest

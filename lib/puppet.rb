@@ -132,13 +132,13 @@ module Puppet
                         Puppet.err detail.to_s
                         return false
                     rescue => detail
-                        Puppet.err "Could not create %s: %s" % [path, detail.to_s]
+                        Puppet.err "Could not create #{path}: #{detail}"
                         return false
                     end
                 elsif FileTest.directory?(File.join(path))
                     next
                 else FileTest.exist?(File.join(path))
-                    raise Puppet::Error, "Cannot create %s: basedir %s is a file" % [dir, File.join(path)]
+                    raise Puppet::Error, "Cannot create #{dir}: basedir #{File.join(path)} is a file"
                 end
             }
             return true

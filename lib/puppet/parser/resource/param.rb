@@ -22,6 +22,6 @@ class Puppet::Parser::Resource::Param
     end
 
     def to_s
-        "%s => %s" % [self.name, self.value]
+        "#{self.name} => #{self.value}"
     end
 end

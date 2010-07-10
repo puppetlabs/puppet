@@ -75,7 +75,7 @@ class TestTransportable < Test::Unit::TestCase
         }
 
         top.flatten.each do |obj|
-            assert(objects.include?(obj), "Missing obj %s[%s]" % [obj.type, obj.name])
+            assert(objects.include?(obj), "Missing obj #{obj.type}[#{obj.name}]")
         end
 
 

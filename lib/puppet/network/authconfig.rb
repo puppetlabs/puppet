@@ -72,13 +72,13 @@ module Puppet
                         if tmp == @configstamp
                             return
                         else
-                            Puppet.notice "%s vs %s" % [tmp, @configstamp]
+                            Puppet.notice "#{tmp} vs #{@configstamp}"
                         end
                     else
                         return
                     end
                 else
-                    Puppet.notice "%s and %s" % [@configtimeout, @configstatted]
+                    Puppet.notice "#{@configtimeout} and #{@configstatted}"
                 end
             end
 
@@ -114,19 +114,19 @@ module Puppet
                         when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+)$/
                             parse_right_directive(right, $1, $2, count)
                         else
-                            raise ConfigurationError, "Invalid line %s: %s" % [count, line]
+                            raise ConfigurationError, "Invalid line #{count}: #{line}"
                         end
                         count += 1
                     }
                 }
             rescue Errno::EACCES => detail
-                Puppet.err "Configuration error: Cannot read %s; cannot serve" % @file
-                #raise Puppet::Error, "Cannot read %s" % @config
+                Puppet.err "Configuration error: Cannot read #{@file}; cannot serve"
+                #raise Puppet::Error, "Cannot read #{@config}"
             rescue Errno::ENOENT => detail
-                Puppet.err "Configuration error: '%s' does not exit; cannot serve" % @file
-                #raise Puppet::Error, "%s does not exit" % @config
+                Puppet.err "Configuration error: '#{@file}' does not exit; cannot serve"
+                #raise Puppet::Error, "#{@config} does not exit"
             #rescue FileServerError => detail
-            #    Puppet.err "FileServer error: %s" % detail
+            #    Puppet.err "FileServer error: #{detail}"
             end
 
             # Verify each of the rights are valid.
@@ -146,22 +146,22 @@ module Puppet
                 modify_right(right, :deny, value, "denying %s access", count)
             when "method"
                 unless right.acl_type == :regex
-                    raise ConfigurationError, "'method' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
+                    raise ConfigurationError, "'method' directive not allowed in namespace ACL at line #{count} of #{@config}"
                 end
                 modify_right(right, :restrict_method, value, "allowing 'method' %s", count)
             when "environment"
                 unless right.acl_type == :regex
-                    raise ConfigurationError, "'environment' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
+                    raise ConfigurationError, "'environment' directive not allowed in namespace ACL at line #{count} of #{@config}"
                 end
                 modify_right(right, :restrict_environment, value, "adding environment %s", count)
             when /auth(?:enticated)?/
                 unless right.acl_type == :regex
-                    raise ConfigurationError, "'authenticated' directive not allowed in namespace ACL at line %s of %s" % [count, @config]
+                    raise ConfigurationError, "'authenticated' directive not allowed in namespace ACL at line #{count} of #{@config}"
                 end
                 modify_right(right, :restrict_authenticated, value, "adding authentication %s", count)
             else
                 raise ConfigurationError,
-                    "Invalid argument '%s' at line %s" % [var, count]
+                    "Invalid argument '#{var}' at line #{count}"
             end
         end
 
@@ -171,7 +171,7 @@ module Puppet
                     right.info msg % val
                     right.send(method, val)
                 rescue AuthStoreError => detail
-                    raise ConfigurationError, "%s at line %s of %s" % [detail.to_s, count, @file]
+                    raise ConfigurationError, "#{detail} at line #{count} of #{@file}"
                 end
             end
         end

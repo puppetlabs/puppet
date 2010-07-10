@@ -34,7 +34,7 @@ module Puppet
             when Symbol
                 return currentvalue
             else
-                raise Puppet::DevError, "Invalid current value for mode: %s" % currentvalue.inspect
+                raise Puppet::DevError, "Invalid current value for mode: #{currentvalue.inspect}"
             end
         end
 
@@ -45,7 +45,7 @@ module Puppet
             when Symbol
                 return newvalue
             else
-                raise Puppet::DevError, "Invalid 'should' value for mode: %s" % newvalue.inspect
+                raise Puppet::DevError, "Invalid 'should' value for mode: #{newvalue.inspect}"
             end
         end
 
@@ -55,17 +55,17 @@ module Puppet
             value = should
             if value.is_a?(String)
                 unless value =~ /^\d+$/
-                    raise Puppet::Error, "File modes can only be numbers, not %s" % value.inspect
+                    raise Puppet::Error, "File modes can only be numbers, not #{value.inspect}"
                 end
                 # Make sure our number looks like octal.
                 unless value =~ /^0/
-                    value = "0" + value
+                    value = "0#{value}"
                 end
                 old = value
                 begin
                     value = Integer(value)
                 rescue ArgumentError => detail
-                    raise Puppet::DevError, "Could not convert %s to integer" % old.inspect
+                    raise Puppet::DevError, "Could not convert #{old.inspect} to integer"
                 end
             end
 
@@ -121,7 +121,7 @@ module Puppet
             begin
                 File.chmod(mode, @resource[:path])
             rescue => detail
-                error = Puppet::Error.new("failed to chmod %s: %s" % [@resource[:path], detail.message])
+                error = Puppet::Error.new("failed to chmod #{@resource[:path]}: #{detail.message}")
                 error.set_backtrace detail.backtrace
                 raise error
             end

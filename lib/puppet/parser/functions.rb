@@ -41,16 +41,16 @@ module Puppet::Parser::Functions
         name = symbolize(name)
 
         if functions.include?(name)
-            raise Puppet::DevError, "Function %s already defined" % name
+            raise Puppet::DevError, "Function #{name} already defined"
         end
 
         ftype = options[:type] || :statement
 
         unless ftype == :statement or ftype == :rvalue
-            raise Puppet::DevError, "Invalid statement type %s" % ftype.inspect
+            raise Puppet::DevError, "Invalid statement type #{ftype.inspect}"
         end
 
-        fname = "function_" + name.to_s
+        fname = "function_#{name}"
         environment_module.send(:define_method, fname, &block)
 
         # Someday we'll support specifying an arity, but for now, nope
@@ -66,12 +66,12 @@ module Puppet::Parser::Functions
         name = symbolize(name)
 
         unless functions.include? name
-            raise Puppet::DevError, "Function %s is not defined" % name
+            raise Puppet::DevError, "Function #{name} is not defined"
         end
 
         functions.delete name
 
-        fname = "function_" + name.to_s
+        fname = "function_#{name}"
         environment_module.send(:remove_method, fname)
     end
 
@@ -92,15 +92,15 @@ module Puppet::Parser::Functions
         ret = ""
 
         functions.sort { |a,b| a[0].to_s <=> b[0].to_s }.each do |name, hash|
-            #ret += "%s\n%s\n" % [name, hash[:type]]
-            ret += "%s\n%s\n" % [name, "-" * name.to_s.length]
+            #ret += "#{name}\n#{hash[:type]}\n"
+            ret += "#{name}\n#{"-" * name.to_s.length}\n"
             if hash[:doc]
                 ret += Puppet::Util::Docs.scrub(hash[:doc])
             else
                 ret += "Undocumented.\n"
             end
 
-            ret += "\n\n- **Type**: %s\n\n" % hash[:type]
+            ret += "\n\n- **Type**: #{hash[:type]}\n\n"
         end
 
         return ret

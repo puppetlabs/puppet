@@ -15,7 +15,7 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
             return :on
         else
             status.chomp!
-            raise Puppet::Error, "Invalid response '%s' returned from getsebool" % [status]
+            raise Puppet::Error, "Invalid response '#{status}' returned from getsebool"
         end
     end
 

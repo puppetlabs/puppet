@@ -98,7 +98,7 @@ class Puppet::Network::HTTP::WEBrick
         # Get the cached copy.  We know it's been generated, too.
         host = Puppet::SSL::Host.localhost
 
-        raise Puppet::Error, "Could not retrieve certificate for %s and not running on a valid certificate authority" % host.name unless host.certificate
+        raise Puppet::Error, "Could not retrieve certificate for #{host.name} and not running on a valid certificate authority" unless host.certificate
 
         results[:SSLPrivateKey] = host.key.content
         results[:SSLCertificate] = host.certificate.content
@@ -134,7 +134,7 @@ class Puppet::Network::HTTP::WEBrick
     def xmlrpc_servlet
         handlers = @xmlrpc_handlers.collect { |handler|
             unless hclass = Puppet::Network::Handler.handler(handler)
-                raise "Invalid xmlrpc handler %s" % handler
+                raise "Invalid xmlrpc handler #{handler}"
             end
             hclass.new({})
         }

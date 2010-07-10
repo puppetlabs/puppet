@@ -15,7 +15,7 @@ Puppet::Type.newtype(:resources) do
 
         validate do |name|
             unless Puppet::Type.type(name)
-                raise ArgumentError, "Could not find resource type '%s'" % name
+                raise ArgumentError, "Could not find resource type '#{name}'"
             end
         end
 
@@ -32,7 +32,7 @@ Puppet::Type.newtype(:resources) do
         validate do |value|
             if [:true, true, "true"].include?(value)
                 unless @resource.resource_type.respond_to?(:instances)
-                    raise ArgumentError, "Purging resources of type %s is not supported, since they cannot be queried from the system" % @resource[:name]
+                    raise ArgumentError, "Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system"
                 end
                 unless @resource.resource_type.validproperty?(:ensure)
                     raise ArgumentError, "Purging is only supported on types that accept 'ensure'"
@@ -58,7 +58,7 @@ Puppet::Type.newtype(:resources) do
                 false
             when Integer; value
             else
-                raise ArgumentError, "Invalid value %s" % value.inspect
+                raise ArgumentError, "Invalid value #{value.inspect}"
             end
         end
 
@@ -73,7 +73,7 @@ Puppet::Type.newtype(:resources) do
 
     def check(resource)
         unless defined?(@checkmethod)
-            @checkmethod = "%s_check" % self[:name]
+            @checkmethod = "#{self[:name]}_check"
         end
         unless defined?(@hascheck)
             @hascheck = respond_to?(@checkmethod)

@@ -74,8 +74,8 @@ class ExternalNode
         @parameters = Hash.new("unknown")    # sets a default value of "unknown"
 
         self.parse_argv(hostname)
-        self.match_classes(WORKINGDIR + "/" + classdir)
-        self.match_parameters(WORKINGDIR + "/" + parameterdir)
+        self.match_classes(WORKINGDIR + "/#{classdir}")
+        self.match_parameters(WORKINGDIR + "/#{parameterdir}")
     end
 
     # private method called by initialize() which sanity-checks our hostname.

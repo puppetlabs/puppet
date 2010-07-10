@@ -19,7 +19,7 @@ class Rights
             if obj = self[name]
                 obj.send(method, *args)
             else
-                raise ArgumentError, "Unknown right '%s'" % name
+                raise ArgumentError, "Unknown right '#{name}'"
             end
         end
     end
@@ -61,20 +61,20 @@ class Rights
         # or failed, in any case will throw an error to the outside world
         if name =~ /^\// or right
             # we're a patch ACL, let's fail
-            msg = "%s access to %s [%s]" % [ (args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})"), name, args[:method] ]
+            msg = "#{(args[:node].nil? ? args[:ip] : "#{args[:node]}(#{args[:ip]})")} access to #{name} [#{args[:method]}]"
 
             msg += " authenticated " if args[:authenticated]
 
-            error = AuthorizationError.new("Forbidden request: " + msg)
+            error = AuthorizationError.new("Forbidden request: #{msg}")
             if right
                 error.file = right.file
                 error.line = right.line
             end
-            Puppet.warning("Denying access: " + error.to_s)
+            Puppet.warning("Denying access: #{error}")
         else
             # there were no rights allowing/denying name
             # if name is not a path, let's throw
-            error = ArgumentError.new "Unknown namespace right '%s'" % name
+            error = ArgumentError.new "Unknown namespace right '#{name}'"
         end
         raise error
     end
@@ -156,13 +156,13 @@ class Rights
                 @key = Regexp.new(@name)
                 @methods = ALL
             else
-                raise ArgumentError, "Unknown right type '%s'" % name
+                raise ArgumentError, "Unknown right type '#{name}'"
             end
             super()
         end
 
         def to_s
-            "access[%s]" % @name
+            "access[#{@name}]"
         end
 
         # There's no real check to do at this point
@@ -198,7 +198,7 @@ class Rights
             m = m.intern if m.is_a?(String)
 
             unless ALL.include?(m)
-                raise ArgumentError, "'%s' is not an allowed value for method directive" % m
+                raise ArgumentError, "'#{m}' is not an allowed value for method directive"
             end
 
             # if we were allowing all methods, then starts from scratch
@@ -207,7 +207,7 @@ class Rights
             end
 
             if @methods.include?(m)
-                raise ArgumentError, "'%s' is already in the '%s' ACL" % [m, name]
+                raise ArgumentError, "'#{m}' is already in the '#{name}' ACL"
             end
 
             @methods << m
@@ -216,7 +216,7 @@ class Rights
         def restrict_environment(env)
             env = Puppet::Node::Environment.new(env)
             if @environment.include?(env)
-                raise ArgumentError, "'%s' is already in the '%s' ACL" % [env, name]
+                raise ArgumentError, "'#{env}' is already in the '#{name}' ACL"
             end
 
             @environment << env
@@ -231,7 +231,7 @@ class Rights
             when "all","any", :all, :any
                 authentication = nil
             else
-                raise ArgumentError, "'%s' incorrect authenticated value: %s" % [name, authentication]
+                raise ArgumentError, "'#{name}' incorrect authenticated value: #{authentication}"
             end
             @authentication = authentication
         end

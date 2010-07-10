@@ -18,12 +18,12 @@ class Puppet::Parser::AST
             lval = @lval.safeevaluate(scope)
             lval = Puppet::Parser::Scope.number?(lval)
             if lval == nil
-                raise ArgumentError, "left operand of %s is not a number" % @operator
+                raise ArgumentError, "left operand of #{@operator} is not a number"
             end
             rval = @rval.safeevaluate(scope)
             rval = Puppet::Parser::Scope.number?(rval)
             if rval == nil
-                raise ArgumentError, "right operand of %s is not a number" % @operator
+                raise ArgumentError, "right operand of #{@operator} is not a number"
             end
 
             # compute result
@@ -34,7 +34,7 @@ class Puppet::Parser::AST
             super
 
             unless %w{+ - * / << >>}.include?(@operator)
-                raise ArgumentError, "Invalid arithmetic operator %s" % @operator
+                raise ArgumentError, "Invalid arithmetic operator #{@operator}"
             end
         end
     end

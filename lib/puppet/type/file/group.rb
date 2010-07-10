@@ -11,7 +11,7 @@ module Puppet
         @event = :file_changed
 
         validate do |group|
-            raise(Puppet::Error, "Invalid group name '%s'" % group.inspect) unless group and group != ""
+            raise(Puppet::Error, "Invalid group name '#{group.inspect}'") unless group and group != ""
         end
 
         def id2name(id)
@@ -51,7 +51,7 @@ module Puppet
                 if value =~ /^\d+$/
                     gid = Integer(value)
                 elsif value.is_a?(String)
-                    fail "Could not find group %s" % value unless gid = gid(value)
+                    fail "Could not find group #{value}" unless gid = gid(value)
                 else
                     gid = value
                 end
@@ -70,7 +70,7 @@ module Puppet
             # large GIDs instead of negative ones.  This isn't a Ruby bug,
             # it's an OS X bug, since it shows up in perl, too.
             if currentvalue > Puppet[:maximum_uid].to_i
-                self.warning "Apparently using negative GID (%s) on a platform that does not consistently handle them" % currentvalue
+                self.warning "Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them"
                 currentvalue = :silly
             end
 
@@ -108,13 +108,13 @@ module Puppet
                 break if gid = validgroup?(group)
             end
 
-            raise Puppet::Error, "Could not find group(s) %s" % @should.join(",") unless gid
+            raise Puppet::Error, "Could not find group(s) #{@should.join(",")}" unless gid
 
             begin
                 # set owner to nil so it's ignored
                 File.send(method, nil, gid, resource[:path])
             rescue => detail
-                error = Puppet::Error.new( "failed to chgrp %s to %s: %s" % [resource[:path], gid, detail.message])
+                error = Puppet::Error.new( "failed to chgrp #{resource[:path]} to #{gid}: #{detail.message}")
                 raise error
             end
             return :file_changed

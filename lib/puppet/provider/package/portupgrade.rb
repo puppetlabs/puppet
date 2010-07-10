@@ -70,7 +70,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
                         else
                         #         unrecognised output from pkg_info
-                        Puppet.debug "portupgrade.Instances() - unable to match output: %s" % data
+                        Puppet.debug "portupgrade.Instances() - unable to match output: #{data}"
                         end
                 }
 
@@ -82,7 +82,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         ######## Installation sub command
 
         def install
-            Puppet.debug "portupgrade.install() - Installation call on %s" % @resource[:name]
+            Puppet.debug "portupgrade.install() - Installation call on #{@resource[:name]}"
             # -M: yes, we're a batch, so don't ask any questions
         	cmdline = ["-M BATCH=yes", @resource[:name]]
 
@@ -94,7 +94,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
                 end
 
                 if output =~ /\*\* No such /
-                    raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
+                    raise Puppet::ExecutionFailure, "Could not find package #{@resource[:name]}"
                 end
 
                 # No return code required, so do nil to be clean
@@ -104,7 +104,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         ######## Latest subcommand (returns the latest version available, or current version if installed is latest)
 
         def latest
-            Puppet.debug "portupgrade.latest() - Latest check called on %s" % @resource[:name]
+            Puppet.debug "portupgrade.latest() - Latest check called on #{@resource[:name]}"
             # search for latest version available, or return current version.
             # cmdline = "portversion -v <portorigin>", returns "<portname> <code> <stuff>"
             # or "** No matching package found: <portname>"
@@ -128,24 +128,24 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
                 # all others return the current version so no unexpected 'upgrades' occur.	
                 case comparison
                 when "=", ">"
-                    Puppet.debug "portupgrade.latest() - Installed package is latest (%s)" % installedversion
+                    Puppet.debug "portupgrade.latest() - Installed package is latest (#{installedversion})"
                     return installedversion
                         when "<"
                         #         "portpkg-1.7_5  <  needs updating (port has 1.14)"
                         # "portpkg-1.7_5  <  needs updating (port has 1.14) (=> 'newport/pkg')
                         if otherdata =~ /\(port has (\S+)\)/
                             newversion = $1
-                            Puppet.debug "portupgrade.latest() - Installed version needs updating to (%s)" % newversion
+                            Puppet.debug "portupgrade.latest() - Installed version needs updating to (#{newversion})"
                             return newversion
                                 else
-                                    Puppet.debug "portupgrade.latest() - Unable to determine new version from (%s)" % otherdata
+                                    Puppet.debug "portupgrade.latest() - Unable to determine new version from (#{otherdata})"
                                     return installedversion
                                 end
                         when "?", "!", "#"
-                            Puppet.debug "portupgrade.latest() - Comparison Error reported from portversion (%s)" % output
+                            Puppet.debug "portupgrade.latest() - Comparison Error reported from portversion (#{output})"
                             return installedversion
                         else
-                            Puppet.debug "portupgrade.latest() - Unknown code from portversion output (%s)" % output
+                            Puppet.debug "portupgrade.latest() - Unknown code from portversion output (#{output})"
                             return installedversion
                         end
 
@@ -154,10 +154,10 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
                 # Seriously - this section should never be called in a perfect world.
                 # as verification that the port is installed has already happened in query.
                 if output =~ /^\*\* No matching package /
-                    raise Puppet::ExecutionFailure, "Could not find package %s" % @resource[:name]
+                    raise Puppet::ExecutionFailure, "Could not find package #{@resource[:name]}"
                         else
                         #         Any other error (dump output to log)
-                        raise Puppet::ExecutionFailure, "Unexpected output from portversion: %s" % output
+                        raise Puppet::ExecutionFailure, "Unexpected output from portversion: #{output}"
                         end
 
                         # Just in case we still are running, return nil
@@ -166,7 +166,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
 
                 # At this point normal operation has finished and we shouldn't have been called.
                 # Error out and let the admin deal with it.
-                raise Puppet::Error, "portversion.latest() - fatal error with portversion: %s" % output
+                raise Puppet::Error, "portversion.latest() - fatal error with portversion: #{output}"
                 return nil
 
         end
@@ -175,7 +175,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         # Used to make sure the package is installed
 
         def query
-            Puppet.debug "portupgrade.query() - Called on %s" % @resource[:name]
+            Puppet.debug "portupgrade.query() - Called on #{@resource[:name]}"
 
             cmdline = ["-qO", @resource[:name]]
             begin
@@ -198,7 +198,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
                 # return the hash to the caller
                 return hash
                 else
-                    Puppet.debug "portupgrade.query() - package (%s) not installed" % @resource[:name]
+                    Puppet.debug "portupgrade.query() - package (#{@resource[:name]}) not installed"
                     return nil
                 end
 
@@ -207,7 +207,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         ####### Uninstall command
 
         def uninstall
-            Puppet.debug "portupgrade.uninstall() - called on %s" % @resource[:name]
+            Puppet.debug "portupgrade.uninstall() - called on #{@resource[:name]}"
             # Get full package name from port origin to uninstall with
             cmdline = ["-qO", @resource[:name]]
             begin
@@ -226,7 +226,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
         ######## Update/upgrade command
 
         def update
-            Puppet.debug "portupgrade.update() - called on (%s)" % @resource[:name]
+            Puppet.debug "portupgrade.update() - called on (#{@resource[:name]})"
 
             cmdline = ["-qO", @resource[:name]]
             begin

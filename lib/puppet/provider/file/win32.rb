@@ -21,7 +21,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
             if value =~ /^\d+$/
                 uid = Integer(value)
             elsif value.is_a?(String)
-                fail "Could not find user %s" % value unless uid = uid(value)
+                fail "Could not find user #{value}" unless uid = uid(value)
             else
                 uid = value
             end
@@ -39,7 +39,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
 
     # Determine if the user is valid, and if so, return the UID
     def validuser?(value)
-        info "Is '%s' a valid user?" % value
+        info "Is '#{value}' a valid user?"
         return 0
         begin
             number = Integer(value)
@@ -65,7 +65,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
         # large UIDs instead of negative ones.  This isn't a Ruby bug,
         # it's an OS X bug, since it shows up in perl, too.
         if currentvalue > Puppet[:maximum_uid].to_i
-            self.warning "Apparently using negative UID (%s) on a platform that does not consistently handle them" % currentvalue
+            self.warning "Apparently using negative UID (#{currentvalue}) on a platform that does not consistently handle them"
             currentvalue = :silly
         end
 

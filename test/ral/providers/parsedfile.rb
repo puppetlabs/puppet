@@ -36,7 +36,7 @@ class TestParsedFile < Test::Unit::TestCase
     # A simple block to skip the complexity of a full transaction.
     def apply(resource)
         [:one, :two, :ensure, :target].each do |st|
-            Puppet.info "Setting %s: %s => %s" % [resource[:name], st, resource.should(st)]
+            Puppet.info "Setting #{resource[:name]}: #{st} => #{resource.should(st)}"
             resource.provider.send(st.to_s + "=", resource.should(st))
         end
     end
@@ -81,7 +81,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         [:one, :two, :name].each do |attr|
-            assert(prov.method_defined?(attr), "Did not define %s" % attr)
+            assert(prov.method_defined?(attr), "Did not define #{attr}")
         end
 
         # Now make sure they stay around
@@ -323,7 +323,7 @@ class TestParsedFile < Test::Unit::TestCase
             if name == :resources
                 assert(! list.include?(file), "Provider somehow found resource target when no resource was passed")
             else
-                assert(list.include?(file), "Provider did not find %s file" % name)
+                assert(list.include?(file), "Provider did not find #{name} file")
             end
         end
 
@@ -334,7 +334,7 @@ class TestParsedFile < Test::Unit::TestCase
 
         # And make sure we get all three files
         files.each do |name, file|
-            assert(list.include?(file), "Provider did not find %s file when resource was passed" % name)
+            assert(list.include?(file), "Provider did not find #{name} file when resource was passed")
         end
     end
 
@@ -434,7 +434,7 @@ class TestParsedFile < Test::Unit::TestCase
         mover = mkresource "mover", :target => :first
 
         [first, second, mover].each do |m|
-            assert_nothing_raised("Could not apply %s" % m[:name]) do
+            assert_nothing_raised("Could not apply #{m[:name]}") do
                 apply(m)
             end
         end
@@ -447,7 +447,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         check = proc do |target, name|
-            assert(prov.target_object(target).read.include?("%s a c" % name), "Did not sync %s" % name)
+            assert(prov.target_object(target).read.include?("#{name} a c"), "Did not sync #{name}")
         end
         # Make sure the data is there
         check.call(:first, :first)
@@ -502,7 +502,7 @@ class TestParsedFile < Test::Unit::TestCase
         # Now make sure all of the data is copied over correctly.
         notdisk.class.validproperties.each do |property|
             assert_equal(notdisk.should(property), notdisk.provider.property_hash[property],
-                "%s was not copied over during creation" % property)
+                "#{property} was not copied over during creation")
         end
 
         # Flush it to disk and make sure it got copied down
@@ -571,7 +571,7 @@ class TestParsedFile < Test::Unit::TestCase
         prov = bill.provider
 
         4.times do |i|
-            assert(prov.one, "Did not get a value for 'one' on try %s" % (i + 1))
+            assert(prov.one, "Did not get a value for 'one' on try #{(i + 1)}")
         end
 
         # First make sure we can retrieve values multiple times from the

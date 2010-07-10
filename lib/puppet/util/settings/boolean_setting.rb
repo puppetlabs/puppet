@@ -24,7 +24,7 @@ class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::Setting
         when true, "true"; return true
         when false, "false"; return false
         else
-            raise ArgumentError, "Invalid value '%s' for %s" % [value.inspect, @name]
+            raise ArgumentError, "Invalid value '#{value.inspect}' for #{@name}"
         end
     end
 end

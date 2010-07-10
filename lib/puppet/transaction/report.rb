@@ -67,7 +67,7 @@ class Puppet::Transaction::Report
         ret = ""
 
         @metrics.sort { |a,b| a[1].label <=> b[1].label }.each do |name, metric|
-            ret += "%s:\n" % metric.label
+            ret += "#{metric.label}:\n"
             metric.values.sort { |a,b|
                 # sort by label
                 if a[0] == :total

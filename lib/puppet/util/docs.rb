@@ -9,7 +9,7 @@ module Puppet::Util::Docs
     # rather than just sticking them in a hash, because otherwise they're
     # too difficult to do inheritance with.
     def dochook(name, &block)
-        method = "dochook_" + name.to_s
+        method = "dochook_#{name}"
 
         meta_def method, &block
     end

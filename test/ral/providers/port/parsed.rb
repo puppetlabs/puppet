@@ -48,7 +48,7 @@ require 'puppettest'
 #            end
 #            @provider.default_target = file
 #
-#            assert_nothing_raised("failed to fetch %s" % file) {
+#            assert_nothing_raised("failed to fetch #{file}") {
 #                @provider.prefetch
 #            }
 #
@@ -60,7 +60,7 @@ require 'puppettest'
 #            assert_equal("53", dns[:number], "dns number is wrong")
 #
 #            text = nil
-#            assert_nothing_raised("failed to generate %s" % file) do
+#            assert_nothing_raised("failed to generate #{file}") do
 #                text = @provider.to_file(@provider.target_records(file))
 #            end
 #
@@ -83,7 +83,7 @@ require 'puppettest'
 #                end
 #            #    assert_equal(old.chomp.gsub(/\s+/, ''),
 #            #        new.gsub(/\s+/, ''),
-#            #        "Lines are not equal in %s" % file)
+#            #        "Lines are not equal in #{file}")
 #            end
 #        end
 #    end
@@ -121,13 +121,13 @@ require 'puppettest'
 #                    hash.each do |param, value|
 #                        if value
 #                            assert_equal(value, record[param],
-#                                "did not get %s out of '%s'" % [param, line])
+#                                "did not get #{param} out of '#{line}'")
 #                        end
 #                    end
 #
 #                    # Now make sure it generates correctly
 #                    assert_equal(line, @provider.to_line(record),
-#                        "Did not generate %s correctly" % line)
+#                        "Did not generate #{line} correctly")
 #                end
 #            end
 #        end

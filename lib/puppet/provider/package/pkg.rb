@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
                 hash[:ensure] = :absent
             end
         else
-            Puppet.warning "Failed to match 'pkg list' line %s" % line.inspect
+            Puppet.warning "Failed to match 'pkg list' line #{line.inspect}"
             return nil
         end
 
@@ -66,7 +66,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
             when "installed"
                 version = v
             else
-                Puppet.warn "unknown package state for %s: %s" % [@resource[:name], v]
+                Puppet.warn "unknown package state for #{@resource[:name]}: #{v}"
             end
         end
         version
@@ -101,7 +101,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
             {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
         if hash[:error] != "ok"
-            raise Puppet::Error.new( "Package %s, version %s is in error state: %s" % [hash[:name], hash[:version], hash[:error]])
+            raise Puppet::Error.new( "Package #{hash[:name]}, version #{hash[:version]} is in error state: #{hash[:error]}")
         end
 
         return hash

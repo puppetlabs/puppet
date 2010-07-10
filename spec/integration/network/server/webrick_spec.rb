@@ -29,7 +29,7 @@ describe Puppet::Network::Server do
             @tmpfile.delete
             Puppet.settings.clear
 
-            system("rm -rf %s" % @dir)
+            system("rm -rf #{@dir}")
 
             Puppet::Util::Cacher.expire
         end

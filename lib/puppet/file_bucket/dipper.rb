@@ -31,7 +31,7 @@ class Puppet::FileBucket::Dipper
     # Back up a file to our bucket
     def backup(file)
         unless ::File.exist?(file)
-            raise(ArgumentError, "File %s does not exist" % file)
+            raise(ArgumentError, "File #{file} does not exist")
         end
         contents = ::File.read(file)
         begin
@@ -42,7 +42,7 @@ class Puppet::FileBucket::Dipper
             return file_bucket_file.checksum_data
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
-            raise Puppet::Error, "Could not back up %s: %s" % [file, detail]
+            raise Puppet::Error, "Could not back up #{file}: #{detail}"
         end
     end
 
@@ -84,7 +84,7 @@ class Puppet::FileBucket::Dipper
                     ::File.chmod(changed, file)
                 end
             else
-                Puppet.err "Could not find file with checksum %s" % sum
+                Puppet.err "Could not find file with checksum #{sum}"
                 return nil
             end
             return newsum

@@ -59,7 +59,7 @@ Puppet::Reports.register_report(:tagmail) do
             end
 
             if messages.empty?
-                Puppet.info "No messages to report to %s" % emails.join(",")
+                Puppet.info "No messages to report to #{emails.join(",")}"
                 next
             else
                 matching_logs << [emails, messages.collect { |m| m.to_report }.join("\n")]
@@ -88,13 +88,13 @@ Puppet::Reports.register_report(:tagmail) do
             neg = []
             taglist.sub(/\s+$/,'').split(/\s*,\s*/).each do |tag|
                 unless tag =~ /^!?[-\w]+$/
-                    raise ArgumentError, "Invalid tag %s" % tag.inspect
+                    raise ArgumentError, "Invalid tag #{tag.inspect}"
                 end
                 case tag
                 when /^\w+/; pos << tag
                 when /^!\w+/; neg << tag.sub("!", '')
                 else
-                    raise Puppet::Error, "Invalid tag '%s'" % tag
+                    raise Puppet::Error, "Invalid tag '#{tag}'"
                 end
             end
 
@@ -108,7 +108,7 @@ Puppet::Reports.register_report(:tagmail) do
     # Process the report.  This just calls the other associated messages.
     def process
         unless FileTest.exists?(Puppet[:tagmap])
-            Puppet.notice "Cannot send tagmail report; no tagmap file %s" % Puppet[:tagmap]
+            Puppet.notice "Cannot send tagmail report; no tagmap file #{Puppet[:tagmap]}"
             return
         end
 
@@ -129,9 +129,9 @@ Puppet::Reports.register_report(:tagmail) do
                         reports.each do |emails, messages|
                             smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
                                 p.puts "From: #{Puppet[:reportfrom]}"
-                                p.puts "Subject: Puppet Report for %s" % self.host
+                                p.puts "Subject: Puppet Report for #{self.host}"
                                 p.puts "To: " + emails.join(", ")
-                                p.puts "Date: " + Time.now.rfc2822
+                                p.puts "Date: #{Time.now.rfc2822}"
                                 p.puts
                                 p.puts messages
                             end
@@ -142,7 +142,7 @@ Puppet::Reports.register_report(:tagmail) do
                         puts detail.backtrace
                     end
                     raise Puppet::Error,
-                        "Could not send report emails through smtp: %s" % detail
+                        "Could not send report emails through smtp: #{detail}"
                 end
             elsif Puppet[:sendmail] != ""
                 begin
@@ -150,7 +150,7 @@ Puppet::Reports.register_report(:tagmail) do
                         # We need to open a separate process for every set of email addresses
                         IO.popen(Puppet[:sendmail] + " " + emails.join(" "), "w") do |p|
                             p.puts "From: #{Puppet[:reportfrom]}"
-                            p.puts "Subject: Puppet Report for %s" % self.host
+                            p.puts "Subject: Puppet Report for #{self.host}"
                             p.puts "To: " + emails.join(", ")
 
                             p.puts messages
@@ -161,7 +161,7 @@ Puppet::Reports.register_report(:tagmail) do
                         puts detail.backtrace
                     end
                     raise Puppet::Error,
-                        "Could not send report emails via sendmail: %s" % detail
+                        "Could not send report emails via sendmail: #{detail}"
                 end
             else
                 raise Puppet::Error, "SMTP server is unset and could not find sendmail"
