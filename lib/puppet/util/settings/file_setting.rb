@@ -23,7 +23,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     end
 
     def group
-        return unless defined?(@group) && @group
+        return unless @group
         @settings[:group]
     end
 
@@ -36,7 +36,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     end
 
     def owner
-        return unless defined?(@owner) && @owner
+        return unless @owner
         return "root" if @owner == "root" or ! use_service_user?
         @settings[:user]
     end

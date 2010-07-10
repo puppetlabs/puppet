@@ -58,7 +58,7 @@ module Puppet::Util::Cacher
         end
 
         def attr_ttl(name)
-            return nil unless defined?(@attr_ttls) and @attr_ttls
+            return nil unless @attr_ttls
             @attr_ttls[name]
         end
 
@@ -122,7 +122,7 @@ module Puppet::Util::Cacher
         end
 
         def value_cache
-            @value_cache = {} unless defined?(@value_cache) and @value_cache
+            @value_cache = {} unless @value_cache
             @value_cache
         end
     end

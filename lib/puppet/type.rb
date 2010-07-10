@@ -572,7 +572,7 @@ class Type
         # Once an object is managed, it always stays managed; but an object
         # that is listed as unmanaged might become managed later in the process,
         # so we have to check that every time
-        if defined?(@managed) and @managed
+        if @managed
             return @managed
         else
             @managed = false
@@ -593,7 +593,7 @@ class Type
     # this is a retarded hack method to get around the difference between
     # component children and file children
     def self.depthfirst?
-        defined?(@depthfirst) && @depthfirst
+        @depthfirst
     end
 
     def depthfirst?
@@ -1328,7 +1328,7 @@ class Type
 
     # Find the default provider.
     def self.defaultprovider
-        unless defined?(@defaultprovider) and @defaultprovider
+        unless @defaultprovider
             suitable = suitableprovider()
 
             # Find which providers are a default for this system.
@@ -1824,7 +1824,7 @@ class Type
     # Retrieve the title of an object.  If no title was set separately,
     # then use the object's name.
     def title
-        unless defined?(@title) and @title
+        unless @title
             if self.class.validparameter?(name_var)
                 @title = self[:name]
             elsif self.class.validproperty?(name_var)

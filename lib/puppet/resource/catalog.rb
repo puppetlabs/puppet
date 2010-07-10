@@ -173,7 +173,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         @resource_table.values.each { |resource| resource.remove } if remove_resources
         @resource_table.clear
 
-        if defined?(@relationship_graph) and @relationship_graph
+        if @relationship_graph
             @relationship_graph.clear
             @relationship_graph = nil
         end
@@ -303,7 +303,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     # Create a graph of all of the relationships in our catalog.
     def relationship_graph
-        unless defined?(@relationship_graph) and @relationship_graph
+        unless @relationship_graph
             # It's important that we assign the graph immediately, because
             # the debug messages below use the relationships in the
             # relationship graph to determine the path to the resources

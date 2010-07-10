@@ -30,7 +30,7 @@ class Puppet::Util::Ldap::Generator
     end
 
     def source
-        if defined?(@source) and @source
+        if @source
             @source.to_s
         else
             nil

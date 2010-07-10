@@ -54,7 +54,7 @@ Puppet::Type.newtype(:cron) do
         # We have to override the parent method, because we consume the entire
         # "should" array
         def insync?(is)
-            if defined?(@should) and @should
+            if @should
                 self.is_to_s(is) == self.should_to_s
             else
                 true

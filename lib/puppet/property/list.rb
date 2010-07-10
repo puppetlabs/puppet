@@ -36,7 +36,7 @@ module Puppet
             end
 
             def should
-                return nil unless defined?(@should) and @should
+                return nil unless @should
 
                 members = @should
                 #inclusive means we are managing everything so if it isn't in should, its gone
@@ -66,7 +66,7 @@ module Puppet
             end
 
             def insync?(is)
-                return true unless defined?(@should) and @should
+                return true unless @should
 
                 return true unless is
 

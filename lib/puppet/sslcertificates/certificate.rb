@@ -23,7 +23,7 @@ class Puppet::SSLCertificates::Certificate
             File.unlink(file) if FileTest.exists?(file)
         }
 
-        if defined?(@hash) and @hash
+        if @hash
             File.unlink(@hash) if FileTest.symlink?(@hash)
         end
     end
@@ -120,7 +120,7 @@ class Puppet::SSLCertificates::Certificate
 
     # this only works for servers, not for users
     def mkcsr
-        self.getkey unless defined?(@key) and @key
+        self.getkey unless @key
 
         name = OpenSSL::X509::Name.new self.subject
 
@@ -178,9 +178,9 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def mkselfsigned
-        self.getkey unless defined?(@key) and @key
+        self.getkey unless @key
 
-        raise Puppet::Error, "Cannot replace existing certificate" if defined?(@cert) and @cert
+        raise Puppet::Error, "Cannot replace existing certificate" if @cert
 
         args = {
             :name => self.certname,
@@ -228,7 +228,7 @@ class Puppet::SSLCertificates::Certificate
         files[@cacertfile] = @cacert if defined?(@cacert)
 
         files.each { |file,thing|
-            if defined?(thing) and thing
+            if thing
                 next if FileTest.exists?(file)
 
                 text = nil

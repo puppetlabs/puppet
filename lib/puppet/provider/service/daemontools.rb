@@ -46,7 +46,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
         # Determine the daemon path.
         def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
-            unless defined?(@defpath) and @defpath
+            unless @defpath
                 ["/var/lib/service", "/etc"].each do |path|
                     if FileTest.exist?(path)
                         @defpath = path
@@ -87,7 +87,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
     # find the service dir on this node
     def servicedir
-        unless defined?(@servicedir) and @servicedir
+        unless @servicedir
             ["/service", "/etc/service","/var/lib/svscan"].each do |path|
                 if FileTest.exist?(path)
                     @servicedir = path

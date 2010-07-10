@@ -22,7 +22,7 @@ module Puppet::Util::Docs
             self.send(m)
         }.join("  ")
 
-        if defined?(@doc) and @doc
+        if @doc
             @doc + extra
         else
             extra

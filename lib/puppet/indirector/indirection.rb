@@ -77,7 +77,7 @@ class Puppet::Indirector::Indirection
     def doc
         text = ""
 
-        text += scrub(@doc) + "\n\n" if defined?(@doc) and @doc
+        text += scrub(@doc) + "\n\n" if @doc
 
         if s = terminus_setting()
             text += "* **Terminus Setting**: #{terminus_setting}"

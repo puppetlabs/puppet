@@ -12,7 +12,7 @@ module PuppetTest::ParserTesting
         attr_writer :evaluate
 
         def evaluated?
-            defined?(@evaluated) and @evaluated
+            @evaluated
         end
 
         def evaluate(*args)

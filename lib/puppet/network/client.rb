@@ -104,7 +104,7 @@ class Puppet::Network::Client
 
     # Are we a local client?
     def local?
-        if defined?(@local) and @local
+        if @local
             true
         else
             false

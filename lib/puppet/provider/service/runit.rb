@@ -39,7 +39,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
         # this is necessary to autodetect a valid resource
         # default path, since there is no standard for such directory.
         def defpath(dummy_argument=:work_arround_for_ruby_GC_bug)
-            unless defined?(@defpath) and @defpath
+            unless @defpath
                 ["/etc/sv", "/var/lib/service"].each do |path|
                     if FileTest.exist?(path)
                         @defpath = path
@@ -54,7 +54,7 @@ Puppet::Type.type(:service).provide :runit, :parent => :daemontools do
 
     # find the service dir on this node
     def servicedir
-        unless defined?(@servicedir) and @servicedir
+        unless @servicedir
             ["/service", "/etc/service","/var/service"].each do |path|
                 if FileTest.exist?(path)
                     @servicedir = path

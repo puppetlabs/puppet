@@ -102,7 +102,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
     # Has this resource already been finished?
     def finished?
-        defined?(@finished) and @finished
+        @finished
     end
 
     def initialize(*args)

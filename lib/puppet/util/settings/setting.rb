@@ -50,11 +50,11 @@ class Puppet::Util::Settings::Setting
     end
 
     def iscreated?
-        defined?(@iscreated) && @iscreated
+        @iscreated
     end
 
     def set?
-        !!(defined?(@value) and ! @value.nil?)
+        !!(!@value.nil?)
     end
 
     # short name for the celement
@@ -68,7 +68,7 @@ class Puppet::Util::Settings::Setting
         str = @desc.gsub(/^/, "# ") + "\n"
 
         # Add in a statement about the default.
-        str += "# The default value is '#{@default}'.\n" if defined?(@default) and @default
+        str += "# The default value is '#{@default}'.\n" if @default
 
         # If the value has not been overridden, then print it out commented
         # and unconverted, so it's clear that that's the default and how it

@@ -46,7 +46,7 @@ class Puppet::Util::Ldap::Manager
     def connect
         raise ArgumentError, "You must pass a block to #connect" unless block_given?
 
-        unless defined?(@connection) and @connection
+        unless @connection
             if Puppet[:ldaptls]
                 ssl = :tls
             elsif Puppet[:ldapssl]

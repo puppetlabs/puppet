@@ -157,7 +157,7 @@ module Puppet
         # Convert to a parseable manifest
         def to_manifest
             unless self.top
-                raise Puppet::DevError, "No keyword; cannot convert to manifest" unless defined?(@keyword) and @keyword
+                raise Puppet::DevError, "No keyword; cannot convert to manifest" unless @keyword
             end
 
             str = "#{@keyword} #{@name} {\n%s\n}"

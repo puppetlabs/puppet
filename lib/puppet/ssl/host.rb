@@ -203,7 +203,7 @@ class Puppet::SSL::Host
     # Create/return a store that uses our SSL info to validate
     # connections.
     def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
-        unless defined?(@ssl_store) and @ssl_store
+        unless @ssl_store
             @ssl_store = OpenSSL::X509::Store.new
             @ssl_store.purpose = purpose
 

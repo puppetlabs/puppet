@@ -18,7 +18,7 @@ module Puppet::Indirector
     # evaluated at parse time, which is before the user has had a chance
     # to override it.
     def indirects(indirection, options = {})
-        raise(ArgumentError, "Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}") if defined?(@indirection) and @indirection
+        raise(ArgumentError, "Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}") if @indirection
         # populate this class with the various new methods
         extend ClassMethods
         include InstanceMethods

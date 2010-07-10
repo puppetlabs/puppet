@@ -10,7 +10,7 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
     NAME_STRING = "## --PUPPET_NAME-- (called '_naginator_name' in the manifest)"
     # Retrieve the associated class from Nagios::Base.
     def self.nagios_type
-        unless defined?(@nagios_type) and @nagios_type
+        unless @nagios_type
             name = resource_type.name.to_s.sub(/^nagios_/, '')
             unless @nagios_type = Nagios::Base.type(name.to_sym)
                 raise Puppet::DevError, "Could not find nagios type '#{name}'"

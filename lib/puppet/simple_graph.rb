@@ -119,7 +119,7 @@ class Puppet::SimpleGraph
     def dependencies(resource)
         # Cache the reversal graph, because it's somewhat expensive
         # to create.
-        @reversal = reversal unless defined?(@reversal) and @reversal
+        @reversal = reversal unless @reversal
         # Strangely, it's significantly faster to search a reversed
         # tree in the :out direction than to search a normal tree
         # in the :in direction.
