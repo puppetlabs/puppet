@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::ResourceReference do
     ast = Puppet::Parser::AST
 
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
     end
 
     def newref(type, title)

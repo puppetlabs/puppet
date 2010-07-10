@@ -45,7 +45,7 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     # Note that File.stat raises Errno::ENOENT if the file is absent and this
     # method does not catch that exception.
     def collect
-        real_path = full_path()
+        real_path = full_path
         stat = stat()
         @owner = stat.uid
         @group = stat.gid

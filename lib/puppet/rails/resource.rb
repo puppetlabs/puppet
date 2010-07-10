@@ -92,7 +92,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
         accumulate_benchmark("Individual resource merger", :attributes) { merge_attributes(resource) }
         accumulate_benchmark("Individual resource merger", :parameters) { merge_parameters(resource) }
         accumulate_benchmark("Individual resource merger", :tags) { merge_tags(resource) }
-        save()
+        save
     end
 
     def merge_attributes(resource)
@@ -170,7 +170,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
 
     def name
-        ref()
+        ref
     end
 
     def parameter(param)

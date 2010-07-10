@@ -11,7 +11,7 @@ class Puppet::Network::HTTP::Rack
         protocols = args[:protocols]
 
         # Always prepare a REST handler
-        @rest_http_handler = Puppet::Network::HTTP::RackREST.new()
+        @rest_http_handler = Puppet::Network::HTTP::RackREST.new
         protocols.delete :rest
 
         # Prepare the XMLRPC handler, for backward compatibility (if requested)
@@ -33,7 +33,7 @@ class Puppet::Network::HTTP::Rack
     # * Return the response (in rack-format) to our caller.
     def call(env)
         request = Rack::Request.new(env)
-        response = Rack::Response.new()
+        response = Rack::Response.new
         Puppet.debug 'Handling request: %s %s' % [request.request_method, request.fullpath]
 
         # if we shall serve XMLRPC, have /RPC2 go to the xmlrpc handler
@@ -56,7 +56,7 @@ class Puppet::Network::HTTP::Rack
             Puppet.err "Backtrace:"
             detail.backtrace.each { |line| Puppet.err " > #{line}" }
         end
-        response.finish()
+        response.finish
     end
 end
 

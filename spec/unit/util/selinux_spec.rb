@@ -42,7 +42,7 @@ describe Puppet::Util::SELinux do
         end
 
         it "should parse the contents of /proc/mounts" do
-            read_mounts().should  == {
+            read_mounts.should  == {
                 '/' => 'ext3',
                 '/sys' => 'sysfs',
                 '/mnt/nfs' => 'nfs',

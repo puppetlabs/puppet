@@ -8,7 +8,7 @@ require 'erb'
 #  This provides functionality essentially equivalent to
 # the language's template() function.  You pass your file
 # path and the resource you want to use into the initialization
-# method, then call result() on the instance, and you get back
+# method, then call result on the instance, and you get back
 # a chunk of text.
 #  The resource's parameters are available as instance variables
 # (as opposed to the language, where we use a method_missing trick).

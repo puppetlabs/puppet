@@ -54,14 +54,14 @@ $LOG.level = Logger::DEBUG
 WORKINGDIR = Dir.pwd
 
 # This class holds all the methods for creating and accessing the properties
-# of an external node. There are really only two public methods: initialize()
-# and a special version of to_yaml()
+# of an external node. There are really only two public methods: initialize
+# and a special version of to_yaml
 
 class ExternalNode
     # Make these instance variables get/set-able with eponymous methods
     attr_accessor :classes, :parameters, :hostname
 
-    # initialize() takes three arguments:
+    # initialize takes three arguments:
     # hostname:: usually passed in via ARGV[0] but it could be anything
     # classdir:: directory under WORKINGDIR to look for files named after
     # classes
@@ -78,7 +78,7 @@ class ExternalNode
         self.match_parameters(WORKINGDIR + "/#{parameterdir}")
     end
 
-    # private method called by initialize() which sanity-checks our hostname.
+    # private method called by initialize which sanity-checks our hostname.
     # good candidate for overriding in a subclass if you need different checks
     def parse_argv(hostname)
         if hostname =~ /^([-\w]+?)\.([-\w\.]+)/    # non-greedy up to the first . is hostname
@@ -132,7 +132,7 @@ class ExternalNode
             return nil
         end
 
-    end # def
+    end
 
     # private method - takes a path to look for files, iterates through all
     # readable, regular files it finds, and matches this instance's @hostname
@@ -146,9 +146,9 @@ class ExternalNode
             if matched_in_patternfile?(filepath,@hostname)
                 @classes << patternfile.to_s
                 $LOG.debug("Appended #{patternfile.to_s} to classes instance variable")
-            end # if
-        end # Dir.foreach
-    end # def
+            end
+        end
+    end
 
     # Parameters are handled slightly differently; we make another level of
     # directories to get the parameter name, then use the names of the files
@@ -177,12 +177,12 @@ class ExternalNode
                 if matched_in_patternfile?(secondlevel, @hostname)
                     @parameters[ parametername.to_s ] = patternfile.to_s
                     $LOG.debug("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
-                end # if
-            end # Dir.foreach #{filepath}
-        end # Dir.foreach #{fullpath}
-    end # def
+                end
+            end
+        end
+    end
 
-end # Class
+end
 
 # Logic for local hacks that don't fit neatly into the autoloading model can
 # happen as we initialize a subclass
@@ -202,10 +202,10 @@ class MyExternalNode < ExternalNode
             @parameters[ "hostclass" ] = hostclass
         else
             $LOG.debug("hostclass couldn't figure out class from #{@hostname}")
-        end # if
-    end # def
+        end
+    end
 
-end # Class
+end
 
 
 # Here we begin actual execution by calling methods defined above

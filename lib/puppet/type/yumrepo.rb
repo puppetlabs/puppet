@@ -103,7 +103,7 @@ module Puppet
         # Return the Puppet::Util::IniConfig::File for the whole yum config
         def self.inifile
             if @inifile.nil?
-                @inifile = read()
+                @inifile = read
                 main = @inifile['main']
                 raise Puppet::Error, "File #{yumconf} does not contain a main section" if main.nil?
                 reposdir = main['reposdir']
@@ -128,7 +128,7 @@ module Puppet
         # Non-test code should use self.inifile to get at the
         # underlying file
         def self.read
-            result = Puppet::Util::IniConfig::File.new()
+            result = Puppet::Util::IniConfig::File.new
             result.read(yumconf)
             main = result['main']
             raise Puppet::Error, "File #{yumconf} does not contain a main section" if main.nil?

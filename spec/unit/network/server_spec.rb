@@ -357,7 +357,7 @@ describe Puppet::Network::Server do
         end
 
         it "should require at least one namespace" do
-            lambda { @server.register_xmlrpc() }.should raise_error(ArgumentError)
+            lambda { @server.register_xmlrpc }.should raise_error(ArgumentError)
         end
 
         it "should allow multiple namespaces to be registered at once" do

@@ -73,7 +73,7 @@ class Puppet::Agent
     def start
         # Create our timer.  Puppet will handle observing it and such.
         timer = EventLoop::Timer.new(:interval => Puppet[:runinterval], :tolerance => 1, :start? => true) do
-            run()
+            run
         end
 
         # Run once before we start following the timer

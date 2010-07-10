@@ -94,20 +94,20 @@ class Puppet::Parser::Compiler
     # This is the main entry into our catalog.
     def compile
         # Set the client's parameters into the top scope.
-        set_node_parameters()
+        set_node_parameters
         create_settings_scope
 
-        evaluate_main()
+        evaluate_main
 
-        evaluate_ast_node()
+        evaluate_ast_node
 
-        evaluate_node_classes()
+        evaluate_node_classes
 
-        evaluate_generators()
+        evaluate_generators
 
-        finish()
+        finish
 
-        fail_on_unevaluated()
+        fail_on_unevaluated
 
         @catalog
     end
@@ -177,7 +177,7 @@ class Puppet::Parser::Compiler
             end
         end
 
-        initvars()
+        initvars
     end
 
     # Create a new scope, with either a specified parent scope or
@@ -352,7 +352,7 @@ class Puppet::Parser::Compiler
     # Make sure all of our resources and such have done any last work
     # necessary.
     def finish
-        evaluate_relationships()
+        evaluate_relationships
 
         resources.each do |resource|
             # Add in any resource overrides.

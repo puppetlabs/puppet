@@ -81,7 +81,7 @@ describe Puppet::FileServing::Mount::File, " when substituting hostnames and ip 
     it "should use local host information if no client data is provided" do
         stub_facter("myhost.mydomain.com")
         @mount.path = "/%h/%d/%H"
-        @mount.path().should == "/myhost/mydomain.com/myhost.mydomain.com"
+        @mount.path.should == "/myhost/mydomain.com/myhost.mydomain.com"
     end
 
     after do

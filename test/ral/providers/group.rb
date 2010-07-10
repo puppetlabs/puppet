@@ -158,7 +158,7 @@ class TestGroupProvider < Test::Unit::TestCase
 
     # Iterate over each of our groups and try to grab the gid.
     def test_ownprovidergroups
-        groupnames().each { |group|
+        groupnames.each { |group|
             gobj = nil
             comp = nil
             fakeresource = fakeresource(:group, group)

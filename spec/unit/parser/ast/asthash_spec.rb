@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::ASTHash do
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
     end
 
     it "should have a merge functionality" do

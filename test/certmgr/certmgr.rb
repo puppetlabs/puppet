@@ -32,7 +32,7 @@ class TestCertMgr < Test::Unit::TestCase
             )
         }
         assert_nothing_raised {
-            cert = newcert.call()
+            cert = newcert.call
         }
         assert_nothing_raised {
             cert.mkselfsigned
@@ -53,7 +53,7 @@ class TestCertMgr < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            cert = newcert.call()
+            cert = newcert.call
         }
         assert_nothing_raised {
             cert.mkselfsigned
@@ -110,13 +110,13 @@ class TestCertMgr < Test::Unit::TestCase
     def testCreateCA
         ca = nil
         assert_nothing_raised {
-            ca = Puppet::SSLCertificates::CA.new()
+            ca = Puppet::SSLCertificates::CA.new
         }
 
         # make the CA again and verify it doesn't fail because everything
         # still exists
         assert_nothing_raised {
-            ca = Puppet::SSLCertificates::CA.new()
+            ca = Puppet::SSLCertificates::CA.new
         }
 
     end

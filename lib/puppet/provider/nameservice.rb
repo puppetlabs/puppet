@@ -205,7 +205,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     # Retrieve what we can about our object
     def getinfo(refresh)
         if @objectinfo.nil? or refresh == true
-            @etcmethod ||= ("get" + self.class.section().to_s + "nam").intern
+            @etcmethod ||= ("get" + self.class.section.to_s + "nam").intern
             begin
                 @objectinfo = Etc.send(@etcmethod, @resource[:name])
             rescue ArgumentError => detail

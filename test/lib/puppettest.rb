@@ -181,8 +181,8 @@ module PuppetTest
         )
 
         unless defined? $user and $group
-            $user = nonrootuser().uid.to_s
-            $group = nonrootgroup().gid.to_s
+            $user = nonrootuser.uid.to_s
+            $group = nonrootgroup.gid.to_s
         end
 
         Puppet.settings.clear
@@ -194,7 +194,7 @@ module PuppetTest
 
         Dir.mkdir(@configpath) unless File.exists?(@configpath)
 
-        @@tmpfiles << @configpath << tmpdir()
+        @@tmpfiles << @configpath << tmpdir
         @@tmppids = []
 
         @@cleaners = []
@@ -216,7 +216,7 @@ module PuppetTest
         #else
         #    Puppet::Util::Log.close
         #    Puppet::Util::Log.newdestination(@logs)
-        #    Puppet[:httplog] = tempfile()
+        #    Puppet[:httplog] = tempfile
         #end
 
         Puppet[:ignoreschedules] = true
@@ -234,7 +234,7 @@ module PuppetTest
             @@tmpfilenum = 1
         end
 
-        f = File.join(self.tmpdir(), "tempfile_" + @@tmpfilenum.to_s)
+        f = File.join(self.tmpdir, "tempfile_" + @@tmpfilenum.to_s)
         @@tmpfiles ||= []
         @@tmpfiles << f
         f
@@ -245,7 +245,7 @@ module PuppetTest
     end
 
     def tstdir
-        dir = tempfile()
+        dir = tempfile
         Dir.mkdir(dir)
         dir
     end
@@ -287,7 +287,7 @@ module PuppetTest
     def teardown
         #@stop = Time.now
         #File.open("/tmp/test_times.log", ::File::WRONLY|::File::CREAT|::File::APPEND) { |f| f.puts "%0.4f %s %s" % [@stop - @start, @method_name, self.class] }
-        @@cleaners.each { |cleaner| cleaner.call() }
+        @@cleaners.each { |cleaner| cleaner.call }
 
         remove_tmp_files
 

@@ -29,7 +29,7 @@ class Puppet::SSL::CertificateFactory
         @cert.public_key = @csr.public_key
         @cert.serial = @serial
 
-        build_extensions()
+        build_extensions
 
         set_ttl
 

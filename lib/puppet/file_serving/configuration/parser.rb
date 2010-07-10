@@ -44,7 +44,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
             }
         }
 
-        validate()
+        validate
 
         @mounts
     end

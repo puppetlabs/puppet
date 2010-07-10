@@ -18,7 +18,7 @@ class TestAuthConfig < Test::Unit::TestCase
     end
 
     def test_parsingconfigfile
-        file = tempfile()
+        file = tempfile
         assert(Puppet[:authconfig], "No config path")
 
         Puppet[:authconfig] = file

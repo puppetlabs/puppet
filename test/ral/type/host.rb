@@ -27,7 +27,7 @@ class TestHost < Test::Unit::TestCase
             cleanup do
                 @provider.default_target = @default_file
             end
-            @target = tempfile()
+            @target = tempfile
             @provider.default_target = @target
         end
     end
@@ -98,7 +98,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_moddinghost
-        host = mkhost()
+        host = mkhost
         cleanup do
             host[:ensure] = :absent
             assert_apply(host)
@@ -119,7 +119,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_invalid_ipaddress
-        host = mkhost()
+        host = mkhost
 
         assert_raise(Puppet::Error) {
             host[:ip] = "abc.def.ghi.jkl"
@@ -127,7 +127,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_invalid_hostname
-        host = mkhost()
+        host = mkhost
 
         assert_raise(Puppet::Error) {
             host[:name] = "!invalid.hostname.$PID$"
@@ -147,7 +147,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def test_valid_hostname
-        host = mkhost()
+        host = mkhost
 
         assert_nothing_raised {
             host[:name] = "yayness"

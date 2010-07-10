@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::Selector do
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
     end
 
     describe "when evaluating" do

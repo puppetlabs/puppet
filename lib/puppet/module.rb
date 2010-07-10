@@ -48,7 +48,7 @@ class Puppet::Module
     def initialize(name, environment = nil)
         @name = name
 
-        assert_validity()
+        assert_validity
 
         if environment.is_a?(Puppet::Node::Environment)
             @environment = environment

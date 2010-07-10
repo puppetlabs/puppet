@@ -23,8 +23,8 @@ require 'puppet/provider/parsedfile'
         def process(line)
             ret = {}
             records = line.split(':',2)
-            ret[:name] = records[0].strip()
-            ret[:recipient] = records[1].strip()
+            ret[:name] = records[0].strip
+            ret[:recipient] = records[1].strip
             ret
         end
 

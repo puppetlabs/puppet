@@ -113,7 +113,7 @@ describe Puppet::Util::Ldap::Manager do
         it "should not pass in any value if no source attribute is specified" do
             @generator.stubs(:source).returns nil
             @manager.generates(:myparam)
-            @generator.expects(:generate).with().returns %w{double yay}
+            @generator.expects(:generate).with.returns %w{double yay}
             @manager.generate "one" => "yay"
         end
 

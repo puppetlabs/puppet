@@ -131,7 +131,7 @@ class TestFileType < Test::Unit::TestCase
     end
 
     def mkfile(content)
-        file = tempfile()
+        file = tempfile
         File.open(file, "w") { |f| f.print(content) }
         file
     end

@@ -15,7 +15,7 @@ class TestParser < Test::Unit::TestCase
     def setup
         super
         Puppet[:parseonly] = true
-        #@lexer = Puppet::Parser::Lexer.new()
+        #@lexer = Puppet::Parser::Lexer.new
     end
 
     def teardown
@@ -28,7 +28,7 @@ class TestParser < Test::Unit::TestCase
             Puppet::Node::Environment.clear
             parser = mkparser
             Puppet.debug("parsing #{file}") if __FILE__ == $0
-            assert_nothing_raised() {
+            assert_nothing_raised {
                 parser.file = file
                 parser.parse
             }
@@ -52,7 +52,7 @@ class TestParser < Test::Unit::TestCase
     def test_arrayrvalues
         parser = mkparser
         ret = nil
-        file = tempfile()
+        file = tempfile
         assert_nothing_raised {
             parser.string = "file { \"#{file}\": mode => [755, 640] }"
         }
@@ -65,7 +65,7 @@ class TestParser < Test::Unit::TestCase
     def test_arrayrvalueswithtrailingcomma
         parser = mkparser
         ret = nil
-        file = tempfile()
+        file = tempfile
         assert_nothing_raised {
             parser.string = "file { \"#{file}\": mode => [755, 640,] }"
         }
@@ -85,7 +85,7 @@ class TestParser < Test::Unit::TestCase
     end
 
     def test_importglobbing
-        basedir = File.join(tmpdir(), "importesting")
+        basedir = File.join(tmpdir, "importesting")
         @@tmpfiles << basedir
         Dir.mkdir(basedir)
 
@@ -109,7 +109,7 @@ class TestParser < Test::Unit::TestCase
     end
 
     def test_nonexistent_import
-        basedir = File.join(tmpdir(), "importesting")
+        basedir = File.join(tmpdir, "importesting")
         @@tmpfiles << basedir
         Dir.mkdir(basedir)
         manifest = File.join(basedir, "manifest")
@@ -124,7 +124,7 @@ class TestParser < Test::Unit::TestCase
     end
 
     def test_trailingcomma
-        path = tempfile()
+        path = tempfile
         str = %{file { "#{path}": ensure => file, }
         }
 
@@ -137,10 +137,10 @@ class TestParser < Test::Unit::TestCase
     end
 
     def test_importedclasses
-        imported = tempfile()
-        importer = tempfile()
+        imported = tempfile
+        importer = tempfile
 
-        made = tempfile()
+        made = tempfile
 
         File.open(imported, "w") do |f|
             f.puts %{class foo { file { "#{made}": ensure => file }}}
@@ -164,7 +164,7 @@ class TestParser < Test::Unit::TestCase
 
     # Make sure fully qualified and unqualified files can be imported
     def test_fqfilesandlocalfiles
-        dir = tempfile()
+        dir = tempfile
         Dir.mkdir(dir)
         importer = File.join(dir, "site.pp")
         fullfile = File.join(dir, "full.pp")
@@ -176,14 +176,14 @@ class TestParser < Test::Unit::TestCase
             f.puts %{import "#{fullfile}"\ninclude full\nimport "local.pp"\ninclude local}
         end
 
-        fullmaker = tempfile()
+        fullmaker = tempfile
         files << fullmaker
 
         File.open(fullfile, "w") do |f|
             f.puts %{class full { file { "#{fullmaker}": ensure => file }}}
         end
 
-        localmaker = tempfile()
+        localmaker = tempfile
         files << localmaker
 
         File.open(localfile, "w") do |f|
@@ -204,7 +204,7 @@ class TestParser < Test::Unit::TestCase
 
     # Make sure the parser adds '.pp' when necessary
     def test_addingpp
-        dir = tempfile()
+        dir = tempfile
         Dir.mkdir(dir)
         importer = File.join(dir, "site.pp")
         localfile = File.join(dir, "local.pp")
@@ -215,7 +215,7 @@ class TestParser < Test::Unit::TestCase
             f.puts %{import "local"\ninclude local}
         end
 
-        file = tempfile()
+        file = tempfile
         files << file
 
         File.open(localfile, "w") do |f|
@@ -232,7 +232,7 @@ class TestParser < Test::Unit::TestCase
 
     # Make sure that file importing changes file relative names.
     def test_changingrelativenames
-        dir = tempfile()
+        dir = tempfile
         Dir.mkdir(dir)
         Dir.mkdir(File.join(dir, "subdir"))
         top = File.join(dir, "site.pp")
@@ -240,14 +240,14 @@ class TestParser < Test::Unit::TestCase
         subtwo = File.join(dir, "subdir/subtwo")
 
         files = []
-        file = tempfile()
+        file = tempfile
         files << file
 
         File.open(subone + ".pp", "w") do |f|
             f.puts %{class one { file { "#{file}": ensure => file }}}
         end
 
-        otherfile = tempfile()
+        otherfile = tempfile
         files << otherfile
         File.open(subtwo + ".pp", "w") do |f|
             f.puts %{import "subone"\n class two inherits one {
@@ -294,7 +294,7 @@ class TestParser < Test::Unit::TestCase
     end
 
     def test_emptyfile
-        file = tempfile()
+        file = tempfile
         File.open(file, "w") do |f|
             f.puts %{}
         end
@@ -306,8 +306,8 @@ class TestParser < Test::Unit::TestCase
     end
 
     def test_multiple_nodes_named
-        file = tempfile()
-        other = tempfile()
+        file = tempfile
+        other = tempfile
 
         File.open(file, "w") do |f|
             f.puts %{

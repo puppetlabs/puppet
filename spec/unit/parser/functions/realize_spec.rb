@@ -6,7 +6,7 @@ describe "the realize function" do
 
     before :each do
         @collector = stub_everything 'collector'
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
         @compiler = stub 'compiler'
         @compiler.stubs(:add_collection).with(@collector)
         @scope.stubs(:compiler).returns(@compiler)

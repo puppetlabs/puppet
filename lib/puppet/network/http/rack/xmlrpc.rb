@@ -23,7 +23,7 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
             response.write 'Method Not Allowed'
             return
         end
-        if request.media_type() != "text/xml"
+        if request.media_type != "text/xml"
             response.status = 400
             response.write 'Bad Request'
             return
@@ -32,7 +32,7 @@ class Puppet::Network::HTTP::RackXMLRPC < Puppet::Network::HTTP::RackHttpHandler
         # get auth/certificate data
         client_request = build_client_request(request)
 
-        response_body = @xmlrpc_server.process(request.body.read(), client_request)
+        response_body = @xmlrpc_server.process(request.body.read, client_request)
 
         response.status = 200
         response['Content-Type'] =  'text/xml; charset=utf-8'

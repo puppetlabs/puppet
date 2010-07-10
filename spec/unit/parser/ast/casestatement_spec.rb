@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::CaseStatement do
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
     end
 
     describe "when evaluating" do
@@ -150,7 +150,7 @@ describe Puppet::Parser::AST::CaseStatement do
 
         tests.each do |should, values|
             values.each do |value|
-                @scope = Puppet::Parser::Scope.new()
+                @scope = Puppet::Parser::Scope.new
                 @scope.setvar("testparam", value)
                 result = ast.evaluate(@scope)
 

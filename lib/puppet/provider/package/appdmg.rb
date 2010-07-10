@@ -81,16 +81,16 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
                             }.each do |pkg|
                                 installapp("#{fspath}/#{pkg}", name, source)
                             end
-                        end # mounts.each do
+                        end
                     ensure
                         hdiutil "eject", mounts[0]
-                    end # begin
-            end # open() do
+                    end
+            end
         ensure
             # JJM Remove the file if open-uri didn't already do so.
             File.unlink(cached_source) if File.exist?(cached_source)
-        end # begin
-    end # def self.installpkgdmg
+        end
+    end
 
     def query
         FileTest.exists?("/var/db/.puppet_appdmg_installed_#{@resource[:name]}") ? {:name => @resource[:name], :ensure => :present} : nil

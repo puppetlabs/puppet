@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::BooleanOperator do
     ast = Puppet::Parser::AST
 
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
         @true_ast = ast::Boolean.new( :value => true)
         @false_ast = ast::Boolean.new( :value => false)
     end

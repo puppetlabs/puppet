@@ -8,7 +8,7 @@ describe "the require function" do
         @catalog = stub 'catalog'
         @compiler = stub 'compiler', :catalog => @catalog
 
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
         @scope.stubs(:findresource)
         @scope.stubs(:compiler).returns(@compiler)
         @klass = stub 'class', :name => "myclass"

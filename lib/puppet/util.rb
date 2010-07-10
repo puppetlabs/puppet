@@ -301,14 +301,14 @@ module Util
                 rescue => detail
                     puts detail.to_s
                     exit!(1)
-                end # begin; rescue
-            end # if child_pid
+                end
+            end
         elsif Puppet.features.microsoft_windows?
             command = command.collect {|part| '"' + part.gsub(/"/, '\\"') + '"'}.join(" ") if command.is_a?(Array)
             Puppet.debug "Creating process '#{command}'"
             processinfo = Process.create( :command_line => command )
             child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
-        end # if posix or win32
+        end
 
         # read output in if required
         if ! arguments[:squelch]

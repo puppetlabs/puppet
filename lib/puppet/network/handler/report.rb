@@ -52,7 +52,7 @@ class Puppet::Network::Handler
             # Used for those reports that accept yaml
             client = report.host
 
-            reports().each do |name|
+            reports.each do |name|
                 if mod = Puppet::Reports.report(name)
                     # We have to use a dup because we're including a module in the
                     # report.

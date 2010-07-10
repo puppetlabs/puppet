@@ -10,7 +10,7 @@ class TestYumRepo < Test::Unit::TestCase
 
     def setup
         super
-        @yumdir = tempfile()
+        @yumdir = tempfile
         Dir.mkdir(@yumdir)
         @yumconf = File.join(@yumdir, "yum.conf")
         File.open(@yumconf, "w") do |f|
@@ -33,7 +33,7 @@ class TestYumRepo < Test::Unit::TestCase
         assert_equal('New description', devel.property(:descr).should)
         assert_apply(devel)
 
-        inifile = Puppet::Type.type(:yumrepo).read()
+        inifile = Puppet::Type.type(:yumrepo).read
         assert_equal('New description', inifile['development']['name'])
         assert_equal('Fedora Core $releasever - $basearch - Base', inifile['base']['name'])
         assert_equal("foo\n  bar\n  baz", inifile['base']['exclude'])
@@ -56,7 +56,7 @@ class TestYumRepo < Test::Unit::TestCase
         repo = make_repo("base", values)
 
         assert_apply(repo)
-        inifile = Puppet::Type.type(:yumrepo).read()
+        inifile = Puppet::Type.type(:yumrepo).read
         sections = all_sections(inifile)
         assert_equal(['base', 'main'], sections)
         text = inifile["base"].format
@@ -75,7 +75,7 @@ class TestYumRepo < Test::Unit::TestCase
                         :baseurl => baseurl })
         devel.retrieve
         assert_apply(devel)
-        inifile = Puppet::Type.type(:yumrepo).read()
+        inifile = Puppet::Type.type(:yumrepo).read
         sec = inifile["development"]
         assert_nil(sec["mirrorlist"])
         assert_equal(baseurl, sec["baseurl"])

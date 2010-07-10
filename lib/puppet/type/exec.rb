@@ -530,7 +530,7 @@ module Puppet
 
         # Verify that we pass all of the checks.  The argument determines whether
         # we skip the :refreshonly check, which is necessary because we now check
-        # within refresh()
+        # within refresh
         def check(refreshing = false)
             self.class.checks.each { |check|
                 next if refreshing and check == :refreshonly

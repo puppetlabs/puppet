@@ -61,8 +61,8 @@ class TestPuppetModule < Test::Unit::TestCase
                 $LOAD_PATH.delete(dir) unless oldlibs.include?(dir)
             end
         end
-        one = tempfile()
-        two = tempfile()
+        one = tempfile
+        two = tempfile
         Dir.mkdir(one)
         Dir.mkdir(two)
 

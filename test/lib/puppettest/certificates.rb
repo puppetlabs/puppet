@@ -19,7 +19,7 @@ module PuppetTest::Certificates
     def mkCA
         ca = nil
         assert_nothing_raised {
-            ca = Puppet::SSLCertificates::CA.new()
+            ca = Puppet::SSLCertificates::CA.new
         }
 
         ca

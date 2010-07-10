@@ -141,7 +141,7 @@ module Puppet::Util::SELinux
         mounts = ""
         begin
             if File.instance_methods.include? "read_nonblock"
-                # If possible we use read_nonblock() in a loop rather than read() to work-
+                # If possible we use read_nonblock in a loop rather than read to work-
                 # a linux kernel bug.  See ticket #1963 for details.
                 mountfh = File.open("/proc/mounts")
                 mounts += mountfh.read_nonblock(1024) while true
@@ -184,7 +184,7 @@ module Puppet::Util::SELinux
     # Internal helper function to return which type of filesystem a
     # given file path resides on
     def find_fs(path)
-        unless mnts = read_mounts()
+        unless mnts = read_mounts
             return nil
         end
 

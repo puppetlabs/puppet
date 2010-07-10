@@ -1,7 +1,7 @@
 #
 # ZAML -- A partial replacement for YAML, writen with speed and code clarity
 #         in mind.  ZAML fixes one YAML bug (loading Exceptions) and provides
-#         a replacement for YAML.dump() unimaginatively called ZAML.dump(),
+#         a replacement for YAML.dump unimaginatively called ZAML.dump,
 #         which is faster on all known cases and an order of magnitude faster
 #         with complex structures.
 #

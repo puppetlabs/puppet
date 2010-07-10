@@ -17,12 +17,12 @@ module Puppet
         def changed?
             # Allow the timeout to be disabled entirely.
             return true if Puppet[:filetimeout] < 0
-            tmp = stamp()
+            tmp = stamp
 
             # We use a different internal variable than the stamp method
             # because it doesn't keep historical state and we do -- that is,
             # we will always be comparing two timestamps, whereas
-            # stamp() just always wants the latest one.
+            # stamp just always wants the latest one.
             if tmp == @tstamp
                 return false
             else
@@ -40,7 +40,7 @@ module Puppet
             end
             @statted = 0
             @stamp = nil
-            @tstamp = stamp()
+            @tstamp = stamp
         end
 
         # Retrieve the filestamp, but only refresh it if we're beyond our

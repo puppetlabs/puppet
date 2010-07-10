@@ -115,7 +115,7 @@ Puppet::Reports.register_report(:rrdgraph) do
             metric.graph
         end
 
-        mkhtml() unless FileTest.exists?(File.join(hostdir, "index.html"))
+        mkhtml unless FileTest.exists?(File.join(hostdir, "index.html"))
     end
 
     # Unfortunately, RRD does not deal well with changing lists of values,

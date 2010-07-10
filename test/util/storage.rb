@@ -9,7 +9,7 @@ class TestStorage < Test::Unit::TestCase
     include PuppetTest
 
     def mkfile
-        path = tempfile()
+        path = tempfile
         File.open(path, "w") { |f| f.puts :yayness }
 
 
@@ -24,9 +24,9 @@ class TestStorage < Test::Unit::TestCase
     end
 
     def test_storeandretrieve
-        path = tempfile()
+        path = tempfile
 
-        f = mkfile()
+        f = mkfile
 
         # Load first, since that's what we do in the code base; this creates
         # all of the necessary directories.
@@ -72,7 +72,7 @@ class TestStorage < Test::Unit::TestCase
         Puppet::Util::Storage.clear
         Puppet::Util::Storage.load
 
-        f = mkfile()
+        f = mkfile
         state = Puppet::Util::Storage.cache(f)
         assert_same Hash, state.class
         assert_equal 0, state.size

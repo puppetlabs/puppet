@@ -193,7 +193,7 @@ class Puppet::Parameter
         self.class.metaparam
     end
 
-    # each parameter class must define the name() method, and parameter
+    # each parameter class must define the name method, and parameter
     # instances do not change that name this implicitly means that a given
     # object can only have one parameter instance of a given parameter
     # class

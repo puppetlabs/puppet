@@ -11,7 +11,7 @@ class TestBaseServiceProvider < Test::Unit::TestCase
     include PuppetTest
 
     def test_base
-        running = tempfile()
+        running = tempfile
 
         commands = {}
         %w{touch rm test}.each do |c|

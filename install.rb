@@ -413,7 +413,7 @@ def install_binfile(from, op_file, target)
             op.puts "#!#{ruby}"
             contents = ip.readlines
             contents.shift if contents[0] =~ /^#!/
-            op.write contents.join()
+            op.write contents.join
         end
     end
 

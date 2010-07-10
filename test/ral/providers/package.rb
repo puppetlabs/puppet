@@ -16,7 +16,7 @@ class TestPackageProvider < Test::Unit::TestCase
     # Load the testpackages hash.
     def self.load_test_packages
         require 'yaml'
-        file = File.join(PuppetTest.datadir(), "providers", "package", "testpackages.yaml")
+        file = File.join(PuppetTest.datadir, "providers", "package", "testpackages.yaml")
         raise "Could not find file #{file}" unless FileTest.exists?(file)
         array = YAML::load(File.read(file)).collect { |hash|
             # Stupid ruby 1.8.1.  YAML is sometimes broken such that

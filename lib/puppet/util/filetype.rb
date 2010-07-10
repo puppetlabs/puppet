@@ -34,7 +34,7 @@ class Puppet::Util::FileType
             define_method(:real_read, instance_method(:read))
             define_method(:read) do
                 begin
-                    val = real_read()
+                    val = real_read
                     @loaded = Time.now
                     if val
                         return val.gsub(/# HEADER.*\n/,'')
@@ -165,15 +165,15 @@ class Puppet::Util::FileType
 
         # Read a specific @path's cron tab.
         def read
-            %x{#{cmdbase()} -l 2>/dev/null}
+            %x{#{cmdbase} -l 2>/dev/null}
         end
 
         # Remove a specific @path's cron tab.
         def remove
             if %w{Darwin FreeBSD}.include?(Facter.value("operatingsystem"))
-                %x{/bin/echo yes | #{cmdbase()} -r 2>/dev/null}
+                %x{/bin/echo yes | #{cmdbase} -r 2>/dev/null}
             else
-                %x{#{cmdbase()} -r 2>/dev/null}
+                %x{#{cmdbase} -r 2>/dev/null}
             end
         end
 

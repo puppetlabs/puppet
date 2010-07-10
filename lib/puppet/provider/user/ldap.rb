@@ -70,10 +70,10 @@ Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
     def groups=(values)
         should = values.split(",")
 
-        if groups() == :absent
+        if groups == :absent
             is = []
         else
-            is = groups().split(",")
+            is = groups.split(",")
         end
 
         modes = {}

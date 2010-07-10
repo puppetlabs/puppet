@@ -259,7 +259,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
     # A simple test to see if we can load the cron from disk.
     def test_load
-        setme()
+        setme
         records = nil
         assert_nothing_raised {
             records = @provider.retrieve(@me)
@@ -271,7 +271,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # it directly
     def test_simple_to_cron
         # make the cron
-        setme()
+        setme
 
         name = "yaytest"
         args = {:name => name,

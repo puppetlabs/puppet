@@ -17,8 +17,8 @@ class TestFileTarget < Test::Unit::TestCase
 
     # Make sure we can create symlinks
     def test_symlinks
-        path = tempfile()
-        link = tempfile()
+        path = tempfile
+        link = tempfile
 
         File.open(path, "w") { |f| f.puts "yay" }
 
@@ -47,8 +47,8 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_simplerecursivelinking
-        source = tempfile()
-        path = tempfile()
+        source = tempfile
+        path = tempfile
         subdir = File.join(source, "subdir")
         file = File.join(subdir, "file")
 
@@ -79,8 +79,8 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_recursivelinking
-        source = tempfile()
-        dest = tempfile()
+        source = tempfile
+        dest = tempfile
 
         files = []
         dirs = []
@@ -132,7 +132,7 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_localrelativelinks
-        dir = tempfile()
+        dir = tempfile
         Dir.mkdir(dir)
         source = File.join(dir, "source")
         File.open(source, "w") { |f| f.puts "yay" }
@@ -156,8 +156,8 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_recursivelinkingmissingtarget
-        source = tempfile()
-        dest = tempfile()
+        source = tempfile
+        dest = tempfile
 
         resources = []
 
@@ -186,8 +186,8 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_insync?
-        source = tempfile()
-        dest = tempfile()
+        source = tempfile
+        dest = tempfile
 
         obj = @file.create(:path => source, :target => dest)
 
@@ -220,8 +220,8 @@ class TestFileTarget < Test::Unit::TestCase
 
     def test_replacedirwithlink
         Puppet[:trace] = false
-        path = tempfile()
-        link = tempfile()
+        path = tempfile
+        link = tempfile
 
         File.open(path, "w") { |f| f.puts "yay" }
         Dir.mkdir(link)
@@ -254,7 +254,7 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_replace_links_with_files
-        base = tempfile()
+        base = tempfile
 
         Dir.mkdir(base)
 
@@ -282,7 +282,7 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_no_erase_linkedto_files
-        base = tempfile()
+        base = tempfile
 
         Dir.mkdir(base)
 
@@ -329,9 +329,9 @@ class TestFileTarget < Test::Unit::TestCase
     end
 
     def test_replace_links
-        dest = tempfile()
-        otherdest = tempfile()
-        link = tempfile()
+        dest = tempfile
+        otherdest = tempfile
+        link = tempfile
 
         File.open(dest, "w") { |f| f.puts "boo" }
         File.open(otherdest, "w") { |f| f.puts "yay" }

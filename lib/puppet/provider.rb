@@ -219,8 +219,8 @@ class Puppet::Provider
     end
 
     dochook(:features) do
-        if features().length > 0
-            return "  Supported features: " + features().collect do |f|
+        if features.length > 0
+            return "  Supported features: " + features.collect do |f|
                 "``#{f}``"
             end.join(", ") + "."
         end

@@ -36,7 +36,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
     def test_ignore_simple_source
 
         #Temp directory to run tests in
-        path = tempfile()
+        path = tempfile
         @@tmpfiles.push path
 
         #source directory
@@ -101,7 +101,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
     def test_ignore_with_wildcard
         #Temp directory to run tests in
-        path = tempfile()
+        path = tempfile
         @@tmpfiles.push path
 
         #source directory
@@ -177,7 +177,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
     def test_ignore_array
         #Temp directory to run tests in
-        path = tempfile()
+        path = tempfile
         @@tmpfiles.push path
 
         #source directory

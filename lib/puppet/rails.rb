@@ -78,14 +78,14 @@ module Puppet::Rails
     def self.init
         raise Puppet::DevError, "No activerecord, cannot init Puppet::Rails" unless Puppet.features.rails?
 
-        connect()
+        connect
 
         unless ActiveRecord::Base.connection.tables.include?("resources")
             require 'puppet/rails/database/schema'
             Puppet::Rails::Schema.init
         end
 
-        migrate() if Puppet[:dbmigrate]
+        migrate if Puppet[:dbmigrate]
     end
 
     # Migrate to the latest db schema.
@@ -120,7 +120,7 @@ module Puppet::Rails
         Puppet.settings.use(:master, :rails)
 
         begin
-            ActiveRecord::Base.establish_connection(database_arguments())
+            ActiveRecord::Base.establish_connection(database_arguments)
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             raise Puppet::Error, "Could not connect to database: #{detail}"

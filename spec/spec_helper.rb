@@ -37,7 +37,7 @@ Spec::Runner.configure do |config|
 
 #  config.prepend_before :all do
 #      setup_mocks_for_rspec
-#      setup() if respond_to? :setup
+#      setup if respond_to? :setup
 #  end
 #
     config.prepend_after :each do

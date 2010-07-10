@@ -11,7 +11,7 @@ class TestFileServer < Test::Unit::TestCase
     def mkmount(path = nil)
         mount = nil
         name = "yaytest"
-        base = path || tempfile()
+        base = path || tempfile
         Dir.mkdir(base) unless FileTest.exists?(base)
         # Create a test file
         File.open(File.join(base, "file"), "w") { |f| f.puts "bazoo" }
@@ -23,7 +23,7 @@ class TestFileServer < Test::Unit::TestCase
     end
     # make a simple file source
     def mktestdir
-        testdir = File.join(tmpdir(), "remotefilecopytesting")
+        testdir = File.join(tmpdir, "remotefilecopytesting")
         @@tmpfiles << testdir
 
         # create a tmpfile
@@ -89,7 +89,7 @@ class TestFileServer < Test::Unit::TestCase
     # verify that listing the root behaves as expected
     def test_listroot
         server = nil
-        testdir, pattern, tmpfile = mktestdir()
+        testdir, pattern, tmpfile = mktestdir
 
         file = nil
         checks = Puppet::Network::Handler.fileserver::CHECKPARAMS
@@ -128,7 +128,7 @@ class TestFileServer < Test::Unit::TestCase
     # test listing individual files
     def test_getfilelist
         server = nil
-        testdir, pattern, tmpfile = mktestdir()
+        testdir, pattern, tmpfile = mktestdir
 
         file = nil
 
@@ -180,7 +180,7 @@ class TestFileServer < Test::Unit::TestCase
     # check that the fileserver is seeing newly created files
     def test_seenewfiles
         server = nil
-        testdir, pattern, tmpfile = mktestdir()
+        testdir, pattern, tmpfile = mktestdir
 
 
         newfile = File.join(testdir, "newfile")
@@ -244,7 +244,7 @@ class TestFileServer < Test::Unit::TestCase
             server.mount("/", "root")
         }
 
-        testdir, pattern, tmpfile = mktestdir()
+        testdir, pattern, tmpfile = mktestdir
 
         list = nil
         assert_nothing_raised {
@@ -273,7 +273,7 @@ class TestFileServer < Test::Unit::TestCase
         }
 
         # make our deep recursion
-        basedir = File.join(tmpdir(), "recurseremotetesting")
+        basedir = File.join(tmpdir, "recurseremotetesting")
         testdir = "#{basedir}/with/some/sub/directories/for/the/purposes/of/testing"
         oldfile = File.join(testdir, "oldfile")
         assert_nothing_raised {
@@ -328,7 +328,7 @@ class TestFileServer < Test::Unit::TestCase
 
 
         # create a deep dir
-        basedir = tempfile()
+        basedir = tempfile
         testdir = "#{basedir}/with/some/sub/directories/for/testing"
         oldfile = File.join(testdir, "oldfile")
         assert_nothing_raised {
@@ -372,7 +372,7 @@ class TestFileServer < Test::Unit::TestCase
             )
         }
 
-        basedir = tempfile()
+        basedir = tempfile
         dirs = %w{a set of directories}
         assert_nothing_raised {
             Dir.mkdir(basedir)
@@ -399,7 +399,7 @@ class TestFileServer < Test::Unit::TestCase
     # verify that 'describe' works as advertised
     def test_describe
         server = nil
-        testdir = tstdir()
+        testdir = tstdir
         files = mktestfiles(testdir)
 
         file = nil
@@ -597,7 +597,7 @@ class TestFileServer < Test::Unit::TestCase
     # Test that we smoothly handle invalid config files
     def test_configfailures
         # create an example file with each of them
-        conffile = tempfile()
+        conffile = tempfile
 
         invalidmounts = {
             "noexist" => "[noexist]
@@ -676,8 +676,8 @@ class TestFileServer < Test::Unit::TestCase
     def test_filereread
         server = nil
 
-        conffile = tempfile()
-        dir = tstdir()
+        conffile = tempfile
+        dir = tstdir
 
         files = mktestfiles(dir)
         File.open(conffile, "w") { |f|
@@ -744,7 +744,7 @@ class TestFileServer < Test::Unit::TestCase
     def test_mountstring
         mount = nil
         name = "yaytest"
-        path = tmpdir()
+        path = tmpdir
         assert_nothing_raised {
             mount = Puppet::Network::Handler.fileserver::Mount.new(name, path)
         }
@@ -756,7 +756,7 @@ class TestFileServer < Test::Unit::TestCase
         # Disable the checking, so changes propagate immediately.
         Puppet[:filetimeout] = -5
         server = nil
-        source = tempfile()
+        source = tempfile
         file = File.join(source, "file")
         link = File.join(source, "link")
         Dir.mkdir(source)
@@ -813,7 +813,7 @@ class TestFileServer < Test::Unit::TestCase
         ip = "127.0.0.1"
 
         # Setup a directory hierarchy for the tests
-        fsdir = File.join(tmpdir(), "host-specific")
+        fsdir = File.join(tmpdir, "host-specific")
         @@tmpfiles << fsdir
         hostdir = File.join(fsdir, "host")
         fqdndir = File.join(fsdir, "fqdn")
@@ -830,7 +830,7 @@ class TestFileServer < Test::Unit::TestCase
                 f.print contents[d]
             end
         end
-        conffile = tempfile()
+        conffile = tempfile
         File.open(conffile, "w") do |f|
             f.print("
 [host]
@@ -931,7 +931,7 @@ allow *
     # Make sure the 'subdir' method in Mount works.
     def test_mount_subdir
         mount = nil
-        base = tempfile()
+        base = tempfile
         Dir.mkdir(base)
         subdir = File.join(base, "subdir")
         Dir.mkdir(subdir)
@@ -940,7 +940,7 @@ allow *
         end
         mount = mkmount(base)
 
-        assert_equal(base, mount.subdir(), "Did not default to base path")
+        assert_equal(base, mount.subdir, "Did not default to base path")
         assert_equal(subdir, mount.subdir("subdir"), "Did not default to base path")
     end
 
@@ -948,10 +948,10 @@ allow *
     # the path.
     def test_expandable
         name = "yaytest"
-        dir = tempfile()
+        dir = tempfile
         Dir.mkdir(dir)
 
-        mount = mkmount()
+        mount = mkmount
         assert_nothing_raised {
             mount.path = dir
         }
@@ -980,7 +980,7 @@ allow *
     end
 
     def test_mount_expand
-        mount = mkmount()
+        mount = mkmount
 
         check = proc do |client, pattern, repl|
             path = "/my/#{pattern}/file"
@@ -1037,7 +1037,7 @@ allow *
             )
         }
 
-        dir = tempfile()
+        dir = tempfile
 
         # When mocks attack, part 2
         kernel_fact = Facter.value(:kernel)

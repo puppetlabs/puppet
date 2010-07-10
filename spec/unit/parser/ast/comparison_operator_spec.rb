@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::ComparisonOperator do
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
         @one = stub 'one', :safeevaluate => "1"
         @two = stub 'two', :safeevaluate => "2"
     end

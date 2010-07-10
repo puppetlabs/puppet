@@ -117,12 +117,12 @@ class Puppet::Parser::Parser
     def initialize(env)
         # The environment is needed to know how to find the resource type collection.
         @environment = env.is_a?(String) ? Puppet::Node::Environment.new(env) : env
-        initvars()
+        initvars
     end
 
     # Initialize or reset all of our variables.
     def initvars
-        @lexer = Puppet::Parser::Lexer.new()
+        @lexer = Puppet::Parser::Lexer.new
     end
 
     # Split an fq name into a namespace and name

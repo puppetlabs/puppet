@@ -64,7 +64,7 @@ describe provider_class do
 
         # This is not supported in the new parsing class
         #it "should concat the last values" do
-        #    provider = provider_class.new()
+        #    provider = provider_class.new
         #    tokens = provider.parse_commands("set /Jar/Jar Binks is my copilot")
         #    tokens.size.should == 1
         #    tokens[0].size.should == 3
@@ -165,7 +165,7 @@ describe provider_class do
     describe "get filters" do
         before do
             augeas_stub = stub("augeas", :get => "value")
-            @provider = provider_class.new()
+            @provider = provider_class.new
             @provider.aug= augeas_stub
         end
 

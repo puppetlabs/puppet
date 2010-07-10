@@ -33,7 +33,7 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def getkey
-        self.mkkey() unless FileTest.exists?(@keyfile)
+        self.mkkey unless FileTest.exists?(@keyfile)
         if @password
 
             @key = OpenSSL::PKey::RSA.new(

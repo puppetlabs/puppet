@@ -11,7 +11,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     def test_withumask
         oldmask = File.umask
 
-        path = tempfile()
+        path = tempfile
 
         # FIXME this fails on FreeBSD with a mode of 01777
         Puppet::Util.withumask(000) do
@@ -23,7 +23,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
 
     def test_benchmark
-        path = tempfile()
+        path = tempfile
         str = "yayness"
         File.open(path, "w") do |f| f.print "yayness" end
 
@@ -119,7 +119,7 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
 
     def test_execute
-        command = tempfile()
+        command = tempfile
         File.open(command, "w") { |f|
             f.puts %{#!/bin/sh\n/bin/echo "$1">&1; echo "$2">&2}
         }
@@ -148,7 +148,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
 
         # And that we can tell it not to fail
-        assert_nothing_raised() do
+        assert_nothing_raised do
             out = Puppet::Util.execute(["touch", "/no/such/file/could/exist"], :failonfail => false)
         end
 
@@ -156,7 +156,7 @@ class TestPuppetUtil < Test::Unit::TestCase
             # Make sure we correctly set our uid and gid
             user = nonrootuser
             group = nonrootgroup
-            file = tempfile()
+            file = tempfile
             assert_nothing_raised do
                 Puppet::Util.execute(["touch", file], :uid => user.name, :gid => group.name)
             end
@@ -170,7 +170,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
 
         # (#565) Test the case of patricide.
-        patricidecommand = tempfile()
+        patricidecommand = tempfile
         File.open(patricidecommand, "w") { |f|
             f.puts %{#!/bin/bash\n/bin/bash -c 'kill -TERM \$PPID' &;\n while [ 1 ]; do echo -n ''; done;\n}
         }
@@ -220,7 +220,7 @@ class TestPuppetUtil < Test::Unit::TestCase
 
     end
 
-    # Check whether execute() accepts strings in addition to arrays.
+    # Check whether execute accepts strings in addition to arrays.
     def test_string_exec
         cmd = "/bin/echo howdy"
         output = nil

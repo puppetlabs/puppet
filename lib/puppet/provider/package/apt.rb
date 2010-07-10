@@ -41,7 +41,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
         self.run_preseed if @resource[:responsefile]
         should = @resource[:ensure]
 
-        checkforcdrom()
+        checkforcdrom
         cmd = %w{-q -y}
 
         keep = ""

@@ -33,7 +33,7 @@ class Puppet::Network::Handler
 
             args[:Local] = true
 
-            @ca = (hash.include?(:CA) and hash[:CA]) ? Puppet::SSLCertificates::CA.new() : nil
+            @ca = (hash.include?(:CA) and hash[:CA]) ? Puppet::SSLCertificates::CA.new : nil
 
             # This is only used by the cfengine module, or if --loadclasses was
             # specified in +puppet+.

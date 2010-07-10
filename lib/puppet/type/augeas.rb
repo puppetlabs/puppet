@@ -176,7 +176,7 @@ Puppet::Type.newtype(:augeas) do
 
         # Actually execute the command.
         def sync
-            @resource.provider.execute_changes()
+            @resource.provider.execute_changes
         end
     end
 

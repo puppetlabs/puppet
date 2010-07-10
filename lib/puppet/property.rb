@@ -201,7 +201,7 @@ class Puppet::Property < Puppet::Parameter
         super
     end
 
-    # each property class must define the name() method, and property instances
+    # each property class must define the name method, and property instances
     # do not change that name
     # this implicitly means that a given object can only have one property
     # instance of a given property class

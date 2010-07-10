@@ -89,7 +89,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # We need a way to test whether a zone is in process.  Our 'ensure'
     # property models the static states, but we need to handle the temporary ones.
     def processing?
-        if hash = status()
+        if hash = status
             case hash[:ensure]
             when "incomplete", "ready", "shutting_down"
                 true
@@ -212,7 +212,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
 
     # Turn the results of getconfig into status information.
     def config_status
-        config = getconfig()
+        config = getconfig
         result = {}
 
         result[:autoboot] = config[:autoboot] ? config[:autoboot].intern : :absent

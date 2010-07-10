@@ -94,7 +94,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
         else
             Puppet.notice "No client; expanding '#{path}' with local host"
             # Else, use the local information
-            map = localmap()
+            map = localmap
         end
 
         path.gsub(/%(.)/) do |v|

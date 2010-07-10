@@ -300,7 +300,7 @@ class Puppet::SimpleGraph
 #    # For some reason, unconnected vertices do not show up in
 #    # this graph.
 #    def to_jpg(path, name)
-#        gv = vertices()
+#        gv = vertices
 #        Dir.chdir(path) do
 #            induced_subgraph(gv).write_to_graphic_file('jpg', name)
 #        end

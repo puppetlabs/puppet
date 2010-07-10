@@ -10,7 +10,7 @@ describe Puppet::Provider::Confine::True do
     end
 
     it "should require a value" do
-        lambda { Puppet::Provider::Confine::True.new() }.should raise_error(ArgumentError)
+        lambda { Puppet::Provider::Confine::True.new }.should raise_error(ArgumentError)
     end
 
     describe "when testing values" do

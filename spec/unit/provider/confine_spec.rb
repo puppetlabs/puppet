@@ -6,7 +6,7 @@ require 'puppet/provider/confine'
 
 describe Puppet::Provider::Confine do
     it "should require a value" do
-        lambda { Puppet::Provider::Confine.new() }.should raise_error(ArgumentError)
+        lambda { Puppet::Provider::Confine.new }.should raise_error(ArgumentError)
     end
 
     it "should always convert values to an array" do

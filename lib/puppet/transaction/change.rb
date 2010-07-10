@@ -33,14 +33,14 @@ class Puppet::Transaction::Change
 
         property.sync
 
-        result = event()
+        result = event
         result.message = property.change_to_s(is, should)
         result.status = "success"
         result.send_log
         result
     rescue => detail
         puts detail.backtrace if Puppet[:trace]
-        result = event()
+        result = event
         result.status = "failure"
 
         result.message = "change from #{property.is_to_s(is)} to #{property.should_to_s(should)} failed: #{detail}"

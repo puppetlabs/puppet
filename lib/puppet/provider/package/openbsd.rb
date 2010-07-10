@@ -16,7 +16,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         packages = []
 
         begin
-            execpipe(listcmd()) do |process|
+            execpipe(listcmd) do |process|
                 # our regex for matching pkg_info output
                 regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
                 fields = [:name, :ensure, :flavor ]
@@ -24,7 +24,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
 
                 # now turn each returned line into a package object
                 process.each { |line|
-                    if match = regex.match(line.split()[0])
+                    if match = regex.match(line.split[0])
                         fields.zip(match.captures) { |field,value|
                             hash[field] = value
                         }
@@ -83,7 +83,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
                 master_version = 0
 
                 process.each do |line|
-                    if match = regex.match(line.split()[0])
+                    if match = regex.match(line.split[0])
                         # now we return the first version, unless ensure is latest
                         version = match.captures[1]
                         return version unless @resource[:ensure] == "latest"

@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 describe "the fqdn_rand function" do
 
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
     end
 
     it "should exist" do

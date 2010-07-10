@@ -104,7 +104,7 @@ tab = case Facter.value(:operatingsystem)
 
             # Then the normal fields.
             matched = true
-            record_type(record[:record_type]).fields().each do |field|
+            record_type(record[:record_type]).fields.each do |field|
                 next if field == :command
                 next if field == :special
                 if record[field] and ! resource.value(field)

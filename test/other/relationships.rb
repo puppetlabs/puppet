@@ -13,7 +13,7 @@ class TestRelationships < Test::Unit::TestCase
     end
 
     def newfile
-        assert_nothing_raised() {
+        assert_nothing_raised {
 
                         return Puppet::Type.type(:file).new(
                 
@@ -57,7 +57,7 @@ class TestRelationships < Test::Unit::TestCase
 
     def test_autorequire
         # We know that execs autorequire their cwd, so we'll use that
-        path = tempfile()
+        path = tempfile
 
 
                     file = Puppet::Type.type(:file).new(

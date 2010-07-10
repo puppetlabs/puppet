@@ -140,7 +140,7 @@ class Puppet::Parser::Scope
             end
         }
 
-        extend_with_functions_module()
+        extend_with_functions_module
 
         @tags = []
 

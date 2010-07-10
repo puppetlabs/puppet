@@ -68,7 +68,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     # Retrieve the associated definition and evaluate it.
     def evaluate
         if klass = resource_type and ! builtin_type?
-            finish()
+            finish
             return klass.evaluate_code(self)
         elsif builtin?
             devfail "Cannot evaluate a builtin type (#{type})"
@@ -95,9 +95,9 @@ class Puppet::Parser::Resource < Puppet::Resource
     def finish
         return if finished?
         @finished = true
-        add_defaults()
-        add_metaparams()
-        validate()
+        add_defaults
+        add_metaparams
+        validate
     end
 
     # Has this resource already been finished?

@@ -30,7 +30,7 @@ module Puppet
         # raise an Puppet::Network::AuthorizedError if the request
         # is denied.
         def allowed?(request)
-            read()
+            read
 
             # we're splitting the request in part because
             # fail_on_deny could as well be called in the XMLRPC context
@@ -54,7 +54,7 @@ module Puppet
             @rights ||= Puppet::Network::Rights.new
         end
 
-        def parse()
+        def parse
             super()
             insert_default_acl
         end

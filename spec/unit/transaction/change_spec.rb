@@ -13,7 +13,7 @@ describe Puppet::Transaction::Change do
         end
 
         it "should require the property and current value" do
-            lambda { Change.new() }.should raise_error
+            lambda { Change.new }.should raise_error
         end
 
         it "should set its property to the provided property" do

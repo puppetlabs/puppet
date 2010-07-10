@@ -39,7 +39,7 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
         end
 
         before :each do
-            @response = Rack::Response.new()
+            @response = Rack::Response.new
         end
 
         def mk_req(opts = {})
@@ -86,13 +86,13 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
 
         it "should set 'authenticated' to false if no certificate is present" do
             req = mk_req
-            Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| authenticated == false }
+            Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| authenticated == false }
             @handler.process(req, @response)
         end
 
         it "should use the client's ip address" do
             req = mk_req 'REMOTE_ADDR' => 'ipaddress'
-            Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| ip == 'ipaddress' }
+            Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| ip == 'ipaddress' }
             @handler.process(req, @response)
         end
 
@@ -108,7 +108,7 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
             it "should retrieve the hostname by matching the certificate parameter" do
                 Puppet.settings.stubs(:value).returns "eh"
                 Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
-                Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| node == "host.domain.com" }
+                Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| node == "host.domain.com" }
                 req = mk_req "myheader" => "/CN=host.domain.com"
                 @handler.process(req, @response)
             end
@@ -123,7 +123,7 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
             it "should consider the host authenticated if the validity parameter contains 'SUCCESS'" do
                 Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
                 Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
-                Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| authenticated == true }
+                Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| authenticated == true }
                 req = mk_req "myheader" => "SUCCESS", "certheader" => "/CN=host.domain.com"
                 @handler.process(req, @response)
             end
@@ -131,7 +131,7 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
             it "should consider the host unauthenticated if the validity parameter does not contain 'SUCCESS'" do
                 Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
                 Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
-                Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| authenticated == false }
+                Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| authenticated == false }
                 req = mk_req "myheader" => "whatever", "certheader" => "/CN=host.domain.com"
                 @handler.process(req, @response)
             end
@@ -139,7 +139,7 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
             it "should consider the host unauthenticated if no certificate information is present" do
                 Puppet.settings.stubs(:value).with(:ssl_client_header).returns "certheader"
                 Puppet.settings.stubs(:value).with(:ssl_client_verify_header).returns "myheader"
-                Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| authenticated == false }
+                Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| authenticated == false }
                 req = mk_req "myheader" => nil, "certheader" => "/CN=host.domain.com"
                 @handler.process(req, @response)
             end
@@ -148,7 +148,7 @@ describe "Puppet::Network::HTTP::RackXMLRPC" do
                 Puppet.settings.stubs(:value).returns "eh"
                 Puppet.settings.expects(:value).with(:ssl_client_header).returns "myheader"
                 Resolv.any_instance.expects(:getname).returns("host.domain.com")
-                Puppet::Network::ClientRequest.expects(:new).with() { |node,ip,authenticated| node == "host.domain.com" }
+                Puppet::Network::ClientRequest.expects(:new).with { |node,ip,authenticated| node == "host.domain.com" }
                 req = mk_req "myheader" => nil
                 @handler.process(req, @response)
             end

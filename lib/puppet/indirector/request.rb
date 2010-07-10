@@ -21,7 +21,7 @@ class Puppet::Indirector::Request
     end
 
     def environment
-        @environment ||= Puppet::Node::Environment.new()
+        @environment ||= Puppet::Node::Environment.new
     end
 
     def environment=(env)

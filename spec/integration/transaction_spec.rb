@@ -179,7 +179,7 @@ describe Puppet::Transaction do
     end
 
     it "should still trigger skipped resources" do
-        catalog = mk_catalog()
+        catalog = mk_catalog
         catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
 
         Puppet[:ignoreschedules] = false

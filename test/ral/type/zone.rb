@@ -16,7 +16,7 @@ class TestZone < PuppetTest::TestCase
     def mkzone(name)
         zone = nil
 
-        base = tempfile()
+        base = tempfile
         Dir.mkdir(base)
         File.chmod(0700, base)
         root = File.join(base, "zonebase")
@@ -214,7 +214,7 @@ class TestZoneAsRoot < TestZone
     def test_getconfig
         zone = mkzone("configtesting")
 
-        base = tempfile()
+        base = tempfile
         zone[:path] = base
 
         ip = "192.168.0.1"
@@ -223,7 +223,7 @@ class TestZoneAsRoot < TestZone
 
         IO.popen("zonecfg -z configtesting -f -", "w") do |f|
             f.puts %{create -b
-set zonepath=#{tempfile()}
+set zonepath=#{tempfile}
 set autoboot=true
 add inherit-pkg-dir
 set dir=/lib

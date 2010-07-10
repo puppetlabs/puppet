@@ -4,7 +4,7 @@ require 'puppet/util/log'
 module Puppet::Util::Logging
 
     def send_log(level, message)
-        Puppet::Util::Log.create({:level => level, :source => log_source(), :message => message}.merge(log_metadata))
+        Puppet::Util::Log.create({:level => level, :source => log_source, :message => message}.merge(log_metadata))
     end
 
     # Create a method for each log level.

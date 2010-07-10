@@ -30,7 +30,7 @@ class DirectoryService < Puppet::Provider::NameService
         attr_writer :macosx_version_major
     end
 
-    initvars()
+    initvars
 
     commands :dscl => "/usr/bin/dscl"
     commands :dseditgroup => "/usr/sbin/dseditgroup"
@@ -181,7 +181,7 @@ class DirectoryService < Puppet::Provider::NameService
 
     def self.generate_attribute_hash(input_hash, *type_properties)
         attribute_hash = {}
-        input_hash.keys().each do |key|
+        input_hash.keys.each do |key|
             ds_attribute = key.sub("dsAttrTypeStandard:", "")
             next unless (@@ds_to_ns_attribute_map.keys.include?(ds_attribute) and type_properties.include? @@ds_to_ns_attribute_map[ds_attribute])
             ds_value = input_hash[key]
@@ -219,7 +219,7 @@ class DirectoryService < Puppet::Provider::NameService
         #     This class method returns nil if the object doesn't exist
         #     Otherwise, it returns a hash of the object properties.
 
-        all_present_str_array = list_all_present()
+        all_present_str_array = list_all_present
 
         # NBK: shortcut the process if the resource is missing
         return nil unless all_present_str_array.include? resource_name

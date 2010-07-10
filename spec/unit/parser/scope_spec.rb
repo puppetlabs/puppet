@@ -4,10 +4,10 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser::Scope do
     before :each do
-        @topscope = Puppet::Parser::Scope.new()
+        @topscope = Puppet::Parser::Scope.new
         # This is necessary so we don't try to use the compiler to discover our parent.
         @topscope.parent = nil
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
         @scope.compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foo"))
         @scope.parent = @topscope
     end
@@ -72,7 +72,7 @@ describe Puppet::Parser::Scope do
 
             Puppet::Parser::Functions.expects(:environment_module).with(nil).returns mod
 
-            Puppet::Parser::Scope.new().singleton_class.ancestors.should be_include(mod)
+            Puppet::Parser::Scope.new.singleton_class.ancestors.should be_include(mod)
         end
     end
 

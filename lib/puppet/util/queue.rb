@@ -29,7 +29,7 @@ require 'puppet/util/instance_loader'
 # +client+, which will return a class-wide singleton client instance, determined by +client_class+.
 #
 # The client plugins are expected to implement an interface similar to that of Stomp::Client:
-# * <tt>new()</tt> should return a connected, ready-to-go client instance.  Note that no arguments are passed in.
+# * <tt>new</tt> should return a connected, ready-to-go client instance.  Note that no arguments are passed in.
 # * <tt>send_message(queue, message)</tt> should send the _message_ to the specified _queue_.
 # * <tt>subscribe(queue)</tt> _block_ subscribes to _queue_ and executes _block_ upon receiving a message.
 # * _queue_ names are simple names independent of the message broker or client library.  No "/queue/" prefixes like in Stomp::Client.

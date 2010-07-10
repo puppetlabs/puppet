@@ -120,7 +120,7 @@ class TestParsedFile < Test::Unit::TestCase
     def test_fileobject
         prov = mkprovider
 
-        path = tempfile()
+        path = tempfile
         obj = nil
         assert_nothing_raised do
             obj = prov.target_object(path)
@@ -295,17 +295,17 @@ class TestParsedFile < Test::Unit::TestCase
         files = {}
 
         # Set the default target
-        default = tempfile()
+        default = tempfile
         files[:default] = default
         prov.default_target = default
 
         # Create a file object
-        inmem = tempfile()
+        inmem = tempfile
         files[:inmemory] = inmem
         prov.target_object(inmem).write("inmem yay ness")
 
         # Lastly, create a resource with separate is and should values
-        mtarget = tempfile()
+        mtarget = tempfile
         files[:resources] = mtarget
         resource = mkresource "yay", :target => mtarget
 
@@ -497,7 +497,7 @@ class TestParsedFile < Test::Unit::TestCase
             "Did not get default ensure value")
 
         # Try creating the object
-        assert_nothing_raised { notdisk.provider.create() }
+        assert_nothing_raised { notdisk.provider.create }
 
         # Now make sure all of the data is copied over correctly.
         notdisk.class.validproperties.each do |property|
@@ -519,7 +519,7 @@ class TestParsedFile < Test::Unit::TestCase
         assert_equal(:present, ondisk.provider.ensure)
 
         # Now destroy the object
-        assert_nothing_raised { notdisk.provider.destroy() }
+        assert_nothing_raised { notdisk.provider.destroy }
 
         assert_nothing_raised { notdisk.flush }
 

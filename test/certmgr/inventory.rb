@@ -54,7 +54,7 @@ class TestCertInventory < Test::Unit::TestCase
         cert = mksignedcert(ca, "host.domain.com")
 
         assert_nothing_raised do
-            file = mock()
+            file = mock
             file.expects(:puts).with do |written|
                 written.include? cert.subject.to_s
             end

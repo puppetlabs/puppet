@@ -175,13 +175,13 @@ describe "http compression" do
                 @inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
                 inflater = stub_everything 'inflater2'
                 inflater.expects(:inflate).with("chunk").returns("uncompressed")
-                Zlib::Inflate.expects(:new).with().returns(inflater)
+                Zlib::Inflate.expects(:new).with.returns(inflater)
                 @adapter.uncompress("chunk")
             end
 
             it "should raise the error the second time" do
                 @inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
-                Zlib::Inflate.expects(:new).with().returns(@inflater)
+                Zlib::Inflate.expects(:new).with.returns(@inflater)
                 lambda { @adapter.uncompress("chunk") }.should raise_error
             end
 

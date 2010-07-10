@@ -153,7 +153,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
         resources_by_id = nil
         debug_benchmark("Searched for resources") {
-            resources_by_id = find_resources()
+            resources_by_id = find_resources
         }
 
         debug_benchmark("Searched for resource params and tags") {

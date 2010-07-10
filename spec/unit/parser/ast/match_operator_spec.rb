@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::MatchOperator do
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
 
         @lval = stub 'lval'
         @lval.stubs(:safeevaluate).with(@scope).returns("this is a string")

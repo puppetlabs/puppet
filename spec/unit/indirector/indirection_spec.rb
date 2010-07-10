@@ -678,7 +678,7 @@ describe Puppet::Indirector::Indirection do
         it "should use the configured terminus class if no terminus name is specified" do
             Puppet::Indirector::Terminus.stubs(:terminus_class).with(:test, :foo).returns(@terminus_class)
             @indirection.terminus_class = :foo
-            @indirection.terminus().should equal(@terminus)
+            @indirection.terminus.should equal(@terminus)
         end
 
         after do
@@ -770,7 +770,7 @@ describe Puppet::Indirector::Indirection do
         describe "and managing the cache terminus" do
             it "should not create a cache terminus at initialization" do
                 # This is weird, because all of the code is in the setup.  If we got
-                # new() called on the cache class, we'd get an exception here.
+                # new called on the cache class, we'd get an exception here.
             end
 
             it "should reuse the cache terminus" do

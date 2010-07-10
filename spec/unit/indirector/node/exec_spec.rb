@@ -29,7 +29,7 @@ describe Puppet::Node::Exec do
             @name = "yay"
             Puppet::Node.expects(:new).with(@name).returns(@node)
             @result = {}
-            # Use a local variable so the reference is usable in the execute() definition.
+            # Use a local variable so the reference is usable in the execute definition.
             result = @result
             @searcher.meta_def(:execute) do |command|
                 return YAML.dump(result)

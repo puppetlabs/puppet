@@ -12,7 +12,7 @@ class TestCron < Test::Unit::TestCase
     def setup
         super
 
-        setme()
+        setme
 
         @crontype = Puppet::Type.type(:cron)
         @provider = @crontype.defaultprovider

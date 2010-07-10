@@ -6,7 +6,7 @@ class Puppet::Network::Server
 
     # Put the daemon into the background.
     def daemonize
-        if pid = fork()
+        if pid = fork
             Process.detach(pid)
             exit(0)
         end
@@ -58,7 +58,7 @@ class Puppet::Network::Server
         http_server_class || raise(ArgumentError, "Could not determine HTTP Server class for server type [#{@server_type}]")
 
         @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
-        @address = determine_bind_address()
+        @address = determine_bind_address
 
         @protocols = [ :rest, :xmlrpc ]
         @listening = false

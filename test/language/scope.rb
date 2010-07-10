@@ -66,7 +66,7 @@ class TestScope < Test::Unit::TestCase
             "Recursive and non-recursive hash is identical for topscope")
 
         # Check the variable we expect is present.
-        assert_equal({"first" => "topval"}, topscope.to_hash(), "topscope returns the expected hash of variables")
+        assert_equal({"first" => "topval"}, topscope.to_hash, "topscope returns the expected hash of variables")
 
         # Now, check that midscope does the right thing in all cases.
 

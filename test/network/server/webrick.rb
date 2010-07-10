@@ -75,7 +75,7 @@ class TestWebrickServer < Test::Unit::TestCase
     def mk_status_client
         client = nil
 
-        assert_nothing_raised() {
+        assert_nothing_raised {
 
                         client = Puppet::Network::Client.status.new(
                 
@@ -90,7 +90,7 @@ class TestWebrickServer < Test::Unit::TestCase
     def mk_status_server
         server = nil
         Puppet[:certdnsnames] = "localhost"
-        assert_nothing_raised() {
+        assert_nothing_raised {
 
                         server = Puppet::Network::HTTPServer::WEBrick.new(
                 
@@ -106,7 +106,7 @@ class TestWebrickServer < Test::Unit::TestCase
 
         pid = fork {
             Puppet.run_mode.stubs(:master?).returns true
-            assert_nothing_raised() {
+            assert_nothing_raised {
                 trap(:INT) { server.shutdown }
                 server.start
             }

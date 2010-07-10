@@ -181,7 +181,7 @@ Puppet::Type.newtype(:cron) do
                 # If it has an alpha method defined, then we check
                 # to see if our value is in that list and if so we turn
                 # it into a number
-                retval = alphacheck(value, alpha())
+                retval = alphacheck(value, alpha)
             end
 
             if retval
@@ -237,7 +237,7 @@ Puppet::Type.newtype(:cron) do
         end
 
         validate do |value|
-            raise ArgumentError, "Invalid special schedule #{value.inspect}" unless specials().include?(value)
+            raise ArgumentError, "Invalid special schedule #{value.inspect}" unless specials.include?(value)
         end
     end
 

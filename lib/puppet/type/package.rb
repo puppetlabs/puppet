@@ -318,6 +318,6 @@ module Puppet
         def exists?
             @provider.get(:ensure) != :absent
         end
-    end # Puppet::Type.type(:package)
+    end
 end
 

@@ -10,7 +10,7 @@ module Puppet::Parser::Functions
         with spaces.  If an argument is an array, the elements of that
         array is interpolated within the rest of the arguments; this makes
         it possible to have an array of arguments and pass that array to
-        shellquote() instead of having to specify each argument
+        shellquote instead of having to specify each argument
         individually in the call.
         ") \
     do |args|
@@ -25,9 +25,9 @@ module Puppet::Parser::Functions
                 result << ("'" + word + "'")
             else
                 r = '"'
-                word.each_byte() do |c|
+                word.each_byte do |c|
                     r += "\\" if Dangerous.include?(c)
-                    r += c.chr()
+                    r += c.chr
                 end
                 r += '"'
                 result << r

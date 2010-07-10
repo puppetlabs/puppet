@@ -47,7 +47,7 @@ module ParsedMountTesting
     end
 
     def mkmount
-        hash = mkmountargs()
+        hash = mkmountargs
         #hash[:provider] = @provider_class.name
 
         fakeresource = stub :type => :mount, :name => hash[:name]

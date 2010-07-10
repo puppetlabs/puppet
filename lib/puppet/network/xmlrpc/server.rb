@@ -12,7 +12,7 @@ module Puppet::Network
 
         def initialize
             super()
-            setup_processor()
+            setup_processor
         end
     end
 end

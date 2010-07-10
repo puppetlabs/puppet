@@ -254,7 +254,7 @@ describe Puppet::Parser do
         end
 
         it "should not include the docs by default" do
-            @parser.ast_context()[:doc].should be_nil
+            @parser.ast_context[:doc].should be_nil
         end
     end
 

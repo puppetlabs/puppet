@@ -131,7 +131,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
             define_method(attr) do
 #                if @property_hash.empty?
 #                    # Note that this swaps the provider out from under us.
-#                    prefetch()
+#                    prefetch
 #                    if @resource.provider == self
 #                        return @property_hash[attr]
 #                    else
@@ -162,7 +162,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     # Always make the resource methods.
     def self.resource_type=(resource)
         super
-        mk_resource_methods()
+        mk_resource_methods
     end
 
     # Mark a target as modified so we know to flush it.  This only gets
@@ -310,7 +310,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                 @property_hash[property] = value
             end
         end
-        mark_target_modified()
+        mark_target_modified
         (@resource.class.name.to_s + "_created").intern
     end
 

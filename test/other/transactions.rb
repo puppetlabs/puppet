@@ -13,7 +13,7 @@ class TestTransactions < Test::Unit::TestCase
     include PuppetTest::Support::Resources
     include PuppetTest::Support::Utils
     class Fakeprop <Puppet::Property
-        initvars()
+        initvars
 
         attr_accessor :path, :is, :should, :name
         def should_to_s(value)
@@ -56,7 +56,7 @@ class TestTransactions < Test::Unit::TestCase
 
     # Create a new type that generates instances with shorter names.
     def mkreducer(&block)
-        type = mkgenerator() do
+        type = mkgenerator do
             def eval_generate
                 ret = []
                 if title.length > 1
@@ -105,7 +105,7 @@ class TestTransactions < Test::Unit::TestCase
 
         assert_equal({inst.title => inst}, $prefetched, "type prefetch was not called")
 
-        # Now make sure it gets called from within evaluate()
+        # Now make sure it gets called from within evaluate
         $prefetched = false
         assert_nothing_raised do
             trans.evaluate
@@ -117,7 +117,7 @@ class TestTransactions < Test::Unit::TestCase
     # We need to generate resources before we prefetch them, else generated
     # resources that require prefetching don't work.
     def test_generate_before_prefetch
-        config = mk_catalog()
+        config = mk_catalog
         trans = Puppet::Transaction.new(config)
 
         generate = nil
@@ -127,7 +127,7 @@ class TestTransactions < Test::Unit::TestCase
         trans.prepare
         return
 
-        resource = Puppet::Type.type(:file).new :ensure => :present, :path => tempfile()
+        resource = Puppet::Type.type(:file).new :ensure => :present, :path => tempfile
         other_resource = mock 'generated'
         def resource.generate
             [other_resource]
@@ -186,8 +186,8 @@ class TestTransactions < Test::Unit::TestCase
 
     # Make sure changes in contained files still generate callback events.
     def test_generated_callbacks
-        dir = tempfile()
-        maker = tempfile()
+        dir = tempfile
+        maker = tempfile
         Dir.mkdir(dir)
         file = File.join(dir, "file")
         File.open(file, "w") { |f| f.puts "" }
@@ -203,7 +203,7 @@ class TestTransactions < Test::Unit::TestCase
         assert(FileTest.exists?(maker), "Did not make callback file")
     end
 
-    # Testing #401 -- transactions are calling refresh() on classes that don't support it.
+    # Testing #401 -- transactions are calling refresh on classes that don't support it.
     def test_callback_availability
         $called = []
         klass = Puppet::Type.newtype(:norefresh) do
@@ -217,7 +217,7 @@ class TestTransactions < Test::Unit::TestCase
             Puppet::Type.rmtype(:norefresh)
         end
 
-        file = Puppet::Type.type(:file).new :path => tempfile(), :content => "yay"
+        file = Puppet::Type.type(:file).new :path => tempfile, :content => "yay"
         one = klass.new :name => "one", :subscribe => file
 
         assert_apply(file, one)
@@ -291,7 +291,7 @@ class TestTransactions < Test::Unit::TestCase
         rels = {}
         # Now add the explicit relationship
         # Now files
-        d = tempfile()
+        d = tempfile
         f = File.join(d, "file")
         file = Puppet::Type.type(:file).new(:path => f, :content => "yay")
         dir = Puppet::Type.type(:file).new(:path => d, :ensure => :directory, :require => file)

@@ -111,13 +111,13 @@ describe provider_class do
         end
 
         it "should read and write to the auth database with the right arguments" do
-            @provider.expects(:execute).with() { |cmds, args|
+            @provider.expects(:execute).with { |cmds, args|
                 cmds.include?("read") and
                 cmds.include?(@authname) and
                 args[:combine] == false
             }.once
 
-            @provider.expects(:execute).with() { |cmds, args|
+            @provider.expects(:execute).with { |cmds, args|
                 cmds.include?("write") and
                 cmds.include?(@authname) and
                 args[:combine] == false and

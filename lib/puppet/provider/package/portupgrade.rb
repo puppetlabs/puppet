@@ -202,7 +202,7 @@ Puppet::Type.type(:package).provide :portupgrade, :parent => Puppet::Provider::P
                     return nil
                 end
 
-        end # def query
+        end
 
         ####### Uninstall command
 

@@ -229,7 +229,7 @@ module DOT
                 t + "]\n"
         end
 
-    end # class DOTNode
+    end
 
     # A subgraph element is the same to graph, but has another header in dot
     # notation.
@@ -276,7 +276,7 @@ module DOT
             hdr + options + nodes + t + "}\n"
         end
 
-    end # class DOTSubgraph
+    end
 
     # This is a graph.
 
@@ -287,7 +287,7 @@ module DOT
         @dot_string = 'digraph'
     end
 
-    end # class DOTDigraph
+    end
 
     # This is an edge.
 
@@ -314,7 +314,7 @@ module DOT
                 }.compact.join( "\n" ) + "\n#{t}]\n"
         end
 
-    end # class DOTEdge
+    end
 
     class DOTDirectedEdge < DOTEdge
 
@@ -322,5 +322,5 @@ module DOT
             '->'
         end
 
-    end # class DOTDirectedEdge
-end # module DOT
+    end
+end

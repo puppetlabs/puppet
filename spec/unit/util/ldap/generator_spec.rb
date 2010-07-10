@@ -40,7 +40,7 @@ describe Puppet::Util::Ldap::Generator do
 
     it "should run the provided block when asked to generate the value" do
         @generator.with { "yayness" }
-        @generator.generate().should == "yayness"
+        @generator.generate.should == "yayness"
     end
 
     it "should pass in any provided value to the block" do

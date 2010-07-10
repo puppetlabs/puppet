@@ -42,7 +42,7 @@ module Manager
         newmethod = "new#{name.to_s}"
 
         # Used for method manipulation.
-        selfobj = singleton_class()
+        selfobj = singleton_class
 
         @types ||= {}
 
@@ -94,7 +94,7 @@ module Manager
         )
 
         # We have to load everything so that we can figure out the default type.
-        klass.providerloader.loadall()
+        klass.providerloader.loadall
 
         klass
     end

@@ -93,12 +93,12 @@ describe Puppet::FileServing::Content, "when returning the contents" do
     end
 
     it "should fail if a path is not set" do
-        proc { @content.content() }.should raise_error(Errno::ENOENT)
+        proc { @content.content }.should raise_error(Errno::ENOENT)
     end
 
     it "should raise Errno::ENOENT if the file is absent" do
         @content.path = "/there/is/absolutely/no/chance/that/this/path/exists"
-        proc { @content.content() }.should raise_error(Errno::ENOENT)
+        proc { @content.content }.should raise_error(Errno::ENOENT)
     end
 
     it "should return the contents of the path if the file exists" do

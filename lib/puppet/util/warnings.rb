@@ -11,7 +11,7 @@ module Puppet::Util::Warnings
         Puppet::Util::Warnings.maybe_log(msg, self.class) { Puppet.warning msg }
     end
 
-    def clear_warnings()
+    def clear_warnings
         @stampwarnings = {}
         nil
     end

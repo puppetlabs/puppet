@@ -23,8 +23,8 @@ module Puppet::Provider::Mount
         if resource[:remounts] == :true
             mountcmd "-o", "remount", resource[:name]
         else
-            unmount()
-            mount()
+            unmount
+            mount
         end
     end
 

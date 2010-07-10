@@ -34,6 +34,6 @@ describe Puppet::Util::Warnings do
     end
 
     after(:each) do
-        Puppet::Util::Warnings.clear_warnings()
+        Puppet::Util::Warnings.clear_warnings
     end
 end

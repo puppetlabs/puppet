@@ -23,7 +23,7 @@ class TestLog < Test::Unit::TestCase
 
     def getlevels
         levels = nil
-        assert_nothing_raised() {
+        assert_nothing_raised {
             levels = []
             Puppet::Util::Log.eachlevel { |level| levels << level }
         }
@@ -34,7 +34,7 @@ class TestLog < Test::Unit::TestCase
     def mkmsgs(levels)
         levels.collect { |level|
             next if level == :alert
-            assert_nothing_raised() {
+            assert_nothing_raised {
 
                             Puppet::Util::Log.new(
                 
@@ -52,9 +52,9 @@ class TestLog < Test::Unit::TestCase
         levels = nil
         Puppet::Util::Log.level = :debug
         levels = getlevels
-        logfile = tempfile()
+        logfile = tempfile
         fact = nil
-        assert_nothing_raised() {
+        assert_nothing_raised {
             Puppet::Util::Log.newdestination(logfile)
         }
         msgs = mkmsgs(levels)
@@ -64,7 +64,7 @@ class TestLog < Test::Unit::TestCase
 
         assert(FileTest.exists?(logfile), "Did not create logfile")
 
-        assert_nothing_raised() {
+        assert_nothing_raised {
             File.open(logfile) { |of|
                 count = of.readlines.length
             }
@@ -74,12 +74,12 @@ class TestLog < Test::Unit::TestCase
 
     def test_syslog
         levels = nil
-        assert_nothing_raised() {
+        assert_nothing_raised {
             levels = getlevels.reject { |level|
                 level == :emerg || level == :crit
             }
         }
-        assert_nothing_raised() {
+        assert_nothing_raised {
             Puppet::Util::Log.newdestination("syslog")
         }
         # there's really no way to verify that we got syslog messages...
@@ -88,11 +88,11 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_levelmethods
-        assert_nothing_raised() {
+        assert_nothing_raised {
             Puppet::Util::Log.newdestination("/dev/null")
         }
         getlevels.each { |level|
-            assert_nothing_raised() {
+            assert_nothing_raised {
                 Puppet.send(level,"Testing for #{level}")
             }
         }
@@ -108,7 +108,7 @@ class TestLog < Test::Unit::TestCase
     end
 
     def test_creatingdirs
-        dir = tempfile()
+        dir = tempfile
         file = File.join(dir, "logfile")
         Puppet::Util::Log.newdestination file
         Puppet.info "testing logs"
@@ -137,7 +137,7 @@ class TestLog < Test::Unit::TestCase
 
                     file = Puppet::Type.type(:file).new(
                 
-            :path => tempfile(),
+            :path => tempfile,
         
             :check => %w{owner group}
         )

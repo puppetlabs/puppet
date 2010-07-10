@@ -79,7 +79,7 @@ class Rights
         raise error
     end
 
-    def initialize()
+    def initialize
         @rights = []
     end
 

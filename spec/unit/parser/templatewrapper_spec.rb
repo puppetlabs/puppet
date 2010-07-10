@@ -96,20 +96,20 @@ describe Puppet::Parser::TemplateWrapper do
         catalog = mock 'catalog', :classes => ["class1", "class2"]
         @scope.expects(:catalog).returns( catalog )
         tw = Puppet::Parser::TemplateWrapper.new(@scope)
-        tw.classes().should == ["class1", "class2"]
+        tw.classes.should == ["class1", "class2"]
     end
 
     it "should allow you to retrieve all the tags with all_tags" do
         catalog = mock 'catalog', :tags => ["tag1", "tag2"]
         @scope.expects(:catalog).returns( catalog )
         tw = Puppet::Parser::TemplateWrapper.new(@scope)
-        tw.all_tags().should == ["tag1","tag2"]
+        tw.all_tags.should == ["tag1","tag2"]
     end
 
     it "should allow you to retrieve the tags defined in the current scope" do
         @scope.expects(:tags).returns( ["tag1", "tag2"] )
         tw = Puppet::Parser::TemplateWrapper.new(@scope)
-        tw.tags().should == ["tag1","tag2"]
+        tw.tags.should == ["tag1","tag2"]
     end
 
     it "should set all of the scope's variables as instance variables" do

@@ -200,7 +200,7 @@ class Puppet::Util::Ldap::Manager
 
     # Search for all entries at our base.  A potentially expensive search.
     def search(sfilter = nil)
-        sfilter ||= filter()
+        sfilter ||= filter
 
         result = []
         connect do |conn|

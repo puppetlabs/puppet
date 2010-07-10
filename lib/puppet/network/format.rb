@@ -24,7 +24,7 @@ class Puppet::Network::Format
         @options = options
 
         # This must be done early the values can be used to set required_methods
-        define_method_names()
+        define_method_names
 
         method_list = {
             :intern_method => "from_#{name}",

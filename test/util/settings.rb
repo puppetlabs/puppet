@@ -60,7 +60,7 @@ class TestSettings < Test::Unit::TestCase
             newc[name] = true
         end
 
-        newfile = tempfile()
+        newfile = tempfile
         File.open(newfile, "w") { |f|
             @config.to_config.split("\n").each do |line|
                 # Uncomment the settings, so they actually take.
@@ -207,7 +207,7 @@ class TestSettings < Test::Unit::TestCase
     attr3 = $attrdir/other
         }
 
-        file = tempfile()
+        file = tempfile
         File.open(file, "w") { |f| f.puts text }
 
         result = nil
@@ -338,7 +338,7 @@ class TestSettings < Test::Unit::TestCase
     end
 
     def test_groupsetting
-        cfile = tempfile()
+        cfile = tempfile
 
         group = "yayness"
 
@@ -363,15 +363,15 @@ class TestSettings < Test::Unit::TestCase
     def test_writingfiles
         File.umask(0022)
 
-        path = tempfile()
+        path = tempfile
         mode = 0644
 
         config = mkconfig
 
         args = { :default => path, :mode => mode, :desc => "yay" }
 
-        user = nonrootuser()
-        group = nonrootgroup()
+        user = nonrootuser
+        group = nonrootgroup
 
         if Puppet.features.root?
             args[:owner] = user.name
@@ -403,15 +403,15 @@ class TestSettings < Test::Unit::TestCase
     def test_mkdir
         File.umask(0022)
 
-        path = tempfile()
+        path = tempfile
         mode = 0755
 
         config = mkconfig
 
         args = { :default => path, :mode => mode, :desc => "a file" }
 
-        user = nonrootuser()
-        group = nonrootgroup()
+        user = nonrootuser
+        group = nonrootgroup
 
         if Puppet.features.root?
             args[:owner] = user.name
@@ -442,7 +442,7 @@ class TestSettings < Test::Unit::TestCase
     # Make sure that tags are ignored when configuring
     def test_configs_ignore_tags
         config = mkconfig
-        file = tempfile()
+        file = tempfile
 
 
             config.setdefaults(
@@ -517,13 +517,13 @@ class TestSettings < Test::Unit::TestCase
     end
 
     def test_parse_removes_quotes
-        config = mkconfig()
+        config = mkconfig
         config.setdefaults(:mysection, :singleq => ["single", "yay"])
         config.setdefaults(:mysection, :doubleq => ["double", "yay"])
         config.setdefaults(:mysection, :none => ["noquote", "yay"])
         config.setdefaults(:mysection, :middle => ["midquote", "yay"])
 
-        file = tempfile()
+        file = tempfile
         # Set one parameter in the file
         File.open(file, "w") { |f|
             f.puts %{[main]\n
@@ -549,7 +549,7 @@ class TestSettings < Test::Unit::TestCase
     # Test that config parameters correctly call passed-in blocks when the value
     # is set.
     def test_paramblocks
-        config = mkconfig()
+        config = mkconfig
 
         testing = nil
         assert_nothing_raised do
@@ -603,7 +603,7 @@ class TestSettings < Test::Unit::TestCase
 
             config.setdefaults(
                 :yay,
-            :mydir => {:default => tempfile(),
+            :mydir => {:default => tempfile,
 
                 :mode => 0644,
                 :owner => "root",
@@ -642,8 +642,8 @@ class TestSettings < Test::Unit::TestCase
 
     # #415
     def test_remove_trailing_spaces
-        config = mkconfig()
-        file = tempfile()
+        config = mkconfig
+        file = tempfile
         File.open(file, "w") { |f| f.puts "rah = something " }
 
         config.setdefaults(:yay, :config => [file, "eh"], :rah => ["testing", "a desc"])
@@ -654,9 +654,9 @@ class TestSettings < Test::Unit::TestCase
 
     # #484
     def test_parsing_unknown_variables
-        logstore()
-        config = mkconfig()
-        file = tempfile()
+        logstore
+        config = mkconfig
+        file = tempfile
         File.open(file, "w") { |f|
             f.puts %{[main]\n
                 one = one

@@ -61,7 +61,7 @@ module Puppet
         end
 
         def bucket
-            mkbucket() unless defined?(@bucket)
+            mkbucket unless defined?(@bucket)
             @bucket
         end
 

@@ -80,7 +80,7 @@ Puppet::Type.type(:package).provide :darwinport, :parent => Puppet::Provider::Pa
     end
 
     def update
-        install()
+        install
     end
 end
 

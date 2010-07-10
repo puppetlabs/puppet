@@ -24,7 +24,7 @@ class Puppet::SSL::Host
         include Puppet::Util::Cacher
 
         cached_attr(:localhost) do
-            result = new()
+            result = new
             result.generate unless result.certificate
             result.key # Make sure it's read in
             result
@@ -184,7 +184,7 @@ class Puppet::SSL::Host
         # If we can get a CA instance, then we're a valid CA, and we
         # should use it to sign our request; else, just try to read
         # the cert.
-        if ! certificate() and ca = Puppet::SSL::CertificateAuthority.instance
+        if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
             ca.sign(self.name)
         end
     end

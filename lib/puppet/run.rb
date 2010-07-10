@@ -49,7 +49,7 @@ class Puppet::Run
             return self
         end
 
-        log_run()
+        log_run
 
         if background?
             Thread.new { agent.run(options) }

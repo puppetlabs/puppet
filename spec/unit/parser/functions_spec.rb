@@ -25,7 +25,7 @@ describe Puppet::Parser::Functions do
     end
 
     it "should use the current default environment if no environment is provided" do
-        Puppet::Parser::Functions.environment_module().should be_instance_of(Module)
+        Puppet::Parser::Functions.environment_module.should be_instance_of(Module)
     end
 
     describe "when calling newfunction" do

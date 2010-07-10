@@ -31,7 +31,7 @@ module Puppet::Network
         # default in that it expects a ClientRequest object in addition to the
         # data.
         def process(data, request)
-            call, params = parser().parseMethodCall(data)
+            call, params = parser.parseMethodCall(data)
             params << request.name << request.ip
             handler, method = call.split(".")
             request.handler = handler

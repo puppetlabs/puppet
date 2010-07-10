@@ -16,13 +16,13 @@ class TestReportServer < Test::Unit::TestCase
     def mkserver
         server = nil
         assert_nothing_raised {
-            server = Puppet::Network::Handler.report.new()
+            server = Puppet::Network::Handler.report.new
         }
         server
     end
 
     def mkclient(server = nil)
-        server ||= mkserver()
+        server ||= mkserver
         client = nil
         assert_nothing_raised {
             client = Puppet::Network::Client.report.new(:Report => server)

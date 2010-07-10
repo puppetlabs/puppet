@@ -26,7 +26,7 @@ class TestSSHKey < Test::Unit::TestCase
             cleanup do
                 @provider.default_target = oldpath
             end
-            @provider.default_target = tempfile()
+            @provider.default_target = tempfile
         end
     end
 
@@ -78,7 +78,7 @@ class TestSSHKey < Test::Unit::TestCase
 
     def test_simplekey
         key = mkkey
-        file = tempfile()
+        file = tempfile
         key[:target] = file
         key[:provider] = :parsed
 
@@ -100,7 +100,7 @@ class TestSSHKey < Test::Unit::TestCase
     end
 
     def test_removal
-        sshkey = mkkey()
+        sshkey = mkkey
         assert_nothing_raised {
             sshkey[:ensure] = :present
         }
@@ -121,7 +121,7 @@ class TestSSHKey < Test::Unit::TestCase
         keys = []
         names = []
         3.times {
-            k = mkkey()
+            k = mkkey
             #h[:ensure] = :present
             #h.retrieve
             keys << k
@@ -133,7 +133,7 @@ class TestSSHKey < Test::Unit::TestCase
         @catalog.clear(true)
         @catalog = nil
 
-        newkey = mkkey()
+        newkey = mkkey
         #newkey[:ensure] = :present
         names << newkey.name
         assert_apply(newkey)

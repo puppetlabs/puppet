@@ -26,7 +26,7 @@ describe "Puppet::Network::HTTP::RackREST" do
         end
 
         before :each do
-            @response = Rack::Response.new()
+            @response = Rack::Response.new
         end
 
         def mk_req(uri, opts = {})

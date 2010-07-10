@@ -98,7 +98,7 @@ describe Puppet::Agent do
 
         it "should use Puppet::Application.controlled_run to manage process state behavior" do
             calls = sequence('calls')
-            Puppet::Application.expects(:controlled_run).yields().in_sequence(calls)
+            Puppet::Application.expects(:controlled_run).yields.in_sequence(calls)
             AgentTestClient.expects(:new).once.in_sequence(calls)
             @agent.run
         end

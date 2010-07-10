@@ -19,7 +19,7 @@ describe Puppet::Network::HttpPool do
 
     it "should use the global SSL::Host instance to get its certificate information" do
         host = mock 'host'
-        Puppet::SSL::Host.expects(:localhost).with().returns host
+        Puppet::SSL::Host.expects(:localhost).with.returns host
         Puppet::Network::HttpPool.ssl_host.should equal(host)
     end
 

@@ -51,7 +51,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
     end
 
     def mkhost
-        hash = mkhosthash()
+        hash = mkhosthash
 
         fakeresource = fakeresource(:host, hash[:name])
 
@@ -86,7 +86,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
     # Make sure parsing gets comments, blanks, and hosts
     def test_blanks_and_comments
-        mkfaketype()
+        mkfaketype
         text = %{# comment one
 
 192.168.43.56\tmyhost\tanother\thost
@@ -191,14 +191,14 @@ class TestParsedHostProvider < Test::Unit::TestCase
     # Make sure we can modify the file elsewhere and those modifications will
     # get taken into account.
     def test_modifyingfile
-        hostfile = tempfile()
+        hostfile = tempfile
         @provider.default_target = hostfile
 
         file = @provider.target_object(hostfile)
 
         hosts = []
         3.times {
-            h = mkhost()
+            h = mkhost
             hosts << h
         }
 
@@ -206,11 +206,11 @@ class TestParsedHostProvider < Test::Unit::TestCase
             host.flush
         end
 
-        newhost = mkhost()
+        newhost = mkhost
         hosts << newhost
 
         # Now store our new host
-        newhost.flush()
+        newhost.flush
 
         # Verify we can retrieve that info
         assert_nothing_raised("Could not retrieve after second write") {

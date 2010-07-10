@@ -122,12 +122,12 @@ describe Puppet::FileServing::Metadata, " when finding the file to use for setti
     it "should use the set base path if one is not provided" do
         File.expects(:lstat).with(@path).returns @stat
         File.expects(:readlink).with(@path).returns "/what/ever"
-        @metadata.collect()
+        @metadata.collect
     end
 
     it "should raise an exception if the file does not exist" do
         File.expects(:lstat).with(@path).raises(Errno::ENOENT)
-        proc { @metadata.collect()}.should raise_error(Errno::ENOENT)
+        proc { @metadata.collect}.should raise_error(Errno::ENOENT)
     end
 end
 

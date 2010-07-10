@@ -66,7 +66,7 @@ class TestResources < Test::Unit::TestCase
 
         assert_nothing_raised {
             assert(res.check("A String"), "String failed check")
-            assert(res.check(Puppet::Type.type(:file).new(:path => tempfile())), "File failed check")
+            assert(res.check(Puppet::Type.type(:file).new(:path => tempfile)), "File failed check")
             assert(res.check(Puppet::Type.type(:user).new(:name => "yayness")), "User failed check in package")
         }
 

@@ -20,7 +20,7 @@ module Puppet::Network::HTTP::Compression
             when 'gzip'
                 return Zlib::GzipReader.new(StringIO.new(response.body)).read
             when 'deflate'
-                return Zlib::Inflate.new().inflate(response.body)
+                return Zlib::Inflate.new.inflate(response.body)
             when nil, 'identity'
                 return response.body
             else

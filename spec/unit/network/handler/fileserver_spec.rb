@@ -12,7 +12,7 @@ describe Puppet::Network::Handler::FileServer do
         File.open(filename, "w") { |f| f.puts filename}
     end
 
-    def create_nested_file()
+    def create_nested_file
         dirname = File.join(@basedir, "nested_dir")
         Dir.mkdir(dirname)
         file = File.join(dirname, "nested_dir_file")
@@ -20,7 +20,7 @@ describe Puppet::Network::Handler::FileServer do
     end
 
     before do
-        @basedir = File.join(Dir.tmpdir(), "test_network_handler")
+        @basedir = File.join(Dir.tmpdir, "test_network_handler")
         Dir.mkdir(@basedir)
         @file = File.join(@basedir, "aFile")
         @link = File.join(@basedir, "aLink")
@@ -62,49 +62,49 @@ describe Puppet::Network::Handler::FileServer do
     end
 
     it "should list the contents of a nested directory" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", true, false)
         list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list the contents of a directory ignoring files that match" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", true, "*File")
         list.sort.should == [   ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list the contents of a directory ignoring directories that match" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", true, "*nested_dir")
         list.sort.should == [   ["/aFile", "file"], ["/", "directory"] ].sort
     end
 
     it "should list the contents of a directory ignoring all ignore patterns that match" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", true, ["*File" , "*nested_dir"])
         list.should == [ ["/", "directory"] ]
     end
 
     it "should list the directory when recursing to a depth of zero" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", 0, false)
         list.should == [["/", "directory"]]
     end
 
     it "should list the base directory and files and nested directory to a depth of one" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", 1, false)
         list.sort.should == [ ["/aFile", "file"], ["/nested_dir", "directory"], ["/", "directory"] ].sort
     end
 
     it "should list the base directory and files and nested directory to a depth of two" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", 2, false)
         list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list the base directory and files and nested directory to a depth greater than the directory structure" do
-        create_nested_file()
+        create_nested_file
         list = @mount.list("/", 42, false)
         list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end

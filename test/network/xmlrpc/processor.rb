@@ -35,7 +35,7 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
         @processor.send(:setup_processor)
         assert(! @processor.handler_loaded?(:ca), "already have ca handler loaded")
         assert_nothing_raised do
-            @processor.add_handler(ca.interface, ca.new())
+            @processor.add_handler(ca.interface, ca.new)
         end
 
         assert(@processor.handler_loaded?(:puppetca), "ca handler not loaded by symbol")
@@ -46,7 +46,7 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
         ca = Puppet::Network::Handler.ca
         @processor.send(:setup_processor)
         assert_nothing_raised do
-            @processor.add_handler(ca.interface, ca.new())
+            @processor.add_handler(ca.interface, ca.new)
         end
 
         fakeparser = Class.new do

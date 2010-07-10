@@ -40,7 +40,7 @@ class Puppet::Application::Queue < Puppet::Application
     def main
         Puppet.notice "Starting puppetqd #{Puppet.version}"
         Puppet::Resource::Catalog::Queue.subscribe do |catalog|
-            # Once you have a Puppet::Resource::Catalog instance, calling save() on it should suffice
+            # Once you have a Puppet::Resource::Catalog instance, calling save on it should suffice
             # to put it through to the database via its active_record indirector (which is determined
             # by the terminus_class = :active_record setting above)
             Puppet::Util.benchmark(:notice, "Processing queued catalog for #{catalog.name}") do

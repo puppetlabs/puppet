@@ -3,7 +3,7 @@ require 'puppet/ssl/certificate'
 
 class Puppet::Network::HTTP::RackHttpHandler
 
-    def initialize()
+    def initialize
     end
 
     # do something useful with request (a Rack::Request) and use

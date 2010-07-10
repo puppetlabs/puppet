@@ -134,7 +134,7 @@ end
 
 describe Puppet::Parser::Lexer::TOKENS do
     before do
-        @lexer = Puppet::Parser::Lexer.new()
+        @lexer = Puppet::Parser::Lexer.new
     end
 
     {
@@ -562,7 +562,7 @@ describe "Puppet::Parser::Lexer in the old tests" do
     end
 
     it "should fail if the string is not set" do
-        lambda { @lexer.fullscan() }.should raise_error(Puppet::LexError)
+        lambda { @lexer.fullscan }.should raise_error(Puppet::LexError)
     end
 
     it "should correctly identify keywords" do
@@ -630,11 +630,11 @@ require 'puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
     extend PuppetTest
     extend PuppetTest::Support::Utils
-    textfiles() do |file|
+    textfiles do |file|
         it "should correctly lex #{file}" do
-            lexer = Puppet::Parser::Lexer.new()
+            lexer = Puppet::Parser::Lexer.new
             lexer.file = file
-            lambda { lexer.fullscan() }.should_not raise_error
+            lambda { lexer.fullscan }.should_not raise_error
         end
     end
 end

@@ -63,6 +63,6 @@ describe "Filebucket REST Terminus" do
         @file_bucket_file.expects(:save)
 
         file_bucket_file = Puppet::FileBucket::File.new("pouet")
-        file_bucket_file.save()
+        file_bucket_file.save
     end
 end

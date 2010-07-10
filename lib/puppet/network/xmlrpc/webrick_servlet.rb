@@ -28,7 +28,7 @@ module Puppet::Network::XMLRPC
             # and we can consume them all ourselves
             super()
 
-            setup_processor()
+            setup_processor
 
             # Set up each of the passed handlers.
             handlers.each do |handler|
@@ -37,7 +37,7 @@ module Puppet::Network::XMLRPC
         end
 
         # Handle the actual request.  We can't use the super() method, because
-        # we need to pass a ClientRequest object to process() so we can do
+        # we need to pass a ClientRequest object to process so we can do
         # authorization.  It's the only way to stay thread-safe.
         def service(request, response)
             if @valid_ip

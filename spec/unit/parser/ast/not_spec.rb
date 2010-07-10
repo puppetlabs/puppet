@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::Not do
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
         @true_ast = Puppet::Parser::AST::Boolean.new( :value => true)
         @false_ast = Puppet::Parser::AST::Boolean.new( :value => false)
     end

@@ -123,7 +123,7 @@ Puppet::Type.newtype(:resources) do
         resource[:audit] = :uid
         current_values = resource.retrieve_resource
 
-        return false if system_users().include?(resource[:name])
+        return false if system_users.include?(resource[:name])
 
         current_values[resource.property(:uid)] > self[:unless_system_user]
     end

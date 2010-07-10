@@ -99,7 +99,7 @@ module Racc
         ###
 
         def do_parse
-            __send__(Racc_Main_Parsing_Routine, _racc_setup(), false)
+            __send__(Racc_Main_Parsing_Routine, _racc_setup, false)
         end
 
         def next_token
@@ -121,7 +121,7 @@ module Racc
                 if i = action_pointer[@racc_state[-1]]
                     if @racc_read_next
                         if @racc_t != 0   # not EOF
-                            tok, @racc_val = next_token()
+                            tok, @racc_val = next_token
                             unless tok      # EOF
                                 @racc_t = 0
                             else
@@ -152,7 +152,7 @@ module Racc
         ###
 
         def yyparse(recv, mid)
-            __send__(Racc_YY_Parse_Method, recv, mid, _racc_setup(), true)
+            __send__(Racc_YY_Parse_Method, recv, mid, _racc_setup, true)
         end
 
         def _racc_yyparse_rb(recv, mid, arg, c_debug)
@@ -770,6 +770,6 @@ def _reduce_none( val, _values, result )
     result
 end
 
-    end   # class Parser
+    end
 
-end   # module Nagios
+end

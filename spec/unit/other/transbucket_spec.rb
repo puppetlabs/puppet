@@ -26,7 +26,7 @@ describe Puppet::TransBucket do
     end
 
     it "should accept TransBuckets into its children list" do
-        object = Puppet::TransBucket.new()
+        object = Puppet::TransBucket.new
         proc { @bucket.push(object) }.should_not raise_error
         @bucket.each do |o|
             o.should equal(object)

@@ -171,7 +171,7 @@ class TestCA < Test::Unit::TestCase
     def test_nodefaultautosign
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::Network::Handler.ca.new()
+            caserv = Puppet::Network::Handler.ca.new
         }
 
         # make sure we know what's going on
@@ -204,13 +204,13 @@ class TestCA < Test::Unit::TestCase
     def test_autosign_true_beats_file
         caserv = nil
         assert_nothing_raised {
-            caserv = Puppet::Network::Handler.ca.new()
+            caserv = Puppet::Network::Handler.ca.new
         }
 
         host = "hostname.domain.com"
 
         # Create an autosign file
-        file = tempfile()
+        file = tempfile
         Puppet[:autosign] = file
 
         File.open(file, "w") { |f|
@@ -239,7 +239,7 @@ class TestCA < Test::Unit::TestCase
     # Make sure that a CSR created with keys that don't match the existing
     # cert throws an exception on the server.
     def test_mismatched_public_keys_throws_exception
-        ca = Puppet::Network::Handler.ca.new()
+        ca = Puppet::Network::Handler.ca.new
 
         # First initialize the server
         client = Puppet::Network::Client.ca.new :CA => ca

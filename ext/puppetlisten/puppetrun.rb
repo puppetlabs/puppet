@@ -20,7 +20,7 @@ Puppet[:config] = "/etc/puppet/puppet.conf"
 Puppet.parse_config
 
 # establish the certificate
-ctx = OpenSSL::SSL::SSLContext.new()
+ctx = OpenSSL::SSL::SSLContext.new
 ctx.key = OpenSSL::PKey::RSA.new(File::read(Puppet[:hostprivkey]))
 ctx.cert = OpenSSL::X509::Certificate.new(File::read(Puppet[:hostcert]))
 ctx.verify_mode = OpenSSL::SSL::VERIFY_PEER

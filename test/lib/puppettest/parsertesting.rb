@@ -29,11 +29,11 @@ module PuppetTest::ParserTesting
         end
 
         def safeevaluate(*args)
-            evaluate()
+            evaluate
         end
 
         def evaluate_match(othervalue, scope, options={})
-            value = evaluate()
+            value = evaluate
             othervalue == value
         end
     end
@@ -154,7 +154,7 @@ module PuppetTest::ParserTesting
 
             return AST::Name.new(
 
-                :file => tempfile(),
+                :file => tempfile,
 
                 :line => rand(100),
                 :value => name
@@ -167,7 +167,7 @@ module PuppetTest::ParserTesting
 
             return AST::Type.new(
 
-                :file => tempfile(),
+                :file => tempfile,
 
                 :line => rand(100),
                 :value => name
@@ -180,7 +180,7 @@ module PuppetTest::ParserTesting
 
             return AST::NodeDef.new(
 
-                :file => tempfile(),
+                :file => tempfile,
 
                 :line => rand(100),
                 :names => nameobj(name),
@@ -205,7 +205,7 @@ module PuppetTest::ParserTesting
 
             return AST::ResourceInstance.new(
 
-                :file => tempfile(),
+                :file => tempfile,
 
                 :line => rand(100),
                 :children => params
@@ -220,7 +220,7 @@ module PuppetTest::ParserTesting
 
             return AST::ResourceParam.new(
 
-                :file => tempfile(),
+                :file => tempfile,
 
                 :line => rand(100),
                 :param => param,
@@ -233,7 +233,7 @@ module PuppetTest::ParserTesting
 
         AST::String.new(
 
-            :file => tempfile(),
+            :file => tempfile,
 
             :line => rand(100),
             :value => value
@@ -246,7 +246,7 @@ module PuppetTest::ParserTesting
 
             return AST::VarDef.new(
 
-                :file => tempfile(),
+                :file => tempfile,
 
                 :line => rand(100),
                 :name => nameobj(name),
@@ -383,7 +383,7 @@ module PuppetTest::ParserTesting
 
         bucket = top
 
-        file = tempfile()
+        file = tempfile
         depth.times do |i|
             resources = []
             width.times do |j|
@@ -419,7 +419,7 @@ module PuppetTest::ParserTesting
         trans = nil
         scope = nil
         assert_nothing_raised {
-            scope = Puppet::Parser::Scope.new()
+            scope = Puppet::Parser::Scope.new
             trans = scope.evaluate(:ast => top)
         }
 

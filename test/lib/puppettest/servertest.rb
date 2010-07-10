@@ -16,9 +16,9 @@ module PuppetTest::ServerTest
     # create a simple manifest that just creates a file
     def mktestmanifest
         file = File.join(Puppet[:confdir], "#{(self.class.to_s + "test")}site.pp")
-        #@createdfile = File.join(tmpdir(), self.class.to_s + "manifesttesting" +
+        #@createdfile = File.join(tmpdir, self.class.to_s + "manifesttesting" +
         #    "_#{@method_name}")
-        @createdfile = tempfile()
+        @createdfile = tempfile
 
         File.open(file, "w") { |f|
             f.puts "file { \"%s\": ensure => file, mode => 755 }\n" % @createdfile
@@ -38,7 +38,7 @@ module PuppetTest::ServerTest
             handlers = {
                 :CA => {}, # so that certs autogenerate
                 :Master => {
-                    :Manifest => mktestmanifest(),
+                    :Manifest => mktestmanifest,
                     :UseNodes => false
                 },
             }

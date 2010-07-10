@@ -42,12 +42,12 @@ class TestFileSources < Test::Unit::TestCase
 
     # Make a simple recursive tree.
     def mk_sourcetree
-        source = tempfile()
+        source = tempfile
         sourcefile = File.join(source, "file")
         Dir.mkdir source
         File.open(sourcefile, "w") { |f| f.puts "yay" }
 
-        dest = tempfile()
+        dest = tempfile
         destfile = File.join(dest, "file")
         return source, dest, sourcefile, destfile
     end
@@ -73,7 +73,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def run_complex_sources(networked = false)
-        path = tempfile()
+        path = tempfile
 
         # first create the source directory
         FileUtils.mkdir_p path
@@ -181,7 +181,7 @@ class TestFileSources < Test::Unit::TestCase
 
     # Make sure added files get correctly caught during recursion
     def test_RecursionWithAddedFiles
-        basedir = tempfile()
+        basedir = tempfile
         Dir.mkdir(basedir)
         @@tmpfiles << basedir
         file1 = File.join(basedir, "file1")
@@ -216,7 +216,7 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def mkfileserverconf(mounts)
-        file = tempfile()
+        file = tempfile
         File.open(file, "w") { |f|
             mounts.each { |path, name|
                 f.puts "[#{name}]\n\tpath #{path}\n\tallow *\n"
@@ -258,7 +258,7 @@ class TestFileSources < Test::Unit::TestCase
         }
 
         serverpid = fork {
-            assert_nothing_raised() {
+            assert_nothing_raised {
                 #trap(:INT) { server.shutdown; Kernel.exit! }
                 trap(:INT) { server.shutdown }
                 server.start
@@ -268,7 +268,7 @@ class TestFileSources < Test::Unit::TestCase
 
         sleep(1)
 
-        name = File.join(tmpdir(), "nosourcefile")
+        name = File.join(tmpdir, "nosourcefile")
 
                     file = Puppet::Type.type(:file).new(
                 
@@ -290,10 +290,10 @@ class TestFileSources < Test::Unit::TestCase
     def test_sourcepaths
         files = []
         3.times {
-            files << tempfile()
+            files << tempfile
         }
 
-        to = tempfile()
+        to = tempfile
 
         File.open(files[-1], "w") { |f| f.puts "yee-haw" }
 
@@ -321,8 +321,8 @@ class TestFileSources < Test::Unit::TestCase
 
     # Make sure that source-copying updates the checksum on the same run
     def test_sourcebeatsensure
-        source = tempfile()
-        dest = tempfile()
+        source = tempfile
+        dest = tempfile
         File.open(source, "w") { |f| f.puts "yay" }
 
         file = nil
@@ -346,9 +346,9 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_sourcewithlinks
-        source = tempfile()
-        link = tempfile()
-        dest = tempfile()
+        source = tempfile
+        link = tempfile
+        dest = tempfile
 
         File.open(source, "w") { |f| f.puts "yay" }
         File.symlink(source, link)
@@ -370,7 +370,7 @@ class TestFileSources < Test::Unit::TestCase
     # Make sure files aren't replaced when replace is false, but otherwise
     # are.
     def test_replace
-        dest = tempfile()
+        dest = tempfile
 
                     file = Puppet::Type.newfile(
                 
@@ -400,11 +400,11 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_sourceselect
-        dest = tempfile()
+        dest = tempfile
         sources = []
         2.times { |i|
             i = i + 1
-            source = tempfile()
+            source = tempfile
             sources << source
             file = File.join(source, "file#{i}")
             Dir.mkdir(source)
@@ -452,9 +452,9 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def test_recursive_sourceselect
-        dest = tempfile()
-        source1 = tempfile()
-        source2 = tempfile()
+        dest = tempfile
+        source1 = tempfile
+        source2 = tempfile
         files = []
         [source1, source2, File.join(source1, "subdir"), File.join(source2, "subdir")].each_with_index do |dir, i|
             Dir.mkdir(dir)
@@ -482,8 +482,8 @@ class TestFileSources < Test::Unit::TestCase
 
     # #594
     def test_purging_missing_remote_files
-        source = tempfile()
-        dest = tempfile()
+        source = tempfile
+        dest = tempfile
         s1 = File.join(source, "file1")
         s2 = File.join(source, "file2")
         d1 = File.join(dest, "file1")

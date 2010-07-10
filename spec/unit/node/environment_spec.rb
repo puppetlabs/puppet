@@ -28,7 +28,7 @@ describe Puppet::Node::Environment do
 
     it "should use the default environment if no name is provided while initializing an environment" do
         Puppet.settings.expects(:value).with(:environment).returns("one")
-        Puppet::Node::Environment.new().name.should == :one
+        Puppet::Node::Environment.new.name.should == :one
     end
 
     it "should treat environment instances as singletons" do

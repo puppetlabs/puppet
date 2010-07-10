@@ -15,7 +15,7 @@ module Puppet::Configurer::FactHandler
         # finding facts and the 'rest' terminus for caching them.  Thus, we'll
         # compile them and then "cache" them on the server.
         begin
-            reload_facter()
+            reload_facter
             Puppet::Node::Facts.find(Puppet[:certname])
         rescue SystemExit,NoMemoryError
             raise
@@ -67,6 +67,6 @@ module Puppet::Configurer::FactHandler
 
         # This loads all existing facts and any new ones.  We have to remove and
         # reload because there's no way to unload specific facts.
-        Puppet::Node::Facts::Facter.load_fact_plugins()
+        Puppet::Node::Facts::Facter.load_fact_plugins
     end
 end

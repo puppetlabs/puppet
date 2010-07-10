@@ -14,7 +14,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     end
 
     # Separate this out so it's relatively atomic.  It's tempting to call
-    # process() instead of name2hash() here, but it ends up being
+    # process instead of name2hash() here, but it ends up being
     # difficult to test because all exceptions get caught by ldapsearch.
     # LAK:NOTE Unfortunately, the ldap support is too stupid to throw anything
     # but LDAP::ResultError, even on bad connections, so we are rough handed

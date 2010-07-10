@@ -113,7 +113,7 @@ class TestExec < Test::Unit::TestCase
     def test_refreshonly_functional
         file = nil
         cmd = nil
-        tmpfile = tempfile()
+        tmpfile = tempfile
         @@tmpfiles.push tmpfile
         trans = nil
 
@@ -127,7 +127,7 @@ class TestExec < Test::Unit::TestCase
         assert_apply(file)
 
         # Now make an exec
-        maker = tempfile()
+        maker = tempfile
         assert_nothing_raised {
 
             cmd = Puppet::Type.type(:exec).new(
@@ -180,7 +180,7 @@ class TestExec < Test::Unit::TestCase
     end
 
     def test_creates
-        file = tempfile()
+        file = tempfile
         exec = nil
         assert(! FileTest.exists?(file), "File already exists")
         assert_nothing_raised {
@@ -201,8 +201,8 @@ class TestExec < Test::Unit::TestCase
 
     # Verify that we can download the file that we're going to execute.
     def test_retrievethenmkexe
-        exe = tempfile()
-        oexe = tempfile()
+        exe = tempfile
+        oexe = tempfile
         sh = %x{which sh}
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
@@ -230,8 +230,8 @@ class TestExec < Test::Unit::TestCase
 
     # Verify that we auto-require any managed scripts.
     def test_autorequire_files
-        exe = tempfile()
-        oexe = tempfile()
+        exe = tempfile
+        oexe = tempfile
         sh = %x{which sh}
         File.open(exe, "w") { |f| f.puts "#!#{sh}\necho yup" }
 
@@ -304,8 +304,8 @@ class TestExec < Test::Unit::TestCase
     end
 
     def test_ifonly
-        afile = tempfile()
-        bfile = tempfile()
+        afile = tempfile
+        bfile = tempfile
 
         exec = nil
         assert_nothing_raised {
@@ -328,8 +328,8 @@ class TestExec < Test::Unit::TestCase
     end
 
     def test_unless
-        afile = tempfile()
-        bfile = tempfile()
+        afile = tempfile
+        bfile = tempfile
 
         exec = nil
         assert_nothing_raised {
@@ -399,14 +399,14 @@ class TestExec < Test::Unit::TestCase
         end
 
         def test_userngroup
-            file = tempfile()
+            file = tempfile
             [
-                [nonrootuser()], # just user, by name
-                [nonrootuser(), nil, true], # user, by uid
-                [nil, nonrootgroup()], # just group
-                [nil, nonrootgroup(), true], # just group, by id
-                [nonrootuser(), nonrootgroup()], # user and group, by name
-                [nonrootuser(), nonrootgroup(), true], # user and group, by id
+                [nonrootuser], # just user, by name
+                [nonrootuser, nil, true], # user, by uid
+                [nil, nonrootgroup], # just group
+                [nil, nonrootgroup, true], # just group, by id
+                [nonrootuser, nonrootgroup], # user and group, by name
+                [nonrootuser, nonrootgroup, true], # user and group, by id
             ].each { |ary|
                 mknverify(file, *ary) {
                 }
@@ -448,7 +448,7 @@ class TestExec < Test::Unit::TestCase
     def test_execthenfile
         exec = nil
         file = nil
-        basedir = tempfile()
+        basedir = tempfile
         path = File.join(basedir, "subfile")
         assert_nothing_raised {
 
@@ -503,8 +503,8 @@ class TestExec < Test::Unit::TestCase
 
     def test_createcwdandexe
         exec1 = exec2 = nil
-        dir = tempfile()
-        file = tempfile()
+        dir = tempfile
+        file = tempfile
 
         assert_nothing_raised {
 
@@ -550,7 +550,7 @@ class TestExec < Test::Unit::TestCase
 
     def test_checkarrays
         exec = nil
-        file = tempfile()
+        file = tempfile
 
         test = "test -f #{file}"
 
@@ -756,8 +756,8 @@ and stuff"
     end
 
     def test_checks_apply_to_refresh
-        file = tempfile()
-        maker = tempfile()
+        file = tempfile
+        maker = tempfile
 
             exec = Puppet::Type.type(:exec).new(
 
@@ -798,8 +798,8 @@ and stuff"
     end
 
     def test_explicit_refresh
-        refresher = tempfile()
-        maker = tempfile()
+        refresher = tempfile
+        maker = tempfile
 
             exec = Puppet::Type.type(:exec).new(
 

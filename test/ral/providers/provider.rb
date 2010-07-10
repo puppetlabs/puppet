@@ -185,7 +185,7 @@ class TestProvider < Test::Unit::TestCase
     def test_outputonfailure
         provider = newprovider
 
-        dir = tstdir()
+        dir = tstdir
         file = File.join(dir, "mycmd")
         sh = Puppet::Util.binary("sh")
         File.open(file, "w") { |f|
@@ -345,7 +345,7 @@ class TestProvider < Test::Unit::TestCase
         assert_equal(:one, prov.name, "did not get name from hash")
 
         assert_nothing_raised("Could not init with no argument") do
-            prov = test.new()
+            prov = test.new
         end
 
         assert_raise(Puppet::DevError, "did not fail when no name is present") do

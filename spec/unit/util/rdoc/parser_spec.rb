@@ -392,11 +392,11 @@ describe RDoc::Parser do
         it "should also scan mono-instruction code" do
             @class.expects(:add_realize).with { |i| i.is_a?(RDoc::Include) and i.name == "File[\"/tmp/a\"]" and i.comment == "mydoc" }
 
-            @parser.scan_for_realize(@class,create_stmt())
+            @parser.scan_for_realize(@class,create_stmt)
         end
 
         it "should register recursively includes to the current container" do
-            @code.stubs(:children).returns([ create_stmt() ])
+            @code.stubs(:children).returns([ create_stmt ])
 
             @class.expects(:add_realize).with { |i| i.is_a?(RDoc::Include) and i.name == "File[\"/tmp/a\"]" and i.comment == "mydoc" }
             @parser.scan_for_realize(@class, [@code])

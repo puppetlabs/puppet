@@ -26,7 +26,7 @@ class TestMailAlias < Test::Unit::TestCase
             cleanup do
                 @provider.default_target = @default_file
             end
-            @target = tempfile()
+            @target = tempfile
             @provider.default_target = @target
         end
     end

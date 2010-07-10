@@ -15,7 +15,7 @@ class Puppet::FileServing::Configuration
 
     class << self
         include Puppet::Util::Cacher
-        cached_attr(:configuration) { new() }
+        cached_attr(:configuration) { new }
     end
 
     Mount = Puppet::FileServing::Mount

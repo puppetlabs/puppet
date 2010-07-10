@@ -7,7 +7,7 @@ describe Puppet::Parser::AST::CollExpr do
     ast = Puppet::Parser::AST
 
     before :each do
-        @scope = Puppet::Parser::Scope.new()
+        @scope = Puppet::Parser::Scope.new
     end
 
     describe "when evaluating with two operands" do

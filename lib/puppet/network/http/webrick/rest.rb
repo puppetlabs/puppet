@@ -18,7 +18,7 @@ class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
         result.merge(client_information(request))
     end
 
-    # WEBrick uses a service() method to respond to requests.  Simply delegate to the handler response() method.
+    # WEBrick uses a service method to respond to requests.  Simply delegate to the handler response method.
     def service(request, response)
         process(request, response)
     end

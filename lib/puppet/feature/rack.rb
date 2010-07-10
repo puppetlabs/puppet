@@ -13,7 +13,7 @@ Puppet.features.add(:rack) do
     if ! (defined?(::Rack) and defined?(::Rack.release))
         false
     else
-        major_version = ::Rack.release().split('.')[0].to_i
+        major_version = ::Rack.release.split('.')[0].to_i
         if major_version >= 1
             true
         else

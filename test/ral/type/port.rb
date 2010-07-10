@@ -27,7 +27,7 @@ require 'puppettest'
 #            cleanup do
 #                @provider.default_target = oldpath
 #            end
-#            @provider.default_target = tempfile()
+#            @provider.default_target = tempfile
 #        end
 #    end
 #
@@ -105,7 +105,7 @@ require 'puppettest'
 #    end
 #
 #    def test_removal
-#        port = mkport()
+#        port = mkport
 #        assert_nothing_raised {
 #            port[:ensure] = :present
 #        }
@@ -123,7 +123,7 @@ require 'puppettest'
 #    end
 #
 #    def test_addingproperties
-#        port = mkport()
+#        port = mkport
 #        assert_events([:port_created], port)
 #
 #        port.delete(:alias)

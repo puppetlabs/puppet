@@ -412,12 +412,12 @@ Puppet::Type.newtype(:zone) do
 
     def retrieve
         provider.flush
-        if hash = provider.properties() and hash[:ensure] != :absent
+        if hash = provider.properties and hash[:ensure] != :absent
             result = setstatus(hash)
             result
         else
             # Return all properties as absent.
-            return properties().inject({}) do | prophash, property|
+            return properties.inject({}) do | prophash, property|
                 prophash[property] = :absent
                 prophash
             end

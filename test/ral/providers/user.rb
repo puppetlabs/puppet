@@ -11,7 +11,7 @@ class TestUserProvider < Test::Unit::TestCase
 
     def setup
         super
-        setme()
+        setme
         @@tmpusers = []
         @provider = nil
         assert_nothing_raised {
@@ -114,7 +114,7 @@ class TestUserProvider < Test::Unit::TestCase
         when :ensure; :present
         when :comment; "Puppet's Testing User #{name}" # use a single quote a la #375
         when :gid; nonrootgroup.gid
-        when :shell; findshell()
+        when :shell; findshell
         when :home; "/home/#{name}"
         else
             return nil
