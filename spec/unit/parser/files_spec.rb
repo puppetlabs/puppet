@@ -173,6 +173,12 @@ describe Puppet::Parser::Files do
       FileTest.expects(:directory?).with(dir).returns(true)
       Puppet::Parser::Files.find_manifests(pattern)[1].should == [file]
     end
+
+    it "should return files once only" do
+      pattern = @basepath + "/fully/qualified/pattern/*"
+      Dir.expects(:glob).with(pattern+'{,.pp,.rb}').returns(%w{one two one})
+      Puppet::Parser::Files.find_manifests(pattern)[1].should == %w{one two}
+    end
   end
 
   describe "when searching for manifests in a found module" do
