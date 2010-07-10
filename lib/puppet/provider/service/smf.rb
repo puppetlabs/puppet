@@ -19,7 +19,6 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     commands :svccfg => "/usr/sbin/svccfg"
 
     def setupservice
-        begin
             if resource[:manifest]
                 [command(:svcs), "-l", @resource[:name]]
                 if $CHILD_STATUS.exitstatus == 1
@@ -27,9 +26,8 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
                     svccfg :import, resource[:manifest]
                 end
             end
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}" )
-        end
     end
 
     def enable

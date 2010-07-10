@@ -34,15 +34,13 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
 
     # Place the request on the queue
     def save(request)
-        begin
             result = nil
             benchmark :info, "Queued #{indirection.name} for #{request.key}" do
                 result = client.send_message(queue, request.instance.render(:pson))
             end
             result
-        rescue => detail
+    rescue => detail
             raise Puppet::Error, "Could not write #{request.key} to queue: #{detail}\nInstance::#{request.instance}\n client : #{client}"
-        end
     end
 
     def self.queue

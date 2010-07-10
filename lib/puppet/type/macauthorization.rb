@@ -22,11 +22,9 @@ Puppet::Type.newtype(:macauthorization) do
     end
 
     def munge_integer(value)
-        begin
             Integer(value)
-        rescue ArgumentError
+    rescue ArgumentError
             fail("munge_integer only takes integers")
-        end
     end
 
     newparam(:name) do

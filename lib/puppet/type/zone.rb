@@ -387,11 +387,9 @@ Puppet::Type.newtype(:zone) do
     end
 
     def validate_ip(ip, name)
-        begin
             IPAddr.new(ip) if ip
-        rescue ArgumentError
+    rescue ArgumentError
             self.fail "'#{ip}' is an invalid #{name}"
-        end
     end
 
     validate do

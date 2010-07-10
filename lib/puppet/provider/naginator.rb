@@ -24,11 +24,9 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
     end
 
     def self.parse(text)
-        begin
             Nagios::Parser.new.parse(text.gsub(NAME_STRING, "_naginator_name"))
-        rescue => detail
+    rescue => detail
             raise Puppet::Error, "Could not parse configuration for #{resource_type.name}: #{detail}"
-        end
     end
 
     def self.to_file(records)

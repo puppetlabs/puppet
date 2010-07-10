@@ -125,16 +125,14 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     end
 
     def setupservice
-        begin
             if resource[:manifest]
                 Puppet.notice "Configuring #{resource[:name]}"
                 command = [ resource[:manifest], resource[:name] ]
                 #texecute("setupservice", command)
                 rv = system("#{command}")
             end
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}" )
-        end
     end
 
     def enabled?
@@ -149,7 +147,6 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     end
 
     def enable
-        begin
             if ! FileTest.directory?(self.daemon)
                 Puppet.notice "No daemon dir, calling setupservice for #{resource[:name]}"
                 self.setupservice
@@ -160,9 +157,8 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
                     File.symlink(self.daemon, self.service)
                 end
             end
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new( "No daemon directory found for #{self.service}")
-        end
     end
 
     def disable

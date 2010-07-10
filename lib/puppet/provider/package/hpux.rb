@@ -27,12 +27,10 @@ Puppet::Type.type(:package).provide :hpux, :parent => Puppet::Provider::Package 
     end
 
     def query
-        begin
             swlist resource[:name]
             {:ensure => :present}
-        rescue
+    rescue
             {:ensure => :absent}
-        end
     end
 
     def uninstall

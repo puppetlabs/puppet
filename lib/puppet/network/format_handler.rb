@@ -9,14 +9,12 @@ module Puppet::Network::FormatHandler
         attr_reader :format
 
         def protect(method, args)
-            begin
                 Puppet::Network::FormatHandler.format(format).send(method, *args)
-            rescue => details
+        rescue => details
                 direction = method.to_s.include?("intern") ? "from" : "to"
                 error = FormatError.new("Could not #{method} #{direction} #{format}: #{details}")
                 error.set_backtrace(details.backtrace)
                 raise error
-            end
         end
 
         def initialize(format)

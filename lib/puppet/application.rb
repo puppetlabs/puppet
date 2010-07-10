@@ -212,12 +212,10 @@ class Application
         end
 
         def find(name)
-            begin
                 self.const_get(name.to_s.capitalize)
-            rescue
+        rescue
                 puts "Unable to find application '#{name.to_s}'."
                 Kernel::exit(1)
-            end
         end
 
         def [](name)
@@ -397,13 +395,11 @@ class Application
     private
 
     def exit_on_fail(message, code = 1)
-        begin
             yield
-        rescue RuntimeError, NotImplementedError => detail
+    rescue RuntimeError, NotImplementedError => detail
             puts detail.backtrace if Puppet[:trace]
             $stderr.puts "Could not #{message}: #{detail}"
             exit(code)
-        end
     end
 end
 end

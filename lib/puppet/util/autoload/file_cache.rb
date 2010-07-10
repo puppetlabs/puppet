@@ -83,12 +83,10 @@ module Puppet::Util::Autoload::FileCache
     end
 
     def protect(path)
-        begin
             yield
-        rescue => detail
+    rescue => detail
             raise unless detail.class.to_s.include?("Errno")
             missing_file(path)
             return false
-        end
     end
 end

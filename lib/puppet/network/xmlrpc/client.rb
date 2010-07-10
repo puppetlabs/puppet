@@ -196,11 +196,9 @@ module Puppet::Network
         end
 
         def start
-            begin
                 @http.start unless @http.started?
-            rescue => detail
+        rescue => detail
                 Puppet.err "Could not connect to server: #{detail}"
-            end
         end
 
         def local

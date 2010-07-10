@@ -76,7 +76,6 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     end
 
     def get_version
-        begin
             execpipe([command(:pkginfo), " -I ", @resource[:name]]) do |process|
                 # our regex for matching pkg_info output
                 regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
@@ -96,9 +95,8 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
                 return master_version unless master_version == 0
                 raise Puppet::Error, "#{version} is not available for this package"
             end
-        rescue Puppet::ExecutionFailure
+    rescue Puppet::ExecutionFailure
             return nil
-        end
     end
 
     def query

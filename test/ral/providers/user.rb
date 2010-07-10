@@ -65,12 +65,10 @@ class TestUserProvider < Test::Unit::TestCase
         end
     else
         def missing?(user)
-            begin
                 obj = Etc.getpwnam(user)
                 return false
-            rescue ArgumentError
+        rescue ArgumentError
                 return true
-            end
         end
 
         def current?(param, user)

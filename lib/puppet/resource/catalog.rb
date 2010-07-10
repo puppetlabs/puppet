@@ -478,13 +478,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     # Store the classes in the classfile.
     def write_class_file
-        begin
             ::File.open(Puppet[:classfile], "w") do |f|
                 f.puts classes.join("\n")
             end
-        rescue => detail
+    rescue => detail
             Puppet.err "Could not create class file #{Puppet[:classfile]}: #{detail}"
-        end
     end
 
     # Produce the graph files if requested.

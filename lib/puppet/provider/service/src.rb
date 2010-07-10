@@ -31,7 +31,6 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     end
 
     def restart
-        begin
             execute([command(:lssrc), "-Ss", @resource[:name]]).each do |line|
                 args = line.split(":")
 
@@ -59,13 +58,11 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
                 end
             end
             self.fail("No such service found")
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}" )
-        end
     end
 
     def status
-        begin
             execute([command(:lssrc), "-s", @resource[:name]]).each do |line|
                 args = line.split
 
@@ -82,9 +79,8 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
                 return state
             end
             self.fail("No such service found")
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}" )
-        end
     end
 
 end

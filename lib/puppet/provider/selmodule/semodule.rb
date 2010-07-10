@@ -13,11 +13,9 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     end
 
     def destroy
-        begin
             execoutput("#{command(:semodule)} --remove #{@resource[:name]}")
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not remove policy module: #{detail}";
-        end
     end
 
     def exists?
@@ -47,11 +45,9 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     end
 
     def syncversion= (dosync)
-        begin
             execoutput("#{command(:semodule)} --upgrade #{selmod_name_to_filename}")
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             raise Puppet::Error, "Could not upgrade policy module: #{detail}";
-        end
     end
 
     # Helper functions

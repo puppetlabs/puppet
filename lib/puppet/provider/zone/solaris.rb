@@ -238,11 +238,9 @@ Puppet::Type.type(:zone).provide(:solaris) do
     end
 
     def zoneadm(*cmd)
-        begin
             adm("-z", @resource[:name], *cmd)
-        rescue Puppet::ExecutionFailure => detail
+    rescue Puppet::ExecutionFailure => detail
             self.fail "Could not #{cmd[0]} zone: #{detail}"
-        end
     end
 
     def zonecfg(*cmd)

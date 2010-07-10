@@ -205,23 +205,19 @@ class Puppet::Util::FileType
     newfiletype(:suntab) do
         # Read a specific @path's cron tab.
         def read
-            begin
                 output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
                 return "" if output.include?("can't open your crontab")
                 raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("you are not authorized to use cron")
                 return output
-            rescue => detail
+        rescue => detail
                 raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}"
-            end
         end
 
         # Remove a specific @path's cron tab.
         def remove
-            begin
                 Puppet::Util.execute(%w{crontab -r}, :uid => @path)
-            rescue => detail
+        rescue => detail
                 raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
-            end
         end
 
         # Overwrite a specific @path's cron tab; must be passed the @path name
@@ -250,22 +246,18 @@ class Puppet::Util::FileType
     newfiletype(:aixtab) do
         # Read a specific @path's cron tab.
         def read
-            begin
                 output = Puppet::Util.execute(%w{crontab -l}, :uid => @path)
                 raise Puppet::Error, "User #{@path} not authorized to use cron" if output.include?("You are not authorized to use the cron command")
                 return output
-            rescue => detail
+        rescue => detail
                 raise Puppet::Error, "Could not read crontab for #{@path}: #{detail}"
-            end
         end
 
         # Remove a specific @path's cron tab.
         def remove
-            begin
                 Puppet::Util.execute(%w{crontab -r}, :uid => @path)
-            rescue => detail
+        rescue => detail
                 raise Puppet::Error, "Could not remove crontab for #{@path}: #{detail}"
-            end
         end
 
         # Overwrite a specific @path's cron tab; must be passed the @path name

@@ -30,11 +30,9 @@ class TestFileSources < Test::Unit::TestCase
     end
 
     def use_storage
-        begin
             initstorage
-        rescue
+    rescue
             system("rm -rf #{Puppet[:statefile]}")
-        end
     end
 
     def initstorage

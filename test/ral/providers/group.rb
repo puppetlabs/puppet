@@ -71,12 +71,10 @@ class TestGroupProvider < Test::Unit::TestCase
         end
     else
         def missing?(group)
-            begin
                 obj = Etc.getgrnam(group)
                 return false
-            rescue ArgumentError
+        rescue ArgumentError
                 return true
-            end
         end
 
         def gid(name)

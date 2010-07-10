@@ -56,15 +56,13 @@ class Puppet::Node
 
     # Merge the node facts with parameters from the node source.
     def fact_merge
-        begin
             if facts = Puppet::Node::Facts.find(name)
                 merge(facts.values)
             end
-        rescue => detail
+    rescue => detail
             error = Puppet::Error.new("Could not retrieve facts for #{name}: #{detail}")
             error.set_backtrace(detail.backtrace)
             raise error
-        end
     end
 
     # Merge any random parameters into our parameter list.

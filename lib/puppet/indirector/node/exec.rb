@@ -41,10 +41,8 @@ class Puppet::Node::Exec < Puppet::Indirector::Exec
 
     # Translate the yaml string into Ruby objects.
     def translate(name, output)
-        begin
             YAML.load(output).inject({}) { |hash, data| hash[symbolize(data[0])] = data[1]; hash }
-        rescue => detail
+    rescue => detail
             raise Puppet::Error, "Could not load external node results for #{name}: #{detail}"
-        end
     end
 end

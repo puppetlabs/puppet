@@ -18,11 +18,9 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
     end
 
     def disable
-        begin
             output = update :del, @resource[:name], :default
-        rescue Puppet::ExecutionFailure
+    rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not disable #{self.name}: #{output}"
-        end
     end
 
     def enabled?
@@ -45,11 +43,9 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
     end
 
     def enable
-        begin
             output = update :add, @resource[:name], :default
-        rescue Puppet::ExecutionFailure
+    rescue Puppet::ExecutionFailure
             raise Puppet::Error, "Could not enable #{self.name}: #{output}"
-        end
     end
 end
 

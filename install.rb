@@ -371,7 +371,6 @@ rescue SystemCallError
 end
 
 def run_tests(test_list)
-    begin
         require 'test/unit/ui/console/testrunner'
         $LOAD_PATH.unshift "lib"
         test_list.each do |test|
@@ -386,9 +385,8 @@ def run_tests(test_list)
 
         tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
         $LOAD_PATH.shift
-    rescue LoadError
+rescue LoadError
         puts "Missing testrunner library; skipping tests"
-    end
 end
 
 ##

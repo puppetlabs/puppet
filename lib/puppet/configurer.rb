@@ -50,10 +50,9 @@ class Puppet::Configurer
 
     # Initialize and load storage
     def dostorage
-        begin
             Puppet::Util::Storage.load
             @compile_time ||= Puppet::Util::Storage.cache(:configuration)[:compile_time]
-        rescue => detail
+    rescue => detail
             puts detail.backtrace if Puppet[:trace]
             Puppet.err "Corrupt state file #{Puppet[:statefile]}: #{detail}"
             begin
@@ -62,7 +61,6 @@ class Puppet::Configurer
             rescue => detail
                 raise Puppet::Error.new("Cannot remove #{Puppet[:statefile]}: #{detail}")
             end
-        end
     end
 
     # Just so we can specify that we are "the" instance.

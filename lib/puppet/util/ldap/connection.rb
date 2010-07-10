@@ -60,7 +60,6 @@ class Puppet::Util::Ldap::Connection
 
     # Start our ldap connection.
     def start
-        begin
             case ssl
             when :tls
                 @connection = LDAP::SSLConn.new(host, port, true)
@@ -72,8 +71,7 @@ class Puppet::Util::Ldap::Connection
             @connection.set_option(LDAP::LDAP_OPT_PROTOCOL_VERSION, 3)
             @connection.set_option(LDAP::LDAP_OPT_REFERRALS, LDAP::LDAP_OPT_ON)
             @connection.simple_bind(user, password)
-        rescue => detail
+    rescue => detail
             raise Puppet::Error, "Could not connect to LDAP: #{detail}"
-        end
     end
 end

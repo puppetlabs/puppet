@@ -216,12 +216,10 @@ module Util
     end
 
     def execfail(command, exception)
-        begin
             output = execute(command)
             return output
-        rescue ExecutionFailure
+    rescue ExecutionFailure
             raise exception, output
-        end
     end
 
     # Execute the desired command, and return the status and output.

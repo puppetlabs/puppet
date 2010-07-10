@@ -78,12 +78,10 @@ Puppet::Type.newtype(:resources) do
     end
 
     def able_to_ensure_absent?(resource)
-        begin
             resource[:ensure] = :absent
-        rescue ArgumentError, Puppet::Error => detail
+    rescue ArgumentError, Puppet::Error => detail
             err "The 'ensure' attribute on #{self[:name]} resources does not accept 'absent' as a value"
             false
-        end
     end
 
     # Generate any new resources we need to manage.  This is pretty hackish
