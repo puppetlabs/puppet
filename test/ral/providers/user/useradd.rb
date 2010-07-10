@@ -35,7 +35,10 @@ class UserAddProviderTest < PuppetTest::TestCase
 
     def test_features
         [:manages_homedir].each do |feature|
-            assert(@provider.feature?(feature),
+
+                        assert(
+                @provider.feature?(feature),
+        
                 "useradd provider is missing %s" % feature)
         end
     end
@@ -56,8 +59,7 @@ class UserAddProviderTest < PuppetTest::TestCase
                 "Got incorrect command")
 
             if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
-                assert(params.include?("-M"),
-                    "Did not disable homedir creation on red hat")
+                assert(params.include?("-M"), "Did not disable homedir creation on red hat")
                 params.delete("-M")
             end
 
@@ -72,8 +74,7 @@ class UserAddProviderTest < PuppetTest::TestCase
                 :uid => "-u", :comment => "-c"}
 
             flags.each do |param, flag|
-                assert_equal(@vals[param], options[flag],
-                    "Got incorrect value for %s" % param)
+                assert_equal(@vals[param], options[flag], "Got incorrect value for %s" % param)
             end
 
             true
@@ -87,7 +88,10 @@ class UserAddProviderTest < PuppetTest::TestCase
         @vals[:managehome] = true
         setup_user
 
-        assert(@user.provider.respond_to?(:manages_homedir?),
+
+                    assert(
+                @user.provider.respond_to?(:manages_homedir?),
+        
             "provider did not get managehome test set")
 
         assert(@user.managehome?, "provider did not get managehome")
@@ -96,12 +100,9 @@ class UserAddProviderTest < PuppetTest::TestCase
         @user.expects(:managehome?).returns(true)
 
         @user.provider.expects(:execute).with do |params|
-            assert_equal(params[0], @provider.command(:add),
-                "useradd was not called")
-            assert(params.include?("-m"),
-                "Did not add -m when managehome was in affect")
-            assert(! params.include?("-M"),
-                "Added -M when managehome was in affect")
+            assert_equal(params[0], @provider.command(:add), "useradd was not called")
+            assert(params.include?("-m"), "Did not add -m when managehome was in affect")
+            assert(! params.include?("-M"), "Added -M when managehome was in affect")
 
             true
         end
@@ -116,14 +117,11 @@ class UserAddProviderTest < PuppetTest::TestCase
         @user.expects(:managehome?).returns(false)
 
         @user.provider.expects(:execute).with do |params|
-            assert_equal(params[0], @provider.command(:add),
-                "useradd was not called")
+            assert_equal(params[0], @provider.command(:add), "useradd was not called")
             if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
-                assert(params.include?("-M"),
-                    "Did not add -M on Red Hat")
+                assert(params.include?("-M"), "Did not add -M on Red Hat")
             end
-            assert(! params.include?("-m"),
-                "Added -m when managehome was disabled")
+            assert(! params.include?("-m"), "Added -m when managehome was disabled")
 
             true
         end
@@ -135,7 +133,10 @@ class UserAddProviderTest < PuppetTest::TestCase
         @vals[:allowdupe] = true
         setup_user
 
-        assert(@user.provider.respond_to?(:allows_duplicates?),
+
+                    assert(
+                @user.provider.respond_to?(:allows_duplicates?),
+        
             "provider did not get allowdupe test set")
 
         assert(@user.allowdupe?, "provider did not get allowdupe")
@@ -144,10 +145,8 @@ class UserAddProviderTest < PuppetTest::TestCase
         @user.expects(:allowdupe?).returns(true)
 
         @user.provider.expects(:execute).with do |params|
-            assert_equal(params[0], @provider.command(:add),
-                "useradd was not called")
-            assert(params.include?("-o"),
-                "Did not add -o when allowdupe was in affect")
+            assert_equal(params[0], @provider.command(:add), "useradd was not called")
+            assert(params.include?("-o"), "Did not add -o when allowdupe was in affect")
 
             true
         end
@@ -162,10 +161,8 @@ class UserAddProviderTest < PuppetTest::TestCase
         @user.expects(:allowdupe?).returns(false)
 
         @user.provider.expects(:execute).with do |params|
-            assert_equal(params[0], @provider.command(:add),
-                "useradd was not called")
-            assert(! params.include?("-o"),
-                "Added -o when allowdupe was disabled")
+            assert_equal(params[0], @provider.command(:add), "useradd was not called")
+            assert(! params.include?("-o"), "Added -o when allowdupe was disabled")
 
             true
         end
@@ -181,8 +178,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         setup_user
 
         @user.provider.expects(:execute).with do |params|
-            assert_equal(params[0], @provider.command(:add),
-                "useradd was not called")
+            assert_equal(params[0], @provider.command(:add), "useradd was not called")
             params.shift
             options = {}
             params.each_with_index do |p, i|
@@ -190,8 +186,7 @@ class UserAddProviderTest < PuppetTest::TestCase
                     options[p] = params[i + 1]
                 end
             end
-            assert_equal(options["-p"], @vals[:password],
-                "Did not set password in useradd call")
+            assert_equal(options["-p"], @vals[:password], "Did not set password in useradd call")
             true
         end
 
@@ -202,8 +197,7 @@ class UserAddProviderTest < PuppetTest::TestCase
         @vals[:password] = "somethingelse"
 
         @user.provider.expects(:execute).with do |params|
-            assert_equal(params[0], @provider.command(:modify),
-                "usermod was not called")
+            assert_equal(params[0], @provider.command(:modify), "usermod was not called")
 
             options = {}
             params.each_with_index do |p, i|
@@ -211,7 +205,10 @@ class UserAddProviderTest < PuppetTest::TestCase
                     options[p] = params[i + 1]
                 end
             end
-            assert_equal(options["-p"], @vals[:password],
+
+                        assert_equal(
+                options["-p"], @vals[:password],
+        
                 "Did not set password in useradd call")
             true
         end

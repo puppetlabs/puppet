@@ -36,7 +36,7 @@ class TestParsedHostProvider < Test::Unit::TestCase
     end
 
     def mkhosthash
-        if defined? @hcount
+        if defined?(@hcount)
             @hcount += 1
         else
             @hcount = 1
@@ -100,12 +100,15 @@ class TestParsedHostProvider < Test::Unit::TestCase
             instances = @provider.parse(text)
         end
 
-        assert_equal([
+
+                    assert_equal(
+                [
             {:record_type => :comment, :line => "# comment one"},
             {:record_type => :blank, :line => ""},
             {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host}},
             {:record_type => :blank, :line => "    "},
             {:record_type => :comment, :line => "# another comment"},
+        
             {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57", :host_aliases => []}
         ], instances)
 
@@ -145,7 +148,10 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
         # Make sure we get the host back
         assert_nothing_raised {
-            assert(file.read.include?(host.name),
+
+                        assert(
+                file.read.include?(host.name),
+        
                 "Did not flush host to disk")
         }
 
@@ -155,7 +161,10 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
         assert_nothing_raised {
             host.flush
-            assert(! file.read.include?(name[0]),
+
+                        assert(
+                ! file.read.include?(name[0]),
+        
                 "Did not remove host_aliases from disk")
         }
 

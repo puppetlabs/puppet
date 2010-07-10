@@ -15,9 +15,9 @@ class Puppet::Parser::TypeLoader
                 if !self.has_key? item
                     self[item] = { :loader => Thread.current, :busy => self.new_cond}
                     :nobody
-                  elsif self[item][:loader] == Thread.current
+                elsif self[item][:loader] == Thread.current
                     :this_thread
-                  else
+                else
                     flag = self[item][:busy]
                     flag.wait
                     flag.signal
@@ -79,8 +79,8 @@ class Puppet::Parser::TypeLoader
         name2files(namespaces, name).each do |filename|
             modname = nil
             import_if_possible(filename) do
-                  modname = import(filename)
-                  @loaded << filename
+                modname = import(filename)
+                @loaded << filename
             end
             if result = yield(filename)
                 Puppet.info "Automatically imported #{name} from #{filename}"
@@ -131,14 +131,14 @@ class Puppet::Parser::TypeLoader
     def import_if_possible(file)
         return if @loaded.include?(file)
         begin
-          case @loading.owner_of(file)
-          when :this_thread
-              return
-          when :another_thread
-              return import_if_possible(file)
-          when :nobody
-              yield
-          end
+            case @loading.owner_of(file)
+            when :this_thread
+                return
+            when :another_thread
+                return import_if_possible(file)
+            when :nobody
+                yield
+            end
         rescue Puppet::ImportError => detail
             # We couldn't load the item
         ensure

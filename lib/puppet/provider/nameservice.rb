@@ -6,7 +6,7 @@ require 'puppet'
 class Puppet::Provider::NameService < Puppet::Provider
     class << self
         def autogen_default(param)
-            if defined? @autogen_defaults
+            if defined?(@autogen_defaults)
                 return @autogen_defaults[symbolize(param)]
             else
                 return nil
@@ -36,7 +36,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         def option(name, option)
             name = name.intern if name.is_a? String
-            if defined? @options and @options.include? name and @options[name].include? option
+            if defined?(@options) and @options.include? name and @options[name].include? option
                 return @options[name][option]
             else
                 return nil
@@ -45,8 +45,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
         def options(name, hash)
             unless resource_type.valid_parameter?(name)
-                raise Puppet::DevError, "%s is not a valid attribute for %s" %
-                    [name, resource_type.name]
+                raise Puppet::DevError, "%s is not a valid attribute for %s" % [name, resource_type.name]
             end
             @options ||= {}
             @options[name] ||= {}
@@ -93,7 +92,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         # This is annoying, but there really aren't that many options,
         # and this *is* built into Ruby.
         def section
-            unless defined? @resource_type
+            unless defined?(@resource_type)
                 raise Puppet::DevError,
                     "Cannot determine Etc section without a resource type"
 
@@ -111,8 +110,7 @@ class Puppet::Provider::NameService < Puppet::Provider
             if @checks.include? name
                 block = @checks[name][:block]
                 unless block.call(value)
-                    raise ArgumentError, "Invalid value %s: %s" %
-                        [value, @checks[name][:error]]
+                    raise ArgumentError, "Invalid value %s: %s" % [value, @checks[name][:error]]
                 end
             end
         end
@@ -161,7 +159,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         end
 
         # Make sure we don't use the same value multiple times
-        if defined? @@prevauto
+        if defined?(@@prevauto)
             @@prevauto += 1
         else
             Etc.send(group) { |obj|
@@ -179,7 +177,7 @@ class Puppet::Provider::NameService < Puppet::Provider
     end
 
     def create
-       if exists?
+        if exists?
             info "already exists"
             # The object already exists
             return nil
@@ -188,8 +186,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         begin
             execute(self.addcmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not create %s %s: %s" %
-                [@resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not create %s %s: %s" % [@resource.class.name, @resource.name, detail]
         end
     end
 
@@ -203,8 +200,7 @@ class Puppet::Provider::NameService < Puppet::Provider
         begin
             execute(self.deletecmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not delete %s %s: %s" %
-                [@resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not delete %s %s: %s" % [@resource.class.name, @resource.name, detail]
         end
     end
 

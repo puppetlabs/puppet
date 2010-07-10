@@ -6,7 +6,7 @@
 
 require 'base64'
 
-unless defined? Base64
+unless defined?(Base64)
     class Base64
         def Base64.encode64(*args)
             Object.method(:encode64).call(*args)

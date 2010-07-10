@@ -120,18 +120,18 @@ describe Puppet::Parser::TemplateWrapper do
         @tw.result("template contents")
 
         @tw.instance_variable_get("@one").should == "foo"
-     end
+    end
 
-     it "should not error out if one of the variables is a symbol" do
+    it "should not error out if one of the variables is a symbol" do
         template_mock = mock("template", :result => "woot!")
         ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
         @scope.expects(:to_hash).returns(:_timestamp => "1234")
         @tw.result("template contents")
-     end
+    end
 
-     %w{! . ; :}.each do |badchar|
-       it "should translate #{badchar} to _ when setting the instance variables" do
+    %w{! . ; :}.each do |badchar|
+        it "should translate #{badchar} to _ when setting the instance variables" do
         template_mock = mock("template", :result => "woot!")
         ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
@@ -139,6 +139,6 @@ describe Puppet::Parser::TemplateWrapper do
         @tw.result("template contents")
 
         @tw.instance_variable_get("@one_").should == "foo"
-      end
-     end
+    end
+    end
 end

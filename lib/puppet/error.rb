@@ -6,7 +6,7 @@ module Puppet # :nodoc:
         attr_accessor :line, :file
 
         def backtrace
-            if defined? @backtrace
+            if defined?(@backtrace)
                 return @backtrace
             else
                 return super
@@ -23,11 +23,9 @@ module Puppet # :nodoc:
         def to_s
             str = nil
             if self.file and self.line
-                str = "%s at %s:%s" %
-                    [@message.to_s, @file, @line]
+                str = "%s at %s:%s" % [@message.to_s, @file, @line]
             elsif self.line
-                str = "%s at line %s" %
-                    [@message.to_s, @line]
+                str = "%s at line %s" % [@message.to_s, @line]
             elsif self.file
                 str = "%s in %s" % [@message.to_s, self.file]
             else

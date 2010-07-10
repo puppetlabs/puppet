@@ -21,28 +21,28 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     # with our error handling.
     def name2hash(name,name_env,node_type)
         info = nil
-        ldapsearch(search_filter(name)) { 
-                   |entry| info = entry2hash(entry) 
-                   if info[:environment]
-                     if name_env == info[:environment]
-                        return info
-                     else
+        ldapsearch(search_filter(name)) {
+            |entry| info = entry2hash(entry)
+            if info[:environment]
+                if name_env == info[:environment]
+                    return info
+                    else
                         info = nil
-                     end
-                   else
-                     info_env = "production"
-                     if name_env == info[:environment]
+                    end
+                    else
+                    info_env = "production"
+                    if name_env == info[:environment]
                         return info
-                     else
+                    else
                         info = nil
-                     end
-                   end
-                  }
+                    end
+                    end
+                }
         if node_type == 'parent'
-          raise Puppet::Error.new("Could not find node '%s' with environment '%s'" % [name,name_env])
+            raise Puppet::Error.new("Could not find node '%s' with environment '%s'" % [name,name_env])
         end
 
-        info = name2hash('default',name_env,'parent')        
+        info = name2hash('default',name_env,'parent')
         return info
     end
 
@@ -58,15 +58,15 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
         names.each do |name|
             facts = Puppet::Node::Facts.find(name)
             if facts.values["environment"]
-               name_env = facts.values["environment"]
+                name_env = facts.values["environment"]
             else
-               name_env = "production"
+                name_env = "production"
             end
             info = name2hash(name,name_env,'child')
             next if info == nil
 
             if info
-               break if node = info2node(request.key, info)
+                break if node = info2node(request.key, info)
             end
         end
 
@@ -205,26 +205,26 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     def find_and_merge_parent(parent, information)
 
         if information[:environment]
-          name_env = information[:environment]
+            name_env = information[:environment]
         else
-          name_env = 'production'
+            name_env = 'production'
         end
 
         parent_info = name2hash(parent,name_env,'parent')
         if parent_info
-         information[:classes] += parent_info[:classes]
-         parent_info[:parameters].each do |param, value|
+        information[:classes] += parent_info[:classes]
+        parent_info[:parameters].each do |param, value|
             # Specifically test for whether it's set, so false values are handled
             # correctly.
             information[:parameters][param] = value unless information[:parameters].include?(param)
-         end
+        end
 
-         information[:environment] ||= parent_info[:environment]
-         parent_info[:parent]
+        information[:environment] ||= parent_info[:environment]
+        parent_info[:parent]
         else
-         raise Puppet::Error.new("Could not find parent node '%s'" % parent)
-         nil
-        end             
+        raise Puppet::Error.new("Could not find parent node '%s'" % parent)
+        nil
+        end
 
     end
 

@@ -127,7 +127,7 @@ module Puppet
 
             # Sort the declarations most specific first.
             def <=>(other)
-                compare(exact?, other.exact?) || 
+                compare(exact?, other.exact?) ||
                 compare(ip?, other.ip?)  ||
                 ((length != other.length) &&  (other.length <=> length)) ||
                 compare(deny?, other.deny?) ||
@@ -230,7 +230,7 @@ module Puppet
                 @name,@exact,@length,@pattern = *case value
                 when /^(?:#{IP})\/(\d+)$/                                   # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
                     [:ip,:inexact,$1.to_i,IPAddr.new(value)]
-                when /^(#{IP})$/                                          # 10.20.30.40, 
+                when /^(#{IP})$/                                          # 10.20.30.40,
                     [:ip,:exact,nil,IPAddr.new(value)]
                 when /^(#{Octet}\.){1,3}\*$/                              # an ip address with a '*' at the end
                     segments = value.split(".")[0..-2]

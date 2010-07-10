@@ -1,4 +1,4 @@
-unless defined? SPEC_HELPER_IS_LOADED
+unless defined?(SPEC_HELPER_IS_LOADED)
 SPEC_HELPER_IS_LOADED = 1
 
 dir = File.expand_path(File.dirname(__FILE__))
@@ -51,11 +51,11 @@ Spec::Runner.configure do |config|
                 if Puppet.features.posix? and file !~ /^\/tmp/ and file !~ /^\/var\/folders/
                     puts "Not deleting tmpfile #{file} outside of /tmp or /var/folders"
                     next
-                elsif Puppet.features.microsoft_windows? 
+                elsif Puppet.features.microsoft_windows?
                     tempdir = File.expand_path(File.join(Dir::LOCAL_APPDATA, "Temp"))
                     if file !~ /^#{tempdir}/
                         puts "Not deleting tmpfile #{file} outside of #{tempdir}"
-                       next
+                        next
                     end
                 end
                 if FileTest.exist?(file)

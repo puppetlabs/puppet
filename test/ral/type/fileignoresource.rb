@@ -56,23 +56,32 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #create source files
 
-        File.open(File.join(frompath,sourcefile1),
-          File::WRONLY|File::CREAT|File::APPEND) { |of|
-            of.puts "yayness"
+
+            File.open(
+                File.join(frompath,sourcefile1),
+
+            File::WRONLY|File::CREAT|File::APPEND) { |of|
+                of.puts "yayness"
         }
 
-        File.open(File.join(frompath,sourcefile2),
-          File::WRONLY|File::CREAT|File::APPEND) { |of|
-            of.puts "even yayer"
+
+            File.open(
+                File.join(frompath,sourcefile2),
+
+            File::WRONLY|File::CREAT|File::APPEND) { |of|
+                of.puts "even yayer"
         }
 
 
         #makes Puppet file Object
         assert_nothing_raised {
+
             tofile = Puppet::Type.type(:file).new(
+
                 :name => topath,
                 :source => frompath,
                 :recurse => true,
+
                 :ignore => "sourcefile2"
             )
         }
@@ -119,24 +128,33 @@ class TestFileIgnoreSources < Test::Unit::TestCase
         #create source files
 
         dir.each { |dir|
-            File.open(File.join(dir,sourcefile1),
-             File::WRONLY|File::CREAT|File::APPEND) { |of|
+
+            File.open(
+                File.join(dir,sourcefile1),
+
+            File::WRONLY|File::CREAT|File::APPEND) { |of|
                 of.puts "yayness"
             }
 
-            File.open(File.join(dir,sourcefile2),
-             File::WRONLY|File::CREAT|File::APPEND) { |of|
-              of.puts "even yayer"
+
+                File.open(
+                    File.join(dir,sourcefile2),
+
+            File::WRONLY|File::CREAT|File::APPEND) { |of|
+                of.puts "even yayer"
             }
 
         }
 
         #makes Puppet file Object
         assert_nothing_raised {
+
             tofile = Puppet::Type.type(:file).new(
+
                 :name => topath,
                 :source => frompath,
                 :recurse => true,
+
                 :ignore => "*2"
             )
         }
@@ -190,14 +208,20 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
 
         sourcedir.each { |dir|
-            File.open(File.join(dir,sourcefile1),
-             File::WRONLY|File::CREAT|File::APPEND) { |of|
+
+            File.open(
+                File.join(dir,sourcefile1),
+
+            File::WRONLY|File::CREAT|File::APPEND) { |of|
                 of.puts "yayness"
             }
 
-            File.open(File.join(dir,sourcefile2),
-             File::WRONLY|File::CREAT|File::APPEND) { |of|
-              of.puts "even yayer"
+
+                File.open(
+                    File.join(dir,sourcefile2),
+
+            File::WRONLY|File::CREAT|File::APPEND) { |of|
+                of.puts "even yayer"
             }
 
         }
@@ -205,12 +229,15 @@ class TestFileIgnoreSources < Test::Unit::TestCase
 
         #makes Puppet file Object
         assert_nothing_raised {
+
             tofile = Puppet::Type.type(:file).new(
+
                 :name => topath,
                 :source => frompath,
                 :recurse => true,
+
                 :ignore => ["*2", "an*"]
-               # :ignore => ["*2", "an*", "nomatch"]
+                # :ignore => ["*2", "an*", "nomatch"]
             )
         }
 

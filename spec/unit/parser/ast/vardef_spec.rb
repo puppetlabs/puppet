@@ -17,7 +17,7 @@ describe Puppet::Parser::AST::VarDef do
             value.expects(:safeevaluate).with(@scope)
 
             vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil,
-                                                     :line => nil
+                :line => nil
             vardef.evaluate(@scope)
         end
 
@@ -28,7 +28,7 @@ describe Puppet::Parser::AST::VarDef do
             @scope.expects(:setvar).with { |name,value,options| options[:append] == nil }
 
             vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil,
-                                                     :line => nil
+                :line => nil
             vardef.evaluate(@scope)
         end
 
@@ -39,7 +39,7 @@ describe Puppet::Parser::AST::VarDef do
             @scope.expects(:setvar).with { |name,value,options| options[:append] == true }
 
             vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil,
-                                                     :line => nil, :append => true
+                :line => nil, :append => true
             vardef.evaluate(@scope)
         end
 

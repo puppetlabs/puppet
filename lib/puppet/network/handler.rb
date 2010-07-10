@@ -19,11 +19,10 @@ module Puppet::Network
 
         # Return the xmlrpc interface.
         def self.interface
-            if defined? @interface
+            if defined?(@interface)
                 return @interface
             else
-                raise Puppet::DevError, "Handler %s has no defined interface" %
-                    self
+                raise Puppet::DevError, "Handler %s has no defined interface" % self
             end
         end
 

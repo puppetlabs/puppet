@@ -357,8 +357,8 @@ describe Puppet::Parser::Lexer::TOKENS[:MLCOMMENT] do
 
     it "should match multiple lines enclosed with '/*' and '*/'" do
         @token.regex.should =~ """/*
-                                   this is a comment
-                                   */"""
+            this is a comment
+            */"""
     end
 
     it "should increase the lexer current line number by the amount of lines spanned by the comment" do
@@ -480,8 +480,8 @@ describe Puppet::Parser::Lexer::TOKENS[:REGEX] do
                 :CASE,:VARIABLE,:LBRACE,:STRING,:COLON,:LBRACE,:VARIABLE,:EQUALS,:NAME,:DIV,:NAME,:RBRACE,[:REGEX,/regex/],:COLON,:LBRACE,:NAME,:LPAREN,:STRING,:RPAREN,:RBRACE,:RBRACE
             )
         end
- 
-   end
+
+    end
 
 
     it "should return the REGEX token and a Regexp" do

@@ -15,7 +15,7 @@ describe provider do
         @fakehdiutilplist = Plist::Emit.dump(@fakehdiutilinfo)
 
         @hdiutilmountargs = ["mount", "-plist", "-nobrowse", "-readonly",
-                             "-noidme", "-mountrandom", "/tmp"]
+            "-noidme", "-mountrandom", "/tmp"]
     end
 
     it "should not be versionable" do
@@ -76,9 +76,9 @@ describe provider do
         it "should call installpkg if a flat pkg file is found instead of a .dmg image" do
             @resource.stubs(:[]).with(:source).returns "/tmp/test.pkg"
             @resource.stubs(:[]).with(:name).returns "testpkg"
-			@provider.class.expects(:installpkgdmg).with("#{@fakepkgfile}", "testpkg").returns ""
-			@provider.install
-		end
+                @provider.class.expects(:installpkgdmg).with("#{@fakepkgfile}", "testpkg").returns ""
+                @provider.install
+                end
     end
-    
+
 end

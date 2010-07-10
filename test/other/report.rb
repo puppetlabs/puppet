@@ -21,8 +21,11 @@ class TestReports < Test::Unit::TestCase
             # Make every third file
             File.open(file, "w") { |f| f.puts "" } if i % 3 == 0
 
-            objects << Puppet::Type.type(:file).new(
+
+                        objects << Puppet::Type.type(:file).new(
+                
                 :path => file,
+        
                 :ensure => "file"
             )
         end
@@ -124,8 +127,7 @@ class TestReports < Test::Unit::TestCase
             assert(FileTest.exists?(file), "Did not create rrd file for %s" % type)
 
             daily = file.sub ".rrd", "-daily.png"
-            assert(FileTest.exists?(daily),
-                "Did not make daily graph for %s" % type)
+            assert(FileTest.exists?(daily), "Did not make daily graph for %s" % type)
         end
 
     end

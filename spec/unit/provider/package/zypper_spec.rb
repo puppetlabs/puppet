@@ -68,14 +68,14 @@ describe provider_class do
 
             fake_data = "Loading repository data...
 Reading installed packages...
-S | Repository     | Name                  | Version         | Arch  
+S | Repository     | Name                  | Version         | Arch
 --+----------------+-----------------------+-----------------+-------
 v | SLES11-Updates | cups                  | 1.1.1           | x86_64
 v | SLES11-Updates | mypackage             | 1.3.9h-8.20.1   | x86_64"
 
-            @provider.expects(:zypper).with("list-updates").returns fake_data
-            @provider.latest.should == "1.3.9h-8.20.1"
+    @provider.expects(:zypper).with("list-updates").returns fake_data
+    @provider.latest.should == "1.3.9h-8.20.1"
         end
     end
 
- end
+end

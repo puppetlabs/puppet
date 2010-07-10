@@ -471,11 +471,11 @@ describe Puppet::Network::Server do
         end
 
         it "should pass the listening address to the HTTP server" do
-           @server.stubs(:http_server).returns(@mock_http_server)
-           @mock_http_server.expects(:listen).with do |args|
-               args[:address] == '127.0.0.1'
-           end
-           @server.listen
+            @server.stubs(:http_server).returns(@mock_http_server)
+            @mock_http_server.expects(:listen).with do |args|
+                args[:address] == '127.0.0.1'
+            end
+            @server.listen
         end
 
         it "should pass the listening port to the HTTP server" do
@@ -505,7 +505,7 @@ describe Puppet::Network::Server do
         it "should pass a list of protocols to the HTTP server" do
             @server.stubs(:http_server).returns(@mock_http_server)
             @mock_http_server.expects(:listen).with do |args|
-               args[:protocols] == [ :rest, :xmlrpc ]
+                args[:protocols] == [ :rest, :xmlrpc ]
             end
             @server.listen
         end

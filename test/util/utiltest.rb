@@ -78,8 +78,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
 
         [:yay, "cool"].each do |var|
-            assert_equal(inst.hash[var], inst[var],
-                        "Var %s did not take" % var)
+            assert_equal(inst.hash[var], inst[var], "Var %s did not take" % var)
         end
 
         assert_nothing_raised do
@@ -88,8 +87,7 @@ class TestPuppetUtil < Test::Unit::TestCase
         end
 
         [:Yay, "Cool"].each do |var|
-            assert_equal(inst.hash[var], inst[var],
-                        "Var %s did not take" % var)
+            assert_equal(inst.hash[var], inst[var], "Var %s did not take" % var)
         end
     end
 
@@ -191,31 +189,34 @@ class TestPuppetUtil < Test::Unit::TestCase
     end
 
     def test_lang_environ_in_execute
-      orig_lang = ENV["LANG"]
-      orig_lc_all = ENV["LC_ALL"]
-      orig_lc_messages = ENV["LC_MESSAGES"]
-      orig_language = ENV["LANGUAGE"]
+        orig_lang = ENV["LANG"]
+        orig_lc_all = ENV["LC_ALL"]
+        orig_lc_messages = ENV["LC_MESSAGES"]
+        orig_language = ENV["LANGUAGE"]
 
-      cleanup do
-          ENV["LANG"] = orig_lang
-          ENV["LC_ALL"] = orig_lc_all
-          ENV["LC_MESSAGES"] = orig_lc_messages
-          ENV["LANGUAGE"] = orig_lc_messages
-      end
+        cleanup do
+            ENV["LANG"] = orig_lang
+            ENV["LC_ALL"] = orig_lc_all
+            ENV["LC_MESSAGES"] = orig_lc_messages
+            ENV["LANGUAGE"] = orig_lc_messages
+        end
 
-      # Mmm, we love gettext(3)
-      ENV["LANG"] = "en_US"
-      ENV["LC_ALL"] = "en_US"
-      ENV["LC_MESSAGES"] = "en_US"
-      ENV["LANGUAGE"] = "en_US"
+        # Mmm, we love gettext(3)
+        ENV["LANG"] = "en_US"
+        ENV["LC_ALL"] = "en_US"
+        ENV["LC_MESSAGES"] = "en_US"
+        ENV["LANGUAGE"] = "en_US"
 
-      %w{LANG LC_ALL LC_MESSAGES LANGUAGE}.each do |env|
-        assert_equal('C',
-                     Puppet::Util.execute(['ruby', '-e', "print ENV['#{env}']"]),
-                     "Environment var #{env} wasn't set to 'C'")
+        %w{LANG LC_ALL LC_MESSAGES LANGUAGE}.each do |env|
 
-        assert_equal 'en_US', ENV[env], "Environment var #{env} not set back correctly"
-      end
+            assert_equal(
+                'C',
+                    Puppet::Util.execute(['ruby', '-e', "print ENV['#{env}']"]),
+
+                    "Environment var #{env} wasn't set to 'C'")
+
+            assert_equal 'en_US', ENV[env], "Environment var #{env} not set back correctly"
+        end
 
     end
 

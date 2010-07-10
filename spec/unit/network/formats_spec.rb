@@ -141,7 +141,7 @@ describe "Puppet Network Format" do
             end
 
             it "use_zlib? should return false" do
-                @yaml.use_zlib?.should == false  
+                @yaml.use_zlib?.should == false
             end
 
             it "should refuse to encode" do

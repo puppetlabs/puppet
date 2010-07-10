@@ -8,17 +8,17 @@ metaparameter = Puppet::Util::Reference.newreference :metaparameter, :doc => "Al
         types[type.name] = type
     }
 
-   str = %{
-Metaparameters
---------------
-Metaparameters are parameters that work with any resource type; they are part of the
-Puppet framework itself rather than being part of the implementation of any
-given instance.  Thus, any defined metaparameter can be used with any instance
-in your manifest, including defined components.
+    str = %{
+        Metaparameters
+        --------------
+        Metaparameters are parameters that work with any resource type; they are part of the
+        Puppet framework itself rather than being part of the implementation of any
+        given instance.  Thus, any defined metaparameter can be used with any instance
+        in your manifest, including defined components.
 
-Available Metaparameters
-++++++++++++++++++++++++
-}
+        Available Metaparameters
+        ++++++++++++++++++++++++
+        }
     begin
         params = []
         Puppet::Type.eachmetaparam { |param|

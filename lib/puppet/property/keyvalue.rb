@@ -52,7 +52,7 @@ module Puppet
             end
 
             def should
-                unless defined? @should and @should
+                unless defined?(@should) and @should
                     return nil
                 end
 
@@ -81,7 +81,7 @@ module Puppet
             end
 
             def insync?(is)
-                unless defined? @should and @should
+                unless defined?(@should) and @should
                     return true
                 end
 

@@ -22,10 +22,13 @@ class TestBaseServiceProvider < Test::Unit::TestCase
             end
             commands[c.to_sym] = path
         end
-        service = Puppet::Type.type(:service).new(
+
+                    service = Puppet::Type.type(:service).new(
+                
             :name => "yaytest", :provider => :base,
             :start => "%s %s" % [commands[:touch], running],
             :status => "%s -f %s" % [commands[:test], running],
+        
             :stop => "%s %s" % [commands[:rm], running]
         )
 
@@ -51,11 +54,14 @@ class TestBaseServiceProvider < Test::Unit::TestCase
     # Testing #454
     def test_that_failures_propagate
         nope = "/no/such/command"
-        service = Puppet::Type.type(:service).new(
+
+                    service = Puppet::Type.type(:service).new(
+                
             :name => "yaytest", :provider => :base,
             :start => nope,
             :status => nope,
             :stop => nope,
+        
             :restart => nope
         )
 

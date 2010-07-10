@@ -23,7 +23,7 @@ class Puppet::Parser::AST
             super(arghash)
 
             # Create the hash, if it was not set at initialization time.
-            unless defined? @children
+            unless defined?(@children)
                 @children = []
             end
 

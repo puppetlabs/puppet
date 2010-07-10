@@ -27,8 +27,7 @@ class Puppet::SSLCertificates::CA
                     end
                     File.unlink(file)
                 rescue => detail
-                    raise Puppet::Error, "Could not delete %s: %s" %
-                        [file, detail]
+                    raise Puppet::Error, "Could not delete %s: %s" % [file, detail]
                 end
             end
 
@@ -159,13 +158,16 @@ class Puppet::SSLCertificates::CA
         if domain = Facter["domain"].value
             name += "." + domain
         end
-        cert = Certificate.new(
+
+                    cert = Certificate.new(
+                
             :name => name,
             :cert => @config[:cacert],
             :encrypt => @config[:capass],
             :key => @config[:cakey],
             :selfsign => true,
             :ttl => ttl,
+        
             :type => :ca
         )
 
@@ -239,8 +241,7 @@ class Puppet::SSLCertificates::CA
     def sign(csr)
         unless csr.is_a?(OpenSSL::X509::Request)
             raise Puppet::Error,
-                "CA#sign only accepts OpenSSL::X509::Request objects, not %s" %
-                csr.class
+                "CA#sign only accepts OpenSSL::X509::Request objects, not %s" % csr.class
         end
 
         unless csr.verify(csr.public_key)
@@ -254,12 +255,15 @@ class Puppet::SSLCertificates::CA
             f << "%04X" % (serial + 1)
         }
 
-        newcert = Puppet::SSLCertificates.mkcert(
+
+                    newcert = Puppet::SSLCertificates.mkcert(
+                
             :type => :server,
             :name => csr.subject,
             :ttl => ttl,
             :issuer => @cert,
             :serial => serial,
+        
             :publickey => csr.public_key
         )
 
@@ -293,8 +297,7 @@ class Puppet::SSLCertificates::CA
 
         certfile = host2certfile(host)
         if File.exists?(certfile)
-            Puppet.notice "Overwriting signed certificate %s for %s" %
-                [certfile, host]
+            Puppet.notice "Overwriting signed certificate %s for %s" % [certfile, host]
         end
 
         Puppet::SSLCertificates::Inventory::add(cert)

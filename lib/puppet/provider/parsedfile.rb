@@ -36,7 +36,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
     end
 
     def self.filetype
-        unless defined? @filetype
+        unless defined?(@filetype)
             @filetype = Puppet::Util::FileType.filetype(:flat)
         end
         return @filetype
@@ -151,7 +151,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
                 if @property_hash[attr] or self.class.valid_attr?(self.class.name, attr)
                     @property_hash[attr] || :absent
                 else
-                    if defined? @resource
+                    if defined?(@resource)
                         @resource.should(attr)
                     else
                         nil
@@ -385,7 +385,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
 
     # Mark both the resource and provider target as modified.
     def mark_target_modified
-        if defined? @resource and restarget = @resource.should(:target) and restarget != @property_hash[:target]
+        if defined?(@resource) and restarget = @resource.should(:target) and restarget != @property_hash[:target]
             self.class.modified(restarget)
         end
         if @property_hash[:target] != :absent and @property_hash[:target]

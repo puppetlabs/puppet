@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :aix, :parent => Puppet::Provider::Package d
                         previous = updates[current[:name]]
 
                         unless Puppet::Util::Package.versioncmp(previous[:version], current[:version]) == 1
-                            updates[ current[:name] ] = current 
+                            updates[ current[:name] ] = current
                         end
 
                     else

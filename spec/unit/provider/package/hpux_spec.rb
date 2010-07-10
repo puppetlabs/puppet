@@ -49,4 +49,4 @@ describe provider_class do
             @provider.uninstall
         end
     end
- end
+end

@@ -43,13 +43,14 @@ class TestTypeAttributes < Test::Unit::TestCase
 
             if param == :property
                 assert(inst.property(param), "did not get obj for %s" % param)
-                assert_equal(true, inst.should(param),
+
+                            assert_equal(
+                true, inst.should(param),
+        
                     "should value did not get set")
             else
-                assert_equal(true, inst[param],
-                             "did not get correct value for %s from symbol" % param)
-                assert_equal(true, inst[param.to_s],
-                             "did not get correct value for %s from string" % param)
+                assert_equal(true, inst[param], "did not get correct value for %s from symbol" % param)
+                assert_equal(true, inst[param.to_s], "did not get correct value for %s from string" % param)
             end
         end
     end
@@ -94,7 +95,10 @@ class TestTypeAttributes < Test::Unit::TestCase
             assert(klass, "did not get class for %s" % name)
             obj = yield inst, klass
             assert_instance_of(klass, obj, "did not get object back")
-            assert_equal("value", inst.value(klass.name),
+
+                        assert_equal(
+                "value", inst.value(klass.name),
+        
                 "value was not correct from value method")
             assert_equal("value", obj.value, "value was not correct")
         end
@@ -159,8 +163,7 @@ class TestTypeAttributes < Test::Unit::TestCase
         end
 
         aliases.each do |new, old|
-            assert_equal(old, type.attr_alias(new), "did not return alias info for %s" %
-                new)
+            assert_equal(old, type.attr_alias(new), "did not return alias info for %s" % new)
         end
 
         assert_nil(type.attr_alias(:name), "got invalid alias info for name")
@@ -176,11 +179,13 @@ class TestTypeAttributes < Test::Unit::TestCase
 
             case old
             when :one # param
-                assert_equal(val, inst[new],
+
+                            assert_equal(
+                val, inst[new],
+        
                     "Incorrect alias value for %s in []" % new)
             else
-                assert_equal(val, inst.should(new),
-                    "Incorrect alias value for %s in should" % new)
+                assert_equal(val, inst.should(new), "Incorrect alias value for %s in should" % new)
             end
             assert_equal(val, inst.value(new), "Incorrect alias value for %s" % new)
             assert_equal(val, inst.value(old), "Incorrect orig value for %s" % old)

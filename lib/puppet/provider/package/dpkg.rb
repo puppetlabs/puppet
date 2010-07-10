@@ -106,13 +106,15 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
         # list out our specific package
         begin
-            output = dpkgquery("-W", "--showformat",
+
+                        output = dpkgquery(
+                "-W", "--showformat",
+        
                 '${Status} ${Package} ${Version}\\n', @resource[:name]
             )
         rescue Puppet::ExecutionFailure
             # dpkg-query exits 1 if the package is not found.
-            return {:ensure => :purged, :status => 'missing',
-                :name => @resource[:name], :error => 'ok'}
+            return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
         end
 
@@ -120,8 +122,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
         if hash[:error] != "ok"
             raise Puppet::Error.new(
-                "Package %s, version %s is in error state: %s" %
-                    [hash[:name], hash[:ensure], hash[:error]]
+                "Package %s, version %s is in error state: %s" % [hash[:name], hash[:ensure], hash[:error]]
             )
         end
 
@@ -144,7 +145,7 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
                 tmpfile.flush
                 execute([:dpkg, "--set-selections"], :stdinfile => tmpfile.path.to_s)
             }
-        end 
+        end
     end
 
     def unhold

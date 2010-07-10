@@ -26,15 +26,15 @@ class Puppet::Parser::AST
 
     # allow our subclass to specify they want documentation
     class << self
-       attr_accessor :use_docs
-       def associates_doc
-         self.use_docs = true
-       end
+        attr_accessor :use_docs
+        def associates_doc
+        self.use_docs = true
+        end
     end
 
     # Does this ast object set something?  If so, it gets evaluated first.
     def self.settor?
-        if defined? @settor
+        if defined?(@settor)
             @settor
         else
             false

@@ -17,30 +17,36 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
 
     def test_install
         pkg = @type.new :name => 'faff',
-                           :provider => :aptitude,
-                           :ensure => :present,
-                           :source => "/tmp/faff.deb"
+            :provider => :aptitude,
+            :ensure => :present,
+            :source => "/tmp/faff.deb"
 
         pkg.provider.expects(
-                         :dpkgquery
-                      ).with(
-                              '-W',
-                              '--showformat',
-                              '${Status} ${Package} ${Version}\n',
-                              'faff'
-                      ).returns(
+            :dpkgquery
+
+                ).with(
+
+                    '-W',
+                    '--showformat',
+                    '${Status} ${Package} ${Version}\n',
+
+                    'faff'
+                        ).returns(
                             "deinstall ok config-files faff 1.2.3-1\n"
-                      ).times(1)
+                        ).times(1)
 
         pkg.provider.expects(
-                         :aptitude
-                   ).with(
-                         '-y',
-                         '-o',
-                         'DPkg::Options::=--force-confold',
-                         :install,
-                         'faff'
-                      ).returns(0)
+            :aptitude
+
+                ).with(
+
+                    '-y',
+                    '-o',
+                    'DPkg::Options::=--force-confold',
+                    :install,
+
+                    'faff'
+                        ).returns(0)
 
         assert_apply( pkg )
     end
@@ -49,22 +55,28 @@ class AptitudePackageProviderTest < PuppetTest::TestCase
         pkg = @type.new :name => 'faff', :provider => :aptitude, :ensure => :purged
 
         pkg.provider.expects(
-                         :dpkgquery
-                      ).with(
-                            '-W',
-                            '--showformat',
-                            '${Status} ${Package} ${Version}\n',
-                            'faff'
-                      ).returns(
+            :dpkgquery
+
+                ).with(
+
+                    '-W',
+                    '--showformat',
+                    '${Status} ${Package} ${Version}\n',
+
+                    'faff'
+                        ).returns(
                             "install ok installed faff 1.2.3-1\n"
-                      ).times(1)
+                        ).times(1)
         pkg.provider.expects(
-                         :aptitude
-                      ).with(
-                            '-y',
-                            'purge',
-                            'faff'
-                      ).returns(0)
+            :aptitude
+
+                ).with(
+
+                    '-y',
+                    'purge',
+
+                    'faff'
+                        ).returns(0)
 
         assert_apply( pkg )
     end

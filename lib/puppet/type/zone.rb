@@ -172,8 +172,7 @@ Puppet::Type.newtype(:zone) do
                     end
                     provider.send(method)
                 else
-                    raise Puppet::DevError, "Cannot move %s from %s" %
-                    [direction, st[:name]]
+                    raise Puppet::DevError, "Cannot move %s from %s" % [direction, st[:name]]
                 end
             end
 
@@ -200,9 +199,9 @@ Puppet::Type.newtype(:zone) do
 
     newparam(:clone) do
         desc "Instead of installing the zone, clone it from another zone.
-          If the zone root resides on a zfs file system, a snapshot will be
-          used to create the clone, is it redisides on ufs, a copy of the zone
-          will be used. The zone you clone from must not be running."
+            If the zone root resides on a zfs file system, a snapshot will be
+            used to create the clone, is it redisides on ufs, a copy of the zone
+            will be used. The zone you clone from must not be running."
     end
 
     newproperty(:ip, :parent => ZoneMultiConfigProperty) do
@@ -327,13 +326,12 @@ Puppet::Type.newtype(:zone) do
                 security_policy=NONE
                 root_password=&lt;%= password %>
                 timeserver=localhost
-                name_service=DNS {domain_name=&lt;%= domain %>
-                        name_server=&lt;%= nameserver %>}
+                name_service=DNS {domain_name=&lt;%= domain %> name_server=&lt;%= nameserver %>}
                 network_interface=primary {hostname=&lt;%= realhostname %>
-                        ip_address=&lt;%= ip %>
-                        netmask=&lt;%= netmask %>
-                        protocol_ipv6=no
-                        default_route=&lt;%= defaultroute %>}
+                    ip_address=&lt;%= ip %>
+                    netmask=&lt;%= netmask %>
+                    protocol_ipv6=no
+                    default_route=&lt;%= defaultroute %>}
                 nfs4_domain=dynamic
 
             And then call that::
@@ -405,9 +403,9 @@ Puppet::Type.newtype(:zone) do
         interface, address, defrouter = value.split(':')
         if self[:iptype] == :shared
             if (interface && address && defrouter.nil?) ||
-               (interface && address && defrouter)
-               validate_ip(address, "IP address")
-               validate_ip(defrouter, "default router")
+                (interface && address && defrouter)
+                validate_ip(address, "IP address")
+                validate_ip(defrouter, "default router")
             else
                 self.fail "ip must contain interface name and ip address separated by a \":\""
             end

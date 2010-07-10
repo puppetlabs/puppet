@@ -137,7 +137,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         after do
-            @indirection.delete if defined? @indirection
+            @indirection.delete if defined?(@indirection)
         end
     end
 
@@ -604,7 +604,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         after do
-            @indirection.delete if defined? @indirection
+            @indirection.delete if defined?(@indirection)
         end
     end
 
@@ -638,7 +638,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         after do
-            @indirection.delete if defined? @indirection
+            @indirection.delete if defined?(@indirection)
         end
     end
 
@@ -682,7 +682,7 @@ describe Puppet::Indirector::Indirection do
         end
 
         after do
-            @indirection.delete if defined? @indirection
+            @indirection.delete if defined?(@indirection)
         end
     end
 

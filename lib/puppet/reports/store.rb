@@ -10,13 +10,16 @@ Puppet::Reports.register_report(:store) do
 
     def mkclientdir(client, dir)
         config = Puppet::Util::Settings.new
-        config.setdefaults("reportclient-#{client}".to_sym,
+
+                    config.setdefaults(
+                "reportclient-#{client}".to_sym,
             "client-#{client}-dir" => { :default => dir,
                 :mode => 0750,
                 :desc => "Client dir for %s" % client,
                 :owner => 'service',
                 :group => 'service'
             },
+        
             :noop => [false, "Used by settings internally."]
         )
 
@@ -51,8 +54,7 @@ Puppet::Reports.register_report(:store) do
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            Puppet.warning "Could not write report for %s at %s: %s" %
-                [client, file, detail]
+            Puppet.warning "Could not write report for %s at %s: %s" % [client, file, detail]
         end
 
         # Only testing cares about the return value

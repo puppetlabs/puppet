@@ -151,7 +151,7 @@ class Puppet::Network::Server
         remove_pidfile
     end
 
-  private
+    private
 
     def http_server
         @http_server ||= http_server_class.new

@@ -16,7 +16,7 @@ class Puppet::Parser::AST
         # Are we the default option?
         def default?
             # Cache the @default value.
-            if defined? @default
+            if defined?(@default)
                 return @default
             end
 
@@ -33,7 +33,7 @@ class Puppet::Parser::AST
                 end
             end
 
-            unless defined? @default
+            unless defined?(@default)
                 @default = false
             end
 

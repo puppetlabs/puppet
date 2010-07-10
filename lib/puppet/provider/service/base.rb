@@ -49,7 +49,7 @@ Puppet::Type.type(:service).provide :base do
         end
     end
 
-    # There is no default command, which causes other methods to be used  
+    # There is no default command, which causes other methods to be used
     def restartcmd
     end
 
@@ -77,10 +77,10 @@ Puppet::Type.type(:service).provide :base do
         end
     end
 
-    # There is no default command, which causes other methods to be used  
+    # There is no default command, which causes other methods to be used
     def statuscmd
     end
-    
+
     # Run the 'start' parameter command, or the specified 'startcmd'.
     def start
         ucommand(:start)
@@ -114,14 +114,13 @@ Puppet::Type.type(:service).provide :base do
             begin
                 output = kill pid
             rescue Puppet::ExecutionFailure => detail
-                @resource.fail "Could not kill %s, PID %s: %s" %
-                        [self.name, pid, output]
+                @resource.fail "Could not kill %s, PID %s: %s" % [self.name, pid, output]
             end
             return true
         end
     end
-    
-    # There is no default command, which causes other methods to be used  
+
+    # There is no default command, which causes other methods to be used
     def stopcmd
     end
 

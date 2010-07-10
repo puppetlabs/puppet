@@ -21,21 +21,22 @@ class TestUtilFileParsing < Test::Unit::TestCase
     end
 
     def test_lines
-        assert_equal("\n", @parser.line_separator,
-            "Default separator was incorrect")
+        assert_equal("\n", @parser.line_separator, "Default separator was incorrect")
 
         {"\n" => ["one two\nthree four", "one two\nthree four\n"],
-         "\t" => ["one two\tthree four", "one two\tthree four\t"],
+        "\t" => ["one two\tthree four", "one two\tthree four\t"],
         }.each do |sep, tests|
             assert_nothing_raised do
                 @parser.line_separator = sep
             end
-            assert_equal(sep, @parser.line_separator,
-                "Did not set separator")
+
+                assert_equal(
+                    sep, @parser.line_separator,
+
+                    "Did not set separator")
 
             tests.each do |test|
-                assert_equal(["one two", "three four"], @parser.lines(test),
-                    "Incorrectly parsed %s" % test.inspect)
+                assert_equal(["one two", "three four"], @parser.lines(test), "Incorrectly parsed %s" % test.inspect)
             end
         end
     end
@@ -72,8 +73,11 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         # Make sure it matches
         assert_nothing_raised do
-            assert_equal({:record_type => :comment, :line => comment},
-                 @parser.parse_line(comment))
+
+            assert_equal(
+                {:record_type => :comment, :line => comment},
+
+                @parser.parse_line(comment))
         end
 
         # But not something else
@@ -88,14 +92,20 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         # The comment should still match
         assert_nothing_raised do
-            assert_equal({:record_type => :comment, :line => comment},
-                 @parser.parse_line(comment))
+
+            assert_equal(
+                {:record_type => :comment, :line => comment},
+
+                @parser.parse_line(comment))
         end
 
         # As should our new line type
         assert_nothing_raised do
-            assert_equal({:record_type => :blank, :line => ""},
-                 @parser.parse_line(""))
+
+            assert_equal(
+                {:record_type => :blank, :line => ""},
+
+                @parser.parse_line(""))
         end
 
     end
@@ -141,13 +151,11 @@ class TestUtilFileParsing < Test::Unit::TestCase
         end
 
         assert_nothing_raised("Did not parse old comment") do
-            assert_equal({:record_type => :comment, :line => comment},
-                 @parser.parse_line(comment))
+            assert_equal({:record_type => :comment, :line => comment}, @parser.parse_line(comment))
         end
         comment = '" another type of comment'
         assert_nothing_raised("Did not parse new comment") do
-            assert_equal({:record_type => :comment2, :line => comment},
-                 @parser.parse_line(comment))
+            assert_equal({:record_type => :comment2, :line => comment}, @parser.parse_line(comment))
         end
 
         # Now define two overlapping record types and make sure we keep the
@@ -158,8 +166,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
         end
 
         assert_nothing_raised do
-            assert_equal({:record_type => :one, :line => "yayness"},
-                @parser.parse_line("yayness"))
+            assert_equal({:record_type => :one, :line => "yayness"}, @parser.parse_line("yayness"))
         end
 
     end
@@ -182,8 +189,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
         end
 
         # Make sure out tab line gets matched
-        tabshould = {:record_type => :tabs, :name => "tab", :first => "separated",
-                            :second => "content"}
+        tabshould = {:record_type => :tabs, :name => "tab", :first => "separated", :second => "content"}
         assert_nothing_raised do
             assert_equal(tabshould, @parser.handle_record_line(tabrecord, tabs))
         end
@@ -195,8 +201,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
         end
 
         # Now make sure both lines parse correctly
-        spaceshould = {:record_type => :spaces, :name => "space",
-            :first => "separated", :second => "content"}
+        spaceshould = {:record_type => :spaces, :name => "space", :first => "separated", :second => "content"}
 
         assert_nothing_raised do
             assert_equal(tabshould, @parser.handle_record_line(tabrecord, tabs))
@@ -243,8 +248,7 @@ class TestUtilFileParsing < Test::Unit::TestCase
         ordered_records = order.collect { |name| records[name] }
 
         # Make sure we default to a trailing separator
-        assert_equal(true, @parser.trailing_separator,
-            "Did not default to a trailing separtor")
+        assert_equal(true, @parser.trailing_separator, "Did not default to a trailing separtor")
 
         # Start without a trailing separator
         @parser.trailing_separator = false
@@ -280,7 +284,10 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         result = nil
         assert_nothing_raised do
-            result = @parser.to_line(:record_type => :record,
+
+            result = @parser.to_line(
+                :record_type => :record,
+
                 :one => "a", :two => :absent, :three => "b")
         end
 
@@ -289,15 +296,17 @@ class TestUtilFileParsing < Test::Unit::TestCase
         # Now try using a different replacement character
         record.absent = "*" # Because cron is a pain in my ass
         assert_nothing_raised do
-            result = @parser.to_line(:record_type => :record,
-                :one => "a", :two => :absent, :three => "b")
+            result = @parser.to_line(:record_type => :record, :one => "a", :two => :absent, :three => "b")
         end
 
         assert_equal("a * b", result, "Absent was not correctly replaced")
 
         # Make sure we deal correctly with the string 'absent'
         assert_nothing_raised do
-            result = @parser.to_line(:record_type => :record,
+
+            result = @parser.to_line(
+                :record_type => :record,
+
                 :one => "a", :two => "b", :three => 'absent')
         end
 
@@ -305,7 +314,10 @@ class TestUtilFileParsing < Test::Unit::TestCase
 
         # And, of course, make sure we can swap things around.
         assert_nothing_raised do
-            result = @parser.to_line(:record_type => :record,
+
+            result = @parser.to_line(
+                :record_type => :record,
+
                 :one => "a", :two => "b", :three => :absent)
         end
 
@@ -318,14 +330,15 @@ class TestUtilFileParsing < Test::Unit::TestCase
             # Check parsing first
             result = @parser.parse_line(start)
             [:one, :two].each do |param|
-                assert_equal(record[param], result[param],
+
+                assert_equal(
+                    record[param], result[param],
+
                     "Did not correctly parse %s" % start.inspect)
             end
 
             # And generating
-            assert_equal(final, @parser.to_line(result),
-                "Did not correctly generate %s from %s" %
-                [final.inspect, record.inspect])
+            assert_equal(final, @parser.to_line(result), "Did not correctly generate %s from %s" % [final.inspect, record.inspect])
         end
 
         # First try it with symmetric characters
@@ -361,23 +374,32 @@ class TestUtilFileParsing < Test::Unit::TestCase
 johnny one two
 billy three four\n"
 
-        # Just parse and generate, to make sure it's isomorphic.
-        assert_nothing_raised do
-            assert_equal(text, @parser.to_file(@parser.parse(text)),
-                "parsing was not isomorphic")
+#         Just parse and generate, to make sure it's isomorphic.
+assert_nothing_raised do
+    assert_equal(text, @parser.to_file(@parser.parse(text)),
+        "parsing was not isomorphic")
         end
     end
 
     def test_valid_attrs
         @parser.record_line :record, :fields => %w{one two three}
 
-        assert(@parser.valid_attr?(:record, :one),
+
+            assert(
+                @parser.valid_attr?(:record, :one),
+
             "one was considered invalid")
 
-        assert(@parser.valid_attr?(:record, :ensure),
+
+                assert(
+                    @parser.valid_attr?(:record, :ensure),
+
             "ensure was considered invalid")
 
-        assert(! @parser.valid_attr?(:record, :four),
+
+                assert(
+                    ! @parser.valid_attr?(:record, :four),
+
             "four was considered valid")
     end
 
@@ -433,11 +455,9 @@ billy three four\n"
             assert(result, "Did not get a result back for '%s'" % line)
             should.each do |field|
                 if field == :alias and line =~ /null/
-                    assert_equal(%w{sink null}, result[field],
-                        "Field %s was not right in '%s'" % [field, line])
+                    assert_equal(%w{sink null}, result[field], "Field %s was not right in '%s'" % [field, line])
                 else
-                    assert_equal(values[field], result[field],
-                        "Field %s was not right in '%s'" % [field, line])
+                    assert_equal(values[field], result[field], "Field %s was not right in '%s'" % [field, line])
                 end
             end
         end
@@ -457,9 +477,9 @@ billy three four\n"
         end
 
         { "a b c d" => [],
-          "a b * d" => [:three],
-          "a b * *" => [:three, :four],
-          "a b c *" => [:four]
+            "a b * d" => [:three],
+            "a b * *" => [:three, :four],
+            "a b c *" => [:four]
         }.each do |line, absentees|
             record = nil
             assert_nothing_raised do
@@ -495,7 +515,10 @@ billy three four\n"
                 :optional => %w{three four}
         end
 
-        assert_equal("a b  ",
+
+            assert_equal(
+                "a b  ",
+
             @parser.to_line(:record_type => :record, :one => "a", :two => "b")
         )
 
@@ -508,7 +531,10 @@ billy three four\n"
                 :rts => true
         end
 
-        assert_equal("a b",
+
+            assert_equal(
+                "a b",
+
             @parser.to_line(:record_type => :record, :one => "a", :two => "b")
         )
 
@@ -522,7 +548,10 @@ billy three four\n"
                 :rts => /[ *]+$/
         end
 
-        assert_equal("a b",
+
+            assert_equal(
+                "a b",
+
             @parser.to_line(:record_type => :record, :one => "a", :two => "b")
         )
     end
@@ -536,7 +565,10 @@ billy three four\n"
         assert_nothing_raised do
             result = @parser.send(:parse_line, "Name One Two Three")
         end
-        assert_equal("Two Three", result[:two],
+
+            assert_equal(
+                "Two Three", result[:two],
+
             "Did not roll up last fields by default")
 
         @parser = FParser.new
@@ -548,7 +580,10 @@ billy three four\n"
         assert_nothing_raised do
             result = @parser.send(:parse_line, "Name One Two Three")
         end
-        assert_equal("Two", result[:two],
+
+            assert_equal(
+                "Two", result[:two],
+
             "Rolled up last fields when rollup => false")
     end
 
@@ -560,7 +595,10 @@ billy three four\n"
             end
         end
 
-        assert(record.respond_to?(:process),
+
+            assert(
+                record.respond_to?(:process),
+
             "Block was not used with text line")
 
         assert_equal("YAYNESS", record.process("yayness")[:line],
@@ -616,8 +654,7 @@ class TestUtilFileRecord < Test::Unit::TestCase
         assert_nothing_raised do
             record = Record.new(:record, :fields => %w{one two})
         end
-        assert_equal([:one, :two], record.fields,
-            "Did not symbolize fields")
+        assert_equal([:one, :two], record.fields, "Did not symbolize fields")
 
         # Make sure we fail on invalid fields
         [:record_type, :target, :on_disk].each do |field|
@@ -634,9 +671,8 @@ class TestUtilFileRecord < Test::Unit::TestCase
         end
 
         record = Record.new(:record, :fields => %w{fields})
-        {:absent => "", :separator => /\s+/, :joiner => " ",
-            :optional => []}.each do |field, default|
-                assert_equal(default, record.send(field), "%s was not default" % field)
+        {:absent => "", :separator => /\s+/, :joiner => " ", :optional => []}.each do |field, default|
+            assert_equal(default, record.send(field), "%s was not default" % field)
         end
     end
 
@@ -650,10 +686,16 @@ class TestUtilFileRecord < Test::Unit::TestCase
 
         line = "This is a line"
 
-        assert(record.respond_to?(:process),
+
+            assert(
+                record.respond_to?(:process),
+
             "Record did not define :process method")
 
-        assert_equal(line.upcase, record.process(line),
+
+                assert_equal(
+                    line.upcase, record.process(line),
+
             "Record did not process line correctly")
     end
 

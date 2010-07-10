@@ -94,9 +94,9 @@ class Puppet::Node
         # First, get the fqdn
         unless fqdn = parameters["fqdn"]
             if parameters["hostname"] and parameters["domain"]
-                 fqdn = parameters["hostname"] + "." + parameters["domain"]
+                fqdn = parameters["hostname"] + "." + parameters["domain"]
             else
-                 Puppet.warning "Host is missing hostname and/or domain: %s" % name
+                Puppet.warning "Host is missing hostname and/or domain: %s" % name
             end
         end
 

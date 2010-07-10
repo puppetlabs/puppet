@@ -118,7 +118,7 @@ class EventLoop
         end
     end
 
-  private
+    private
 
     def select (timeout)
         @wakeup_time = timeout ? Time.now + timeout : nil
@@ -130,7 +130,7 @@ class EventLoop
         @timers.each { |x| x.sound_alarm if x.ready? }
     end
 
-  public
+    public
 
     def quit ; stopped! ; wake_up ; self end
 

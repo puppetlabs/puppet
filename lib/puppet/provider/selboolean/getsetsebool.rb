@@ -34,14 +34,14 @@ Puppet::Type.type(:selboolean).provide(:getsetsebool) do
     # 'setsebool("...")' construct from working.
 
     def execoutput (cmd)
-      output = ''
-      begin
-        execpipe(cmd) do |out|
-          output = out.readlines.join('').chomp!
+        output = ''
+        begin
+            execpipe(cmd) do |out|
+                output = out.readlines.join('').chomp!
+            end
+        rescue Puppet::ExecutionFailure
+            raise Puppet::ExecutionFailure, output.split("\n")[0]
         end
-      rescue Puppet::ExecutionFailure
-        raise Puppet::ExecutionFailure, output.split("\n")[0]
-      end
-      return output
+        return output
     end
 end

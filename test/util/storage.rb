@@ -12,8 +12,11 @@ class TestStorage < Test::Unit::TestCase
         path = tempfile()
         File.open(path, "w") { |f| f.puts :yayness }
 
-        f = Puppet::Type.type(:file).new(
+
+                    f = Puppet::Type.type(:file).new(
+                
             :name => path,
+        
             :check => %w{checksum type}
         )
 

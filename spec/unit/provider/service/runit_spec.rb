@@ -137,4 +137,4 @@ describe provider_class do
         end
     end
 
- end
+end

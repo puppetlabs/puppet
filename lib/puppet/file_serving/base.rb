@@ -86,7 +86,7 @@ class Puppet::FileServing::Base
             'metadata' => {
                 'api_version' => 1
                 }
-       }
+        }
     end
 
 end

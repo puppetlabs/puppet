@@ -14,12 +14,12 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
 
     if command('rpm')
         confine :true => begin
-                rpm('--version')
-           rescue Puppet::ExecutionFailure
-               false
-           else
-               true
-           end
+            rpm('--version')
+            rescue Puppet::ExecutionFailure
+                false
+            else
+                true
+            end
     end
 
     def self.instances

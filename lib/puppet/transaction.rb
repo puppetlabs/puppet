@@ -342,7 +342,7 @@ class Puppet::Transaction
 
     # The tags we should be checking.
     def tags
-        unless defined? @tags
+        unless defined?(@tags)
             self.tags = Puppet[:tags]
         end
 

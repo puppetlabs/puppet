@@ -153,8 +153,7 @@ module Puppet
 
                         unless time.hour == range[0]
                             self.devfail(
-                                "Incorrectly converted time: %s: %s vs %s" %
-                                    [time, time.hour, range[0]]
+                                "Incorrectly converted time: %s: %s vs %s" % [time, time.hour, range[0]]
                             )
                         end
 
@@ -222,8 +221,7 @@ module Puppet
                 At the moment, Puppet cannot guarantee that level of
                 repetition; that is, it can run up to every 10 minutes, but
                 internal factors might prevent it from actually running that
-                often (e.g., long-running Puppet runs will squash conflictingly
-                scheduled runs).
+                often (e.g., long-running Puppet runs will squash conflictingly scheduled runs).
 
                 See the ``periodmatch`` attribute for tuning whether to match
                 times by their distance apart or by their specific value."
@@ -293,8 +291,7 @@ module Puppet
 
                 if value != 1 and @resource[:periodmatch] != :distance
                     raise Puppet::Error,
-                        "Repeat must be 1 unless periodmatch is 'distance', not '%s'" %
-                            @resource[:periodmatch]
+                        "Repeat must be 1 unless periodmatch is 'distance', not '%s'" % @resource[:periodmatch]
                 end
             end
 
@@ -318,16 +315,22 @@ module Puppet
         def self.mkdefaultschedules
             result = []
             Puppet.debug "Creating default schedules"
-            result << self.new(
+
+                        result << self.new(
+                
                 :name => "puppet",
                 :period => :hourly,
+        
                 :repeat => "2"
             )
 
             # And then one for every period
             @parameters.find { |p| p.name == :period }.value_collection.values.each { |value|
-                result << self.new(
+
+                            result << self.new(
+                
                     :name => value.to_s,
+        
                     :period => value
                 )
             }

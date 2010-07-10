@@ -8,9 +8,12 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
     before do
         provider_class = Puppet::Type::Computer.provider(Puppet::Type::Computer.providers[0])
         Puppet::Type::Computer.expects(:defaultprovider).returns provider_class
-        @resource = Puppet::Type::Computer.new(
+
+                    @resource = Puppet::Type::Computer.new(
+                
                         :name => "puppetcomputertest",
                         :en_address => "aa:bb:cc:dd:ee:ff",
+        
                         :ip_address => "1.2.3.4")
         @properties = {}
         @ensure = Puppet::Type::Computer.attrclass(:ensure).new(:resource => @resource)

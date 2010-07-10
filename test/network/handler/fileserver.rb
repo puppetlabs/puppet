@@ -72,8 +72,11 @@ class TestFileServer < Test::Unit::TestCase
     def test_namefailures
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -95,8 +98,11 @@ class TestFileServer < Test::Unit::TestCase
 
         # and make our fileserver
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -129,8 +135,11 @@ class TestFileServer < Test::Unit::TestCase
         file = nil
 
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -183,8 +192,11 @@ class TestFileServer < Test::Unit::TestCase
         checks = Puppet::Network::Handler.fileserver::CHECKPARAMS
 
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -221,8 +233,11 @@ class TestFileServer < Test::Unit::TestCase
     def test_mountroot
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -250,8 +265,11 @@ class TestFileServer < Test::Unit::TestCase
     def test_recursionlevels
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -301,8 +319,11 @@ class TestFileServer < Test::Unit::TestCase
     def test_listedpath
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -344,8 +365,11 @@ class TestFileServer < Test::Unit::TestCase
     def test_widelists
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -384,8 +408,11 @@ class TestFileServer < Test::Unit::TestCase
         checks = Puppet::Network::Handler.fileserver::CHECKPARAMS
 
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -425,7 +452,10 @@ class TestFileServer < Test::Unit::TestCase
 
         # Now try to describe some sources that don't even exist
         retval = nil
-        assert_raise(Puppet::Network::Handler::FileServerError,
+
+            assert_raise(
+                Puppet::Network::Handler::FileServerError,
+
             "Describing non-existent mount did not raise an error") {
             retval = server.describe("/notmounted/" + "noexisties")
         }
@@ -480,14 +510,17 @@ class TestFileServer < Test::Unit::TestCase
     path #{basedir}/those
 
 "
-        }
+    }
 
 
-        # create a server with the file
-        assert_nothing_raised {
-            server = Puppet::Network::Handler.fileserver.new(
-                :Local => false,
-                :Config => conffile
+    # create a server with the file
+    assert_nothing_raised {
+
+        server = Puppet::Network::Handler.fileserver.new(
+
+            :Local => false,
+
+            :Config => conffile
             )
         }
 
@@ -545,15 +578,16 @@ class TestFileServer < Test::Unit::TestCase
 
                     case type
                     when :deny
-                        assert_raise(Puppet::AuthorizationError,
-                            "Host %s, ip %s, allowed %s" %
-                            [host, ip, mount]) {
+
+                        assert_raise(
+                            Puppet::AuthorizationError,
+
+                            "Host %s, ip %s, allowed %s" % [host, ip, mount]) {
                                 list = server.list(mount, :manage, true, false, host, ip)
                         }
                     when :allow
-                        assert_nothing_raised("Host %s, ip %s, denied %s" %
-                            [host, ip, mount]) {
-                                list = server.list(mount, :manage, true, false, host, ip)
+                        assert_nothing_raised("Host %s, ip %s, denied %s" % [host, ip, mount]) {
+                            list = server.list(mount, :manage, true, false, host, ip)
                         }
                     end
                 }
@@ -574,8 +608,8 @@ class TestFileServer < Test::Unit::TestCase
 "
 }
 
-        invalidconfigs = [
-"[not valid]
+    invalidconfigs = [
+        "[not valid]
     path /this/path/does/not/exist
     allow 192.168.0.*
 ",
@@ -589,24 +623,30 @@ class TestFileServer < Test::Unit::TestCase
 "
 ]
 
-        invalidmounts.each { |mount, text|
-            File.open(conffile, "w") { |f|
-                f.print text
+    invalidmounts.each { |mount, text|
+        File.open(conffile, "w") { |f|
+            f.print text
             }
 
 
             # create a server with the file
             server = nil
             assert_nothing_raised {
+
                 server = Puppet::Network::Handler.fileserver.new(
+
                     :Local => true,
+
                     :Config => conffile
                 )
             }
 
-            assert_raise(Puppet::Network::Handler::FileServerError,
-                "Invalid mount was mounted") {
-                    server.list(mount, :manage)
+
+                assert_raise(
+                    Puppet::Network::Handler::FileServerError,
+
+                    "Invalid mount was mounted") {
+                        server.list(mount, :manage)
             }
         }
 
@@ -618,11 +658,17 @@ class TestFileServer < Test::Unit::TestCase
 
             # create a server with the file
             server = nil
-            assert_raise(Puppet::Network::Handler::FileServerError,
-                "Invalid config %s did not raise error" % i) {
-                server = Puppet::Network::Handler.fileserver.new(
-                    :Local => true,
-                    :Config => conffile
+
+                assert_raise(
+                    Puppet::Network::Handler::FileServerError,
+
+                    "Invalid config %s did not raise error" % i) {
+
+                        server = Puppet::Network::Handler.fileserver.new(
+
+                            :Local => true,
+
+                            :Config => conffile
                 )
             }
         }
@@ -643,29 +689,34 @@ class TestFileServer < Test::Unit::TestCase
     path #{dir}
     allow test1.domain.com
 "
-        }
+    }
 
-        # Reset the timeout, so we reload faster
-        Puppet[:filetimeout] = 0.5
+    # Reset the timeout, so we reload faster
+    Puppet[:filetimeout] = 0.5
 
-        # start our server with a fast timeout
-        assert_nothing_raised {
-            server = Puppet::Network::Handler.fileserver.new(
-                :Local => false,
-                :Config => conffile
+    # start our server with a fast timeout
+    assert_nothing_raised {
+
+        server = Puppet::Network::Handler.fileserver.new(
+
+            :Local => false,
+
+            :Config => conffile
             )
         }
 
         list = nil
         assert_nothing_raised {
-            list = server.list("/thing/", :manage, false, false,
+
+            list = server.list(
+                "/thing/", :manage, false, false,
+
                 "test1.domain.com", "127.0.0.1")
         }
         assert(list != "", "List returned nothing in rereard test")
 
         assert_raise(Puppet::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", :manage, false, false,
-                "test2.domain.com", "127.0.0.1")
+            list = server.list("/thing/", :manage, false, false, "test2.domain.com", "127.0.0.1")
         }
 
         sleep 1
@@ -676,16 +727,14 @@ class TestFileServer < Test::Unit::TestCase
     path #{dir}
     allow test2.domain.com
 "
-        }
+    }
 
-        assert_raise(Puppet::AuthorizationError, "List allowed invalid host") {
-            list = server.list("/thing/", :manage, false, false,
-                "test1.domain.com", "127.0.0.1")
+    assert_raise(Puppet::AuthorizationError, "List allowed invalid host") {
+        list = server.list("/thing/", :manage, false, false, "test1.domain.com", "127.0.0.1")
         }
 
         assert_nothing_raised {
-            list = server.list("/thing/", :manage, false, false,
-                "test2.domain.com", "127.0.0.1")
+            list = server.list("/thing/", :manage, false, false, "test2.domain.com", "127.0.0.1")
         }
 
         assert(list != "", "List returned nothing in rereard test")
@@ -716,8 +765,11 @@ class TestFileServer < Test::Unit::TestCase
         File.open(file, "w") { |f| f.puts "yay" }
         File.symlink(file, link)
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -773,8 +825,7 @@ class TestFileServer < Test::Unit::TestCase
             client1_hostdir => "client1\n",
             client2_fqdndir => client2 + "\n"
         }
-        [fsdir, hostdir, fqdndir,
-         client1_hostdir, client2_fqdndir].each { |d|  Dir.mkdir(d) }
+        [fsdir, hostdir, fqdndir, client1_hostdir, client2_fqdndir].each { |d|  Dir.mkdir(d) }
 
         [client1_hostdir, client2_fqdndir].each do |d|
             File.open(File.join(d, "file.txt"), "w") do |f|
@@ -791,13 +842,16 @@ allow *
 path #{fqdndir}/%H
 allow *
 ")
-        end
+    end
 
-        server = nil
-        assert_nothing_raised {
-            server = Puppet::Network::Handler.fileserver.new(
-                :Local => true,
-                :Config => conffile
+    server = nil
+    assert_nothing_raised {
+
+        server = Puppet::Network::Handler.fileserver.new(
+
+            :Local => true,
+
+            :Config => conffile
             )
         }
 
@@ -938,34 +992,37 @@ allow *
         # Do a round of checks with a fake client
         client = "host.domain.com"
         {"%h" => "host", # Short name
-         "%H" => client, # Full name
-         "%d" => "domain.com", # domain
-         "%%" => "%", # escape
-         "%o" => "%o" # other
-         }.each do |pat, repl|
-             result = check.call(client, pat, repl)
-         end
+        "%H" => client, # Full name
+        "%d" => "domain.com", # domain
+        "%%" => "%", # escape
+        "%o" => "%o" # other
+        }.each do |pat, repl|
+            result = check.call(client, pat, repl)
+        end
 
         # Now, check that they use Facter info
         client = nil
         Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
         Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
 
-        Facter.stubs(:to_hash).returns({
-            :ipaddress => "127.0.0.1",
-            :hostname => "myhost",
-            :domain   => "mydomain.com",
+
+            Facter.stubs(:to_hash).returns(
+                {
+                    :ipaddress => "127.0.0.1",
+                    :hostname => "myhost",
+                    :domain   => "mydomain.com",
+
         })
 
 
         {"%h" => "myhost", # Short name
-         "%H" => "myhost.mydomain.com", # Full name
-         "%d" => "mydomain.com", # domain
-         "%%" => "%", # escape
-         "%o" => "%o" # other
-         }.each do |pat, repl|
-             check.call(client, pat, repl)
-         end
+        "%H" => "myhost.mydomain.com", # Full name
+        "%d" => "mydomain.com", # domain
+        "%%" => "%", # escape
+        "%o" => "%o" # other
+        }.each do |pat, repl|
+            check.call(client, pat, repl)
+        end
 
     end
 
@@ -973,8 +1030,11 @@ allow *
     def test_fileserver_expansion
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler.fileserver.new(
+
                 :Local => true,
+
                 :Config => false
             )
         }
@@ -986,11 +1046,14 @@ allow *
 
         ip = '127.0.0.1'
 
-        Facter.stubs(:to_hash).returns({
-            :kernel => kernel_fact,
-            :ipaddress => "127.0.0.1",
-            :hostname => "myhost",
-            :domain   => "mydomain.com",
+
+            Facter.stubs(:to_hash).returns(
+                {
+                    :kernel => kernel_fact,
+                    :ipaddress => "127.0.0.1",
+                    :hostname => "myhost",
+                    :domain   => "mydomain.com",
+
         })
 
         Dir.mkdir(dir)
@@ -1047,7 +1110,7 @@ allow *
                 File::open(file, "w") { |f| f.print name }
             end
 
-           Puppet::Module::find(name)
+            Puppet::Module::find(name)
         end
 
         conffile = tempfile
@@ -1057,8 +1120,11 @@ allow *
         # create a server with the file
         server = nil
         assert_nothing_raised {
+
             server = Puppet::Network::Handler::FileServer.new(
+
                 :Local => false ,
+
                 :Config => conffile
             )
         }
@@ -1080,8 +1146,7 @@ allow *
             end
 
             assert_nothing_raised("Host 'allow' denied #{mount}") {
-                server.list(mount, :manage, true, false,
-                            'allow.example.com', "192.168.0.1")
+                server.list(mount, :manage, true, false, 'allow.example.com', "192.168.0.1")
             }
         end
     end
@@ -1109,14 +1174,17 @@ allow *
     path #{basedir}/thing
     allow 192.168.0.*
 "
-        }
+    }
 
-        # create a server with the file
-        server = nil
-        assert_nothing_raised {
-            server = Puppet::Network::Handler::FileServer.new(
-                :Local => false,
-                :Config => conffile
+    # create a server with the file
+    server = nil
+    assert_nothing_raised {
+
+        server = Puppet::Network::Handler::FileServer.new(
+
+            :Local => false,
+
+            :Config => conffile
             )
         }
 
@@ -1136,14 +1204,15 @@ allow *
         assert_describe(mount, file, server)
 
         # now let's check that things are being correctly forbidden
-        assert_raise(Puppet::AuthorizationError,
-                     "Host 'deny' allowed #{mount}") {
-            server.list(mount, :manage, true, false,
-                        'deny.example.com', "192.168.1.1")
+
+            assert_raise(
+                Puppet::AuthorizationError,
+
+                    "Host 'deny' allowed #{mount}") {
+                        server.list(mount, :manage, true, false, 'deny.example.com', "192.168.1.1")
         }
         assert_nothing_raised("Host 'allow' denied #{mount}") {
-            server.list(mount, :manage, true, false,
-                        'allow.example.com', "192.168.0.1")
+            server.list(mount, :manage, true, false, 'allow.example.com', "192.168.0.1")
         }
     end
 
@@ -1161,8 +1230,11 @@ allow *
         ].each do |failer|
             File.open(config, "w") { |f| f.puts failer }
             assert_raise(Puppet::Network::Handler::FileServerError, "Did not fail on %s" % failer.inspect) {
+
                 server = Puppet::Network::Handler::FileServer.new(
+
                     :Local => false,
+
                     :Config => config
                 )
             }
@@ -1172,8 +1244,8 @@ allow *
     def test_can_start_without_configuration
         Puppet[:fileserverconfig] = tempfile
         assert_nothing_raised("Could not create fileserver when configuration is absent") do
-                server = Puppet::Network::Handler::FileServer.new(
-                    :Local => false
+            server = Puppet::Network::Handler::FileServer.new(
+                :Local => false
                 )
         end
     end

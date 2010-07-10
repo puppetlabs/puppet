@@ -6,7 +6,7 @@ module Puppet
     class Network::AuthConfig < Puppet::Util::LoadedFile
 
         def self.main
-            unless defined? @main
+            unless defined?(@main)
                 @main = self.new()
             end
             @main
@@ -105,7 +105,7 @@ module Puppet
                             count += 1
                             next
                         when /^(?:(\[[\w.]+\])|(path)\s+((?:~\s+)?[^ ]+))\s*$/ # "namespace" or "namespace.method" or "path /path" or "path ~ regex"
-                             name = $1
+                            name = $1
                             if $2 == "path"
                                 name = $3
                             end
@@ -123,8 +123,7 @@ module Puppet
                 Puppet.err "Configuration error: Cannot read %s; cannot serve" % @file
                 #raise Puppet::Error, "Cannot read %s" % @config
             rescue Errno::ENOENT => detail
-                Puppet.err "Configuration error: '%s' does not exit; cannot serve" %
-                    @file
+                Puppet.err "Configuration error: '%s' does not exit; cannot serve" % @file
                 #raise Puppet::Error, "%s does not exit" % @config
             #rescue FileServerError => detail
             #    Puppet.err "FileServer error: %s" % detail

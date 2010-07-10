@@ -120,7 +120,7 @@ describe Puppet::Type.type(:mount)::Ensure do
             @ensure.should = :defined
             @ensure.sync
         end
-        
+
         it "should not unmount itself if it is mounted and should be defined" do
             @provider.stubs(:ensure).returns(:mounted)
             @provider.stubs(:mounted?).returns(true)
@@ -131,7 +131,7 @@ describe Puppet::Type.type(:mount)::Ensure do
             @ensure.should = :defined
             @ensure.sync
         end
-        
+
         it "should not mount itself if it is unmounted and should be defined" do
             @provider.stubs(:ensure).returns(:unmounted)
             @provider.stubs(:mounted?).returns(false)
@@ -186,7 +186,7 @@ describe Puppet::Type.type(:mount)::Ensure do
             @ensure.should = :defined
             @ensure.insync?(:mounted).should == true
         end
-        
+
         it "should be insync if it is unmounted and should be defined" do
             @ensure.should = :defined
             @ensure.insync?(:unmounted).should == true
@@ -196,7 +196,7 @@ describe Puppet::Type.type(:mount)::Ensure do
             @ensure.should = :present
             @ensure.insync?(:mounted).should == true
         end
-        
+
         it "should be insync if it is unmounted and should be present" do
             @ensure.should = :present
             @ensure.insync?(:unmounted).should == true

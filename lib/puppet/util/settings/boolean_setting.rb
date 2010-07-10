@@ -5,11 +5,9 @@ class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::Setting
     # get the arguments in getopt format
     def getopt_args
         if short
-            [["--#{name}", "-#{short}", GetoptLong::NO_ARGUMENT],
-             ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
+            [["--#{name}", "-#{short}", GetoptLong::NO_ARGUMENT], ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
         else
-            [["--#{name}", GetoptLong::NO_ARGUMENT],
-             ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
+            [["--#{name}", GetoptLong::NO_ARGUMENT], ["--no-#{name}", GetoptLong::NO_ARGUMENT]]
         end
     end
 
@@ -26,8 +24,7 @@ class Puppet::Util::Settings::BooleanSetting < Puppet::Util::Settings::Setting
         when true, "true"; return true
         when false, "false"; return false
         else
-            raise ArgumentError, "Invalid value '%s' for %s" %
-                [value.inspect, @name]
+            raise ArgumentError, "Invalid value '%s' for %s" % [value.inspect, @name]
         end
     end
 end

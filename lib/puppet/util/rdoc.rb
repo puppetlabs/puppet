@@ -16,15 +16,18 @@ module Puppet::Util::RDoc
             require 'puppet/util/rdoc/parser'
 
             r = RDoc::RDoc.new
-            RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new("puppet/util/rdoc/generators/puppet_generator.rb",
-                                                                       "PuppetGenerator".intern,
-                                                                       "puppet")
+
+                RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
+                    "puppet/util/rdoc/generators/puppet_generator.rb",
+                        "PuppetGenerator".intern,
+
+                        "puppet")
             # specify our own format & where to output
             options = [ "--fmt", "puppet",
-                        "--quiet",
-                        "--force-update",
-                        "--exclude", "/modules/[^/]*/files/.*\.pp$",
-                        "--op", outputdir ]
+                "--quiet",
+                "--force-update",
+                "--exclude", "/modules/[^/]*/files/.*\.pp$",
+                "--op", outputdir ]
 
             options += [ "--charset", charset] if charset
             options += files

@@ -67,8 +67,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
         begin
             execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-            raise Puppet::Error, "Could not %s %s %s: %s" %
-                [msg, @resource.class.name, @resource.name, detail]
+            raise Puppet::Error, "Could not %s %s %s: %s" % [msg, @resource.class.name, @resource.name, detail]
         end
     end
 

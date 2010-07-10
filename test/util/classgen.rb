@@ -55,14 +55,20 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
 
         # Now make sure we can choose our own constant
         assert_nothing_raised do
-            const = sub.send(:handleclassconst, newklass, klass.name,
+
+                        const = sub.send(
+                :handleclassconst, newklass, klass.name,
+        
                 :constant => "Fooness")
         end
         assert(defined?(Baseconst::Fooness), "Specified constant was not defined")
 
         # And make sure prefixes work
         assert_nothing_raised do
-            const = sub.send(:handleclassconst, newklass, klass.name,
+
+                        const = sub.send(
+                :handleclassconst, newklass, klass.name,
+        
                 :prefix => "Test")
         end
         assert(defined?(Baseconst::TestGenconst), "prefix was not used")
@@ -111,7 +117,10 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
 
         assert(!klass.one, "'one' was already set")
 
-        assert_nothing_raised do sub.send(:initclass, klass,
+
+                    assert_nothing_raised do sub.send(
+                :initclass, klass,
+        
             :attributes => {:one => :a, :two => :b}) end
 
         assert_equal(:a, klass.one, "Class was initialized incorrectly")
@@ -135,7 +144,10 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
         assert(! klass.respond_to?(:extended), "Class already responds to extended")
         assert(! klass.new.respond_to?(:included), "Class already responds to included")
 
-        assert_nothing_raised do sub.send(:initclass, klass,
+
+                    assert_nothing_raised do sub.send(
+                :initclass, klass,
+        
             :include => incl, :extend => ext)
         end
 
@@ -150,8 +162,7 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
         name = "yayness"
         klass = nil
         assert_nothing_raised {
-            klass = GenTest.genclass(name, :array => array,
-                :hash => hash, :parent => FakeBase) do
+            klass = GenTest.genclass(name, :array => array, :hash => hash, :parent => FakeBase) do
                     class << self
                         attr_accessor :name
                     end
@@ -160,9 +171,15 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
 
         assert(klass.respond_to?(:name=), "Class did not execute block")
 
-        assert(hash.include?(klass.name),
+
+                    assert(
+                hash.include?(klass.name),
+        
             "Class did not get added to hash")
-        assert(array.include?(klass),
+
+                    assert(
+                array.include?(klass),
+        
             "Class did not get added to array")
         assert_equal(klass.superclass, FakeBase, "Parent class was wrong")
     end
@@ -209,10 +226,8 @@ class TestPuppetUtilClassGen < Test::Unit::TestCase
         assert(mod.respond_to?(:yaytest), "Class did not execute block")
 
         assert_instance_of(Module, mod)
-        assert(hash.include?(mod.name),
-            "Class did not get added to hash")
-        assert(array.include?(mod),
-            "Class did not get added to array")
+        assert(hash.include?(mod.name), "Class did not get added to hash")
+        assert(array.include?(mod), "Class did not get added to array")
     end
 
     def test_genconst_string

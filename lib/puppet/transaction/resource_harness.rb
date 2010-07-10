@@ -53,7 +53,7 @@ class Puppet::Transaction::ResourceHarness
         end
 
         resource.properties.reject { |p| p.name == :ensure }.reject do |param|
-            param.should.nil? 
+            param.should.nil?
         end.reject do |param|
             param_is_insync?(current, param)
         end.collect do |param|

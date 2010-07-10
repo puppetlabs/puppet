@@ -30,7 +30,7 @@ describe Puppet::Util::FileLocking do
             File.stubs(:exists?).with('/file').returns true
             File.stubs(:file?).with('/file').returns true
         end
-        
+
         it "should use a global shared mutex" do
             @sync = mock 'sync'
             @sync.expects(:synchronize).with(Sync::SH).once
@@ -66,7 +66,7 @@ describe Puppet::Util::FileLocking do
             File.expects(:exists?).with('/file').returns false
             File.expects(:open).with('/file').once
 
-            Puppet::Util::FileLocking.readlock('/file') 
+            Puppet::Util::FileLocking.readlock('/file')
         end
     end
 
@@ -150,7 +150,7 @@ describe Puppet::Util::FileLocking do
             File.expects(:exists?).with('/file').returns false
             File.expects(:open).with('/file', 'w', 0600).once
 
-            Puppet::Util::FileLocking.writelock('/file') 
+            Puppet::Util::FileLocking.writelock('/file')
         end
     end
 end

@@ -12,7 +12,7 @@ describe "Pure ruby yaml implementation" do
     []           => "--- []",
     :symbol      => "--- !ruby/sym symbol",
     {:a => "A"}  => "--- \n  !ruby/sym a: A"
-    }.each { |o,y| 
+    }.each { |o,y|
         it "should convert the #{o.class} #{o.inspect} to yaml" do
             o.to_yaml.should == y
         end
@@ -26,7 +26,7 @@ describe "Pure ruby yaml implementation" do
     Object.new                   => "--- !ruby/object {}",
     [Object.new]                 => "--- \n  - !ruby/object {}",
     {Object.new => Object.new}   => "--- \n  ? !ruby/object {}\n  : !ruby/object {}"
-    }.each { |o,y| 
+    }.each { |o,y|
         it "should convert the #{o.class} #{o.inspect} to yaml" do
             o.to_yaml.should == y
         end

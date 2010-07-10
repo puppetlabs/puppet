@@ -1,10 +1,10 @@
-# Puppet External Data Sources 
+# Puppet External Data Sources
 #
 # This is a parser function to read data from external files, this version
 # uses CSV files but the concept can easily be adjust for databases, yaml
 # or any other queryable data source.
 #
-# The object of this is to make it obvious when it's being used, rather than 
+# The object of this is to make it obvious when it's being used, rather than
 # magically loading data in when an module is loaded I prefer to look at the code
 # and see statements like:
 #
@@ -34,7 +34,7 @@
 #
 # Now create the following data files in /etc/puppet/manifests/extdata
 #
-# domain_myclient.com.csv: 
+# domain_myclient.com.csv:
 #    snmp_contact,John Doe <john@myclient.com>
 #    root_contact,support@%{domain}
 #    client_trusted_ips,192.168.1.130,192.168.10.0/24
@@ -48,7 +48,7 @@
 #
 #    $snmp_contact = extlookup("snmp_contact")
 #
-# The obove code shows some other features, you can use any fact or variable that 
+# The obove code shows some other features, you can use any fact or variable that
 # is in scope by simply using %{varname} in your data files, you can return arrays
 # by just having multiple values in the csv after the initial variable name.
 #
@@ -57,8 +57,8 @@
 # in empty values etc.  You can however specify a default value:
 #
 #    $ntp_servers = extlookup("ntp_servers", "1.${country}.pool.ntp.org")
-# 
-# In this case it will default to "1.${country}.pool.ntp.org" if nothing is defined in 
+#
+# In this case it will default to "1.${country}.pool.ntp.org" if nothing is defined in
 # any data file.
 #
 # You can also specify an additional data file to search first before any others at use
@@ -78,7 +78,7 @@
 #
 # For further help contact Volcane on #puppet
 require 'csv'
- 
+
 module Puppet::Parser::Functions
     newfunction(:extlookup, :type => :rvalue) do |args|
         key = args[0]
@@ -110,12 +110,12 @@ module Puppet::Parser::Functions
 
             extlookup_precedence << prec
         end
-    
+
 
         datafiles = Array.new
 
         # if we got a custom data file, put it first in the array of search files
-        if datafile != "" 
+        if datafile != ""
             if File.exists?(extlookup_datadir + "/#{datafile}.csv")
                 datafiles << extlookup_datadir + "/#{datafile}.csv"
             end
@@ -135,14 +135,14 @@ module Puppet::Parser::Functions
                     result = CSV.read(file).find_all do |r|
                         r[0] == key
                     end
-    
+
 
                     # return just the single result if theres just one,
                     # else take all the fields in the csv and build an array
                     if result.length > 0
                         if result[0].length == 2
                             val = result[0][1].to_s
-                            
+
                             # parse %{}'s in the CSV into local variables using lookupvar()
                             while val =~ /%\{(.+?)\}/
                                 val.gsub!(/%\{#{$1}\}/, lookupvar($1))
@@ -152,7 +152,7 @@ module Puppet::Parser::Functions
                         elsif result[0].length > 1
                             length = result[0].length
                             cells = result[0][1,length]
-    
+
                             # Individual cells in a CSV result are a weird data type and throws
                             # puppets yaml parsing, so just map it all to plain old strings
                             desired = cells.map do |c|
@@ -172,7 +172,7 @@ module Puppet::Parser::Functions
         # don't accidently return nil's and such rather throw a parse error
         if desired == "_ExtUNSET_" && default == "_ExtUNSET_"
             raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
-        else 
+        else
             desired = default if desired == "_ExtUNSET_"
         end
 

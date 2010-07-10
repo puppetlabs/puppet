@@ -61,7 +61,7 @@ describe Puppet::Network::FormatHandler do
         describe "that is supported" do
             before do
                 Puppet.settings.expects(:value).with(:preferred_serialization_format).returns :one
-            end    
+            end
             it "should return the preferred serialization format first" do
                 FormatTester.supported_formats.should == [:one, :two]
             end

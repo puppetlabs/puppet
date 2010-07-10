@@ -10,16 +10,18 @@ class TestType < Test::Unit::TestCase
     def test_typemethods
         Puppet::Type.eachtype { |type|
             name = nil
-            assert_nothing_raised("Searching for name for %s caused failure" %
-                type.to_s) {
+            assert_nothing_raised("Searching for name for %s caused failure" % type.to_s) {
                     name = type.name
             }
 
             assert(name, "Could not find name for %s" % type.to_s)
 
-            assert_equal(
+
+                        assert_equal(
+                
                 type,
                 Puppet::Type.type(name),
+        
                 "Failed to retrieve %s by name" % name
             )
 
@@ -29,13 +31,19 @@ class TestType < Test::Unit::TestCase
             #end
 
             assert_nothing_raised {
-                assert_not_nil(
+
+                            assert_not_nil(
+                
                     type.properties,
+        
                     "Properties for %s are nil" % name
                 )
 
-                assert_not_nil(
+
+                            assert_not_nil(
+                
                     type.validproperties,
+        
                     "Valid properties for %s are nil" % name
                 )
             }
@@ -43,8 +51,11 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_aliases_are_added_to_catalog
-        resource = Puppet::Type.type(:file).new(
+
+                    resource = Puppet::Type.type(:file).new(
+                
             :name => "/path/to/some/missing/file",
+        
             :ensure => "file"
         )
         resource.stubs(:path).returns("")
@@ -60,8 +71,11 @@ class TestType < Test::Unit::TestCase
     end
 
     def test_aliasing_fails_without_a_catalog
-        resource = Puppet::Type.type(:file).new(
+
+                    resource = Puppet::Type.type(:file).new(
+                
             :name => "/no/such/file",
+        
             :ensure => "file"
         )
 
@@ -73,8 +87,11 @@ class TestType < Test::Unit::TestCase
     def test_ensuredefault
         user = nil
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).new(
+
+                        user = Puppet::Type.type(:user).new(
+                
                 :name => "pptestAA",
+        
                 :check => [:uid]
             )
         }
@@ -83,8 +100,11 @@ class TestType < Test::Unit::TestCase
         assert(! user.property(:ensure), "User got an ensure property")
 
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).new(
+
+                        user = Puppet::Type.type(:user).new(
+                
                 :name => "pptestAB",
+        
                 :comment => "Testingness"
             )
         }
@@ -92,8 +112,11 @@ class TestType < Test::Unit::TestCase
         assert(user.property(:ensure), "User did not add ensure property")
 
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).new(
+
+                        user = Puppet::Type.type(:user).new(
+                
                 :name => "pptestBC",
+        
                 :comment => "A fake user"
             )
         }
@@ -108,7 +131,10 @@ class TestType < Test::Unit::TestCase
             end
         }
 
-        assert(Puppet::Type.respond_to?(:newmytype),
+
+                    assert(
+                Puppet::Type.respond_to?(:newmytype),
+        
             "new<type> method did not get created")
 
         obj = nil
@@ -144,8 +170,7 @@ class TestType < Test::Unit::TestCase
                 newparam(:rah) do isnamevar end
             end
         }
-        assert_equal(parammethod, Puppet::Type.method(:newparam),
-            "newparam method got replaced by newtype")
+        assert_equal(parammethod, Puppet::Type.method(:newparam), "newparam method got replaced by newtype")
     end
 
     def test_newproperty_options
@@ -215,8 +240,11 @@ class TestType < Test::Unit::TestCase
 
         path = tempfile()
         assert_nothing_raised do
-            file = fileclass.create(
+
+                        file = fileclass.create(
+                
                 :title => "Myfile",
+        
                 :path => path
             )
         end
@@ -228,8 +256,11 @@ class TestType < Test::Unit::TestCase
 
         # Now make sure we can specify both and still get the right answers
         assert_nothing_raised do
-            file = fileclass.create(
+
+                        file = fileclass.create(
+                
                 :title => "Myfile",
+        
                 :name => path
             )
         end
@@ -248,15 +279,21 @@ class TestType < Test::Unit::TestCase
         echo = Puppet::Util.binary "echo"
         exec1 = exec2 = nil
         assert_nothing_raised do
-            exec1 = Puppet::Type.type(:exec).new(
+
+                        exec1 = Puppet::Type.type(:exec).new(
+                
                 :title => "exec1",
+        
                 :command => "#{echo} funtest"
             )
         end
         catalog.add_resource(exec1)
         assert_nothing_raised do
-            exec2 = Puppet::Type.type(:exec).new(
+
+                        exec2 = Puppet::Type.type(:exec).new(
+                
                 :title => "exec2",
+        
                 :command => "#{echo} funtest"
             )
         end
@@ -265,16 +302,22 @@ class TestType < Test::Unit::TestCase
         # Now do files, since they are. This should fail.
         file1 = file2 = nil
         path = tempfile()
-        file1 = Puppet::Type.type(:file).new(
+
+                    file1 = Puppet::Type.type(:file).new(
+                
             :title => "file1",
             :path => path,
+        
             :content => "yayness"
         )
         catalog.add_resource(file1)
 
-        file2 = Puppet::Type.type(:file).new(
+
+                    file2 = Puppet::Type.type(:file).new(
+                
             :title => "file2",
             :path => path,
+        
             :content => "rahness"
         )
         assert_raise(ArgumentError) { catalog.add_resource(file2) }

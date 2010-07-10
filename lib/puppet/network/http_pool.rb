@@ -62,7 +62,7 @@ module Puppet::Network::HttpPool
             http.verify_callback = self.method(:ssl_verify_callback).to_proc
         end
     end
-    
+
     def self.ssl_verify_callback(peer_ok, x509_store_ctx)
         if not peer_ok
             Puppet.debug "OpenSSL: Error(#{x509_store_ctx.error}): #{x509_store_ctx.error_string}"

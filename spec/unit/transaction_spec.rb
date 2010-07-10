@@ -85,7 +85,7 @@ describe Puppet::Transaction do
         @transaction.add_resource_status(status)
         @transaction.should be_any_failed
     end
-    
+
     it "should not consider there to be failed resources if no statuses are marked failed" do
         resource = Puppet::Type.type(:notify).new :name => "yayness"
         status = Puppet::Resource::Status.new(resource)

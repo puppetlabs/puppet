@@ -34,7 +34,7 @@ module Puppet
         end
 
         def ref
-            unless defined? @ref
+            unless defined?(@ref)
                 @ref = Puppet::Resource.new(@type, @name)
             end
             @ref.to_s
@@ -65,15 +65,14 @@ module Puppet
         end
 
         def to_manifest
-            "%s { '%s':\n%s\n}" %
-                [self.type.to_s, self.name,
-                 @params.collect { |p, v|
-                     if v.is_a? Array
-                         "    #{p} => [\'#{v.join("','")}\']"
-                     else
-                         "    #{p} => \'#{v}\'"
-                     end
-                 }.join(",\n")
+            "%s { '%s':\n%s\n}" % [self.type.to_s, self.name,
+                @params.collect { |p, v|
+                    if v.is_a? Array
+                        "    #{p} => [\'#{v.join("','")}\']"
+                    else
+                        "    #{p} => \'#{v}\'"
+                    end
+                }.join(",\n")
                 ]
         end
 
@@ -151,8 +150,7 @@ module Puppet
                     # nada
                 else
                     raise Puppet::DevError,
-                        "TransBuckets cannot handle objects of type %s" %
-                            arg.class
+                        "TransBuckets cannot handle objects of type %s" % arg.class
                 end
             }
             @children += args
@@ -161,7 +159,7 @@ module Puppet
         # Convert to a parseable manifest
         def to_manifest
             unless self.top
-                unless defined? @keyword and @keyword
+                unless defined?(@keyword) and @keyword
                     raise Puppet::DevError, "No keyword; cannot convert to manifest"
                 end
             end
@@ -222,7 +220,7 @@ module Puppet
         end
 
         def to_ref
-            unless defined? @ref
+            unless defined?(@ref)
                 if self.type and self.name
                     @ref = Puppet::Resource.new(self.type, self.name)
                 elsif self.type and ! self.name # This is old-school node types
@@ -247,7 +245,7 @@ module Puppet
         end
 
         def param(param,value)
-            unless defined? @parameters
+            unless defined?(@parameters)
                 @parameters = {}
             end
             @parameters[param] = value

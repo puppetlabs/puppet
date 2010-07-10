@@ -53,9 +53,9 @@ to other machines.
         desc "The name of the resource being managed.
         The default naming convention follows Directory Service paths::
 
-          /Computers/localhost
-          /Groups/admin
-          /Users/localadmin
+            /Computers/localhost
+            /Groups/admin
+            /Users/localadmin
 
         The ds_type and ds_name type parameters are not necessary if the
         default naming convention is followed."

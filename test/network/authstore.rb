@@ -93,9 +93,15 @@ class TestAuthStore < Test::Unit::TestCase
             @store.deny("*.sub.madstop.com")
         }
 
-        assert(@store.allowed?("hostname.madstop.com", "192.168.1.50"),
+
+            assert(
+                @store.allowed?("hostname.madstop.com", "192.168.1.50"),
+
             "hostname not allowed")
-        assert(! @store.allowed?("name.sub.madstop.com", "192.168.0.50"),
+
+                assert(
+                    ! @store.allowed?("name.sub.madstop.com", "192.168.0.50"),
+
             "subname name allowed")
     end
 
@@ -105,9 +111,15 @@ class TestAuthStore < Test::Unit::TestCase
             @store.deny("192.168.0.0/24")
         }
 
-        assert(@store.allowed?("hostname.madstop.com", "192.168.1.50"),
+
+            assert(
+                @store.allowed?("hostname.madstop.com", "192.168.1.50"),
+
             "hostname not allowed")
-        assert(! @store.allowed?("hostname.madstop.com", "192.168.0.50"),
+
+                assert(
+                    ! @store.allowed?("hostname.madstop.com", "192.168.0.50"),
+
             "Host allowed over IP")
     end
 
@@ -128,22 +140,31 @@ class TestAuthStore < Test::Unit::TestCase
 
     def test_store
         assert_nothing_raised do
-            assert_nil(@store.send(:store, :allow, "*.host.com"),
+
+            assert_nil(
+                @store.send(:store, :allow, "*.host.com"),
+
                 "store did not return nil")
         end
         assert_equal([Declaration.new(:allow, "*.host.com")],
-                     @store.send(:instance_variable_get, "@declarations"),
+            @store.send(:instance_variable_get, "@declarations"),
             "Did not store declaration")
 
         # Now add another one and make sure it gets sorted appropriately
         assert_nothing_raised do
-            assert_nil(@store.send(:store, :allow, "me.host.com"),
+
+            assert_nil(
+                @store.send(:store, :allow, "me.host.com"),
+
                 "store did not return nil")
         end
 
-        assert_equal([
-                     Declaration.new(:allow, "me.host.com"),
-                     Declaration.new(:allow, "*.host.com")
+
+            assert_equal(
+                [
+                    Declaration.new(:allow, "me.host.com"),
+
+                    Declaration.new(:allow, "*.host.com")
         ],
             @store.send(:instance_variable_get, "@declarations"),
             "Did not sort declarations")
@@ -160,11 +181,17 @@ class TestAuthStore < Test::Unit::TestCase
 
         store = Puppet::Network::AuthStore.new
         assert_nothing_raised do
-            assert_nil(store.allow("*"),
+
+            assert_nil(
+                store.allow("*"),
+
                 "allow did not return nil")
         end
 
-        assert(store.globalallow?,
+
+            assert(
+                store.globalallow?,
+
             "did not enable global allow")
     end
 
@@ -186,7 +213,10 @@ class TestAuthStore < Test::Unit::TestCase
             inval$id
 
         }.each { |pat|
-            assert_raise(Puppet::AuthStoreError,
+
+            assert_raise(
+                Puppet::AuthStoreError,
+
                 "name '%s' was allowed" % pat) {
                 @store.allow(pat)
             }
@@ -216,7 +246,10 @@ class TestAuthStore < Test::Unit::TestCase
             @store.allow("domain.*.com")
         }
 
-        assert(!@store.allowed?("very.long.domain.name.com", "1.2.3.4"),
+
+            assert(
+                !@store.allowed?("very.long.domain.name.com", "1.2.3.4"),
+
             "Long hostname allowed")
 
         assert_raise(Puppet::AuthStoreError) {
@@ -229,14 +262,16 @@ class TestAuthStore < Test::Unit::TestCase
         @store.allow("hostname.com")
 
         %w{hostname.com Hostname.COM hostname.Com HOSTNAME.COM}.each do |name|
-            assert(@store.allowed?(name, "127.0.0.1"),
-                "did not allow %s" % name)
+            assert(@store.allowed?(name, "127.0.0.1"), "did not allow %s" % name)
         end
     end
 
     def test_allowed?
         Puppet[:trace] = false
-        assert(@store.allowed?(nil, nil),
+
+            assert(
+                @store.allowed?(nil, nil),
+
             "Did not default to true for local checks")
         assert_raise(Puppet::DevError, "did not fail on one input") do
             @store.allowed?("host.com", nil)
@@ -252,13 +287,19 @@ class TestAuthStore < Test::Unit::TestCase
         @store.allow("host.madstop.com")
         @store.deny("*.madstop.com")
 
-        assert(@store.allowed?("host.madstop.com", "192.168.0.1"),
+
+            assert(
+                @store.allowed?("host.madstop.com", "192.168.0.1"),
+
             "More specific allowal by name failed")
 
         @store.allow("192.168.0.1")
         @store.deny("192.168.0.0/24")
 
-        assert(@store.allowed?("host.madstop.com", "192.168.0.1"),
+
+            assert(
+                @store.allowed?("host.madstop.com", "192.168.0.1"),
+
             "More specific allowal by ip failed")
     end
 
@@ -344,8 +385,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             end
 
             [:name, :pattern, :length].zip(output).each do |method, value|
-                assert_equal(value, @decl.send(method),
-                    "Got incorrect value for %s from %s" % [method, input])
+                assert_equal(value, @decl.send(method), "Got incorrect value for %s from %s" % [method, input])
             end
         end
 
@@ -365,14 +405,16 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
     def test_result
         ["allow", :allow].each do |val|
             assert_nothing_raised { @decl.type = val }
-            assert_equal(true, @decl.result, "did not result to true with %s" %
-                val.inspect)
+            assert_equal(true, @decl.result, "did not result to true with %s" % val.inspect)
         end
 
         [:deny, "deny"].each do |val|
             assert_nothing_raised { @decl.type = val }
-            assert_equal(false, @decl.result,
-                "did not result to false with %s" % val.inspect)
+
+                assert_equal(
+                    false, @decl.result,
+
+                    "did not result to false with %s" % val.inspect)
         end
 
         ["yay", 1, nil, false, true].each do |val|
@@ -391,8 +433,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
             "*.HOSTNAME.Com" => %w{com hostname *},
 
         }.each do |input, output|
-            assert_equal(output, @decl.send(:munge_name, input),
-                "munged %s incorrectly" % input)
+            assert_equal(output, @decl.send(:munge_name, input), "munged %s incorrectly" % input)
         end
     end
 
@@ -414,10 +455,16 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
         ip_exact = Declaration.new(:allow, "192.168.0.1")
         ip_range = Declaration.new(:allow, "192.168.0.*")
 
-        assert_equal(-1, host_exact <=> host_range,
+
+            assert_equal(
+                -1, host_exact <=> host_range,
+
             "exact name match did not sort first")
 
-        assert_equal(-1, ip_exact <=> ip_range,
+
+                assert_equal(
+                    -1, ip_exact <=> ip_range,
+
             "exact ip match did not sort first")
 
         # Next make sure we sort by length
@@ -431,10 +478,12 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
         assert_equal(-1, ip24 <=> ip16, "/16 sorted before /24 in ip with masks")
 
         # Make sure ip checks sort before host checks
-        assert_equal(-1, ip_exact <=> host_exact,
-            "IP exact did not sort before host exact")
+        assert_equal(-1, ip_exact <=> host_exact, "IP exact did not sort before host exact")
 
-        assert_equal(-1, ip_range <=> host_range,
+
+            assert_equal(
+                -1, ip_range <=> host_range,
+
             "IP range did not sort before host range")
 
         host_long = Declaration.new(:allow, "*.domain.host.com")
@@ -447,20 +496,21 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
         assert_equal(-1, host_deny <=> host_exact, "deny did not sort before allow when exact")
 
         host_range_deny = Declaration.new(:deny, "*.host.com")
-        assert_equal(-1, host_range_deny <=> host_range,
-            "deny did not sort before allow when ranged")
+        assert_equal(-1, host_range_deny <=> host_range, "deny did not sort before allow when ranged")
 
         ip_allow = Declaration.new(:allow, "192.168.0.0/16")
         ip_deny = Declaration.new(:deny, "192.168.0.0/16")
 
-        assert_equal(-1, ip_deny <=> ip_allow,
+
+            assert_equal(
+                -1, ip_deny <=> ip_allow,
+
             "deny did not sort before allow in ip range")
 
         %w{host.com *.domain.com 192.168.0.1 192.168.0.1/24}.each do |decl|
             assert_equal(0, Declaration.new(:allow, decl) <=>
                 Declaration.new(:allow, decl),
-                "Equivalent declarations for %s were considered different" %
-                decl
+                "Equivalent declarations for %s were considered different" % decl
             )
         end
     end
@@ -481,10 +531,8 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
         assert(! host.send(:matchname?, "yay.com"), "incorrect match")
 
         domain = Declaration.new(:allow, "*.domain.com")
-        %w{host.domain.com domain.com very.long.domain.com very-long.domain.com
-        }.each do |name|
-            assert(domain.send(:matchname?, name),
-                "Did not match %s" % name)
+        %w{host.domain.com domain.com very.long.domain.com very-long.domain.com }.each do |name|
+            assert(domain.send(:matchname?, name), "Did not match %s" % name)
         end
     end
 end

@@ -58,13 +58,13 @@ describe Puppet::Type.type(:exec) do
 
             proc { @execer.refresh }.should raise_error(Puppet::Error)
         end
-        
+
         it "should not report a failure if the exit status is specified in a returns array" do
             command = "false"
             create_resource(command, "", 1, [0,1])
             proc { @execer.refresh }.should_not raise_error(Puppet::Error)
         end
-        
+
         it "should report a failure if the exit status is not specified in a returns array" do
             command = "false"
             create_resource(command, "", 1, [0,100])

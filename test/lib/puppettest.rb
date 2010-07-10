@@ -52,11 +52,14 @@ module PuppetTest
     def self.munge_argv
         require 'getoptlong'
 
-        result = GetoptLong.new(
-            [ "--debug",    "-d", GetoptLong::NO_ARGUMENT       ],
-            [ "--resolve",  "-r", GetoptLong::REQUIRED_ARGUMENT ],
-            [ "-n",               GetoptLong::REQUIRED_ARGUMENT ],
-            [ "--help",     "-h", GetoptLong::NO_ARGUMENT       ]
+
+            result = GetoptLong.new(
+
+                [ "--debug",    "-d", GetoptLong::NO_ARGUMENT       ],
+                [ "--resolve",  "-r", GetoptLong::REQUIRED_ARGUMENT ],
+                [ "-n",               GetoptLong::REQUIRED_ARGUMENT ],
+
+                [ "--help",     "-h", GetoptLong::NO_ARGUMENT       ]
         )
 
         usage = "USAGE: TESTOPTS='[-n <method> -n <method> ...] [-d]' rake [target] [target] ..."
@@ -93,7 +96,7 @@ module PuppetTest
     # Find the root of the Puppet tree; this is not the test directory, but
     # the parent of that dir.
     def basedir(*list)
-        unless defined? @@basedir
+        unless defined?(@@basedir)
             Dir.chdir(File.dirname(__FILE__)) do
                 @@basedir = File.dirname(File.dirname(Dir.getwd))
             end
@@ -110,7 +113,7 @@ module PuppetTest
     end
 
     def exampledir(*args)
-        unless defined? @@exampledir
+        unless defined?(@@exampledir)
             @@exampledir = File.join(basedir, "examples")
         end
 
@@ -170,13 +173,16 @@ module PuppetTest
             ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin"
         end
         @memoryatstart = Puppet::Util.memory
-        if defined? @@testcount
+        if defined?(@@testcount)
             @@testcount += 1
         else
             @@testcount = 0
         end
 
-        @configpath = File.join(tmpdir,
+
+            @configpath = File.join(
+                tmpdir,
+
             "configdir" + @@testcount.to_s + "/"
         )
 
@@ -232,7 +238,7 @@ module PuppetTest
     end
 
     def tempfile
-        if defined? @@tmpfilenum
+        if defined?(@@tmpfilenum)
             @@tmpfilenum += 1
         else
             @@tmpfilenum = 1
@@ -259,13 +265,13 @@ module PuppetTest
     end
 
     def tmpdir
-        unless defined? @tmpdir and @tmpdir
+        unless defined?(@tmpdir) and @tmpdir
             @tmpdir = case Facter["operatingsystem"].value
-                      when "Darwin"; "/private/tmp"
-                      when "SunOS"; "/var/tmp"
-                      else
-                            "/tmp"
-                      end
+                when "Darwin"; "/private/tmp"
+                when "SunOS"; "/var/tmp"
+                else
+                    "/tmp"
+                        end
 
 
             @tmpdir = File.join(@tmpdir, "puppettesting" + Process.pid.to_s)
@@ -314,8 +320,7 @@ module PuppetTest
         diff = @memoryatend - @memoryatstart
 
         if diff > 1000
-            Puppet.info "%s#%s memory growth (%s to %s): %s" %
-                [self.class, @method_name, @memoryatstart, @memoryatend, diff]
+            Puppet.info "%s#%s memory growth (%s to %s): %s" % [self.class, @method_name, @memoryatstart, @memoryatend, diff]
         end
 
         # reset all of the logs

@@ -19,7 +19,7 @@ class Puppet::Network::Handler
         }
 
         def autosign
-            if defined? @autosign
+            if defined?(@autosign)
                 @autosign
             else
                 Puppet[:autosign]
@@ -35,12 +35,11 @@ class Puppet::Network::Handler
 
             # we only otherwise know how to handle files
             unless autosign =~ /^\//
-                raise Puppet::Error, "Invalid autosign value %s" %
-                    autosign.inspect
+                raise Puppet::Error, "Invalid autosign value %s" % autosign.inspect
             end
 
             unless FileTest.exists?(autosign)
-                unless defined? @@warnedonautosign
+                unless defined?(@@warnedonautosign)
                     @@warnedonautosign = true
                     Puppet.info "Autosign is enabled but %s is missing" % autosign
                 end
@@ -124,8 +123,7 @@ class Puppet::Network::Handler
                     if @ca.getclientcsr(hostname)
                         Puppet.info "Not replacing existing request from %s" % hostname
                     else
-                        Puppet.notice "Host %s has a waiting certificate request" %
-                            hostname
+                        Puppet.notice "Host %s has a waiting certificate request" % hostname
                         @ca.storeclientcsr(csr)
                     end
                     return ["", ""]

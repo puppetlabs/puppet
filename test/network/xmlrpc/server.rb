@@ -18,8 +18,7 @@ class TestXMLRPCServer < Test::Unit::TestCase
         assert(@server.get_service_hook, "no service hook defined")
 
         assert_nothing_raised("Did not init @loadedhandlers") do
-            assert(! @server.handler_loaded?(:puppetca),
-                "server thinks handlers are loaded")
+            assert(! @server.handler_loaded?(:puppetca), "server thinks handlers are loaded")
         end
     end
 end

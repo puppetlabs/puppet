@@ -123,9 +123,12 @@ describe Puppet::Run do
                 "background" => true,
             }
 
-            Puppet::Run.expects(:new).with({
+
+                        Puppet::Run.expects(:new).with(
+                {
                 :tags => "whatever",
                 :background => true,
+        
             })
 
             Puppet::Run.from_pson(options)

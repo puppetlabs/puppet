@@ -41,9 +41,9 @@ end
 
 describe Puppet::Type.type(:schedule) do
     before :each do
-      Puppet.settings.stubs(:value).with(:ignoreschedules).returns(false)
+        Puppet.settings.stubs(:value).with(:ignoreschedules).returns(false)
 
-      @schedule = Puppet::Type.type(:schedule).new(:name => "testing")
+        @schedule = Puppet::Type.type(:schedule).new(:name => "testing")
     end
 
     describe Puppet::Type.type(:schedule) do

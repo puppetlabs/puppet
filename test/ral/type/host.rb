@@ -33,7 +33,7 @@ class TestHost < Test::Unit::TestCase
     end
 
     def mkhost
-        if defined? @hcount
+        if defined?(@hcount)
             @hcount += 1
         else
             @hcount = 1
@@ -43,10 +43,13 @@ class TestHost < Test::Unit::TestCase
 
         host = nil
         assert_nothing_raised {
-            host = Puppet::Type.type(:host).new(
+
+                        host = Puppet::Type.type(:host).new(
+                
                 :name => "fakehost%s" % @hcount,
                 :ip => "192.168.27.%s" % @hcount,
                 :alias => "alias%s" % @hcount,
+        
                 :catalog => @catalog
             )
         }
@@ -68,8 +71,11 @@ class TestHost < Test::Unit::TestCase
         host = nil
 
         assert_nothing_raised {
-            host = Puppet::Type.type(:host).new(
+
+                        host = Puppet::Type.type(:host).new(
+                
                 :name => "culain",
+        
                 :ip => "192.168.0.3"
             )
         }

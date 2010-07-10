@@ -3,7 +3,7 @@ require 'puppet/util/tagging'
 require 'puppet/util/logging'
 
 # A simple struct for storing what happens on the system.
-class Puppet::Transaction::Event 
+class Puppet::Transaction::Event
     include Puppet::Util::Tagging
     include Puppet::Util::Logging
 
@@ -18,7 +18,7 @@ class Puppet::Transaction::Event
     def initialize(*args)
         options = args.last.is_a?(Hash) ? args.pop : ATTRIBUTES.inject({}) { |hash, attr| hash[attr] = args.pop; hash }
         options.each { |attr, value| send(attr.to_s + "=", value) unless value.nil? }
-        
+
         @time = Time.now
     end
 

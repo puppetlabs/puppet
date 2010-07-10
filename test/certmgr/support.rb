@@ -25,11 +25,9 @@ class TestCertSupport < Test::Unit::TestCase
     # Yay, metaprogramming
     def test_keytype
         [:key, :csr, :cert, :ca_cert].each do |name|
-            assert(Puppet::SSLCertificates::Support.method_defined?(name),
-                "No retrieval method for %s" % name)
+            assert(Puppet::SSLCertificates::Support.method_defined?(name), "No retrieval method for %s" % name)
             maker = "mk_%s" % name
-            assert(Puppet::SSLCertificates::Support.method_defined?(maker),
-                "No maker method for %s" % name)
+            assert(Puppet::SSLCertificates::Support.method_defined?(maker), "No maker method for %s" % name)
         end
     end
 
@@ -43,7 +41,10 @@ class TestCertSupport < Test::Unit::TestCase
 
         assert_logged(:info, /Creating a new SSL/, "Did not log about new key")
         keys.each do |file|
-            assert(FileTest.exists?(Puppet[file]),
+
+                        assert(
+                FileTest.exists?(Puppet[file]),
+        
                 "Did not create %s key file" % file)
         end
 

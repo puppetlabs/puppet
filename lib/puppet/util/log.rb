@@ -16,9 +16,12 @@ class Puppet::Util::Log
 
     # Create a new destination type.
     def self.newdesttype(name, options = {}, &block)
-        dest = genclass(name, :parent => Puppet::Util::Log::Destination, :prefix => "Dest",
+
+                    dest = genclass(
+                name, :parent => Puppet::Util::Log::Destination, :prefix => "Dest",
             :block => block,
             :hash => @desttypes,
+        
             :attributes => options
         )
         dest.match(dest.name)
@@ -234,7 +237,7 @@ class Puppet::Util::Log
 
         Log.newmessage(self)
     end
-    
+
     def message=(msg)
         raise ArgumentError, "Puppet::Util::Log requires a message" unless msg
         @message = msg.to_s

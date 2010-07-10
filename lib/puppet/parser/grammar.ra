@@ -44,11 +44,11 @@ program:    statements {
         result = nil
     end
 }
-            | nil
+    | nil
 
 statements:   statement
-            | statements statement {
-    if val[0] and val[1]
+    | statements statement {
+        if val[0] and val[1]
         if val[0].instance_of?(AST::ASTArray)
             val[0].push(val[1])
             result = val[0]
@@ -63,25 +63,25 @@ statements:   statement
 
 # The main list of valid statements
 statement:    resource
-            | virtualresource
-            | collection
-            | assignment
-            | casestatement
-            | ifstatement_begin
-            | import
-            | fstatement
-            | definition
-            | hostclass
-            | nodedef
-            | resourceoverride
-            | append
-            | relationship
+    | virtualresource
+    | collection
+    | assignment
+    | casestatement
+    | ifstatement_begin
+    | import
+    | fstatement
+    | definition
+    | hostclass
+    | nodedef
+    | resourceoverride
+    | append
+    | relationship
 
 relationship: relationship_side edge relationship_side {
     result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
 }
-            | relationship edge relationship_side {
-    result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
+    | relationship edge relationship_side {
+        result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
 }
 
 relationship_side: resource | resourceref | collection
@@ -96,7 +96,7 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
         :arguments => args,
         :ftype => :statement
 }
- | NAME LPAREN funcvalues COMMA RPAREN {
+| NAME LPAREN funcvalues COMMA RPAREN {
     args = aryfy(val[2])
     result = ast AST::Function,
         :name => val[0][:value],
@@ -110,9 +110,9 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
         :arguments => AST::ASTArray.new({}),
         :ftype => :statement
 }
-            | NAME funcvalues {
-    args = aryfy(val[1])
-    result = ast AST::Function,
+    | NAME funcvalues {
+        args = aryfy(val[1])
+        result = ast AST::Function,
         :name => val[0][:value],
         :line => val[0][:line],
         :arguments => args,
@@ -120,14 +120,14 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
 }
 
 funcvalues:       namestring
-                | resourceref
-                | funcvalues COMMA namestring {
-    result = aryfy(val[0], val[2])
-    result.line = @lexer.line
-    result.file = @lexer.file
+    | resourceref
+    | funcvalues COMMA namestring {
+        result = aryfy(val[0], val[2])
+        result.line = @lexer.line
+        result.file = @lexer.file
 }
-                | funcvalues COMMA resourceref {
-    unless val[0].is_a?(AST::ASTArray)
+    | funcvalues COMMA resourceref {
+        unless val[0].is_a?(AST::ASTArray)
         val[0] = aryfy(val[0])
     end
 
@@ -139,16 +139,16 @@ funcvalues:       namestring
 # This is *almost* an rvalue, but I couldn't get a full
 # rvalue to work without scads of shift/reduce conflicts.
 namestring:       name
-                | variable
-                | type
-                | boolean
-                | funcrvalue
-                | selector
-                | quotedtext
-                | hasharrayaccesses
-                | CLASSNAME {
-                    result = ast AST::Name, :value => val[0][:value]
-                }
+    | variable
+    | type
+    | boolean
+    | funcrvalue
+    | selector
+    | quotedtext
+    | hasharrayaccesses
+    | CLASSNAME {
+        result = ast AST::Name, :value => val[0][:value]
+            }
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
     @lexer.commentpop
@@ -165,9 +165,12 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
         end
         # now, i need to somehow differentiate between those things with
         # arrays in their names, and normal things
-        result.push ast(AST::Resource,
+
+            result.push ast(
+                AST::Resource,
             :type => val[0],
             :title => instance[0],
+
             :parameters => instance[1])
     }
 }           | classname LBRACE params endcomma RBRACE {
@@ -238,8 +241,8 @@ collection:     classref collectrhand LBRACE anyparams endcomma RBRACE {
     args[:override] = val[3]
     result = ast AST::Collection, args
 }
-                | classref collectrhand {
-    if val[0] =~ /^[a-z]/
+    | classref collectrhand {
+        if val[0] =~ /^[a-z]/
         Puppet.warning addcontext("Collection names must now be capitalized")
     end
     type = val[0].downcase
@@ -267,8 +270,8 @@ collectrhand:     LCOLLECT collstatements RCOLLECT {
         result = :virtual
     end
 }
-                | LLCOLLECT collstatements RRCOLLECT {
-    if val[1]
+    | LLCOLLECT collstatements RRCOLLECT {
+        if val[1]
         result = val[1]
         result.form = :exported
     else
@@ -279,41 +282,41 @@ collectrhand:     LCOLLECT collstatements RCOLLECT {
 # A mini-language for handling collection comparisons.  This is organized
 # to avoid the need for precedence indications.
 collstatements:           nil
-                        | collstatement
-                        | collstatements colljoin collstatement {
-    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
+    | collstatement
+    | collstatements colljoin collstatement {
+        result = ast AST::CollExpr, :test1 => val[0], :oper => val[1], :test2 => val[2]
 }
 
 collstatement:            collexpr
-                        | LPAREN collstatements RPAREN {
-    result = val[1]
-    result.parens = true
+    | LPAREN collstatements RPAREN {
+        result = val[1]
+        result.parens = true
 }
 
 colljoin:                 AND { result=val[0][:value] }
-                        | OR  { result=val[0][:value] }
+    | OR  { result=val[0][:value] }
 
 collexpr:                 colllval ISEQUAL simplervalue {
     result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
     #result = ast AST::CollExpr
     #result.push *val
 }
-                        | colllval NOTEQUAL simplervalue {
-    result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
-    #result = ast AST::CollExpr
-    #result.push *val
+    | colllval NOTEQUAL simplervalue {
+        result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
+        #result = ast AST::CollExpr
+        #result.push *val
 }
 
 colllval:                 variable
-                        | name
+    | name
 
 resourceinst:   resourcename COLON params endcomma {
     result = ast AST::ResourceInstance, :children => [val[0],val[2]]
 }
 
 resourceinstances:   resourceinst
-                 | resourceinstances SEMIC resourceinst {
-    if val[0].instance_of?(AST::ResourceInstance)
+    | resourceinstances SEMIC resourceinst {
+        if val[0].instance_of?(AST::ResourceInstance)
         result = ast AST::ASTArray, :children => [val[0],val[2]]
     else
         val[0].push val[2]
@@ -322,7 +325,7 @@ resourceinstances:   resourceinst
 }
 
 endsemi:      # nothing
-            | SEMIC
+    | SEMIC
 
 undef:         UNDEF {
     result = ast AST::Undef, :value => :undef
@@ -337,12 +340,12 @@ type:         CLASSREF {
 }
 
 resourcename:   quotedtext
-            | name
-            | type
-            | selector
-            | variable
-            | array
-            | hasharrayaccesses
+    | name
+    | type
+    | selector
+    | variable
+    | array
+    | hasharrayaccesses
 
 assignment:     VARIABLE EQUALS expression {
     if val[0][:value] =~ /::/
@@ -352,8 +355,8 @@ assignment:     VARIABLE EQUALS expression {
     variable = ast AST::Name, :value => val[0][:value], :line => val[0][:line]
     result = ast AST::VarDef, :name => variable, :value => val[2], :line => val[0][:line]
 }
-            | hasharrayaccess EQUALS expression {
-    result = ast AST::VarDef, :name => val[0], :value => val[2]
+    | hasharrayaccess EQUALS expression {
+        result = ast AST::VarDef, :name => val[0], :value => val[2]
 }
 
 append:     VARIABLE APPENDS expression {
@@ -365,9 +368,9 @@ params:   # nothing
 {
     result = ast AST::ASTArray
 }
-        | param { result = val[0] }
-        | params COMMA param {
-    if val[0].instance_of?(AST::ASTArray)
+    | param { result = val[0] }
+    | params COMMA param {
+        if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -381,19 +384,19 @@ param:        NAME FARROW rvalue {
 
 addparam:     NAME PARROW rvalue {
     result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2],
-                                     :add => true
+        :add => true
 }
 
 anyparam:     param
-            | addparam
+    | addparam
 
 anyparams:   # nothing
 {
     result = ast AST::ASTArray
 }
-        | anyparam { result = val[0] }
-        | anyparams COMMA anyparam {
-    if val[0].instance_of?(AST::ASTArray)
+    | anyparam { result = val[0] }
+    | anyparams COMMA anyparam {
+        if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -402,8 +405,8 @@ anyparams:   # nothing
 }
 
 rvalues:      rvalue
-            | rvalues comma rvalue {
-    if val[0].instance_of?(AST::ASTArray)
+    | rvalues comma rvalue {
+        if val[0].instance_of?(AST::ASTArray)
         result = val[0].push(val[2])
     else
         result = ast AST::ASTArray, :children => [val[0],val[2]]
@@ -411,24 +414,24 @@ rvalues:      rvalue
 }
 
 simplervalue:       quotedtext
-            | name
-            | type
-            | boolean
-            | selector
-            | variable
+    | name
+    | type
+    | boolean
+    | selector
+    | variable
 
 rvalue:       quotedtext
-            | name
-            | type
-            | boolean
-            | selector
-            | variable
-            | array
-            | hash
-            | hasharrayaccesses
-            | resourceref
-            | funcrvalue
-            | undef
+    | name
+    | type
+    | boolean
+    | selector
+    | variable
+    | array
+    | hash
+    | hasharrayaccesses
+    | resourceref
+    | funcrvalue
+    | undef
 
 # We currently require arguments in these functions.
 funcrvalue:   NAME LPAREN funcvalues RPAREN {
@@ -444,13 +447,13 @@ funcrvalue:   NAME LPAREN funcvalues RPAREN {
         :ftype => :rvalue
 }
 
-quotedtext: STRING       { result = ast AST::String, :value => val[0][:value],                  :line => val[0][:line] }           
-          | DQPRE dqrval { result = ast AST::Concat, :value => [ast(AST::String,val[0])]+val[1], :line => val[0][:line] }
+quotedtext: STRING       { result = ast AST::String, :value => val[0][:value],                  :line => val[0][:line] }
+    | DQPRE dqrval { result = ast AST::Concat, :value => [ast(AST::String,val[0])]+val[1], :line => val[0][:line] }
 
 dqrval: expression dqtail { result = [val[0]] + val[1] }
 
 dqtail: DQPOST        { result = [ast(AST::String,val[0])]          }
-      | DQMID dqrval  { result = [ast(AST::String,val[0])] + val[1] }
+    | DQMID dqrval  { result = [ast(AST::String,val[0])] + val[1] }
 
 boolean:    BOOLEAN {
     result = ast AST::Boolean, :value => val[0][:value], :line => val[0][:line]
@@ -480,11 +483,11 @@ ifstatement:      expression LBRACE statements RBRACE else {
 
     result = ast AST::IfStatement, args
 }
-                | expression LBRACE RBRACE else {
-    @lexer.commentpop
-    args = {
-        :test => val[0],
-        :statements => ast(AST::Nop)
+    | expression LBRACE RBRACE else {
+        @lexer.commentpop
+        args = {
+            :test => val[0],
+            :statements => ast(AST::Nop)
     }
 
     if val[3]
@@ -495,16 +498,16 @@ ifstatement:      expression LBRACE statements RBRACE else {
 }
 
 else:             # nothing
-                | ELSIF ifstatement {
-    result = ast AST::Else, :statements => val[1]
+    | ELSIF ifstatement {
+        result = ast AST::Else, :statements => val[1]
 }
-                | ELSE LBRACE statements RBRACE {
-    @lexer.commentpop
-    result = ast AST::Else, :statements => val[2]
+    | ELSE LBRACE statements RBRACE {
+        @lexer.commentpop
+        result = ast AST::Else, :statements => val[2]
 }
-                | ELSE LBRACE RBRACE {
-    @lexer.commentpop
-    result = ast AST::Else, :statements => ast(AST::Nop)
+    | ELSE LBRACE RBRACE {
+        @lexer.commentpop
+        result = ast AST::Else, :statements => ast(AST::Nop)
 }
 
 # Unlike yacc/bison, it seems racc
@@ -520,65 +523,65 @@ else:             # nothing
 # per operator :-(
 
 expression:   rvalue
-            | expression IN rvalue {
-    result = ast AST::InOperator, :lval => val[0], :rval => val[2]
+    | expression IN rvalue {
+        result = ast AST::InOperator, :lval => val[0], :rval => val[2]
 }
-            | expression MATCH regex {
-    result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression MATCH regex {
+        result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression NOMATCH regex {
-    result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression NOMATCH regex {
+        result = ast AST::MatchOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression PLUS expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression PLUS expression {
+        result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression MINUS expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression MINUS expression {
+        result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression DIV expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression DIV expression {
+        result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression TIMES expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression TIMES expression {
+        result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression LSHIFT expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression LSHIFT expression {
+        result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression RSHIFT expression {
-    result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression RSHIFT expression {
+        result = ast AST::ArithmeticOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | MINUS expression =UMINUS {
-    result = ast AST::Minus, :value => val[1]
+    | MINUS expression =UMINUS {
+        result = ast AST::Minus, :value => val[1]
 }
-            | expression NOTEQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression NOTEQUAL expression {
+        result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression ISEQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression ISEQUAL expression {
+        result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression GREATERTHAN expression {
-    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression GREATERTHAN expression {
+        result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression GREATEREQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression GREATEREQUAL expression {
+        result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression LESSTHAN expression {
-    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression LESSTHAN expression {
+        result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression LESSEQUAL expression {
-    result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression LESSEQUAL expression {
+        result = ast AST::ComparisonOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | NOT expression {
-    result = ast AST::Not, :value => val[1]
+    | NOT expression {
+        result = ast AST::Not, :value => val[1]
 }
-            | expression AND expression {
-    result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression AND expression {
+        result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | expression OR expression {
-    result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
+    | expression OR expression {
+        result = ast AST::BooleanOperator, :operator => val[1][:value], :lval => val[0], :rval => val[2]
 }
-            | LPAREN expression RPAREN {
-    result = val[1]
+    | LPAREN expression RPAREN {
+        result = val[1]
 }
 
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
@@ -591,8 +594,8 @@ casestatement:  CASE rvalue LBRACE caseopts RBRACE {
 }
 
 caseopts:     caseopt
-            | caseopts caseopt {
-    if val[0].instance_of?(AST::ASTArray)
+    | caseopts caseopt {
+        if val[0].instance_of?(AST::ASTArray)
         val[0].push val[1]
         result = val[0]
     else
@@ -605,15 +608,18 @@ caseopt:        casevalues COLON LBRACE statements RBRACE {
     result = ast AST::CaseOpt, :value => val[0], :statements => val[3]
 }               | casevalues COLON LBRACE RBRACE {
     @lexer.commentpop
-    result = ast(AST::CaseOpt,
+
+        result = ast(
+        AST::CaseOpt,
         :value => val[0],
+
         :statements => ast(AST::ASTArray)
     )
 }
 
 casevalues:       selectlhand
-                | casevalues COMMA selectlhand {
-    if val[0].instance_of?(AST::ASTArray)
+    | casevalues COMMA selectlhand {
+        if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -626,14 +632,14 @@ selector:     selectlhand QMARK svalues {
 }
 
 svalues:      selectval
-            | LBRACE sintvalues endcomma RBRACE {
-    @lexer.commentpop
-    result = val[1]
+    | LBRACE sintvalues endcomma RBRACE {
+        @lexer.commentpop
+        result = val[1]
 }
 
 sintvalues:   selectval
-            | sintvalues comma selectval {
-    if val[0].instance_of?(AST::ASTArray)
+    | sintvalues comma selectval {
+        if val[0].instance_of?(AST::ASTArray)
         val[0].push(val[2])
         result = val[0]
     else
@@ -646,21 +652,21 @@ selectval:        selectlhand FARROW rvalue {
 }
 
 selectlhand:  name
-            | type
-            | quotedtext
-            | variable
-            | funcrvalue
-            | boolean
-            | undef
-            | DEFAULT {
-    result = ast AST::Default, :value => val[0][:value], :line => val[0][:line]
+    | type
+    | quotedtext
+    | variable
+    | funcrvalue
+    | boolean
+    | undef
+    | DEFAULT {
+        result = ast AST::Default, :value => val[0][:value], :line => val[0][:line]
 }
-            | regex
+    | regex
 
 # These are only used for importing, and we don't interpolate there.
 string:        STRING       { result = [val[0][:value]] }
 strings:       string
-            |  strings COMMA string { result = val[0] += val[2] }
+    |  strings COMMA string { result = val[0] += val[2] }
 
 import: IMPORT strings {
     val[1].each do |file|
@@ -714,16 +720,16 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
 classref:       CLASSREF { result = val[0][:value] }
 
 classname:       NAME { result = val[0][:value] }
-            | CLASSNAME { result = val[0][:value] }
-            | CLASS { result = "class" }
+    | CLASSNAME { result = val[0][:value] }
+    | CLASS { result = "class" }
 
 # Multiple hostnames, as used for node names.  These are all literal
 # strings, not AST objects.
 hostnames:    nodename
-  | hostnames COMMA nodename {
-    result = val[0]
-    result = [result] unless result.is_a?(Array)
-    result << val[2]
+    | hostnames COMMA nodename {
+        result = val[0]
+        result = [result] unless result.is_a?(Array)
+        result << val[2]
 }
 
 nodename: hostname {
@@ -731,9 +737,9 @@ nodename: hostname {
 }
 
 hostname: NAME { result = val[0][:value] }
-        | STRING { result = val[0][:value] }
-        | DEFAULT { result = val[0][:value] }
-        | regex
+    | STRING { result = val[0][:value] }
+    | DEFAULT { result = val[0][:value] }
+    | regex
 
 nil:    {
     result = nil
@@ -744,28 +750,28 @@ nothing:    {
 }
 
 argumentlist: nil
-            | LPAREN nothing RPAREN {
-    result = nil
+    | LPAREN nothing RPAREN {
+        result = nil
 }
-            | LPAREN arguments RPAREN {
-    result = val[1]
-    result = [result] unless result[0].is_a?(Array)
+    | LPAREN arguments RPAREN {
+        result = val[1]
+        result = [result] unless result[0].is_a?(Array)
 }
 
 arguments:    argument
-            | arguments COMMA argument {
-    result = val[0]
-    result = [result] unless result[0].is_a?(Array)
-    result << val[2]
+    | arguments COMMA argument {
+        result = val[0]
+        result = [result] unless result[0].is_a?(Array)
+        result << val[2]
 }
 
 argument:     NAME EQUALS rvalue {
     Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0][:value], val[2]]
 }
-            | NAME {
-    Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
-    result = [val[0][:value]]
+    | NAME {
+        Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
+        result = [val[0][:value]]
 }           | VARIABLE EQUALS rvalue {
     result = [val[0][:value], val[2]]
 }           | VARIABLE {
@@ -773,13 +779,13 @@ argument:     NAME EQUALS rvalue {
 }
 
 nodeparent:       nil
-            | INHERITS hostname {
-    result = val[1]
+    | INHERITS hostname {
+        result = val[1]
 }
 
 classparent:       nil
-            | INHERITS classnameordefault {
-    result = val[1]
+    | INHERITS classnameordefault {
+        result = val[1]
 }
 
 classnameordefault: classname | DEFAULT
@@ -795,8 +801,8 @@ array:        LBRACK rvalues RBRACK {
         result = ast AST::ASTArray, :children => [val[1]]
     end
 }
-            | LBRACK rvalues COMMA RBRACK {
-    if val[1].instance_of?(AST::ASTArray)
+    | LBRACK rvalues COMMA RBRACK {
+        if val[1].instance_of?(AST::ASTArray)
         result = val[1]
     else
         result = ast AST::ASTArray, :children => [val[1]]
@@ -806,10 +812,10 @@ array:        LBRACK rvalues RBRACK {
 }
 
 comma:        FARROW
-            | COMMA
+    | COMMA
 
 endcomma:     # nothing
-            | COMMA { result = nil }
+    | COMMA { result = nil }
 
 regex:        REGEX {
     result = ast AST::Regex, :value => val[0][:value]
@@ -822,8 +828,8 @@ hash:        LBRACE hashpairs RBRACE {
         result = ast AST::ASTHash, { :value => val[1] }
     end
 }
-            | LBRACE hashpairs COMMA RBRACE {
-    if val[1].instance_of?(AST::ASTHash)
+    | LBRACE hashpairs COMMA RBRACE {
+        if val[1].instance_of?(AST::ASTHash)
         result = val[1]
     else
         result = ast AST::ASTHash, { :value => val[1] }
@@ -833,8 +839,8 @@ hash:        LBRACE hashpairs RBRACE {
 }
 
 hashpairs:  hashpair
-            | hashpairs COMMA hashpair {
-    if val[0].instance_of?(AST::ASTHash)
+    | hashpairs COMMA hashpair {
+        if val[0].instance_of?(AST::ASTHash)
         result = val[0].merge(val[2])
     else
         result = ast AST::ASTHash, :value => val[0]
@@ -847,15 +853,15 @@ hashpair:   key FARROW rvalue {
 }
 
 key:      NAME { result = val[0][:value] }
-  | quotedtext { result = val[0] }
+    | quotedtext { result = val[0] }
 
 hasharrayaccess: VARIABLE LBRACK rvalue RBRACK {
-    result = ast AST::HashOrArrayAccess, :variable => val[0][:value], :key => val[2] 
+    result = ast AST::HashOrArrayAccess, :variable => val[0][:value], :key => val[2]
 }
 
 hasharrayaccesses:    hasharrayaccess
-                    | hasharrayaccess LBRACK rvalue RBRACK {
-    result = ast AST::HashOrArrayAccess, :variable => val[0], :key => val[2] 
+    | hasharrayaccess LBRACK rvalue RBRACK {
+        result = ast AST::HashOrArrayAccess, :variable => val[0], :key => val[2]
 }
 
 end

@@ -40,7 +40,7 @@ class Puppet::Parameter
         def doc
             @doc ||= ""
 
-            unless defined? @addeddocvals
+            unless defined?(@addeddocvals)
                 @doc += value_collection.doc
 
                 if f = self.required_features
@@ -92,7 +92,7 @@ class Puppet::Parameter
 
         # Is this parameter the namevar?  Defaults to false.
         def isnamevar?
-            if defined? @isnamevar
+            if defined?(@isnamevar)
                 return @isnamevar
             else
                 return false
@@ -111,7 +111,7 @@ class Puppet::Parameter
 
         # Is this parameter required?  Defaults to false.
         def required?
-            if defined? @required
+            if defined?(@required)
                 return @required
             else
                 return false
@@ -174,11 +174,11 @@ class Puppet::Parameter
 
         error = type.new(args.join(" "))
 
-        if defined? @resource and @resource and @resource.line
+        if defined?(@resource) and @resource and @resource.line
             error.line = @resource.line
         end
 
-        if defined? @resource and @resource and @resource.file
+        if defined?(@resource) and @resource and @resource.file
             error.file = @resource.file
         end
 
@@ -217,7 +217,7 @@ class Puppet::Parameter
 
     # for testing whether we should actually do anything
     def noop
-        unless defined? @noop
+        unless defined?(@noop)
             @noop = false
         end
         tmp = @noop || self.resource.noop || Puppet[:noop] || false
@@ -228,7 +228,7 @@ class Puppet::Parameter
     # return the full path to us, for logging and rollback; not currently
     # used
     def pathbuilder
-        if defined? @resource and @resource
+        if defined?(@resource) and @resource
             return [@resource.pathbuilder, self.name]
         else
             return [self.name]
@@ -303,7 +303,7 @@ class Puppet::Parameter
 
     # The properties need to return tags so that logs correctly collect them.
     def tags
-        unless defined? @tags
+        unless defined?(@tags)
             @tags = []
             # This might not be true in testing
             if @resource.respond_to? :tags

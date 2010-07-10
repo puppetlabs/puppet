@@ -14,8 +14,7 @@ Puppet::Parser::Functions::newfunction(:inline_template, :type => :rvalue, :doc 
                 wrapper.result(string)
             rescue => detail
                 raise Puppet::ParseError,
-                    "Failed to parse inline template: %s" %
-                        [detail]
+                    "Failed to parse inline template: %s" % [detail]
             end
         end.join("")
 end

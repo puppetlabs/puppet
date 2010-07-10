@@ -34,12 +34,12 @@ describe provider_class do
         end
     end
 
-    it "should execute the startsrc command" do 
+    it "should execute the startsrc command" do
         @provider.expects(:execute).with(['/usr/bin/startsrc', '-s', "myservice"], {:squelch => true, :failonfail => true})
         @provider.start
-    end            
+    end
 
-    it "should execute the stopsrc command" do 
+    it "should execute the stopsrc command" do
         @provider.expects(:execute).with(['/usr/bin/stopsrc', '-s', "myservice"], {:squelch => true, :failonfail => true})
         @provider.stop
     end

@@ -176,7 +176,7 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
         Puppet.settings.stubs(:value).with(:dbsocket).returns("")
-        Puppet.settings.stubs(:value).with(:dbconnections).returns(1) 
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "postgresql",
@@ -226,7 +226,7 @@ describe Puppet::Rails, "when initializing an Oracle connection" do
         Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
         Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
         Puppet.settings.stubs(:value).with(:dbname).returns("testname")
-        Puppet.settings.stubs(:value).with(:dbconnections).returns(1) 
+        Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
         Puppet::Rails.database_arguments.should == {
             :adapter => "oracle_enhanced",
@@ -252,7 +252,7 @@ describe Puppet::Rails, "when initializing an Oracle connection" do
             :username => "testuser",
             :password => "testpassword",
             :database => "testname",
-            :pool => 1 
+            :pool => 1
         }
     end
 end

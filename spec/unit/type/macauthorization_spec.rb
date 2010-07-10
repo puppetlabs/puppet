@@ -20,8 +20,8 @@ describe Puppet::Type.type(:macauthorization), "when checking macauthorization o
 
         parameters = [:name,]
         properties = [:auth_type, :allow_root, :authenticate_user, :auth_class,
-                      :comment, :group, :k_of_n, :mechanisms, :rule,
-                      :session_owner, :shared, :timeout, :tries]
+            :comment, :group, :k_of_n, :mechanisms, :rule,
+            :session_owner, :shared, :timeout, :tries]
 
         parameters.each do |parameter|
             it "should have a %s parameter" % parameter do

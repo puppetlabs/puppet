@@ -4,12 +4,12 @@ Puppet::Type.type(:package).provide :urpmi, :parent => :rpm, :source => :rpm do
 
     if command('rpm')
         confine :true => begin
-                rpm('-ql', 'rpm')
-           rescue Puppet::ExecutionFailure
-               false
-           else
-               true
-           end
+            rpm('-ql', 'rpm')
+            rescue Puppet::ExecutionFailure
+                false
+            else
+                true
+            end
     end
 
     defaultfor :operatingsystem => [:mandriva, :mandrake]

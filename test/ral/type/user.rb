@@ -27,7 +27,7 @@ class TestUser < Test::Unit::TestCase
         end
 
         def exists?
-            if defined? @ensure and @ensure == :present
+            if defined?(@ensure) and @ensure == :present
                 true
             else
                 false
@@ -64,11 +64,14 @@ class TestUser < Test::Unit::TestCase
     def mkuser(name)
         user = nil
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).new(
+
+                        user = Puppet::Type.type(:user).new(
+                
                 :name => name,
                 :comment => "Puppet Testing User",
                 :gid => Puppet::Util::SUIDManager.gid,
                 :shell => findshell(),
+        
                 :home => "/home/%s" % name
             )
         }
@@ -86,15 +89,21 @@ class TestUser < Test::Unit::TestCase
         home = nil
         ogroup = nil
         assert_nothing_raised {
-            user = Puppet::Type.type(:user).new(
+
+                        user = Puppet::Type.type(:user).new(
+                
                 :name => "pptestu",
                 :home => file,
                 :gid => "pptestg",
+        
                 :groups => "yayness"
             )
-            home = Puppet::Type.type(:file).new(
+
+                        home = Puppet::Type.type(:file).new(
+                
                 :path => file,
                 :owner => "pptestu",
+        
                 :ensure => "directory"
             )
             group = Puppet::Type.type(:group).new(

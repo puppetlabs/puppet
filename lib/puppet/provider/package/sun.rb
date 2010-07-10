@@ -6,8 +6,8 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     desc "Sun's packaging system.  Requires that you specify the source for
         the packages you're managing."
     commands :pkginfo => "/usr/bin/pkginfo",
-             :pkgadd => "/usr/sbin/pkgadd",
-             :pkgrm => "/usr/sbin/pkgrm"
+        :pkgadd => "/usr/sbin/pkgadd",
+        :pkgrm => "/usr/sbin/pkgrm"
 
     confine :operatingsystem => :solaris
 

@@ -61,8 +61,7 @@ class TestAuthConfig < Test::Unit::TestCase
         auth = nil
         assert_nothing_raised { auth = obj.send(:authconfig) }
         assert(auth, "did not get auth")
-        assert_equal(Puppet::Network::AuthConfig.main.object_id, auth.object_id,
-            "did not get main authconfig")
+        assert_equal(Puppet::Network::AuthConfig.main.object_id, auth.object_id, "did not get main authconfig")
     end
 
     def test_authorize
@@ -84,7 +83,10 @@ class TestAuthConfig < Test::Unit::TestCase
 
         # Now set our run_mode to master, so calls are allowed
         Puppet.run_mode.stubs(:master?).returns true
-        assert(@obj.authorized?(@request),
+
+                    assert(
+                @obj.authorized?(@request),
+        
             "Denied call with no config file and master")
         assert_logged(:debug, /Allowing/, "did not log call")
 

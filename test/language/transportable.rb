@@ -78,8 +78,11 @@ class TestTransportable < Test::Unit::TestCase
             assert(objects.include?(obj), "Missing obj %s[%s]" % [obj.type, obj.name])
         end
 
-        assert_equal(found.length,
+
+                    assert_equal(
+                found.length,
             top.flatten.find_all { |o| o.file == :funtest }.length,
+        
             "Found incorrect number of objects")
     end
 end

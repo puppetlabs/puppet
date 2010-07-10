@@ -68,40 +68,40 @@ describe provider_class do
         end
     end
 
-   describe "when calling destroy" do
-       it "should use the delete command if the user exists and is not a role" do
+    describe "when calling destroy" do
+        it "should use the delete command if the user exists and is not a role" do
             @provider.stubs(:exists?).returns(true)
             @provider.stubs(:is_role?).returns(false)
             @provider.expects(:deletecmd)
             @provider.expects(:run)
             @provider.destroy
-       end
+        end
 
-       it "should use the delete command if the user is a role" do
+        it "should use the delete command if the user is a role" do
             @provider.stubs(:exists?).returns(true)
             @provider.stubs(:is_role?).returns(true)
             @provider.expects(:deletecmd)
             @provider.expects(:run)
             @provider.destroy
-       end
-   end
+        end
+    end
 
-   describe "when calling create_role" do
-       it "should use the transition(role) if the user exists" do
+    describe "when calling create_role" do
+        it "should use the transition(role) if the user exists" do
             @provider.stubs(:exists?).returns(true)
             @provider.stubs(:is_role?).returns(false)
             @provider.expects(:transition).with("role")
             @provider.expects(:run)
             @provider.create_role
-       end
+        end
 
-       it "should use the add command when role doesn't exists" do
+        it "should use the add command when role doesn't exists" do
             @provider.stubs(:exists?).returns(false)
             @provider.expects(:addcmd)
             @provider.expects(:run)
             @provider.create_role
-       end
-   end
+        end
+    end
 
     describe "when allow duplicate is enabled" do
         before do

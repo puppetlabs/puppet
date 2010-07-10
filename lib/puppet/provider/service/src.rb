@@ -1,7 +1,7 @@
 # AIX System Resource controller (SRC)
 Puppet::Type.type(:service).provide :src, :parent => :base do
 
-    desc "Support for AIX's System Resource controller.  
+    desc "Support for AIX's System Resource controller.
 
     Services are started/stopped based on the stopsrc and startsrc
     commands, and some services can be refreshed with refresh command.
@@ -31,7 +31,7 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     end
 
     def restart
-        begin 
+        begin
             execute([command(:lssrc), "-Ss", @resource[:name]]).each do |line|
                 args = line.split(":")
 
@@ -65,14 +65,14 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
     end
 
     def status
-        begin 
+        begin
             execute([command(:lssrc), "-s", @resource[:name]]).each do |line|
                 args = line.split
 
                 # This is the header line
                 next unless args[0] == @resource[:name]
 
-                # PID is the 3rd field, but inoperative subsystems 
+                # PID is the 3rd field, but inoperative subsystems
                 # skip this so split doesn't work right
                 state = case args[-1]
                     when "active" then :running

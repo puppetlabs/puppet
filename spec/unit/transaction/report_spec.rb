@@ -165,13 +165,13 @@ describe Puppet::Transaction::Report do
         describe "for times" do
             it "should provide the total amount of time for each resource type" do
                 add_statuses(3, :file) do |status|
-                    status.evaluation_time = 1 
+                    status.evaluation_time = 1
                 end
                 add_statuses(3, :exec) do |status|
-                    status.evaluation_time = 2 
+                    status.evaluation_time = 2
                 end
                 add_statuses(3, :mount) do |status|
-                    status.evaluation_time = 3 
+                    status.evaluation_time = 3
                 end
 
                 @report.calculate_metrics

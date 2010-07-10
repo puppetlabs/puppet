@@ -21,9 +21,12 @@ class TestZone < PuppetTest::TestCase
         File.chmod(0700, base)
         root = File.join(base, "zonebase")
         assert_nothing_raised {
+
             zone = Puppet::Type.type(:zone).new(
+
                 :name => name,
                 :path => root,
+
                 :ensure => "configured" # don't want to install zones automatically
             )
         }
@@ -111,9 +114,11 @@ class TestZone < PuppetTest::TestCase
 
         methods.each do |m|
             Puppet::Type.type(:zone).suitableprovider.each do |prov|
-                assert(prov.method_defined?(m),
-                    "Zone provider %s does not define method %s" %
-                    [prov.name, m])
+
+                assert(
+                    prov.method_defined?(m),
+
+                    "Zone provider %s does not define method %s" % [prov.name, m])
             end
         end
 
@@ -130,12 +135,18 @@ class TestZone < PuppetTest::TestCase
         property = zone.property(:inherit)
         assert(zone, "Did not get 'inherit' property")
 
-        assert_equal("add inherit-pkg-dir\nset dir=/usr\nend", property.configtext,
+
+            assert_equal(
+                "add inherit-pkg-dir\nset dir=/usr\nend", property.configtext,
+
             "Got incorrect config text")
 
         zone.provider.inherit = "/usr"
 
-        assert_equal("", property.configtext,
+
+            assert_equal(
+                "", property.configtext,
+
             "Got incorrect config text")
 
         # Now we want multiple directories
@@ -149,7 +160,10 @@ add inherit-pkg-dir
 set dir=/sbin
 end"
 
-        assert_equal(text, property.configtext,
+
+    assert_equal(
+        text, property.configtext,
+
             "Got incorrect config text")
 
         zone.provider.inherit = %w{/usr /sbin /lib}
@@ -157,7 +171,10 @@ end"
 
         text = "remove inherit-pkg-dir dir=/lib"
 
-        assert_equal(text, property.configtext,
+
+            assert_equal(
+                text, property.configtext,
+
             "Got incorrect config text")
     end
 end
@@ -230,13 +247,13 @@ set address=#{ip}
 set physical=bge0
 end
 }
-        end
+    end
 
-        assert_equal(0, $?, "Did not successfully create zone")
+    assert_equal(0, $?, "Did not successfully create zone")
 
-        hash = nil
-        assert_nothing_raised {
-            hash = zone.provider.send(:getconfig)
+    hash = nil
+    assert_nothing_raised {
+        hash = zone.provider.send(:getconfig)
         }
 
         zone[:check] = [:inherit, :autoboot]
@@ -247,14 +264,23 @@ end
         end
 
         # And make sure it gets set correctly.
-        assert_equal(%w{/sbin /usr /opt/csw /lib /platform}.sort,
+
+            assert_equal(
+                %w{/sbin /usr /opt/csw /lib /platform}.sort,
+
             values[:inherit].sort, "Inherited dirs did not get collected correctly."
         )
 
-        assert_equal(["#{interface}:#{ip}"], values[:ip],
+
+            assert_equal(
+                ["#{interface}:#{ip}"], values[:ip],
+
             "IP addresses did not get collected correctly.")
 
-        assert_equal(:true, values[:autoboot],
+
+                assert_equal(
+                    :true, values[:autoboot],
+
             "Autoboot did not get collected correctly.")
     end
 
@@ -280,7 +306,10 @@ end
 
         assert(zone.insync?(zone.retrieve), "Zone is not insync")
 
-        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /dir: \/sbin/,
+
+            assert(
+                %x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /dir: \/sbin/,
+
             "sbin was not added")
 
         # And then remove it.
@@ -291,7 +320,10 @@ end
 
         assert(zone.insync?(zone.retrieve), "Zone is not insync")
 
-        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} !~ /dir: \/sbin/,
+
+            assert(
+                %x{/usr/sbin/zonecfg -z #{zone[:name]} info} !~ /dir: \/sbin/,
+
             "sbin was not removed")
 
         # Now add an ip adddress.  Fortunately (or not), zonecfg doesn't verify
@@ -302,18 +334,19 @@ end
 
         assert_apply(zone)
         assert(zone.insync?(zone.retrieve), "Zone is not in sync")
-        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /192.168.0.1/,
+
+            assert(
+                %x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /192.168.0.1/,
+
             "ip was not added")
         zone[:ip] = ["hme1:192.168.0.2", "hme0:192.168.0.1"]
         assert_apply(zone)
         assert(zone.insync?(zone.retrieve), "Zone is not in sync")
-        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /192.168.0.2/,
-            "ip was not added")
+        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} =~ /192.168.0.2/, "ip was not added")
         zone[:ip] = ["hme1:192.168.0.2"]
         assert_apply(zone)
         zone.retrieve
-        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} !~ /192.168.0.1/,
-            "ip was not removed")
+        assert(%x{/usr/sbin/zonecfg -z #{zone[:name]} info} !~ /192.168.0.1/, "ip was not removed")
     end
 
     # Test creating and removing a zone, but only up to the configured property,
@@ -345,7 +378,7 @@ end
         currentvalues = zone.retrieve
 
         assert_equal(:absent, currentvalues[zone.property(:ensure)],
-                     "Zone is not absent")
+            "Zone is not absent")
     end
 
     # Just go through each method linearly and make sure it works.
@@ -377,9 +410,7 @@ end
             assert_nothing_raised {
                 current_values = zone.retrieve
             }
-            assert_equal(property, current_values[zone.property(:ensure)],
-                "Method %s did not correctly set property %s" %
-                    [method, property])
+            assert_equal(property, current_values[zone.property(:ensure)], "Method %s did not correctly set property %s" % [method, property])
         end
     end
 
@@ -412,7 +443,7 @@ end
         currentvalues = zone.retrieve
 
         assert_equal(:absent, currentvalues[zone.property(:ensure)],
-                     "Zone is not absent")
+            "Zone is not absent")
     end
 end
 

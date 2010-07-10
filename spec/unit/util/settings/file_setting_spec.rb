@@ -61,7 +61,7 @@ describe Puppet::Util::Settings::FileSetting do
 
     describe "when reading the owner" do
         it "should be root when the setting specifies root" do
-            setting = FileSetting.new(:settings => mock("settings"), :owner => "root", :desc => "a setting") 
+            setting = FileSetting.new(:settings => mock("settings"), :owner => "root", :desc => "a setting")
             setting.owner.should == "root"
         end
 

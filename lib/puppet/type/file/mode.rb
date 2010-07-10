@@ -6,21 +6,21 @@ module Puppet
         require 'etc'
         desc "Mode the file should be.  Currently relatively limited:
             you must specify the exact mode the file should be.
- 
+
             Note that when you set the mode of a directory, Puppet always
-            sets the search/traverse (1) bit anywhere the read (4) bit is set. 
+            sets the search/traverse (1) bit anywhere the read (4) bit is set.
             This is almost always what you want: read allows you to list the
-            entries in a directory, and search/traverse allows you to access 
-            (read/write/execute) those entries.)  Because of this feature, you 
-            can recursively make a directory and all of the files in it 
+            entries in a directory, and search/traverse allows you to access
+            (read/write/execute) those entries.)  Because of this feature, you
+            can recursively make a directory and all of the files in it
             world-readable by setting e.g.::
 
                 file { '/some/dir':
-                  mode => 644,
-                  recurse => true,
+                    mode => 644,
+                    recurse => true,
                 }
 
-            In this case all of the files underneath ``/some/dir`` will have 
+            In this case all of the files underneath ``/some/dir`` will have
             mode 644, and all of the directories will have mode 755."
 
         @event = :file_changed
@@ -34,8 +34,7 @@ module Puppet
             when Symbol
                 return currentvalue
             else
-                raise Puppet::DevError, "Invalid current value for mode: %s" %
-                    currentvalue.inspect
+                raise Puppet::DevError, "Invalid current value for mode: %s" % currentvalue.inspect
             end
         end
 
@@ -46,8 +45,7 @@ module Puppet
             when Symbol
                 return newvalue
             else
-                raise Puppet::DevError, "Invalid 'should' value for mode: %s" %
-                    newvalue.inspect
+                raise Puppet::DevError, "Invalid 'should' value for mode: %s" % newvalue.inspect
             end
         end
 
@@ -57,8 +55,7 @@ module Puppet
             value = should
             if value.is_a?(String)
                 unless value =~ /^\d+$/
-                    raise Puppet::Error, "File modes can only be numbers, not %s" %
-                        value.inspect
+                    raise Puppet::Error, "File modes can only be numbers, not %s" % value.inspect
                 end
                 # Make sure our number looks like octal.
                 unless value =~ /^0/
@@ -68,8 +65,7 @@ module Puppet
                 begin
                     value = Integer(value)
                 rescue ArgumentError => detail
-                    raise Puppet::DevError, "Could not convert %s to integer" %
-                        old.inspect
+                    raise Puppet::DevError, "Could not convert %s to integer" % old.inspect
                 end
             end
 
@@ -108,8 +104,8 @@ module Puppet
             # off mode management entirely.
 
             if stat = @resource.stat(false)
-                unless defined? @fixed
-                    if defined? @should and @should
+                unless defined?(@fixed)
+                    if defined?(@should) and @should
                         @should = @should.collect { |s| self.dirmask(s) }
                     end
                 end
@@ -125,8 +121,7 @@ module Puppet
             begin
                 File.chmod(mode, @resource[:path])
             rescue => detail
-                error = Puppet::Error.new("failed to chmod %s: %s" %
-                    [@resource[:path], detail.message])
+                error = Puppet::Error.new("failed to chmod %s: %s" % [@resource[:path], detail.message])
                 error.set_backtrace detail.backtrace
                 raise error
             end

@@ -1,6 +1,6 @@
 module Puppet
     Puppet::Type.type(:file).newproperty(:owner) do
-        
+
         desc "To whom the file should belong.  Argument can be user name or
             user ID."
         @event = :file_changed
@@ -23,8 +23,7 @@ module Puppet
             when String
                 newvalue
             else
-                raise Puppet::DevError, "Invalid uid type %s(%s)" %
-                    [newvalue.class, newvalue]
+                raise Puppet::DevError, "Invalid uid type %s(%s)" % [newvalue.class, newvalue]
             end
         end
 

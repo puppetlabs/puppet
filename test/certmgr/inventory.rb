@@ -13,8 +13,8 @@ class TestCertInventory < Test::Unit::TestCase
     Inventory = Puppet::SSLCertificates::Inventory
 
     def setup
-      super
-      Puppet::Util::SUIDManager.stubs(:asuser).yields
+        super
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
     end
 
     def test_format
@@ -25,9 +25,12 @@ class TestCertInventory < Test::Unit::TestCase
             format = Inventory.format(cert)
         end
 
-        assert(format =~ /^0x0001 \S+ \S+ #{cert.subject}/,
-              "Did not create correct format")
-      end
+
+            assert(
+                format =~ /^0x0001 \S+ \S+ #{cert.subject}/,
+
+                "Did not create correct format")
+        end
 
     def test_init
         # First create a couple of certificates
@@ -42,8 +45,7 @@ class TestCertInventory < Test::Unit::TestCase
         end
 
         [cert1, cert2].each do |cert|
-            assert(init.include?(cert.subject.to_s),
-                "Did not catch %s" % cert.subject.to_s)
+            assert(init.include?(cert.subject.to_s), "Did not catch %s" % cert.subject.to_s)
         end
     end
 
@@ -58,7 +60,7 @@ class TestCertInventory < Test::Unit::TestCase
             end
             Puppet::Util::Settings.any_instance.stubs(:write)
             Puppet::Util::Settings.any_instance.expects(:write).
-              with(:cert_inventory, 'a').yields(file)
+                with(:cert_inventory, 'a').yields(file)
 
             Puppet::SSLCertificates::Inventory.add(cert)
         end

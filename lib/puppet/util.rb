@@ -38,8 +38,7 @@ module Util
                     Puppet::Util::SUIDManager.egid = group
                     Puppet::Util::SUIDManager.gid = group
                 rescue => detail
-                    Puppet.warning "could not change to group %s: %s" %
-                        [group.inspect, detail]
+                    Puppet.warning "could not change to group %s: %s" % [group.inspect, detail]
                     $stderr.puts "could not change to group %s" % group.inspect
 
                     # Don't exit on failed group changes, since it's
@@ -77,14 +76,20 @@ module Util
                     args = args.join(" ")
                 end
                 if useself
+
                     Puppet::Util::Log.create(
+
                         :level => level,
                         :source => self,
+
                         :message => args
                     )
                 else
+
                     Puppet::Util::Log.create(
+
                         :level => level,
+
                         :message => args
                     )
                 end
@@ -130,8 +135,7 @@ module Util
                 elsif FileTest.directory?(File.join(path))
                     next
                 else FileTest.exist?(File.join(path))
-                    raise "Cannot create %s: basedir %s is a file" %
-                        [dir, File.join(path)]
+                    raise "Cannot create %s: basedir %s is a file" % [dir, File.join(path)]
                 end
             }
             return true
@@ -189,10 +193,10 @@ module Util
         if bin =~ /^\//
             return bin if FileTest.file? bin and FileTest.executable? bin
         else
-           ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
-               dest=File.join(dir, bin)
-               return dest if FileTest.file? dest and FileTest.executable? dest
-           end
+            ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
+                dest=File.join(dir, bin)
+                return dest if FileTest.file? dest and FileTest.executable? dest
+            end
         end
         return nil
     end
@@ -318,8 +322,7 @@ module Util
         elsif Puppet.features.microsoft_windows?
             command = command.collect {|part| '"' + part.gsub(/"/, '\\"') + '"'}.join(" ") if command.is_a?(Array)
             Puppet.debug "Creating process '%s'" % command
-            processinfo = Process.create(
-                :command_line => command )
+            processinfo = Process.create( :command_line => command )
             child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
         end # if posix or win32
 
@@ -375,7 +378,7 @@ module Util
     module_function :benchmark
 
     def memory
-        unless defined? @pmap
+        unless defined?(@pmap)
             pmap = %x{which pmap 2>/dev/null}.chomp
             if $? != 0 or pmap =~ /^no/
                 @pmap = nil

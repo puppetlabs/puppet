@@ -34,8 +34,7 @@ class Puppet::Run
 
     def log_run
         msg = ""
-        msg += "triggered run" %
-        if options[:tags]
+        msg += "triggered run" % if options[:tags]
             msg += " with tags #{options[:tags].inspect}"
         end
 

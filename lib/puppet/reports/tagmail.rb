@@ -31,8 +31,7 @@ Puppet::Reports.register_report(:tagmail) do
         webservers that are not also from mailservers to ``httpadmins@domain.com``.
 
         If you are using anti-spam controls, such as grey-listing, on your mail
-        server you should whitelist the sending email (controlled by ``reportform``
-        configuration option) to ensure your email is not discarded as spam.
+        server you should whitelist the sending email (controlled by ``reportform`` configuration option) to ensure your email is not discarded as spam.
         "
 
 
@@ -109,8 +108,7 @@ Puppet::Reports.register_report(:tagmail) do
     # Process the report.  This just calls the other associated messages.
     def process
         unless FileTest.exists?(Puppet[:tagmap])
-            Puppet.notice "Cannot send tagmail report; no tagmap file %s" %
-                Puppet[:tagmap]
+            Puppet.notice "Cannot send tagmail report; no tagmap file %s" % Puppet[:tagmap]
             return
         end
 
@@ -130,12 +128,12 @@ Puppet::Reports.register_report(:tagmail) do
                     Net::SMTP.start(Puppet[:smtpserver]) do |smtp|
                         reports.each do |emails, messages|
                             smtp.open_message_stream(Puppet[:reportfrom], *emails) do |p|
-                              p.puts "From: #{Puppet[:reportfrom]}"
-                              p.puts "Subject: Puppet Report for %s" % self.host
-                              p.puts "To: " + emails.join(", ")
-                              p.puts "Date: " + Time.now.rfc2822
-                              p.puts
-                              p.puts messages
+                                p.puts "From: #{Puppet[:reportfrom]}"
+                                p.puts "Subject: Puppet Report for %s" % self.host
+                                p.puts "To: " + emails.join(", ")
+                                p.puts "Date: " + Time.now.rfc2822
+                                p.puts
+                                p.puts messages
                             end
                         end
                     end

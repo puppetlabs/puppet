@@ -107,8 +107,7 @@ class Puppet::Network::Handler
             if hash.include?(:Mount)
                 @passedconfig = true
                 unless hash[:Mount].is_a?(Hash)
-                    raise Puppet::DevError, "Invalid mount hash %s" %
-                        hash[:Mount].inspect
+                    raise Puppet::DevError, "Invalid mount hash %s" % hash[:Mount].inspect
                 end
 
                 hash[:Mount].each { |dir, name|
@@ -159,8 +158,7 @@ class Puppet::Network::Handler
         def mount(path, name)
             if @mounts.include?(name)
                 if @mounts[name] != path
-                    raise FileServerError, "%s is already mounted at %s" %
-                        [@mounts[name].path, name]
+                    raise FileServerError, "%s is already mounted at %s" % [@mounts[name].path, name]
                 else
                     # it's already mounted; no problem
                     return
@@ -219,8 +217,7 @@ class Puppet::Network::Handler
                 clientip = nil
             end
             unless mount.allowed?(client, clientip)
-                mount.warning "%s cannot access %s" %
-                    [client, file]
+                mount.warning "%s cannot access %s" % [client, file]
                 raise Puppet::AuthorizationError, "Cannot access %s" % mount
             end
         end
@@ -283,8 +280,7 @@ class Puppet::Network::Handler
                         when /\[([-\w]+)\]/
                             name = $1
                             if newmounts.include?(name)
-                                raise FileServerError, "%s is already mounted as %s in %s" %
-                                    [newmounts[name], name, @configuration.file]
+                                raise FileServerError, "%s is already mounted as %s in %s" % [newmounts[name], name, @configuration.file]
                             end
                             mount = Mount.new(name)
                             newmounts[name] = mount
@@ -299,8 +295,7 @@ class Puppet::Network::Handler
                                     begin
                                         mount.path = value
                                     rescue FileServerError => detail
-                                        Puppet.err "Removing mount %s: %s" %
-                                            [mount.name, detail]
+                                        Puppet.err "Removing mount %s: %s" % [mount.name, detail]
                                         newmounts.delete(mount.name)
                                     end
                                 end
@@ -311,7 +306,10 @@ class Puppet::Network::Handler
                                         mount.allow(val)
                                     rescue AuthStoreError => detail
                                         puts detail.backtrace if Puppet[:trace]
-                                        raise FileServerError.new(detail.to_s,
+
+                                            raise FileServerError.new(
+                                                detail.to_s,
+
                                             count, @configuration.file)
                                     end
                                 }
@@ -321,17 +319,18 @@ class Puppet::Network::Handler
                                         mount.info "denying %s access" % val
                                         mount.deny(val)
                                     rescue AuthStoreError => detail
-                                        raise FileServerError.new(detail.to_s,
+
+                                        raise FileServerError.new(
+                                            detail.to_s,
+
                                             count, @configuration.file)
                                     end
                                 }
                             else
-                                raise FileServerError.new("Invalid argument '%s'" % var,
-                                    count, @configuration.file)
+                                raise FileServerError.new("Invalid argument '%s'" % var, count, @configuration.file)
                             end
                         else
-                            raise FileServerError.new("Invalid line '%s'" % line.chomp,
-                                count, @configuration.file)
+                            raise FileServerError.new("Invalid line '%s'" % line.chomp, count, @configuration.file)
                         end
                         count += 1
                     }
@@ -340,8 +339,7 @@ class Puppet::Network::Handler
                 Puppet.err "FileServer error: Cannot read %s; cannot serve" % @configuration
                 #raise Puppet::Error, "Cannot read %s" % @configuration
             rescue Errno::ENOENT => detail
-                Puppet.err "FileServer error: '%s' does not exist; cannot serve" %
-                    @configuration
+                Puppet.err "FileServer error: '%s' does not exist; cannot serve" % @configuration
             end
 
             unless newmounts[MODULES]
@@ -368,9 +366,12 @@ class Puppet::Network::Handler
                 # object...
                 mount = PluginMount.new(PLUGINS)
                 # Yes, you're allowed to hate me for this.
-                mount.instance_variable_set(:@declarations,
-                                 newmounts[PLUGINS].instance_variable_get(:@declarations)
-                                 )
+
+                    mount.instance_variable_set(
+                        :@declarations,
+
+                            newmounts[PLUGINS].instance_variable_get(:@declarations)
+                            )
                 newmounts[PLUGINS] = mount
             end
 
@@ -379,8 +380,7 @@ class Puppet::Network::Handler
             # pointing to the specific problem.
             newmounts.each { |name, mount|
                 unless mount.valid?
-                    raise FileServerError, "Invalid mount %s" %
-                        name
+                    raise FileServerError, "Invalid mount %s" % name
                 end
             }
             @mounts = newmounts
@@ -448,8 +448,7 @@ class Puppet::Network::Handler
                 if client
                     map = clientmap(client)
                 else
-                    Puppet.notice "No client; expanding '%s' with local host" %
-                        path
+                    Puppet.notice "No client; expanding '%s' with local host" % path
                     # Else, use the local information
                     map = localmap()
                 end
@@ -465,7 +464,7 @@ class Puppet::Network::Handler
 
             # Do we have any patterns in our path, yo?
             def expandable?
-                if defined? @expandable
+                if defined?(@expandable)
                     @expandable
                 else
                     false
@@ -515,8 +514,11 @@ class Puppet::Network::Handler
                     # the effort.
                     obj[:audit] = CHECKPARAMS
                 else
+
                     obj = Puppet::Type.type(:file).new(
+
                         :name => file_path(path, client),
+
                         :audit => CHECKPARAMS
                     )
                     @files[file_path(path, client)] = obj
@@ -542,11 +544,11 @@ class Puppet::Network::Handler
             # Cache this manufactured map, since if it's used it's likely
             # to get used a lot.
             def localmap
-                unless defined? @@localmap
+                unless defined?(@@localmap)
                     @@localmap = {
                         "h" =>  Facter.value("hostname"),
                         "H" => [Facter.value("hostname"),
-                                Facter.value("domain")].join("."),
+                            Facter.value("domain")].join("."),
                         "d" =>  Facter.value("domain")
                     }
                 end
@@ -710,7 +712,7 @@ class Puppet::Network::Handler
             end
 
             def path_exists?(relpath, client = nil)
-               !valid_modules(client).find { |mod| mod.plugin(relpath) }.nil?
+                !valid_modules(client).find { |mod| mod.plugin(relpath) }.nil?
             end
 
             def valid?
@@ -749,7 +751,7 @@ class Puppet::Network::Handler
             end
 
             def add_to_filetree(f, filetree)
-               first, rest = f.split(File::SEPARATOR, 2)
+                first, rest = f.split(File::SEPARATOR, 2)
             end
         end
     end

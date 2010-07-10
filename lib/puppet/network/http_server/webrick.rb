@@ -108,8 +108,7 @@ module Puppet
                 # have a global state
 
                 # mount has to be called after the server is initialized
-                servlet = Puppet::Network::XMLRPC::WEBrickServlet.new(
-                    handler_instances)
+                servlet = Puppet::Network::XMLRPC::WEBrickServlet.new( handler_instances)
                 self.mount("/RPC2", servlet)
             end
 

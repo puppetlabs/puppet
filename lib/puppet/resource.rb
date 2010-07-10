@@ -224,13 +224,13 @@ class Puppet::Resource
     # Convert our resource to Puppet code.
     def to_manifest
         "%s { '%s':\n%s\n}" % [self.type.to_s.downcase, self.title,
-             @parameters.collect { |p, v|
-                 if v.is_a? Array
-                     "    #{p} => [\'#{v.join("','")}\']"
-                 else
-                     "    #{p} => \'#{v}\'"
-                 end
-             }.join(",\n")
+            @parameters.collect { |p, v|
+                if v.is_a? Array
+                    "    #{p} => [\'#{v.join("','")}\']"
+                else
+                    "    #{p} => \'#{v}\'"
+                end
+            }.join(",\n")
             ]
     end
 
@@ -287,10 +287,10 @@ class Puppet::Resource
             # the database interaction doesn't have to worry about
             # whether it returns an array or a string.
             result[p.to_s] = if v.is_a?(Array) and v.length == 1
-                              v[0]
-                          else
-                              v
-                          end
+                v[0]
+                    else
+                        v
+                            end
         end
 
         result.tags = self.tags
@@ -405,11 +405,11 @@ class Puppet::Resource
     end
 
     def extract_type_and_title(argtype, argtitle)
-	    if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
-	    elsif argtitle                                         then [ argtype,            argtitle      ]
-	    elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
-	    else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
-	    end
+        if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
+        elsif argtitle                                         then [ argtype,            argtitle      ]
+        elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
+        else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
+        end
     end
 
     def munge_type_name(value)

@@ -39,7 +39,7 @@ describe provider do
 Installed: 1:1.0
 Candidate: 1:1.1
 Version table:
- 1:1.0
+1:1.0
     650 http://ftp.osuosl.org testing/main Packages
 *** 1:1.1
     100 /var/lib/dpkg/status"

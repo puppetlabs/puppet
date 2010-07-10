@@ -13,8 +13,7 @@ describe "the sprintf function" do
     end
 
     it "should raise a ParseError if there is less than 1 argument" do
-        lambda { @scope.function_sprintf([]) }.should(
-            raise_error(Puppet::ParseError))
+        lambda { @scope.function_sprintf([]) }.should( raise_error(Puppet::ParseError))
     end
 
     it "should format integers" do
@@ -35,7 +34,7 @@ describe "the sprintf function" do
     it "should perform more complex formatting" do
         result = @scope.function_sprintf(
             [ "<%.8s:%#5o %#8X (%-8s)>",
-              "overlongstring", "23", "48879", "foo" ])
+                "overlongstring", "23", "48879", "foo" ])
         result.should(eql("<overlong:  027   0XBEEF (foo     )>"))
     end
 

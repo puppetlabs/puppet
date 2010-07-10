@@ -128,5 +128,5 @@ class Puppet::Node::Environment
         end
     end
 
-    @root = new(:'*root*') 
+    @root = new(:'*root*')
 end

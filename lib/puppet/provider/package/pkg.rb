@@ -66,8 +66,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
             when "installed"
                 version = v
             else
-                Puppet.warn "unknown package state for %s: %s" %
-                            [@resource[:name], v]
+                Puppet.warn "unknown package state for %s: %s" % [@resource[:name], v]
             end
         end
         version
@@ -95,17 +94,14 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         rescue Puppet::ExecutionFailure
             # pkg returns 1 if the package is not found.
             return {:ensure => :absent, :status => 'missing',
-                    :name => @resource[:name], :error => 'ok'}
+                :name => @resource[:name], :error => 'ok'}
         end
 
-        hash = self.class.parse_line(output) || 
-               {:ensure => :absent, :status => 'missing',
-                :name => @resource[:name], :error => 'ok'}
+        hash = self.class.parse_line(output) ||
+            {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
 
         if hash[:error] != "ok"
-              raise Puppet::Error.new(
-                    "Package %s, version %s is in error state: %s" %
-                    [hash[:name], hash[:version], hash[:error]])
+            raise Puppet::Error.new( "Package %s, version %s is in error state: %s" % [hash[:name], hash[:version], hash[:error]])
         end
 
         return hash

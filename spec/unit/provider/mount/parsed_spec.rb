@@ -29,7 +29,7 @@ module ParsedMountTesting
     def mkmountargs
         mount = nil
 
-        if defined? @pcount
+        if defined?(@pcount)
             @pcount += 1
         else
             @pcount = 1
@@ -151,7 +151,7 @@ describe provider_class do
 
         it "should write the mount to disk when :flush is called" do
             old_text = @provider_class.target_object(@provider_class.default_target).read
-            
+
             @mount.flush
 
             text = @provider_class.target_object(@provider_class.default_target).read

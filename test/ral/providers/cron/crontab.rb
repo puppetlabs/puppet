@@ -23,7 +23,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # a full cron job.  These tests assume individual record types will always be correctly
     # parsed, so all they
     def sample_crons
-        unless defined? @sample_crons
+        unless defined?(@sample_crons)
             @sample_crons = YAML.load(File.read(File.join(@crondir, "crontab_collections.yaml")))
         end
         @sample_crons
@@ -33,7 +33,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # mapping between records and lines.  We have plenty of redundancy here because
     # we use these records to build up our complex, multi-line cron jobs below.
     def sample_records
-        unless defined? @sample_records
+        unless defined?(@sample_records)
             @sample_records = YAML.load(File.read(File.join(@crondir, "crontab_sample_records.yaml")))
         end
         @sample_records
@@ -253,7 +253,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
                 sis.dup.each do |p,v|
                     is.delete(p) if v == :absent
                 end
-                assert_equal(should, is,
+
+                            assert_equal(
+                should, is,
+        
                     "Did not parse %s correctly" % file)
             end
 
@@ -295,7 +298,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
             str = @provider.to_line(args)
         }
 
-        assert_equal("# Puppet Name: #{name}\n30 * * * * date > /dev/null", str,
+
+                    assert_equal(
+                "# Puppet Name: #{name}\n30 * * * * date > /dev/null", str,
+        
             "Cron did not generate correctly")
     end
 
@@ -370,8 +376,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
         @provider.flush :target => @me, :command => "/do/something",
             :record_type => :crontab
         created = @provider.retrieve(@me)
-        assert(created.detect { |r| r[:command] == "/do/something" },
-            "Did not create cron tab")
+        assert(created.detect { |r| r[:command] == "/do/something" }, "Did not create cron tab")
     end
 
     # Make sure we correctly bidirectionally parse things.
@@ -393,7 +398,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
             @provider.initvars
             str += "\n"
             target.write(str)
-            assert_equal(str, target.read,
+
+                        assert_equal(
+                str, target.read,
+        
                 "Did not write correctly")
             assert_nothing_raised("Could not prefetch with %s" % str.inspect) do
                 @provider.prefetch
@@ -402,7 +410,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
                 @provider.flush_target(@me)
             end
 
-            assert_equal(str, target.read,
+
+                        assert_equal(
+                str, target.read,
+        
                 "Changed in read/write")
 
             @provider.clear
@@ -435,30 +446,42 @@ class TestCronParsedProvider < Test::Unit::TestCase
 
         # Now make some crons that should match
         matchers = [
-            @type.new(
+
+                        @type.new(
+                
                 :name => "yaycron",
                 :minute => [0, 30],
                 :command => "date",
+        
                 :user => @me
             ),
-            @type.new(
+
+                        @type.new(
+                
                 :name => "youtest",
                 :command => "yaytest",
+        
                 :user => you
             )
         ]
 
         nonmatchers = [
-            @type.new(
+
+                        @type.new(
+                
                 :name => "footest",
                 :minute => [0, 30],
                 :hour => 1,
                 :command => "fooness",
+        
                 :user => @me # wrong target
             ),
-            @type.new(
+
+                        @type.new(
+                
                 :name => "funtest2",
                 :command => "funtest",
+        
                 :user => you # wrong target for this cron
             )
         ]
@@ -509,8 +532,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
             # Ignore whitespace differences, since those don't affect function.
             modtext = text.gsub(/[ \t]+/, " ")
             modtarget = target.read.gsub(/[ \t]+/, " ")
-            assert_equal(modtext, modtarget,
-                "File was not rewritten the same")
+            assert_equal(modtext, modtarget, "File was not rewritten the same")
 
             @provider.clear
         end
@@ -535,14 +557,20 @@ class TestCronParsedProvider < Test::Unit::TestCase
             end
             records = @provider.send(:instance_variable_get, "@records")
             records.each do |r|
-                assert_equal(:freebsd_special, r[:record_type],
+
+                            assert_equal(
+                :freebsd_special, r[:record_type],
+        
                     "Did not create lines as freebsd lines")
             end
             assert_nothing_raised("Could not flush with %s" % str.inspect) do
                 @provider.flush_target(@me)
             end
 
-            assert_equal(str, target.read,
+
+                        assert_equal(
+                str, target.read,
+        
                 "Changed in read/write")
 
             @provider.clear

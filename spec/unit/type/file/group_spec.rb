@@ -70,7 +70,7 @@ describe property do
 
             @group.must be_insync(10)
         end
-        
+
         it "should not validate that groups exist when a group is specified as an integer" do
             @group.expects(:gid).never
             @group.validgroup?(10)

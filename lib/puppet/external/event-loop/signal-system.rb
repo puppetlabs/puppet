@@ -35,7 +35,7 @@ module SignalEmitterModule
     def define_signal (name, slot=:before, &body)
         # Can't use `define_method' and take a block pre-1.9.
         class_eval %{ def on_#{name} &block
-                    add_signal_handler(:#{name}, &block) end }
+            add_signal_handler(:#{name}, &block) end }
         define_signal_handler(name, :before, &lambda {|*a|})
         define_signal_handler(name, :after, &lambda {|*a|})
         define_signal_handler(name, slot, &body) if block_given?
@@ -160,7 +160,7 @@ module SignalObserver
         names.each { |x| __ignore_signal_1(subject, x) }
     end
 
-  private
+    private
 
     def __ignore_signal_1(subject, name)
         @observed_signals[subject][name].each do |handler|

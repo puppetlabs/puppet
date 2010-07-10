@@ -15,7 +15,7 @@ describe Puppet::Util::Log do
 
     describe Puppet::Util::Log::DestConsole do
         before do
-            @console = Puppet::Util::Log::DestConsole.new 
+            @console = Puppet::Util::Log::DestConsole.new
         end
 
         it "should colorize if Puppet[:color] is :ansi" do
@@ -173,7 +173,7 @@ describe Puppet::Util::Log do
             it "should use the source_descriptors" do
                 source = stub "source"
                 source.stubs(:source_descriptors).returns(:tags => ["tag","tag2"], :path => "path", :version => 100)
-                
+
                 log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
                 log.expects(:tag).with("tag")
                 log.expects(:tag).with("tag2")

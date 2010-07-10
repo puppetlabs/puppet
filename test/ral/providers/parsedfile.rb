@@ -36,8 +36,7 @@ class TestParsedFile < Test::Unit::TestCase
     # A simple block to skip the complexity of a full transaction.
     def apply(resource)
         [:one, :two, :ensure, :target].each do |st|
-            Puppet.info "Setting %s: %s => %s" %
-                [resource[:name], st, resource.should(st)]
+            Puppet.info "Setting %s: %s => %s" % [resource[:name], st, resource.should(st)]
             resource.provider.send(st.to_s + "=", resource.should(st))
         end
     end
@@ -51,8 +50,7 @@ class TestParsedFile < Test::Unit::TestCase
     end
 
     def mkprovider(name = :parsed)
-        @provider = @type.provide(name, :parent => Puppet::Provider::ParsedFile,
-            :filetype => :ram, :default_target => "yayness") do
+        @provider = @type.provide(name, :parent => Puppet::Provider::ParsedFile, :filetype => :ram, :default_target => "yayness") do
             record_line name, :fields => %w{name one two}
         end
     end
@@ -63,7 +61,7 @@ class TestParsedFile < Test::Unit::TestCase
     end
 
     def teardown
-        if defined? @provider
+        if defined?(@provider)
             @type.unprovide(@provider.name)
             @provider = nil
         end
@@ -369,16 +367,14 @@ class TestParsedFile < Test::Unit::TestCase
         assert_equal(:c, one.provider.two)
 
         # And make sure it's right on disk
-        assert(prov.target_object(:yayness).read.include?("one a c"),
-            "Did not write out correct data")
+        assert(prov.target_object(:yayness).read.include?("one a c"), "Did not write out correct data")
 
         # Make sure the second resource has not been modified
         assert_equal("a", two.provider.one, "Two was flushed early")
         assert_equal("c", two.provider.two, "Two was flushed early")
 
         # And on disk
-        assert(prov.target_object(:yayness).read.include?("two a c"),
-            "Wrote out other resource")
+        assert(prov.target_object(:yayness).read.include?("two a c"), "Wrote out other resource")
 
         # Now fetch the data again and make sure we're still right
         assert_nothing_raised { prov.prefetch(resources) }
@@ -422,8 +418,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         # And make sure our resource doesn't appear twice in the file.
-        assert_equal("yay b c\n", prov.target_object(:basic).read,
-            "Wrote record to file twice")
+        assert_equal("yay b c\n", prov.target_object(:basic).read, "Wrote record to file twice")
     end
 
     # Make sure a record can switch targets.
@@ -452,8 +447,7 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         check = proc do |target, name|
-            assert(prov.target_object(target).read.include?("%s a c" % name),
-                "Did not sync %s" % name)
+            assert(prov.target_object(target).read.include?("%s a c" % name), "Did not sync %s" % name)
         end
         # Make sure the data is there
         check.call(:first, :first)
@@ -479,8 +473,7 @@ class TestParsedFile < Test::Unit::TestCase
         check.call(:second, :mover)
 
         # And make sure the mover is no longer in the first file
-        assert(prov.target_object(:first) !~ /mover/,
-            "Mover was not removed from first file")
+        assert(prov.target_object(:first) !~ /mover/, "Mover was not removed from first file")
     end
 
     # Make sure that 'ensure' correctly calls 'sync' on all properties.
@@ -497,7 +490,10 @@ class TestParsedFile < Test::Unit::TestCase
         prov.target_object(:first).write "ondisk a c\n"
         prov.prefetch("ondisk" => ondisk, "notdisk" => notdisk)
 
-        assert_equal(:present, notdisk.should(:ensure),
+
+            assert_equal(
+                :present, notdisk.should(:ensure),
+
             "Did not get default ensure value")
 
         # Try creating the object
@@ -528,10 +524,8 @@ class TestParsedFile < Test::Unit::TestCase
         assert_nothing_raised { notdisk.flush }
 
         # And make sure it's no longer present
-        assert(prov.target_object(:first).read !~ /^notdisk/,
-            "Did not remove thing from disk")
-        assert(prov.target_object(:first).read =~ /^ondisk/,
-            "Lost object on disk")
+        assert(prov.target_object(:first).read !~ /^notdisk/, "Did not remove thing from disk")
+        assert(prov.target_object(:first).read =~ /^ondisk/, "Lost object on disk")
         assert_equal(:present, ondisk.provider.ensure)
     end
 
@@ -588,14 +582,14 @@ class TestParsedFile < Test::Unit::TestCase
         end
 
         assert(bills_values[bill.property(:one)],
-               "Bill does not have a value for 'one'")
+            "Bill does not have a value for 'one'")
         assert(bills_values[bill.property(:one)],
-               "Bill does not have a value for 'one' on second try")
+            "Bill does not have a value for 'one' on second try")
         assert_nothing_raised do
             bill.retrieve
         end
         assert(bills_values[bill.property(:one)],
-               "bill's value for 'one' disappeared")
+            "bill's value for 'one' disappeared")
     end
 
     # Make sure that creating a new resource finds existing records in memory
@@ -615,7 +609,10 @@ class TestParsedFile < Test::Unit::TestCase
 
     # Make sure invalid fields always show up as insync
     def test_invalid_fields
-        prov = @type.provide(:test, :parent => Puppet::Provider::ParsedFile,
+
+        prov = @type.provide(
+            :test, :parent => Puppet::Provider::ParsedFile,
+
             :filetype => :ram, :default_target => :yayness) do
             record_line :test, :fields => %w{name two}
         end
@@ -640,7 +637,10 @@ class TestParsedFile < Test::Unit::TestCase
 
     # Make sure we call the prefetch hook at the right place.
     def test_prefetch_hook
-        prov = @type.provide(:test, :parent => Puppet::Provider::ParsedFile,
+
+        prov = @type.provide(
+            :test, :parent => Puppet::Provider::ParsedFile,
+
             :filetype => :ram, :default_target => :yayness) do
 
             def self.prefetch_hook(records)
@@ -678,14 +678,16 @@ class TestParsedFile < Test::Unit::TestCase
         otarget.write("oname b d\n")
 
         # Now make a resource that targets elsewhat.
-        res = @type.new(:name => "test", :one => "a", :two => "c",
-            :target => opath)
+        res = @type.new(:name => "test", :one => "a", :two => "c", :target => opath)
 
         assert(res.property(:target), "Target is a parameter, not a property")
 
         assert_apply(res)
 
-        assert_equal("oname b d\ntest a c\n", otarget.read,
+
+            assert_equal(
+                "oname b d\ntest a c\n", otarget.read,
+
             "did not get correct results in specified target")
     end
 end

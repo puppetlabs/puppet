@@ -62,8 +62,7 @@ module Puppet
             parent = File.dirname(@resource[:path])
             unless FileTest.exists? parent
                 raise Puppet::Error,
-                    "Cannot create %s; parent directory %s does not exist" %
-                        [@resource[:path], parent]
+                    "Cannot create %s; parent directory %s does not exist" % [@resource[:path], parent]
             end
             if mode
                 Puppet::Util.withumask(000) do
@@ -93,7 +92,7 @@ module Puppet
             value = super(value)
             value,resource[:target] = :link,value unless value.is_a? Symbol
             resource[:links] = :manage if value == :link and resource[:links] != :follow
-            value 
+            value
         end
 
         def change_to_s(currentvalue, newvalue)
@@ -123,12 +122,10 @@ module Puppet
 
             if ! FileTest.exists?(basedir)
                 raise Puppet::Error,
-                    "Can not create %s; parent directory does not exist" %
-                    @resource.title
+                    "Can not create %s; parent directory does not exist" % @resource.title
             elsif ! FileTest.directory?(basedir)
                 raise Puppet::Error,
-                    "Can not create %s; %s is not a directory" %
-                    [@resource.title, dirname]
+                    "Can not create %s; %s is not a directory" % [@resource.title, dirname]
             end
         end
 

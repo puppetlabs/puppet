@@ -18,7 +18,7 @@ describe Puppet::Node::Facts, "when indirecting" do
     it "should add the node's certificate name as the 'clientcert' fact when adding local facts" do
         @facts.add_local_facts
         @facts.values["clientcert"].should == Puppet.settings[:certname]
-    end 
+    end
 
     it "should add the Puppet version as a 'clientversion' fact when adding local facts" do
         @facts.add_local_facts

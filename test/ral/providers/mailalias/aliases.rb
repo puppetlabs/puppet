@@ -26,7 +26,7 @@ class TestMailaliasAliasesProvider < Test::Unit::TestCase
     end
 
     def mkalias(name = "me")
-        if defined? @pcount
+        if defined?(@pcount)
             @pcount += 1
         else
             @pcount = 1

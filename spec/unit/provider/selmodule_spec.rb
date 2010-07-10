@@ -61,6 +61,6 @@ describe provider_class do
             @provider.syncversion.should == :false
         end
 
-     end
+    end
 
 end

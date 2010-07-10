@@ -2,9 +2,9 @@ Puppet::Type.type(:package).provide :ports, :parent => :freebsd, :source => :fre
     desc "Support for FreeBSD's ports.  Again, this still mixes packages and ports."
 
     commands :portupgrade => "/usr/local/sbin/portupgrade",
-             :portversion => "/usr/local/sbin/portversion",
-             :portuninstall => "/usr/local/sbin/pkg_deinstall",
-             :portinfo => "/usr/sbin/pkg_info"
+        :portversion => "/usr/local/sbin/portversion",
+        :portuninstall => "/usr/local/sbin/pkg_deinstall",
+        :portinfo => "/usr/sbin/pkg_info"
 
     defaultfor :operatingsystem => :freebsd
 

@@ -10,9 +10,12 @@ tab = case Facter.value(:operatingsystem)
     end
 
 
-Puppet::Type.type(:cron).provide(:crontab,
+
+            Puppet::Type.type(:cron).provide(
+                :crontab,
     :parent => Puppet::Provider::ParsedFile,
     :default_target => ENV["USER"] || "root",
+        
     :filetype => tab
 ) do
     commands :crontab => "crontab"

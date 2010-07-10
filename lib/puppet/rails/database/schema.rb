@@ -21,7 +21,7 @@ class Puppet::Rails::Schema
 
                 # Thanks, mysql!  MySQL requires a length on indexes in text fields.
                 # So, we provide them for mysql and handle everything else specially.
-		# Oracle doesn't index on CLOB fields, so we skip it
+                # Oracle doesn't index on CLOB fields, so we skip it
                 if Puppet[:dbadapter] == "mysql"
                     execute "CREATE INDEX typentitle ON resources (restype,title(50));"
                 elsif Puppet[:dbadapter] != "oracle_enhanced"
@@ -51,10 +51,10 @@ class Puppet::Rails::Schema
                     t.column :created_at, :datetime
                 end
 
-		# Oracle automatically creates a primary key index
-		if Puppet[:dbadapter] != "oracle_enhanced"
+                # Oracle automatically creates a primary key index
+                if Puppet[:dbadapter] != "oracle_enhanced"
                     add_index :puppet_tags, :id, :integer => true
-		end
+                end
 
                 create_table :hosts do |t|
                     t.column :name, :string, :null => false

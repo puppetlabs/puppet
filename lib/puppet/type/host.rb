@@ -6,9 +6,9 @@ module Puppet
             desc "The host's IP address, IPv4 or IPv6."
 
         validate do |value|
-           unless value =~ /((([0-9a-fA-F]+:){7}[0-9a-fA-F]+)|(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?::(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?)|((25[0-5]|2[0-4][\d]|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})/
-             raise Puppet::Error, "Invalid IP address"
-           end
+            unless value =~ /((([0-9a-fA-F]+:){7}[0-9a-fA-F]+)|(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?::(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?)|((25[0-5]|2[0-4][\d]|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})/
+            raise Puppet::Error, "Invalid IP address"
+            end
         end
 
         end
@@ -46,7 +46,7 @@ module Puppet
             # We actually want to return the whole array here, not just the first
             # value.
             def should
-                if defined? @should
+                if defined?(@should)
                     if @should == [:absent]
                         return :absent
                     else
@@ -71,7 +71,7 @@ module Puppet
                 those providers that write to disk."
 
             defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
-                    @resource.class.defaultprovider.default_target
+                @resource.class.defaultprovider.default_target
                 else
                     nil
                 end
@@ -84,12 +84,12 @@ module Puppet
             isnamevar
 
             validate do |value|
-               # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
-               x = value.split('.').each do |hostpart|
-                  unless hostpart =~ /^([\d\w]+|[\d\w][\d\w\-]+[\d\w])$/
-                     raise Puppet::Error, "Invalid host name"
-                  end
-               end
+                # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]
+                x = value.split('.').each do |hostpart|
+                    unless hostpart =~ /^([\d\w]+|[\d\w][\d\w\-]+[\d\w])$/
+                        raise Puppet::Error, "Invalid host name"
+                    end
+                end
             end
         end
 

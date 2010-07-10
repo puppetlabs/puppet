@@ -11,8 +11,7 @@ module Puppet
             it can be specified as the value of *backup* in a **file** object.
 
             Currently, filebuckets are only useful for manual retrieval of
-            accidentally removed files (e.g., you look in the log for the md5
-            sum and retrieve the file with that sum from the filebucket), but
+            accidentally removed files (e.g., you look in the log for the md5 sum and retrieve the file with that sum from the filebucket), but
             when transactions are fully supported filebuckets will be used to
             undo transactions.
 
@@ -35,9 +34,9 @@ module Puppet
 
         newparam(:server) do
             desc "The server providing the remote filebucket.  If this is not
-                  specified then *path* is checked. If it is set, then the
-                  bucket is local.  Otherwise the puppetmaster server specified
-                  in the config or at the commandline is used."
+                specified then *path* is checked. If it is set, then the
+                bucket is local.  Otherwise the puppetmaster server specified
+                in the config or at the commandline is used."
             defaultto { Puppet[:server] }
         end
 
@@ -62,7 +61,7 @@ module Puppet
         end
 
         def bucket
-            mkbucket() unless defined? @bucket
+            mkbucket() unless defined?(@bucket)
             return @bucket
         end
 

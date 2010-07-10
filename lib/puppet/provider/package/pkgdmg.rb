@@ -30,7 +30,7 @@ require 'facter/util/plist'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
     desc "Package management based on Apple's Installer.app and DiskUtility.app.  This package works by checking the contents of a DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg files may exist in the root directory of the DMG file system. Sub directories are not checked for packages.  See `the wiki docs </trac/puppet/wiki/DmgPackages>` for more detail."
-    
+
     confine :operatingsystem => :darwin
     defaultfor :operatingsystem => :darwin
     commands :installer => "/usr/sbin/installer"
@@ -50,21 +50,24 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
     def self.instances
         instance_by_name.collect do |name|
+
             new(
+
                 :name => name,
                 :provider => :pkgdmg,
+
                 :ensure => :installed
             )
         end
     end
 
     def self.installpkg(source, name, orig_source)
-      installer "-pkg", source, "-target", "/"
-      # Non-zero exit status will throw an exception.
-      File.open("/var/db/.puppet_pkgdmg_installed_#{name}", "w") do |t|
-          t.print "name: '#{name}'\n"
-          t.print "source: '#{orig_source}'\n"
-      end
+        installer "-pkg", source, "-target", "/"
+        # Non-zero exit status will throw an exception.
+        File.open("/var/db/.puppet_pkgdmg_installed_#{name}", "w") do |t|
+            t.print "name: '#{name}'\n"
+            t.print "source: '#{orig_source}'\n"
+        end
     end
 
     def self.installpkgdmg(source, name)

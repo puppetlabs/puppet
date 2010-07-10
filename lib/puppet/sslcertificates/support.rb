@@ -66,8 +66,7 @@ module Puppet::SSLCertificates::Support
 
     # Our certificate request
     keytype :csr, :param => :hostcsr, :class => OpenSSL::X509::Request do
-        Puppet.info "Creating a new certificate request for %s" %
-            Puppet[:certname]
+        Puppet.info "Creating a new certificate request for %s" % Puppet[:certname]
 
         csr = OpenSSL::X509::Request.new
         csr.version = 0
@@ -96,8 +95,7 @@ module Puppet::SSLCertificates::Support
             if Puppet[:trace]
                 puts detail.backtrace
             end
-            raise Puppet::Error.new("Certificate retrieval failed: %s" %
-                detail)
+            raise Puppet::Error.new("Certificate retrieval failed: %s" % detail)
         end
 
         if cert.nil? or cert == ""

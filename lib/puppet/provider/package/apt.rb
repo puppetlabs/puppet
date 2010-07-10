@@ -19,7 +19,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     # install packages from remote sites.
 
     def checkforcdrom
-        unless defined? @@checkedforcdrom
+        unless defined?(@@checkedforcdrom)
             if FileTest.exists? "/etc/apt/sources.list"
                 if File.read("/etc/apt/sources.list") =~ /^[^#]*cdrom:/
                     @@checkedforcdrom = true

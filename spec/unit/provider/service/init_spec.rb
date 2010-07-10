@@ -18,13 +18,13 @@ describe provider_class do
         @resource.stubs(:[]).with(:path).returns ["/service/path","/alt/service/path"]
 #        @resource.stubs(:ref).returns "Service[myservice]"
         File.stubs(:directory?).returns(true)
-        
+
         @provider = provider_class.new
         @provider.resource = @resource
     end
 
     describe "when getting all service instances" do
-        before :each do 
+        before :each do
             @services = ['one', 'two', 'three', 'four']
             Dir.stubs(:entries).returns @services
             FileTest.stubs(:directory?).returns(true)
@@ -59,14 +59,14 @@ describe provider_class do
                 @class.expects(:new).with{|hash| hash[:path] == @class.defpath}.returns("#{inst}_instance")
             end
             results = @services.sort.collect {|x| "#{x}_instance"}
-            @class.instances.sort.should == results  
+            @class.instances.sort.should == results
         end
         it "should set hasstatus to true for providers" do
             @services.each do |inst|
                 @class.expects(:new).with{|hash| hash[:name] == inst && hash[:hasstatus] == true}.returns("#{inst}_instance")
             end
             results = @services.collect {|x| "#{x}_instance"}
-            @class.instances.should == results  
+            @class.instances.should == results
         end
     end
 
@@ -95,18 +95,18 @@ describe provider_class do
             lambda { @provider.initscript }.should raise_error(Puppet::Error, "Could not find init script for 'myservice'")
         end
     end
-    
+
     describe "if the init script is present" do
         before :each do
             File.stubs(:stat).with("/service/path/myservice").returns true
         end
-        
+
         [:start, :stop, :status, :restart].each do |method|
             it "should have a #{method} method" do
                 @provider.should respond_to(method)
             end
             describe "when running #{method}" do
-            
+
                 it "should use any provided explicit command" do
                     @resource.stubs(:[]).with(method).returns "/user/specified/command"
                     @provider.expects(:execute).with { |command, *args| command == ["/user/specified/command"] }
@@ -117,7 +117,7 @@ describe provider_class do
                     @resource.stubs(:[]).with("has#{method}".intern).returns :true
                     @provider.expects(:execute).with { |command, *args| command ==  ["/service/path/myservice",method]}
                     @provider.send(method)
-                end            
+                end
             end
         end
 

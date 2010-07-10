@@ -37,8 +37,7 @@ class TestTypeProviders < Test::Unit::TestCase
     # Make sure the provider is always the first parameter created.
     def test_provider_sorting
         should = [:name, :ensure]
-        assert_equal(should, @type.allattrs.reject { |p| ! should.include?(p) },
-            "Got wrong order of parameters")
+        assert_equal(should, @type.allattrs.reject { |p| ! should.include?(p) }, "Got wrong order of parameters")
 
         @type.provide(:yay) { }
         should = [:name, :provider, :ensure]

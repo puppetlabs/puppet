@@ -28,10 +28,13 @@ class TestRailsParameter < Test::Unit::TestCase
 
         host.save
 
-        resource = host.resources.create(
-            :title => "/tmp/to_resource",
-            :restype => "file",
-            :exported => true)
+
+            resource = host.resources.create(
+
+                :title => "/tmp/to_resource",
+                :restype => "file",
+
+                :exported => true)
 
         # Use array and non-array values, to make sure we get things back in
         # the same form.
@@ -43,8 +46,11 @@ class TestRailsParameter < Test::Unit::TestCase
                 values = [value]
             end
             valueobjects = values.collect do |v|
-                resource.param_values.create(:value => v,
-                                             :param_name => param)
+
+                resource.param_values.create(
+                    :value => v,
+
+                        :param_name => param)
             end
 
             assert(param, "Did not create rails parameter")

@@ -7,7 +7,7 @@ property = Puppet::Type.type(:file).attrclass(:owner)
 describe property do
     before do
         # FIXME: many of these tests exercise the provider rather than `owner`
-        # and should be moved into provider tests. ~JW 
+        # and should be moved into provider tests. ~JW
         @provider = Puppet::Type.type(:file).provider(:posix).new
         @provider.stubs(:uid).with("one").returns(1)
 
@@ -96,7 +96,7 @@ describe property do
 
             @owner.must be_insync(10)
         end
-        
+
         it "should not validate that users exist when a user is specified as an integer" do
             @provider.expects(:uid).never
             @provider.validuser?(10)

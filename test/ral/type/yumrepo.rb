@@ -67,9 +67,12 @@ class TestYumRepo < Test::Unit::TestCase
     def test_absent
         copy_datafiles
         baseurl = 'http://example.com/'
-        devel = make_repo("development",
-                          { :mirrorlist => 'absent',
-                            :baseurl => baseurl })
+
+            devel = make_repo(
+                "development",
+                    { :mirrorlist => 'absent',
+
+                        :baseurl => baseurl })
         devel.retrieve
         assert_apply(devel)
         inifile = Puppet::Type.type(:yumrepo).read()

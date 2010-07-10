@@ -19,20 +19,20 @@ describe Puppet::Util::SELinux do
         before do
         end
         it "should return :true if this system has SELinux enabled" do
-             Selinux.expects(:is_selinux_enabled).returns 1
-             selinux_support?.should be_true
+            Selinux.expects(:is_selinux_enabled).returns 1
+            selinux_support?.should be_true
         end
 
         it "should return :false if this system lacks SELinux" do
-             Selinux.expects(:is_selinux_enabled).returns 0
-             selinux_support?.should be_false
+            Selinux.expects(:is_selinux_enabled).returns 0
+            selinux_support?.should be_false
         end
- 
+
         it "should return nil if /proc/mounts does not exist" do
             File.stubs(:open).with("/proc/mounts").raises("No such file or directory - /proc/mounts")
             read_mounts.should == nil
         end
-   end
+    end
 
     describe "filesystem detection" do
         before :each do
@@ -77,7 +77,7 @@ describe Puppet::Util::SELinux do
     describe "realpath" do
         it "should handle files that don't exist" do
 
-            # Since I'm stubbing Pathname.new for this test, 
+            # Since I'm stubbing Pathname.new for this test,
             # I need to also stub the internal calls to Pathname.new,
             # which happen in Pathname.dirname and Parthname.basename
             # I want those to return real Pathname objects,
@@ -194,7 +194,7 @@ describe Puppet::Util::SELinux do
     end
 
     describe "set_selinux_context" do
-         before :each do
+        before :each do
             fh = stub 'fh', :close => nil
             File.stubs(:open).with("/proc/mounts").returns fh
             fh.stubs(:read_nonblock).returns(
@@ -206,7 +206,7 @@ describe Puppet::Util::SELinux do
                 ).then.raises EOFError
         end
 
-       it "should return nil if there is no SELinux support" do
+        it "should return nil if there is no SELinux support" do
             self.expects(:selinux_support?).returns false
             set_selinux_context("/foo", "user_u:role_r:type_t:s0").should be_nil
         end

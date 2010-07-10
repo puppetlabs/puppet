@@ -1,7 +1,9 @@
 module Puppet
     module Util
         class CommandLine
-            LegacyName = Hash.new{|h,k| k}.update({
+
+                        LegacyName = Hash.new{|h,k| k}.update(
+                {
                 'agent'      => 'puppetd',
                 'cert'       => 'puppetca',
                 'doc'        => 'puppetdoc',
@@ -12,6 +14,7 @@ module Puppet
                 'resource'   => 'ralsh',
                 'kick'       => 'puppetrun',
                 'master'     => 'puppetmasterd',
+        
             })
 
             def initialize( zero = $0, argv = ARGV, stdin = STDIN )

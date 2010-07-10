@@ -14,7 +14,7 @@ require 'pathname'
 module Puppet::Util::SELinux
 
     def selinux_support?
-        unless defined? Selinux
+        unless defined?(Selinux)
             return false
         end
         if Selinux.is_selinux_enabled == 1
@@ -89,7 +89,7 @@ module Puppet::Util::SELinux
     # I believe that the OS should always provide at least a fall-through context
     # though on any well-running system.
     def set_selinux_context(file, value, component = false)
-        unless selinux_support? && selinux_label_support?(file) 
+        unless selinux_support? && selinux_label_support?(file)
             return nil
         end
 

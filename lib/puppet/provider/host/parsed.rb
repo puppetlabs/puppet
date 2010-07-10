@@ -7,9 +7,12 @@ else
     hosts = "/etc/hosts"
 end
 
-Puppet::Type.type(:host).provide(:parsed,
+
+            Puppet::Type.type(:host).provide(
+                :parsed,
     :parent => Puppet::Provider::ParsedFile,
     :default_target => hosts,
+        
     :filetype => :flat
 ) do
     confine :exists => hosts

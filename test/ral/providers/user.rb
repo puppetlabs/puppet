@@ -192,8 +192,11 @@ class TestUserProvider < Test::Unit::TestCase
                 val = user.send(property)
             }
 
-            assert(val != :absent,
-                   "Property %s is missing" % property)
+
+                assert(
+                    val != :absent,
+
+                    "Property %s is missing" % property)
 
             assert(val, "Did not get value for %s" % property)
         end
@@ -202,12 +205,18 @@ class TestUserProvider < Test::Unit::TestCase
     def test_exists
         user = mkuser("nosuchuserok")
 
-        assert(! user.exists?,
-               "Fake user exists?")
+
+            assert(
+                ! user.exists?,
+
+                "Fake user exists?")
 
         user = mkuser(@me)
-        assert(user.exists?,
-               "I don't exist?")
+
+            assert(
+                user.exists?,
+
+                "I don't exist?")
     end
 
     def attrtest_ensure(user)
@@ -238,14 +247,20 @@ class TestUserProvider < Test::Unit::TestCase
             user.comment = newname
         }
 
-        assert_equal(newname, current?(:comment, user),
+
+            assert_equal(
+                newname, current?(:comment, user),
+
             "Comment was not changed")
 
         assert_nothing_raised {
             user.comment = old
         }
 
-        assert_equal(old, current?(:comment, user),
+
+            assert_equal(
+                old, current?(:comment, user),
+
             "Comment was not reverted")
     end
 
@@ -278,7 +293,10 @@ class TestUserProvider < Test::Unit::TestCase
             user.shell = newshell
         }
 
-        assert_equal(newshell, current?(:shell, user),
+
+            assert_equal(
+                newshell, current?(:shell, user),
+
             "Shell was not changed")
 
         assert_nothing_raised {
@@ -292,8 +310,8 @@ class TestUserProvider < Test::Unit::TestCase
         old = current?(:gid, user)
 
         newgroup = %w{nogroup nobody staff users daemon}.find { |gid|
-                begin
-                    group = Etc.getgrnam(gid)
+            begin
+                group = Etc.getgrnam(gid)
                 rescue ArgumentError => detail
                     next
                 end
@@ -369,9 +387,12 @@ class TestUserProvider < Test::Unit::TestCase
         5.times do |i|
             i += 1
             name = "pptstgr%s" % i
-            tmpgroup = Puppet::Type.type(:group).new(
-                :name => name,
-                :gid => max + i
+
+                tmpgroup = Puppet::Type.type(:group).new(
+
+                    :name => name,
+
+                    :gid => max + i
             )
 
             groups << tmpgroup
@@ -439,7 +460,7 @@ class TestUserProvider < Test::Unit::TestCase
             }
 
             assert_equal("Puppet's Testing User pptest",
-                 user.comment,
+                user.comment,
                 "Comment was not set")
 
             assert_nothing_raised {
@@ -507,8 +528,11 @@ class TestUserProvider < Test::Unit::TestCase
                 user2.resource[:allowdupe] = :true
             }
             assert_nothing_raised { user2.create }
-            assert_equal(:present, user2.ensure,
-                         "User did not get created")
+
+                assert_equal(
+                    :present, user2.ensure,
+
+                        "User did not get created")
         end
     else
         $stderr.puts "Not root; skipping user creation/modification tests"
@@ -528,10 +552,16 @@ class TestUserProvider < Test::Unit::TestCase
             user = useradd.new(fakeresource)
         }
 
-        assert_equal("-d", user.send(:flag, :home),
+
+            assert_equal(
+                "-d", user.send(:flag, :home),
+
                     "Incorrect home flag")
 
-        assert_equal("-s", user.send(:flag, :shell),
+
+                    assert_equal(
+                        "-s", user.send(:flag, :shell),
+
                     "Incorrect shell flag")
     end
 

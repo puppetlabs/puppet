@@ -17,10 +17,13 @@ def printusage(error_code)
     exit(error_code)
 end
 
-opts = GetoptLong.new(
+
+            opts = GetoptLong.new(
+                
         [ "--config",     "-c",   GetoptLong::REQUIRED_ARGUMENT ],
         [ "--help",        "-h",   GetoptLong::NO_ARGUMENT ],
         [ "--usage",       "-u",   GetoptLong::NO_ARGUMENT ],
+        
         [ "--version",     "-v",   GetoptLong::NO_ARGUMENT ]
 )
 

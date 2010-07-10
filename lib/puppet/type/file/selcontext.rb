@@ -46,8 +46,8 @@ module Puppet
 
         def insync?(value)
             if not selinux_support?
-              debug("SELinux bindings not found. Ignoring parameter.")
-              return true
+                debug("SELinux bindings not found. Ignoring parameter.")
+                return true
             end
             super
         end

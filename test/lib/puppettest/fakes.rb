@@ -36,8 +36,7 @@ module PuppetTest
         def []=(param, value)
             param = symbolize(param)
             unless @realresource.valid_parameter?(param)
-                raise Puppet::DevError, "Invalid attribute %s for %s" %
-                    [param, @realresource.name]
+                raise Puppet::DevError, "Invalid attribute %s for %s" % [param, @realresource.name]
             end
             if @realresource.attrtype(param) == :property
                 @should[param] = value

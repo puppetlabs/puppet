@@ -11,12 +11,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
 
     if command('rpm')
         confine :true => begin
-                rpm('--version')
-           rescue Puppet::ExecutionFailure
-               false
-           else
-               true
-           end
+            rpm('--version')
+            rescue Puppet::ExecutionFailure
+                false
+            else
+                true
+            end
     end
 
     defaultfor :operatingsystem => [:fedora, :centos, :redhat]
@@ -28,26 +28,26 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
         super
         return unless packages.detect { |name, package| package.should(:ensure) == :latest }
 
-         # collect our 'latest' info
-         updates = {}
-         python(YUMHELPER).each_line do |l|
-             l.chomp!
-             next if l.empty?
-             if l[0,4] == "_pkg"
-                 hash = nevra_to_hash(l[5..-1])
-                 [hash[:name], "#{hash[:name]}.#{hash[:arch]}"].each  do |n|
-                     updates[n] ||= []
-                     updates[n] << hash
-                 end
-             end
-         end
+        # collect our 'latest' info
+        updates = {}
+        python(YUMHELPER).each_line do |l|
+            l.chomp!
+            next if l.empty?
+            if l[0,4] == "_pkg"
+                hash = nevra_to_hash(l[5..-1])
+                [hash[:name], "#{hash[:name]}.#{hash[:arch]}"].each  do |n|
+                    updates[n] ||= []
+                    updates[n] << hash
+                end
+            end
+        end
 
-         # Add our 'latest' info to the providers.
-         packages.each do |name, package|
-             if info = updates[package[:name]]
-                 package.provider.latest_info = info[0]
-             end
-         end
+        # Add our 'latest' info to the providers.
+        packages.each do |name, package|
+            if info = updates[package[:name]]
+                package.provider.latest_info = info[0]
+            end
+        end
     end
 
     def install
@@ -104,5 +104,5 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     def purge
         yum "-y", :erase, @resource[:name]
     end
- end
+end
 

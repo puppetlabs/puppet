@@ -92,20 +92,26 @@ describe ssh_authorized_key do
     describe "when neither user nor target is specified" do
         it "should raise an error" do
             proc do
+
                 @class.create(
-                  :name   => "Test",
-                  :key    => "AAA",
-                  :type   => "ssh-rsa",
-                  :ensure => :present)
+
+                    :name   => "Test",
+                    :key    => "AAA",
+                    :type   => "ssh-rsa",
+
+                    :ensure => :present)
             end.should raise_error(Puppet::Error)
         end
     end
 
     describe "when both target and user are specified" do
         it "should use target" do
+
             resource = @class.create(
+
                 :name => "Test",
                 :user => "root",
+
                 :target => "/tmp/blah")
             resource.should(:target).should == "/tmp/blah"
         end
@@ -114,8 +120,11 @@ describe ssh_authorized_key do
 
     describe "when user is specified" do
         it "should determine target" do
+
             resource = @class.create(
+
                 :name   => "Test",
+
                 :user   => "root")
             target = File.expand_path("~root/.ssh/authorized_keys")
             resource.should(:target).should == target
@@ -127,12 +136,15 @@ describe ssh_authorized_key do
             target = File.expand_path("~root/.ssh/authorized_keys")
             resource.property(:target).insync?(target).should == true
         end
-   end
+    end
 
     describe "when calling validate" do
         it "should not crash on a non-existant user" do
+
             resource = @class.create(
+
                 :name   => "Test",
+
                 :user   => "ihopesuchuserdoesnotexist")
             proc { resource.validate }.should_not raise_error
         end

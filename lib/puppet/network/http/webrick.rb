@@ -117,7 +117,7 @@ class Puppet::Network::HTTP::WEBrick
         results
     end
 
-  private
+    private
 
     def setup_handlers
         # Set up the new-style protocols.

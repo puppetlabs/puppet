@@ -81,16 +81,19 @@ class TestSUIDManager < Test::Unit::TestCase
         else
             set_exit_status!
 
-            Puppet::Util.expects(:execute).with( 'yay',
-                                                 { :failonfail => false,
-                                                   :uid => @user.uid,
-                                                   :gid => @user.gid }
-                                               ).returns('output')
+
+                Puppet::Util.expects(:execute).with(
+                    'yay',
+                        { :failonfail => false,
+                            :uid => @user.uid,
+
+                            :gid => @user.gid }
+                                ).returns('output')
 
 
             output = Puppet::Util::SUIDManager.run_and_capture 'yay',
-                                                               @user.uid,
-                                                               @user.gid
+                @user.uid,
+                @user.gid
 
             assert_equal 'output', output.first
             assert_kind_of Process::Status, output.last
@@ -119,8 +122,8 @@ class TestSUIDManager < Test::Unit::TestCase
     end
 
     def set_exit_status!
-      # We want to make sure $? is set, this is the only way I know how.
-      Kernel.system '' if $?.nil?
+        # We want to make sure $? is set, this is the only way I know how.
+        Kernel.system '' if $?.nil?
     end
 end
 

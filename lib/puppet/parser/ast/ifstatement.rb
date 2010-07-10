@@ -24,7 +24,7 @@ class Puppet::Parser::AST
                 if Puppet::Parser::Scope.true?(value)
                     return @statements.safeevaluate(scope)
                 else
-                    if defined? @else
+                    if defined?(@else)
                         return @else.safeevaluate(scope)
                     else
                         return nil

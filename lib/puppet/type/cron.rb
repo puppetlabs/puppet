@@ -54,7 +54,7 @@ Puppet::Type.newtype(:cron) do
         # We have to override the parent method, because we consume the entire
         # "should" array
         def insync?(is)
-            if defined? @should and @should
+            if defined?(@should) and @should
                 self.is_to_s(is) == self.should_to_s
             else
                 true
@@ -197,8 +197,7 @@ Puppet::Type.newtype(:cron) do
             if retval
                 return retval.to_s
             else
-                self.fail "%s is not a valid %s" %
-                    [value, self.class.name]
+                self.fail "%s is not a valid %s" % [value, self.class.name]
             end
         end
     end
@@ -221,12 +220,12 @@ Puppet::Type.newtype(:cron) do
             remove any existing values for that field."
 
         def retrieve
-          return_value = super
-          if return_value && return_value.is_a?(Array)
-            return_value = return_value[0]
-          end
+            return_value = super
+            if return_value && return_value.is_a?(Array)
+                return_value = return_value[0]
+            end
 
-          return return_value
+            return return_value
         end
 
         def should
@@ -251,8 +250,7 @@ Puppet::Type.newtype(:cron) do
 
         validate do |value|
             unless specials().include?(value)
-                raise ArgumentError, "Invalid special schedule %s" %
-                    value.inspect
+                raise ArgumentError, "Invalid special schedule %s" % value.inspect
             end
         end
     end
@@ -313,8 +311,7 @@ Puppet::Type.newtype(:cron) do
 
         validate do |value|
             unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"
-                raise ArgumentError, "Invalid environment setting %s" %
-                    value.inspect
+                raise ArgumentError, "Invalid environment setting %s" % value.inspect
             end
         end
 
@@ -356,8 +353,7 @@ Puppet::Type.newtype(:cron) do
             is used for human reference only and is generated automatically
             for cron jobs found on the system.  This generally won't
             matter, as Puppet will do its best to match existing cron jobs
-            against specified jobs (and Puppet adds a comment to cron jobs it
-            adds), but it is at least possible that converting from
+            against specified jobs (and Puppet adds a comment to cron jobs it adds), but it is at least possible that converting from
             unmanaged jobs to managed jobs might require manual
             intervention."
 

@@ -214,10 +214,10 @@ class Puppet::Parser::Resource < Puppet::Resource
             # the database interaction doesn't have to worry about
             # whether it returns an array or a string.
             result[p] = if v.is_a?(Array) and v.length == 1
-                              v[0]
-                          else
-                              v
-                          end
+                v[0]
+                    else
+                        v
+                            end
         end
 
         result.file = self.file
@@ -302,14 +302,14 @@ class Puppet::Parser::Resource < Puppet::Resource
 
         # If we've gotten this far, we're allowed to override.
 
-        # Merge with previous value, if the parameter was generated with the +> 
-        # syntax.  It's important that we use a copy of the new param instance 
-        # here, not the old one, and not the original new one, so that the source 
-        # is registered correctly for later overrides but the values aren't 
+        # Merge with previous value, if the parameter was generated with the +>
+        # syntax.  It's important that we use a copy of the new param instance
+        # here, not the old one, and not the original new one, so that the source
+        # is registered correctly for later overrides but the values aren't
         # implcitly shared when multiple resources are overrriden at once (see
         # ticket #3556).
         if param.add
-            param = param.dup 
+            param = param.dup
             param.value = [current.value, param.value].flatten
         end
 
@@ -331,8 +331,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         params.each do |param|
             # Don't set the same parameter twice
             if @parameters[param.name]
-                self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" %
-                    [param.name, self.to_s]
+                self.fail Puppet::ParseError, "Duplicate parameter '%s' for on %s" % [param.name, self.to_s]
             end
 
             set_parameter(param)

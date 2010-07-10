@@ -37,7 +37,9 @@ class Resource < AST::ResourceReference
         # many times.
         resource_titles.flatten.collect { |resource_title|
             exceptwrap :type => Puppet::ParseError do
-                resource = Puppet::Parser::Resource.new(type, resource_title,
+
+                            resource = Puppet::Parser::Resource.new(
+                type, resource_title,
                     :parameters => paramobjects,
                     :file => self.file,
                     :line => self.line,
@@ -45,6 +47,7 @@ class Resource < AST::ResourceReference
                     :virtual => virt,
                     :source => scope.source,
                     :scope => scope,
+        
                     :strict => true
                 )
 
@@ -62,9 +65,12 @@ class Resource < AST::ResourceReference
         if params.is_a?(AST::ASTArray)
             @parameters = params
         else
-            @parameters = AST::ASTArray.new(
+
+                        @parameters = AST::ASTArray.new(
+                
                 :line => params.line,
                 :file => params.file,
+        
                 :children => [params]
             )
         end

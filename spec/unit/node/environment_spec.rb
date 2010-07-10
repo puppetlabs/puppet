@@ -63,7 +63,7 @@ describe Puppet::Node::Environment do
         it "should reuse any existing resource type collection" do
             @env.known_resource_types.should equal(@env.known_resource_types)
         end
-        
+
         it "should perform the initial import when creating a new collection" do
             @collection.expects(:perform_initial_import)
             Puppet::Resource::TypeCollection.expects(:new).returns @collection

@@ -15,28 +15,34 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
 
     def test_install
         pkg = @type.new :name => 'faff',
-                           :provider => :aptrpm,
-                           :ensure => :present,
-                           :source => "/tmp/faff.rpm"
+            :provider => :aptrpm,
+            :ensure => :present,
+            :source => "/tmp/faff.rpm"
 
         pkg.provider.expects(
-                            :rpm
-                      ).with(
-                            '-q',
-                            'faff',
-                            '--nosignature',
-                            '--nodigest',
-                            '--qf',
-                            "%{NAME}-%{VERSION}-%{RELEASE} %{VERSION}-%{RELEASE}\n"
-                      ).raises(Puppet::ExecutionFailure, "couldn't find rpm").times(1)
+            :rpm
+
+                ).with(
+
+                    '-q',
+                    'faff',
+                    '--nosignature',
+                    '--nodigest',
+                    '--qf',
+
+                    "%{NAME}-%{VERSION}-%{RELEASE} %{VERSION}-%{RELEASE}\n"
+                        ).raises(Puppet::ExecutionFailure, "couldn't find rpm").times(1)
 
         pkg.provider.expects(
-                         :aptget
-                    ).with(
-                         '-q',
-                         '-y',
-                         "install",
-                         'faff'
+            :aptget
+
+                ).with(
+
+                    '-q',
+                    '-y',
+                    "install",
+
+                    'faff'
                     ).returns(0)
 
         pkg.evaluate.each { |state| state.forward }
@@ -46,24 +52,30 @@ class AptrpmPackageProviderTest < PuppetTest::TestCase
         pkg = @type.new :name => 'faff', :provider => :aptrpm, :ensure => :absent
 
         pkg.provider.expects(
-                         :rpm
-                    ).with(
-                        '-q',
-                        'faff',
-                        '--nosignature',
-                        '--nodigest',
-                        '--qf',
-                        "%{NAME}-%{VERSION}-%{RELEASE} %{VERSION}-%{RELEASE}\n"
+            :rpm
+
+                ).with(
+
+                    '-q',
+                    'faff',
+                    '--nosignature',
+                    '--nodigest',
+                    '--qf',
+
+                    "%{NAME}-%{VERSION}-%{RELEASE} %{VERSION}-%{RELEASE}\n"
                     ).returns(
                         "faff-1.2.3-1 1.2.3-1\n"
                     ).times(1)
         pkg.provider.expects(
-                        :aptget
-                    ).with(
-                        '-y',
-                        '-q',
-                        'remove',
-                        'faff'
+            :aptget
+
+                ).with(
+
+                    '-y',
+                    '-q',
+                    'remove',
+
+                    'faff'
                     ).returns(0)
 
         pkg.evaluate.each { |state| state.forward }

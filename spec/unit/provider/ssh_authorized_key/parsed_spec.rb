@@ -56,24 +56,30 @@ describe provider_class do
     }
 
     it "should be able to generate a basic authorized_keys file" do
-        key = mkkey({
-            :name => "Just Testing",
-            :key => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
-            :type => "ssh-dss",
-            :ensure => :present,
-            :options => [:absent]
+
+        key = mkkey(
+            {
+                :name => "Just Testing",
+                :key => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
+                :type => "ssh-dss",
+                :ensure => :present,
+
+                :options => [:absent]
         })
 
         genkey(key).should == "ssh-dss AAAAfsfddsjldjgksdflgkjsfdlgkj Just Testing\n"
     end
 
     it "should be able to generate a authorized_keys file with options" do
-        key = mkkey({
-            :name => "root@localhost",
-            :key => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
-            :type => "ssh-rsa",
-            :ensure => :present,
-            :options => ['from="192.168.1.1"', "no-pty", "no-X11-forwarding"]
+
+        key = mkkey(
+            {
+                :name => "root@localhost",
+                :key => "AAAAfsfddsjldjgksdflgkjsfdlgkj",
+                :type => "ssh-rsa",
+                :ensure => :present,
+
+                :options => ['from="192.168.1.1"', "no-pty", "no-X11-forwarding"]
         })
 
         genkey(key).should == "from=\"192.168.1.1\",no-pty,no-X11-forwarding ssh-rsa AAAAfsfddsjldjgksdflgkjsfdlgkj root@localhost\n"
@@ -117,7 +123,7 @@ describe provider_class do
                 @resource.stubs(:should).with(:user).returns "random_bob"
                 target = "/tmp/.ssh_dir/place_to_put_authorized_keys"
                 @resource.stubs(:should).with(:target).returns target
-           end
+            end
 
             it "should create the directory" do
                 File.stubs(:exist?).with("/tmp/.ssh_dir").returns false
@@ -147,7 +153,7 @@ describe provider_class do
             before :each do
                 @resource.stubs(:should).with(:user).returns "nobody"
                 @resource.stubs(:should).with(:target).returns nil
-                # 
+                #
                 # I'd like to use random_bob here and something like
                 #
                 #    File.stubs(:expand_path).with("~random_bob/.ssh").returns "/users/r/random_bob/.ssh"

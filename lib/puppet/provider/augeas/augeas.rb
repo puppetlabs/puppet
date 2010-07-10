@@ -31,17 +31,17 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     SAVE_OVERWRITE = "overwrite"
 
     COMMANDS = {
-      "set" => [ :path, :string ],
-      "rm" => [ :path ],
-      "clear" => [ :path ],
-      "insert" => [ :string, :string, :path ],
-      "get" => [ :path, :comparator, :string ],
-      "match" => [ :path, :glob ],
-      "size" => [:comparator, :int],
-      "include" => [:string],
-      "not_include" => [:string],
-      "==" => [:glob],
-      "!=" => [:glob]
+        "set" => [ :path, :string ],
+        "rm" => [ :path ],
+        "clear" => [ :path ],
+        "insert" => [ :string, :string, :path ],
+        "get" => [ :path, :comparator, :string ],
+        "match" => [ :path, :glob ],
+        "size" => [:comparator, :int],
+        "include" => [:string],
+        "not_include" => [:string],
+        "==" => [:glob],
+        "!=" => [:glob]
     }
 
     COMMANDS["ins"] = COMMANDS["insert"]

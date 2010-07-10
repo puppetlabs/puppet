@@ -50,7 +50,7 @@ class Autotest::Rspec < Autotest
     # ~/.autotest to provide a different spec command then the default
     # paths provided.
     def spec_command(separator=File::ALT_SEPARATOR)
-        unless defined? @spec_command then
+        unless defined?(@spec_command) then
             @spec_command = spec_commands.find { |cmd| File.exists? cmd }
 
             raise RspecCommandError, "No spec command could be found!" unless @spec_command

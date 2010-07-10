@@ -21,14 +21,12 @@ class Puppet::Parser::AST
             case @ftype
             when :rvalue
                 unless Puppet::Parser::Functions.rvalue?(@name)
-                    raise Puppet::ParseError, "Function '%s' does not return a value" %
-                        @name
+                    raise Puppet::ParseError, "Function '%s' does not return a value" % @name
                 end
             when :statement
                 if Puppet::Parser::Functions.rvalue?(@name)
                     raise Puppet::ParseError,
-                        "Function '%s' must be the value of a statement" %
-                        @name
+                        "Function '%s' must be the value of a statement" % @name
                 end
             else
                 raise Puppet::DevError, "Invalid function type %s" % @ftype.inspect

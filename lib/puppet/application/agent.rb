@@ -100,9 +100,9 @@ class Puppet::Application::Agent < Puppet::Application
 
     def fingerprint
         unless cert = host.certificate || host.certificate_request
-           $stderr.puts "Fingerprint asked but no certificate nor certificate request have yet been issued"
-           exit(1)
-           return
+            $stderr.puts "Fingerprint asked but no certificate nor certificate request have yet been issued"
+            exit(1)
+            return
         end
         unless fingerprint = cert.fingerprint(options[:digest])
             raise ArgumentError, "Could not get fingerprint for digest '#{options[:digest]}'"
@@ -183,8 +183,7 @@ class Puppet::Application::Agent < Puppet::Application
 
     def setup_listen
         unless FileTest.exists?(Puppet[:authconfig])
-            Puppet.err "Will not start without authorization file %s" %
-                Puppet[:authconfig]
+            Puppet.err "Will not start without authorization file %s" % Puppet[:authconfig]
             exit(14)
         end
 
@@ -235,7 +234,7 @@ class Puppet::Application::Agent < Puppet::Application
         Puppet.settings.use :main, :agent, :ssl
 
         # We need to specify a ca location for all of the SSL-related i
-        # indirected classes to work; in fingerprint mode we just need 
+        # indirected classes to work; in fingerprint mode we just need
         # access to the local files and we don't need a ca.
         Puppet::SSL::Host.ca_location = options[:fingerprint] ? :none : :remote
 

@@ -25,7 +25,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
         execpipe("#{command(:semodule)} --list") do |out|
             out.each do |line|
                 if line =~ /#{@resource[:name]}\b/
-                        return :true
+                    return :true
                 end
             end
         end
@@ -57,15 +57,15 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     # Helper functions
 
     def execoutput (cmd)
-      output = ''
-      begin
-        execpipe(cmd) do |out|
-          output = out.readlines.join('').chomp!
+        output = ''
+        begin
+            execpipe(cmd) do |out|
+                output = out.readlines.join('').chomp!
+            end
+        rescue Puppet::ExecutionFailure
+            raise Puppet::ExecutionFailure, output.split("\n")[0]
         end
-      rescue Puppet::ExecutionFailure
-        raise Puppet::ExecutionFailure, output.split("\n")[0]
-      end
-      return output
+        return output
     end
 
     def selmod_name_to_filename

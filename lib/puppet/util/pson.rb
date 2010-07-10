@@ -1,4 +1,4 @@
-# A simple module to provide consistency between how we use PSON and how 
+# A simple module to provide consistency between how we use PSON and how
 # ruby expects it to be used.  Basically, we don't want to require
 # that the sender specify a class.
 #  Ruby wants everyone to provide a 'type' field, and the PSON support

@@ -55,7 +55,7 @@ module PuppetTest::Support::Utils
         else
             puts id
         end
-        unless defined? @me
+        unless defined?(@me)
             raise "Could not retrieve user name; 'id' did not work"
         end
     end

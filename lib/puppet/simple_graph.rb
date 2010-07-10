@@ -122,7 +122,7 @@ class Puppet::SimpleGraph
     def dependencies(resource)
         # Cache the reversal graph, because it's somewhat expensive
         # to create.
-        unless defined? @reversal and @reversal
+        unless defined?(@reversal) and @reversal
             @reversal = reversal
         end
         # Strangely, it's significantly faster to search a reversed
@@ -395,28 +395,28 @@ class Puppet::SimpleGraph
     # rdot.rb. If an edge or vertex label is a kind of Hash then the keys
     # which match +dot+ properties will be used as well.
     def to_dot_graph (params = {})
-      params['name'] ||= self.class.name.gsub(/:/,'_')
-      fontsize   = params['fontsize'] ? params['fontsize'] : '8'
-      graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
-      edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
-      vertices.each do |v|
-        name = v.to_s
-        params = {'name'     => '"'+name+'"',
-                  'fontsize' => fontsize,
-                  'label'    => name}
-        v_label = v.to_s
-        params.merge!(v_label) if v_label and v_label.kind_of? Hash
-        graph << DOT::DOTNode.new(params)
-      end
-      edges.each do |e|
-        params = {'from'     => '"'+ e.source.to_s + '"',
-                  'to'       => '"'+ e.target.to_s + '"',
-                  'fontsize' => fontsize }
-        e_label = e.to_s
-        params.merge!(e_label) if e_label and e_label.kind_of? Hash
-        graph << edge_klass.new(params)
-      end
-      graph
+        params['name'] ||= self.class.name.gsub(/:/,'_')
+        fontsize   = params['fontsize'] ? params['fontsize'] : '8'
+        graph      = (directed? ? DOT::DOTDigraph : DOT::DOTSubgraph).new(params)
+        edge_klass = directed? ? DOT::DOTDirectedEdge : DOT::DOTEdge
+        vertices.each do |v|
+            name = v.to_s
+            params = {'name'     => '"'+name+'"',
+                'fontsize' => fontsize,
+                'label'    => name}
+            v_label = v.to_s
+            params.merge!(v_label) if v_label and v_label.kind_of? Hash
+            graph << DOT::DOTNode.new(params)
+        end
+        edges.each do |e|
+            params = {'from'     => '"'+ e.source.to_s + '"',
+                'to'       => '"'+ e.target.to_s + '"',
+                'fontsize' => fontsize }
+            e_label = e.to_s
+            params.merge!(e_label) if e_label and e_label.kind_of? Hash
+            graph << edge_klass.new(params)
+        end
+        graph
     end
 
     # Output the dot format as a string
@@ -425,20 +425,20 @@ class Puppet::SimpleGraph
     # Call +dotty+ for the graph which is written to the file 'graph.dot'
     # in the # current directory.
     def dotty (params = {}, dotfile = 'graph.dot')
-      File.open(dotfile, 'w') {|f| f << to_dot(params) }
-      system('dotty', dotfile)
+        File.open(dotfile, 'w') {|f| f << to_dot(params) }
+        system('dotty', dotfile)
     end
 
     # Use +dot+ to create a graphical representation of the graph.  Returns the
     # filename of the graphics file.
     def write_to_graphic_file (fmt='png', dotfile='graph')
-      src = dotfile + '.dot'
-      dot = dotfile + '.' + fmt
+        src = dotfile + '.dot'
+        dot = dotfile + '.' + fmt
 
-      File.open(src, 'w') {|f| f << self.to_dot << "\n"}
+        File.open(src, 'w') {|f| f << self.to_dot << "\n"}
 
-      system( "dot -T#{fmt} #{src} -o #{dot}" )
-      dot
+        system( "dot -T#{fmt} #{src} -o #{dot}" )
+        dot
     end
 
     # Produce the graph files if requested.

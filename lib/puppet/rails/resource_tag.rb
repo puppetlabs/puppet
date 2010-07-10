@@ -3,7 +3,7 @@ class Puppet::Rails::ResourceTag < ActiveRecord::Base
     belongs_to :resource
 
     def to_label
-      "#{self.puppet_tag.name}"
+        "#{self.puppet_tag.name}"
     end
 
     # returns an array of hash containing tags of resource

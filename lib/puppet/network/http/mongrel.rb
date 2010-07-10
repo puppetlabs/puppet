@@ -33,7 +33,7 @@ class Puppet::Network::HTTP::Mongrel
         @listening
     end
 
-  private
+    private
 
     def setup_handlers
         # Register our REST support at /

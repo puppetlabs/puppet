@@ -195,7 +195,7 @@ describe Puppet::Type.type(:file) do
                 file[:path].should == "/"
             end
         end
-        
+
         describe "on Microsoft Windows systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(false)
@@ -379,8 +379,11 @@ describe Puppet::Type.type(:file) do
                     File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
                     File.symlink(@file, @link)
 
-                    @resource = Puppet::Type.type(:file).new(
+
+                                @resource = Puppet::Type.type(:file).new(
+                
                         :path => @link,
+        
                         :mode => "755"
                     )
                     @catalog.add_resource @resource
@@ -406,7 +409,7 @@ describe Puppet::Type.type(:file) do
         else # @real_posix
             # should recode tests using expectations instead of using the filesystem
         end
-        
+
         describe "on Microsoft Windows systems" do
             before do
                 Puppet.features.stubs(:posix?).returns(false)

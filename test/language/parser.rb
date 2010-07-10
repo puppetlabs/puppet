@@ -80,8 +80,7 @@ class TestParser < Test::Unit::TestCase
         @@tmpfiles << name
 
         File.open(file, "w") { |f|
-            f.puts "file { \"%s\": ensure => file, mode => 755 }\n" %
-               name
+            f.puts "file { \"%s\": ensure => file, mode => 755 }\n" % name
         }
     end
 
@@ -673,8 +672,7 @@ file { "/tmp/yayness":
         end
 
         [one, two].each do |file|
-            assert(@logs.detect { |l| l.message =~ /importing '#{file}'/},
-                "did not import %s" % file)
+            assert(@logs.detect { |l| l.message =~ /importing '#{file}'/}, "did not import %s" % file)
         end
     end
 
@@ -743,7 +741,6 @@ file { "/tmp/yayness":
         assert_nothing_raised do
             result = parser.newdefine "FunTest"
         end
-        assert_equal(result, parser.find_definition("", "fUntEst"),
-            "%s was not matched" % "fUntEst")
+        assert_equal(result, parser.find_definition("", "fUntEst"), "%s was not matched" % "fUntEst")
     end
 end

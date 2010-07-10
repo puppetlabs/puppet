@@ -21,8 +21,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
         begin
             output = update :del, @resource[:name], :default
         rescue Puppet::ExecutionFailure
-            raise Puppet::Error, "Could not disable %s: %s" %
-                [self.name, output]
+            raise Puppet::Error, "Could not disable %s: %s" % [self.name, output]
         end
     end
 
@@ -49,8 +48,7 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
         begin
             output = update :add, @resource[:name], :default
         rescue Puppet::ExecutionFailure
-            raise Puppet::Error, "Could not enable %s: %s" %
-                [self.name, output]
+            raise Puppet::Error, "Could not enable %s: %s" % [self.name, output]
         end
     end
 end

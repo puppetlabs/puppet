@@ -122,7 +122,7 @@ describe Puppet::Util::Settings do
             @settings[:bool].should == true
         end
 
-       it "should not consider a cli setting of a non boolean with a boolean as an argument to be a boolean" do
+        it "should not consider a cli setting of a non boolean with a boolean as an argument to be a boolean" do
             # Turn it off first
             @settings[:myval] = "bob"
             @settings.handlearg("--no-myval", "")

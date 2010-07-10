@@ -215,7 +215,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
                 end
             end
 
-           describe "and :signed was provided" do
+            describe "and :signed was provided" do
                 it "should print a string containing all signed certificate requests and certificates" do
                     @ca.expects(:list).returns %w{host1 host2}
 

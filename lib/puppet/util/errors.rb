@@ -38,8 +38,7 @@ module Puppet::Util::Errors
         rescue Puppet::Error => detail
             raise adderrorcontext(detail)
         rescue => detail
-            message = options[:message] || "%s failed with error %s: %s" %
-                    [self.class, detail.class, detail.to_s]
+            message = options[:message] || "%s failed with error %s: %s" % [self.class, detail.class, detail.to_s]
 
             error = options[:type].new(message)
             # We can't use self.fail here because it always expects strings,

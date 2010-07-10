@@ -54,11 +54,11 @@ describe Puppet::Parser::AST::ComparisonOperator do
     end
 
     %w{< > <= >= ==}.each do |oper|
-       it "should return the result of using '#{oper}' to compare the left and right sides" do
-           operator = Puppet::Parser::AST::ComparisonOperator.new :lval => @one, :operator => oper, :rval => @two
+        it "should return the result of using '#{oper}' to compare the left and right sides" do
+            operator = Puppet::Parser::AST::ComparisonOperator.new :lval => @one, :operator => oper, :rval => @two
 
-           operator.evaluate(@scope).should == 1.send(oper,2)
-       end
+            operator.evaluate(@scope).should == 1.send(oper,2)
+        end
     end
 
     it "should return the result of using '!=' to compare the left and right sides" do
@@ -81,12 +81,12 @@ describe Puppet::Parser::AST::ComparisonOperator do
     # see ticket #1759
     %w{< > <= >=}.each do |oper|
         it "should return the correct result of using '#{oper}' to compare 10 and 9" do
-           ten = stub 'one', :safeevaluate => "10"
-           nine = stub 'two', :safeevaluate => "9"
-           operator = Puppet::Parser::AST::ComparisonOperator.new :lval => ten, :operator => oper, :rval => nine
+            ten = stub 'one', :safeevaluate => "10"
+            nine = stub 'two', :safeevaluate => "9"
+            operator = Puppet::Parser::AST::ComparisonOperator.new :lval => ten, :operator => oper, :rval => nine
 
-           operator.evaluate(@scope).should == 10.send(oper,9)
-       end
+            operator.evaluate(@scope).should == 10.send(oper,9)
+        end
     end
 
 end

@@ -72,10 +72,10 @@ Puppet::Type.newtype(:resources) do
     end
 
     def check(resource)
-        unless defined? @checkmethod
+        unless defined?(@checkmethod)
             @checkmethod = "%s_check" % self[:name]
         end
-        unless defined? @hascheck
+        unless defined?(@hascheck)
             @hascheck = respond_to?(@checkmethod)
         end
         if @hascheck
@@ -104,18 +104,18 @@ Puppet::Type.newtype(:resources) do
             select { |r| r.class.validproperty?(:ensure) }.
             select { |r| able_to_ensure_absent?(r) }.
             each { |resource|
-              @parameters.each do |name, param|
-                  resource[name] = param.value if param.metaparam?
-              end
+                @parameters.each do |name, param|
+                    resource[name] = param.value if param.metaparam?
+                end
 
-              # Mark that we're purging, so transactions can handle relationships
-              # correctly
-              resource.purging
-          }
+                # Mark that we're purging, so transactions can handle relationships
+                # correctly
+                resource.purging
+            }
     end
 
     def resource_type
-        unless defined? @resource_type
+        unless defined?(@resource_type)
             unless type = Puppet::Type.type(self[:name])
                 raise Puppet::DevError, "Could not find resource type"
             end

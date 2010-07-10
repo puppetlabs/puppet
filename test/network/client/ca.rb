@@ -23,8 +23,7 @@ class TestClientCA < Test::Unit::TestCase
         end
 
         [:hostprivkey, :hostcert, :localcacert].each do |name|
-            assert(FileTest.exists?(Puppet.settings[name]),
-                "Did not create cert %s" % name)
+            assert(FileTest.exists?(Puppet.settings[name]), "Did not create cert %s" % name)
         end
     end
 
@@ -64,8 +63,7 @@ class TestClientCA < Test::Unit::TestCase
         end
 
         # And then make sure the cert isn't written to disk
-        assert(! FileTest.exists?(Puppet[:hostcert]),
-            "Invalid cert got written to disk")
+        assert(! FileTest.exists?(Puppet[:hostcert]), "Invalid cert got written to disk")
     end
 end
 

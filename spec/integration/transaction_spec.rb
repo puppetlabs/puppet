@@ -106,20 +106,29 @@ describe Puppet::Transaction do
         path = tmpfile("path")
         file1 = tmpfile("file1")
         file2 = tmpfile("file2")
-        file = Puppet::Type.type(:file).new(
+
+                    file = Puppet::Type.type(:file).new(
+                
             :path => path,
+        
             :ensure => "file"
         )
-        exec1 = Puppet::Type.type(:exec).new(
+
+                    exec1 = Puppet::Type.type(:exec).new(
+                
             :path => ENV["PATH"],
             :command => "touch %s" % file1,
             :refreshonly => true,
+        
             :subscribe => Puppet::Resource.new(:file, path)
         )
-        exec2 = Puppet::Type.type(:exec).new(
+
+                    exec2 = Puppet::Type.type(:exec).new(
+                
             :path => ENV["PATH"],
             :command => "touch %s" % file2,
             :refreshonly => true,
+        
             :subscribe => Puppet::Resource.new(:file, path)
         )
 
@@ -132,24 +141,33 @@ describe Puppet::Transaction do
     it "should not let one failed refresh result in other refreshes failing" do
         path = tmpfile("path")
         newfile = tmpfile("file")
-        file = Puppet::Type.type(:file).new(
+
+                    file = Puppet::Type.type(:file).new(
+                
             :path => path,
+        
             :ensure => "file"
         )
-        exec1 = Puppet::Type.type(:exec).new(
+
+                    exec1 = Puppet::Type.type(:exec).new(
+                
             :path => ENV["PATH"],
             :command => "touch /this/cannot/possibly/exist",
             :logoutput => true,
             :refreshonly => true,
             :subscribe => file,
+        
             :title => "one"
         )
-        exec2 = Puppet::Type.type(:exec).new(
+
+                    exec2 = Puppet::Type.type(:exec).new(
+                
             :path => ENV["PATH"],
             :command => "touch %s" % newfile,
             :logoutput => true,
             :refreshonly => true,
             :subscribe => [file, exec1],
+        
             :title => "two"
         )
 
@@ -165,17 +183,23 @@ describe Puppet::Transaction do
         catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
 
         Puppet[:ignoreschedules] = false
-        file = Puppet::Type.type(:file).new(
+
+                    file = Puppet::Type.type(:file).new(
+                
             :name => tmpfile("file"),
+        
             :ensure => "file",
             :backup => false
         )
 
         fname = tmpfile("exec")
-        exec = Puppet::Type.type(:exec).new(
+
+                    exec = Puppet::Type.type(:exec).new(
+                
             :name => "touch #{fname}",
             :path => "/usr/bin:/bin",
             :schedule => "monthly",
+        
             :subscribe => Puppet::Resource.new("file", file.name)
         )
 
@@ -211,21 +235,30 @@ describe Puppet::Transaction do
     end
 
     it "should not attempt to evaluate resources with failed dependencies" do
-        exec = Puppet::Type.type(:exec).new(
+
+                    exec = Puppet::Type.type(:exec).new(
+                
             :command => "/bin/mkdir /this/path/cannot/possibly/exit",
+        
             :title => "mkdir"
         )
 
-        file1 = Puppet::Type.type(:file).new(
+
+                    file1 = Puppet::Type.type(:file).new(
+                
             :title => "file1",
             :path => tmpfile("file1"),
+        
             :require => exec,
             :ensure => :file
         )
 
-        file2 = Puppet::Type.type(:file).new(
+
+                    file2 = Puppet::Type.type(:file).new(
+                
             :title => "file2",
             :path => tmpfile("file2"),
+        
             :require => file1,
             :ensure => :file
         )

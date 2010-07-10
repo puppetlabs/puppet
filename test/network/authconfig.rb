@@ -43,16 +43,11 @@ class TestAuthConfig < Test::Unit::TestCase
         }
 
         assert_nothing_raised {
-            assert(config.allowed?(request("pelementserver.describe",
-                "culain.madstop.com", "1.1.1.1")), "Did not allow host")
-            assert(! config.allowed?(request("pelementserver.describe",
-                "culain.madstop.com", "10.10.1.1")), "Allowed host")
-            assert(config.allowed?(request("fileserver.yay",
-                "culain.madstop.com", "10.1.1.1")), "Did not allow host to fs")
-            assert(! config.allowed?(request("fileserver.yay",
-                "culain.madstop.com", "10.10.1.1")), "Allowed host to fs")
-            assert(config.allowed?(request("fileserver.list",
-                "culain.madstop.com", "10.10.1.1")), "Did not allow host to fs.list")
+            assert(config.allowed?(request("pelementserver.describe", "culain.madstop.com", "1.1.1.1")), "Did not allow host")
+            assert(! config.allowed?(request("pelementserver.describe", "culain.madstop.com", "10.10.1.1")), "Allowed host")
+            assert(config.allowed?(request("fileserver.yay", "culain.madstop.com", "10.1.1.1")), "Did not allow host to fs")
+            assert(! config.allowed?(request("fileserver.yay", "culain.madstop.com", "10.10.1.1")), "Allowed host to fs")
+            assert(config.allowed?(request("fileserver.list", "culain.madstop.com", "10.10.1.1")), "Did not allow host to fs.list")
         }
     end
 
@@ -63,7 +58,10 @@ class TestAuthConfig < Test::Unit::TestCase
 
         other = nil
         assert_nothing_raised { other = Puppet::Network::AuthConfig.main }
-        assert_equal(auth.object_id, other.object_id,
+
+                    assert_equal(
+                auth.object_id, other.object_id,
+        
             "did not get same authconfig from class")
     end
 end

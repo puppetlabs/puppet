@@ -19,7 +19,7 @@ Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
 
     def self.srclistcmd(source)
         return [ command(:nimclient), "-o", "showres", "-a", "installp_flags=L", "-a", "resource=#{source}" ]
-    end        
+    end
 
     def install(useversion = true)
         unless source = @resource[:source]

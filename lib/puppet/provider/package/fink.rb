@@ -79,6 +79,6 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
 
     def purge
         aptget '-y', '-q', 'remove', '--purge', @resource[:name]
-     end
+    end
 end
 

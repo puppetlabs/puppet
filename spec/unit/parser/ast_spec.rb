@@ -21,9 +21,9 @@ describe Puppet::Parser::AST do
     end
 
     [ Puppet::Parser::AST::Collection, Puppet::Parser::AST::Else,
-      Puppet::Parser::AST::Function, Puppet::Parser::AST::IfStatement,
-      Puppet::Parser::AST::Resource, Puppet::Parser::AST::ResourceDefaults,
-      Puppet::Parser::AST::ResourceOverride, Puppet::Parser::AST::VarDef
+        Puppet::Parser::AST::Function, Puppet::Parser::AST::IfStatement,
+        Puppet::Parser::AST::Resource, Puppet::Parser::AST::ResourceDefaults,
+        Puppet::Parser::AST::ResourceOverride, Puppet::Parser::AST::VarDef
     ].each do |k|
         it "#{k}.use_docs should return true" do
             ast = k.new({})

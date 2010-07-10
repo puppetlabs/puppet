@@ -412,7 +412,10 @@ class TestSnippets < Test::Unit::TestCase
 
     def snippet_componentrequire
         %w{1 2}.each do |num|
-            assert_file("/tmp/testing_component_requires#{num}",
+
+                        assert_file(
+                "/tmp/testing_component_requires#{num}",
+        
                 "#{num} does not exist")
         end
     end
@@ -433,29 +436,22 @@ class TestSnippets < Test::Unit::TestCase
     end
 
     def snippet_fqdefinition
-        assert_file("/tmp/fqdefinition",
-            "Did not make file from fully-qualified definition")
+        assert_file("/tmp/fqdefinition", "Did not make file from fully-qualified definition")
     end
 
     def snippet_subclass_name_duplication
-        assert_file("/tmp/subclass_name_duplication1",
-            "Did not make first file from duplicate subclass names")
-        assert_file("/tmp/subclass_name_duplication2",
-            "Did not make second file from duplicate subclass names")
+        assert_file("/tmp/subclass_name_duplication1", "Did not make first file from duplicate subclass names")
+        assert_file("/tmp/subclass_name_duplication2", "Did not make second file from duplicate subclass names")
     end
 
     def snippet_funccomma
-        assert_file("/tmp/funccomma1",
-            "Did not make first file from trailing function comma")
-        assert_file("/tmp/funccomma2",
-            "Did not make second file from trailing function comma")
+        assert_file("/tmp/funccomma1", "Did not make first file from trailing function comma")
+        assert_file("/tmp/funccomma2", "Did not make second file from trailing function comma")
     end
 
     def snippet_arraytrailingcomma
-        assert_file("/tmp/arraytrailingcomma1",
-            "Did not make first file from array")
-        assert_file("/tmp/arraytrailingcomma2",
-            "Did not make second file from array")
+        assert_file("/tmp/arraytrailingcomma1", "Did not make first file from array")
+        assert_file("/tmp/arraytrailingcomma2", "Did not make second file from array")
     end
 
     def snippet_multipleclass

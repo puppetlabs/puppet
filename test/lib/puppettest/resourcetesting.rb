@@ -4,9 +4,15 @@ module PuppetTest::ResourceTesting
 
     def mkevaltest(parser = nil)
         parser ||= mkparser
-        @parser.newdefine("evaltest",
+
+                    @parser.newdefine(
+                "evaltest",
+        
             :arguments => [%w{one}, ["two", stringobj("755")]],
-            :code => resourcedef("file", "/tmp",
+
+                        :code => resourcedef(
+                "file", "/tmp",
+        
                 "owner" => varref("one"), "mode" => varref("two"))
         )
     end

@@ -191,8 +191,11 @@ class TestCA < Test::Unit::TestCase
         server = nil
         Puppet.stubs(:master?).returns true
         assert_nothing_raised {
-            server = Puppet::Network::HTTPServer::WEBrick.new(
+
+                        server = Puppet::Network::HTTPServer::WEBrick.new(
+                
                 :Port => @@port,
+        
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :Status => nil

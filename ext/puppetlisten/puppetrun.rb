@@ -31,7 +31,7 @@ s = TCPSocket.new(host, port)
 ssl = OpenSSL::SSL::SSLSocket.new(s, ctx)
 ssl.connect # start SSL session
 ssl.sync_close = true  # if true the underlying socket will be
-                       # closed in SSLSocket#close. (default: false)
+#                        closed in SSLSocket#close. (default: false)
 while (line = ssl.gets)
     puts line
 end

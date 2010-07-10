@@ -23,9 +23,12 @@ class TestAST < Test::Unit::TestCase
             astelse = AST::Else.new(:statements => fakeelse)
         }
         assert_nothing_raised {
-            astif = AST::IfStatement.new(
+
+                        astif = AST::IfStatement.new(
+                
                 :test => faketest,
                 :statements => fakeif,
+        
                 :else => astelse
             )
         }

@@ -10,7 +10,7 @@ module Puppet::Network::XMLRPC
         # This is a hackish way to avoid an auth message every time we have a
         # normal operation
         def self.log(msg)
-            unless defined? @logs
+            unless defined?(@logs)
                 @logs = {}
             end
             if @logs.include?(msg)
@@ -84,8 +84,11 @@ module Puppet::Network::XMLRPC
                 client = peer[2]
                 clientip = peer[3]
             else
-                raise ::XMLRPC::FaultException.new(
+
+                            raise ::XMLRPC::FaultException.new(
+                
                     ERR_UNCAUGHT_EXCEPTION,
+        
                     "Could not retrieve client information"
                 )
             end
@@ -103,8 +106,7 @@ module Puppet::Network::XMLRPC
                     Puppet.warning "Could not retrieve server name from cert"
                 else
                     unless client == nameary[1]
-                        Puppet.debug "Overriding %s with cert name %s" %
-                            [client, nameary[1]]
+                        Puppet.debug "Overriding %s with cert name %s" % [client, nameary[1]]
                         client = nameary[1]
                     end
                     valid = true

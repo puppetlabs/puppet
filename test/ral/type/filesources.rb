@@ -13,7 +13,7 @@ class TestFileSources < Test::Unit::TestCase
     include PuppetTest::FileTesting
     def setup
         super
-        if defined? @port
+        if defined?(@port)
             @port += 1
         else
             @port = 12345
@@ -59,10 +59,13 @@ class TestFileSources < Test::Unit::TestCase
         tofile = nil
         trans = nil
 
-        tofile = Puppet::Type.type(:file).new(
+
+                    tofile = Puppet::Type.type(:file).new(
+                
             :path => todir,
             :recurse => true,
             :backup => false,
+        
             :source => fromdir
         )
         catalog = mk_catalog(tofile)
@@ -192,10 +195,13 @@ class TestFileSources < Test::Unit::TestCase
         File.open(file1, "w") { |f| f.puts "yay" }
         rootobj = nil
         assert_nothing_raised {
-            rootobj = Puppet::Type.type(:file).new(
+
+                        rootobj = Puppet::Type.type(:file).new(
+                
                 :name => basedir,
                 :recurse => true,
                 :check => %w{type owner},
+        
                 :mode => 0755
             )
         }
@@ -240,8 +246,11 @@ class TestFileSources < Test::Unit::TestCase
 
         serverpid = nil
         assert_nothing_raised("Could not start on port %s" % @port) {
-            server = Puppet::Network::HTTPServer::WEBrick.new(
+
+                        server = Puppet::Network::HTTPServer::WEBrick.new(
+                
                 :Port => @port,
+        
                 :Handlers => {
                     :CA => {}, # so that certs autogenerate
                     :FileServer => {
@@ -264,8 +273,11 @@ class TestFileSources < Test::Unit::TestCase
         sleep(1)
 
         name = File.join(tmpdir(), "nosourcefile")
-        file = Puppet::Type.type(:file).new(
+
+                    file = Puppet::Type.type(:file).new(
+                
             :source => "puppet://localhost/noexist/file",
+        
             :name => name
         )
 
@@ -291,8 +303,11 @@ class TestFileSources < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type.type(:file).new(
+
+                        file = Puppet::Type.type(:file).new(
+                
                 :name => to,
+        
                 :source => files
             )
         }
@@ -316,9 +331,12 @@ class TestFileSources < Test::Unit::TestCase
 
         file = nil
         assert_nothing_raised {
-            file = Puppet::Type.type(:file).new(
+
+                        file = Puppet::Type.type(:file).new(
+                
                 :name => dest,
                 :ensure => "file",
+        
                 :source => source
             )
         }
@@ -357,9 +375,12 @@ class TestFileSources < Test::Unit::TestCase
     # are.
     def test_replace
         dest = tempfile()
-        file = Puppet::Type.newfile(
+
+                    file = Puppet::Type.newfile(
+                
             :path => dest,
             :content => "foobar",
+        
             :recurse => true
         )
 
@@ -373,15 +394,13 @@ class TestFileSources < Test::Unit::TestCase
         assert_apply(file)
 
         # Make sure it doesn't change.
-        assert_equal("yayness\n", File.read(dest),
-            "File got replaced when :replace was false")
+        assert_equal("yayness\n", File.read(dest), "File got replaced when :replace was false")
 
         file[:replace] = true
         assert_apply(file)
 
         # Make sure it changes.
-        assert_equal("foobar", File.read(dest),
-            "File was not replaced when :replace was true")
+        assert_equal("foobar", File.read(dest), "File was not replaced when :replace was true")
     end
 
     def test_sourceselect
@@ -406,7 +425,10 @@ class TestFileSources < Test::Unit::TestCase
             }
         end
 
-        obj = Puppet::Type.newfile(:path => dest, :recurse => true,
+
+                    obj = Puppet::Type.newfile(
+                :path => dest, :recurse => true,
+        
             :source => sources)
 
         assert_equal(:first, obj[:sourceselect], "sourceselect has the wrong default")

@@ -1,8 +1,8 @@
 Puppet::Type.newtype(:macauthorization) do
 
     @doc = "Manage the Mac OS X authorization database.
-            See:
-            http://developer.apple.com/documentation/Security/Conceptual/Security_Overview/Security_Services/chapter_4_section_5.html for more information."
+        See:
+        http://developer.apple.com/documentation/Security/Conceptual/Security_Overview/Security_Services/chapter_4_section_5.html for more information."
 
     ensurable
 
@@ -20,12 +20,12 @@ Puppet::Type.newtype(:macauthorization) do
             fail("munge_boolean only takes booleans")
         end
     end
-    
+
     def munge_integer(value)
         begin
-          Integer(value)
+            Integer(value)
         rescue ArgumentError
-          fail("munge_integer only takes integers")
+            fail("munge_integer only takes integers")
         end
     end
 
@@ -102,7 +102,7 @@ Puppet::Type.newtype(:macauthorization) do
         then 'k' (the integer value of this parameter) mechanisms must succeed.
         The most common setting for this parameter is '1'. If k-of-n is not
         set, then 'n-of-n' mechanisms must succeed."
-        
+
         munge do |value|
             @resource.munge_integer(value)
         end
@@ -150,7 +150,7 @@ Puppet::Type.newtype(:macauthorization) do
         authenticate every time, set the timeout to 0. For minimum security,
         remove the timeout attribute so the user authenticates only once per
         session."
-        
+
         munge do |value|
             @resource.munge_integer(value)
         end

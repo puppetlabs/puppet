@@ -155,7 +155,7 @@ describe Puppet::FileBucketFile::File do
         it "should use the bucketdir, the 8 sum character directories, the full filebucket, and 'contents' as the full file name" do
             path = Puppet::FileBucketFile::File.new.send(:contents_path_for, @bucket)
             path.should == ['/dev/null/bucketdir', @digest[0..7].split(""), @digest, "contents"].flatten.join(::File::SEPARATOR)
-         end
+        end
     end
 
     describe "when saving files" do

@@ -496,7 +496,7 @@ describe Puppet::Parser::Resource do
         end
 
         it "should fail if the same param is declared twice" do
-            lambda do 
+            lambda do
                 @parser_resource = mkresource :source => @source, :parameters => [
                     Puppet::Parser::Resource::Param.new(
                         :name => :foo, :value => "bar", :source => @source

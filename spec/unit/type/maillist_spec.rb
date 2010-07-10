@@ -14,7 +14,7 @@ describe maillist do
         @provider_class.stubs(:new).returns(@provider)
 
         Puppet::Type.type(:maillist).stubs(:defaultprovider).returns(@provider_class)
-        
+
         @maillist = Puppet::Type.type(:maillist).new( :name => 'test' )
 
         @catalog = Puppet::Resource::Catalog.new

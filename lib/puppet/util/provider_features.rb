@@ -107,7 +107,7 @@ module Puppet::Util::ProviderFeatures
     # Generate a module that sets up the boolean methods to test for given
     # features.
     def feature_module
-        unless defined? @feature_module
+        unless defined?(@feature_module)
             @features ||= {}
             @feature_module = ::Module.new
             const_set("FeatureModule", @feature_module)

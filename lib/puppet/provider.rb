@@ -40,8 +40,7 @@ class Puppet::Provider
         elsif superclass.respond_to? :command and command = superclass.command(name)
             # nothing
         else
-            raise Puppet::DevError, "No command %s defined for provider %s" %
-                [name, self.name]
+            raise Puppet::DevError, "No command %s defined for provider %s" % [name, self.name]
         end
 
         return binary(command)
@@ -109,7 +108,7 @@ class Puppet::Provider
     # Create the methods for a given command.
     def self.make_command_methods(name)
         # Now define a method for that command
-        unless singleton_class.method_defined? name
+        unless singleton_class.method_defined?(name)
             meta_def(name) do |*args|
                 unless command(name)
                     raise Puppet::Error, "Command %s is missing" % name
@@ -126,7 +125,7 @@ class Puppet::Provider
 
             # And then define an instance method that just calls the class method.
             # We need both, so both instances and classes can easily run the commands.
-            unless method_defined? name
+            unless method_defined?(name)
                 define_method(name) do |*args|
                     self.class.send(name, *args)
                 end
@@ -179,7 +178,7 @@ class Puppet::Provider
 
     # Retrieve the data source.  Defaults to the provider name.
     def self.source
-        unless defined? @source
+        unless defined?(@source)
             @source = self.name
         end
         @source
@@ -204,7 +203,7 @@ class Puppet::Provider
     end
 
 #    def self.to_s
-#        unless defined? @str
+#        unless defined?(@str)
 #            if self.resource_type
 #                @str = "%s provider %s" % [resource_type.name, self.name]
 #            else

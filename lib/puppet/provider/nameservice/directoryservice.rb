@@ -93,7 +93,7 @@ class DirectoryService < Puppet::Provider::NameService
         #      For example, if we're working with an user type, this will be /Users
         #      with a group type, this will be /Groups.
         #   @ds_path is an attribute of the class itself.
-        if defined? @ds_path
+        if defined?(@ds_path)
             return @ds_path
         end
         # JJM: "Users" or "Groups" etc ...  (Based on the Puppet::Type)
@@ -104,7 +104,7 @@ class DirectoryService < Puppet::Provider::NameService
     end
 
     def self.get_macosx_version_major
-        if defined? @macosx_version_major
+        if defined?(@macosx_version_major)
             return @macosx_version_major
         end
         begin
@@ -115,7 +115,7 @@ class DirectoryService < Puppet::Provider::NameService
                 product_version_major = Facter.value(:macosx_productversion_major)
             else
                 # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-                Puppet.warning("DEPRECATION WARNING: Future versions of the directoryservice provider will require Facter 1.5.5 or newer.")            
+                Puppet.warning("DEPRECATION WARNING: Future versions of the directoryservice provider will require Facter 1.5.5 or newer.")
                 product_version = Facter.value(:macosx_productversion)
                 if product_version.nil?
                     fail("Could not determine OS X version from Facter")
@@ -138,7 +138,7 @@ class DirectoryService < Puppet::Provider::NameService
         begin
             dscl_output = execute(get_exec_preamble("-list"))
         rescue Puppet::ExecutionFailure => detail
-           fail("Could not get %s list from DirectoryService" % [ @resource_type.name.to_s ])
+            fail("Could not get %s list from DirectoryService" % [ @resource_type.name.to_s ])
         end
         return dscl_output.split("\n")
     end
@@ -155,12 +155,12 @@ class DirectoryService < Puppet::Provider::NameService
 
         dscl_plist = {}
         dscl_output.split("\n").inject([]) do |array, line|
-          if line =~ /^\s+/   # it's a value
-            array[-1] << line # add the value to the previous key
-          else
-            array << line
-          end
-          array
+            if line =~ /^\s+/   # it's a value
+                array[-1] << line # add the value to the previous key
+            else
+                array << line
+            end
+            array
         end.compact
 
         dscl_output.each do |line|
@@ -357,19 +357,19 @@ class DirectoryService < Puppet::Provider::NameService
     end
 
     def password=(passphrase)
-      exec_arg_vector = self.class.get_exec_preamble("-read", @resource.name)
-      exec_arg_vector << @@ns_to_ds_attribute_map[:guid]
-      begin
-          guid_output = execute(exec_arg_vector)
-          guid_plist = Plist.parse_xml(guid_output)
-          # Although GeneratedUID like all DirectoryService values can be multi-valued
-          # according to the schema, in practice user accounts cannot have multiple UUIDs
-          # otherwise Bad Things Happen, so we just deal with the first value.
-          guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
-          self.class.set_password(@resource.name, guid, passphrase)
-      rescue Puppet::ExecutionFailure => detail
-          fail("Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail])
-      end
+        exec_arg_vector = self.class.get_exec_preamble("-read", @resource.name)
+        exec_arg_vector << @@ns_to_ds_attribute_map[:guid]
+        begin
+            guid_output = execute(exec_arg_vector)
+            guid_plist = Plist.parse_xml(guid_output)
+            # Although GeneratedUID like all DirectoryService values can be multi-valued
+            # according to the schema, in practice user accounts cannot have multiple UUIDs
+            # otherwise Bad Things Happen, so we just deal with the first value.
+            guid = guid_plist["dsAttrTypeStandard:#{@@ns_to_ds_attribute_map[:guid]}"][0]
+            self.class.set_password(@resource.name, guid, passphrase)
+        rescue Puppet::ExecutionFailure => detail
+            fail("Could not set %s on %s[%s]: %s" % [param, @resource.class.name, @resource.name, detail])
+        end
     end
 
     # NBK: we override @parent.set as we need to execute a series of commands
@@ -385,10 +385,10 @@ class DirectoryService < Puppet::Provider::NameService
             # in the manifest.
             if @resource[:auth_membership] and not current_members.nil?
                 remove_unwanted_members(current_members, value)
-             end
+            end
 
-             # if they're not a member, make them one.
-             add_members(current_members, value)
+            # if they're not a member, make them one.
+            add_members(current_members, value)
         else
             exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
             # JJM: The following line just maps the NS name to the DS name
@@ -424,14 +424,13 @@ class DirectoryService < Puppet::Provider::NameService
         exec_arg_vector = self.class.get_exec_preamble("-create", @resource[:name])
         exec_arg_vector << @@ns_to_ds_attribute_map[:guid] << guid
         begin
-          execute(exec_arg_vector)
+            execute(exec_arg_vector)
         rescue Puppet::ExecutionFailure => detail
-            fail("Could not set GeneratedUID for %s %s: %s" %
-                [@resource.class.name, @resource.name, detail])
+            fail("Could not set GeneratedUID for %s %s: %s" % [@resource.class.name, @resource.name, detail])
         end
 
         if value = @resource.should(:password) and value != ""
-          self.class.set_password(@resource[:name], guid, value)
+            self.class.set_password(@resource[:name], guid, value)
         end
 
         # Now we create all the standard properties
@@ -446,10 +445,9 @@ class DirectoryService < Puppet::Provider::NameService
                     next if property == :password  # skip setting the password here
                     exec_arg_vector << value.to_s
                     begin
-                      execute(exec_arg_vector)
+                        execute(exec_arg_vector)
                     rescue Puppet::ExecutionFailure => detail
-                        fail("Could not create %s %s: %s" %
-                            [@resource.class.name, @resource.name, detail])
+                        fail("Could not create %s %s: %s" % [@resource.class.name, @resource.name, detail])
                     end
                 end
             end
@@ -461,24 +459,24 @@ class DirectoryService < Puppet::Provider::NameService
             if not new_members.include?(member)
                 cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
                 begin
-                     execute(cmd)
+                    execute(cmd)
                 rescue Puppet::ExecutionFailure => detail
-                     fail("Could not remove %s from group: %s, %s" % [member, @resource.name, detail])
+                    fail("Could not remove %s from group: %s, %s" % [member, @resource.name, detail])
                 end
-             end
-         end
+            end
+        end
     end
 
     def add_members(current_members, new_members)
         new_members.each do |new_member|
-           if current_members.nil? or not current_members.include?(new_member)
-               cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
-               begin
+            if current_members.nil? or not current_members.include?(new_member)
+                cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
+                begin
                     execute(cmd)
-               rescue Puppet::ExecutionFailure => detail
+                rescue Puppet::ExecutionFailure => detail
                     fail("Could not add %s to group: %s, %s" % [new_member, @resource.name, detail])
-               end
-           end
+                end
+            end
         end
     end
 

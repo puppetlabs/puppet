@@ -23,7 +23,10 @@ class TestRights < Test::Unit::TestCase
             @store.newright(:write)
         }
 
-        assert(! @store.allowed?(:write, "host.madstop.com", "0.0.0.0"),
+
+                    assert(
+                ! @store.allowed?(:write, "host.madstop.com", "0.0.0.0"),
+        
             "Defaulted to allowing access")
 
         assert_nothing_raised {

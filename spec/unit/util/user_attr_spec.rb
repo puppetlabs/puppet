@@ -20,7 +20,7 @@ describe UserAttr do
         end
 
         it "should return a hash with the name value from /etc/user_attr" do
-             UserAttr.get_attributes_by_name('foo')[:name].should == 'foo'
+            UserAttr.get_attributes_by_name('foo')[:name].should == 'foo'
         end
 
         #this test is contrived

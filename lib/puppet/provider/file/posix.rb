@@ -64,7 +64,7 @@ Puppet::Type.type(:file).provide :posix do
             return false
         end
     end
-    
+
     def retrieve(resource)
         unless stat = resource.stat(false)
             return :absent
@@ -82,7 +82,7 @@ Puppet::Type.type(:file).provide :posix do
 
         return currentvalue
     end
-    
+
     def sync(path, links, should)
         # Set our method appropriately, depending on links.
         if links == :manage

@@ -36,12 +36,10 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
                     when "deny"
                         deny(mount, value)
                     else
-                        raise ArgumentError.new("Invalid argument '%s'" % var,
-                            @count, file)
+                        raise ArgumentError.new("Invalid argument '%s'" % var, @count, file)
                     end
                 else
-                    raise ArgumentError.new("Invalid line '%s'" % line.chomp,
-                        @count, file)
+                    raise ArgumentError.new("Invalid line '%s'" % line.chomp, @count, file)
                 end
             }
         }
@@ -61,7 +59,10 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
                 mount.info "allowing %s access" % val
                 mount.allow(val)
             rescue AuthStoreError => detail
-                raise ArgumentError.new(detail.to_s,
+
+                            raise ArgumentError.new(
+                detail.to_s,
+        
                     @count, file)
             end
         }
@@ -75,7 +76,10 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
                 mount.info "denying %s access" % val
                 mount.deny(val)
             rescue AuthStoreError => detail
-                raise ArgumentError.new(detail.to_s,
+
+                            raise ArgumentError.new(
+                detail.to_s,
+        
                     @count, file)
             end
         }
@@ -84,8 +88,7 @@ class Puppet::FileServing::Configuration::Parser < Puppet::Util::LoadedFile
     # Create a new mount.
     def newmount(name)
         if @mounts.include?(name)
-            raise ArgumentError, "%s is already mounted at %s" %
-                [@mounts[name], name], @count, file
+            raise ArgumentError, "%s is already mounted at %s" % [@mounts[name], name], @count, file
         end
         case name
         when "modules"

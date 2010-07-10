@@ -20,17 +20,23 @@ class TestSettings < Test::Unit::TestCase
 
     def set_configs(config = nil)
         config ||= @config
-        config.setdefaults("main",
+
+            config.setdefaults(
+                "main",
             :one => ["a", "one"],
             :two => ["a", "two"],
             :yay => ["/default/path", "boo"],
             :mkusers => [true, "uh, yeah"],
+
             :name => ["testing", "a"]
         )
 
-        config.setdefaults("section1",
+
+            config.setdefaults(
+                "section1",
             :attr => ["a", "one"],
             :attrdir => ["/another/dir", "two"],
+
             :attr3 => ["$attrdir/maybe", "boo"]
         )
     end
@@ -183,13 +189,13 @@ class TestSettings < Test::Unit::TestCase
 
     def test_parse_file
         text = %{
-one = this is a test
-two = another test
-owner = root
-group = root
-yay = /a/path
+            one = this is a test
+            two = another test
+            owner = root
+            group = root
+            yay = /a/path
 
-[main]
+            [main]
     four = five
     six = seven
 
@@ -241,10 +247,13 @@ yay = /a/path
         c = mkconfig
 
         assert_nothing_raised {
-            @config.setdefaults("testing",
+
+            @config.setdefaults(
+                "testing",
                 :onboolean => [true, "An on bool"],
                 :offboolean => [false, "An off bool"],
                 :string => ["a string", "A string arg"],
+
                 :file => ["/path/to/file", "A file arg"]
             )
         }
@@ -270,8 +279,7 @@ yay = /a/path
                     arg = val
                 end
 
-                assert_nothing_raised("Could not handle arg %s with value %s" %
-                    [opt, val]) {
+                assert_nothing_raised("Could not handle arg %s with value %s" % [opt, val]) {
 
                     @config.handlearg(opt, arg)
                 }
@@ -280,12 +288,15 @@ yay = /a/path
     end
 
     def test_addargs
-        @config.setdefaults("testing",
-                            :onboolean => [true, "An on bool"],
-                            :offboolean => [false, "An off bool"],
-                            :string => ["a string", "A string arg"],
-                            :file => ["/path/to/file", "A file arg"]
-                            )
+
+        @config.setdefaults(
+            "testing",
+                :onboolean => [true, "An on bool"],
+                :offboolean => [false, "An off bool"],
+                :string => ["a string", "A string arg"],
+
+                :file => ["/path/to/file", "A file arg"]
+                )
 
         should = []
         @config.each { |name, element|
@@ -303,10 +314,13 @@ yay = /a/path
     def test_addargs_functional
         @config = Puppet::Util::Settings.new
 
-        @config.setdefaults("testing",
-                            :onboolean => [true, "An on bool"],
-                            :string => ["a string", "A string arg"]
-                            )
+
+            @config.setdefaults(
+                "testing",
+                    :onboolean => [true, "An on bool"],
+
+                    :string => ["a string", "A string arg"]
+                    )
         result = []
         should = []
         assert_nothing_raised("Add args failed") do
@@ -430,7 +444,10 @@ yay = /a/path
         config = mkconfig
         file = tempfile()
 
-        config.setdefaults(:mysection,
+
+            config.setdefaults(
+                :mysection,
+
             :mydir => [file, "a file"]
         )
 
@@ -442,7 +459,10 @@ yay = /a/path
 
         assert(FileTest.directory?(file), "Directory did not get created")
 
-        assert_equal("yayness", Puppet[:tags],
+
+            assert_equal(
+                "yayness", Puppet[:tags],
+
             "Tags got changed during config")
     end
 
@@ -457,7 +477,10 @@ yay = /a/path
             val = config[:url]
         }
 
-        assert_equal("http://yayness/rahness", val,
+
+            assert_equal(
+                "http://yayness/rahness", val,
+
             "Settings got messed up")
     end
 
@@ -485,8 +508,11 @@ yay = /a/path
             }
             elem = config.setting(name)
 
-            assert_instance_of(type, elem,
-                "%s got created as wrong type" % value.inspect)
+
+                assert_instance_of(
+                    type, elem,
+
+                    "%s got created as wrong type" % value.inspect)
         end
     end
 
@@ -506,12 +532,12 @@ yay = /a/path
     none = one
     middle = mid"quote
 }
-        }
+    }
 
-        config.setdefaults(:mysection, :config => [file, "eh"])
+    config.setdefaults(:mysection, :config => [file, "eh"])
 
-        assert_nothing_raised {
-            config.parse
+    assert_nothing_raised {
+        config.parse
         }
 
         %w{singleq doubleq none}.each do |p|
@@ -574,8 +600,11 @@ yay = /a/path
 
     def test_no_modify_root
         config = mkconfig
-        config.setdefaults(:yay,
+
+            config.setdefaults(
+                :yay,
             :mydir => {:default => tempfile(),
+
                 :mode => 0644,
                 :owner => "root",
                 :group => "service",
@@ -643,25 +672,37 @@ yay = /a/path
     end
 
     def test_multiple_interpolations
-        @config.setdefaults(:section,
+
+        @config.setdefaults(
+            :section,
             :one => ["oneval", "yay"],
             :two => ["twoval", "yay"],
+
             :three => ["$one/$two", "yay"]
         )
 
-        assert_equal("oneval/twoval", @config[:three],
+
+            assert_equal(
+                "oneval/twoval", @config[:three],
+
             "Did not interpolate multiple variables")
     end
 
     # Make sure we can replace ${style} var names
     def test_curly_replacements
-        @config.setdefaults(:section,
+
+        @config.setdefaults(
+            :section,
             :one => ["oneval", "yay"],
             :two => ["twoval", "yay"],
+
             :three => ["$one/${two}/${one}/$two", "yay"]
         )
 
-        assert_equal("oneval/twoval/oneval/twoval", @config[:three],
+
+            assert_equal(
+                "oneval/twoval/oneval/twoval", @config[:three],
+
             "Did not interpolate curlied variables")
     end
 
@@ -682,16 +723,25 @@ yay = /a/path
     def test_celement_short_name_not_duplicated
         config = mkconfig
         assert_nothing_raised("Could not create celement with short name.") do
-            config.setdefaults(:main,
-                               :one => { :default => "blah", :desc => "anything", :short => "o" })
+
+            config.setdefaults(
+                :main,
+
+                    :one => { :default => "blah", :desc => "anything", :short => "o" })
         end
         assert_nothing_raised("Could not create second celement with short name.") do
-            config.setdefaults(:main,
-                               :two => { :default => "blah", :desc => "anything", :short => "i" })
+
+            config.setdefaults(
+                :main,
+
+                    :two => { :default => "blah", :desc => "anything", :short => "i" })
         end
         assert_raise(ArgumentError, "Could create second celement with duplicate short name.") do
-            config.setdefaults(:main,
-                               :three => { :default => "blah", :desc => "anything", :short => "i" })
+
+            config.setdefaults(
+                :main,
+
+                    :three => { :default => "blah", :desc => "anything", :short => "i" })
         end
         # make sure that when the above raises an expection that the config is not included
         assert(!config.include?(:three), "Invalid configuration item was retained")
@@ -706,12 +756,18 @@ yay = /a/path
         assert_equal([["--foo", "-n", GetoptLong::REQUIRED_ARGUMENT]], element.getopt_args, "Did not produce appropriate getopt args")
 
         element = BooleanSetting.new :name => "foo", :desc => "anything", :settings => Puppet::Util::Settings.new
-        assert_equal([["--foo", GetoptLong::NO_ARGUMENT], ["--no-foo", GetoptLong::NO_ARGUMENT]],
-                     element.getopt_args, "Did not produce appropriate getopt args")
+
+            assert_equal(
+                [["--foo", GetoptLong::NO_ARGUMENT], ["--no-foo", GetoptLong::NO_ARGUMENT]],
+
+                    element.getopt_args, "Did not produce appropriate getopt args")
 
         element.short = "n"
-        assert_equal([["--foo", "-n", GetoptLong::NO_ARGUMENT],["--no-foo", GetoptLong::NO_ARGUMENT]],
-                      element.getopt_args, "Did not produce appropriate getopt args")
+
+            assert_equal(
+                [["--foo", "-n", GetoptLong::NO_ARGUMENT],["--no-foo", GetoptLong::NO_ARGUMENT]],
+
+                    element.getopt_args, "Did not produce appropriate getopt args")
     end
 end
 

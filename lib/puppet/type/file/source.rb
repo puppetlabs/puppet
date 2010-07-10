@@ -114,7 +114,7 @@ module Puppet
                 end
             end
 
-            if resource[:ensure] == :absent 
+            if resource[:ensure] == :absent
                 # We know all we need to
             elsif metadata.ftype != "link"
                 resource[:ensure] = metadata.ftype

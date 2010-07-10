@@ -14,7 +14,7 @@ require 'net/http'
 # us to never use ssl.  Yay.
 class Net::HTTP
     def use_ssl?
-        if defined? @use_ssl
+        if defined?(@use_ssl)
             @use_ssl
         else
             false
@@ -50,7 +50,7 @@ class Puppet::Network::Client
     # Determine what clients look for when being passed an object for local
     # client/server stuff.  E.g., you could call Client::CA.new(:CA => ca).
     def self.drivername
-        unless defined? @drivername
+        unless defined?(@drivername)
             @drivername = self.name
         end
         @drivername
@@ -58,7 +58,7 @@ class Puppet::Network::Client
 
     # Figure out the handler for our client.
     def self.handler
-        unless defined? @handler
+        unless defined?(@handler)
             @handler = Puppet::Network::Handler.handler(self.name)
         end
         @handler
@@ -66,7 +66,7 @@ class Puppet::Network::Client
 
     # The class that handles xmlrpc interaction for us.
     def self.xmlrpc_client
-        unless defined? @xmlrpc_client
+        unless defined?(@xmlrpc_client)
             @xmlrpc_client = Puppet::Network::XMLRPCClient.handler_class(self.handler)
         end
         @xmlrpc_client
@@ -112,7 +112,7 @@ class Puppet::Network::Client
 
     # Are we a local client?
     def local?
-        if defined? @local and @local
+        if defined?(@local) and @local
             true
         else
             false
@@ -140,8 +140,7 @@ class Puppet::Network::Client
     end
 
     def run
-        raise Puppet::DevError, "Client type %s did not override run" %
-            self.class
+        raise Puppet::DevError, "Client type %s did not override run" % self.class
     end
 
     def scheduled?
@@ -168,9 +167,12 @@ class Puppet::Network::Client
     # timer events here.
     def start
         # Create our timer.  Puppet will handle observing it and such.
-        timer = Puppet.newtimer(
+
+                    timer = Puppet.newtimer(
+                
             :interval => Puppet[:runinterval],
             :tolerance => 1,
+        
             :start? => true
         ) do
             begin

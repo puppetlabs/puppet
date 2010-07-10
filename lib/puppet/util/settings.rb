@@ -67,7 +67,7 @@ class Puppet::Util::Settings
             unsafe_clear(exceptcli)
         end
     end
-    
+
     # Remove all set values, potentially skipping cli values.
     def unsafe_clear(exceptcli = false)
         @values.each do |name, values|
@@ -227,8 +227,8 @@ class Puppet::Util::Settings
                 if include?(v)
                     #if there is only one value, just print it for back compatibility
                     if v == val
-                         puts value(val,env)
-                         break
+                        puts value(val,env)
+                        break
                     end
                     puts "%s = %s" % [v, value(v,env)]
                 else
@@ -434,7 +434,7 @@ class Puppet::Util::Settings
     end
 
     def reuse
-        return unless defined? @used
+        return unless defined?(@used)
         @sync.synchronize do # yay, thread-safe
             new = @used
             @used = []
@@ -477,7 +477,7 @@ class Puppet::Util::Settings
     end
 
     def legacy_to_mode(type, param)
-        if not defined? @app_names then
+        if not defined?(@app_names) then
             require 'puppet/util/command_line'
             command_line = Puppet::Util::CommandLine.new
             @app_names = Puppet::Util::CommandLine::LegacyName.inject({}) do |hash, pair|
@@ -524,7 +524,7 @@ class Puppet::Util::Settings
             # Clear the list of environments, because they cache, at least, the module path.
             # We *could* preferentially just clear them if the modulepath is changed,
             # but we don't really know if, say, the vardir is changed and the modulepath
-            # is defined relative to it. We need the defined? stuff because of loading
+            # is defined relative to it. We need the defined?(stuff) because of loading
             # order issues.
             Puppet::Node::Environment.clear if defined?(Puppet::Node) and defined?(Puppet::Node::Environment)
         end
@@ -610,9 +610,9 @@ Generated on #{Time.now}.
 
 }.gsub(/^/, "# ")
 
-        # Add a section heading that matches our name.
-        if @config.include?(:run_mode)
-            str += "[%s]\n" % self[:run_mode]
+#         Add a section heading that matches our name.
+if @config.include?(:run_mode)
+    str += "[%s]\n" % self[:run_mode]
         end
         eachsection do |section|
             persection(section) do |obj|
@@ -689,7 +689,7 @@ Generated on #{Time.now}.
             end
             throw :foundval, nil
         end
-        
+
         # If we didn't get a value, use the default
         val = @config[param].default if val.nil?
 
@@ -769,16 +769,14 @@ Generated on #{Time.now}.
         tmpfile = file + ".tmp"
         sync = Sync.new
         unless FileTest.directory?(File.dirname(tmpfile))
-            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" %
-                [file, File.dirname(file)]
+            raise Puppet::DevError, "Cannot create %s; directory %s does not exist" % [file, File.dirname(file)]
         end
 
         sync.synchronize(Sync::EX) do
             File.open(file, ::File::CREAT|::File::RDWR, 0600) do |rf|
                 rf.lock_exclusive do
                     if File.exist?(tmpfile)
-                        raise Puppet::Error, ".tmp file already exists for %s; Aborting locked write. Check the .tmp file and delete if appropriate" %
-                            [file]
+                        raise Puppet::Error, ".tmp file already exists for %s; Aborting locked write. Check the .tmp file and delete if appropriate" % [file]
                     end
 
                     # If there's a failure, remove our tmpfile

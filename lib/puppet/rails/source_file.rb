@@ -3,6 +3,6 @@ class Puppet::Rails::SourceFile < ActiveRecord::Base
     has_one :resource
 
     def to_label
-      "#{self.filename}"
+        "#{self.filename}"
     end
 end

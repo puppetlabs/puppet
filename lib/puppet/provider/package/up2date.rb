@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
     commands :up2date => "/usr/sbin/up2date-nox"
 
     defaultfor :operatingsystem => [:redhat, :oel, :ovm],
-               :lsbdistrelease => ["2.1", "3", "4"]
+        :lsbdistrelease => ["2.1", "3", "4"]
 
     confine    :operatingsystem => [:redhat, :oel, :ovm]
 

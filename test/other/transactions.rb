@@ -146,8 +146,7 @@ class TestTransactions < Test::Unit::TestCase
         end
 
         %w{ya ra y r}.each do |name|
-            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]),
-                "Generated %s was not a vertex" % name)
+            assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]), "Generated %s was not a vertex" % name)
             assert($finished.include?(name), "%s was not finished" % name)
         end
     end
@@ -323,13 +322,22 @@ class TestTransactions < Test::Unit::TestCase
         path = tempfile
         epath = tempfile
         spath = tempfile
-        file = Puppet::Type.type(:file).new(:path => path, :ensure => :file,
+
+                    file = Puppet::Type.type(:file).new(
+                :path => path, :ensure => :file,
+        
             :title => "file")
-        exec = Puppet::Type.type(:exec).new(:command => "touch %s" % epath,
+
+                    exec = Puppet::Type.type(:exec).new(
+                :command => "touch %s" % epath,
             :path => ENV["PATH"], :subscribe => file, :refreshonly => true,
+        
             :title => 'exec1')
-        exec2 = Puppet::Type.type(:exec).new(:command => "touch %s" % spath,
+
+                    exec2 = Puppet::Type.type(:exec).new(
+                :command => "touch %s" % spath,
             :path => ENV["PATH"], :subscribe => exec, :refreshonly => true,
+        
             :title => 'exec2')
 
         Puppet[:noop] = true
@@ -347,11 +355,17 @@ class TestTransactions < Test::Unit::TestCase
         assert(@logs.detect { |l|
             l.message =~ /should be/  and l.source == file.property(:ensure).path},
                 "did not log file change")
-        assert(@logs.detect { |l|
+
+                    assert(
+                @logs.detect { |l|
             l.message =~ /Would have/ and l.source == exec.path },
+        
                 "did not log first exec trigger")
-        assert(@logs.detect { |l|
+
+                    assert(
+                @logs.detect { |l|
             l.message =~ /Would have/ and l.source == exec2.path },
+        
                 "did not log second exec trigger")
     end
 
@@ -361,7 +375,10 @@ class TestTransactions < Test::Unit::TestCase
         3.times do |i|
             path = tempfile
             paths << path
-            file = Puppet::Type.type(:file).new(:path => path, :ensure => :absent,
+
+                        file = Puppet::Type.type(:file).new(
+                :path => path, :ensure => :absent,
+        
                 :backup => false, :title => "file%s" % i)
             File.open(path, "w") { |f| f.puts "" }
             files << file

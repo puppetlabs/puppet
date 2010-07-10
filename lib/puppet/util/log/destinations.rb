@@ -30,8 +30,7 @@ Puppet::Util::Log.newdesttype :syslog do
         if msg.source == "Puppet"
             @syslog.send(msg.level, msg.to_s.gsub("%", '%%'))
         else
-            @syslog.send(msg.level, "(%s) %s" %
-                [msg.source.to_s.gsub("%", ""),
+            @syslog.send(msg.level, "(%s) %s" % [msg.source.to_s.gsub("%", ""),
                     msg.to_s.gsub("%", '%%')
                 ]
             )
@@ -43,14 +42,14 @@ Puppet::Util::Log.newdesttype :file do
     match(/^\//)
 
     def close
-        if defined? @file
+        if defined?(@file)
             @file.close
             @file = nil
         end
     end
 
     def flush
-        if defined? @file
+        if defined?(@file)
             @file.flush
         end
     end
@@ -74,8 +73,7 @@ Puppet::Util::Log.newdesttype :file do
     end
 
     def handle(msg)
-        @file.puts("%s %s (%s): %s" %
-            [msg.time, msg.source, msg.level, msg.to_s])
+        @file.puts("%s %s (%s): %s" % [msg.time, msg.source, msg.level, msg.to_s])
 
         @file.flush if @autoflush
     end
@@ -160,10 +158,10 @@ Puppet::Util::Log.newdesttype :host do
 
     def handle(msg)
         unless msg.is_a?(String) or msg.remote
-            unless defined? @hostname
+            unless defined?(@hostname)
                 @hostname = Facter["hostname"].value
             end
-            unless defined? @domain
+            unless defined?(@domain)
                 @domain = Facter["domain"].value
                 if @domain
                     @hostname += "." + @domain

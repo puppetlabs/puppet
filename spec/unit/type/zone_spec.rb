@@ -6,10 +6,10 @@ zone = Puppet::Type.type(:zone)
 
 describe zone do
     before do
-	zone = Puppet::Type.type(:zone)
+        zone = Puppet::Type.type(:zone)
         provider = stub 'provider'
-	provider.stubs(:name).returns(:solaris)
-	zone.stubs(:defaultprovider).returns(provider)
+        provider.stubs(:name).returns(:solaris)
+        zone.stubs(:defaultprovider).returns(provider)
         resource = stub 'resource', :resource => nil, :provider => provider, :line => nil, :file => nil
     end
 
@@ -38,13 +38,11 @@ describe zone do
     end
 
     it "should be invalid when :ip has a \":\" and iptype is :exclusive" do
-        lambda { zone.new(:name => "dummy", :ip => "if:1.2.3.4",
-	    :iptype => :exclusive) }.should raise_error
+        lambda { zone.new(:name => "dummy", :ip => "if:1.2.3.4", :iptype => :exclusive) }.should raise_error
     end
 
     it "should be invalid when :ip has two \":\" and iptype is :exclusive" do
-        lambda { zone.new(:name => "dummy", :ip => "if:1.2.3.4:2.3.4.5",
-	    :iptype => :exclusive) }.should raise_error
+        lambda { zone.new(:name => "dummy", :ip => "if:1.2.3.4:2.3.4.5", :iptype => :exclusive) }.should raise_error
     end
 
     it "should be valid when :iptype is :shared and using interface and ip" do
@@ -56,8 +54,7 @@ describe zone do
     end
 
     it "should be valid when :iptype is :exclusive and using interface" do
-        zone.new(:name => "dummy", :path => "/dummy", :ip => "if",
-	    :iptype => :exclusive)
+        zone.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive)
     end
 
 end

@@ -138,8 +138,7 @@ module Puppet
                 elsif FileTest.directory?(File.join(path))
                     next
                 else FileTest.exist?(File.join(path))
-                    raise Puppet::Error, "Cannot create %s: basedir %s is a file" %
-                        [dir, File.join(path)]
+                    raise Puppet::Error, "Cannot create %s: basedir %s is a file" % [dir, File.join(path)]
                 end
             }
             return true

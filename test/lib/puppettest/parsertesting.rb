@@ -12,7 +12,7 @@ module PuppetTest::ParserTesting
         attr_writer :evaluate
 
         def evaluated?
-            defined? @evaluated and @evaluated
+            defined?(@evaluated) and @evaluated
         end
 
         def evaluate(*args)
@@ -101,11 +101,14 @@ module PuppetTest::ParserTesting
             title = stringobj(title)
         end
         assert_nothing_raised("Could not create %s %s" % [type, title]) {
+
             return AST::Resource.new(
+
                 :file => __FILE__,
                 :line => __LINE__,
                 :title => title,
                 :type => type,
+
                 :parameters => resourceinst(params)
             )
         }
@@ -119,10 +122,13 @@ module PuppetTest::ParserTesting
 
     def resourceoverride(type, title, params)
         assert_nothing_raised("Could not create %s %s" % [type, name]) {
+
             return AST::ResourceOverride.new(
+
                 :file => __FILE__,
                 :line => __LINE__,
                 :object => resourceref(type, title),
+
                 :type => type,
                 :parameters => resourceinst(params)
             )
@@ -131,10 +137,13 @@ module PuppetTest::ParserTesting
 
     def resourceref(type, title)
         assert_nothing_raised("Could not create %s %s" % [type, title]) {
+
             return AST::ResourceReference.new(
+
                 :file => __FILE__,
                 :line => __LINE__,
                 :type => type,
+
                 :title => stringobj(title)
             )
         }
@@ -148,34 +157,46 @@ module PuppetTest::ParserTesting
 
     def nameobj(name)
         assert_nothing_raised("Could not create name %s" % name) {
+
             return AST::Name.new(
-                                 :file => tempfile(),
-                                 :line => rand(100),
-                                 :value => name
-                                )
+
+                :file => tempfile(),
+
+                :line => rand(100),
+                :value => name
+                    )
         }
     end
 
     def typeobj(name)
         assert_nothing_raised("Could not create type %s" % name) {
+
             return AST::Type.new(
-                                 :file => tempfile(),
-                                 :line => rand(100),
-                                 :value => name
-                                )
+
+                :file => tempfile(),
+
+                :line => rand(100),
+                :value => name
+                    )
         }
     end
 
     def nodedef(name)
         assert_nothing_raised("Could not create node %s" % name) {
+
             return AST::NodeDef.new(
+
                 :file => tempfile(),
+
                 :line => rand(100),
                 :names => nameobj(name),
-                :code => AST::ASTArray.new(
-                    :children => [
-                        varobj("%svar" % name, "%svalue" % name),
-                        fileobj("/%s" % name)
+
+                    :code => AST::ASTArray.new(
+
+                        :children => [
+                            varobj("%svar" % name, "%svalue" % name),
+
+                            fileobj("/%s" % name)
                     ]
                 )
             )
@@ -187,11 +208,14 @@ module PuppetTest::ParserTesting
             params = hash.collect { |param, value|
             resourceparam(param, value)
         }
-        return AST::ResourceInstance.new(
-                                   :file => tempfile(),
-                                   :line => rand(100),
-                                   :children => params
-                                  )
+
+            return AST::ResourceInstance.new(
+
+                :file => tempfile(),
+
+                :line => rand(100),
+                :children => params
+                    )
         }
     end
 
@@ -201,21 +225,27 @@ module PuppetTest::ParserTesting
             value = stringobj(value)
         end
         assert_nothing_raised("Could not create param %s" % param) {
+
             return AST::ResourceParam.new(
-                                        :file => tempfile(),
-                                        :line => rand(100),
-                                        :param => param,
-                                        :value => value
-                                       )
+
+                :file => tempfile(),
+
+                :line => rand(100),
+                :param => param,
+                :value => value
+                    )
         }
     end
 
     def stringobj(value)
+
         AST::String.new(
-                        :file => tempfile(),
-                        :line => rand(100),
-                        :value => value
-                       )
+
+            :file => tempfile(),
+
+            :line => rand(100),
+            :value => value
+                )
     end
 
     def varobj(name, value)
@@ -223,54 +253,69 @@ module PuppetTest::ParserTesting
             value = stringobj(value)
         end
         assert_nothing_raised("Could not create %s code" % name) {
+
             return AST::VarDef.new(
-                                   :file => tempfile(),
-                                   :line => rand(100),
-                                   :name => nameobj(name),
-                                   :value => value
-                                  )
+
+                :file => tempfile(),
+
+                :line => rand(100),
+                :name => nameobj(name),
+                :value => value
+                    )
         }
     end
 
     def varref(name)
         assert_nothing_raised("Could not create %s variable" % name) {
+
             return AST::Variable.new(
-                                     :file => __FILE__,
-                                     :line => __LINE__,
-                                     :value => name
-                                    )
+
+                :file => __FILE__,
+                :line => __LINE__,
+
+                :value => name
+                    )
         }
     end
 
     def argobj(name, value)
         assert_nothing_raised("Could not create %s compargument" % name) {
             return AST::CompArgument.new(
-                                         :children => [nameobj(name), stringobj(value)]
-                                        )
+                :children => [nameobj(name), stringobj(value)]
+                    )
         }
     end
 
     def defaultobj(type, params)
         pary = []
         params.each { |p,v|
+
             pary << AST::ResourceParam.new(
-                                         :file => __FILE__,
-                                         :line => __LINE__,
-                                         :param => p,
-                                         :value => stringobj(v)
-                                        )
+
+                :file => __FILE__,
+                :line => __LINE__,
+                :param => p,
+
+                :value => stringobj(v)
+                    )
         }
-        past = AST::ASTArray.new(
-                                 :file => __FILE__,
-                                 :line => __LINE__,
-                                 :children => pary
-                                )
+
+            past = AST::ASTArray.new(
+
+                :file => __FILE__,
+                :line => __LINE__,
+
+                :children => pary
+                    )
 
         assert_nothing_raised("Could not create defaults for %s" % type) {
+
             return AST::ResourceDefaults.new(
+
                 :file => __FILE__,
                 :line => __LINE__,
                 :type => type,
+
                 :parameters => past
             )
         }
@@ -283,9 +328,12 @@ module PuppetTest::ParserTesting
     def functionobj(function, name, ftype = :statement)
         func = nil
         assert_nothing_raised do
+
             func = Puppet::Parser::AST::Function.new(
+
                 :name => function,
                 :ftype => ftype,
+
                 :arguments => AST::ASTArray.new(
                     :children => [nameobj(name)]
                 )

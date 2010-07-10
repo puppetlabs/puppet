@@ -88,9 +88,7 @@ module PuppetTest::FileTesting
         tolist = file_list(todir).sort
 
         fromlist.sort.zip(tolist.sort).each { |a,b|
-            assert_equal(a, b,
-        "Fromfile %s with length %s does not match tofile %s with length %s" %
-            [a, fromlist.length, b, tolist.length])
+            assert_equal(a, b, "Fromfile %s with length %s does not match tofile %s with length %s" % [a, fromlist.length, b, tolist.length])
         }
         #assert_equal(fromlist,tolist)
 
@@ -103,18 +101,21 @@ module PuppetTest::FileTesting
             fromstat = File.stat(fromfile)
             tostat = File.stat(tofile)
             [:ftype,:gid,:mode,:uid].each { |method|
+
                 assert_equal(
-                             fromstat.send(method),
-                             tostat.send(method)
-                            )
 
-                            next if fromstat.ftype == "directory"
-                            if checked < 10 and i % 3 == 0
-                                from = File.open(fromfile) { |f| f.read }
-                                to = File.open(tofile) { |f| f.read }
+                    fromstat.send(method),
 
-                                assert_equal(from,to)
-                                checked += 1
+                    tostat.send(method)
+                        )
+
+                        next if fromstat.ftype == "directory"
+                        if checked < 10 and i % 3 == 0
+                            from = File.open(fromfile) { |f| f.read }
+                            to = File.open(tofile) { |f| f.read }
+
+                            assert_equal(from,to)
+                            checked += 1
                             end
             }
         }

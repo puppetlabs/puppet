@@ -61,7 +61,7 @@ class Puppet::Indirector::Ldap < Puppet::Indirector::Terminus
 
     # Create an ldap connection.
     def connection
-        unless defined? @connection and @connection
+        unless defined?(@connection) and @connection
             unless Puppet.features.ldap?
                 raise Puppet::Error, "Could not set up LDAP Connection: Missing ruby/ldap libraries"
             end

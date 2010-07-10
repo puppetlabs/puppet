@@ -24,7 +24,10 @@ class TestXMLRPCWEBrickServlet < Test::Unit::TestCase
 
         assert(servlet.get_service_hook, "service hook was not set up")
 
-        assert(servlet.handler_loaded?(:puppetca),
+
+                    assert(
+                servlet.handler_loaded?(:puppetca),
+        
             "Did not load handler")
     end
 end

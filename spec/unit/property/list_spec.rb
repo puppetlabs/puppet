@@ -118,7 +118,7 @@ describe list_class do
             end
         end
 
-       describe "when calling insync?" do
+        describe "when calling insync?" do
             it "should return true unless @should is defined and not nil" do
                 @property.must be_insync("foo")
             end

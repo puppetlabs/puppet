@@ -23,8 +23,11 @@ class TestCertMgr < Test::Unit::TestCase
         cert = nil
         name = "testing"
         newcert = proc {
-            Puppet::SSLCertificates::Certificate.new(
+
+                        Puppet::SSLCertificates::Certificate.new(
+                
                 :name => name,
+        
                 :selfsign => true
             )
         }
@@ -67,9 +70,12 @@ class TestCertMgr < Test::Unit::TestCase
         name = "testing"
         keyfile = mkPassFile
         assert_nothing_raised {
-            cert = Puppet::SSLCertificates::Certificate.new(
+
+                        cert = Puppet::SSLCertificates::Certificate.new(
+                
                 :name => name,
                 :selfsign => true,
+        
                 :capass => keyfile
             )
         }
@@ -120,7 +126,9 @@ class TestCertMgr < Test::Unit::TestCase
 
         cert = nil
         assert_nothing_raised {
-            cert = Puppet::SSLCertificates::Certificate.new(
+
+                        cert = Puppet::SSLCertificates::Certificate.new(
+                
                 :name => "signedcertest",
                 :property => "TN",
                 :city => "Nashville",
@@ -128,6 +136,7 @@ class TestCertMgr < Test::Unit::TestCase
                 :email => "luke@madstop.com",
                 :org => "Puppet",
                 :ou => "Development",
+        
                 :encrypt => mkPassFile()
             )
 

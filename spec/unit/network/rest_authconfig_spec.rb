@@ -32,7 +32,7 @@ describe Puppet::Network::RestAuthConfig do
         @authconfig.rights = @acl
 
         @request = stub 'request', :indirection_name => "path", :key => "to/resource", :ip => "127.0.0.1",
-                                   :node => "me", :method => :save, :environment => :env, :authenticated => true
+            :node => "me", :method => :save, :environment => :env, :authenticated => true
     end
 
     it "should use the puppet default rest authorization file" do
@@ -115,7 +115,7 @@ describe Puppet::Network::RestAuthConfig do
 
     describe "when adding default ACLs" do
 
-       DEFAULT_ACL.each do |acl|
+        DEFAULT_ACL.each do |acl|
             it "should create a default right for #{acl[:acl]}" do
                 @authconfig.stubs(:mk_acl)
                 @authconfig.expects(:mk_acl).with(acl)

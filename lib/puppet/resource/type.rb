@@ -201,7 +201,7 @@ class Puppet::Resource::Type
         arguments.each do |param, default|
             param = param.to_sym
             next if set.include?(param)
-            
+
             # Even if 'default' is a false value, it's an AST value, so this works fine
             fail Puppet::ParseError, "Must pass #{param} to #{resource.ref}" unless default
 

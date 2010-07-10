@@ -82,8 +82,7 @@ class Puppet::Application::Kick < Puppet::Application
                         end
                         print "%s finished with exit code %s\n" % [host, $?.exitstatus]
                     else
-                        $stderr.puts "Could not find host for PID %s with status %s" %
-                            [pid, $?.exitstatus]
+                        $stderr.puts "Could not find host for PID %s with status %s" % [pid, $?.exitstatus]
                     end
                 rescue Errno::ECHILD
                     # There are no children left, so just exit unless there are still
@@ -144,7 +143,7 @@ class Puppet::Application::Kick < Puppet::Application
             exit(12)
         end
     end
-    
+
     def initialize(*args)
         super
         @hosts = []

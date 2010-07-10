@@ -29,7 +29,7 @@ class Puppet::Util::Log::Destination
     end
 
     def name
-        if defined? @name
+        if defined?(@name)
             return @name
         else
             return self.class.name

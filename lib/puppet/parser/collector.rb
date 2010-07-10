@@ -41,11 +41,14 @@ class Puppet::Parser::Collector
             # overrided those resources
             objects.each do |res|
                 unless @collected.include?(res.ref)
-                    newres = Puppet::Parser::Resource.new(res.type, res.title,
+
+                                newres = Puppet::Parser::Resource.new(
+                res.type, res.title,
                         :parameters => overrides[:parameters],
                         :file => overrides[:file],
                         :line => overrides[:line],
                         :source => overrides[:source],
+        
                         :scope => overrides[:scope]
                     )
 
@@ -111,7 +114,7 @@ class Puppet::Parser::Collector
         # We used to eagerly include param_names/values but the way
         # the search filter is built ruined those efforts and we
         # were eagerly loading only the searched parameter and not
-        # the other ones. 
+        # the other ones.
         query = {}
         case search
         when /puppet_tags/
@@ -151,8 +154,7 @@ class Puppet::Parser::Collector
             end
         end
 
-        scope.debug("Collected %s %s resource%s in %.2f seconds" %
-            [count, @type, count == 1 ? "" : "s", time])
+        scope.debug("Collected %s %s resource%s in %.2f seconds" % [count, @type, count == 1 ? "" : "s", time])
 
         return resources
     end

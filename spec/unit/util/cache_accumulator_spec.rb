@@ -25,16 +25,22 @@ describe Puppet::Util::CacheAccumulator do
     end
 
     it 'should delegate bulk lookups to find with appropriate arguments and returning result count' do
-        @test_class.expects(:find).with(:all,
-                                        :conditions => {:name => ['a', 'b', 'c']}
-                                       ).returns(['a','b','c'].collect {|n| @test_class.new(n)}).once
+
+        @test_class.expects(:find).with(
+            :all,
+
+                :conditions => {:name => ['a', 'b', 'c']}
+                    ).returns(['a','b','c'].collect {|n| @test_class.new(n)}).once
         @test_class.accumulate_by_name('a', 'b', 'c').should == 3
     end
 
     it 'should only need find_or_create_by_name lookup for missing bulk entries' do
-        @test_class.expects(:find).with(:all,
-                                        :conditions => {:name => ['a', 'b']}
-                                       ).returns([ @test_class.new('a') ]).once
+
+        @test_class.expects(:find).with(
+            :all,
+
+                :conditions => {:name => ['a', 'b']}
+                    ).returns([ @test_class.new('a') ]).once
         @test_class.expects(:find_or_create_by_name).with('b').returns(@test_class.new('b')).once
         @test_class.expects(:find_or_create_by_name).with('a').never
         @test_class.accumulate_by_name('a','b').should == 1

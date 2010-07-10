@@ -49,8 +49,7 @@ class TestPuppetDefaults < Test::Unit::TestCase
             value = Puppet[param]
 
             unless value !~ notval
-                assert_nothing_raised { raise "%s is incorrectly set to %s" %
-                    [param,value] }
+                assert_nothing_raised { raise "%s is incorrectly set to %s" % [param,value] }
             end
         }
     end

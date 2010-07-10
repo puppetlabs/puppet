@@ -68,8 +68,7 @@ class Puppet::Network::Handler
                         if Puppet[:trace]
                             puts detail.backtrace
                         end
-                        Puppet.err "Report %s failed: %s" %
-                            [name, detail]
+                        Puppet.err "Report %s failed: %s" % [name, detail]
                     end
                 else
                     Puppet.warning "No report named '%s'" % name

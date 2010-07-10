@@ -16,7 +16,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
 
     def group=(value)
         unless AllowedGroups.include?(value)
-            identifying_fields = [desc,name,default].compact.join(': ') 
+            identifying_fields = [desc,name,default].compact.join(': ')
             raise SettingError, "Internal error: The :group setting for %s must be 'service', not '%s'" % [identifying_fields,value]
         end
         @group = value
@@ -29,7 +29,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
 
     def owner=(value)
         unless AllowedOwners.include?(value)
-            identifying_fields = [desc,name,default].compact.join(': ') 
+            identifying_fields = [desc,name,default].compact.join(': ')
             raise SettingError, "Internal error: The :owner setting for %s must be either 'root' or 'service', not '%s'" % [identifying_fields,value]
         end
         @owner = value
@@ -115,8 +115,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
             name = $1
             unless @settings.include?(name)
                 raise ArgumentError,
-                    "Settings parameter '%s' is undefined" %
-                    name
+                    "Settings parameter '%s' is undefined" % name
             end
         }
     end

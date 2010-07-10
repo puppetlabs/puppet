@@ -37,10 +37,10 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # This map exists due to the use of hyphens and reserved words in
     # the authorization schema.
     PuppetToNativeAttributeMap = {  :allow_root => "allow-root",
-                                    :authenticate_user => "authenticate-user",
-                                    :auth_class => "class",
-                                    :k_of_n => "k-of-n",
-                                    :session_owner => "session-owner", }
+        :authenticate_user => "authenticate-user",
+        :auth_class => "class",
+        :k_of_n => "k-of-n",
+        :session_owner => "session-owner", }
 
     class << self
         attr_accessor :parsed_auth_db
@@ -196,8 +196,11 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
             Plist::Emit.save_plist(values, tmp.path)
             cmds = []
             cmds << :security << "authorizationdb" << "write" << name
-            output = execute(cmds, :combine => false,
-                             :stdinfile => tmp.path.to_s)
+
+                output = execute(
+                    cmds, :combine => false,
+
+                        :stdinfile => tmp.path.to_s)
         rescue Errno::EACCES => e
             raise Puppet::Error.new("Cannot save right to #{tmp.path}: #{e}")
         ensure
@@ -285,8 +288,8 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # case due to not being in the actual authorization db schema.
 
     properties = [  :allow_root, :authenticate_user, :auth_class, :comment,
-                    :group, :k_of_n, :mechanisms, :rule, :session_owner,
-                    :shared, :timeout, :tries ]
+        :group, :k_of_n, :mechanisms, :rule, :session_owner,
+        :shared, :timeout, :tries ]
 
     properties.each do |field|
         define_method(field.to_s) do

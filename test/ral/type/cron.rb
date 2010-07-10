@@ -124,10 +124,13 @@ class TestCron < Test::Unit::TestCase
             name = "yaytest"
             command = "date > /dev/null "
             assert_nothing_raised {
+
                 cron = @crontype.new(
+
                     :name => name,
                     :command => "date > /dev/null ",
                     :month => "May",
+
                     :user => @me
                 )
             }
@@ -195,12 +198,10 @@ class TestCron < Test::Unit::TestCase
                         }
 
                         if value.is_a?(Integer)
-                            assert_equal([value.to_s], cron.should(param),
-                                "Cron value was not set correctly")
+                            assert_equal([value.to_s], cron.should(param), "Cron value was not set correctly")
                         end
                     when :invalid
-                        assert_raise(Puppet::Error, "%s is incorrectly a valid %s" %
-                            [value, param]) {
+                        assert_raise(Puppet::Error, "%s is incorrectly a valid %s" % [value, param]) {
                             cron[param] = value
                         }
                     end
@@ -219,10 +220,13 @@ class TestCron < Test::Unit::TestCase
         eachprovider do |provider|
             cron = nil
             assert_nothing_raised {
+
                 cron = @crontype.new(
+
                     :command => "/bin/date > /dev/null",
                     :minute => [0, 30],
                     :name => "crontest",
+
                     :provider => provider.name
                 )
             }
@@ -245,10 +249,13 @@ class TestCron < Test::Unit::TestCase
     def test_fieldremoval
         cron = nil
         assert_nothing_raised {
+
             cron = @crontype.new(
+
                 :command => "/bin/date > /dev/null",
                 :minute => [0, 30],
                 :name => "crontest",
+
                 :provider => :crontab
             )
         }
@@ -277,9 +284,12 @@ class TestCron < Test::Unit::TestCase
         cleanup { provider.filetype = ft }
 
         setme
-        cron = @crontype.new(:name => "testing",
+
+            cron = @crontype.new(
+                :name => "testing",
             :minute => [0, 30],
             :command => "/bin/testing",
+
             :user => @me
         )
         # Write it to our file
@@ -294,8 +304,11 @@ class TestCron < Test::Unit::TestCase
 
         crons.each do |cron|
             assert_instance_of(@crontype, cron, "Did not receive a real cron object")
-            assert_instance_of(String, cron.value(:user),
-                "Cron user is not a string")
+
+                assert_instance_of(
+                    String, cron.value(:user),
+
+                    "Cron user is not a string")
         end
     end
 
@@ -334,11 +347,11 @@ class TestCron < Test::Unit::TestCase
 
 
     def provider_set(cron, param, value)
-      unless param =~ /=$/
-        param = "%s=" % param
-      end
+        unless param =~ /=$/
+            param = "%s=" % param
+        end
 
-      cron.provider.send(param, value)
+        cron.provider.send(param, value)
     end
 
     def test_value
@@ -352,8 +365,8 @@ class TestCron < Test::Unit::TestCase
             assert(property, "Did not get %s property" % param)
 
             assert_nothing_raised {
-#                property.is = :absent
-                 provider_set(cron, param, :absent)
+                #                property.is = :absent
+                provider_set(cron, param, :absent)
             }
 
             val = "*"
@@ -419,10 +432,13 @@ class TestCron < Test::Unit::TestCase
         crons = []
         users = ["root", nonrootuser.name]
         users.each do |user|
+
             cron = Puppet::Type.type(:cron).new(
+
                 :name => "testcron-#{user}",
                 :user => user,
                 :command => "/bin/echo",
+
                 :minute => [0,30]
             )
             crons << cron
@@ -439,9 +455,11 @@ class TestCron < Test::Unit::TestCase
                 next if user == other
                 text = provider.target_object(other).read
 
-                assert(text !~ /testcron-#{user}/,
-                       "%s's cron job is in %s's tab" %
-                       [user, other])
+
+                    assert(
+                        text !~ /testcron-#{user}/,
+
+                        "%s's cron job is in %s's tab" % [user, other])
             end
         end
     end
@@ -450,20 +468,27 @@ class TestCron < Test::Unit::TestCase
     def test_default_user
         crontab = @crontype.provider(:crontab)
         if crontab.suitable?
+
             inst = @crontype.new(
+
                 :name => "something", :command => "/some/thing",
+
                 :provider => :crontab)
-            assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:user),
-                "user did not default to current user with crontab")
-            assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:target),
-                "target did not default to current user with crontab")
+            assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:user), "user did not default to current user with crontab")
+            assert_equal(Etc.getpwuid(Process.uid).name, inst.should(:target), "target did not default to current user with crontab")
 
             # Now make a new cron with a user, and make sure it gets copied
             # over
-            inst = @crontype.new(:name => "yay", :command => "/some/thing",
-                :user => "bin", :provider => :crontab)
-            assert_equal("bin", inst.should(:target),
-                "target did not default to user with crontab")
+
+                inst = @crontype.new(
+                    :name => "yay", :command => "/some/thing",
+
+                    :user => "bin", :provider => :crontab)
+
+                        assert_equal(
+                            "bin", inst.should(:target),
+
+                            "target did not default to user with crontab")
         end
     end
 

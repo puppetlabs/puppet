@@ -163,9 +163,9 @@ describe provider do
 
     describe "when holding or unholding" do
         before do
-          @tempfile = stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file"
-          @tempfile.stubs(:write)
-          Tempfile.stubs(:new).returns @tempfile
+            @tempfile = stub 'tempfile', :print => nil, :close => nil, :flush => nil, :path => "/other/file"
+            @tempfile.stubs(:write)
+            Tempfile.stubs(:new).returns @tempfile
         end
 
         it "should install first if holding" do

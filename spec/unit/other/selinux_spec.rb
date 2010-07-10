@@ -7,11 +7,14 @@ require 'puppet/type/selmodule'
 
 describe Puppet::Type.type(:file), " when manipulating file contexts" do
     before :each do
-        @file = Puppet::Type::File.new(
+
+                    @file = Puppet::Type::File.new(
+                
             :name => "/tmp/foo",
             :ensure => "file",
             :seluser => "user_u",
             :selrole => "role_r",
+        
             :seltype => "type_t" )
     end
     it "should use :seluser to get/set an SELinux user file context attribute" do
@@ -30,9 +33,12 @@ describe Puppet::Type.type(:selboolean), " when manipulating booleans" do
         provider_class = Puppet::Type::Selboolean.provider(Puppet::Type::Selboolean.providers[0])
         Puppet::Type::Selboolean.stubs(:defaultprovider).returns provider_class
 
-        @bool = Puppet::Type::Selboolean.new(
+
+                    @bool = Puppet::Type::Selboolean.new(
+                
             :name => "foo",
             :value => "on",
+        
             :persistent => true )
     end
     it "should be able to access :name" do
@@ -59,10 +65,13 @@ describe Puppet::Type.type(:selmodule), " when checking policy modules" do
         provider_class = Puppet::Type::Selmodule.provider(Puppet::Type::Selmodule.providers[0])
         Puppet::Type::Selmodule.stubs(:defaultprovider).returns provider_class
 
-        @module = Puppet::Type::Selmodule.new(
+
+                    @module = Puppet::Type::Selmodule.new(
+                
             :name => "foo",
             :selmoduledir => "/some/path",
             :selmodulepath => "/some/path/foo.pp",
+        
             :syncversion => true)
     end
     it "should be able to access :name" do

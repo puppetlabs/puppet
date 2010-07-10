@@ -35,7 +35,10 @@ module Puppet
             # we're splitting the request in part because
             # fail_on_deny could as well be called in the XMLRPC context
             # with a ClientRequest.
-            @rights.fail_on_deny(build_uri(request),
+
+                        @rights.fail_on_deny(
+                build_uri(request),
+        
                                     :node => request.node,
                                     :ip => request.ip,
                                     :method => request.method,

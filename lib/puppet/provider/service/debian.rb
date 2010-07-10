@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     # http://projects.reductivelabs.com/issues/2538
     # is resolved.
     commands :invoke_rc => "/usr/sbin/invoke-rc.d"
-    
+
     defaultfor :operatingsystem => [:debian, :ubuntu]
 
     def self.defpath
@@ -30,7 +30,7 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
         # TODO: Replace system() call when Puppet::Util.execute gives us a way
         # to determine exit status.  http://projects.reductivelabs.com/issues/2538
         system("/usr/sbin/invoke-rc.d", "--quiet", "--query", @resource[:name], "start")
-        
+
         # 104 is the exit status when you query start an enabled service.
         # 106 is the exit status when the policy layer supplies a fallback action
         # See x-man-page://invoke-rc.d

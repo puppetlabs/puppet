@@ -32,7 +32,7 @@ describe Puppet::Parser do
         parser = Puppet::Parser::Parser.new "development"
         parser.known_resource_types.should equal(rtc)
     end
-    
+
     it "should delegate importing to the known resource type loader" do
         parser = Puppet::Parser::Parser.new "development"
         parser.known_resource_types.loader.expects(:import).with("newfile", "current_file")
@@ -100,32 +100,32 @@ describe Puppet::Parser do
         end
 
         it "comparison operation, it should create the correct ast objects" do
-             ast::ComparisonOperator.expects(:new).with {
-                 |h| h[:lval].is_a?(ast::Name) and h[:rval].is_a?(ast::Name) and h[:operator]=="<"
-             }
-             @parser.parse("if 1 < 2 { $var = 1 }")
+            ast::ComparisonOperator.expects(:new).with {
+                |h| h[:lval].is_a?(ast::Name) and h[:rval].is_a?(ast::Name) and h[:operator]=="<"
+            }
+            @parser.parse("if 1 < 2 { $var = 1 }")
 
         end
 
     end
 
     describe "when parsing if complex expressions" do
-         it "should create a correct ast tree" do
-             aststub = stub_everything 'ast'
-             ast::ComparisonOperator.expects(:new).with {
-                 |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]==">"
-             }.returns(aststub)
-             ast::ComparisonOperator.expects(:new).with {
-                 |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]=="=="
-             }.returns(aststub)
-             ast::BooleanOperator.expects(:new).with {
-                 |h| h[:rval]==aststub and h[:lval]==aststub and h[:operator]=="and"
-             }
-             @parser.parse("if (1 > 2) and (1 == 2) { $var = 1 }")
-         end
+        it "should create a correct ast tree" do
+            aststub = stub_everything 'ast'
+            ast::ComparisonOperator.expects(:new).with {
+                |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]==">"
+            }.returns(aststub)
+            ast::ComparisonOperator.expects(:new).with {
+                |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]=="=="
+            }.returns(aststub)
+            ast::BooleanOperator.expects(:new).with {
+                |h| h[:rval]==aststub and h[:lval]==aststub and h[:operator]=="and"
+            }
+            @parser.parse("if (1 > 2) and (1 == 2) { $var = 1 }")
+        end
 
-         it "should raise an error on incorrect expression" do
-             lambda { @parser.parse("if (1 > 2 > ) or (1 == 2) { $var = 1 }") }.should raise_error
+        it "should raise an error on incorrect expression" do
+            lambda { @parser.parse("if (1 > 2 > ) or (1 == 2) { $var = 1 }") }.should raise_error
         end
 
     end
@@ -194,7 +194,7 @@ describe Puppet::Parser do
 
         it "should build a chain of 'ifs' if there's an 'elsif'" do
             ast = @parser.parse(<<-PP)
-              if true { notice('test') } elsif true {} else { }
+                if true { notice('test') } elsif true {} else { }
             PP
         end
 
@@ -398,12 +398,12 @@ describe Puppet::Parser do
             @krt.add(Puppet::Resource::Type.new(:hostclass, "foobar", :arguments => {"biz" => nil}))
             lambda { @parser.parse("class { foobar: biz => stuff }") }.should_not raise_error
         end
-        
+
         it "should correctly mark exported resources as exported" do
             @parser.parse("@@file { '/file': }")
             @krt.hostclass("").code[0].exported.should be_true
         end
-        
+
         it "should correctly mark virtual resources as virtual" do
             @parser.parse("@file { '/file': }")
             @krt.hostclass("").code[0].virtual.should be_true

@@ -54,7 +54,7 @@ class Puppet::Util::Settings::Setting
     end
 
     def iscreated?
-        if defined? @iscreated
+        if defined?(@iscreated)
             return @iscreated
         else
             return false
@@ -62,7 +62,7 @@ class Puppet::Util::Settings::Setting
     end
 
     def set?
-        if defined? @value and ! @value.nil?
+        if defined?(@value) and ! @value.nil?
             return true
         else
             return false
@@ -82,7 +82,7 @@ class Puppet::Util::Settings::Setting
         str = @desc.gsub(/^/, "# ") + "\n"
 
         # Add in a statement about the default.
-        if defined? @default and @default
+        if defined?(@default) and @default
             str += "# The default value is '%s'.\n" % @default
         end
 

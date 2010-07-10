@@ -14,8 +14,11 @@ class TestRelationships < Test::Unit::TestCase
 
     def newfile
         assert_nothing_raised() {
-            return Puppet::Type.type(:file).new(
+
+                        return Puppet::Type.type(:file).new(
+                
                 :path => tempfile,
+        
                 :check => [:mode, :owner, :group]
             )
         }
@@ -39,8 +42,7 @@ class TestRelationships < Test::Unit::TestCase
         sources.each do |source|
             targets.each do |target|
                 edge = deps.find { |e| e.source == source and e.target == target }
-                assert(edge, "Could not find edge for %s => %s" %
-                    [source.ref, target.ref])
+                assert(edge, "Could not find edge for %s => %s" % [source.ref, target.ref])
 
                 if refresher
                     assert_equal(:ALL_EVENTS, edge.event)
@@ -57,9 +59,15 @@ class TestRelationships < Test::Unit::TestCase
         # We know that execs autorequire their cwd, so we'll use that
         path = tempfile()
 
-        file = Puppet::Type.type(:file).new(:title => "myfile", :path => path,
+
+                    file = Puppet::Type.type(:file).new(
+                :title => "myfile", :path => path,
+        
             :ensure => :directory)
-        exec = Puppet::Type.newexec(:title => "myexec", :cwd => path,
+
+                    exec = Puppet::Type.newexec(
+                :title => "myexec", :cwd => path,
+        
             :command => "/bin/echo")
 
         catalog = mk_catalog(file, exec)

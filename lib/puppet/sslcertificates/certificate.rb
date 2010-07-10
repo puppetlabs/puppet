@@ -25,7 +25,7 @@ class Puppet::SSLCertificates::Certificate
             end
         }
 
-        if defined? @hash and @hash
+        if defined?(@hash) and @hash
             if FileTest.symlink?(@hash)
                 File.unlink(@hash)
             end
@@ -41,8 +41,11 @@ class Puppet::SSLCertificates::Certificate
             self.mkkey()
         end
         if @password
+
             @key = OpenSSL::PKey::RSA.new(
+
                 File.read(@keyfile),
+
                 @password
             )
         else
@@ -137,7 +140,7 @@ class Puppet::SSLCertificates::Certificate
 
     # this only works for servers, not for users
     def mkcsr
-        unless defined? @key and @key
+        unless defined?(@key) and @key
             self.getkey
         end
 
@@ -177,11 +180,14 @@ class Puppet::SSLCertificates::Certificate
 #                end
 #            }
 
-        if @password
-            #passwdproc = proc { @password }
-            keytext = @key.export(
-                OpenSSL::Cipher::DES.new(:EDE3, :CBC),
-                @password
+    if @password
+    #        passwdproc = proc { @password }
+
+        keytext = @key.export(
+
+            OpenSSL::Cipher::DES.new(:EDE3, :CBC),
+
+            @password
             )
             File.open(@keyfile, "w", 0400) { |f|
                 f << keytext
@@ -196,11 +202,11 @@ class Puppet::SSLCertificates::Certificate
     end
 
     def mkselfsigned
-        unless defined? @key and @key
+        unless defined?(@key) and @key
             self.getkey
         end
 
-        if defined? @cert and @cert
+        if defined?(@cert) and @cert
             raise Puppet::Error, "Cannot replace existing certificate"
         end
 
@@ -226,7 +232,7 @@ class Puppet::SSLCertificates::Certificate
     def subject(string = false)
         subj = @@params2names.collect { |param, name|
             if @params.include?(param)
-               [name, @params[param]]
+                [name, @params[param]]
             end
         }.reject { |ary| ary.nil? }
 
@@ -249,12 +255,12 @@ class Puppet::SSLCertificates::Certificate
             @certfile => @cert,
             @keyfile => @key,
         }
-        if defined? @cacert
+        if defined?(@cacert)
             files[@cacertfile] = @cacert
         end
 
         files.each { |file,thing|
-            if defined? thing and thing
+            if defined?(thing) and thing
                 if FileTest.exists?(file)
                     next
                 end
@@ -262,8 +268,11 @@ class Puppet::SSLCertificates::Certificate
                 text = nil
 
                 if thing.is_a?(OpenSSL::PKey::RSA) and @password
+
                     text = thing.export(
+
                         OpenSSL::Cipher::DES.new(:EDE3, :CBC),
+
                         @password
                     )
                 else
@@ -274,7 +283,7 @@ class Puppet::SSLCertificates::Certificate
             end
         }
 
-        if defined? @cacert
+        if defined?(@cacert)
             SSLCertificates.mkhash(Puppet[:certdir], @cacert, @cacertfile)
         end
     end

@@ -55,7 +55,7 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     # Do a glob on the yaml directory, loading each file found
     def search(request)
-      Dir.glob(File.join(base, self.class.indirection_name.to_s, request.key)).collect { |f| YAML.load_file(f) }
+        Dir.glob(File.join(base, self.class.indirection_name.to_s, request.key)).collect { |f| YAML.load_file(f) }
     end
 
     private

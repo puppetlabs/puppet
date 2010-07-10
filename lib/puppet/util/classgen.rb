@@ -52,7 +52,7 @@ module Puppet::Util::ClassGen
         options = symbolize_options(options)
         const = genconst_string(name, options)
         retval = false
-        if const_defined? const
+        if const_defined?(const)
             remove_const(const)
             retval = true
         end
@@ -132,7 +132,7 @@ module Puppet::Util::ClassGen
     def handleclassconst(klass, name, options)
         const = genconst_string(name, options)
 
-        if const_defined? const
+        if const_defined?(const)
             if options[:overwrite]
                 Puppet.info "Redefining %s in %s" % [name, self]
                 remove_const(const)

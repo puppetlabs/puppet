@@ -22,7 +22,7 @@ module Puppet::Network::HTTP::Handler
         raise NotImplementedError
     end
 
-    # Which format to use when serializing our response or interpreting the request.  
+    # Which format to use when serializing our response or interpreting the request.
     # IF the client provided a Content-Type use this, otherwise use the Accept header
     # and just pick the first value.
     def format_to_use(request)
@@ -155,7 +155,7 @@ module Puppet::Network::HTTP::Handler
         return result[:ip]
     end
 
-  private
+    private
 
     def return_yaml_response(response, body)
         set_content_type(response, Puppet::Network::FormatHandler.format("yaml"))

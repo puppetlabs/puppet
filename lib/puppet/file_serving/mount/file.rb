@@ -96,8 +96,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
         if node
             map = clientmap(node)
         else
-            Puppet.notice "No client; expanding '%s' with local host" %
-                path
+            Puppet.notice "No client; expanding '%s' with local host" % path
             # Else, use the local information
             map = localmap()
         end
@@ -114,7 +113,7 @@ class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
 
     # Do we have any patterns in our path, yo?
     def expandable?
-        if defined? @expandable
+        if defined?(@expandable)
             @expandable
         else
             false

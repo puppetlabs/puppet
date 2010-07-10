@@ -8,9 +8,12 @@ else
     fstab = "/etc/fstab"
 end
 
-Puppet::Type.type(:mount).provide(:parsed,
+
+            Puppet::Type.type(:mount).provide(
+                :parsed,
     :parent => Puppet::Provider::ParsedFile,
     :default_target => fstab,
+        
     :filetype => :flat
 ) do
     include Puppet::Provider::Mount
@@ -21,8 +24,7 @@ Puppet::Type.type(:mount).provide(:parsed,
     @platform = Facter["operatingsystem"].value
     case @platform
     when "Solaris"
-        @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot,
-               :options]
+        @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot, :options]
     else
         @fields = [:device, :name, :fstype, :options, :dump, :pass]
         @fielddefaults = [ nil ] * 4 + [ "0", "2" ]

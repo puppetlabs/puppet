@@ -68,10 +68,13 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
                     Puppet.debug "/#{TypeMap[ds_type]}/#{ds_name} has no MCX data."
                 else
                     # This node has MCX data.
-                    rsrc = self.new(:name => "/#{TypeMap[ds_type]}/#{ds_name}",
-                                 :ds_type => ds_type,
-                                 :ds_name => ds_name,
-                                 :content => content)
+
+                        rsrc = self.new(
+                            :name => "/#{TypeMap[ds_type]}/#{ds_name}",
+                                :ds_type => ds_type,
+                                :ds_name => ds_name,
+
+                                :content => content)
                     mcx_list << rsrc
                 end
             end
@@ -184,17 +187,23 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
 
     def content
         ds_parms = get_dsparams
-        mcx = self.class.mcxexport(ds_parms[:ds_type],
-                                   ds_parms[:ds_name])
+
+            mcx = self.class.mcxexport(
+                ds_parms[:ds_type],
+
+                    ds_parms[:ds_name])
         return mcx
     end
 
     def content=(value)
         # dscl localhost -mcximport
         ds_parms = get_dsparams
-        mcx = mcximport(ds_parms[:ds_type],
-                        ds_parms[:ds_name],
-                        resource[:content])
+
+            mcx = mcximport(
+                ds_parms[:ds_type],
+                    ds_parms[:ds_name],
+
+                    resource[:content])
         return mcx
     end
 

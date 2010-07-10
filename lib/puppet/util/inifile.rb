@@ -113,8 +113,7 @@ module Puppet::Util::IniConfig
             text.each_line do |l|
                 line += 1
                 if l.strip.empty? || "#;".include?(l[0,1]) ||
-                        (l.split(nil, 2)[0].downcase == "rem" &&
-                         l[0,1].downcase == "r")
+                        (l.split(nil, 2)[0].downcase == "rem" && l[0,1].downcase == "r")
                     # Whitespace or comment
                     if section.nil?
                         @files[file] << l

@@ -174,12 +174,15 @@ module Puppet::Network
                 hash[:HTTPProxyPort] = nil
             end
 
-            super(
+
+                        super(
+                
                 hash[:Server],
                 hash[:Path],
                 hash[:Port],
                 hash[:HTTPProxyHost],
                 hash[:HTTPProxyPort],
+        
                 nil, # user
                 nil, # password
                 true, # use_ssl

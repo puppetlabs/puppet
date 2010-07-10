@@ -33,10 +33,10 @@ describe provider_class do
         @provider.stubs(:plist_from_label).returns([@joblabel, @jobplist])
         @provider.stubs(:execute).returns("")
         @provider.stubs(:resource).returns @resource
-        
+
         # We stub this out for the normal case as 10.6 is "special".
         provider_class.stubs(:get_macosx_version_major).returns("10.5")
-        
+
     end
 
     it "should have a start method for #{@provider.object_id}" do
@@ -78,7 +78,7 @@ describe provider_class do
             @provider.status.should == :running
         end
     end
-    
+
     describe "when checking whether the service is enabled" do
         it "should return true if the job plist says disabled is false" do
             @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => false}])
@@ -93,7 +93,7 @@ describe provider_class do
             @provider.enabled?.should == :false
         end
     end
-    
+
     describe "when checking whether the service is enabled on OS X 10.6" do
         it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
             provider_class.stubs(:get_macosx_version_major).returns("10.6")
@@ -178,7 +178,7 @@ describe provider_class do
             @provider.stop
         end
     end
-    
+
     describe "when enabling the service on OS X 10.6" do
         it "should write to the global launchd overrides file once" do
             provider_class.stubs(:get_macosx_version_major).returns("10.6")
@@ -187,7 +187,7 @@ describe provider_class do
             @provider.enable
         end
     end
-    
+
     describe "when disabling the service on OS X 10.6" do
         it "should write to the global launchd overrides file once" do
             provider_class.stubs(:get_macosx_version_major).returns("10.6")
@@ -197,4 +197,4 @@ describe provider_class do
         end
     end
 
- end
+end

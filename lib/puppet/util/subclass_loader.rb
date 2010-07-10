@@ -19,7 +19,10 @@ module Puppet::Util::SubclassLoader
             raise ArgumentError, "Must be a class to use SubclassLoader"
         end
         @subclasses = []
-        @loader = Puppet::Util::Autoload.new(self,
+
+                    @loader = Puppet::Util::Autoload.new(
+                self,
+        
             path, :wrap => false
         )
 
@@ -63,7 +66,7 @@ module Puppet::Util::SubclassLoader
         unless self == self.classloader
             super
         end
-        return nil unless defined? @subclassname
+        return nil unless defined?(@subclassname)
         if c = self.send(@subclassname, method)
             return c
         else
@@ -73,7 +76,7 @@ module Puppet::Util::SubclassLoader
 
     # Retrieve or calculate a name.
     def name(dummy_argument=:work_arround_for_ruby_GC_bug)
-        unless defined? @name
+        unless defined?(@name)
             @name = self.to_s.sub(/.+::/, '').intern
         end
 

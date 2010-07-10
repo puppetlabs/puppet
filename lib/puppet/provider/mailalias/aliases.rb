@@ -1,8 +1,11 @@
 require 'puppet/provider/parsedfile'
 
-Puppet::Type.type(:mailalias).provide(:aliases,
+
+    Puppet::Type.type(:mailalias).provide(
+        :aliases,
     :parent => Puppet::Provider::ParsedFile,
     :default_target => "/etc/aliases",
+
     :filetype => :flat
 ) do
     text_line :comment, :match => /^#/
@@ -18,11 +21,11 @@ Puppet::Type.type(:mailalias).provide(:aliases,
         end
 
         def process(line)
-          ret = {}
-          records = line.split(':',2)
-          ret[:name] = records[0].strip()
-          ret[:recipient] = records[1].strip()
-          ret
+            ret = {}
+            records = line.split(':',2)
+            ret[:name] = records[0].strip()
+            ret[:recipient] = records[1].strip()
+            ret
         end
 
         def to_line(record)

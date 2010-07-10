@@ -136,11 +136,13 @@ describe Puppet::Parser::AST::CaseStatement do
         }
         options = tests.collect do |result, values|
             values = values.collect { |v| AST::Leaf.new :value => v }
-            AST::CaseOpt.new(:value => AST::ASTArray.new(:children => values),
+
+                        AST::CaseOpt.new(
+                :value => AST::ASTArray.new(:children => values),
+        
                 :statements => AST::Leaf.new(:value => result))
         end
-        options << AST::CaseOpt.new(:value => AST::Default.new(:value => "default"),
-            :statements => AST::Leaf.new(:value => "default"))
+        options << AST::CaseOpt.new(:value => AST::Default.new(:value => "default"), :statements => AST::Leaf.new(:value => "default"))
 
         ast = nil
         param = AST::Variable.new(:value => "testparam")

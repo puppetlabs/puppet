@@ -60,8 +60,11 @@ module Manager
         end
 
         # Then create the class.
-        klass = genclass(name,
+
+                    klass = genclass(
+                name,
             :parent => (parent || Puppet::Type),
+        
             :overwrite => true,
             :hash => @types,
             :attributes => options,
@@ -85,7 +88,10 @@ module Manager
         end
 
         # Now set up autoload any providers that might exist for this type.
-        klass.providerloader = Puppet::Util::Autoload.new(klass,
+
+                    klass.providerloader = Puppet::Util::Autoload.new(
+                klass,
+        
             "puppet/provider/#{klass.name.to_s}"
         )
 
@@ -98,7 +104,10 @@ module Manager
     # Remove an existing defined type.  Largely used for testing.
     def rmtype(name)
         # Then create the class.
-        klass = rmclass(name,
+
+                    klass = rmclass(
+                name,
+        
             :hash => @types
         )
 
@@ -128,8 +137,11 @@ module Manager
 
     # Create a loader for Puppet types.
     def typeloader
-        unless defined? @typeloader
-            @typeloader = Puppet::Util::Autoload.new(self,
+        unless defined?(@typeloader)
+
+                        @typeloader = Puppet::Util::Autoload.new(
+                self,
+        
                 "puppet/type", :wrap => false
             )
         end

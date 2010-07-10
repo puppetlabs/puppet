@@ -12,8 +12,8 @@ class TestCA < Test::Unit::TestCase
     include PuppetTest
 
     def setup
-      super
-      Puppet::Util::SUIDManager.stubs(:asuser).yields
+        super
+        Puppet::Util::SUIDManager.stubs(:asuser).yields
     end
 
     def hosts

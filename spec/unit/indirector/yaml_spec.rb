@@ -116,31 +116,31 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     end
 
     describe Puppet::Indirector::Yaml, " when searching" do
-      it "should return an array of fact instances with one instance for each file when globbing *" do
-        @request = stub 'request', :key => "*", :instance => @subject
-        @one = mock 'one'
-        @two = mock 'two'
-        @store.expects(:base).returns "/my/yaml/dir"
-        Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns(%w{one.yaml two.yaml})
-        YAML.expects(:load_file).with("one.yaml").returns @one;
-        YAML.expects(:load_file).with("two.yaml").returns @two;
-        @store.search(@request).should == [@one, @two]
-      end
+        it "should return an array of fact instances with one instance for each file when globbing *" do
+            @request = stub 'request', :key => "*", :instance => @subject
+            @one = mock 'one'
+            @two = mock 'two'
+            @store.expects(:base).returns "/my/yaml/dir"
+            Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns(%w{one.yaml two.yaml})
+            YAML.expects(:load_file).with("one.yaml").returns @one;
+            YAML.expects(:load_file).with("two.yaml").returns @two;
+            @store.search(@request).should == [@one, @two]
+        end
 
-      it "should return an array containing a single instance of fact when globbing 'one*'" do
-        @request = stub 'request', :key => "one*", :instance => @subject
-        @one = mock 'one'
-        @store.expects(:base).returns "/my/yaml/dir"
-        Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns(%w{one.yaml})
-        YAML.expects(:load_file).with("one.yaml").returns @one;
-        @store.search(@request).should == [@one]
-      end
+        it "should return an array containing a single instance of fact when globbing 'one*'" do
+            @request = stub 'request', :key => "one*", :instance => @subject
+            @one = mock 'one'
+            @store.expects(:base).returns "/my/yaml/dir"
+            Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns(%w{one.yaml})
+            YAML.expects(:load_file).with("one.yaml").returns @one;
+            @store.search(@request).should == [@one]
+        end
 
-      it "should return an empty array when the glob doesn't match anything" do
-        @request = stub 'request', :key => "f*ilglobcanfail*", :instance => @subject
-        @store.expects(:base).returns "/my/yaml/dir"
-        Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns([])
-        @store.search(@request).should == []
-      end
+        it "should return an empty array when the glob doesn't match anything" do
+            @request = stub 'request', :key => "f*ilglobcanfail*", :instance => @subject
+            @store.expects(:base).returns "/my/yaml/dir"
+            Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns([])
+            @store.search(@request).should == []
+        end
     end
 end

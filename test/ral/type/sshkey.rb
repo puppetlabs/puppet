@@ -40,7 +40,7 @@ class TestSSHKey < Test::Unit::TestCase
     def mkkey
         key = nil
 
-        if defined? @kcount
+        if defined?(@kcount)
             @kcount += 1
         else
             @kcount = 1
@@ -48,11 +48,14 @@ class TestSSHKey < Test::Unit::TestCase
 
         @catalog ||= mk_catalog
 
-        key = @sshkeytype.new(
+
+                    key = @sshkeytype.new(
+                
             :name => "host%s.madstop.com" % @kcount,
             :key => "%sAAAAB3NzaC1kc3MAAACBAMnhSiku76y3EGkNCDsUlvpO8tRgS9wL4Eh54WZfQ2lkxqfd2uT/RTT9igJYDtm/+UHuBRdNGpJYW1Nw2i2JUQgQEEuitx4QKALJrBotejGOAWxxVk6xsh9xA0OW8Q3ZfuX2DDitfeC8ZTCl4xodUMD8feLtP+zEf8hxaNamLlt/AAAAFQDYJyf3vMCWRLjTWnlxLtOyj/bFpwAAAIEAmRxxXb4jjbbui9GYlZAHK00689DZuX0EabHNTl2yGO5KKxGC6Esm7AtjBd+onfu4Rduxut3jdI8GyQCIW8WypwpJofCIyDbTUY4ql0AQUr3JpyVytpnMijlEyr41FfIb4tnDqnRWEsh2H7N7peW+8DWZHDFnYopYZJ9Yu4/jHRYAAACAERG50e6aRRb43biDr7Ab9NUCgM9bC0SQscI/xdlFjac0B/kSWJYTGVARWBDWug705hTnlitY9cLC5Ey/t/OYOjylTavTEfd/bh/8FkAYO+pWdW3hx6p97TBffK0b6nrc6OORT2uKySbbKOn0681nNQh4a6ueR3JRppNkRPnTk5c=" % @kcount,
             :type => "ssh-dss",
             :alias => ["192.168.0.%s" % @kcount],
+        
             :catalog => @catalog
         )
 

@@ -8,28 +8,28 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     other platforms.
 
     See:
-     * http://developer.apple.com/macosx/launchd.html
-     * http://launchd.macosforge.org/
+    * http://developer.apple.com/macosx/launchd.html
+    * http://launchd.macosforge.org/
 
     This provider reads plists out of the following directories:
-     * /System/Library/LaunchDaemons
-     * /System/Library/LaunchAgents
-     * /Library/LaunchDaemons
-     * /Library/LaunchAgents
+    * /System/Library/LaunchDaemons
+    * /System/Library/LaunchAgents
+    * /Library/LaunchDaemons
+    * /Library/LaunchAgents
 
     and builds up a list of services based upon each plists \"Label\" entry.
 
     This provider supports:
-     * ensure => running/stopped,
-     * enable => true/false
-     * status
-     * restart
+    * ensure => running/stopped,
+    * enable => true/false
+    * status
+    * restart
 
     Here is how the Puppet states correspond to launchd states:
-     * stopped => job unloaded
-     * started => job loaded
-     * enabled => 'Disable' removed from job plist file
-     * disabled => 'Disable' added to job plist file
+    * stopped => job unloaded
+    * started => job loaded
+    * enabled => 'Disable' removed from job plist file
+    * disabled => 'Disable' added to job plist file
 
     Note that this allows you to do something launchctl can't do, which is to
     be in a state of \"stopped/enabled\ or \"running/disabled\".
@@ -45,9 +45,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     has_feature :enableable
 
     Launchd_Paths = ["/Library/LaunchAgents",
-                     "/Library/LaunchDaemons",
-                     "/System/Library/LaunchAgents",
-                     "/System/Library/LaunchDaemons",]
+        "/Library/LaunchDaemons",
+        "/System/Library/LaunchAgents",
+        "/System/Library/LaunchDaemons",]
 
     Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
 
@@ -89,10 +89,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
             new(:name => job, :provider => :launchd, :path => jobs[job])
         end
     end
-    
-    
+
+
     def self.get_macosx_version_major
-        if defined? @macosx_version_major
+        if defined?(@macosx_version_major)
             return @macosx_version_major
         end
         begin
@@ -103,7 +103,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                 product_version_major = Facter.value(:macosx_productversion_major)
             else
                 # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-                Puppet.warning("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")            
+                Puppet.warning("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
                 product_version = Facter.value(:macosx_productversion)
                 if product_version.nil?
                     fail("Could not determine OS X version from Facter")
@@ -211,15 +211,15 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     def enabled?
         job_plist_disabled = nil
         overrides_disabled = nil
-        
+
         job_path, job_plist = plist_from_label(resource[:name])
         if job_plist.has_key?("Disabled")
             job_plist_disabled = job_plist["Disabled"]
         end
-        
+
         if self.class.get_macosx_version_major == "10.6":
             overrides = Plist::parse_xml(Launchd_Overrides)
-        
+
             unless overrides.nil?
                 if overrides.has_key?(resource[:name])
                     if overrides[resource[:name]].has_key?("Disabled")
@@ -228,7 +228,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                 end
             end
         end
-        
+
         if overrides_disabled.nil?
             if job_plist_disabled.nil? or job_plist_disabled == false
                 return :true

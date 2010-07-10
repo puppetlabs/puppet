@@ -47,7 +47,7 @@ class Puppet::Util::Storage
         Puppet.settings.use(:main) unless FileTest.directory?(Puppet[:statedir])
 
         unless File.exists?(Puppet[:statefile])
-            unless defined? @@state and ! @@state.nil?
+            unless defined?(@@state) and ! @@state.nil?
                 self.init
             end
             return
@@ -61,15 +61,12 @@ class Puppet::Util::Storage
                 begin
                     @@state = YAML.load(file)
                 rescue => detail
-                    Puppet.err "Checksumfile %s is corrupt (%s); replacing" %
-                        [Puppet[:statefile], detail]
+                    Puppet.err "Checksumfile %s is corrupt (%s); replacing" % [Puppet[:statefile], detail]
                     begin
-                        File.rename(Puppet[:statefile],
-                            Puppet[:statefile] + ".bad")
+                        File.rename(Puppet[:statefile], Puppet[:statefile] + ".bad")
                     rescue
                         raise Puppet::Error,
-                            "Could not rename corrupt %s; remove manually" %
-                            Puppet[:statefile]
+                            "Could not rename corrupt %s; remove manually" % Puppet[:statefile]
                     end
                 end
             end

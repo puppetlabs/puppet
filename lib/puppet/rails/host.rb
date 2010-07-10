@@ -83,8 +83,11 @@ class Puppet::Rails::Host < ActiveRecord::Base
 
     # Return the value of a fact.
     def fact(name)
-        if fv = self.fact_values.find(:all, :include => :fact_name,
-                                      :conditions => "fact_names.name = '#{name}'")
+
+        if fv = self.fact_values.find(
+            :all, :include => :fact_name,
+
+                :conditions => "fact_names.name = '#{name}'")
             return fv
         else
             return nil

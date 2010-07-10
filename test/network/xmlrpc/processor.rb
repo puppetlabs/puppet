@@ -65,8 +65,7 @@ class TestXMLRPCProcessor < Test::Unit::TestCase
         request.expects(:method=).with("mymethod")
 
         @processor.stubs(:verify)
-        @processor.expects(:handle).with(request.call,
-            "params", request.name, request.ip)
+        @processor.expects(:handle).with(request.call, "params", request.name, request.ip)
 
         @processor.send(:process, ["myhandler.mymethod", ["params"]], request)
     end

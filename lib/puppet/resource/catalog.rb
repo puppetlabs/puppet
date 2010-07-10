@@ -311,7 +311,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     # Create a graph of all of the relationships in our catalog.
     def relationship_graph
-        unless defined? @relationship_graph and @relationship_graph
+        unless defined?(@relationship_graph) and @relationship_graph
             # It's important that we assign the graph immediately, because
             # the debug messages below use the relationships in the
             # relationship graph to determine the path to the resources
@@ -394,11 +394,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     def self.from_pson(data)
         result = new(data['name'])
 
-        if tags = data['tags'] 
+        if tags = data['tags']
             result.tag(*tags)
         end
 
-        if version = data['version'] 
+        if version = data['version']
             result.version = version
         end
 
@@ -460,11 +460,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             'metadata' => {
                 'api_version' => 1
                 }
-       }
+        }
     end
 
     def to_pson(*args)
-       to_pson_data_hash.to_pson(*args)
+        to_pson_data_hash.to_pson(*args)
     end
 
     # Convert our catalog into a RAL catalog.
@@ -477,7 +477,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         to_catalog :to_resource
     end
 
-    # filter out the catalog, applying +block+ to each resource. 
+    # filter out the catalog, applying +block+ to each resource.
     # If the block result is false, the resource will
     # be kept otherwise it will be skipped
     def filter(&block)
@@ -519,8 +519,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
         msg = "Duplicate definition: %s is already defined" % resource.ref
 
         if existing_resource.file and existing_resource.line
-            msg << " in file %s at line %s" %
-                [existing_resource.file, existing_resource.line]
+            msg << " in file %s at line %s" % [existing_resource.file, existing_resource.line]
         end
 
         if resource.line or resource.file

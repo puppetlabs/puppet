@@ -63,7 +63,7 @@ class Nagios::Base
     # Return a mapping (or nil) for a param
     def self.mapping(name)
         name = name.intern if name.is_a? String
-        if defined? @map
+        if defined?(@map)
             @map[name]
         else
             nil
@@ -72,7 +72,7 @@ class Nagios::Base
 
     # Return the namevar for the canonical name.
     def self.namevar
-        if defined? @namevar
+        if defined?(@namevar)
             return @namevar
         else
             if parameter?(:name)
@@ -157,7 +157,7 @@ class Nagios::Base
 
     # Whether a given parameter is suppressed.
     def self.suppress?(name)
-        defined? @suppress and @suppress.include?(name)
+        defined?(@suppress) and @suppress.include?(name)
     end
 
     # Return our name as the string.
@@ -197,7 +197,7 @@ class Nagios::Base
             self[param] = value
         }
         if @namevar == :_naginator_name
-          self['_naginator_name'] = self['name']
+            self['_naginator_name'] = self['name']
         end
     end
 
@@ -241,7 +241,7 @@ class Nagios::Base
     end
 
     def parammap(param)
-        unless defined? @map
+        unless defined?(@map)
             map = {
                 self.namevar => "cn"
             }
@@ -257,7 +257,7 @@ class Nagios::Base
     end
 
     def parent
-        unless defined? self.class.attached
+        unless defined?(self.class.attached)
             puts "Duh, you called parent on an unattached class"
             return
         end
@@ -346,9 +346,9 @@ class Nagios::Base
     end
 
     newtype :hostgroup do
-      setparameters :hostgroup_name, :alias, :members, :hostgroup_members, :notes,
-          :notes_url, :action_url,
-          :register, :use
+        setparameters :hostgroup_name, :alias, :members, :hostgroup_members, :notes,
+            :notes_url, :action_url,
+            :register, :use
     end
 
     newtype :service do
@@ -434,14 +434,14 @@ class Nagios::Base
     end
 
     newtype :hostdependency do
-      auxiliary = true
-      setparameters :dependent_host_name, :dependent_hostgroup_name, :host_name,
-          :hostgroup_name, :inherits_parent, :execution_failure_criteria,
-          :notification_failure_criteria, :dependency_period,
-          :register, :use,
-          :_naginator_name
+        auxiliary = true
+        setparameters :dependent_host_name, :dependent_hostgroup_name, :host_name,
+            :hostgroup_name, :inherits_parent, :execution_failure_criteria,
+            :notification_failure_criteria, :dependency_period,
+            :register, :use,
+            :_naginator_name
 
-      setnamevar :_naginator_name
+        setnamevar :_naginator_name
     end
 
     newtype :hostescalation do

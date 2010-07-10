@@ -96,9 +96,9 @@ class ExternalNode
     def to_yaml
         classes = self.classes.to_a
         if self.parameters.empty? # otherwise to_yaml prints "parameters: {}"
-             parameters = nil
+            parameters = nil
         else
-             parameters = self.parameters
+            parameters = self.parameters
         end
         ({ 'classes' => classes, 'parameters' => parameters}).to_yaml
     end
@@ -164,7 +164,7 @@ class ExternalNode
             next if File.basename(filepath) =~ /^\./     # skip over dotfiles
 
             next unless File.directory?(filepath) and
-                        File.readable?(filepath)        # skip over non-directories
+                File.readable?(filepath)        # skip over non-directories
 
             $LOG.debug "Considering contents of #{filepath}"
 
@@ -175,8 +175,8 @@ class ExternalNode
                     File.readable?(secondlevel)
                 $LOG.debug("Attempting to match [#{@hostname}] in [#{secondlevel}]")
                 if matched_in_patternfile?(secondlevel, @hostname)
-                     @parameters[ parametername.to_s ] = patternfile.to_s
-                     $LOG.debug("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
+                    @parameters[ parametername.to_s ] = patternfile.to_s
+                    $LOG.debug("Set @parameters[#{parametername.to_s}] = #{patternfile.to_s}")
                 end # if
             end # Dir.foreach #{filepath}
         end # Dir.foreach #{fullpath}

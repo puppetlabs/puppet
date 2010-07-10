@@ -64,15 +64,13 @@ describe Puppet::Network::Handler::FileServer do
     it "should list the contents of a nested directory" do
         create_nested_file()
         list = @mount.list("/", true, false)
-        list.sort.should == [   ["/aFile", "file"], ["/", "directory"] ,
-                                ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
+        list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list the contents of a directory ignoring files that match" do
         create_nested_file()
         list = @mount.list("/", true, "*File")
-        list.sort.should == [   ["/", "directory"] ,
-                                ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
+        list.sort.should == [   ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list the contents of a directory ignoring directories that match" do
@@ -102,15 +100,13 @@ describe Puppet::Network::Handler::FileServer do
     it "should list the base directory and files and nested directory to a depth of two" do
         create_nested_file()
         list = @mount.list("/", 2, false)
-        list.sort.should == [   ["/aFile", "file"], ["/", "directory"] ,
-                                ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
+        list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list the base directory and files and nested directory to a depth greater than the directory structure" do
         create_nested_file()
         list = @mount.list("/", 42, false)
-        list.sort.should == [   ["/aFile", "file"], ["/", "directory"] ,
-                                ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
+        list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
     end
 
     it "should list a valid symbolic link as a file when recursing base dir" do
@@ -156,7 +152,7 @@ describe Puppet::Network::Handler::FileServer do
 
         it "should list a file within a directory when given the file path with recursion" do
             @mount.list("facter/fact.rb", true, "false").should == [["/", "file"], ["/", "file"]]
-         end
+        end
 
         it "should return a merged view of all plugins for all modules" do
             list = @mount.list("facter",true,false)

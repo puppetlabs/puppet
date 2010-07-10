@@ -154,12 +154,15 @@ class Type
         @@metaparamhash ||= {}
         name = symbolize(name)
 
-        param = genclass(name,
+
+            param = genclass(
+                name,
             :parent => options[:parent] || Puppet::Parameter,
             :prefix => "MetaParam",
             :hash => @@metaparamhash,
             :array => @@metaparams,
             :attributes => options[:attributes],
+
             &block
         )
 
@@ -206,12 +209,15 @@ class Type
     # @parameters array, and does some basic checking on it.
     def self.newparam(name, options = {}, &block)
         options[:attributes] ||= {}
-        param = genclass(name,
+
+            param = genclass(
+                name,
             :parent => options[:parent] || Puppet::Parameter,
             :attributes => options[:attributes],
             :block => block,
             :prefix => "Parameter",
             :array => @parameters,
+
             :hash => @paramhash
         )
 
@@ -228,8 +234,7 @@ class Type
     end
 
     def self.newstate(name, options = {}, &block)
-        Puppet.warning "newstate() has been deprecrated; use newproperty(%s)" %
-            name
+        Puppet.warning "newstate() has been deprecrated; use newproperty(%s)" % name
         newproperty(name, options, &block)
     end
 
@@ -250,8 +255,7 @@ class Type
         end
 
         if @validproperties.include?(name)
-            raise Puppet::DevError, "Class %s already has a property named %s" %
-                [self.name, name]
+            raise Puppet::DevError, "Class %s already has a property named %s" % [self.name, name]
         end
 
         if parent = options[:parent]
@@ -293,7 +297,7 @@ class Type
 
     # Return the parameter names
     def self.parameters
-        return [] unless defined? @parameters
+        return [] unless defined?(@parameters)
         @parameters.collect { |klass| klass.name }
     end
 
@@ -335,14 +339,14 @@ class Type
 
     # Return the list of validproperties
     def self.validproperties
-        return {} unless defined? @parameters
+        return {} unless defined?(@parameters)
 
         return @validproperties.keys
     end
 
     # does the name reflect a valid parameter?
     def self.validparameter?(name)
-        unless defined? @parameters
+        unless defined?(@parameters)
             raise Puppet::DevError, "Class %s has not defined parameters" % self
         end
         if @paramhash.include?(name) or @@metaparamhash.include?(name)
@@ -438,8 +442,7 @@ class Type
             # make sure the parameter doesn't have any errors
             property.value = value
         rescue => detail
-            error = Puppet::Error.new("Parameter %s failed: %s" %
-                [name, detail])
+            error = Puppet::Error.new("Parameter %s failed: %s" % [name, detail])
             error.set_backtrace(detail.backtrace)
             raise error
         end
@@ -594,7 +597,7 @@ class Type
     # name conflicts, does it necessarily mean that the objects conflict?
     # Defaults to true.
     def self.isomorphic?
-        if defined? @isomorphic
+        if defined?(@isomorphic)
             return @isomorphic
         else
             return true
@@ -613,7 +616,7 @@ class Type
         # Once an object is managed, it always stays managed; but an object
         # that is listed as unmanaged might become managed later in the process,
         # so we have to check that every time
-        if defined? @managed and @managed
+        if defined?(@managed) and @managed
             return @managed
         else
             @managed = false
@@ -634,7 +637,7 @@ class Type
     # this is a retarded hack method to get around the difference between
     # component children and file children
     def self.depthfirst?
-        if defined? @depthfirst
+        if defined?(@depthfirst)
             return @depthfirst
         else
             return false
@@ -683,9 +686,8 @@ class Type
 
         if property = @parameters[:ensure]
             unless is.include? property
-               raise Puppet::DevError,
-                        "The is value is not in the is array for '%s'" %
-                        [property.name]
+                raise Puppet::DevError,
+                    "The is value is not in the is array for '%s'" % [property.name]
             end
             ensureis = is[property]
             if property.insync?(ensureis) and property.should == :absent
@@ -695,15 +697,13 @@ class Type
 
         properties.each { |property|
             unless is.include? property
-               raise Puppet::DevError,
-                        "The is value is not in the is array for '%s'" %
-                        [property.name]
+                raise Puppet::DevError,
+                    "The is value is not in the is array for '%s'" % [property.name]
             end
 
             propis = is[property]
             unless property.insync?(propis)
-                property.debug("Not in sync: %s vs %s" %
-                    [propis.inspect, property.should.inspect])
+                property.debug("Not in sync: %s vs %s" % [propis.inspect, property.should.inspect])
                 insync = false
             #else
             #    property.debug("In sync")
@@ -809,16 +809,13 @@ class Type
         end
 
         if exobj = @objects[name] and self.isomorphic?
-            msg = "Object '%s[%s]' already exists" %
-                [newobj.class.name, name]
+            msg = "Object '%s[%s]' already exists" % [newobj.class.name, name]
 
             if exobj.file and exobj.line
-                msg += ("in file %s at line %s" %
-                    [object.file, object.line])
+                msg += ("in file %s at line %s" % [object.file, object.line])
             end
             if object.file and object.line
-                msg += ("and cannot be redefined in file %s at line %s" %
-                    [object.file, object.line])
+                msg += ("and cannot be redefined in file %s at line %s" % [object.file, object.line])
             end
             error = Puppet::Error.new(msg)
             raise error
@@ -836,8 +833,7 @@ class Type
         if @objects.include?(name)
             unless @objects[name] == obj
                 raise Puppet::Error.new(
-                    "Cannot create alias %s: object already exists" %
-                    [name]
+                    "Cannot create alias %s: object already exists" % [name]
                 )
             end
         end
@@ -845,8 +841,7 @@ class Type
         if @aliases.include?(name)
             unless @aliases[name] == obj
                 raise Puppet::Error.new(
-                    "Object %s already has alias %s" %
-                    [@aliases[name].name, name]
+                    "Object %s already has alias %s" % [@aliases[name].name, name]
                 )
             end
         end
@@ -857,13 +852,13 @@ class Type
     # remove all of the instances of a single type
     def self.clear
         raise "Global resource removal is deprecated"
-        if defined? @objects
+        if defined?(@objects)
             @objects.each do |name, obj|
                 obj.remove(true)
             end
             @objects.clear
         end
-        if defined? @aliases
+        if defined?(@aliases)
             @aliases.clear
         end
     end
@@ -879,7 +874,7 @@ class Type
     # remove a specified object
     def self.delete(resource)
         raise "Global resource removal is deprecated"
-        return unless defined? @objects
+        return unless defined?(@objects)
         if @objects.include?(resource.title)
             @objects.delete(resource.title)
         end
@@ -900,7 +895,7 @@ class Type
     # iterate across each of the type's instances
     def self.each
         raise "Global resource iteration is deprecated"
-        return unless defined? @objects
+        return unless defined?(@objects)
         @objects.each { |name,instance|
             yield instance
         }
@@ -952,7 +947,7 @@ class Type
     def self.hash2resource(hash)
         hash = hash.inject({}) { |result, ary| result[ary[0].to_sym] = ary[1]; result }
 
-        title = hash.delete(:title) 
+        title = hash.delete(:title)
         title ||= hash[:name]
         title ||= hash[key_attributes.first] if key_attributes.length == 1
 
@@ -1047,7 +1042,7 @@ class Type
                 property.name
             end
         end
-        
+
         def properties_to_audit(list)
             if list == :all
                 list = all_properties() if list == :all
@@ -1069,8 +1064,8 @@ class Type
 
     newmetaparam(:loglevel) do
         desc "Sets the level that information will be logged.
-             The log levels have the biggest impact when logs are sent to
-             syslog (which is currently the default)."
+            The log levels have the biggest impact when logs are sent to
+            syslog (which is currently the default)."
         defaultto :notice
 
         newvalues(*Puppet::Util::Log.levels)
@@ -1401,7 +1396,7 @@ class Type
 
     # Find the default provider.
     def self.defaultprovider
-        unless defined? @defaultprovider and @defaultprovider
+        unless defined?(@defaultprovider) and @defaultprovider
             suitable = suitableprovider()
 
             # Find which providers are a default for this system.
@@ -1415,16 +1410,13 @@ class Type
             retval = nil
             if defaults.length > 1
                 Puppet.warning(
-                    "Found multiple default providers for %s: %s; using %s" %
-                    [self.name, defaults.collect { |i| i.name.to_s }.join(", "),
-                        defaults[0].name]
+                    "Found multiple default providers for %s: %s; using %s" % [self.name, defaults.collect { |i| i.name.to_s }.join(", "), defaults[0].name]
                 )
                 retval = defaults.shift
             elsif defaults.length == 1
                 retval = defaults.shift
             else
-                raise Puppet::DevError, "Could not find a default provider for %s" %
-                    self.name
+                raise Puppet::DevError, "Could not find a default provider for %s" % self.name
             end
 
             @defaultprovider = retval
@@ -1483,8 +1475,7 @@ class Type
                     provider
                 else
                     raise Puppet::DevError,
-                        "Could not find parent provider %s of %s" %
-                            [pname, name]
+                        "Could not find parent provider %s of %s" % [pname, name]
                 end
             end
         else
@@ -1495,13 +1486,16 @@ class Type
 
         self.providify
 
-        provider = genclass(name,
+
+            provider = genclass(
+                name,
             :parent => parent,
             :hash => provider_hash,
             :prefix => "Provider",
             :block => block,
             :include => feature_module,
             :extend => feature_module,
+
             :attributes => options
         )
 
@@ -1566,8 +1560,11 @@ class Type
 
     def self.unprovide(name)
         if provider_hash.has_key? name
-            rmclass(name,
+
+            rmclass(
+                name,
                 :hash => provider_hash,
+
                 :prefix => "Provider"
             )
             if @defaultprovider and @defaultprovider.name == name
@@ -1595,8 +1592,7 @@ class Type
         elsif klass = self.class.provider(name)
             @provider = klass.new(self)
         else
-            raise ArgumentError, "Could not find %s provider of %s" %
-                [name, self.class.name]
+            raise ArgumentError, "Could not find %s provider of %s" % [name, self.class.name]
         end
     end
 
@@ -1706,7 +1702,7 @@ class Type
 
         @defaults = {}
 
-        unless defined? @parameters
+        unless defined?(@parameters)
             @parameters = []
         end
 
@@ -1718,24 +1714,24 @@ class Type
         @attr_aliases = {}
 
         @paramdoc = Hash.new { |hash,key|
-          if key.is_a?(String)
-            key = key.intern
-          end
-          if hash.include?(key)
-            hash[key]
-          else
-            "Param Documentation for %s not found" % key
-          end
+            if key.is_a?(String)
+                key = key.intern
+            end
+            if hash.include?(key)
+                hash[key]
+            else
+                "Param Documentation for %s not found" % key
+            end
         }
 
-        unless defined? @doc
+        unless defined?(@doc)
             @doc = ""
         end
 
     end
 
     def self.to_s
-        if defined? @name
+        if defined?(@name)
             "Puppet::Type::" + @name.to_s.capitalize
         else
             super
@@ -1760,9 +1756,12 @@ class Type
 
     # create a log at specified level
     def log(msg)
+
         Puppet::Util::Log.create(
+
             :level => @parameters[:loglevel].value,
             :message => msg,
+
             :source => self
         )
     end
@@ -1899,7 +1898,7 @@ class Type
     # Is this resource being purged?  Used by transactions to forbid
     # deletion when there are dependencies.
     def purging?
-        if defined? @purging
+        if defined?(@purging)
             @purging
         else
             false
@@ -1909,14 +1908,13 @@ class Type
     # Retrieve the title of an object.  If no title was set separately,
     # then use the object's name.
     def title
-        unless defined? @title and @title
+        unless defined?(@title) and @title
             if self.class.validparameter?(name_var)
                 @title = self[:name]
             elsif self.class.validproperty?(name_var)
                 @title = self.should(name_var)
             else
-                self.devfail "Could not find namevar %s for %s" %
-                    [name_var, self.class.name]
+                self.devfail "Could not find namevar %s for %s" % [name_var, self.class.name]
             end
         end
 

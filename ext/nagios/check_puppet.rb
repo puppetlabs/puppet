@@ -20,26 +20,35 @@ class CheckPuppet
         o.set_summary_indent('  ')
         o.banner =    "Usage: #{script_name} [OPTIONS]"
         o.define_head "The check_puppet Nagios plug-in checks that specified " +
-                  "Puppet process is running and the state file is no " +
-                  "older than specified interval."
-                  o.separator   ""
-                  o.separator   "Mandatory arguments to long options are mandatory for " +
-                  "short options too."
+            "Puppet process is running and the state file is no " +
+            "older than specified interval."
+            o.separator   ""
+            o.separator   "Mandatory arguments to long options are mandatory for " +
+            "short options too."
 
-                  o.on("-s", "--statefile=statefile", String, "The state file",
-         "Default: #{OPTIONS[:statefile]}") { |OPTIONS[:statefile]| }
-         o.on("-p", "--process=processname", String, "The process to check",
-         "Default: #{OPTIONS[:process]}")   { |OPTIONS[:process]| }
-         o.on("-i", "--interval=value", Integer,
-         "Default: #{OPTIONS[:interval]} minutes")  { |OPTIONS[:interval]| }
 
-         o.separator ""
-         o.on_tail("-h", "--help", "Show this help message.") do
-             puts o
-             exit
-         end
+                o.on(
+                    "-s", "--statefile=statefile", String, "The state file",
 
-         o.parse!(ARGV)
+        "Default: #{OPTIONS[:statefile]}") { |OPTIONS[:statefile]| }
+
+            o.on(
+                "-p", "--process=processname", String, "The process to check",
+
+        "Default: #{OPTIONS[:process]}")   { |OPTIONS[:process]| }
+
+            o.on(
+                "-i", "--interval=value", Integer,
+
+        "Default: #{OPTIONS[:interval]} minutes")  { |OPTIONS[:interval]| }
+
+        o.separator ""
+        o.on_tail("-h", "--help", "Show this help message.") do
+            puts o
+            exit
+        end
+
+        o.parse!(ARGV)
     end
 
     def check_proc

@@ -6,8 +6,7 @@ module Puppet::Util::SUIDManager
     extend Forwardable
 
     # Note groups= is handled specially due to a bug in OS X 10.6
-    to_delegate_to_process = [ :euid=, :euid, :egid=, :egid,
-                               :uid=, :uid, :gid=, :gid, :groups ]
+    to_delegate_to_process = [ :euid=, :euid, :egid=, :egid, :uid=, :uid, :gid=, :gid, :groups ]
 
     to_delegate_to_process.each do |method|
         def_delegator Process, method
@@ -19,8 +18,8 @@ module Puppet::Util::SUIDManager
         require 'facter'
         # 'kernel' is available without explicitly loading all facts
         if Facter.value('kernel') != 'Darwin'
-          @osx_maj_ver = false
-          return @osx_maj_ver
+            @osx_maj_ver = false
+            return @osx_maj_ver
         end
         # But 'macosx_productversion_major' requires it.
         Facter.loadfacts
@@ -28,7 +27,7 @@ module Puppet::Util::SUIDManager
         return @osx_maj_ver
     end
     module_function :osx_maj_ver
-    
+
     def groups=(grouplist)
         if osx_maj_ver == '10.6'
             return true
@@ -75,7 +74,7 @@ module Puppet::Util::SUIDManager
         raise ArgumentError, "Invalid id type %s" % type unless map.include?(type)
         ret = Puppet::Util.send(type, id)
         if ret == nil
-          raise Puppet::Error, "Invalid %s: %s" % [map[type], id]
+            raise Puppet::Error, "Invalid %s: %s" % [map[type], id]
         end
         return ret
     end

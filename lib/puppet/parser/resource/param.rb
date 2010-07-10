@@ -1,7 +1,7 @@
 require 'puppet/file_collection/lookup'
 require 'puppet/parser/yaml_trimmer'
 
- # The parameters we stick in Resources.
+# The parameters we stick in Resources.
 class Puppet::Parser::Resource::Param
     attr_accessor :name, :value, :source, :add
     include Puppet::Util

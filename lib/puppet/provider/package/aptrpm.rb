@@ -12,12 +12,12 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
 
     if command('rpm')
         confine :true => begin
-                rpm('-ql', 'rpm')
-           rescue Puppet::ExecutionFailure
-               false
-           else
-               true
-           end
+            rpm('-ql', 'rpm')
+            rescue Puppet::ExecutionFailure
+                false
+            else
+                true
+            end
     end
 
     # Install a package using 'apt-get'.  This function needs to support

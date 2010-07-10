@@ -29,22 +29,28 @@ class TestFileType < Test::Unit::TestCase
         @file['main']['key2'] = 'newvalue2'
         @file['main']['key3'] = 'newvalue3'
         text = s.format
-        assert_equal("[main]\nkey1=value1\n# Comment\nkey2=newvalue2\nkey3=newvalue3\n",
-                     s.format)
+
+            assert_equal(
+                "[main]\nkey1=value1\n# Comment\nkey2=newvalue2\nkey3=newvalue3\n",
+
+                    s.format)
     end
 
     def test_multi
         fmain = mkfile("[main]\nkey1=main.value1\n# Comment\nkey2=main.value2")
         fsub = mkfile("[sub1]\nkey1=sub1 value1\n\n" +
-                        "[sub2]\nkey1=sub2.value1")
+            "[sub2]\nkey1=sub2.value1")
         main_mtime = File::stat(fmain).mtime
         assert_nothing_raised {
             @file.read(fmain)
             @file.read(fsub)
         }
         main = get_section('main')
-        assert_entries(main,
-                       { 'key1' => 'main.value1', 'key2' => 'main.value2' })
+
+            assert_entries(
+                main,
+
+                    { 'key1' => 'main.value1', 'key2' => 'main.value2' })
         sub1 = get_section('sub1')
         assert_entries(sub1, { 'key1' => 'sub1 value1' })
         sub2 = get_section('sub2')
@@ -60,14 +66,17 @@ class TestFileType < Test::Unit::TestCase
         assert( File.exists?(fsub) )
         assert_equal(main_mtime, File::stat(fmain).mtime)
         subtext = File.read(fsub)
-        assert_equal("[sub1]\nkey1=sub1 newvalue1\n\n" +
-                     "[sub2]\nkey1=sub2.value1\nkey2=sub2 newvalue2\n",
-                     subtext)
+
+            assert_equal(
+                "[sub1]\nkey1=sub1 newvalue1\n\n" +
+                    "[sub2]\nkey1=sub2.value1\nkey2=sub2 newvalue2\n",
+
+                    subtext)
     end
 
     def test_format_nil
         fname = mkfile("[main]\nkey1=value1\n# Comment\nkey2=value2\n" +
-                       "# Comment2\n")
+            "# Comment2\n")
         assert_nothing_raised {
             @file.read(fname)
         }
@@ -75,8 +84,11 @@ class TestFileType < Test::Unit::TestCase
         s['key2'] = nil
         s['key3'] = nil
         text = s.format
-        assert_equal("[main]\nkey1=value1\n# Comment\n# Comment2\n",
-                     s.format)
+
+            assert_equal(
+                "[main]\nkey1=value1\n# Comment\n# Comment2\n",
+
+                    s.format)
     end
 
     def test_whitespace
@@ -107,9 +119,12 @@ class TestFileType < Test::Unit::TestCase
 
     def assert_entries(section, hash)
         hash.each do |k, v|
-            assert_equal(v, section[k],
-                        "Expected <#{v}> for #{section.name}[#{k}] " +
-                         "but got <#{section[k]}>")
+
+            assert_equal(
+                v, section[k],
+
+                    "Expected <#{v}> for #{section.name}[#{k}] " +
+                        "but got <#{section[k]}>")
         end
     end
 

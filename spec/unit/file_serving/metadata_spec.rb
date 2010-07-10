@@ -22,15 +22,15 @@ describe Puppet::FileServing::Metadata do
     end
 
     it "should support pson serialization" do
-        Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:to_pson) 
+        Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:to_pson)
     end
 
     it "should support to_pson_data_hash" do
-        Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:to_pson_data_hash) 
+        Puppet::FileServing::Metadata.new("/foo/bar").should respond_to(:to_pson_data_hash)
     end
 
     it "should support pson deserialization" do
-        Puppet::FileServing::Metadata.should respond_to(:from_pson) 
+        Puppet::FileServing::Metadata.should respond_to(:from_pson)
     end
 
     describe "when serializing" do
@@ -42,7 +42,7 @@ describe Puppet::FileServing::Metadata do
             pdh_as_pson = mock "data as pson"
             @metadata.expects(:to_pson_data_hash).returns pdh
             pdh.expects(:to_pson).returns pdh_as_pson
-            @metadata.to_pson.should == pdh_as_pson 
+            @metadata.to_pson.should == pdh_as_pson
         end
 
         it "should serialize as FileMetadata" do
@@ -221,7 +221,7 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
             @stat.stubs(:ftype).returns("link")
             File.expects(:readlink).with("/my/file").returns("/path/to/link")
             @metadata.collect
- 
+
             @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
             @file.stubs(:md5_file).returns(@checksum)           #
         end

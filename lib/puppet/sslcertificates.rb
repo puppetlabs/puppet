@@ -82,8 +82,11 @@ module Puppet::SSLCertificates
             raise Puppet::Error, "unknown cert type '%s'" % hash[:type]
         end
 
-        ex << ef.create_extension("nsComment",
-                                  "Puppet Ruby/OpenSSL Generated Certificate")
+
+            ex << ef.create_extension(
+                "nsComment",
+
+                    "Puppet Ruby/OpenSSL Generated Certificate")
         ex << ef.create_extension("basicConstraints", basic_constraint, true)
         ex << ef.create_extension("subjectKeyIdentifier", "hash")
 

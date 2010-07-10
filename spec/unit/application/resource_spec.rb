@@ -50,8 +50,8 @@ describe Puppet::Application::Resource do
         end
 
         it "should load Facter facts" do
-          Facter.expects(:loadfacts).once
-          @resource.preinit
+            Facter.expects(:loadfacts).once
+            @resource.preinit
         end
     end
 

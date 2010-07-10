@@ -83,8 +83,7 @@ class TestPackageProvider < Test::Unit::TestCase
         assert_nothing_raised("Could not query provider") do
             result = provider.query
         end
-        assert((result == :listed or result.is_a?(Hash)),
-            "query did not return hash or :listed")
+        assert((result == :listed or result.is_a?(Hash)), "query did not return hash or :listed")
         if result == :listed
             assert(provider.resource.is(:ensure) != :absent, msg)
         else
@@ -192,8 +191,7 @@ class TestPackageProvider < Test::Unit::TestCase
             end
             provider.flush
             new = provider.properties
-            assert(current != new, "package was not upgraded: %s did not change" %
-                current.inspect)
+            assert(current != new, "package was not upgraded: %s did not change" % current.inspect)
         end
 
         unless versions.empty?
@@ -204,8 +202,7 @@ class TestPackageProvider < Test::Unit::TestCase
             end
             provider.flush
             new = provider.properties
-            assert(current != new, "package was not upgraded: %s did not change" %
-                current.inspect)
+            assert(current != new, "package was not upgraded: %s did not change" % current.inspect)
         end
 
         # Now call 'latest' after the package is installed

@@ -15,7 +15,7 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
 
     def mk_subclass(name, path, parent)
         # Make a fake client
-        unless defined? @basedir
+        unless defined?(@basedir)
             @basedir ||= tempfile()
             $: << @basedir
             cleanup { $:.delete(@basedir) if $:.include?(@basedir) }
@@ -40,8 +40,7 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
             fake = LoadTest.faker(:fake)
         end
         assert_nothing_raised do
-            assert_equal(fake, LoadTest.fake,
-                "Did not get subclass back from main method")
+            assert_equal(fake, LoadTest.fake, "Did not get subclass back from main method")
         end
         assert(fake, "did not load subclass")
 
@@ -83,10 +82,8 @@ class TestPuppetUtilSubclassLoader < Test::Unit::TestCase
         end
         assert(othersub, "did not get other sub")
         assert(mainsub, "did not get main sub")
-        assert(othersub.ancestors.include?(OtherLoader),
-            "othersub is not a subclass of otherloader")
-        assert(mainsub.ancestors.include?(LoadTest),
-            "mainsub is not a subclass of loadtest")
+        assert(othersub.ancestors.include?(OtherLoader), "othersub is not a subclass of otherloader")
+        assert(mainsub.ancestors.include?(LoadTest), "mainsub is not a subclass of loadtest")
     end
 end
 

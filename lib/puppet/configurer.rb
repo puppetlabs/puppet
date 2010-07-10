@@ -62,8 +62,7 @@ class Puppet::Configurer
                 ::File.unlink(Puppet[:statefile])
                 retry
             rescue => detail
-                raise Puppet::Error.new("Cannot remove %s: %s" %
-                    [Puppet[:statefile], detail])
+                raise Puppet::Error.new("Cannot remove %s: %s" % [Puppet[:statefile], detail])
             end
         end
     end

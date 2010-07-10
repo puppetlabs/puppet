@@ -32,8 +32,11 @@ module PuppetTest::RailsTesting
 
         # Now build a resource
         resources = []
-        resources << mkresource(:type => type, :title => title, :exported => true,
-                   :parameters => params)
+
+            resources << mkresource(
+                :type => type, :title => title, :exported => true,
+
+                    :parameters => params)
 
         # Now collect our facts
         facts = Facter.to_hash

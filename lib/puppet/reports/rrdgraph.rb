@@ -22,7 +22,7 @@ Puppet::Reports.register_report(:rrdgraph) do
         which defaults to the ``runinterval``."
 
     def hostdir
-        unless defined? @hostdir
+        unless defined?(@hostdir)
             @hostdir = File.join(Puppet[:rrddir], self.host)
         end
         @hostdir
@@ -31,8 +31,7 @@ Puppet::Reports.register_report(:rrdgraph) do
     def htmlfile(type, graphs, field)
         file = File.join(hostdir, "%s.html" % type)
         File.open(file, "w") do |of|
-            of.puts "<html><head><title>%s graphs for %s</title></head><body>" %
-                [type.capitalize, host]
+            of.puts "<html><head><title>%s graphs for %s</title></head><body>" % [type.capitalize, host]
 
             graphs.each do |graph|
                 if field == :first
@@ -87,12 +86,9 @@ Puppet::Reports.register_report(:rrdgraph) do
         end
 
         File.open(File.join(hostdir, "index.html"), "w") do |of|
-            of.puts "<html><head><title>Report graphs for %s</title></head><body>" %
-                host
+            of.puts "<html><head><title>Report graphs for %s</title></head><body>" % host
             files.each do |file|
-                of.puts "<a href='%s'>%s</a><br/>" %
-                    [File.basename(file),
-                     File.basename(file).sub(".html",'').capitalize]
+                of.puts "<a href='%s'>%s</a><br/>" % [File.basename(file), File.basename(file).sub(".html",'').capitalize]
             end
             of.puts "</body></html>"
         end

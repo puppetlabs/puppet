@@ -79,7 +79,7 @@ class Puppet::Indirector::Indirection
     def doc
         text = ""
 
-        if defined? @doc and @doc
+        if defined?(@doc) and @doc
             text += scrub(@doc) + "\n\n"
         end
 

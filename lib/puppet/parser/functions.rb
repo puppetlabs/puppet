@@ -15,9 +15,12 @@ module Puppet::Parser::Functions
     end
 
     def self.autoloader
-        unless defined? @autoloader
-            @autoloader = Puppet::Util::Autoload.new(self,
+        unless defined?(@autoloader)
+
+                        @autoloader = Puppet::Util::Autoload.new(
+                self,
                 "puppet/parser/functions",
+        
                 :wrap => false
             )
         end
@@ -28,8 +31,8 @@ module Puppet::Parser::Functions
     Environment = Puppet::Node::Environment
 
     def self.environment_module(env = nil)
-        @modules.synchronize { 
-            @modules[ env || Environment.current || Environment.root ] ||= Module.new 
+        @modules.synchronize {
+            @modules[ env || Environment.current || Environment.root ] ||= Module.new
         }
     end
 
@@ -104,8 +107,8 @@ module Puppet::Parser::Functions
     end
 
     def self.functions(env = nil)
-        @functions.synchronize { 
-            @functions[ env || Environment.current || Environment.root ] 
+        @functions.synchronize {
+            @functions[ env || Environment.current || Environment.root ]
         }
     end
 

@@ -39,4 +39,4 @@ describe provider_class do
             @provider.install
         end
     end
- end
+end

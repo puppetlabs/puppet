@@ -69,7 +69,7 @@ class Module
             new_aliases.kind_of? Array or new_aliases = [new_aliases]
             for new_alias in new_aliases do
                 class_eval %{def #{new_alias}(*args, &block)
-                            #{existing_name}(*args, &block) end}
+                    #{existing_name}(*args, &block) end}
             end
         end
     end
@@ -94,7 +94,7 @@ class Module
     end
 
     def writer_defined? (name)
-        method_defined? name.to_sym.writer
+        method_defined?(name.to_sym.writer)
     end
 
     # If you pass a predicate symbol :foo? to this method, it'll first
@@ -110,7 +110,7 @@ class Module
             end
             if name.predicate?
                 class_eval %{def #{name.imperative}
-                           self.#{name.writer} true end}
+                    self.#{name.writer} true end}
             end
         end
     end
@@ -130,7 +130,7 @@ class Module
     def define_opposite_readers (name_pairs)
         name_pairs.collect! { |k, v| [k.to_sym, v.to_sym] }
         for opposite_name, name in name_pairs do
-            define_reader(name) unless method_defined? name
+            define_reader(name) unless method_defined?(name)
             class_eval %{def #{opposite_name} ; not #{name} end}
         end
     end
@@ -138,11 +138,11 @@ class Module
     def define_opposite_writers (name_pairs)
         name_pairs.collect! { |k, v| [k.to_sym, v.to_sym] }
         for opposite_name, name in name_pairs do
-            define_writer(name) unless writer_defined? name
+            define_writer(name) unless writer_defined?(name)
             class_eval %{def #{opposite_name.writer} x
-                         self.#{name.writer} !x end}
+                self.#{name.writer} !x end}
             class_eval %{def #{opposite_name.imperative}
-                         self.#{name.writer} false end}
+                self.#{name.writer} false end}
         end
     end
 
@@ -167,7 +167,7 @@ class Module
         define_opposite_writer(opposite_name => name)
     end
 
-  public :define_method
+    public :define_method
 
     def define_methods (*names, &body)
         names.each { |name| define_method(name, &body) }

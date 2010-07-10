@@ -66,7 +66,7 @@ class Puppet::Util::Autoload
             end
         end
 
-        unless defined? @wrap
+        unless defined?(@wrap)
             @wrap = true
         end
     end

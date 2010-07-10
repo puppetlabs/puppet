@@ -65,13 +65,13 @@ Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_ya
     end
 
     def encode(text)
-        requiring_zlib do 
+        requiring_zlib do
             Base64.encode64(Zlib::Deflate.deflate(text, Zlib::BEST_COMPRESSION))
         end
     end
 
     def decode(yaml)
-        requiring_zlib do 
+        requiring_zlib do
             YAML.load(Zlib::Inflate.inflate(Base64.decode64(yaml)))
         end
     end

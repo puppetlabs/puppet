@@ -18,7 +18,7 @@ describe "the 'defined' function" do
         @scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "yayness")
         @scope.function_defined("yayness").should be_true
     end
-    
+
     it "should be true when the name is defined as a definition" do
         @scope.known_resource_types.add Puppet::Resource::Type.new(:definition, "yayness")
         @scope.function_defined("yayness").should be_true

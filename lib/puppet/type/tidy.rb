@@ -58,14 +58,14 @@ Puppet::Type.newtype(:tidy) do
             This removes files from \/tmp if they are one week old or older,
             are not in a subdirectory and match one of the shell globs given.
 
-            Note that the patterns are matched against the basename of each 
-            file -- that is, your glob patterns should not have any '/' 
-            characters in them, since you are only specifying against the last 
+            Note that the patterns are matched against the basename of each
+            file -- that is, your glob patterns should not have any '/'
+            characters in them, since you are only specifying against the last
             bit of the file.
-            
-            Finally, note that you must now specify a non-zero/non-false value 
+
+            Finally, note that you must now specify a non-zero/non-false value
             for recurse if matches is used, as matches only apply to files found
-            by recursion (there's no reason to use static patterns match against 
+            by recursion (there's no reason to use static patterns match against
             a statically determined path).  Requiering explicit recursion clears
             up a common source of confusion."
 

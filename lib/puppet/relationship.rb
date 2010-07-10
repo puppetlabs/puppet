@@ -31,7 +31,7 @@ class Puppet::Relationship
 
         new(source, target, args)
     end
-    
+
     def event=(event)
         if event != :NONE and ! callback
             raise ArgumentError, "You must pass a callback for non-NONE events"

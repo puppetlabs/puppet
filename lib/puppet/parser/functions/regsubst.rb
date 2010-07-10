@@ -1,7 +1,10 @@
 module Puppet::Parser::Functions
-    newfunction(:regsubst, :type => :rvalue,
-                :doc => "
-                Perform regexp replacement on a string or array of strings.
+
+    newfunction(
+    :regsubst, :type => :rvalue,
+
+    :doc => "
+    Perform regexp replacement on a string or array of strings.
 
 - **Parameters** (in order):
 
@@ -20,10 +23,10 @@ module Puppet::Parser::Functions
 
 :lang:  Optional.  How to handle multibyte characters.  A single-character string with the following values:
 
-     - **N**         None
-     - **E**         EUC
-     - **S**         SJIS
-     - **U**         UTF-8
+    - **N**         None
+    - **E**         EUC
+    - **S**         SJIS
+    - **U**         UTF-8
 
 - **Examples**
 
@@ -37,8 +40,11 @@ Put angle brackets around each octet in the node's IP address::
 ") \
     do |args|
         unless args.length.between?(3, 5)
-            raise(Puppet::ParseError,
-                  "regsubst(): got #{args.length} arguments, expected 3 to 5")
+
+            raise(
+                Puppet::ParseError,
+
+                    "regsubst(): got #{args.length} arguments, expected 3 to 5")
         end
         target, regexp, replacement, flags, lang = args
         reflags = 0
@@ -48,8 +54,11 @@ Put angle brackets around each octet in the node's IP address::
         elsif flags.respond_to?(:split)
             flags = flags.split('')
         else
-            raise(Puppet::ParseError,
-                  "regsubst(): bad flags parameter #{flags.class}:`#{flags}'")
+
+            raise(
+                Puppet::ParseError,
+
+                    "regsubst(): bad flags parameter #{flags.class}:`#{flags}'")
         end
         flags.each do |f|
             case f
@@ -63,22 +72,28 @@ Put angle brackets around each octet in the node's IP address::
         begin
             re = Regexp.compile(regexp, reflags, lang)
         rescue RegexpError, TypeError
-            raise(Puppet::ParseError,
-                  "regsubst(): Bad regular expression `#{regexp}'")
+
+            raise(
+                Puppet::ParseError,
+
+                    "regsubst(): Bad regular expression `#{regexp}'")
         end
         if target.respond_to?(operation)
             # String parameter -> string result
             result = target.send(operation, re, replacement)
         elsif target.respond_to?(:collect) and
-                target.respond_to?(:all?) and
-                target.all? { |e| e.respond_to?(operation) }
+            target.respond_to?(:all?) and
+            target.all? { |e| e.respond_to?(operation) }
             # Array parameter -> array result
             result = target.collect { |e|
                 e.send(operation, re, replacement)
             }
         else
-            raise(Puppet::ParseError,
-                  "regsubst(): bad target #{target.class}:`#{target}'")
+
+            raise(
+                Puppet::ParseError,
+
+                    "regsubst(): bad target #{target.class}:`#{target}'")
         end
         return result
     end
