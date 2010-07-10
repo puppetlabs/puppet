@@ -82,7 +82,7 @@ end
 sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
-ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
+ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
 tests = glob(%w{test/**/*.rb})

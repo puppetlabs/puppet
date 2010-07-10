@@ -98,15 +98,15 @@ def run_suite
 end
 
 watch('spec/spec_helper.rb') { run_all_specs }
-watch(%r%^spec/(unit|integration)/.*\.rb$%) { |md| run_spec_files(md[0]) }
-watch(%r%^lib/puppet/(.*)\.rb$%) { |md|
+watch(%r{^spec/(unit|integration)/.*\.rb$}) { |md| run_spec_files(md[0]) }
+watch(%r{^lib/puppet/(.*)\.rb$}) { |md|
     run_spec_files(file2specs(md[0]))
     if t = file2test(md[0])
         run_test_file(t)
     end
 }
-watch(%r!^spec/lib/spec.*!) { |md| run_all_specs }
-watch(%r!^spec/lib/monkey_patches/.*!) { |md| run_all_specs }
+watch(%r{^spec/lib/spec.*}) { |md| run_all_specs }
+watch(%r{^spec/lib/monkey_patches/.*}) { |md| run_all_specs }
 watch(%r{test/.+\.rb}) { |md|
     if md[0] =~ /\/lib\//
         run_all_tests

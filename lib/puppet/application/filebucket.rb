@@ -15,7 +15,7 @@ class Puppet::Application::Filebucket < Puppet::Application
     def run_command
         @args = command_line.args
         command = args.shift
-        return send(command) if %w[get backup restore].include? command
+        return send(command) if %w{get backup restore}.include? command
         help
     end
 

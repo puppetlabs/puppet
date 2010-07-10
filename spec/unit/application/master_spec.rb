@@ -102,7 +102,7 @@ describe Puppet::Application::Master do
         end
 
         it "should parse the log destination from ARGV" do
-            @master.command_line.stubs(:args).returns(%w[--logdest /my/file])
+            @master.command_line.stubs(:args).returns(%w{--logdest /my/file})
 
             Puppet::Util::Log.expects(:newdestination).with("/my/file")
 

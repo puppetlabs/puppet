@@ -212,7 +212,7 @@ module PSON
                 # passed to the configure method.
                 def to_h
                     result = {}
-                    for iv in %w[indent space space_before object_nl array_nl check_circular allow_nan max_nesting]
+                    for iv in %w{indent space space_before object_nl array_nl check_circular allow_nan max_nesting}
                         result[iv.intern] = instance_variable_get("@#{iv}")
                     end
                     result

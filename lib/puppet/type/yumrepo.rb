@@ -294,7 +294,7 @@ module Puppet
         newproperty(:failovermethod, :parent => Puppet::IniProperty) do
             desc "Either 'roundrobin' or 'priority'.\n#{ABSENT_DOC}"
             newvalue(:absent) { self.should = :absent }
-            newvalue(%r(roundrobin|priority)) { }
+            newvalue(%r{roundrobin|priority}) { }
         end
 
         newproperty(:keepalive, :parent => Puppet::IniProperty) do

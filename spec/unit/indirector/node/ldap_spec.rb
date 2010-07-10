@@ -170,7 +170,7 @@ describe Puppet::Node::Ldap do
             end
 
             it "should add any classes from ldap" do
-                @result[:classes] = %w[a b c d]
+                @result[:classes] = %w{a b c d}
                 @node.expects(:classes=).with(%w{a b c d})
                 @searcher.find(@request)
             end

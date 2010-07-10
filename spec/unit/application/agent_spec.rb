@@ -155,7 +155,7 @@ describe Puppet::Application::Agent do
         end
 
         it "should parse the log destination from the command line" do
-            @puppetd.command_line.stubs(:args).returns(%w[--logdest /my/file])
+            @puppetd.command_line.stubs(:args).returns(%w{--logdest /my/file})
 
             Puppet::Util::Log.expects(:newdestination).with("/my/file")
 
