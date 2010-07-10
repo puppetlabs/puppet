@@ -175,14 +175,15 @@ describe content do
 
                 it "should display a diff if the current contents are different from the desired content" do 
                     @content.should = "some content"
-                    @content.expects(:string_file_diff).once
+                    @content.expects(:diff).returns("my diff").once
+                    @content.expects(:print).with("my diff").once
 
                     @content.insync?("other content")
                 end
 
                 it "should not display a diff if the sum for the current contents is the same as the sum for the desired content" do 
                     @content.should = "some content"
-                    @content.expects(:string_file_diff).never
+                    @content.expects(:diff).never
 
                     @content.insync?("{md5}" + Digest::MD5.hexdigest("some content"))
                 end

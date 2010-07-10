@@ -1,5 +1,6 @@
 require 'net/http'
 require 'uri'
+require 'tempfile'
 
 require 'puppet/util/checksums'
 require 'puppet/network/http/api/v1'
@@ -101,7 +102,9 @@ module Puppet
             result = super
 
             if ! result and Puppet[:show_diff]
-                string_file_diff(@resource[:path], actual_content)
+                write_temporarily do |path|
+                    print diff(@resource[:path], path)
+                end
             end
             return result
         end
@@ -135,6 +138,19 @@ module Puppet
             @resource.write(:content)
 
             return return_event
+        end
+
+        def write_temporarily
+            tempfile = Tempfile.new("puppet-file")
+            tempfile.open
+
+            write(tempfile)
+
+            tempfile.close
+
+            yield tempfile.path
+
+            tempfile.delete
         end
 
         def write(file)
