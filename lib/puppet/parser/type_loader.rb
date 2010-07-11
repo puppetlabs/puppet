@@ -126,16 +126,16 @@ class Puppet::Parser::TypeLoader
 
   # Utility method factored out of load for handling thread-safety.
   # This isn't tested in the specs, because that's basically impossible.
-  def import_if_possible(file)
+  def import_if_possible(file, &blk)
     return if @loaded.include?(file)
     begin
       case @loading.owner_of(file)
       when :this_thread
         return
       when :another_thread
-        return import_if_possible(file)
+        return import_if_possible(file, &blk)
       when :nobody
-        yield
+        blk.call
       end
     rescue Puppet::ImportError => detail
       # We couldn't load the item
