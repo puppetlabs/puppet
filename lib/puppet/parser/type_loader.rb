@@ -51,8 +51,10 @@ class Puppet::Parser::TypeLoader
       unless file =~ /^#{File::SEPARATOR}/
         file = File.join(dir, file)
       end
-      @imported[file] = true
-      parse_file(file)
+      unless imported? file
+        @imported[file] = true
+        parse_file(file)
+      end
     end
 
     modname
