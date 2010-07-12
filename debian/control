@@ -13,6 +13,7 @@ Homepage: http://reductivelabs.com/trac/puppet
 Package: puppet
 Architecture: all
 Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${source:Version})
+Breaks: puppet-common (<< 2.6.1~rc2-1)
 Recommends: rdoc, libaugeas-ruby1.8
 Suggests: puppet-el, vim-puppet, libselinux-ruby1.8
 Description: centralised configuration management for networks
@@ -30,7 +31,7 @@ Description: centralised configuration management for networks
 Package: puppetmaster
 Architecture: all
 Depends: ${misc:Depends}, ruby1.8, puppet-common (= ${source:Version}), facter, lsb-base
-Conflicts: puppet (<< 0.24.7-1)
+Breaks: puppet (<< 0.24.7-1)
 Recommends: rails (>= 1.2.3-2), rdoc, libldap-ruby1.8
 Suggests: apache2 | nginx, mongrel, puppet-el, vim-puppet, libapache2-mod-passenger, librack-ruby (>= 1.0.0), stompserver, libstomp-ruby1.8
 Description: centralised configuration management control daemon
@@ -50,7 +51,7 @@ Description: centralised configuration management control daemon
 Package: puppet-common
 Architecture: all
 Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser
-Conflicts: puppet (<< 0.25.4-1), puppetmaster (<< 0.25.4-1)
+Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
 Description: common files for puppet and puppetmaster
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the

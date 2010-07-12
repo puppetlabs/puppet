@@ -3,8 +3,10 @@ puppet (2.6.0~rc2-1) UNRELEASED; urgency=low
   * New upstream version
   * Fix "short package description doesn't differ from binary package
     puppet", update description of binary package. (Closes: #587364)
+  * Move /usr/bin/puppet to the puppet-common package
+  * debian/control: Convert Conflicts: to Breaks:
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 12 Jul 2010 15:37:07 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 12 Jul 2010 16:16:14 +0200
 
 puppet (0.25.5-1) unstable; urgency=low
 
