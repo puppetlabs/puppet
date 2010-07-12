@@ -12,8 +12,7 @@ Homepage: http://projects.puppetlabs.com/projects/puppet
 
 Package: puppet
 Architecture: all
-Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${source:Version})
-Breaks: puppet-common (<< 2.6.1~rc2-1)
+Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${binary:Version})
 Recommends: rdoc, libaugeas-ruby1.8
 Suggests: puppet-el, vim-puppet, libselinux-ruby1.8
 Description: centralised configuration management for networks
