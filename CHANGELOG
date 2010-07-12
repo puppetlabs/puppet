@@ -1,5 +1,15 @@
+2.6.0rc2
+========
+fa74020  [#4209] catalog.resources should return resources
+f5f9a38  Fix for #4210 -- missing require in CA
+1c3e844  Minimal fix for #4205 -- incorrect Import loop messages
+99d8323  Fix #4206 - import "path/*" tries to import files twice
+a2115af  Alt fix for #4207 -- serialize environments as their names
+fe4dcd8  [#4208] Missing parameter breaks multithread compilation
+
 2.6.0rc1
 ========
+e028310  Updated CHANGELOG for 2.6.0rc1
 3180b9d  Code smell: Two space indentation
 5432259  Code smell: Avoid needless decorations
 8f15707  Code smell: Don't restate results directly after assignment
