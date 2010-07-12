@@ -1,6 +1,9 @@
 module Puppet::Parser::Functions
-    newfunction(:split, :type => :rvalue,
-      :doc => "\
+
+  newfunction(
+  :split, :type => :rvalue,
+
+    :doc => "\
 Split a string variable into an array using the specified split regexp.
 
   Usage::
@@ -19,11 +22,8 @@ a regexp meta-character (.), and that needs protection.  A simple
 way to do that for a single character is to enclose it in square
 brackets.") do |args|
 
-     if args.length != 2
-         raise Puppet::ParseError, ("split(): wrong number of arguments" +
-				   " (#{args.length}; must be 2)")
-     end
+  raise Puppet::ParseError, ("split(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
 
-     return args[0].split(Regexp.compile(args[1]))
-    end
+  return args[0].split(Regexp.compile(args[1]))
+  end
 end

@@ -1,44 +1,44 @@
 config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc => "A reference for all configuration parameters") do
-    docs = {}
-    Puppet.settings.each do |name, object|
-        docs[name] = object
+  docs = {}
+  Puppet.settings.each do |name, object|
+    docs[name] = object
+  end
+
+  str = ""
+  docs.sort { |a, b|
+    a[0].to_s <=> b[0].to_s
+  }.each do |name, object|
+    # Make each name an anchor
+    header = name.to_s
+    str += h(header, 3)
+
+    # Print the doc string itself
+    begin
+      str += object.desc.gsub(/\n/, " ")
+    rescue => detail
+      puts detail.backtrace
+      puts detail
+    end
+    str += "\n\n"
+
+    # Now print the data about the item.
+    str += ""
+    val = object.default
+    if name.to_s == "vardir"
+      val = "/var/lib/puppet"
+    elsif name.to_s == "confdir"
+      val = "/etc/puppet"
     end
 
-    str = ""
-    docs.sort { |a, b|
-        a[0].to_s <=> b[0].to_s
-    }.each do |name, object|
-        # Make each name an anchor
-        header = name.to_s
-        str += h(header, 3)
-
-        # Print the doc string itself
-        begin
-            str += object.desc.gsub(/\n/, " ")
-        rescue => detail
-            puts detail.backtrace
-            puts detail
-        end
-        str += "\n\n"
-
-        # Now print the data about the item.
-        str += ""
-        val = object.default
-        if name.to_s == "vardir"
-            val = "/var/lib/puppet"
-        elsif name.to_s == "confdir"
-            val = "/etc/puppet"
-        end
-
-        # Leave out the section information; it was apparently confusing people.
-        #str += "- **Section**: %s\n" % object.section
-        unless val == ""
-            str += "- **Default**: %s\n" % val
-        end
-        str += "\n"
+    # Leave out the section information; it was apparently confusing people.
+    #str += "- **Section**: #{object.section}\n"
+    unless val == ""
+      str += "- **Default**: #{val}\n"
     end
+    str += "\n"
+  end
 
-    return str
+  return str
 end
 
 config.header = "
@@ -57,14 +57,14 @@ These parameters can be supplied to the executables either as command-line
 options or in the configuration file.  For instance, the command-line
 invocation below would set the configuration directory to ``/private/puppet``::
 
-    $ puppetd --confdir=/private/puppet
+  $ puppet agent --confdir=/private/puppet
 
 Note that boolean options are turned on and off with a slightly different
 syntax on the command line::
 
-    $ puppetd --storeconfigs
+  $ puppet agent --storeconfigs
 
-    $ puppetd --no-storeconfigs
+  $ puppet agent --no-storeconfigs
 
 The invocations above will enable and disable, respectively, the storage of
 the client configuration.
@@ -81,20 +81,17 @@ executables look for ``puppet.conf`` in their configuration directory
 ``~user/.puppet/puppet.conf`` as a regular user by default.
 
 All executables will set any parameters set within the ``main`` section,
-while each executable will also look for a section named for the executable
-and load those parameters.  For example, ``puppetd`` will look for a
-section named ``puppetd``, and ``puppetmasterd`` looks for a section
-named ``puppetmasterd``.  This allows you to use a single configuration file
-to customize the settings for all of your executables.
+and each executable will also use one of the ``master``, ``agent``, or
+``user`` sections.
 
 File Format
 '''''''''''
 The file follows INI-style formatting.  Here is an example of a very simple
 ``puppet.conf`` file::
 
-    [main]
-        confdir = /private/puppet
-        storeconfigs = true
+  [main]
+    confdir = /private/puppet
+    storeconfigs = true
 
 Note that boolean parameters must be explicitly specified as `true` or
 `false` as seen above.
@@ -102,8 +99,8 @@ Note that boolean parameters must be explicitly specified as `true` or
 If you need to change file parameters (e.g., reset the mode or owner), do
 so within curly braces on the same line::
 
-    [main]
-        myfile = /tmp/whatever {owner = root, mode = 644}
+  [main]
+    myfile = /tmp/whatever {owner = root, mode = 644}
 
 If you're starting out with a fresh configuration, you may wish to let
 the executable generate a template configuration file for you by invoking
@@ -111,7 +108,7 @@ the executable in question with the `--genconfig` command.  The executable
 will print a template configuration to standard output, which can be
 redirected to a file like so::
 
-    $ puppetd --genconfig > /etc/puppet/puppet.conf
+  $ puppet agent --genconfig > /etc/puppet/puppet.conf
 
 Note that this invocation will replace the contents of any pre-existing
 `puppet.conf` file, so make a backup of your present config if it contains
@@ -122,23 +119,23 @@ argument, which will generate a manifest that can be used to manage all of
 Puppet's directories and files and prints it to standard output.  This can
 likewise be redirected to a file::
 
-    $ puppetd --genmanifest > /etc/puppet/manifests/site.pp
+  $ puppet agent --genmanifest > /etc/puppet/manifests/site.pp
 
 Puppet can also create user and group accounts for itself (one `puppet` group
 and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument::
 
-    $ puppetd --mkusers
+  $ puppet agent --mkusers
 
 Signals
 -------
-The ``puppetd`` and ``puppetmasterd`` executables catch some signals for special
+The ``puppet agent`` and ``puppet master`` executables catch some signals for special
 handling.  Both daemons catch (``SIGHUP``), which forces the server to restart
 tself.  Predictably, interrupt and terminate (``SIGINT`` and ``SIGTERM``) will shut
-down the server, whether it be an instance of ``puppetd`` or ``puppetmasterd``.
+down the server, whether it be an instance of ``puppet agent`` or ``puppet master``.
 
-Sending the ``SIGUSR1`` signal to an instance of ``puppetd`` will cause it to
+Sending the ``SIGUSR1`` signal to an instance of ``puppet agent`` will cause it to
 immediately begin a new configuration transaction with the server.  This
-signal has no effect on ``puppetmasterd``.
+signal has no effect on ``puppet master``.
 
 Configuration Parameter Reference
 ---------------------------------

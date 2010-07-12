@@ -1,12 +1,10 @@
 class Puppet::Network::Client::Runner < Puppet::Network::Client::ProxyClient
-    self.mkmethods
+  self.mkmethods
 
-    def initialize(hash = {})
-        if hash.include?(:Runner)
-            hash[:Runner] = self.class.handler.new()
-        end
+  def initialize(hash = {})
+    hash[:Runner] = self.class.handler.new if hash.include?(:Runner)
 
-        super(hash)
-    end
+    super(hash)
+  end
 end
 

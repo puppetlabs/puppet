@@ -39,16 +39,16 @@ if [ -f /etc/sysconfig/puppetmaster ]; then
     . /etc/sysconfig/puppetmaster
 fi
 
-[ -z "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_MANIFEST=/etc/puppet/manifests/site.pp
-[ -z "$PUPPETMASTER_LOG" ] && PUPPETMASTER_LOG="/var/log/puppet/puppetmaster.log"
-PUPPETMASTER_OPTS="
-    --manifest=$PUPPETMASTER_MANIFEST \
-    --logdest=${PUPPETMASTER_LOG} \
+PUPPETMASTER_OPTS=""
+[ -n "$PUPPETMASTER_MANIFEST" ] && PUPPETMASTER_OPTS="--manifest=${PUPPETMASTER_MANIFEST}"
+if [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -gt 1 ]; then
+    PUPPETMASTER_OPTS="$PUPPETMASTER_OPTS --servertype=mongrel"
+elif [ -n "$PUPPETMASTER_PORTS" ] && [ ${#PUPPETMASTER_PORTS[@]} -eq 1 ]; then
+    PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --masterport=${PUPPETMASTER_PORTS[0]}"
+fi
+[ -n "$PUPPETMASTER_LOG" ] && PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} --logdest ${PUPPETMASTER_LOG}"
+PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
     ${PUPPETMASTER_EXTRA_OPTS}"
-PUPPET_OPTS=""
-[ -n "${PUPPET_SERVER}" ] && PUPPET_OPTS="--server=${PUPPET_SERVER}"
-[ -n "$PUPPET_LOG" ] && PUPPET_OPTS="${PUPPET_OPTS} --logdest=${PUPPET_LOG}"
-[ -n "$PUPPET_PORT" ] && PUPPET_OPTS="${PUPPET_OPTS} --port=${PUPPET_PORT}"
 
 prog=puppetmasterd
 PUPPETMASTER=/usr/sbin/$prog

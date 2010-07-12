@@ -7,5 +7,5 @@ require 'puppet/indirector/file_content'
 require 'puppet/indirector/rest'
 
 class Puppet::Indirector::FileContent::Rest < Puppet::Indirector::REST
-    desc "Retrieve file contents via a REST HTTP interface."
+  desc "Retrieve file contents via a REST HTTP interface."
 end

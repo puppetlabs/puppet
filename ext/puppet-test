@@ -229,6 +229,30 @@ Suite.new :local_catalog, "Local catalog handling" do
     end
 end
 
+Suite.new :resource_type, "Managing resource types" do
+    newtest :find, "Find a type" do
+        Puppet::Resource::Type.terminus_class = :parser
+        ARGV.each do |name|
+            json = Puppet::Resource::Type.find(name).to_pson
+            data = PSON.parse(json)
+            p Puppet::Resource::Type.from_pson(data)
+        end
+    end
+
+    newtest :search_types, "Find all types" do
+        Puppet::Resource::Type.terminus_class = :rest
+        result = Puppet::Resource::Type.search("*")
+        result.each { |r| p r }
+    end
+
+    newtest :restful_type, "Find a type and return it via REST" do
+        Puppet::Resource::Type.terminus_class = :rest
+        ARGV.each do |name|
+            p Puppet::Resource::Type.find(name)
+        end
+    end
+end
+
 Suite.new :remote_catalog, "Remote catalog handling" do
     def prepare
         $args[:cache] = false
@@ -286,7 +310,7 @@ end
 Suite.new :filebucket, "Filebucket interactions" do
     def prepare
         require 'tempfile'
-        @client = Puppet::Network::Client.dipper.new($args)
+        @client = Puppet::FileBucket::Dipper.new($args)
     end
 
     newtest :backup, "Backed up file" do

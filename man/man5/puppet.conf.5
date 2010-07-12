@@ -418,6 +418,11 @@ The type of database to use.
 .
 \fBDefault\fP: sqlite3
 .UNINDENT
+
+.SS dbconnections
+The number of database connections. Only used when networked databases are used.  Will be ignored if the value is an empty string or is less than 1.
+
+
 .SS dblocation
 .sp
 The database cache for client configurations.  Used for querying within the language.

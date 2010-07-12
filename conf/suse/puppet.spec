@@ -10,8 +10,8 @@ Release: 1%{?dist}
 License: GPL
 Group: System Environment/Base
 
-URL: http://puppetlabs.com/projects/puppet/
-Source: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+URL: http://reductivelabs.com/projects/puppet/
+Source: http://reductivelabs.com/downloads/puppet/%{name}-%{version}.tar.gz
 Patch0: puppet.suse.patch
 Requires: ruby >= 1.8.2
 Requires: facter >= 1.3.7

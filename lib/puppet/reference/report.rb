@@ -1,7 +1,7 @@
 require 'puppet/reports'
 
 report = Puppet::Util::Reference.newreference :report, :doc => "All available transaction reports" do
-    Puppet::Reports.reportdocs
+  Puppet::Reports.reportdocs
 end
 
 report.header = "

@@ -1,30 +1,30 @@
 type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource types and all their details" do
-    types = {}
-    Puppet::Type.loadall
+  types = {}
+  Puppet::Type.loadall
 
-    Puppet::Type.eachtype { |type|
-        next if type.name == :puppet
-        next if type.name == :component
-        types[type.name] = type
-    }
+  Puppet::Type.eachtype { |type|
+    next if type.name == :puppet
+    next if type.name == :component
+    types[type.name] = type
+  }
 
-    str = %{
+  str = %{
 
-Resource Types
---------------
+    Resource Types
+    --------------
 
-- The *namevar* is the parameter used to uniquely identify a type instance.
+    - The *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
   the colon in a type declaration.  In general, only developers will need to
   worry about which parameter is the ``namevar``.
 
   In the following code::
 
-      file { "/etc/passwd":
-          owner => root,
-          group => root,
-          mode => 644
-      }
+    file { "/etc/passwd":
+      owner => root,
+      group => root,
+      mode => 644
+    }
 
   ``/etc/passwd`` is considered the title of the file object (used for things like
   dependency handling), and because ``path`` is the namevar for ``file``, that
@@ -32,8 +32,7 @@ Resource Types
 
 - *Parameters* determine the specific configuration of the instance.  They either
   directly modify the system (internally, these are called properties) or they affect
-  how the instance behaves (e.g., adding a search path for ``exec`` instances
-  or determining recursion on ``file`` instances).
+  how the instance behaves (e.g., adding a search path for ``exec`` instances or determining recursion on ``file`` instances).
 
 - *Providers* provide low-level functionality for a given resource type.  This is
   usually in the form of calling out to external commands.
@@ -52,65 +51,63 @@ Resource Types
     }
 
     types.sort { |a,b|
-        a.to_s <=> b.to_s
+      a.to_s <=> b.to_s
     }.each { |name,type|
 
-        str += "
+      str += "
 
 ----------------
 
 "
 
-        str += h(name, 3)
-        str += scrub(type.doc) + "\n\n"
+  str += h(name, 3)
+  str += scrub(type.doc) + "\n\n"
 
-        # Handle the feature docs.
-        if featuredocs = type.featuredocs
-            str += h("Features", 4)
-            str += featuredocs
-        end
+  # Handle the feature docs.
+  if featuredocs = type.featuredocs
+    str += h("Features", 4)
+    str += featuredocs
+    end
 
-        docs = {}
-        type.validproperties.sort { |a,b|
-            a.to_s <=> b.to_s
-        }.reject { |sname|
-            property = type.propertybyname(sname)
-            property.nodoc
-        }.each { |sname|
-            property = type.propertybyname(sname)
+    docs = {}
+    type.validproperties.sort { |a,b|
+      a.to_s <=> b.to_s
+    }.reject { |sname|
+      property = type.propertybyname(sname)
+      property.nodoc
+    }.each { |sname|
+      property = type.propertybyname(sname)
 
-            unless property
-                raise "Could not retrieve property %s on type %s" % [sname, type.name]
-            end
+      raise "Could not retrieve property #{sname} on type #{type.name}" unless property
 
-            doc = nil
-            unless doc = property.doc
-                $stderr.puts "No docs for %s[%s]" % [type, sname]
-                next
-            end
-            doc = doc.dup
-            tmp = doc
-            tmp = scrub(tmp)
+      doc = nil
+      unless doc = property.doc
+        $stderr.puts "No docs for #{type}[#{sname}]"
+        next
+      end
+      doc = doc.dup
+      tmp = doc
+      tmp = scrub(tmp)
 
-            docs[sname]  = tmp
-        }
-
-        str += h("Parameters", 4) + "\n"
-        type.parameters.sort { |a,b|
-            a.to_s <=> b.to_s
-        }.each { |name,param|
-            #docs[name] = indent(scrub(type.paramdoc(name)), $tab)
-            docs[name] = scrub(type.paramdoc(name))
-        }
-
-        docs.sort { |a, b|
-            a[0].to_s <=> b[0].to_s
-        }.each { |name, doc|
-            namevar = type.namevar == name and name != :name
-            str += paramwrap(name, doc, :namevar => namevar)
-        }
-        str += "\n"
+      docs[sname]  = tmp
     }
 
-    str
+    str += h("Parameters", 4) + "\n"
+    type.parameters.sort { |a,b|
+      a.to_s <=> b.to_s
+    }.each { |name,param|
+      #docs[name] = indent(scrub(type.paramdoc(name)), $tab)
+      docs[name] = scrub(type.paramdoc(name))
+    }
+
+    additional_key_attributes = type.key_attributes - [:name]
+    docs.sort { |a, b|
+      a[0].to_s <=> b[0].to_s
+    }.each { |name, doc|
+      str += paramwrap(name, doc, :namevar => additional_key_attributes.include?(name))
+    }
+    str += "\n"
+  }
+
+  str
 end
