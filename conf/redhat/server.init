@@ -13,7 +13,7 @@ PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
 lockfile=/var/lock/subsys/puppetmaster
-pidfile=/var/run/puppet/puppetmasterd.pid
+pidfile=/var/run/puppet/master.pid
 
 # Source function library.
 . /etc/rc.d/init.d/functions

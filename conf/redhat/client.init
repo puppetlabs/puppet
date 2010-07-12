@@ -15,7 +15,7 @@ export PATH
 
 [ -f /etc/sysconfig/puppet ] && . /etc/sysconfig/puppet
 lockfile=${LOCKFILE-/var/lock/subsys/puppet}
-pidfile=${PIDFILE-/var/run/puppet/puppetd.pid}
+pidfile=${PIDFILE-/var/run/puppet/agent.pid}
 puppetd=${PUPPETD-/usr/sbin/puppetd}
 RETVAL=0
 
