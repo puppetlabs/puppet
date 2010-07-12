@@ -14,8 +14,8 @@ class Puppet::SSL::CertificateAuthority
   require 'puppet/ssl/certificate_factory'
   require 'puppet/ssl/inventory'
   require 'puppet/ssl/certificate_revocation_list'
-
   require 'puppet/ssl/certificate_authority/interface'
+  require 'puppet/network/authstore'
 
   class CertificateVerificationError < RuntimeError
     attr_accessor :error_code
