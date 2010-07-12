@@ -383,6 +383,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @resource_table.keys
   end
 
+  def resources
+    @resource_table.values.uniq
+  end
+
   def self.from_pson(data)
     result = new(data['name'])
 
