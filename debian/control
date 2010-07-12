@@ -5,10 +5,10 @@ Maintainer: Puppet Package Maintainers <pkg-puppet-devel@lists.alioth.debian.org
 Uploaders: Micah Anderson <micah@debian.org>, Andrew Pollock <apollock@debian.org>, Nigel Kersten <nigel@explanatorygap.net>, Stig Sandbeck Mathisen <ssm@debian.org>
 Build-Depends-Indep: ruby (>= 1.8.1), libopenssl-ruby, facter (>= 1.5)
 Build-Depends: debhelper (>= 6.0.7~), openssl
-Standards-Version: 3.8.4
+Standards-Version: 3.9.0
 Vcs-Git: git://git.debian.org/git/pkg-puppet/puppet.git
 Vcs-Browser: http://git.debian.org/?p=pkg-puppet/puppet.git
-Homepage: http://reductivelabs.com/trac/puppet
+Homepage: http://projects.puppetlabs.com/projects/puppet
 
 Package: puppet
 Architecture: all
