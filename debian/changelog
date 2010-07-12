@@ -7,8 +7,10 @@ puppet (2.6.0~rc2-1) UNRELEASED; urgency=low
   * debian/control: Convert Conflicts: to Breaks:
   * debian/control: bump policy version and update project homepage
   * debian/control: Update dependencies/breakages
+  * debian/copyright: Remove reference to deprecated bsd license file,
+    it is included already
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 12 Jul 2010 16:28:02 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 12 Jul 2010 16:31:19 +0200
 
 puppet (0.25.5-1) unstable; urgency=low
 
