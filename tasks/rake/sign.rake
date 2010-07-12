@@ -5,10 +5,10 @@ version = Puppet::PUPPETVERSION
 
 # Sign package
 
-sh "gpg --homedir $HOME/release_key --detach-sign --output pkg/puppet-#{version}.tar.gz.sign --armor pkg/puppet-#{version}.tar.gz"
+sh "gpg --homedir $HOME/pl_release_key --detach-sign --output pkg/puppet-#{version}.tar.gz.sign --armor pkg/puppet-#{version}.tar.gz"
 
 # Sign gem
 
-sh "gpg --homedir $HOME/release_key --detach-sign --output pkg/puppet-#{version}.gem.sign --armor pkg/puppet-#{version}.gem"
+sh "gpg --homedir $HOME/pl_release_key --detach-sign --output pkg/puppet-#{version}.gem.sign --armor pkg/puppet-#{version}.gem"
 
 end

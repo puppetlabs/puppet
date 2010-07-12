@@ -43,19 +43,19 @@ module PSON
       string = string.dup
       string << '' # XXX workaround: avoid buffer sharing
       string.force_encoding(Encoding::ASCII_8BIT)
-      string.gsub!(/["\\\x0-\x1f]/) { MAP[$&] }
+      string.gsub!(/["\\\x0-\x1f]/) { MAP[$MATCH] }
       string.gsub!(/(
-                      (?:
-                        [\xc2-\xdf][\x80-\xbf]    |
-                        [\xe0-\xef][\x80-\xbf]{2} |
-                        [\xf0-\xf4][\x80-\xbf]{3}
-                      )+ |
-                      [\x80-\xc1\xf5-\xff]       # invalid
-                    )/nx) { |c|
-                      c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
-                      s = PSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
-                      s.gsub!(/.{4}/n, '\\\\u\&')
-                    }
+        (?:
+          [\xc2-\xdf][\x80-\xbf]    |
+          [\xe0-\xef][\x80-\xbf]{2} |
+          [\xf0-\xf4][\x80-\xbf]{3}
+            )+ |
+            [\x80-\xc1\xf5-\xff]       # invalid
+              )/nx) { |c|
+                c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
+                s = PSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
+                s.gsub!(/.{4}/n, '\\\\u\&')
+              }
       string.force_encoding(Encoding::UTF_8)
       string
     rescue Iconv::Failure => e
@@ -63,15 +63,15 @@ module PSON
     end
   else
     def utf8_to_pson(string) # :nodoc:
-      string = string.gsub(/["\\\x0-\x1f]/) { MAP[$&] }
+      string = string.gsub(/["\\\x0-\x1f]/) { MAP[$MATCH] }
       string.gsub!(/(
-                      (?:
-                        [\xc2-\xdf][\x80-\xbf]    |
-                        [\xe0-\xef][\x80-\xbf]{2} |
-                        [\xf0-\xf4][\x80-\xbf]{3}
-                      )+ |
-                      [\x80-\xc1\xf5-\xff]       # invalid
-                    )/nx) { |c|
+        (?:
+          [\xc2-\xdf][\x80-\xbf]    |
+          [\xe0-\xef][\x80-\xbf]{2} |
+          [\xf0-\xf4][\x80-\xbf]{3}
+            )+ |
+            [\x80-\xc1\xf5-\xff]       # invalid
+              )/nx) { |c|
         c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
         s = PSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
         s.gsub!(/.{4}/n, '\\\\u\&')
@@ -110,7 +110,7 @@ module PSON
         # * *indent*: a string used to indent levels (default: ''),
         # * *space*: a string that is put after, a : or , delimiter (default: ''),
         # * *space_before*: a string that is put before a : pair delimiter (default: ''),
-        # * *object_nl*: a string that is put at the end of a PSON object (default: ''), 
+        # * *object_nl*: a string that is put at the end of a PSON object (default: ''),
         # * *array_nl*: a string that is put at the end of a PSON array (default: ''),
         # * *check_circular*: true if checking for circular data structures
         #   should be done (the default), false otherwise.
@@ -172,13 +172,13 @@ module PSON
         end
 
         # Returns _true_, if _object_ was already seen during this generating
-        # run. 
+        # run.
         def seen?(object)
           @seen.key?(object.__id__)
         end
 
         # Remember _object_, to find out if it was already encountered (if a
-        # cyclic data structure is if a cyclic data structure is rendered). 
+        # cyclic data structure is if a cyclic data structure is rendered).
         def remember(object)
           @seen[object.__id__] = true
         end
@@ -212,7 +212,7 @@ module PSON
         # passed to the configure method.
         def to_h
           result = {}
-          for iv in %w[indent space space_before object_nl array_nl check_circular allow_nan max_nesting]
+          for iv in %w{indent space space_before object_nl array_nl check_circular allow_nan max_nesting}
             result[iv.intern] = instance_variable_get("@#{iv}")
           end
           result
@@ -248,7 +248,7 @@ module PSON
           def pson_check_circular(state)
             if state and state.check_circular?
               state.seen?(self) and raise PSON::CircularDatastructure,
-                  "circular data structures not supported!"
+                "circular data structures not supported!"
               state.remember self
             end
             yield
@@ -333,7 +333,7 @@ module PSON
                 pson_shift(state, depth + 1) << value.to_pson(state, depth + 1)
               }.join(delim)
               result << state.array_nl
-              result << pson_shift(state, depth) 
+              result << pson_shift(state, depth)
               result << ']'
             else
               '[' << map { |value| value.to_pson }.join(delim) << ']'

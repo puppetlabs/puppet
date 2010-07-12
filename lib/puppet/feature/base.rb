@@ -15,7 +15,7 @@ Puppet.features.add(:usage, :libs => %w{rdoc/ri/ri_paths rdoc/usage})
 Puppet.features.add(:libshadow, :libs => ["shadow"])
 
 # We're running as root.
-Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.uid == 0 }
+Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.root? }
 
 # We've got mongrel available
 Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http_server/mongrel})
@@ -31,3 +31,23 @@ Puppet.features.add(:rrd, :libs => ["RRDtool"])
 
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])
+
+# We have a syslog implementation
+Puppet.features.add(:syslog, :libs => ["syslog"])
+
+# We can use POSIX user functions
+Puppet.features.add(:posix) do
+  require 'etc'
+  Etc.getpwuid(0) != nil && Puppet.features.syslog?
+end
+
+# We can use Microsoft Windows functions
+Puppet.features.add(:microsoft_windows, :libs => ["sys/admin", "win32/process", "win32/dir"])
+
+raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.microsoft_windows?
+
+# We have CouchDB
+Puppet.features.add(:couchdb, :libs => ["couchrest"])
+
+# We have sqlite
+Puppet.features.add(:sqlite, :libs => ["sqlite3"])

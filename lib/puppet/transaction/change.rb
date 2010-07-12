@@ -4,89 +4,84 @@ require 'puppet/transaction/event'
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
-    attr_accessor :is, :should, :path, :property, :changed, :proxy
+  attr_accessor :is, :should, :property, :proxy, :auditing
 
-    # Switch the goals of the property, thus running the change in reverse.
-    def backward
-        @is, @should = @should, @is
-        @property.should = @should
+  def auditing?
+    auditing
+  end
 
-        @property.info "Reversing %s" % self
-        return self.go
-    end
+  # Create our event object.
+  def event
+    result = property.event
+    result.previous_value = is
+    result.desired_value = should
+    result
+  end
 
-    def changed?
-        self.changed
-    end
+  def initialize(property, currentvalue)
+    @property = property
+    @is = currentvalue
 
-    # Create our event object.
-    def event(name)
-        # default to a simple event type
-        unless name.is_a?(Symbol)
-            @property.warning("Property '%s' returned invalid event '%s'; resetting to default" %
-                [@property.class, name])
+    @should = property.should
 
-            name = @property.event(should)
-        end
+    @changed = false
+  end
 
-        Puppet::Transaction::Event.new(name, self.resource)
-    end
+  def apply
+    return audit_event if auditing?
+    return noop_event if noop?
 
-    def initialize(property, currentvalue)
-        @property = property
-        @path = [property.path,"change"].flatten
-        @is = currentvalue
+    property.sync
 
-        @should = property.should
+    result = event
+    result.message = property.change_to_s(is, should)
+    result.status = "success"
+    result.send_log
+    result
+  rescue => detail
+    puts detail.backtrace if Puppet[:trace]
+    result = event
+    result.status = "failure"
 
-        @changed = false
-    end
+    result.message = "change from #{property.is_to_s(is)} to #{property.should_to_s(should)} failed: #{detail}"
+    result.send_log
+    result
+  end
 
-    # Perform the actual change.  This method can go either forward or
-    # backward, and produces an event.
-    def go
-        if self.noop?
-            @property.log "is %s, should be %s (noop)" % [property.is_to_s(@is), property.should_to_s(@should)]
-            return [event(:noop)]
-        end
+  # Is our property noop?  This is used for generating special events.
+  def noop?
+    @property.noop
+  end
 
-        # The transaction catches any exceptions here.
-        events = @property.sync
-        if events.nil?
-            events = [(@property.name.to_s + "_changed").to_sym]
-        elsif events.is_a?(Array)
-            if events.empty?
-                events = [(@property.name.to_s + "_changed").to_sym]
-            end
-        else
-            events = [events]
-        end
+  # The resource that generated this change.  This is used for handling events,
+  # and the proxy resource is used for generated resources, since we can't
+  # send an event to a resource we don't have a direct relationship with.  If we
+  # have a proxy resource, then the events will be considered to be from
+  # that resource, rather than us, so the graph resolution will still work.
+  def resource
+    self.proxy || @property.resource
+  end
 
-        return events.collect { |name|
-            @report = @property.log(@property.change_to_s(@is, @should))
-            event(name)
-        }
-    end
+  def to_s
+    "change #{@property.change_to_s(@is, @should)}"
+  end
 
-    def forward
-        return self.go
-    end
+  private
 
-    # Is our property noop?  This is used for generating special events.
-    def noop?
-        return @property.noop
-    end
+  def audit_event
+    # This needs to store the appropriate value, and then produce a new event
+    result = event
+    result.message = "audit change: previously recorded value #{property.should_to_s(should)} has been changed to #{property.is_to_s(is)}"
+    result.status = "audit"
+    result.send_log
+    result
+  end
 
-    # The resource that generated this change.  This is used for handling events,
-    # and the proxy resource is used for generated resources, since we can't
-    # send an event to a resource we don't have a direct relationship.  If we
-    # have a proxy resource, then the events will be considered to be from
-    # that resource, rather than us, so the graph resolution will still work.
-    def resource
-        self.proxy || @property.resource
-    end
-
-    def to_s
-        return "change %s" % @property.change_to_s(@is, @should)
-    end
+  def noop_event
+    result = event
+    result.message = "is #{property.is_to_s(is)}, should be #{property.should_to_s(should)} (noop)"
+    result.status = "noop"
+    result.send_log
+    result
+  end
 end

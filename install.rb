@@ -22,7 +22,7 @@
 # 2) Build Rdoc documentation from all files in bin/ (excluding .bat and .cmd),
 #    all .rb files in lib/, ./README, ./ChangeLog, and ./Install.
 # 3) Build ri documentation from all files in bin/ (excluding .bat and .cmd),
-#    and all .rb files in lib/. This is disabled by default on Win32.
+#    and all .rb files in lib/. This is disabled by default on Microsoft Windows.
 # 4) Install commands from bin/ into the Ruby bin directory. On Windows, if a
 #    if a corresponding batch file (.bat or .cmd) exists in the bin directory,
 #    it will be copied over as well. Otherwise, a batch file (always .bat) will
@@ -46,23 +46,23 @@ require 'optparse'
 require 'ostruct'
 
 begin
-    require 'rdoc/rdoc'
-    $haverdoc = true
+  require 'rdoc/rdoc'
+  $haverdoc = true
 rescue LoadError
-    puts "Missing rdoc; skipping documentation"
-    $haverdoc = false
+  puts "Missing rdoc; skipping documentation"
+  $haverdoc = false
 end
 
 begin
-    if $haverdoc
-       rst2man = %x{which rst2man.py}
-       $haveman = true
-    else
-       $haveman = false
-    end
-rescue
-    puts "Missing rst2man; skipping man page creation"
+  if $haverdoc
+    rst2man = %x{which rst2man.py}
+    $haveman = true
+  else
     $haveman = false
+  end
+rescue
+  puts "Missing rst2man; skipping man page creation"
+  $haveman = false
 end
 
 PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
@@ -71,18 +71,18 @@ MIN_FACTER_VERSION = 1.5
 InstallOptions = OpenStruct.new
 
 def glob(list)
-    g = list.map { |i| Dir.glob(i) }
-    g.flatten!
-    g.compact!
-    g.reject! { |e| e =~ /\.svn/ }
-    g
+  g = list.map { |i| Dir.glob(i) }
+  g.flatten!
+  g.compact!
+  g.reject! { |e| e =~ /\.svn/ }
+  g
 end
 
 # Set these values to what you want installed.
 sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
-ri    = glob(%w(bin/*.rb sbin/* lib/**/*.rb)).reject { |e| e=~ /\.(bat|cmd)$/ }
+ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py})
 tests = glob(%w{test/**/*.rb})
@@ -131,23 +131,23 @@ end
 
 # Verify that all of the prereqs are installed
 def check_prereqs
-    PREREQS.each { |pre|
-        begin
-            require pre
-            if pre == "facter"
-              # to_f isn't quite exact for strings like "1.5.1" but is good
-              # enough for this purpose.
-              facter_version = Facter.version.to_f
-              if facter_version < MIN_FACTER_VERSION
-                puts "Facter version: %s; minimum required: %s; cannot install" % [facter_version, MIN_FACTER_VERSION]
-                exit -1
-              end
-            end
-        rescue LoadError
-            puts "Could not load %s; cannot install" % pre
-            exit -1
+  PREREQS.each { |pre|
+    begin
+      require pre
+      if pre == "facter"
+        # to_f isn't quite exact for strings like "1.5.1" but is good
+        # enough for this purpose.
+        facter_version = Facter.version.to_f
+        if facter_version < MIN_FACTER_VERSION
+          puts "Facter version: #{facter_version}; minimum required: #{MIN_FACTER_VERSION}; cannot install"
+          exit -1
         end
-    }
+      end
+    rescue LoadError
+      puts "Could not load #{pre}; cannot install"
+      exit -1
+    end
+  }
 end
 
 ##
@@ -156,36 +156,32 @@ end
 def prepare_installation
   # Only try to do docs if we're sure they have rdoc
   if $haverdoc
-      InstallOptions.rdoc  = true
-      if RUBY_PLATFORM == "i386-mswin32"
-        InstallOptions.ri  = false
-      else
-        InstallOptions.ri  = true
-      end
+    InstallOptions.rdoc  = true
+    InstallOptions.ri  = RUBY_PLATFORM != "i386-mswin32"
   else
-      InstallOptions.rdoc  = false
-      InstallOptions.ri  = false
+    InstallOptions.rdoc  = false
+    InstallOptions.ri  = false
   end
 
 
   if $haveman
-      InstallOptions.man = true
-      if RUBY_PLATFORM == "i386-mswin32"
-        InstallOptions.man  = false
-      end
+    InstallOptions.man = true
+    if RUBY_PLATFORM == "i386-mswin32"
+      InstallOptions.man  = false
+    end
   else
-      InstallOptions.man = false
+    InstallOptions.man = false
   end
 
   InstallOptions.tests = true
 
   if $haveman
-      InstallOptions.man = true
-      if RUBY_PLATFORM == "i386-mswin32"
-        InstallOptions.man  = false
-      end
+    InstallOptions.man = true
+    if RUBY_PLATFORM == "i386-mswin32"
+      InstallOptions.man  = false
+    end
   else
-      InstallOptions.man = false
+    InstallOptions.man = false
   end
 
   ARGV.options do |opts|
@@ -270,7 +266,7 @@ def prepare_installation
   else
     sitelibdir = Config::CONFIG["sitelibdir"]
     if sitelibdir.nil?
-      sitelibdir = $:.find { |x| x =~ /site_ruby/ }
+      sitelibdir = $LOAD_PATH.find { |x| x =~ /site_ruby/ }
       if sitelibdir.nil?
         sitelibdir = File.join(libdir, "site_ruby")
       elsif sitelibdir !~ Regexp.quote(version)
@@ -323,77 +319,74 @@ end
 # Build the rdoc documentation. Also, try to build the RI documentation.
 #
 def build_rdoc(files)
-    return unless $haverdoc
-    begin
-        r = RDoc::RDoc.new
-        r.document(["--main", "README", "--title",
-            "Puppet -- Site Configuration Management", "--line-numbers"] + files)
-    rescue RDoc::RDocError => e
-        $stderr.puts e.message
-    rescue Exception => e
-        $stderr.puts "Couldn't build RDoc documentation\n#{e.message}"
-    end
+  return unless $haverdoc
+  begin
+    r = RDoc::RDoc.new
+    r.document(["--main", "README", "--title", "Puppet -- Site Configuration Management", "--line-numbers"] + files)
+  rescue RDoc::RDocError => e
+    $stderr.puts e.message
+  rescue Exception => e
+    $stderr.puts "Couldn't build RDoc documentation\n#{e.message}"
+  end
 end
 
 def build_ri(files)
-    return unless $haverdoc
-    begin
-        ri = RDoc::RDoc.new
-        #ri.document(["--ri-site", "--merge"] + files)
-        ri.document(["--ri-site"] + files)
-    rescue RDoc::RDocError => e
-        $stderr.puts e.message
-    rescue Exception => e
-        $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
-        $stderr.puts "Continuing with install..."
-    end
+  return unless $haverdoc
+  begin
+    ri = RDoc::RDoc.new
+    #ri.document(["--ri-site", "--merge"] + files)
+    ri.document(["--ri-site"] + files)
+  rescue RDoc::RDocError => e
+    $stderr.puts e.message
+  rescue Exception => e
+    $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
+    $stderr.puts "Continuing with install..."
+  end
 end
 
 def build_man(bins, sbins)
-    return unless $haveman
-    begin
-        # Locate rst2man
-        rst2man = %x{which rst2man.py}
-        rst2man.chomp!
-        # Create puppet.conf.5 man page
-        %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
-        %x{#{rst2man} ./puppet.conf.rst ./man/man5/puppet.conf.5}
-        File.unlink("./puppet.conf.rst")
+  return unless $haveman
+  begin
+    # Locate rst2man
+    rst2man = %x{which rst2man.py}
+    rst2man.chomp!
+    # Create puppet.conf.5 man page
+    %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
+    %x{#{rst2man} ./puppet.conf.rst ./man/man5/puppet.conf.5}
+    File.unlink("./puppet.conf.rst")
 
-        # Create binary man pages
-        binary = bins + sbins 
-        binary.each do |bin|
-          b = bin.gsub( /(bin|sbin)\//, "")
-          %x{#{bin} --help > ./#{b}.rst}
-          %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
-          File.unlink("./#{b}.rst")
-        end
-    
-rescue SystemCallError
-        $stderr.puts "Couldn't build man pages: " + $!
-        $stderr.puts "Continuing with install..."
+    # Create binary man pages
+    binary = bins + sbins
+    binary.each do |bin|
+      b = bin.gsub( /(bin|sbin)\//, "")
+      %x{#{bin} --help > ./#{b}.rst}
+      %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
+      File.unlink("./#{b}.rst")
     end
+
+rescue SystemCallError
+  $stderr.puts "Couldn't build man pages: " + $ERROR_INFO
+  $stderr.puts "Continuing with install..."
+  end
 end
 
 def run_tests(test_list)
-    begin
-        require 'test/unit/ui/console/testrunner'
-        $:.unshift "lib"
-        test_list.each do |test|
-            next if File.directory?(test)
-            require test
-        end
-
-        tests = []
-        ObjectSpace.each_object { |o| tests << o if o.kind_of?(Class) }
-        tests.delete_if { |o| !o.ancestors.include?(Test::Unit::TestCase) }
-        tests.delete_if { |o| o == Test::Unit::TestCase }
-
-        tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
-        $:.shift
-    rescue LoadError
-        puts "Missing testrunner library; skipping tests"
+    require 'test/unit/ui/console/testrunner'
+    $LOAD_PATH.unshift "lib"
+    test_list.each do |test|
+      next if File.directory?(test)
+      require test
     end
+
+    tests = []
+    ObjectSpace.each_object { |o| tests << o if o.kind_of?(Class) }
+    tests.delete_if { |o| !o.ancestors.include?(Test::Unit::TestCase) }
+    tests.delete_if { |o| o == Test::Unit::TestCase }
+
+    tests.each { |test| Test::Unit::UI::Console::TestRunner.run(test) }
+    $LOAD_PATH.shift
+rescue LoadError
+    puts "Missing testrunner library; skipping tests"
 end
 
 ##
@@ -419,10 +412,8 @@ def install_binfile(from, op_file, target)
       ruby = File.join(Config::CONFIG['bindir'], Config::CONFIG['ruby_install_name'])
       op.puts "#!#{ruby}"
       contents = ip.readlines
-      if contents[0] =~ /^#!/
-          contents.shift
-      end
-      op.write contents.join()
+      contents.shift if contents[0] =~ /^#!/
+      op.write contents.join
     end
   end
 

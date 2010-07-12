@@ -1,9 +1,9 @@
 require 'autotest'
 
 Autotest.add_discovery do
-    "rspec"
+  "rspec"
 end
 
 Autotest.add_discovery do
-    "puppet"
+  "puppet"
 end

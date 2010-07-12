@@ -1,5 +1,9 @@
 Documentation (and detailed install instructions) can be found
-online at http://puppetlabs.com/trac/puppet/wiki/DocumentationStart .
+online at http://docs.puppetlabs.com/.
+
+Additional documentation can also be found at the Puppet Wiki:
+
+http://projects.puppetlabs.com/projects/puppet/wiki/
 
 Generally, you need the following things installed:
 

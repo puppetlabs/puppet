@@ -12,7 +12,7 @@ License:        GPLv2+
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
 Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.sign
-
+Patch0:         rundir-perms.patch
 Group:          System Environment/Base
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)

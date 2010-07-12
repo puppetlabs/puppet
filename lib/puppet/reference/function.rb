@@ -1,5 +1,5 @@
 function = Puppet::Util::Reference.newreference :function, :doc => "All functions available in the parser" do
-    Puppet::Parser::Functions.functiondocs
+  Puppet::Parser::Functions.functiondocs
 end
 function.header = "
 There are two types of functions in Puppet: Statements and rvalues.

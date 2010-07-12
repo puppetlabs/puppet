@@ -6,21 +6,21 @@ module PSON
     # into a Ruby data structure.
     class Parser < StringScanner
       STRING                = /" ((?:[^\x0-\x1f"\\] |
-                                   # escaped special characters:
-                                  \\["\\\/bfnrt] |
-                                  \\u[0-9a-fA-F]{4} |
-                                   # match all but escaped special characters:
-                                  \\[\x20-\x21\x23-\x2e\x30-\x5b\x5d-\x61\x63-\x65\x67-\x6d\x6f-\x71\x73\x75-\xff])*)
-                              "/nx
+      #                              escaped special characters:
+        \\["\\\/bfnrt] |
+        \\u[0-9a-fA-F]{4} |
+        #                          match all but escaped special characters:
+          \\[\x20-\x21\x23-\x2e\x30-\x5b\x5d-\x61\x63-\x65\x67-\x6d\x6f-\x71\x73\x75-\xff])*)
+            "/nx
       INTEGER               = /(-?0|-?[1-9]\d*)/
       FLOAT                 = /(-?
-                                (?:0|[1-9]\d*)
-                                (?:
-                                  \.\d+(?i:e[+-]?\d+) |
-                                  \.\d+ |
-                                  (?i:e[+-]?\d+)
-                                )
-                                )/x
+        (?:0|[1-9]\d*)
+        (?:
+          \.\d+(?i:e[+-]?\d+) |
+          \.\d+ |
+          (?i:e[+-]?\d+)
+            )
+            )/x
       NAN                   = /NaN/
       INFINITY              = /Infinity/
       MINUS_INFINITY        = /-Infinity/
@@ -35,17 +35,17 @@ module PSON
       NULL                  = /null/
       IGNORE                = %r(
         (?:
-         //[^\n\r]*[\n\r]| # line comments
-         /\*               # c-style comments
-         (?:
-          [^*/]|        # normal chars
-          /[^*]|        # slashes that do not start a nested comment
-          \*[^/]|       # asterisks that do not end this comment
-          /(?=\*/)      # single slash before this comment's end 
-         )*
-           \*/               # the End of this comment
-           |[ \t\r\n]+       # whitespaces: space, horicontal tab, lf, cr
-        )+
+        //[^\n\r]*[\n\r]| # line comments
+        /\*               # c-style comments
+        (?:
+        [^*/]|        # normal chars
+        /[^*]|        # slashes that do not start a nested comment
+        \*[^/]|       # asterisks that do not end this comment
+        /(?=\*/)      # single slash before this comment's end
+        )*
+        \*/               # the End of this comment
+        |[ \t\r\n]+       # whitespaces: space, horicontal tab, lf, cr
+      )+
       )mx
 
       UNPARSED = Object.new
@@ -113,23 +113,26 @@ module PSON
 
       # Unescape characters in strings.
       UNESCAPE_MAP = Hash.new { |h, k| h[k] = k.chr }
-      UNESCAPE_MAP.update({
-        ?"  => '"',
-        ?\\ => '\\',
-        ?/  => '/',
-        ?b  => "\b",
-        ?f  => "\f",
-        ?n  => "\n",
-        ?r  => "\r",
-        ?t  => "\t",
-        ?u  => nil, 
+
+        UNESCAPE_MAP.update(
+          {
+            ?"  => '"',
+            ?\\ => '\\',
+            ?/  => '/',
+            ?b  => "\b",
+            ?f  => "\f",
+            ?n  => "\n",
+            ?r  => "\r",
+            ?t  => "\t",
+            ?u  => nil,
+
       })
 
       def parse_string
         if scan(STRING)
           return '' if self[1].empty?
-          string = self[1].gsub(%r((?:\\[\\bfnrt"/]|(?:\\u(?:[A-Fa-f\d]{4}))+|\\[\x20-\xff]))n) do |c|
-            if u = UNESCAPE_MAP[$&[1]]
+          string = self[1].gsub(%r{(?:\\[\\bfnrt"/]|(?:\\u(?:[A-Fa-f\d]{4}))+|\\[\x20-\xff])}n) do |c|
+            if u = UNESCAPE_MAP[$MATCH[1]]
               u
             else # \uXXXX
               bytes = ''
@@ -141,9 +144,7 @@ module PSON
               PSON::UTF16toUTF8.iconv(bytes)
             end
           end
-          if string.respond_to?(:force_encoding)
-            string.force_encoding(Encoding::UTF_8)
-          end
+          string.force_encoding(Encoding::UTF_8) if string.respond_to?(:force_encoding)
           string
         else
           UNPARSED
@@ -206,9 +207,7 @@ module PSON
               raise ParserError, "expected ',' or ']' in array at '#{peek(20)}'!"
             end
           when scan(ARRAY_CLOSE)
-            if delim
-              raise ParserError, "expected next element in array at '#{peek(20)}'!"
-            end
+            raise ParserError, "expected next element in array at '#{peek(20)}'!" if delim
             break
           when skip(IGNORE)
             ;
@@ -228,9 +227,7 @@ module PSON
           case
           when (string = parse_string) != UNPARSED
             skip(IGNORE)
-            unless scan(PAIR_DELIMITER)
-              raise ParserError, "expected ':' in object at '#{peek(20)}'!"
-            end
+            raise ParserError, "expected ':' in object at '#{peek(20)}'!" unless scan(PAIR_DELIMITER)
             skip(IGNORE)
             unless (value = parse_value).equal? UNPARSED
               result[string] = value
@@ -247,9 +244,7 @@ module PSON
               raise ParserError, "expected value in object at '#{peek(20)}'!"
             end
           when scan(OBJECT_CLOSE)
-            if delim
-              raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!"
-            end
+            raise ParserError, "expected next name, value pair in object at '#{peek(20)}'!" if delim
             if @create_id and klassname = result[@create_id]
               klass = PSON.deep_const_get klassname
               break unless klass and klass.pson_creatable?

@@ -30,7 +30,7 @@
 # See: http://puppetlabs.com/trac/puppet/wiki/WritingYourOwnFunctions
 
 module Puppet::Parser::Functions
-    newfunction(:hostname_to_dn, :type => :rvalue, :doc => "Given 'foo.bar.com', return 'dc=foo,dc=bar,dc=com'.") do |args|
-        args[0].split(/\./).map do |s| "dc=%s"%[s] end.join(",")
-    end
+  newfunction(:hostname_to_dn, :type => :rvalue, :doc => "Given 'foo.bar.com', return 'dc=foo,dc=bar,dc=com'.") do |args|
+    args[0].split(/\./).map do |s| "dc=#{s}" end.join(",")
+  end
 end

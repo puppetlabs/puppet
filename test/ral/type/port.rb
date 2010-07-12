@@ -27,25 +27,25 @@ require 'puppettest'
 #            cleanup do
 #                @provider.default_target = oldpath
 #            end
-#            @provider.default_target = tempfile()
+#            @provider.default_target = tempfile
 #        end
 #    end
 #
 #    def mkport
 #        port = nil
 #
-#        if defined? @pcount
+#        if defined?(@pcount)
 #            @pcount += 1
 #        else
 #            @pcount = 1
 #        end
 #        assert_nothing_raised {
 #            port = Puppet::Type.type(:port).new(
-#                :name => "puppet%s" % @pcount,
-#                :number => "813%s" % @pcount,
+#                :name => "puppet#{@pcount}",
+#                :number => "813#{@pcount}",
 #                :protocols => "tcp",
 #                :description => "The port that Puppet runs on",
-#                :alias => "coolness%s" % @pcount
+#                :alias => "coolness#{@pcount}"
 #            )
 #        }
 #
@@ -105,7 +105,7 @@ require 'puppettest'
 #    end
 #
 #    def test_removal
-#        port = mkport()
+#        port = mkport
 #        assert_nothing_raised {
 #            port[:ensure] = :present
 #        }
@@ -123,7 +123,7 @@ require 'puppettest'
 #    end
 #
 #    def test_addingproperties
-#        port = mkport()
+#        port = mkport
 #        assert_events([:port_created], port)
 #
 #        port.delete(:alias)

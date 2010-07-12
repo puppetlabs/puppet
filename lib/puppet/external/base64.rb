@@ -6,14 +6,14 @@
 
 require 'base64'
 
-unless defined? Base64
-    class Base64
-        def Base64.encode64(*args)
-            Object.method(:encode64).call(*args)
-        end
-
-        def Base64.decode64(*args)
-            Object.method(:decode64).call(*args)
-        end
+unless defined?(Base64)
+  class Base64
+    def Base64.encode64(*args)
+      Object.method(:encode64).call(*args)
     end
+
+    def Base64.decode64(*args)
+      Object.method(:decode64).call(*args)
+    end
+  end
 end
