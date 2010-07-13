@@ -60,17 +60,24 @@ class Puppet::Resource
 
       # Don't duplicate the title as the namevar
       next hash if param == namevar and value == title
-      if value.is_a? Puppet::Resource
-        hash[param] = value.to_s
-      else
-        hash[param] = value
-      end
+
+      hash[param] = Puppet::Resource.value_to_pson_data(value)
       hash
     end
 
     data["parameters"] = params unless params.empty?
 
     data
+  end
+
+  def self.value_to_pson_data(value)
+    if value.is_a? Array
+      value.map{|v| value_to_pson_data(v) }
+    elsif value.is_a? Puppet::Resource
+      value.to_s
+    else
+      value
+    end
   end
 
   def to_pson(*args)
