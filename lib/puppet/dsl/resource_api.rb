@@ -37,7 +37,7 @@ class Puppet::DSL::ResourceAPI
 
     super
   ensure
-    @searching_for_method = true
+    @searching_for_method = false
   end
 
   def set_instance_variables
