@@ -40,17 +40,17 @@ module Puppet
       end
 
       def run_dir
-        which_dir("/var/run/puppet", "~/.puppet/var")
+        "$vardir/run"
       end
 
       def logopts
-        if name == :master
+        if master?
           {
             :default => "$vardir/log",
-            :mode => 0750,
-            :owner => "service",
-            :group => "service",
-            :desc => "The Puppet log directory."
+            :mode    => 0750,
+            :owner   => "service",
+            :group   => "service",
+            :desc    => "The Puppet log directory."
           }
         else
           ["$vardir/log", "The Puppet log directory."]
@@ -64,9 +64,9 @@ module Puppet
         #       there's a comment that suggests that we do that
         #       and we currently don't.
         expand_path case
-        when name == :master; global
-        when Puppet.features.root?; global
-        else user
+          when name == :master; global
+          when Puppet.features.root?; global
+          else user
         end
       end
 

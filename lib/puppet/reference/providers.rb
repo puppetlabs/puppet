@@ -95,7 +95,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
     ret += h(type.name.to_s + "_", 2)
 
-    ret += ".. _#{type.name}: #{"http://reductivelabs.com/trac/puppet/wiki/TypeReference##{type.name}"}\n\n"
+    ret += ".. _#{type.name}: #{"http://docs.puppetlabs.com/references/stable/type.html##{type.name}"}\n\n"
     ret += option("Default provider", default)
     ret += doctable(headers, table_data)
 

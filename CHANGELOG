@@ -1,5 +1,17 @@
+2.6.0rc3
+========
+9df87e9  [#4219] Install misses command_line dir, puppet $app --help fails
+0422852  conf/redhat: Consistently pass pidfile option to daemon, killproc, and status
+63bf037  conf/redhat: Update conf/init files for single binary
+f72741f  conf/redhat: Rebase rundir-perms patch
+793d7b7  [#4213] -o option for setting onetime now works properly
+2edf7fe  [#3656] Serializing arrays of references
+27d5a47  [#4215] Have rundir depend on vardir
+06cc552  Fix for #4220 -- modules not implicitly loading their init files
+
 2.6.0rc2
 ========
+8747479  Updated CHANGELOG for 2.6.0rc2
 fa74020  [#4209] catalog.resources should return resources
 f5f9a38  Fix for #4210 -- missing require in CA
 1c3e844  Minimal fix for #4205 -- incorrect Import loop messages

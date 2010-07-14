@@ -27,7 +27,7 @@
 
 # Jeff McCune <jeff.mccune@northstarlabs.net>
 # 2007-08-14
-# See: http://reductivelabs.com/trac/puppet/wiki/WritingYourOwnFunctions
+# See: http://docs.puppetlabs.com/guides/custom_functions.html
 
 module Puppet::Parser::Functions
   newfunction(:hostname_to_dn, :type => :rvalue, :doc => "Given 'foo.bar.com', return 'dc=foo,dc=bar,dc=com'.") do |args|

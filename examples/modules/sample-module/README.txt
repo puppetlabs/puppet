@@ -13,5 +13,5 @@ Note the consistent naming of files for Puppet::Util::Autoload
 
 Reference Documents:
 http://reductivelabs.com/trac/puppet/wiki/ModuleOrganisation
-http://reductivelabs.com/trac/puppet/wiki/WritingYourOwnFunctions
+http://docs.puppetlabs.com/guides/custom_functions.html
 http://reductivelabs.com/trac/puppet/wiki/FunctionReference

@@ -5,7 +5,7 @@ class Puppet::Application::Agent < Puppet::Application
   should_parse_config
   run_mode :agent
 
-  attr_accessor :explicit_waitforcert, :args, :agent, :daemon, :host
+  attr_accessor :args, :agent, :daemon, :host
 
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
@@ -15,7 +15,7 @@ class Puppet::Application::Agent < Puppet::Application
     end
 
     {
-      :waitforcert => 120,  # Default to checking for certs every 5 minutes
+      :waitforcert => nil,
       :detailed_exitcodes => false,
       :verbose => false,
       :debug => false,
@@ -32,7 +32,6 @@ class Puppet::Application::Agent < Puppet::Application
       options[opt] = val
     end
 
-    @explicit_waitforcert = false
     @args = {}
     require 'puppet/daemon'
     @daemon = Puppet::Daemon.new
@@ -62,11 +61,6 @@ class Puppet::Application::Agent < Puppet::Application
     options[:client] = false
   end
 
-  option("--onetime", "-o") do |arg|
-    Puppet[:onetime] = true
-    options[:waitforcert] = 0 unless @explicit_waitforcert
-  end
-
   option("--detailed-exitcodes") do |arg|
     options[:detailed_exitcodes] = true
   end
@@ -83,7 +77,6 @@ class Puppet::Application::Agent < Puppet::Application
 
   option("--waitforcert WAITFORCERT", "-w") do |arg|
     options[:waitforcert] = arg.to_i
-    @explicit_waitforcert = true
   end
 
   option("--port PORT","-p") do |arg|
@@ -149,7 +142,6 @@ class Puppet::Application::Agent < Puppet::Application
     options[:verbose] = true
     Puppet[:onetime] = true
     options[:detailed_exitcodes] = true
-    options[:waitforcert] = 0 unless @explicit_waitforcert
   end
 
   # Handle the logging settings.
@@ -194,6 +186,12 @@ class Puppet::Application::Agent < Puppet::Application
     server = Puppet::Network::Server.new(:xmlrpc_handlers => handlers, :port => Puppet[:puppetport])
 
     @daemon.server = server
+  end
+
+  def setup_host
+    @host = Puppet::SSL::Host.new
+    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : 120)
+    cert = @host.wait_for_cert(waitforcert) unless options[:fingerprint]
   end
 
   def setup
@@ -252,8 +250,7 @@ class Puppet::Application::Agent < Puppet::Application
     # waitforcert happens.
     @daemon.daemonize if Puppet[:daemonize]
 
-    @host = Puppet::SSL::Host.new
-    cert = @host.wait_for_cert(options[:waitforcert]) unless options[:fingerprint]
+    setup_host
 
     @objects = []
 

@@ -12,9 +12,9 @@ Reductive Labs use.
 .INDENT 3.5
 .INDENT 0.0
 .TP
-.B puppetdoc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir <rdoc outputdir>] [\-m|\-\-mode <text|pdf|markdown|trac|rdoc>]
+.B puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir <rdoc outputdir>] [\-m|\-\-mode <text|pdf|markdown|trac|rdoc>]
 .
-[\-r|\-\-reference <[type]|configuration|..>] [manifest\-file]
+[\-r|\-\-reference <[type]|configuration|..>] [\-\-charset CHARSET] [manifest\-file]
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -32,7 +32,7 @@ directives. The generated documentation directory is doc by default but
 can be changed with the \(aqoutputdir\(aq option.
 .sp
 If the command is started with \(aqmanifest\-file\(aq command\-line arguments,
-puppetdoc generate a single manifest documentation that is output on
+puppet doc generate a single manifest documentation that is output on
 stdout.
 .SH OPTIONS
 .INDENT 0.0
@@ -59,13 +59,17 @@ The default mode is \(aqtext\(aq. In \(aqrdoc\(aq mode you must provide
 .TP
 .B reference: Build a particular reference. Get a list of references by
 .
-running +puppetdoc \-\-list+.
+running +puppet doc \-\-list+.
+.TP
+.B charset:   Used only in \(aqrdoc\(aq mode. It sets the charset used in the
+.
+html files produced.
 .UNINDENT
 .SH EXAMPLE
 .INDENT 0.0
 .INDENT 3.5
 .sp
-$ puppetdoc \-r type > /tmp/type_reference.rst
+$ puppet doc \-r type > /tmp/type_reference.rst
 .UNINDENT
 .UNINDENT
 .sp
@@ -73,7 +77,7 @@ or
 .INDENT 0.0
 .INDENT 3.5
 .sp
-$ puppetdoc \-\-outputdir /tmp/rdoc \-\-mode rdoc /path/to/manifests
+$ puppet doc \-\-outputdir /tmp/rdoc \-\-mode rdoc /path/to/manifests
 .UNINDENT
 .UNINDENT
 .sp
@@ -81,7 +85,7 @@ or
 .INDENT 0.0
 .INDENT 3.5
 .sp
-$ puppetdoc /etc/puppet/manifests/site.pp
+$ puppet doc /etc/puppet/manifests/site.pp
 .UNINDENT
 .UNINDENT
 .sp
@@ -89,7 +93,7 @@ or
 .INDENT 0.0
 .INDENT 3.5
 .sp
-$ puppetdoc \-m markdown \-r configuration
+$ puppet doc \-m markdown \-r configuration
 .UNINDENT
 .UNINDENT
 .SH AUTHOR
