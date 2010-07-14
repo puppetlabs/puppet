@@ -124,7 +124,7 @@ class Puppet::Module
   # defaulting to 'init.{pp,rb}' for empty modules.
   def match_manifests(rest)
     pat = File.join(path, MANIFESTS, rest || 'init')
-    Dir.
+    [manifest("init.pp"),manifest("init.rb")].compact + Dir.
       glob(pat + (File.extname(pat).empty? ? '.{pp,rb}' : '')).
       reject { |f| FileTest.directory?(f) }
   end
