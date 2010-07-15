@@ -104,4 +104,20 @@ describe "Puppet::Rails::Resource" do
       @resource.merge_parameters(merge_resource)
     end
   end
+
+  describe "#to_resource" do
+    it "should instantiate a Puppet::Parser::Resource" do
+      scope = stub "scope", :source => nil
+
+      @resource = Puppet::Rails::Resource.new
+      @resource.stubs(:attributes).returns({
+        "restype" => 'notify',
+        "title"   => 'hello'
+      })
+      @resource.stubs(:param_names).returns([])
+
+      @resource.to_resource(scope).should be_a(Puppet::Parser::Resource)
+
+    end
+  end
 end
