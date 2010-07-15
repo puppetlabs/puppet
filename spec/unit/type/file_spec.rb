@@ -1053,4 +1053,18 @@ describe Puppet::Type.type(:file) do
       file.retrieve
     end
   end
+
+  describe ".title_patterns" do
+    before do
+      @type_class = Puppet::Type.type(:file)
+    end
+    
+    it "should have a regexp that captures the entire string, except for a terminating slash" do
+      patterns = @type_class.title_patterns
+      string = "abc/\n\tdef/"
+      patterns[0][0] =~ string
+      $1.should == "abc/\n\tdef"
+    end
+  end
+
 end

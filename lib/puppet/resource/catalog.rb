@@ -57,7 +57,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   def title_key_for_ref( ref )
-    ref =~ /^(.+)\[(.*)\]/
+    ref =~ /^(.+)\[(.*)\]/m
     [$1, $2]
   end
 

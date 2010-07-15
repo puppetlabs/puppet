@@ -1066,4 +1066,13 @@ describe Puppet::Resource::Catalog, "when converting from pson" do
 
     lambda { PSON.parse @pson.to_pson }.should raise_error(ArgumentError)
   end
+
+  describe "#title_key_for_ref" do
+    it "should parse a resource ref string into a pair" do
+      @catalog.title_key_for_ref("Title[name]").should == ["Title", "name"]
+    end
+    it "should parse a resource ref string into a pair, even if there's a newline inside the name" do
+      @catalog.title_key_for_ref("Title[na\nme]").should == ["Title", "na\nme"]
+    end
+  end
 end

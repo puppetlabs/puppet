@@ -193,7 +193,7 @@ class Type
     when 0; []
     when 1;
       identity = lambda {|x| x}
-      [ [ /(.*)/, [ [key_attributes.first, identity ] ] ] ]
+      [ [ /(.*)/m, [ [key_attributes.first, identity ] ] ] ]
     else
       raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
     end
