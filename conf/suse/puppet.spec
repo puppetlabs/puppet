@@ -43,7 +43,6 @@ for f in bin/* ; do
 done
 
 %install
-%{__rm} -rf %{buildroot}
 %{__install} -d -m0755 %{buildroot}%{_sbindir}
 %{__install} -d -m0755 %{buildroot}%{_bindir}
 %{__install} -d -m0755 %{buildroot}%{ruby_sitelibdir}
@@ -52,36 +51,41 @@ done
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-%{__install} -Dp -m0755 %{pbuild}/bin/* %{pbuild}/sbin/* %{buildroot}%{_sbindir}
+%{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_sbindir}
+%{__install} -Dp -m0755 %{pbuild}/sbin/* %{buildroot}%{_sbindir}
 %{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
 %{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
-%{__mv} %{buildroot}%{_sbindir}/pi %{buildroot}%{_bindir}/pi
-%{__mv} %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
 %{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
 %{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
-find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
-%{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
-%{__install} -Dp -m0755 %{suseconfdir}/client.init %{buildroot}%{_initrddir}/puppet
-%{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
-%{__install} -Dp -m0755 %{suseconfdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
+find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
+%{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppet
+%{__install} -Dp -m0755 %SOURCE1 %{buildroot}%{_initrddir}/puppet
+%{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppetmaster
+%{__install} -Dp -m0755 %SOURCE2 %{buildroot}%{_initrddir}/puppetmaster
 %{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 %{__install} -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+#%{__ln_s} puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
+#%{__ln_s} puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
 %{__install} -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+%{__ln_s}  %{_initrddir}/puppet %{buildroot}%{_sbindir}/rcpuppet
+%{__ln_s}  %{_initrddir}/puppetmaster %{buildroot}%{_sbindir}/rcpuppetmaster
 
 %files
 %defattr(-, root, root, 0755)
 %{_bindir}/puppet
-%{_bindir}/pi
-%{_bindir}/filebucket
+%{_sbindir}/filebucket
 %{_sbindir}/ralsh
 %{_sbindir}/puppetd
+%{_sbindir}/rcpuppet
+%{_sbindir}/pi
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
-%config(noreplace) %{_sysconfdir}/sysconfig/puppet
+/var/adm/fillup-templates/sysconfig.puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %doc CHANGELOG COPYING LICENSE README examples
 %exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
+%dir %{_sysconfdir}/puppet
 # These need to be owned by puppet so the server can
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
@@ -152,7 +156,7 @@ fi
 
 * Mon Jun 19 2006 David Lutterkort <dlutter@redhat.com> - 0.18.0-1
 - Patch config for LSB compliance (lsb-config.patch)
-- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl
+- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl 
   to /var/lib/puppet, /etc/puppet/clases.txt to /var/lib/puppet/classes.txt,
   /etc/puppet/localconfig.yaml to /var/lib/puppet/localconfig.yaml
 
@@ -175,7 +179,7 @@ fi
 - Rebuilt for new version
 
 * Wed Mar 22 2006 David Lutterkort <dlutter@redhat.com> - 0.15.1-1
-- Patch0: Run puppetmaster as root; running as puppet is not ready
+- Patch0: Run puppetmaster as root; running as puppet is not ready 
   for primetime
 
 * Mon Mar 13 2006 David Lutterkort <dlutter@redhat.com> - 0.15.0-1
@@ -190,7 +194,7 @@ fi
   allocate the puppet uid/gid dynamically
 
 * Sun Feb 19 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-4
-- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed
+- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed 
 problem with listing fileserver.conf and puppetmaster.conf twice
 
 * Wed Feb  8 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-3
@@ -215,7 +219,7 @@ problem with listing fileserver.conf and puppetmaster.conf twice
 - Added basic fileserver.conf
 
 * Wed Jan 11 2006 David Lutterkort <dlutter@redhat.com> - 0.10.1-1
-- Updated. Moved installation of library files to sitelibdir. Pulled
+- Updated. Moved installation of library files to sitelibdir. Pulled 
 initscripts into separate files. Folded tools rpm into server
 
 * Thu Nov 24 2005 Duane Griffin <d.griffin@psenterprise.com>
