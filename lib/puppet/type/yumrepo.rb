@@ -325,6 +325,12 @@ module Puppet
       newvalue(%r{[1-9][0-9]?}) { }
     end
 
+    newproperty(:cost, :parent => Puppet::IniProperty) do
+      desc "Cost of this repository.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{\d+}) { }
+    end
+
     newproperty(:proxy, :parent => Puppet::IniProperty) do
       desc "URL to the proxy server for this repository.\n#{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
