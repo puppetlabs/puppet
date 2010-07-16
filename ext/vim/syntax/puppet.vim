@@ -33,6 +33,7 @@ syn match   puppetNodeRe        "/.*/" contained
 "FIXME: "Foo-bar" doesn't get highlighted as expected, although "foo-bar" does.
 syn match   puppetInstance      "[A-Za-z0-9_-]\+\(::[A-Za-z0-9_-]\+\)*\s*{" contains=puppetTypeName,puppetTypeDefault
 syn match   puppetInstance      "[A-Z][a-z_-]\+\(::[A-Z][a-z_-]\+\)*\s*[[{]" contains=puppetTypeName,puppetTypeDefault
+syn match   puppetInstance      "[A-Z][a-z_-]\+\(::[A-Z][a-z_-]\+\)*\s*<\?<|" contains=puppetTypeName,puppetTypeDefault
 syn match   puppetTypeName      "[a-z]\w*" contained
 syn match   puppetTypeDefault   "[A-Z]\w*" contained
 
