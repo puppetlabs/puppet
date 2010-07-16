@@ -25,8 +25,9 @@ describe Puppet::Node::Exec do
 
   describe "when handling the results of the command" do
     before do
-      @node = stub 'node', :fact_merge => nil
       @name = "yay"
+      @node = Puppet::Node.new(@name)
+      @node.stubs(:fact_merge)
       Puppet::Node.expects(:new).with(@name).returns(@node)
       @result = {}
       # Use a local variable so the reference is usable in the execute definition.
@@ -45,14 +46,14 @@ describe Puppet::Node::Exec do
 
     it "should set the resulting parameters as the node parameters" do
       @result[:parameters] = {"a" => "b", "c" => "d"}
-      @node.expects(:parameters=).with "a" => "b", "c" => "d"
       @searcher.find(@request)
+      @node.parameters.should == {"a" => "b", "c" => "d"}
     end
 
     it "should set the resulting classes as the node classes" do
       @result[:classes] = %w{one two}
-      @node.expects(:classes=).with %w{one two}
       @searcher.find(@request)
+      @node.classes.should == [ 'one', 'two' ]
     end
 
     it "should merge the node's facts with its parameters" do
@@ -62,8 +63,8 @@ describe Puppet::Node::Exec do
 
     it "should set the node's environment if one is provided" do
       @result[:environment] = "yay"
-      @node.expects(:environment=).with "yay"
       @searcher.find(@request)
+      @node.environment.to_s.should == 'yay'
     end
   end
 end
