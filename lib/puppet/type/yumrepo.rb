@@ -85,7 +85,7 @@ module Puppet
       clear
       inifile.each_section do |s|
         next if s.name == "main"
-        obj = create(:name => s.name, :audit => check)
+        obj = new(:name => s.name, :audit => check)
         current_values = obj.retrieve
         obj.eachproperty do |property|
           if current_values[property].nil?
