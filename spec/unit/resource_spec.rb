@@ -687,6 +687,13 @@ describe Puppet::Resource do
       result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
       result[:requires].should == "File[/bar]"
     end
+
+    it "should serialize multiple relationships as arrays of reference strings" do
+      resource = Puppet::Resource.new("File", "/foo")
+      resource[:requires] = [Puppet::Resource.new("File", "/bar"), Puppet::Resource.new("File", "/baz")]
+      result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
+      result[:requires].should == [ "File[/bar]",  "File[/baz]" ]
+    end
   end
 
   describe "when converting from pson" do

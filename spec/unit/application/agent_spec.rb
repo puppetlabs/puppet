@@ -59,12 +59,6 @@ describe Puppet::Application::Agent do
       @puppetd.preinit
     end
 
-    it "should set waitforcert to 120" do
-      @puppetd.preinit
-
-      @puppetd.options[:waitforcert].should == 120
-    end
-
     it "should init client to true" do
       @puppetd.preinit
 
@@ -124,21 +118,22 @@ describe Puppet::Application::Agent do
       @puppetd.options[:client].should be_false
     end
 
-    it "should set onetime to true with --onetime" do
-      @puppetd.handle_onetime(nil)
-      Puppet[:onetime].should be_true
-    end
-
     it "should set waitforcert to 0 with --onetime and if --waitforcert wasn't given" do
-      @puppetd.explicit_waitforcert = false
-      @puppetd.handle_onetime(nil)
-      @puppetd.options[:waitforcert].should == 0
+      Puppet[:onetime] = true
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(0)
+      @puppetd.setup_host
     end
 
-    it "should not reset waitforcert with --onetime when --waitforcert is used" do
-      @puppetd.explicit_waitforcert = true
-      @puppetd.handle_onetime(nil)
-      @puppetd.options[:waitforcert].should_not == 0
+    it "should use supplied waitforcert when --onetime is specified" do
+      Puppet[:onetime] = true
+      @puppetd.handle_waitforcert(60)
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(60)
+      @puppetd.setup_host
+    end
+
+    it "should use a default value for waitforcert when --onetime and --waitforcert are not specified" do
+      Puppet::SSL::Host.any_instance.expects(:wait_for_cert).with(120)
+      @puppetd.setup_host
     end
 
     it "should set the log destination with --logdest" do
@@ -166,13 +161,6 @@ describe Puppet::Application::Agent do
       @puppetd.options.expects(:[]=).with(:waitforcert,42)
 
       @puppetd.handle_waitforcert("42")
-    end
-
-    it "should mark explicit_waitforcert to true with --waitforcert" do
-      @puppetd.options.stubs(:[]=)
-
-      @puppetd.handle_waitforcert("42")
-      @puppetd.explicit_waitforcert.should be_true
     end
 
     it "should set args[:Port] with --port" do
@@ -224,10 +212,6 @@ describe Puppet::Application::Agent do
       end
       it "should set options[:detailed_exitcodes] to true" do
         @puppetd.options.expects(:[]=).with(:detailed_exitcodes,true)
-        @puppetd.setup_test
-      end
-      it "should set waitforcert to 0" do
-        @puppetd.options.expects(:[]=).with(:waitforcert,0)
         @puppetd.setup_test
       end
     end
