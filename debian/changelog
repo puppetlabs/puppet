@@ -1,4 +1,4 @@
-puppet (2.6.0~rc2-1) UNRELEASED; urgency=low
+puppet (2.6.0~rc3-1) UNRELEASED; urgency=low
 
   * New upstream version
   * Fix "short package description doesn't differ from binary package
