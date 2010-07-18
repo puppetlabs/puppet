@@ -11,8 +11,9 @@ puppet (2.6.0~rc3-1) UNRELEASED; urgency=low
     it is included already
   * move manpage puppet(8) to package puppet-common
   * Debian fix: set correct header in puppet.conf(5)
+  * Add puppetqd(8) to the puppetmaster package
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Mon, 12 Jul 2010 16:59:22 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 18 Jul 2010 23:44:15 +0200
 
 puppet (0.25.5-1) unstable; urgency=low
 
