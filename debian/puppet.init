@@ -36,7 +36,7 @@ reload_puppet_agent() {
 start_puppet_agent() {
     if is_true "$START" ; then
 	start-stop-daemon --start --quiet --pidfile $PIDFILE \
-	    --startas $DAEMON -- $DAEMON_OPTS
+	    --startas $DAEMON -- $NAME $DAEMON_OPTS
     else
 	echo ""
 	echo "puppet not configured to start, please edit /etc/default/puppet to enable"

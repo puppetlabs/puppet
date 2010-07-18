@@ -9,7 +9,7 @@
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 DAEMON=/usr/bin/puppet
-DAEMON_OPTS="master"
+DAEMON_OPTS=""
 NAME=master
 DESC="puppet master"
 
@@ -42,13 +42,13 @@ start_puppet_master() {
 	    STARTPORT=$PORT
 	    while [ $NUMSTART -lt $PUPPETMASTERS ]; do 
 		start-stop-daemon --start --quiet --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid \
-		    --startas $DAEMON -- $DAEMON_OPTS --masterport=$STARTPORT --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid
+		    --startas $DAEMON -- $NAME $DAEMON_OPTS --masterport=$STARTPORT --pidfile=/var/run/puppet/${NAME}-${STARTPORT}.pid
 		STARTPORT=$(($STARTPORT + 1))
 		NUMSTART=$(($NUMSTART + 1))
 	    done
 	else
 	    start-stop-daemon --start --quiet --pidfile /var/run/puppet/${NAME}.pid \
-		--startas $DAEMON -- $DAEMON_OPTS --masterport=$PORT
+		--startas $DAEMON -- $NAME $DAEMON_OPTS --masterport=$PORT
 	fi
     else
 	echo ""
