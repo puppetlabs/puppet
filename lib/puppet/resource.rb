@@ -199,7 +199,7 @@ class Puppet::Resource
   end
 
   def resource_type
-    case type
+    @resource_type ||= case type
     when "Class"; find_hostclass(title)
     when "Node"; find_node(title)
     else

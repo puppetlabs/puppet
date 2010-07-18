@@ -32,12 +32,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   # Set up some boolean test methods
-  [:translated, :override, :evaluated].each do |method|
-    newmeth = (method.to_s + "?").intern
-    define_method(newmeth) do
-      self.send(method)
-    end
-  end
+  def translated?; !!@translated; end
+  def override?;   !!@override;   end
+  def evaluated?;  !!@evaluated;  end
 
   def [](param)
     param = symbolize(param)

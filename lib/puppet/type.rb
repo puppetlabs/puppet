@@ -1874,12 +1874,8 @@ class Type
     self.to_trans.to_resource
   end
 
-  %w{exported virtual}.each do |m|
-    define_method(m+"?") do
-      self.send(m)
-    end
-  end
-
+  def virtual?;  !!@virtual;  end
+  def exported?; !!@exported; end
 end
 end
 
