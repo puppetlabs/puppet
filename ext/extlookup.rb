@@ -74,7 +74,7 @@
 # need to edit a load of manifests to do simple things like adjust a desired version number.
 #
 # For more information on installing and writing your own custom functions see:
-#    http://puppetlabs.com/trac/puppet/wiki/WritingYourOwnFunctions
+#    http://docs.puppetlabs.com/guides/custom_functions.html
 #
 # For further help contact Volcane on #puppet
 require 'csv'

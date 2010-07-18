@@ -41,7 +41,7 @@ class DirectoryService < Puppet::Provider::NameService
 
   # JJM 2007-07-25: This map is used to map NameService attributes to their
   #     corresponding DirectoryService attribute names.
-  #     See: http://images.apple.com/server/docs/Open_Directory_v10.4.pdf
+  #     See: http://images.apple.com/server/docs.Open_Directory_v10.4.pdf
   # JJM: Note, this is de-coupled from the Puppet::Type, and must
   #     be actively maintained.  There may also be collisions with different
   #     types (Users, Groups, Mounts, Hosts, etc...)
