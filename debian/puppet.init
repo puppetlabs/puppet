@@ -9,10 +9,10 @@
 ### END INIT INFO                                                                                                                                          
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/puppetd
-DAEMON_OPTS=""
-NAME=puppetd
-DESC="puppet configuration management tool"
+DAEMON=/usr/bin/puppet
+DAEMON_OPTS="agent"
+NAME=agent
+DESC="puppet agent"
 PIDFILE="/var/run/puppet/${NAME}.pid"
 
 test -x $DAEMON || exit 0
@@ -29,11 +29,11 @@ is_true() {
     fi
 }
 
-reload_puppet() {
+reload_puppet_agent() {
 	start-stop-daemon --stop --quiet --signal HUP --pidfile $PIDFILE 
 }
 
-start_puppet() {
+start_puppet_agent() {
     if is_true "$START" ; then
 	start-stop-daemon --start --quiet --pidfile $PIDFILE \
 	    --startas $DAEMON -- $DAEMON_OPTS
@@ -43,38 +43,38 @@ start_puppet() {
     fi
 }
 
-stop_puppet() {
+stop_puppet_agent() {
 	start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
 }
 
-status_puppet() {
+status_puppet_agent() {
 	status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
 }
 
 case "$1" in
     start)
 	log_begin_msg "Starting $DESC"
-	start_puppet
+	start_puppet_agent
 	log_end_msg $?
 	;;
     stop)
 	log_begin_msg "Stopping $DESC"
-	stop_puppet
+	stop_puppet_agent
 	log_end_msg $?
 	;;
     reload)
     	log_begin_msg "Reloading $DESC"
-    	reload_puppet
+        reload_puppet_agent
     	log_end_msg $?
     	;;
     status)
-	status_puppet
+        status_puppet_agent
 	;;
     restart|force-reload)
 	log_begin_msg "Restarting $DESC"
-	stop_puppet
+	stop_puppet_agent
 	sleep 1
-	start_puppet
+	start_puppet_agent
 	log_end_msg $?
 	;;
   *)

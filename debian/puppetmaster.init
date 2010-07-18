@@ -8,10 +8,10 @@
 ### END INIT INFO                 
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/puppetmasterd
-DAEMON_OPTS=""
-NAME=puppetmasterd
-DESC="puppet configuration management tool master server"
+DAEMON=/usr/bin/puppet
+DAEMON_OPTS="master"
+NAME=master
+DESC="puppet master"
 
 test -x $DAEMON || exit 0
 
@@ -33,7 +33,7 @@ is_true() {
     fi
 }
 
-start_puppetmaster() {
+start_puppet_master() {
     if is_true "$START" ; then
 	if [ "$SERVERTYPE" = "mongrel" ]
 	then
@@ -56,7 +56,7 @@ start_puppetmaster() {
     fi
 }
 
-stop_puppetmaster() {
+stop_puppet_master() {
     if [ "$SERVERTYPE" = "mongrel" ]
     then
 	NUMSTART=0
@@ -72,7 +72,7 @@ stop_puppetmaster() {
     fi
 }
 
-status_puppetmaster() {
+status_puppet_master() {
     if is_true "$START" ; then
 	if [ "$SERVERTYPE" = "mongrel" ]
 	then
@@ -97,25 +97,25 @@ status_puppetmaster() {
 case "$1" in
     start)
 	log_begin_msg "Starting $DESC"
-	start_puppetmaster
+	start_puppet_master
 	log_end_msg $?
 	;;
     stop)
 	log_begin_msg "Stopping $DESC"
-	stop_puppetmaster
+	stop_puppet_master
 	log_end_msg $?
 	;;
     reload)
   	# Do nothing, as Puppetmaster rechecks its config automatically
         ;;
     status)
-	    status_puppetmaster
+	status_puppet_master
         ;;
     restart|force-reload)
 	log_begin_msg "Restarting $DESC"
-	stop_puppetmaster
+	stop_puppet_master
 	sleep 1
-	start_puppetmaster
+	start_puppet_master
 	log_end_msg $?
 	;;
     *)

@@ -8,10 +8,11 @@
 ### END INIT INFO                 
 
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
-DAEMON=/usr/sbin/puppetqd
-DAEMON_OPTS=""
-NAME=puppetqd
-DESC="puppetmaster queue broker management daemon"
+DAEMON=/usr/bin/puppet
+DAEMON_OPTS="queue"
+NAME=queue
+DESC="puppet queue"
+PIDFILE="${PIDFILE}"
 
 test -x $DAEMON || exit 0
 
@@ -33,20 +34,20 @@ is_true() {
     fi
 }
 
-start_puppetqd() {
+start_puppet_queue() {
     if is_true "$PUPPETQD" ; then
-	start-stop-daemon --start --quiet --pidfile=/var/run/puppet/puppetqd.pid \
+	start-stop-daemon --start --quiet --pidfile=${PIDFILE} \
 	    --startas $DAEMON -- $DAEMON_OPTS
     fi
 }
 
-stop_puppetqd() {
-    start-stop-daemon --stop --quiet --oknodo --pidfile /var/run/puppet/puppetqd.pid
+stop_puppet_queue() {
+    start-stop-daemon --stop --quiet --oknodo --pidfile ${PIDFILE}
 }
 
-status_puppetqd() {
+status_puppet_queue() {
     if is_true "$PUPPETQD" ; then
-        status_of_proc -p "/var/run/puppet/puppetqd.pid" "${DAEMON}" "${NAME}"
+        status_of_proc -p "${PIDFILE}" "${DAEMON}" "${NAME}"
     else
 	echo ""
 	echo "puppetqd not configured to start"
@@ -57,22 +58,22 @@ status_puppetqd() {
 case "$1" in
     start)
 	log_begin_msg "Starting $DESC"
-	start_puppetqd
+	start_puppet_queue
 	log_end_msg $?
 	;;
     stop)
 	log_begin_msg "Stopping $DESC"
-	stop_puppetqd
+	stop_puppet_queue
 	log_end_msg $?
 	;;
     status)
-	    status_puppetqd
+	status_puppet_queue
         ;;
     reload|restart|force-reload)
 	log_begin_msg "Restarting $DESC"
-	stop_puppetqd
+	stop_puppet_queue
 	sleep 1
-	start_puppetqd
+	start_puppet_queue
 	log_end_msg $?
 	;;
     *)
