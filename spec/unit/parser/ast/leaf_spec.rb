@@ -13,63 +13,6 @@ describe Puppet::Parser::AST::Leaf do
     Puppet::Parser::AST::Leaf.new(:value => "value").should respond_to(:evaluate_match)
   end
 
-  describe "when evaluate_match is called" do
-    it "should evaluate itself" do
-      @leaf.expects(:safeevaluate).with(@scope)
-
-      @leaf.evaluate_match("value", @scope)
-    end
-
-    it "should match values by equality" do
-      @value.stubs(:==).returns(false)
-      @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
-      @value.expects(:==).with("value")
-
-      @leaf.evaluate_match("value", @scope)
-    end
-
-    it "should downcase the evaluated value if wanted" do
-      @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
-      @value.expects(:downcase).returns("value")
-
-      @leaf.evaluate_match("value", @scope)
-    end
-
-    it "should convert values to number" do
-      @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
-      Puppet::Parser::Scope.expects(:number?).with(@value).returns(2)
-      Puppet::Parser::Scope.expects(:number?).with("23").returns(23)
-
-      @leaf.evaluate_match("23", @scope)
-    end
-
-    it "should compare 'numberized' values" do
-      @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
-      two = stub_everything 'two'
-      one = stub_everything 'one'
-
-      Puppet::Parser::Scope.stubs(:number?).with(@value).returns(one)
-      Puppet::Parser::Scope.stubs(:number?).with("2").returns(two)
-
-      one.expects(:==).with(two)
-
-      @leaf.evaluate_match("2", @scope)
-    end
-
-    it "should match undef if value is an empty string" do
-      @leaf.stubs(:safeevaluate).with(@scope).returns("")
-
-      @leaf.evaluate_match(:undef, @scope).should be_true
-    end
-
-    it "should downcase the parameter value if wanted" do
-      parameter = stub 'parameter'
-      parameter.expects(:downcase).returns("value")
-
-      @leaf.evaluate_match(parameter, @scope)
-    end
-  end
-
   describe "when converting to string" do
     it "should transform its value to string" do
       value = stub 'value', :is_a? => true
