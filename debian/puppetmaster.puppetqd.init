@@ -12,7 +12,7 @@ DAEMON=/usr/bin/puppet
 DAEMON_OPTS="queue"
 NAME=queue
 DESC="puppet queue"
-PIDFILE="${PIDFILE}"
+PIDFILE="/var/run/puppet/${NAME}"
 
 test -x $DAEMON || exit 0
 
