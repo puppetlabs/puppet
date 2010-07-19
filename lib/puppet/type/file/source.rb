@@ -106,8 +106,6 @@ module Puppet
         next if metadata_method == :checksum and metadata.ftype == "directory"
 
         if resource[param_name].nil? or resource[param_name] == :absent
-          v = metadata.send(metadata_method)
-          resource.info "Setting #{param_name} to #{v}"
           resource[param_name] = metadata.send(metadata_method)
         end
       end
