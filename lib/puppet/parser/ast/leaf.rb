@@ -63,7 +63,7 @@ class Puppet::Parser::AST
 
   class Concat < AST::Leaf
     def evaluate(scope)
-      @value.collect { |x| x.evaluate(scope) }.join
+      @value.collect { |x| x.evaluate(scope) }.collect{ |x| x == :undef ? '' : x }.join
     end
 
     def to_s

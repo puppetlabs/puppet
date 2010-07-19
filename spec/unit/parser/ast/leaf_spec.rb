@@ -50,6 +50,37 @@ describe Puppet::Parser::AST::String do
   end
 end
 
+describe Puppet::Parser::AST::Concat do
+  describe "when evaluating" do
+    before :each do
+      @scope = stub_everything 'scope'
+    end
+    it "should interpolate variables and concatenate their values" do
+      one = Puppet::Parser::AST::String.new(:value => "one")
+      one.stubs(:evaluate).returns("one ")
+      two = Puppet::Parser::AST::String.new(:value => "two")
+      two.stubs(:evaluate).returns(" two ")
+      three = Puppet::Parser::AST::String.new(:value => "three")
+      three.stubs(:evaluate).returns(" three")
+      var = Puppet::Parser::AST::Variable.new(:value => "myvar")
+      var.stubs(:evaluate).returns("foo")
+      array = Puppet::Parser::AST::Variable.new(:value => "array")
+      array.stubs(:evaluate).returns(["bar","baz"])
+      concat = Puppet::Parser::AST::Concat.new(:value => [one,var,two,array,three])
+
+      concat.evaluate(@scope).should == 'one foo two barbaz three'
+    end
+
+    it "should transform undef variables to empty string" do
+      var = Puppet::Parser::AST::Variable.new(:value => "myvar")
+      var.stubs(:evaluate).returns(:undef)
+      concat = Puppet::Parser::AST::Concat.new(:value => [var])
+
+      concat.evaluate(@scope).should == ''
+    end
+  end
+end
+
 describe Puppet::Parser::AST::Undef do
   before :each do
     @scope = stub 'scope'
