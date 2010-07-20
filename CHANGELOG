@@ -1,5 +1,16 @@
+2.6.0
+=====
+42a475e  Fixing #4268 - manifests always imported
+06fc40c  [#4269] Undef variables interpolate to empty string
+1288f8c  [#4270] Force inherited classes to load into the correct environment
+539d716  [#4287] Fix the undefined evaluate_match error when comparing functions
+d2da1d4  Tweak to tweak to fix for #4233 -- ":" is valid in type names
+bbc07f2  Bandaid for #4285 -- :name vs <namevar>
+40e6f02  Tweak to fix for #4233 -- only accept word chars in types
+
 2.6.0rc4
 ========
+d87a2e3  Updated CHANGELOG for 2.6.0RC4
 cf597d7  [#4233] Ruby regexps are not multiline by default, but Resource titles can be multiline
 d6cbb21  Fix for #4234 -- ruby DSL fails on second resource
 4822de3  Fix for #4236 -- Only interpolate $ if followed by a variable
