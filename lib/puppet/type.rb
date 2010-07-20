@@ -193,7 +193,7 @@ class Type
     when 0; []
     when 1;
       identity = lambda {|x| x}
-      [ [ /(.*)/, [ [key_attributes.first, identity ] ] ] ]
+      [ [ /(.*)/m, [ [key_attributes.first, identity ] ] ] ]
     else
       raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
     end
@@ -723,6 +723,10 @@ class Type
 
   # Are we running in noop mode?
   def noop?
+    # If we're not a host_config, we're almost certainly part of
+    # Settings, and we want to ignore 'noop'
+    return false if catalog and ! catalog.host_config?
+
     if defined?(@noop)
       @noop
     else
@@ -1874,12 +1878,8 @@ class Type
     self.to_trans.to_resource
   end
 
-  %w{exported virtual}.each do |m|
-    define_method(m+"?") do
-      self.send(m)
-    end
-  end
-
+  def virtual?;  !!@virtual;  end
+  def exported?; !!@exported; end
 end
 end
 

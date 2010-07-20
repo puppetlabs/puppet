@@ -10,17 +10,6 @@ class Puppet::Parser::AST
       @value
     end
 
-    # evaluate ourselves, and match
-    def evaluate_match(value, scope)
-      obj = self.safeevaluate(scope)
-
-      obj   = obj.downcase   if obj.respond_to?(:downcase)
-      value = value.downcase if value.respond_to?(:downcase)
-
-      # "" == undef for case/selector/if
-      obj == value or (obj == "" and value == :undef)
-    end
-
     def match(value)
       @value == value
     end
@@ -74,7 +63,7 @@ class Puppet::Parser::AST
 
   class Concat < AST::Leaf
     def evaluate(scope)
-      @value.collect { |x| x.evaluate(scope) }.join
+      @value.collect { |x| x.evaluate(scope) }.collect{ |x| x == :undef ? '' : x }.join
     end
 
     def to_s

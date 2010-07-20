@@ -199,7 +199,7 @@ class Puppet::Resource
   end
 
   def resource_type
-    case type
+    @resource_type ||= case type
     when "Class"; find_hostclass(title)
     when "Node"; find_node(title)
     else
@@ -217,7 +217,11 @@ class Puppet::Resource
   end
 
   def uniqueness_key
-    self.to_hash.values_at(*key_attributes.sort_by { |k| k.to_s })
+    # Temporary kludge to deal with inconsistant use patters
+    h = self.to_hash
+    h[namevar] ||= h[:name]
+    h[:name]   ||= h[namevar]
+    h.values_at(*key_attributes.sort_by { |k| k.to_s })
   end
 
   def key_attributes
@@ -353,7 +357,8 @@ class Puppet::Resource
 
   def find_resource_type(type)
     # It still works fine without the type == 'class' short-cut, but it is a lot slower.
-    find_builtin_resource_type(type) || find_defined_resource_type(type) unless type.to_s.downcase == 'class'
+    return nil if ["class", "node"].include? type.to_s.downcase
+    find_builtin_resource_type(type) || find_defined_resource_type(type)
   end
 
   def find_builtin_resource_type(type)
@@ -409,6 +414,9 @@ class Puppet::Resource
     if    (argtitle || argtype) =~ /^([^\[\]]+)\[(.+)\]$/m then [ $1,                 $2            ]
     elsif argtitle                                         then [ argtype,            argtitle      ]
     elsif argtype.is_a?(Puppet::Type)                      then [ argtype.class.name, argtype.title ]
+    elsif argtype.is_a?(Hash)                              then
+      raise ArgumentError, "Puppet::Resource.new does not take a hash as the first argument. "+
+        "Did you mean (#{(argtype[:type] || argtype["type"]).inspect}, #{(argtype[:title] || argtype["title"]).inspect }) ?"
     else raise ArgumentError, "No title provided and #{argtype.inspect} is not a valid resource reference"
     end
   end

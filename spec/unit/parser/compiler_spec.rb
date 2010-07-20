@@ -23,7 +23,7 @@ class CompilerTestResource
     @evaluated
   end
 
-  def builtin?
+  def builtin_type?
     @builtin
   end
 

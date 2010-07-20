@@ -137,6 +137,16 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Parser::Compiler.stubs(:compile)
       @compiler.find(@request)
     end
+
+    it "should log the benchmark result" do
+      Puppet::Node.stubs(:find).returns(@node)
+      @compiler.stubs(:networked?).returns(true)
+      Puppet::Parser::Compiler.stubs(:compile)
+
+      Puppet.expects(:notice).with { |msg| msg =~ /Compiled catalog/ }
+
+      @compiler.find(@request)
+    end
   end
 
   describe "when extracting facts from the request" do

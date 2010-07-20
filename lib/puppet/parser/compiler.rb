@@ -251,19 +251,7 @@ class Puppet::Parser::Compiler
   # evaluate_generators loop.
   def evaluate_definitions
     exceptwrap do
-      if ary = unevaluated_resources
-        evaluated = false
-        ary.each do |resource|
-          if not resource.virtual?
-            resource.evaluate
-            evaluated = true
-          end
-        end
-        # If we evaluated, let the loop know.
-        return evaluated
-      else
-        return false
-      end
+      !unevaluated_resources.each { |resource| resource.evaluate }.empty?
     end
   end
 
@@ -482,12 +470,7 @@ class Puppet::Parser::Compiler
   # Return an array of all of the unevaluated resources.  These will be definitions,
   # which need to get evaluated into native resources.
   def unevaluated_resources
-    ary = resources.reject { |resource| resource.builtin? or resource.evaluated?  }
-
-    if ary.empty?
-      return nil
-    else
-      return ary
-    end
+    # The order of these is significant for speed due to short-circuting
+    resources.reject { |resource| resource.evaluated? or resource.virtual? or resource.builtin_type? }
   end
 end

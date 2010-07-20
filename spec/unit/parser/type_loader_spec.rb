@@ -38,16 +38,16 @@ describe Puppet::Parser::TypeLoader do
 
     it "should attempt to import each generated name" do
       @loader.expects(:name2files).returns %w{foo bar}
-      @loader.expects(:import).with("foo")
-      @loader.expects(:import).with("bar")
+      @loader.expects(:import).with("foo",nil)
+      @loader.expects(:import).with("bar",nil)
       @loader.load_until(["foo"], "bar") { |f| false }
     end
 
     it "should yield after each import" do
       yielded = []
       @loader.expects(:name2files).returns %w{foo bar}
-      @loader.expects(:import).with("foo")
-      @loader.expects(:import).with("bar")
+      @loader.expects(:import).with("foo",nil)
+      @loader.expects(:import).with("bar",nil)
       @loader.load_until(["foo"], "bar") { |f| yielded << f; false }
       yielded.should == %w{foo bar}
     end
@@ -55,31 +55,31 @@ describe Puppet::Parser::TypeLoader do
     it "should stop importing when the yielded block returns true" do
       yielded = []
       @loader.expects(:name2files).returns %w{foo bar baz}
-      @loader.expects(:import).with("foo")
-      @loader.expects(:import).with("bar")
-      @loader.expects(:import).with("baz").never
+      @loader.expects(:import).with("foo",nil)
+      @loader.expects(:import).with("bar",nil)
+      @loader.expects(:import).with("baz",nil).never
       @loader.load_until(["foo"], "bar") { |f| true if f == "bar" }
     end
 
     it "should return the result of the block" do
       yielded = []
       @loader.expects(:name2files).returns %w{foo bar baz}
-      @loader.expects(:import).with("foo")
-      @loader.expects(:import).with("bar")
-      @loader.expects(:import).with("baz").never
+      @loader.expects(:import).with("foo",nil)
+      @loader.expects(:import).with("bar",nil)
+      @loader.expects(:import).with("baz",nil).never
       @loader.load_until(["foo"], "bar") { |f| 10 if f == "bar" }.should == 10
     end
 
     it "should return nil if the block never returns true" do
       @loader.expects(:name2files).returns %w{foo bar}
-      @loader.expects(:import).with("foo")
-      @loader.expects(:import).with("bar")
+      @loader.expects(:import).with("foo",nil)
+      @loader.expects(:import).with("bar",nil)
       @loader.load_until(["foo"], "bar") { |f| false }.should be_nil
     end
 
     it "should know when a given name has been loaded" do
       @loader.expects(:name2files).returns %w{file}
-      @loader.expects(:import).with("file")
+      @loader.expects(:import).with("file",nil)
       @loader.load_until(["foo"], "bar") { |f| true }
       @loader.should be_loaded("file")
     end

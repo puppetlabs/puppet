@@ -1,5 +1,34 @@
+2.6.0
+=====
+42a475e  Fixing #4268 - manifests always imported
+06fc40c  [#4269] Undef variables interpolate to empty string
+1288f8c  [#4270] Force inherited classes to load into the correct environment
+539d716  [#4287] Fix the undefined evaluate_match error when comparing functions
+d2da1d4  Tweak to tweak to fix for #4233 -- ":" is valid in type names
+bbc07f2  Bandaid for #4285 -- :name vs <namevar>
+40e6f02  Tweak to fix for #4233 -- only accept word chars in types
+
+2.6.0rc4
+========
+d87a2e3  Updated CHANGELOG for 2.6.0RC4
+cf597d7  [#4233] Ruby regexps are not multiline by default, but Resource titles can be multiline
+d6cbb21  Fix for #4234 -- ruby DSL fails on second resource
+4822de3  Fix for #4236 -- Only interpolate $ if followed by a variable
+b509032  Fix #4238 - if should match undef as ''
+8c8c146  Minimal fix for #4243 -- import isn't thread safe
+d319da4  [#4247] storeconfigs was calling Puppet::Parser::Resource.new with the wrong arguments
+9f91540  [#4256] External nodes parameters can now be assigned to nodes
+680dd1a  Fix for #4257 -- problems resolving ::-prefixed classes
+6e07a19  Fix #4262 - Puppetmaster used to log compilation time
+5b68afe  Fix for #4255 -- misleading diagnostic message
+dd03ac9  Partial fix for #4278 -- the performance aspects
+4ce33fd  Fixed #4249 - Updated SUSE packaging specifications
+91185c6  New man pages for 2.6.0
+1cda7c5  Fixes errant Trac references in documentation
+
 2.6.0rc3
 ========
+f60b6a0  Updated CHANGELOG for 2.6.0rc3
 9df87e9  [#4219] Install misses command_line dir, puppet $app --help fails
 0422852  conf/redhat: Consistently pass pidfile option to daemon, killproc, and status
 63bf037  conf/redhat: Update conf/init files for single binary

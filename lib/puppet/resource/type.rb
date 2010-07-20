@@ -145,7 +145,12 @@ class Puppet::Resource::Type
     resource_type = type == :hostclass ? :class : :node
 
     # Make sure our parent class has been evaluated, if we have one.
-    parent_type.mk_plain_resource(scope) if parent and ! scope.catalog.resource(resource_type, parent)
+    if parent
+      parent_resource = scope.catalog.resource(resource_type, parent)
+      unless parent_resource
+        parent_type(scope).mk_plain_resource(scope)
+      end
+    end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the
@@ -169,11 +174,14 @@ class Puppet::Resource::Type
     @name.is_a?(Regexp)
   end
 
-  def parent_type
+  def parent_type(scope = nil)
     return nil unless parent
 
-    unless @parent_type ||= resource_type_collection.send(type, parent)
-      fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type}"
+    unless @parent_type
+      raise "Must pass scope to parent_type when called first time" unless scope
+      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", scope.namespaces, parent)
+        fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"
+      end
     end
 
     @parent_type
@@ -255,7 +263,7 @@ class Puppet::Resource::Type
   end
 
   def evaluate_parent_type(resource)
-    return unless klass = parent_type and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
+    return unless klass = parent_type(resource.scope) and parent_resource = resource.scope.compiler.catalog.resource(:class, klass.name) || resource.scope.compiler.catalog.resource(:node, klass.name)
     parent_resource.evaluate unless parent_resource.evaluated?
     parent_scope(resource.scope, klass)
   end
