@@ -357,7 +357,8 @@ class Puppet::Resource
 
   def find_resource_type(type)
     # It still works fine without the type == 'class' short-cut, but it is a lot slower.
-    find_builtin_resource_type(type) || find_defined_resource_type(type) unless type.to_s.downcase == 'class'
+    return nil if ["class", "node"].include? type.to_s.downcase
+    find_builtin_resource_type(type) || find_defined_resource_type(type)
   end
 
   def find_builtin_resource_type(type)
