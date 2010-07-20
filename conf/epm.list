@@ -1,6 +1,6 @@
 %product Puppet
-%copyright 2004-2005 by Reductive Labs, All Rights Reserved
-%vendor Reductive Labs
+%copyright 2004-2005 by Puppet Labs, All Rights Reserved
+%vendor Puppet Labs
 %license COPYING
 %readme README
 %description System Automation and Configuration Management Software
