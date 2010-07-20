@@ -123,6 +123,22 @@ describe Puppet::Type do
     Puppet::Type.type(:mount).new(:name => "foo").type.should == :mount
   end
 
+  it "should use any provided noop value" do
+    Puppet::Type.type(:mount).new(:name => "foo", :noop => true).must be_noop
+  end
+
+  it "should use the global noop value if none is provided" do
+    Puppet[:noop] = true
+    Puppet::Type.type(:mount).new(:name => "foo").must be_noop
+  end
+
+  it "should not be noop if in a non-host_config catalog" do
+    resource = Puppet::Type.type(:mount).new(:name => "foo")
+    catalog = Puppet::Resource::Catalog.new
+    catalog.add_resource resource
+    resource.should_not be_noop
+  end
+
   describe "when creating an event" do
     before do
       @resource = Puppet::Type.type(:mount).new :name => "foo"
