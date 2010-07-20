@@ -77,7 +77,7 @@ install: build
 	$(INSTALL) -m0644 ext/rack/files/config.ru \
 		$(CURDIR)/debian/puppetmaster/usr/share/puppet/rack/puppetmasterd
 
-	dh_installexamples examples/*
+	dh_installexamples -p puppet-common examples/*
 
 	$(INSTALL) -d -m0775 $(pkgconfdir)/templates
 	$(INSTALL) -d -m0775 $(pkgconfdir)/modules
