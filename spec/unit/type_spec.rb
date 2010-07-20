@@ -406,6 +406,27 @@ describe Puppet::Type do
     end
   end
 
+  describe ".title_patterns" do
+    describe "when there's one namevar" do
+      before do
+        @type_class = Puppet::Type.type(:notify)
+        @type_class.stubs(:key_attributes).returns([:one])
+      end
+
+      it "should have a default pattern for when there's one namevar" do
+        patterns = @type_class.title_patterns
+        patterns.length.should == 1
+        patterns[0].length.should == 2
+      end
+      
+      it "should have a regexp that captures the entire string" do
+        patterns = @type_class.title_patterns
+        string = "abc\n\tdef"
+        patterns[0][0] =~ string
+        $1.should == "abc\n\tdef"
+      end
+    end
+  end
 
   describe "when in a catalog" do
     before do

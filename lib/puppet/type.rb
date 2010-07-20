@@ -193,7 +193,7 @@ class Type
     when 0; []
     when 1;
       identity = lambda {|x| x}
-      [ [ /(.*)/, [ [key_attributes.first, identity ] ] ] ]
+      [ [ /(.*)/m, [ [key_attributes.first, identity ] ] ] ]
     else
       raise Puppet::DevError,"you must specify title patterns when there are two or more key attributes"
     end
@@ -1874,12 +1874,8 @@ class Type
     self.to_trans.to_resource
   end
 
-  %w{exported virtual}.each do |m|
-    define_method(m+"?") do
-      self.send(m)
-    end
-  end
-
+  def virtual?;  !!@virtual;  end
+  def exported?; !!@exported; end
 end
 end
 

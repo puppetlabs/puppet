@@ -35,6 +35,27 @@ describe Puppet::Parser::AST::Leaf do
       @leaf.evaluate_match("value", @scope)
     end
 
+    it "should convert values to number" do
+      @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
+      Puppet::Parser::Scope.expects(:number?).with(@value).returns(2)
+      Puppet::Parser::Scope.expects(:number?).with("23").returns(23)
+
+      @leaf.evaluate_match("23", @scope)
+    end
+
+    it "should compare 'numberized' values" do
+      @leaf.stubs(:safeevaluate).with(@scope).returns(@value)
+      two = stub_everything 'two'
+      one = stub_everything 'one'
+
+      Puppet::Parser::Scope.stubs(:number?).with(@value).returns(one)
+      Puppet::Parser::Scope.stubs(:number?).with("2").returns(two)
+
+      one.expects(:==).with(two)
+
+      @leaf.evaluate_match("2", @scope)
+    end
+
     it "should match undef if value is an empty string" do
       @leaf.stubs(:safeevaluate).with(@scope).returns("")
 

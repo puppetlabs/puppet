@@ -17,6 +17,9 @@ class Puppet::Parser::AST
       obj   = obj.downcase   if obj.respond_to?(:downcase)
       value = value.downcase if value.respond_to?(:downcase)
 
+      obj   = Puppet::Parser::Scope.number?(obj)   || obj
+      value = Puppet::Parser::Scope.number?(value) || value
+
       # "" == undef for case/selector/if
       obj == value or (obj == "" and value == :undef)
     end

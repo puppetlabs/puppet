@@ -70,7 +70,7 @@ class Puppet::Parser::TypeLoader
 
   def initialize(env)
     self.environment = env
-    @loaded = []
+    @loaded = {}
     @loading = Helper.new
 
     @imported = {}
@@ -79,10 +79,13 @@ class Puppet::Parser::TypeLoader
   def load_until(namespaces, name)
     return nil if name == "" # special-case main.
     name2files(namespaces, name).each do |filename|
-      modname = nil
-      import_if_possible(filename) do
-        modname = import(filename)
-        @loaded << filename
+      modname = begin
+        import_if_possible(filename)
+      rescue Puppet::ImportError => detail
+        # We couldn't load the item
+        # I'm not convienced we should just drop these errors, but this
+        # preserves existing behaviours.
+        nil
       end
       if result = yield(filename)
         Puppet.info "Automatically imported #{name} from #{filename}"
@@ -124,23 +127,18 @@ class Puppet::Parser::TypeLoader
     parser.parse
   end
 
-  private
-
   # Utility method factored out of load for handling thread-safety.
   # This isn't tested in the specs, because that's basically impossible.
-  def import_if_possible(file, &blk)
-    return if @loaded.include?(file)
-    begin
+  def import_if_possible(file, current_file = nil)
+    @loaded[file] || begin
       case @loading.owner_of(file)
       when :this_thread
-        return
+        nil
       when :another_thread
-        return import_if_possible(file, &blk)
+        import_if_possible(file,current_file)
       when :nobody
-        blk.call
+        @loaded[file] = import(file,current_file)
       end
-    rescue Puppet::ImportError => detail
-      # We couldn't load the item
     ensure
       @loading.done_with(file)
     end

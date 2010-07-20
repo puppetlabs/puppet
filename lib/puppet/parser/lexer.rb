@@ -540,15 +540,17 @@ class Puppet::Parser::Lexer
     [ str[0..-2],str[-1,1] ]
   end
 
-  def tokenize_interpolated_string(token_type)
+  def tokenize_interpolated_string(token_type,preamble='')
     value,terminator = slurpstring('"$')
-    token_queue << [TOKENS[token_type[terminator]],value]
-    while terminator == '$' and not @scanner.scan(/\{/)
-      token_queue << [TOKENS[:VARIABLE],@scanner.scan(%r{(\w*::)*\w+|[0-9]})]
-      value,terminator = slurpstring('"$')
-      token_queue << [TOKENS[DQ_continuation_token_types[terminator]],value]
+    token_queue << [TOKENS[token_type[terminator]],preamble+value]
+    if terminator != '$' or @scanner.scan(/\{/)
+      token_queue.shift 
+    elsif var_name = @scanner.scan(%r{(\w*::)*\w+|[0-9]})
+      token_queue << [TOKENS[:VARIABLE],var_name]
+      tokenize_interpolated_string(DQ_continuation_token_types)
+    else
+      tokenize_interpolated_string(token_type,token_queue.pop.last + terminator)
     end
-    token_queue.shift
   end
 
   # just parse a string, not a whole file

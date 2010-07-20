@@ -72,9 +72,9 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
     loglevel = networked? ? :notice : :none
 
-    benchmark(loglevel, "Compiled catalog for #{node.name}") do
+    benchmark(loglevel, str) do
       begin
-        return Puppet::Parser::Compiler.compile(node)
+        config = Puppet::Parser::Compiler.compile(node)
       rescue Puppet::Error => detail
         Puppet.err(detail.to_s) if networked?
         raise

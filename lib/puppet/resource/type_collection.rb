@@ -198,11 +198,7 @@ class Puppet::Resource::TypeCollection
   private
 
   def find_fully_qualified(name, type)
-    return nil unless name =~ /^::/
-
-    name = name.sub(/^::/, '')
-
-    send(type, name)
+    send(type, name.sub(/^::/, ''))
   end
 
   def find_partially_qualified(namespace, name, type)

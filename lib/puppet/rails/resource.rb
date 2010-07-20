@@ -212,16 +212,16 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     end
     hash[:scope] = scope
     hash[:source] = scope.source
-    hash[:params] = []
+    hash[:parameters] = []
     names = []
     self.param_names.each do |pname|
       # We can get the same name multiple times because of how the
       # db layout works.
       next if names.include?(pname.name)
       names << pname.name
-      hash[:params] << pname.to_resourceparam(self, scope.source)
+      hash[:parameters] << pname.to_resourceparam(self, scope.source)
     end
-    obj = Puppet::Parser::Resource.new(hash)
+    obj = Puppet::Parser::Resource.new(hash.delete("type"), hash.delete("title"), hash)
 
     # Store the ID, so we can check if we're re-collecting the same resource.
     obj.rails_id = self.id

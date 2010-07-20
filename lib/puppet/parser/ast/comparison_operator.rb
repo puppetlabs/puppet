@@ -16,17 +16,16 @@ class Puppet::Parser::AST
     def evaluate(scope)
       # evaluate the operands, should return a boolean value
       lval = @lval.safeevaluate(scope)
-      rval = @rval.safeevaluate(scope)
 
-      # convert to number if operands are number
-      lval = Puppet::Parser::Scope.number?(lval) || lval
-      rval = Puppet::Parser::Scope.number?(rval) || rval
-
-      # return result
-      unless @operator == '!='
-        lval.send(@operator,rval)
+      case @operator
+      when "==","!="
+        @rval.evaluate_match(lval, scope) ? @operator == '==' : @operator == '!='
       else
-        lval != rval
+        rval = @rval.safeevaluate(scope)
+        rval = Puppet::Parser::Scope.number?(rval) || rval
+        lval = Puppet::Parser::Scope.number?(lval) || lval
+
+        lval.send(@operator,rval)
       end
     end
 
