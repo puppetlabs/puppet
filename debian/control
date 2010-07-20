@@ -15,7 +15,10 @@ Architecture: all
 Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter, lsb-base, puppet-common (= ${binary:Version})
 Recommends: rdoc, libaugeas-ruby1.8
 Suggests: puppet-el, vim-puppet, libselinux-ruby1.8
-Description: centralised configuration management for networks
+Description: Puppet agent startup script and compatibility scripts
+ This package contains the startup script and compatbility scripts for the
+ puppet agent, which is the process responsible for configuring the local node.
+ .
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the
  separate elements normally aggregated in different files, like users,
@@ -33,7 +36,10 @@ Depends: ${misc:Depends}, ruby1.8, puppet-common (= ${source:Version}), facter, 
 Breaks: puppet (<< 0.24.7-1)
 Recommends: rails (>= 1.2.3-2), rdoc, libldap-ruby1.8
 Suggests: apache2 | nginx, mongrel, puppet-el, vim-puppet, libapache2-mod-passenger, librack-ruby (>= 1.0.0), stompserver, libstomp-ruby1.8
-Description: centralised configuration management control daemon
+Description: Puppet master startup and compatibility scripts
+ This package contains the startup and compatibility scripts for the puppet
+ master, which is the server hosting manifests and files for the puppet nodes.
+ .
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the
  separate elements normally aggregated in different files, like users,
@@ -44,14 +50,12 @@ Description: centralised configuration management control daemon
  classing abilities for drawing out the similarities between hosts while
  allowing them to be as specific as necessary, and it handles dependency
  and prerequisite relationships between objects clearly and explicitly.
- .
- This package contains the manifest server, 'puppetmaster'.
 
 Package: puppet-common
 Architecture: all
 Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
-Description: common files for puppet and puppetmaster
+Description: centralized configuration management
  Puppet lets you centrally manage every important aspect of your system
  using a cross-platform specification language that manages all the
  separate elements normally aggregated in different files, like users,
@@ -63,8 +67,9 @@ Description: common files for puppet and puppetmaster
  allowing them to be as specific as necessary, and it handles dependency
  and prerequisite relationships between objects clearly and explicitly.
  .
- This package contains the files common to the 'puppet' and
- 'puppetmaster' packages.
+ This package contains the puppet software and documentation.  For the startup
+ scripts needed to run the puppet agent and master, see the "puppet" and
+ "puppetmaster" packages, respectively.
 
 Package: vim-puppet
 Architecture: all
