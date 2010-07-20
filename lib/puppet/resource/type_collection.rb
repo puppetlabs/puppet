@@ -134,7 +134,7 @@ class Puppet::Resource::TypeCollection
     loader.load_until(namespaces, name) { find(namespaces, name, type) }
   end
 
-  def find_node(name)
+  def find_node(namespaces, name)
     find("", name, :node)
   end
 

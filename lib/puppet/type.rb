@@ -723,6 +723,10 @@ class Type
 
   # Are we running in noop mode?
   def noop?
+    # If we're not a host_config, we're almost certainly part of
+    # Settings, and we want to ignore 'noop'
+    return false if catalog and ! catalog.host_config?
+
     if defined?(@noop)
       @noop
     else

@@ -346,6 +346,9 @@ describe Puppet::Resource::Type do
 
       @child = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "bar")
       @code.add @child
+
+      @env   = stub "environment", :known_resource_types => @code
+      @scope = stub "scope", :environment => @env, :namespaces => [""]
     end
 
     it "should be able to define a parent" do
@@ -353,7 +356,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should use the code collection to find the parent resource type" do
-      @child.parent_type.should equal(@parent)
+      @child.parent_type(@scope).should equal(@parent)
     end
 
     it "should be able to find parent nodes" do
@@ -362,22 +365,26 @@ describe Puppet::Resource::Type do
       child = Puppet::Resource::Type.new(:node, "foo", :parent => "bar")
       @code.add child
 
-      child.parent_type.should equal(parent)
+      child.parent_type(@scope).should equal(parent)
     end
 
     it "should cache a reference to the parent type" do
       @code.expects(:hostclass).once.with("bar").returns @parent
-      @child.parent_type
+      @child.parent_type(@scope)
       @child.parent_type
     end
 
     it "should correctly state when it is another type's child" do
+      @child.parent_type(@scope)
       @child.should be_child_of(@parent)
     end
 
     it "should be considered the child of a parent's parent" do
       @grandchild = Puppet::Resource::Type.new(:hostclass, "baz", :parent => "foo")
       @code.add @grandchild
+
+      @child.parent_type(@scope)
+      @grandchild.parent_type(@scope)
 
       @grandchild.should be_child_of(@parent)
     end
@@ -470,6 +477,8 @@ describe Puppet::Resource::Type do
       end
 
       it "should evaluate the parent's resource" do
+        @type.parent_type(@scope)
+        
         @type.evaluate_code(@resource)
 
         @scope.class_scope(@parent_type).should_not be_nil
@@ -477,6 +486,8 @@ describe Puppet::Resource::Type do
 
       it "should not evaluate the parent's resource if it has already been evaluated" do
         @parent_resource.evaluate
+        
+        @type.parent_type(@scope)
 
         @parent_resource.expects(:evaluate).never
 
@@ -484,6 +495,8 @@ describe Puppet::Resource::Type do
       end
 
       it "should use the parent's scope as its base scope" do
+        @type.parent_type(@scope)
+
         @type.evaluate_code(@resource)
 
         @scope.class_scope(@type).parent.object_id.should == @scope.class_scope(@parent_type).object_id
@@ -505,6 +518,8 @@ describe Puppet::Resource::Type do
       end
 
       it "should evaluate the parent's resource" do
+        @type.parent_type(@scope)
+
         @type.evaluate_code(@resource)
 
         @scope.class_scope(@parent_type).should_not be_nil
@@ -512,6 +527,8 @@ describe Puppet::Resource::Type do
 
       it "should not evaluate the parent's resource if it has already been evaluated" do
         @parent_resource.evaluate
+        
+        @type.parent_type(@scope)
 
         @parent_resource.expects(:evaluate).never
 
@@ -519,6 +536,8 @@ describe Puppet::Resource::Type do
       end
 
       it "should use the parent's scope as its base scope" do
+        @type.parent_type(@scope)
+
         @type.evaluate_code(@resource)
 
         @scope.class_scope(@type).parent.object_id.should == @scope.class_scope(@parent_type).object_id
@@ -528,7 +547,7 @@ describe Puppet::Resource::Type do
 
   describe "when creating a resource" do
     before do
-      @node = Puppet::Node.new("foo")
+      @node = Puppet::Node.new("foo", :environment => 'env')
       @compiler = Puppet::Parser::Compiler.new(@node)
       @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
 
@@ -538,6 +557,8 @@ describe Puppet::Resource::Type do
       @code = Puppet::Resource::TypeCollection.new("env")
       @code.add @top
       @code.add @middle
+      
+      @node.environment.stubs(:known_resource_types).returns(@code)
     end
 
     it "should create a resource instance" do

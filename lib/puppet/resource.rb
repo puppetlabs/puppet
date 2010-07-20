@@ -217,7 +217,11 @@ class Puppet::Resource
   end
 
   def uniqueness_key
-    self.to_hash.values_at(*key_attributes.sort_by { |k| k.to_s })
+    # Temporary kludge to deal with inconsistant use patters
+    h = self.to_hash
+    h[namevar] ||= h[:name]
+    h[:name]   ||= h[namevar]
+    h.values_at(*key_attributes.sort_by { |k| k.to_s })
   end
 
   def key_attributes
@@ -353,7 +357,8 @@ class Puppet::Resource
 
   def find_resource_type(type)
     # It still works fine without the type == 'class' short-cut, but it is a lot slower.
-    find_builtin_resource_type(type) || find_defined_resource_type(type) unless type.to_s.downcase == 'class'
+    return nil if ["class", "node"].include? type.to_s.downcase
+    find_builtin_resource_type(type) || find_defined_resource_type(type)
   end
 
   def find_builtin_resource_type(type)

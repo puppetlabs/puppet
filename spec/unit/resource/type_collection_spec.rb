@@ -263,7 +263,7 @@ describe Puppet::Resource::TypeCollection do
   it "should use the generic 'find' method with an empty namespace to find nodes" do
     loader = Puppet::Resource::TypeCollection.new("env")
     loader.expects(:find).with("", "bar", :node)
-    loader.find_node("bar")
+    loader.find_node(stub("ignored"), "bar")
   end
 
   it "should use the 'find_or_load' method to find hostclasses" do

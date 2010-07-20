@@ -39,3 +39,73 @@ describe Puppet::Parser::AST do
   end
 
 end
+
+describe 'AST Generic Child' do
+  before :each do
+    @value = stub 'value'
+    class Evaluateable < Puppet::Parser::AST
+      attr_accessor :value
+      def safeevaluate(*options)
+        return value
+      end
+    end
+    @evaluateable = Evaluateable.new(:value => @value)
+    @scope = stubs 'scope'
+  end
+
+  describe "when evaluate_match is called" do
+    it "should evaluate itself" do
+      @evaluateable.expects(:safeevaluate).with(@scope)
+
+      @evaluateable.evaluate_match("value", @scope)
+    end
+
+    it "should match values by equality" do
+      @value.expects(:==).with("value").returns(true)
+
+      @evaluateable.evaluate_match("value", @scope)
+    end
+
+    it "should downcase the evaluated value if wanted" do
+      @value.expects(:downcase).returns("value")
+
+      @evaluateable.evaluate_match("value", @scope)
+    end
+
+    it "should convert values to number" do
+      Puppet::Parser::Scope.expects(:number?).with(@value).returns(2)
+      Puppet::Parser::Scope.expects(:number?).with("23").returns(23)
+
+      @evaluateable.evaluate_match("23", @scope)
+    end
+
+    it "should compare 'numberized' values" do
+      two = stub_everything 'two'
+      one = stub_everything 'one'
+
+      Puppet::Parser::Scope.stubs(:number?).with(@value).returns(one)
+      Puppet::Parser::Scope.stubs(:number?).with("2").returns(two)
+
+      one.expects(:==).with(two)
+
+      @evaluateable.evaluate_match("2", @scope)
+    end
+
+    it "should match undef if value is an empty string" do
+      @evaluateable.value = ''
+      @evaluateable.evaluate_match(:undef, @scope).should be_true
+    end
+
+    it "should downcase the parameter value if wanted" do
+      parameter = stub 'parameter'
+      parameter.expects(:downcase).returns("value")
+
+      @evaluateable.evaluate_match(parameter, @scope)
+    end
+
+    it "should not match '' if value is undef" do
+      @evaluateable.value = :undef
+      @evaluateable.evaluate_match('', @scope).should be_false
+    end
+  end
+end
