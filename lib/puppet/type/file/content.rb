@@ -186,7 +186,7 @@ module Puppet
     end
 
     def chunk_file_from_source(source_or_content)
-      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path)
+      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''))
       connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
       connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
         case response.code

@@ -362,7 +362,7 @@ describe content do
       end
 
       it "should send the correct indirection uri" do
-        @conn.expects(:request_get).with { |uri,headers| uri == "/production/file_content//path/to/source" }.yields(@response)
+        @conn.expects(:request_get).with { |uri,headers| uri == "/production/file_content/path/to/source" }.yields(@response)
         @content.write(@fh)
       end
 
