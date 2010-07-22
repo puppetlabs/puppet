@@ -1,6 +1,6 @@
 # Packaging using Peter Bonivart's pkgutil program.
 Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun do
-    desc "Package management using Peter Bonivartg's ``pkgutil`` command on Solaris."
+    desc "Package management using Peter Bonivart's ``pkgutil`` command on Solaris."
     pkguti = "pkgutil"
     if FileTest.executable?("/opt/csw/bin/pkgutil")
         pkguti = "/opt/csw/bin/pkgutil"
