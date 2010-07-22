@@ -19,9 +19,9 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
                 "The pkgutil command is missing; pkgutil packaging unavailable"
         end
 
-        unless FileTest.exists?("/var/pkg-get/admin")
-            Puppet.notice "It is highly recommended you create '/var/pkg-get/admin'."
-            Puppet.notice "See /var/pkg-get/admin-fullauto"
+        unless FileTest.exists?("/var/opt/csw/pkgutil/admin")
+            Puppet.notice "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
+            Puppet.notice "See /var/opt/csw/pkgutil"
         end
     end
 
