@@ -264,7 +264,6 @@ class Application
         self.send(fname, value)
       end
     end
-    @option_parser.default_argv = self.command_line.args
     @option_parser
   end
 
@@ -337,7 +336,7 @@ class Application
 
     # scan command line argument
     begin
-      self.option_parser.parse!
+      self.option_parser.parse!(self.command_line.args)
     rescue OptionParser::ParseError => detail
       $stderr.puts detail
       $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"

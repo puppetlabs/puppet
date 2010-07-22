@@ -194,7 +194,6 @@ describe Puppet::Application do
     it "should create a new option parser when needed" do
       option_parser = stub "option parser"
       option_parser.stubs(:on)
-      option_parser.stubs(:default_argv=)
       OptionParser.expects(:new).returns(option_parser).once
       @app.option_parser.should == option_parser
       @app.option_parser.should == option_parser
@@ -203,22 +202,12 @@ describe Puppet::Application do
     it "should pass the banner to the option parser" do
       option_parser = stub "option parser"
       option_parser.stubs(:on)
-      option_parser.stubs(:default_argv=)
       @app.class.instance_eval do
         banner "banner"
       end
 
       OptionParser.expects(:new).with("banner").returns(option_parser)
 
-      @app.option_parser
-    end
-
-    it "should set the optionparser's args to the command line args" do
-      option_parser = stub "option parser"
-      option_parser.stubs(:on)
-      option_parser.expects(:default_argv=).with(%w{ fake args })
-      @app.command_line.stubs(:args).returns(%w{ fake args })
-      OptionParser.expects(:new).returns(option_parser)
       @app.option_parser
     end
 
@@ -237,7 +226,8 @@ describe Puppet::Application do
     end
 
     it "should ask OptionParser to parse the command-line argument" do
-      @app.option_parser.expects(:parse!)
+      @app.command_line.stubs(:args).returns(%w{ fake args })
+      @app.option_parser.expects(:parse!).with(%w{ fake args })
 
       @app.parse_options
     end
