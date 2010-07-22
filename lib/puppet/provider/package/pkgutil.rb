@@ -1,4 +1,5 @@
 # Packaging using pkgutil from http://pkgutil.wikidot.com/
+# vim:set sw=4 ts=4 sts=4:
 Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun do
     desc "Package management using ``pkgutil`` command on Solaris."
     pkgutil = "pkgutil"
@@ -20,6 +21,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         end
     end
 
+    # It's a class method. Returns a list of instances of this class.
     def self.instances(hash = {})
         blastlist(hash).collect do |bhash|
             bhash.delete(:avail)
@@ -32,6 +34,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         command = ["-c"]
 
         if hash[:justme]
+            command << ["--single"]
             command << hash[:justme]
         end
 
@@ -86,7 +89,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         pkgutil "-y", "--install", @resource[:name]
     end
 
-    # Retrieve the version from the current package file.
+    # What's the latest version of the package available?
     def latest
         hash = self.class.blastlist(:justme => @resource[:name])
         hash[:avail]
