@@ -1,27 +1,30 @@
-# Packaging using pkgutil from http://pkgutil.wikidot.com/
-# vim:set sw=4 ts=4 sts=4:
+# Packaging using Peter Bonivart's pkgutil program.
 Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun do
-    desc "Package management using ``pkgutil`` command on Solaris."
-    pkgutil = "pkgutil"
+    desc "Package management using Peter Bonivart's ``pkgutil`` command on Solaris."
+    pkguti = "pkgutil"
     if FileTest.executable?("/opt/csw/bin/pkgutil")
-        pkgutil = "/opt/csw/bin/pkgutil"
+        pkguti = "/opt/csw/bin/pkgutil"
     end
 
     confine :operatingsystem => :solaris
 
-    commands :pkgutil => pkgutil
+    commands :pkguti => pkguti
 
-    # This is so stupid, but then, so is Solaris.
+    # This is so stupid, but then, so is blastwave.
     ENV["PAGER"] = "/usr/bin/cat"
 
     def self.extended(mod)
-        unless command(:pkgutil) != "pkgutil"
+        unless command(:pkguti) != "pkgutil"
             raise Puppet::Error,
                 "The pkgutil command is missing; pkgutil packaging unavailable"
         end
+
+        unless FileTest.exists?("/var/opt/csw/pkgutil/admin")
+            Puppet.notice "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
+            Puppet.notice "See /var/opt/csw/pkgutil"
+        end
     end
 
-    # It's a class method. Returns a list of instances of this class.
     def self.instances(hash = {})
         blastlist(hash).collect do |bhash|
             bhash.delete(:avail)
@@ -29,21 +32,24 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         end
     end
 
-    # Turn our pkgutil listing into a bunch of hashes.
+    # Turn our blastwave listing into a bunch of hashes.
     def self.blastlist(hash)
         command = ["-c"]
 
         if hash[:justme]
+            # The --single option speeds up the execution, because it queries
+            # the package managament system for one package only.
             command << ["--single"]
             command << hash[:justme]
         end
 
-        output = pkgutil command
+        output = pkguti command
 
         list = output.split("\n").collect do |line|
             next if line =~ /^#/
             next if line =~ /^WARNING/
             next if line =~ /localrev\s+remoterev/
+            next if line =~ /installed\s+catalog/
 
             blastsplit(line)
         end.reject { |h| h.nil? }
@@ -86,10 +92,10 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     end
 
     def install
-        pkgutil "-y", "--install", @resource[:name]
+        pkguti "-y", "-i", @resource[:name]
     end
 
-    # What's the latest version of the package available?
+    # Retrieve the version from the current package file.
     def latest
         hash = self.class.blastlist(:justme => @resource[:name])
         hash[:avail]
@@ -105,10 +111,10 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
     # Remove the old package, and install the new one
     def update
-        pkgutil "-y", "--upgrade", @resource[:name]
+        pkguti "-y", "-i", @resource[:name]
     end
 
     def uninstall
-        pkgutil "-y", "--remove", @resource[:name]
+        pkguti "-y", "-r", @resource[:name]
     end
 end
