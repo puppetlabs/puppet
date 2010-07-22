@@ -88,7 +88,7 @@ class Puppet::Parser::TypeLoader
         nil
       end
       if result = yield(filename)
-        Puppet.info "Automatically imported #{name} from #{filename} into #{environment}"
+        Puppet.debug "Automatically imported #{name} from #{filename} into #{environment}"
         result.module_name = modname if modname and result.respond_to?(:module_name=)
         return result
       end
