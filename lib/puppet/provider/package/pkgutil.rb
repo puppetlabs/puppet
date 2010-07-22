@@ -37,6 +37,9 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         command = ["-c"]
 
         if hash[:justme]
+            # The --single option speeds up the execution, because it queries
+            # the package managament system for one package only.
+            command << ["--single"]
             command << hash[:justme]
         end
 
