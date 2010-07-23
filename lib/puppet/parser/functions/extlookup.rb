@@ -82,11 +82,11 @@ require 'csv'
 module Puppet::Parser::Functions
   newfunction(:extlookup, :type => :rvalue) do |args|
     key = args[0]
-    default = "_ExtUNSET_"
-    datafile = "_ExtUNSET_"
 
-    default = args[1] if args[1]
-    datafile = args[2] if args[2]
+    default  = args[1]
+    datafile = args[2]
+
+    raise Puppet::ParseError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
 
     extlookup_datadir = lookupvar('extlookup_datadir')
     extlookup_precedence = Array.new
@@ -123,12 +123,13 @@ module Puppet::Parser::Functions
       datafiles << extlookup_datadir + "/#{d}.csv"
     end
 
-    desired = "_ExtUNSET_"
+    desired = nil
 
     datafiles.each do |file|
+      parser = Puppet::Parser::Parser.new(environment)
       parser.watch_file(file) if File.exists?(file)
 
-      if desired == "_ExtUNSET_"
+      if desired.nil?
         if File.exists?(file)
           result = CSV.read(file).find_all do |r|
             r[0] == key
@@ -167,15 +168,6 @@ module Puppet::Parser::Functions
       end
     end
 
-    # don't accidently return nil's and such rather throw a parse error
-    if desired == "_ExtUNSET_" && default == "_ExtUNSET_"
-      raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
-    else
-      desired = default if desired == "_ExtUNSET_"
-    end
-
-    desired
+    desired || default or raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
   end
 end
-
-# vi:tabstop=4:expandtab:ai
