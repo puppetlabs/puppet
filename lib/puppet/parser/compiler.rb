@@ -15,16 +15,15 @@ class Puppet::Parser::Compiler
   include Puppet::Resource::TypeCollectionHelper
 
   def self.compile(node)
-    # At the start of a new compile we don't assume anything about 
-    # known_resouce_types; we'll get these from the environment and
-    # cache them in a thread variable for the duration of the 
-    # compilation.
-    Thread.current[:known_resource_types] = nil
     new(node).compile.to_resource
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
-  end
+  ensure
+    # We get these from the environment and only cache them in a thread 
+    # variable for the duration of the compilation.
+    Thread.current[:known_resource_types] = nil
+ end
 
   attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources, :relationships
 
