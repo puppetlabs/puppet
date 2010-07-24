@@ -295,6 +295,12 @@ module Puppet
       newvalue(%r{(0|1)}) { }
     end
 
+     newproperty(:http_caching, :parent => Puppet::IniProperty) do
+       desc "Either 'packages' or 'all' or 'none'.\n#{ABSENT_DOC}" 
+       newvalue(:absent) { self.should = :absent }
+       newvalue(%r(packages|all|none)) { }
+     end
+
     newproperty(:timeout, :parent => Puppet::IniProperty) do
       desc "Number of seconds to wait for a connection before timing
         out.\n#{ABSENT_DOC}"
