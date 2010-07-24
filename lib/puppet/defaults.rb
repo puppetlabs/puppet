@@ -607,7 +607,7 @@ module Puppet
 
     setdefaults(
     :main,
-    :factpath => {:default => "$vardir/lib/facter/${File::PATH_SEPARATOR}$vardir/facts",
+    :factpath => {:default => "$vardir/lib/facter:$vardir/facts",
       :desc => "Where Puppet should look for facts.  Multiple directories should
         be colon-separated, like normal PATH variables.",
 
