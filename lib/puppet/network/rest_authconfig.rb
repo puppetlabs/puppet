@@ -3,6 +3,7 @@ require 'puppet/network/authconfig'
 module Puppet
   class Network::RestAuthConfig < Network::AuthConfig
 
+    extend MonitorMixin
     attr_accessor :rights
 
     DEFAULT_ACL = [
@@ -20,9 +21,11 @@ module Puppet
     ]
 
     def self.main
-      add_acl = @main.nil?
-      super
-      @main.insert_default_acl if add_acl and !@main.exists?
+      synchronize do
+        add_acl = @main.nil?
+        super
+        @main.insert_default_acl if add_acl and !@main.exists?
+      end
       @main
     end
 
