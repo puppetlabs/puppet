@@ -1,4 +1,7 @@
-Process.maxgroups = 1024
+
+unless defined? JRUBY_VERSION
+  Process.maxgroups = 1024
+end
 
 module RDoc
   def self.caller(skip=nil)
