@@ -1,5 +1,38 @@
+2.6.1rc1
+========
+bdfcac5  Update Red Hat spec file for 2.6.0
+9f08e7c  Feature: puppet-load - a tool to stress-test master compilation
+ef9a4a6  Fix #4245 - default insertion of ACL is not thread safe
+4065e81  Fix race condition in rack autoloading of request/response
+3163932  Fix #4244 - Cached Attributes is not thread safe
+7d42f77  JRuby doesn't implement Process.maxgroups
+760e418  Fix #4349 - Parsing with ignoreimport=true was always loading site.pp
+67bdf89  Fix #4348 - Puppet doc single manifest broken
+13c71b9  extlookup() is a builtin
+d38e522  [#4333] old optparse doesn't support default_argv=
+86b0882  Fixed #4326 - Updated SUSE packaging
+03313b8  Fix #4319 - source file url sent to the master is invalid
+ac3a0d2  vim: highlight default parameters in definition/classes
+be2141a  vim: match collected resources.
+c047c8d  vim: added elsif
+9569136  Fix for 4314 -- Need to allow '-' in class name for refs
+636079f  Fixed #4304 - Changed logging level for auto import message
+000fd1e  Fix for #4303 -- reverting to old escaping in '-strings
+1d494a3  Tweak to fix for #4302--dangling ref to known_resource_types
+2383050  Fix #4302 - Compilation speed regression compared to 2.6
+63ec207  Minimal fix for #4297, with notes for follow-up
+7ad7eb1  Fix #4286 - rename puppetdoc global module <site> to __site__
+28bb195  Fixed yumrepo type deprecation wanring `
+067a46d  Temporary tweak to tests for #4242
+9778f2a  [#4242] Fixed recursion due to parents including their children
+59a23d6  Fix for #3382 -- Empty classes as graph placeholders
+865282a  Fixed example config.ru
+a0a63c3  Fixed network and indirection reference
+64386cf  Fixed Indirection reference
+
 2.6.0
 =====
+db0b30d  Updated CHANGELOG for 2.6.0
 42a475e  Fixing #4268 - manifests always imported
 06fc40c  [#4269] Undef variables interpolate to empty string
 1288f8c  [#4270] Force inherited classes to load into the correct environment
