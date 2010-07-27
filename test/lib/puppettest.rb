@@ -227,14 +227,14 @@ module PuppetTest
     #Facter.stubs(:to_hash).returns({})
   end
 
-  def tempfile
+  def tempfile(suffix = '')
     if defined?(@@tmpfilenum)
       @@tmpfilenum += 1
     else
       @@tmpfilenum = 1
     end
 
-    f = File.join(self.tmpdir, "tempfile_" + @@tmpfilenum.to_s)
+    f = File.join(self.tmpdir, "tempfile_" + @@tmpfilenum.to_s + suffix)
     @@tmpfiles ||= []
     @@tmpfiles << f
     f

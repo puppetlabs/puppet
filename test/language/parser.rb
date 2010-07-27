@@ -97,7 +97,7 @@ class TestParser < Test::Unit::TestCase
     }
 
     4.times { |i|
-      path = File.join(basedir, subdir, "subfile#{i}")
+      path = File.join(basedir, subdir, "subfile#{i}.pp")
       mkmanifest(path)
     }
 
@@ -137,8 +137,8 @@ class TestParser < Test::Unit::TestCase
   end
 
   def test_importedclasses
-    imported = tempfile
-    importer = tempfile
+    imported = tempfile '.pp'
+    importer = tempfile '.pp'
 
     made = tempfile
 
@@ -655,9 +655,9 @@ file { "/tmp/yayness":
   end
 
   def test_multiple_imports_on_one_line
-    one = tempfile
-    two = tempfile
-    base = tempfile
+    one = tempfile '.pp'
+    two = tempfile '.pp'
+    base = tempfile '.pp'
     File.open(one, "w") { |f| f.puts "$var = value" }
     File.open(two, "w") { |f| f.puts "$var = value" }
     File.open(base, "w") { |f| f.puts "import '#{one}', '#{two}'" }

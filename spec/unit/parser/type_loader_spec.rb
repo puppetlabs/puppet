@@ -192,7 +192,7 @@ describe Puppet::Parser::TypeLoader do
   end
 
   it "should be able to add classes to the current resource type collection" do
-    file = tmpfile("simple_file")
+    file = tmpfile("simple_file.pp")
     File.open(file, "w") { |f| f.puts "class foo {}" }
     @loader.import(file)
 
