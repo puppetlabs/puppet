@@ -122,9 +122,6 @@ module Puppet::Parser::Functions
     desired = nil
 
     datafiles.each do |file|
-      parser = Puppet::Parser::Parser.new(environment)
-      parser.watch_file(file) if File.exists?(file)
-
       if desired.nil?
         if File.exists?(file)
           result = CSV.read(file).find_all do |r|
