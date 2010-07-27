@@ -400,6 +400,14 @@ describe Puppet::Resource::TypeCollection do
       @parser.expects(:parse).raises ArgumentError
       lambda { @code.perform_initial_import }.should raise_error(Puppet::Error)
     end
+
+    it "should not do anything if the ignore_import settings is set" do
+      Puppet.settings[:ignoreimport] = true
+      @parser.expects(:string=).never
+      @parser.expects(:file=).never
+      @parser.expects(:parse).never
+      @code.perform_initial_import
+    end
   end
 
   describe "when determining the configuration version" do

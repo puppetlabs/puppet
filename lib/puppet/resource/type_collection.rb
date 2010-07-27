@@ -153,6 +153,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def perform_initial_import
+    return if Puppet.settings[:ignoreimport]
     parser = Puppet::Parser::Parser.new(environment)
     if code = Puppet.settings.uninterpolated_value(:code, environment.to_s) and code != ""
       parser.string = code

@@ -15,6 +15,8 @@ module RDoc
 class Parser
   extend ParserFactory
 
+  SITE = "__site__"
+
   attr_accessor :ast, :input_file_name, :top_level
 
   # parser registration into RDoc
@@ -74,7 +76,7 @@ class Parser
 
   # split_module tries to find if +path+ belongs to the module path
   # if it does, it returns the module name, otherwise if we are sure
-  # it is part of the global manifest path, "<site>" is returned.
+  # it is part of the global manifest path, "__site__" is returned.
   # And finally if this path couldn't be mapped anywhere, nil is returned.
   def split_module(path)
     # find a module
@@ -105,7 +107,7 @@ class Parser
     end
     # we are under a global manifests
     Puppet.debug "rdoc: global manifests"
-    "<site>"
+    SITE
   end
 
   # create documentation for the top level +container+
@@ -128,7 +130,7 @@ class Parser
     Puppet.debug "rdoc: scanning for #{name}"
 
     container.module_name = name
-    container.global=true if name == "<site>"
+    container.global=true if name == SITE
 
     @stats.num_modules += 1
     container, name  = get_class_or_module(container,name)
