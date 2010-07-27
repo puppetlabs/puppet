@@ -318,16 +318,15 @@ class Puppet::SimpleGraph
     # to container leaves, but that would result in many more
     # relationships.
     stage_class = Puppet::Type.type(:stage)
+    whit_class  = Puppet::Type.type(:whit)
     containers = other.topsort.find_all { |v| (v.is_a?(type) or v.is_a?(stage_class)) and vertex?(v) }
     containers.each do |container|
       # Get the list of children from the other graph.
       children = other.adjacent(container, :direction => :out)
 
-      # Just remove the container if it's empty.
-      if children.empty?
-        remove_vertex!(container)
-        next
-      end
+      # MQR TODO: Luke suggests that it should be possible to refactor the system so that
+      #           container nodes are retained, thus obviating the need for the whit. 
+      children = [whit_class.new(:name => container.name, :catalog => other)] if children.empty?
 
       # First create new edges for each of the :in edges
       [:in, :out].each do |dir|

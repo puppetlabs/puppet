@@ -1,4 +1,5 @@
 require 'puppet/util/cacher'
+require 'monitor'
 
 # Just define it, so this class has fewer load dependencies.
 class Puppet::Node
@@ -67,14 +68,23 @@ class Puppet::Node::Environment
 
   def initialize(name)
     @name = name
+    extend MonitorMixin
   end
 
   def known_resource_types
-    if @known_resource_types.nil? or @known_resource_types.stale?
-      @known_resource_types = Puppet::Resource::TypeCollection.new(self)
-      @known_resource_types.perform_initial_import
-    end
-    @known_resource_types
+    # This makes use of short circuit evaluation to get the right thread-safe
+    # per environment semantics with an efficient most common cases; we almost
+    # always just return our thread's known-resource types.  Only at the start
+    # of a compilation (after our thread var has been set to nil) or when the
+    # environment has changed do we delve deeper. 
+    Thread.current[:known_resource_types] = nil if (krt = Thread.current[:known_resource_types]) && krt.environment != self
+    Thread.current[:known_resource_types] ||= synchronize {
+      if @known_resource_types.nil? or @known_resource_types.stale?
+        @known_resource_types = Puppet::Resource::TypeCollection.new(self)
+        @known_resource_types.perform_initial_import
+      end
+      @known_resource_types
+    }
   end
 
   def module(name)

@@ -1,5 +1,5 @@
 require 'puppet/indirector/indirection'
-require 'puppet/checksum'
+require 'puppet/util/checksums'
 require 'puppet/file_serving/content'
 require 'puppet/file_serving/metadata'
 
