@@ -47,6 +47,10 @@ describe Puppet::Parser::AST::String do
       value = stub 'value', :is_a? => true, :to_s => "ab"
       Puppet::Parser::AST::String.new( :value => value ).to_s.should == "\"ab\""
     end
+    it "should return a dup of its value" do
+      value = ""
+      Puppet::Parser::AST::String.new( :value => value ).evaluate(stub 'scope').should_not be_equal(value)
+    end
   end
 end
 
