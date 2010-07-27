@@ -444,6 +444,15 @@ module Puppet
       in puppet/reports/name.rb, and multiple report names should be
       comma-separated (whitespace is okay)."
     ],
+    :reportdir => {:default => "$vardir/reports",
+      :mode => 0750,
+      :owner => "service",
+      :group => "service",
+      :desc => "The directory in which to store reports
+        received from the client.  Each client gets a separate
+        subdirectory."},
+    :reporturl => ["http://localhost:3000/reports",
+      "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
     :rrddir => {:default => "$vardir/rrd",
       :owner => "service",
@@ -622,16 +631,7 @@ module Puppet
       is used for retrieval, so anything that is a valid file source can
       be used here."],
     :factsync => [false, "Whether facts should be synced with the central server."],
-    :factsignore => [".svn CVS", "What files to ignore when pulling down facts."],
-    :reportdir => {:default => "$vardir/reports",
-      :mode => 0750,
-      :owner => "service",
-      :group => "service",
-      :desc => "The directory in which to store reports
-        received from the client.  Each client gets a separate
-        subdirectory."},
-    :reporturl => ["http://localhost:3000/reports",
-      "The URL used by the http reports processor to send reports"]
+    :factsignore => [".svn CVS", "What files to ignore when pulling down facts."]
   )
 
 
