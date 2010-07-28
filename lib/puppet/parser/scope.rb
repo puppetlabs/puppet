@@ -474,6 +474,20 @@ class Puppet::Parser::Scope
     end
   end
 
+  def find_resource_type(type)
+    # It still works fine without the type == 'class' short-cut, but it is a lot slower.
+    return nil if ["class", "node"].include? type.to_s.downcase
+    find_builtin_resource_type(type) || find_defined_resource_type(type)
+  end
+
+  def find_builtin_resource_type(type)
+    Puppet::Type.type(type.to_s.downcase.to_sym)
+  end
+
+  def find_defined_resource_type(type)
+    environment.known_resource_types.find_definition(namespaces, type.to_s.downcase)
+  end
+
   private
 
   def extend_with_functions_module
