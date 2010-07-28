@@ -258,6 +258,32 @@ describe Puppet::Resource::TypeCollection do
       loader.add instance
       loader.find("foo::bar", "eh", :hostclass).should be_nil
     end
+
+    describe "when topscope has a class that has the same name as a local class" do
+      before do
+        @loader = Puppet::Resource::TypeCollection.new("env")
+        [ "foo::bar", "bar" ].each do |name|
+          @loader.add Puppet::Resource::Type.new(:hostclass, name)
+        end
+      end
+
+      it "should favor the local class, if the name is unqualified" do
+        @loader.find("foo", "bar",   :hostclass).name.should == 'foo::bar'
+      end
+
+      it "should only look in the topclass, if the name is qualified" do
+        @loader.find("foo", "::bar", :hostclass).name.should == 'bar'
+      end
+
+    end
+    
+    it "should not look in the local scope for classes when the name is qualified" do
+        @loader = Puppet::Resource::TypeCollection.new("env")
+        @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
+
+        @loader.find("foo", "::bar", :hostclass).should == nil
+    end
+
   end
 
   it "should use the generic 'find' method with an empty namespace to find nodes" do
@@ -437,4 +463,5 @@ describe Puppet::Resource::TypeCollection do
     end
 
   end
+
 end

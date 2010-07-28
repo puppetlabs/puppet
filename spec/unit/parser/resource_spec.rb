@@ -58,15 +58,9 @@ describe Puppet::Parser::Resource do
   end
 
   it "should get its environment from its scope" do
-    scope = stub 'scope', :source => stub("source")
-    scope.expects(:environment).returns "foo"
+    scope = stub 'scope', :source => stub("source"), :namespaces => nil
+    scope.expects(:environment).returns("foo").at_least_once
     Puppet::Parser::Resource.new("file", "whatever", :scope => scope).environment.should == "foo"
-  end
-
-  it "should get its namespaces from its scope" do
-    scope = stub 'scope', :source => stub("source")
-    scope.expects(:namespaces).returns %w{one two}
-    Puppet::Parser::Resource.new("file", "whatever", :scope => scope).namespaces.should == %w{one two}
   end
 
   it "should use the resource type collection helper module" do
@@ -74,7 +68,7 @@ describe Puppet::Parser::Resource do
   end
 
   it "should use the scope's environment as its environment" do
-    @scope.expects(:environment).returns "myenv"
+    @scope.expects(:environment).returns("myenv").at_least_once
     Puppet::Parser::Resource.new("file", "whatever", :scope => @scope).environment.should == "myenv"
   end
 
