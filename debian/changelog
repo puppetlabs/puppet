@@ -1,3 +1,10 @@
+puppet (2.6.0-2) unstable; urgency=low
+
+  * Bump Standards-Version to 3.9.1
+  * Release for unstable
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Wed, 28 Jul 2010 20:48:21 +0200
+
 puppet (2.6.0-1) experimental; urgency=low
 
   * New upstream version
