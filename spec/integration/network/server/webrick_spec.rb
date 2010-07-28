@@ -18,6 +18,7 @@ describe Puppet::Network::Server do
 
       Puppet.settings[:confdir] = @dir
       Puppet.settings[:vardir] = @dir
+      Puppet.settings[:group] = Process.gid
 
       Puppet::SSL::Host.ca_location = :local
 
