@@ -488,6 +488,27 @@ class Puppet::Parser::Scope
     environment.known_resource_types.find_definition(namespaces, type.to_s.downcase)
   end
 
+  def resolve_type_and_titles(type, titles)
+    raise ArgumentError, "titles must be an array" unless titles.is_a?(Array)
+
+    case type.downcase
+    when "class"
+      # resolve the titles
+      titles = titles.collect do |a_title|
+        hostclass = find_hostclass(a_title)
+        hostclass ?  hostclass.name : a_title
+      end
+    when "node"
+      # no-op
+    else
+      # resolve the type
+      resource_type = find_resource_type(type)
+      type = resource_type.name if resource_type
+    end
+
+    return [type, titles]
+  end
+
   private
 
   def extend_with_functions_module
