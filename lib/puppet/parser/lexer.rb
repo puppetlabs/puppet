@@ -483,7 +483,7 @@ class Puppet::Parser::Lexer
       yield [final_token.name, token_value]
 
       if @previous_token
-        namestack(value) if @previous_token.name == :CLASS
+        namestack(value) if @previous_token.name == :CLASS and value != '{'
 
         if @previous_token.name == :DEFINE
           if indefine?

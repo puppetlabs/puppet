@@ -619,6 +619,12 @@ describe "Puppet::Parser::Lexer in the old tests" do
     @lexer.namespace.should == "base::sub"
   end
 
+  it "should not put class instantiation on the namespace" do
+    @lexer.string = "class base { class sub { class { mode"
+    @lexer.fullscan
+    @lexer.namespace.should == "base::sub"
+  end
+
   it "should correctly handle fully qualified names" do
     @lexer.string = "class base { class sub::more {"
     @lexer.fullscan
