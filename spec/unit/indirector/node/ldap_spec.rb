@@ -5,10 +5,6 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/node/ldap'
 
 describe Puppet::Node::Ldap do
-  before do
-    Puppet::Node::Facts.stubs(:terminus_class).returns :yaml
-  end
-
   describe "when searching for a single node" do
     before :each do
       @searcher = Puppet::Node::Ldap.new
