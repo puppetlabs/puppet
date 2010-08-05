@@ -78,7 +78,10 @@ class Puppet::Application::Apply < Puppet::Application
     if options[:code] or command_line.args.length == 0
       Puppet[:code] = options[:code] || STDIN.read
     else
-      Puppet[:manifest] = command_line.args.shift
+      manifest = command_line.args.shift
+      raise "Could not find file #{manifest}" unless File.exist?(manifest)
+      Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
+      Puppet[:manifest] = manifest
     end
 
     # Collect our facts.

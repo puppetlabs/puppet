@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/apply'
+require 'puppet/file_bucket/dipper'
 
 describe Puppet::Application::Apply do
   before :each do
@@ -53,7 +54,6 @@ describe Puppet::Application::Apply do
       Puppet.stubs(:trap)
       Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
-      require 'lib/puppet/file_bucket/dipper'
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
 
@@ -212,10 +212,28 @@ describe Puppet::Application::Apply do
         @apply.main
       end
 
-      it "should set the manifest if some files are passed on command line" do
+      it "should set the manifest if a file is passed on command line and the file exists" do
+        File.stubs(:exist?).with('site.pp').returns true
         @apply.command_line.stubs(:args).returns(['site.pp'])
 
         Puppet.expects(:[]=).with(:manifest,"site.pp")
+
+        @apply.main
+      end
+
+      it "should raise an error if a file is passed on command line and the file does not exist" do
+        File.stubs(:exist?).with('noexist.pp').returns false
+        @apply.command_line.stubs(:args).returns(['noexist.pp'])
+        lambda { @apply.main }.should raise_error(RuntimeError, 'Could not find file noexist.pp')
+      end
+
+      it "should set the manifest to the first file and warn other files will be skipped" do
+        File.stubs(:exist?).with('starwarsIV').returns true
+        File.expects(:exist?).with('starwarsI').never
+        @apply.command_line.stubs(:args).returns(['starwarsIV', 'starwarsI', 'starwarsII'])
+
+        Puppet.expects(:[]=).with(:manifest,"starwarsIV")
+        Puppet.expects(:warning).with('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
 
         @apply.main
       end
@@ -232,7 +250,7 @@ describe Puppet::Application::Apply do
         lambda { @apply.main }.should raise_error
       end
 
-      it "should find the node" do
+      it "should look for the node" do
         Puppet::Node.expects(:find).returns(@node)
 
         @apply.main
