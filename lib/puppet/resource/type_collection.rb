@@ -92,50 +92,8 @@ class Puppet::Resource::TypeCollection
     @definitions[munge_name(name)]
   end
 
-  def find(namespaces, name, type)
-    #Array("") == [] for some reason
-    namespaces = [namespaces] unless namespaces.is_a?(Array)
-
-    if name =~ /^::/
-      return send(type, name.sub(/^::/, ''))
-    end
-
-    namespaces.each do |namespace|
-      ary = namespace.split("::")
-
-      while ary.length > 0
-        tmp_namespace = ary.join("::")
-        if r = find_partially_qualified(tmp_namespace, name, type)
-          return r
-        end
-
-        # Delete the second to last object, which reduces our namespace by one.
-        ary.pop
-      end
-
-      if result = send(type, name)
-        return result
-      end
-    end
-    nil
-  end
-
-  def find_or_load(namespaces, name, type)
-    name      = name.downcase
-    namespaces = [namespaces] unless namespaces.is_a?(Array)
-    namespaces = namespaces.collect { |ns| ns.downcase }
-
-    # This could be done in the load_until, but the knowledge seems to
-    # belong here.
-    if r = find(namespaces, name, type)
-      return r
-    end
-
-    loader.load_until(namespaces, name) { find(namespaces, name, type) }
-  end
-
   def find_node(namespaces, name)
-    find("", name, :node)
+    @nodes[munge_name(name)]
   end
 
   def find_hostclass(namespaces, name)
@@ -198,8 +156,59 @@ class Puppet::Resource::TypeCollection
 
   private
 
-  def find_partially_qualified(namespace, name, type)
-    send(type, [namespace, name].join("::"))
+  # Return a list of all possible fully-qualified names that might be
+  # meant by the given name, in the context of namespaces.
+  def resolve_namespaces(namespaces, name)
+    name      = name.downcase
+    if name =~ /^::/
+      # name is explicitly fully qualified, so just return it, sans
+      # initial "::".
+      return [name.sub(/^::/, '')]
+    end
+    if name == ""
+      # The name "" has special meaning--it always refers to a "main"
+      # hostclass which contains all toplevel resources.
+      return [""]
+    end
+
+    namespaces = [namespaces] unless namespaces.is_a?(Array)
+    namespaces = namespaces.collect { |ns| ns.downcase }
+
+    result = []
+    namespaces.each do |namespace|
+      ary = namespace.split("::")
+
+      # Search each namespace nesting in innermost-to-outermost order.
+      while ary.length > 0
+        result << "#{ary.join("::")}::#{name}"
+        ary.pop
+      end
+
+      # Finally, search the toplevel namespace.
+      result << name
+    end
+
+    return result.uniq
+  end
+
+  # Resolve namespaces and find the given object.  Autoload it if
+  # necessary.
+  def find_or_load(namespaces, name, type)
+    resolve_namespaces(namespaces, name).each do |fqname|
+      if result = send(type, fqname)
+        return result
+      end
+      loader.try_load_fqname(fqname) do |filename, modname|
+        if result = send(type, fqname)
+          Puppet.debug "Automatically imported #{name} from #{filename} into #{environment}"
+          result.module_name = modname if modname and result.respond_to?(:module_name=)
+          return result
+        end
+      end
+    end
+
+    # Nothing found.
+    return nil
   end
 
   def munge_name(name)

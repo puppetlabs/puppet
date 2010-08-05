@@ -103,11 +103,11 @@ class Puppet::Parser::Parser
   end
 
   def find_hostclass(namespace, name)
-    known_resource_types.find_or_load(namespace, name, :hostclass)
+    known_resource_types.find_hostclass(namespace, name)
   end
 
   def find_definition(namespace, name)
-    known_resource_types.find_or_load(namespace, name, :definition)
+    known_resource_types.find_definition(namespace, name)
   end
 
   def import(file)

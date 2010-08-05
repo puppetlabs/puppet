@@ -28,85 +28,27 @@ describe Puppet::Parser::TypeLoader do
   describe "when loading names from namespaces" do
     it "should do nothing if the name to import is an empty string" do
       @loader.expects(:name2files).never
-      @loader.load_until(["foo"], "") { |f| false }.should be_nil
-    end
-
-    it "should turn the provided namespaces and name into a list of files" do
-      @loader.expects(:name2files).with(["foo"], "bar").returns []
-      @loader.load_until(["foo"], "bar") { |f| false }
+      @loader.try_load_fqname("") { |filename, modname| raise :should_not_occur }.should be_nil
     end
 
     it "should attempt to import each generated name" do
-      @loader.expects(:name2files).returns %w{foo bar}
+      @loader.expects(:import).with("foo/bar",nil)
       @loader.expects(:import).with("foo",nil)
-      @loader.expects(:import).with("bar",nil)
-      @loader.load_until(["foo"], "bar") { |f| false }
+      @loader.try_load_fqname("foo::bar") { |f| false }
     end
 
     it "should yield after each import" do
       yielded = []
-      @loader.expects(:name2files).returns %w{foo bar}
+      @loader.expects(:import).with("foo/bar",nil)
       @loader.expects(:import).with("foo",nil)
-      @loader.expects(:import).with("bar",nil)
-      @loader.load_until(["foo"], "bar") { |f| yielded << f; false }
-      yielded.should == %w{foo bar}
-    end
-
-    it "should stop importing when the yielded block returns true" do
-      yielded = []
-      @loader.expects(:name2files).returns %w{foo bar baz}
-      @loader.expects(:import).with("foo",nil)
-      @loader.expects(:import).with("bar",nil)
-      @loader.expects(:import).with("baz",nil).never
-      @loader.load_until(["foo"], "bar") { |f| true if f == "bar" }
-    end
-
-    it "should return the result of the block" do
-      yielded = []
-      @loader.expects(:name2files).returns %w{foo bar baz}
-      @loader.expects(:import).with("foo",nil)
-      @loader.expects(:import).with("bar",nil)
-      @loader.expects(:import).with("baz",nil).never
-      @loader.load_until(["foo"], "bar") { |f| 10 if f == "bar" }.should == 10
-    end
-
-    it "should return nil if the block never returns true" do
-      @loader.expects(:name2files).returns %w{foo bar}
-      @loader.expects(:import).with("foo",nil)
-      @loader.expects(:import).with("bar",nil)
-      @loader.load_until(["foo"], "bar") { |f| false }.should be_nil
+      @loader.try_load_fqname("foo::bar") { |filename, modname| yielded << [filename, modname]; false }
+      yielded.should == [["foo/bar", nil], ["foo", nil]]
     end
 
     it "should know when a given name has been loaded" do
-      @loader.expects(:name2files).returns %w{file}
       @loader.expects(:import).with("file",nil)
-      @loader.load_until(["foo"], "bar") { |f| true }
+      @loader.try_load_fqname("file") { |f| true }
       @loader.should be_loaded("file")
-    end
-
-    it "should set the module name on any created resource types" do
-      type = Puppet::Resource::Type.new(:hostclass, "mytype")
-
-      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{one}]
-      @loader.stubs(:parse_file)
-      @loader.load_until(["foo"], "one") { |f| type }
-
-      type.module_name.should == "modname"
-    end
-  end
-
-  describe "when mapping names to files" do
-    {
-      [["foo"], "::bar::baz"] => %w{bar/baz},
-      [[""], "foo::bar"]      => %w{foo foo/bar},
-      [%w{foo}, "bar"]        => %w{foo foo/bar bar},
-      [%w{a b}, "bar"]        => %w{a a/bar b b/bar bar},
-      [%w{a::b::c}, "bar"]    => %w{a a/b/c/bar bar},
-      [%w{a::b}, "foo::bar"]  => %w{a a/b/foo/bar foo/bar}
-    }.each do |inputs, outputs|
-      it "should produce #{outputs.inspect} from the #{inputs[0].inspect} namespace and #{inputs[1]} name" do
-        @loader.name2files(*inputs).should == outputs
-      end
     end
   end
 
@@ -197,5 +139,16 @@ describe Puppet::Parser::TypeLoader do
     @loader.import(file)
 
     @loader.known_resource_types.hostclass("foo").should be_instance_of(Puppet::Resource::Type)
+  end
+
+  describe "when deciding where to look for files" do
+    { 'foo' => ['foo'],
+      'foo::bar' => ['foo/bar', 'foo'],
+      'foo::bar::baz' => ['foo/bar/baz', 'foo/bar', 'foo']
+    }.each do |fqname, expected_paths|
+      it "should look for #{fqname.inspect} in #{expected_paths.inspect}" do
+        @loader.instance_eval { name2files(fqname) }.should == expected_paths
+      end
+    end
   end
 end

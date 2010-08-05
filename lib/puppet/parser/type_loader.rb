@@ -76,48 +76,27 @@ class Puppet::Parser::TypeLoader
     @imported = {}
   end
 
-  def load_until(namespaces, name)
-    return nil if name == "" # special-case main.
-    name2files(namespaces, name).each do |filename|
-      modname = begin
-        import_if_possible(filename)
-      rescue Puppet::ImportError => detail
-        # We couldn't load the item
-        # I'm not convienced we should just drop these errors, but this
-        # preserves existing behaviours.
-        nil
-      end
-      if result = yield(filename)
-        Puppet.debug "Automatically imported #{name} from #{filename} into #{environment}"
-        result.module_name = modname if modname and result.respond_to?(:module_name=)
-        return result
+  # Try to load the object with the given fully qualified name.  For
+  # each file that was actually loaded, yield(filename, modname).
+  def try_load_fqname(fqname)
+    return nil if fqname == "" # special-case main.
+    name2files(fqname).each do |filename|
+      if not loaded?(filename)
+        modname = begin
+          import_if_possible(filename)
+        rescue Puppet::ImportError => detail
+          # We couldn't load the item
+          # I'm not convienced we should just drop these errors, but this
+          # preserves existing behaviours.
+          nil
+        end
+        yield(filename, modname)
       end
     end
-    nil
   end
 
   def loaded?(name)
     @loaded.include?(name)
-  end
-
-  def name2files(namespaces, name)
-    return [name.sub(/^::/, '').gsub("::", File::SEPARATOR)] if name =~ /^::/
-
-    result = namespaces.inject([]) do |names_to_try, namespace|
-      fullname = (namespace + "::#{name}").sub(/^::/, '')
-
-      # Try to load the module init file if we're a qualified name
-      names_to_try << fullname.split("::")[0] if fullname.include?("::")
-
-      # Then the fully qualified name
-      names_to_try << fullname
-    end
-
-    # Otherwise try to load the bare name on its own.  This
-    # is appropriate if the class we're looking for is in a
-    # module that's different from our namespace.
-    result << name
-    result.uniq.collect { |f| f.gsub("::", File::SEPARATOR) }
   end
 
   def parse_file(file)
@@ -143,4 +122,19 @@ class Puppet::Parser::TypeLoader
       @loading.done_with(file)
     end
   end
+
+  private
+
+  # Return a list of all file basenames that should be tried in order
+  # to load the object with the given fully qualified name.
+  def name2files(fqname)
+    result = []
+    ary = fqname.split("::")
+    while ary.length > 0
+      result << ary.join(File::SEPARATOR)
+      ary.pop
+    end
+    return result
+  end
+
 end

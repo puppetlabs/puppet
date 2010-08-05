@@ -514,8 +514,7 @@ describe Puppet::Resource::Type do
         @compiler.add_resource @scope, @parent_resource
 
         @type.resource_type_collection = @scope.known_resource_types
-        @type.resource_type_collection.stubs(:node).with("parent").returns(@parent_type)
-        @type.resource_type_collection.stubs(:node).with("Parent").returns(@parent_type)
+        @type.resource_type_collection.add(@parent_type)
       end
 
       it "should evaluate the parent's resource" do
