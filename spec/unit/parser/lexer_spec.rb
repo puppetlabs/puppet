@@ -412,6 +412,7 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string with an escaped "\\'"'}                => [[:STRING,'single quoted string with an escaped "\'"']],
     %q{'single quoted string with an escaped "\$"'}                 => [[:STRING,'single quoted string with an escaped "\$"']],
     %q{'single quoted string with an escaped "\."'}                 => [[:STRING,'single quoted string with an escaped "\."']],
+    %q{'single quoted string with an escaped "\n"'}                 => [[:STRING,'single quoted string with an escaped "\n"']],
     %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
     %q{"string with an escaped '\\$'"}                              => [[:STRING,"string with an escaped '$'"]],
