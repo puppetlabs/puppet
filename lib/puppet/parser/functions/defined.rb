@@ -3,7 +3,7 @@ Puppet::Parser::Functions::newfunction(:defined, :type => :rvalue, :doc => "Dete
   type is defined, either as a native type or a defined type, or whether a class is defined.
   This is useful for checking whether a class is defined and only including it if it is.
   This function can also test whether a resource has been defined, using resource references
-  (e.g., ``if defined(File['/tmp/myfile']) { ... }``).  This function is unfortunately
+  (e.g., `if defined(File['/tmp/myfile']) { ... }`).  This function is unfortunately
   dependent on the parse order of the configuration when testing whether a resource is defined.") do |vals|
     result = false
     vals = [vals] unless vals.is_a?(Array)

@@ -3,26 +3,26 @@ require 'puppet/util/package'
 
       Puppet::Parser::Functions::newfunction(
         :versioncmp, :type => :rvalue,
-        
+
   :doc => "Compares two versions
 
-Prototype::
+Prototype:
 
-  \$result = versioncmp(a, b)
+    \$result = versioncmp(a, b)
 
-  where a and b are arbitrary version strings
+Where a and b are arbitrary version strings
 
-This functions returns a number::
+This functions returns a number:
 
-  * > 0 if version a is greater than version b
-  * == 0 if both version are equals
-  * < 0 if version a is less than version b
+* > 0 if version a is greater than version b
+* == 0 if both version are equals
+* < 0 if version a is less than version b
 
-Example::
+Example:
 
-  if versioncmp('2.6-1', '2.4.5') > 0 {
-    notice('2.6-1 is > than 2.4.5')
-  }
+    if versioncmp('2.6-1', '2.4.5') > 0 {
+        notice('2.6-1 is > than 2.4.5')
+    }
 
 ") do |args|
 

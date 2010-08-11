@@ -47,7 +47,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
       # Add the suitability note
       if missing = provider.suitable?(false) and missing.empty?
-        data << "**X**"
+        data << "*X*"
         suit = true
         functional = true
       else
@@ -86,7 +86,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
       # Add a note for every feature
       features.each do |feature|
         if provider.features.include?(feature)
-          data << "**X**"
+          data << "*X*"
         else
           data << ""
         end
