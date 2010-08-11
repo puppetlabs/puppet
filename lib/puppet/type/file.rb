@@ -16,7 +16,7 @@ Puppet::Type.newtype(:file) do
   @doc = "Manages local files, including setting ownership and
     permissions, creation of both files and directories, and
     retrieving entire files from remote servers.  As Puppet matures, it
-    expected that the ``file`` resource will be used less and less to
+    expected that the `file` resource will be used less and less to
     manage content, and instead native resources will be used to do so.
 
     If you find that you are often copying files in from a central
@@ -61,33 +61,33 @@ Puppet::Type.newtype(:file) do
   newparam(:backup) do
     desc "Whether files should be backed up before
       being replaced.  The preferred method of backing files up is via
-      a ``filebucket``, which stores files by their MD5 sums and allows
+      a `filebucket`, which stores files by their MD5 sums and allows
       easy retrieval without littering directories with backups.  You
       can specify a local filebucket or a network-accessible
-      server-based filebucket by setting ``backup => bucket-name``.
-      Alternatively, if you specify any value that begins with a ``.``
-      (e.g., ``.puppet-bak``), then Puppet will use copy the file in
+      server-based filebucket by setting `backup => bucket-name`.
+      Alternatively, if you specify any value that begins with a `.`
+      (e.g., `.puppet-bak`), then Puppet will use copy the file in
       the same directory with that value as the extension of the
-      backup. Setting ``backup => false`` disables all backups of the
+      backup. Setting `backup => false` disables all backups of the
       file in question.
 
-      Puppet automatically creates a local filebucket named ``puppet`` and
+      Puppet automatically creates a local filebucket named `puppet` and
       defaults to backing up there.  To use a server-based filebucket,
-      you must specify one in your configuration::
+      you must specify one in your configuration
 
-        filebucket { main:
-          server => puppet
-        }
+            filebucket { main:
+              server => puppet
+            }
 
-      The ``puppet master`` daemon creates a filebucket by default,
+      The `puppet master` daemon creates a filebucket by default,
       so you can usually back up to your main server with this
       configuration.  Once you've described the bucket in your
-      configuration, you can use it in any file::
+      configuration, you can use it in any file
 
-        file { \"/my/file\":
-          source => \"/path/in/nfs/or/something\",
-          backup => main
-        }
+            file { \"/my/file\":
+              source => \"/path/in/nfs/or/something\",
+              backup => main
+            }
 
       This will back the file up to the central server.
 
@@ -192,9 +192,9 @@ Puppet::Type.newtype(:file) do
   newparam(:ignore) do
     desc "A parameter which omits action on files matching
       specified patterns during recursion.  Uses Ruby's builtin globbing
-      engine, so shell metacharacters are fully supported, e.g. ``[a-z]*``.
+      engine, so shell metacharacters are fully supported, e.g. `[a-z]*`.
       Matches that would descend into the directory structure are ignored,
-      e.g., ``*/*``."
+      e.g., `*/*`."
 
     validate do |value|
       unless value.is_a?(Array) or value.is_a?(String) or value == false
@@ -205,10 +205,10 @@ Puppet::Type.newtype(:file) do
 
   newparam(:links) do
     desc "How to handle links during file actions.  During file copying,
-      ``follow`` will copy the target file instead of the link, ``manage``
-      will copy the link itself, and ``ignore`` will just pass it by.
-      When not copying, ``manage`` and ``ignore`` behave equivalently
-      (because you cannot really ignore links entirely during local recursion), and ``follow`` will manage the file to which the
+      `follow` will copy the target file instead of the link, `manage`
+      will copy the link itself, and `ignore` will just pass it by.
+      When not copying, `manage` and `ignore` behave equivalently
+      (because you cannot really ignore links entirely during local recursion), and `follow` will manage the file to which the
       link points."
 
     newvalues(:follow, :manage)
@@ -223,7 +223,7 @@ Puppet::Type.newtype(:file) do
       files unless you really know what you are doing.  This option only
       makes sense when recursively managing directories.
 
-      Note that when using ``purge`` with ``source``, Puppet will purge any files
+      Note that when using `purge` with `source`, Puppet will purge any files
       that are not on the remote system."
 
     defaultto :false
@@ -234,7 +234,7 @@ Puppet::Type.newtype(:file) do
   newparam(:sourceselect) do
     desc "Whether to copy all valid sources, or just the first one.  This parameter
       is only used in recursive copies; by default, the first valid source is the
-      only one used as a recursive source, but if this parameter is set to ``all``,
+      only one used as a recursive source, but if this parameter is set to `all`,
       then all valid sources will have all of their contents copied to the local host,
       and for sources that have the same file, the source earlier in the list will
       be used."

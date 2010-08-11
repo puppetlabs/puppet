@@ -94,7 +94,7 @@ module Puppet
     end
 
     @doc = "Installs and manages host entries.  For most systems, these
-      entries will just be in ``/etc/hosts``, but some systems (notably OS X)
+      entries will just be in `/etc/hosts`, but some systems (notably OS X)
       will have different solutions."
   end
 end

@@ -5,8 +5,8 @@ module Puppet
       information into the mount table. The actual behavior depends
       on the value of the 'ensure' parameter.
 
-      Note that if a ``mount`` receives an event from another resource,
-      it will try to remount the filesystems if ``ensure`` is set to ``mounted``."
+      Note that if a `mount` receives an event from another resource,
+      it will try to remount the filesystems if `ensure` is set to `mounted`."
 
     feature :refreshable, "The provider can remount the filesystem.",
       :methods => [:remount]
@@ -15,10 +15,10 @@ module Puppet
     # call code when sync is called.
     newproperty(:ensure) do
       desc "Control what to do with this mount. Set this attribute to
-        ``umounted`` to make sure the filesystem is in the filesystem table
-        but not mounted (if the filesystem is currently mounted, it will be unmounted).  Set it to ``absent`` to unmount (if necessary) and remove
-        the filesystem from the fstab.  Set to ``mounted`` to add it to the
-        fstab and mount it. Set to ``present`` to add to fstab but not change
+        `umounted` to make sure the filesystem is in the filesystem table
+        but not mounted (if the filesystem is currently mounted, it will be unmounted).  Set it to `absent` to unmount (if necessary) and remove
+        the filesystem from the fstab.  Set to `mounted` to add it to the
+        fstab and mount it. Set to `present` to add to fstab but not change
         mount/unmount status"
 
       newvalue(:defined) do
@@ -149,7 +149,7 @@ module Puppet
 
     newproperty(:dump) do
       desc "Whether to dump the mount.  Not all platform support this.
-        Valid values are ``1`` or ``0``. or ``2`` on FreeBSD, Default is ``0``."
+        Valid values are `1` or `0`. or `2` on FreeBSD, Default is `0`."
 
       if Facter["operatingsystem"].value == "FreeBSD"
         newvalue(%r{(0|1|2)})
@@ -183,7 +183,7 @@ module Puppet
     end
 
     newparam(:path) do
-      desc "The deprecated name for the mount point.  Please use ``name`` now."
+      desc "The deprecated name for the mount point.  Please use `name` now."
 
       def value=(value)
         warning "'path' is deprecated for mounts.  Please use 'name'."
@@ -193,7 +193,7 @@ module Puppet
     end
 
     newparam(:remounts) do
-      desc "Whether the mount can be remounted  ``mount -o remount``.  If
+      desc "Whether the mount can be remounted  `mount -o remount`.  If
         this is false, then the filesystem will be unmounted and remounted
         manually, which is prone to failure."
 

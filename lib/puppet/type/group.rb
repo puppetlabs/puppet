@@ -89,7 +89,7 @@ module Puppet
 
     newparam(:allowdupe, :boolean => true) do
       desc "Whether to allow duplicate GIDs.  This option does not work on
-        FreeBSD (contract to the ``pw`` man page)."
+        FreeBSD (contract to the `pw` man page)."
 
       newvalues(:true, :false)
 
