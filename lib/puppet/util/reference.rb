@@ -15,7 +15,7 @@ class Puppet::Util::Reference
   end
 
   def self.modes
-    %w{pdf trac text markdown}
+    %w{pdf text markdown}
   end
 
   def self.newreference(name, options = {}, &block)
@@ -181,27 +181,4 @@ class Puppet::Util::Reference
   def to_text(withcontents = true)
     strip_trac(to_rest(withcontents))
   end
-
-  def to_trac(with_contents = true)
-    "{{{\n#!rst\n#{self.to_rest(with_contents)}\n}}}"
-  end
-
-  def trac
-    Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
-      f.puts self.to_trac
-    end
-
-    puts "Writing #{@name} reference to trac as #{@page}"
-    cmd = %{sudo trac-admin /opt/rl/trac/puppet wiki import %s /tmp/puppetdoc.txt} % self.page
-    output = %x{#{cmd}}
-    unless $CHILD_STATUS == 0
-      $stderr.puts "trac-admin failed"
-      $stderr.puts output
-      exit(1)
-    end
-    unless output =~ /^\s+/
-      $stderr.puts output
-    end
-  end
 end
-

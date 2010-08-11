@@ -56,7 +56,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   def run_command
-    return[:rdoc, :trac, :markdown].include?(options[:mode]) ? send(options[:mode]) : other
+    return[:rdoc, :markdown].include?(options[:mode]) ? send(options[:mode]) : other
   end
 
   def rdoc
@@ -72,7 +72,7 @@ class Puppet::Application::Doc < Puppet::Application
 
           Puppet.settings.setdefaults(
         "puppetdoc",
-        
+
       "document_all" => [false, "Document all resources"]
     )
     Puppet.settings[:document_all] = options[:all] || false
@@ -90,14 +90,6 @@ class Puppet::Application::Doc < Puppet::Application
       exit_code = 1
     end
     exit exit_code
-  end
-
-  def trac
-    require 'puppet/util/reference'
-    options[:references].each do |name|
-      section = Puppet::Util::Reference.reference(name) or raise "Could not find section #{name}"
-      section.trac unless options[:mode] == :pdf
-    end
   end
 
   def markdown
