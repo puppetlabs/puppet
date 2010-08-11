@@ -47,24 +47,18 @@ module Puppet::Util::Docs
       lengths[i] = value.to_s.length if value.to_s.length > lengths[i]
     end
 
-    # Add the top header row
-    str += lengths.collect { |num| "=" * num }.join(" ") + "\n"
+    # Add the header names
+    str += headers.zip(lengths).collect { |value, num| pad(value, num) }.join(" | ") + " |" + "\n"
 
-    # And the header names
-    str += headers.zip(lengths).collect { |value, num| pad(value, num) }.join(" ") + "\n"
-
-    # And the second header row
-    str += lengths.collect { |num| "=" * num }.join(" ") + "\n"
+    # And the header row
+    str += lengths.collect { |num| "-" * num }.join(" | ") + " |" + "\n"
 
     # Now each data row
     data.sort { |a, b| a[0].to_s <=> b[0].to_s }.each do |name, rows|
       str += [name, rows].flatten.zip(lengths).collect do |value, length|
         pad(value, length)
-      end.join(" ") + "\n"
+      end.join(" | ") + " |" + "\n"
     end
-
-    # And the bottom line row
-    str += lengths.collect { |num| "=" * num }.join(" ") + "\n"
 
     str + "\n"
   end
