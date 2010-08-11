@@ -1,6 +1,6 @@
 # Packaging using Blastwave's pkg-get program.
 Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun do
-  desc "Package management using Blastwave.org's ``pkg-get`` command on Solaris."
+  desc "Package management using Blastwave.org's `pkg-get` command on Solaris."
   pkgget = "pkg-get"
   pkgget = "/opt/csw/bin/pkg-get" if FileTest.executable?("/opt/csw/bin/pkg-get")
 

@@ -10,7 +10,7 @@ Puppet::Type.newtype(:computer) do
     This provider only manages Computer objects in the local directory service
     domain, not in remote directories.
 
-    If you wish to manage /etc/hosts on Mac OS X, then simply use the host
+    If you wish to manage `/etc/hosts` file on Mac OS X, then simply use the host
     type as per other platforms.
 
     This type primarily exists to create localhost Computer objects that MCX
@@ -31,7 +31,7 @@ Puppet::Type.newtype(:computer) do
 
   newproperty(:ensure, :parent => Puppet::Property::Ensure) do
     desc "Control the existences of this computer record. Set this attribute to
-      ``present`` to ensure the computer record exists.  Set it to ``absent``
+      `present` to ensure the computer record exists.  Set it to `absent`
       to delete any computer records with this name"
     newvalue(:present) do
       provider.create

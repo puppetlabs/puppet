@@ -14,10 +14,8 @@ module Puppet
     end
 
     newproperty(:host_aliases) do
-      desc 'Any aliases the host might have.  Multiple values must be
-        specified as an array.  Note that this property is not the same as
-        the "alias" metaparam; use this property to add aliases to a host
-        on disk, and "alias" to aliases for use in your Puppet scripts.'
+      desc "Any aliases the host might have.  Multiple values must be
+        specified as an array."
 
       def insync?(is)
         is == @should
@@ -98,4 +96,3 @@ module Puppet
       will have different solutions."
   end
 end
-

@@ -12,7 +12,7 @@ module Puppet
 
       This resource type uses the prescribed native tools for creating
       groups and generally uses POSIX APIs for retrieving information
-      about them.  It does not directly modify /etc/passwd or anything."
+      about them.  It does not directly modify `/etc/passwd` or anything."
 
     feature :allows_duplicates,
       "The provider supports duplicate users with the same UID."
@@ -381,4 +381,3 @@ module Puppet
     end
   end
 end
-

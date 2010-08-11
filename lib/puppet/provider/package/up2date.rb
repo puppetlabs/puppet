@@ -1,5 +1,5 @@
 Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm do
-  desc "Support for Red Hat's proprietary ``up2date`` package update
+  desc "Support for Red Hat's proprietary `up2date` package update
     mechanism."
 
   commands :up2date => "/usr/sbin/up2date-nox"

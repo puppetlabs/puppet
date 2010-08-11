@@ -69,9 +69,9 @@ Puppet::Type.newtype(:zone) do
 
   ensurable do
     desc "The running state of the zone.  The valid states directly reflect
-      the states that ``zoneadm`` provides.  The states are linear,
-      in that a zone must be ``configured`` then ``installed``, and
-      only then can be ``running``.  Note also that ``halt`` is currently
+      the states that `zoneadm` provides.  The states are linear,
+      in that a zone must be `configured` then `installed`, and
+      only then can be `running`.  Note also that `halt` is currently
       used to stop zones."
 
     @states = {}
@@ -313,31 +313,31 @@ Puppet::Type.newtype(:zone) do
   # only used to boot the zone the very first time.
   newparam(:sysidcfg) do
     desc %{The text to go into the sysidcfg file when the zone is first
-      booted.  The best way is to use a template::
+      booted.  The best way is to use a template:
 
-        # $templatedir/sysidcfg
-        system_locale=en_US
-        timezone=GMT
-        terminal=xterms
-        security_policy=NONE
-        root_password=&lt;%= password %>
-        timeserver=localhost
-        name_service=DNS {domain_name=&lt;%= domain %> name_server=&lt;%= nameserver %>}
-        network_interface=primary {hostname=&lt;%= realhostname %>
-          ip_address=&lt;%= ip %>
-          netmask=&lt;%= netmask %>
-          protocol_ipv6=no
-          default_route=&lt;%= defaultroute %>}
-        nfs4_domain=dynamic
+          # $templatedir/sysidcfg
+          system_locale=en_US
+          timezone=GMT
+          terminal=xterms
+          security_policy=NONE
+          root_password=&lt;%= password %>
+          timeserver=localhost
+          name_service=DNS {domain_name=&lt;%= domain %> name_server=&lt;%= nameserver %>}
+          network_interface=primary {hostname=&lt;%= realhostname %>
+            ip_address=&lt;%= ip %>
+            netmask=&lt;%= netmask %>
+            protocol_ipv6=no
+            default_route=&lt;%= defaultroute %>}
+          nfs4_domain=dynamic
 
-      And then call that::
+      And then call that:
 
-        zone { myzone:
-          ip => "bge0:192.168.0.23",
-          sysidcfg => template(sysidcfg),
-          path => "/opt/zones/myzone",
-          realhostname => "fully.qualified.domain.name"
-        }
+          zone { myzone:
+            ip => "bge0:192.168.0.23",
+            sysidcfg => template(sysidcfg),
+            path => "/opt/zones/myzone",
+            realhostname => "fully.qualified.domain.name"
+          }
 
       The sysidcfg only matters on the first booting of the zone,
       so Puppet only checks for it at that time.}

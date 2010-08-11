@@ -15,32 +15,32 @@ Puppet::Type.newtype(:cron) do
     association is made and synced to disk, you can then manage the job
     normally (e.g., change the schedule of the job).
 
-    Example
+    Example:
 
-          cron { logrotate:
-            command => \"/usr/sbin/logrotate\",
-            user => root,
-            hour => 2,
-            minute => 0
-          }
+        cron { logrotate:
+          command => \"/usr/sbin/logrotate\",
+          user => root,
+          hour => 2,
+          minute => 0
+        }
 
-    Note that all cron values can be specified as an array of values
+    Note that all cron values can be specified as an array of values:
 
-          cron { logrotate:
-            command => \"/usr/sbin/logrotate\",
-            user => root,
-            hour => [2, 4]
-          }   
+        cron { logrotate:
+          command => \"/usr/sbin/logrotate\",
+          user => root,
+          hour => [2, 4]
+        }
 
     Or using ranges, or the step syntax `*/2` (although there's no guarantee that
-    your `cron` daemon supports it)
+    your `cron` daemon supports it):
 
-          cron { logrotate:
-            command => \"/usr/sbin/logrotate\",
-            user => root,
-            hour => ['2-4'],
-            minute => '*/10'
-          }
+        cron { logrotate:
+          command => \"/usr/sbin/logrotate\",
+          user => root,
+          hour => ['2-4'],
+          minute => '*/10'
+        }
     "
   ensurable
 

@@ -8,12 +8,12 @@ module Puppet
     @doc = "Manage packages.  There is a basic dichotomy in package
       support right now:  Some package types (e.g., yum and apt) can
       retrieve their own package files, while others (e.g., rpm and sun) cannot.  For those package formats that cannot retrieve
-      their own files, you can use the ``source`` parameter to point to
+      their own files, you can use the `source` parameter to point to
       the correct file.
 
       Puppet will automatically guess the packaging format that you are
       using based on the platform you are on, but you can override it
-      using the ``provider`` parameter; each provider defines what it
+      using the `provider` parameter; each provider defines what it
       requires in order to function, and you must meet those requirements
       to use a given provider."
 
@@ -22,7 +22,7 @@ module Puppet
     feature :uninstallable, "The provider can uninstall packages.",
       :methods => [:uninstall]
     feature :upgradeable, "The provider can upgrade to the latest version of a
-        package.  This feature is used by specifying ``latest`` as the
+        package.  This feature is used by specifying `latest` as the
         desired value for the package.",
       :methods => [:update, :latest]
     feature :purgeable, "The provider can purge packages.  This generally means
@@ -104,7 +104,6 @@ module Puppet
         end
       end
 
-
       defaultto :installed
 
       # Override the parent method, because we've got all kinds of
@@ -181,35 +180,35 @@ module Puppet
       system uses internally, which is sometimes (especially on Solaris)
       a name that is basically useless to humans.  If you want to
       abstract package installation, then you can use aliases to provide
-      a common name to packages::
+      a common name to packages:
 
-        # In the 'openssl' class
-        $ssl = $operatingsystem ? {
-          solaris => SMCossl,
-          default => openssl
-        }
+          # In the 'openssl' class
+          $ssl = $operatingsystem ? {
+            solaris => SMCossl,
+            default => openssl
+          }
 
-        # It is not an error to set an alias to the same value as the
-        # object name.
-        package { $ssl:
-          ensure => installed,
-          alias => openssl
-        }
+          # It is not an error to set an alias to the same value as the
+          # object name.
+          package { $ssl:
+            ensure => installed,
+            alias => openssl
+          }
 
-        . etc. .
+          . etc. .
 
-        $ssh = $operatingsystem ? {
-          solaris => SMCossh,
-          default => openssh
-        }
+          $ssh = $operatingsystem ? {
+            solaris => SMCossh,
+            default => openssh
+          }
 
-        # Use the alias to specify a dependency, rather than
-        # having another selector to figure it out again.
-        package { $ssh:
-          ensure => installed,
-          alias => openssh,
-          require => Package[openssl]
-        }
+          # Use the alias to specify a dependency, rather than
+          # having another selector to figure it out again.
+          package { $ssh:
+            ensure => installed,
+            alias => openssh,
+            require => Package[openssl]
+          }
 
       "
       isnamevar
@@ -228,7 +227,7 @@ module Puppet
     end
 
     newparam(:type) do
-      desc "Deprecated form of ``provider``."
+      desc "Deprecated form of `provider`."
 
       munge do |value|
         warning "'type' is deprecated; use 'provider' instead"
@@ -243,7 +242,7 @@ module Puppet
         This is currently only used on Solaris.  The value will be
         validated according to system rules, which in the case of
         Solaris means that it should either be a fully qualified path
-        or it should be in /var/sadm/install/admin."
+        or it should be in `/var/sadm/install/admin`."
     end
 
     newparam(:responsefile) do
@@ -320,4 +319,3 @@ module Puppet
     end
   end
 end
-
