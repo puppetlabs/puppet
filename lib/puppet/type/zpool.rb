@@ -45,9 +45,9 @@ module Puppet
 
     newproperty(:mirror, :array_matching => :all, :parent => Puppet::Property::MultiVDev) do
       desc "List of all the devices to mirror for this pool. Each mirror should be a space separated string:
-    
+
     mirror => [\"disk1 disk2\", \"disk3 disk4\"]
-    
+
       "
 
       validate do |value|
@@ -57,8 +57,8 @@ module Puppet
 
     newproperty(:raidz, :array_matching => :all, :parent => Puppet::Property::MultiVDev) do
       desc "List of all the devices to raid for this pool. Should be an array of space separated strings:
-  
-    raidz => [\"disk1 disk2\", \"disk3 disk4\"]
+      
+          raidz => [\"disk1 disk2\", \"disk3 disk4\"]
 
       "
 

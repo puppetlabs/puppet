@@ -320,14 +320,14 @@ Puppet::Type.newtype(:zone) do
           timezone=GMT
           terminal=xterms
           security_policy=NONE
-          root_password=&lt;%= password %>
+          root_password=<%= password %>
           timeserver=localhost
-          name_service=DNS {domain_name=&lt;%= domain %> name_server=&lt;%= nameserver %>}
-          network_interface=primary {hostname=&lt;%= realhostname %>
-            ip_address=&lt;%= ip %>
-            netmask=&lt;%= netmask %>
+          name_service=DNS {domain_name=<%= domain %> name_server=<%= nameserver %>}
+          network_interface=primary {hostname=<%= realhostname %>
+            ip_address=<%= ip %>
+            netmask=<%= netmask %>
             protocol_ipv6=no
-            default_route=&lt;%= defaultroute %>}
+            default_route=<%= defaultroute %>}
           nfs4_domain=dynamic
 
       And then call that:

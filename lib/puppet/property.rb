@@ -55,10 +55,10 @@ class Puppet::Property < Puppet::Parameter
   # * <tt>:required_features</tt>: A list of features this value requires.
   # * <tt>:event</tt>: The event that should be returned when this value is set.
   # * <tt>:call</tt>: When to call any associated block.  The default value
-  #   is ``instead``, which means to call the value instead of calling the
-  #   provider.  You can also specify ``before`` or ``after``, which will
+  #   is `instead`, which means to call the value instead of calling the
+  #   provider.  You can also specify `before` or `after`, which will
   #   call both the block and the provider, according to the order you specify
-  #   (the ``first`` refers to when the block is called, not the provider).
+  #   (the `first` refers to when the block is called, not the provider).
   def self.newvalue(name, options = {}, &block)
     value = value_collection.newvalue(name, options, &block)
 
@@ -181,10 +181,10 @@ class Puppet::Property < Puppet::Parameter
   def log(msg)
 
           Puppet::Util::Log.create(
-                
+
       :level => resource[:loglevel],
       :message => msg,
-        
+
       :source => self
     )
   end

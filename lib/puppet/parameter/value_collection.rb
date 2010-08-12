@@ -21,14 +21,14 @@ class Puppet::Parameter::ValueCollection
         @doc += "  Valid values are "
         @doc += @strings.collect do |value|
           if aliases = value.aliases and ! aliases.empty?
-            "``#{value.name}`` (also called ``#{aliases.join(", ")}``)"
+            "`#{value.name}` (also called `#{aliases.join(", ")}`)"
           else
-            "``#{value.name}``"
+            "`#{value.name}`"
           end
         end.join(", ") + "."
       end
 
-      @doc += "  Values can match ``" + regexes.join("``, ``") + "``." unless regexes.empty?
+      @doc += "  Values can match `" + regexes.join("`, `") + "`." unless regexes.empty?
     end
 
     @doc
