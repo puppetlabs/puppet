@@ -6,12 +6,12 @@ require 'time'
 
 Puppet::Reports.register_report(:tagmail) do
   desc "This report sends specific log messages to specific email addresses
-    based on the tags in the log messages.  See the
-    `UsingTags tag documentation`:trac: for more information
-    on tags.
+    based on the tags in the log messages.  
 
-    To use this report, you must create a ``tagmail.conf`` (in the location
-    specified by ``tagmap``).  This is a simple file that maps tags to
+    See the [UsingTags tag documentation](http://projects.puppetlabs.com/projects/puppet/wiki/Using_Tags) for more information on tags.
+
+    To use this report, you must create a `tagmail.conf` (in the location
+    specified by `tagmap`).  This is a simple file that maps tags to
     email addresses:  Any log messages in the report that match the specified
     tags will be sent to the specified email addresses.
 
@@ -20,20 +20,19 @@ Puppet::Reports.register_report(:tagmail) do
     the email addresses by a colon, and the email addresses should also
     be comma-separated.
 
-    Lastly, there is an ``all`` tag that will always match all log messages.
+    Lastly, there is an `all` tag that will always match all log messages.
 
-    Here is an example tagmail.conf::
+    Here is an example `tagmail.conf`:
 
-      all: me@domain.com
-      webserver, !mailserver: httpadmins@domain.com
+        all: me@domain.com
+        webserver, !mailserver: httpadmins@domain.com
 
-    This will send all messages to ``me@domain.com``, and all messages from
-    webservers that are not also from mailservers to ``httpadmins@domain.com``.
+    This will send all messages to `me@domain.com`, and all messages from
+    webservers that are not also from mailservers to `httpadmins@domain.com`.
 
     If you are using anti-spam controls, such as grey-listing, on your mail
-    server you should whitelist the sending email (controlled by ``reportform`` configuration option) to ensure your email is not discarded as spam.
+    server you should whitelist the sending email (controlled by `reportform` configuration option) to ensure your email is not discarded as spam.
     "
-
 
   # Find all matching messages.
   def match(taglists)

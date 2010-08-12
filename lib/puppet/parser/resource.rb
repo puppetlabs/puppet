@@ -102,9 +102,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def initialize(*args)
+    raise ArgumentError, "Resources require a scope" unless args.last[:scope]
     super
 
-    raise ArgumentError, "Resources require a scope" unless scope
     @source ||= scope.source
   end
 
@@ -138,10 +138,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   def name
     self[:name] || self.title
-  end
-
-  def namespaces
-    scope.namespaces
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.

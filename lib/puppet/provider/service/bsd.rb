@@ -1,8 +1,8 @@
 # Manage FreeBSD services.
 Puppet::Type.type(:service).provide :bsd, :parent => :init do
-  desc "FreeBSD's (and probably NetBSD?) form of ``init``-style service management.
+  desc "FreeBSD's (and probably NetBSD?) form of `init`-style service management.
 
-  Uses ``rc.conf.d`` for service enabling and disabling.
+  Uses `rc.conf.d` for service enabling and disabling.
 
 "
 

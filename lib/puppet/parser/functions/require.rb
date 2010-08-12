@@ -12,9 +12,8 @@ relationships between classes.  This function is a superset of the
 class depends on the required class.
 
 Warning: using require in place of include can lead to unwanted dependency cycles.
-  For instance the following manifest, with 'require' instead of 'include'
-  would produce a nasty dependence cycle, because notify imposes a before
-  between File[/foo] and Service[foo]::
+  
+For instance the following manifest, with 'require' instead of 'include' would produce a nasty dependence cycle, because notify imposes a before between File[/foo] and Service[foo]:
 
     class myservice {
       service { foo: ensure => running }

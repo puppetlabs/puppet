@@ -68,12 +68,12 @@ describe Puppet::Parameter::ValueCollection do
 
   it "should correctly generate documentation for values" do
     @collection.newvalues :foo
-    @collection.doc.should be_include("Valid values are ``foo``")
+    @collection.doc.should be_include("Valid values are `foo`")
   end
 
   it "should correctly generate documentation for regexes" do
     @collection.newvalues %r{\w+}
-    @collection.doc.should be_include("Values can match ``/\\w+/``")
+    @collection.doc.should be_include("Values can match `/\\w+/`")
   end
 
   it "should be able to find the first matching value" do

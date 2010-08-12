@@ -42,7 +42,7 @@ class Puppet::Parser::AST
   # The base string class.
   class String < AST::Leaf
     def evaluate(scope)
-      @value
+      @value.dup
     end
 
     def to_s

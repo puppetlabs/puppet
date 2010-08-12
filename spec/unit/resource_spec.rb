@@ -123,18 +123,6 @@ describe Puppet::Resource do
     Puppet::Resource.new("file", "/my/file", :environment => :foo).environment.name.should == :foo
   end
 
-  it "should support specifying namespaces" do
-    Puppet::Resource.new("file", "/my/file", :namespaces => ["foo"]).namespaces.should == ["foo"]
-  end
-
-  it "should convert namespaces to an array if not specified as one" do
-    Puppet::Resource.new("file", "/my/file", :namespaces => "foo").namespaces.should == ["foo"]
-  end
-
-  it "should default to a single amespace of an empty string" do
-    Puppet::Resource.new("file", "/my/file").namespaces.should == [""]
-  end
-
   describe "and munging its type and title" do
     describe "when modeling a builtin resource" do
       it "should be able to find the resource type" do
@@ -163,16 +151,6 @@ describe Puppet::Resource do
 
         it "should set its title to the provided title" do
           Puppet::Resource.new("foo::bar", "/my/file").title.should == "/my/file"
-        end
-
-        describe "and the resource is unqualified and models a qualified resource type" do
-          it "should set its type to the fully qualified resource type" do
-            Puppet::Resource.new("bar", "/my/file", :namespaces => %w{foo}).type.should == "Foo::Bar"
-          end
-
-          it "should be able to find the resource type" do
-            Puppet::Resource.new("bar", "/my/file", :namespaces => %w{foo}).resource_type.should equal(@type)
-          end
         end
       end
 
@@ -209,20 +187,6 @@ describe Puppet::Resource do
 
         it "should be able to find the resource type" do
           Puppet::Resource.new("class", "foo::bar").resource_type.should equal(@type)
-        end
-
-        describe "and the resource is unqualified and models a qualified class" do
-          it "should set its title to the fully qualified resource type" do
-            Puppet::Resource.new("class", "bar", :namespaces => %w{foo}).title.should == "Foo::Bar"
-          end
-
-          it "should be able to find the resource type" do
-            Puppet::Resource.new("class", "bar", :namespaces => %w{foo}).resource_type.should equal(@type)
-          end
-
-          it "should set its type to 'Class'" do
-            Puppet::Resource.new("class", "bar", :namespaces => %w{foo}).type.should == "Class"
-          end
         end
       end
 

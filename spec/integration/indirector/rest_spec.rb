@@ -39,6 +39,7 @@ describe Puppet::Indirector::REST do
 
     Puppet.settings[:confdir] = @dir
     Puppet.settings[:vardir] = @dir
+    Puppet.settings[:group] = Process.gid
     Puppet.settings[:server] = "127.0.0.1"
     Puppet.settings[:masterport] = "34343"
 

@@ -1,10 +1,10 @@
 require 'puppet/provider/ldap'
 
 Puppet::Type.type(:user).provide :ldap, :parent => Puppet::Provider::Ldap do
-  desc "User management via ``ldap``.  This provider requires that you
+  desc "User management via `ldap`.  This provider requires that you
     have valid values for all of the ldap-related settings,
-    including ``ldapbase``.  You will also almost definitely need settings
-    for ``ldapuser`` and ``ldappassword``, so that your clients can write
+    including `ldapbase`.  You will also almost definitely need settings
+    for `ldapuser` and `ldappassword`, so that your clients can write
     to ldap.
 
     Note that this provider will automatically generate a UID for you if

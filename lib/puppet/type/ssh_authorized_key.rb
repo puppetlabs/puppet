@@ -34,8 +34,8 @@ module Puppet
     newproperty(:target) do
       desc "The absolute filename in which to store the SSH key. This
       property is optional and should only be used in cases where keys
-      are stored in a non-standard location (ie not in
-      ~user/.ssh/authorized_keys)."
+      are stored in a non-standard location (i.e.` not in
+      `~user/.ssh/authorized_keys`)."
 
       defaultto :absent
 
@@ -96,4 +96,3 @@ module Puppet
     end
   end
 end
-

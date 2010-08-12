@@ -1,7 +1,7 @@
 require 'puppet/provider/nameservice/objectadd'
 
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
-  desc "User management via ``useradd`` and its ilk.  Note that you will need to install the ``Shadow Password`` Ruby library often known as ruby-libshadow to manage user passwords."
+  desc "User management via `useradd` and its ilk.  Note that you will need to install the `Shadow Password` Ruby library often known as ruby-libshadow to manage user passwords."
 
   commands :add => "useradd", :delete => "userdel", :modify => "usermod"
 

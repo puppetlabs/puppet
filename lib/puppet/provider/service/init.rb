@@ -3,9 +3,9 @@
 Puppet::Type.type(:service).provide :init, :parent => :base do
   desc "Standard init service management.
 
-  This provider assumes that the init script has no ``status`` command,
+  This provider assumes that the init script has no `status` command,
   because so few scripts do, so you need to either provide a status
-  command or specify via ``hasstatus`` that one already exists in the
+  command or specify via `hasstatus` that one already exists in the
   init script.
 
 "

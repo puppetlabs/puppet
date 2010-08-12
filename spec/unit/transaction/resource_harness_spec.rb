@@ -50,7 +50,7 @@ describe Puppet::Transaction::ResourceHarness do
     end
 
     it "should cache and log the current value if no cached values are present" do
-      @resource.expects(:info)
+      @resource.expects(:debug)
       @harness.copy_audited_parameters(@resource, {:mode => "755"}).should == []
 
       @harness.cached(@resource, :mode).should == "755"

@@ -7,8 +7,9 @@ describe "the extlookup function" do
 
   before :each do
     @scope = Puppet::Parser::Scope.new
-    
+
     @scope.stubs(:environment).returns(Puppet::Node::Environment.new('production'))
+    Puppet::Parser::Functions.function("extlookup")
   end
 
   it "should exist" do
@@ -62,9 +63,8 @@ describe "the extlookup function" do
   end
 
   describe "should look in $extlookup_datadir for data files listed by $extlookup_precedence" do
-    before do 
+    before do
       @scope.stubs(:lookupvar).with('extlookup_datadir').returns("/tmp")
-      @scope.stubs(:lookupvar).with('extlookup_precedence').returns(["one","two"])
       File.open("/tmp/one.csv","w"){|one| one.puts "key,value1" }
       File.open("/tmp/two.csv","w") do |two|
         two.puts "key,value2"
@@ -73,13 +73,23 @@ describe "the extlookup function" do
     end
 
     it "when the key is in the first file" do
+      @scope.stubs(:lookupvar).with('extlookup_precedence').returns(["one","two"])
       result = @scope.function_extlookup([ "key" ])
       result.should == "value1"
     end
 
     it "when the key is in the second file" do
+      @scope.stubs(:lookupvar).with('extlookup_precedence').returns(["one","two"])
       result = @scope.function_extlookup([ "key2" ])
       result.should == "value_two"
+    end
+
+    it "should not modify extlookup_precedence data" do
+      variable = '%{fqdn}'
+      @scope.stubs(:lookupvar).with('extlookup_precedence').returns([variable,"one"])
+      @scope.stubs(:lookupvar).with('fqdn').returns('myfqdn')
+      result = @scope.function_extlookup([ "key" ])
+      variable.should == '%{fqdn}'
     end
   end
 end

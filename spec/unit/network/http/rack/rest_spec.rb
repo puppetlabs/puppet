@@ -82,8 +82,8 @@ describe "Puppet::Network::HTTP::RackREST" do
           @file.stubs(:is_a?).with(File).returns(true)
         end
 
-        it "should set the Content-Length header" do
-          @response.expects(:[]=).with("Content-Length", 100)
+        it "should set the Content-Length header as a string" do
+          @response.expects(:[]=).with("Content-Length", '100')
 
           @handler.set_response(@response, @file, 200)
         end

@@ -1,12 +1,9 @@
-#  Created by Luke Kanies on 2006-12-12.
-#  Copyright (c) 2006. All rights reserved.
-
 require 'puppet'
 
 Puppet::Type.newtype(:resources) do
   @doc = "This is a metatype that can manage other resource types.  Any
     metaparams specified here will be passed on to any generated resources,
-    so you can purge umanaged resources but set ``noop`` to true so the
+    so you can purge umanaged resources but set `noop` to true so the
     purging is only logged and does not actually happen."
 
 
@@ -132,4 +129,3 @@ Puppet::Type.newtype(:resources) do
     %w{root nobody bin noaccess daemon sys}
   end
 end
-

@@ -224,7 +224,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should convert parser resources to plain resources" do
-      resource = Puppet::Parser::Resource.new(:file, "foo", :scope => stub("scope"), :source => stub("source"))
+      resource = Puppet::Parser::Resource.new(:file, "foo", :scope => stub("scope", :environment => nil, :namespaces => nil), :source => stub("source"))
       catalog = Puppet::Resource::Catalog.new("whev")
       catalog.add_resource(resource)
       new = catalog.to_resource

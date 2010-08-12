@@ -2,7 +2,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
 
-  desc "Package management via ``apt-get``."
+  desc "Package management via `apt-get`."
 
   has_feature :versionable
 

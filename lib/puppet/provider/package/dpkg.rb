@@ -1,8 +1,8 @@
 require 'puppet/provider/package'
 
 Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package do
-  desc "Package management via ``dpkg``.  Because this only uses ``dpkg``
-    and not ``apt``, you must specify the source of any packages you want
+  desc "Package management via `dpkg`.  Because this only uses `dpkg`
+    and not `apt`, you must specify the source of any packages you want
     to manage."
 
   has_feature :holdable
