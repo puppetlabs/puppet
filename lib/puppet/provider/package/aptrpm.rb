@@ -2,7 +2,7 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
   # Provide sorting functionality
   include Puppet::Util::Package
 
-  desc "Package management via ``apt-get`` ported to ``rpm``."
+  desc "Package management via `apt-get` ported to `rpm`."
 
   has_feature :versionable
 

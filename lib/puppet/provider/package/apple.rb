@@ -5,7 +5,7 @@ Puppet::Type.type(:package).provide :apple, :parent => Puppet::Provider::Package
   desc "Package management based on OS X's builtin packaging system.  This is
     essentially the simplest and least functional package system in existence --
     it only supports installation; no deletion or upgrades.  The provider will
-    automatically add the ``.pkg`` extension, so leave that off when specifying
+    automatically add the `.pkg` extension, so leave that off when specifying
     the package name."
 
   confine :operatingsystem => :darwin

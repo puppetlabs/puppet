@@ -41,7 +41,7 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     unless result.is_a?(File)
       response.write result
     else
-      response["Content-Length"] = result.stat.size
+      response["Content-Length"] = result.stat.size.to_s
       response.body = RackFile.new(result)
     end
   end

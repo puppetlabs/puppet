@@ -2,7 +2,7 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
 
-  desc "Package management via ``fink``."
+  desc "Package management via `fink`."
 
   commands :fink => "/sw/bin/fink"
   commands :aptget => "/sw/bin/apt-get"

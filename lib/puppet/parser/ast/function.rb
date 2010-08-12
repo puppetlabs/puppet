@@ -11,7 +11,6 @@ class Puppet::Parser::AST
     @settor = true
 
     def evaluate(scope)
-
       # Make sure it's a defined function
       raise Puppet::ParseError, "Unknown function #{@name}" unless Puppet::Parser::Functions.function(@name)
 

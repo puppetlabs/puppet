@@ -20,7 +20,7 @@ module Puppet::Parser::Functions
             @autoloader = Puppet::Util::Autoload.new(
         self,
         "puppet/parser/functions",
-        
+
         :wrap => false
       )
     end
@@ -94,7 +94,7 @@ module Puppet::Parser::Functions
         ret += "Undocumented.\n"
       end
 
-      ret += "\n\n- **Type**: #{hash[:type]}\n\n"
+      ret += "\n\n- *Type*: #{hash[:type]}\n\n"
     end
 
     ret

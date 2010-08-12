@@ -158,6 +158,10 @@ class Puppet::Configurer
       return
     end
   ensure
+    # Make sure we forget the retained module_directories of any autoload
+    # we might have used.
+    Thread.current[:env_module_directories] = nil
+
     # Now close all of our existing http connections, since there's no
     # reason to leave them lying open.
     Puppet::Network::HttpPool.clear_http_instances

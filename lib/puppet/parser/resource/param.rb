@@ -13,7 +13,7 @@ class Puppet::Parser::Resource::Param
 
   def initialize(hash)
     set_options(hash)
-    requiredopts(:name, :value, :source)
+    requiredopts(:name, :value)
     @name = symbolize(@name)
   end
 

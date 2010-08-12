@@ -56,7 +56,7 @@ class Puppet::Application::Doc < Puppet::Application
   end
 
   def run_command
-    return[:rdoc, :trac, :markdown].include?(options[:mode]) ? send(options[:mode]) : other
+    return[:rdoc].include?(options[:mode]) ? send(options[:mode]) : other
   end
 
   def rdoc
@@ -72,7 +72,7 @@ class Puppet::Application::Doc < Puppet::Application
 
           Puppet.settings.setdefaults(
         "puppetdoc",
-        
+
       "document_all" => [false, "Document all resources"]
     )
     Puppet.settings[:document_all] = options[:all] || false
@@ -89,40 +89,6 @@ class Puppet::Application::Doc < Puppet::Application
       $stderr.puts "Could not generate documentation: #{detail}"
       exit_code = 1
     end
-    exit exit_code
-  end
-
-  def trac
-    require 'puppet/util/reference'
-    options[:references].each do |name|
-      section = Puppet::Util::Reference.reference(name) or raise "Could not find section #{name}"
-      section.trac unless options[:mode] == :pdf
-    end
-  end
-
-  def markdown
-    text = ""
-    with_contents = false
-    exit_code = 0
-    require 'puppet/util/reference'
-    options[:references].sort { |a,b| a.to_s <=> b.to_s }.each do |name|
-      raise "Could not find reference #{name}" unless section = Puppet::Util::Reference.reference(name)
-
-      begin
-        # Add the per-section text, but with no ToC
-        text += section.send(options[:format], with_contents)
-        text += Puppet::Util::Reference.footer
-        text.gsub!(/`\w+\s+([^`]+)`:trac:/) { |m| $1 }
-        Puppet::Util::Reference.markdown(name, text)
-        text = ""
-      rescue => detail
-        puts detail.backtrace
-        $stderr.puts "Could not generate reference #{name}: #{detail}"
-        exit_code = 1
-        next
-      end
-    end
-
     exit exit_code
   end
 

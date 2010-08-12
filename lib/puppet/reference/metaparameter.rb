@@ -29,14 +29,6 @@ metaparameter = Puppet::Util::Reference.newreference :metaparameter, :doc => "Al
       a.to_s <=> b.to_s
     }.each { |param|
       str += paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)), :level => 4)
-      #puts "<dt>#{param}</dt>"
-      #puts tab(1) + Puppet::Type.metaparamdoc(param).scrub.indent($tab)gsub(/\n\s*/,' ')
-      #puts "<dd>"
-      #puts indent(scrub(Puppet::Type.metaparamdoc(param)), $tab)
-      #puts scrub(Puppet::Type.metaparamdoc(param))
-      #puts "</dd>"
-
-      #puts ""
     }
   rescue => detail
     puts detail.backtrace

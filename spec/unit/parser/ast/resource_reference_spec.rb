@@ -32,11 +32,6 @@ describe Puppet::Parser::AST::ResourceReference do
     ]
   end
 
-  it "should pass its scope's namespaces to all created resource references" do
-    @scope.add_namespace "foo"
-    newref("File", "/tmp/yay").evaluate(@scope).namespaces.should == ["foo"]
-  end
-
   it "should return a correct representation when converting to string" do
     type = stub 'type', :is_a? => true, :to_s => "file"
     title = stub 'title', :is_a? => true, :to_s => "[/tmp/a, /tmp/b]"

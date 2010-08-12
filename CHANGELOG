@@ -1,5 +1,44 @@
+2.6.1rc2
+========
+252c9b8  Further RST to Markdown fixes for types, values, tests
+1157e8d  Updated all types to Markdown output
+fef8800  Updated reference output to generate valid Markdown
+79e0a2e  Reformatting documentation from RST to MarkDown (#4509) Signed-off-by: Jes Fraser <jes@gadget.geek.nz>
+62435e5  Rewrote functions documentation to Markdown
+e4b2aa6  Removed legacy Trac code
+8ddea2a  Maint.  Passenger fix broke a test
+f43e87b  Fix for #4476 -- rails calling yaml internals
+a23d80a  Fixes #4485 -- single quoted strings should not treat \n as new line
+8e31b52  Passenger needs HTTP headers values to be string
+037bb32  [#4404] Remove requirement for source on Parser::Resource::Param
+0e4bc62  [#4364] Fix failing spec due to incorrect loglevel
+3a6ca54  Fix #4458 - Do not dump the whole environment when instances can't be found
+d909827  Fix for #4465 -- earlier "feature" patch broke ldap
+47005aa  Maint -- tests need to respect RFC-952
+6aac8f0  [#4467] Make Puppet Master respect facts_terminus settings
+1cba9a7  added md5 support as requested in http://serverfault.com/questions/166199/puppet-md5-sum-of-string
+1dfd2b6  [#4381] extlookup shouldn't trigger reparses of .pp files
+be2b1f3  [#4370] Fixes extlookup precedence getting overwritten between runs
+03808fd  Fixed #4364 - Reduced audit msg from info to debug
+539b57c  [#4347] run_mode was colliding with --mode for "puppet doc"
+1faebdd  [#4423] repair parameterized class instantiation
+37568bd  [#4423] class { shouldn't get stored on the namespace stack
+449315a  [#4397]+[#4344] Move type-name resolution out of Puppet::Resource into the AST resources.
+daa801b  [#4344] Temporary fix to stop agent from importing modules
+00ebf01  [#4344] Fix for failing templates when module name matches file in local dir.
+e32320e  [#4336] "reportdir" was in the wrong section
+0f9672a  Fixed #4311 - Typo in defaults.rb
+f54d843  Fix #4461 - attempt to fix another performance issue
+2c21fae  Fix for #4300 Solaris svc files need new pid filenames
+83c2419  [#4284] Fix failing specs run as root due to missing puppet group
+8237f68  [#4242] Fixed (removed) a broken unit test
+d5ad0fb  Removed eventual documentation line ... eventually came
+871e6fd  Fixed #4368 - Updated clean stored configs ext script for new config sections
+cb64477  Updated version to 2.6.1
+
 2.6.1rc1
 ========
+ecf44e4  Updated CHANGELOG for 2.6.1rc1
 bdfcac5  Update Red Hat spec file for 2.6.0
 9f08e7c  Feature: puppet-load - a tool to stress-test master compilation
 ef9a4a6  Fix #4245 - default insertion of ACL is not thread safe

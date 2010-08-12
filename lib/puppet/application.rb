@@ -285,7 +285,7 @@ class Application
       Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
       Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
       Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
-      Puppet.settings.set_value(:mode, Puppet.run_mode.name.to_s, :mutable_defaults)
+      Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
     end
 
     require 'puppet'

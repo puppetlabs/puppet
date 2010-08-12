@@ -28,27 +28,28 @@ Puppet::Type.newtype(:augeas) do
     via the augeas tool.
 
     Requires:
-      - augeas to be installed (http://www.augeas.net)
-      - ruby-augeas bindings
 
-    Sample usage with a string::
+    - augeas to be installed (http://www.augeas.net)
+    - ruby-augeas bindings
 
-      augeas{\"test1\" :
-        context => \"/files/etc/sysconfig/firstboot\",
-        changes => \"set RUN_FIRSTBOOT YES\",
-        onlyif  => \"match other_value size > 0\",
-      }
+    Sample usage with a string:
 
-    Sample usage with an array and custom lenses::
+        augeas{\"test1\" :
+          context => \"/files/etc/sysconfig/firstboot\",
+          changes => \"set RUN_FIRSTBOOT YES\",
+          onlyif  => \"match other_value size > 0\",
+        }
 
-      augeas{\"jboss_conf\":
-        context => \"/files\",
-        changes => [
-          \"set /etc/jbossas/jbossas.conf/JBOSS_IP $ipaddress\",
-          \"set /etc/jbossas/jbossas.conf/JAVA_HOME /usr\"
-        ],
-        load_path => \"$/usr/share/jbossas/lenses\",
-      }
+    Sample usage with an array and custom lenses:
+
+        augeas{\"jboss_conf\":
+          context => \"/files\",
+          changes => [
+            \"set /etc/jbossas/jbossas.conf/JBOSS_IP $ipaddress\",
+            \"set /etc/jbossas/jbossas.conf/JAVA_HOME /usr\"
+          ],
+          load_path => \"$/usr/share/jbossas/lenses\",
+        }
 
     "
 
@@ -71,23 +72,23 @@ Puppet::Type.newtype(:augeas) do
 
   newparam (:onlyif) do
     desc "Optional augeas command and comparisons to control the execution of this type.
-      Supported onlyif syntax::
+      Supported onlyif syntax:
 
-        get [AUGEAS_PATH] [COMPARATOR] [STRING]
-        match [MATCH_PATH] size [COMPARATOR] [INT]
-        match [MATCH_PATH] include [STRING]
-        match [MATCH_PATH] not_include [STRING]
-        match [MATCH_PATH] == [AN_ARRAY]
-        match [MATCH_PATH] != [AN_ARRAY]
+          get [AUGEAS_PATH] [COMPARATOR] [STRING]
+          match [MATCH_PATH] size [COMPARATOR] [INT]
+          match [MATCH_PATH] include [STRING]
+          match [MATCH_PATH] not_include [STRING]
+          match [MATCH_PATH] == [AN_ARRAY]
+          match [MATCH_PATH] != [AN_ARRAY]
 
-      where::
+      where:
 
-        AUGEAS_PATH is a valid path scoped by the context
-        MATCH_PATH is a valid match synatx scoped by the context
-        COMPARATOR is in the set [> >= != == <= <]
-        STRING is a string
-        INT is a number
-        AN_ARRAY is in the form ['a string', 'another']"
+          AUGEAS_PATH is a valid path scoped by the context
+          MATCH_PATH is a valid match synatx scoped by the context
+          COMPARATOR is in the set [> >= != == <= <]
+          STRING is a string
+          INT is a number
+          AN_ARRAY is in the form ['a string', 'another']"
     defaultto ""
   end
 
@@ -95,16 +96,14 @@ Puppet::Type.newtype(:augeas) do
   newparam(:changes) do
     desc "The changes which should be applied to the filesystem. This
     can be either a string which contains a command or an array of commands.
-    Commands supported are::
+    Commands supported are:
 
-      set [PATH] [VALUE]     Sets the value VALUE at loction PATH
-      rm [PATH]              Removes the node at location PATH
-      remove [PATH]          Synonym for rm
-      clear [PATH]           Keeps the node at PATH, but removes the value.
-      ins [LABEL] [WHERE] [PATH]
-        Inserts an empty node LABEL either [WHERE={before|after}] PATH.
-      insert [LABEL] [WHERE] [PATH]
-        Synonym for ins
+        set [PATH] [VALUE]     Sets the value VALUE at loction PATH
+        rm [PATH]              Removes the node at location PATH
+        remove [PATH]          Synonym for rm
+        clear [PATH]           Keeps the node at PATH, but removes the value.
+        ins [LABEL] [WHERE] [PATH]    Inserts an empty node LABEL either [WHERE={before|after}] PATH.
+        insert [LABEL] [WHERE] [PATH] Synonym for ins
 
     If the parameter 'context' is set that value is prepended to PATH"
   end
@@ -136,11 +135,11 @@ Puppet::Type.newtype(:augeas) do
   end
 
   newparam(:lens) do
-    desc "Use a specific lens, e.g. 'Hosts.lns'. When this parameter is set, you must also set the incl parameter to indicate which file to load. Only that file will be loaded, which greatly speeds up execution of the type"
+    desc "Use a specific lens, e.g. `Hosts.lns`. When this parameter is set, you must also set the incl parameter to indicate which file to load. Only that file will be loaded, which greatly speeds up execution of the type"
   end
 
   newparam(:incl) do
-    desc "Load only a specific file, e.g. '/etc/hosts'.  When this parameter is set, you must also set the lens parameter to indicate which lens to use."
+    desc "Load only a specific file, e.g. `/etc/hosts`.  When this parameter is set, you must also set the lens parameter to indicate which lens to use."
   end
 
   validate do

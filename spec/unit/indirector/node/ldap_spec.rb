@@ -5,10 +5,6 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 require 'puppet/indirector/node/ldap'
 
 describe Puppet::Node::Ldap do
-  before do
-    Puppet::Node::Facts.stubs(:terminus_class).returns :yaml
-  end
-
   describe "when searching for a single node" do
     before :each do
       @searcher = Puppet::Node::Ldap.new
@@ -23,17 +19,17 @@ describe Puppet::Node::Ldap do
     end
 
     it "should convert the hostname into a search filter" do
-      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {"environment" => 'production'}
+      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
       @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{@name}))").yields entry
-      @searcher.name2hash(@name, 'production', 'parent')
+      @searcher.name2hash(@name)
     end
 
     it "should convert any found entry into a hash" do
-      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {"environment" => 'production'}
+      entry = stub 'entry', :dn => 'cn=mynode.domain.com,ou=hosts,dc=madstop,dc=com', :vals => %w{}, :to_hash => {}
       @searcher.expects(:ldapsearch).with("(&(objectclass=puppetClient)(cn=#{@name}))").yields entry
-      myhash = {"myhash" => true, :environment => 'production'}
+      myhash = {"myhash" => true}
       @searcher.expects(:entry2hash).with(entry).returns myhash
-      @searcher.name2hash(@name, 'production', 'parent').should == myhash
+      @searcher.name2hash(@name).should == myhash
     end
 
     # This heavily tests our entry2hash method, so we don't have to stub out the stupid entry information any more.
@@ -128,20 +124,20 @@ describe Puppet::Node::Ldap do
     end
 
     it "should search first for the provided key" do
-      @searcher.expects(:name2hash).with("mynode.domain.com", 'production', 'child').returns({})
+      @searcher.expects(:name2hash).with("mynode.domain.com").returns({})
       @searcher.find(@request)
     end
 
     it "should search for the short version of the provided key if the key looks like a hostname and no results are found for the key itself" do
-      @searcher.expects(:name2hash).with("mynode.domain.com", 'production', 'child').returns(nil)
-      @searcher.expects(:name2hash).with("mynode", 'production', 'child').returns({})
+      @searcher.expects(:name2hash).with("mynode.domain.com").returns(nil)
+      @searcher.expects(:name2hash).with("mynode").returns({})
       @searcher.find(@request)
     end
 
     it "should search for default information if no information can be found for the key" do
-      @searcher.expects(:name2hash).with("mynode.domain.com", 'production', 'child').returns(nil)
-      @searcher.expects(:name2hash).with("mynode", 'production', 'child').returns(nil)
-      @searcher.expects(:name2hash).with("default", 'production', 'child').returns({})
+      @searcher.expects(:name2hash).with("mynode.domain.com").returns(nil)
+      @searcher.expects(:name2hash).with("mynode").returns(nil)
+      @searcher.expects(:name2hash).with("default").returns({})
       @searcher.find(@request)
     end
 
@@ -162,8 +158,8 @@ describe Puppet::Node::Ldap do
       end
 
       it "should create the node with the correct name, even if it was found by a different name" do
-        @searcher.expects(:name2hash).with("mynode.domain.com", 'production', 'child').returns nil
-        @searcher.expects(:name2hash).with("mynode", 'production', 'child').returns @result
+        @searcher.expects(:name2hash).with("mynode.domain.com").returns nil
+        @searcher.expects(:name2hash).with("mynode").returns @result
 
         Puppet::Node.expects(:new).with("mynode.domain.com").returns @node
         @searcher.find(@request)
@@ -213,15 +209,17 @@ describe Puppet::Node::Ldap do
           @parent = {:classes => [], :parameters => {}}
           @parent_parent = {:classes => [], :parameters => {}}
 
-          @searcher.stubs(:name2hash).with{|name, env, mode| name == @name}.returns(@entry)
-          @searcher.stubs(:name2hash).with{|name, env, mode| name == 'parent'}.returns(@parent)
-          @searcher.stubs(:name2hash).with{|name, env, mode| name == 'parent_parent'}.returns(@parent_parent)
+          @searcher.stubs(:name2hash).with(@name).returns(@entry)
+          @searcher.stubs(:name2hash).with('parent').returns(@parent)
+          @searcher.stubs(:name2hash).with('parent_parent').returns(@parent_parent)
 
           @searcher.stubs(:parent_attribute).returns(:parent)
         end
 
         it "should search for the parent node" do
           @entry[:parent] = "parent"
+          @searcher.expects(:name2hash).with(@name).returns @entry
+          @searcher.expects(:name2hash).with('parent').returns @parent
 
           @searcher.find(@request)
         end
@@ -229,7 +227,7 @@ describe Puppet::Node::Ldap do
         it "should fail if the parent cannot be found" do
           @entry[:parent] = "parent"
 
-          @searcher.expects(:name2hash).with('parent', 'production', 'parent').returns nil
+          @searcher.expects(:name2hash).with('parent').returns nil
 
           proc { @searcher.find(@request) }.should raise_error(Puppet::Error)
         end

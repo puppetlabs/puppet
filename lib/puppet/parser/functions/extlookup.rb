@@ -99,18 +99,14 @@ module Puppet::Parser::Functions
     # this will result in /path/to/extdata/hosts/your.box.com.csv
     # being searched.
     #
-    # we parse the precedence here because the best place to specify
-    # it would be in site.pp but site.pp is only evaluated at startup
-    # so $fqdn etc would have no meaning there, this way it gets evaluated
-    # each run and has access to the right variables for that run
-    lookupvar('extlookup_precedence').each do |prec|
-      while prec =~ /%\{(.+?)\}/
-        prec.gsub!(/%\{#{$1}\}/, lookupvar($1))
+    # This is for back compatibility to interpolate variables with %.
+    # % interpolation is a workaround for a problem that has been fixed: Puppet variable
+    # interpolation at top scope used to only happen on each run
+    extlookup_precedence = lookupvar('extlookup_precedence').collect do |var|
+      var.gsub(/%\{(.+?)\}/) do |capture|
+        lookupvar($1)
       end
-
-      extlookup_precedence << prec
     end
-
 
     datafiles = Array.new
 
@@ -126,9 +122,6 @@ module Puppet::Parser::Functions
     desired = nil
 
     datafiles.each do |file|
-      parser = Puppet::Parser::Parser.new(environment)
-      parser.watch_file(file) if File.exists?(file)
-
       if desired.nil?
         if File.exists?(file)
           result = CSV.read(file).find_all do |r|

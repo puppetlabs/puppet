@@ -7,8 +7,15 @@ class Puppet::Parser::AST::ResourceReference < Puppet::Parser::AST::Branch
   # Evaluate our object, but just return a simple array of the type
   # and name.
   def evaluate(scope)
-    titles = Array(title.safeevaluate(scope)).collect { |t| Puppet::Resource.new(type, t, :namespaces => scope.namespaces) }
-    return(titles.length == 1 ? titles.pop : titles)
+    titles = Array(title.safeevaluate(scope))
+
+    a_type, titles = scope.resolve_type_and_titles(type, titles)
+
+    resources = titles.collect{ |a_title|
+      Puppet::Resource.new(a_type, a_title)
+    }
+
+    return(resources.length == 1 ? resources.pop : resources)
   end
 
   def to_s
