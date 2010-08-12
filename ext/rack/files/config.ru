@@ -4,7 +4,7 @@
 # if puppet is not in your RUBYLIB:
 # $:.unshift('/opt/puppet/lib')
 
-$0 = "puppetmasterd"
+$0 = "master"
 require 'puppet'
 
 # if you want debugging:
