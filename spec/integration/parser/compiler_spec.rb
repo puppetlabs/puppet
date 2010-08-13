@@ -80,4 +80,15 @@ describe Puppet::Parser::Compiler do
     Puppet::Resource::TypeCollection.any_instance.stubs(:stale?).returns(true).then.returns(false) # pretend change
     Puppet::Parser::Compiler.compile(node).version.should == 2
   end
+
+  it "should not allow classes inside conditional constructs" do
+    Puppet[:code] = <<-PP
+      if true {
+        class foo {
+        }
+      }
+    PP
+
+    lambda { Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode")) }.should raise_error(Puppet::Error)
+  end
 end

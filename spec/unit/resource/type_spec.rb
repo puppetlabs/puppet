@@ -322,7 +322,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should set its module name in the scope if available" do
-      @type.module_name = "mymod"
+      @type.instance_eval { @module_name = "mymod" }
 
       @type.set_resource_parameters(@resource, @scope)
 

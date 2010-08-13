@@ -135,21 +135,21 @@ describe Puppet::Resource::TypeCollection do
 
     describe "that need to be loaded" do
       it "should use the loader to load the files" do
-        @code.loader.expects(:try_load_fqname).with("ns::klass")
-        @code.loader.expects(:try_load_fqname).with("klass")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
         @code.find_hostclass(["ns"], "klass")
       end
 
       it "should downcase the name and downcase and array-fy the namespaces before passing to the loader" do
-        @code.loader.expects(:try_load_fqname).with("ns::klass")
-        @code.loader.expects(:try_load_fqname).with("klass")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
         @code.find_hostclass("Ns", "Klass")
       end
 
-      it "should attempt to find the type when the loader yields" do
-        @code.loader.expects(:try_load_fqname).yields
-        @code.expects(:hostclass).with("ns::klass").times(2).returns(false).then.returns(true)
-        @code.find_hostclass("ns", "klass")
+      it "should use the class returned by the loader" do
+        @code.loader.expects(:try_load_fqname).returns(:klass)
+        @code.expects(:hostclass).with("ns::klass").returns(false)
+        @code.find_hostclass("ns", "klass").should == :klass
       end
 
       it "should return nil if the name isn't found" do
@@ -159,8 +159,8 @@ describe Puppet::Resource::TypeCollection do
 
       it "already-loaded names at broader scopes should not shadow autoloaded names" do
         @code.add Puppet::Resource::Type.new(:hostclass, "bar")
-        @code.loader.expects(:try_load_fqname).with("foo::bar")
-        @code.find_hostclass("foo", "bar")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
+        @code.find_hostclass("foo", "bar").should == :foobar
       end
     end
   end

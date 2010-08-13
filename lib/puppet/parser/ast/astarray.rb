@@ -9,6 +9,11 @@ class Puppet::Parser::AST
   class ASTArray < Branch
     include Enumerable
 
+    # True if this ASTArray represents a list of statements in a
+    # context that defines a namespace.  Classes and definitions may
+    # only appear in such a context.
+    attr_accessor :is_a_namespace
+
     # Return a child by index.  Probably never used.
     def [](index)
       @children[index]
@@ -32,7 +37,19 @@ class Puppet::Parser::AST
       }
 
       rets = items.flatten.collect { |child|
-        child.safeevaluate(scope)
+        if child.respond_to? :instantiate
+          if is_a_namespace
+            # no problem, just don't evaluate it.
+          else
+            msg = "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
+            error = Puppet::Error.new(msg)
+            error.line = child.line
+            error.file = child.file
+            raise error
+          end
+        else
+          child.safeevaluate(scope)
+        end
       }
       rets.reject { |o| o.nil? }
     end

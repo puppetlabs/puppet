@@ -89,9 +89,9 @@ describe Puppet::Parser::AST::Resource do
     before do
       @scope = Puppet::Parser::Scope.new :compiler => Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
       @parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new)
-      @parser.newdefine "one"
-      @parser.newdefine "one::two"
-      @parser.newdefine "three"
+      ["one", "one::two", "three"].each do |name|
+        @parser.environment.known_resource_types.add(Puppet::Resource::Type.new(:definition, name, {}))
+      end
       @twoscope = @scope.newscope(:namespace => "one")
       @twoscope.resource = @scope.resource
     end

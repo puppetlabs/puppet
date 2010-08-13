@@ -28,26 +28,18 @@ describe Puppet::Parser::TypeLoader do
   describe "when loading names from namespaces" do
     it "should do nothing if the name to import is an empty string" do
       @loader.expects(:name2files).never
-      @loader.try_load_fqname("") { |filename, modname| raise :should_not_occur }.should be_nil
+      @loader.try_load_fqname(:hostclass, "") { |filename, modname| raise :should_not_occur }.should be_nil
     end
 
     it "should attempt to import each generated name" do
-      @loader.expects(:import).with("foo/bar",nil)
-      @loader.expects(:import).with("foo",nil)
-      @loader.try_load_fqname("foo::bar") { |f| false }
-    end
-
-    it "should yield after each import" do
-      yielded = []
-      @loader.expects(:import).with("foo/bar",nil)
-      @loader.expects(:import).with("foo",nil)
-      @loader.try_load_fqname("foo::bar") { |filename, modname| yielded << [filename, modname]; false }
-      yielded.should == [["foo/bar", nil], ["foo", nil]]
+      @loader.expects(:import).with("foo/bar",nil).returns([])
+      @loader.expects(:import).with("foo",nil).returns([])
+      @loader.try_load_fqname(:hostclass, "foo::bar") { |f| false }
     end
 
     it "should know when a given name has been loaded" do
-      @loader.expects(:import).with("file",nil)
-      @loader.try_load_fqname("file") { |f| true }
+      @loader.expects(:import).with("file",nil).returns([])
+      @loader.try_load_fqname(:hostclass, "file") { |f| true }
       @loader.should be_loaded("file")
     end
   end
@@ -55,7 +47,7 @@ describe Puppet::Parser::TypeLoader do
   describe "when importing" do
     before do
       Puppet::Parser::Files.stubs(:find_manifests).returns ["modname", %w{file}]
-      @loader.stubs(:parse_file)
+      @loader.stubs(:parse_file).returns(Puppet::Parser::AST::Hostclass.new(''))
     end
 
     it "should return immediately when imports are being ignored" do
@@ -86,13 +78,13 @@ describe Puppet::Parser::TypeLoader do
 
     it "should parse each found file" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
-      @loader.expects(:parse_file).with("/one")
+      @loader.expects(:parse_file).with("/one").returns(Puppet::Parser::AST::Hostclass.new(''))
       @loader.import("myfile")
     end
 
     it "should make each file qualified before attempting to parse it" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{one}]
-      @loader.expects(:parse_file).with("/current/one")
+      @loader.expects(:parse_file).with("/current/one").returns(Puppet::Parser::AST::Hostclass.new(''))
       @loader.import("myfile", "/current/file")
     end
 
@@ -105,7 +97,7 @@ describe Puppet::Parser::TypeLoader do
 
     it "should not attempt to import files that have already been imported" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
-      @loader.expects(:parse_file).once
+      @loader.expects(:parse_file).once.returns(Puppet::Parser::AST::Hostclass.new(''))
       @loader.import("myfile")
 
       # This will fail if it tries to reimport the file.
@@ -116,7 +108,7 @@ describe Puppet::Parser::TypeLoader do
   describe "when parsing a file" do
     before do
       @parser = Puppet::Parser::Parser.new(@loader.environment)
-      @parser.stubs(:parse)
+      @parser.stubs(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
       @parser.stubs(:file=)
       Puppet::Parser::Parser.stubs(:new).with(@loader.environment).returns @parser
     end
@@ -128,7 +120,7 @@ describe Puppet::Parser::TypeLoader do
 
     it "should assign the parser its file and parse" do
       @parser.expects(:file=).with("/my/file")
-      @parser.expects(:parse)
+      @parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
       @loader.parse_file("/my/file")
     end
   end

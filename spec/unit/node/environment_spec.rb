@@ -52,7 +52,7 @@ describe Puppet::Node::Environment do
     before do
       @env = Puppet::Node::Environment.new("dev")
       @collection = Puppet::Resource::TypeCollection.new(@env)
-      @env.stubs(:perform_initial_import)
+      @env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
       Thread.current[:known_resource_types] = nil
     end
 
@@ -67,7 +67,7 @@ describe Puppet::Node::Environment do
 
     it "should perform the initial import when creating a new collection" do
       @env = Puppet::Node::Environment.new("dev")
-      @env.expects(:perform_initial_import)
+      @env.expects(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
       @env.known_resource_types
     end
 

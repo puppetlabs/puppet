@@ -17,7 +17,7 @@ class Parser
 
   SITE = "__site__"
 
-  attr_accessor :ast, :input_file_name, :top_level
+  attr_accessor :input_file_name, :top_level
 
   # parser registration into RDoc
   parse_files_matching(/\.(rb|pp)$/)
@@ -36,8 +36,12 @@ class Parser
     Puppet.info "rdoc: scanning #{@input_file_name}"
     if @input_file_name =~ /\.pp$/
       @parser = Puppet::Parser::Parser.new(Puppet[:environment])
+      environment = @parser.environment
       @parser.file = @input_file_name
-      @ast = @parser.parse
+      @known_resource_types = environment.known_resource_types
+      @parser.parse.instantiate('').each do |type|
+        @known_resource_types.add type
+      end
     end
     scan_top_level(@top_level)
     @top_level
@@ -334,7 +338,7 @@ class Parser
   # that contains the documentation
   def parse_elements(container)
     Puppet.debug "rdoc: scanning manifest"
-    @ast.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
+    @known_resource_types.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
       name = klass.name
       if klass.file == @input_file_name
         unless name.empty?
@@ -347,13 +351,13 @@ class Parser
       end
     end
 
-    @ast.definitions.each do |name, define|
+    @known_resource_types.definitions.each do |name, define|
       if define.file == @input_file_name
         document_define(name,define,container)
       end
     end
 
-    @ast.nodes.each do |name, node|
+    @known_resource_types.nodes.each do |name, node|
       if node.file == @input_file_name
         document_node(name.to_s,node,container)
       end

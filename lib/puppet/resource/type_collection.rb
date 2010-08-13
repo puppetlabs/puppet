@@ -19,6 +19,12 @@ class Puppet::Resource::TypeCollection
     @watched_files = {}
   end
 
+  def import_ast(ast, modname)
+    ast.instantiate(modname).each do |instance|
+      add(instance)
+    end
+  end
+
   def <<(thing)
     add(thing)
     self
@@ -177,15 +183,8 @@ class Puppet::Resource::TypeCollection
   # necessary.
   def find_or_load(namespaces, name, type)
     resolve_namespaces(namespaces, name).each do |fqname|
-      if result = send(type, fqname)
+      if result = send(type, fqname) || loader.try_load_fqname(type, fqname)
         return result
-      end
-      loader.try_load_fqname(fqname) do |filename, modname|
-        if result = send(type, fqname)
-          Puppet.debug "Automatically imported #{name} from #{filename} into #{environment}"
-          result.module_name = modname if modname and result.respond_to?(:module_name=)
-          return result
-        end
       end
     end
 

@@ -133,26 +133,6 @@ class Puppet::Parser::Parser
     return ns, n
   end
 
-  # Create a new class, or merge with an existing class.
-  def newclass(name, options = {})
-    known_resource_types.add Puppet::Resource::Type.new(:hostclass, name, ast_context(true).merge(options))
-  end
-
-  # Create a new definition.
-  def newdefine(name, options = {})
-    known_resource_types.add Puppet::Resource::Type.new(:definition, name, ast_context(true).merge(options))
-  end
-
-  # Create a new node.  Nodes are special, because they're stored in a global
-  # table, not according to namespaces.
-  def newnode(names, options = {})
-    names = [names] unless names.instance_of?(Array)
-    context = ast_context(true)
-    names.collect do |name|
-      known_resource_types.add(Puppet::Resource::Type.new(:node, name, context.merge(options)))
-    end
-  end
-
   def on_error(token,value,stack)
     if token == 0 # denotes end of file
       value = 'end of file'
@@ -174,42 +154,43 @@ class Puppet::Parser::Parser
 
   # how should I do error handling here?
   def parse(string = nil)
-    return parse_ruby_file if self.file =~ /\.rb$/
-    self.string = string if string
-    begin
-      @yydebug = false
-      main = yyparse(@lexer,:scan)
-    rescue Racc::ParseError => except
-      error = Puppet::ParseError.new(except)
-      error.line = @lexer.line
-      error.file = @lexer.file
-      error.set_backtrace except.backtrace
-      raise error
-    rescue Puppet::ParseError => except
-      except.line ||= @lexer.line
-      except.file ||= @lexer.file
-      raise except
-    rescue Puppet::Error => except
-      # and this is a framework error
-      except.line ||= @lexer.line
-      except.file ||= @lexer.file
-      raise except
-    rescue Puppet::DevError => except
-      except.line ||= @lexer.line
-      except.file ||= @lexer.file
-      raise except
-    rescue => except
-      error = Puppet::DevError.new(except.message)
-      error.line = @lexer.line
-      error.file = @lexer.file
-      error.set_backtrace except.backtrace
-      raise error
+    if self.file =~ /\.rb$/
+      parse_ruby_file
+      main = nil
+    else
+      self.string = string if string
+      begin
+        @yydebug = false
+        main = yyparse(@lexer,:scan)
+      rescue Racc::ParseError => except
+        error = Puppet::ParseError.new(except)
+        error.line = @lexer.line
+        error.file = @lexer.file
+        error.set_backtrace except.backtrace
+        raise error
+      rescue Puppet::ParseError => except
+        except.line ||= @lexer.line
+        except.file ||= @lexer.file
+        raise except
+      rescue Puppet::Error => except
+        # and this is a framework error
+        except.line ||= @lexer.line
+        except.file ||= @lexer.file
+        raise except
+      rescue Puppet::DevError => except
+        except.line ||= @lexer.line
+        except.file ||= @lexer.file
+        raise except
+      rescue => except
+        error = Puppet::DevError.new(except.message)
+        error.line = @lexer.line
+        error.file = @lexer.file
+        error.set_backtrace except.backtrace
+        raise error
+      end
     end
-    if main
-      # Store the results as the top-level class.
-      newclass("", :code => main)
-    end
-    return known_resource_types
+    # Store the results as the top-level class.
+    return Puppet::Parser::AST::Hostclass.new('', :code => main)
   ensure
     @lexer.clear
   end

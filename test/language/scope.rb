@@ -163,7 +163,7 @@ class TestScope < Test::Unit::TestCase
     config = mkcompiler
 
     # Create a default source
-    parser.newclass("")
+    parser.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "")
     config.topscope.source = parser.known_resource_types.hostclass("")
 
     # And a scope resource
@@ -175,12 +175,12 @@ class TestScope < Test::Unit::TestCase
     )
 
     # Create a top-level define
-    parser.newdefine "one", :arguments => [%w{arg}],
+    parser.known_resource_types.add Puppet::Resource::Type.new(:definition, "one", :arguments => [%w{arg}],
       :code => AST::ASTArray.new(
         :children => [
           resourcedef("file", "/tmp", {"owner" => varref("arg")})
         ]
-      )
+      ))
 
     # create a resource that calls our third define
     obj = resourcedef("one", "boo", {"arg" => "parentfoo"})

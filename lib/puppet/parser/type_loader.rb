@@ -47,17 +47,19 @@ class Puppet::Parser::TypeLoader
       raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
     end
 
+    loaded_asts = []
     files.each do |file|
       unless file =~ /^#{File::SEPARATOR}/
         file = File.join(dir, file)
       end
       unless imported? file
         @imported[file] = true
-        parse_file(file)
+        loaded_asts << parse_file(file)
       end
     end
-
-    modname
+    loaded_asts.inject([]) do |loaded_types, ast|
+      loaded_types + known_resource_types.import_ast(ast, modname)
+    end
   end
 
   def imported?(file)
@@ -76,23 +78,26 @@ class Puppet::Parser::TypeLoader
     @imported = {}
   end
 
-  # Try to load the object with the given fully qualified name.  For
-  # each file that was actually loaded, yield(filename, modname).
-  def try_load_fqname(fqname)
+  # Try to load the object with the given fully qualified name.
+  def try_load_fqname(type, fqname)
     return nil if fqname == "" # special-case main.
     name2files(fqname).each do |filename|
       if not loaded?(filename)
-        modname = begin
-          import_if_possible(filename)
+        begin
+          imported_types = import_if_possible(filename)
+          if result = imported_types.find { |t| t.type == type and t.name == fqname }
+            Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
+            return result
+          end
         rescue Puppet::ImportError => detail
           # We couldn't load the item
           # I'm not convienced we should just drop these errors, but this
           # preserves existing behaviours.
-          nil
         end
-        yield(filename, modname)
       end
     end
+    # Nothing found.
+    return nil
   end
 
   def loaded?(name)
@@ -103,7 +108,7 @@ class Puppet::Parser::TypeLoader
     Puppet.debug("importing '#{file}' in environment #{environment}")
     parser = Puppet::Parser::Parser.new(environment)
     parser.file = file
-    parser.parse
+    return parser.parse
   end
 
   # Utility method factored out of load for handling thread-safety.
