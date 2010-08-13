@@ -52,7 +52,7 @@ describe Puppet::Node::Environment do
     before do
       @env = Puppet::Node::Environment.new("dev")
       @collection = Puppet::Resource::TypeCollection.new(@env)
-      @collection.stubs(:perform_initial_import)
+      @env.stubs(:perform_initial_import)
       Thread.current[:known_resource_types] = nil
     end
 
@@ -66,9 +66,8 @@ describe Puppet::Node::Environment do
     end
 
     it "should perform the initial import when creating a new collection" do
-      @collection.expects(:perform_initial_import)
-      Puppet::Resource::TypeCollection.expects(:new).returns @collection
-
+      @env = Puppet::Node::Environment.new("dev")
+      @env.expects(:perform_initial_import)
       @env.known_resource_types
     end
 
@@ -272,6 +271,58 @@ describe Puppet::Node::Environment do
       env = Puppet::Node::Environment.new "foo"
       @helper.environment = env
       @helper.environment.name.should == :foo
+    end
+  end
+
+  describe "when performing initial import" do
+    before do
+      @parser = stub 'parser', :file= => nil, :string => nil, :parse => nil
+      Puppet::Parser::Parser.stubs(:new).returns @parser
+      @env = Puppet::Node::Environment.new("env")
+    end
+
+    it "should create a new parser instance" do
+      Puppet::Parser::Parser.expects(:new).returns @parser
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should set the parser's string to the 'code' setting and parse if code is available" do
+      Puppet.settings[:code] = "my code"
+      @parser.expects(:string=).with "my code"
+      @parser.expects(:parse)
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
+      File.stubs(:expand_path).with("/my/file").returns "/my/file"
+      File.expects(:exist?).with("/my/file").returns true
+      Puppet.settings[:manifest] = "/my/file"
+      @parser.expects(:file=).with "/my/file"
+      @parser.expects(:parse)
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should not attempt to load a manifest if none is present" do
+      File.stubs(:expand_path).with("/my/file").returns "/my/file"
+      File.expects(:exist?).with("/my/file").returns false
+      Puppet.settings[:manifest] = "/my/file"
+      @parser.expects(:file=).never
+      @parser.expects(:parse).never
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should fail helpfully if there is an error importing" do
+      File.stubs(:exist?).returns true
+      @parser.expects(:parse).raises ArgumentError
+      lambda { @env.instance_eval { perform_initial_import } }.should raise_error(Puppet::Error)
+    end
+
+    it "should not do anything if the ignore_import settings is set" do
+      Puppet.settings[:ignoreimport] = true
+      @parser.expects(:string=).never
+      @parser.expects(:file=).never
+      @parser.expects(:parse).never
+      @env.instance_eval { perform_initial_import }
     end
   end
 end

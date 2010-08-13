@@ -110,24 +110,6 @@ class Puppet::Resource::TypeCollection
     end
   end
 
-  def perform_initial_import
-    return if Puppet.settings[:ignoreimport]
-    parser = Puppet::Parser::Parser.new(environment)
-    if code = Puppet.settings.uninterpolated_value(:code, environment.to_s) and code != ""
-      parser.string = code
-    else
-      file = Puppet.settings.value(:manifest, environment.to_s)
-      return unless File.exist?(file)
-      parser.file = file
-    end
-    parser.parse
-  rescue => detail
-    msg = "Could not parse for environment #{environment}: #{detail}"
-    error = Puppet::Error.new(msg)
-    error.set_backtrace(detail.backtrace)
-    raise error
-  end
-
   def stale?
     @watched_files.values.detect { |file| file.changed? }
   end
