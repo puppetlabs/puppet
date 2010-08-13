@@ -5,7 +5,6 @@
 # $:.unshift('/opt/puppet/lib')
 
 $0 = "master"
-require 'puppet'
 
 # if you want debugging:
 # ARGV << "--debug"
