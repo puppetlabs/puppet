@@ -41,19 +41,10 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     end
   end
 
-  # Get the yaml directory
-  def base
-    Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
-  end
-
   # Return the path to a given node's file.
   def path(name)
+    base = Puppet.run_mode.master? ? Puppet[:yamldir] : Puppet[:clientyamldir]
     File.join(base, self.class.indirection_name.to_s, name.to_s + ".yaml")
-  end
-
-  # Do a glob on the yaml directory, loading each file found
-  def search(request)
-    Dir.glob(File.join(base, self.class.indirection_name.to_s, request.key)).collect { |f| YAML.load_file(f) }
   end
 
   private
