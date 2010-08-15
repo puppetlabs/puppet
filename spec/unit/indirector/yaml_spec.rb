@@ -40,6 +40,18 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       @store.path(:me).should =~ %r{^/client/yaml/dir}
     end
 
+    it "should use the extension if one is specified" do
+      Puppet.run_mode.expects(:master?).returns true
+      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
+      @store.path(:me,'.farfignewton').should =~ %r{\.farfignewton$}
+    end
+
+    it "should assume an extension of .yaml if none is specified" do
+      Puppet.run_mode.expects(:master?).returns true
+      Puppet.settings.expects(:value).with(:yamldir).returns "/server/yaml/dir"
+      @store.path(:me).should =~ %r{\.yaml$}
+    end
+
     it "should store all files in a single file root set in the Puppet defaults" do
       @store.path(:me).should =~ %r{^#{@dir}}
     end
@@ -120,8 +132,8 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
       @request = stub 'request', :key => "*", :instance => @subject
       @one = mock 'one'
       @two = mock 'two'
-      @store.expects(:base).returns "/my/yaml/dir"
-      Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns(%w{one.yaml two.yaml})
+      @store.expects(:path).with(@request.key,'').returns :glob
+      Dir.expects(:glob).with(:glob).returns(%w{one.yaml two.yaml})
       YAML.expects(:load_file).with("one.yaml").returns @one;
       YAML.expects(:load_file).with("two.yaml").returns @two;
       @store.search(@request).should == [@one, @two]
@@ -130,16 +142,16 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     it "should return an array containing a single instance of fact when globbing 'one*'" do
       @request = stub 'request', :key => "one*", :instance => @subject
       @one = mock 'one'
-      @store.expects(:base).returns "/my/yaml/dir"
-      Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns(%w{one.yaml})
+      @store.expects(:path).with(@request.key,'').returns :glob
+      Dir.expects(:glob).with(:glob).returns(%w{one.yaml})
       YAML.expects(:load_file).with("one.yaml").returns @one;
       @store.search(@request).should == [@one]
     end
 
     it "should return an empty array when the glob doesn't match anything" do
       @request = stub 'request', :key => "f*ilglobcanfail*", :instance => @subject
-      @store.expects(:base).returns "/my/yaml/dir"
-      Dir.expects(:glob).with(File.join("/my/yaml/dir", @store.class.indirection_name.to_s, @request.key)).returns([])
+      @store.expects(:path).with(@request.key,'').returns :glob
+      Dir.expects(:glob).with(:glob).returns []
       @store.search(@request).should == []
     end
   end
