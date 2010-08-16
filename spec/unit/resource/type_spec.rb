@@ -412,6 +412,23 @@ describe Puppet::Resource::Type do
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
     end
 
+    it "should add hostclass names to the classes list" do
+      @type.evaluate_code(@resource)
+      @compiler.catalog.classes.should be_include("foo")
+    end
+
+    it "should add node names to the classes list" do
+      @type = Puppet::Resource::Type.new(:node, "foo")
+      @type.evaluate_code(@resource)
+      @compiler.catalog.classes.should be_include("foo")
+    end
+
+    it "should not add defined resource names to the classes list" do
+      @type = Puppet::Resource::Type.new(:definition, "foo")
+      @type.evaluate_code(@resource)
+      @compiler.catalog.classes.should_not be_include("foo")
+    end
+
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
       @type.expects(:subscope).with(@scope, @resource).returns subscope
