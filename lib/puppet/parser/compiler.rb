@@ -19,7 +19,12 @@ class Puppet::Parser::Compiler
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
-  end
+  ensure
+    # We get these from the environment and only cache them in a thread 
+    # variable for the duration of the compilation.
+    Thread.current[:known_resource_types] = nil
+    Thread.current[:env_module_directories] = nil
+ end
 
   attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources, :relationships
 

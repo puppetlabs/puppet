@@ -52,8 +52,9 @@ module Puppet
 
   newtype(:yumrepo) do
     @doc = "The client-side description of a yum repository. Repository
-      configurations are found by parsing /etc/yum.conf and
-      the files indicated by reposdir in that file (see yum.conf(5) for details)
+      configurations are found by parsing `/etc/yum.conf` and
+      the files indicated by the `reposdir` option in that file 
+      (see yum.conf(5) for details)
 
       Most parameters are identical to the ones documented
       in yum.conf(5)
@@ -85,7 +86,7 @@ module Puppet
       clear
       inifile.each_section do |s|
         next if s.name == "main"
-        obj = create(:name => s.name, :audit => check)
+        obj = new(:name => s.name, :audit => check)
         current_values = obj.retrieve
         obj.eachproperty do |property|
           if current_values[property].nil?

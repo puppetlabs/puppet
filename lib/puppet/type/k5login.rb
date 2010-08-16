@@ -3,15 +3,15 @@
 # Plug-in type for handling k5login files
 
 Puppet::Type.newtype(:k5login) do
-  @doc = "Manage the .k5login file for a user.  Specify the full path to
-    the .k5login file as the name and an array of principals as the
+  @doc = "Manage the `.k5login` file for a user.  Specify the full path to
+    the `.k5login` file as the name and an array of principals as the
     property principals."
 
   ensurable
 
   # Principals that should exist in the file
   newproperty(:principals, :array_matching => :all) do
-    desc "The principals present in the .k5login file."
+    desc "The principals present in the `.k5login` file."
   end
 
   # The path/name of the k5login file

@@ -33,11 +33,12 @@ class Resource < AST::ResourceReference
     # This is where our implicit iteration takes place; if someone
     # passed an array as the name, then we act just like the called us
     # many times.
+    fully_qualified_type, resource_titles = scope.resolve_type_and_titles(type, resource_titles)
+
     resource_titles.flatten.collect { |resource_title|
       exceptwrap :type => Puppet::ParseError do
-
-              resource = Puppet::Parser::Resource.new(
-        type, resource_title,
+        resource = Puppet::Parser::Resource.new(
+          fully_qualified_type, resource_title,
           :parameters => paramobjects,
           :file => self.file,
           :line => self.line,

@@ -72,7 +72,7 @@ module Puppet::Util::ProviderFeatures
     names = @features.keys.sort { |a,b| a.to_s <=> b.to_s }
     names.each do |name|
       doc = @features[name].docs.gsub(/\n\s+/, " ")
-      str += "- **#{name}**: #{doc}\n"
+      str += "- *#{name}*: #{doc}\n"
     end
 
     if providers.length > 0
@@ -83,7 +83,7 @@ module Puppet::Util::ProviderFeatures
         prov = provider(provname)
         names.each do |name|
           if prov.feature?(name)
-            data[provname] << "**X**"
+            data[provname] << "*X*"
           else
             data[provname] << ""
           end

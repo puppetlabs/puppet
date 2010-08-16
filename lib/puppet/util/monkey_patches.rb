@@ -1,4 +1,7 @@
-Process.maxgroups = 1024
+
+unless defined? JRUBY_VERSION
+  Process.maxgroups = 1024
+end
 
 module RDoc
   def self.caller(skip=nil)
@@ -22,7 +25,7 @@ end
 
 [Object, Exception, Integer, Struct, Date, Time, Range, Regexp, Hash, Array, Float, String, FalseClass, TrueClass, Symbol, NilClass, Class].each { |cls|
   cls.class_eval do
-    def to_yaml
+    def to_yaml(ignored=nil)
       ZAML.dump(self)
     end
   end

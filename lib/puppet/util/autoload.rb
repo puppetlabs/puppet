@@ -131,11 +131,23 @@ class Puppet::Util::Autoload
     # We have to require this late in the process because otherwise we might have
     # load order issues.
     require 'puppet/node/environment'
-    Puppet::Node::Environment.new(env).modulepath.collect do |dir|
-      Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
-    end.flatten.collect { |d| [File.join(d, "plugins"), File.join(d, "lib")] }.flatten.find_all do |d|
-      FileTest.directory?(d)
-    end
+
+    real_env = Puppet::Node::Environment.new(env)
+
+    # We're using a per-thread cache of said module directories, so that
+    # we don't scan the filesystem each time we try to load something with
+    # this autoload instance. But since we don't want to cache for the eternity
+    # this env_module_directories gets reset after the compilation on the master.
+    # This is also reset after an agent ran.
+    # One of the side effect of this change is that this module directories list will be
+    # shared among all autoload that we have running at a time. But that won't be an issue
+    # as by definition those directories are shared by all autoload.
+    Thread.current[:env_module_directories] ||= {}
+    Thread.current[:env_module_directories][real_env] ||= real_env.modulepath.collect do |dir|
+        Dir.entries(dir).reject { |f| f =~ /^\./ }.collect { |f| File.join(dir, f) }
+      end.flatten.collect { |d| [File.join(d, "plugins"), File.join(d, "lib")] }.flatten.find_all do |d|
+        FileTest.directory?(d)
+      end
   end
 
   def search_directories(env=nil)

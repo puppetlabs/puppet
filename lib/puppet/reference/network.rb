@@ -1,3 +1,5 @@
+require 'puppet/network/handler'
+
 network = Puppet::Util::Reference.newreference :network, :depth => 2, :doc => "Available network handlers and clients" do
   ret = ""
   Puppet::Network::Handler.subclasses.sort { |a,b| a.to_s <=> b.to_s }.each do |name|
@@ -27,11 +29,11 @@ on the server, and the client knows how to call the handler's methods
 appropriately.
 
 Most handlers are meant to be started on the server, usually within
-``puppet master``, and the clients are mostly started on the client,
-usually within ``puppet agent``.
+`puppet master`, and the clients are mostly started on the client,
+usually within `puppet agent`.
 
 You can find the server-side handler for each interface at
-``puppet/network/handler/<name>.rb`` and the client class at
-``puppet/network/client/<name>.rb``.
+`puppet/network/handler/<name>.rb` and the client class at
+`puppet/network/client/<name>.rb`.
 
 "

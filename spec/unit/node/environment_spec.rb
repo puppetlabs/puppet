@@ -53,6 +53,7 @@ describe Puppet::Node::Environment do
       @env = Puppet::Node::Environment.new("dev")
       @collection = Puppet::Resource::TypeCollection.new(@env)
       @collection.stubs(:perform_initial_import)
+      Thread.current[:known_resource_types] = nil
     end
 
     it "should create a resource type collection if none exists" do
@@ -71,13 +72,41 @@ describe Puppet::Node::Environment do
       @env.known_resource_types
     end
 
-    it "should create and return a new collection rather than returning a stale collection" do
-      @env.known_resource_types.expects(:stale?).returns true
-
-      Puppet::Resource::TypeCollection.expects(:new).returns @collection
+    it "should return the same collection even if stale if it's the same thread" do
+      Puppet::Resource::TypeCollection.stubs(:new).returns @collection
+      @env.known_resource_types.stubs(:stale?).returns true
 
       @env.known_resource_types.should equal(@collection)
     end
+
+    it "should return the current thread associated collection if there is one" do
+      Thread.current[:known_resource_types] = @collection
+
+      @env.known_resource_types.should equal(@collection)
+    end
+
+    it "should give to all threads the same collection if it didn't change" do
+      Puppet::Resource::TypeCollection.expects(:new).with(@env).returns @collection
+      @env.known_resource_types
+
+      t = Thread.new {
+        @env.known_resource_types.should equal(@collection)
+      }
+      t.join
+    end
+
+    it "should give to new threads a new collection if it isn't stale" do
+      Puppet::Resource::TypeCollection.expects(:new).with(@env).returns @collection
+      @env.known_resource_types.expects(:stale?).returns(true)
+
+      Puppet::Resource::TypeCollection.expects(:new).returns @collection
+
+      t = Thread.new {
+        @env.known_resource_types.should equal(@collection)
+      }
+      t.join
+    end
+
   end
 
   [:modulepath, :manifestdir].each do |setting|

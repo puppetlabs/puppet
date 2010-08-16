@@ -107,7 +107,7 @@ describe "Puppet::Rails::Resource" do
 
   describe "#to_resource" do
     it "should instantiate a Puppet::Parser::Resource" do
-      scope = stub "scope", :source => nil
+      scope = stub "scope", :source => nil, :environment => nil, :namespaces => nil
 
       @resource = Puppet::Rails::Resource.new
       @resource.stubs(:attributes).returns({

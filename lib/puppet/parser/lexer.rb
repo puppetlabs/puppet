@@ -221,7 +221,7 @@ class Puppet::Parser::Lexer
   TOKENS.add_token :RETURN, "\n", :skip => true, :incr_line => true, :skip_text => true
 
   TOKENS.add_token :SQUOTE, "'" do |lexer, value|
-    [TOKENS[:STRING], lexer.slurpstring(value).first ]
+    [TOKENS[:STRING], lexer.slurpstring(value,["'"],:ignore_invalid_escapes).first ]
   end
 
   DQ_initial_token_types      = {'$' => :DQPRE,'"' => :STRING}
@@ -483,7 +483,7 @@ class Puppet::Parser::Lexer
       yield [final_token.name, token_value]
 
       if @previous_token
-        namestack(value) if @previous_token.name == :CLASS
+        namestack(value) if @previous_token.name == :CLASS and value != '{'
 
         if @previous_token.name == :DEFINE
           if indefine?
@@ -517,24 +517,23 @@ class Puppet::Parser::Lexer
 
   # we've encountered the start of a string...
   # slurp in the rest of the string and return it
-  Valid_escapes_in_strings = %w{ \\  $ ' " n t s }+["\n"]
-  def slurpstring(terminators)
+  def slurpstring(terminators,escapes=%w{ \\  $ ' " n t s }+["\n"],ignore_invalid_escapes=false)
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
     str = @scanner.scan_until(/([^\\]|^)[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
     @line += str.count("\n") # literal carriage returns add to the line count.
     str.gsub!(/\\(.)/) {
-      case ch=$1
-      when 'n'; "\n"
-      when 't'; "\t"
-      when 's'; " "
-      else
-        if Valid_escapes_in_strings.include? ch and not (ch == '"' and terminators == "'")
-          ch
-        else
-          Puppet.warning "Unrecognised escape sequence '\\#{ch}'#{file && " in file #{file}"}#{line && " at line #{line}"}"
-          "\\#{ch}"
+      ch = $1
+      if escapes.include? ch
+        case ch
+        when 'n'; "\n"
+        when 't'; "\t"
+        when 's'; " "
+        else      ch
         end
+      else
+        Puppet.warning "Unrecognised escape sequence '\\#{ch}'#{file && " in file #{file}"}#{line && " at line #{line}"}" unless ignore_invalid_escapes
+        "\\#{ch}"
       end
     }
     [ str[0..-2],str[-1,1] ]

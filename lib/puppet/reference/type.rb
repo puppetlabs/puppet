@@ -16,25 +16,25 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
     - The *namevar* is the parameter used to uniquely identify a type instance.
   This is the parameter that gets assigned when a string is provided before
   the colon in a type declaration.  In general, only developers will need to
-  worry about which parameter is the ``namevar``.
+  worry about which parameter is the `namevar`.
 
-  In the following code::
+  In the following code:
 
-    file { "/etc/passwd":
-      owner => root,
-      group => root,
-      mode => 644
-    }
+      file { "/etc/passwd":
+        owner => root,
+        group => root,
+        mode => 644
+      }
 
-  ``/etc/passwd`` is considered the title of the file object (used for things like
-  dependency handling), and because ``path`` is the namevar for ``file``, that
-  string is assigned to the ``path`` parameter.
+  `/etc/passwd` is considered the title of the file object (used for things like
+  dependency handling), and because `path` is the namevar for `file`, that
+  string is assigned to the `path` parameter.
 
-- *Parameters* determine the specific configuration of the instance.  They either
+  - *Parameters* determine the specific configuration of the instance.  They either
   directly modify the system (internally, these are called properties) or they affect
-  how the instance behaves (e.g., adding a search path for ``exec`` instances or determining recursion on ``file`` instances).
+  how the instance behaves (e.g., adding a search path for `exec` instances or determining recursion on `file` instances).
 
-- *Providers* provide low-level functionality for a given resource type.  This is
+  - *Providers* provide low-level functionality for a given resource type.  This is
   usually in the form of calling out to external commands.
 
   When required binaries are specified for providers, fully qualifed paths
@@ -42,7 +42,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
   binaries indicate that Puppet will search for the binary using the shell
   path.
 
-- *Features* are abilities that some providers might not support.  You can use the list
+  - *Features* are abilities that some providers might not support.  You can use the list
   of supported features to determine how a given provider can be used.
 
   Resource types define features they can use, and providers can be tested to see

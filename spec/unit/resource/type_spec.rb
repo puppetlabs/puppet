@@ -369,7 +369,8 @@ describe Puppet::Resource::Type do
     end
 
     it "should cache a reference to the parent type" do
-      @code.expects(:hostclass).once.with("bar").returns @parent
+      @code.stubs(:hostclass).with("foo::bar").returns nil
+      @code.expects(:hostclass).with("bar").once.returns @parent
       @child.parent_type(@scope)
       @child.parent_type
     end

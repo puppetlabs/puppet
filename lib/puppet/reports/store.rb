@@ -2,7 +2,7 @@ require 'puppet'
 
 Puppet::Reports.register_report(:store) do
   desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
-    and this just stores the file on disk, in the ``reportdir`` directory.
+    and this just stores the file on disk, in the `reportdir` directory.
 
     These files collect quickly -- one every half hour -- so it is a good idea
     to perform some maintenance on them if you use this report (it's the only
@@ -19,7 +19,7 @@ Puppet::Reports.register_report(:store) do
         :owner => 'service',
         :group => 'service'
       },
-        
+
       :noop => [false, "Used by settings internally."]
     )
 

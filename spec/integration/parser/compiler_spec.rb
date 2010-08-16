@@ -26,4 +26,47 @@ describe Puppet::Parser::Compiler do
 
     @compiler.catalog.version.should == version
   end
+
+  describe "when resolving class references" do
+    it "should favor local scope, even if there's an included class in topscope" do
+      Puppet[:code] = <<-PP
+        class experiment {
+          class baz {
+          }
+          notify {"x" : require => Class[Baz] }
+        }
+        class baz {
+        }
+        include baz
+        include experiment
+        include experiment::baz
+      PP
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
+
+      notify_resource = catalog.resource( "Notify[x]" )
+
+      notify_resource[:require].title.should == "Experiment::Baz"
+    end
+
+    it "should favor local scope, even if there's an unincluded class in topscope" do
+      Puppet[:code] = <<-PP
+        class experiment {
+          class baz {
+          }
+          notify {"x" : require => Class[Baz] }
+        }
+        class baz {
+        }
+        include experiment
+        include experiment::baz
+      PP
+
+      catalog = Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode"))
+
+      notify_resource = catalog.resource( "Notify[x]" )
+
+      notify_resource[:require].title.should == "Experiment::Baz"
+    end
+  end
 end

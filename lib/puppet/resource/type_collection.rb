@@ -96,8 +96,8 @@ class Puppet::Resource::TypeCollection
     #Array("") == [] for some reason
     namespaces = [namespaces] unless namespaces.is_a?(Array)
 
-    if r = find_fully_qualified(name, type)
-      return r
+    if name =~ /^::/
+      return send(type, name.sub(/^::/, ''))
     end
 
     namespaces.each do |namespace|
@@ -153,6 +153,7 @@ class Puppet::Resource::TypeCollection
   end
 
   def perform_initial_import
+    return if Puppet.settings[:ignoreimport]
     parser = Puppet::Parser::Parser.new(environment)
     if code = Puppet.settings.uninterpolated_value(:code, environment.to_s) and code != ""
       parser.string = code
@@ -196,10 +197,6 @@ class Puppet::Resource::TypeCollection
   end
 
   private
-
-  def find_fully_qualified(name, type)
-    send(type, name.sub(/^::/, ''))
-  end
 
   def find_partially_qualified(namespace, name, type)
     send(type, [namespace, name].join("::"))

@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleIdentifier</key>
-    <string>com.puppetlabs.puppet</string>
+    <string>com.reductivelabs.puppet</string>
     <key>CFBundleShortVersionString</key>
     <string>{SHORTVERSION}</string>
     <key>IFMajorVersion</key>

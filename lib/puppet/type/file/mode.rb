@@ -13,14 +13,14 @@ module Puppet
       entries in a directory, and search/traverse allows you to access
       (read/write/execute) those entries.)  Because of this feature, you
       can recursively make a directory and all of the files in it
-      world-readable by setting e.g.::
+      world-readable by setting e.g.:
 
-        file { '/some/dir':
-          mode => 644,
-          recurse => true,
-        }
+          file { '/some/dir':
+            mode => 644,
+            recurse => true,
+          }
 
-      In this case all of the files underneath ``/some/dir`` will have
+      In this case all of the files underneath `/some/dir` will have
       mode 644, and all of the directories will have mode 755."
 
     @event = :file_changed

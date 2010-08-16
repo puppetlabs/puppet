@@ -33,7 +33,7 @@ module Puppet
     end
 
     newproperty(:snapdir) do
-      desc "The sharenfs property."
+      desc "The snapdir property."
     end
 
     autorequire(:zpool) do
@@ -48,4 +48,3 @@ module Puppet
     end
   end
 end
-

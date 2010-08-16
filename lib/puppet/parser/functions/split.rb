@@ -6,7 +6,7 @@ module Puppet::Parser::Functions
     :doc => "\
 Split a string variable into an array using the specified split regexp.
 
-  Usage::
+  Usage:
 
     $string     = 'v1.v2:v3.v4'
     $array_var1 = split($string, ':')

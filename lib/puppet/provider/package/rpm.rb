@@ -1,7 +1,7 @@
 require 'puppet/provider/package'
 # RPM packaging.  Should work anywhere that has rpm installed.
 Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Provider::Package do
-  desc "RPM packaging support; should work anywhere with a working ``rpm``
+  desc "RPM packaging support; should work anywhere with a working `rpm`
     binary."
 
   has_feature :versionable

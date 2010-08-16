@@ -47,7 +47,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
       # Add the suitability note
       if missing = provider.suitable?(false) and missing.empty?
-        data << "**X**"
+        data << "*X*"
         suit = true
         functional = true
       else
@@ -86,7 +86,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
       # Add a note for every feature
       features.each do |feature|
         if provider.features.include?(feature)
-          data << "**X**"
+          data << "*X*"
         else
           data << ""
         end
@@ -95,7 +95,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
     ret += h(type.name.to_s + "_", 2)
 
-    ret += ".. _#{type.name}: #{"http://docs.puppetlabs.com/references/stable/type.html##{type.name}"}\n\n"
+    ret += "[#{type.name}](#{"http://docs.puppetlabs.com/references/stable/type.html##{type.name}"})\n\n"
     ret += option("Default provider", default)
     ret += doctable(headers, table_data)
 
@@ -111,7 +111,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
   ret
 end
 providers.header = "
-Puppet resource types are usually backed by multiple implementations called ``providers``,
+Puppet resource types are usually backed by multiple implementations called `providers`,
 which handle variance between platforms and tools.
 
 Different providers are suitable or unsuitable on different platforms based on things

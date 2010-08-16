@@ -1,7 +1,7 @@
 require 'puppet/provider/nameservice/pw'
 
 Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::PW do
-  desc "User management via ``pw`` on FreeBSD."
+  desc "User management via `pw` on FreeBSD."
 
   commands :pw => "pw"
   has_features :manages_homedir, :allows_duplicates

@@ -1,8 +1,8 @@
 module Puppet
   newtype(:sshkey) do
     @doc = "Installs and manages ssh host keys.  At this point, this type
-      only knows how to install keys into /etc/ssh/ssh_known_hosts, and
-      it cannot manage user authorized keys yet."
+      only knows how to install keys into `/etc/ssh/ssh_known_hosts`.  See 
+      the `ssh_authorized_key` type to manage authorized keys."
 
     ensurable
 
@@ -23,9 +23,7 @@ module Puppet
     # to see if we can automatically glean any aliases.
     newproperty(:host_aliases) do
       desc 'Any aliases the host might have.  Multiple values must be
-        specified as an array.  Note that this property is not the same as
-        the "alias" metaparam; use this property to add aliases to a host
-        on disk, and "alias" to aliases for use in your Puppet scripts.'
+        specified as an array.'
 
       attr_accessor :meta
 
@@ -56,7 +54,7 @@ module Puppet
 
     newproperty(:target) do
       desc "The file in which to store the ssh key.  Only used by
-        the ``parsed`` provider."
+        the `parsed` provider."
 
       defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
         @resource.class.defaultprovider.default_target
@@ -67,4 +65,3 @@ module Puppet
     end
   end
 end
-

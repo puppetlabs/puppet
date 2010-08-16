@@ -82,11 +82,11 @@ require 'csv'
 module Puppet::Parser::Functions
   newfunction(:extlookup, :type => :rvalue) do |args|
     key = args[0]
-    default = "_ExtUNSET_"
-    datafile = "_ExtUNSET_"
 
-    default = args[1] if args[1]
-    datafile = args[2] if args[2]
+    default  = args[1]
+    datafile = args[2]
+
+    raise Puppet::ParseError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
 
     extlookup_datadir = lookupvar('extlookup_datadir')
     extlookup_precedence = Array.new
@@ -99,18 +99,14 @@ module Puppet::Parser::Functions
     # this will result in /path/to/extdata/hosts/your.box.com.csv
     # being searched.
     #
-    # we parse the precedence here because the best place to specify
-    # it would be in site.pp but site.pp is only evaluated at startup
-    # so $fqdn etc would have no meaning there, this way it gets evaluated
-    # each run and has access to the right variables for that run
-    lookupvar('extlookup_precedence').each do |prec|
-      while prec =~ /%\{(.+?)\}/
-        prec.gsub!(/%\{#{$1}\}/, lookupvar($1))
+    # This is for back compatibility to interpolate variables with %.
+    # % interpolation is a workaround for a problem that has been fixed: Puppet variable
+    # interpolation at top scope used to only happen on each run
+    extlookup_precedence = lookupvar('extlookup_precedence').collect do |var|
+      var.gsub(/%\{(.+?)\}/) do |capture|
+        lookupvar($1)
       end
-
-      extlookup_precedence << prec
     end
-
 
     datafiles = Array.new
 
@@ -123,12 +119,10 @@ module Puppet::Parser::Functions
       datafiles << extlookup_datadir + "/#{d}.csv"
     end
 
-    desired = "_ExtUNSET_"
+    desired = nil
 
     datafiles.each do |file|
-      parser.watch_file(file) if File.exists?(file)
-
-      if desired == "_ExtUNSET_"
+      if desired.nil?
         if File.exists?(file)
           result = CSV.read(file).find_all do |r|
             r[0] == key
@@ -167,15 +161,6 @@ module Puppet::Parser::Functions
       end
     end
 
-    # don't accidently return nil's and such rather throw a parse error
-    if desired == "_ExtUNSET_" && default == "_ExtUNSET_"
-      raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
-    else
-      desired = default if desired == "_ExtUNSET_"
-    end
-
-    desired
+    desired || default or raise Puppet::ParseError, "No match found for '#{key}' in any data file during extlookup()"
   end
 end
-
-# vi:tabstop=4:expandtab:ai
