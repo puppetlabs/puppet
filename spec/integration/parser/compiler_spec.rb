@@ -69,4 +69,26 @@ describe Puppet::Parser::Compiler do
       notify_resource[:require].title.should == "Experiment::Baz"
     end
   end
+
+  it "should recompute the version after input files are re-parsed" do
+    Puppet[:code] = 'class foo { }'
+    Time.stubs(:now).returns(1)
+    node = Puppet::Node.new('mynode')
+    Puppet::Parser::Compiler.compile(node).version.should == 1
+    Time.stubs(:now).returns(2)
+    Puppet::Parser::Compiler.compile(node).version.should == 1 # no change because files didn't change
+    Puppet::Resource::TypeCollection.any_instance.stubs(:stale?).returns(true).then.returns(false) # pretend change
+    Puppet::Parser::Compiler.compile(node).version.should == 2
+  end
+
+  it "should not allow classes inside conditional constructs" do
+    Puppet[:code] = <<-PP
+      if true {
+        class foo {
+        }
+      }
+    PP
+
+    lambda { Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode")) }.should raise_error(Puppet::Error)
+  end
 end

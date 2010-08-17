@@ -22,7 +22,7 @@ class TestRailsParameter < Test::Unit::TestCase
 
     # Now create a source
     parser = mkparser
-    source = parser.newclass "myclass"
+    source = parser.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "myclass")
 
     host = Puppet::Rails::Host.new(:name => "myhost")
 

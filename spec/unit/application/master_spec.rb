@@ -257,16 +257,15 @@ describe Puppet::Application::Master do
 
     describe "the parseonly command" do
       before :each do
-        Puppet.stubs(:[]).with(:environment)
+        @environment = Puppet::Node::Environment.new("env")
+        Puppet.stubs(:[]).with(:environment).returns(@environment)
         Puppet.stubs(:[]).with(:manifest).returns("site.pp")
         Puppet.stubs(:err)
         @master.stubs(:exit)
-        @collection = stub_everything
-        Puppet::Resource::TypeCollection.stubs(:new).returns(@collection)
       end
 
       it "should use a Puppet Resource Type Collection to parse the file" do
-        @collection.expects(:perform_initial_import)
+        @environment.expects(:perform_initial_import)
         @master.parseonly
       end
 
@@ -276,7 +275,7 @@ describe Puppet::Application::Master do
       end
 
       it "should exit with exit code 1 if error" do
-        @collection.stubs(:perform_initial_import).raises(Puppet::ParseError)
+        @environment.stubs(:perform_initial_import).raises(Puppet::ParseError)
         @master.expects(:exit).with(1)
         @master.parseonly
       end

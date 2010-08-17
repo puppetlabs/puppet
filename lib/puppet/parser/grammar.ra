@@ -29,37 +29,18 @@ preclow
 
 rule
 program:    statements {
-  if val[0]
-    # Make sure we always return an array.
-    if val[0].is_a?(AST::ASTArray)
-      if val[0].children.empty?
-        result = nil
-      else
-        result = val[0]
-      end
-    else
-      result = aryfy(val[0])
-    end
-  else
-    result = nil
-  end
+  val[0].is_a_namespace = true
+  result = val[0]
 }
   | nil
 
-statements:   statement
+  statements:   statement {
+    result = ast AST::ASTArray, :children => [val[0]]
+  }
   | statements statement {
-    if val[0] and val[1]
-    if val[0].instance_of?(AST::ASTArray)
-      val[0].push(val[1])
-      result = val[0]
-    else
-      result = ast AST::ASTArray, :children => [val[0],val[1]]
-    end
-  elsif obj = (val[0] || val[1])
-    result = obj
-  else result = nil
-  end
-}
+    val[0].push(val[1])
+    result = val[0]
+  }
 
 # The main list of valid statements
 statement:    resource
@@ -664,16 +645,17 @@ import: IMPORT strings {
 #definition: DEFINE NAME argumentlist parent LBRACE statements RBRACE {
 definition: DEFINE classname argumentlist LBRACE statements RBRACE {
   @lexer.commentpop
-  newdefine classname(val[1]), :arguments => val[2], :code => val[4], :line => val[0][:line]
+  result = Puppet::Parser::AST::Definition.new(classname(val[1]),
+                                               ast_context(true).merge(:arguments => val[2], :code => val[4],
+                                                                       :line => val[0][:line]))
   @lexer.indefine = false
-  result = nil
 
 #}           | DEFINE NAME argumentlist parent LBRACE RBRACE {
 }           | DEFINE classname argumentlist LBRACE RBRACE {
   @lexer.commentpop
-  newdefine classname(val[1]), :arguments => val[2], :line => val[0][:line]
+  result = Puppet::Parser::AST::Definition.new(classname(val[1]),
+                                               ast_context(true).merge(:arguments => val[2], :line => val[0][:line]))
   @lexer.indefine = false
-  result = nil
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
@@ -681,24 +663,27 @@ hostclass: CLASS classname argumentlist classparent LBRACE statements RBRACE {
   @lexer.commentpop
   # Our class gets defined in the parent namespace, not our own.
   @lexer.namepop
-  newclass classname(val[1]), :arguments => val[2], :parent => val[3], :code => val[5], :line => val[0][:line]
-  result = nil
+  val[5].is_a_namespace = true
+  result = Puppet::Parser::AST::Hostclass.new(classname(val[1]),
+                                              ast_context(true).merge(:arguments => val[2], :parent => val[3],
+                                                                      :code => val[5], :line => val[0][:line]))
 }           | CLASS classname argumentlist classparent LBRACE RBRACE {
   @lexer.commentpop
   # Our class gets defined in the parent namespace, not our own.
   @lexer.namepop
-  newclass classname(val[1]), :arguments => val[2], :parent => val[3], :line => val[0][:line]
-  result = nil
+  result = Puppet::Parser::AST::Hostclass.new(classname(val[1]),
+                                              ast_context(true).merge(:arguments => val[2], :parent => val[3],
+                                                                      :line => val[0][:line]))
 }
 
 nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
   @lexer.commentpop
-  newnode val[1], :parent => val[2], :code => val[4], :line => val[0][:line]
-  result = nil
+  result = Puppet::Parser::AST::Node.new(val[1],
+                                         ast_context(true).merge(:parent => val[2], :code => val[4],
+                                                                 :line => val[0][:line]))
 }       |  NODE hostnames nodeparent LBRACE RBRACE {
   @lexer.commentpop
-  newnode val[1], :parent => val[2], :line => val[0][:line]
-  result = nil
+  result = Puppet::Parser::AST::Node.new(val[1], ast_context(true).merge(:parent => val[2], :line => val[0][:line]))
 }
 
 classref:       CLASSREF { result = val[0][:value] }
@@ -709,10 +694,11 @@ classname:       NAME { result = val[0][:value] }
 
 # Multiple hostnames, as used for node names.  These are all literal
 # strings, not AST objects.
-hostnames:    nodename
+hostnames:    nodename {
+    result = [result]
+}
   | hostnames COMMA nodename {
     result = val[0]
-    result = [result] unless result.is_a?(Array)
     result << val[2]
 }
 

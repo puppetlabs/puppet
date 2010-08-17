@@ -29,8 +29,7 @@ describe Puppet::Parser::Scope do
   end
 
   it "should be able to retrieve its parent module name from the source of its parent type" do
-    @topscope.source = Puppet::Resource::Type.new(:hostclass, :foo)
-    @topscope.source.module_name = "foo"
+    @topscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
 
     @scope.parent_module_name.should == "foo"
   end

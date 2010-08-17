@@ -81,7 +81,7 @@ class Puppet::Node::Environment
     Thread.current[:known_resource_types] ||= synchronize {
       if @known_resource_types.nil? or @known_resource_types.stale?
         @known_resource_types = Puppet::Resource::TypeCollection.new(self)
-        @known_resource_types.perform_initial_import
+        @known_resource_types.import_ast(perform_initial_import, '')
       end
       @known_resource_types
     }
@@ -141,6 +141,32 @@ class Puppet::Node::Environment
     end.find_all do |p|
       p =~ /^#{File::SEPARATOR}/ && FileTest.directory?(p)
     end
+  end
+
+  private
+
+  def perform_initial_import
+    return empty_parse_result if Puppet.settings[:ignoreimport]
+    parser = Puppet::Parser::Parser.new(self)
+    if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
+      parser.string = code
+    else
+      file = Puppet.settings.value(:manifest, name.to_s)
+      return empty_parse_result unless File.exist?(file)
+      parser.file = file
+    end
+    parser.parse
+  rescue => detail
+    msg = "Could not parse for environment #{self}: #{detail}"
+    error = Puppet::Error.new(msg)
+    error.set_backtrace(detail.backtrace)
+    raise error
+  end
+
+  def empty_parse_result
+    # Return an empty toplevel hostclass to use as the result of
+    # perform_initial_import when no file was actually loaded.
+    return Puppet::Parser::AST::Hostclass.new('')
   end
 
   @root = new(:'*root*')
