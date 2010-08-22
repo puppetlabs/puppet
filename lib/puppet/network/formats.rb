@@ -1,6 +1,6 @@
 require 'puppet/network/format_handler'
 
-Puppet::Network::FormatHandler.create(:yaml, :mime => "text/yaml") do
+Puppet::Network::FormatHandler.create_serialized_formats(:yaml) do
   # Yaml doesn't need the class name; it's serialized.
   def intern(klass, text)
     YAML.load(text)
@@ -29,7 +29,7 @@ end
 # This is a "special" format which is used for the moment only when sending facts
 # as REST GET parameters (see Puppet::Configurer::FactHandler).
 # This format combines a yaml serialization, then zlib compression and base64 encoding.
-Puppet::Network::FormatHandler.create(:b64_zlib_yaml, :mime => "text/b64_zlib_yaml") do
+Puppet::Network::FormatHandler.create_serialized_formats(:b64_zlib_yaml) do
   require 'base64'
 
   def use_zlib?
@@ -127,7 +127,7 @@ Puppet::Network::FormatHandler.create(:raw, :mime => "application/x-raw", :weigh
   end
 end
 
-Puppet::Network::FormatHandler.create(:pson, :mime => "text/pson", :weight => 10, :required_methods => [:render_method, :intern_method]) do
+Puppet::Network::FormatHandler.create_serialized_formats(:pson, :weight => 10, :required_methods => [:render_method, :intern_method]) do
   confine :true => Puppet.features.pson?
 
   def intern(klass, text)
@@ -159,4 +159,4 @@ Puppet::Network::FormatHandler.create(:pson, :mime => "text/pson", :weight => 10
 end
 
 # This is really only ever going to be used for Catalogs.
-Puppet::Network::FormatHandler.create(:dot, :mime => "text/dot", :required_methods => [:render_method])
+Puppet::Network::FormatHandler.create_serialized_formats(:dot, :required_methods => [:render_method])
