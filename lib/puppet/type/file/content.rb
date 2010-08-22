@@ -166,6 +166,8 @@ module Puppet
         yield source_or_content
       elsif source_or_content.nil?
         yield read_file_from_filebucket
+      elsif Puppet.settings[:name] == "apply"
+        yield source_or_content.content
       elsif source_or_content.local?
         chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
       else
