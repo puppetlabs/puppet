@@ -19,8 +19,8 @@ module Puppet::FileServing::IndirectionHooks
     return PROTOCOL_MAP["file"] if request.key =~ /^#{::File::SEPARATOR}/
     return PROTOCOL_MAP["file"] if request.protocol == "file"
 
-    # We're heading over the wire the protocol is 'puppet' and we've got a server name or we're not named 'puppet'
-    if request.protocol == "puppet" and (request.server or Puppet.settings[:name] != "puppet")
+    # We're heading over the wire the protocol is 'puppet' and we've got a server name or we're not named 'apply' or 'puppet'
+    if request.protocol == "puppet" and (request.server or !["puppet","apply"].include?(Puppet.settings[:name]))
       return PROTOCOL_MAP["puppet"]
     end
 

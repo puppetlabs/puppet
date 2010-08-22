@@ -15,7 +15,7 @@ describe "Puppet::FileServing::Files", :shared => true do
     @test_class.find(uri)
   end
 
-  it "should use the rest terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is not 'puppet'" do
+  it "should use the rest terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is not 'puppet' or 'apply'" do
     uri = "puppet:///fakemod/my/file"
     Puppet.settings.stubs(:value).returns "foo"
     Puppet.settings.stubs(:value).with(:name).returns("puppetd")
@@ -29,6 +29,17 @@ describe "Puppet::FileServing::Files", :shared => true do
     Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing", :module => nil, :modulepath => []))
     Puppet.settings.stubs(:value).returns ""
     Puppet.settings.stubs(:value).with(:name).returns("puppet")
+    Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
+    @indirection.terminus(:file_server).expects(:find)
+    @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
+    @test_class.find(uri)
+  end
+
+  it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'apply'" do
+    uri = "puppet:///fakemod/my/file"
+    Puppet::Node::Environment.stubs(:new).returns(stub("env", :name => "testing", :module => nil, :modulepath => []))
+    Puppet.settings.stubs(:value).returns ""
+    Puppet.settings.stubs(:value).with(:name).returns("apply")
     Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
     @indirection.terminus(:file_server).expects(:find)
     @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
