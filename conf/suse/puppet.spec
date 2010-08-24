@@ -1,31 +1,35 @@
 %{!?ruby_sitelibdir: %define ruby_sitelibdir %(ruby -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')}
 %define pbuild %{_builddir}/%{name}-%{version}
-%define suseconfdir conf/suse
-%define confdir conf/redhat
+%define confdir conf/suse
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 0.25.4
+Version: 2.6.0
 Release: 1%{?dist}
 License: GPL
-Group: System Environment/Base
+Group:    Productivity/Networking/System
 
 URL: http://puppetlabs.com/projects/puppet/
-Source: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
-Patch0: puppet.suse.patch
+Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+Source1: client.init
+Source2: server.init
+Patch0: ruby-env.patch
+
+PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.2
-Requires: facter >= 1.3.7
+Requires: facter >= 1.5
+Requires: cron
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: ruby >= 1.8.2
+BuildRequires: ruby >= 1.8.7
 
 %description
-Puppet lets you centrally manage every important aspect of your system using a
-cross-platform specification language that manages all the separate elements
-normally aggregated in different files, like users, cron jobs, and hosts,
+Puppet lets you centrally manage every important aspect of your system using a 
+cross-platform specification language that manages all the separate elements 
+normally aggregated in different files, like users, cron jobs, and hosts, 
 along with obviously discrete elements like packages, services, and files.
 
 %package server
-Group: System Environment/Base
+Group:    Productivity/Networking/System
 Summary: Server for the puppet system management tool
 Requires: puppet = %{version}-%{release}
 
@@ -43,45 +47,51 @@ for f in bin/* ; do
 done
 
 %install
-%{__rm} -rf %{buildroot}
 %{__install} -d -m0755 %{buildroot}%{_sbindir}
 %{__install} -d -m0755 %{buildroot}%{_bindir}
+%{__install} -d -m0755 %{buildroot}%{_confdir}
 %{__install} -d -m0755 %{buildroot}%{ruby_sitelibdir}
 %{__install} -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
 %{__install} -d -m0755 %{buildroot}%{_docdir}/%{name}-%{version}
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 %{__install} -d -m0755 %{buildroot}%{_localstatedir}/log/puppet
-%{__install} -Dp -m0755 %{pbuild}/bin/* %{pbuild}/sbin/* %{buildroot}%{_sbindir}
-%{__mv} %{buildroot}%{_sbindir}/puppet %{buildroot}%{_bindir}/puppet
-%{__mv} %{buildroot}%{_sbindir}/puppetrun %{buildroot}%{_bindir}/puppetrun
-%{__mv} %{buildroot}%{_sbindir}/pi %{buildroot}%{_bindir}/pi
-%{__mv} %{buildroot}%{_sbindir}/filebucket %{buildroot}%{_bindir}/filebucket
+%{__install} -Dp -m0755 %{pbuild}/bin/* %{buildroot}%{_bindir}
+%{__install} -Dp -m0755 %{pbuild}/sbin/* %{buildroot}%{_sbindir}
 %{__install} -Dp -m0644 %{pbuild}/lib/puppet.rb %{buildroot}%{ruby_sitelibdir}/puppet.rb
 %{__cp} -a %{pbuild}/lib/puppet %{buildroot}%{ruby_sitelibdir}
-find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %{__chmod} a-x
-%{__install} -Dp -m0644 %{confdir}/client.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppet
-%{__install} -Dp -m0755 %{suseconfdir}/client.init %{buildroot}%{_initrddir}/puppet
-%{__install} -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/sysconfig/puppetmaster
-%{__install} -Dp -m0755 %{suseconfdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
-%{__install} -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
-%{__install} -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
-%{__install} -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
+%{__cp} -a %{pbuild}/conf/redhat/client.sysconfig %{buildroot}%{_confdir}/client.sysconfig
+%{__install} -Dp -m0644 %{buildroot}%{_confdir}/client.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppet
+%{__install} -Dp -m0755 %SOURCE1 %{buildroot}%{_initrddir}/puppet
+%{__cp} -a %{pbuild}/conf/redhat/server.sysconfig %{buildroot}%{_confdir}/server.sysconfig
+%{__install} -Dp -m0644 %{buildroot}%{_confdir}/server.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppetmaster
+%{__install} -Dp -m0755 %SOURCE2 %{buildroot}%{_initrddir}/puppetmaster
+%{__cp} -a %{pbuild}/conf/redhat/fileserver.conf %{buildroot}%{_confdir}/fileserver.conf
+%{__install} -Dp -m0644 %{buildroot}%{_confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
+%{__cp} -a %{pbuild}/conf/redhat/puppet.conf %{buildroot}%{_confdir}/puppet.conf
+%{__install} -Dp -m0644 %{buildroot}%{_confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
+%{__cp} -a %{pbuild}/conf/redhat/logrotate %{buildroot}%{_confdir}/logrotate
+%{__install} -Dp -m0644 %{buildroot}%{_confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+%{__ln_s}  %{_initrddir}/puppet %{buildroot}%{_sbindir}/rcpuppet
+%{__ln_s}  %{_initrddir}/puppetmaster %{buildroot}%{_sbindir}/rcpuppetmaster
 
 %files
 %defattr(-, root, root, 0755)
 %{_bindir}/puppet
-%{_bindir}/pi
+%{_bindir}/puppetdoc
 %{_bindir}/filebucket
-%{_sbindir}/ralsh
+%{_bindir}/ralsh
+%{_bindir}/pi
 %{_sbindir}/puppetd
+%{_sbindir}/rcpuppet
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
-%config(noreplace) %{_sysconfdir}/sysconfig/puppet
+/var/adm/fillup-templates/sysconfig.puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %doc CHANGELOG COPYING LICENSE README examples
-%exclude %{_sbindir}/puppetdoc
 %config(noreplace) %{_sysconfdir}/logrotate.d/puppet
+%dir %{_sysconfdir}/puppet
 # These need to be owned by puppet so the server can
 # write to them
 %attr(-, puppet, puppet) %{_localstatedir}/run/puppet
@@ -91,56 +101,115 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -print0 | xargs -0 -r %
 %files server
 %defattr(-, root, root, 0755)
 %{_sbindir}/puppetmasterd
+%{_sbindir}/rcpuppetmaster
 %{_sbindir}/puppetqd
-%{_bindir}/puppetrun
+%{_sbindir}/puppetrun
+%{_sbindir}/puppetca
 %{_initrddir}/puppetmaster
 %config(noreplace) %{_sysconfdir}/puppet/*
-%config(noreplace) %{_sysconfdir}/sysconfig/puppetmaster
-%{_sbindir}/puppetca
+%exclude %{_sysconfdir}/puppet/puppet.conf
+/var/adm/fillup-templates/sysconfig.puppetmaster
+%dir %{_sysconfdir}/puppet
 
 %pre
 /usr/sbin/groupadd -r puppet 2>/dev/null || :
 /usr/sbin/useradd -g puppet -c "Puppet" \
-    -s /sbin/nologin -r -d /var/lib/puppet puppet 2> /dev/null || :
+    -s /sbin/nologin -r -d /var/puppet puppet 2> /dev/null || :
 
 %post
-/sbin/chkconfig --add puppet
-exit 0
+%{fillup_and_insserv -y puppet}
 
 %post server
-/sbin/chkconfig --add puppetmaster
+%{fillup_and_insserv -n -y puppetmaster}
 
 %preun
-if [ "$1" = 0 ] ; then
-    /sbin/service puppet stop > /dev/null 2>&1
-    /sbin/chkconfig --del puppet
-fi
+%stop_on_removal puppet
 
 %preun server
-if [ "$1" = 0 ] ; then
-    /sbin/service puppetmaster stop > /dev/null 2>&1
-    /sbin/chkconfig --del puppetmaster
-fi
+%stop_on_removal puppetmaster
+
+%postun
+%restart_on_update puppet
+%{insserv_cleanup}
 
 %postun server
-if [ "$1" -ge 1 ]; then
-    /sbin/service puppetmaster try-restart > /dev/null 2>&1
-fi
+%restart_on_update puppetmaster
+%{insserv_cleanup}
 
 %clean
 %{__rm} -rf %{buildroot}
 
 %changelog
-* Sat Feb 16 2008 James Turnbull <james@lovedthanlost.net> - 0.24.1-1
-- Fixed puppet configuation file references to match single puppet.conf file
-- Update versions for 0.24.1 release
+* Wed Jul 21 2010 Ben Kevan <ben.kevan@gmail.com> - 2.6.0
+- New version and ruby version bump
+- Add puppetdoc to %_bindir (unknown why original suse package, excluded or forgot to add)
+- Corrected patch for ruby environment
+- Move binaries back to the correct directories
+
+* Wed Jul 14 2010 Ben Kevan <ben.kevan@gmail.com> - 0.25.5
+- New version.
+- Use original client, server.init names
+- Revert to puppetmaster
+- Fixed client.init and server.init and included $null and Should-Stop for both
+
+* Tue Mar 2 2010 Martin Vuk  <martin.vuk@fri.uni-lj.si> - 0.25.4
+- New version.
+
+* Sun Aug 9 2009 Noah Fontes <nfontes@transtruct.org>
+- Fix build on SLES 9.
+- Enable puppet and puppet-server services by default.
+
+* Sat Aug 8 2009 Noah Fontes <nfontes@transtruct.org>
+- Fix a lot of relevant warnings from rpmlint.
+- Build on OpenSUSE 11.1 correctly.
+- Rename puppetmaster init scripts to puppet-server to correspond to the package name.
+
+* Wed Apr 22 2009 Leo Eraly  <leo@unstable.be> - 0.24.8
+- New version.
+
+* Tue Dec 9 2008 Leo Eraly  <leo@unstable.be> - 0.24.6
+- New version.
+
+* Fri Sep 5 2008 Leo Eraly  <leo@unstable.be> - 0.24.5
+- New version.
+
+* Fri Jun 20 2008 Martin Vuk  <martin.vuk@fri.uni-lj.si> - 0.24.4
+- Removed symlinks to old configuration files
+
+* Fri Dec 14 2007 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.24.0
+- New version.
+
+* Fri Jun  29 2007 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.23.0
+- New version.
+
+* Wed May  2 2007 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.22.4
+- New version. Includes provider for rug package manager.
+
+* Wed Apr 25  2007 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.22.3
+- New version. Added links /sbin/rcpuppet and /sbin/rcpuppetmaster
+
+* Sun Jan  7  2007 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.22.0
+- version bump
+
+* Tue Oct  3  2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.19.3-3
+- Made package arch dependant.
+
+* Sat Sep 23  2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.19.3-1
+- New version
+
+* Sun Sep 17  2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.19.1-1
+- New version
+
+* Tue Aug  30 2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.19.0-1
+- New version
+- No need to patch anymore :-), since my changes went into official release.
 
 * Tue Aug  3 2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.18.4-3
 - Replaced puppet-bin.patch with %build section from David's spec
 
 * Tue Aug  1 2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.18.4-2
 - Added supprot for enabling services in SuSE
-
+ 
 * Tue Aug  1 2006 Martin Vuk <martin.vuk@fri.uni-lj.si> - 0.18.4-1
 - New version and support for SuSE
 
@@ -152,7 +221,7 @@ fi
 
 * Mon Jun 19 2006 David Lutterkort <dlutter@redhat.com> - 0.18.0-1
 - Patch config for LSB compliance (lsb-config.patch)
-- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl
+- Changed config moves /var/puppet to /var/lib/puppet, /etc/puppet/ssl 
   to /var/lib/puppet, /etc/puppet/clases.txt to /var/lib/puppet/classes.txt,
   /etc/puppet/localconfig.yaml to /var/lib/puppet/localconfig.yaml
 
@@ -175,7 +244,7 @@ fi
 - Rebuilt for new version
 
 * Wed Mar 22 2006 David Lutterkort <dlutter@redhat.com> - 0.15.1-1
-- Patch0: Run puppetmaster as root; running as puppet is not ready
+- Patch0: Run puppetmaster as root; running as puppet is not ready 
   for primetime
 
 * Mon Mar 13 2006 David Lutterkort <dlutter@redhat.com> - 0.15.0-1
@@ -190,7 +259,7 @@ fi
   allocate the puppet uid/gid dynamically
 
 * Sun Feb 19 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-4
-- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed
+- Use fedora-usermgmt to create puppet user/group. Use uid/gid 24. Fixed 
 problem with listing fileserver.conf and puppetmaster.conf twice
 
 * Wed Feb  8 2006 David Lutterkort <dlutter@redhat.com> - 0.13.0-3
@@ -215,7 +284,7 @@ problem with listing fileserver.conf and puppetmaster.conf twice
 - Added basic fileserver.conf
 
 * Wed Jan 11 2006 David Lutterkort <dlutter@redhat.com> - 0.10.1-1
-- Updated. Moved installation of library files to sitelibdir. Pulled
+- Updated. Moved installation of library files to sitelibdir. Pulled 
 initscripts into separate files. Folded tools rpm into server
 
 * Thu Nov 24 2005 Duane Griffin <d.griffin@psenterprise.com>

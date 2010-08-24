@@ -5,7 +5,7 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        0.25.5
+Version:        2.6.0
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2+
@@ -68,6 +68,7 @@ The server can also function as a certificate authority and file server.
 %setup -q
 patch -p1 < conf/redhat/rundir-perms.patch
 
+
 %build
 # Fix some rpmlint complaints
 for f in mac_dscl.pp mac_dscl_revert.pp \
@@ -91,6 +92,7 @@ rm -rf %{buildroot}
 ruby install.rb --destdir=%{buildroot} --quick --no-rdoc
 
 install -d -m0755 %{buildroot}%{_sysconfdir}/puppet/manifests
+install -d -m0755 %{buildroot}%{_datadir}/%{name}/modules
 install -d -m0755 %{buildroot}%{_localstatedir}/lib/puppet
 install -d -m0755 %{buildroot}%{_localstatedir}/run/puppet
 install -d -m0750 %{buildroot}%{_localstatedir}/log/puppet
@@ -221,6 +223,10 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue Jul 20 2010 Todd Zullinger <tmz@pobox.com> - 2.6.0-1
+- Update to 2.6.0
+- Create and own /usr/share/puppet/modules (#615432)
+
 * Mon May 03 2010 Todd Zullinger <tmz@pobox.com> - 0.25.5-1
 - Update to 0.25.5
 - Adjust selinux conditional for EL-6

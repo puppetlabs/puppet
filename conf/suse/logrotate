@@ -1,0 +1,10 @@
+/var/log/puppet/*log {
+  missingok
+  notifempty
+  create 0644 puppet puppet
+  sharedscripts
+  postrotate
+    [ -e /etc/init.d/puppetmaster ] && /etc/init.d/puppetmaster condrestart >/dev/null 2>&1 || true
+    [ -e /etc/init.d/puppet ] && /etc/init.d/puppet reload > /dev/null 2>&1 || true
+  endscript
+}

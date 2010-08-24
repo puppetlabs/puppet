@@ -13,7 +13,7 @@ PATH=/usr/bin:/sbin:/bin:/usr/sbin
 export PATH
 
 lockfile=/var/lock/subsys/puppetmaster
-pidfile=/var/run/puppet/puppetmasterd.pid
+pidfile=/var/run/puppet/master.pid
 
 # Source function library.
 . /etc/rc.d/init.d/functions
@@ -33,6 +33,13 @@ fi
 PUPPETMASTER_OPTS="${PUPPETMASTER_OPTS} \
     ${PUPPETMASTER_EXTRA_OPTS}"
 
+# Determine if we can use the -p option to daemon, killproc, and status.
+# RHEL < 5 can't.
+if status | grep -q -- '-p' 2>/dev/null; then
+    daemonopts="--pidfile $pidfile"
+    pidopts="-p $pidfile"
+fi
+
 RETVAL=0
 
 prog=puppetmasterd
@@ -50,7 +57,7 @@ start() {
                 ret=$?; [ $ret != 0 ] && RETVAL=$ret
             done
         else
-            daemon $PUPPETMASTER $PUPPETMASTER_OPTS
+            daemon $daemonopts $PUPPETMASTER $PUPPETMASTER_OPTS
             RETVAL=$?
         fi
     else
@@ -72,8 +79,7 @@ stop() {
             ret=$?; [ $ret != 0 ] && RETVAL=$ret
         done
     else
-        killproc | grep -q -- '-p' 2>/dev/null && killopts="-p $pidfile"
-        killproc $killopts $PUPPETMASTER
+        killproc $pidopts $PUPPETMASTER
         RETVAL=$?
     fi
     echo
@@ -99,7 +105,7 @@ rh_status() {
             ret=$?; [ $ret != 0 ] && RETVAL=$ret
         done
     else
-        status $PUPPETMASTER
+        status $pidopts $PUPPETMASTER
         RETVAL=$?
     fi
     return $RETVAL

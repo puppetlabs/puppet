@@ -29,7 +29,7 @@
 #            # We actually want to return the whole array here, not just the first
 #            # value.
 #            def should
-#                if defined? @should
+#                if defined?(@should)
 #                    if @should[0] == :absent
 #                        return :absent
 #                    else
@@ -44,7 +44,7 @@
 #                valids = ["udp", "tcp", "ddp", :absent]
 #                unless valids.include? value
 #                    raise Puppet::Error,
-#                        "Protocols can be either 'udp' or 'tcp', not %s" % value
+#                        "Protocols can be either 'udp' or 'tcp', not #{value}"
 #                end
 #            end
 #        end
@@ -61,13 +61,13 @@
 #            desc 'Any aliases the port might have.  Multiple values must be
 #                specified as an array.  Note that this property is not the same as
 #                the "alias" metaparam; use this property to add aliases to a port
-#                in the services file, and "alias" to aliases for use in your Puppet 
+#                in the services file, and "alias" to aliases for use in your Puppet
 #                scripts.'
 #
 #            # We actually want to return the whole array here, not just the first
 #            # value.
 #            def should
-#                if defined? @should
+#                if defined?(@should)
 #                    if @should[0] == :absent
 #                        return :absent
 #                    else

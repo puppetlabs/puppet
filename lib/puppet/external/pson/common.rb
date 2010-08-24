@@ -28,17 +28,17 @@ module PSON
     end
 
     def registered_document_types
-        @registered_document_types ||= {}
+      @registered_document_types ||= {}
     end
 
     # Register a class-constant for deserializaion.
     def register_document_type(name,klass)
-        registered_document_types[name.to_s] = klass        
+      registered_document_types[name.to_s] = klass
     end
 
-    # Return the constant located at _path_. 
+    # Return the constant located at _path_.
     # Anything may be registered as a path by calling register_path, above.
-    # Otherwise, the format of _path_ has to be either ::A::B::C or A::B::C. 
+    # Otherwise, the format of _path_ has to be either ::A::B::C or A::B::C.
     # In either of these cases A has to be defined in Object (e.g. the path
     # must be an absolute namespace path.  If the constant doesn't exist at
     # the given path, an ArgumentError is raised.
@@ -171,7 +171,7 @@ module PSON
   # * *indent*: a string used to indent levels (default: ''),
   # * *space*: a string that is put after, a : or , delimiter (default: ''),
   # * *space_before*: a string that is put before a : pair delimiter (default: ''),
-  # * *object_nl*: a string that is put at the end of a PSON object (default: ''), 
+  # * *object_nl*: a string that is put at the end of a PSON object (default: ''),
   # * *array_nl*: a string that is put at the end of a PSON array (default: ''),
   # * *check_circular*: true if checking for circular data structures
   #   should be done (the default), false otherwise.
@@ -223,11 +223,14 @@ module PSON
   # The _opts_ argument can be used to configure the generator, see the
   # generate method for a more detailed explanation.
   def pretty_generate(obj, opts = nil)
+
     state = PSON.state.new(
+
       :indent     => '  ',
       :space      => ' ',
       :object_nl  => "\n",
       :array_nl   => "\n",
+
       :check_circular => true
     )
     if opts

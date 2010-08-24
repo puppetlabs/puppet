@@ -3,3 +3,4 @@ s
 --colour
 --loadby
 mtime
+--backtrace

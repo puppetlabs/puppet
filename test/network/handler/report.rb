@@ -7,77 +7,77 @@ require 'puppet/network/handler/report'
 require 'puppettest/reporttesting'
 
 class TestReportServer < Test::Unit::TestCase
-    include PuppetTest
-    include PuppetTest::Reporttesting
+  include PuppetTest
+  include PuppetTest::Reporttesting
 
-    Report = Puppet::Network::Handler.report
-    Puppet::Util.logmethods(self)
+  Report = Puppet::Network::Handler.report
+  Puppet::Util.logmethods(self)
 
-    def mkserver
-        server = nil
-        assert_nothing_raised {
-            server = Puppet::Network::Handler.report.new()
-        }
-        server
-    end
+  def mkserver
+    server = nil
+    assert_nothing_raised {
+      server = Puppet::Network::Handler.report.new
+    }
+    server
+  end
 
-    def mkclient(server = nil)
-        server ||= mkserver()
-        client = nil
-        assert_nothing_raised {
-            client = Puppet::Network::Client.report.new(:Report => server)
-        }
+  def mkclient(server = nil)
+    server ||= mkserver
+    client = nil
+    assert_nothing_raised {
+      client = Puppet::Network::Client.report.new(:Report => server)
+    }
 
-        client
-    end
+    client
+  end
 
-    def test_process
-        server = Puppet::Network::Handler.report.new
+  def test_process
+    server = Puppet::Network::Handler.report.new
 
-        # We have to run multiple reports to make sure there's no conflict
-        reports = []
-        $run = []
-        2.times do |i|
-            name = "processtest%s" % i
-            reports << name
+    # We have to run multiple reports to make sure there's no conflict
+    reports = []
+    $run = []
+    2.times do |i|
+      name = "processtest#{i}"
+      reports << name
 
-            Report.newreport(name) do
-                def process
-                    $run << self.report_name
-                end
-            end
+      Report.newreport(name) do
+        def process
+          $run << self.report_name
         end
-        Puppet[:reports] = reports.collect { |r| r.to_s }.join(",")
+      end
+    end
+    Puppet[:reports] = reports.collect { |r| r.to_s }.join(",")
 
-        report = fakereport
+    report = fakereport
 
-        retval = nil
-        assert_nothing_raised {
-            retval = server.send(:process, YAML.dump(report))
-        }
+    retval = nil
+    assert_nothing_raised {
+      retval = server.send(:process, YAML.dump(report))
+    }
 
-        reports.each do |name|
-            assert($run.include?(name.intern), "Did not run %s" % name)
-        end
-
-        # Now make sure our server doesn't die on missing reports
-        Puppet[:reports] = "fakereport"
-        assert_nothing_raised {
-            retval = server.send(:process, YAML.dump(report))
-        }
+    reports.each do |name|
+      assert($run.include?(name.intern), "Did not run #{name}")
     end
 
-    def test_reports
-        Puppet[:reports] = "myreport"
+    # Now make sure our server doesn't die on missing reports
+    Puppet[:reports] = "fakereport"
+    assert_nothing_raised {
+      retval = server.send(:process, YAML.dump(report))
+    }
+  end
 
-        # Create a server
-        server = Puppet::Network::Handler.report.new
+  def test_reports
+    Puppet[:reports] = "myreport"
 
-        {"myreport" => ["myreport"],
-            " fake, another, yay " => ["fake", "another", "yay"]
-        }.each do |str, ary|
-            Puppet[:reports] = str
-            assert_equal(ary, server.send(:reports))
-        end
+    # Create a server
+    server = Puppet::Network::Handler.report.new
+
+    {"myreport" => ["myreport"],
+      " fake, another, yay " => ["fake", "another", "yay"]
+    }.each do |str, ary|
+      Puppet[:reports] = str
+      assert_equal(ary, server.send(:reports))
     end
+  end
 end

@@ -12,33 +12,33 @@ require 'puppet/file_serving/content'
 # Broker access to the filesystem, converting local URIs into metadata
 # or content objects.
 class Puppet::FileServing::Mount < Puppet::Network::AuthStore
-    include Puppet::Util::Logging
+  include Puppet::Util::Logging
 
-    attr_reader :name
+  attr_reader :name
 
-    def find(path, options)
-        raise NotImplementedError
+  def find(path, options)
+    raise NotImplementedError
+  end
+
+  # Create our object.  It must have a name.
+  def initialize(name)
+    unless name =~ %r{^[-\w]+$}
+      raise ArgumentError, "Invalid mount name format '#{name}'"
     end
+    @name = name
 
-    # Create our object.  It must have a name.
-    def initialize(name)
-        unless name =~ %r{^[-\w]+$}
-            raise ArgumentError, "Invalid mount name format '%s'" % name
-        end
-        @name = name
+    super()
+  end
 
-        super()
-    end
+  def search(path, options)
+    raise NotImplementedError
+  end
 
-    def search(path, options)
-        raise NotImplementedError
-    end
+  def to_s
+    "mount[#{@name}]"
+  end
 
-    def to_s
-        "mount[%s]" % @name
-    end
-
-    # A noop.
-    def validate
-    end
+  # A noop.
+  def validate
+  end
 end

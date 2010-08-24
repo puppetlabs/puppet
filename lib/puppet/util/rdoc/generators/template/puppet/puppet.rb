@@ -615,6 +615,19 @@ END:requires
     </div>
 ENDIF:requires
 
+    <!-- if realizes -->
+IF:realizes
+    <div id="realizes">
+      <h3 class="section-bar">Realized Resources</h3>
+
+      <div id="realizes-list">
+START:realizes
+        <span class="realizes-name">HREF:aref:name:</span>
+END:realizes
+      </div>
+    </div>
+ENDIF:realizes
+
 START:sections
     <div id="section">
 IF:sectitle
@@ -625,7 +638,6 @@ IF:seccomment
       </div>
 ENDIF:seccomment
 ENDIF:sectitle
-
 
 <!-- if facts -->
 IF:facts

@@ -9,22 +9,21 @@ require 'puppettest'
 require 'puppettest/parsertesting'
 
 class TestVariable < Test::Unit::TestCase
-    include PuppetTest
-    include PuppetTest::ParserTesting
-    AST = Puppet::Parser::AST
+  include PuppetTest
+  include PuppetTest::ParserTesting
+  AST = Puppet::Parser::AST
 
-    def setup
-        super
-        @interp = mkinterp
-        @scope = mkscope :interp => @interp
-        @name = "myvar"
-        @var = AST::Variable.new(:value => @name)
-    end
+  def setup
+    super
+    @scope = mkscope
+    @name = "myvar"
+    @var = AST::Variable.new(:value => @name)
+  end
 
-    def test_evaluate
-        assert_equal("", @var.evaluate(@scope), "did not return empty string on unset var")
-        @scope.setvar(@name, "something")
-        assert_equal("something", @var.evaluate(@scope), "incorrect variable value")
-    end
+  def test_evaluate
+    assert_equal(:undef, @var.evaluate(@scope), "did not return :undef on unset var")
+    @scope.setvar(@name, "something")
+    assert_equal("something", @var.evaluate(@scope), "incorrect variable value")
+  end
 end
 
