@@ -35,10 +35,12 @@ program:    statements {
   | nil
 
   statements:   statement {
-    result = ast AST::ASTArray, :children => [val[0]]
+    result = ast AST::ASTArray, :children => (val[0] ? [val[0]] : [])
   }
   | statements statement {
-    val[0].push(val[1])
+    if val[1]
+      val[0].push(val[1])
+    end
     result = val[0]
   }
 
@@ -70,19 +72,17 @@ relationship_side: resource | resourceref | collection
 edge: IN_EDGE | OUT_EDGE | IN_EDGE_SUB | OUT_EDGE_SUB
 
 fstatement:   NAME LPAREN funcvalues RPAREN {
-  args = aryfy(val[2])
   result = ast AST::Function,
     :name => val[0][:value],
     :line => val[0][:line],
-    :arguments => args,
+    :arguments => val[2],
     :ftype => :statement
 }
 | NAME LPAREN funcvalues COMMA RPAREN {
-  args = aryfy(val[2])
   result = ast AST::Function,
     :name => val[0][:value],
     :line => val[0][:line],
-    :arguments => args,
+    :arguments => val[2],
     :ftype => :statement
 }            | NAME LPAREN RPAREN {
   result = ast AST::Function,
@@ -92,29 +92,22 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
     :ftype => :statement
 }
   | NAME funcvalues {
-    args = aryfy(val[1])
     result = ast AST::Function,
     :name => val[0][:value],
     :line => val[0][:line],
-    :arguments => args,
+    :arguments => val[1],
     :ftype => :statement
 }
 
-funcvalues:       namestring
-  | resourceref
+funcvalues: namestring { result = aryfy(val[0]) }
+  | resourceref        { result = aryfy(val[0]) }
   | funcvalues COMMA namestring {
-    result = aryfy(val[0], val[2])
-    result.line = @lexer.line
-    result.file = @lexer.file
+    val[0].push(val[2])
+    result = val[0]
 }
   | funcvalues COMMA resourceref {
-    unless val[0].is_a?(AST::ASTArray)
-    val[0] = aryfy(val[0])
-  end
-
-  val[0].push(val[2])
-
-  result = val[0]
+    val[0].push(val[2])
+    result = val[0]
 }
 
 # This is *almost* an rvalue, but I couldn't get a full
@@ -133,23 +126,7 @@ namestring:       name
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
   @lexer.commentpop
-  array = val[2]
-  array = [array] if array.instance_of?(AST::ResourceInstance)
-  result = ast AST::ASTArray
-
-  # this iterates across each specified resourceinstance
-  array.each { |instance|
-    raise Puppet::Dev, "Got something that isn't an instance" unless instance.instance_of?(AST::ResourceInstance)
-    # now, i need to somehow differentiate between those things with
-    # arrays in their names, and normal things
-
-      result.push ast(
-        AST::Resource,
-      :type => val[0],
-      :title => instance[0],
-
-      :parameters => instance[1])
-  }
+  result = ast(AST::Resource, :type => val[0], :instances => val[2])
 }           | classname LBRACE params endcomma RBRACE {
   # This is a deprecated syntax.
   error "All resource specifications require names"
@@ -178,14 +155,8 @@ virtualresource:  at resource {
 
   method = type.to_s + "="
 
-  # Just mark our resources as exported and pass them through.
-  if val[1].instance_of?(AST::ASTArray)
-    val[1].each do |obj|
-      obj.send(method, true)
-    end
-  else
-    val[1].send(method, true)
-  end
+  # Just mark our resource as exported and pass it through.
+  val[1].send(method, true)
 
   result = val[1]
 }
@@ -284,17 +255,13 @@ colllval:                 variable
   | name
 
 resourceinst:   resourcename COLON params endcomma {
-  result = ast AST::ResourceInstance, :children => [val[0],val[2]]
+  result = ast AST::ResourceInstance, :title => val[0], :parameters => val[2]
 }
 
-resourceinstances:   resourceinst
+resourceinstances:   resourceinst { result = aryfy(val[0]) }
   | resourceinstances SEMIC resourceinst {
-    if val[0].instance_of?(AST::ResourceInstance)
-    result = ast AST::ASTArray, :children => [val[0],val[2]]
-  else
     val[0].push val[2]
     result = val[0]
-  end
 }
 
 endsemi:      # nothing
@@ -339,14 +306,10 @@ params:   # nothing
 {
   result = ast AST::ASTArray
 }
-  | param { result = val[0] }
+  | param { result = aryfy(val[0]) }
   | params COMMA param {
-    if val[0].instance_of?(AST::ASTArray)
     val[0].push(val[2])
     result = val[0]
-  else
-    result = ast AST::ASTArray, :children => [val[0],val[2]]
-  end
 }
 
 param:        NAME FARROW rvalue {
@@ -365,24 +328,14 @@ anyparams:   # nothing
 {
   result = ast AST::ASTArray
 }
-  | anyparam { result = val[0] }
+  | anyparam { result = aryfy(val[0]) }
   | anyparams COMMA anyparam {
-    if val[0].instance_of?(AST::ASTArray)
     val[0].push(val[2])
     result = val[0]
-  else
-    result = ast AST::ASTArray, :children => [val[0],val[2]]
-  end
 }
 
-rvalues:      rvalue
-  | rvalues comma rvalue {
-    if val[0].instance_of?(AST::ASTArray)
-    result = val[0].push(val[2])
-  else
-    result = ast AST::ASTArray, :children => [val[0],val[2]]
-  end
-}
+rvalues: rvalue               { result = aryfy(val[0]) }
+       | rvalues comma rvalue { result = val[0].push(val[2]) }
 
 simplervalue:       quotedtext
   | name
@@ -406,10 +359,9 @@ rvalue:       quotedtext
 
 # We currently require arguments in these functions.
 funcrvalue:   NAME LPAREN funcvalues RPAREN {
-  args = aryfy(val[2])
   result = ast AST::Function,
     :name => val[0][:value], :line => val[0][:line],
-    :arguments => args,
+    :arguments => val[2],
     :ftype => :rvalue
 }           | NAME LPAREN RPAREN {
   result = ast AST::Function,
@@ -553,19 +505,13 @@ expression:   rvalue
 
 casestatement:  CASE rvalue LBRACE caseopts RBRACE {
   @lexer.commentpop
-  options = val[3]
-  options = ast AST::ASTArray, :children => [val[3]] unless options.instance_of?(AST::ASTArray)
-  result = ast AST::CaseStatement, :test => val[1], :options => options
+  result = ast AST::CaseStatement, :test => val[1], :options => val[3]
 }
 
-caseopts:     caseopt
+caseopts:     caseopt { result = aryfy(val[0]) }
   | caseopts caseopt {
-    if val[0].instance_of?(AST::ASTArray)
     val[0].push val[1]
     result = val[0]
-  else
-    result = ast AST::ASTArray, :children => [val[0], val[1]]
-  end
 }
 
 caseopt:        casevalues COLON LBRACE statements RBRACE {
@@ -582,14 +528,10 @@ caseopt:        casevalues COLON LBRACE statements RBRACE {
   )
 }
 
-casevalues:       selectlhand
+casevalues:       selectlhand { result = aryfy(val[0]) }
   | casevalues COMMA selectlhand {
-    if val[0].instance_of?(AST::ASTArray)
     val[0].push(val[2])
     result = val[0]
-  else
-    result = ast AST::ASTArray, :children => [val[0],val[2]]
-  end
 }
 
 selector:     selectlhand QMARK svalues {
@@ -638,7 +580,7 @@ import: IMPORT strings {
     import(file)
   end
 
-  result = AST::ASTArray.new(:children => [])
+  result = nil
 }
 
 # Disable definition inheritance for now. 8/27/06, luke
@@ -764,22 +706,9 @@ variable:     VARIABLE {
   result = ast AST::Variable, :value => val[0][:value], :line => val[0][:line]
 }
 
-array:        LBRACK rvalues RBRACK {
-  if val[1].instance_of?(AST::ASTArray)
-    result = val[1]
-  else
-    result = ast AST::ASTArray, :children => [val[1]]
-  end
-}
-  | LBRACK rvalues COMMA RBRACK {
-    if val[1].instance_of?(AST::ASTArray)
-    result = val[1]
-  else
-    result = ast AST::ASTArray, :children => [val[1]]
-  end
-}           | LBRACK RBRACK {
-  result = ast AST::ASTArray
-}
+array: LBRACK rvalues       RBRACK { result = val[1] }
+     | LBRACK rvalues COMMA RBRACK { result = val[1] }
+     | LBRACK               RBRACK { result = ast AST::ASTArray }
 
 comma:        FARROW
   | COMMA

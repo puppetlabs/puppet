@@ -10,14 +10,15 @@ describe Puppet::Parser::AST::Resource do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
     @scope = Puppet::Parser::Scope.new(:compiler => @compiler)
     @scope.stubs(:resource).returns(stub_everything)
-    @resource = ast::Resource.new(:title => @title, :type => "file", :parameters => ast::ASTArray.new(:children => []) )
+    @instance = ast::ResourceInstance.new(:title => @title, :parameters => ast::ASTArray.new(:children => []))
+    @resource = ast::Resource.new(:type => "file", :instances => ast::ASTArray.new(:children => [@instance]))
     @resource.stubs(:qualified_type).returns("Resource")
   end
 
   it "should evaluate all its parameters" do
     param = stub 'param'
     param.expects(:safeevaluate).with(@scope).returns Puppet::Parser::Resource::Param.new(:name => "myparam", :value => "myvalue", :source => stub("source"))
-    @resource.stubs(:parameters).returns [param]
+    @instance.stubs(:parameters).returns [param]
 
     @resource.evaluate(@scope)
   end
@@ -34,7 +35,7 @@ describe Puppet::Parser::AST::Resource do
 
     array = Puppet::Parser::AST::ASTArray.new(:children => titles)
 
-    @resource.title = array
+    @instance.title = array
     result = @resource.evaluate(@scope).collect { |r| r.title }
     result.should be_include("one")
     result.should be_include("two")
@@ -48,10 +49,17 @@ describe Puppet::Parser::AST::Resource do
 
     array = Puppet::Parser::AST::ASTArray.new(:children => titles)
 
-    @resource.title = array
+    @instance.title = array
     result = @resource.evaluate(@scope).collect { |r| r.title }
     result.should be_include("one")
     result.should be_include("two")
+  end
+
+  it "should implicitly iterate over instances" do
+    new_title = Puppet::Parser::AST::String.new(:value => "other_title")
+    new_instance = ast::ResourceInstance.new(:title => new_title, :parameters => ast::ASTArray.new(:children => []))
+    @resource.instances.push(new_instance)
+    @resource.evaluate(@scope).collect { |r| r.title }.should == ["mytitle", "other_title"]
   end
 
   it "should handover resources to the compiler" do
@@ -62,7 +70,7 @@ describe Puppet::Parser::AST::Resource do
 
     array = Puppet::Parser::AST::ASTArray.new(:children => titles)
 
-    @resource.title = array
+    @instance.title = array
     result = @resource.evaluate(@scope)
 
     result.each do |res|
@@ -98,7 +106,10 @@ describe Puppet::Parser::AST::Resource do
 
     def resource(type, params = nil)
       params ||= Puppet::Parser::AST::ASTArray.new(:children => [])
-      Puppet::Parser::AST::Resource.new(:type => type, :title => Puppet::Parser::AST::String.new(:value => "myresource"), :parameters => params)
+      instance = Puppet::Parser::AST::ResourceInstance.new(
+          :title => Puppet::Parser::AST::String.new(:value => "myresource"), :parameters => params)
+      Puppet::Parser::AST::Resource.new(:type => type,
+                                        :instances => Puppet::Parser::AST::ASTArray.new(:children => [instance]))
     end
 
     it "should be able to generate resources with fully qualified type information" do

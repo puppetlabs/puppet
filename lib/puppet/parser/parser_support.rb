@@ -29,18 +29,9 @@ class Puppet::Parser::Parser
     message
   end
 
-  # Create an AST array out of all of the args
-  def aryfy(*args)
-    if args[0].instance_of?(AST::ASTArray)
-      result = args.shift
-      args.each { |arg|
-        result.push arg
-      }
-    else
-      result = ast AST::ASTArray, :children => args
-    end
-
-    result
+  # Create an AST array containing a single element
+  def aryfy(arg)
+    ast AST::ASTArray, :children => [arg]
   end
 
   # Create an AST object, and automatically add the file and line information if
