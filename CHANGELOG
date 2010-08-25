@@ -1,5 +1,23 @@
+2.6.1rc3
+========
+81a2725  Fix for #4456 -- need to accept some mime-type aliases
+c318558  Fix for #4489 -- apply was using the rest terminus
+491c31d  Fix for #4542 -- included classes weren't assigned proper stages
+302d657  Fix for #4501 -- reports not generated in standalone
+1ea4ccf  Start server before agent
+4c28079  [#4555] puppet queue tries to call code it hasn't required
+d1150e0  fix #4528 - treat * as absent
+20f4b90  Fix for #4518 -- classes not getting added to compiler.classes
+57bb06b  [#4545] Remove obsolete 'trac' specs
+82b4f04  Maint. -- Fix test failures broken by previous commit
+0c30754  Maint.  Removing code at the request of the original author
+3df0490  [#4298] Puppet apply prints an error if the file to apply doesn't exist
+5d4f222  Fixed #4527 correctly for 2.6.1
+1b3d782  Updated config.ru example for 2.6.1
+
 2.6.1rc2
 ========
+0aa27b5  Updated for 2.6.1rc2
 252c9b8  Further RST to Markdown fixes for types, values, tests
 1157e8d  Updated all types to Markdown output
 fef8800  Updated reference output to generate valid Markdown
