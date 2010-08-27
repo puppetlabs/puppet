@@ -2,8 +2,10 @@ puppet (2.6.0-3) UNRELEASED; urgency=low
 
   * Fix ""Duplicate definition" error when "-" used in class names"
     cherry-pick fix from upstream (Closes: #592305)
+  * Fix "Puppet standalone broken"
+    cherry-pick from upstream (Closes: #594575)
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 22:54:07 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 22:56:57 +0200
 
 puppet (2.6.0-2) unstable; urgency=low
 
