@@ -4,8 +4,10 @@ puppet (2.6.0-3) UNRELEASED; urgency=low
     cherry-pick fix from upstream (Closes: #592305)
   * Fix "Puppet standalone broken"
     cherry-pick from upstream (Closes: #594575)
+  * Fix "puppetmaster - environment column grows endless"
+    cherry-pick from http://github.com/MarkusQ/puppet (Closes: #594584)
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 22:56:57 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 23:12:52 +0200
 
 puppet (2.6.0-2) unstable; urgency=low
 
