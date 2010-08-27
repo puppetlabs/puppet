@@ -78,7 +78,10 @@ class Puppet::Application::Apply < Puppet::Application
     if options[:code] or command_line.args.length == 0
       Puppet[:code] = options[:code] || STDIN.read
     else
-      Puppet[:manifest] = command_line.args.shift
+      manifest = command_line.args.shift
+      raise "Could not find file #{manifest}" unless File.exist?(manifest)
+      Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
+      Puppet[:manifest] = manifest
     end
 
     # Collect our facts.
@@ -123,17 +126,22 @@ class Puppet::Application::Apply < Puppet::Application
       configurer.execute_prerun_command
 
       # And apply it
+      if Puppet[:report]
+        report = configurer.initialize_report
+        Puppet::Util::Log.newdestination(report)
+      end
       transaction = catalog.apply
 
       configurer.execute_postrun_command
 
-      status = 0
-      if not Puppet[:noop] and options[:detailed_exitcodes]
-        transaction.generate_report
-        exit(transaction.report.exit_status)
+      if Puppet[:report]
+        Puppet::Util::Log.close(report)
+        configurer.send_report(report, transaction)
       else
-        exit(0)
+        transaction.generate_report
       end
+
+      exit( Puppet[:noop] ? 0 : options[:detailed_exitcodes] ? transaction.report.exit_status : 0 )
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       $stderr.puts detail.message
