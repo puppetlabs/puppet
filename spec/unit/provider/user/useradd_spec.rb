@@ -109,6 +109,15 @@ describe provider_class do
       @provider.stubs(:command).with(:add).returns("useradd")
       @provider.stubs(:add_properties).returns(["-G", "somegroup"])
       @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:[]).with(:expiry).returns("somedate")
+      @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", '-e somedate', "someuser"]
+    end
+
+    it "should return an array without -e if expery is undefined full command" do
+      @provider.stubs(:command).with(:add).returns("useradd")
+      @provider.stubs(:add_properties).returns(["-G", "somegroup"])
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:[]).with(:expiry).returns nil
       @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", "someuser"]
     end
   end

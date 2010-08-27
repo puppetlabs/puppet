@@ -17,7 +17,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value !~ /\s/
   end
 
-  has_features :manages_homedir, :allows_duplicates
+  has_features :manages_homedir, :allows_duplicates, :manages_expiry
 
   has_feature :manages_passwords if Puppet.features.libshadow?
 
@@ -32,6 +32,15 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     elsif %w{Fedora RedHat CentOS OEL OVS}.include?(Facter.value("operatingsystem"))
       cmd << "-M"
     end
+    cmd
+  end
+
+  def check_manage_expiry
+    cmd = []
+    if @resource[:expiry]
+      cmd << "-e #{@resource[:expiry]}"
+    end
+
     cmd
   end
 
@@ -53,6 +62,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += add_properties
     cmd += check_allow_dup
     cmd += check_manage_home
+    cmd += check_manage_expiry
     cmd << @resource[:name]
   end
 

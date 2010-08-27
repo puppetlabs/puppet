@@ -27,6 +27,9 @@ module Puppet
     feature :manages_solaris_rbac,
       "The provider can manage roles and normal users"
 
+    feature :manages_expiry,
+      "The provider can manage the expiry date for a user."
+
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
@@ -206,6 +209,17 @@ module Puppet
       validate do |val|
         if val.to_s == "true"
           raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" unless provider.class.manages_homedir?
+        end
+      end
+    end
+
+    newproperty(:expiry, :required_features => :manages_expiry) do
+      desc "The expiry date for this user. Must be provided in
+           a zero padded YYYY-MM-DD format - e.g 2010-02-19."
+
+      validate do |value|
+        if value !~ /^\d{4}-\d{2}-\d{2}$/
+          raise ArgumentError, "Expiry dates must be YYYY-MM-DD"
         end
       end
     end
