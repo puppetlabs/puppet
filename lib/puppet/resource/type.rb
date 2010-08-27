@@ -69,6 +69,7 @@ class Puppet::Resource::Type
     end
 
     scope = subscope(scope, resource) unless resource.title == :main
+    scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)
 

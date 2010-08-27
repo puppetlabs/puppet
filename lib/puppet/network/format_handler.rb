@@ -37,6 +37,12 @@ module Puppet::Network::FormatHandler
     instance
   end
 
+  def self.create_serialized_formats(name,options = {},&block)
+    ["application/x-#{name}", "application/#{name}", "text/x-#{name}", "text/#{name}"].each { |mime_type|
+      create name, {:mime => mime_type}.update(options), &block
+    }
+  end
+
   def self.extended(klass)
     klass.extend(ClassMethods)
 

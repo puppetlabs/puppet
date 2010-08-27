@@ -38,6 +38,7 @@ class Puppet::Application::Queue < Puppet::Application
   option("--verbose","-v")
 
   def main
+    require 'lib/puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
     Puppet.notice "Starting puppetqd #{Puppet.version}"
     Puppet::Resource::Catalog::Queue.subscribe do |catalog|
       # Once you have a Puppet::Resource::Catalog instance, calling save on it should suffice

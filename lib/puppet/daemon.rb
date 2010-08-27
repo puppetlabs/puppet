@@ -121,8 +121,8 @@ class Puppet::Daemon
     create_pidfile
 
     raise Puppet::DevError, "Daemons must have an agent, server, or both" unless agent or server
-    agent.start if agent
     server.start if server
+    agent.start if agent
 
     EventLoop.current.run
   end

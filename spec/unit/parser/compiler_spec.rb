@@ -430,7 +430,18 @@ describe Puppet::Parser::Compiler do
       lambda { @compiler.add_resource(@scope, resource) }.should raise_error(ArgumentError)
     end
 
-    it "should add edges from the class resources to the main stage if no stage is specified" do
+    it "should add edges from the class resources to the parent's stage if no stage is specified" do
+      main      = @compiler.catalog.resource(:stage, :main)
+      foo_stage = resource(:stage, :foo_stage)
+      @compiler.add_resource(@scope, foo_stage)
+      resource = resource(:class, "foo")
+      @scope.stubs(:resource).returns(:stage => :foo_stage)
+      @compiler.add_resource(@scope, resource)
+
+      @compiler.catalog.should be_edge(foo_stage, resource)
+    end
+
+    it "should add edges from top-level class resources to the main stage if no stage is specified" do
       main = @compiler.catalog.resource(:stage, :main)
       resource = resource(:class, "foo")
       @compiler.add_resource(@scope, resource)

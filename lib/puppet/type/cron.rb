@@ -169,7 +169,7 @@ Puppet::Type.newtype(:cron) do
       end
 
       if value == "*"
-        return value
+        return :absent
       end
 
       return value unless self.class.boundaries
