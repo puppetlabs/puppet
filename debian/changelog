@@ -6,8 +6,10 @@ puppet (2.6.0-3) UNRELEASED; urgency=low
     cherry-pick from upstream (Closes: #594575)
   * Fix "puppetmaster - environment column grows endless"
     cherry-pick from http://github.com/MarkusQ/puppet (Closes: #594584)
+  * Fix "puppet master: downloaded plugins have zero size when using
+    passenger" cherry-pick from upstream (Closes: #594559)
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 23:12:52 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Fri, 27 Aug 2010 23:17:06 +0200
 
 puppet (2.6.0-2) unstable; urgency=low
 
