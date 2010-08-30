@@ -12,7 +12,7 @@ describe Puppet::Application::Cert do
   end
 
   it "should operate in master run_mode" do
-    @cert_app.class.run_mode.name.should equal :master
+    @cert_app.class.run_mode.name.should equal(:master)
   end
 
   it "should ask Puppet::Application to parse Puppet configuration file" do
