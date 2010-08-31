@@ -97,7 +97,10 @@ class TestCronParsedProvider < Test::Unit::TestCase
     # Then do them all at once.
     records = []
     text = ""
-    sample_records.each do |name, options|
+    # Sort sample_records so that the :empty entry does not come last
+    # (if it does, the test will fail because the empty last line will
+    # be ignored)
+    sample_records.sort { |a, b| a.first.to_s <=> b.first.to_s }.each do |name, options|
       records << options[:record]
       text += options[:text] + "\n"
     end
