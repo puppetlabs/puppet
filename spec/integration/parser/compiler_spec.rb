@@ -81,9 +81,20 @@ describe Puppet::Parser::Compiler do
     Puppet::Parser::Compiler.compile(node).version.should == 2
   end
 
-  it "should not allow classes inside conditional constructs" do
+  it "should not allow classes inside evaluated conditional constructs" do
     Puppet[:code] = <<-PP
       if true {
+        class foo {
+        }
+      }
+    PP
+
+    lambda { Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode")) }.should raise_error(Puppet::Error)
+  end
+
+  it "should not allow classes inside unevaluated conditional constructs" do
+    Puppet[:code] = <<-PP
+      if false {
         class foo {
         }
       }

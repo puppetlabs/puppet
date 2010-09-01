@@ -28,22 +28,30 @@ prechigh
 preclow
 
 rule
-program:    statements {
-  val[0].is_a_namespace = true
-  result = val[0]
-}
+program:    statements_and_declarations
   | nil
 
-  statements:   statement {
+  statements_and_declarations:   statement_or_declaration {
     result = ast AST::ASTArray, :children => [val[0]]
   }
-  | statements statement {
+  | statements_and_declarations statement_or_declaration {
     val[0].push(val[1])
     result = val[0]
   }
 
+# statements is like statements_and_declarations, but it doesn't allow
+# nested definitions, classes, or nodes.
+statements: statements_and_declarations {
+  val[0].each do |stmt|
+    if stmt.is_a?(AST::TopLevelConstruct)
+      error "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
+    end
+  end
+  result = val[0]
+}
+
 # The main list of valid statements
-statement:    resource
+statement_or_declaration:    resource
   | virtualresource
   | collection
   | assignment
@@ -659,11 +667,10 @@ definition: DEFINE classname argumentlist LBRACE statements RBRACE {
 }
 
 #hostclass: CLASS NAME argumentlist parent LBRACE statements RBRACE {
-hostclass: CLASS classname argumentlist classparent LBRACE statements RBRACE {
+hostclass: CLASS classname argumentlist classparent LBRACE statements_and_declarations RBRACE {
   @lexer.commentpop
   # Our class gets defined in the parent namespace, not our own.
   @lexer.namepop
-  val[5].is_a_namespace = true
   result = Puppet::Parser::AST::Hostclass.new(classname(val[1]),
                                               ast_context(true).merge(:arguments => val[2], :parent => val[3],
                                                                       :code => val[5], :line => val[0][:line]))
