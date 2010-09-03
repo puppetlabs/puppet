@@ -52,15 +52,6 @@ describe Puppet::Parser do
       @parser.file = "/my/file.rb"
       @parser.parse
     end
-
-    describe "in ruby" do
-      it "should use the ruby interpreter to load the file" do
-        @parser.file = "/my/file.rb"
-        @parser.expects(:require).with "/my/file.rb"
-
-        @parser.parse_ruby_file
-      end
-    end
   end
 
   describe "when parsing append operator" do
