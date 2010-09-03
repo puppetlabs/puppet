@@ -7,6 +7,9 @@ $LOAD_PATH.unshift("#{dir}/")
 $LOAD_PATH.unshift("#{dir}/lib") # a spec-specific test lib dir
 $LOAD_PATH.unshift("#{dir}/../lib")
 
+# Don't want puppet getting the command line arguments for rake or autotest
+ARGV.clear
+
 require 'puppet'
 require 'mocha'
 gem 'rspec', '>=1.2.9'
