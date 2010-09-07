@@ -3,7 +3,6 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/util/backups'
-include PuppetTest
 
 describe Puppet::Util::Backups do
   before do

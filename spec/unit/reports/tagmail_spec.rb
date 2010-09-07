@@ -3,12 +3,12 @@
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
 require 'puppet/reports'
-require 'puppettest'
+require 'puppettest/support/utils'
 
 tagmail = Puppet::Reports.report(:tagmail)
 
 describe tagmail do
-  extend PuppetTest
+  extend PuppetTest::Support::Utils
 
   before do
     @processor = Puppet::Transaction::Report.new

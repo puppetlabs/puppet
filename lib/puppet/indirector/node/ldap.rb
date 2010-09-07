@@ -3,9 +3,9 @@ require 'puppet/indirector/ldap'
 
 class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   desc "Search in LDAP for node configuration information.  See
-  the `LdapNodes`:trac: page for more information.  This will first
+  the [LDAP Nodes](http://projects.puppetlabs.com/projects/puppet/wiki/Ldap_Nodes) page for more information.  This will first
   search for whatever the certificate name is, then (if that name
-  contains a '.') for the short name, then 'default'."
+  contains a `.`) for the short name, then `default`."
 
   # The attributes that Puppet class information is stored in.
   def class_attributes
@@ -34,7 +34,7 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
     node = nil
     names.each do |name|
       next unless info = name2hash(name)
- 
+
       break if node = info2node(request.key, info)
     end
 
