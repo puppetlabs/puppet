@@ -31,21 +31,27 @@ describe provider do
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage')
       @provider.install
     end
-    it "should use :install to update" do
+    it 'should use :install to update' do
       @provider.expects(:install)
       @provider.update
     end
-    it "should be able to set version" do
-      @resource.stubs(:should).with(:ensure).returns "1.2"
+    it 'should be able to set version' do
+      @resource.stubs(:should).with(:ensure).returns '1.2'
       @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :install, 'mypackage-1.2')
-      @provider.stubs(:query).returns :ensure => '1.2' 
+      @provider.stubs(:query).returns :ensure => '1.2'
+      @provider.install
+    end
+    it 'should be able to downgrade' do
+      @resource.stubs(:should).with(:ensure).returns '1.0'
+      @provider.expects(:yum).with('-d', '0', '-e', '0', '-y', :downgrade, 'mypackage-1.0')
+      @provider.stubs(:query).returns(:ensure => '1.2').then.returns(:ensure => '1.0')
       @provider.install
     end
   end
 
   describe 'when uninstalling' do
-    it "should use erase to purge" do
-      @provider.expects(:yum).with("-y", :erase, 'mypackage')
+    it 'should use erase to purge' do
+      @provider.expects(:yum).with('-y', :erase, 'mypackage')
       @provider.purge
     end
     it 'should use rpm to uninstall' do
@@ -54,7 +60,7 @@ describe provider do
     end
   end
 
-  it "should be versionable" do
+  it 'should be versionable' do
     provider.should be_versionable
   end
 end
