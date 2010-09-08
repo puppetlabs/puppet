@@ -35,4 +35,3 @@ describe "Pure ruby yaml implementation" do
     end
   }
 end
-

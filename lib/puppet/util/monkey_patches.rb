@@ -48,3 +48,16 @@ if RUBY_VERSION == '1.8.7'
   end
 end
 
+# Workaround for yaml_initialize, which isn't supported before Ruby
+# 1.8.3.
+if RUBY_VERSION == '1.8.1' || RUBY_VERSION == '1.8.2'
+  YAML.add_ruby_type( /^object/ ) { |tag, val|
+    type, obj_class = YAML.read_type_class( tag, Object )
+    r = YAML.object_maker( obj_class, val )
+    if r.respond_to? :yaml_initialize
+      r.instance_eval { instance_variables.each { |name| remove_instance_variable name } }
+      r.yaml_initialize(tag, val)
+    end
+    r
+  }
+end
