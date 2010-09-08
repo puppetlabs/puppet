@@ -24,6 +24,10 @@ module Puppet
       "The provider can modify user passwords, by accepting a password
       hash."
 
+    feature :manages_password_age,
+      "The provider can set age requirements and restrictions for
+      passwords."
+
     feature :manages_solaris_rbac,
       "The provider can manage roles and normal users"
 
@@ -160,6 +164,43 @@ module Puppet
       end
     end
 
+    newproperty(:password_min_age, :required_features => :manages_password_age) do
+      desc "The minimum amount of time in days a password must be used before it may be changed"
+
+      munge do |value|
+        case value
+        when String
+          Integer(value)
+        else
+          value
+        end
+      end
+
+      validate do |value|
+        if value.to_s !~ /^\d+$/
+          raise ArgumentError, "Password minimum age must be provided as a number"
+        end
+      end
+    end
+
+    newproperty(:password_max_age, :required_features => :manages_password_age) do
+      desc "The maximum amount of time in days a password may be used before it must be changed"
+
+      munge do |value|
+        case value
+        when String
+          Integer(value)
+        else
+          value
+        end
+      end
+
+      validate do |value|
+        if value.to_s !~ /^\d+$/
+          raise ArgumentError, "Password maximum age must be provided as a number"
+        end
+      end
+    end
 
     newproperty(:groups, :parent => Puppet::Property::List) do
       desc "The groups of which the user is a member.  The primary

@@ -39,6 +39,10 @@ describe user do
     user.provider_feature(:manages_expiry).should_not be_nil
   end
 
+  it "should have a manages_password_age feature" do
+    user.provider_feature(:manages_password_age).should_not be_nil
+  end
+
   describe "instances" do
     it "should have a valid provider" do
       user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
@@ -51,7 +55,7 @@ describe user do
     end
   end
 
-  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
+  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
 
   properties.each do |property|
     it "should have a #{property} property" do
