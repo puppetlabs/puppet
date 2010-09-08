@@ -44,7 +44,8 @@ program:    statements_and_declarations
 statements: statements_and_declarations {
   val[0].each do |stmt|
     if stmt.is_a?(AST::TopLevelConstruct)
-      error "Classes, definitions, and nodes may only appear at toplevel or inside other classes"
+      error "Classes, definitions, and nodes may only appear at toplevel or inside other classes", \
+          :line => stmt.context[:line], :file => stmt.context[:file]
     end
   end
   result = val[0]

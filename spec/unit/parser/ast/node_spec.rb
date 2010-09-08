@@ -4,9 +4,10 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::Node do
   describe "when instantiated" do
-    it "should make its names available through an accessor" do
-      node = Puppet::Parser::AST::Node.new(['foo', 'bar'])
+    it "should make its names and context available through accessors" do
+      node = Puppet::Parser::AST::Node.new(['foo', 'bar'], :line => 5)
       node.names.should == ['foo', 'bar']
+      node.context.should == {:line => 5}
     end
 
     it "should create a node with the proper type, name, context, and module name" do

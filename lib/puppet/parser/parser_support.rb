@@ -68,13 +68,13 @@ class Puppet::Parser::Parser
   end
 
   # Raise a Parse error.
-  def error(message)
+  def error(message, options = {})
     if brace = @lexer.expected
       message += "; expected '%s'"
     end
     except = Puppet::ParseError.new(message)
-    except.line = @lexer.line
-    except.file = @lexer.file if @lexer.file
+    except.line = options[:line] || @lexer.line
+    except.file = options[:file] || @lexer.file
 
     raise except
   end
