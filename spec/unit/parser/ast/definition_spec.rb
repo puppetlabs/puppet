@@ -3,6 +3,11 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 describe Puppet::Parser::AST::Definition do
+  it "should make its context available through an accessor" do
+    definition = Puppet::Parser::AST::Definition.new('foo', :line => 5)
+    definition.context.should == {:line => 5}
+  end
+
   describe "when instantiated" do
     it "should create a definition with the proper type, name, context, and module name" do
       definition = Puppet::Parser::AST::Definition.new('foo', :line => 5)
