@@ -21,22 +21,8 @@ class Puppet::Parser::AST
 
     # Evaluate our children.
     def evaluate(scope)
-      # Make a new array, so we don't have to deal with the details of
-      # flattening and such
-      items = []
-
-      # First clean out any AST::ASTArrays
-      @children.each { |child|
-        if child.instance_of?(AST::ASTArray)
-          child.each do |ac|
-            items << ac
-          end
-        else
-          items << child
-        end
-      }
-
-      rets = items.flatten.collect { |child|
+      result = []
+      @children.each do |child|
         if child.respond_to? :instantiate
           if is_a_namespace
             # no problem, just don't evaluate it.
@@ -48,10 +34,14 @@ class Puppet::Parser::AST
             raise error
           end
         else
-          child.safeevaluate(scope)
+          item = child.safeevaluate(scope)
+          if !item.nil?
+            # nil values are implicitly removed.
+            result.push(item)
+          end
         end
-      }
-      rets.reject { |o| o.nil? }
+      end
+      result
     end
 
     def push(*ary)
@@ -69,10 +59,4 @@ class Puppet::Parser::AST
       "[" + @children.collect { |c| c.to_s }.join(', ') + "]"
     end
   end
-
-  # A simple container class, containing the parameters for an object.
-  # Used for abstracting the grammar declarations.  Basically unnecessary
-  # except that I kept finding bugs because I had too many arrays that
-  # meant completely different things.
-  class ResourceInstance < ASTArray; end
 end

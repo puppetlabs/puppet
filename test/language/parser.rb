@@ -477,9 +477,11 @@ file { "/tmp/yayness":
       end
 
       assert_instance_of(AST::ASTArray, ret.hostclass("").code)
-      resdef = ret.hostclass("").code[0][0]
+      resdef = ret.hostclass("").code[0]
       assert_instance_of(AST::Resource, resdef)
-      assert_equal("/tmp/testing", resdef.title.value)
+      assert_instance_of(AST::ASTArray, resdef.instances)
+      assert_equal(1, resdef.instances.children.length)
+      assert_equal("/tmp/testing", resdef.instances[0].title.value)
       # We always get an astarray back, so...
       check.call(resdef, "simple resource")
 

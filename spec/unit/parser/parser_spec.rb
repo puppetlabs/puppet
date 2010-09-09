@@ -143,7 +143,6 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceReference" do
-      ast::Resource.stubs(:new)
       ast::ResourceReference.expects(:new).with { |arg|
         arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(ast::ASTArray)
       }
@@ -386,11 +385,11 @@ describe Puppet::Parser do
     end
 
     it "should correctly mark exported resources as exported" do
-      @parser.parse("@@file { '/file': }").code[0][0].exported.should be_true
+      @parser.parse("@@file { '/file': }").code[0].exported.should be_true
     end
 
     it "should correctly mark virtual resources as virtual" do
-      @parser.parse("@file { '/file': }").code[0][0].virtual.should be_true
+      @parser.parse("@file { '/file': }").code[0].virtual.should be_true
     end
   end
 
