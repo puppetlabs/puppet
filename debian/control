@@ -53,7 +53,7 @@ Description: Centralized configuration management - master startup and compatibi
 
 Package: puppet-common
 Architecture: all
-Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser
+Depends: ${misc:Depends}, ruby1.8, libxmlrpc-ruby, libopenssl-ruby, libshadow-ruby1.8, adduser, facter
 Breaks: puppet (<< 2.6.0~rc2-1), puppetmaster (<< 0.25.4-1)
 Description: Centralized configuration management
  Puppet lets you centrally manage every important aspect of your system
