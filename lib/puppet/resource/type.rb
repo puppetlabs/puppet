@@ -233,8 +233,13 @@ class Puppet::Resource::Type
       resource[param] = value
     end
 
-    scope.setvar("title", resource.title) unless set.include? :title
-    scope.setvar("name", resource.name.to_s.downcase) unless set.include? :name
+    if @type == :hostclass
+      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
+      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+    else
+      scope.setvar("title", resource.title              ) unless set.include? :title
+      scope.setvar("name",  resource.name               ) unless set.include? :name
+    end
     scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
 
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
