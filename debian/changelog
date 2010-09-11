@@ -1,3 +1,12 @@
+puppet (2.6.0-4) unstable; urgency=high
+
+  * Make sure the "puppet-common" package can be purged even when not
+    fully installed (Closes: #596163)
+  * Add dependency on "facter" for "puppet-common"
+  * Urgency "high" due to RC bug during squeeze freeze
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Sat, 11 Sep 2010 10:48:26 +0200
+
 puppet (2.6.0-3) unstable; urgency=low
 
   * Fix ""Duplicate definition" error when "-" used in class names"
