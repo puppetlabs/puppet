@@ -472,6 +472,12 @@ class Type
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
+    if provider and ! provider.class.supports_parameter?(klass)
+      missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+      info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+      return nil
+    end
+
     return @parameters[name] if @parameters.include?(name)
 
     @parameters[name] = klass.new(:resource => self)
