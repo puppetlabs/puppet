@@ -410,13 +410,15 @@ class Type
 
     property = self.newattr(name)
 
-    begin
-      # make sure the parameter doesn't have any errors
-      property.value = value
-    rescue => detail
-      error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
-      error.set_backtrace(detail.backtrace)
-      raise error
+    if property
+      begin
+        # make sure the parameter doesn't have any errors
+        property.value = value
+      rescue => detail
+        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error.set_backtrace(detail.backtrace)
+        raise error
+      end
     end
 
     nil
