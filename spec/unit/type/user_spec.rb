@@ -262,6 +262,11 @@ describe user do
   end
 
   describe "when user has roles" do
+    before do
+      # To test this feature, we have to support it.
+      user.new(:name => "foo").provider.class.stubs(:feature?).returns(true)
+    end
+
     it "should autorequire roles" do
       testuser = Puppet::Type.type(:user).new(:name => "testuser")
       testuser[:roles] = "testrole"
