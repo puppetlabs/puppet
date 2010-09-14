@@ -410,13 +410,15 @@ class Type
 
     property = self.newattr(name)
 
-    begin
-      # make sure the parameter doesn't have any errors
-      property.value = value
-    rescue => detail
-      error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
-      error.set_backtrace(detail.backtrace)
-      raise error
+    if property
+      begin
+        # make sure the parameter doesn't have any errors
+        property.value = value
+      rescue => detail
+        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error.set_backtrace(detail.backtrace)
+        raise error
+      end
     end
 
     nil
@@ -470,6 +472,12 @@ class Type
 
     unless klass = self.class.attrclass(name)
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
+    end
+
+    if provider and ! provider.class.supports_parameter?(klass)
+      missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+      info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+      return nil
     end
 
     return @parameters[name] if @parameters.include?(name)
