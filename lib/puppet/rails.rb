@@ -22,7 +22,7 @@ module Puppet::Rails
       ActiveRecord::Base.logger.level = Logger::DEBUG
     end
 
-    if (::ActiveRecord::VERSION::MAJOR == 2 and ::ActiveRecord::VERSION::MINOR <= 1)
+    if (([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f) >= 2.1)
       ActiveRecord::Base.allow_concurrency = true
     end
 
