@@ -1,5 +1,30 @@
+2.6.1rc4
+========
+763e7cb  Minimal fix for #4691 -- class name uppercased in $name
+4a9c857  Fix for #4693 -- implicit stages should never be serialized
+fa4d32c  Fix for #4646 -- Missing stub
+4d55c6e  Fix for tests broken by fix for #4489 -- stub standalone
+b397b69  Fix for #4489 -- apply was using the rest terminus
+e91a8cc  [#4462] uncaught Timeout::Error
+4d36a51  Fixed alias metaparam docs error
+b063635  Skip apt-listbugs and apt-listchanges when installing from puppet
+e860907  [#4660] Avoid passing rake and autotest args to puppet tests
+419e007  Fixed #4706 - logcheck patterns
+f6c0265  Fixed queue require for #4555
+07d0be4  [#4308] Remove puppettest from specs
+9e69616  Fixed RSpec warning messages
+8d24861  Fixed #4100 - Added http_caching to yumrepo type
+8cd266e  Added cost parameter to the yumrepo type
+0056d41  Fixed extlookup documentation and spacing
+e783a16  Fix for #4506 -- too much data being serialized
+f59cfc8  Fixed terminus example documentation
+690465e  Fix #4615 - vim highlighting fails on slashes and colons.
+078e4fd  Updated man pages
+7548c65  Updated Man page generation since move to Markdown
+
 2.6.1rc3
 ========
+8be1929  Updated CHANGELOG for 2.6.1rc3
 81a2725  Fix for #4456 -- need to accept some mime-type aliases
 c318558  Fix for #4489 -- apply was using the rest terminus
 491c31d  Fix for #4542 -- included classes weren't assigned proper stages

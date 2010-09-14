@@ -1031,7 +1031,7 @@ class Type
           }
 
           service { sshd:
-            subscribe => file[sshdconfig]
+            subscribe => File[sshdconfig]
           }
 
       When you use this feature, the parser sets `sshdconfig` as the name,

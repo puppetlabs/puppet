@@ -71,7 +71,7 @@ class Puppet::Parser::Compiler
       raise ArgumentError, "Could not find stage #{resource[:stage] || :main} specified by #{resource}"
     end
 
-    resource[:stage] ||= stage.title
+    resource[:stage] ||= stage.title unless stage.title == :main
     @catalog.add_edge(stage, resource)
   end
 

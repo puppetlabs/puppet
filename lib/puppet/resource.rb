@@ -193,7 +193,7 @@ class Puppet::Resource
   end
 
   def resource_type
-    @resource_type ||= case type
+    case type
     when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
     when "Node"; known_resource_types.node(title)
     else

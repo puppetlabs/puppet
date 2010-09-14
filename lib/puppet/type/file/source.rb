@@ -94,6 +94,16 @@ module Puppet
       metadata && metadata.checksum
     end
 
+    # Look up (if necessary) and return remote content.
+    cached_attr(:content) do
+      raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
+
+      unless tmp = Puppet::FileServing::Content.find(metadata.source)
+        fail "Could not find any content at %s" % metadata.source
+      end
+      tmp.content
+    end
+
     # Copy the values from the source to the resource.  Yay.
     def copy_source_values
       devfail "Somehow got asked to copy source values without any metadata" unless metadata
