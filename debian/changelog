@@ -1,3 +1,12 @@
+puppet (2.6.0-5) unstable; urgency=low
+
+  * Fix "Puppet standalone broken"; cherry-pick from upstream
+    (Closes: #594575)
+  * Fix "source file url sent to the master is invalid"; cherry-pick from
+    upstream (Closes: #594769)
+
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Tue, 14 Sep 2010 10:31:06 +0200
+
 puppet (2.6.0-4) unstable; urgency=high
 
   * Make sure the "puppet-common" package can be purged even when not
