@@ -1,5 +1,13 @@
+2.6.1
+=====
+14f871d  [#4756] addendum for #4756
+9bdfe69  Fix for Bug #4756 - Providers no longer respect missing features Restored deleted lines from type.rb and reinstated unit tests
+14b3340  Fix for #4736 -- preserve case of defined resources
+bd973a2  Fix for #4637 --use of namevar missed in refactor
+
 2.6.1rc4
 ========
+efa834a  Updated CHANGELOG for 2.6.1rc4
 763e7cb  Minimal fix for #4691 -- class name uppercased in $name
 4a9c857  Fix for #4693 -- implicit stages should never be serialized
 fa4d32c  Fix for #4646 -- Missing stub
