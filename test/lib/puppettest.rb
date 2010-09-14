@@ -6,17 +6,6 @@ mainlib = File.expand_path(File.join(File.dirname(__FILE__), '../../lib'))
 $LOAD_PATH.unshift(mainlib) unless $LOAD_PATH.include?(mainlib)
 
 require 'puppet'
-
-# include any gems in vendor/gems
-Dir["#{mainlib}/../vendor/gems/**"].each do |path|
-  libpath = File.join(path, "lib")
-  if File.directory?(libpath)
-    $LOAD_PATH.unshift(libpath)
-  else
-    $LOAD_PATH.unshift(path)
-  end
-end
-
 require 'mocha'
 
 # Only load the test/unit class if we're not in the spec directory.
@@ -31,16 +20,7 @@ if ARGV.include?("-d")
   $console = true
 end
 
-# Some monkey-patching to allow us to test private methods.
-class Class
-  def publicize_methods(*methods)
-    saved_private_instance_methods = methods.empty? ? self.private_instance_methods : methods
-
-    self.class_eval { public(*saved_private_instance_methods) }
-    yield
-    self.class_eval { private(*saved_private_instance_methods) }
-  end
-end
+require File.expand_path(File.join(File.dirname(__FILE__), '../../spec/monkey_patches/publicize_methods'))
 
 module PuppetTest
   # These need to be here for when rspec tests use these

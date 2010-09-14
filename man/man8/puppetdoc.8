@@ -1,108 +1,108 @@
-.TH   "" "" ""
-.SH NAME
- \- 
-.\" Man page generated from reStructeredText.
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.SH SYNOPSIS
-.sp
-Generate a reference for all Puppet types. Largely meant for internal
-Reductive Labs use.
-.SH USAGE
-.INDENT 0.0
-.INDENT 3.5
-.INDENT 0.0
-.TP
-.B puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir <rdoc outputdir>] [\-m|\-\-mode <text|pdf|markdown|trac|rdoc>]
+.TH "PUPPETDOC" "8" "August 2010" "" ""
+Generate a reference for all Puppet types\. Largely meant for internal Reductive Labs use\.puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir \fIrdoc outputdir\fR] [\-m|\-\-mode \fItext|pdf|rdoc\fR]
 .
-[\-r|\-\-reference <[type]|configuration|..>] [\-\-charset CHARSET] [manifest\-file]
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.SH DESCRIPTION
-.sp
-If mode is not \(aqrdoc\(aq, then this command generates a restructured\-text
-document describing all installed Puppet types or all allowable
-arguments to puppet executables. It is largely meant for internal use
-and is used to generate the reference document available on the
-Reductive Labs web site.
-.sp
-In \(aqrdoc\(aq mode, this command generates an html RDoc hierarchy describing
-the manifests that are in \(aqmanifestdir\(aq and \(aqmodulepath\(aq configuration
-directives. The generated documentation directory is doc by default but
-can be changed with the \(aqoutputdir\(aq option.
-.sp
-If the command is started with \(aqmanifest\-file\(aq command\-line arguments,
-puppet doc generate a single manifest documentation that is output on
-stdout.
-.SH OPTIONS
-.INDENT 0.0
-.TP
-.B all:       Output the docs for all of the reference types. In \(aqrdoc\(aq
+.IP "" 4
 .
-modes, this also outputs documentation for all resources
-.UNINDENT
-.sp
-help:      Print this help message
-.INDENT 0.0
-.TP
-.B outputdir: Specifies the directory where to output the rdoc
+.nf
+
+         [\-r|\-\-reference <[type]|configuration|\.\.>] [\-\-charset CHARSET] [manifest\-file]
 .
-documentation in \(aqrdoc\(aq mode.
-.TP
-.B mode:      Determine the output mode. Valid modes are \(aqtext\(aq, \(aqtrac\(aq,
+.fi
 .
-\(aqpdf\(aq, \(aqmarkdown\(aq and \(aqrdoc\(aq. The \(aqpdf\(aq and \(aqmarkdown\(aq modes
-create PDF or Markdown formatted files in the /tmp directory.
-Note that \(aqtrac\(aq mode only works on Reductive Labs servers.
-The default mode is \(aqtext\(aq. In \(aqrdoc\(aq mode you must provide
-\(aqmanifests\-path\(aq
-.TP
-.B reference: Build a particular reference. Get a list of references by
+.IP "" 0
+If mode is not \'rdoc\', then this command generates a Markdown document describing all installed Puppet types or all allowable arguments to puppet executables\. It is largely meant for internal use and is used to generate the reference document available on the Puppet Labs web site\.
 .
-running +puppet doc \-\-list+.
-.TP
-.B charset:   Used only in \(aqrdoc\(aq mode. It sets the charset used in the
+.P
+In \'rdoc\' mode, this command generates an html RDoc hierarchy describing the manifests that are in \'manifestdir\' and \'modulepath\' configuration directives\. The generated documentation directory is doc by default but can be changed with the \'outputdir\' option\.
 .
-html files produced.
-.UNINDENT
-.SH EXAMPLE
-.INDENT 0.0
-.INDENT 3.5
-.sp
-$ puppet doc \-r type > /tmp/type_reference.rst
-.UNINDENT
-.UNINDENT
-.sp
+.P
+If the command is started with \'manifest\-file\' command\-line arguments, puppet doc generate a single manifest documentation that is output on stdout\.all: Output the docs for all of the reference types\. In \'rdoc\'
+.
+.IP "" 4
+.
+.nf
+
+       modes, this also outputs documentation for all resources
+.
+.fi
+.
+.IP "" 0
+.
+.P
+help: Print this help message
+.
+.P
+outputdir: Specifies the directory where to output the rdoc
+.
+.IP "" 4
+.
+.nf
+
+       documentation in \'rdoc\' mode\.
+.
+.fi
+.
+.IP "" 0
+.
+.P
+mode: Determine the output mode\. Valid modes are \'text\', \'trac\',
+.
+.IP "" 4
+.
+.nf
+
+       \'pdf\' and \'rdoc\'\. The \'pdf\' mode creates PDF formatted files
+       in the /tmp directory\. The default mode is \'text\'\. In \'rdoc\'
+       mode you must provide \'manifests\-path\'
+.
+.fi
+.
+.IP "" 0
+.
+.P
+reference: Build a particular reference\. Get a list of references by
+.
+.IP "" 4
+.
+.nf
+
+       running +puppet doc \-\-list+\.
+.
+.fi
+.
+.IP "" 0
+.
+.P
+charset: Used only in \'rdoc\' mode\. It sets the charset used in the
+.
+.IP "" 4
+.
+.nf
+
+       html files produced\.
+.
+.fi
+.
+.IP "" 0
+$ puppet doc \-r type > /tmp/type_reference\.rst
+.
+.P
 or
-.INDENT 0.0
-.INDENT 3.5
-.sp
+.
+.P
 $ puppet doc \-\-outputdir /tmp/rdoc \-\-mode rdoc /path/to/manifests
-.UNINDENT
-.UNINDENT
-.sp
-or
-.INDENT 0.0
-.INDENT 3.5
-.sp
-$ puppet doc /etc/puppet/manifests/site.pp
-.UNINDENT
-.UNINDENT
-.sp
-or
-.INDENT 0.0
-.INDENT 3.5
-.sp
-$ puppet doc \-m markdown \-r configuration
-.UNINDENT
-.UNINDENT
-.SH AUTHOR
-.sp
-Luke Kanies
-.SH COPYRIGHT
-.sp
-Copyright (c) 2005\-2007 Reductive Labs, LLC Licensed under the GNU
-Public License
-.\" Generated by docutils manpage writer.
-.\" 
 .
+.P
+or
+.
+.P
+$ puppet doc /etc/puppet/manifests/site\.pp
+.
+.P
+or
+.
+.P
+$ puppet doc \-m pdf \-r configurationLuke KaniesCopyright (c) 2005\-2007 Reductive Labs, LLC Licensed under the GNU Public License

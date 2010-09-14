@@ -311,7 +311,7 @@ describe Puppet::Application::Apply do
       end
 
       it "should apply the catalog" do
-        @catalog.expects(:apply)
+        @catalog.expects(:apply).returns(stub_everything 'transaction')
 
         @apply.main
       end

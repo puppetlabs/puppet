@@ -23,7 +23,7 @@ describe Puppet::Application::Master do
   end
 
   it "should operate in master run_mode" do
-    @master.class.run_mode.name.should equal :master
+    @master.class.run_mode.name.should equal(:master)
   end
 
   it "should ask Puppet::Application to parse Puppet configuration file" do

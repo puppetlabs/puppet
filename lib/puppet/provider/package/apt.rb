@@ -14,6 +14,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
 
   ENV['DEBIAN_FRONTEND'] = "noninteractive"
 
+  # disable common apt helpers to allow non-interactive package installs
+  ENV['APT_LISTBUGS_FRONTEND'] = "none"
+  ENV['APT_LISTCHANGES_FRONTEND'] = "none"
+
   # A derivative of DPKG; this is how most people actually manage
   # Debian boxes, and the only thing that differs is that it can
   # install packages from remote sites.
