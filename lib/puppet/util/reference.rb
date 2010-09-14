@@ -72,7 +72,7 @@ class Puppet::Util::Reference
     loaded_instances(:reference).sort { |a,b| a.to_s <=> b.to_s }
   end
 
-  HEADER_LEVELS = [nil, "=", "-", "+", "'", "~"]
+  HEADER_LEVELS = [nil, "#", "##", "###", "####", "#####"]
 
   attr_accessor :page, :depth, :header, :title, :dynamic
   attr_writer :doc
@@ -90,7 +90,7 @@ class Puppet::Util::Reference
   end
 
   def h(name, level)
-    "#{name}\n#{HEADER_LEVELS[level] * name.to_s.length}\n\n"
+    "#{HEADER_LEVELS[level]} #{name}\n\n"
   end
 
   def initialize(name, options = {}, &block)

@@ -8,12 +8,12 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
   Puppet::Indirector::Indirection.instances.sort { |a,b| a.to_s <=> b.to_s }.each do |indirection|
     ind = Puppet::Indirector::Indirection.instance(indirection)
     name = indirection.to_s.capitalize
-    text += indirection.to_s + "\n" + ("-" * name.length) + "\n\n"
+    text += "## " + indirection.to_s + "\n\n"
 
     text += ind.doc + "\n\n"
 
     Puppet::Indirector::Terminus.terminus_classes(ind.name).sort { |a,b| a.to_s <=> b.to_s }.each do |terminus|
-      text += terminus.to_s + "\n" + ("+" * terminus.to_s.length) + "\n\n"
+      text += "### " + terminus.to_s + "\n\n"
 
       term_class = Puppet::Indirector::Terminus.terminus_class(ind.name, terminus)
 
