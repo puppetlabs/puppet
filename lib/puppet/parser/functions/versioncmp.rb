@@ -14,7 +14,7 @@ Where a and b are arbitrary version strings
 
 This functions returns a number:
 
-* Greate than 0 if version a is greater than version b
+* Greater than 0 if version a is greater than version b
 * Equal to 0 if both version are equals
 * Less than 0 if version a is less than version b
 
