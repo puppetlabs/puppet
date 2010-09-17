@@ -61,20 +61,30 @@ describe Puppet::Parser::AST::Function do
     end
 
     it "should call the underlying ruby function" do
-      argument = stub 'arg', :safeevaluate => "nothing"
+      argument = stub 'arg', :safeevaluate => ["nothing"]
       Puppet::Parser::Functions.stubs(:function).with("exist").returns(true)
       func = Puppet::Parser::AST::Function.new :name => "exist", :ftype => :statement, :arguments => argument
 
-      @scope.expects(:function_exist).with("nothing")
+      @scope.expects(:function_exist).with(["nothing"])
+
+      func.evaluate(@scope)
+    end
+
+    it "should convert :undef to '' in arguments" do
+      argument = stub 'arg', :safeevaluate => ["foo", :undef, "bar"]
+      Puppet::Parser::Functions.stubs(:function).with("exist").returns(true)
+      func = Puppet::Parser::AST::Function.new :name => "exist", :ftype => :statement, :arguments => argument
+
+      @scope.expects(:function_exist).with(["foo", "", "bar"])
 
       func.evaluate(@scope)
     end
 
     it "should return the ruby function return for rvalue functions" do
-      argument = stub 'arg', :safeevaluate => "nothing"
+      argument = stub 'arg', :safeevaluate => ["nothing"]
       Puppet::Parser::Functions.stubs(:function).with("exist").returns(true)
       func = Puppet::Parser::AST::Function.new :name => "exist", :ftype => :statement, :arguments => argument
-      @scope.stubs(:function_exist).with("nothing").returns("returning")
+      @scope.stubs(:function_exist).with(["nothing"]).returns("returning")
 
       func.evaluate(@scope).should == "returning"
     end
