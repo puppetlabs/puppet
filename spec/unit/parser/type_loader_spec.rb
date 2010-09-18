@@ -77,13 +77,6 @@ describe Puppet::Parser::TypeLoader do
       @loader.load_until(["foo"], "bar") { |f| false }.should be_nil
     end
 
-    it "should know when a given name has been loaded" do
-      @loader.expects(:name2files).returns %w{file}
-      @loader.expects(:import).with("file",nil)
-      @loader.load_until(["foo"], "bar") { |f| true }
-      @loader.should be_loaded("file")
-    end
-
     it "should set the module name on any created resource types" do
       type = Puppet::Resource::Type.new(:hostclass, "mytype")
 
@@ -113,7 +106,8 @@ describe Puppet::Parser::TypeLoader do
   describe "when importing" do
     before do
       Puppet::Parser::Files.stubs(:find_manifests).returns ["modname", %w{file}]
-      @loader.stubs(:parse_file)
+      Puppet::Parser::Parser.any_instance.stubs(:parse)
+      Puppet::Parser::Parser.any_instance.stubs(:file=)
     end
 
     it "should return immediately when imports are being ignored" do
@@ -154,16 +148,9 @@ describe Puppet::Parser::TypeLoader do
       @loader.import("myfile", "/current/file")
     end
 
-    it "should know when a given file has been imported" do
-      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
-      @loader.import("myfile")
-
-      @loader.should be_imported("/one")
-    end
-
     it "should not attempt to import files that have already been imported" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
-      @loader.expects(:parse_file).once
+      Puppet::Parser::Parser.any_instance.expects(:parse).once
       @loader.import("myfile")
 
       # This will fail if it tries to reimport the file.
