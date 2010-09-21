@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
-
 require File.dirname(__FILE__) + '/../../spec_helper'
+
 require 'puppet'
 require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
@@ -94,6 +94,17 @@ describe Puppet::SSLCertificates::CA do
 
     it 'should store the public key' do
       File.exists?(Puppet[:capub]).should be_true
+    end
+
+    it 'should prepend "Puppet CA: " to the fqdn as the ca_name by default' do
+      host_mock_fact = mock()
+      host_mock_fact.expects(:value).returns('myhost')
+      domain_mock_fact = mock()
+      domain_mock_fact.expects(:value).returns('puppetlabs.lan')
+      Facter.stubs(:[]).with('hostname').returns(host_mock_fact)
+      Facter.stubs(:[]).with('domain').returns(domain_mock_fact)
+
+      @ca.mkrootcert.name.should == 'Puppet CA: myhost.puppetlabs.lan'
     end
   end
 end
