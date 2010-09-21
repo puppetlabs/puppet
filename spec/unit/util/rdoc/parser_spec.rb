@@ -19,7 +19,7 @@ describe RDoc::Parser do
     it "should parse puppet files with the puppet parser" do
       @parser.stubs(:scan_top_level)
       parser = stub 'parser'
-      Puppet::Parser::Parser.expects(:new).returns(parser)
+      Puppet::Parser::Parser.stubs(:new).returns(parser)
       parser.expects(:parse)
       parser.expects(:file=).with("module/manifests/init.pp")
 
