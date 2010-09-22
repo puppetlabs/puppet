@@ -545,6 +545,13 @@ describe Puppet::Type.metaparamclass(:audit) do
     @resource[:audit].should == list
   end
 
+  it "should accept the string 'all' to specify auditing all possible properties" do
+    @resource[:audit] = 'all'
+
+    list = @resource.class.properties.collect { |p| p.name }
+    @resource[:audit].should == list
+  end
+
   it "should fail if asked to audit an invalid property" do
     lambda { @resource[:audit] = :foobar }.should raise_error(Puppet::Error)
   end
