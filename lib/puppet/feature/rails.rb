@@ -24,9 +24,7 @@ Puppet.features.add(:rails) do
     end
   end
 
-  if ! (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
-    false
-  elsif ! (([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f) >= 2.1)
+  unless (Puppet::Util.activerecord_version >= 2.1)
     Puppet.info "ActiveRecord 2.1 or later required for StoreConfigs"
     false
   else

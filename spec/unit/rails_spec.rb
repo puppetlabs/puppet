@@ -47,11 +47,17 @@ describe Puppet::Rails, "when initializing any connection" do
     Puppet::Rails.connect
   end
 
-  describe "on ActiveRecord 2.1.x" do
-    confine("ActiveRecord 2.1.x") { ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f) >= 2.1 }
-
-    it "should set ActiveRecord::Base.allow_concurrency" do
+  describe "ActiveRecord Version" do
+    it "should set ActiveRecord::Base.allow_concurrency if ActiveRecord is 2.1" do
+      Puppet::Util.stubs(:activerecord_version).returns(2.1)
       ActiveRecord::Base.expects(:allow_concurrency=).with(true)
+
+      Puppet::Rails.connect
+    end
+
+    it "should not set ActiveRecord::Base.allow_concurrency if ActiveRecord is >= 2.2" do
+      Puppet::Util.stubs(:activerecord_version).returns(2.2)
+      ActiveRecord::Base.expects(:allow_concurrency=).never
 
       Puppet::Rails.connect
     end
