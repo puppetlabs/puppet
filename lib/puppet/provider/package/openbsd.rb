@@ -60,7 +60,15 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         "You must specify a package source for BSD packages"
     end
 
-    pkgadd @resource[:source]
+    if @resource[:source][-1,1] == ::File::PATH_SEPARATOR
+      e_vars = { :PKG_PATH => @resource[:source] }
+      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-')
+    else
+      e_vars = {}
+      full_name = @resource[:source]
+    end
+
+     Puppet::Util::Execution::withenv(e_vars) { pkgadd full_name }
   end
 
   def get_version
