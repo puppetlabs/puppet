@@ -45,4 +45,11 @@ describe Puppet::Application::Doc do
       Dir.chdir(old_dir)
     end
   end
+
+  it "should respect the -o option" do
+    puppetdoc = Puppet::Application[:doc]
+    puppetdoc.command_line.stubs(:args).returns(['foo', '-o', 'bar'])
+    puppetdoc.parse_options
+    puppetdoc.options[:outputdir].should == 'bar'
+  end
 end
