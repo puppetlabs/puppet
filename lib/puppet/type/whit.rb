@@ -4,4 +4,8 @@ Puppet::Type.newtype(:whit) do
   newparam :name do
     desc "The name of the whit, because it must have one."
   end
+
+  def to_s
+    "Class[#{name}]"
+  end
 end
