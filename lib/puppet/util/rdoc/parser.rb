@@ -208,7 +208,7 @@ class Parser
           Puppet.debug "rdoc: found resource: #{type}[#{title}]"
 
           param = []
-          stmt.params.children.each do |p|
+          stmt.parameters.children.each do |p|
             res = {}
             res["name"] = p.param
             res["value"] = "#{p.value.to_s}" unless p.value.nil?
