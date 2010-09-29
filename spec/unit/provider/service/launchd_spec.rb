@@ -95,23 +95,25 @@ describe provider_class do
   end
 
   describe "when checking whether the service is enabled on OS X 10.6" do
-    confine "Not running on OSX" => (Facter.value(:operatingsystem) == "Darwin")
     it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
       @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => true}])
       @provider.class.stubs(:read_plist).returns({@resource[:name] => {"Disabled" => false}})
+      FileTest.expects(:file?).with(Launchd_Overrides).returns(true)
       @provider.enabled?.should == :true
     end
     it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
       @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => false}])
       @provider.class.stubs(:read_plist).returns({@resource[:name] => {"Disabled" => true}})
+      FileTest.expects(:file?).with(Launchd_Overrides).returns(true)
       @provider.enabled?.should == :false
     end
     it "should return true if the job plist and the global overrides have no disabled keys" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
       @provider.stubs(:plist_from_label).returns(["foo", {}])
       @provider.class.stubs(:read_plist).returns({})
+      FileTest.expects(:file?).with(Launchd_Overrides).returns(true)
       @provider.enabled?.should == :true
     end
   end
