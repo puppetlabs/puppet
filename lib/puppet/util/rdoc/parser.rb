@@ -33,13 +33,16 @@ class Parser
 
   # main entry point
   def scan
-    Puppet.info "rdoc: scanning #{@input_file_name}"
-    if @input_file_name =~ /\.pp$/
-      @parser = Puppet::Parser::Parser.new(Puppet[:environment])
-      @parser.file = @input_file_name
-      @ast = @parser.parse
+    env = Puppet::Node::Environment.new
+    unless env.known_resource_types.watching_file?(@input_file_name)
+      Puppet.info "rdoc: scanning #{@input_file_name}"
+      if @input_file_name =~ /\.pp$/
+        @parser = Puppet::Parser::Parser.new(env)
+        @parser.file = @input_file_name
+        @ast = @parser.parse
+      end
+      scan_top_level(@top_level)
     end
-    scan_top_level(@top_level)
     @top_level
   end
 
@@ -205,7 +208,7 @@ class Parser
           Puppet.debug "rdoc: found resource: #{type}[#{title}]"
 
           param = []
-          stmt.params.children.each do |p|
+          stmt.parameters.children.each do |p|
             res = {}
             res["name"] = p.param
             res["value"] = "#{p.value.to_s}" unless p.value.nil?

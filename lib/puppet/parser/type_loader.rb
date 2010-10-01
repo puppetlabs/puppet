@@ -3,25 +3,56 @@ require 'puppet/node/environment'
 class Puppet::Parser::TypeLoader
   include Puppet::Node::Environment::Helper
 
-  class Helper < Hash
+  # Helper class that makes sure we don't try to import the same file
+  # more than once from either the same thread or different threads.
+  class Helper
     include MonitorMixin
-    def done_with(item)
-      synchronize do
-        delete(item)[:busy].signal if self.has_key?(item) and self[item][:loader] == Thread.current
-      end
+    def initialize
+      super
+      # These hashes are indexed by filename
+      @state = {} # :doing or :done
+      @thread = {} # if :doing, thread that's doing the parsing
+      @cond_var = {} # if :doing, condition var that will be signaled when done.
     end
-    def owner_of(item)
-      synchronize do
-        if !self.has_key? item
-          self[item] = { :loader => Thread.current, :busy => self.new_cond}
-          :nobody
-        elsif self[item][:loader] == Thread.current
-          :this_thread
+
+    # Execute the supplied block exactly once per file, no matter how
+    # many threads have asked for it to run.  If another thread is
+    # already executing it, wait for it to finish.  If this thread is
+    # already executing it, return immediately without executing the
+    # block.
+    #
+    # Note: the reason for returning immediately if this thread is
+    # already executing the block is to handle the case of a circular
+    # import--when this happens, we attempt to recursively re-parse a
+    # file that we are already in the process of parsing.  To prevent
+    # an infinite regress we need to simply do nothing when the
+    # recursive import is attempted.
+    def do_once(file)
+      need_to_execute = synchronize do
+        case @state[file]
+        when :doing
+          if @thread[file] != Thread.current
+            @cond_var[file].wait
+          end
+          false
+        when :done
+          false
         else
-          flag = self[item][:busy]
-          flag.wait
-          flag.signal
-          :another_thread
+          @state[file] = :doing
+          @thread[file] = Thread.current
+          @cond_var[file] = new_cond
+          true
+        end
+      end
+      if need_to_execute
+        begin
+          yield
+        ensure
+          synchronize do
+            @state[file] = :done
+            @thread.delete(file)
+            @cond_var.delete(file).broadcast
+          end
         end
       end
     end
@@ -51,17 +82,12 @@ class Puppet::Parser::TypeLoader
       unless file =~ /^#{File::SEPARATOR}/
         file = File.join(dir, file)
       end
-      unless imported? file
-        @imported[file] = true
+      @loading_helper.do_once(file) do
         parse_file(file)
       end
     end
 
     modname
-  end
-
-  def imported?(file)
-    @imported.has_key?(file)
   end
 
   def known_resource_types
@@ -70,17 +96,14 @@ class Puppet::Parser::TypeLoader
 
   def initialize(env)
     self.environment = env
-    @loaded = {}
-    @loading = Helper.new
-
-    @imported = {}
+    @loading_helper = Helper.new
   end
 
   def load_until(namespaces, name)
     return nil if name == "" # special-case main.
     name2files(namespaces, name).each do |filename|
       modname = begin
-        import_if_possible(filename)
+        import(filename)
       rescue Puppet::ImportError => detail
         # We couldn't load the item
         # I'm not convienced we should just drop these errors, but this
@@ -94,10 +117,6 @@ class Puppet::Parser::TypeLoader
       end
     end
     nil
-  end
-
-  def loaded?(name)
-    @loaded.include?(name)
   end
 
   def name2files(namespaces, name)
@@ -125,22 +144,5 @@ class Puppet::Parser::TypeLoader
     parser = Puppet::Parser::Parser.new(environment)
     parser.file = file
     parser.parse
-  end
-
-  # Utility method factored out of load for handling thread-safety.
-  # This isn't tested in the specs, because that's basically impossible.
-  def import_if_possible(file, current_file = nil)
-    @loaded[file] || begin
-      case @loading.owner_of(file)
-      when :this_thread
-        nil
-      when :another_thread
-        import_if_possible(file,current_file)
-      when :nobody
-        @loaded[file] = import(file,current_file)
-      end
-    ensure
-      @loading.done_with(file)
-    end
   end
 end

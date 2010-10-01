@@ -26,5 +26,4 @@ Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
   def modifycmd(param,value)
     super.insert(1,"-F")
   end
-
 end

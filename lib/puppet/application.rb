@@ -254,19 +254,6 @@ class Application
   def preinit
   end
 
-  def option_parser
-    return @option_parser if defined?(@option_parser)
-
-    @option_parser = OptionParser.new(self.class.banner)
-
-    self.class.option_parser_commands.each do |options, fname|
-      @option_parser.on(*options) do |value|
-        self.send(fname, value)
-      end
-    end
-    @option_parser
-  end
-
   def initialize(command_line = nil)
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
@@ -323,20 +310,29 @@ class Application
   end
 
   def parse_options
-    # get all puppet options
-    optparse_opt = []
-    optparse_opt = Puppet.settings.optparse_addargs(optparse_opt)
+    # Create an option parser
+    option_parser = OptionParser.new(self.class.banner)
 
-    # convert them to OptionParser format
-    optparse_opt.each do |option|
-      self.option_parser.on(*option) do |arg|
+    # Add all global options to it.
+    Puppet.settings.optparse_addargs([]).each do |option|
+      option_parser.on(*option) do |arg|
         handlearg(option[0], arg)
       end
     end
 
-    # scan command line argument
+    # Add options that are local to this application, which were
+    # created using the "option()" metaprogramming method.  If there
+    # are any conflicts, this application's options will be favored.
+    self.class.option_parser_commands.each do |options, fname|
+      option_parser.on(*options) do |value|
+        # Call the method that "option()" created.
+        self.send(fname, value)
+      end
+    end
+
+    # scan command line.
     begin
-      self.option_parser.parse!(self.command_line.args)
+      option_parser.parse!(self.command_line.args)
     rescue OptionParser::ParseError => detail
       $stderr.puts detail
       $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"

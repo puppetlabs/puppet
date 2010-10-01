@@ -1,0 +1,64 @@
+--- !ruby/object:Puppet::Transaction::Report
+  host: mattmac.local
+  logs: 
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym info
+      message: Applying configuration version '1285283846'
+      source: Puppet
+      tags: 
+        - info
+      time: 2010-09-23 16:17:26.977750 -07:00
+  metrics: 
+    time: !ruby/object:Puppet::Util::Metric
+      label: Time
+      name: time
+      values: 
+        - - !ruby/sym config_retrieval
+          - Config retrieval
+          - 0.955046892166138
+        - - !ruby/sym schedule
+          - Schedule
+          - 0.00123691558837891
+        - - !ruby/sym total
+          - Total
+          - 0.956486701965332
+        - - !ruby/sym filebucket
+          - Filebucket
+          - 0.00020289421081543
+    resources: !ruby/object:Puppet::Util::Metric
+      label: Resources
+      name: resources
+      values: 
+        - - !ruby/sym skipped
+          - Skipped
+          - 0
+        - - !ruby/sym scheduled
+          - Scheduled
+          - 7
+        - - !ruby/sym applied
+          - Applied
+          - 0
+        - - !ruby/sym restarted
+          - Restarted
+          - 0
+        - - !ruby/sym total
+          - Total
+          - 10
+        - - !ruby/sym failed_restarts
+          - Failed restarts
+          - 0
+        - - !ruby/sym out_of_sync
+          - Out of sync
+          - 0
+        - - !ruby/sym failed
+          - Failed
+          - 0
+    changes: !ruby/object:Puppet::Util::Metric
+      label: Changes
+      name: changes
+      values: 
+        - - !ruby/sym total
+          - Total
+          - 0
+  records: {}
+  time: 2010-09-23 16:17:26.987789 -07:00

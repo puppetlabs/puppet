@@ -111,7 +111,7 @@ class Puppet::Parser::Parser
   end
 
   def import(file)
-    known_resource_types.loader.import_if_possible(file, @lexer.file)
+    known_resource_types.loader.import(file, @lexer.file)
   end
 
   def initialize(env)
@@ -215,7 +215,9 @@ class Puppet::Parser::Parser
   end
 
   def parse_ruby_file
-    require self.file
+    # Execute the contents of the file inside its own "main" object so
+    # that it can call methods in the resource type API.
+    Puppet::DSL::ResourceTypeAPI.new.instance_eval(File.read(self.file))
   end
 
   def string=(string)

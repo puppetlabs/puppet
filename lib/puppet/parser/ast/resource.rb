@@ -46,7 +46,6 @@ class Resource < AST::ResourceReference
           :virtual => virt,
           :source => scope.source,
           :scope => scope,
-        
           :strict => true
         )
 
@@ -64,12 +63,9 @@ class Resource < AST::ResourceReference
     if params.is_a?(AST::ASTArray)
       @parameters = params
     else
-
-            @parameters = AST::ASTArray.new(
-                
+      @parameters = AST::ASTArray.new(
         :line => params.line,
         :file => params.file,
-        
         :children => [params]
       )
     end
