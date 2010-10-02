@@ -52,7 +52,7 @@ the exact same outcome:
 
    $snmp_contact = extlookup(\"snmp_contact\")
 
-The obove code shows some other features, you can use any fact or variable that
+The above code shows some other features, you can use any fact or variable that
 is in scope by simply using %{varname} in your data files, you can return arrays
 by just having multiple values in the csv after the initial variable name.
 

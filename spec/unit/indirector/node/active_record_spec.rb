@@ -3,7 +3,6 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/node'
-require 'spec/lib/puppet_spec/files.rb'
 
 describe "Puppet::Node::ActiveRecord" do
   include PuppetSpec::Files

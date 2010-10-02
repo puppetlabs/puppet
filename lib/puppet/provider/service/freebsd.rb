@@ -78,7 +78,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
   # Add a new setting to the rc files
   def rc_add(service, rcvar, yesno)
-    append = "\n\# Added by Puppet\n#{rcvar}_enable=\"#{yesno}\""
+    append = "\# Added by Puppet\n#{rcvar}_enable=\"#{yesno}\"\n"
     # First, try the one-file-per-service style
     if File.exists?(@@rcconf_dir)
       File.open(@@rcconf_dir + "/#{service}", File::WRONLY | File::APPEND | File::CREAT, 0644) {
