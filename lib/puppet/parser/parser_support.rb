@@ -102,7 +102,7 @@ class Puppet::Parser::Parser
   end
 
   def import(file)
-    known_resource_types.loader.import_if_possible(file, @lexer.file)
+    known_resource_types.loader.import(file, @lexer.file)
   end
 
   def initialize(env)
