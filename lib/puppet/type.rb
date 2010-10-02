@@ -965,7 +965,7 @@ class Type
       the value, and any changes already get logged."
 
     validate do |list|
-      list = Array(list)
+      list = Array(list).collect {|p| p.to_sym}
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)
@@ -990,8 +990,8 @@ class Type
     end
 
     def properties_to_audit(list)
-      if list == :all
-        list = all_properties if list == :all
+      if !list.kind_of?(Array) && list.to_sym == :all
+        list = all_properties
       else
         list = Array(list).collect { |p| p.to_sym }
       end

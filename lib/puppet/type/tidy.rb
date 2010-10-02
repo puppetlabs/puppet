@@ -1,5 +1,6 @@
 Puppet::Type.newtype(:tidy) do
   require 'puppet/file_serving/fileset'
+  require 'puppet/file_bucket/dipper'
 
   @doc = "Remove unwanted files based on specific criteria.  Multiple
     criteria are OR'd together, so a file that is too large but is not
