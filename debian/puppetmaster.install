@@ -1,6 +1,5 @@
 debian/fileserver.conf etc/puppet
 conf/auth.conf etc/puppet
-ext/puppetlast usr/bin
 debian/tmp/usr/sbin/puppetmasterd usr/sbin
 debian/tmp/usr/sbin/puppetca usr/sbin
 debian/tmp/usr/sbin/puppetrun usr/sbin
