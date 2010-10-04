@@ -207,19 +207,21 @@ class Parser
       if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
         begin
           type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-          title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
-          Puppet.debug "rdoc: found resource: #{type}[#{title}]"
+          stmt.instances.each do |inst|
+            title = inst.title.is_a?(Puppet::Parser::AST::ASTArray) ? inst.title.to_s.gsub(/\[(.*)\]/,'\1') : inst.title.to_s
+            Puppet.debug "rdoc: found resource: #{type}[#{title}]"
 
-          param = []
-          stmt.params.children.each do |p|
-            res = {}
-            res["name"] = p.param
-            res["value"] = "#{p.value.to_s}" unless p.value.nil?
+            param = []
+            inst.parameters.children.each do |p|
+              res = {}
+              res["name"] = p.param
+              res["value"] = "#{p.value.to_s}" unless p.value.nil?
 
-            param << res
+              param << res
+            end
+
+            container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
           end
-
-          container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
         rescue => detail
           raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
         end

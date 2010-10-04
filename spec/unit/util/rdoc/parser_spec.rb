@@ -342,10 +342,12 @@ describe RDoc::Parser do
 
     def create_stmt(name)
       stmt_value = stub "#{name}_value", :value => "myclass"
-      stmt = stub_everything 'stmt', :name => name, :arguments => [stmt_value], :doc => "mydoc"
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::Function).returns(true)
-      stmt
+
+      Puppet::Parser::AST::Function.new(
+        :name      => name,
+        :arguments => [stmt_value],
+        :doc       => 'mydoc'
+      )
     end
 
     before(:each) do
@@ -379,10 +381,11 @@ describe RDoc::Parser do
 
     def create_stmt
       stmt_value = stub "resource_ref", :to_s => "File[\"/tmp/a\"]"
-      stmt = stub_everything 'stmt', :name => "realize", :arguments => [stmt_value], :doc => "mydoc"
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::Function).returns(true)
-      stmt
+      Puppet::Parser::AST::Function.new(
+        :name      => 'realize',
+        :arguments => [stmt_value],
+        :doc       => 'mydoc'
+      )
     end
 
     before(:each) do
@@ -434,11 +437,16 @@ describe RDoc::Parser do
   describe "when scanning for resources" do
     before :each do
       @class = stub_everything 'class'
-
-      param = stub 'params', :children => []
-      @stmt = stub_everything 'stmt', :type => "File", :title => "myfile", :doc => "mydoc", :params => param
-      @stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-      @stmt.stubs(:is_a?).with(Puppet::Parser::AST::Resource).returns(true)
+      @stmt = Puppet::Parser::AST::Resource.new(
+        :type       => "File",
+        :instances  => Puppet::Parser::AST::ASTArray.new(:children => [
+          Puppet::Parser::AST::ResourceInstance.new(
+            :title => Puppet::Parser::AST::Name.new(:value => "myfile"),
+            :parameters => Puppet::Parser::AST::ASTArray.new(:children => [])
+          )
+        ]),
+        :doc        => 'mydoc'
+      )
 
       @code = stub_everything 'code'
       @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)

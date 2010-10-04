@@ -50,7 +50,6 @@ class Resource < AST::Branch
             :virtual => virt,
             :source => scope.source,
             :scope => scope,
-
             :strict => true
           )
 
