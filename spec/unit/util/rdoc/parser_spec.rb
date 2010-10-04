@@ -16,17 +16,12 @@ describe RDoc::Parser do
   end
 
   describe "when scanning files" do
-    before do
-      @environment = Puppet::Node::Environment.new("foo")
-    end
-
     it "should parse puppet files with the puppet parser" do
       @parser.stubs(:scan_top_level)
       parser = stub 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
       parser.expects(:file=).with("module/manifests/init.pp")
-      parser.expects(:environment).returns(@environment)
 
       @parser.scan
     end
@@ -34,7 +29,6 @@ describe RDoc::Parser do
     it "should scan the ast for Puppet files" do
       parser = stub_everything 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
-      parser.expects(:environment).returns(@environment)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
 
       @parser.expects(:scan_top_level)
@@ -45,7 +39,6 @@ describe RDoc::Parser do
     it "should return a PuppetTopLevel to RDoc" do
       parser = stub_everything 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
-      parser.expects(:environment).returns(@environment)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
 
       @parser.expects(:scan_top_level)
