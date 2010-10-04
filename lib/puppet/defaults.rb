@@ -453,6 +453,12 @@ module Puppet
     :reporturl => ["http://localhost:3000/reports",
       "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
+    :strict_hostname_checking => [false, "Whether to only search for the complete
+      hostname as it is in the certificate when searching for node information
+      in the catalogs."]
+  )
+
+  setdefaults(:metrics,
     :rrddir => {:default => "$vardir/rrd",
       :owner => "service",
       :group => "service",
@@ -461,10 +467,7 @@ module Puppet
         this directory."
     },
     :rrdinterval => ["$runinterval", "How often RRD should expect data.
-      This should match how often the hosts report back to the server."],
-    :strict_hostname_checking => [false, "Whether to only search for the complete
-      hostname as it is in the certificate when searching for node information
-      in the catalogs."]
+      This should match how often the hosts report back to the server."]
   )
 
   setdefaults(:agent,
