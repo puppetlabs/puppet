@@ -8,7 +8,7 @@ require 'puppettest'
 require 'puppet/type'
 
 class TestMetric < PuppetTest::TestCase
-  confine "Missing RRDtool library" =>  Puppet.features.rrd?
+  confine "Missing RRDtool library" => (Puppet.features.rrd? || Puppet.features.rrd_legacy?)
   include PuppetTest
 
   def gendata
@@ -43,7 +43,7 @@ class TestMetric < PuppetTest::TestCase
   def rundata(report, time)
     assert_nothing_raised {
       gendata.each do |name, data|
-        report.newmetric(name, data)
+        report.add_metric(name, data)
       end
       report.metrics.each { |n, m| m.store(time) }
     }

@@ -35,10 +35,7 @@ class TestReports < Test::Unit::TestCase
     config.retrieval_duration = 0.001
     trans = config.apply
 
-    report = Puppet::Transaction::Report.new
-    trans.add_metrics_to_report(report)
-
-    report
+    trans.generate_report
   end
 
   # Make sure we can use reports as log destinations.
@@ -95,7 +92,7 @@ class TestReports < Test::Unit::TestCase
     assert_equal(yaml, File.read(file), "File did not get written")
   end
 
-  if Puppet.features.rrd?
+  if Puppet.features.rrd? || Puppet.features.rrd_legacy?
   def test_rrdgraph_report
     Puppet.settings.use(:main, :metrics)
     report = mkreport
