@@ -2,6 +2,7 @@
 
 require 'facter'
 require 'puppet'
+require 'logger'
 
 module Puppet::Rails
   TIME_DEBUG = true
@@ -22,9 +23,8 @@ module Puppet::Rails
       ActiveRecord::Base.logger.level = Logger::DEBUG
     end
 
-    if (::ActiveRecord::VERSION::MAJOR == 2 and ::ActiveRecord::VERSION::MINOR <= 1)
-      ActiveRecord::Base.allow_concurrency = true
-    end
+    # As of ActiveRecord 2.2 allow_concurrency has been deprecated and no longer has any effect.
+    ActiveRecord::Base.allow_concurrency = true if Puppet::Util.activerecord_version < 2.2
 
     ActiveRecord::Base.verify_active_connections!
 
