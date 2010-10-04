@@ -21,8 +21,6 @@ Puppet::Type.newtype(:mcx) do
 
   @doc = "MCX object management using DirectoryService on OS X.
 
-Original Author: Jeff McCune <mccune.jeff@gmail.com>
-
 The default provider of this type merely manages the XML plist as
 reported by the dscl -mcxexport command.  This is similar to the
 content property of the file type in Puppet.
@@ -51,13 +49,13 @@ to other machines.
 
   newparam(:name) do
     desc "The name of the resource being managed.
-    The default naming convention follows Directory Service paths::
+    The default naming convention follows Directory Service paths:
 
-      /Computers/localhost
-      /Groups/admin
-      /Users/localadmin
+        /Computers/localhost
+        /Groups/admin
+        /Users/localadmin
 
-    The ds_type and ds_name type parameters are not necessary if the
+    The `ds_type` and `ds_name` type parameters are not necessary if the
     default naming convention is followed."
     isnamevar
   end
@@ -80,8 +78,10 @@ to other machines.
   newproperty(:content, :required_features => :manages_content) do
     desc "The XML Plist.  The value of MCXSettings in DirectoryService.
     This is the standard output from the system command:
-    dscl localhost -mcxexport /Local/Default/<ds_type>/ds_name
-    Note that ds_type is capitalized and plural in the dscl command."
+        
+        dscl localhost -mcxexport /Local/Default/<ds_type>/ds_name
+    
+    Note that `ds_type` is capitalized and plural in the dscl command."
   end
 
   # JJM Yes, this is not DRY at all.  Because of the code blocks

@@ -85,8 +85,8 @@ describe RDoc::Parser do
       @parser.scan_top_level(@topcontainer)
     end
 
-    it "should set the module as global if we parse the global manifests (ie <site> module)" do
-      @parser.stubs(:split_module).returns("<site>")
+    it "should set the module as global if we parse the global manifests (ie __site__ module)" do
+      @parser.stubs(:split_module).returns(RDoc::Parser::SITE)
       @parser.stubs(:parse_elements)
 
       @topcontainer.expects(:global=).with(true)
@@ -131,7 +131,7 @@ describe RDoc::Parser do
     it "should return <site> for manifests not under module path" do
       File.stubs(:expand_path).returns("/path/to/manifests/init.pp")
       File.stubs(:identical?).returns(false)
-      @parser.split_module("/path/to/manifests/init.pp").should == "<site>"
+      @parser.split_module("/path/to/manifests/init.pp").should == RDoc::Parser::SITE
     end
   end
 

@@ -13,7 +13,7 @@ class Puppet::Resource
   extend Puppet::Util::Pson
   include Enumerable
   attr_accessor :file, :line, :catalog, :exported, :virtual, :validate_parameters, :strict
-  attr_reader :namespaces
+  attr_reader :type, :title
 
   require 'puppet/indirector'
   extend Puppet::Indirector
@@ -157,26 +157,25 @@ class Puppet::Resource
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
-    @namespaces = [""]
 
-    # Set things like namespaces and strictness first.
+    # Set things like strictness first.
     attributes.each do |attr, value|
       next if attr == :parameters
       send(attr.to_s + "=", value)
     end
 
-    # We do namespaces first, and use tmp variables, so our title
-    # canonicalization works (i.e., namespaces are set and resource
-    # types can be looked up)
-    tmp_type, tmp_title = extract_type_and_title(type, title)
-    self.type = tmp_type
-    self.title = tmp_title
+    @type, @title = extract_type_and_title(type, title)
+
+    @type = munge_type_name(@type)
+
+    if @type == "Class"
+      @title = :main if @title == ""
+      @title = munge_type_name(@title)
+    end
 
     if params = attributes[:parameters]
       extract_parameters(params)
     end
-
-    resolve_type_and_title
 
     tag(self.type)
     tag(self.title) if valid_tag?(self.title)
@@ -193,17 +192,12 @@ class Puppet::Resource
     return(catalog ? catalog.resource(to_s) : nil)
   end
 
-  def title=(value)
-    @unresolved_title = value
-    @title = nil
-  end
-
   def resource_type
-    @resource_type ||= case type
-    when "Class"; find_hostclass(title)
-    when "Node"; find_node(title)
+    case type
+    when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
+    when "Node"; known_resource_types.node(title)
     else
-      find_resource_type(type)
+      Puppet::Type.type(type.to_s.downcase.to_sym) || known_resource_types.definition(type)
     end
   end
 
@@ -314,28 +308,6 @@ class Puppet::Resource
     self
   end
 
-  # We have to lazy-evaluate this.
-  def title=(value)
-    @title = nil
-    @unresolved_title = value
-  end
-
-  # We have to lazy-evaluate this.
-  def type=(value)
-    @type = nil
-    @unresolved_type = value || "Class"
-  end
-
-  def title
-    resolve_type_and_title unless @title
-    @title
-  end
-
-  def type
-    resolve_type_and_title unless @type
-    @type
-  end
-
   def valid_parameter?(name)
     resource_type.valid_parameter?(name)
   end
@@ -346,29 +318,6 @@ class Puppet::Resource
 
   private
 
-  def find_node(name)
-    known_resource_types.node(name)
-  end
-
-  def find_hostclass(title)
-    name = title == :main ? "" : title
-    known_resource_types.find_hostclass(namespaces, name)
-  end
-
-  def find_resource_type(type)
-    # It still works fine without the type == 'class' short-cut, but it is a lot slower.
-    return nil if ["class", "node"].include? type.to_s.downcase
-    find_builtin_resource_type(type) || find_defined_resource_type(type)
-  end
-
-  def find_builtin_resource_type(type)
-    Puppet::Type.type(type.to_s.downcase.to_sym)
-  end
-
-  def find_defined_resource_type(type)
-    known_resource_types.find_definition(namespaces, type.to_s.downcase)
-  end
-
   # Produce a canonical method name.
   def parameter_name(param)
     param = param.to_s.downcase.to_sym
@@ -376,10 +325,6 @@ class Puppet::Resource
       param = namevar
     end
     param
-  end
-
-  def namespaces=(ns)
-    @namespaces = Array(ns)
   end
 
   # The namevar for our resource type. If the type doesn't exist,
@@ -428,54 +373,9 @@ class Puppet::Resource
     value.to_s.split("::").collect { |s| s.capitalize }.join("::")
   end
 
-  # This is an annoyingly complicated method for resolving qualified
-  # types as necessary, and putting them in type or title attributes.
-  def resolve_type_and_title
-    if @unresolved_type
-      @type = resolve_type
-      @unresolved_type = nil
-    end
-    if @unresolved_title
-      @title = resolve_title
-      @unresolved_title = nil
-    end
-  end
-
-  def resolve_type
-    case type = munge_type_name(@unresolved_type)
-    when "Class", "Node";
-      type
-    else
-      # Otherwise, some kind of builtin or defined resource type
-      munge_type_name( (r = find_resource_type(type)) ? r.name : type)
-    end
-  end
-
-  # This method only works if resolve_type was called first
-  def resolve_title
-    case @type
-    when "Node"; return @unresolved_title
-    when "Class";
-      resolve_title_for_class(@unresolved_title)
-    else
-      @unresolved_title
-    end
-  end
-
-  def resolve_title_for_class(title)
-    if title == "" or title == :main
-      return :main
-    end
-
-    if klass = find_hostclass(title)
-      result = klass.name
-    end
-    munge_type_name(result || title)
-  end
-
   def parse_title
     h = {}
-    type = find_resource_type(@type)
+    type = resource_type
     if type.respond_to? :title_patterns
       type.title_patterns.each { |regexp, symbols_and_lambdas|
         if captures = regexp.match(title.to_s)

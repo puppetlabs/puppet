@@ -41,7 +41,7 @@ end
 
 describe Puppet::Type.type(:schedule) do
   before :each do
-    Puppet.settings.stubs(:value).with(:ignoreschedules).returns(false)
+    Puppet[:ignoreschedules] = false
 
     @schedule = Puppet::Type.type(:schedule).new(:name => "testing")
   end

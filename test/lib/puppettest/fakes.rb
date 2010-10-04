@@ -1,4 +1,4 @@
-require 'puppettest'
+require File.expand_path(File.join(File.dirname(__FILE__), '../../../lib/puppet/util'))
 
 module PuppetTest
   # A baseclass for the faketypes.

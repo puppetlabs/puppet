@@ -54,8 +54,6 @@
 # This is what you would install on your Puppet master; non-master hosts could
 # leave off the 'fileserver' and 'puppetmaster' namespaces.
 #
-# Expect more documentation on this eventually.
-#
 # = Options
 #
 # Note that any configuration parameter that's valid in the configuration file

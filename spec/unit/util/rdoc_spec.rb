@@ -75,6 +75,19 @@ describe Puppet::Util::RDoc do
       Puppet::Util::RDoc.manifestdoc([])
     end
 
+    it "should use a parser with the correct environment" do
+      FileTest.stubs(:file?).returns(true)
+      Puppet::Util::RDoc.stubs(:output)
+
+      parser = stub_everything
+      Puppet::Parser::Parser.stubs(:new).with{ |env| env.is_a?(Puppet::Node::Environment) }.returns(parser)
+
+      parser.expects(:file=).with("file")
+      parser.expects(:parse)
+
+      Puppet::Util::RDoc.manifestdoc(["file"])
+    end
+
     it "should puppet parse all given files" do
       FileTest.stubs(:file?).returns(true)
       Puppet::Util::RDoc.stubs(:output)

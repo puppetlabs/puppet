@@ -6,7 +6,7 @@ describe "the require function" do
 
   before :each do
     @catalog = stub 'catalog'
-    @compiler = stub 'compiler', :catalog => @catalog
+    @compiler = stub 'compiler', :catalog => @catalog, :environment => nil
 
     @scope = Puppet::Parser::Scope.new
     @scope.stubs(:findresource)

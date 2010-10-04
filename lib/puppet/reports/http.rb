@@ -5,7 +5,7 @@ require 'uri'
 Puppet::Reports.register_report(:http) do
 
   desc <<-DESC
-  Send report information via HTTP to the ``reporturl``. Each host sends
+  Send report information via HTTP to the `reporturl`. Each host sends
   its report as a YAML dump and this sends this YAML to a client via HTTP POST.
   The YAML is the `report` parameter of the request."
   DESC

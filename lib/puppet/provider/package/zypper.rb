@@ -1,5 +1,5 @@
 Puppet::Type.type(:package).provide :zypper, :parent => :rpm do
-  desc "Support for SuSE ``zypper`` package manager. Found in SLES10sp2+ and SLES11"
+  desc "Support for SuSE `zypper` package manager. Found in SLES10sp2+ and SLES11"
 
   has_feature :versionable
 

@@ -19,7 +19,7 @@ endif
 " match class/definition/node declarations
 syn region  puppetDefine        start="^\s*\(class\|define\|node\)\s" end="{" contains=puppetDefType,puppetDefName,puppetDefArguments,puppetNodeRe
 syn keyword puppetDefType       class define node inherits contained
-syn region  puppetDefArguments  start="(" end=")" contained contains=puppetArgument
+syn region  puppetDefArguments  start="(" end=")" contained contains=puppetArgument,puppetString
 syn match   puppetArgument      "\w\+" contained
 syn match   puppetArgument      "\$\w\+" contained
 syn match   puppetArgument      "'[^']+'" contained
@@ -33,6 +33,7 @@ syn match   puppetNodeRe        "/.*/" contained
 "FIXME: "Foo-bar" doesn't get highlighted as expected, although "foo-bar" does.
 syn match   puppetInstance      "[A-Za-z0-9_-]\+\(::[A-Za-z0-9_-]\+\)*\s*{" contains=puppetTypeName,puppetTypeDefault
 syn match   puppetInstance      "[A-Z][a-z_-]\+\(::[A-Z][a-z_-]\+\)*\s*[[{]" contains=puppetTypeName,puppetTypeDefault
+syn match   puppetInstance      "[A-Z][a-z_-]\+\(::[A-Z][a-z_-]\+\)*\s*<\?<|" contains=puppetTypeName,puppetTypeDefault
 syn match   puppetTypeName      "[a-z]\w*" contained
 syn match   puppetTypeDefault   "[A-Z]\w*" contained
 
@@ -56,19 +57,19 @@ syn region  puppetFunction      start="^\s*\(alert\|crit\|debug\|emerg\|err\|fai
 " rvalues
 syn region  puppetFunction      start="^\s*\(defined\|file\|fqdn_rand\|generate\|inline_template\|regsubst\|sha1\|shellquote\|split\|sprintf\|tagged\|template\|versioncmp\)\s*(" end=")" contained contains=puppetString
 
-syn match   puppetVariable      "$\w\+"
-syn match   puppetVariable      "${\w\+}"
+syn match   puppetVariable      "$[a-zA-Z0-9_:]\+"
+syn match   puppetVariable      "${[a-zA-Z0-9_:]\+}"
 
 " match anything between simple/double quotes.
 " don't match variables if preceded by a backslash.
 syn region  puppetString        start=+'+ skip=+\\\\\|\\'+ end=+'+
 syn region  puppetString        start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=puppetVariable,puppetNotVariable
-syn match   puppetString        "/.*/"
+syn match   puppetString        "/[^/]*/"
 syn match   puppetNotVariable   "\\$\w\+" contained
 syn match   puppetNotVariable   "\\${\w\+}" contained
 
 syn keyword puppetKeyword       import inherits include
-syn keyword puppetControl       case default if else
+syn keyword puppetControl       case default if else elsif
 syn keyword puppetSpecial       true false undef
 
 " comments last overriding everything else

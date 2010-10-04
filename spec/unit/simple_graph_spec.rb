@@ -439,7 +439,8 @@ describe Puppet::SimpleGraph do
       @middle = Container.new("middle", ["e", "f", @two])
       @top = Container.new("top", ["g", "h", @middle, @one, @three])
       @empty = Container.new("empty", [])
-
+      
+      @whit  = Puppet::Type.type(:whit)
       @stage = Puppet::Type.type(:stage).new(:name => "foo")
 
       @contgraph = @top.to_graph
@@ -499,8 +500,17 @@ describe Puppet::SimpleGraph do
       end
     end
 
+    it "should contain a whit-resource to mark the place held by the empty container" do
+      @depgraph.vertices.find_all { |v| v.is_a?(@whit) }.length.should == 1
+    end
+
+    it "should replace edges to empty containers with edges to their residual whit" do
+      emptys_whit = @depgraph.vertices.find_all { |v| v.is_a?(@whit) }.first
+      @depgraph.should be_edge("c", emptys_whit)
+    end
+
     it "should no longer contain anything but the non-container objects" do
-      @depgraph.vertices.find_all { |v| ! v.is_a?(String) }.should be_empty
+      @depgraph.vertices.find_all { |v| ! v.is_a?(String) and ! v.is_a?(@whit)}.should be_empty
     end
 
     it "should copy labels" do

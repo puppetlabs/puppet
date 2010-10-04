@@ -3,27 +3,27 @@ module Puppet
     require 'etc'
     desc "Whether to create files that don't currently exist.
       Possible values are *absent*, *present*, *file*, and *directory*.
-      Specifying ``present`` will match any form of file existence, and
+      Specifying `present` will match any form of file existence, and
       if the file is missing will create an empty file. Specifying
-      ``absent`` will delete the file (and directory if recurse => true).
+      `absent` will delete the file (and directory if recurse => true).
 
       Anything other than those values will be considered to be a symlink.
-      For instance, the following text creates a link::
+      For instance, the following text creates a link:
 
-        # Useful on solaris
-        file { \"/etc/inetd.conf\":
-          ensure => \"/etc/inet/inetd.conf\"
-        }
+          # Useful on solaris
+          file { \"/etc/inetd.conf\":
+            ensure => \"/etc/inet/inetd.conf\"
+          }
 
-      You can make relative links::
+      You can make relative links:
 
-        # Useful on solaris
-        file { \"/etc/inetd.conf\":
-          ensure => \"inet/inetd.conf\"
-        }
+          # Useful on solaris
+          file { \"/etc/inetd.conf\":
+            ensure => \"inet/inetd.conf\"
+          }
 
       If you need to make a relative link to a file named the same
-      as one of the valid values, you must prefix it with ``./`` or
+      as one of the valid values, you must prefix it with `./` or
       something similar.
 
       You can also make recursive symlinks, which will create a

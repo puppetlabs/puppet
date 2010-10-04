@@ -8,7 +8,7 @@ Queue Daemon).
 Currently this is only supported for "Storeconfigs" which is
 documented at:
 
-http://puppetlabs.com/trac/puppet/wiki/UsingStoredConfiguration
+http://reductivelabs.com/trac/puppet/wiki/UsingStoredConfiguration
 
 In the future this feature can be extended to any new puppet
 data which involves storage in a database.

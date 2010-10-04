@@ -1,10 +1,10 @@
 # Manage debian services.  Start/stop is the same as InitSvc, but enable/disable
 # is special.
 Puppet::Type.type(:service).provide :debian, :parent => :init do
-  desc "Debian's form of ``init``-style management.
+  desc "Debian's form of `init`-style management.
 
   The only difference is that this supports service enabling and disabling
-  via ``update-rc.d`` and determines enabled status via ``invoke-rc.d``.
+  via `update-rc.d` and determines enabled status via `invoke-rc.d`.
 
   "
 

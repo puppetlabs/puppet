@@ -117,7 +117,7 @@ module Puppet::Network::HTTP::Handler
     result = indirection_request.model.search(indirection_request.key, indirection_request.to_hash)
 
     if result.nil? or (result.is_a?(Array) and result.empty?)
-      return do_exception(response, "Could not find instances in #{indirection_request.indirection_name} with '#{indirection_request.to_hash.inspect}'", 404)
+      return do_exception(response, "Could not find instances in #{indirection_request.indirection_name} with '#{indirection_request.key}'", 404)
     end
 
     format = format_to_use(request)

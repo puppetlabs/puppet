@@ -89,8 +89,9 @@ class TestCertSupport < Test::Unit::TestCase
       should_path = Puppet[:hostprivkey]
 
       dir, file = File.split(should_path)
-      newfile = file.sub(/^([a-z.]+)\./) { $1.upcase + "."}
+      newfile = file.sub(/^([-a-z.0-9]+)\./) { $1.upcase + "."}
       upper_path = File.join(dir, newfile)
+p upper_path
       File.open(upper_path, "w") { |f| f.print key.to_s }
 
       user = CertUser.new

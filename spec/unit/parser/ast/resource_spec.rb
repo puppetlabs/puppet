@@ -113,6 +113,13 @@ describe Puppet::Parser::AST::Resource do
       resource("file").evaluate(@twoscope)[0].type.should == "File"
     end
 
+    it "should correctly generate resources that can look up defined classes by title" do
+      @scope.known_resource_types.add_hostclass Puppet::Resource::Type.new(:hostclass, "Myresource", {})
+      res = resource("class").evaluate(@twoscope)[0]
+      res.type.should == "Class"
+      res.title.should == "Myresource"
+    end
+
     it "should fail for resource types that do not exist" do
       lambda { resource("nosuchtype").evaluate(@twoscope) }.should raise_error(Puppet::ParseError)
     end

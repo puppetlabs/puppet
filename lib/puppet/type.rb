@@ -410,13 +410,15 @@ class Type
 
     property = self.newattr(name)
 
-    begin
-      # make sure the parameter doesn't have any errors
-      property.value = value
-    rescue => detail
-      error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
-      error.set_backtrace(detail.backtrace)
-      raise error
+    if property
+      begin
+        # make sure the parameter doesn't have any errors
+        property.value = value
+      rescue => detail
+        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error.set_backtrace(detail.backtrace)
+        raise error
+      end
     end
 
     nil
@@ -470,6 +472,12 @@ class Type
 
     unless klass = self.class.attrclass(name)
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
+    end
+
+    if provider and ! provider.class.supports_parameter?(klass)
+      missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+      info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+      return nil
     end
 
     return @parameters[name] if @parameters.include?(name)
@@ -933,16 +941,16 @@ class Type
   newmetaparam(:schedule) do
     desc "On what schedule the object should be managed.  You must create a
       schedule object, and then reference the name of that object to use
-      that for your schedule::
+      that for your schedule:
 
-        schedule { daily:
-          period => daily,
-          range => \"2-4\"
-        }
+          schedule { daily:
+            period => daily,
+            range => \"2-4\"
+          }
 
-        exec { \"/usr/bin/apt-get update\":
-          schedule => daily
-        }
+          exec { \"/usr/bin/apt-get update\":
+            schedule => daily
+          }
 
       The creation of the schedule object does not need to appear in the
       configuration before objects that use it."
@@ -1020,40 +1028,40 @@ class Type
 
   newmetaparam(:alias) do
     desc "Creates an alias for the object.  Puppet uses this internally when you
-      provide a symbolic name::
+      provide a symbolic name:
 
-        file { sshdconfig:
-          path => $operatingsystem ? {
-            solaris => \"/usr/local/etc/ssh/sshd_config\",
-            default => \"/etc/ssh/sshd_config\"
-          },
-          source => \"...\"
-        }
+          file { sshdconfig:
+            path => $operatingsystem ? {
+              solaris => \"/usr/local/etc/ssh/sshd_config\",
+              default => \"/etc/ssh/sshd_config\"
+            },
+            source => \"...\"
+          }
 
-        service { sshd:
-          subscribe => file[sshdconfig]
-        }
+          service { sshd:
+            subscribe => File[sshdconfig]
+          }
 
-      When you use this feature, the parser sets ``sshdconfig`` as the name,
+      When you use this feature, the parser sets `sshdconfig` as the name,
       and the library sets that as an alias for the file so the dependency
-      lookup for ``sshd`` works.  You can use this parameter yourself,
+      lookup for `sshd` works.  You can use this parameter yourself,
       but note that only the library can use these aliases; for instance,
-      the following code will not work::
+      the following code will not work:
 
-        file { \"/etc/ssh/sshd_config\":
-          owner => root,
-          group => root,
-          alias => sshdconfig
-        }
+          file { \"/etc/ssh/sshd_config\":
+            owner => root,
+            group => root,
+            alias => sshdconfig
+          }
 
-        file { sshdconfig:
-          mode => 644
-        }
+          file { sshdconfig:
+            mode => 644
+          }
 
       There's no way here for the Puppet parser to know that these two stanzas
       should be affecting the same file.
 
-      See the `LanguageTutorial language tutorial`:trac: for more information.
+      See the [Language Tutorial](http://docs.puppetlabs.com/guides/language_tutorial.html) for more information.
 
       "
 
@@ -1083,9 +1091,9 @@ class Type
       be useful to add your own tags to a given resource.
 
       Tags are currently useful for things like applying a subset of a
-      host's configuration::
+      host's configuration:
 
-        puppet agent --test --tags mytag
+          puppet agent --test --tags mytag
 
       This way, when you're testing a configuration you can run just the
       portion you're testing."
@@ -1189,23 +1197,23 @@ class Type
   newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
     desc "One or more objects that this object depends on.
       This is used purely for guaranteeing that changes to required objects
-      happen before the dependent object.  For instance::
+      happen before the dependent object.  For instance:
 
-        # Create the destination directory before you copy things down
-        file { \"/usr/local/scripts\":
-          ensure => directory
-        }
+          # Create the destination directory before you copy things down
+          file { \"/usr/local/scripts\":
+            ensure => directory
+          }
 
-        file { \"/usr/local/scripts/myscript\":
-          source => \"puppet://server/module/myscript\",
-          mode => 755,
-          require => File[\"/usr/local/scripts\"]
-        }
+          file { \"/usr/local/scripts/myscript\":
+            source => \"puppet://server/module/myscript\",
+            mode => 755,
+            require => File[\"/usr/local/scripts\"]
+          }
 
       Multiple dependencies can be specified by providing a comma-seperated list
-      of resources, enclosed in square brackets::
+      of resources, enclosed in square brackets:
 
-        require => [ File[\"/usr/local\"], File[\"/usr/local/scripts\"] ]
+          require => [ File[\"/usr/local\"], File[\"/usr/local/scripts\"] ]
 
       Note that Puppet will autorequire everything that it can, and
       there are hooks in place so that it's easy for resources to add new
@@ -1219,10 +1227,10 @@ class Type
 
       Currently, exec resources will autorequire their CWD (if it is
       specified) plus any fully qualified paths that appear in the
-      command.   For instance, if you had an ``exec`` command that ran
-      the ``myscript`` mentioned above, the above code that pulls the
+      command.   For instance, if you had an `exec` command that ran
+      the `myscript` mentioned above, the above code that pulls the
       file down would be automatically listed as a requirement to the
-      ``exec`` code, so that you would always be running againts the
+      `exec` code, so that you would always be running againts the
       most recent version.
       "
   end
@@ -1230,20 +1238,20 @@ class Type
   newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc "One or more objects that this object depends on.  Changes in the
       subscribed to objects result in the dependent objects being
-      refreshed (e.g., a service will get restarted).  For instance::
+      refreshed (e.g., a service will get restarted).  For instance:
 
-        class nagios {
-          file { \"/etc/nagios/nagios.conf\":
-            source => \"puppet://server/module/nagios.conf\",
-            alias => nagconf # just to make things easier for me
+          class nagios {
+            file { \"/etc/nagios/nagios.conf\":
+              source => \"puppet://server/module/nagios.conf\",
+              alias => nagconf # just to make things easier for me
+            }
+            service { nagios:
+              ensure => running,
+              subscribe => File[nagconf]
+            }
           }
-          service { nagios:
-            ensure => running,
-            subscribe => File[nagconf]
-          }
-        }
 
-      Currently the ``exec``, ``mount`` and ``service`` type support
+      Currently the `exec`, `mount` and `service` type support
       refreshing.
       "
   end
@@ -1251,18 +1259,18 @@ class Type
   newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
     desc %{This parameter is the opposite of **require** -- it guarantees
       that the specified object is applied later than the specifying
-      object::
+      object:
 
-        file { "/var/nagios/configuration":
-          source  => "...",
-          recurse => true,
-          before => Exec["nagios-rebuid"]
-        }
+          file { "/var/nagios/configuration":
+            source  => "...",
+            recurse => true,
+            before => Exec["nagios-rebuid"]
+          }
 
-        exec { "nagios-rebuild":
-          command => "/usr/bin/make",
-          cwd => "/var/nagios/configuration"
-        }
+          exec { "nagios-rebuild":
+            command => "/usr/bin/make",
+            cwd => "/var/nagios/configuration"
+          }
 
       This will make sure all of the files are up to date before the
       make command is run.}
@@ -1270,16 +1278,16 @@ class Type
 
   newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
     desc %{This parameter is the opposite of **subscribe** -- it sends events
-      to the specified object::
+      to the specified object:
 
-        file { "/etc/sshd_config":
-          source => "....",
-          notify => Service[sshd]
-        }
+          file { "/etc/sshd_config":
+            source => "....",
+            notify => Service[sshd]
+          }
 
-        service { sshd:
-          ensure => running
-        }
+          service { sshd:
+            ensure => running
+          }
 
       This will restart the sshd service if the sshd config file changes.}
   end
@@ -1293,24 +1301,24 @@ class Type
       By default, all classes get directly added to the
       'main' stage.  You can create new stages as resources:
 
-        stage { [pre, post]: }
+          stage { [pre, post]: }
 
       To order stages, use standard relationships:
 
-        stage { pre: before => Stage[main] }
+          stage { pre: before => Stage[main] }
 
       Or use the new relationship syntax:
 
-        Stage[pre] -> Stage[main] -> Stage[post]
+          Stage[pre] -> Stage[main] -> Stage[post]
 
       Then use the new class parameters to specify a stage:
 
-        class { foo: stage => pre }
+          class { foo: stage => pre }
 
       Stages can only be set on classes, not individual resources.  This will
-      fail::
+      fail:
 
-        file { '/foo': stage => pre, ensure => file }
+          file { '/foo': stage => pre, ensure => file }
     }
   end
 

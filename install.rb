@@ -55,13 +55,13 @@ end
 
 begin
   if $haverdoc
-    rst2man = %x{which rst2man.py}
+    ronn = %x{which ronn}
     $haveman = true
   else
     $haveman = false
   end
 rescue
-  puts "Missing rst2man; skipping man page creation"
+  puts "Missing ronn; skipping man page creation"
   $haveman = false
 end
 
@@ -347,21 +347,22 @@ end
 def build_man(bins, sbins)
   return unless $haveman
   begin
-    # Locate rst2man
-    rst2man = %x{which rst2man.py}
-    rst2man.chomp!
+    # Locate ronn
+    ronn = %x{which ronn}
+    ronn.chomp!
     # Create puppet.conf.5 man page
-    %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
-    %x{#{rst2man} ./puppet.conf.rst ./man/man5/puppet.conf.5}
-    File.unlink("./puppet.conf.rst")
+    %x{bin/puppetdoc --reference configuration > ./man/man5/puppetconf.5.ronn}
+    %x{#{ronn} -r ./man/man5/puppetconf.5.ronn}
+    File.move("./man/man5/puppetconf.5", "./man/man5/puppet.conf.5")
+    File.unlink("./man/man5/puppetconf.5.ronn")
 
     # Create binary man pages
     binary = bins + sbins
     binary.each do |bin|
       b = bin.gsub( /(bin|sbin)\//, "")
-      %x{#{bin} --help > ./#{b}.rst}
-      %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
-      File.unlink("./#{b}.rst")
+      %x{#{bin} --help > ./man/man8/#{b}.8.ronn}
+      %x{#{ronn} -r ./man/man8/#{b}.8.ronn}
+      File.unlink("./man/man8/#{b}.8.ronn")
     end
 
 rescue SystemCallError

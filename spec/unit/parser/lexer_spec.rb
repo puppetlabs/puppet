@@ -410,6 +410,10 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string')}                                     => [[:STRING,'single quoted string']],
     %q{"double quoted string"}                                      => [[:STRING,'double quoted string']],
     %q{'single quoted string with an escaped "\\'"'}                => [[:STRING,'single quoted string with an escaped "\'"']],
+    %q{'single quoted string with an escaped "\$"'}                 => [[:STRING,'single quoted string with an escaped "\$"']],
+    %q{'single quoted string with an escaped "\."'}                 => [[:STRING,'single quoted string with an escaped "\."']],
+    %q{'single quoted string with an escaped "\n"'}                 => [[:STRING,'single quoted string with an escaped "\n"']],
+    %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
     %q{"string with an escaped '\\$'"}                              => [[:STRING,"string with an escaped '$'"]],
     %q{"string with $v (but no braces)"}                            => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' (but no braces)']],
@@ -616,6 +620,12 @@ describe "Puppet::Parser::Lexer in the old tests" do
     @lexer.namespace.should == "base::sub"
   end
 
+  it "should not put class instantiation on the namespace" do
+    @lexer.string = "class base { class sub { class { mode"
+    @lexer.fullscan
+    @lexer.namespace.should == "base::sub"
+  end
+
   it "should correctly handle fully qualified names" do
     @lexer.string = "class base { class sub::more {"
     @lexer.fullscan
@@ -634,7 +644,6 @@ end
 
 require 'puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
-  extend PuppetTest
   extend PuppetTest::Support::Utils
   textfiles do |file|
     it "should correctly lex #{file}" do

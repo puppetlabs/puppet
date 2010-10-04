@@ -3,9 +3,9 @@ require 'puppet/indirector/ldap'
 
 class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   desc "Search in LDAP for node configuration information.  See
-  the `LdapNodes`:trac: page for more information.  This will first
+  the [LDAP Nodes](http://projects.puppetlabs.com/projects/puppet/wiki/Ldap_Nodes) page for more information.  This will first
   search for whatever the certificate name is, then (if that name
-  contains a '.') for the short name, then 'default'."
+  contains a `.`) for the short name, then `default`."
 
   # The attributes that Puppet class information is stored in.
   def class_attributes
@@ -19,30 +19,10 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
   # LAK:NOTE Unfortunately, the ldap support is too stupid to throw anything
   # but LDAP::ResultError, even on bad connections, so we are rough handed
   # with our error handling.
-  def name2hash(name,name_env,node_type)
+  def name2hash(name)
     info = nil
-    ldapsearch(search_filter(name)) {
-      |entry| info = entry2hash(entry)
-      if info[:environment]
-        if name_env == info[:environment]
-          return info
-          else
-            info = nil
-          end
-          else
-          info_env = "production"
-          if name_env == info[:environment]
-            return info
-          else
-            info = nil
-          end
-          end
-        }
-    if node_type == 'parent'
-      raise Puppet::Error.new("Could not find node '#{name}' with environment '#{name_env}'")
-    end
-
-    info = name2hash('default',name_env,'parent')
+    ldapsearch(search_filter(name)) { |entry| info = entry2hash(entry) }
+    info
   end
 
   # Look for our node in ldap.
@@ -53,18 +33,9 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
     node = nil
     names.each do |name|
-      facts = Puppet::Node::Facts.find(name)
-      if facts.values["environment"]
-        name_env = facts.values["environment"]
-      else
-        name_env = "production"
-      end
-      info = name2hash(name,name_env,'child')
-      next if info == nil
+      next unless info = name2hash(name)
 
-      if info
-        break if node = info2node(request.key, info)
-      end
+      break if node = info2node(request.key, info)
     end
 
     node
@@ -200,29 +171,14 @@ class Puppet::Node::Ldap < Puppet::Indirector::Ldap
 
   # Find information for our parent and merge it into the current info.
   def find_and_merge_parent(parent, information)
-
-    if information[:environment]
-      name_env = information[:environment]
-    else
-      name_env = 'production'
-    end
-
-    parent_info = name2hash(parent,name_env,'parent')
-    if parent_info
+    parent_info = name2hash(parent) || raise(Puppet::Error.new("Could not find parent node '#{parent}'"))
     information[:classes] += parent_info[:classes]
     parent_info[:parameters].each do |param, value|
-      # Specifically test for whether it's set, so false values are handled
-      # correctly.
+      # Specifically test for whether it's set, so false values are handled correctly.
       information[:parameters][param] = value unless information[:parameters].include?(param)
     end
-
     information[:environment] ||= parent_info[:environment]
     parent_info[:parent]
-    else
-    raise Puppet::Error.new("Could not find parent node '#{parent}'")
-    nil
-    end
-
   end
 
   # Take a name and a hash, and return a node instance.

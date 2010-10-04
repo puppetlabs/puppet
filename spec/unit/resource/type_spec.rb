@@ -369,7 +369,8 @@ describe Puppet::Resource::Type do
     end
 
     it "should cache a reference to the parent type" do
-      @code.expects(:hostclass).once.with("bar").returns @parent
+      @code.stubs(:hostclass).with("foo::bar").returns nil
+      @code.expects(:hostclass).with("bar").once.returns @parent
       @child.parent_type(@scope)
       @child.parent_type
     end
@@ -409,6 +410,23 @@ describe Puppet::Resource::Type do
       @known_resource_types = stub 'known_resource_types'
       @resource.stubs(:known_resource_types).returns @known_resource_types
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
+    end
+
+    it "should add hostclass names to the classes list" do
+      @type.evaluate_code(@resource)
+      @compiler.catalog.classes.should be_include("foo")
+    end
+
+    it "should add node names to the classes list" do
+      @type = Puppet::Resource::Type.new(:node, "foo")
+      @type.evaluate_code(@resource)
+      @compiler.catalog.classes.should be_include("foo")
+    end
+
+    it "should not add defined resource names to the classes list" do
+      @type = Puppet::Resource::Type.new(:definition, "foo")
+      @type.evaluate_code(@resource)
+      @compiler.catalog.classes.should_not be_include("foo")
     end
 
     it "should set all of its parameters in a subscope" do

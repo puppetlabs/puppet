@@ -138,9 +138,6 @@ class Puppet::Application::Master < Puppet::Application
 
     Puppet.settings.use :main, :master, :ssl
 
-    # A temporary solution, to at least make the master work for now.
-    Puppet::Node::Facts.terminus_class = :yaml
-
     # Cache our nodes in yaml.  Currently not configurable.
     Puppet::Node.cache_class = :yaml
 

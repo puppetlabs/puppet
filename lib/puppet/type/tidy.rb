@@ -5,7 +5,7 @@ Puppet::Type.newtype(:tidy) do
     criteria are OR'd together, so a file that is too large but is not
     old enough will still get tidied.
 
-    If you don't specify either 'age' or 'size', then all files will
+    If you don't specify either `age` or `size`, then all files will
     be removed.
 
     This resource type works by generating a file resource for every file
@@ -47,7 +47,7 @@ Puppet::Type.newtype(:tidy) do
       at least one of the patterns specified. Multiple patterns can
       be specified using an array.
 
-      Example::
+      Example:
 
           tidy { \"/tmp\":
             age => \"1w\",
@@ -55,7 +55,7 @@ Puppet::Type.newtype(:tidy) do
             matches => [ \"[0-9]pub*.tmp\", \"*.temp\", \"tmpfile?\" ]
           }
 
-      This removes files from \/tmp if they are one week old or older,
+      This removes files from `/tmp` if they are one week old or older,
       are not in a subdirectory and match one of the shell globs given.
 
       Note that the patterns are matched against the basename of each

@@ -56,7 +56,7 @@ module Puppet
 
   Puppet::Type.type(:file).newproperty(:seluser, :parent => Puppet::SELFileContext) do
     desc "What the SELinux user component of the context of the file should be.
-      Any valid SELinux user component is accepted.  For example ``user_u``.
+      Any valid SELinux user component is accepted.  For example `user_u`.
       If not specified it defaults to the value returned by matchpathcon for
       the file, if any exists.  Only valid on systems with SELinux support
       enabled."
@@ -67,7 +67,7 @@ module Puppet
 
   Puppet::Type.type(:file).newproperty(:selrole, :parent => Puppet::SELFileContext) do
     desc "What the SELinux role component of the context of the file should be.
-      Any valid SELinux role component is accepted.  For example ``role_r``.
+      Any valid SELinux role component is accepted.  For example `role_r`.
       If not specified it defaults to the value returned by matchpathcon for
       the file, if any exists.  Only valid on systems with SELinux support
       enabled."
@@ -78,7 +78,7 @@ module Puppet
 
   Puppet::Type.type(:file).newproperty(:seltype, :parent => Puppet::SELFileContext) do
     desc "What the SELinux type component of the context of the file should be.
-      Any valid SELinux type component is accepted.  For example ``tmp_t``.
+      Any valid SELinux type component is accepted.  For example `tmp_t`.
       If not specified it defaults to the value returned by matchpathcon for
       the file, if any exists.  Only valid on systems with SELinux support
       enabled."
@@ -89,8 +89,8 @@ module Puppet
 
   Puppet::Type.type(:file).newproperty(:selrange, :parent => Puppet::SELFileContext) do
     desc "What the SELinux range component of the context of the file should be.
-      Any valid SELinux range component is accepted.  For example ``s0`` or
-      ``SystemHigh``.  If not specified it defaults to the value returned by
+      Any valid SELinux range component is accepted.  For example `s0` or
+      `SystemHigh`.  If not specified it defaults to the value returned by
       matchpathcon for the file, if any exists.  Only valid on systems with
       SELinux support enabled and that have support for MCS (Multi-Category
       Security)."

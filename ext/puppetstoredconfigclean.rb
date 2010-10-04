@@ -3,7 +3,7 @@
 # Script to clean up stored configs for (a) given host(s)
 #
 # Credits:
-# Script was taken from http://puppetlabs.com/trac/puppet/attachment/wiki/UsingStoredConfiguration/kill_node_in_storedconfigs_db.rb
+# Script was taken from http://reductivelabs.com/trac/puppet/attachment/wiki/UsingStoredConfiguration/kill_node_in_storedconfigs_db.rb
 # which haven been initially posted by James Turnbull
 # duritong adapted and improved the script a bit.
 
@@ -19,11 +19,11 @@ end
 
 
       opts = GetoptLong.new(
-                
+
     [ "--config",     "-c",   GetoptLong::REQUIRED_ARGUMENT ],
     [ "--help",        "-h",   GetoptLong::NO_ARGUMENT ],
     [ "--usage",       "-u",   GetoptLong::NO_ARGUMENT ],
-        
+
     [ "--version",     "-v",   GetoptLong::NO_ARGUMENT ]
 )
 
@@ -54,7 +54,7 @@ printusage(1) unless ARGV.size > 0
 require 'puppet/rails'
 Puppet[:config] = config
 Puppet.parse_config
-pm_conf = Puppet.settings.instance_variable_get(:@values)[:puppetmasterd]
+pm_conf = Puppet.settings.instance_variable_get(:@values)[:master]
 
 adapter = pm_conf[:dbadapter]
 args = {:adapter => adapter, :log_level => pm_conf[:rails_loglevel]}

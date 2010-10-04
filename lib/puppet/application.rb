@@ -264,7 +264,6 @@ class Application
         self.send(fname, value)
       end
     end
-    @option_parser.default_argv = self.command_line.args
     @option_parser
   end
 
@@ -286,7 +285,7 @@ class Application
       Puppet.settings.set_value(:name, Puppet.application_name.to_s, :mutable_defaults)
       Puppet.settings.set_value(:logdir, Puppet.run_mode.logopts, :mutable_defaults)
       Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
-      Puppet.settings.set_value(:mode, Puppet.run_mode.name.to_s, :mutable_defaults)
+      Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
     end
 
     require 'puppet'
@@ -337,7 +336,7 @@ class Application
 
     # scan command line argument
     begin
-      self.option_parser.parse!
+      self.option_parser.parse!(self.command_line.args)
     rescue OptionParser::ParseError => detail
       $stderr.puts detail
       $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"

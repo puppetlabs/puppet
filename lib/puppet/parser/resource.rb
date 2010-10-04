@@ -64,6 +64,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   # Retrieve the associated definition and evaluate it.
   def evaluate
+    @evaluated = true
     if klass = resource_type and ! builtin_type?
       finish
       return klass.evaluate_code(self)
@@ -72,8 +73,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     else
       self.fail "Cannot find definition #{type}"
     end
-  ensure
-    @evaluated = true
   end
 
   # Mark this resource as both exported and virtual,
@@ -103,9 +102,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def initialize(*args)
+    raise ArgumentError, "Resources require a scope" unless args.last[:scope]
     super
 
-    raise ArgumentError, "Resources require a scope" unless scope
     @source ||= scope.source
   end
 
@@ -139,10 +138,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   def name
     self[:name] || self.title
-  end
-
-  def namespaces
-    scope.namespaces
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.

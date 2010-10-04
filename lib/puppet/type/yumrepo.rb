@@ -52,8 +52,9 @@ module Puppet
 
   newtype(:yumrepo) do
     @doc = "The client-side description of a yum repository. Repository
-      configurations are found by parsing /etc/yum.conf and
-      the files indicated by reposdir in that file (see yum.conf(5) for details)
+      configurations are found by parsing `/etc/yum.conf` and
+      the files indicated by the `reposdir` option in that file 
+      (see yum.conf(5) for details)
 
       Most parameters are identical to the ones documented
       in yum.conf(5)
@@ -85,7 +86,7 @@ module Puppet
       clear
       inifile.each_section do |s|
         next if s.name == "main"
-        obj = create(:name => s.name, :audit => check)
+        obj = new(:name => s.name, :audit => check)
         current_values = obj.retrieve
         obj.eachproperty do |property|
           if current_values[property].nil?
@@ -294,6 +295,12 @@ module Puppet
       newvalue(%r{(0|1)}) { }
     end
 
+     newproperty(:http_caching, :parent => Puppet::IniProperty) do
+       desc "Either 'packages' or 'all' or 'none'.\n#{ABSENT_DOC}" 
+       newvalue(:absent) { self.should = :absent }
+       newvalue(%r(packages|all|none)) { }
+     end
+
     newproperty(:timeout, :parent => Puppet::IniProperty) do
       desc "Number of seconds to wait for a connection before timing
         out.\n#{ABSENT_DOC}"
@@ -322,6 +329,12 @@ module Puppet
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{[1-9][0-9]?}) { }
+    end
+
+    newproperty(:cost, :parent => Puppet::IniProperty) do
+      desc "Cost of this repository.\n#{ABSENT_DOC}"
+      newvalue(:absent) { self.should = :absent }
+      newvalue(%r{\d+}) { }
     end
 
     newproperty(:proxy, :parent => Puppet::IniProperty) do

@@ -6,37 +6,37 @@ module Puppet::Parser::Functions
   :doc => "
   Perform regexp replacement on a string or array of strings.
 
-- **Parameters** (in order):
+* *Parameters* (in order):
 
-:target:  The string or array of strings to operate on.  If an array, the replacement will be performed on each of the elements in the array, and the return value will be an array.
+    _target_  The string or array of strings to operate on.  If an array, the replacement will be performed on each of the elements in the array, and the return value will be an array.
 
-:regexp:  The regular expression matching the target string.  If you want it anchored at the start and or end of the string, you must do that with ^ and $ yourself.
+    _regexp_  The regular expression matching the target string.  If you want it anchored at the start and or end of the string, you must do that with ^ and $ yourself.
 
-:replacement:  Replacement string. Can contain back references to what was matched using \\0, \\1, and so on.
+    _replacement_  Replacement string. Can contain back references to what was matched using \\0, \\1, and so on.
 
-:flags:  Optional. String of single letter flags for how the regexp is interpreted:
+    _flags_  Optional. String of single letter flags for how the regexp is interpreted:
 
-  - **E**         Extended regexps
-  - **I**         Ignore case in regexps
-  - **M**         Multiline regexps
-  - **G**         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
+        - *E*         Extended regexps
+        - *I*         Ignore case in regexps
+        - *M*         Multiline regexps
+        - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
 
-:lang:  Optional.  How to handle multibyte characters.  A single-character string with the following values:
+    _lang_  Optional.  How to handle multibyte characters.  A single-character string with the following values:
 
-  - **N**         None
-  - **E**         EUC
-  - **S**         SJIS
-  - **U**         UTF-8
+        - *N*         None
+        - *E*         EUC
+        - *S*         SJIS
+        - *U*         UTF-8
 
-- **Examples**
+* *Examples*
 
-Get the third octet from the node's IP address::
+Get the third octet from the node's IP address:
 
-  $i3 = regsubst($ipaddress,'^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$','\\3')
+    $i3 = regsubst($ipaddress,'^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$','\\3')
 
-Put angle brackets around each octet in the node's IP address::
+Put angle brackets around each octet in the node's IP address:
 
-  $x = regsubst($ipaddress, '([0-9]+)', '<\\1>', 'G')
+    $x = regsubst($ipaddress, '([0-9]+)', '<\\1>', 'G')
 ") \
   do |args|
     unless args.length.between?(3, 5)

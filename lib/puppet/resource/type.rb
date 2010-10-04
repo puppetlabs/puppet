@@ -69,6 +69,7 @@ class Puppet::Resource::Type
     end
 
     scope = subscope(scope, resource) unless resource.title == :main
+    scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)
 
@@ -174,12 +175,29 @@ class Puppet::Resource::Type
     @name.is_a?(Regexp)
   end
 
+  # MQR TODO:
+  #
+  # The change(s) introduced by the fix for #4270 are mostly silly & should be 
+  # removed, though we didn't realize it at the time.  If it can be established/
+  # ensured that nodes never call parent_type and that resource_types are always
+  # (as they should be) members of exactly one resource_type_collection the 
+  # following method could / should be replaced with:
+  #
+  # def parent_type
+  #   @parent_type ||= parent && (
+  #     resource_type_collection.find_or_load([name],parent,type.to_sym) ||
+  #     fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{resource_type_collection.environment}"
+  #   )
+  # end
+  #
+  # ...and then the rest of the changes around passing in scope reverted.
+  #
   def parent_type(scope = nil)
     return nil unless parent
 
     unless @parent_type
       raise "Must pass scope to parent_type when called first time" unless scope
-      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", scope.namespaces, parent)
+      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", [name], parent)
         fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"
       end
     end
@@ -215,8 +233,13 @@ class Puppet::Resource::Type
       resource[param] = value
     end
 
-    scope.setvar("title", resource.title) unless set.include? :title
-    scope.setvar("name", resource.name) unless set.include? :name
+    if @type == :hostclass
+      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
+      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+    else
+      scope.setvar("title", resource.title              ) unless set.include? :title
+      scope.setvar("name",  resource.name               ) unless set.include? :name
+    end
     scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
 
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)

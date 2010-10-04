@@ -59,23 +59,23 @@
 # types:
 #   List all available types.
 #
-# verbose::
+# verbose:
 #   Print extra information.
 #
 # = Example
 #
-# This example uses ``puppet resource`` to return Puppet configuration for the user ``luke``::
+# This example uses `puppet resource` to return Puppet configuration for the user `luke`:
 #
-#    $ puppet resource user luke
-#    user { 'luke':
-#      home => '/home/luke',
-#      uid => '100',
-#      ensure => 'present',
-#      comment => 'Luke Kanies,,,',
-#      gid => '1000',
-#      shell => '/bin/bash',
-#      groups => ['sysadmin','audio','video','puppet']
-#    }
+#      $ puppet resource user luke
+#      user { 'luke':
+#        home => '/home/luke',
+#        uid => '100',
+#        ensure => 'present',
+#        comment => 'Luke Kanies,,,',
+#        gid => '1000',
+#        shell => '/bin/bash',
+#        groups => ['sysadmin','audio','video','puppet']
+#      }
 #
 # = Author
 #

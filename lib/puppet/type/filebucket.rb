@@ -16,13 +16,13 @@ module Puppet
       undo transactions.
 
       You will normally want to define a single filebucket for your
-      whole network and then use that as the default backup location::
+      whole network and then use that as the default backup location:
 
-        # Define the bucket
-        filebucket { main: server => puppet }
+          # Define the bucket
+          filebucket { main: server => puppet }
 
-        # Specify it as the default target
-        File { backup => main }
+          # Specify it as the default target
+          File { backup => main }
 
       Puppetmaster servers create a filebucket by default, so this will
       work in a default configuration."
@@ -92,4 +92,3 @@ module Puppet
     end
   end
 end
-
