@@ -56,7 +56,7 @@ class Puppet::Rails::Host < ActiveRecord::Base
         end
 
         if env = node.environment
-          host.environment = env.to_s
+          host.environment = env
         end
 
         # Store the facts into the database.
