@@ -230,7 +230,7 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:special) do
-    desc "Special schedules only supported on FreeBSD."
+    desc "Special schedules"
 
     def specials
       %w{reboot yearly annually monthly weekly daily midnight hourly}

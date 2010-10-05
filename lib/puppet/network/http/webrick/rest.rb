@@ -1,5 +1,6 @@
 require 'puppet/network/http/handler'
 require 'resolv'
+require 'webrick'
 
 class Puppet::Network::HTTP::WEBrickREST < WEBrick::HTTPServlet::AbstractServlet
 
