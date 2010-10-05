@@ -20,6 +20,7 @@ module PuppetSpec
   FIXTURE_DIR = File.join(dir = File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
 end
 
+require 'spec/lib/puppet_spec/files'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/add_confine_and_runnable_to_rspec_dsl'
 require 'monkey_patches/publicize_methods'

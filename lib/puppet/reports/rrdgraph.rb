@@ -122,7 +122,7 @@ Puppet::Reports.register_report(:rrdgraph) do
   # that means we record the total time, the config time, and that's about
   # it.  We should probably send each type's time as a separate metric.
   def timeclean(metric)
-    metric.values = metric.values.find_all { |name, label, value| [:total, :config_retrieval].include?(name) }
+    metric.values = metric.values.find_all { |name, label, value| ['total', 'config_retrieval'].include?(name.to_s) }
   end
 end
 

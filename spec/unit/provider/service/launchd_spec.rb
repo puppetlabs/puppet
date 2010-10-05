@@ -98,19 +98,22 @@ describe provider_class do
     it "should return true if the job plist says disabled is true and the global overrides says disabled is false" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
       @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => true}])
-      Plist.stubs(:parse_xml).returns({@resource[:name] => {"Disabled" => false}})
+      @provider.class.stubs(:read_plist).returns({@resource[:name] => {"Disabled" => false}})
+      FileTest.expects(:file?).with(Launchd_Overrides).returns(true)
       @provider.enabled?.should == :true
     end
     it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
       @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => false}])
-      Plist.stubs(:parse_xml).returns({@resource[:name] => {"Disabled" => true}})
+      @provider.class.stubs(:read_plist).returns({@resource[:name] => {"Disabled" => true}})
+      FileTest.expects(:file?).with(Launchd_Overrides).returns(true)
       @provider.enabled?.should == :false
     end
     it "should return true if the job plist and the global overrides have no disabled keys" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
       @provider.stubs(:plist_from_label).returns(["foo", {}])
-      Plist.stubs(:parse_xml).returns({})
+      @provider.class.stubs(:read_plist).returns({})
+      FileTest.expects(:file?).with(Launchd_Overrides).returns(true)
       @provider.enabled?.should == :true
     end
   end
@@ -182,7 +185,7 @@ describe provider_class do
   describe "when enabling the service on OS X 10.6" do
     it "should write to the global launchd overrides file once" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
-      Plist.stubs(:parse_xml).returns({})
+      @provider.class.stubs(:read_plist).returns({})
       Plist::Emit.expects(:save_plist).once
       @provider.enable
     end
@@ -191,7 +194,7 @@ describe provider_class do
   describe "when disabling the service on OS X 10.6" do
     it "should write to the global launchd overrides file once" do
       provider_class.stubs(:get_macosx_version_major).returns("10.6")
-      Plist.stubs(:parse_xml).returns({})
+      @provider.class.stubs(:read_plist).returns({})
       Plist::Emit.expects(:save_plist).once
       @provider.enable
     end

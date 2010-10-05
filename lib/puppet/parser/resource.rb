@@ -64,6 +64,7 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   # Retrieve the associated definition and evaluate it.
   def evaluate
+    return if evaluated?
     @evaluated = true
     if klass = resource_type and ! builtin_type?
       finish

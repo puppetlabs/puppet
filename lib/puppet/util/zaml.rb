@@ -242,7 +242,6 @@ class String
         when self =~ /\n/
           if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
           z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-          z.nl
         else
           z.emit(self)
       end
