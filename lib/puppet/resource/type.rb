@@ -138,20 +138,14 @@ class Puppet::Resource::Type
     end
   end
 
-  # Make an instance of our resource type.  This is only possible
-  # for those classes and nodes that don't have any arguments, and is
-  # only useful for things like the 'include' function.
-  def mk_plain_resource(scope)
+  # Make an instance of the resource type, and place it in the catalog
+  # if it isn't in the catalog already.  This is only possible for
+  # classes and nodes.  No parameters are be supplied--if this is a
+  # parameterized class, then all parameters take on their default
+  # values.
+  def ensure_in_catalog(scope)
     type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
     resource_type = type == :hostclass ? :class : :node
-
-    # Make sure our parent class has been evaluated, if we have one.
-    if parent
-      parent_resource = scope.catalog.resource(resource_type, parent)
-      unless parent_resource
-        parent_type(scope).mk_plain_resource(scope)
-      end
-    end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the
@@ -161,9 +155,20 @@ class Puppet::Resource::Type
     end
 
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
+    instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
-    scope.catalog.tag(*resource.tags)
     resource
+  end
+
+  def instantiate_resource(scope, resource)
+    # Make sure our parent class has been evaluated, if we have one.
+    if parent && !scope.catalog.resource(resource.type, parent)
+      parent_type(scope).ensure_in_catalog(scope)
+    end
+
+    if ['Class', 'Node'].include? resource.type
+      scope.catalog.tag(*resource.tags)
+    end
   end
 
   def name
