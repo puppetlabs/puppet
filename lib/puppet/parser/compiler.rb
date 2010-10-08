@@ -144,7 +144,7 @@ class Puppet::Parser::Compiler
       if klass = scope.find_hostclass(name)
         found << name and next if scope.class_scope(klass)
 
-        resource = klass.mk_plain_resource(scope)
+        resource = klass.ensure_in_catalog(scope)
 
         # If they've disabled lazy evaluation (which the :include function does),
         # then evaluate our resource immediately.
@@ -220,7 +220,7 @@ class Puppet::Parser::Compiler
 
     # Create a resource to model this node, and then add it to the list
     # of resources.
-    resource = astnode.mk_plain_resource(topscope)
+    resource = astnode.ensure_in_catalog(topscope)
 
     resource.evaluate
 
