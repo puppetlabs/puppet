@@ -321,6 +321,31 @@ class DirectoryService < Puppet::Provider::NameService
     password_hash
   end
 
+  # Unlike most other *nixes, OS X doesn't provide built in functionality
+  # for automatically assigning uids and gids to accounts, so we set up these
+  # methods for consumption by functionality like --mkusers
+  # By default we restrict to a reasonably sane range for system accounts
+  def self.next_system_id(id_type, min_id=20)
+    dscl_args = ['.', '-list']
+    if id_type == 'uid'
+      dscl_args << '/Users' << 'uid'
+    elsif id_type == 'gid'
+      dscl_args << '/Groups' << 'gid'
+    else
+      fail("Invalid id_type #{id_type}. Only 'uid' and 'gid' supported")
+    end
+    dscl_out = dscl(dscl_args)
+    # We're ok with throwing away negative uids here.
+    ids = dscl_out.split.compact.collect { |l| l.to_i if l.match(/^\d+$/) }
+    ids.compact!.sort! { |a,b| a.to_f <=> b.to_f }
+    # We're just looking for an unused id in our sorted array.
+    ids.each_index do |i|
+      next_id = ids[i] + 1
+      return next_id if ids[i+1] != next_id and next_id >= min_id
+    end
+  end
+
+
   def ensure=(ensure_value)
     super
     # We need to loop over all valid properties for the type we're
@@ -422,7 +447,14 @@ class DirectoryService < Puppet::Provider::NameService
     # Now we create all the standard properties
     Puppet::Type.type(@resource.class.name).validproperties.each do |property|
       next if property == :ensure
-      if value = @resource.should(property) and value != ""
+      value = @resource.should(property)
+      if property == :gid and value.nil?
+        value = self.class.next_system_id(id_type='gid')
+      end
+      if property == :uid and value.nil?
+        value = self.class.next_system_id(id_type='uid')
+      end
+      if value != "" and not value.nil?
         if property == :members
           add_members(nil, value)
         else
