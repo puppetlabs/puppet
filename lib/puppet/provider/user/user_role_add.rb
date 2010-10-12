@@ -81,7 +81,9 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
       run(transition("normal"), "transition role to")
     else
       run(addcmd, "create")
-      run(passcmd, "change password policy for")
+      if cmd = passcmd
+        run(cmd, "change password policy for")
+      end
     end
     # added to handle case when password is specified
     self.password = @resource[:password] if @resource[:password]
