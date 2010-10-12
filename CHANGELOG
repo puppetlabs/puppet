@@ -1,5 +1,13 @@
+2.6.2
+=====
+1d719be  Fix for #4945 -- explicitly check os to supress man page installation
+55417bc  Reversion of 021d534482dd8edb863cb77d668ac3525362a0a6
+a6e2bea  Fixed #4919 - added parenths to fix error message:
+
 2.6.2rc1
 ========
+917c520  Incremented version to 2.6.2
+900eae4  Updated CHANGELOG for 2.6.2rc1
 1b6094d  Fixed documentation typo
 bdf12fe  Fix for #4896 -- stray newline left over from removed diagnostic
 e7424c6  (#4772) Update SuSE .spec file
