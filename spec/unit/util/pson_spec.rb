@@ -18,4 +18,21 @@ describe Puppet::Util::Pson do
     pson.expects(:from_pson).with("mydata")
     pson.pson_create("type" => "foo", "data" => "mydata")
   end
+
+
+  { 
+    'foo' => '"foo"',
+    1 => '1',
+    "\x80" => "\"\x80\"",
+    [] => '[]'
+  }.each { |str,pson|
+    it "should be able to encode #{str.inspect}" do
+      str.to_pson.should == pson
+    end
+  }
+
+  it "should be able to handle arbitrary binary data" do
+    bin_string = (1..20000).collect { |i| ((17*i+13*i*i) % 255).chr }.join
+    PSON.parse(%Q{{ "type": "foo", "data": #{bin_string.to_pson} }})["data"].should == bin_string
+  end
 end
