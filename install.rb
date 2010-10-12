@@ -462,4 +462,4 @@ prepare_installation
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
-do_man(man) if InstallOptions.man
+do_man(man) unless $operatingsystem == "windows"
