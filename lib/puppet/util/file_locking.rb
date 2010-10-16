@@ -34,8 +34,11 @@ module Puppet::Util::FileLocking
     end
 
     Puppet::Util.sync(file).synchronize(Sync::EX) do
-      File.open(file, "w", mode) do |rf|
+      File.open(file, File::Constants::CREAT | File::Constants::WRONLY, mode) do |rf|
         rf.lock_exclusive do |lrf|
+          # poor's man open(2) O_EXLOCK|O_TRUNC
+          lrf.seek(0, IO::SEEK_SET)
+          lrf.truncate(0)
           yield lrf
         end
       end
