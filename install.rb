@@ -88,6 +88,7 @@ libs  = glob(%w{lib/**/*.rb lib/**/*.py lib/puppet/util/command_line/*})
 tests = glob(%w{test/**/*.rb})
 
 def do_bins(bins, target, strip = 's?bin/')
+  Dir.mkdir(target) unless File.directory? target
   bins.each do |bf|
     obf = bf.gsub(/#{strip}/, '')
     install_binfile(bf, obf, target)
@@ -154,10 +155,12 @@ end
 # Prepare the file installation.
 #
 def prepare_installation
+  $operatingsystem = Facter["operatingsystem"].value
+
   # Only try to do docs if we're sure they have rdoc
   if $haverdoc
     InstallOptions.rdoc  = true
-    InstallOptions.ri  = RUBY_PLATFORM != "i386-mswin32"
+    InstallOptions.ri  = $operatingsystem != "windows"
   else
     InstallOptions.rdoc  = false
     InstallOptions.ri  = false
@@ -166,7 +169,7 @@ def prepare_installation
 
   if $haveman
     InstallOptions.man = true
-    if RUBY_PLATFORM == "i386-mswin32"
+    if $operatingsystem == "windows"
       InstallOptions.man  = false
     end
   else
@@ -174,15 +177,6 @@ def prepare_installation
   end
 
   InstallOptions.tests = true
-
-  if $haveman
-    InstallOptions.man = true
-    if RUBY_PLATFORM == "i386-mswin32"
-      InstallOptions.man  = false
-    end
-  else
-    InstallOptions.man = false
-  end
 
   ARGV.options do |opts|
     opts.banner = "Usage: #{File.basename($0)} [options]"
@@ -418,7 +412,7 @@ def install_binfile(from, op_file, target)
     end
   end
 
-  if Config::CONFIG["target_os"] =~ /win/io and Config::CONFIG["target_os"] !~ /darwin/io
+  if $operatingsystem == "windows"
     installed_wrapper = false
 
     if File.exists?("#{from}.bat")
@@ -468,4 +462,4 @@ prepare_installation
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
-do_man(man)
+do_man(man) unless $operatingsystem == "windows"

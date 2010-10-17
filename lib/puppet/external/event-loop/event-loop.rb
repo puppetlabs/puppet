@@ -75,8 +75,10 @@ class EventLoop
     @notify_src, @notify_snk = IO.pipe
 
     # prevent file descriptor leaks
-    @notify_src.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
-    @notify_snk.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    if @notify_src.respond_to?(:fcntl) and defined?(Fcntl) and defined?(Fcntl::F_SETFD) and defined?(Fcntl::FD_CLOEXEC)
+      @notify_src.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+      @notify_snk.fcntl(Fcntl::F_SETFD, Fcntl::FD_CLOEXEC)
+    end
 
     @notify_src.will_block = false
     @notify_snk.will_block = false
@@ -234,19 +236,21 @@ class IO
   end
 
   def will_block?
-    require "fcntl"
-    fcntl(Fcntl::F_GETFL, 0) & Fcntl::O_NONBLOCK == 0
+    if respond_to?(:fcntl) and defined?(Fcntl) and defined?(Fcntl::F_GETFL) and defined?(Fcntl::O_NONBLOCK)
+      fcntl(Fcntl::F_GETFL, 0) & Fcntl::O_NONBLOCK == 0
+    end
   end
 
   def will_block= (wants_blocking)
-    require "fcntl"
-    flags = fcntl(Fcntl::F_GETFL, 0)
-    if wants_blocking
-      flags &= ~Fcntl::O_NONBLOCK
-    else
-      flags |= Fcntl::O_NONBLOCK
+    if respond_to?(:fcntl) and defined?(Fcntl) and defined?(Fcntl::F_GETFL) and defined?(Fcntl::O_NONBLOCK)
+      flags = fcntl(Fcntl::F_GETFL, 0)
+      if wants_blocking
+        flags &= ~Fcntl::O_NONBLOCK
+      else
+        flags |= Fcntl::O_NONBLOCK
+      end
+      fcntl(Fcntl::F_SETFL, flags)
     end
-    fcntl(Fcntl::F_SETFL, flags)
   end
 end
 

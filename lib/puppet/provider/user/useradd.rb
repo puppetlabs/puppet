@@ -3,11 +3,13 @@ require 'puppet/provider/nameservice/objectadd'
 Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameService::ObjectAdd do
   desc "User management via `useradd` and its ilk.  Note that you will need to install the `Shadow Password` Ruby library often known as ruby-libshadow to manage user passwords."
 
-  commands :add => "useradd", :delete => "userdel", :modify => "usermod"
+  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage"
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
+  options :password_min_age, :flag => "-m"
+  options :password_max_age, :flag => "-M"
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -17,9 +19,9 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value !~ /\s/
   end
 
-  has_features :manages_homedir, :allows_duplicates
+  has_features :manages_homedir, :allows_duplicates, :manages_expiry
 
-  has_feature :manages_passwords if Puppet.features.libshadow?
+  has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
 
   def check_allow_dup
     @resource.allowdupe? ? ["-o"] : []
@@ -35,10 +37,20 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
+  def check_manage_expiry
+    cmd = []
+    if @resource[:expiry]
+      cmd << "-e #{@resource[:expiry]}"
+    end
+
+    cmd
+  end
+
   def add_properties
     cmd = []
     Puppet::Type.type(:user).validproperties.each do |property|
       next if property == :ensure
+      next if property.to_s =~ /password_.+_age/
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
@@ -53,7 +65,36 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += add_properties
     cmd += check_allow_dup
     cmd += check_manage_home
+    cmd += check_manage_expiry
     cmd << @resource[:name]
+  end
+
+  def passcmd
+    cmd = [command(:password)]
+    [:password_min_age, :password_max_age].each do |property|
+      if value = @resource.should(property)
+        cmd << flag(property) << value
+      end
+    end
+    cmd << @resource[:name]
+  end
+
+  def min_age
+    if Puppet.features.libshadow?
+      if ent = Shadow::Passwd.getspnam(@resource.name)
+        return ent.sp_min
+      end
+    end
+    :absent
+  end
+
+  def max_age
+    if Puppet.features.libshadow?
+      if ent = Shadow::Passwd.getspnam(@resource.name)
+        return ent.sp_max
+      end
+    end
+    :absent
   end
 
   # Retrieve the password using the Shadow Password library

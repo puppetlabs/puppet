@@ -31,6 +31,7 @@ describe tagmail do
 
   {
     "tag: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag}, []],
+    "tag.localhost: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag.localhost}, []],
     "tag, other: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag other}, []],
     "tag-other: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag-other}, []],
     "tag, !other: abuse@domain.com" => [%w{abuse@domain.com}, %w{tag}, %w{other}],

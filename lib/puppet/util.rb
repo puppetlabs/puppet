@@ -20,6 +20,14 @@ module Util
   # Create a hash to store the different sync objects.
   @@syncresources = {}
 
+  def self.activerecord_version
+    if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
+      ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
+    else
+      0
+    end
+  end
+
   # Return the sync object associated with a given resource.
   def self.sync(resource)
     @@syncresources[resource] ||= Sync.new

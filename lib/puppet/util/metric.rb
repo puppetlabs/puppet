@@ -31,8 +31,11 @@ class Puppet::Util::Metric
 
     start ||= Time.now.to_i - 5
 
-    @rrd = RRDtool.new(self.path)
     args = []
+
+    if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+      @rrd = RRDtool.new(self.path)
+    end
 
     values.each { |value|
       # the 7200 is the heartbeat -- this means that any data that isn't
@@ -42,14 +45,22 @@ class Puppet::Util::Metric
     args.push "RRA:AVERAGE:0.5:1:300"
 
     begin
-      @rrd.create( Puppet[:rrdinterval].to_i, start, args)
+      if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+        @rrd.create( Puppet[:rrdinterval].to_i, start, args)
+      else
+        RRD.create( self.path, '-s', Puppet[:rrdinterval].to_i.to_s, '-b', start.to_i.to_s, *args)
+      end
     rescue => detail
       raise "Could not create RRD file #{path}: #{detail}"
     end
   end
 
   def dump
-    puts @rrd.info
+    if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+      puts @rrd.info
+    else
+      puts RRD.info(self.path)
+    end
   end
 
   def graph(range = nil)
@@ -82,14 +93,26 @@ class Puppet::Util::Metric
       args << lines
       args.flatten!
       if range
-        args.push("--start",range[0],"--end",range[1])
+        if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+          args.push("--start",range[0],"--end",range[1])
+        else
+          args.push("--start",range[0].to_i.to_s,"--end",range[1].to_i.to_s)
+        end
       else
-        args.push("--start", Time.now.to_i - time, "--end", Time.now.to_i)
+        if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+          args.push("--start", Time.now.to_i - time, "--end", Time.now.to_i)
+        else
+          args.push("--start", (Time.now.to_i - time).to_s, "--end", Time.now.to_i.to_s)
+        end
       end
 
       begin
         #Puppet.warning "args = #{args}"
-        RRDtool.graph( args )
+        if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+          RRDtool.graph( args )
+        else
+          RRD.graph( *args )
+        end
       rescue => detail
         Puppet.err "Failed to graph #{self.name}: #{detail}"
       end
@@ -114,13 +137,15 @@ class Puppet::Util::Metric
   end
 
   def store(time)
-    unless Puppet.features.rrd?
+    unless Puppet.features.rrd? || Puppet.features.rrd_legacy?
       Puppet.warning "RRD library is missing; cannot store metrics"
       return
     end
     self.create(time - 5) unless FileTest.exists?(self.path)
 
-    @rrd ||= RRDtool.new(self.path)
+    if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+      @rrd ||= RRDtool.new(self.path)
+    end
 
     # XXX this is not terribly error-resistant
     args = [time]
@@ -133,7 +158,11 @@ class Puppet::Util::Metric
     arg = args.join(":")
     template = temps.join(":")
     begin
-      @rrd.update( template, [ arg ] )
+      if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
+        @rrd.update( template, [ arg ] )
+      else
+        RRD.update( self.path, '-t', template, arg )
+      end
       #system("rrdtool updatev #{self.path} '#{arg}'")
     rescue => detail
       raise Puppet::Error, "Failed to update #{self.name}: #{detail}"

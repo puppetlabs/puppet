@@ -27,6 +27,27 @@ describe Puppet::Parser::Compiler do
     @compiler.catalog.version.should == version
   end
 
+  it "should not create duplicate resources when a class is referenced both directly and indirectly by the node classifier (4792)" do
+    Puppet[:code] = <<-PP
+      class foo
+      {
+        notify { foo_notify: }
+        include bar
+      }
+      class bar
+      {
+        notify { bar_notify: }
+      }
+    PP
+
+    @node.stubs(:classes).returns(['foo', 'bar'])
+
+    catalog = Puppet::Parser::Compiler.compile(@node)
+
+    catalog.resource("Notify[foo_notify]").should_not be_nil
+    catalog.resource("Notify[bar_notify]").should_not be_nil
+  end
+
   describe "when resolving class references" do
     it "should favor local scope, even if there's an included class in topscope" do
       Puppet[:code] = <<-PP
