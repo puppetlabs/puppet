@@ -14,7 +14,7 @@
 #
 #   puppet-load [-d|--debug] [--concurrency <num>] [--repeat <num>] [-V|--version] [-v|--verbose]
 #               [--node <host.domain.com>] [--facts <factfile>] [--cert <certfile>] [--key <keyfile>]
-#               [--server <server.domain.com>]
+#               [--factsdir <factsdir>] [--server <server.domain.com>]
 #
 # = Description
 #
@@ -35,8 +35,9 @@
 #   Set the puppet master hostname or IP address..
 #
 # node::
-#   Set the fully-qualified domain name of the client.  This is only used for
-#   certificate purposes, but can be used to override the discovered hostname.
+#   Set the fully-qualified domain name of the client. This option can be given multiple
+#   times. In this case puppet-load will ask for catalog compilation of all the given nodes
+#   on a round robin way.
 #
 # help::
 #   Print this help message
@@ -45,6 +46,11 @@
 #   This can be used to provide facts for the compilation, directly from a YAML
 #   file as found in the clientyaml directory. If none are provided, puppet-load
 #   will look by itself using Puppet facts indirector.
+#
+# factsdir::
+#   Specify a directory where the yaml facts files can be found. If provided puppet-load
+#   will look up facts in this directory. If not found it will resort to using Puppet Facts
+#   indirector.
 #
 # cert::
 #   This option is mandatory. It should be set to the cert PEM file that will be used
@@ -70,8 +76,9 @@
 #
 # = Example usage
 #
+# SINGLE NODE:
 #   1) On the master host, generate a new certificate and private key for our test host:
-#   puppet ca --generate puppet-load.domain.com [*]
+#   puppet ca --generate puppet-load.domain.com
 #
 #   2) Copy the cert and key to the puppet-load host (which can be the same as the master one)
 #
@@ -81,7 +88,7 @@
 #      allow $1
 #      allow puppet-load.domain.com
 #
-#   4) launch the master
+#   4) launch the master(s)
 #
 #   5) Prepare or get a fact file. One way to get one is to look on the master in $vardir/yaml/ for the host
 #   you want to simulate.
@@ -89,12 +96,30 @@
 #   5) launch puppet-load
 #   puppet-load -debug --node server.domain.com --server master.domain.com --facts server.domain.com.yaml --concurrency 2 --repeat 20 
 #
-# [*]: unfortunately at this stage Puppet trusts the certname of the connecting node more than
-#      than the node name request paramater. It means that the master will compile
-#      the puppet-load node and not the --node given.
+# MULTIPLE NODES:
+#   1) On the master host, generate a new certificate and private key for our test host:
+#   puppet ca --generate puppet-load.domain.com
+#
+#   2) Copy the cert and key to the puppet-load host (which can be the same as the master one)
+#
+#   3) On the master host edit or create the auth.conf so that the catalog ACL match:
+#      path ~ ^/catalog/([^/]+)$
+#      method find
+#      allow $1
+#      allow puppet-load.domain.com
+#
+#   4) launch the master(s)
+#
+#   5) Prepare or get a fact file. One way to get one is to look on the master in $vardir/yaml/ for the host
+#   you want to simulate.
+#
+#   5) launch puppet-load
+#   puppet-load -debug --node server1.domain.com --node server2.domain.com --node server3.domain.com \
+#                      --server master.domain.com --factsdir /var/lib/puppet/yaml/facts --concurrency 2 --repeat 20 
+#
+#   puppet-load will load facts file in the --factsdir directory based on the node name.
 #
 # = TODO
-#   * Allow to simulate any different nodes
 #   * More output stats for error connections (ie report errors, HTTP code...)
 #
 #
@@ -115,6 +140,7 @@ $cmdargs = [
   [ "--concurrency",  "-c", GetoptLong::REQUIRED_ARGUMENT       ],
   [ "--node",     "-n", GetoptLong::REQUIRED_ARGUMENT ],
   [ "--facts",          GetoptLong::REQUIRED_ARGUMENT ],
+  [ "--factsdir",       GetoptLong::REQUIRED_ARGUMENT ],
   [ "--repeat",   "-r", GetoptLong::REQUIRED_ARGUMENT ],
   [ "--cert",     "-C", GetoptLong::REQUIRED_ARGUMENT ],
   [ "--key",      "-k", GetoptLong::REQUIRED_ARGUMENT ],
@@ -131,14 +157,15 @@ Puppet::Util::Log.newdestination(:console)
 times = {}
 
 def read_facts(file)
-  YAML.load(File.read(file))
+  Puppet.debug("reading facts from: #{file}")
+  fact = YAML.load(File.read(file))
 end
 
 
 result = GetoptLong.new(*$cmdargs)
 
 $args = {}
-$options = {:repeat => 1, :concurrency => 1, :pause => false, :cert => nil, :key => nil, :timeout => 180, :masterport => 8140}
+$options = {:repeat => 1, :concurrency => 1, :pause => false, :cert => nil, :key => nil, :timeout => 180, :masterport => 8140, :node => [], :factsdir => nil}
 
 begin
   result.each { |opt,arg|
@@ -151,7 +178,9 @@ begin
         exit(14)
       end
     when "--node"
-      $options[:node] = arg
+      $options[:node] << arg
+    when "--factsdir"
+      $options[:factsdir] = arg
     when "--server"
       $options[:server] = arg
     when "--masterport"
@@ -192,21 +221,24 @@ unless $options[:cert] and $options[:key]
   raise "--cert and --key are mandatory to authenticate the client"
 end
 
-unless $options[:facts] and facts = read_facts($options[:facts])
-  unless facts = Puppet::Node::Facts.find($options[:node])
-    raise "Could not find facts for %s" % $options[:node]
-  end
-end
+parameters = []
 
-unless $options[:node]
+unless $options[:node].size > 0
   raise "--node is a mandatory argument. It tells to the master what node to compile"
 end
 
-facts.values["fqdn"] = $options[:node]
-facts.values["hostname"] = $options[:node].sub(/\..+/, '')
-facts.values["domain"] = $options[:node].sub(/^[^.]+\./, '')
+$options[:node].each do |node|
+  factfile = $options[:factsdir] ? File.join($options[:factsdir], node + ".yaml") : $options[:facts]
+  unless fact = read_facts(factfile) or fact = Puppet::Node::Facts.find(node)
+    raise "Could not find facts for %s" % node
+  end
+  fact.values["fqdn"] = node
+  fact.values["hostname"] = node.sub(/\..+/, '')
+  fact.values["domain"] = node.sub(/^[^.]+\./, '')
 
-parameters = {:facts_format => "b64_zlib_yaml", :facts => CGI.escape(facts.render(:b64_zlib_yaml))}
+  parameters << {:facts_format => "b64_zlib_yaml", :facts => CGI.escape(fact.render(:b64_zlib_yaml))}
+end
+
 
 class RequestPool
   include EventMachine::Deferrable
@@ -233,17 +265,19 @@ class RequestPool
   end
 
   def spawn_request(index)
-    EventMachine::HttpRequest.new("https://#{$options[:server]}:#{$options[:masterport]}/production/catalog/#{$options[:node]}").get(
+    nodeidx = index % $options[:node].size
+    node = $options[:node][nodeidx]
+    EventMachine::HttpRequest.new("https://#{$options[:server]}:#{$options[:masterport]}/production/catalog/#{node}").get(
     :port => $options[:masterport],
-    :query => @parameters,
+    :query => @parameters[nodeidx],
     :timeout => $options[:timeout],
     :head => { "Accept" => "pson, yaml, b64_zlib_yaml, marshal, dot, raw", "Accept-Encoding" => "gzip, deflate" },
     :ssl => { :private_key_file => $options[:key],
               :cert_chain_file => $options[:cert],
               :verify_peer => false } ) do
-        Puppet.debug("starting client #{index}")
         @times[index] = Time.now
         @sizes[index] = 0
+        Puppet.debug("starting client #{index} for #{node}")
     end
   end
 
