@@ -60,8 +60,7 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
     begin
       output = rpm(*cmd)
     rescue Puppet::ExecutionFailure
-      # rpm exits 1 if the package is not found.
-      return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}    
+      return nil
     end
 
     # FIXME: We could actually be getting back multiple packages

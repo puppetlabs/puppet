@@ -59,7 +59,7 @@ class Puppet::Util::Metric
     if Puppet.features.rrd_legacy? && ! Puppet.features.rrd?
       puts @rrd.info
     else
-      puts RRD.info self.path
+      puts RRD.info(self.path)
     end
   end
 
