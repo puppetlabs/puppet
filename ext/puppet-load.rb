@@ -265,6 +265,8 @@ class RequestPool
   end
 
   def spawn_request(index)
+    @times[index] = Time.now
+    @sizes[index] = 0
     nodeidx = index % $options[:node].size
     node = $options[:node][nodeidx]
     EventMachine::HttpRequest.new("https://#{$options[:server]}:#{$options[:masterport]}/production/catalog/#{node}").get(
@@ -302,7 +304,7 @@ class RequestPool
     }
 
     conn.errback {
-      Puppet.debug("Client #{index} finished with an error: #{conn.response.error}")
+      Puppet.debug("Client #{index} finished with an error: #{conn.error}")
       @times[index] = Time.now - @times[index]
       @responses[:failed].push(conn)
       check_progress
