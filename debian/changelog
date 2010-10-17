@@ -1,10 +1,10 @@
-puppet (2.6.2-1) UNRELEASED; urgency=low
+puppet (2.6.2-1) unstable; urgency=low
 
   * New upstream release
     - Fix "Various bugs breaking usability in 2.6.0" (Closes: #597399)
   * ext/puppetlast: removed from upstream
 
- -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 17 Oct 2010 20:51:56 +0200
+ -- Stig Sandbeck Mathisen <ssm@debian.org>  Sun, 17 Oct 2010 21:33:33 +0200
 
 puppet (2.6.0-5) unstable; urgency=low
 
