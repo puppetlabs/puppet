@@ -165,7 +165,9 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     begin
       execute(self.addcmd)
-      execute(self.passcmd) if self.feature? :manages_password_age
+      if feature?(:manages_password_age) && (cmd = passcmd)
+        execute(cmd)
+      end
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Could not create #{@resource.class.name} #{@resource.name}: #{detail}"
     end

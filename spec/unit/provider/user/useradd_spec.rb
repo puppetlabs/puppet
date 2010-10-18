@@ -131,4 +131,46 @@ describe provider_class do
       @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", "someuser"]
     end
   end
+
+  describe "when calling passcmd" do
+    before do
+      @resource.stubs(:allowdupe?).returns true
+      @resource.stubs(:managehome?).returns true
+    end
+
+    it "should call command with :pass" do
+      @provider.expects(:command).with(:password)
+      @provider.passcmd
+    end
+
+    it "should return nil if neither min nor max is set" do
+      @resource.stubs(:should).with(:password_min_age).returns nil
+      @resource.stubs(:should).with(:password_max_age).returns nil
+      @provider.passcmd.must == nil
+    end
+
+    it "should return a chage command array with -m <value> and the user name if password_min_age is set" do
+      @provider.stubs(:command).with(:password).returns("chage")
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:should).with(:password_min_age).returns 123
+      @resource.stubs(:should).with(:password_max_age).returns nil
+      @provider.passcmd.must == ['chage','-m',123,'someuser']
+    end
+
+    it "should return a chage command array with -M <value> if password_max_age is set" do
+      @provider.stubs(:command).with(:password).returns("chage")
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:should).with(:password_min_age).returns nil
+      @resource.stubs(:should).with(:password_max_age).returns 999
+      @provider.passcmd.must == ['chage','-M',999,'someuser']
+    end
+
+    it "should return a chage command array with -M <value> -m <value> if both password_min_age and password_max_age are set" do
+      @provider.stubs(:command).with(:password).returns("chage")
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:should).with(:password_min_age).returns 123
+      @resource.stubs(:should).with(:password_max_age).returns 999
+      @provider.passcmd.must == ['chage','-m',123,'-M',999,'someuser']
+    end
+  end
 end

@@ -1,5 +1,12 @@
+2.6.3rc1
+========
+3c56705  Fix for #4832 -- Making PSON handle arbitrary binary data
+e232770  Minimal fix for #4975 -- only call chage when managing password age rules
+a090e86  Fix for #4963 -- Use correct commands for password expiry on solaris
+
 2.6.2
 =====
+295c3be  Updated CHANGELOG for 2.6.2
 1d719be  Fix for #4945 -- explicitly check os to supress man page installation
 55417bc  Reversion of 021d534482dd8edb863cb77d668ac3525362a0a6
 a6e2bea  Fixed #4919 - added parenths to fix error message:
