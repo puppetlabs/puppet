@@ -6,7 +6,7 @@ module Puppet::Util::FileLocking
   # Create a shared lock for reading
   def readlock(file)
     raise ArgumentError, "#{file} is not a file" unless !File.exists?(file) or File.file?(file)
-    Puppet::Util.sync(file).synchronize(Sync::SH) do
+    Puppet::Util.synchronize_on(file,Sync::SH) do
       File.open(file) { |f|
         f.lock_shared { |lf| yield lf }
       }
@@ -33,7 +33,7 @@ module Puppet::Util::FileLocking
       end
     end
 
-    Puppet::Util.sync(file).synchronize(Sync::EX) do
+    Puppet::Util.synchronize_on(file,Sync::EX) do
       File.open(file, File::Constants::CREAT | File::Constants::WRONLY, mode) do |rf|
         rf.lock_exclusive do |lrf|
           # poor's man open(2) O_EXLOCK|O_TRUNC

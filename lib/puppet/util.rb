@@ -3,6 +3,7 @@
 require 'puppet/util/monkey_patches'
 require 'sync'
 require 'puppet/external/lock'
+require 'monitor'
 
 module Puppet
   # A command failed to execute.
@@ -17,8 +18,7 @@ module Util
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
 
-  # Create a hash to store the different sync objects.
-  @@syncresources = {}
+  @@sync_objects = {}.extend MonitorMixin
 
   def self.activerecord_version
     if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
@@ -28,10 +28,19 @@ module Util
     end
   end
 
-  # Return the sync object associated with a given resource.
-  def self.sync(resource)
-    @@syncresources[resource] ||= Sync.new
-    @@syncresources[resource]
+  
+  def self.synchronize_on(x,type)
+    sync_object,users = 0,1
+    begin
+      @@sync_objects.synchronize { 
+        (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
+      }
+      @@sync_objects[x][sync_object].synchronize(type) { yield }
+    ensure
+      @@sync_objects.synchronize { 
+        @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
+      }
+    end
   end
 
   # Change the process to a different user
@@ -359,9 +368,7 @@ module Util
 
   # Create an exclusive lock.
   def threadlock(resource, type = Sync::EX)
-    Puppet::Util.sync(resource).synchronize(type) do
-      yield
-    end
+    Puppet::Util.synchronize_on(resource,type) { yield }
   end
 
   # Because some modules provide their own version of this method.

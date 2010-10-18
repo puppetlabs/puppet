@@ -32,17 +32,12 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should use a global shared mutex" do
-      @sync = mock 'sync'
-      @sync.expects(:synchronize).with(Sync::SH).once
-      Puppet::Util.expects(:sync).with('/file').returns @sync
-
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::SH).once
       Puppet::Util::FileLocking.readlock '/file'
     end
 
     it "should use a shared lock on the file" do
-      @sync = mock 'sync'
-      @sync.stubs(:synchronize).yields
-      Puppet::Util.expects(:sync).with('/file').returns @sync
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::SH).yields
 
       fh = mock 'filehandle'
       File.expects(:open).with("/file").yields fh
@@ -59,9 +54,7 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should create missing files" do
-      @sync = mock 'sync'
-      @sync.stubs(:synchronize).yields
-      Puppet::Util.expects(:sync).with('/file').returns @sync
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::SH).yields
 
       File.expects(:exists?).with('/file').returns false
       File.expects(:open).with('/file').once
@@ -72,9 +65,7 @@ describe Puppet::Util::FileLocking do
 
   describe "when acquiring a write lock" do
     before do
-      @sync = mock 'sync'
-      Puppet::Util.stubs(:sync).returns @sync
-      @sync.stubs(:synchronize).yields
+      Puppet::Util.stubs(:synchronize_on).yields
       File.stubs(:file?).with('/file').returns true
       File.stubs(:exists?).with('/file').returns true
     end
@@ -88,10 +79,7 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should use a global exclusive mutex" do
-      sync = mock 'sync'
-      sync.expects(:synchronize).with(Sync::EX)
-      Puppet::Util.expects(:sync).with("/file").returns sync
-
+      Puppet::Util.expects(:synchronize_on).with("/file",Sync::EX)
       Puppet::Util::FileLocking.writelock '/file'
     end
 
@@ -161,9 +149,7 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should create missing files" do
-      @sync = mock 'sync'
-      @sync.stubs(:synchronize).yields
-      Puppet::Util.expects(:sync).with('/file').returns @sync
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::EX).yields
 
       File.expects(:exists?).with('/file').returns false
       File.expects(:open).with('/file', File::Constants::CREAT | File::Constants::WRONLY, 0600).once
