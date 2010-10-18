@@ -70,13 +70,12 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
   end
 
   def passcmd
-    cmd = [command(:password)]
-    [:password_min_age, :password_max_age].each do |property|
-      if value = @resource.should(property)
-        cmd << flag(property) << value
-      end
+    age_limits = [:password_min_age, :password_max_age].select { |property| @resource.should(property) }
+    if age_limits.empty?
+      nil
+    else
+      [command(:password),age_limits.collect { |property| [flag(property), @resource.should(property)]}, @resource[:name]].flatten
     end
-    cmd << @resource[:name]
   end
 
   def min_age

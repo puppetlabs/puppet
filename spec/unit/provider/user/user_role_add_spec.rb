@@ -72,7 +72,7 @@ describe provider_class do
       @provider = provider_class.new(@resource)
       @provider.stubs(:user_attributes)
       @provider.stubs(:execute)
-      @provider.expects(:execute).with { |cmd, *args| args == ["-m", 5, "-M", 10, "myuser"] }
+      @provider.expects(:execute).with { |cmd, *args| args == ["-n", 5, "-x", 10, "myuser"] }
       @provider.create
     end
   end

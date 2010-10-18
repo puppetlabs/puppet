@@ -6,15 +6,15 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   defaultfor :operatingsystem => :solaris
 
-  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "chage", :role_add => "roleadd", :role_delete => "roledel", :role_modify => "rolemod"
+  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "passwd", :role_add => "roleadd", :role_delete => "roledel", :role_modify => "rolemod"
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
   options :roles, :flag => "-R"
   options :auths, :flag => "-A"
   options :profiles, :flag => "-P"
-  options :password_min_age, :flag => "-m"
-  options :password_max_age, :flag => "-M"
+  options :password_min_age, :flag => "-n"
+  options :password_max_age, :flag => "-x"
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -81,7 +81,9 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
       run(transition("normal"), "transition role to")
     else
       run(addcmd, "create")
-      run(passcmd, "change password policy for")
+      if cmd = passcmd
+        run(cmd, "change password policy for")
+      end
     end
     # added to handle case when password is specified
     self.password = @resource[:password] if @resource[:password]
