@@ -522,13 +522,14 @@ class Puppet::Parser::Lexer
     # backslash; the caret is there to match empty strings
     str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
     @line += str.count("\n") # literal carriage returns add to the line count.
-    str.gsub!(/\\(.)/) {
+    str.gsub!(/\\(.)/m) {
       ch = $1
       if escapes.include? ch
         case ch
         when 'n'; "\n"
         when 't'; "\t"
         when 's'; " "
+        when "\n": ''
         else      ch
         end
       else
