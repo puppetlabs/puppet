@@ -46,7 +46,7 @@ describe Puppet::Transaction::ResourceHarness do
       @harness.cache(@resource, :mode, "755")
       @harness.copy_audited_parameters(@resource, {}).should == [:mode]
 
-      @resource[:mode].should == 0755
+      @resource[:mode].should == "755"
     end
 
     it "should cache and log the current value if no cached values are present" do
@@ -169,7 +169,7 @@ describe Puppet::Transaction::ResourceHarness do
       @resource[:audit] = :mode
       @harness.cache(@resource, :mode, "755")
       @harness.changes_to_perform(@status, @resource)
-      @resource[:mode].should == 0755
+      @resource[:mode].should == "755"
     end
 
     it "should mark changes created as a result of auditing as auditing changes" do
@@ -242,7 +242,7 @@ describe Puppet::Transaction::ResourceHarness do
         @resource[:ensure] = :present
         @resource[:mode] = "755"
         @current_state[:ensure] = :present
-        @current_state[:mode] = 0755
+        @current_state[:mode] = "755"
         @harness.changes_to_perform(@status, @resource).should == []
       end
     end

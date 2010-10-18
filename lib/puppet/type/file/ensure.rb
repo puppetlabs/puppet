@@ -66,7 +66,7 @@ module Puppet
       end
       if mode
         Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path],mode)
+          Dir.mkdir(@resource[:path], mode.to_i(8))
         end
       else
         Dir.mkdir(@resource[:path])
