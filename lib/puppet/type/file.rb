@@ -290,25 +290,8 @@ Puppet::Type.newtype(:file) do
     super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
-  # List files, but only one level deep.
-  def self.instances(base = "/")
-    return [] unless FileTest.directory?(base)
-
-    files = []
-    Dir.entries(base).reject { |e|
-      e == "." or e == ".."
-    }.each do |name|
-      path = File.join(base, name)
-      if obj = self[path]
-        obj[:audit] = :all
-        files << obj
-      else
-        files << self.new(
-          :name => path, :audit => :all
-        )
-      end
-    end
-    files
+  def self.instances(base = '/')
+    return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
   end
 
   @depthfirst = false
