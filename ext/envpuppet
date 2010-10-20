@@ -1,0 +1,80 @@
+#! /bin/bash
+#
+# Jeff McCune <jeff@puppetlabs.com>
+# 2010-10-20
+#
+# Copyright (c) 2010, Puppet Labs
+# License: BSD 3-clause license
+#
+# This script provides a simple way to execute puppet and related tools
+# directly from a git clone of the upstream repositories.  This allows you to
+# quickly switch branches and test different versions of code without much
+# friction.
+#
+# NOTE: There may be issues if puppet, facter, etc... are already installed
+# into RUBY's site_ruby directory.  If you run into strange problems, make sure
+# the correct ruby libraries are being loaded...
+#
+# Sample Usage:
+# =============
+# cd ~/src
+# git clone git://github.com/puppetlabs/puppet.git
+# git clone git://github.com/puppetlabs/facter.git
+# pushd puppet
+# git checkout tags/2.6.1
+# popd
+# pushd facter
+# git checkout tags/1.5.8
+# export ENVPUPPET_BASEDIR=/home/jeff/src
+# envpuppet puppet --version
+# 2.6.1
+# envpuppet facter --version
+# 1.5.8
+
+set -e
+set -u
+
+if test -d puppet -o -d facter; then
+    echo " WARNING!"
+    echo "  Strange things happen if puppet or facter are in the"
+    echo "  current working directory"
+    echo "  (import errors from ruby are a prime example)"
+    echo " WARNING!"
+    echo ""
+    echo "I suggest changing to ~ or /tmp or something..."
+    echo ""
+    echo "Sleeping 2 seconds."
+    echo ""
+    sleep 2
+fi
+
+# Set this to where you check out puppet and facter
+: ${ENVPUPPET_BASEDIR:="${HOME}/src"}
+
+# git://github.com/reductivelabs/puppet.git
+mypath="${ENVPUPPET_BASEDIR}/puppet/sbin:${ENVPUPPET_BASEDIR}/puppet/bin"
+myrubylib="${ENVPUPPET_BASEDIR}/puppet/lib"
+
+# git://github.com/reductivelabs/facter.git
+mypath="${mypath}:${ENVPUPPET_BASEDIR}/facter/bin"
+myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/facter/lib"
+
+# http://github.com/jamtur01/puppet-scaffold.git
+mypath="${mypath}:${ENVPUPPET_BASEDIR}/puppet-scaffold/bin"
+myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/puppet-scaffold/lib"
+
+# http://github.com/puppetlabs/puppet-module-tool.git
+# Also known as "pmt"  Will become "puppet module"
+mypath="${mypath}:${ENVPUPPET_BASEDIR}/puppet-module-tool/bin"
+myrubylib="${myrubylib}:${ENVPUPPET_BASEDIR}/puppet-module-tool/lib"
+
+# Use the existing environment, if present.
+# Default to no value to prevent unbound variable issues
+mypath="${mypath}:${PATH:-}"
+myrubylib="${myrubylib}:${RUBYLIB:-}"
+
+# Trim any trailing colons from the path list.
+export PATH="${mypath%%:}"
+export RUBYLIB="${myrubylib%%:}"
+
+exec "$@"
