@@ -124,6 +124,10 @@ class Puppet::Node::Environment
     name.to_s
   end
 
+  def to_sym
+    to_s.to_sym
+  end
+
   # The only thing we care about when serializing an environment is its 
   # identity; everything else is ephemeral and should not be stored or
   # transmitted.
