@@ -18,7 +18,7 @@ class Puppet::Parser::Scope
 
   include Enumerable
   include Puppet::Util::Errors
-  attr_accessor :level, :source, :resource
+  attr_accessor :source, :resource
   attr_accessor :base, :keyword
   attr_accessor :top, :translated, :compiler
   attr_accessor :parent
@@ -318,8 +318,6 @@ class Puppet::Parser::Scope
   # to be reassigned.
   def setvar(name,value, options = {})
     table = options[:ephemeral] ? @ephemeral.last : @symtable
-    #Puppet.debug "Setting %s to '%s' at level %s mode append %s" %
-    #    [name.inspect,value,self.level, append]
     if table.include?(name)
       unless options[:append]
         error = Puppet::ParseError.new("Cannot reassign variable #{name}")
