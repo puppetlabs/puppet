@@ -104,11 +104,6 @@ class Puppet::Parser::Scope
     compiler.environment
   end
 
-  # Are we the top scope?
-  def topscope?
-    @level == 1
-  end
-
   def find_hostclass(name)
     known_resource_types.find_hostclass(namespaces, name)
   end
