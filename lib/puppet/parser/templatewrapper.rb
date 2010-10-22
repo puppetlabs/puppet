@@ -20,11 +20,7 @@ class Puppet::Parser::TemplateWrapper
 
   # Should return true if a variable is defined, false if it is not
   def has_variable?(name)
-    if scope.lookupvar(name.to_s, false) != :undefined
-      true
-    else
-      false
-    end
+    scope.lookupvar(name.to_s) != :undefined
   end
 
   # Allow templates to access the defined classes
@@ -55,9 +51,7 @@ class Puppet::Parser::TemplateWrapper
   # the missing_method definition here until we declare the syntax finally
   # dead.
   def method_missing(name, *args)
-    # We have to tell lookupvar to return :undefined to us when
-    # appropriate; otherwise it converts to "".
-    value = scope.lookupvar(name.to_s, false)
+    value = scope.lookupvar(name.to_s)
     if value != :undefined
       return value
     else

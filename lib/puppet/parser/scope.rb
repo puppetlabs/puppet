@@ -210,45 +210,41 @@ class Puppet::Parser::Scope
     find_definition(name) || find_hostclass(name)
   end
 
-  def lookup_qualified_var(name, usestring)
+  def undef_as(x,v)
+    (v == :undefined) ? x : (v == :undef) ? x : v
+  end
+
+  def lookup_qualified_var(name)
     parts = name.split(/::/)
     shortname = parts.pop
     klassname = parts.join("::")
     klass = find_hostclass(klassname)
     unless klass
       warning "Could not look up qualified variable '#{name}'; class #{klassname} could not be found"
-      return usestring ? "" : :undefined
+      return :undefined
     end
     unless kscope = class_scope(klass)
       warning "Could not look up qualified variable '#{name}'; class #{klassname} has not been evaluated"
-      return usestring ? "" : :undefined
+      return :undefined
     end
-    kscope.lookupvar(shortname, usestring)
+    kscope.lookupvar(shortname)
   end
 
   private :lookup_qualified_var
 
-  # Look up a variable.  The simplest value search we do.  Default to returning
-  # an empty string for missing values, but support returning a constant.
-  def lookupvar(name, usestring = true)
+  # Look up a variable.  The simplest value search we do.  
+  def lookupvar(name)
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     # If the variable is qualified, then find the specified scope and look the variable up there instead.
     if name =~ /::/
-      return lookup_qualified_var(name, usestring)
-    end
-    # We can't use "if table[name]" here because the value might be false
-    if ephemeral_include?(name) or table.include?(name)
-      if usestring and table[name] == :undef
-        return ""
-      else
-        return table[name]
-      end
-    elsif self.parent
-      return parent.lookupvar(name, usestring)
-    elsif usestring
-      return ""
+      lookup_qualified_var(name)
+    elsif ephemeral_include?(name) or table.include?(name)
+      # We can't use "if table[name]" here because the value might be false
+      table[name]
+    elsif parent
+      parent.lookupvar(name)
     else
-      return :undefined
+      :undefined
     end
   end
 
@@ -333,7 +329,7 @@ class Puppet::Parser::Scope
       table[name] = value
     else # append case
       # lookup the value in the scope if it exists and insert the var
-      table[name] = lookupvar(name)
+      table[name] = undef_as('',lookupvar(name))
       # concatenate if string, append if array, nothing for other types
       case value
       when Array
@@ -363,7 +359,7 @@ class Puppet::Parser::Scope
           if var and var =~ /^[0-9]+$/ and not ephemeral_include?(var)
             next
           end
-          out << lookupvar(var).to_s || ""
+          out << undef_as('',lookupvar(var)).to_s
         end
       elsif ss.scan(/^\\(.)/)
         # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])

@@ -336,12 +336,12 @@ describe Puppet::Parser::AST::Variable do
   end
 
   it "should lookup the variable in scope" do
-    @scope.expects(:lookupvar).with("myvar", false).returns(:myvalue)
+    @scope.expects(:lookupvar).with("myvar").returns(:myvalue)
     @var.safeevaluate(@scope).should == :myvalue
   end
 
   it "should return undef if the variable wasn't set" do
-    @scope.expects(:lookupvar).with("myvar", false).returns(:undefined)
+    @scope.expects(:lookupvar).with("myvar").returns(:undefined)
     @var.safeevaluate(@scope).should == :undef
   end
 

@@ -124,7 +124,7 @@ class Puppet::Parser::AST
     # not include syntactical constructs, like '$' and '{}').
     def evaluate(scope)
       parsewrap do
-        if (var = scope.lookupvar(@value, false)) == :undefined
+        if (var = scope.lookupvar(@value)) == :undefined
           var = :undef
         end
         var

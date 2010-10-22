@@ -76,16 +76,8 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when looking up a variable" do
-    it "should default to an empty string" do
-      @scope.lookupvar("var").should == ""
-    end
-
-    it "should return an string when asked for a string" do
-      @scope.lookupvar("var", true).should == ""
-    end
-
-    it "should return ':undefined' for unset variables when asked not to return a string" do
-      @scope.lookupvar("var", false).should == :undefined
+    it "should return ':undefined' for unset variables" do
+      @scope.lookupvar("var").should == :undefined
     end
 
     it "should be able to look up values" do
@@ -151,32 +143,32 @@ describe Puppet::Parser::Scope do
         @scope.lookupvar("other::deep::klass::var").should == "otherval"
       end
 
-      it "should return an empty string for qualified variables that cannot be found in other classes" do
+      it "should return ':undefined' for qualified variables that cannot be found in other classes" do
         other_scope = create_class_scope("other::deep::klass")
 
-        @scope.lookupvar("other::deep::klass::var").should == ""
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
-      it "should warn and return an empty string for qualified variables whose classes have not been evaluated" do
+      it "should warn and return ':undefined' for qualified variables whose classes have not been evaluated" do
         klass = newclass("other::deep::klass")
         @scope.expects(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == ""
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
-      it "should warn and return an empty string for qualified variables whose classes do not exist" do
+      it "should warn and return ':undefined' for qualified variables whose classes do not exist" do
         @scope.expects(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == ""
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that does not exist" do
         @scope.stubs(:warning)
-        @scope.lookupvar("other::deep::klass::var", false).should == :undefined
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that has not been evaluated" do
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
-        @scope.lookupvar("other::deep::klass::var", false).should == :undefined
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
     end
   end
@@ -291,7 +283,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var
 
-      @scope.lookupvar("1", false).should == :undefined
+      @scope.lookupvar("1").should == :undefined
     end
 
     it "should not remove classic variables when unset_ephemeral_var is called" do
@@ -301,7 +293,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var
 
-      @scope.lookupvar("myvar", false).should == :value1
+      @scope.lookupvar("myvar").should == :value1
     end
 
     it "should raise an error when setting it again" do
@@ -322,7 +314,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("0", :earliest, :ephemeral => true)
         @scope.new_ephemeral
         @scope.setvar("0", :latest, :ephemeral => true)
-        @scope.lookupvar("0", false).should == :latest
+        @scope.lookupvar("0").should == :latest
       end
 
       it "should be able to report the current level" do
@@ -353,7 +345,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("1", :value1, :ephemeral => true)
         @scope.new_ephemeral
         @scope.setvar("0", :value2, :ephemeral => true)
-        @scope.lookupvar("1", false).should == :value1
+        @scope.lookupvar("1").should == :value1
       end
 
       describe "when calling unset_ephemeral_var without a level" do
@@ -364,7 +356,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var
 
-          @scope.lookupvar("1", false).should == :undefined
+          @scope.lookupvar("1").should == :undefined
         end
       end
 
@@ -378,7 +370,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var(2)
 
-          @scope.lookupvar("1", false).should == :value2
+          @scope.lookupvar("1").should == :value2
         end
       end
     end
@@ -563,13 +555,13 @@ describe Puppet::Parser::Scope do
     it "should be able to unset normal variables" do
       @scope.setvar("foo", "bar")
       @scope.unsetvar("foo")
-      @scope.lookupvar("foo").should == ""
+      @scope.lookupvar("foo").should == :undefined
     end
 
     it "should be able to unset ephemeral variables" do
       @scope.setvar("0", "bar", :ephemeral => true)
       @scope.unsetvar("0")
-      @scope.lookupvar("0").should == ""
+      @scope.lookupvar("0").should == :undefined
     end
 
     it "should not unset ephemeral variables in previous ephemeral scope" do
