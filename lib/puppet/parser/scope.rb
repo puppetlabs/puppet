@@ -343,65 +343,6 @@ class Puppet::Parser::Scope
     end
   end
 
-  # Return an interpolated string.
-  def strinterp(string, file = nil, line = nil)
-    # Most strings won't have variables in them.
-    ss = StringScanner.new(string)
-    out = ""
-    while not ss.eos?
-      if ss.scan(/^\$\{((\w*::)*\w+|[0-9]+)\}|^\$([0-9])|^\$((\w*::)*\w+)/)
-        # If it matches the backslash, then just retun the dollar sign.
-        if ss.matched == '\\$'
-          out << '$'
-        else # look the variable up
-          # make sure $0-$9 are lookupable only if ephemeral
-          var = ss[1] || ss[3] || ss[4]
-          if var and var =~ /^[0-9]+$/ and not ephemeral_include?(var)
-            next
-          end
-          out << undef_as('',lookupvar(var)).to_s
-        end
-      elsif ss.scan(/^\\(.)/)
-        # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])
-        case ss[1]
-        when 'n'
-          out << "\n"
-        when 't'
-          out << "\t"
-        when 's'
-          out << " "
-        when '\\'
-          out << '\\'
-        when '$'
-          out << '$'
-        else
-          str = "Unrecognised escape sequence '#{ss.matched}'"
-          str += " in file #{file}" if file
-          str += " at line #{line}" if line
-          Puppet.warning str
-          out << ss.matched
-        end
-      elsif ss.scan(/^\$/)
-        out << '$'
-      elsif ss.scan(/^\\\n/) # an escaped carriage return
-        next
-      else
-        tmp = ss.scan(/[^\\$]+/)
-        # Puppet.debug("Got other: pos:%d; m:%s" % [ss.pos, tmp])
-        unless tmp
-          error = Puppet::ParseError.new("Could not parse string #{string.inspect}")
-          {:file= => file, :line= => line}.each do |m,v|
-            error.send(m, v) if v
-          end
-          raise error
-        end
-        out << tmp
-      end
-    end
-
-    out
-  end
-
   # Return the tags associated with this scope.  It's basically
   # just our parents' tags, plus our type.  We don't cache this value
   # because our parent tags might change between calls.
