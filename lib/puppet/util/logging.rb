@@ -15,6 +15,17 @@ module Puppet::Util::Logging
     end
   end
 
+  def deprication_warning(message)
+    $deprication_warnings ||= Hash.new(0)
+    if $deprication_warnings.length < 100 and ($deprication_warnings[message] += 1) == 1
+      warn message
+    end
+  end
+
+  def clear_deprication_warnings
+    $deprication_warnings.clear if $deprication_warnings
+  end
+
   private
 
   def is_resource?
