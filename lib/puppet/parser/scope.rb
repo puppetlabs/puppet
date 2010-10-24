@@ -214,30 +214,25 @@ class Puppet::Parser::Scope
     (v == :undefined) ? x : (v == :undef) ? x : v
   end
 
-  def lookup_qualified_var(name)
-    parts = name.split(/::/)
-    shortname = parts.pop
-    klassname = parts.join("::")
-    klass = find_hostclass(klassname)
-    unless klass
-      warning "Could not look up qualified variable '#{name}'; class #{klassname} could not be found"
-      return :undefined
-    end
-    unless kscope = class_scope(klass)
-      warning "Could not look up qualified variable '#{name}'; class #{klassname} has not been evaluated"
-      return :undefined
-    end
-    kscope.lookupvar(shortname)
+  def qualified_scope(classname)
+    raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
+    raise "class #{classname} has not been evaluated" unless kscope = class_scope(klass)
+    kscope
   end
 
-  private :lookup_qualified_var
+  private :qualified_scope
 
   # Look up a variable.  The simplest value search we do.  
   def lookupvar(name)
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     # If the variable is qualified, then find the specified scope and look the variable up there instead.
-    if name =~ /::/
-      lookup_qualified_var(name)
+    if name =~ /^(.*)::(.+)$/
+      begin 
+        qualified_scope($1).lookupvar($2)
+      rescue RuntimeError => e
+        warning "Could not look up qualified variable '#{name}'; #{e.message}"
+        :undefined
+      end
     elsif ephemeral_include?(name) or table.include?(name)
       # We can't use "if table[name]" here because the value might be false
       table[name]
