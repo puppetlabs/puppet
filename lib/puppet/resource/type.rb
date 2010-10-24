@@ -222,6 +222,19 @@ class Puppet::Resource::Type
       set[param] = true
     end
 
+    if @type == :hostclass
+      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
+      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+    else
+      scope.setvar("title", resource.title              ) unless set.include? :title
+      scope.setvar("name",  resource.name               ) unless set.include? :name
+    end
+    scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
+
+    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
+      scope.setvar("caller_module_name", caller_name)
+    end
+    scope.class_set(self.name,scope) if hostclass? or node?
     # Verify that all required arguments are either present or
     # have been provided with defaults.
     arguments.each do |param, default|
@@ -238,19 +251,6 @@ class Puppet::Resource::Type
       resource[param] = value
     end
 
-    if @type == :hostclass
-      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
-      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
-    else
-      scope.setvar("title", resource.title              ) unless set.include? :title
-      scope.setvar("name",  resource.name               ) unless set.include? :name
-    end
-    scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
-
-    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope.setvar("caller_module_name", caller_name)
-    end
-    scope.class_set(self.name,scope) if hostclass? or node?
   end
 
   # Create a new subscope in which to evaluate our code.
