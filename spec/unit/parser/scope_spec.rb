@@ -73,6 +73,14 @@ describe Puppet::Parser::Scope do
 
       Puppet::Parser::Scope.new.singleton_class.ancestors.should be_include(mod)
     end
+
+    it "should remember if it is dynamic" do
+      (!!Puppet::Parser::Scope.new(:dynamic => true).dynamic).should == true
+    end
+
+    it "should assume it is not dynamic" do
+      (!Puppet::Parser::Scope.new.dynamic).should == true
+    end
   end
 
   describe "when looking up a variable" do

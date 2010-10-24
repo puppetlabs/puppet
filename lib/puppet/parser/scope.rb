@@ -21,7 +21,7 @@ class Puppet::Parser::Scope
   attr_accessor :source, :resource
   attr_accessor :base, :keyword
   attr_accessor :top, :translated, :compiler
-  attr_accessor :parent
+  attr_accessor :parent, :dynamic
   attr_reader :namespaces
 
   # thin wrapper around an ephemeral

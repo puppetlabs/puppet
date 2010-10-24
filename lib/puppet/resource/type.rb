@@ -62,13 +62,11 @@ class Puppet::Resource::Type
 
   # Now evaluate the code associated with this class or definition.
   def evaluate_code(resource)
-    scope = resource.scope
 
-    if tmp = evaluate_parent_type(resource)
-      scope = tmp
-    end
+    static_parent = evaluate_parent_type(resource)
+    scope = static_parent || resource.scope
 
-    scope = subscope(scope, resource) unless resource.title == :main
+    scope = scope.newscope(:namespace => namespace, :source => self, :resource => resource, :dynamic => !static_parent) unless resource.title == :main
     scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)
@@ -261,11 +259,6 @@ class Puppet::Resource::Type
       resource[param] = value
     end
 
-  end
-
-  # Create a new subscope in which to evaluate our code.
-  def subscope(scope, resource)
-    scope.newscope :resource => resource, :namespace => self.namespace, :source => self
   end
 
   # Check whether a given argument is valid.
