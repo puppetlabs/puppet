@@ -16,8 +16,7 @@ describe Puppet::Parser::AST::VarDef do
       name.expects(:safeevaluate).with(@scope)
       value.expects(:safeevaluate).with(@scope)
 
-      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil,
-        :line => nil
+      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil, :line => nil
       vardef.evaluate(@scope)
     end
 
@@ -27,8 +26,7 @@ describe Puppet::Parser::AST::VarDef do
 
       @scope.expects(:setvar).with { |name,value,options| options[:append] == nil }
 
-      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil,
-        :line => nil
+      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil, :line => nil
       vardef.evaluate(@scope)
     end
 
@@ -38,8 +36,17 @@ describe Puppet::Parser::AST::VarDef do
 
       @scope.expects(:setvar).with { |name,value,options| options[:append] == true }
 
-      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil,
-        :line => nil, :append => true
+      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => nil, :line => nil, :append => true
+      vardef.evaluate(@scope)
+    end
+
+    it "should call pass the source location to setvar" do
+      name = stub 'name', :safeevaluate => "var"
+      value = stub 'value', :safeevaluate => "1"
+
+      @scope.expects(:setvar).with { |name,value,options| options[:file] == 'setvar.pp' and options[:line] == 917 }
+
+      vardef = Puppet::Parser::AST::VarDef.new :name => name, :value => value, :file => 'setvar.pp', :line => 917
       vardef.evaluate(@scope)
     end
 
