@@ -236,9 +236,13 @@ class Puppet::Parser::Scope
       end
     elsif ephemeral_include?(name) or table.include?(name)
       # We can't use "if table[name]" here because the value might be false
+      if options[:dynamic] and self != compiler.topscope
+        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        Puppet.deprication_warning "Dynamic lookup of $#{name}#{location} will not be supported in future versions. Use a fully-qualified variable name or parameterized classes."
+      end
       table[name]
     elsif parent
-      parent.lookupvar(name,options)
+      parent.lookupvar(name,options.merge(:dynamic => (dynamic || options[:dynamic])))
     else
       :undefined
     end
