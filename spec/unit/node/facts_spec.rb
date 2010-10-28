@@ -130,7 +130,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
         pson = PSON.parse(facts.to_pson)
-        pson.should == {"name"=>"foo", "timestamp"=>"Thu Oct 28 11:16:31 -0700 2010", "expiration"=>"Thu Oct 28 11:21:31 -0700 2010", "values"=>{"a"=>1, "b"=>2, "c"=>3}}
+        pson.should == {"name"=>"foo", "timestamp"=>@timestamp.to_s, "expiration"=>@expiration.to_s, "values"=>{"a"=>1, "b"=>2, "c"=>3}}
       end
     end
   end
