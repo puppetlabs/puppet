@@ -1,5 +1,9 @@
+require 'time'
+
 require 'puppet/node'
 require 'puppet/indirector'
+
+require 'puppet/util/pson'
 
 # Manage a given node's facts.  This either accepts facts and stores them, or
 # returns facts for a given node.
@@ -7,6 +11,7 @@ class Puppet::Node::Facts
   # Set up indirection, so that nodes can be looked for in
   # the node sources.
   extend Puppet::Indirector
+  extend Puppet::Util::Pson
 
   # We want to expire any cached nodes if the facts are saved.
   module NodeExpirer
@@ -52,6 +57,22 @@ class Puppet::Node::Facts
   def ==(other)
     return false unless self.name == other.name
     strip_internal == other.send(:strip_internal)
+  end
+
+  def self.from_pson(data)
+    result = new(data['name'], data['values'])
+    result.values[:_timestamp] = Time.parse(data['timestamp'])
+    result.expiration = Time.parse(data['expiration'])
+    result
+  end
+
+  def to_pson(*args)
+    {
+      'expiration' => expiration,
+      'name' => name,
+      'timestamp' => values[:_timestamp],
+      'values' => values.reject {|k,v| k == :_timestamp},
+    }.to_pson(*args)
   end
 
   private
