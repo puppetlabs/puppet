@@ -30,6 +30,10 @@ end
 class Puppet::TestIndirectedFoo::Rest < Puppet::Indirector::REST
 end
 
+# This port randomization is NOT a good pattern for testing, don't copy
+# but it's a quick fix to deal with sporadic test failures in Hudson #4894
+# Ticket #5098 created to fix these tests in the future
+masterport = rand(100) + 34300
 
 describe Puppet::Indirector::REST do
   before do
@@ -41,7 +45,7 @@ describe Puppet::Indirector::REST do
     Puppet.settings[:vardir] = @dir
     Puppet.settings[:group] = Process.gid
     Puppet.settings[:server] = "127.0.0.1"
-    Puppet.settings[:masterport] = "34343"
+    Puppet.settings[:masterport] = masterport
 
     Puppet::SSL::Host.ca_location = :local
 
@@ -65,7 +69,7 @@ describe Puppet::Indirector::REST do
       ca = Puppet::SSL::CertificateAuthority.new
       ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
 
-      @params = { :port => 34343, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
+      @params = { :port => masterport, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
       @server = Puppet::Network::Server.new(@params)
       @server.listen
 
@@ -291,7 +295,7 @@ describe Puppet::Indirector::REST do
 
     before :each do
       Puppet[:servertype] = 'mongrel'
-      @params = { :port => 34343, :handlers => [ :test_indirected_foo ] }
+      @params = { :port => masterport, :handlers => [ :test_indirected_foo ] }
 
       # Make sure we never get a cert, since mongrel can't speak ssl
       Puppet::SSL::Certificate.stubs(:find).returns nil
@@ -312,7 +316,7 @@ describe Puppet::Indirector::REST do
       Puppet::Network::HTTP::MongrelREST.any_instance.stubs(:check_authorization).returns(true)
     end
 
-    after do
+    after :each do
       @server.unlisten
     end
 

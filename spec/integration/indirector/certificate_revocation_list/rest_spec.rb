@@ -8,7 +8,11 @@ require 'puppet/network/http/webrick/rest'
 
 describe "Certificate REST Terminus" do
   before do
-    Puppet[:masterport] = 34343
+# This port randomization is NOT a good pattern for testing, don't copy
+# but it's a quick fix to deal with sporadic test failures in Hudson #4894
+# Ticket #5098 created to fix these tests in the future
+    masterport = rand(100) + 34500
+    Puppet[:masterport] = masterport
     Puppet[:server] = "localhost"
 
     # Get a safe temporary file
@@ -19,7 +23,7 @@ describe "Certificate REST Terminus" do
     Puppet.settings[:vardir] = @dir
     Puppet.settings[:group] = Process.gid
     Puppet.settings[:server] = "127.0.0.1"
-    Puppet.settings[:masterport] = "34343"
+    Puppet.settings[:masterport] = masterport
 
     Puppet::Util::Cacher.expire
 
@@ -32,7 +36,7 @@ describe "Certificate REST Terminus" do
     ca = Puppet::SSL::CertificateAuthority.new
     ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
 
-    @params = { :port => 34343, :handlers => [ :certificate_revocation_list ] }
+    @params = { :port => masterport, :handlers => [ :certificate_revocation_list ] }
     @server = Puppet::Network::Server.new(@params)
     @server.listen
 
