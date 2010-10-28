@@ -57,9 +57,8 @@ module Puppet::Network::HTTP::API::V1
     # fix to not need this, and our goal is to move away from the complication
     # that leads to the fix being too long.
     return :singular if indirection == "facts"
-
-    # "status" really is singular
     return :singular if indirection == "status"
+    return :plural if indirection == "inventory"
 
     result = (indirection =~ /s$/) ? :plural : :singular
 

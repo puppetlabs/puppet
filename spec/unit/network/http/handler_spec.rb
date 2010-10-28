@@ -305,17 +305,20 @@ describe Puppet::Network::HTTP::Handler do
         @handler.do_search(@irequest, @request, @response)
       end
 
-      it "should return a 404 when searching returns an empty array" do
-        @model_class.stubs(:name).returns "my name"
-        @handler.expects(:set_response).with { |response, body, status| status == 404 }
+      it "should return [] when searching returns an empty array" do
+        @handler.expects(:accept_header).with(@request).returns "one,two"
         @model_class.stubs(:search).returns([])
+        @model_class.expects(:render_multiple).with(@oneformat, []).returns "[]"
+
+
+        @handler.expects(:set_response).with { |response, data| data == "[]" }
         @handler.do_search(@irequest, @request, @response)
       end
 
       it "should return a 404 when searching returns nil" do
         @model_class.stubs(:name).returns "my name"
         @handler.expects(:set_response).with { |response, body, status| status == 404 }
-        @model_class.stubs(:search).returns([])
+        @model_class.stubs(:search).returns(nil)
         @handler.do_search(@irequest, @request, @response)
       end
     end
