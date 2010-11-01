@@ -33,6 +33,11 @@ class Puppet::Node::Inventory::Yaml < Puppet::Indirector::Yaml
 
   def node_matches_option?(type, name, operator, value, facts)
     case type
+    when "meta"
+      case name
+      when "timestamp"
+        compare_timestamp(operator, facts.timestamp, Time.parse(value))
+      end
     when "facts"
       compare_facts(operator, facts.values[name], value)
     end
@@ -54,6 +59,23 @@ class Puppet::Node::Inventory::Yaml < Puppet::Indirector::Yaml
       value1.to_f > value2.to_f
     when "ne"
       value1.to_s != value2.to_s
+    end
+  end
+
+  def compare_timestamp(operator, value1, value2)
+    case operator
+    when "eq"
+      value1 == value2
+    when "le"
+      value1 <= value2
+    when "ge"
+      value1 >= value2
+    when "lt"
+      value1 < value2
+    when "gt"
+      value1 > value2
+    when "ne"
+      value1 != value2
     end
   end
 end
