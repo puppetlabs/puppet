@@ -9,6 +9,7 @@ require 'puppet/indirector/catalog/compiler'
 
 describe Puppet::Resource::Catalog::Compiler do
   before do
+    require 'puppet/rails'
     Puppet::Rails.stubs(:init)
     Facter.stubs(:to_hash).returns({})
     Facter.stubs(:value).returns(Facter::Util::Fact.new("something"))
