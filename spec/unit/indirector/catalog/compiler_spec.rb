@@ -156,7 +156,8 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @request = stub 'request', :options => {}
 
-      @facts = stub 'facts', :save => nil
+      @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
+      @facts.stubs(:save).returns(nil)
     end
 
     it "should do nothing if no facts are provided" do
