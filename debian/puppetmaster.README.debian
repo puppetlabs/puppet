@@ -18,7 +18,7 @@ the domain name in the SSL configuration to be yours).
 Additionally, your puppet.conf on your puppetmaster will need the
 following settings:
 
-[puppetmasterd]]
+[master]
 ssl_client_header = SSL_CLIENT_S_DN
 ssl_client_verify_header = SSL_CLIENT_VERIFY
 

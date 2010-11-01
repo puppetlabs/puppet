@@ -52,7 +52,7 @@ PORT=8140
 #  dbuser=puppet
 #  dbpassword=xxxx
 #  dblocation = /var/lib/puppet/storeconfigs.sqlite <-- only if using sqlite
-#  [puppetmasterd]
+#  [master]
 #  async_storeconfigs = true
 #
 #  See: http://reductivelabs.com/trac/puppet/wiki/UsingStoredConfiguration

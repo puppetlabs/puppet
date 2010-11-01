@@ -1,6 +1,8 @@
 puppet (2.6.2-2) UNRELEASED; urgency=low
 
   * Fix puppetqd initscript PID location
+  * Fix /etc/default/puppetmaster comments to match new section headings
+  * Fix puppetmaster/README.Debian to match new section headings
 
  -- Micah Anderson <micah@debian.org>  Mon, 01 Nov 2010 19:21:55 -0400
 
