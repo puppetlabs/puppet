@@ -35,7 +35,7 @@ class Puppet::Node::Facts
     @name = name
     @values = values
 
-    add_internal
+    add_timestamp
   end
 
   def downcase_if_necessary
@@ -75,12 +75,20 @@ class Puppet::Node::Facts
     }.to_pson(*args)
   end
 
-  private
-
   # Add internal data to the facts for storage.
-  def add_internal
-    self.values[:_timestamp] = Time.now
+  def add_timestamp
+    self.timestamp = Time.now
   end
+
+  def timestamp=(time)
+    self.values[:_timestamp] = time
+  end
+
+  def timestamp
+    self.values[:_timestamp]
+  end
+
+  private
 
   # Strip out that internal data.
   def strip_internal

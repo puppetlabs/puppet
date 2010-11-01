@@ -22,6 +22,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     else
       facts = Puppet::Node::Facts.convert_from(format, text_facts)
     end
+    facts.add_timestamp
     facts.save
   end
 
