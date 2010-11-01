@@ -7,7 +7,7 @@ require 'puppet/indirector/inventory/yaml'
 require 'puppet/indirector/request'
 
 describe Puppet::Node::Inventory::Yaml do
-  def setup_search_matching(matching, nonmatching, query)
+  def assert_search_matches(matching, nonmatching, query)
     request = Puppet::Indirector::Request.new(:inventory, :search, nil, query)
 
     Dir.stubs(:glob).returns(matching.keys + nonmatching.keys)
@@ -16,11 +16,11 @@ describe Puppet::Node::Inventory::Yaml do
         YAML.stubs(:load_file).with(key).returns value
       end
     end
-    return matching, request
+    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
   it "should return node names that match the search query options" do
-    matching, request = setup_search_matching({
+    assert_search_matches({
         '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => "i386", 'processor_count' => '4'),
         '/path/to/matching1.yaml' => Puppet::Node::Facts.new("matchingnode1", "architecture" => "i386", 'processor_count' => '4', 'randomfact' => 'foo')
       },
@@ -32,11 +32,10 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.architecture' => 'i386', 'facts.processor_count' => '4'}
     )
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
   it "should return empty array when no nodes match the search query options" do
-    matching, request = setup_search_matching({}, {
+    assert_search_matches({}, {
         "/path/to/nonmatching.yaml"  => Puppet::Node::Facts.new("nonmatchingnode",  "architecture" => "powerpc", 'processor_count' => '10'),
         "/path/to/nonmatching1.yaml" => Puppet::Node::Facts.new("nonmatchingnode1", "architecture" => "powerpc", 'processor_count' => '5'),
         "/path/to/nonmatching2.yaml" => Puppet::Node::Facts.new("nonmatchingnode2", "architecture" => "i386",    'processor_count' => '5'),
@@ -44,12 +43,11 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.processor_count.lt' => '4', 'facts.processor_count.gt' => '4'}
     )
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
 
   it "should return node names that match the search query options with the greater than operator" do
-    matching, request = setup_search_matching({
+    assert_search_matches({
         '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => "i386",    'processor_count' => '5'),
         '/path/to/matching1.yaml' => Puppet::Node::Facts.new("matchingnode1", "architecture" => "powerpc", 'processor_count' => '10', 'randomfact' => 'foo')
       },
@@ -60,12 +58,10 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.processor_count.gt' => '4'}
     )
-
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
   it "should return node names that match the search query options with the less than operator" do
-    matching, request = setup_search_matching({
+    assert_search_matches({
         '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => "i386",    'processor_count' => '5'),
         '/path/to/matching1.yaml' => Puppet::Node::Facts.new("matchingnode1", "architecture" => "powerpc", 'processor_count' => '30', 'randomfact' => 'foo')
       },
@@ -76,12 +72,10 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.processor_count.lt' => '50'}
     )
-
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
   it "should return node names that match the search query options with the less than or equal to operator" do
-    matching, request = setup_search_matching({
+    assert_search_matches({
         '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => "i386",    'processor_count' => '5'),
         '/path/to/matching1.yaml' => Puppet::Node::Facts.new("matchingnode1", "architecture" => "powerpc", 'processor_count' => '50', 'randomfact' => 'foo')
       },
@@ -92,12 +86,10 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.processor_count.le' => '50'}
     )
-
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
   it "should return node names that match the search query options with the greater than or equal to operator" do
-    matching, request = setup_search_matching({
+    assert_search_matches({
         '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => "i386",    'processor_count' => '100'),
         '/path/to/matching1.yaml' => Puppet::Node::Facts.new("matchingnode1", "architecture" => "powerpc", 'processor_count' => '50', 'randomfact' => 'foo')
       },
@@ -108,12 +100,10 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.processor_count.ge' => '50'}
     )
-
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 
   it "should return node names that match the search query options with the not equal operator" do
-    matching, request = setup_search_matching({
+    assert_search_matches({
         '/path/to/matching.yaml'  => Puppet::Node::Facts.new("matchingnode",  "architecture" => 'arm'                           ),
         '/path/to/matching1.yaml' => Puppet::Node::Facts.new("matchingnode1", "architecture" => 'powerpc', 'randomfact' => 'foo')
       },
@@ -124,7 +114,5 @@ describe Puppet::Node::Inventory::Yaml do
       },
       {'facts.architecture.ne' => 'i386'}
     )
-
-    Puppet::Node::Inventory::Yaml.new.search(request).should =~ matching.values.map {|facts| facts.name}
   end
 end
