@@ -15,23 +15,7 @@ class Puppet::Node::Inventory::Yaml < Puppet::Indirector::Yaml
       type, name, operator = key.to_s.split(".")
       operator ||= 'eq'
 
-      next unless type == "facts"
-      return false unless facts.values[name]
-
-      return false unless case operator
-      when "eq"
-        facts.values[name].to_s == value.to_s
-      when "le"
-        facts.values[name].to_f <= value.to_f
-      when "ge"
-        facts.values[name].to_f >= value.to_f
-      when "lt"
-        facts.values[name].to_f < value.to_f
-      when "gt"
-        facts.values[name].to_f > value.to_f
-      when "ne"
-        facts.values[name].to_s != value.to_s
-      end
+      return false unless node_matches_option?(type, name, operator, value, facts)
     end
     return true
   end
@@ -43,5 +27,55 @@ class Puppet::Node::Inventory::Yaml < Puppet::Indirector::Yaml
       node_names << facts.name if node_matches?(facts, request.options)
     end
     node_names
+  end
+
+  private
+
+  def node_matches_option?(type, name, operator, value, facts)
+    case type
+    when "meta"
+      case name
+      when "timestamp"
+        compare_timestamp(operator, facts.timestamp, Time.parse(value))
+      end
+    when "facts"
+      compare_facts(operator, facts.values[name], value)
+    end
+  end
+
+  def compare_facts(operator, value1, value2)
+    return false unless value1
+
+    case operator
+    when "eq"
+      value1.to_s == value2.to_s
+    when "le"
+      value1.to_f <= value2.to_f
+    when "ge"
+      value1.to_f >= value2.to_f
+    when "lt"
+      value1.to_f < value2.to_f
+    when "gt"
+      value1.to_f > value2.to_f
+    when "ne"
+      value1.to_s != value2.to_s
+    end
+  end
+
+  def compare_timestamp(operator, value1, value2)
+    case operator
+    when "eq"
+      value1 == value2
+    when "le"
+      value1 <= value2
+    when "ge"
+      value1 >= value2
+    when "lt"
+      value1 < value2
+    when "gt"
+      value1 > value2
+    when "ne"
+      value1 != value2
+    end
   end
 end
