@@ -115,4 +115,107 @@ describe Puppet::Node::Inventory::Yaml do
       {'facts.architecture.ne' => 'i386'}
     )
   end
+
+  def apply_timestamp(facts, timestamp)
+    facts.timestamp = timestamp
+    facts
+  end
+
+  it "should be able to query based on meta.timestamp.gt" do
+    assert_search_matches({
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+      },
+      {
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {'meta.timestamp.gt' => '2010-10-15'}
+    )
+  end
+
+  it "should be able to query based on meta.timestamp.le" do
+    assert_search_matches({
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+      },
+      {'meta.timestamp.le' => '2010-10-15'}
+    )
+  end
+
+  it "should be able to query based on meta.timestamp.lt" do
+    assert_search_matches({
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+      },
+      {
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {'meta.timestamp.lt' => '2010-10-15'}
+    )
+  end
+
+  it "should be able to query based on meta.timestamp.ge" do
+    assert_search_matches({
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+      },
+      {'meta.timestamp.ge' => '2010-10-15'}
+    )
+  end
+
+  it "should be able to query based on meta.timestamp.eq" do
+    assert_search_matches({
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+      },
+      {'meta.timestamp.eq' => '2010-10-15'}
+    )
+  end
+
+  it "should be able to query based on meta.timestamp" do
+    assert_search_matches({
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+      },
+      {'meta.timestamp' => '2010-10-15'}
+    )
+  end
+
+  it "should be able to query based on meta.timestamp.ne" do
+    assert_search_matches({
+        '/path/to/2010-11-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-01", {}), Time.parse("2010-11-01")),
+        '/path/to/2010-11-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-11-10", {}), Time.parse("2010-11-10")),
+        '/path/to/2010-10-01.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-01", {}), Time.parse("2010-10-01")),
+        '/path/to/2010-10-10.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-10", {}), Time.parse("2010-10-10")),
+      },
+      {
+        '/path/to/2010-10-15.yaml' => apply_timestamp(Puppet::Node::Facts.new("2010-10-15", {}), Time.parse("2010-10-15")),
+      },
+      {'meta.timestamp.ne' => '2010-10-15'}
+    )
+  end
 end
