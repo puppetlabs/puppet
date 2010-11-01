@@ -9,6 +9,7 @@ require 'puppet/indirector/catalog/compiler'
 
 describe Puppet::Resource::Catalog::Compiler do
   before do
+    require 'puppet/rails'
     Puppet::Rails.stubs(:init)
     Facter.stubs(:to_hash).returns({})
     Facter.stubs(:value).returns(Facter::Util::Fact.new("something"))
@@ -155,7 +156,8 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @request = stub 'request', :options => {}
 
-      @facts = stub 'facts', :save => nil
+      @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
+      @facts.stubs(:save).returns(nil)
     end
 
     it "should do nothing if no facts are provided" do
@@ -165,12 +167,17 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.extract_facts_from_request(@request)
     end
 
-    it "should use the Facts class to deserialize the provided facts" do
+    it "should use the Facts class to deserialize the provided facts and update the timestamp" do
       @request.options[:facts_format] = "foo"
       @request.options[:facts] = "bar"
       Puppet::Node::Facts.expects(:convert_from).returns @facts
 
+      @facts.timestamp = Time.parse('2010-11-01')
+      @now = Time.parse('2010-11-02')
+      Time.expects(:now).returns(@now)
+
       @compiler.extract_facts_from_request(@request)
+      @facts.timestamp.should == @now
     end
 
     it "should use the provided fact format" do
