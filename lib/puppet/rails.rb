@@ -57,16 +57,10 @@ module Puppet::Rails
 
       socket          = Puppet[:dbsocket]
       args[:socket]   = socket unless socket.to_s.empty?
-
-      connections     = Puppet[:dbconnections].to_i
-      args[:pool]     = connections if connections > 0
     when "oracle_enhanced":
       args[:database] = Puppet[:dbname] unless Puppet[:dbname].to_s.empty?
       args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
       args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
-
-      connections     = Puppet[:dbconnections].to_i
-      args[:pool]     = connections if connections > 0
     else
       raise ArgumentError, "Invalid db adapter #{adapter}"
     end
