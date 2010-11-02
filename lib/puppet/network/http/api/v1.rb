@@ -30,7 +30,7 @@ module Puppet::Network::HTTP::API::V1
 
     key = URI.unescape(key)
 
-    Puppet::Indirector::Request.new(indirection, method, key, params)
+    [indirection, method, key, params]
   end
 
   def indirection2uri(request)
