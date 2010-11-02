@@ -663,6 +663,8 @@ module Puppet
       used when networked databases are used."],
     :dbpassword => [ "puppet", "The database password for caching. Only
       used when networked databases are used."],
+    :dbconnections => [ '', "The number of database connections for networked
+      databases.  Will be ignored unless the value is a positive integer."],
     :dbsocket => [ "", "The database socket location. Only used when networked
       databases are used.  Will be ignored if the value is an empty string."],
     :railslog => {:default => "$logdir/rails.log",

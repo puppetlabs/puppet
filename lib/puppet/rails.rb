@@ -52,6 +52,7 @@ module Puppet::Rails
       args[:port]     = Puppet[:dbport] unless Puppet[:dbport].to_s.empty?
       args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
       args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
+      args[:pool]     = Puppet[:dbconnections].to_i unless Puppet[:dbconnections].to_i <= 0
       args[:database] = Puppet[:dbname]
       args[:reconnect]= true
 
@@ -61,6 +62,7 @@ module Puppet::Rails
       args[:database] = Puppet[:dbname] unless Puppet[:dbname].to_s.empty?
       args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
       args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
+      args[:pool]     = Puppet[:dbconnections].to_i unless Puppet[:dbconnections].to_i <= 0
     else
       raise ArgumentError, "Invalid db adapter #{adapter}"
     end
