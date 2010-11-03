@@ -141,8 +141,8 @@ Puppet::Type.newtype(:tidy) do
   newparam(:size) do
     desc "Tidy files whose size is equal to or greater than
       the specified size.  Unqualified values are in kilobytes, but
-      *b*, *k*, *m*, and *g* can be appended to specify *bytes*,
-      *kilobytes*, *megabytes*, and *gigabytes*, respectively.
+      *b*, *k*, *m*, *g*, and *t* can be appended to specify *bytes*,
+      *kilobytes*, *megabytes*, *gigabytes*, and *terabytes*, respectively.
       Only the first character is significant, so the full word can also 
       be used."
 
@@ -150,7 +150,8 @@ Puppet::Type.newtype(:tidy) do
       :b => 0,
       :k => 1,
       :m => 2,
-      :g => 3
+      :g => 3,
+      :t => 4
     }
 
     def convert(unit, multi)
