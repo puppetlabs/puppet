@@ -1,10 +1,11 @@
 puppet (2.6.2-2) unstable; urgency=low
 
   * Fix puppetqd initscript PID location
-  * Fix /etc/default/puppetmaster comments to match new section headings
+  * Fix default/puppetmaster comments section headings
   * Fix puppetmaster/README.Debian to match new section headings
-  * Add missing Suggests on libactiverecord-ruby1.8, libmysql-ruby1.8 | libpgsql-ruby1.8
-  * Add missing var/lib/puppet/client_yaml/catalog in puppet-common.dirs (Closes: #557769)
+  * Add missing Suggests on ruby libraries needed for storedconfigs
+  * Add missing var/lib/puppet/client_yaml/catalog in 
+    puppet-common.dirs (Closes: #557769)
 
  -- Micah Anderson <micah@debian.org>  Mon, 01 Nov 2010 19:21:55 -0400
 
