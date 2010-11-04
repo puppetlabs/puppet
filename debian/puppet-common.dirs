@@ -5,3 +5,4 @@ etc/puppet/modules
 usr/lib/ruby/1.8
 var/lib/puppet
 var/log/puppet
+var/lib/puppet/client_yaml/catalog
