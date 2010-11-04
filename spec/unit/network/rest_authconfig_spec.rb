@@ -30,9 +30,6 @@ describe Puppet::Network::RestAuthConfig do
 
     @acl = stub_everything 'rights'
     @authconfig.rights = @acl
-
-    @request = stub 'request', :indirection_name => "path", :key => "to/resource", :ip => "127.0.0.1",
-      :node => "me", :method => :save, :environment => :env, :authenticated => true
   end
 
   it "should use the puppet default rest authorization file" do
@@ -41,16 +38,10 @@ describe Puppet::Network::RestAuthConfig do
     Puppet::Network::RestAuthConfig.new(nil, false)
   end
 
-  it "should read the config file when needed" do
-    @authconfig.expects(:read)
-
-    @authconfig.allowed?(@request)
-  end
-
   it "should ask for authorization to the ACL subsystem" do
     @acl.expects(:fail_on_deny).with("/path/to/resource", :node => "me", :ip => "127.0.0.1", :method => :save, :environment => :env, :authenticated => true)
 
-    @authconfig.allowed?(@request)
+    @authconfig.allowed?("path", :save, "to/resource", :ip => "127.0.0.1", :node => "me", :environment => :env, :authenticated => true)
   end
 
   describe "when defining an acl with mk_acl" do
