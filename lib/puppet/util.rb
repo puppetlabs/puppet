@@ -198,7 +198,7 @@ module Util
     end
   end
 
-  def binary(bin)
+  def which(bin)
     if bin =~ /^\//
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
@@ -209,7 +209,7 @@ module Util
     end
     nil
   end
-  module_function :binary
+  module_function :which
 
   # Execute the provided command in a pipe, yielding the pipe object.
   def execpipe(command, failonfail = true)
@@ -378,15 +378,10 @@ module Util
 
   def memory
     unless defined?(@pmap)
-      pmap = %x{which pmap 2>/dev/null}.chomp
-      if $CHILD_STATUS != 0 or pmap =~ /^no/
-        @pmap = nil
-      else
-        @pmap = pmap
-      end
+      @pmap = which('pmap')
     end
     if @pmap
-      return %x{pmap #{Process.pid}| grep total}.chomp.sub(/^\s*total\s+/, '').sub(/K$/, '').to_i
+      %x{#{@pmap} #{Process.pid}| grep total}.chomp.sub(/^\s*total\s+/, '').sub(/K$/, '').to_i
     else
       0
     end

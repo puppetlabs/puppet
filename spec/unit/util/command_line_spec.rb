@@ -86,7 +86,7 @@ describe Puppet::Util::CommandLine do
   describe "when the subcommand is not implemented" do
     it "should find and invoke an executable with a hyphenated name" do
       commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
-      Puppet::Util.expects(:binary).with('puppet-whatever').returns('/dev/null/puppet-whatever')
+      Puppet::Util.expects(:which).with('puppet-whatever').returns('/dev/null/puppet-whatever')
       commandline.expects(:system).with('/dev/null/puppet-whatever', 'argument')
 
       commandline.execute
@@ -95,7 +95,7 @@ describe Puppet::Util::CommandLine do
     describe "and an external implementation cannot be found" do
       it "should abort and show the usage message" do
         commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
-        Puppet::Util.expects(:binary).with('puppet-whatever').returns(nil)
+        Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
         commandline.expects(:system).never
 
         commandline.expects(:usage_message).returns("the usage message")

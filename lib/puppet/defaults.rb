@@ -637,7 +637,7 @@ module Puppet
     setdefaults(
     :tagmail,
     :tagmap => ["$confdir/tagmail.conf", "The mapping between reporting tags and email addresses."],
-    :sendmail => [%x{which sendmail 2>/dev/null}.chomp, "Where to find the sendmail binary with which to send email."],
+    :sendmail => [which('sendmail') || '', "Where to find the sendmail binary with which to send email."],
 
     :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."), "The 'from' email address for the reports."],
     :smtpserver => ["none", "The server through which to send email reports."]

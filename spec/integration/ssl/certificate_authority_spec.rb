@@ -121,9 +121,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should save valid certificates" do
       @ca.sign("luke.madstop.com")
 
-      ssl = %x{which openssl}
-
-      unless ssl
+      unless ssl = Puppet::Util::which('openssl')
         pending "No ssl available"
       else
         ca_cert = Puppet[:cacert]
