@@ -17,7 +17,7 @@ class Parser
 
   SITE = "__site__"
 
-  attr_accessor :ast, :input_file_name, :top_level
+  attr_accessor :input_file_name, :top_level
 
   # parser registration into RDoc
   parse_files_matching(/\.(rb|pp)$/)
@@ -33,15 +33,18 @@ class Parser
 
   # main entry point
   def scan
-    env = Puppet::Node::Environment.new
-    unless env.known_resource_types.watching_file?(@input_file_name)
+    environment = Puppet::Node::Environment.new
+    unless environment.known_resource_types.watching_file?(@input_file_name)
       Puppet.info "rdoc: scanning #{@input_file_name}"
       if @input_file_name =~ /\.pp$/
-        @parser = Puppet::Parser::Parser.new(env)
+        @parser = Puppet::Parser::Parser.new(environment)
         @parser.file = @input_file_name
-        @ast = @parser.parse
+        @known_resource_types = environment.known_resource_types
+        @parser.parse.instantiate('').each do |type|
+          @known_resource_types.add type
+        end
+        scan_top_level(@top_level)
       end
-      scan_top_level(@top_level)
     end
     @top_level
   end
@@ -204,19 +207,21 @@ class Parser
       if stmt.is_a?(Puppet::Parser::AST::Resource) and !stmt.type.nil?
         begin
           type = stmt.type.split("::").collect { |s| s.capitalize }.join("::")
-          title = stmt.title.is_a?(Puppet::Parser::AST::ASTArray) ? stmt.title.to_s.gsub(/\[(.*)\]/,'\1') : stmt.title.to_s
-          Puppet.debug "rdoc: found resource: #{type}[#{title}]"
+          stmt.instances.each do |inst|
+            title = inst.title.is_a?(Puppet::Parser::AST::ASTArray) ? inst.title.to_s.gsub(/\[(.*)\]/,'\1') : inst.title.to_s
+            Puppet.debug "rdoc: found resource: #{type}[#{title}]"
 
-          param = []
-          stmt.parameters.children.each do |p|
-            res = {}
-            res["name"] = p.param
-            res["value"] = "#{p.value.to_s}" unless p.value.nil?
+            param = []
+            inst.parameters.children.each do |p|
+              res = {}
+              res["name"] = p.param
+              res["value"] = "#{p.value.to_s}" unless p.value.nil?
 
-            param << res
+              param << res
+            end
+
+            container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
           end
-
-          container.add_resource(PuppetResource.new(type, title, stmt.doc, param))
         rescue => detail
           raise Puppet::ParseError, "impossible to parse resource in #{stmt.file} at line #{stmt.line}: #{detail}"
         end
@@ -337,7 +342,7 @@ class Parser
   # that contains the documentation
   def parse_elements(container)
     Puppet.debug "rdoc: scanning manifest"
-    @ast.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
+    @known_resource_types.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
       name = klass.name
       if klass.file == @input_file_name
         unless name.empty?
@@ -350,13 +355,13 @@ class Parser
       end
     end
 
-    @ast.definitions.each do |name, define|
+    @known_resource_types.definitions.each do |name, define|
       if define.file == @input_file_name
         document_define(name,define,container)
       end
     end
 
-    @ast.nodes.each do |name, node|
+    @known_resource_types.nodes.each do |name, node|
       if node.file == @input_file_name
         document_node(name.to_s,node,container)
       end

@@ -39,9 +39,8 @@ class TestParser < Test::Unit::TestCase
     failers { |file|
       parser = mkparser
       Puppet.debug("parsing failer #{file}") if __FILE__ == $0
-      assert_raise(Puppet::ParseError, "Did not fail while parsing #{file}") {
-        parser.file = file
-        ast = parser.parse
+      assert_raise(Puppet::ParseError, Puppet::Error, "Did not fail while parsing #{file}") {
+        Puppet[:manifest] = file
         config = mkcompiler(parser)
         config.compile
         #ast.hostclass("").evaluate config.topscope
@@ -288,7 +287,7 @@ class TestParser < Test::Unit::TestCase
       ret = parser.parse
     }
 
-    ret.hostclass("").code.each do |obj|
+    ret.code.each do |obj|
       assert_instance_of(AST::Collection, obj)
     end
   end
@@ -362,12 +361,12 @@ file { "/tmp/yayness":
 
 
     assert_raise(Puppet::ParseError) {
-      parser.parse %{define mydef($schedule) {}}
+      parser.known_resource_types.import_ast(parser.parse(%{define mydef($schedule) {}}), '')
     }
 
     assert_nothing_raised {
-      parser.parse %{define adef($schedule = false) {}}
-      parser.parse %{define mydef($schedule = daily) {}}
+      parser.known_resource_types.import_ast(parser.parse(%{define adef($schedule = false) {}}), '')
+      parser.known_resource_types.import_ast(parser.parse(%{define mydef($schedule = daily) {}}), '')
     }
   end
 
@@ -379,12 +378,12 @@ file { "/tmp/yayness":
     str1 = %{if true { #{exec.call("true")} }}
     ret = nil
     assert_nothing_raised {
-      ret = parser.parse(str1).hostclass("").code[0]
+      ret = parser.parse(str1).code[0]
     }
     assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
     parser = mkparser
     str2 = %{if true { #{exec.call("true")} } else { #{exec.call("false")} }}
-    ret = parser.parse(str2).hostclass("").code[0]
+    ret = parser.parse(str2).code[0]
     assert_instance_of(Puppet::Parser::AST::IfStatement, ret)
     assert_instance_of(Puppet::Parser::AST::Else, ret.else)
   end
@@ -393,23 +392,23 @@ file { "/tmp/yayness":
     parser = mkparser
 
     assert_nothing_raised {
-      parser.parse %{class myclass { class other {} }}
+      parser.known_resource_types.import_ast(parser.parse(%{class myclass { class other {} }}), '')
     }
     assert(parser.hostclass("myclass"), "Could not find myclass")
     assert(parser.hostclass("myclass::other"), "Could not find myclass::other")
 
     assert_nothing_raised {
-      parser.parse "class base {}
+      parser.known_resource_types.import_ast(parser.parse("class base {}
       class container {
         class deep::sub inherits base {}
-      }"
+      }"), '')
     }
     sub = parser.hostclass("container::deep::sub")
     assert(sub, "Could not find sub")
 
     # Now try it with a parent class being a fq class
     assert_nothing_raised {
-      parser.parse "class container::one inherits container::deep::sub {}"
+      parser.known_resource_types.import_ast(parser.parse("class container::one inherits container::deep::sub {}"), '')
     }
     sub = parser.hostclass("container::one")
     assert(sub, "Could not find one")
@@ -417,7 +416,7 @@ file { "/tmp/yayness":
 
     # Finally, try including a qualified class
     assert_nothing_raised("Could not include fully qualified class") {
-      parser.parse "include container::deep::sub"
+      parser.known_resource_types.import_ast(parser.parse("include container::deep::sub"), '')
     }
   end
 
@@ -426,20 +425,11 @@ file { "/tmp/yayness":
 
     # Make sure we put the top-level code into a class called "" in
     # the "" namespace
-    assert_nothing_raised do
-      out = parser.parse ""
-
-      assert_instance_of(Puppet::Resource::TypeCollection, out)
-      assert_nil(parser.hostclass(""), "Got a 'main' class when we had no code")
-    end
-
-    # Now try something a touch more complicated
     parser.initvars
     assert_nothing_raised do
-      out = parser.parse "Exec { path => '/usr/bin:/usr/sbin' }"
-      assert_instance_of(Puppet::Resource::TypeCollection, out)
-      assert_equal("", parser.hostclass("").name)
-      assert_equal("", parser.hostclass("").namespace)
+      parser.known_resource_types.import_ast(parser.parse("Exec { path => '/usr/bin:/usr/sbin' }"), '')
+      assert_equal("", parser.known_resource_types.hostclass("").name)
+      assert_equal("", parser.known_resource_types.hostclass("").namespace)
     end
   end
 
@@ -482,22 +472,26 @@ file { "/tmp/yayness":
 
       ret = nil
       assert_nothing_raised do
-        ret = parser.parse("#{at}file { '/tmp/testing': owner => root }")
+        parser.known_resource_types.import_ast(parser.parse("#{at}file { '/tmp/testing': owner => root }"), '')
+        ret = parser.known_resource_types
       end
 
       assert_instance_of(AST::ASTArray, ret.hostclass("").code)
       resdef = ret.hostclass("").code[0]
       assert_instance_of(AST::Resource, resdef)
-      assert_equal("/tmp/testing", resdef.title.value)
+      assert_instance_of(AST::ASTArray, resdef.instances)
+      assert_equal(1, resdef.instances.children.length)
+      assert_equal("/tmp/testing", resdef.instances[0].title.value)
       # We always get an astarray back, so...
       check.call(resdef, "simple resource")
 
       # Now let's try it with multiple resources in the same spec
       assert_nothing_raised do
-        ret = parser.parse("#{at}file { ['/tmp/1', '/tmp/2']: owner => root }")
+        parser.known_resource_types.import_ast(parser.parse("#{at}file { ['/tmp/1', '/tmp/2']: owner => root }"), '')
+        ret = parser.known_resource_types
       end
 
-      ret.hostclass("").code.each do |res|
+      ret.hostclass("").code[0].each do |res|
         assert_instance_of(AST::Resource, res)
         check.call(res, "multiresource")
       end
@@ -537,7 +531,7 @@ file { "/tmp/yayness":
         ret = parser.parse("File #{arrow}")
       end
 
-      coll = ret.hostclass("").code[0]
+      coll = ret.code[0]
       assert_instance_of(AST::Collection, coll)
       assert_equal(form, coll.form)
     end
@@ -560,7 +554,7 @@ file { "/tmp/yayness":
 
       res = nil
       assert_nothing_raised do
-        res = parser.parse(str).hostclass("").code[0]
+        res = parser.parse(str).code[0]
       end
 
       assert_instance_of(AST::Collection, res)
@@ -583,7 +577,7 @@ file { "/tmp/yayness":
 
       res = nil
       assert_nothing_raised do
-        res = parser.parse(str).hostclass("").code[0]
+        res = parser.parse(str).code[0]
       end
 
       assert_instance_of(AST::Collection, res)
@@ -607,7 +601,7 @@ file { "/tmp/yayness":
 
       res = nil
       assert_nothing_raised("Could not parse '#{test}'") do
-        res = parser.parse(str).hostclass("").code[0]
+        res = parser.parse(str).code[0]
       end
 
       assert_instance_of(AST::Collection, res)
@@ -624,15 +618,11 @@ file { "/tmp/yayness":
   def test_fully_qualified_definitions
     parser = mkparser
 
+    types = parser.known_resource_types
     assert_nothing_raised("Could not parse fully-qualified definition") {
-      parser.parse %{define one::two { }}
+      types.import_ast(parser.parse(%{define one::two { }}), '')
     }
     assert(parser.definition("one::two"), "Could not find one::two with no namespace")
-
-    # Now try using the definition
-    assert_nothing_raised("Could not parse fully-qualified definition usage") {
-      parser.parse %{one::two { yayness: }}
-    }
   end
 
   # #524
@@ -691,7 +681,7 @@ file { "/tmp/yayness":
       result = parser.parse %{$variable = undef}
     }
 
-    main = result.hostclass("").code
+    main = result.code
     children = main.children
     assert_instance_of(AST::VarDef, main.children[0])
     assert_instance_of(AST::Undef, main.children[0].value)
@@ -704,7 +694,8 @@ file { "/tmp/yayness":
     str = "file { '/tmp/yay': ensure => file }\nclass yay {}\nnode foo {}\ndefine bar {}\n"
     result = nil
     assert_nothing_raised("Could not parse") do
-      result = parser.parse(str)
+      parser.known_resource_types.import_ast(parser.parse(str), '')
+      result = parser.known_resource_types
     end
     assert_instance_of(Puppet::Resource::TypeCollection, result, "Did not get a ASTSet back from parsing")
 
@@ -734,12 +725,14 @@ file { "/tmp/yayness":
 
     result = nil
     assert_nothing_raised do
-      result = parser.newclass "Yayness"
+      parser.known_resource_types.import_ast(parser.parse("class yayness { }"), '')
+      result = parser.known_resource_types.hostclass('yayness')
     end
     assert_equal(result, parser.find_hostclass("", "yayNess"))
 
     assert_nothing_raised do
-      result = parser.newdefine "FunTest"
+      parser.known_resource_types.import_ast(parser.parse("define funtest { }"), '')
+      result = parser.known_resource_types.definition('funtest')
     end
     assert_equal(result, parser.find_definition("", "fUntEst"), "#{"fUntEst"} was not matched")
   end

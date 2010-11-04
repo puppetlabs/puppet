@@ -13,8 +13,8 @@ class Puppet::Resource::Type
 
   RESOURCE_SUPERTYPES = [:hostclass, :node, :definition]
 
-  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection, :module_name
-  attr_reader :type, :namespace, :arguments, :behaves_like
+  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
+  attr_reader :type, :namespace, :arguments, :behaves_like, :module_name
 
   RESOURCE_SUPERTYPES.each do |t|
     define_method("#{t}?") { self.type == t }
@@ -92,6 +92,8 @@ class Puppet::Resource::Type
     end
 
     set_arguments(options[:arguments])
+
+    @module_name = options[:module_name]
   end
 
   # This is only used for node names, and really only when the node name

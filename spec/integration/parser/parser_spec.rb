@@ -11,7 +11,7 @@ describe Puppet::Parser::Parser do
       end
 
       def result_instance
-        @result.hostclass("").code[0]
+        @result.code[0]
       end
 
       def matches?(string)
@@ -44,7 +44,7 @@ describe Puppet::Parser::Parser do
       end
 
       def result_instance
-        @result.hostclass("").code[0]
+        @result.code[0]
       end
 
       def matches?(string)
@@ -85,7 +85,9 @@ describe Puppet::Parser::Parser do
       class test {}
       """)
 
-      ast.hostclass("test").doc.should == "comment\n"
+      ast.code[0].should be_a(Puppet::Parser::AST::Hostclass)
+      ast.code[0].name.should == 'test'
+      ast.code[0].instantiate('')[0].doc.should == "comment\n"
     end
   end
 

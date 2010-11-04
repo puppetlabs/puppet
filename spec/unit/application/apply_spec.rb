@@ -142,17 +142,16 @@ describe Puppet::Application::Apply do
 
     describe "the parseonly command" do
       before :each do
-        Puppet.stubs(:[]).with(:environment)
+        @environment = Puppet::Node::Environment.new("env")
+        Puppet.stubs(:[]).with(:environment).returns(@environment)
         Puppet.stubs(:[]).with(:manifest).returns("site.pp")
         Puppet.stubs(:err)
         @apply.stubs(:exit)
         @apply.options.stubs(:[]).with(:code).returns "some code"
-        @collection = stub_everything
-        Puppet::Resource::TypeCollection.stubs(:new).returns(@collection)
       end
 
-      it "should use a Puppet Resource Type Collection to parse the file" do
-        @collection.expects(:perform_initial_import)
+      it "should use the environment to parse the file" do
+        @environment.stubs(:perform_initial_import)
         @apply.parseonly
       end
 
@@ -162,7 +161,7 @@ describe Puppet::Application::Apply do
       end
 
       it "should exit with exit code 1 if error" do
-        @collection.stubs(:perform_initial_import).raises(Puppet::ParseError)
+        @environment.stubs(:perform_initial_import).raises(Puppet::ParseError)
         @apply.expects(:exit).with(1)
         @apply.parseonly
       end

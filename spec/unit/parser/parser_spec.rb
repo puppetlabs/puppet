@@ -64,14 +64,16 @@ describe Puppet::Parser do
       lambda { @parser.parse("$var += ") }.should raise_error
     end
 
-    it "should call ast::VarDef with append=true" do
-      ast::VarDef.expects(:new).with { |h| h[:append] == true }
-      @parser.parse("$var += 2")
+    it "should create ast::VarDef with append=true" do
+      vardef = @parser.parse("$var += 2").code[0]
+      vardef.should be_a(Puppet::Parser::AST::VarDef)
+      vardef.append.should == true
     end
 
     it "should work with arrays too" do
-      ast::VarDef.expects(:new).with { |h| h[:append] == true }
-      @parser.parse("$var += ['test']")
+      vardef = @parser.parse("$var += ['test']").code[0]
+      vardef.should be_a(Puppet::Parser::AST::VarDef)
+      vardef.append.should == true
     end
 
   end
@@ -132,7 +134,6 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceReference" do
-      ast::Resource.stubs(:new)
       ast::ResourceReference.expects(:new).with { |arg|
         arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(ast::ASTArray)
       }
@@ -151,10 +152,14 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceOverride" do
-      ast::ResourceOverride.expects(:new).with { |arg|
-        arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:parameters].is_a?(ast::ResourceParam)
-      }
-      @parser.parse('Resource["title1","title2"] { param => value }')
+      #ast::ResourceOverride.expects(:new).with { |arg|
+      #  arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:parameters].is_a?(ast::ResourceParam)
+      #}
+      ro = @parser.parse('Resource["title1","title2"] { param => value }').code[0]
+      ro.should be_a(ast::ResourceOverride)
+      ro.line.should == 1
+      ro.object.should be_a(ast::ResourceReference)
+      ro.parameters[0].should be_a(ast::ResourceParam)
     end
 
   end
@@ -281,24 +286,6 @@ describe Puppet::Parser do
     end
   end
 
-  describe "when creating a node" do
-    before :each do
-      @lexer = stub 'lexer'
-      @lexer.stubs(:getcomment)
-      @parser.stubs(:lexer).returns(@lexer)
-      @node = stub_everything 'node'
-      @parser.stubs(:ast_context).returns({})
-      @parser.stubs(:node).returns(nil)
-
-      @nodename = stub 'nodename', :is_a? => false, :value => "foo"
-      @nodename.stubs(:is_a?).with(Puppet::Parser::AST::HostName).returns(true)
-    end
-
-    it "should return an array of nodes" do
-      @parser.newnode(@nodename).should be_instance_of(Array)
-    end
-  end
-
   describe "when retrieving a specific node" do
     it "should delegate to the known_resource_types node" do
       @known_resource_types.expects(:node).with("node")
@@ -351,30 +338,28 @@ describe Puppet::Parser do
       @parser.stubs(:known_resource_types).returns @krt
     end
 
-    it "should create new classes" do
-      @parser.parse("class foobar {}")
-      @krt.hostclass("foobar").should be_instance_of(Puppet::Resource::Type)
+    it "should not create new classes" do
+      @parser.parse("class foobar {}").code[0].should be_a(Puppet::Parser::AST::Hostclass)
+      @krt.hostclass("foobar").should be_nil
     end
 
     it "should correctly set the parent class when one is provided" do
-      @parser.parse("class foobar inherits yayness {}")
-      @krt.hostclass("foobar").parent.should == "yayness"
+      @parser.parse("class foobar inherits yayness {}").code[0].instantiate('')[0].parent.should == "yayness"
     end
 
     it "should correctly set the parent class for multiple classes at a time" do
-      @parser.parse("class foobar inherits yayness {}\nclass boo inherits bar {}")
-      @krt.hostclass("foobar").parent.should == "yayness"
-      @krt.hostclass("boo").parent.should == "bar"
+      statements = @parser.parse("class foobar inherits yayness {}\nclass boo inherits bar {}").code
+      statements[0].instantiate('')[0].parent.should == "yayness"
+      statements[1].instantiate('')[0].parent.should == "bar"
     end
 
     it "should define the code when some is provided" do
-      @parser.parse("class foobar { $var = val }")
-      @krt.hostclass("foobar").code.should_not be_nil
+      @parser.parse("class foobar { $var = val }").code[0].code.should_not be_nil
     end
 
     it "should define parameters when provided" do
-      @parser.parse("class foobar($biz,$baz) {}")
-      @krt.hostclass("foobar").arguments.should == {"biz" => nil, "baz" => nil}
+      foobar = @parser.parse("class foobar($biz,$baz) {}").code[0].instantiate('')[0]
+      foobar.arguments.should == {"biz" => nil, "baz" => nil}
     end
   end
 
@@ -391,13 +376,37 @@ describe Puppet::Parser do
     end
 
     it "should correctly mark exported resources as exported" do
-      @parser.parse("@@file { '/file': }")
-      @krt.hostclass("").code[0].exported.should be_true
+      @parser.parse("@@file { '/file': }").code[0].exported.should be_true
     end
 
     it "should correctly mark virtual resources as virtual" do
-      @parser.parse("@file { '/file': }")
-      @krt.hostclass("").code[0].virtual.should be_true
+      @parser.parse("@file { '/file': }").code[0].virtual.should be_true
+    end
+  end
+
+  describe "when parsing nodes" do
+    it "should be able to parse a node with a single name" do
+      node = @parser.parse("node foo { }").code[0]
+      node.should be_a Puppet::Parser::AST::Node
+      node.names.length.should == 1
+      node.names[0].value.should == "foo"
+    end
+
+    it "should be able to parse a node with two names" do
+      node = @parser.parse("node foo, bar { }").code[0]
+      node.should be_a Puppet::Parser::AST::Node
+      node.names.length.should == 2
+      node.names[0].value.should == "foo"
+      node.names[1].value.should == "bar"
+    end
+
+    it "should be able to parse a node with three names" do
+      node = @parser.parse("node foo, bar, baz { }").code[0]
+      node.should be_a Puppet::Parser::AST::Node
+      node.names.length.should == 3
+      node.names[0].value.should == "foo"
+      node.names[1].value.should == "bar"
+      node.names[2].value.should == "baz"
     end
   end
 end
