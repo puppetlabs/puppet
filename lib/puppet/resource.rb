@@ -80,6 +80,18 @@ class Puppet::Resource
     end
   end
 
+  def yaml_property_munge(x)
+    case x
+    when Hash
+      x.inject({}) { |h,kv| 
+        k,v = kv
+        h[k] = self.class.value_to_pson_data(v)
+        h
+      }
+    else self.class.value_to_pson_data(x)
+    end
+  end
+
   def to_pson(*args)
     to_pson_data_hash.to_pson(*args)
   end

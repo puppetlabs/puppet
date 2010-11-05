@@ -120,6 +120,9 @@ class Object
   def to_yaml_properties
     instance_variables.sort        # Default YAML behavior
   end
+  def yaml_property_munge(x)
+    x
+  end
   def zamlized_class_name(root)
     cls = self.class
     "!ruby/#{root.name.downcase}#{cls == root ? '' : ":#{cls.respond_to?(:name) ? cls.name : cls}"}"
@@ -136,7 +139,7 @@ class Object
             z.nl
             v[1..-1].to_zaml(z)       # Remove leading '@'
             z.emit(': ')
-            instance_variable_get(v).to_zaml(z)
+            yaml_property_munge(instance_variable_get(v)).to_zaml(z)
           }
         end
       }
