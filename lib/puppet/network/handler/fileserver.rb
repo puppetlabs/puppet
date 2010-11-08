@@ -5,6 +5,8 @@ require 'cgi'
 require 'delegate'
 require 'sync'
 
+require 'puppet/network/handler'
+require 'puppet/network/xmlrpc/server'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
 

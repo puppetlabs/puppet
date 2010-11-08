@@ -4,9 +4,8 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/network/handler/fileserver'
 
-
 describe Puppet::Network::Handler::FileServer do
-  require 'tmpdir'
+  include PuppetSpec::Files
 
   def create_file(filename)
     File.open(filename, "w") { |f| f.puts filename}
@@ -20,8 +19,7 @@ describe Puppet::Network::Handler::FileServer do
   end
 
   before do
-    @basedir = File.join(Dir.tmpdir, "test_network_handler")
-    Dir.mkdir(@basedir)
+    @basedir = tmpdir("test_network_handler")
     @file = File.join(@basedir, "aFile")
     @link = File.join(@basedir, "aLink")
     create_file(@file)
