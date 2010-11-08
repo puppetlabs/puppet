@@ -227,10 +227,7 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match if the times are one minute apart and the current minute and hour are 0" do
-      zero = Time.now
-
-      # Reset the current time to X:00:00
-      current = zero - (zero.hour * 3600) - (zero.min * 60) - zero.sec
+      current = Time.utc(2010, "nov", 7, 0, 0, 0)
 
       # Now set the previous time to one minute before that
       previous = current - 60
@@ -240,10 +237,9 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should not match if the times are 23 hours and 58 minutes apart and the current hour is 23 and the current minute is 59" do
-      zero = Time.now
 
       # Reset the previous time to 00:00:00
-      previous = zero - (zero.hour * 3600) - (zero.min * 60) - zero.sec
+      previous = Time.utc(2010, "nov", 7, 0, 0, 0)
 
       # Set the current time to 23:59
       now = previous + (23 * 3600) + (59 * 60)
