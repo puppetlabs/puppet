@@ -580,7 +580,7 @@ describe Puppet::Parser::Compiler do
     it "should evaluate each class" do
       @compiler.catalog.stubs(:tag)
 
-      @class.expects(:mk_plain_resource).with(@scope)
+      @class.expects(:ensure_in_catalog).with(@scope)
       @scope.stubs(:class_scope).with(@class)
 
       @compiler.evaluate_classes(%w{myclass}, @scope)
@@ -591,7 +591,7 @@ describe Puppet::Parser::Compiler do
 
       @resource.expects(:evaluate).never
 
-      @class.expects(:mk_plain_resource).returns(@resource)
+      @class.expects(:ensure_in_catalog).returns(@resource)
       @scope.stubs(:class_scope).with(@class)
 
       @compiler.evaluate_classes(%w{myclass}, @scope)
@@ -601,7 +601,7 @@ describe Puppet::Parser::Compiler do
       @compiler.catalog.stubs(:tag)
 
       @resource.expects(:evaluate)
-      @class.expects(:mk_plain_resource).returns(@resource)
+      @class.expects(:ensure_in_catalog).returns(@resource)
       @scope.stubs(:class_scope).with(@class)
 
       @compiler.evaluate_classes(%w{myclass}, @scope, false)
@@ -638,7 +638,7 @@ describe Puppet::Parser::Compiler do
       @scope.stubs(:class_scope).with(@class)
 
       Puppet::Parser::Resource.stubs(:new).returns(@resource)
-      @class.stubs :mk_plain_resource
+      @class.stubs :ensure_in_catalog
       @compiler.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
     end
   end
@@ -678,7 +678,7 @@ describe Puppet::Parser::Compiler do
       @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
 
       node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
-      node_class.expects(:mk_plain_resource).returns(node_resource)
+      node_class.expects(:ensure_in_catalog).returns(node_resource)
 
       @compiler.compile
     end
@@ -688,7 +688,7 @@ describe Puppet::Parser::Compiler do
       @compiler.known_resource_types.stubs(:node).with("default").returns(node_class)
 
       node_resource = stub 'node resource', :ref => "Node[default]", :evaluate => nil, :type => "node"
-      node_class.expects(:mk_plain_resource).returns(node_resource)
+      node_class.expects(:ensure_in_catalog).returns(node_resource)
 
       @compiler.compile
     end
@@ -698,7 +698,7 @@ describe Puppet::Parser::Compiler do
       @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
 
       node_resource = stub 'node resource', :ref => "Node[c]", :type => "node"
-      node_class.expects(:mk_plain_resource).returns(node_resource)
+      node_class.expects(:ensure_in_catalog).returns(node_resource)
 
       node_resource.expects(:evaluate)
 
@@ -707,7 +707,7 @@ describe Puppet::Parser::Compiler do
 
     it "should set the node's scope as the top scope" do
       node_resource = stub 'node resource', :ref => "Node[c]", :evaluate => nil, :type => "node"
-      node_class = stub 'node', :name => "c", :mk_plain_resource => node_resource
+      node_class = stub 'node', :name => "c", :ensure_in_catalog => node_resource
 
       @compiler.known_resource_types.stubs(:node).with("c").returns(node_class)
 
