@@ -66,8 +66,16 @@ describe Puppet::Indirector::REST do
       ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
 
       @params = { :port => 34343, :handlers => [ :test_indirected_foo ], :xmlrpc_handlers => [ :status ] }
-      @server = Puppet::Network::Server.new(@params)
-      @server.listen
+      retries = 0
+      begin
+        @server = Puppet::Network::Server.new(@params)
+        @server.listen
+      rescue Errno::EADDRINUSE => e
+        sleep 0.1
+        puts "Port 34343 is in use; waiting for it to be free" if retries == 50
+        retry if (retries += 1) < 100
+        pending "Can't run too many simultanious tests"
+      end
 
       # LAK:NOTE We need to have a fake model here so that our indirected methods get
       # passed through REST; otherwise we'd be stubbing 'find', which would cause an immediate

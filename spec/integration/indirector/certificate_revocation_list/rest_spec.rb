@@ -33,8 +33,15 @@ describe "Certificate REST Terminus" do
     ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
 
     @params = { :port => 34343, :handlers => [ :certificate_revocation_list ] }
-    @server = Puppet::Network::Server.new(@params)
-    @server.listen
+    begin
+      @server = Puppet::Network::Server.new(@params)
+      @server.listen
+    rescue Errno::EADDRINUSE => e
+      sleep 0.1
+      puts "Port 34343 is in use; waiting for it to be free" if retries == 50
+      retry if (retries += 1) < 100
+      pending "Can't run too many simultanious tests"
+    end
 
     # And make sure we've generated the CRL
     @crl = ca.crl

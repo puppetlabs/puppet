@@ -36,8 +36,15 @@ describe "Filebucket REST Terminus" do
     @host = Puppet::SSL::Host.new(Puppet[:certname])
 
     @params = { :port => 34343, :handlers => [ :file_bucket_file ] }
-    @server = Puppet::Network::Server.new(@params)
-    @server.listen
+    begin
+      @server = Puppet::Network::Server.new(@params)
+      @server.listen
+    rescue Errno::EADDRINUSE => e
+      sleep 0.1
+      puts "Port 34343 is in use; waiting for it to be free" if retries == 50
+      retry if (retries += 1) < 100
+      pending "Can't run too many simultanious tests"
+    end
 
     @old_terminus = Puppet::FileBucket::File.indirection.terminus_class
     Puppet::FileBucket::File.terminus_class = :rest
