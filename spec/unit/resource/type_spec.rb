@@ -579,29 +579,29 @@ describe Puppet::Resource::Type do
     end
 
     it "should create a resource instance" do
-      @top.mk_plain_resource(@scope).should be_instance_of(Puppet::Parser::Resource)
+      @top.ensure_in_catalog(@scope).should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should set its resource type to 'class' when it is a hostclass" do
-      Puppet::Resource::Type.new(:hostclass, "top").mk_plain_resource(@scope).type.should == "Class"
+      Puppet::Resource::Type.new(:hostclass, "top").ensure_in_catalog(@scope).type.should == "Class"
     end
 
     it "should set its resource type to 'node' when it is a node" do
-      Puppet::Resource::Type.new(:node, "top").mk_plain_resource(@scope).type.should == "Node"
+      Puppet::Resource::Type.new(:node, "top").ensure_in_catalog(@scope).type.should == "Node"
     end
 
     it "should fail when it is a definition" do
-      lambda { Puppet::Resource::Type.new(:definition, "top").mk_plain_resource(@scope) }.should raise_error(ArgumentError)
+      lambda { Puppet::Resource::Type.new(:definition, "top").ensure_in_catalog(@scope) }.should raise_error(ArgumentError)
     end
 
     it "should add the created resource to the scope's catalog" do
-      @top.mk_plain_resource(@scope)
+      @top.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should evaluate the parent class if one exists" do
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
@@ -609,40 +609,40 @@ describe Puppet::Resource::Type do
     it "should fail to evaluate if a parent class is defined but cannot be found" do
       othertop = Puppet::Resource::Type.new :hostclass, "something", :parent => "yay"
       @code.add othertop
-      lambda { othertop.mk_plain_resource(@scope) }.should raise_error(Puppet::ParseError)
+      lambda { othertop.ensure_in_catalog(@scope) }.should raise_error(Puppet::ParseError)
     end
 
     it "should not create a new resource if one already exists" do
       @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
       @compiler.catalog.expects(:add_resource).never
-      @top.mk_plain_resource(@scope)
+      @top.ensure_in_catalog(@scope)
     end
 
     it "should return the existing resource when not creating a new one" do
       @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
       @compiler.catalog.expects(:add_resource).never
-      @top.mk_plain_resource(@scope).should == "something"
+      @top.ensure_in_catalog(@scope).should == "something"
     end
 
     it "should not create a new parent resource if one already exists and it has a parent class" do
-      @top.mk_plain_resource(@scope)
+      @top.ensure_in_catalog(@scope)
 
       top_resource = @compiler.catalog.resource(:class, "top")
 
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should equal(top_resource)
     end
 
     # #795 - tag before evaluation.
     it "should tag the catalog with the resource tags when it is evaluated" do
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.should be_tagged("middle")
     end
 
     it "should tag the catalog with the parent class tags when it is evaluated" do
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.should be_tagged("top")
     end
