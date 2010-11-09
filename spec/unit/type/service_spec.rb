@@ -66,6 +66,10 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :false)
   end
 
+  it "should specify :true as the default value of hasstatus" do
+    Puppet::Type.type(:service).new(:name => "yay")[:hasstatus].should == :true
+  end
+
   it "should support :true as a value to :hasrestart" do
     Puppet::Type.type(:service).new(:name => "yay", :hasrestart => :true)
   end
