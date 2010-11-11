@@ -6,9 +6,6 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
   See:
    * http://upstart.ubuntu.com/
   "
-  # Note: I did not set default for Ubuntu
-  # defaultfor :operatingsystem => :ubuntu
-
   # confine to :ubuntu for now because I haven't tested on other platforms
   confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]
 
@@ -37,7 +34,7 @@ Puppet::Type.type(:service).provide :upstart, :parent => :init do
           else
             line.split.first
           end
-        instances << new(:name => name) #, :path => "/etc/init/#{name}.conf")
+        instances << new(:name => name)
       }
     }
     instances
