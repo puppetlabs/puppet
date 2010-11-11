@@ -53,10 +53,11 @@ class Resource < AST::Branch
             :strict => true
           )
 
-          # And then store the resource in the compiler.
-          # At some point, we need to switch all of this to return
-          # resources instead of storing them like this.
+          if resource.resource_type.is_a? Puppet::Resource::Type
+            resource.resource_type.instantiate_resource(scope, resource)
+          end
           scope.compiler.add_resource(scope, resource)
+          scope.compiler.evaluate_classes([resource_title],scope,false) if fully_qualified_type == 'class'
           resource
         end
       }

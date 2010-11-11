@@ -56,7 +56,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '-', path))
+    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
   end
 
   # returns a label => path map for either all jobs, or just a single

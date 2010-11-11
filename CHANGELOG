@@ -1,5 +1,14 @@
+2.6.3rc2
+========
+76ac1f8  Fixed #5112 - Launchd Service broke in 2.6.2 with OS X 10.4 Clients.
+776ea2a  Fixed #5137 - Removed no longer required TOC references
+31118fe  Kludge for #5048 -- serialization compatibility with 0.25.x
+65ef24e  (#4534/#4778) -- Normalize parameterized classes
+3b53bfc  Fix for #5022 -- Escaped newlines should be elided
+
 2.6.3rc1
 ========
+e3fc5b9  Updated CHANGELOG and version for 2.6.3rc1
 3c56705  Fix for #4832 -- Making PSON handle arbitrary binary data
 e232770  Minimal fix for #4975 -- only call chage when managing password age rules
 a090e86  Fix for #4963 -- Use correct commands for password expiry on solaris

@@ -424,6 +424,7 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
     %q{"string with an escaped '\\$'"}                              => [[:STRING,"string with an escaped '$'"]],
+    %Q{"string with a line ending with a backslash: \\\nfoo"}       => [[:STRING,"string with a line ending with a backslash: foo"]],
     %q{"string with $v (but no braces)"}                            => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' (but no braces)']],
     %q["string with ${v} in braces"]                                => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' in braces']],
     %q["string with ${qualified::var} in braces"]                   => [[:DQPRE,"string with "],[:VARIABLE,'qualified::var'],[:DQPOST,' in braces']],

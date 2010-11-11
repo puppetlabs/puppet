@@ -115,7 +115,16 @@ module Puppet
     :node_terminus => ["plain", "Where to find information about nodes."],
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
-    :facts_terminus => [Puppet.application_name.to_s == "master" ? 'yaml' : 'facter', "The node facts terminus."],
+    :facts_terminus => {
+      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter', 
+      :desc => "The node facts terminus.",
+      :hook => proc do |value|
+        require 'puppet/node/facts'
+        if value.to_s == "rest"
+          Puppet::Node::Facts.cache_class = :yaml
+        end
+      end
+    },
     :inventory_terminus => [ "$facts_terminus", "Should usually be the same as the facts terminus" ],
     :httplog => { :default => "$logdir/http.log",
       :owner => "root",
@@ -579,10 +588,16 @@ module Puppet
       end
     },
     :report_server => ["$server",
-      "The server to which to send transaction reports."
+      "The server to send transaction reports to."
     ],
     :report_port => ["$masterport",
       "The port to communicate with the report_server."
+    ],
+    :inventory_server => ["$server",
+      "The server to send facts to."
+    ],
+    :inventory_port => ["$masterport",
+      "The port to communicate with the inventory_server."
     ],
     :report => [false,
       "Whether to send reports after every transaction."

@@ -154,6 +154,14 @@ class Puppet::Resource
     end
   end
 
+  # This stub class is only needed for serialization compatibility with 0.25.x
+  class Reference
+    attr_accessor :type,:title
+    def initialize(type,title)
+      @type,@title = type,title
+    end
+  end
+
   # Create our resource.
   def initialize(type, title = nil, attributes = {})
     @parameters = {}
@@ -179,6 +187,8 @@ class Puppet::Resource
 
     tag(self.type)
     tag(self.title) if valid_tag?(self.title)
+
+    @reference = Reference.new(@type,@title) # for serialization compatibility with 0.25.x
 
     raise ArgumentError, "Invalid resource type #{type}" if strict? and ! resource_type
   end

@@ -100,6 +100,8 @@ module Puppet
         looked for in the process table."
 
       newvalues(:true, :false)
+
+      defaultto :true
     end
     newparam(:name) do
       desc "The name of the service to run.  This name is used to find
