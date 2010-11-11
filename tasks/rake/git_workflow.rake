@@ -108,7 +108,7 @@ task :mail_patches do
     files = Dir.glob("00*.patch")
     files.each do |file|
         contents = File.read(file)
-        contents.sub!(/^---$/, "#{additional_info}---")
+        contents.sub!(/^---\n/, "---\n#{additional_info}")
         File.open(file, 'w') do |file_handle|
             file_handle.print contents
         end
