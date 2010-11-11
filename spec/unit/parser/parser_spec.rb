@@ -269,15 +269,22 @@ describe Puppet::Parser do
 
     it "should prefer provided options over AST context" do
       @class.expects(:new).with { |opts| opts[:file] == "/bar" }
-      @parser.expects(:ast_context).returns :file => "/foo"
+      @lexer.expects(:file).returns "/foo"
       @parser.ast(@class, :file => "/bar")
     end
 
     it "should include docs when the AST class uses them" do
       @class.expects(:use_docs).returns true
       @class.stubs(:new)
-      @parser.expects(:ast_context).with(true).returns({})
+      @parser.expects(:ast_context).with{ |a| a[0] == true }.returns({})
       @parser.ast(@class, :file => "/bar")
+    end
+
+    it "should get docs from lexer using the correct AST line number" do
+      @class.expects(:use_docs).returns true
+      @class.stubs(:new).with{ |a| a[:doc] == "doc" }
+      @lexer.expects(:getcomment).with(12).returns "doc"
+      @parser.ast(@class, :file => "/bar", :line => 12)
     end
   end
 
