@@ -89,6 +89,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
     @catalog = Puppet::Resource::Catalog.new
     @catalog.stubs(:apply)
     @agent.stubs(:retrieve_catalog).returns @catalog
+    @agent.stubs(:save_last_run_summary)
 
     Puppet::Util::Log.stubs(:newdestination)
     Puppet::Util::Log.stubs(:close)
@@ -236,6 +237,7 @@ describe Puppet::Configurer, "when sending a report" do
   before do
     Puppet.settings.stubs(:use).returns(true)
     @configurer = Puppet::Configurer.new
+    @configurer.stubs(:save_last_run_summary)
 
     @report = stub 'report'
     @trans = stub 'transaction'
@@ -284,6 +286,20 @@ describe Puppet::Configurer, "when sending a report" do
     @configurer.send_report(@report)
   end
 
+  it "should save the last run summary if reporting is enabled" do
+    Puppet.settings[:report] = true
+
+    @configurer.expects(:save_last_run_summary).with(@report)
+    @configurer.send_report(@report)
+  end
+
+  it "should not save the last run summary if reporting is disabled" do
+    Puppet.settings[:report] = false
+
+    @configurer.expects(:save_last_run_summary).never
+    @configurer.send_report(@report)
+  end
+
   it "should log but not fail if saving the report fails" do
     Puppet.settings[:report] = true
 
@@ -292,6 +308,36 @@ describe Puppet::Configurer, "when sending a report" do
     Puppet.expects(:err)
     lambda { @configurer.send_report(@report) }.should_not raise_error
   end
+end
+
+describe Puppet::Configurer, "when saving the summary report file" do
+  before do
+    Puppet.settings.stubs(:use).returns(true)
+    @configurer = Puppet::Configurer.new
+
+    @report = stub 'report'
+    @trans = stub 'transaction'
+    @lastrunfd = stub 'lastrunfd'
+    Puppet::Util::FileLocking.stubs(:writelock).yields(@lastrunfd)
+  end
+
+  it "should write the raw summary to the lastrunfile setting value" do
+    Puppet::Util::FileLocking.expects(:writelock).with(Puppet[:lastrunfile], 0660)
+    @configurer.save_last_run_summary(@report)
+  end
+
+  it "should write the raw summary as yaml" do
+    @report.expects(:raw_summary).returns("summary")
+    @lastrunfd.expects(:print).with(YAML.dump("summary"))
+    @configurer.save_last_run_summary(@report)
+  end
+
+  it "should log but not fail if saving the last run summary fails" do
+    Puppet::Util::FileLocking.expects(:writelock).raises "exception"
+    Puppet.expects(:err)
+    lambda { @configurer.save_last_run_summary(@report) }.should_not raise_error
+  end
+
 end
 
 describe Puppet::Configurer, "when retrieving a catalog" do
