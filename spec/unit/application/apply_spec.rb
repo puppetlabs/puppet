@@ -316,6 +316,17 @@ describe Puppet::Application::Apply do
         @apply.main
       end
 
+      it "should save the last run summary" do
+        configurer = stub_everything 'configurer'
+        Puppet::Configurer.expects(:new).returns configurer
+        Puppet.stubs(:[]).with(:noop).returns(false)
+        report = stub 'report'
+        @transaction.stubs(:report).returns(report)
+
+        configurer.expects(:save_last_run_summary).with(report)
+        @apply.main
+      end
+
       describe "with detailed_exitcodes" do
         it "should exit with report's computed exit status" do
           Puppet.stubs(:[]).with(:noop).returns(false)
