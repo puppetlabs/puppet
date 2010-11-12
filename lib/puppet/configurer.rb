@@ -166,17 +166,26 @@ class Puppet::Configurer
     execute_postrun_command
 
     Puppet::Util::Log.close(report)
-
     send_report(report, transaction)
   end
 
   def send_report(report, trans)
     report.finalize_report if trans
     puts report.summary if Puppet[:summarize]
+    save_last_run_summary(report)
     report.save if Puppet[:report]
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err "Could not send report: #{detail}"
+  end
+
+  def save_last_run_summary(report)
+    Puppet::Util::FileLocking.writelock(Puppet[:lastrunfile], 0660) do |file|
+      file.print YAML.dump(report.raw_summary)
+    end
+  rescue => detail
+    puts detail.backtrace if Puppet[:trace]
+    Puppet.err "Could not save last run local report: #{detail}"
   end
 
   private

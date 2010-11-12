@@ -80,28 +80,47 @@ class Puppet::Transaction::Report
     host
   end
 
-  # Provide a summary of this report.
+  # Provide a human readable textual summary of this report.
   def summary
-    ret = ""
+    report = raw_summary
 
-    @metrics.sort { |a,b| a[1].label <=> b[1].label }.each do |name, metric|
-      ret += "#{metric.label}:\n"
-      metric.values.sort { |a,b|
+    ret = ""
+    report.keys.sort { |a,b| a.to_s <=> b.to_s }.each do |key|
+      ret += "#{Puppet::Util::Metric.labelize(key)}:\n"
+
+      report[key].keys.sort { |a,b|
         # sort by label
-        if a[0] == :total
+        if a == :total
           1
-        elsif b[0] == :total
+        elsif b == :total
           -1
         else
-          a[1] <=> b[1]
+          report[key][a].to_s <=> report[key][b].to_s
         end
-      }.each do |name, label, value|
+      }.each do |label|
+        value = report[key][label]
         next if value == 0
         value = "%0.2f" % value if value.is_a?(Float)
-        ret += "   %15s %s\n" % [label + ":", value]
+        ret += "   %15s %s\n" % [Puppet::Util::Metric.labelize(label) + ":", value]
       end
     end
     ret
+  end
+
+  # Provide a raw hash summary of this report.
+  def raw_summary
+    report = {}
+
+    @metrics.each do |name, metric|
+      key = metric.name.to_s
+      report[key] = {}
+      metric.values.each do |name, label, value|
+        report[key][name.to_s] = value
+      end
+      report[key]["total"] = 0 unless key == "time" or report[key].include?("total")
+    end
+    (report["time"] ||= {})["last_run"] = Time.now.tv_sec
+    report
   end
 
   # Based on the contents of this report's metrics, compute a single number
@@ -142,7 +161,6 @@ class Puppet::Transaction::Report
     metrics["total"] = resource_statuses.length
 
     resource_statuses.each do |name, status|
-
       Puppet::Resource::Status::STATES.each do |state|
         metrics[state.to_s] += 1 if status.send(state)
       end

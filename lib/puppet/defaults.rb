@@ -607,6 +607,10 @@ module Puppet
     :report => [false,
       "Whether to send reports after every transaction."
     ],
+    :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report summary in yaml format."
+    },
     :graph => [false, "Whether to create dot graph files for the different
       configuration graphs.  These dot files can be interpreted by tools
       like OmniGraffle or dot (which is part of ImageMagick)."],
