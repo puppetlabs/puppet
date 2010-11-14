@@ -74,7 +74,7 @@ describe Puppet::Indirector::REST do
         sleep 0.1
         puts "Port 34343 is in use; waiting for it to be free" if retries == 50
         retry if (retries += 1) < 100
-        pending "Can't run too many simultanious tests"
+        pending "Can't run too many simultaneous tests"
       end
 
       # LAK:NOTE We need to have a fake model here so that our indirected methods get
