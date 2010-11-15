@@ -64,7 +64,7 @@ class Puppet::Util::Metric
   end
 
   def graph(range = nil)
-    unless Puppet.features.rrd?
+    unless Puppet.features.rrd? || Puppet.features.rrd_legacy?
       Puppet.warning "RRD library is missing; cannot graph metrics"
       return
     end
