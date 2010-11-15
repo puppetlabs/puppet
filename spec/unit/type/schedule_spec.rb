@@ -239,6 +239,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match if the previous time is prior to the most recent Sunday" do
       now = Time.utc(2010, "nov", 11, 0, 0, 0) # Thursday
+      Time.stubs(:now).returns(now)
       previous = Time.utc(2010, "nov", 6, 23, 59, 59) # Sat
 
       @schedule.match?(previous).should be_true
@@ -246,6 +247,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should not match if the previous time is after the most recent Saturday" do
       now = Time.utc(2010, "nov", 11, 0, 0, 0) # Thursday
+      Time.stubs(:now).returns(now)
       previous = Time.utc(2010, "nov", 7, 0, 0, 0) # Sunday
 
       @schedule.match?(previous).should be_false
@@ -262,6 +264,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match when the previous time is prior to the first day of this month" do
       now = Time.utc(2010, "nov", 8, 00, 59, 59)
+      Time.stubs(:now).returns(now)
       previous = Time.utc(2010, "oct", 31, 23, 59, 59)
 
       @schedule.match?(previous).should be_true
@@ -269,6 +272,7 @@ describe Puppet::Type.type(:schedule) do
 
     it "should not match when the previous time is after the last day of last month" do
       now = Time.utc(2010, "nov", 8, 00, 59, 59)
+      Time.stubs(:now).returns(now)
       previous = Time.utc(2010, "nov", 1, 0, 0, 0)
 
       @schedule.match?(previous).should be_false
