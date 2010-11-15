@@ -180,13 +180,13 @@ describe Puppet::Rails, "when initializing a mysql connection" do
     Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns(0)
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns('0')
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns('')
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
   end
 end
 
@@ -253,13 +253,13 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
     Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns(0)
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns('0')
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns('')
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
   end
 end
 
@@ -313,12 +313,12 @@ describe Puppet::Rails, "when initializing an Oracle connection" do
     Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns(0)
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns('0')
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
 
     Puppet.settings.stubs(:value).with(:dbconnections).returns('')
-    Puppet::Rails.database_arguments.should_not be_include :pool
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
   end
 end

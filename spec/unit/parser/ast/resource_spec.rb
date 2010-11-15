@@ -152,7 +152,7 @@ describe Puppet::Parser::AST::Resource do
       result = @resource.evaluate(@scope)
       result.length.should == 1
       result.first.ref.should == "Class[Classname]"
-      @compiler.catalog.resource("Class[Classname]").should equal result.first
+      @compiler.catalog.resource("Class[Classname]").should equal(result.first)
     end
 
     it "should cause its parent to be evaluated" do
@@ -163,7 +163,7 @@ describe Puppet::Parser::AST::Resource do
       result = @resource.evaluate(@scope)
       result.length.should == 1
       result.first.ref.should == "Class[Classname]"
-      @compiler.catalog.resource("Class[Classname]").should equal result.first
+      @compiler.catalog.resource("Class[Classname]").should equal(result.first)
       @compiler.catalog.resource("Class[Parentname]").should be_instance_of(Puppet::Parser::Resource)
     end
 

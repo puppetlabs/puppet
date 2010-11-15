@@ -49,7 +49,7 @@ describe Puppet::Parser::AST::String do
     end
     it "should return a dup of its value" do
       value = ""
-      Puppet::Parser::AST::String.new( :value => value ).evaluate(stub 'scope').should_not be_equal(value)
+      Puppet::Parser::AST::String.new( :value => value ).evaluate(stub('scope')).should_not be_equal(value)
     end
   end
 end
