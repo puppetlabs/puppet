@@ -67,15 +67,15 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
     # Split the different lines into hashes.
     def self.blastsplit(line)
-        if line =~ /\s*(\S+)\s+((\[Not installed\])|(\S+))\s+(\S+)/
+        if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
             hash = {}
             hash[:name] = $1
-            hash[:ensure] = if $2 == "[Not installed]"
+            hash[:ensure] = if $2 == "notinst"
                 :absent
             else
                 $2
             end
-            hash[:avail] = $5
+            hash[:avail] = $3
 
             if hash[:avail] == "SAME"
                 hash[:avail] = hash[:ensure]
