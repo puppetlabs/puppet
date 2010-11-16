@@ -1,5 +1,21 @@
+2.6.3
+=====
+184733c  [#5322] (#5322) Remove spec file that adds little value and causes failures
+178c2a6  Fix test failures that fixing #4726 exposed.
+74b6c09  (#4726) Fix RRD legacy support
+8662056  Fix for #4279 -- mount detection on HP-UX
+fbb096a  Fix for #5055 -- adding to_sym to Puppet::Node::Environment
+b2ff6a5  Fix for #5298 -- Collections need to do type lookup
+1ce00dc  Step towards [5298] -- cleanup indentation, etc. in AST::Collection
+722608b  Fixed #5287 - Schedule documentation is incorrect
+c8b6fb5  Fixed #5296 - test warnings messages
+d221c05  (#5297) Fix schedule tests that were missing stubs for Time.now
+f2fd0d1  Fix for #5273 -- user resource constantly resetting password age
+544dcf8  Fix #5289 -- Bad copy/paste changes message on test failure
+
 2.6.3rc3
 ========
+126681f  Updated CHANGELOG for 2.6.3rc3
 b15231d  Fix for #4299 -- Don't require which
 ea435a4  Fix #5020 - Prefer finding node name from REST uri over certname
 a097b93  Fix for #4894 -- retry tests if port is in use
