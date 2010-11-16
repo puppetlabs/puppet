@@ -15,7 +15,8 @@ class Puppet::Parser::AST
     def evaluate(scope)
       str, code = query && query.safeevaluate(scope)
 
-      newcoll = Puppet::Parser::Collector.new(scope, @type, str, code, self.form)
+      resource_type = scope.find_resource_type(@type)
+      newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, str, code, self.form)
 
       scope.compiler.add_collection(newcoll)
 
