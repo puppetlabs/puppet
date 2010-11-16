@@ -82,16 +82,60 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
     mcx_list
   end
 
-  private
-
-  # mcxexport is used by instances, and therefore
-  # a class method.
   def self.mcxexport(ds_type, ds_name)
     ds_t = TypeMap[ds_type]
     ds_n = ds_name.to_s
     ds_path = "/Local/Default/#{ds_t}/#{ds_n}"
     dscl 'localhost', '-mcxexport', ds_path
   end
+
+
+  def create
+    self.content=(resource[:content])
+  end
+
+  def destroy
+    ds_parms = get_dsparams
+    ds_t = TypeMap[ds_parms[:ds_type]]
+    ds_n = ds_parms[:ds_name].to_s
+    ds_path = "/Local/Default/#{ds_t}/#{ds_n}"
+
+    dscl 'localhost', '-mcxdelete', ds_path
+  end
+
+  def exists?
+    # JJM Just re-use the content method and see if it's empty.
+    begin
+      mcx = content
+    rescue Puppet::ExecutionFailure => e
+      return false
+    end
+    has_mcx = ! mcx.empty?
+  end
+
+  def content
+    ds_parms = get_dsparams
+
+      mcx = self.class.mcxexport(
+        ds_parms[:ds_type],
+
+          ds_parms[:ds_name])
+    mcx
+  end
+
+  def content=(value)
+    # dscl localhost -mcximport
+    ds_parms = get_dsparams
+
+      mcx = mcximport(
+        ds_parms[:ds_type],
+          ds_parms[:ds_name],
+
+          resource[:content])
+    mcx
+  end
+
+  private
 
   def mcximport(ds_type, ds_name, val)
     ds_t = TypeMap[ds_type]
@@ -153,53 +197,6 @@ Puppet::Type.type(:mcx).provide :mcxcontent, :parent => Puppet::Provider do
 
     return rval
 
-  end
-
-  public
-
-  def create
-    self.content=(resource[:content])
-  end
-
-  def destroy
-    ds_parms = get_dsparams
-    ds_t = TypeMap[ds_parms[:ds_type]]
-    ds_n = ds_parms[:ds_name].to_s
-    ds_path = "/Local/Default/#{ds_t}/#{ds_n}"
-
-    dscl 'localhost', '-mcxdelete', ds_path
-  end
-
-  def exists?
-    # JJM Just re-use the content method and see if it's empty.
-    begin
-      mcx = content
-    rescue Puppet::ExecutionFailure => e
-      return false
-    end
-    has_mcx = ! mcx.empty?
-  end
-
-  def content
-    ds_parms = get_dsparams
-
-      mcx = self.class.mcxexport(
-        ds_parms[:ds_type],
-
-          ds_parms[:ds_name])
-    mcx
-  end
-
-  def content=(value)
-    # dscl localhost -mcximport
-    ds_parms = get_dsparams
-
-      mcx = mcximport(
-        ds_parms[:ds_type],
-          ds_parms[:ds_name],
-
-          resource[:content])
-    mcx
   end
 
 end
