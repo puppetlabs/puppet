@@ -59,6 +59,10 @@ describe provider_class do
       @provider.parse_line("::1     localhost")[:name].should == "localhost"
     end
 
+    it "should set an empty comment" do
+      @provider.parse_line("::1     localhost")[:comment].should == ""
+    end
+
   end
 
   describe "when parsing a line with ip, hostname and comment" do
@@ -72,6 +76,10 @@ describe provider_class do
 
     it "should parse the hostname from the second field" do
       @provider.parse_line(@testline)[:name].should == "localhost"
+    end
+
+    it "should parse the comment after the first '#' character" do
+      @provider.parse_line(@testline)[:comment].should == 'A comment with a #-char'
     end
 
   end
@@ -107,6 +115,10 @@ describe provider_class do
 
     it "should parse all host_aliases from the third field" do
       @provider.parse_line(@testline)[:host_aliases].should == ['alias1' ,'alias2', 'alias3']
+    end
+
+    it "should parse the comment after the first '#' character" do
+      @provider.parse_line(@testline)[:comment].should == 'A comment with a #-char'
     end
 
   end
@@ -145,6 +157,38 @@ describe provider_class do
         :ensure     => :present
       )
       genhost(host).should == "192.0.0.1\thost\ta1\ta2\ta3\ta4\n"
+    end
+
+    it "should be able to generate a simple hostfile entry with comments" do
+      host = mkhost(
+        :name    => 'localhost',
+        :ip      => '127.0.0.1',
+        :comment => 'Bazinga!',
+        :ensure  => :present
+      )
+      genhost(host).should == "127.0.0.1\tlocalhost\t# Bazinga!\n"
+    end
+
+    it "should be able to generate an entry with one alias and a comment" do
+      host = mkhost(
+        :name   => 'localhost.localdomain',
+        :ip     => '127.0.0.1',
+        :host_aliases => ['localhost'],
+        :comment => 'Bazinga!',
+        :ensure => :present
+      )
+      genhost(host).should == "127.0.0.1\tlocalhost.localdomain\tlocalhost\t# Bazinga!\n"
+    end
+
+    it "should be able to generate an entry with more than one alias and a comment" do
+      host = mkhost(
+        :name         => 'host',
+        :ip           => '192.0.0.1',
+        :host_aliases => [ 'a1','a2','a3','a4' ],
+        :comment      => 'Bazinga!',
+        :ensure       => :present
+      )
+      genhost(host).should == "192.0.0.1\thost\ta1\ta2\ta3\ta4\t# Bazinga!\n"
     end
 
   end

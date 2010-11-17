@@ -21,7 +21,7 @@ describe Puppet::Type.type(:host) do
       end
     end
 
-    [:ip, :target, :host_aliases, :ensure].each do |property|
+    [:ip, :target, :host_aliases, :comment, :ensure].each do |property|
       it "should have a #{property} property" do
         @class.attrtype(property).should == :property
       end
@@ -61,7 +61,6 @@ describe Puppet::Type.type(:host) do
     end
 
     it "should not accept malformed IPv4 addresses like 192.168.0.300" do
-      pending
       proc { @class.new(:name => "foo", :ip => '192.168.0.300') }.should raise_error
     end
 
@@ -78,7 +77,6 @@ describe Puppet::Type.type(:host) do
     end
 
     it "should not accept empty host_aliases" do
-      pending
       proc { @class.new(:name => "foo", :host_aliases => ['alias1','']) }.should raise_error
     end
   end
