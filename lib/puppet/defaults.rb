@@ -116,7 +116,7 @@ module Puppet
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
     :facts_terminus => {
-      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter', 
+      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter',
       :desc => "The node facts terminus.",
       :hook => proc do |value|
         require 'puppet/node/facts'
@@ -599,7 +599,7 @@ module Puppet
     :inventory_port => ["$masterport",
       "The port to communicate with the inventory_server."
     ],
-    :report => [false,
+    :report => [true,
       "Whether to send reports after every transaction."
     ],
     :graph => [false, "Whether to create dot graph files for the different
