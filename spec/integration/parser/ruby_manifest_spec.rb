@@ -69,7 +69,7 @@ describe "Pure ruby manifests" do
     write_file('foo.rb', "hostclass 'bar' do file 'test_file', :owner => 'root', :mode => '644' end")
     catalog = compile("import 'foo'\ninclude bar")
     file = catalog.resource("File[test_file]")
-    file.should be_a Puppet::Resource
+    file.should be_a(Puppet::Resource)
     file.type.should == 'File'
     file.title.should == 'test_file'
     file.exported.should_not be

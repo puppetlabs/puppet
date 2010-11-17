@@ -32,17 +32,12 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should use a global shared mutex" do
-      @sync = mock 'sync'
-      @sync.expects(:synchronize).with(Sync::SH).once
-      Puppet::Util.expects(:sync).with('/file').returns @sync
-
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::SH).once
       Puppet::Util::FileLocking.readlock '/file'
     end
 
     it "should use a shared lock on the file" do
-      @sync = mock 'sync'
-      @sync.stubs(:synchronize).yields
-      Puppet::Util.expects(:sync).with('/file').returns @sync
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::SH).yields
 
       fh = mock 'filehandle'
       File.expects(:open).with("/file").yields fh
@@ -59,9 +54,7 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should create missing files" do
-      @sync = mock 'sync'
-      @sync.stubs(:synchronize).yields
-      Puppet::Util.expects(:sync).with('/file').returns @sync
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::SH).yields
 
       File.expects(:exists?).with('/file').returns false
       File.expects(:open).with('/file').once
@@ -72,9 +65,7 @@ describe Puppet::Util::FileLocking do
 
   describe "when acquiring a write lock" do
     before do
-      @sync = mock 'sync'
-      Puppet::Util.stubs(:sync).returns @sync
-      @sync.stubs(:synchronize).yields
+      Puppet::Util.stubs(:synchronize_on).yields
       File.stubs(:file?).with('/file').returns true
       File.stubs(:exists?).with('/file').returns true
     end
@@ -88,29 +79,26 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should use a global exclusive mutex" do
-      sync = mock 'sync'
-      sync.expects(:synchronize).with(Sync::EX)
-      Puppet::Util.expects(:sync).with("/file").returns sync
-
+      Puppet::Util.expects(:synchronize_on).with("/file",Sync::EX)
       Puppet::Util::FileLocking.writelock '/file'
     end
 
     it "should use any specified mode when opening the file" do
-      File.expects(:open).with("/file", "w", :mymode)
+      File.expects(:open).with("/file", File::Constants::CREAT | File::Constants::WRONLY , :mymode)
 
       Puppet::Util::FileLocking.writelock('/file', :mymode)
     end
 
     it "should use the mode of the existing file if no mode is specified" do
       File.expects(:stat).with("/file").returns(mock("stat", :mode => 0755))
-      File.expects(:open).with("/file", "w", 0755)
+      File.expects(:open).with("/file", File::Constants::CREAT | File::Constants::WRONLY, 0755)
 
       Puppet::Util::FileLocking.writelock('/file')
     end
 
     it "should use 0600 as the mode if no mode is specified and the file does not exist" do
       File.expects(:stat).raises(Errno::ENOENT)
-      File.expects(:open).with("/file", "w", 0600)
+      File.expects(:open).with("/file", File::Constants::CREAT | File::Constants::WRONLY, 0600)
 
       Puppet::Util::FileLocking.writelock('/file')
     end
@@ -130,7 +118,25 @@ describe Puppet::Util::FileLocking do
       lfh = mock 'locked_filehandle'
       fh.expects(:lock_exclusive).yields(lfh)
 
+      lfh.stubs(:seek)
+      lfh.stubs(:truncate)
       lfh.expects(:print).with "foo"
+
+      Puppet::Util::FileLocking.writelock('/file') do |f|
+        f.print "foo"
+      end
+    end
+
+    it "should truncate the file under an exclusive lock" do
+      fh = mock 'fh'
+      File.expects(:open).yields fh
+
+      lfh = mock 'locked_filehandle'
+      fh.expects(:lock_exclusive).yields(lfh)
+
+      lfh.expects(:seek).with(0, IO::SEEK_SET)
+      lfh.expects(:truncate).with(0)
+      lfh.stubs(:print)
 
       Puppet::Util::FileLocking.writelock('/file') do |f|
         f.print "foo"
@@ -143,12 +149,10 @@ describe Puppet::Util::FileLocking do
     end
 
     it "should create missing files" do
-      @sync = mock 'sync'
-      @sync.stubs(:synchronize).yields
-      Puppet::Util.expects(:sync).with('/file').returns @sync
+      Puppet::Util.expects(:synchronize_on).with('/file',Sync::EX).yields
 
       File.expects(:exists?).with('/file').returns false
-      File.expects(:open).with('/file', 'w', 0600).once
+      File.expects(:open).with('/file', File::Constants::CREAT | File::Constants::WRONLY, 0600).once
 
       Puppet::Util::FileLocking.writelock('/file')
     end

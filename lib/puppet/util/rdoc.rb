@@ -10,24 +10,25 @@ module Puppet::Util::RDoc
 
       # then rdoc
       require 'rdoc/rdoc'
+      require 'rdoc/options'
 
       # load our parser
       require 'puppet/util/rdoc/parser'
 
       r = RDoc::RDoc.new
 
-        RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
+      RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
           "puppet/util/rdoc/generators/puppet_generator.rb",
-            "PuppetGenerator".intern,
+          "PuppetGenerator".intern,
+          "puppet")
 
-            "puppet")
       # specify our own format & where to output
       options = [ "--fmt", "puppet",
         "--quiet",
-        "--force-update",
         "--exclude", "/modules/[^/]*/files/.*\.pp$",
         "--op", outputdir ]
 
+      options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
       options += [ "--charset", charset] if charset
       options += files
 

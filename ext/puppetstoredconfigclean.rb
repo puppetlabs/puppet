@@ -70,8 +70,6 @@ case adapter
     args[:port]     = pm_conf[:dbport] unless pm_conf[:dbport].to_s.empty?
     socket          = pm_conf[:dbsocket]
     args[:socket]   = socket unless socket.to_s.empty?
-    connections     = pm_conf[:dbconnections].to_i
-    args[:pool]     = connections if connections > 0
   else
     raise ArgumentError, "Invalid db adapter #{adapter}"
 end

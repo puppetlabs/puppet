@@ -656,7 +656,7 @@ module Puppet
     setdefaults(
     :tagmail,
     :tagmap => ["$confdir/tagmail.conf", "The mapping between reporting tags and email addresses."],
-    :sendmail => [%x{which sendmail 2>/dev/null}.chomp, "Where to find the sendmail binary with which to send email."],
+    :sendmail => [which('sendmail') || '', "Where to find the sendmail binary with which to send email."],
 
     :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."), "The 'from' email address for the reports."],
     :smtpserver => ["none", "The server through which to send email reports."]
@@ -682,11 +682,10 @@ module Puppet
       used when networked databases are used."],
     :dbpassword => [ "puppet", "The database password for caching. Only
       used when networked databases are used."],
+    :dbconnections => [ '', "The number of database connections for networked
+      databases.  Will be ignored unless the value is a positive integer."],
     :dbsocket => [ "", "The database socket location. Only used when networked
       databases are used.  Will be ignored if the value is an empty string."],
-    :dbconnections => [ 0, "The number of database connections. Only used when
-      networked databases are used.  Will be ignored if the value is an empty
-      string or is less than 1."],
     :railslog => {:default => "$logdir/rails.log",
       :mode => 0600,
       :owner => "service",

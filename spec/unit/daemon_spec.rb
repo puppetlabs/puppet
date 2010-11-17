@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby"
+#!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../spec_helper'
 require 'puppet/daemon'
@@ -142,11 +142,7 @@ describe Puppet::Daemon do
   describe "when creating its pidfile" do
     it "should use an exclusive mutex" do
       Puppet.settings.expects(:value).with(:name).returns "me"
-
-      sync = mock 'sync'
-      Puppet::Util.expects(:sync).with("me").returns sync
-
-      sync.expects(:synchronize).with(Sync::EX)
+      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @daemon.create_pidfile
     end
 
@@ -180,10 +176,8 @@ describe Puppet::Daemon do
     it "should use an exclusive mutex" do
       Puppet.settings.expects(:value).with(:name).returns "me"
 
-      sync = mock 'sync'
-      Puppet::Util.expects(:sync).with("me").returns sync
+      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
 
-      sync.expects(:synchronize).with(Sync::EX)
       @daemon.remove_pidfile
     end
 

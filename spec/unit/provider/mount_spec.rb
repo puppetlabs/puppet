@@ -113,7 +113,14 @@ describe Puppet::Provider::Mount do
       @mounter.should be_mounted
     end
 
-    it "should match ' on <name>' if the operating system is not Darwin or Solaris" do
+    it "should match '^<name> on' if the operating system is HP-UX" do
+      Facter.stubs(:value).with("operatingsystem").returns("HP-UX")
+      @mounter.expects(:mountcmd).returns("/ on /dev/dsk/whatever\n/var on /dev/dsk/other")
+
+      @mounter.should be_mounted
+    end
+
+    it "should match ' on <name>' if the operating system is not Darwin, Solaris, or HP-UX" do
       Facter.stubs(:value).with("operatingsystem").returns("Debian")
       @mounter.expects(:mountcmd).returns("/dev/dsk/whatever on / and stuff\n/dev/other/disk on /var and stuff")
 

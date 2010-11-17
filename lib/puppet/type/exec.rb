@@ -553,13 +553,7 @@ module Puppet
       if self[:path]
         if Puppet.features.posix? and !File.exists?(exe)
           withenv :PATH => self[:path].join(File::PATH_SEPARATOR) do
-            path = %x{which #{exe}}.chomp
-            if path == ""
-              raise ArgumentError,
-                "Could not find command '#{exe}'"
-            else
-              exe = path
-            end
+            exe = which(exe) || raise(ArgumentError,"Could not find command '#{exe}'")
           end
         elsif Puppet.features.microsoft_windows? and !File.exists?(exe)
           self[:path].each do |path|

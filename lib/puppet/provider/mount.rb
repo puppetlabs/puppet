@@ -41,7 +41,7 @@ module Puppet::Provider::Mount
       case platform
       when "Darwin"
         line =~ / on #{name} / or line =~ %r{ on /private/var/automount#{name}}
-      when "Solaris"
+      when "Solaris", "HP-UX"
         line =~ /^#{name} on /
       else
         line =~ / on #{name} /
