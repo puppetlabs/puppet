@@ -57,6 +57,7 @@ class Puppet::Util::Log
     destinations.keys.each { |dest|
       close(dest)
     }
+    raise Puppet::DevError.new("Log.close_all failed to close #{@destinations.keys.inspect}") if !@destinations.empty?
   end
 
   # Flush any log destinations that support such operations.
