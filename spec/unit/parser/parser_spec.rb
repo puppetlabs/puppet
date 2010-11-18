@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Parser do
 
-  ast = Puppet::Parser::AST
+  Puppet::Parser::AST
 
   before :each do
     @known_resource_types = Puppet::Resource::TypeCollection.new("development")
@@ -80,21 +80,21 @@ describe Puppet::Parser do
 
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
-      ast::Not.expects(:new).with { |h| h[:value].is_a?(ast::Boolean) }
+      Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
       @parser.parse("if ! true { $var = 1 }")
     end
 
     it "boolean operation, it should create the correct ast objects" do
-      ast::BooleanOperator.expects(:new).with {
-        |h| h[:rval].is_a?(ast::Boolean) and h[:lval].is_a?(ast::Boolean) and h[:operator]=="or"
+      Puppet::Parser::AST::BooleanOperator.expects(:new).with {
+        |h| h[:rval].is_a?(Puppet::Parser::AST::Boolean) and h[:lval].is_a?(Puppet::Parser::AST::Boolean) and h[:operator]=="or"
       }
       @parser.parse("if true or true { $var = 1 }")
 
     end
 
     it "comparison operation, it should create the correct ast objects" do
-      ast::ComparisonOperator.expects(:new).with {
-        |h| h[:lval].is_a?(ast::Name) and h[:rval].is_a?(ast::Name) and h[:operator]=="<"
+      Puppet::Parser::AST::ComparisonOperator.expects(:new).with {
+        |h| h[:lval].is_a?(Puppet::Parser::AST::Name) and h[:rval].is_a?(Puppet::Parser::AST::Name) and h[:operator]=="<"
       }
       @parser.parse("if 1 < 2 { $var = 1 }")
 
@@ -105,13 +105,13 @@ describe Puppet::Parser do
   describe "when parsing if complex expressions" do
     it "should create a correct ast tree" do
       aststub = stub_everything 'ast'
-      ast::ComparisonOperator.expects(:new).with {
-        |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]==">"
+      Puppet::Parser::AST::ComparisonOperator.expects(:new).with {
+        |h| h[:rval].is_a?(Puppet::Parser::AST::Name) and h[:lval].is_a?(Puppet::Parser::AST::Name) and h[:operator]==">"
       }.returns(aststub)
-      ast::ComparisonOperator.expects(:new).with {
-        |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]=="=="
+      Puppet::Parser::AST::ComparisonOperator.expects(:new).with {
+        |h| h[:rval].is_a?(Puppet::Parser::AST::Name) and h[:lval].is_a?(Puppet::Parser::AST::Name) and h[:operator]=="=="
       }.returns(aststub)
-      ast::BooleanOperator.expects(:new).with {
+      Puppet::Parser::AST::BooleanOperator.expects(:new).with {
         |h| h[:rval]==aststub and h[:lval]==aststub and h[:operator]=="and"
       }
       @parser.parse("if (1 > 2) and (1 == 2) { $var = 1 }")
@@ -134,8 +134,8 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceReference" do
-      ast::ResourceReference.expects(:new).with { |arg|
-        arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(ast::ASTArray)
+      Puppet::Parser::AST::ResourceReference.expects(:new).with { |arg|
+        arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(Puppet::Parser::AST::ASTArray)
       }
       @parser.parse('exec { test: command => File["a","b"] }')
     end
@@ -152,14 +152,14 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceOverride" do
-      #ast::ResourceOverride.expects(:new).with { |arg|
-      #  arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:parameters].is_a?(ast::ResourceParam)
+      #Puppet::Parser::AST::ResourceOverride.expects(:new).with { |arg|
+      #  arg[:line]==1 and arg[:object].is_a?(Puppet::Parser::AST::ResourceReference) and arg[:parameters].is_a?(Puppet::Parser::AST::ResourceParam)
       #}
       ro = @parser.parse('Resource["title1","title2"] { param => value }').code[0]
-      ro.should be_a(ast::ResourceOverride)
+      ro.should be_a(Puppet::Parser::AST::ResourceOverride)
       ro.line.should == 1
-      ro.object.should be_a(ast::ResourceReference)
-      ro.parameters[0].should be_a(ast::ResourceParam)
+      ro.object.should be_a(Puppet::Parser::AST::ResourceReference)
+      ro.parameters[0].should be_a(Puppet::Parser::AST::ResourceParam)
     end
 
   end
@@ -179,17 +179,17 @@ describe Puppet::Parser do
     end
 
     it "should create a nop node for empty branch" do
-      ast::Nop.expects(:new)
+      Puppet::Parser::AST::Nop.expects(:new)
       @parser.parse("if true { }")
     end
 
     it "should create a nop node for empty else branch" do
-      ast::Nop.expects(:new)
+      Puppet::Parser::AST::Nop.expects(:new)
       @parser.parse("if true { notice('test') } else { }")
     end
 
     it "should build a chain of 'ifs' if there's an 'elsif'" do
-      ast = @parser.parse(<<-PP)
+      lambda { @parser.parse(<<-PP) }.should_not raise_error
         if true { notice('test') } elsif true {} else { }
       PP
     end
