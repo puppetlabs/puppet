@@ -89,9 +89,6 @@ describe Puppet::Configurer, "when executing a catalog run" do
     @catalog = Puppet::Resource::Catalog.new
     @catalog.stubs(:apply)
     @agent.stubs(:retrieve_catalog).returns @catalog
-
-    Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:close)
   end
 
   it "should prepare for the run" do
@@ -101,14 +98,14 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should initialize a transaction report if one is not provided" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
 
     @agent.run
   end
 
   it "should pass the new report to the catalog" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.stubs(:initialize_report).returns report
     @catalog.expects(:apply).with{|options| options[:report] == report}
 
@@ -116,7 +113,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should use the provided report if it was passed one" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).never
     @catalog.expects(:apply).with{|options| options[:report] == report}
 
@@ -176,7 +173,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should send the report" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
     @agent.expects(:send_report).with { |r, trans| r == report }
 
@@ -184,7 +181,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should send the transaction report with a reference to the transaction if a run was actually made" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
 
     trans = stub 'transaction'
@@ -198,7 +195,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
   it "should send the transaction report even if the catalog could not be retrieved" do
     @agent.expects(:retrieve_catalog).returns nil
 
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
     @agent.expects(:send_report)
 
@@ -208,7 +205,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
   it "should send the transaction report even if there is a failure" do
     @agent.expects(:retrieve_catalog).raises "whatever"
 
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
     @agent.expects(:send_report)
 
@@ -216,16 +213,16 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should remove the report as a log destination when the run is finished" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
-
-    Puppet::Util::Log.expects(:close).with(report)
+    report.expects(:<<).at_least_once
 
     @agent.run
+    Puppet::Util::Log.destinations.should_not include(report)
   end
 
   it "should return the report as the result of the run" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
 
     @agent.run.should equal(report)
