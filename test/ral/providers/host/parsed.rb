@@ -67,7 +67,8 @@ class TestParsedHostProvider < Test::Unit::TestCase
 
   # Make sure we convert both directlys correctly using a simple host.
   def test_basic_isomorphism
-    hash = {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host}}
+    hash = {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host},
+            :comment => ''}
 
     str = nil
     assert_nothing_raised do
@@ -105,11 +106,13 @@ class TestParsedHostProvider < Test::Unit::TestCase
         [
       {:record_type => :comment, :line => "# comment one"},
       {:record_type => :blank, :line => ""},
-      {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host}},
+      {:record_type => :parsed, :name => "myhost", :ip => "192.168.43.56", :host_aliases => %w{another host},
+       :comment => ''},
       {:record_type => :blank, :line => "    "},
       {:record_type => :comment, :line => "# another comment"},
         
-      {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57", :host_aliases => []}
+      {:record_type => :parsed, :name => "anotherhost", :ip => "192.168.43.57", :host_aliases => [],
+       :comment => ''}
     ], instances)
 
     newtext = nil
