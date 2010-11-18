@@ -7,7 +7,7 @@ require 'puppet/util/log'
 describe Puppet::Util::Log do
   it "should write a given message to the specified destination" do
     arraydest = []
-    Puppet::Util::Log.newdestination(arraydest)
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
     Puppet::Util::Log.new(:level => :notice, :message => "foo")
     message = arraydest.last.message
     message.should == "foo"

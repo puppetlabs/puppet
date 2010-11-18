@@ -185,7 +185,7 @@ module PuppetTest
     #if rake? or ! Puppet[:debug]
     #if defined?($puppet_debug) or ! rake?
       Puppet[:color] = false if textmate?
-      Puppet::Util::Log.newdestination(@logs)
+      Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
       if defined? $console
         Puppet.info @method_name
         Puppet::Util::Log.newdestination(:console)
@@ -305,7 +305,7 @@ module PuppetTest
 
   def logstore
     @logs = []
-    Puppet::Util::Log.newdestination(@logs)
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
   end
 end
 

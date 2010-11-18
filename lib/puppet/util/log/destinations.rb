@@ -203,8 +203,20 @@ Puppet::Util::Log.newdesttype :report do
 end
 
 # Log to an array, just for testing.
+module Puppet::Test
+  class LogCollector
+    def initialize(logs)
+      @logs = logs
+    end
+
+    def <<(value)
+      @logs << value
+    end
+  end
+end
+
 Puppet::Util::Log.newdesttype :array do
-  match "Array"
+  match "Puppet::Test::LogCollector"
 
   def initialize(messages)
     @messages = messages
