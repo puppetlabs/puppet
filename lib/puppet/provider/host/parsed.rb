@@ -8,66 +8,36 @@ else
 end
 
 
-      Puppet::Type.type(:host).provide(
-        :parsed,
-  :parent => Puppet::Provider::ParsedFile,
-  :default_target => hosts,
-        
-  :filetype => :flat
-) do
+Puppet::Type.type(:host).provide(:parsed,:parent => Puppet::Provider::ParsedFile,
+  :default_target => hosts,:filetype => :flat) do
   confine :exists => hosts
 
   text_line :comment, :match => /^#/
   text_line :blank, :match => /^\s*$/
 
-  record_line :parsed, :fields => %w{ip name host_aliases},
-    :optional => %w{host_aliases},
-    :rts => true do |line|
-    hash = {}
-    if line.sub!(/^(\S+)\s+(\S+)\s*/, '')
-      hash[:ip] = $1
-      hash[:name] = $2
-
-      if line.empty?
+  record_line :parsed, :fields => %w{ip name host_aliases comment},
+    :optional => %w{host_aliases comment},
+    :match    => /^(\S+)\s+(\S+)\s*(.*?)?(?:\s*#\s*(.*))?$/,
+    :post_parse => proc { |hash|
+      # An absent comment should match "comment => ''"
+      hash[:comment] = '' if hash[:comment].nil? or hash[:comment] == :absent
+      unless hash[:host_aliases].nil? or hash[:host_aliases] == :absent
+        hash[:host_aliases] = hash[:host_aliases].split(/\s+/)
+      else
         hash[:host_aliases] = []
-      else
-        line.sub!(/\s*/, '')
-        line.sub!(/^([^#]+)\s*/) do |value|
-          aliases = $1
-          unless aliases =~ /^\s*$/
-            hash[:host_aliases] = aliases.split(/\s+/)
-          end
-
-          ""
-        end
       end
-    else
-      raise Puppet::Error, "Could not match '#{line}'"
-    end
-
-    hash[:host_aliases] = [] if hash[:host_aliases] == ""
-
-    return hash
-  end
-
-  # Convert the current object into a host-style string.
-  def self.to_line(hash)
-    return super unless hash[:record_type] == :parsed
-    [:ip, :name].each do |n|
-      raise ArgumentError, "#{n} is a required attribute for hosts" unless hash[n] and hash[n] != :absent
-    end
-
-    str = "#{hash[:ip]}\t#{hash[:name]}"
-
-    if hash.include? :host_aliases and !hash[:host_aliases].empty?
-      if hash[:host_aliases].is_a? Array
+    },
+    :to_line  => proc { |hash|
+      [:ip, :name].each do |n|
+        raise ArgumentError, "#{n} is a required attribute for hosts" unless hash[n] and hash[n] != :absent
+      end
+      str = "#{hash[:ip]}\t#{hash[:name]}"
+      if hash.include? :host_aliases and !hash[:host_aliases].empty?
         str += "\t#{hash[:host_aliases].join("\t")}"
-      else
-        raise ArgumentError, "Host aliases must be specified as an array"
       end
-    end
-
-    str
-  end
+      if hash.include? :comment and !hash[:comment].empty?
+        str += "\t# #{hash[:comment]}"
+      end
+      str
+    }
 end
-
