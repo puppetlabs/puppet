@@ -139,6 +139,7 @@ class Puppet::Application::Apply < Puppet::Application
         configurer.send_report(report, transaction)
       else
         transaction.generate_report
+        configurer.save_last_run_summary(transaction.report)
       end
 
       exit( Puppet[:noop] ? 0 : options[:detailed_exitcodes] ? transaction.report.exit_status : 0 )
@@ -163,6 +164,9 @@ class Puppet::Application::Apply < Puppet::Application
       $stderr.puts "Exiting"
       exit(1)
     end
+
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.cache_class = :yaml
 
     if options[:debug]
       Puppet::Util::Log.level = :debug

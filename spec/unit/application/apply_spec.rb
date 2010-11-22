@@ -56,6 +56,7 @@ describe Puppet::Application::Apply do
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
+      Puppet::Transaction::Report.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
     end
@@ -113,6 +114,11 @@ describe Puppet::Application::Apply do
       lambda { @apply.setup }.should raise_error(SystemExit)
     end
 
+    it "should tell the report handler to cache locally as yaml" do
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
+
+      @apply.setup
+    end
   end
 
   describe "when executing" do
@@ -313,6 +319,17 @@ describe Puppet::Application::Apply do
       it "should apply the catalog" do
         @catalog.expects(:apply).returns(stub_everything('transaction'))
 
+        @apply.main
+      end
+
+      it "should save the last run summary" do
+        configurer = stub_everything 'configurer'
+        Puppet::Configurer.expects(:new).returns configurer
+        Puppet.stubs(:[]).with(:noop).returns(false)
+        report = stub 'report'
+        @transaction.stubs(:report).returns(report)
+
+        configurer.expects(:save_last_run_summary).with(report)
         @apply.main
       end
 

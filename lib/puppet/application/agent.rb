@@ -229,6 +229,8 @@ class Puppet::Application::Agent < Puppet::Application
     Puppet::SSL::Host.ca_location = options[:fingerprint] ? :none : :remote
 
     Puppet::Transaction::Report.terminus_class = :rest
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.cache_class = :yaml
 
     # Override the default; puppetd needs this, usually.
     # You can still override this on the command-line with, e.g., :compiler.

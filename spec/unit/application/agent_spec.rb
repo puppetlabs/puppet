@@ -180,6 +180,7 @@ describe Puppet::Application::Agent do
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.stubs(:terminus_class=)
+      Puppet::Transaction::Report.stubs(:cache_class=)
       Puppet::Resource::Catalog.stubs(:terminus_class=)
       Puppet::Resource::Catalog.stubs(:cache_class=)
       Puppet::Node::Facts.stubs(:terminus_class=)
@@ -307,6 +308,12 @@ describe Puppet::Application::Agent do
 
     it "should tell the report handler to use REST" do
       Puppet::Transaction::Report.expects(:terminus_class=).with(:rest)
+
+      @puppetd.setup
+    end
+
+    it "should tell the report handler to cache locally as yaml" do
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
 
       @puppetd.setup
     end
