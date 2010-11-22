@@ -130,7 +130,7 @@ class Puppet::Application::Apply < Puppet::Application
         report = configurer.initialize_report
         Puppet::Util::Log.newdestination(report)
       end
-      transaction = catalog.apply
+      transaction = catalog.apply(:report => report)
 
       configurer.execute_postrun_command
 
