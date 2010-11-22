@@ -2,6 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
+require 'puppet/rails'
 require 'puppet/node/facts'
 
 describe "Puppet::Node::Facts::ActiveRecord" do
