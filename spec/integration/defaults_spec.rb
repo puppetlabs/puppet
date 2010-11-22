@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 require 'puppet/defaults'
+require 'puppet/rails'
 
 describe "Puppet defaults" do
     include Puppet::Util::Execution

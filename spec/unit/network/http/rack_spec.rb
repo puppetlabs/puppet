@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'puppet/network/handler'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 
 describe "Puppet::Network::HTTP::Rack" do
