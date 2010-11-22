@@ -2,6 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet/rails'
 require 'puppet/parser/collector'
 
 describe Puppet::Parser::Collector, "when initializing" do

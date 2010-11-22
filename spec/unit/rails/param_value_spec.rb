@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../spec_helper'
+require 'puppet/rails'
 
 describe "Puppet::Rails::ParamValue" do
   confine "Cannot test without ActiveRecord" => Puppet.features.rails?
