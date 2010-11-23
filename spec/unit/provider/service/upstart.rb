@@ -24,8 +24,7 @@ describe provider_class do
       resource = Puppet::Type.type(:service).new(:name => "foo", :provider => :upstart, :status => "/bin/foo")
       provider = provider_class.new(resource)
 
-      Process::Status.any_instance.stubs(:exitstatus).returns(0)
-      provider.expects(:ucommand)
+      provider.expects(:ucommand).with { `true`; true }
       provider.status.should == :running
     end
 
