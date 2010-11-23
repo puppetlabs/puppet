@@ -77,12 +77,12 @@ class Puppet::Configurer
   end
 
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare
+  def prepare(options)
     dostorage
 
-    download_plugins
+    download_plugins unless options[:skip_plugin_download]
 
-    download_fact_plugins
+    download_fact_plugins unless options[:skip_plugin_download]
 
     execute_prerun_command
   end
@@ -126,7 +126,7 @@ class Puppet::Configurer
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
     begin
-      prepare
+      prepare(options)
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
