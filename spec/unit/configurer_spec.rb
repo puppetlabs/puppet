@@ -515,23 +515,23 @@ describe Puppet::Configurer, "when preparing for a run" do
   it "should initialize the metadata store" do
     @agent.class.stubs(:facts).returns(@facts)
     @agent.expects(:dostorage)
-    @agent.prepare
+    @agent.prepare({})
   end
 
   it "should download fact plugins" do
     @agent.expects(:download_fact_plugins)
 
-    @agent.prepare
+    @agent.prepare({})
   end
 
   it "should download plugins" do
     @agent.expects(:download_plugins)
 
-    @agent.prepare
+    @agent.prepare({})
   end
 
   it "should perform the pre-run commands" do
     @agent.expects(:execute_prerun_command)
-    @agent.prepare
+    @agent.prepare({})
   end
 end
