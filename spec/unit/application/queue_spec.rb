@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/queue'
+require 'puppet/indirector/catalog/queue'
 
 describe Puppet::Application::Queue do
   before :each do

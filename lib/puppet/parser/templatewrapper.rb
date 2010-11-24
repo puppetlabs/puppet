@@ -1,6 +1,7 @@
 # A simple wrapper for templates, so they don't have full access to
 # the scope objects.
 require 'puppet/parser/files'
+require 'erb'
 
 class Puppet::Parser::TemplateWrapper
   attr_writer :scope

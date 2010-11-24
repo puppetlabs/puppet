@@ -78,7 +78,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     end
   end
 
-  def min_age
+  def password_min_age
     if Puppet.features.libshadow?
       if ent = Shadow::Passwd.getspnam(@resource.name)
         return ent.sp_min
@@ -87,7 +87,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     :absent
   end
 
-  def max_age
+  def password_max_age
     if Puppet.features.libshadow?
       if ent = Shadow::Passwd.getspnam(@resource.name)
         return ent.sp_max

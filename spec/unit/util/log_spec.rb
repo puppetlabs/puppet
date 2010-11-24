@@ -7,7 +7,7 @@ require 'puppet/util/log'
 describe Puppet::Util::Log do
   it "should write a given message to the specified destination" do
     arraydest = []
-    Puppet::Util::Log.newdestination(arraydest)
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
     Puppet::Util::Log.new(:level => :notice, :message => "foo")
     message = arraydest.last.message
     message.should == "foo"
@@ -87,7 +87,7 @@ describe Puppet::Util::Log do
     it "should flush the log queue when the first destination is specified" do
       Puppet::Util::Log.close_all
       Puppet::Util::Log.expects(:flushqueue)
-      Puppet::Util::Log.newdestination([])
+      Puppet::Util::Log.newdestination(:console)
     end
 
     it "should convert the level to a symbol if it's passed in as a string" do

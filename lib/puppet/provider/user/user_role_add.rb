@@ -156,11 +156,11 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     shadow_entry[1] if shadow_entry
   end
 
-  def min_age
+  def password_min_age
     shadow_entry ? shadow_entry[3] : :absent
   end
 
-  def max_age
+  def password_max_age
     shadow_entry ? shadow_entry[4] : :absent
   end
 

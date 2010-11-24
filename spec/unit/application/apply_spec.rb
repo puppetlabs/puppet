@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/apply'
 require 'puppet/file_bucket/dipper'
+require 'puppet/configurer'
 
 describe Puppet::Application::Apply do
   before :each do
@@ -56,6 +57,7 @@ describe Puppet::Application::Apply do
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
+      Puppet::Transaction::Report.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
     end
@@ -113,6 +115,11 @@ describe Puppet::Application::Apply do
       lambda { @apply.setup }.should raise_error(SystemExit)
     end
 
+    it "should tell the report handler to cache locally as yaml" do
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
+
+      @apply.setup
+    end
   end
 
   describe "when executing" do
@@ -193,6 +200,9 @@ describe Puppet::Application::Apply do
         @catalog.stubs(:apply).returns(@transaction)
 
         @apply.stubs(:exit)
+
+        Puppet::Util::Storage.stubs(:load)
+        Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
       end
 
       it "should set the code to run from --code" do
@@ -301,18 +311,24 @@ describe Puppet::Application::Apply do
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        configurer = stub 'configurer'
-
-        Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:execute_prerun_command)
-        configurer.expects(:execute_postrun_command)
+        Puppet::Configurer.any_instance.expects(:execute_prerun_command)
+        Puppet::Configurer.any_instance.expects(:execute_postrun_command)
 
         @apply.main
       end
 
       it "should apply the catalog" do
-        @catalog.expects(:apply).returns(stub_everything 'transaction')
+        @catalog.expects(:apply).returns(stub_everything('transaction'))
 
+        @apply.main
+      end
+
+      it "should save the last run summary" do
+        Puppet.stubs(:[]).with(:noop).returns(false)
+        report = stub 'report'
+        Puppet::Configurer.any_instance.stubs(:initialize_report).returns(report)
+
+        Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
         @apply.main
       end
 
@@ -320,8 +336,7 @@ describe Puppet::Application::Apply do
         it "should exit with report's computed exit status" do
           Puppet.stubs(:[]).with(:noop).returns(false)
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-          report = stub 'report', :exit_status => 666
-          @transaction.stubs(:report).returns(report)
+          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
           @apply.expects(:exit).with(666)
 
           @apply.main

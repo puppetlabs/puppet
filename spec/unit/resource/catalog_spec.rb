@@ -374,7 +374,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @original.add_edge(@r1,@r2)
       @original.filter do |r|
         r == @r1
-      end.edge(@r1,@r2).should be_empty
+      end.edge?(@r1,@r2).should_not be
     end
   end
 
@@ -933,8 +933,8 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog.add_edge(one, two)
     @catalog.add_edge(two, three)
 
-    @catalog.edge(one, two  ).expects(:to_pson_data_hash).returns "one_two_pson"
-    @catalog.edge(two, three).expects(:to_pson_data_hash).returns "two_three_pson"
+    @catalog.edges_between(one, two  )[0].expects(:to_pson_data_hash).returns "one_two_pson"
+    @catalog.edges_between(two, three)[0].expects(:to_pson_data_hash).returns "two_three_pson"
 
     PSON.parse(@catalog.to_pson,:create_additions => false)['data']['edges'].sort.should == %w{one_two_pson two_three_pson}.sort
   end

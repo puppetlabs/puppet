@@ -18,6 +18,9 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar
     rcvar = execute([self.initscript, :rcvar], :failonfail => true, :squelch => false)
     rcvar = rcvar.split("\n")
+    rcvar.delete_if {|str| str =~ /^#\s*$/}
+    rcvar[1] = rcvar[1].gsub(/^\$/, '')
+    rcvar
   end
 
   # Extract service name
@@ -44,7 +47,7 @@ Puppet::Type.type(:service).provide :freebsd, :parent => :init do
   def rcvar_value
     value = self.rcvar[1]
     self.error("No rcvar value found in rcvar") if value.nil?
-    value = value.gsub!(/(.*)_enable=\"?(.*)\"?/, '\2')
+    value = value.gsub!(/(.*)_enable="?(\w+)"?/, '\2')
     self.error("rcvar value is empty") if value.nil?
     self.debug("rcvar value is #{value}")
     value

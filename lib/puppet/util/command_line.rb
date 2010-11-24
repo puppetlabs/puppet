@@ -62,7 +62,7 @@ module Puppet
           external_command = "puppet-#{subcommand_name}"
 
           require 'puppet/util'
-          path_to_subcommand = Puppet::Util.binary( external_command )
+          path_to_subcommand = Puppet::Util.which( external_command )
           return false unless path_to_subcommand
 
           system( path_to_subcommand, *args )

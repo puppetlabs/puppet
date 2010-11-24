@@ -123,25 +123,9 @@ class Puppet::Application::Apply < Puppet::Application
 
       require 'puppet/configurer'
       configurer = Puppet::Configurer.new
-      configurer.execute_prerun_command
+      report = configurer.run(:skip_plugin_download => true, :catalog => catalog)
 
-      # And apply it
-      if Puppet[:report]
-        report = configurer.initialize_report
-        Puppet::Util::Log.newdestination(report)
-      end
-      transaction = catalog.apply
-
-      configurer.execute_postrun_command
-
-      if Puppet[:report]
-        Puppet::Util::Log.close(report)
-        configurer.send_report(report, transaction)
-      else
-        transaction.generate_report
-      end
-
-      exit( Puppet[:noop] ? 0 : options[:detailed_exitcodes] ? transaction.report.exit_status : 0 )
+      exit( Puppet[:noop] ? 0 : options[:detailed_exitcodes] ? report.exit_status : 0 )
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       $stderr.puts detail.message
@@ -163,6 +147,9 @@ class Puppet::Application::Apply < Puppet::Application
       $stderr.puts "Exiting"
       exit(1)
     end
+
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.cache_class = :yaml
 
     if options[:debug]
       Puppet::Util::Log.level = :debug

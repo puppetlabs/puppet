@@ -116,7 +116,7 @@ module Puppet
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
     :facts_terminus => {
-      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter', 
+      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter',
       :desc => "The node facts terminus.",
       :hook => proc do |value|
         require 'puppet/node/facts'
@@ -599,9 +599,17 @@ module Puppet
     :inventory_port => ["$masterport",
       "The port to communicate with the inventory_server."
     ],
-    :report => [false,
+    :report => [true,
       "Whether to send reports after every transaction."
     ],
+    :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report summary in yaml format."
+    },
+    :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report in yaml format."
+    },
     :graph => [false, "Whether to create dot graph files for the different
       configuration graphs.  These dot files can be interpreted by tools
       like OmniGraffle or dot (which is part of ImageMagick)."],
@@ -656,7 +664,7 @@ module Puppet
     setdefaults(
     :tagmail,
     :tagmap => ["$confdir/tagmail.conf", "The mapping between reporting tags and email addresses."],
-    :sendmail => [%x{which sendmail 2>/dev/null}.chomp, "Where to find the sendmail binary with which to send email."],
+    :sendmail => [which('sendmail') || '', "Where to find the sendmail binary with which to send email."],
 
     :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."), "The 'from' email address for the reports."],
     :smtpserver => ["none", "The server through which to send email reports."]
@@ -682,11 +690,10 @@ module Puppet
       used when networked databases are used."],
     :dbpassword => [ "puppet", "The database password for caching. Only
       used when networked databases are used."],
+    :dbconnections => [ '', "The number of database connections for networked
+      databases.  Will be ignored unless the value is a positive integer."],
     :dbsocket => [ "", "The database socket location. Only used when networked
       databases are used.  Will be ignored if the value is an empty string."],
-    :dbconnections => [ 0, "The number of database connections. Only used when
-      networked databases are used.  Will be ignored if the value is an empty
-      string or is less than 1."],
     :railslog => {:default => "$logdir/rails.log",
       :mode => 0600,
       :owner => "service",

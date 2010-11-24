@@ -64,7 +64,7 @@ class Puppet::Util::Metric
   end
 
   def graph(range = nil)
-    unless Puppet.features.rrd?
+    unless Puppet.features.rrd? || Puppet.features.rrd_legacy?
       Puppet.warning "RRD library is missing; cannot graph metrics"
       return
     end
@@ -122,7 +122,7 @@ class Puppet::Util::Metric
   def initialize(name,label = nil)
     @name = name.to_s
 
-    @label = label || labelize(name)
+    @label = label || self.class.labelize(name)
 
     @values = []
   end
@@ -132,7 +132,7 @@ class Puppet::Util::Metric
   end
 
   def newvalue(name,value,label = nil)
-    label ||= labelize(name)
+    label ||= self.class.labelize(name)
     @values.push [name,label,value]
   end
 
@@ -173,10 +173,8 @@ class Puppet::Util::Metric
     @values.sort { |a, b| a[1] <=> b[1] }
   end
 
-  private
-
   # Convert a name into a label.
-  def labelize(name)
+  def self.labelize(name)
     name.to_s.capitalize.gsub("_", " ")
   end
 end

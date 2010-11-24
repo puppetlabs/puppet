@@ -37,12 +37,12 @@ class Puppet::Parser::Parser
   # Create an AST object, and automatically add the file and line information if
   # available.
   def ast(klass, hash = {})
-    klass.new ast_context(klass.use_docs).merge(hash)
+    klass.new ast_context(klass.use_docs, hash[:line]).merge(hash)
   end
 
-  def ast_context(include_docs = false)
+  def ast_context(include_docs = false, ast_line = nil)
     result = {
-      :line => lexer.line,
+      :line => ast_line || lexer.line,
       :file => lexer.file
     }
     result[:doc] = lexer.getcomment(result[:line]) if include_docs

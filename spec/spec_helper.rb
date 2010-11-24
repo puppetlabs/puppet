@@ -72,7 +72,7 @@ Spec::Runner.configure do |config|
     Puppet.settings[:bindaddress] = "127.0.0.1"
 
     @logs = []
-    Puppet::Util::Log.newdestination(@logs)
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
   end
 end
 

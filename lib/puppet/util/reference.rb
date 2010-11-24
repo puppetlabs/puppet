@@ -39,14 +39,7 @@ class Puppet::Util::Reference
     Puppet::Util.secure_open("/tmp/puppetdoc.txt", "w") do |f|
       f.puts text
     end
-    rst2latex = %x{which rst2latex}
-    if $CHILD_STATUS != 0 or rst2latex =~ /no /
-      rst2latex = %x{which rst2latex.py}
-    end
-    if $CHILD_STATUS != 0 or rst2latex =~ /no /
-      raise "Could not find rst2latex"
-    end
-    rst2latex.chomp!
+    rst2latex = which('rst2latex') || which('rst2latex.py') || raise("Could not find rst2latex")
     cmd = %{#{rst2latex} /tmp/puppetdoc.txt > /tmp/puppetdoc.tex}
     Puppet::Util.secure_open("/tmp/puppetdoc.tex","w") do |f|
       # If we get here without an error, /tmp/puppetdoc.tex isn't a tricky cracker's symlink

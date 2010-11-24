@@ -6,6 +6,8 @@ require 'delegate'
 require 'sync'
 require 'xmlrpc/server'
 
+require 'puppet/network/handler'
+require 'puppet/network/xmlrpc/server'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
 require 'puppet/network/handler'

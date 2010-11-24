@@ -1,0 +1,19 @@
+# Some leading comment, that should be ignored
+# The next line is empty so it should be ignored
+
+::1 localhost
+
+# We now try another delimiter: Several tabs
+127.0.0.1         localhost
+
+# No test trailing spaces
+10.0.0.1         host1         
+
+# Ok its time to test aliases
+2001:252:0:1::2008:8 ipv6host alias1
+192.168.0.1 ipv4host alias2 alias3
+
+# Testing inlinecomments now
+192.168.0.2 host3 # This is host3
+192.168.0.3 host4 alias10 # This is host4
+192.168.0.4 host5   alias11             alias12      #     This is host5

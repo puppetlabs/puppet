@@ -61,4 +61,3 @@ describe "Pure ruby yaml implementation" do
     x2[2].should equal(x2)
   end
 end
-

@@ -276,7 +276,7 @@ class TestType < Test::Unit::TestCase
   def test_isomorphic_names
     catalog = mk_catalog
     # First do execs, since they're not isomorphic.
-    echo = Puppet::Util.binary "echo"
+    echo = Puppet::Util.which "echo"
     exec1 = exec2 = nil
     assert_nothing_raised do
 

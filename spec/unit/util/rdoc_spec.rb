@@ -43,8 +43,16 @@ describe Puppet::Util::RDoc do
       Puppet::Util::RDoc.rdoc("output", [], "utf-8")
     end
 
-    it "should tell RDoc to force updates of indices" do
+    it "should tell RDoc to force updates of indices when RDoc supports it" do
+      Options::OptionList.stubs(:options).returns([["--force-update", "-U", 0 ]])
       @rdoc.expects(:document).with { |args| args.include?("--force-update") }
+
+      Puppet::Util::RDoc.rdoc("output", [])
+    end
+
+    it "should not tell RDoc to force updates of indices when RDoc doesn't support it" do
+      Options::OptionList.stubs(:options).returns([])
+      @rdoc.expects(:document).never.with { |args| args.include?("--force-update") }
 
       Puppet::Util::RDoc.rdoc("output", [])
     end

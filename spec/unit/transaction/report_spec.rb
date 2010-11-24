@@ -225,8 +225,19 @@ describe Puppet::Transaction::Report do
       @report.calculate_metrics
     end
 
-    %w{Changes Total Resources}.each do |main|
-      it "should include information on #{main} in the summary" do
+    %w{changes time resources events}.each do |main|
+      it "should include the key #{main} in the raw summary hash" do
+        @report.raw_summary.should be_key main
+      end
+    end
+
+    it "should include the last run time in the raw summary hash" do
+      Time.stubs(:now).returns(Time.utc(2010,11,10,12,0,24))
+      @report.raw_summary["time"]["last_run"].should == 1289390424
+    end
+
+    %w{Changes Total Resources Time Events}.each do |main|
+      it "should include information on #{main} in the textual summary" do
         @report.summary.should be_include(main)
       end
     end

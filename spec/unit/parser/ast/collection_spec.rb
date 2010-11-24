@@ -5,6 +5,8 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 describe Puppet::Parser::AST::Collection do
   before :each do
     @scope = stub_everything 'scope'
+    @mytype = stub_everything('mytype')
+    @scope.stubs(:find_resource_type).returns @mytype
     @compiler = stub_everything 'compile'
     @scope.stubs(:compiler).returns(@compiler)
 
@@ -24,6 +26,8 @@ describe Puppet::Parser::AST::Collection do
 
   it "should instantiate a Collector for this type" do
     collection = Puppet::Parser::AST::Collection.new :form => :virtual, :type => "test"
+    @test_type = stub 'type', :name => 'test'
+    @scope.expects(:find_resource_type).with('test').returns @test_type
 
     Puppet::Parser::Collector.expects(:new).with(@scope, "test", nil, nil, :virtual)
 
