@@ -31,7 +31,7 @@ Puppet::Type.type(:zfs).provide(:solaris) do
     end
   end
 
-  [:mountpoint, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |field|
+  [:mountpoint, :recordsize, :aclmode, :aclinherit, :primarycache, :secondarycache, :compression, :copies, :quota, :reservation, :sharenfs, :snapdir].each do |field|
     define_method(field) do
       zfs(:get, "-H", "-o", "value", field, @resource[:name]).strip
     end
