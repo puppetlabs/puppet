@@ -27,10 +27,6 @@ describe Puppet::Application::Doc do
     @doc.should respond_to(:rdoc)
   end
 
-  it "should declare a trac command" do
-    @doc.should respond_to(:trac)
-  end
-
   it "should declare a fallback for unknown options" do
     @doc.should respond_to(:handle_unknown)
   end
@@ -270,21 +266,6 @@ describe Puppet::Application::Doc do
   end
 
   describe "when running" do
-    before :each do
-    end
-
-    describe "in trac mode" do
-      it "should call trac for each reference" do
-        ref = stub 'ref'
-        Puppet::Util::Reference.stubs(:reference).with(:ref).returns(ref)
-        @doc.options.stubs(:[]).with(:references).returns([:ref])
-        @doc.options.stubs(:[]).with(:mode).returns(:trac)
-
-        ref.expects(:trac)
-
-        @doc.trac
-      end
-    end
 
     describe "in rdoc mode" do
       before :each do

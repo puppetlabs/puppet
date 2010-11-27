@@ -5,19 +5,17 @@ module Puppet
     newproperty(:ip) do
       desc "The host's IP address, IPv4 or IPv6."
 
-    validate do |value|
-      unless value =~ /((([0-9a-fA-F]+:){7}[0-9a-fA-F]+)|(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?::(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?)|((25[0-5]|2[0-4][\d]|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})/
-      raise Puppet::Error, "Invalid IP address"
+      validate do |value|
+        unless value =~ /^((([0-9a-fA-F]+:){7}[0-9a-fA-F]+)|(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?::(([0-9a-fA-F]+:)*[0-9a-fA-F]+)?)|((25[0-5]|2[0-4][\d]|[0-1]?\d?\d)(\.(25[0-5]|2[0-4]\d|[0-1]?\d?\d)){3})$/
+          raise Puppet::Error, "Invalid IP address"
+        end
       end
-    end
 
     end
 
     newproperty(:host_aliases) do
-      desc 'Any aliases the host might have.  Multiple values must be
-        specified as an array.  Note that this property is not the same as
-        the "alias" metaparam; use this property to add aliases to a host
-        on disk, and "alias" to aliases for use in your Puppet scripts.'
+      desc "Any aliases the host might have.  Multiple values must be
+        specified as an array."
 
       def insync?(is)
         is == @should
@@ -26,21 +24,6 @@ module Puppet
       def is_to_s(currentvalue = @is)
         currentvalue = [currentvalue] unless currentvalue.is_a? Array
         currentvalue.join(" ")
-      end
-
-      def retrieve
-        is = super
-        case is
-        when String
-          is = is.split(/\s*,\s*/)
-        when Symbol
-          is = [is]
-        when Array
-          # nothing
-        else
-          raise Puppet::DevError, "Invalid @is type #{is.class}"
-        end
-        is
       end
 
       # We actually want to return the whole array here, not just the first
@@ -63,7 +46,12 @@ module Puppet
 
       validate do |value|
         raise Puppet::Error, "Host aliases cannot include whitespace" if value =~ /\s/
+        raise Puppet::Error, "Host alias cannot be an empty string. Use an empty array to delete all host_aliases " if value =~ /^\s*$/
       end
+    end
+
+    newproperty(:comment) do
+      desc "A comment that will be attached to the line with a # character"
     end
 
     newproperty(:target) do
@@ -94,8 +82,7 @@ module Puppet
     end
 
     @doc = "Installs and manages host entries.  For most systems, these
-      entries will just be in ``/etc/hosts``, but some systems (notably OS X)
+      entries will just be in `/etc/hosts`, but some systems (notably OS X)
       will have different solutions."
   end
 end
-

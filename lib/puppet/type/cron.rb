@@ -15,32 +15,32 @@ Puppet::Type.newtype(:cron) do
     association is made and synced to disk, you can then manage the job
     normally (e.g., change the schedule of the job).
 
-    Example::
+    Example:
 
-      cron { logrotate:
-        command => \"/usr/sbin/logrotate\",
-        user => root,
-        hour => 2,
-        minute => 0
-      }
+        cron { logrotate:
+          command => \"/usr/sbin/logrotate\",
+          user => root,
+          hour => 2,
+          minute => 0
+        }
 
-    Note that all cron values can be specified as an array of values::
+    Note that all cron values can be specified as an array of values:
 
-      cron { logrotate:
-        command => \"/usr/sbin/logrotate\",
-        user => root,
-        hour => [2, 4]
-      }
+        cron { logrotate:
+          command => \"/usr/sbin/logrotate\",
+          user => root,
+          hour => [2, 4]
+        }
 
-    Or using ranges, or the step syntax ``*/2`` (although there's no guarantee that
-    your ``cron`` daemon supports it)::
+    Or using ranges, or the step syntax `*/2` (although there's no guarantee that
+    your `cron` daemon supports it):
 
-      cron { logrotate:
-        command => \"/usr/sbin/logrotate\",
-        user => root,
-        hour => ['2-4'],
-        minute => '*/10'
-      }
+        cron { logrotate:
+          command => \"/usr/sbin/logrotate\",
+          user => root,
+          hour => ['2-4'],
+          minute => '*/10'
+        }
     "
   ensurable
 
@@ -169,7 +169,7 @@ Puppet::Type.newtype(:cron) do
       end
 
       if value == "*"
-        return value
+        return :absent
       end
 
       return value unless self.class.boundaries
@@ -206,7 +206,7 @@ Puppet::Type.newtype(:cron) do
       profile is not sourced when the command is run, so if the
       user's environment is desired it should be sourced manually.
 
-      All cron parameters support ``absent`` as a value; this will
+      All cron parameters support `absent` as a value; this will
       remove any existing values for that field."
 
     def retrieve
@@ -230,7 +230,7 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:special) do
-    desc "Special schedules only supported on FreeBSD."
+    desc "Special schedules"
 
     def specials
       %w{reboot yearly annually monthly weekly daily midnight hourly}
@@ -293,7 +293,7 @@ Puppet::Type.newtype(:cron) do
       but will not associate them with a specific job.
 
       Settings should be specified exactly as they should appear in
-      the crontab, e.g., ``PATH=/bin:/usr/bin:/usr/sbin``."
+      the crontab, e.g., `PATH=/bin:/usr/bin:/usr/sbin`."
 
     validate do |value|
       unless value =~ /^\s*(\w+)\s*=\s*(.*)\s*$/ or value == :absent or value == "absent"

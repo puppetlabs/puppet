@@ -20,7 +20,7 @@ module Puppet::Parser::Functions
             @autoloader = Puppet::Util::Autoload.new(
         self,
         "puppet/parser/functions",
-        
+
         :wrap => false
       )
     end
@@ -73,8 +73,10 @@ module Puppet::Parser::Functions
   def self.function(name)
     name = symbolize(name)
 
-    unless functions.include?(name) or functions(Puppet::Node::Environment.root).include?(name)
-      autoloader.load(name,Environment.current || Environment.root)
+    @functions.synchronize do
+      unless functions.include?(name) or functions(Puppet::Node::Environment.root).include?(name)
+        autoloader.load(name,Environment.current || Environment.root)
+      end
     end
 
     ( functions(Environment.root)[name] || functions[name] || {:name => false} )[:name]
@@ -94,7 +96,7 @@ module Puppet::Parser::Functions
         ret += "Undocumented.\n"
       end
 
-      ret += "\n\n- **Type**: #{hash[:type]}\n\n"
+      ret += "\n\n- *Type*: #{hash[:type]}\n\n"
     end
 
     ret

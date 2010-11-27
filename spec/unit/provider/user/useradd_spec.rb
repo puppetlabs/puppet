@@ -15,6 +15,7 @@ describe provider_class do
   # #1360
   it "should add -o when allowdupe is enabled and the user is being created" do
     @resource.expects(:allowdupe?).returns true
+    @provider.stubs(:execute)
     @provider.expects(:execute).with { |args| args.include?("-o") }
     @provider.create
   end
@@ -24,6 +25,15 @@ describe provider_class do
     @provider.expects(:execute).with { |args| args.include?("-o") }
 
     @provider.uid = 150
+  end
+
+  it "should set password age rules" do
+    provider_class.has_feature :manages_password_age
+    @resource = Puppet::Type.type(:user).new :name => "myuser", :password_min_age => 5, :password_max_age => 10, :provider => :useradd
+    @provider = provider_class.new(@resource)
+    @provider.stubs(:execute)
+    @provider.expects(:execute).with { |cmd, *args| args == ["-m", 5, "-M", 10, "myuser"] }
+    @provider.create
   end
 
   describe "when checking to add allow dup" do
@@ -109,7 +119,58 @@ describe provider_class do
       @provider.stubs(:command).with(:add).returns("useradd")
       @provider.stubs(:add_properties).returns(["-G", "somegroup"])
       @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:[]).with(:expiry).returns("somedate")
+      @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", '-e somedate', "someuser"]
+    end
+
+    it "should return an array without -e if expery is undefined full command" do
+      @provider.stubs(:command).with(:add).returns("useradd")
+      @provider.stubs(:add_properties).returns(["-G", "somegroup"])
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:[]).with(:expiry).returns nil
       @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", "someuser"]
+    end
+  end
+
+  describe "when calling passcmd" do
+    before do
+      @resource.stubs(:allowdupe?).returns true
+      @resource.stubs(:managehome?).returns true
+    end
+
+    it "should call command with :pass" do
+      @provider.expects(:command).with(:password)
+      @provider.passcmd
+    end
+
+    it "should return nil if neither min nor max is set" do
+      @resource.stubs(:should).with(:password_min_age).returns nil
+      @resource.stubs(:should).with(:password_max_age).returns nil
+      @provider.passcmd.must == nil
+    end
+
+    it "should return a chage command array with -m <value> and the user name if password_min_age is set" do
+      @provider.stubs(:command).with(:password).returns("chage")
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:should).with(:password_min_age).returns 123
+      @resource.stubs(:should).with(:password_max_age).returns nil
+      @provider.passcmd.must == ['chage','-m',123,'someuser']
+    end
+
+    it "should return a chage command array with -M <value> if password_max_age is set" do
+      @provider.stubs(:command).with(:password).returns("chage")
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:should).with(:password_min_age).returns nil
+      @resource.stubs(:should).with(:password_max_age).returns 999
+      @provider.passcmd.must == ['chage','-M',999,'someuser']
+    end
+
+    it "should return a chage command array with -M <value> -m <value> if both password_min_age and password_max_age are set" do
+      @provider.stubs(:command).with(:password).returns("chage")
+      @resource.stubs(:[]).with(:name).returns("someuser")
+      @resource.stubs(:should).with(:password_min_age).returns 123
+      @resource.stubs(:should).with(:password_max_age).returns 999
+      @provider.passcmd.must == ['chage','-m',123,'-M',999,'someuser']
     end
   end
 end

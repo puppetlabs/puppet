@@ -3,6 +3,8 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/apply'
+require 'puppet/file_bucket/dipper'
+require 'puppet/configurer'
 
 describe Puppet::Application::Apply do
   before :each do
@@ -53,9 +55,9 @@ describe Puppet::Application::Apply do
       Puppet.stubs(:trap)
       Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
-      require 'lib/puppet/file_bucket/dipper'
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
+      Puppet::Transaction::Report.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
     end
@@ -113,6 +115,11 @@ describe Puppet::Application::Apply do
       lambda { @apply.setup }.should raise_error(SystemExit)
     end
 
+    it "should tell the report handler to cache locally as yaml" do
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
+
+      @apply.setup
+    end
   end
 
   describe "when executing" do
@@ -142,17 +149,16 @@ describe Puppet::Application::Apply do
 
     describe "the parseonly command" do
       before :each do
-        Puppet.stubs(:[]).with(:environment)
+        @environment = Puppet::Node::Environment.new("env")
+        Puppet.stubs(:[]).with(:environment).returns(@environment)
         Puppet.stubs(:[]).with(:manifest).returns("site.pp")
         Puppet.stubs(:err)
         @apply.stubs(:exit)
         @apply.options.stubs(:[]).with(:code).returns "some code"
-        @collection = stub_everything
-        Puppet::Resource::TypeCollection.stubs(:new).returns(@collection)
       end
 
-      it "should use a Puppet Resource Type Collection to parse the file" do
-        @collection.expects(:perform_initial_import)
+      it "should use the environment to parse the file" do
+        @environment.stubs(:perform_initial_import)
         @apply.parseonly
       end
 
@@ -162,7 +168,7 @@ describe Puppet::Application::Apply do
       end
 
       it "should exit with exit code 1 if error" do
-        @collection.stubs(:perform_initial_import).raises(Puppet::ParseError)
+        @environment.stubs(:perform_initial_import).raises(Puppet::ParseError)
         @apply.expects(:exit).with(1)
         @apply.parseonly
       end
@@ -194,6 +200,9 @@ describe Puppet::Application::Apply do
         @catalog.stubs(:apply).returns(@transaction)
 
         @apply.stubs(:exit)
+
+        Puppet::Util::Storage.stubs(:load)
+        Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
       end
 
       it "should set the code to run from --code" do
@@ -212,10 +221,28 @@ describe Puppet::Application::Apply do
         @apply.main
       end
 
-      it "should set the manifest if some files are passed on command line" do
+      it "should set the manifest if a file is passed on command line and the file exists" do
+        File.stubs(:exist?).with('site.pp').returns true
         @apply.command_line.stubs(:args).returns(['site.pp'])
 
         Puppet.expects(:[]=).with(:manifest,"site.pp")
+
+        @apply.main
+      end
+
+      it "should raise an error if a file is passed on command line and the file does not exist" do
+        File.stubs(:exist?).with('noexist.pp').returns false
+        @apply.command_line.stubs(:args).returns(['noexist.pp'])
+        lambda { @apply.main }.should raise_error(RuntimeError, 'Could not find file noexist.pp')
+      end
+
+      it "should set the manifest to the first file and warn other files will be skipped" do
+        File.stubs(:exist?).with('starwarsIV').returns true
+        File.expects(:exist?).with('starwarsI').never
+        @apply.command_line.stubs(:args).returns(['starwarsIV', 'starwarsI', 'starwarsII'])
+
+        Puppet.expects(:[]=).with(:manifest,"starwarsIV")
+        Puppet.expects(:warning).with('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
 
         @apply.main
       end
@@ -232,7 +259,7 @@ describe Puppet::Application::Apply do
         lambda { @apply.main }.should raise_error
       end
 
-      it "should find the node" do
+      it "should look for the node" do
         Puppet::Node.expects(:find).returns(@node)
 
         @apply.main
@@ -284,18 +311,24 @@ describe Puppet::Application::Apply do
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        configurer = stub 'configurer'
-
-        Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:execute_prerun_command)
-        configurer.expects(:execute_postrun_command)
+        Puppet::Configurer.any_instance.expects(:execute_prerun_command)
+        Puppet::Configurer.any_instance.expects(:execute_postrun_command)
 
         @apply.main
       end
 
       it "should apply the catalog" do
-        @catalog.expects(:apply)
+        @catalog.expects(:apply).returns(stub_everything('transaction'))
 
+        @apply.main
+      end
+
+      it "should save the last run summary" do
+        Puppet.stubs(:[]).with(:noop).returns(false)
+        report = stub 'report'
+        Puppet::Configurer.any_instance.stubs(:initialize_report).returns(report)
+
+        Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
         @apply.main
       end
 
@@ -303,8 +336,7 @@ describe Puppet::Application::Apply do
         it "should exit with report's computed exit status" do
           Puppet.stubs(:[]).with(:noop).returns(false)
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-          report = stub 'report', :exit_status => 666
-          @transaction.stubs(:report).returns(report)
+          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
           @apply.expects(:exit).with(666)
 
           @apply.main

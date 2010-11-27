@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/filebucket'
+require 'puppet/file_bucket/dipper'
 
 describe Puppet::Application::Filebucket do
   before :each do

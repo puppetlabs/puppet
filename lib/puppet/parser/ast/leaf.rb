@@ -42,7 +42,7 @@ class Puppet::Parser::AST
   # The base string class.
   class String < AST::Leaf
     def evaluate(scope)
-      @value
+      @value.dup
     end
 
     def to_s
@@ -148,12 +148,20 @@ class Puppet::Parser::AST
       key.respond_to?(:evaluate) ? key.safeevaluate(scope) : key
     end
 
+    def array_index_or_key(object, key)
+      if object.is_a?(Array)
+        raise Puppet::ParserError, "#{key} is not an integer, but is used as an index of an array" unless key = Puppet::Parser::Scope.number?(key)
+      end
+      key
+    end
+
     def evaluate(scope)
       object = evaluate_container(scope)
+      accesskey = evaluate_key(scope)
 
       raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) or object.is_a?(Array)
 
-      object[evaluate_key(scope)]
+      object[array_index_or_key(object, accesskey)]
     end
 
     # Assign value to this hashkey or array index
@@ -166,7 +174,7 @@ class Puppet::Parser::AST
       end
 
       # assign to hash or array
-      object[accesskey] = value
+      object[array_index_or_key(object, accesskey)] = value
     end
 
     def to_s

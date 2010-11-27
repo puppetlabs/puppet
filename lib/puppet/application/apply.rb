@@ -78,7 +78,10 @@ class Puppet::Application::Apply < Puppet::Application
     if options[:code] or command_line.args.length == 0
       Puppet[:code] = options[:code] || STDIN.read
     else
-      Puppet[:manifest] = command_line.args.shift
+      manifest = command_line.args.shift
+      raise "Could not find file #{manifest}" unless File.exist?(manifest)
+      Puppet.warning("Only one file can be applied per run.  Skipping #{command_line.args.join(', ')}") if command_line.args.size > 0
+      Puppet[:manifest] = manifest
     end
 
     # Collect our facts.
@@ -120,20 +123,9 @@ class Puppet::Application::Apply < Puppet::Application
 
       require 'puppet/configurer'
       configurer = Puppet::Configurer.new
-      configurer.execute_prerun_command
+      report = configurer.run(:skip_plugin_download => true, :catalog => catalog)
 
-      # And apply it
-      transaction = catalog.apply
-
-      configurer.execute_postrun_command
-
-      status = 0
-      if not Puppet[:noop] and options[:detailed_exitcodes]
-        transaction.generate_report
-        exit(transaction.report.exit_status)
-      else
-        exit(0)
-      end
+      exit( Puppet[:noop] ? 0 : options[:detailed_exitcodes] ? report.exit_status : 0 )
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       $stderr.puts detail.message
@@ -155,6 +147,9 @@ class Puppet::Application::Apply < Puppet::Application
       $stderr.puts "Exiting"
       exit(1)
     end
+
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.cache_class = :yaml
 
     if options[:debug]
       Puppet::Util::Log.level = :debug

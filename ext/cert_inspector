@@ -1,0 +1,140 @@
+#!/usr/bin/env ruby
+require 'openssl'
+
+class X509Collector
+  include Enumerable
+
+  def initialize
+    @collected_data = {}
+  end
+
+  def interpret_contents(contents)
+    cls = case contents.split("\n")[0]
+          when /BEGIN X509 CRL/ then OpenSSL::X509::CRL
+          when /BEGIN CERTIFICATE REQUEST/ then OpenSSL::X509::Request
+          when /BEGIN CERTIFICATE/ then OpenSSL::X509::Certificate
+          when /BEGIN RSA (PRIVATE|PUBLIC) KEY/ then OpenSSL::PKey::RSA
+          else return nil
+          end
+    cls.new(contents)
+  rescue
+    nil
+  end
+
+  def expected_non_x509_files
+    ['inventory.txt', 'ca.pass', 'serial']
+  end
+
+  def investigate_path(path)
+    if File.directory?(path)
+      Dir.foreach(path) do |x|
+        next if ['.', '..'].include? x
+        investigate_path File.join(path, x)
+      end
+    else
+      contents = File.read path
+      meaning = interpret_contents contents
+      unless meaning || expected_non_x509_files.include?(File.basename(path))
+        puts "WARNING: file #{path.inspect} could not be interpreted"
+      end
+      @collected_data[path] = meaning if meaning
+    end
+  end
+
+  def each(&block)
+    @collected_data.each(&block)
+  end
+
+  def extract_public_key_info(path, meaning)
+    case meaning
+    when OpenSSL::PKey::RSA
+      if meaning.private?
+        [meaning.public_key, 2, path]
+      else
+        [meaning, 3, path]
+      end
+    when OpenSSL::X509::Certificate
+      [meaning.public_key, 0, meaning.subject.to_s]
+    when OpenSSL::X509::Request
+      [meaning.public_key, 1, meaning.subject.to_s]
+    end
+  end
+
+  def who_signed(meaning, key_names, keys)
+    signing_key = keys.find { |key| meaning.verify(key) }
+    if signing_key then "#{key_names[signing_key.to_s]}" else "???" end
+  end
+
+  def explain(meaning, key_names, keys)
+    case meaning
+    when OpenSSL::PKey::RSA
+      if meaning.private?
+        "Private key for #{key_names[meaning.public_key.to_s]}"
+      else
+        "Public key for #{key_names[meaning.public_key.to_s]}"
+      end
+    when OpenSSL::X509::Certificate
+      signature_desc = who_signed(meaning, key_names, keys)
+      "Certificate assigning name #{meaning.subject.to_s} to #{key_names[meaning.public_key.to_s]}\n    serial number #{meaning.serial}\n    issued by #{meaning.issuer.to_s}\n    signed by #{signature_desc}"
+    when OpenSSL::X509::Request
+      signature_desc = who_signed(meaning, key_names, keys)
+      "Certificate request for #{meaning.subject.to_s} having key #{key_names[meaning.public_key.to_s]}\n    signed by #{signature_desc}"
+    when OpenSSL::X509::CRL
+      signature_desc = who_signed(meaning, key_names, keys)
+      revoked_serial_numbers = meaning.revoked.map { |r| r.serial }
+      revoked_desc = if revoked_serial_numbers.count > 0 then "serial numbers #{revoked_serial_numbers.inspect}" else "nothing" end
+      "Certificate revocation list revoking #{revoked_desc}\n    issued by #{meaning.issuer.to_s}\n    signed by #{signature_desc}"
+    else
+      "Unknown"
+    end
+  end
+
+  # Yield unique public keys, with a canonical name for each.
+  def collect_public_keys
+    key_data = {} # pem => (priority, name, public_key)
+    @collected_data.collect do |path, meaning|
+      begin
+        next unless public_key_info = extract_public_key_info(path, meaning)
+        public_key, priority, name = public_key_info
+        pem = public_key.to_s
+        existing_priority, existing_name, existing_public_key = key_data[pem]
+        next if existing_priority and existing_priority < priority
+        key_data[pem] = priority, name, public_key
+      rescue
+        puts "exception!"
+      end
+    end
+    name_to_key_hash = {}
+    key_data.each do |pem, data|
+      priority, name, public_key = data
+      if name_to_key_hash[name]
+        suffix_num = 2
+        while name_to_key_hash[name + " (#{suffix_num})"]
+          suffix_num += 1
+        end
+        name = name + " (#{suffix_num})"
+      end
+      name_to_key_hash[name] = public_key
+    end
+    key_names = {}
+    keys = []
+    name_to_key_hash.each do |name, public_key|
+      key_names[public_key.to_s] = "key<#{name}>"
+      keys << public_key
+    end
+    [key_names, keys]
+  end
+end
+
+collector = X509Collector.new
+ARGV.each do |path|
+  collector.investigate_path(path)
+end
+key_names, keys = collector.collect_public_keys
+collector.map do |path, meaning|
+  [collector.explain(meaning, key_names, keys), path]
+end.sort.each do |description, path|
+  puts "#{path}:"
+  puts "  #{description}"
+  puts
+end

@@ -2,6 +2,7 @@
 
 require 'facter'
 require 'puppet'
+require 'logger'
 
 module Puppet::Rails
   TIME_DEBUG = true
@@ -22,9 +23,8 @@ module Puppet::Rails
       ActiveRecord::Base.logger.level = Logger::DEBUG
     end
 
-    if (::ActiveRecord::VERSION::MAJOR == 2 and ::ActiveRecord::VERSION::MINOR <= 1)
-      ActiveRecord::Base.allow_concurrency = true
-    end
+    # As of ActiveRecord 2.2 allow_concurrency has been deprecated and no longer has any effect.
+    ActiveRecord::Base.allow_concurrency = true if Puppet::Util.activerecord_version < 2.2
 
     ActiveRecord::Base.verify_active_connections!
 
@@ -52,21 +52,17 @@ module Puppet::Rails
       args[:port]     = Puppet[:dbport] unless Puppet[:dbport].to_s.empty?
       args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
       args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
+      args[:pool]     = Puppet[:dbconnections].to_i unless Puppet[:dbconnections].to_i <= 0
       args[:database] = Puppet[:dbname]
       args[:reconnect]= true
 
       socket          = Puppet[:dbsocket]
       args[:socket]   = socket unless socket.to_s.empty?
-
-      connections     = Puppet[:dbconnections].to_i
-      args[:pool]     = connections if connections > 0
     when "oracle_enhanced":
       args[:database] = Puppet[:dbname] unless Puppet[:dbname].to_s.empty?
       args[:username] = Puppet[:dbuser] unless Puppet[:dbuser].to_s.empty?
       args[:password] = Puppet[:dbpassword] unless Puppet[:dbpassword].to_s.empty?
-
-      connections     = Puppet[:dbconnections].to_i
-      args[:pool]     = connections if connections > 0
+      args[:pool]     = Puppet[:dbconnections].to_i unless Puppet[:dbconnections].to_i <= 0
     else
       raise ArgumentError, "Invalid db adapter #{adapter}"
     end

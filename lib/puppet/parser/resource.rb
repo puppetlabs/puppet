@@ -64,6 +64,8 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   # Retrieve the associated definition and evaluate it.
   def evaluate
+    return if evaluated?
+    @evaluated = true
     if klass = resource_type and ! builtin_type?
       finish
       return klass.evaluate_code(self)
@@ -72,8 +74,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     else
       self.fail "Cannot find definition #{type}"
     end
-  ensure
-    @evaluated = true
   end
 
   # Mark this resource as both exported and virtual,
@@ -94,6 +94,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     @finished = true
     add_defaults
     add_metaparams
+    add_scope_tags
     validate
   end
 
@@ -103,9 +104,9 @@ class Puppet::Parser::Resource < Puppet::Resource
   end
 
   def initialize(*args)
+    raise ArgumentError, "Resources require a scope" unless args.last[:scope]
     super
 
-    raise ArgumentError, "Resources require a scope" unless scope
     @source ||= scope.source
   end
 
@@ -139,10 +140,6 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   def name
     self[:name] || self.title
-  end
-
-  def namespaces
-    scope.namespaces
   end
 
   # A temporary occasion, until I get paths in the scopes figured out.
@@ -261,6 +258,12 @@ class Puppet::Parser::Resource < Puppet::Resource
     Puppet::Type.eachmetaparam do |name|
       next unless self.class.relationship_parameter?(name)
       add_backward_compatible_relationship_param(name) if compat_mode
+    end
+  end
+
+  def add_scope_tags
+    if scope_resource = scope.resource
+      tag(*scope_resource.tags)
     end
   end
 

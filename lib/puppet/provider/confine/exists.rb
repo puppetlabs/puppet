@@ -6,10 +6,7 @@ class Puppet::Provider::Confine::Exists < Puppet::Provider::Confine
   end
 
   def pass?(value)
-    if for_binary?
-      return false unless value = binary(value)
-    end
-    value and FileTest.exist?(value)
+    value && (for_binary? ? which(value) : FileTest.exist?(value))
   end
 
   def message(value)

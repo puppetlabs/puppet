@@ -1,3 +1,6 @@
+require 'rack'
+require 'rack/request'
+require 'rack/response'
 
 require 'puppet/network/http'
 require 'puppet/network/http/rack/rest'

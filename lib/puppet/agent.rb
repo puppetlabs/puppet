@@ -37,7 +37,9 @@ class Puppet::Agent
       with_client do |client|
         begin
           sync.synchronize { lock { result = client.run(*args) } }
-        rescue => detail
+        rescue SystemExit,NoMemoryError
+          raise
+        rescue Exception => detail
           puts detail.backtrace if Puppet[:trace]
           Puppet.err "Could not run #{client_class}: #{detail}"
         end

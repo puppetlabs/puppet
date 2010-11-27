@@ -1,11 +1,12 @@
 Puppet::Type.newtype(:tidy) do
   require 'puppet/file_serving/fileset'
+  require 'puppet/file_bucket/dipper'
 
   @doc = "Remove unwanted files based on specific criteria.  Multiple
     criteria are OR'd together, so a file that is too large but is not
     old enough will still get tidied.
 
-    If you don't specify either 'age' or 'size', then all files will
+    If you don't specify either `age` or `size`, then all files will
     be removed.
 
     This resource type works by generating a file resource for every file
@@ -47,7 +48,7 @@ Puppet::Type.newtype(:tidy) do
       at least one of the patterns specified. Multiple patterns can
       be specified using an array.
 
-      Example::
+      Example:
 
           tidy { \"/tmp\":
             age => \"1w\",
@@ -55,7 +56,7 @@ Puppet::Type.newtype(:tidy) do
             matches => [ \"[0-9]pub*.tmp\", \"*.temp\", \"tmpfile?\" ]
           }
 
-      This removes files from \/tmp if they are one week old or older,
+      This removes files from `/tmp` if they are one week old or older,
       are not in a subdirectory and match one of the shell globs given.
 
       Note that the patterns are matched against the basename of each
@@ -140,15 +141,17 @@ Puppet::Type.newtype(:tidy) do
   newparam(:size) do
     desc "Tidy files whose size is equal to or greater than
       the specified size.  Unqualified values are in kilobytes, but
-      *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
-      and *megabytes*, respectively.  Only the first character is
-      significant, so the full word can also be used."
+      *b*, *k*, *m*, *g*, and *t* can be appended to specify *bytes*,
+      *kilobytes*, *megabytes*, *gigabytes*, and *terabytes*, respectively.
+      Only the first character is significant, so the full word can also 
+      be used."
 
     @@sizeconvertors = {
       :b => 0,
       :k => 1,
       :m => 2,
-      :g => 3
+      :g => 3,
+      :t => 4
     }
 
     def convert(unit, multi)

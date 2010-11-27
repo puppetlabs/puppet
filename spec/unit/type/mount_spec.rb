@@ -203,23 +203,45 @@ describe Puppet::Type.type(:mount)::Ensure do
     end
   end
 
-  describe Puppet::Type.type(:mount), "when responding to events" do
+  describe Puppet::Type.type(:mount), "when responding to refresh" do
 
-    it "should remount if it is currently mounted" do
-      @provider.expects(:mounted?).returns(true)
+    it "should remount if it is supposed to be mounted" do
+      @mount[:ensure] = "mounted"
       @provider.expects(:remount)
 
       @mount.refresh
     end
 
-    it "should not remount if it is not currently mounted" do
-      @provider.expects(:mounted?).returns(false)
+    it "should not remount if it is supposed to be present" do
+      @mount[:ensure] = "present"
+      @provider.expects(:remount).never
+
+      @mount.refresh
+    end
+
+    it "should not remount if it is supposed to be absent" do
+      @mount[:ensure] = "absent"
+      @provider.expects(:remount).never
+
+      @mount.refresh
+    end
+
+    it "should not remount if it is supposed to be defined" do
+      @mount[:ensure] = "defined"
+      @provider.expects(:remount).never
+
+      @mount.refresh
+    end
+
+    it "should not remount if it is supposed to be unmounted" do
+      @mount[:ensure] = "unmounted"
       @provider.expects(:remount).never
 
       @mount.refresh
     end
 
     it "should not remount swap filesystems" do
+      @mount[:ensure] = "mounted"
       @mount[:fstype] = "swap"
       @provider.expects(:remount).never
 

@@ -13,7 +13,8 @@ class ObjectAdd < Puppet::Provider::NameService
   end
 
   def modifycmd(param, value)
-    cmd = [command(:modify), flag(param), value]
+    cmd = [command(param.to_s =~ /password_.+_age/ ? :password : :modify)]
+    cmd << flag(param) << value
     if @resource.allowdupe? && ((param == :uid) || (param == :gid and self.class.name == :groupadd))
       cmd << "-o"
     end

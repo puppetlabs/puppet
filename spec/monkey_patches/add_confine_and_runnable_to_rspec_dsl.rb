@@ -5,7 +5,6 @@ dir = File.expand_path(File.dirname(__FILE__))
 end
 
 require 'spec'
-require 'puppettest'
 require 'puppettest/runnable_test'
 
 module Spec

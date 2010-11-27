@@ -12,7 +12,7 @@ module Puppet
 
       This resource type uses the prescribed native tools for creating
       groups and generally uses POSIX APIs for retrieving information
-      about them.  It does not directly modify /etc/passwd or anything."
+      about them.  It does not directly modify `/etc/passwd` or anything."
 
     feature :allows_duplicates,
       "The provider supports duplicate users with the same UID."
@@ -24,8 +24,15 @@ module Puppet
       "The provider can modify user passwords, by accepting a password
       hash."
 
+    feature :manages_password_age,
+      "The provider can set age requirements and restrictions for
+      passwords."
+
     feature :manages_solaris_rbac,
       "The provider can manage roles and normal users"
+
+    feature :manages_expiry,
+      "The provider can manage the expiry date for a user."
 
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
@@ -157,6 +164,43 @@ module Puppet
       end
     end
 
+    newproperty(:password_min_age, :required_features => :manages_password_age) do
+      desc "The minimum amount of time in days a password must be used before it may be changed"
+
+      munge do |value|
+        case value
+        when String
+          Integer(value)
+        else
+          value
+        end
+      end
+
+      validate do |value|
+        if value.to_s !~ /^\d+$/
+          raise ArgumentError, "Password minimum age must be provided as a number"
+        end
+      end
+    end
+
+    newproperty(:password_max_age, :required_features => :manages_password_age) do
+      desc "The maximum amount of time in days a password may be used before it must be changed"
+
+      munge do |value|
+        case value
+        when String
+          Integer(value)
+        else
+          value
+        end
+      end
+
+      validate do |value|
+        if value.to_s !~ /^\d+$/
+          raise ArgumentError, "Password maximum age must be provided as a number"
+        end
+      end
+    end
 
     newproperty(:groups, :parent => Puppet::Property::List) do
       desc "The groups of which the user is a member.  The primary
@@ -206,6 +250,17 @@ module Puppet
       validate do |val|
         if val.to_s == "true"
           raise ArgumentError, "User provider #{provider.class.name} can not manage home directories" unless provider.class.manages_homedir?
+        end
+      end
+    end
+
+    newproperty(:expiry, :required_features => :manages_expiry) do
+      desc "The expiry date for this user. Must be provided in
+           a zero padded YYYY-MM-DD format - e.g 2010-02-19."
+
+      validate do |value|
+        if value !~ /^\d{4}-\d{2}-\d{2}$/
+          raise ArgumentError, "Expiry dates must be YYYY-MM-DD"
         end
       end
     end
@@ -381,4 +436,3 @@ module Puppet
     end
   end
 end
-

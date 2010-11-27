@@ -12,7 +12,7 @@ module Puppet
     include Puppet::Util::Diff
 
     attr_accessor :source, :local
-    desc "Copy a file over the current file.  Uses ``checksum`` to
+    desc "Copy a file over the current file.  Uses `checksum` to
       determine when a file should be copied.  Valid values are either
       fully qualified paths to files, or URIs.  Currently supported URI
       types are *puppet* and *file*.
@@ -20,47 +20,47 @@ module Puppet
       This is one of the primary mechanisms for getting content into
       applications that Puppet does not directly support and is very
       useful for those configuration files that don't change much across
-      sytems.  For instance::
+      sytems.  For instance:
 
-        class sendmail {
-          file { \"/etc/mail/sendmail.cf\":
-            source => \"puppet://server/modules/module_name/sendmail.cf\"
+          class sendmail {
+            file { \"/etc/mail/sendmail.cf\":
+              source => \"puppet://server/modules/module_name/sendmail.cf\"
+            }
           }
-        }
 
-      You can also leave out the server name, in which case ``puppet agent``
-      will fill in the name of its configuration server and ``puppet apply``
+      You can also leave out the server name, in which case `puppet agent`
+      will fill in the name of its configuration server and `puppet apply`
       will use the local filesystem.  This makes it easy to use the same
       configuration in both local and centralized forms.
 
-      Currently, only the ``puppet`` scheme is supported for source
+      Currently, only the `puppet` scheme is supported for source
       URL's. Puppet will connect to the file server running on
-      ``server`` to retrieve the contents of the file. If the
-      ``server`` part is empty, the behavior of the command-line
-      interpreter (``puppet apply``) and the client demon (``puppet agent``) differs
-      slightly: ``apply`` will look such a file up on the module path
-      on the local host, whereas ``agent`` will connect to the
+      `server` to retrieve the contents of the file. If the
+      `server` part is empty, the behavior of the command-line
+      interpreter (`puppet apply`) and the client demon (`puppet agent`) differs
+      slightly: `apply` will look such a file up on the module path
+      on the local host, whereas `agent` will connect to the
       puppet server that it received the manifest from.
 
-      See the `FileServingConfiguration fileserver configuration documentation`:trac: for information on how to configure
+      See the [fileserver configuration documentation](http://projects.puppetlabs.com/projects/puppet/wiki/File_Serving_Configuration) for information on how to configure
       and use file services within Puppet.
 
       If you specify multiple file sources for a file, then the first
       source that exists will be used.  This allows you to specify
-      what amount to search paths for files::
+      what amount to search paths for files:
 
-        file { \"/path/to/my/file\":
-          source => [
-            \"/modules/nfs/files/file.$host\",
-            \"/modules/nfs/files/file.$operatingsystem\",
-            \"/modules/nfs/files/file\"
-          ]
-        }
+          file { \"/path/to/my/file\":
+            source => [
+              \"/modules/nfs/files/file.$host\",
+              \"/modules/nfs/files/file.$operatingsystem\",
+              \"/modules/nfs/files/file\"
+            ]
+          }
 
       This will use the first found file as the source.
 
-      You cannot currently copy links using this mechanism; set ``links``
-      to ``follow`` if any remote sources are links.
+      You cannot currently copy links using this mechanism; set `links`
+      to `follow` if any remote sources are links.
       "
 
     validate do |sources|
@@ -92,6 +92,16 @@ module Puppet
 
     def checksum
       metadata && metadata.checksum
+    end
+
+    # Look up (if necessary) and return remote content.
+    cached_attr(:content) do
+      raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
+
+      unless tmp = Puppet::FileServing::Content.find(metadata.source)
+        fail "Could not find any content at %s" % metadata.source
+      end
+      tmp.content
     end
 
     # Copy the values from the source to the resource.  Yay.

@@ -451,7 +451,7 @@ class TestLangFunctions < Test::Unit::TestCase
       scope.function_include("nosuchclass")
     end
 
-    parser.newclass("myclass")
+    scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "myclass", {})
 
     scope.compiler.expects(:evaluate_classes).with(%w{myclass otherclass}, scope, false).returns(%w{myclass otherclass})
 

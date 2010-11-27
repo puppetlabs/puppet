@@ -1,11 +1,7 @@
-#
-# Simple module for manageing SELinux booleans
-#
-
 module Puppet
   newtype(:selboolean) do
     @doc = "Manages SELinux booleans on systems with SELinux support.  The supported booleans
-      are any of the ones found in /selinux/booleans/."
+      are any of the ones found in `/selinux/booleans/`."
 
     newparam(:name) do
       desc "The name of the SELinux boolean to be managed."
@@ -20,7 +16,7 @@ module Puppet
 
     newparam(:persistent) do
       desc "If set true, SELinux booleans will be written to disk and persist accross reboots.
-        The default is ``false``."
+        The default is `false`."
 
       defaultto :false
       newvalues(:true, :false)
@@ -28,4 +24,3 @@ module Puppet
 
   end
 end
-

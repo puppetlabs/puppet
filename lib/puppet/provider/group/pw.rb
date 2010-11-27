@@ -1,7 +1,7 @@
 require 'puppet/provider/nameservice/pw'
 
 Puppet::Type.type(:group).provide :pw, :parent => Puppet::Provider::NameService::PW do
-  desc "Group management via ``pw``.
+  desc "Group management via `pw`.
 
   Only works on FreeBSD.
 

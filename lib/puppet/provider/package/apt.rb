@@ -2,7 +2,7 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   # Provide sorting functionality
   include Puppet::Util::Package
 
-  desc "Package management via ``apt-get``."
+  desc "Package management via `apt-get`."
 
   has_feature :versionable
 
@@ -13,6 +13,10 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
   defaultfor :operatingsystem => [:debian, :ubuntu]
 
   ENV['DEBIAN_FRONTEND'] = "noninteractive"
+
+  # disable common apt helpers to allow non-interactive package installs
+  ENV['APT_LISTBUGS_FRONTEND'] = "none"
+  ENV['APT_LISTCHANGES_FRONTEND'] = "none"
 
   # A derivative of DPKG; this is how most people actually manage
   # Debian boxes, and the only thing that differs is that it can

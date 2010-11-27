@@ -47,11 +47,17 @@ describe Puppet::Rails, "when initializing any connection" do
     Puppet::Rails.connect
   end
 
-  describe "on ActiveRecord 2.1.x" do
-    confine("ActiveRecord 2.1.x") { ::ActiveRecord::VERSION::MAJOR == 2 and ::ActiveRecord::VERSION::MINOR <= 1 }
-
-    it "should set ActiveRecord::Base.allow_concurrency" do
+  describe "ActiveRecord Version" do
+    it "should set ActiveRecord::Base.allow_concurrency if ActiveRecord is 2.1" do
+      Puppet::Util.stubs(:activerecord_version).returns(2.1)
       ActiveRecord::Base.expects(:allow_concurrency=).with(true)
+
+      Puppet::Rails.connect
+    end
+
+    it "should not set ActiveRecord::Base.allow_concurrency if ActiveRecord is >= 2.2" do
+      Puppet::Util.stubs(:activerecord_version).returns(2.2)
+      ActiveRecord::Base.expects(:allow_concurrency=).never
 
       Puppet::Rails.connect
     end
@@ -97,9 +103,9 @@ describe Puppet::Rails, "when initializing a mysql connection" do
     Puppet.settings.stubs(:value).with(:dbport).returns("")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 45).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
     Puppet.settings.stubs(:value).with(:dbsocket).returns("")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "mysql",
@@ -107,9 +113,9 @@ describe Puppet::Rails, "when initializing a mysql connection" do
       :host => "testserver",
       :username => "testuser",
       :password => "testpassword",
+      :pool => pool_size,
       :database => "testname",
-      :reconnect => true,
-      :pool => 1
+      :reconnect => true
     }
   end
 
@@ -120,9 +126,9 @@ describe Puppet::Rails, "when initializing a mysql connection" do
     Puppet.settings.stubs(:value).with(:dbport).returns("9999")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 12).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
     Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "mysql",
@@ -131,10 +137,10 @@ describe Puppet::Rails, "when initializing a mysql connection" do
       :port => "9999",
       :username => "testuser",
       :password => "testpassword",
+      :pool => pool_size,
       :database => "testname",
       :socket => "testsocket",
-      :reconnect => true,
-      :pool => 1
+      :reconnect => true
     }
   end
 
@@ -145,9 +151,9 @@ describe Puppet::Rails, "when initializing a mysql connection" do
     Puppet.settings.stubs(:value).with(:dbport).returns("9999")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 23).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
     Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "mysql",
@@ -156,11 +162,31 @@ describe Puppet::Rails, "when initializing a mysql connection" do
       :port => "9999",
       :username => "testuser",
       :password => "testpassword",
+      :pool => pool_size,
       :database => "testname",
       :socket => "testsocket",
-      :reconnect => true,
-      :pool => 1
+      :reconnect => true
     }
+  end
+
+  it "should not provide the pool if dbconnections is 0, '0', or ''" do
+    Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
+    Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+    Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+    Puppet.settings.stubs(:value).with(:dbport).returns("9999")
+    Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+    Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+    Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns(0)
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns('0')
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns('')
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
   end
 end
 
@@ -174,9 +200,9 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
     Puppet.settings.stubs(:value).with(:dbport).returns("9999")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 200).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
     Puppet.settings.stubs(:value).with(:dbsocket).returns("")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "postgresql",
@@ -185,9 +211,9 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
       :port => "9999",
       :username => "testuser",
       :password => "testpassword",
+      :pool => pool_size,
       :database => "testname",
-      :reconnect => true,
-      :pool => 1
+      :reconnect => true
     }
   end
 
@@ -198,9 +224,9 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
     Puppet.settings.stubs(:value).with(:dbport).returns("9999")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 122).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
     Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "postgresql",
@@ -209,50 +235,90 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
       :port => "9999",
       :username => "testuser",
       :password => "testpassword",
+      :pool => pool_size,
       :database => "testname",
       :socket => "testsocket",
-      :pool => 1,
       :reconnect => true
     }
+  end
+
+  it "should not provide the pool if dbconnections is 0, '0', or ''" do
+    Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
+    Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+    Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+    Puppet.settings.stubs(:value).with(:dbport).returns("9999")
+    Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+    Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+    Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns(0)
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns('0')
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns('')
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
   end
 end
 
 describe Puppet::Rails, "when initializing an Oracle connection" do
   confine "Cannot test without ActiveRecord" => Puppet.features.rails?
 
-  it "should provide the adapter, log_level, and username, password, dbconnections, and database arguments" do
+  it "should provide the adapter, log_level, and username, password, and database arguments" do
     Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
     Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 123).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "oracle_enhanced",
       :log_level => "testlevel",
       :username => "testuser",
       :password => "testpassword",
-      :database => "testname",
-      :pool => 1
+      :pool => pool_size,
+      :database => "testname"
     }
   end
 
-  it "should provide the adapter, log_level, and host, username, password, database, pool, and socket arguments" do
+  it "should provide the adapter, log_level, and host, username, password, database and socket arguments" do
     Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
     Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
     Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
     Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbconnections).returns((pool_size = 124).to_s)
     Puppet.settings.stubs(:value).with(:dbname).returns("testname")
-    Puppet.settings.stubs(:value).with(:dbconnections).returns(1)
 
     Puppet::Rails.database_arguments.should == {
       :adapter => "oracle_enhanced",
       :log_level => "testlevel",
       :username => "testuser",
       :password => "testpassword",
-      :database => "testname",
-      :pool => 1
+      :pool => pool_size,
+      :database => "testname"
     }
+  end
+
+  it "should not provide the pool if dbconnections is 0, '0', or ''" do
+    Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
+    Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
+    Puppet.settings.stubs(:value).with(:dbserver).returns("testserver")
+    Puppet.settings.stubs(:value).with(:dbport).returns("9999")
+    Puppet.settings.stubs(:value).with(:dbuser).returns("testuser")
+    Puppet.settings.stubs(:value).with(:dbpassword).returns("testpassword")
+    Puppet.settings.stubs(:value).with(:dbname).returns("testname")
+    Puppet.settings.stubs(:value).with(:dbsocket).returns("testsocket")
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns(0)
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns('0')
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
+
+    Puppet.settings.stubs(:value).with(:dbconnections).returns('')
+    Puppet::Rails.database_arguments.should_not be_include(:pool)
   end
 end

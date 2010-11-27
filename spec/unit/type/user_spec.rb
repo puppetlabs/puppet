@@ -35,6 +35,14 @@ describe user do
     user.provider_feature(:manages_solaris_rbac).should_not be_nil
   end
 
+  it "should have a manages_expiry feature" do
+    user.provider_feature(:manages_expiry).should_not be_nil
+  end
+
+  it "should have a manages_password_age feature" do
+    user.provider_feature(:manages_password_age).should_not be_nil
+  end
+
   describe "instances" do
     it "should have a valid provider" do
       user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)
@@ -47,7 +55,7 @@ describe user do
     end
   end
 
-  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :groups, :roles, :auths, :profiles, :project, :keys]
+  properties = [:ensure, :uid, :gid, :home, :comment, :shell, :password, :password_min_age, :password_max_age, :groups, :roles, :auths, :profiles, :project, :keys, :expiry]
 
   properties.each do |property|
     it "should have a #{property} property" do
@@ -227,6 +235,16 @@ describe user do
     end
   end
 
+  describe "when managing expiry" do
+    before do
+      @expiry = user.attrclass(:expiry).new(:resource => @resource)
+    end
+
+    it "should fail if given an invalid date" do
+      lambda { @expiry.should = "200-20-20" }.should raise_error(Puppet::Error)
+    end
+  end
+
   describe "when managing passwords" do
     before do
       @password = user.attrclass(:password).new(:resource => @resource, :should => "mypass")
@@ -262,6 +280,11 @@ describe user do
   end
 
   describe "when user has roles" do
+    before do
+      # To test this feature, we have to support it.
+      user.new(:name => "foo").provider.class.stubs(:feature?).returns(true)
+    end
+
     it "should autorequire roles" do
       testuser = Puppet::Type.type(:user).new(:name => "testuser")
       testuser[:roles] = "testrole"

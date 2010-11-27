@@ -61,11 +61,11 @@ module Puppet::Network::HTTP::Handler
 
   # handle an HTTP request
   def process(request, response)
-    indirection_request = uri2indirection(http_method(request), path(request), params(request))
+    indirection, method, key, params = uri2indirection(http_method(request), path(request), params(request))
 
-    check_authorization(indirection_request)
+    check_authorization(indirection, method, key, params)
 
-    send("do_#{indirection_request.method}", indirection_request, request, response)
+    send("do_#{method}", indirection, key, params, request, response)
   rescue SystemExit,NoMemoryError
     raise
   rescue Exception => e
@@ -96,11 +96,16 @@ module Puppet::Network::HTTP::Handler
     set_response(response, exception.to_s, status)
   end
 
+  def model(indirection_name)
+    raise ArgumentError, "Could not find indirection '#{indirection_name}'" unless indirection = Puppet::Indirector::Indirection.instance(indirection_name.to_sym)
+    indirection.model
+  end
+
   # Execute our find.
-  def do_find(indirection_request, request, response)
-    unless result = indirection_request.model.find(indirection_request.key, indirection_request.to_hash)
-      Puppet.info("Could not find #{indirection_request.indirection_name} for '#{indirection_request.key}'")
-      return do_exception(response, "Could not find #{indirection_request.indirection_name} #{indirection_request.key}", 404)
+  def do_find(indirection_name, key, params, request, response)
+    unless result = model(indirection_name).find(key, params)
+      Puppet.info("Could not find #{indirection_name} for '#{key}'")
+      return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
     end
 
     # The encoding of the result must include the format to use,
@@ -113,34 +118,35 @@ module Puppet::Network::HTTP::Handler
   end
 
   # Execute our search.
-  def do_search(indirection_request, request, response)
-    result = indirection_request.model.search(indirection_request.key, indirection_request.to_hash)
+  def do_search(indirection_name, key, params, request, response)
+    model  = self.model(indirection_name)
+    result = model.search(key, params)
 
-    if result.nil? or (result.is_a?(Array) and result.empty?)
-      return do_exception(response, "Could not find instances in #{indirection_request.indirection_name} with '#{indirection_request.to_hash.inspect}'", 404)
+    if result.nil?
+      return do_exception(response, "Could not find instances in #{indirection_name} with '#{key}'", 404)
     end
 
     format = format_to_use(request)
     set_content_type(response, format)
 
-    set_response(response, indirection_request.model.render_multiple(format, result))
+    set_response(response, model.render_multiple(format, result))
   end
 
   # Execute our destroy.
-  def do_destroy(indirection_request, request, response)
-    result = indirection_request.model.destroy(indirection_request.key, indirection_request.to_hash)
+  def do_destroy(indirection_name, key, params, request, response)
+    result = model(indirection_name).destroy(key, params)
 
     return_yaml_response(response, result)
   end
 
   # Execute our save.
-  def do_save(indirection_request, request, response)
+  def do_save(indirection_name, key, params, request, response)
     data = body(request).to_s
     raise ArgumentError, "No data to save" if !data or data.empty?
 
     format = request_format(request)
-    obj = indirection_request.model.convert_from(format, data)
-    result = save_object(indirection_request, obj)
+    obj = model(indirection_name).convert_from(format, data)
+    result = obj.save(key)
     return_yaml_response(response, result)
   end
 
@@ -160,12 +166,6 @@ module Puppet::Network::HTTP::Handler
   def return_yaml_response(response, body)
     set_content_type(response, Puppet::Network::FormatHandler.format("yaml"))
     set_response(response, body.to_yaml)
-  end
-
-  # LAK:NOTE This has to be here for testing; it's a stub-point so
-  # we keep infinite recursion from happening.
-  def save_object(ind_request, object)
-    object.save(ind_request.key)
   end
 
   def get?(request)

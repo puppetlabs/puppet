@@ -1,8 +1,7 @@
 Puppet::Type.newtype(:macauthorization) do
 
   @doc = "Manage the Mac OS X authorization database.
-    See:
-    http://developer.apple.com/documentation/Security/Conceptual/Security_Overview/Security_Services/chapter_4_section_5.html for more information."
+    See the [Apple developer site](http://developer.apple.com/documentation/Security/Conceptual/Security_Overview/Security_Services/chapter_4_section_5.html) for more information."
 
   ensurable
 

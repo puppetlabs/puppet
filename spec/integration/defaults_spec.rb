@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../spec_helper'
 
 require 'puppet/defaults'
+require 'puppet/rails'
 
 describe "Puppet defaults" do
     include Puppet::Util::Execution
@@ -227,7 +228,7 @@ describe "Puppet defaults" do
 
   it "should have a :caname setting that defaults to the cert name" do
     Puppet.settings[:certname] = "foo"
-    Puppet.settings[:ca_name].should == "foo"
+    Puppet.settings[:ca_name].should == "Puppet CA: foo"
   end
 
   it "should have a 'prerun_command' that defaults to the empty string" do

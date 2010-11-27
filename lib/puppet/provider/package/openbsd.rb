@@ -2,8 +2,7 @@ require 'puppet/provider/package'
 
 # Packaging on OpenBSD.  Doesn't work anywhere else that I know of.
 Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Package do
-  include Puppet::Util::Execution
-  desc "OpenBSD's form of ``pkg_add`` support."
+  desc "OpenBSD's form of `pkg_add` support."
 
   commands :pkginfo => "pkg_info", :pkgadd => "pkg_add", :pkgdelete => "pkg_delete"
 
@@ -61,18 +60,15 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         "You must specify a package source for BSD packages"
     end
 
-    old_ensure = @resource[:ensure]
-
-    if @resource[:source] =~ /\/$/
-      withenv :PKG_PATH => @resource[:source] do
-        @resource[:ensure] = old_ensure if (@resource[:ensure] = get_version) == nil
-        full_name = [ @resource[:name], @resource[:ensure], @resource[:flavor] ]
-        pkgadd full_name.join('-').chomp('-')
-      end
+    if @resource[:source][-1,1] == ::File::PATH_SEPARATOR
+      e_vars = { :PKG_PATH => @resource[:source] }
+      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-')
     else
-      pkgadd @resource[:source]
+      e_vars = {}
+      full_name = @resource[:source]
     end
 
+     Puppet::Util::Execution::withenv(e_vars) { pkgadd full_name }
   end
 
   def get_version

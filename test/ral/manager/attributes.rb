@@ -229,7 +229,10 @@ class TestTypeAttributes < Test::Unit::TestCase
       end
       yes.each { |a| assert(resource.should(a), "Did not get value for #{a} in #{prov.name}") }
       no.each do |a|
-        # These may or may not get passed to the provider. We shouldn't care.
+        assert_nil(resource.should(a), "Got value for unsupported %s in %s" % [a, prov.name])
+        if Puppet::Util::Log.sendlevel?(:info)
+          assert(@logs.find { |l| l.message =~ /not managing attribute #{a}/ and l.level == :info }, "No warning about failed %s" % a)
+        end
       end
 
       @logs.clear

@@ -17,6 +17,7 @@ describe Puppet::SSL::Host do
 
     Puppet.settings[:confdir] = @dir
     Puppet.settings[:vardir] = @dir
+    Puppet.settings[:group] = Process.gid
 
     Puppet::SSL::Host.ca_location = :local
 

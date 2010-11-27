@@ -18,7 +18,7 @@ Puppet::Type.newtype(:selmodule) do
   newparam(:selmoduledir) do
 
     desc "The directory to look for the compiled pp module file in.
-      Currently defaults to /usr/share/selinux/targeted.  If selmodulepath
+      Currently defaults to `/usr/share/selinux/targeted`.  If selmodulepath
       is not specified the module will be looked for in this directory in a
       in a file called NAME.pp, where NAME is the value of the name parameter."
 
@@ -34,9 +34,9 @@ Puppet::Type.newtype(:selmodule) do
 
   newproperty(:syncversion) do
 
-    desc "If set to ``true``, the policy will be reloaded if the
+    desc "If set to `true`, the policy will be reloaded if the
     version found in the on-disk file differs from the loaded
-    version.  If set to ``false`` (the default) the the only check
+    version.  If set to `false` (the default) the the only check
     that will be made is if the policy is loaded at all or not."
 
     newvalue(:true)
@@ -51,4 +51,3 @@ Puppet::Type.newtype(:selmodule) do
     end
   end
 end
-

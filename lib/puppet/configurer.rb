@@ -77,12 +77,12 @@ class Puppet::Configurer
   end
 
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare
+  def prepare(options)
     dostorage
 
-    download_plugins
+    download_plugins unless options[:skip_plugin_download]
 
-    download_fact_plugins
+    download_fact_plugins unless options[:skip_plugin_download]
 
     execute_prerun_command
   end
@@ -126,7 +126,7 @@ class Puppet::Configurer
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
     begin
-      prepare
+      prepare(options)
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
@@ -158,23 +158,38 @@ class Puppet::Configurer
       return
     end
   ensure
+    # Make sure we forget the retained module_directories of any autoload
+    # we might have used.
+    Thread.current[:env_module_directories] = nil
+
     # Now close all of our existing http connections, since there's no
     # reason to leave them lying open.
     Puppet::Network::HttpPool.clear_http_instances
     execute_postrun_command
 
     Puppet::Util::Log.close(report)
-
     send_report(report, transaction)
   end
 
   def send_report(report, trans = nil)
     trans.generate_report if trans
     puts report.summary if Puppet[:summarize]
-    report.save if Puppet[:report]
+    save_last_run_summary(report)
+    if Puppet[:report]
+      report.save
+    end
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err "Could not send report: #{detail}"
+  end
+
+  def save_last_run_summary(report)
+    Puppet::Util::FileLocking.writelock(Puppet[:lastrunfile], 0660) do |file|
+      file.print YAML.dump(report.raw_summary)
+    end
+  rescue => detail
+    puts detail.backtrace if Puppet[:trace]
+    Puppet.err "Could not save last run local report: #{detail}"
   end
 
   private

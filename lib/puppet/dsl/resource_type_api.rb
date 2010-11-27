@@ -1,34 +1,15 @@
 require 'puppet/resource/type'
 
-module Puppet::DSL::ResourceTypeAPI
+# Type of the objects inside of which pure ruby manifest files are
+# executed.  Provides methods for creating defines, hostclasses, and
+# nodes.
+class Puppet::DSL::ResourceTypeAPI
+  def initialize
+    @__created_ast_objects__ = []
+  end
+
   def define(name, *args, &block)
-    result = mk_resource_type(:definition, name, Hash.new, block)
-    result.set_arguments(munge_type_arguments(args))
-    result
-  end
-
-  def hostclass(name, options = {}, &block)
-    mk_resource_type(:hostclass, name, options, block)
-  end
-
-  def node(name, options = {}, &block)
-    mk_resource_type(:node, name, options, block)
-  end
-
-  private
-
-  def mk_resource_type(type, name, options, code)
-    klass = Puppet::Resource::Type.new(type, name, options)
-
-    klass.ruby_code = code if code
-
-    Puppet::Node::Environment.new.known_resource_types.add klass
-
-    klass
-  end
-
-  def munge_type_arguments(args)
-    args.inject([]) do |result, item|
+    args = args.inject([]) do |result, item|
       if item.is_a?(Hash)
         item.each { |p, v| result << [p, v] }
       else
@@ -36,5 +17,18 @@ module Puppet::DSL::ResourceTypeAPI
       end
       result
     end
+    @__created_ast_objects__.push Puppet::Parser::AST::Definition.new(name, {:arguments => args}, &block)
+    nil
+  end
+
+  def hostclass(name, options = {}, &block)
+    @__created_ast_objects__.push Puppet::Parser::AST::Hostclass.new(name, options, &block)
+    nil
+  end
+
+  def node(name, options = {}, &block)
+    name = [name] unless name.is_a?(Array)
+    @__created_ast_objects__.push Puppet::Parser::AST::Node.new(name, options, &block)
+    nil
   end
 end

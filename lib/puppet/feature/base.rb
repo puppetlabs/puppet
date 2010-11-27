@@ -27,7 +27,8 @@ Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
 Puppet.features.add(:augeas, :libs => ["augeas"])
 
 # We have RRD available
-Puppet.features.add(:rrd, :libs => ["RRDtool"])
+Puppet.features.add(:rrd_legacy, :libs => ["RRDtool"])
+Puppet.features.add(:rrd, :libs => ["RRD"])
 
 # We have OpenSSL
 Puppet.features.add(:openssl, :libs => ["openssl"])

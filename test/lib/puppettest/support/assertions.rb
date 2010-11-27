@@ -1,7 +1,5 @@
-require 'puppettest'
 require 'puppettest/support/utils'
 require 'fileutils'
-
 
 module PuppetTest
   include PuppetTest::Support::Utils

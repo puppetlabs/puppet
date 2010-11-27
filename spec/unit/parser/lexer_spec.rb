@@ -30,6 +30,14 @@ describe Puppet::Parser::Lexer do
 
       @lexer.line.should == 10
     end
+
+    it "should not think the terminator is escaped, when preceeded by an even number of backslashes" do
+      @lexer.line = 10
+      @lexer.string = "here\nis\nthe\nstring\\\\'with\nextra\njunk"
+      @lexer.slurpstring("'")
+
+      @lexer.line.should == 13
+    end
   end
 end
 
@@ -410,8 +418,13 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string')}                                     => [[:STRING,'single quoted string']],
     %q{"double quoted string"}                                      => [[:STRING,'double quoted string']],
     %q{'single quoted string with an escaped "\\'"'}                => [[:STRING,'single quoted string with an escaped "\'"']],
+    %q{'single quoted string with an escaped "\$"'}                 => [[:STRING,'single quoted string with an escaped "\$"']],
+    %q{'single quoted string with an escaped "\."'}                 => [[:STRING,'single quoted string with an escaped "\."']],
+    %q{'single quoted string with an escaped "\n"'}                 => [[:STRING,'single quoted string with an escaped "\n"']],
+    %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
     %q{"string with an escaped '\\$'"}                              => [[:STRING,"string with an escaped '$'"]],
+    %Q{"string with a line ending with a backslash: \\\nfoo"}       => [[:STRING,"string with a line ending with a backslash: foo"]],
     %q{"string with $v (but no braces)"}                            => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' (but no braces)']],
     %q["string with ${v} in braces"]                                => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' in braces']],
     %q["string with ${qualified::var} in braces"]                   => [[:DQPRE,"string with "],[:VARIABLE,'qualified::var'],[:DQPOST,' in braces']],
@@ -616,6 +629,12 @@ describe "Puppet::Parser::Lexer in the old tests" do
     @lexer.namespace.should == "base::sub"
   end
 
+  it "should not put class instantiation on the namespace" do
+    @lexer.string = "class base { class sub { class { mode"
+    @lexer.fullscan
+    @lexer.namespace.should == "base::sub"
+  end
+
   it "should correctly handle fully qualified names" do
     @lexer.string = "class base { class sub::more {"
     @lexer.fullscan
@@ -634,7 +653,6 @@ end
 
 require 'puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
-  extend PuppetTest
   extend PuppetTest::Support::Utils
   textfiles do |file|
     it "should correctly lex #{file}" do

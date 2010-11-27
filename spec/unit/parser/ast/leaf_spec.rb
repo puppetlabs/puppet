@@ -47,6 +47,10 @@ describe Puppet::Parser::AST::String do
       value = stub 'value', :is_a? => true, :to_s => "ab"
       Puppet::Parser::AST::String.new( :value => value ).to_s.should == "\"ab\""
     end
+    it "should return a dup of its value" do
+      value = ""
+      Puppet::Parser::AST::String.new( :value => value ).evaluate(stub('scope')).should_not be_equal(value)
+    end
   end
 end
 
@@ -132,12 +136,36 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       access.evaluate(@scope).should == "val2"
     end
 
+    it "should be able to return an array member when index is a stringified number" do
+      @scope.stubs(:lookupvar).with("a").returns(["val1", "val2", "val3"])
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "1" )
+
+      access.evaluate(@scope).should == "val2"
+    end
+
+    it "should raise an error when accessing an array with a key" do
+      @scope.stubs(:lookupvar).with("a").returns(["val1", "val2", "val3"])
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "get_me_the_second_element_please" )
+
+      lambda { access.evaluate(@scope) }.should raise_error
+    end
+
     it "should be able to return an hash value" do
       @scope.stubs(:lookupvar).with("a").returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
 
       access.evaluate(@scope).should == "val2"
+    end
+
+    it "should be able to return an hash value with a numerical key" do
+      @scope.stubs(:lookupvar).with("a").returns({ "key1" => "val1", "key2" => "val2", "45" => "45", "key3" => "val3" })
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "45" )
+
+      access.evaluate(@scope).should == "45"
     end
 
     it "should raise an error if the variable lookup didn't return an hash or an array" do
@@ -189,6 +217,24 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       access.assign(scope, "c" )
 
       scope.lookupvar("a").should be_include("b")
+    end
+
+    it "should raise an error when assigning an array element with a key" do
+      @scope.stubs(:lookupvar).with("a").returns([])
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "get_me_the_second_element_please" )
+
+      lambda { access.assign(@scope, "test") }.should raise_error
+    end
+
+    it "should be able to return an array member when index is a stringified number" do
+      scope = Puppet::Parser::Scope.new
+      scope.setvar("a", [])
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "0" )
+
+      access.assign(scope, "val2")
+      scope.lookupvar("a").should == ["val2"]
     end
 
     it "should raise an error when trying to overwrite an hash value" do

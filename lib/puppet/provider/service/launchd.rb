@@ -38,6 +38,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   commands :launchctl => "/bin/launchctl"
   commands :sw_vers => "/usr/bin/sw_vers"
+  commands :plutil => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem => :darwin
@@ -52,6 +53,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
 
 
+  # Read a plist, whether its format is XML or in Apple's "binary1"
+  # format.
+  def self.read_plist(path)
+    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+  end
+
   # returns a label => path map for either all jobs, or just a single
   # job if the label is specified
   def self.jobsearch(label=nil)
@@ -62,8 +69,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
           next if f =~ /^\..*$/
           next if FileTest.directory?(f)
           fullpath = File.join(path, f)
-          job = Plist::parse_xml(fullpath)
-          if job and job.has_key?("Label")
+          if FileTest.file?(fullpath) and job = read_plist(fullpath) and job.has_key?("Label")
             if job["Label"] == label
               return { label => fullpath }
             else
@@ -118,8 +124,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   def plist_from_label(label)
     job = self.class.jobsearch(label)
     job_path = job[label]
-    job_plist = Plist::parse_xml(job_path)
-    raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}") if not job_plist
+    if FileTest.file?(job_path)
+      job_plist = self.class.read_plist(job_path)
+    else
+      raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}")
+    end
     [job_path, job_plist]
   end
 
@@ -200,9 +209,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
     if self.class.get_macosx_version_major == "10.6":
-      overrides = Plist::parse_xml(Launchd_Overrides)
-
-      unless overrides.nil?
+      if FileTest.file?(Launchd_Overrides) and overrides = self.class.read_plist(Launchd_Overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
         end
@@ -227,7 +234,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # versions this is stored in the job plist itself.
   def enable
     if self.class.get_macosx_version_major == "10.6"
-      overrides = Plist::parse_xml(Launchd_Overrides)
+      overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
     else
@@ -242,7 +249,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   def disable
     if self.class.get_macosx_version_major == "10.6"
-      overrides = Plist::parse_xml(Launchd_Overrides)
+      overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
     else

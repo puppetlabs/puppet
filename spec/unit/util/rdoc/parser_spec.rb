@@ -19,8 +19,8 @@ describe RDoc::Parser do
     it "should parse puppet files with the puppet parser" do
       @parser.stubs(:scan_top_level)
       parser = stub 'parser'
-      Puppet::Parser::Parser.expects(:new).returns(parser)
-      parser.expects(:parse)
+      Puppet::Parser::Parser.stubs(:new).returns(parser)
+      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
       parser.expects(:file=).with("module/manifests/init.pp")
 
       @parser.scan
@@ -29,6 +29,7 @@ describe RDoc::Parser do
     it "should scan the ast for Puppet files" do
       parser = stub_everything 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
+      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
 
       @parser.expects(:scan_top_level)
 
@@ -38,6 +39,7 @@ describe RDoc::Parser do
     it "should return a PuppetTopLevel to RDoc" do
       parser = stub_everything 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
+      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
 
       @parser.expects(:scan_top_level)
 
@@ -47,8 +49,8 @@ describe RDoc::Parser do
 
   describe "when scanning top level entities" do
     before :each do
-      @resource_type_collection = stub_everything 'resource_type_collection'
-      @parser.ast = @resource_type_collection
+      @resource_type_collection = resource_type_collection = stub_everything('resource_type_collection')
+      @parser.instance_eval { @known_resource_types = resource_type_collection }
       @parser.stubs(:split_module).returns("module")
 
       @topcontainer = stub_everything 'topcontainer'
@@ -85,8 +87,8 @@ describe RDoc::Parser do
       @parser.scan_top_level(@topcontainer)
     end
 
-    it "should set the module as global if we parse the global manifests (ie <site> module)" do
-      @parser.stubs(:split_module).returns("<site>")
+    it "should set the module as global if we parse the global manifests (ie __site__ module)" do
+      @parser.stubs(:split_module).returns(RDoc::Parser::SITE)
       @parser.stubs(:parse_elements)
 
       @topcontainer.expects(:global=).with(true)
@@ -131,7 +133,7 @@ describe RDoc::Parser do
     it "should return <site> for manifests not under module path" do
       File.stubs(:expand_path).returns("/path/to/manifests/init.pp")
       File.stubs(:identical?).returns(false)
-      @parser.split_module("/path/to/manifests/init.pp").should == "<site>"
+      @parser.split_module("/path/to/manifests/init.pp").should == RDoc::Parser::SITE
     end
   end
 
@@ -141,8 +143,8 @@ describe RDoc::Parser do
       @definition = stub_everything 'definition', :file => "module/manifests/init.pp", :type => :definition, :name => "mydef"
       @node = stub_everything 'node', :file => "module/manifests/init.pp", :type => :node, :name => "mynode"
 
-      @resource_type_collection = Puppet::Resource::TypeCollection.new("env")
-      @parser.ast = @resource_type_collection
+      @resource_type_collection = resource_type_collection = Puppet::Resource::TypeCollection.new("env")
+      @parser.instance_eval { @known_resource_types = resource_type_collection }
 
       @container = stub_everything 'container'
     end
@@ -340,10 +342,12 @@ describe RDoc::Parser do
 
     def create_stmt(name)
       stmt_value = stub "#{name}_value", :value => "myclass"
-      stmt = stub_everything 'stmt', :name => name, :arguments => [stmt_value], :doc => "mydoc"
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::Function).returns(true)
-      stmt
+
+      Puppet::Parser::AST::Function.new(
+        :name      => name,
+        :arguments => [stmt_value],
+        :doc       => 'mydoc'
+      )
     end
 
     before(:each) do
@@ -377,10 +381,11 @@ describe RDoc::Parser do
 
     def create_stmt
       stmt_value = stub "resource_ref", :to_s => "File[\"/tmp/a\"]"
-      stmt = stub_everything 'stmt', :name => "realize", :arguments => [stmt_value], :doc => "mydoc"
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-      stmt.stubs(:is_a?).with(Puppet::Parser::AST::Function).returns(true)
-      stmt
+      Puppet::Parser::AST::Function.new(
+        :name      => 'realize',
+        :arguments => [stmt_value],
+        :doc       => 'mydoc'
+      )
     end
 
     before(:each) do
@@ -432,11 +437,16 @@ describe RDoc::Parser do
   describe "when scanning for resources" do
     before :each do
       @class = stub_everything 'class'
-
-      param = stub 'params', :children => []
-      @stmt = stub_everything 'stmt', :type => "File", :title => "myfile", :doc => "mydoc", :params => param
-      @stmt.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-      @stmt.stubs(:is_a?).with(Puppet::Parser::AST::Resource).returns(true)
+      @stmt = Puppet::Parser::AST::Resource.new(
+        :type       => "File",
+        :instances  => Puppet::Parser::AST::ASTArray.new(:children => [
+          Puppet::Parser::AST::ResourceInstance.new(
+            :title => Puppet::Parser::AST::Name.new(:value => "myfile"),
+            :parameters => Puppet::Parser::AST::ASTArray.new(:children => [])
+          )
+        ]),
+        :doc        => 'mydoc'
+      )
 
       @code = stub_everything 'code'
       @code.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(true)

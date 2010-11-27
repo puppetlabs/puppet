@@ -43,8 +43,16 @@ describe Puppet::Util::RDoc do
       Puppet::Util::RDoc.rdoc("output", [], "utf-8")
     end
 
-    it "should tell RDoc to force updates of indices" do
+    it "should tell RDoc to force updates of indices when RDoc supports it" do
+      Options::OptionList.stubs(:options).returns([["--force-update", "-U", 0 ]])
       @rdoc.expects(:document).with { |args| args.include?("--force-update") }
+
+      Puppet::Util::RDoc.rdoc("output", [])
+    end
+
+    it "should not tell RDoc to force updates of indices when RDoc doesn't support it" do
+      Options::OptionList.stubs(:options).returns([])
+      @rdoc.expects(:document).never.with { |args| args.include?("--force-update") }
 
       Puppet::Util::RDoc.rdoc("output", [])
     end
@@ -73,6 +81,19 @@ describe Puppet::Util::RDoc do
       Puppet.expects(:[]=).with(:ignoreimport, true)
 
       Puppet::Util::RDoc.manifestdoc([])
+    end
+
+    it "should use a parser with the correct environment" do
+      FileTest.stubs(:file?).returns(true)
+      Puppet::Util::RDoc.stubs(:output)
+
+      parser = stub_everything
+      Puppet::Parser::Parser.stubs(:new).with{ |env| env.is_a?(Puppet::Node::Environment) }.returns(parser)
+
+      parser.expects(:file=).with("file")
+      parser.expects(:parse)
+
+      Puppet::Util::RDoc.manifestdoc(["file"])
     end
 
     it "should puppet parse all given files" do

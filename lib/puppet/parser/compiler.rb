@@ -19,7 +19,12 @@ class Puppet::Parser::Compiler
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
-  end
+  ensure
+    # We get these from the environment and only cache them in a thread 
+    # variable for the duration of the compilation.
+    Thread.current[:known_resource_types] = nil
+    Thread.current[:env_module_directories] = nil
+ end
 
   attr_reader :node, :facts, :collections, :catalog, :node_scope, :resources, :relationships
 
@@ -51,13 +56,10 @@ class Puppet::Parser::Compiler
     # Note that this will fail if the resource is not unique.
     @catalog.add_resource(resource)
 
-    set_container_resource(scope, resource)
-  end
 
-  # Add our container edge.  If we're a class, then we get treated specially - we can
-  # control the stage that the class is applied in.  Otherwise, we just
-  # get added to our parent container.
-  def set_container_resource(scope, resource)
+    # Add our container edge.  If we're a class, then we get treated specially - we can
+    # control the stage that the class is applied in.  Otherwise, we just
+    # get added to our parent container.
     return if resource.type.to_s.downcase == "stage"
 
     if resource.type.to_s.downcase != "class"
@@ -65,14 +67,13 @@ class Puppet::Parser::Compiler
       return @catalog.add_edge(scope.resource, resource)
     end
 
-    unless stage = @catalog.resource(:stage, resource[:stage] || :main)
+    unless stage = @catalog.resource(:stage, resource[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
       raise ArgumentError, "Could not find stage #{resource[:stage] || :main} specified by #{resource}"
     end
 
+    resource[:stage] ||= stage.title unless stage.title == :main
     @catalog.add_edge(stage, resource)
   end
-
-  private :set_container_resource
 
   # Do we use nodes found in the code, vs. the external node sources?
   def ast_nodes?
@@ -143,7 +144,7 @@ class Puppet::Parser::Compiler
       if klass = scope.find_hostclass(name)
         found << name and next if scope.class_scope(klass)
 
-        resource = klass.mk_plain_resource(scope)
+        resource = klass.ensure_in_catalog(scope)
 
         # If they've disabled lazy evaluation (which the :include function does),
         # then evaluate our resource immediately.
@@ -219,7 +220,7 @@ class Puppet::Parser::Compiler
 
     # Create a resource to model this node, and then add it to the list
     # of resources.
-    resource = astnode.mk_plain_resource(topscope)
+    resource = astnode.ensure_in_catalog(topscope)
 
     resource.evaluate
 
@@ -284,10 +285,7 @@ class Puppet::Parser::Compiler
     @main_resource = Puppet::Parser::Resource.new("class", :main, :scope => @topscope, :source => @main)
     @topscope.resource = @main_resource
 
-    @resources << @main_resource
-    @catalog.add_resource(@main_resource)
-
-    set_container_resource(@topscope, @main_resource)
+    add_resource(@topscope, @main_resource)
 
     @main_resource.evaluate
   end

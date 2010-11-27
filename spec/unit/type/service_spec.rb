@@ -66,6 +66,10 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :false)
   end
 
+  it "should specify :true as the default value of hasstatus" do
+    Puppet::Type.type(:service).new(:name => "yay")[:hasstatus].should == :true
+  end
+
   it "should support :true as a value to :hasrestart" do
     Puppet::Type.type(:service).new(:name => "yay", :hasrestart => :true)
   end
@@ -76,8 +80,16 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
 
   it "should allow setting the :enable parameter if the provider has the :enableable feature" do
     Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
+    Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(true)
     svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
     svc.should(:enable).should == :true
+  end
+
+  it "should not allow setting the :enable parameter if the provider is missing the :enableable feature" do
+    Puppet::Type.type(:service).defaultprovider.stubs(:supports_parameter?).returns(true)
+    Puppet::Type.type(:service).defaultprovider.expects(:supports_parameter?).with(Puppet::Type.type(:service).attrclass(:enable)).returns(false)
+    svc = Puppet::Type.type(:service).new(:name => "yay", :enable => true)
+    svc.should(:enable).should be_nil
   end
 
   it "should split paths on ':'" do

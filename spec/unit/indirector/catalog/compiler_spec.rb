@@ -6,9 +6,11 @@
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
 require 'puppet/indirector/catalog/compiler'
+require 'puppet/rails'
 
 describe Puppet::Resource::Catalog::Compiler do
   before do
+    require 'puppet/rails'
     Puppet::Rails.stubs(:init)
     Facter.stubs(:to_hash).returns({})
     Facter.stubs(:value).returns(Facter::Util::Fact.new("something"))
@@ -33,8 +35,8 @@ describe Puppet::Resource::Catalog::Compiler do
       Puppet::Node.stubs(:find).with('node1').returns(node1)
       Puppet::Node.stubs(:find).with('node2').returns(node2)
 
-      compiler.find(stub('request', :node => 'node1', :options => {}))
-      compiler.find(stub('node2request', :node => 'node2', :options => {}))
+      compiler.find(stub('request', :key => 'node1', :node => 'node1', :options => {}))
+      compiler.find(stub('node2request', :key => 'node2', :node => 'node2', :options => {}))
     end
 
     it "should provide a method for determining if the catalog is networked" do
@@ -70,7 +72,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @node = Puppet::Node.new @name
       @node.stubs(:merge)
       Puppet::Node.stubs(:find).returns @node
-      @request = stub 'request', :key => "does not matter", :node => @name, :options => {}
+      @request = stub 'request', :key => @name, :node => @name, :options => {}
     end
 
     it "should directly use provided nodes" do
@@ -80,14 +82,14 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.find(@request)
     end
 
-    it "should use the request's node name if no explicit node is provided" do
+    it "should use the authenticated node name if no request key is provided" do
+      @request.stubs(:key).returns(nil)
       Puppet::Node.expects(:find).with(@name).returns(@node)
       @compiler.expects(:compile).with(@node)
       @compiler.find(@request)
     end
 
-    it "should use the provided node name if no explicit node is provided and no authenticated node information is available" do
-      @request.expects(:node).returns nil
+    it "should use the provided node name by default" do
       @request.expects(:key).returns "my_node"
 
       Puppet::Node.expects(:find).with("my_node").returns @node
@@ -155,7 +157,8 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @request = stub 'request', :options => {}
 
-      @facts = stub 'facts', :save => nil
+      @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
+      @facts.stubs(:save).returns(nil)
     end
 
     it "should do nothing if no facts are provided" do
@@ -165,12 +168,17 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler.extract_facts_from_request(@request)
     end
 
-    it "should use the Facts class to deserialize the provided facts" do
+    it "should use the Facts class to deserialize the provided facts and update the timestamp" do
       @request.options[:facts_format] = "foo"
       @request.options[:facts] = "bar"
       Puppet::Node::Facts.expects(:convert_from).returns @facts
 
+      @facts.timestamp = Time.parse('2010-11-01')
+      @now = Time.parse('2010-11-02')
+      Time.expects(:now).returns(@now)
+
       @compiler.extract_facts_from_request(@request)
+      @facts.timestamp.should == @now
     end
 
     it "should use the provided fact format" do
@@ -198,7 +206,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
-      @request = stub 'request', :node => @name, :options => {}
+      @request = stub 'request', :key => @name, :options => {}
       @compiler.stubs(:compile)
     end
 
@@ -217,7 +225,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
-      @request = stub 'request', :node => @name, :options => {}
+      @request = stub 'request', :key => @name, :options => {}
       @compiler.stubs(:compile)
       Puppet::Node.stubs(:find).with(@name).returns(@node)
     end

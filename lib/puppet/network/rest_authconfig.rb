@@ -3,6 +3,7 @@ require 'puppet/network/authconfig'
 module Puppet
   class Network::RestAuthConfig < Network::AuthConfig
 
+    extend MonitorMixin
     attr_accessor :rights
 
     DEFAULT_ACL = [
@@ -20,30 +21,32 @@ module Puppet
     ]
 
     def self.main
-      add_acl = @main.nil?
-      super
-      @main.insert_default_acl if add_acl and !@main.exists?
+      synchronize do
+        add_acl = @main.nil?
+        super
+        @main.insert_default_acl if add_acl and !@main.exists?
+      end
       @main
     end
 
     # check wether this request is allowed in our ACL
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
-    def allowed?(request)
+    def allowed?(indirection, method, key, params)
       read
 
       # we're splitting the request in part because
       # fail_on_deny could as well be called in the XMLRPC context
       # with a ClientRequest.
 
-            @rights.fail_on_deny(
-        build_uri(request),
-        
-                  :node => request.node,
-                  :ip => request.ip,
-                  :method => request.method,
-                  :environment => request.environment,
-                  :authenticated => request.authenticated)
+      @rights.fail_on_deny(
+        build_uri(indirection, key),
+        :node => params[:node],
+        :ip => params[:ip],
+        :method => method,
+        :environment => params[:environment],
+        :authenticated => params[:authenticated]
+      )
     end
 
     def initialize(file = nil, parsenow = true)
@@ -87,8 +90,8 @@ module Puppet
       @rights.restrict_authenticated(acl[:acl], acl[:authenticated]) unless acl[:authenticated].nil?
     end
 
-    def build_uri(request)
-      "/#{request.indirection_name}/#{request.key}"
+    def build_uri(indirection_name, key)
+      "/#{indirection_name}/#{key}"
     end
   end
 end

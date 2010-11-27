@@ -6,51 +6,51 @@ module Puppet
     @doc = "Executes external commands.  It is critical that all commands
       executed using this mechanism can be run multiple times without
       harm, i.e., they are *idempotent*.  One useful way to create idempotent
-      commands is to use the checks like ``creates`` to avoid running the
+      commands is to use the checks like `creates` to avoid running the
       command unless some condition is met.
 
-      Note also that you can restrict an ``exec`` to only run when it receives
-      events by using the ``refreshonly`` parameter; this is a useful way to
+      Note also that you can restrict an `exec` to only run when it receives
+      events by using the `refreshonly` parameter; this is a useful way to
       have your configuration respond to events with arbitrary commands.
 
-      It is worth noting that ``exec`` is special, in that it is not
-      currently considered an error to have multiple ``exec`` instances
+      It is worth noting that `exec` is special, in that it is not
+      currently considered an error to have multiple `exec` instances
       with the same name.  This was done purely because it had to be this
       way in order to get certain functionality, but it complicates things.
-      In particular, you will not be able to use ``exec`` instances that
+      In particular, you will not be able to use `exec` instances that
       share their commands with other instances as a dependency, since
       Puppet has no way of knowing which instance you mean.
 
-      For example::
+      For example:
 
-        # defined in the production class
-        exec { \"make\":
-          cwd => \"/prod/build/dir\",
-          path => \"/usr/bin:/usr/sbin:/bin\"
-        }
+          # defined in the production class
+          exec { \"make\":
+            cwd => \"/prod/build/dir\",
+            path => \"/usr/bin:/usr/sbin:/bin\"
+          }
 
-        . etc. .
+          . etc. .
 
-        # defined in the test class
-        exec { \"make\":
-          cwd => \"/test/build/dir\",
-          path => \"/usr/bin:/usr/sbin:/bin\"
-        }
+          # defined in the test class
+          exec { \"make\":
+            cwd => \"/test/build/dir\",
+            path => \"/usr/bin:/usr/sbin:/bin\"
+          }
 
       Any other type would throw an error, complaining that you had
       the same instance being managed in multiple places, but these are
-      obviously different images, so ``exec`` had to be treated specially.
+      obviously different images, so `exec` had to be treated specially.
 
       It is recommended to avoid duplicate names whenever possible.
 
-      Note that if an ``exec`` receives an event from another resource,
-      it will get executed again (or execute the command specified in ``refresh``, if there is one).
+      Note that if an `exec` receives an event from another resource,
+      it will get executed again (or execute the command specified in `refresh`, if there is one).
 
-      There is a strong tendency to use ``exec`` to do whatever work Puppet
+      There is a strong tendency to use `exec` to do whatever work Puppet
       can't already do; while this is obviously acceptable (and unavoidable)
-      in the short term, it is highly recommended to migrate work from ``exec``
+      in the short term, it is highly recommended to migrate work from `exec`
       to native Puppet types as quickly as possible.  If you find that
-      you are doing a lot of work with ``exec``, please at least notify
+      you are doing a lot of work with `exec`, please at least notify
       us at Puppet Labs what you are doing, and hopefully we can work with
       you to get a native resource type for the work you are doing."
 
@@ -159,9 +159,9 @@ module Puppet
       desc "The actual command to execute.  Must either be fully qualified
         or a search path for the command must be provided.  If the command
         succeeds, any output produced will be logged at the instance's
-        normal log level (usually ``notice``), but if the command fails
+        normal log level (usually `notice`), but if the command fails
         (meaning its return code does not match the specified code) then
-        any output is logged at the ``err`` log level."
+        any output is logged at the `err` log level."
     end
 
     newparam(:path) do
@@ -223,7 +223,7 @@ module Puppet
 
     newparam(:logoutput) do
       desc "Whether to log output.  Defaults to logging output at the
-        loglevel for the ``exec`` resource. Use *on_failure* to only
+        loglevel for the `exec` resource. Use *on_failure* to only
         log the output when the command reports an error.  Values are
         **true**, *false*, *on_failure*, and any legal log level."
 
@@ -253,7 +253,7 @@ module Puppet
     newparam(:environment) do
       desc "Any additional environment variables you want to set for a
         command.  Note that if you use this to set PATH, it will override
-        the ``path`` attribute.  Multiple environment variables should be
+        the `path` attribute.  Multiple environment variables should be
         specified as an array."
 
       validate do |values|
@@ -330,22 +330,22 @@ module Puppet
       desc "The command should only be run as a
         refresh mechanism for when a dependent object is changed.  It only
         makes sense to use this option when this command depends on some
-        other object; it is useful for triggering an action::
+        other object; it is useful for triggering an action:
 
-          # Pull down the main aliases file
-          file { \"/etc/aliases\":
-            source => \"puppet://server/module/aliases\"
-          }
+            # Pull down the main aliases file
+            file { \"/etc/aliases\":
+              source => \"puppet://server/module/aliases\"
+            }  
 
-          # Rebuild the database, but only when the file changes
-          exec { newaliases:
-            path => [\"/usr/bin\", \"/usr/sbin\"],
-            subscribe => File[\"/etc/aliases\"],
-            refreshonly => true
-          }
+            # Rebuild the database, but only when the file changes
+            exec { newaliases:
+              path => [\"/usr/bin\", \"/usr/sbin\"],
+              subscribe => File[\"/etc/aliases\"],
+              refreshonly => true
+            }
 
-        Note that only ``subscribe`` and ``notify`` can trigger actions, not ``require``,
-        so it only makes sense to use ``refreshonly`` with ``subscribe`` or ``notify``."
+        Note that only `subscribe` and `notify` can trigger actions, not `require`,
+        so it only makes sense to use `refreshonly` with `subscribe` or `notify`."
 
       newvalues(:true, :false)
 
@@ -364,13 +364,13 @@ module Puppet
     newcheck(:creates) do
       desc "A file that this command creates.  If this
         parameter is provided, then the command will only be run
-        if the specified file does not exist::
+        if the specified file does not exist:
 
-          exec { \"tar xf /my/tar/file.tar\":
-            cwd => \"/var/tmp\",
-            creates => \"/var/tmp/myfile\",
-            path => [\"/usr/bin\", \"/usr/sbin\"]
-          }
+            exec { \"tar xf /my/tar/file.tar\":
+              cwd => \"/var/tmp\",
+              creates => \"/var/tmp/myfile\",
+              path => [\"/usr/bin\", \"/usr/sbin\"]
+            }
 
         "
 
@@ -396,16 +396,16 @@ module Puppet
     end
 
     newcheck(:unless) do
-      desc "If this parameter is set, then this ``exec`` will run unless
-        the command returns 0.  For example::
+      desc "If this parameter is set, then this `exec` will run unless
+        the command returns 0.  For example:
 
-          exec { \"/bin/echo root >> /usr/lib/cron/cron.allow\":
-            path => \"/usr/bin:/usr/sbin:/bin\",
-            unless => \"grep root /usr/lib/cron/cron.allow 2>/dev/null\"
-          }
+            exec { \"/bin/echo root >> /usr/lib/cron/cron.allow\":
+              path => \"/usr/bin:/usr/sbin:/bin\",
+              unless => \"grep root /usr/lib/cron/cron.allow 2>/dev/null\"
+            }
 
-        This would add ``root`` to the cron.allow file (on Solaris) unless
-        ``grep`` determines it's already there.
+        This would add `root` to the cron.allow file (on Solaris) unless
+        `grep` determines it's already there.
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
@@ -433,22 +433,22 @@ module Puppet
     end
 
     newcheck(:onlyif) do
-      desc "If this parameter is set, then this ``exec`` will only run if
-        the command returns 0.  For example::
+      desc "If this parameter is set, then this `exec` will only run if
+        the command returns 0.  For example:
 
-          exec { \"logrotate\":
-            path => \"/usr/bin:/usr/sbin:/bin\",
-            onlyif => \"test `du /var/log/messages | cut -f1` -gt 100000\"
-          }
+            exec { \"logrotate\":
+              path => \"/usr/bin:/usr/sbin:/bin\",
+              onlyif => \"test `du /var/log/messages | cut -f1` -gt 100000\"
+            }
 
-        This would run ``logrotate`` only if that test returned true.
+        This would run `logrotate` only if that test returned true.
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
 
-        Also note that onlyif can take an array as its value, eg::
+        Also note that onlyif can take an array as its value, e.g.:
 
-          onlyif => [\"test -f /tmp/file1\", \"test -f /tmp/file2\"]
+            onlyif => [\"test -f /tmp/file1\", \"test -f /tmp/file2\"]
 
         This will only run the exec if /all/ conditions in the array return true.
         "
@@ -553,13 +553,7 @@ module Puppet
       if self[:path]
         if Puppet.features.posix? and !File.exists?(exe)
           withenv :PATH => self[:path].join(File::PATH_SEPARATOR) do
-            path = %x{which #{exe}}.chomp
-            if path == ""
-              raise ArgumentError,
-                "Could not find command '#{exe}'"
-            else
-              exe = path
-            end
+            exe = which(exe) || raise(ArgumentError,"Could not find command '#{exe}'")
           end
         elsif Puppet.features.microsoft_windows? and !File.exists?(exe)
           self[:path].each do |path|
@@ -683,4 +677,3 @@ module Puppet
     end
   end
 end
-

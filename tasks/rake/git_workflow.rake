@@ -103,10 +103,21 @@ task :mail_patches do
     # Create all of the patches
     sh "git format-patch -C -M -s -n --subject-prefix='PATCH/puppet' #{parent}..HEAD"
 
+    # Add info to the patches
+    additional_info = "Local-branch: #{branch}\n"
+    files = Dir.glob("00*.patch")
+    files.each do |file|
+        contents = File.read(file)
+        contents.sub!(/^---\n/, "---\n#{additional_info}")
+        File.open(file, 'w') do |file_handle|
+            file_handle.print contents
+        end
+    end
+
     # And then mail them out.
 
     # If we've got more than one patch, add --compose
-    if Dir.glob("00*.patch").length > 1
+    if files.length > 1
         compose = "--compose"
     else
         compose = ""

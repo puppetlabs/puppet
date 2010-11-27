@@ -2,12 +2,12 @@
 module Puppet
   setdefaults(:main,
     :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
-    is running as root or the user that ``puppet master`` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
-    it defaults to being in ``~``."],
+    is running as root or the user that `puppet master` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
+    it defaults to being in `~`."],
     :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
     :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
-      default is essentially $0 without the path or ``.rb``."],
-    :mode => [Puppet.run_mode.name.to_s, "The effective 'run mode' of the application: master, agent, or user."]
+      default is essentially $0 without the path or `.rb`."],
+    :run_mode => [Puppet.run_mode.name.to_s, "The effective 'run mode' of the application: master, agent, or user."]
   )
 
   setdefaults(:main, :logdir => Puppet.run_mode.logopts)
@@ -44,8 +44,8 @@ module Puppet
       specify 'all'.  This feature is only available in Puppet versions
       higher than 0.18.4."],
     :color => ["ansi", "Whether to use colors when logging to the console.
-      Valid values are ``ansi`` (equivalent to ``true``), ``html`` (mostly
-      used during testing with TextMate), and ``false``, which produces
+      Valid values are `ansi` (equivalent to `true`), `html` (mostly
+      used during testing with TextMate), and `false`, which produces
       no color."],
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
@@ -92,18 +92,18 @@ module Puppet
     :authconfig => [ "$confdir/namespaceauth.conf",
       "The configuration file that defines the rights to the different
       namespaces and methods.  This can be used as a coarse-grained
-      authorization system for both ``puppet agent`` and ``puppet master``."
+      authorization system for both `puppet agent` and `puppet master`."
     ],
     :environment => {:default => "production", :desc => "The environment Puppet is running in.  For clients
-      (e.g., ``puppet agent``) this determines the environment itself, which
-      is used to find modules and much more.  For servers (i.e., ``puppet master``) this provides the default environment for nodes
+      (e.g., `puppet agent`) this determines the environment itself, which
+      is used to find modules and much more.  For servers (i.e., `puppet master`) this provides the default environment for nodes
       we know nothing about."
     },
     :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
     :diff => ["diff", "Which diff command to use when printing differences between files."],
     :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
       is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
-      This feature currently requires the ``diff/lcs`` Ruby library."],
+      This feature currently requires the `diff/lcs` Ruby library."],
     :daemonize => { :default => true,
       :desc => "Send the process into the background.  This is the default.",
       :short => "D"
@@ -115,7 +115,17 @@ module Puppet
     :node_terminus => ["plain", "Where to find information about nodes."],
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
-    :facts_terminus => ["facter", "Where to get node facts."],
+    :facts_terminus => {
+      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter',
+      :desc => "The node facts terminus.",
+      :hook => proc do |value|
+        require 'puppet/node/facts'
+        if value.to_s == "rest"
+          Puppet::Node::Facts.cache_class = :yaml
+        end
+      end
+    },
+    :inventory_terminus => [ "$facts_terminus", "Should usually be the same as the facts terminus" ],
     :httplog => { :default => "$logdir/http.log",
       :owner => "root",
       :mode => 0640,
@@ -135,7 +145,7 @@ module Puppet
     :queue_source => ["stomp://localhost:61613/", "Which type of queue to use for asynchronous processing.  If your stomp server requires
       authentication, you can include it in the URI as long as your stomp client library is at least 1.1.1"],
     :async_storeconfigs => {:default => false, :desc => "Whether to use a queueing system to provide asynchronous database integration.
-      Requires that ``puppetqd`` be running and that 'PSON' support for ruby be installed.",
+      Requires that `puppetqd` be running and that 'PSON' support for ruby be installed.",
       :hook => proc do |value|
         if value
           # This reconfigures the terminii for Node, Facts, and Catalog
@@ -266,10 +276,9 @@ module Puppet
       to all clients.  If enabled, CA chaining will almost definitely not work."]
   )
 
-
     setdefaults(
     :ca,
-    :ca_name => ["$certname", "The name to use the Certificate Authority certificate."],
+    :ca_name => ["Puppet CA: $certname", "The name to use the Certificate Authority certificate."],
     :cadir => {  :default => "$ssldir/ca",
       :owner => "service",
       :group => "service",
@@ -385,7 +394,7 @@ module Puppet
     :manifestdir => ["$confdir/manifests", "Where puppet master looks for its manifests."],
     :manifest => ["$manifestdir/site.pp", "The entry-point manifest for puppet master."],
     :code => ["", "Code to parse directly.  This is essentially only used
-      by ``puppet``, and should only be set if you're writing your own Puppet
+      by `puppet`, and should only be set if you're writing your own Puppet
       executable"],
     :masterlog => { :default => "$logdir/puppetmaster.log",
       :owner => "service",
@@ -419,7 +428,7 @@ module Puppet
     :rest_authconfig => [ "$confdir/auth.conf",
       "The configuration file that defines the rights to the different
       rest indirections.  This can be used as a fine-grained
-      authorization system for ``puppet master``."
+      authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
     :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
@@ -427,7 +436,7 @@ module Puppet
       directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
       client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
-      to the authenticated client's SSL DN (e.g., ``/CN=puppet.puppetlabs.com``).
+      to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).
       See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
     :ssl_client_verify_header => ["HTTP_X_CLIENT_VERIFY", "The header containing the status
       message of the client verification. Only used with Mongrel.  This header must be set by the proxy
@@ -441,10 +450,25 @@ module Puppet
       :desc => "The directory in which serialized data is stored, usually in a subdirectory."},
     :reports => ["store",
       "The list of reports to generate.  All reports are looked for
-      in puppet/reports/name.rb, and multiple report names should be
+      in `puppet/reports/name.rb`, and multiple report names should be
       comma-separated (whitespace is okay)."
     ],
+    :reportdir => {:default => "$vardir/reports",
+      :mode => 0750,
+      :owner => "service",
+      :group => "service",
+      :desc => "The directory in which to store reports
+        received from the client.  Each client gets a separate
+        subdirectory."},
+    :reporturl => ["http://localhost:3000/reports",
+      "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
+    :strict_hostname_checking => [false, "Whether to only search for the complete
+      hostname as it is in the certificate when searching for node information
+      in the catalogs."]
+  )
+
+  setdefaults(:metrics,
     :rrddir => {:default => "$vardir/rrd",
       :owner => "service",
       :group => "service",
@@ -453,10 +477,7 @@ module Puppet
         this directory."
     },
     :rrdinterval => ["$runinterval", "How often RRD should expect data.
-      This should match how often the hosts report back to the server."],
-    :strict_hostname_checking => [false, "Whether to only search for the complete
-      hostname as it is in the certificate when searching for node information
-      in the catalogs."]
+      This should match how often the hosts report back to the server."]
   )
 
   setdefaults(:agent,
@@ -479,7 +500,7 @@ module Puppet
       :mode => 0644,
       :desc => "The file in which puppet agent stores a list of the classes
         associated with the retrieved configuration.  Can be loaded in
-        the separate ``puppet`` executable using the ``--loadclasses``
+        the separate `puppet` executable using the `--loadclasses`
         option."},
     :puppetdlog => { :default => "$logdir/puppetd.log",
       :owner => "root",
@@ -496,8 +517,8 @@ module Puppet
       "How often puppet agent applies the client configuration; in seconds."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then by default only the
-      ``runner`` server is started, which allows remote authorized
-      and authenticated nodes to connect and trigger ``puppet agent``
+      `runner` server is started, which allows remote authorized
+      and authenticated nodes to connect and trigger `puppet agent`
       runs."],
     :ca_server => ["$server", "The server to use for certificate
       authority requests.  It's a separate server because it cannot
@@ -567,14 +588,28 @@ module Puppet
       end
     },
     :report_server => ["$server",
-      "The server to which to send transaction reports."
+      "The server to send transaction reports to."
     ],
     :report_port => ["$masterport",
       "The port to communicate with the report_server."
     ],
-    :report => [false,
+    :inventory_server => ["$server",
+      "The server to send facts to."
+    ],
+    :inventory_port => ["$masterport",
+      "The port to communicate with the inventory_server."
+    ],
+    :report => [true,
       "Whether to send reports after every transaction."
     ],
+    :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report summary in yaml format."
+    },
+    :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report in yaml format."
+    },
     :graph => [false, "Whether to create dot graph files for the different
       configuration graphs.  These dot files can be interpreted by tools
       like OmniGraffle or dot (which is part of ImageMagick)."],
@@ -595,7 +630,7 @@ module Puppet
       "Where Puppet should store plugins that it pulls down from the central
       server."],
     :pluginsource => ["puppet://$server/plugins",
-      "From where to retrieve plugins.  The standard Puppet ``file`` type
+      "From where to retrieve plugins.  The standard Puppet `file` type
       is used for retrieval, so anything that is a valid file source can
       be used here."],
     :pluginsync => [false, "Whether plugins should be synced with the central server."],
@@ -607,7 +642,7 @@ module Puppet
 
     setdefaults(
     :main,
-    :factpath => {:default => "$vardir/lib/facter/${File::PATH_SEPARATOR}$vardir/facts",
+    :factpath => {:default => "$vardir/lib/facter:$vardir/facts",
       :desc => "Where Puppet should look for facts.  Multiple directories should
         be colon-separated, like normal PATH variables.",
 
@@ -618,32 +653,22 @@ module Puppet
       "Where Puppet should store facts that it pulls down from the central
       server."],
     :factsource => ["puppet://$server/facts/",
-      "From where to retrieve facts.  The standard Puppet ``file`` type
+      "From where to retrieve facts.  The standard Puppet `file` type
       is used for retrieval, so anything that is a valid file source can
       be used here."],
     :factsync => [false, "Whether facts should be synced with the central server."],
-    :factsignore => [".svn CVS", "What files to ignore when pulling down facts."],
-    :reportdir => {:default => "$vardir/reports",
-      :mode => 0750,
-      :owner => "service",
-      :group => "service",
-      :desc => "The directory in which to store reports
-        received from the client.  Each client gets a separate
-        subdirectory."},
-    :reporturl => ["http://localhost:3000/reports",
-      "The URL used by the http reports processor to send reports"]
+    :factsignore => [".svn CVS", "What files to ignore when pulling down facts."]
   )
 
 
     setdefaults(
     :tagmail,
     :tagmap => ["$confdir/tagmail.conf", "The mapping between reporting tags and email addresses."],
-    :sendmail => [%x{which sendmail 2>/dev/null}.chomp, "Where to find the sendmail binary with which to send email."],
+    :sendmail => [which('sendmail') || '', "Where to find the sendmail binary with which to send email."],
 
     :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."), "The 'from' email address for the reports."],
     :smtpserver => ["none", "The server through which to send email reports."]
   )
-
 
     setdefaults(
     :rails,
@@ -665,11 +690,10 @@ module Puppet
       used when networked databases are used."],
     :dbpassword => [ "puppet", "The database password for caching. Only
       used when networked databases are used."],
+    :dbconnections => [ '', "The number of database connections for networked
+      databases.  Will be ignored unless the value is a positive integer."],
     :dbsocket => [ "", "The database socket location. Only used when networked
       databases are used.  Will be ignored if the value is an empty string."],
-    :dbconnections => [ 0, "The number of database connections. Only used when
-      networked databases are used.  Will be ignored if the value is an empty
-      string or is less than 1."],
     :railslog => {:default => "$logdir/rails.log",
       :mode => 0600,
       :owner => "service",
@@ -678,17 +702,15 @@ module Puppet
     },
 
     :rails_loglevel => ["info", "The log level for Rails connections.  The value must be
-      a valid log level within Rails.  Production environments normally use ``info``
-      and other environments normally use ``debug``."]
+      a valid log level within Rails.  Production environments normally use `info`
+      and other environments normally use `debug`."]
   )
-
 
     setdefaults(
     :couchdb,
 
     :couchdb_url => ["http://127.0.0.1:5984/puppet", "The url where the puppet couchdb database will be created"]
   )
-
 
     setdefaults(
     :transaction,
@@ -704,20 +726,18 @@ module Puppet
     ]
   )
 
-
     setdefaults(
     :main,
     :external_nodes => ["none",
 
       "An external command that can produce node information.  The output
       must be a YAML dump of a hash, and that hash must have one or both of
-      ``classes`` and ``parameters``, where ``classes`` is an array and
-      ``parameters`` is a hash.  For unknown nodes, the commands should
+      `classes` and `parameters`, where `classes` is an array and
+      `parameters` is a hash.  For unknown nodes, the commands should
       exit with a non-zero exit code.
 
       This command makes it straightforward to store your node mapping
       information in other data sources like databases."])
-
 
         setdefaults(
         :ldap,
@@ -733,9 +753,9 @@ module Puppet
       Defaults to false because TLS usually requires certificates
       to be set up on the client side."],
     :ldapserver => ["ldap",
-      "The LDAP server.  Only used if ``ldapnodes`` is enabled."],
+      "The LDAP server.  Only used if `ldapnodes` is enabled."],
     :ldapport => [389,
-      "The LDAP port.  Only used if ``ldapnodes`` is enabled."],
+      "The LDAP port.  Only used if `ldapnodes` is enabled."],
 
     :ldapstring => ["(&(objectclass=puppetClient)(cn=%s))",
       "The search string used to find an LDAP node."],

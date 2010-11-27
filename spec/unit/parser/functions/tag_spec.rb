@@ -6,6 +6,7 @@ describe "the 'tag' function" do
 
   before :each do
     @scope = Puppet::Parser::Scope.new
+    @scope.stubs(:environment).returns(nil)
   end
 
   it "should exist" do

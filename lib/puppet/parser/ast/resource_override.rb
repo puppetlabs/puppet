@@ -3,12 +3,11 @@ require 'puppet/parser/ast/resource'
 class Puppet::Parser::AST
   # Set a parameter on a resource specification created somewhere else in the
   # configuration.  The object is responsible for verifying that this is allowed.
-  class ResourceOverride < Resource
+  class ResourceOverride < AST::Branch
 
     associates_doc
 
-    attr_accessor :object
-    attr_reader :parameters
+    attr_accessor :object, :parameters
 
     # Iterate across all of our children.
     def each

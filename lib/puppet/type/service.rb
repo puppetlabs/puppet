@@ -17,10 +17,10 @@ module Puppet
       can provide the better behaviour you will get.  Or, you can just
       use a platform that has very good service support.
 
-      Note that if a ``service`` receives an event from another resource,
+      Note that if a `service` receives an event from another resource,
       the service will get restarted. The actual command to restart the
       service depends on the platform. You can provide a special command
-      for restarting with the ``restart`` attribute."
+      for restarting with the `restart` attribute."
 
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
@@ -83,7 +83,7 @@ module Puppet
     newparam(:binary) do
       desc "The path to the daemon.  This is only used for
         systems that do not support init scripts.  This binary will be
-        used to start the service if no ``start`` parameter is
+        used to start the service if no `start` parameter is
         provided."
     end
 
@@ -94,12 +94,14 @@ module Puppet
         not support any kind of status command; thus, you must specify
         manually whether the service you are running has such a
         command (or you can specify a specific command using the
-        ``status`` parameter).
+        `status` parameter).
 
         If you do not specify anything, then the service name will be
         looked for in the process table."
 
       newvalues(:true, :false)
+
+      defaultto :true
     end
     newparam(:name) do
       desc "The name of the service to run.  This name is used to find
@@ -140,7 +142,7 @@ module Puppet
     end
     newparam(:start) do
       desc "Specify a *start* command manually.  Most service subsystems
-        support a ``start`` command, so this will not need to be
+        support a `start` command, so this will not need to be
         specified."
     end
     newparam(:status) do
@@ -156,14 +158,14 @@ module Puppet
 
     newparam(:control) do
       desc "The control variable used to manage services (originally for HP-UX).
-        Defaults to the upcased service name plus ``START`` replacing dots with
-        underscores, for those providers that support the ``controllable`` feature."
+        Defaults to the upcased service name plus `START` replacing dots with
+        underscores, for those providers that support the `controllable` feature."
       defaultto { resource.name.gsub(".","_").upcase + "_START" if resource.provider.controllable? }
     end
 
     newparam :hasrestart do
-      desc "Specify that an init script has a ``restart`` option.  Otherwise,
-        the init script's ``stop`` and ``start`` methods are used."
+      desc "Specify that an init script has a `restart` option.  Otherwise,
+        the init script's `stop` and `start` methods are used."
       newvalues(:true, :false)
     end
 

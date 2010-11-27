@@ -1,12 +1,11 @@
 Puppet::Reports.register_report(:rrdgraph) do
   desc "Graph all available data about hosts using the RRD library.  You
     must have the Ruby RRDtool library installed to use this report, which
-    you can get from `the RubyRRDTool RubyForge page`_.  This package may also
-    be available as ``ruby-rrd`` or ``rrdtool-ruby`` in your distribution's package
-    management system.  The library and/or package will both require the binary
-    ``rrdtool`` package from your distribution to be installed.
-
-    .. _the RubyRRDTool RubyForge page: http://rubyforge.org/projects/rubyrrdtool/
+    you can get from 
+    [the RubyRRDTool RubyForge page](http://rubyforge.org/projects/rubyrrdtool/).  
+    This package may also be available as `ruby-rrd` or `rrdtool-ruby` in your 
+    distribution's package management system.  The library and/or package will both 
+    require the binary `rrdtool` package from your distribution to be installed.
 
     This report will create, manage, and graph RRD database files for each
     of the metrics generated during transactions, and it will create a
@@ -14,12 +13,12 @@ Puppet::Reports.register_report(:rrdgraph) do
     point, it will not create a common index file to display links to
     all hosts.
 
-    All RRD files and graphs get created in the ``rrddir`` directory.  If
+    All RRD files and graphs get created in the `rrddir` directory.  If
     you want to serve these publicly, you should be able to just alias that
     directory in a web server.
 
-    If you really know what you're doing, you can tune the ``rrdinterval``,
-    which defaults to the ``runinterval``."
+    If you really know what you're doing, you can tune the `rrdinterval`,
+    which defaults to the `runinterval`."
 
   def hostdir
     @hostdir ||= File.join(Puppet[:rrddir], self.host)
@@ -123,7 +122,7 @@ Puppet::Reports.register_report(:rrdgraph) do
   # that means we record the total time, the config time, and that's about
   # it.  We should probably send each type's time as a separate metric.
   def timeclean(metric)
-    metric.values = metric.values.find_all { |name, label, value| [:total, :config_retrieval].include?(name) }
+    metric.values = metric.values.find_all { |name, label, value| ['total', 'config_retrieval'].include?(name.to_s) }
   end
 end
 

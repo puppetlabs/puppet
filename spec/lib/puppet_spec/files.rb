@@ -1,4 +1,5 @@
 require 'fileutils'
+require 'tempfile'
 
 # A support module for testing files.
 module PuppetSpec::Files

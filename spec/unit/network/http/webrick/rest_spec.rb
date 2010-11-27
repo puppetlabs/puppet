@@ -2,6 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../../../spec_helper'
 require 'puppet/network/http'
+require 'webrick'
 require 'puppet/network/http/webrick/rest'
 
 describe Puppet::Network::HTTP::WEBrickREST do

@@ -191,35 +191,17 @@ describe Puppet::Application do
       Puppet.settings.stubs(:optparse_addargs).returns([])
     end
 
-    it "should create a new option parser when needed" do
-      option_parser = stub "option parser"
-      option_parser.stubs(:on)
-      option_parser.stubs(:default_argv=)
-      OptionParser.expects(:new).returns(option_parser).once
-      @app.option_parser.should == option_parser
-      @app.option_parser.should == option_parser
-    end
-
     it "should pass the banner to the option parser" do
       option_parser = stub "option parser"
       option_parser.stubs(:on)
-      option_parser.stubs(:default_argv=)
+      option_parser.stubs(:parse!)
       @app.class.instance_eval do
         banner "banner"
       end
 
       OptionParser.expects(:new).with("banner").returns(option_parser)
 
-      @app.option_parser
-    end
-
-    it "should set the optionparser's args to the command line args" do
-      option_parser = stub "option parser"
-      option_parser.stubs(:on)
-      option_parser.expects(:default_argv=).with(%w{ fake args })
-      @app.command_line.stubs(:args).returns(%w{ fake args })
-      OptionParser.expects(:new).returns(option_parser)
-      @app.option_parser
+      @app.parse_options
     end
 
     it "should get options from Puppet.settings.optparse_addargs" do
@@ -230,14 +212,14 @@ describe Puppet::Application do
 
     it "should add Puppet.settings options to OptionParser" do
       Puppet.settings.stubs(:optparse_addargs).returns( [["--option","-o", "Funny Option"]])
-
-      @app.option_parser.expects(:on).with { |*arg| arg == ["--option","-o", "Funny Option"] }
-
+      Puppet.settings.expects(:handlearg).with("--option", 'true')
+      @app.command_line.stubs(:args).returns(["--option"])
       @app.parse_options
     end
 
     it "should ask OptionParser to parse the command-line argument" do
-      @app.option_parser.expects(:parse!)
+      @app.command_line.stubs(:args).returns(%w{ fake args })
+      OptionParser.any_instance.expects(:parse!).with(%w{ fake args })
 
       @app.parse_options
     end
@@ -268,31 +250,30 @@ describe Puppet::Application do
 
     describe "when dealing with an argument not declared directly by the application" do
       it "should pass it to handle_unknown if this method exists" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--not-handled"]])
-        @app.option_parser.stubs(:on).yields("value")
+        Puppet.settings.stubs(:optparse_addargs).returns([["--not-handled", :REQUIRED]])
 
         @app.expects(:handle_unknown).with("--not-handled", "value").returns(true)
-
+        @app.command_line.stubs(:args).returns(["--not-handled", "value"])
         @app.parse_options
       end
 
       it "should pass it to Puppet.settings if handle_unknown says so" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet"]])
-        @app.option_parser.stubs(:on).yields("value")
+        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet", :REQUIRED]])
 
         @app.stubs(:handle_unknown).with("--topuppet", "value").returns(false)
 
         Puppet.settings.expects(:handlearg).with("--topuppet", "value")
+        @app.command_line.stubs(:args).returns(["--topuppet", "value"])
         @app.parse_options
       end
 
       it "should pass it to Puppet.settings if there is no handle_unknown method" do
-        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet"]])
-        @app.option_parser.stubs(:on).yields("value")
+        Puppet.settings.stubs(:optparse_addargs).returns([["--topuppet", :REQUIRED]])
 
         @app.stubs(:respond_to?).returns(false)
 
         Puppet.settings.expects(:handlearg).with("--topuppet", "value")
+        @app.command_line.stubs(:args).returns(["--topuppet", "value"])
         @app.parse_options
       end
 
@@ -320,7 +301,7 @@ describe Puppet::Application do
 
     it "should exit if OptionParser raises an error" do
       $stderr.stubs(:puts)
-      @app.option_parser.stubs(:parse!).raises(OptionParser::ParseError.new("blah blah"))
+      OptionParser.any_instance.stubs(:parse!).raises(OptionParser::ParseError.new("blah blah"))
 
       @app.expects(:exit)
 
@@ -488,7 +469,7 @@ describe Puppet::Application do
           @app.class.option("--[no-]test3","-t") do
           end
 
-          @app.option_parser
+          @app.parse_options
         end
 
         it "should pass a block that calls our defined method" do
@@ -500,7 +481,7 @@ describe Puppet::Application do
           @app.class.option("--test4","-t") do
           end
 
-          @app.option_parser
+          @app.parse_options
         end
       end
 
@@ -511,7 +492,7 @@ describe Puppet::Application do
 
           @app.class.option("--test4","-t")
 
-          @app.option_parser
+          @app.parse_options
         end
 
         it "should give to OptionParser a block that adds the the value to the options array" do
@@ -522,7 +503,7 @@ describe Puppet::Application do
 
           @app.class.option("--test4","-t")
 
-          @app.option_parser
+          @app.parse_options
         end
       end
     end

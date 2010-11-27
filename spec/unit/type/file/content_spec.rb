@@ -6,6 +6,7 @@ content = Puppet::Type.type(:file).attrclass(:content)
 describe content do
   before do
     @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+    content.stubs(:standalone?).returns(false)
   end
 
   it "should be a subclass of Property" do
@@ -362,7 +363,7 @@ describe content do
       end
 
       it "should send the correct indirection uri" do
-        @conn.expects(:request_get).with { |uri,headers| uri == "/production/file_content//path/to/source" }.yields(@response)
+        @conn.expects(:request_get).with { |uri,headers| uri == "/production/file_content/path/to/source" }.yields(@response)
         @content.write(@fh)
       end
 

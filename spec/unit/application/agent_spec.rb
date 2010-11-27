@@ -6,6 +6,7 @@ require 'puppet/agent'
 require 'puppet/application/agent'
 require 'puppet/network/server'
 require 'puppet/daemon'
+require 'puppet/network/handler'
 
 describe Puppet::Application::Agent do
   before :each do
@@ -13,6 +14,7 @@ describe Puppet::Application::Agent do
     @puppetd.stubs(:puts)
     @daemon = stub_everything 'daemon'
     Puppet::Daemon.stubs(:new).returns(@daemon)
+    Puppet[:daemonize] = false
     @agent = stub_everything 'agent'
     Puppet::Agent.stubs(:new).returns(@agent)
     @puppetd.preinit
@@ -175,13 +177,10 @@ describe Puppet::Application::Agent do
       @puppetd.options.stubs(:[])
       Puppet.stubs(:info)
       FileTest.stubs(:exists?).returns(true)
-      Puppet.stubs(:[])
-      Puppet.stubs(:[]=)
-      Puppet.stubs(:[]).with(:libdir).returns("/dev/null/lib")
-      Puppet.settings.stubs(:print_config?)
-      Puppet.settings.stubs(:print_config)
+      Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
       Puppet::Transaction::Report.stubs(:terminus_class=)
+      Puppet::Transaction::Report.stubs(:cache_class=)
       Puppet::Resource::Catalog.stubs(:terminus_class=)
       Puppet::Resource::Catalog.stubs(:cache_class=)
       Puppet::Node::Facts.stubs(:terminus_class=)
@@ -192,7 +191,7 @@ describe Puppet::Application::Agent do
 
     describe "with --test" do
       before :each do
-        Puppet.settings.stubs(:handlearg)
+        #Puppet.settings.stubs(:handlearg)
         @puppetd.options.stubs(:[]=)
       end
 
@@ -207,8 +206,9 @@ describe Puppet::Application::Agent do
         @puppetd.setup_test
       end
       it "should set options[:onetime] to true" do
-        Puppet.expects(:[]=).with(:onetime,true)
+        Puppet[:onetime] = false
         @puppetd.setup_test
+        Puppet[:onetime].should == true
       end
       it "should set options[:detailed_exitcodes] to true" do
         @puppetd.options.expects(:[]=).with(:detailed_exitcodes,true)
@@ -264,7 +264,7 @@ describe Puppet::Application::Agent do
 
     it "should print puppet config if asked to in Puppet config" do
       @puppetd.stubs(:exit)
-      Puppet.settings.stubs(:print_configs?).returns(true)
+      Puppet[:configprint] = "pluginsync"
 
       Puppet.settings.expects(:print_configs)
 
@@ -272,14 +272,14 @@ describe Puppet::Application::Agent do
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
-      Puppet.settings.stubs(:print_configs?).returns(true)
+      Puppet[:configprint] = "pluginsync"
 
       lambda { @puppetd.setup }.should raise_error(SystemExit)
     end
 
     it "should set a central log destination with --centrallogs" do
       @puppetd.options.stubs(:[]).with(:centrallogs).returns(true)
-      Puppet.stubs(:[]).with(:server).returns("puppet.reductivelabs.com")
+      Puppet[:server] = "puppet.reductivelabs.com"
       Puppet::Util::Log.stubs(:newdestination).with(:syslog)
 
       Puppet::Util::Log.expects(:newdestination).with("puppet.reductivelabs.com")
@@ -312,9 +312,16 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
-    it "should change the catalog_terminus setting to 'rest'" do
-      Puppet.expects(:[]=).with(:catalog_terminus, :rest)
+    it "should tell the report handler to cache locally as yaml" do
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
+
       @puppetd.setup
+    end
+
+    it "should change the catalog_terminus setting to 'rest'" do
+      Puppet[:catalog_terminus] = :foo
+      @puppetd.setup
+      Puppet[:catalog_terminus].should ==  :rest
     end
 
     it "should tell the catalog handler to use cache" do
@@ -324,9 +331,10 @@ describe Puppet::Application::Agent do
     end
 
     it "should change the facts_terminus setting to 'facter'" do
-      Puppet.expects(:[]=).with(:facts_terminus, :facter)
+      Puppet[:facts_terminus] = :foo
 
       @puppetd.setup
+      Puppet[:facts_terminus].should == :facter
     end
 
     it "should create an agent" do
@@ -374,7 +382,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should daemonize if needed" do
-      Puppet.stubs(:[]).with(:daemonize).returns(true)
+      Puppet[:daemonize] = true
 
       @daemon.expects(:daemonize)
 
@@ -397,7 +405,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should setup listen if told to and not onetime" do
-      Puppet.stubs(:[]).with(:listen).returns(true)
+      Puppet[:listen] = true
       @puppetd.options.stubs(:[]).with(:onetime).returns(false)
 
       @puppetd.expects(:setup_listen)
@@ -407,7 +415,7 @@ describe Puppet::Application::Agent do
 
     describe "when setting up listen" do
       before :each do
-        Puppet.stubs(:[]).with(:authconfig).returns('auth')
+        Puppet[:authconfig] = 'auth'
         FileTest.stubs(:exists?).with('auth').returns(true)
         File.stubs(:exist?).returns(true)
         @puppetd.options.stubs(:[]).with(:serve).returns([])
@@ -419,7 +427,7 @@ describe Puppet::Application::Agent do
 
       it "should exit if no authorization file" do
         Puppet.stubs(:err)
-        FileTest.stubs(:exists?).with('auth').returns(false)
+        FileTest.stubs(:exists?).with(Puppet[:authconfig]).returns(false)
 
         @puppetd.expects(:exit)
 
@@ -440,9 +448,9 @@ describe Puppet::Application::Agent do
       end
 
       it "should use puppet default port" do
-        Puppet.stubs(:[]).with(:puppetport).returns(:port)
+        Puppet[:puppetport] = 32768
 
-        Puppet::Network::Server.expects(:new).with { |args| args[:port] == :port }
+        Puppet::Network::Server.expects(:new).with { |args| args[:port] == 32768 }
 
         @puppetd.setup_listen
       end
@@ -521,7 +529,7 @@ describe Puppet::Application::Agent do
         end
 
         it "should exit with report's computed exit status" do
-          Puppet.stubs(:[]).with(:noop).returns(false)
+          Puppet[:noop] = false
           report = stub 'report', :exit_status => 666
           @agent.stubs(:run).returns(report)
           @puppetd.expects(:exit).with(666)
@@ -530,7 +538,7 @@ describe Puppet::Application::Agent do
         end
 
         it "should always exit with 0 if --noop" do
-          Puppet.stubs(:[]).with(:noop).returns(true)
+          Puppet[:noop] = true
           report = stub 'report', :exit_status => 666
           @agent.stubs(:run).returns(report)
           @puppetd.expects(:exit).with(0)

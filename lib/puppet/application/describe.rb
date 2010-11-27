@@ -130,7 +130,7 @@ class TypeDoc
       a[0].to_s <=> b[0].to_s
     }.each { |name, doc|
       print "\n- **#{name}**"
-      if type.namevar == name and name != :name
+      if type.key_attributes.include?(name) and name != :name
         puts " (*namevar*)"
       else
         puts ""

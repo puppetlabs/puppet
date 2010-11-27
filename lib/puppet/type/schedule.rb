@@ -16,7 +16,7 @@ module Puppet
       Thus, it behooves you to use wider scheduling (e.g., over a couple of
       hours) combined with periods and repetitions.  For instance, if you
       wanted to restrict certain resources to only running once, between
-      the hours of two and 4 AM, then you would use this schedule::
+      the hours of two and 4 AM, then you would use this schedule:
 
         schedule { maint:
           range => \"2 - 4\",
@@ -33,7 +33,7 @@ module Puppet
       Puppet automatically creates a schedule for each valid period with the
       same name as that period (e.g., hourly and daily).  Additionally,
       a schedule named *puppet* is created and used as the default,
-      with the following attributes::
+      with the following attributes:
 
         schedule { puppet:
           period => hourly,
@@ -45,11 +45,11 @@ module Puppet
 
     newparam(:name) do
       desc "The name of the schedule.  This name is used to retrieve the
-        schedule when assigning it to an object::
+        schedule when assigning it to an object:
 
           schedule { daily:
             period => daily,
-            range => [2, 4]
+            range => \"2 - 4\",
           }
 
           exec { \"/usr/bin/apt-get update\":
@@ -65,7 +65,7 @@ module Puppet
         is always a range within a 24 hour period, and hours must be
         specified in numbers between 0 and 23, inclusive.  Minutes and
         seconds can be provided, using the normal colon as a separator.
-        For instance::
+        For instance:
 
           schedule { maintenance:
             range => \"1:30 - 4:30\"
@@ -196,17 +196,17 @@ module Puppet
         Note that the period defines how often a given resource will get
         applied but not when; if you would like to restrict the hours
         that a given resource can be applied (e.g., only at night during
-        a maintenance window) then use the ``range`` attribute.
+        a maintenance window) then use the `range` attribute.
 
         If the provided periods are not sufficient, you can provide a
         value to the *repeat* attribute, which will cause Puppet to
         schedule the affected resources evenly in the period the
-        specified number of times.  Take this schedule::
+        specified number of times.  Take this schedule:
 
-          schedule { veryoften:
-            period => hourly,
-            repeat => 6
-          }
+            schedule { veryoften:
+              period => hourly,
+              repeat => 6
+            }
 
         This can cause Puppet to apply that resource up to every 10 minutes.
 
@@ -215,7 +215,7 @@ module Puppet
         internal factors might prevent it from actually running that
         often (e.g., long-running Puppet runs will squash conflictingly scheduled runs).
 
-        See the ``periodmatch`` attribute for tuning whether to match
+        See the `periodmatch` attribute for tuning whether to match
         times by their distance apart or by their specific value."
 
       newvalues(:hourly, :daily, :weekly, :monthly, :never)
@@ -307,10 +307,10 @@ module Puppet
       Puppet.debug "Creating default schedules"
 
             result << self.new(
-                
+
         :name => "puppet",
         :period => :hourly,
-        
+
         :repeat => "2"
       )
 
@@ -318,9 +318,7 @@ module Puppet
       @parameters.find { |p| p.name == :period }.value_collection.values.each { |value|
 
               result << self.new(
-                
           :name => value.to_s,
-        
           :period => value
         )
       }
@@ -349,4 +347,3 @@ module Puppet
     end
   end
 end
-

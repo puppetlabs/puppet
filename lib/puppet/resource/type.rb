@@ -13,8 +13,8 @@ class Puppet::Resource::Type
 
   RESOURCE_SUPERTYPES = [:hostclass, :node, :definition]
 
-  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection, :module_name
-  attr_reader :type, :namespace, :arguments, :behaves_like
+  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
+  attr_reader :type, :namespace, :arguments, :behaves_like, :module_name
 
   RESOURCE_SUPERTYPES.each do |t|
     define_method("#{t}?") { self.type == t }
@@ -69,6 +69,7 @@ class Puppet::Resource::Type
     end
 
     scope = subscope(scope, resource) unless resource.title == :main
+    scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)
 
@@ -91,6 +92,8 @@ class Puppet::Resource::Type
     end
 
     set_arguments(options[:arguments])
+
+    @module_name = options[:module_name]
   end
 
   # This is only used for node names, and really only when the node name
@@ -137,20 +140,14 @@ class Puppet::Resource::Type
     end
   end
 
-  # Make an instance of our resource type.  This is only possible
-  # for those classes and nodes that don't have any arguments, and is
-  # only useful for things like the 'include' function.
-  def mk_plain_resource(scope)
+  # Make an instance of the resource type, and place it in the catalog
+  # if it isn't in the catalog already.  This is only possible for
+  # classes and nodes.  No parameters are be supplied--if this is a
+  # parameterized class, then all parameters take on their default
+  # values.
+  def ensure_in_catalog(scope)
     type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
     resource_type = type == :hostclass ? :class : :node
-
-    # Make sure our parent class has been evaluated, if we have one.
-    if parent
-      parent_resource = scope.catalog.resource(resource_type, parent)
-      unless parent_resource
-        parent_type(scope).mk_plain_resource(scope)
-      end
-    end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the
@@ -160,9 +157,20 @@ class Puppet::Resource::Type
     end
 
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
+    instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
-    scope.catalog.tag(*resource.tags)
     resource
+  end
+
+  def instantiate_resource(scope, resource)
+    # Make sure our parent class has been evaluated, if we have one.
+    if parent && !scope.catalog.resource(resource.type, parent)
+      parent_type(scope).ensure_in_catalog(scope)
+    end
+
+    if ['Class', 'Node'].include? resource.type
+      scope.catalog.tag(*resource.tags)
+    end
   end
 
   def name
@@ -174,12 +182,29 @@ class Puppet::Resource::Type
     @name.is_a?(Regexp)
   end
 
+  # MQR TODO:
+  #
+  # The change(s) introduced by the fix for #4270 are mostly silly & should be 
+  # removed, though we didn't realize it at the time.  If it can be established/
+  # ensured that nodes never call parent_type and that resource_types are always
+  # (as they should be) members of exactly one resource_type_collection the 
+  # following method could / should be replaced with:
+  #
+  # def parent_type
+  #   @parent_type ||= parent && (
+  #     resource_type_collection.find_or_load([name],parent,type.to_sym) ||
+  #     fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{resource_type_collection.environment}"
+  #   )
+  # end
+  #
+  # ...and then the rest of the changes around passing in scope reverted.
+  #
   def parent_type(scope = nil)
     return nil unless parent
 
     unless @parent_type
       raise "Must pass scope to parent_type when called first time" unless scope
-      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", scope.namespaces, parent)
+      unless @parent_type = scope.environment.known_resource_types.send("find_#{type}", [name], parent)
         fail Puppet::ParseError, "Could not find parent resource type '#{parent}' of type #{type} in #{scope.environment}"
       end
     end
@@ -215,8 +240,13 @@ class Puppet::Resource::Type
       resource[param] = value
     end
 
-    scope.setvar("title", resource.title) unless set.include? :title
-    scope.setvar("name", resource.name) unless set.include? :name
+    if @type == :hostclass
+      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
+      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+    else
+      scope.setvar("title", resource.title              ) unless set.include? :title
+      scope.setvar("name",  resource.name               ) unless set.include? :name
+    end
     scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
 
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)

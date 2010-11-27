@@ -1,5 +1,240 @@
+2.6.3
+=====
+184733c  [#5322] (#5322) Remove spec file that adds little value and causes failures
+178c2a6  Fix test failures that fixing #4726 exposed.
+74b6c09  (#4726) Fix RRD legacy support
+8662056  Fix for #4279 -- mount detection on HP-UX
+fbb096a  Fix for #5055 -- adding to_sym to Puppet::Node::Environment
+b2ff6a5  Fix for #5298 -- Collections need to do type lookup
+1ce00dc  Step towards [5298] -- cleanup indentation, etc. in AST::Collection
+722608b  Fixed #5287 - Schedule documentation is incorrect
+c8b6fb5  Fixed #5296 - test warnings messages
+d221c05  (#5297) Fix schedule tests that were missing stubs for Time.now
+f2fd0d1  Fix for #5273 -- user resource constantly resetting password age
+544dcf8  Fix #5289 -- Bad copy/paste changes message on test failure
+
+2.6.3rc3
+========
+126681f  Updated CHANGELOG for 2.6.3rc3
+b15231d  Fix for #4299 -- Don't require which
+ea435a4  Fix #5020 - Prefer finding node name from REST uri over certname
+a097b93  Fix for #4894 -- retry tests if port is in use
+ee61b4e  Fix for #4955 -- Race condition & memory leak in Puppet::Util
+f57425d  Fix #4921 - race condition in Parser Functions creation
+9604f1c  Fix #5252 - line number mis-attribution during parsing
+cc5224c  Maint. fix for test broken by 00eedac5
+5f7d0fb  Fix for #2568 -- Add a dbconnections option to set AR pool size
+ba4d22b  Maint.  Removing code for which no CLA has been signed
+4a3d5d7  Reimplementation of functionality removed by prior commit
+235d641  Refactor for CLA
+9ba0c8a  Fix #4923 - close process race when truncating existing file
+cb16d3d  Puppet-load: better and safer error reporting
+1d26742  Fix #5023 - puppet-load multiple nodes support
+00eedac  capture stderr from exec resources
+4cbceab  (#4573) FreeBSD service provider now supports versions <7 and >8
+06c8748  Fix #3808 - puppetdoc should use --force-update only if RDoc supports it
+6e6712b  [#4813] Remove dead code from puppet/rails/host.rb
+956296a  Fix #4911 - Do not generate doc for standard RDoc parser generated object
+4fa24bb  Fix #5127 - error when accessing array elements
+abb8c66  (#5242) Fix schedule specs that fail near daylight savings
+ec667fd  Kludge for #5206 -- port of fix for #3536 to yaml
+9a3b584  (#5062) Add envpuppet helper script to ext/
+aad7008  [#5225] Fix spec failure that depended on time change
+21db472  (#5233) Randomize tmp dir paths
+
+2.6.3rc2
+========
+244213c  Updated CHANGELOG for 2.6.3rc2
+76ac1f8  Fixed #5112 - Launchd Service broke in 2.6.2 with OS X 10.4 Clients.
+776ea2a  Fixed #5137 - Removed no longer required TOC references
+31118fe  Kludge for #5048 -- serialization compatibility with 0.25.x
+65ef24e  (#4534/#4778) -- Normalize parameterized classes
+3b53bfc  Fix for #5022 -- Escaped newlines should be elided
+
+2.6.3rc1
+========
+e3fc5b9  Updated CHANGELOG and version for 2.6.3rc1
+3c56705  Fix for #4832 -- Making PSON handle arbitrary binary data
+e232770  Minimal fix for #4975 -- only call chage when managing password age rules
+a090e86  Fix for #4963 -- Use correct commands for password expiry on solaris
+
+2.6.2
+=====
+295c3be  Updated CHANGELOG for 2.6.2
+1d719be  Fix for #4945 -- explicitly check os to supress man page installation
+55417bc  Reversion of 021d534482dd8edb863cb77d668ac3525362a0a6
+a6e2bea  Fixed #4919 - added parenths to fix error message:
+
+2.6.2rc1
+========
+917c520  Incremented version to 2.6.2
+900eae4  Updated CHANGELOG for 2.6.2rc1
+1b6094d  Fixed documentation typo
+bdf12fe  Fix for #4896 -- stray newline left over from removed diagnostic
+e7424c6  (#4772) Update SuSE .spec file
+0aaa742  Fixes #4792 (Duplicate definition since 2.6.1 upgrade)
+ea49d13  Improvement to #4025: made spec tests work on all platforms
+0b4ce08  Adds #3046 - support for password min/max age
+e9f9d26  [#4783] (#4783) Fix RRDGraph report generation
+34f87cf  Add user account expiry to the useradd type and provider
+a7fb9b1  Fixed #4025 (failure in launchd if certain plists are binary).
+2573872  Fix for #4649 -- avoid unsupported features on non-posix systems
+eb9279c  Fix for 4273 -- revert b7e2580ab49ecdb67fc9b522829c005fc3750fbe
+53a2bea  Fix for #4804 -- escaped backslashes in interpolated strings
+d12e477  Fixes #4863 (Missing "require 'webrick'" causes nondeterministic spec failures)
+574812e  (#4860) Add regression tests that would have caught bad params method
+68947e7  (#4860) Fix wrong method name.. params seems to be renamed to parameters
+021359b  Fix for #4644: install.rb works properly on Windows
+d057b90  Fix #4726 Update puppet rrdtool metric code to support modern rrd ruby bindings
+66cf3a9  Fix #4226 - Prepend 'Puppet CA: ' to fqdn for default root ca_name
+d54352a  Port Puppet::SSLCertificates::CA test to rspec
+effc6b8  Fixes #4852 - error messages involving Whits now mention Classes instead
+3f99bd7  Fix #4267 - Create a backup before dropping permissions
+6468f4e  (#4763) Don't call a method that was removed in Rails 3 activerecord
+79d5fde  Fixed #4763 - Hardcoded ActiveRecord version
+4798df3  Fixes #4822 -- Puppet doc -o option broken
+99c1019  [#4798] Puppet doc manifests documentation mode broken
+8cd1540  [#4692] undefined variables cause :undef to be passed to functions
+06bf566  [#4787] Missing require causing failure
+bba04e0  Fix for #4746 -- Newline goes at the _end_ of the line
+9e17c25  Fix #4743: Allow the audit meta-parameter to accept both 'all', and :all
+f950061  [#4716] ResourceTypeAPI exposes implementation details that are likely to change
+8ff4b9a  Fixed #4819 - corrected cron documentation
+2b50f30  [#4771] Import of manifests with the same name only happens once
+7b8cb74  Fix for #4708 - tagmail should allow . in tagname
+6f229ee  Minimal fix for #4631 -- set implicit classes as in 0.25.x
+021d534  Fixed #3707 - rpm, like dpkg-query exits 1 if the package is not installed.  Returning nil in this provider had the effect that on every run, puppet would end up calling yum erase .  Returning the correct data structure resolves this.
+216f663  Fixed Puppet Doc TOC generation
+c3cb57c  Fixed versioncmp function typo
+898a170  Fixed Reductive references in LICENSE file
+996f14e  Documentation updates for Markdown conversion
+
+2.6.1
+=====
+cad1e0f  Updated CHANGELOG for 2.6.1
+14f871d  [#4756] addendum for #4756
+9bdfe69  Fix for Bug #4756 - Providers no longer respect missing features Restored deleted lines from type.rb and reinstated unit tests
+14b3340  Fix for #4736 -- preserve case of defined resources
+bd973a2  Fix for #4637 --use of namevar missed in refactor
+
+2.6.1rc4
+========
+efa834a  Updated CHANGELOG for 2.6.1rc4
+763e7cb  Minimal fix for #4691 -- class name uppercased in $name
+4a9c857  Fix for #4693 -- implicit stages should never be serialized
+fa4d32c  Fix for #4646 -- Missing stub
+4d55c6e  Fix for tests broken by fix for #4489 -- stub standalone
+b397b69  Fix for #4489 -- apply was using the rest terminus
+e91a8cc  [#4462] uncaught Timeout::Error
+4d36a51  Fixed alias metaparam docs error
+b063635  Skip apt-listbugs and apt-listchanges when installing from puppet
+e860907  [#4660] Avoid passing rake and autotest args to puppet tests
+419e007  Fixed #4706 - logcheck patterns
+f6c0265  Fixed queue require for #4555
+07d0be4  [#4308] Remove puppettest from specs
+9e69616  Fixed RSpec warning messages
+8d24861  Fixed #4100 - Added http_caching to yumrepo type
+8cd266e  Added cost parameter to the yumrepo type
+0056d41  Fixed extlookup documentation and spacing
+e783a16  Fix for #4506 -- too much data being serialized
+f59cfc8  Fixed terminus example documentation
+690465e  Fix #4615 - vim highlighting fails on slashes and colons.
+078e4fd  Updated man pages
+7548c65  Updated Man page generation since move to Markdown
+
+2.6.1rc3
+========
+8be1929  Updated CHANGELOG for 2.6.1rc3
+81a2725  Fix for #4456 -- need to accept some mime-type aliases
+c318558  Fix for #4489 -- apply was using the rest terminus
+491c31d  Fix for #4542 -- included classes weren't assigned proper stages
+302d657  Fix for #4501 -- reports not generated in standalone
+1ea4ccf  Start server before agent
+4c28079  [#4555] puppet queue tries to call code it hasn't required
+d1150e0  fix #4528 - treat * as absent
+20f4b90  Fix for #4518 -- classes not getting added to compiler.classes
+57bb06b  [#4545] Remove obsolete 'trac' specs
+82b4f04  Maint. -- Fix test failures broken by previous commit
+0c30754  Maint.  Removing code at the request of the original author
+3df0490  [#4298] Puppet apply prints an error if the file to apply doesn't exist
+5d4f222  Fixed #4527 correctly for 2.6.1
+1b3d782  Updated config.ru example for 2.6.1
+
+2.6.1rc2
+========
+0aa27b5  Updated for 2.6.1rc2
+252c9b8  Further RST to Markdown fixes for types, values, tests
+1157e8d  Updated all types to Markdown output
+fef8800  Updated reference output to generate valid Markdown
+79e0a2e  Reformatting documentation from RST to MarkDown (#4509) Signed-off-by: Jes Fraser <jes@gadget.geek.nz>
+62435e5  Rewrote functions documentation to Markdown
+e4b2aa6  Removed legacy Trac code
+8ddea2a  Maint.  Passenger fix broke a test
+f43e87b  Fix for #4476 -- rails calling yaml internals
+a23d80a  Fixes #4485 -- single quoted strings should not treat \n as new line
+8e31b52  Passenger needs HTTP headers values to be string
+037bb32  [#4404] Remove requirement for source on Parser::Resource::Param
+0e4bc62  [#4364] Fix failing spec due to incorrect loglevel
+3a6ca54  Fix #4458 - Do not dump the whole environment when instances can't be found
+d909827  Fix for #4465 -- earlier "feature" patch broke ldap
+47005aa  Maint -- tests need to respect RFC-952
+6aac8f0  [#4467] Make Puppet Master respect facts_terminus settings
+1cba9a7  added md5 support as requested in http://serverfault.com/questions/166199/puppet-md5-sum-of-string
+1dfd2b6  [#4381] extlookup shouldn't trigger reparses of .pp files
+be2b1f3  [#4370] Fixes extlookup precedence getting overwritten between runs
+03808fd  Fixed #4364 - Reduced audit msg from info to debug
+539b57c  [#4347] run_mode was colliding with --mode for "puppet doc"
+1faebdd  [#4423] repair parameterized class instantiation
+37568bd  [#4423] class { shouldn't get stored on the namespace stack
+449315a  [#4397]+[#4344] Move type-name resolution out of Puppet::Resource into the AST resources.
+daa801b  [#4344] Temporary fix to stop agent from importing modules
+00ebf01  [#4344] Fix for failing templates when module name matches file in local dir.
+e32320e  [#4336] "reportdir" was in the wrong section
+0f9672a  Fixed #4311 - Typo in defaults.rb
+f54d843  Fix #4461 - attempt to fix another performance issue
+2c21fae  Fix for #4300 Solaris svc files need new pid filenames
+83c2419  [#4284] Fix failing specs run as root due to missing puppet group
+8237f68  [#4242] Fixed (removed) a broken unit test
+d5ad0fb  Removed eventual documentation line ... eventually came
+871e6fd  Fixed #4368 - Updated clean stored configs ext script for new config sections
+cb64477  Updated version to 2.6.1
+
+2.6.1rc1
+========
+ecf44e4  Updated CHANGELOG for 2.6.1rc1
+bdfcac5  Update Red Hat spec file for 2.6.0
+9f08e7c  Feature: puppet-load - a tool to stress-test master compilation
+ef9a4a6  Fix #4245 - default insertion of ACL is not thread safe
+4065e81  Fix race condition in rack autoloading of request/response
+3163932  Fix #4244 - Cached Attributes is not thread safe
+7d42f77  JRuby doesn't implement Process.maxgroups
+760e418  Fix #4349 - Parsing with ignoreimport=true was always loading site.pp
+67bdf89  Fix #4348 - Puppet doc single manifest broken
+13c71b9  extlookup() is a builtin
+d38e522  [#4333] old optparse doesn't support default_argv=
+86b0882  Fixed #4326 - Updated SUSE packaging
+03313b8  Fix #4319 - source file url sent to the master is invalid
+ac3a0d2  vim: highlight default parameters in definition/classes
+be2141a  vim: match collected resources.
+c047c8d  vim: added elsif
+9569136  Fix for 4314 -- Need to allow '-' in class name for refs
+636079f  Fixed #4304 - Changed logging level for auto import message
+000fd1e  Fix for #4303 -- reverting to old escaping in '-strings
+1d494a3  Tweak to fix for #4302--dangling ref to known_resource_types
+2383050  Fix #4302 - Compilation speed regression compared to 2.6
+63ec207  Minimal fix for #4297, with notes for follow-up
+7ad7eb1  Fix #4286 - rename puppetdoc global module <site> to __site__
+28bb195  Fixed yumrepo type deprecation wanring `
+067a46d  Temporary tweak to tests for #4242
+9778f2a  [#4242] Fixed recursion due to parents including their children
+59a23d6  Fix for #3382 -- Empty classes as graph placeholders
+865282a  Fixed example config.ru
+a0a63c3  Fixed network and indirection reference
+64386cf  Fixed Indirection reference
+
 2.6.0
 =====
+db0b30d  Updated CHANGELOG for 2.6.0
 42a475e  Fixing #4268 - manifests always imported
 06fc40c  [#4269] Undef variables interpolate to empty string
 1288f8c  [#4270] Force inherited classes to load into the correct environment
@@ -3427,10 +3662,6 @@ ada960b  Constants in provider/interface/redhat.rb are getting redifined as they
 5e8d71d  Fix the ral:providers:host:parsed tests so they run successfully
 9530df1  Updated to version 0.23.2
 0d312a1  Updated to version 0.23.2
-
-0.23.2
-======
-49c9a62  Adding release tag REL_0_23_2
 b84015a  The last set of bug-fixes before the next release.  This commit just fixes a couple of problems that resulted when I changed the Provider#initialize method to not duplicate its argument, which was necessary for ParsedFile.
 aaf5959  Adding test support for the other mongrel configuration header
 db0ffc7  Copying the "commands" and "confine" statements to the actual dscl providers, since they need to be there to determine where the providers are suitable.  Otherwise base classes could unnecessarily affect how subclasses work.
@@ -3460,10 +3691,6 @@ a8bf96a  Adding a file that should have been in a commit from yesterda
 530d290  Applying a modification of the patch from Marcin Owsiany, allowing Mongrel to be a CA
 64fba48  Updated to version 0.23.1
 d3988cc  Updated to version 0.23.1
-
-0.23.1
-======
-0f7f752  Adding release tag REL_0_23_1
 2229dc1  Fixing #726 -- mounts can now correctly handle mounted but absent filesystems.
 47b7058  Adding some code in an attempt to fix #728, but it is all commented out since I could not get it fixed in time for beaker
 2e14ea4  Attempting to clean up the mount documentation as in #727.
@@ -3554,10 +3781,6 @@ dc2a0bf  Use single config file
 ada4355  Updated to version 0.23.0
 d8f4c53  Updated to version 0.23.0
 049faf8  Updated to version 0.23.0
-
-0.23.0
-======
-f588d47  Adding release tag REL_0_23_0
 8844fca  Changing the paths to match laeg, instead of culain.
 d79a788  Modified the fileserver to cache file information, so that each file isn't being read on every connection.  Also, added londo's patch from #678 to avoid reading entire files into memory.
 944e1f4  More updates to puppet-test
@@ -3731,10 +3954,6 @@ fb4f04d  updating changelog with version number
 0f02a54  Updated to version 0.22.4
 e049999  Updated to version 0.22.4
 4f2b903  Updated to version 0.22.4
-
-0.22.4
-======
-22ce899  Adding release tag REL_0_22_4
 3e895b5  Changing the remount stuff back to not repeating the mount options.
 6438270  Adding a "supports_parameter?" method to test whether a given provider supports the features required by a given parameter.  This is used during attribute instance creation, but its creation was necessicated by test code.
 c9de332  Fixing the fileserver naming tests after the change to allow "-" in fileserver module names.
@@ -3798,10 +4017,6 @@ ca5d068  Updating the docs for the sourceselect parameter
 a999752  Updated to version 0.22.3
 24ad5ab  Updated to version 0.22.3
 9ce7c79  Updated to version 0.22.3
-
-0.22.3
-======
-a3a7ea7  Adding release tag REL_0_22_3
 e154589  Fixing puppetdoc with the recent changes to the networking code
 801d0f7  Fixing a bug I apparently introduced in the testing that would have made user management not work with netinfo.  In the process, I am enabling validation on the nameservice subclasses.
 2544f75  Fixing the documentation to match reality, as reported in #548.
@@ -3825,10 +4040,6 @@ c5e1a44  Fixing the "readcert" method after getting the signed cert; the method 
 36feb29  Fixing a small bug in testing whether instance methods are already defined.
 45904ca  Updated to version 0.22.2
 0452878  Updated to version 0.22.2
-
-0.22.2
-======
-a917a3e  Adding release tag REL_0_22_2
 474b86c  Hopefully the last batch of commits before I release 0.22.2.  Mostly just get tests to pass.
 90d8b2d  Remove no-lockdir patch. Clean changelog
 a68a7c2  Change puppet's homedir to /var/lib/puppet
@@ -3983,10 +4194,6 @@ f80bd5e  Fixing exec so it actually works when path is specified as an array
 d117aa8  Updated to version 0.22.1
 1e90209  Updated to version 0.22.1
 463d3a8  Updated to version 0.22.1
-
-0.22.1
-======
-530c255  Adding release tag REL_0_22_1
 1d059b0  Fixing #470, I think.  I basically just threw away the validation and let suidmanager do it all when running commands.
 69a07b1  The resolve functionality in "test" is almost working...
 42d15fe  Adding note about removing mounts netinfo provider
@@ -4078,10 +4285,6 @@ f7d8350  Updating docs for 0.22.0
 4ee6c97  Updated to version 0.22.0
 98ed0ae  Updated to version 0.22.0
 38cfa67  Updated to version 0.22.0
-
-0.22.0
-======
-728d745  Adding release tag REL_0_22_0
 3446dd6  Last round of fixes before the next release
 954a285  Fixing puppet test task for older ruby versions
 7afa69c  Fixing rake test so it works with the new puppet loader
@@ -4260,10 +4463,6 @@ c3c5851  Fixing configuration storage -- there was a check being done that cause
 60af8e2  Updated to version 0.20.1
 e313a26  Updated to version 0.20.1
 68d9e78  Updated to version 0.20.1
-
-0.20.1
-======
-2feb9e8  Adding release tag REL_0_20_1
 7d46167  Updating changelog for 0.20.1
 7fa96cb  Another small fix, just for solaris
 db5d9d4  Another testing fix
@@ -4315,10 +4514,6 @@ e741b7b  Fixing some Class.to_s handling
 71924ad  Updated to version 0.20.0
 a488dd9  Updated to version 0.20.0
 4688d93  Updated to version 0.20.0
-
-0.20.0
-======
-7694bd9  Adding release tag
 f9f939e  Updating changelog for 0.20
 e3b4f23  Another round of bugfixing, including finding out that the tagmail report was leaving zombie processes lying around
 07f616b  A round of bug-fixing on OS X
@@ -4440,16 +4635,6 @@ f2ac4dc  Updating changelog for 0.19.3, and merging the version changes over.
 8f9dcb5  Updated to version 0.19.2
 595d5ba  Updated to version 0.19.2
 6902f2d  Updated to version 0.19.2
-
-0.19.3
-======
-bec795d  Adding release tag REL_0_19_3
-0513ffa  Fixing problem with the hostname being removed when running locally.  The node_name setting was not checking that the client was set, and it is never set when running locally.
-7726afc  Adding branch to fix the problem with hostnames getting nilled
-
-0.19.2
-======
-ddb4c47  Adding release tag REL_0_19_2
 164c18f  As requested by Christian Warden, triggering an object now results in an event, which can result in further triggers.
 98004b2  Adding some error handling for when a non-existent report is asked for, and adding a bit more testing.
 a1e27bc  Adding trace information to autoload.rb
@@ -4494,10 +4679,6 @@ fd4ef3c  Better documentation around certificate revocation and mgmt
 c8a6df0  Updated to version 0.19.1
 ee8b8c7  Updated to version 0.19.1
 6f85511  Updated to version 0.19.1
-
-0.19.1
-======
-7e229a8  Adding release tag REL_0_19_2
 0e58f65  Updating changelog for 0.19.1
 4a3c8d1  Adding testing for the default? method, and fixing it to support arrays and returning false when no defaults are specified
 48992d7  Using the "trace" configuration parameter to determine whether a stack trace should be printed, rather than just using "debug".  I added the param a little while ago and was using it internally in Puppet::DevError, but I just now went through the whole configuration and switched to using it.
@@ -4539,10 +4720,6 @@ c651b19  Disable the sample fileserver module by default, otherwise users get sp
 65bb635  Updated to version 0.19.0
 61e42e7  Updated to version 0.19.0
 12b219e  Updated to version 0.19.0
-
-0.19.0
-======
-fbebcc5  Adding release tag REL_0_19_0
 e309b76  Modifying the provider base class so that it defines a method for every used command (e.g., you call "commands :rpm => 'rpm'", and it defines an "rpm" method.  I then pushed this throughout the package providers, which are the heaviest users of commands.
 c5ce953  Adding aptitude support, including a new util::package module that provides a method for package version sorting, and a couple of smaller bug fixes.  This fixes #237.
 2113eed  Adding hasrestart parameter to services
@@ -4660,10 +4837,6 @@ b2f1aa0  doc updates
 b8bf113  Updated to version 0.18.4
 94cc68b  Updated to version 0.18.4
 ce95ee3  Updated to version 0.18.4
-
-0.18.4
-======
-74a3b4d  Adding release tag REL_0_18_4
 f13c451  updating changelog for 0.18.4
 cdeccab  Another batch of bug fixes, this time focused on OS X patches.  Looks like I did not test on os x last time.
 b42eaee  First round of bugfixes in preparation for 0.18.4
@@ -4694,10 +4867,6 @@ e74b8af  fixing html markup
 b23b797  Updated to version 0.18.3
 fe8ce26  Updated to version 0.18.3
 a984a90  Updated to version 0.18.3
-
-0.18.3
-======
-04a99e7  Adding release tag REL_0_18_3
 8063ab1  Fixing filebucket server so that paths are not added multiple times
 1ab4594  Adding tests for previous config bugfixes, and updating changelog
 a6cc3e4  Fixing reports so that multiple host report directories can be created.  There was a config conflict before.
@@ -4727,10 +4896,6 @@ eff8d6e  Accepting the patch from #190.
 bd9fd8d  Updated to version 0.18.2
 71036e7  Updated to version 0.18.2
 aa87963  Updated to version 0.18.2
-
-0.18.2
-======
-3e5907d  Adding release tag REL_0_18_2
 afe84ec  small fixes towards 0.18.2
 e17f4ed  adding host information to reports and tagmail report
 1503b42  renaming tagmail config file
@@ -4761,10 +4926,6 @@ ea91896  changing the #!ruby lines to #!env ruby
 d275489  Updated to version 0.18.1
 35ef37b  Updated to version 0.18.1
 427831c  Updated to version 0.18.1
-
-0.18.1
-======
-1cc2712  Adding release tag REL_0_18_1
 7adafc6  For each type, adding a "new<type>" method to Puppet::Type, so instead of typing Puppet::Type.type(:file).create(...) you can now type Puppet::Type.newfile(...).
 e8c57ae  Cleaning up plugin handling a bit -- they can now be colon-separated paths, and I added a separate "plugindest" setting for determining where plugins are synchronized to.  The major feature I added, though, is that Puppet::Type now knows how to load plugins, and treats :pluginpath as a search path for plugins.
 d98ab11  Fixing zone tests
@@ -4814,11 +4975,6 @@ e841d8f  Adding test and fix for empty execs being ignored
 0ab461b  Updated to version 0.18.0
 daac8cf  Updated to version 0.18.0
 8779dbe  Updated to version 0.18.0
-
-0.18.0
-======
-4a5df83  Adding release tag REL_0_18_0
-a6f9bf4  Adding release tag REL_0_18_0
 ae3dba9  updating changelog for 0.18.0
 ead6b17  updating documentation for sshkey
 20b0a6d  fixing transaction tests to just warn when the user is not in more than one group, rather than failing.
@@ -4880,10 +5036,6 @@ b08816b  Fixing #162.  Node names must now be comma-separated.
 3ab4a89  Small fix to include puppetrun in /usr/bin
 62a0ff0  adding puppetrun to the red hat spec file
 fda013a  Updated to version 0.17.2
-
-0.17.2
-======
-b742236  Adding release tag REL_0_17_2
 3c15a28  updating changelog for 0.17.2
 a08ca93  Fixing #138, all of it, I think.  Environment settings are now allowed, although all bets are off in terms of parsing existing environment settings in crontabs.
 69cf2fe  Adding a small fix to cron tabs; they will at least parse tabs that have env settings in them, although you still cannot, at this point, set them.
@@ -4893,10 +5045,6 @@ d55adda  First version of puppetrun.  It seems to mostly work, but I need to tes
 b3ea53c  Adding a lot of structure to puppet.rb to make it easier to manage multiple objects in a single process, including making it easy to add threads.  Added some testing for all of that.
 93771b7  fixing user[:groups] management when the user is absent
 738698c  Updated to version 0.17.1
-
-0.17.1
-======
-f028420  Adding release tag REL_0_17_1
 ed9adf5  updating changelog for 0.17.1 and 0.17.0
 9b5de11  Allowing empty files
 5382118  Fixing #146.  I think I mostly just fixed the error message; I do not think there was another bug there.
@@ -4904,10 +5052,6 @@ ed9adf5  updating changelog for 0.17.1 and 0.17.0
 dc3a6d5  Making sure file recursion works for all valid inputs
 373afa3  updating version on spec file
 4296b02  Updated to version 0.17.0
-
-0.17.0
-======
-559f4b0  Adding release tag REL_0_17_0
 3be0f95  Wrapping the host storage into a transaction.  It might have a slight performance improvement, but, ah, unlikely.
 9d6166e  adding a test to make sure that defaults get taken up by components
 a0bcf5a  Adding code to try for the rails gem if the library cannot be found normally, and adding some protections in case there are problems
@@ -4939,27 +5083,15 @@ e06c661  Small bug fixes
 18de804  fixing log messages
 a7fadbe  fixing log messages
 43fdd89  Updated to version 0.16.5
-
-0.16.5
-======
-054cc77  Adding release tag REL_0_16_5
 64a58e4  updating changelog for 0.16.5
 44f1579  Fixing a stupid bug i managed to introduce in 0.16.2 (probably) involving importing files with classes in them.  This is a better solution than what I had before the bug, anyway.  Also, some documentation fixes.
 a9df49d  Fixing some naming problems with crons, and adding appropriate tests
 e8c912d  Allowing dashes in class names, although grammar rules restrict it from working anywhere except node names or in tag().  They are valid in host names, and many companies have them in the host names; in fact, this fix is for a company with this exact problem -- they cannot use puppet with their nodes because all their hosts have dashes in the host names.
 37d2850  Switching to just using "preserve" for file copying in file#handlebackups
 8b0481c  Updated to version 0.16.4
-
-0.16.4
-======
-66b8bfd  Adding release tag REL_0_16_4
 4b84ca9  updating changelog for 0.16.4
 b67a19b  Fixing #132, which involved creating a separate CA client and using it to retrieve the certificates.  There was more work to do because of the weird client/daemon/server heirarchy.
 a435d07  Updated to version 0.16.3
-
-0.16.3
-======
-ab17248  Adding release tag REL_0_16_3
 3f08155  updating changelog
 2faa447  Bug fixes from OS X for 0.16.3
 5e246ab  Hopefully final bug fixes in preparation for 0.16.3
@@ -4975,17 +5107,9 @@ a1574a5  Fixing TransObject#to_type so that it does not modify the object being 
 bcfc469  Adding in all of the patches necessary to make a prototype rails interface to puppet nodes work.  The biggest change is that there is now a separate NetworkClient class for every Client subclass, because otherwise you get namespace collisions.  Most everything other change is a relatively minor patch.
 9539dbb  Adding in all of the patches necessary to make a prototype rails interface to puppet nodes work.  The biggest change is that there is now a separate NetworkClient class for every Client subclass, because otherwise you get namespace collisions.  Most everything other change is a relatively minor patch.
 9b627cd  Trying to track down the bugs reported this morning, so I added some more test cases.  I did find a bug in the filebuckets, fixed it, and added a test case.
-
-0.16.2
-======
-13c91ea  Adding release tag REL_0_16_2
 003e897  updating changelog for 0.16.1 and 0.16.2
 a78bf1e  adding "clean" mode to puppetca
 bda8e52  This should have been in 0.16.1.  Moving the "setclass" statements around so that classes are set before a given class's code is evaluated, so it can be tested within the code, within node defs, components, or classes.
-
-0.16.1
-======
-77bf69c  Adding release tag REL_0_16_1
 bff9463  Adding sum type to the retrieved sum if it is not already there.  This provides backwards compatibility for existing cache files.
 feff317  removing unnecessary debugging
 baa412c  Adding "defined" functino to puppet, so you can now test whether a given class or definition is defined.
@@ -4993,10 +5117,6 @@ baa412c  Adding "defined" functino to puppet, so you can now test whether a give
 ccc4d95  Modifying non-existent-package test to make sure syncing fails, and modified ports package type to check the error output instead of the return code, because the portinstall command returns 0 even on failure.
 e64bd22  Fix ownership on server files (trac #122) Change ownership on /var/puppet
 9fe0b37  removing patch from red hat spec file
-
-0.16.0
-======
-2492328  Adding release tag REL_0_16_0
 a0b4553  Final commit before 0.16.0
 63cdc6c  making corrections to pass tests on freebsd
 d9fd002  Go some work started on developing authorization, but I have made little progress.  I might wait on this for the next point release.
@@ -5034,10 +5154,6 @@ ae4b12e  Revamp the yumrepo type to deal with repositories defined anywhere in y
 8df6e84  another small mount fix; this time, for stupid os x
 88dd992  committing version changes
 d10a638  Committing an important fix to mounts; since i am sure no one has downloaded 0.15.3, i am just going to rerelease 0.15.3 with this fix in it
-
-0.15.3
-======
-abf09dc  Adding release tag REL_0_15_3
 83d5236  updating changelog for 0.15.3; I need these exec fixes for my client
 e5be7d3  Adding autoloading for types and service types, also.
 fcce820  Okay, last one, hopefully.  Modifying checks to support arrays.
@@ -5047,10 +5163,6 @@ fcce820  Okay, last one, hopefully.  Modifying checks to support arrays.
 1e4abae  moving cwd existence check into "sync" instead of "validate"
 7dae24f  Fixing a small bug in type.rb that ignored false values (instead of nil values), another small bug in value setting that resulted in the file and line appearing twice in errors, and added validation to all of the checks in :exec (along with testing for all of it).
 b0edb35  removing patch from spec file
-
-0.15.2
-======
-feab8d9  Adding release tag REL_0_15_2
 122cf58  updating changelog in preparation for 0.15.2
 013cfd2  Adding darwinport type.
 9697354  differentiating openbsd from freebsd, adding freebsd, and autoloading package types instead of manually loading them
@@ -5094,10 +5206,6 @@ a9fdf9d  Disbale running puppetmaster as puppet until we've sorted out which fil
 791e4da  Committing support for group membership management.  Currently only works on Linuxes and other OSes that use "useradd" that support -G.
 932fd03  commiting package test fix that i thought i committed ages ago
 28602a6  Simplified as yum install can be used for both install and update
-
-0.15.1
-======
-437ee64  Adding release tag REL_0_15_1
 95b762b  updating changelog for 0.15.1
 fc98ab0  Fixing #100.  I just added a bit of a hack to configuration parsing -- if a group is specified in a section that matches the name of the process, then it is assumed to be the group that the process should run as.  The problem is that we are reusing the term "group" here for both the run-group and the file-group.  Oh well.
 5dcf303  Using differents commands with yum depending on whether the package is currently installed or not.
@@ -5113,10 +5221,6 @@ fc68910  removing dos EOL chars
 c74fd81  Committing the EPM support.  I am in the process of moving this to a common library that all of my projects can use.
 271a8d2  Adding EPM package building.
 805b32b  Updated to version 0.15.0
-
-0.15.0
-======
-1409cd6  Adding release tag REL_0_15_0
 92e3c1e  Updating changelog for 0.15.0.
 ec7d46e  fixing small bug in the test code when there are no packages to test
 f851be7  Adding upgrade ability to sun packages.  Currently it removes the old package and installs the new one.
@@ -5146,19 +5250,11 @@ b6d829b  Fixing #95.  I had to redesign how events were triggered; the transacti
 7756f9a  Fixing #97.  I was wrong about the object type I had, so I was calling "type" with no arguments, which was causing the bug.
 2faff5d  lowering the log output for nonexistent files
 eb68633  Updated to version 0.14.1
-
-0.14.1
-======
-ad0fa4b  Adding release tag REL_0_14_1
 cee0882  updating changelog for 0.14.1
 2351cd7  making case statements not create a new scope
 54fcdbd  fixing some more logging issues
 0549d03  Making some logging changes, and fixing a small bug in group management on missing files
 72d747b  Updated to version 0.14.0
-
-0.14.0
-======
-783735c  Adding release tag REL_0_14_0
 b76004a  Fixing yum listing bug, and caching the "latest" value so it is not asked for so many times; this fixes #90.
 3c07deb  Committing the last changes, for now, to handling links.  You still cannot copy remote links, but you can either ignore or follow them.  I do not think we will be able to copy remote links until I have merged symlinks and files to be the same object type again.
 e9e88b0  Adding "links" parameter to files, and adding support for following or ignoring links to all of the states it can matter to.  I still need to modify "source" so that it behaves correctly when managing links.
@@ -5175,10 +5271,6 @@ f2ea9b7  Supporting variables as the test value in both case statements and sele
 aae9b2a  Definitions now always create their own context, which means that they cannot override elements in the containing scopes.
 451ba6d  upgrading to warning the message about using a cached copy
 faffd69  Updated to version 0.13.6
-
-0.13.6
-======
-25614df  Adding release tag REL_0_13_6
 caa7f48  updating changelog for 0.13.6
 343dd08  Fixing tests so they do not chmod /dev/null to 640 (stupid tests).
 1a93c82  Fixing #68.  After tons and tons and tons of work, everything successfully configures itself, and the --genmanifest argument should actually work.  User and group creation will not necessarily work everywhere (in particular, Puppet uses dependencies to create the group first, but Fedora complains on user creation if the group already exists), but file and directory creation should.  The only downside is that there is a decent amount of extra information printed on daemon startup, as the daemon checks its config; this could maybe be seen as a bonus, though, I guess.
@@ -5207,20 +5299,12 @@ b119a72  Fixing output when user/group are not found
 043fc33  adding commas to each line
 d06cd3f  removing the initial syslog dest setting
 f6ca82b  Updated to version 0.13.5
-
-0.13.5
-======
-7ec2f82  Adding release tag REL_0_13_5
 85e4d31  adding changelog for 0.13.5
 2dffbee  Adding redhat service type, to support enabling and disabling a service
 7e5cc76  Fixing package types so you can specify the package type manually in a manifest
 7806618  removing extra error statement
 6e26a73  adding passwd converter
 3aff15e  Updated to version 0.13.4
-
-0.13.4
-======
-d0b3f6c  Adding release tag REL_0_13_4
 1f05ad0  updating changelog for 0.13.4
 cfb0e36  updates
 89856ec  Adding a bit more logging
@@ -5237,10 +5321,6 @@ beef01c  Properly figure out when updates are available. Previously, packages wo
 5f4335f  Adding logoutput parameter to :exec
 89702d8  Fixing symbolic naming bug where symbolic names were being ignored in some cases
 7d15fe1  Updated to version 0.13.2
-
-0.13.2
-======
-d0bbab5  Adding release tag REL_0_13_2
 037b7ac  Changed the parsedtype definition of exists(), and fixed a few smaller bugs.  Last code commit before 0.13.2
 6fe01ce  Tracked down a few other bugs; everything now passes on debian in preparation for 0.13.2
 8602932  Changing "answerfile" to "adminfile", adding "responsefile", and autorequiring both.
@@ -5255,10 +5335,6 @@ f098485  Correcting some path problems with symlink, and changing "target" state
 3f15cb8  Fixing :target reference in pfile.rb
 9508bd0  Correcting some path problems with symlink, and changing "target" state to "ensure"
 64eafa8  Updated to version 0.13.1
-
-0.13.1
-======
-ac8f3ae  Adding release tag REL_0_13_1
 a456c4d  updating alias docs to pass ReST checks
 1a05ed2  updating changelog and docs for :alias
 89d37f6  Fixing some problems with cron tab management, and creating Puppet::Util.{u,g}id methods.
@@ -5269,10 +5345,6 @@ b13b5ed  Set the Release tag in the spec file to 1 when the version is changed
 8c02ffd  Adapt specfile to the fact that puppetmaster now automatically runs as user puppet. Add default config files that send logs to /var/log/puppet.
 d629a80  Fix version in last changelog entry (makes rpmlint happy)
 44071d0  Updated to version 0.13.0
-
-0.13.0
-======
-4751fce  Adding release tag REL_0_13_0
 2cb5cb3  Updating changelog for 0.13.0
 387db24  Adding answerfile support to sun pkgs.
 2ce061a  adding some documentation
@@ -5309,10 +5381,6 @@ d5af359  Rewrote client init script since puppetd is now a proper demon.
 96b761b  Fixing waitforcert so that the client can actually add the certs once it receives them
 c7f9942  Adding release tag REL_0_12_0
 cf82cfa  Updated to version 0.12.0
-
-0.12.0
-======
-2c35151  Adding 0.12.0 release tag
 282cfcf  Updated to version 0.12.0
 1186069  Small mods to the packaging stuff
 87904d3  RPM release is almost entirely there, it just needs to be integrated into release management
@@ -5322,26 +5390,14 @@ ae2575b  Adding the event-loop stuff to the repository and switching to using it
 258114d  Modifying docs, and adding scheduling hooks
 0cb51f3  Fixing a small checksumming bug, reorganizing the client stuff a bit, and adding freshness checking for the configuration, so the config is recompiled every time nor is it downloaded unless it has been recompiled
 f49b103  Updated to version 0.11.2
-
-0.11.2
-======
-36f6e05  Adding release tag REL_0_11_2
 c372a7d  modding changelog for 0.11.2
 6bab167  Made lots of small changes, mostly to help usability but also fixed a couple of key bugs
 ed39be9  Fixing most types to allow no statements
 3d458ef  Updated to version 0.11.1
-
-0.11.1
-======
-4bbb952  Adding release tag REL_0_11_1
 c3df525  modifying changelog for 0.11.1
 060b8bd  Adding openbsd packaging support
 ada3aee  Fixing problems where objects were passing @parameters[:param] objects, instead of specifically retrieving the value
 f36c7d1  Updated to version 0.11.0
-
-0.11.0
-======
-1d2095b  Adding release tag REL_0_11_0
 3700b37  Adding an "ensure" state where appropriate, and significantly reworking the builtin docs.
 92a780a  Added "ensure" state to some classes, and added infrastructure for it to work elsewhere.
 83906a2  Adding sshkey class plus tests, and adding "aggregatable" methods to type.rb
@@ -5362,10 +5418,6 @@ f420135  Converting transport format to YAML instead of Marshal, and caching the
 c5782df  Adding "content" state to files, and string interpolation handles escaped whitespace characters.
 b0ea70d  Adding 0.10.2 stuff
 6b6c49b  Updated to version 0.10.2
-
-0.10.2
-======
-f7211e3  Adding release tag REL_0_10_2
 1cf05ff  Services now work at least somewhat on solaris 10, and service testing is pretty different.
 4c4f530  Fixing dependencies to not depend on file order.  Added Puppet::Type.{finalize,mkdepends,builddepends}
 21410a2  Fixing documentation generation, and fixing aliasing so that objects can safely be aliased to themselves
@@ -5374,10 +5426,6 @@ f7211e3  Adding release tag REL_0_10_2
 97fb6c9  Adding generic autorequire mechanism, and thus removing it from exec
 11b5463  Adding a requires? method to types, fixed the bug where exec fail when Puppet is downloading the script to execute, and modified "exec" to autorequire any managed scripts
 932b783  Updated to version 0.10.1
-
-0.10.1
-======
-dc012b1  adding 0.10.1 release tag
 854f16b  modifying changelog for 0.10.1
 89d0050  Adding Sun support and fixing the last remaining bugs related to the daemon changes i just made
 45ac512  Supporting puppetmasterd running as a non-root user, and doing some basic message cleanup
@@ -5386,10 +5434,6 @@ dc012b1  adding 0.10.1 release tag
 e5ac196  Adding some consistencies to the executable tests.  All exe tests now pass on OpenBSD, although the only real problem was that ruby was in /usr/local/bin.
 dccafc7  Updating Puppet to work with the new Facter
 b7974b5  Updated to version 0.10.0
-
-0.10.0
-======
-8458a0d  Adding 0.10.0 release tag
 48031dd  Describing 0.10.0 changes
 48ba030  Modifying hosttest
 f00a7db  All tests pass now, although the lack of service support on os x means that i have now disabled services on it
@@ -5409,10 +5453,6 @@ e611f2c  adding some better readme stuff
 b532a30  adding things to the change log, and modifying the order of the steps
 584652c  Disabling most documentation generation except for the API docs, and wrapping the StatusServer in the xmlrpc check
 0e0fdac  Updated to version 0.9.3
-
-0.9.3
-=====
-d4a9f3e  Adding release tag
 e2e2fb3  some updates to the typegen stuff, even though i may still not use it
 5302921  Fixing two reported bugs in cron jobs.  Cron jobs correctly change when fields other than the command are updated, and they do not continually refresh when the command has trailing spaces
 592c24d  adding some comments

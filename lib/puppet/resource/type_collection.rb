@@ -19,6 +19,12 @@ class Puppet::Resource::TypeCollection
     @watched_files = {}
   end
 
+  def import_ast(ast, modname)
+    ast.instantiate(modname).each do |instance|
+      add(instance)
+    end
+  end
+
   def <<(thing)
     add(thing)
     self
@@ -92,50 +98,8 @@ class Puppet::Resource::TypeCollection
     @definitions[munge_name(name)]
   end
 
-  def find(namespaces, name, type)
-    #Array("") == [] for some reason
-    namespaces = [namespaces] unless namespaces.is_a?(Array)
-
-    if r = find_fully_qualified(name, type)
-      return r
-    end
-
-    namespaces.each do |namespace|
-      ary = namespace.split("::")
-
-      while ary.length > 0
-        tmp_namespace = ary.join("::")
-        if r = find_partially_qualified(tmp_namespace, name, type)
-          return r
-        end
-
-        # Delete the second to last object, which reduces our namespace by one.
-        ary.pop
-      end
-
-      if result = send(type, name)
-        return result
-      end
-    end
-    nil
-  end
-
-  def find_or_load(namespaces, name, type)
-    name      = name.downcase
-    namespaces = [namespaces] unless namespaces.is_a?(Array)
-    namespaces = namespaces.collect { |ns| ns.downcase }
-
-    # This could be done in the load_until, but the knowledge seems to
-    # belong here.
-    if r = find(namespaces, name, type)
-      return r
-    end
-
-    loader.load_until(namespaces, name) { find(namespaces, name, type) }
-  end
-
   def find_node(namespaces, name)
-    find("", name, :node)
+    @nodes[munge_name(name)]
   end
 
   def find_hostclass(namespaces, name)
@@ -150,23 +114,6 @@ class Puppet::Resource::TypeCollection
     define_method(m) do
       instance_variable_get("@#{m}").dup
     end
-  end
-
-  def perform_initial_import
-    parser = Puppet::Parser::Parser.new(environment)
-    if code = Puppet.settings.uninterpolated_value(:code, environment.to_s) and code != ""
-      parser.string = code
-    else
-      file = Puppet.settings.value(:manifest, environment.to_s)
-      return unless File.exist?(file)
-      parser.file = file
-    end
-    parser.parse
-  rescue => detail
-    msg = "Could not parse for environment #{environment}: #{detail}"
-    error = Puppet::Error.new(msg)
-    error.set_backtrace(detail.backtrace)
-    raise error
   end
 
   def stale?
@@ -197,12 +144,52 @@ class Puppet::Resource::TypeCollection
 
   private
 
-  def find_fully_qualified(name, type)
-    send(type, name.sub(/^::/, ''))
+  # Return a list of all possible fully-qualified names that might be
+  # meant by the given name, in the context of namespaces.
+  def resolve_namespaces(namespaces, name)
+    name      = name.downcase
+    if name =~ /^::/
+      # name is explicitly fully qualified, so just return it, sans
+      # initial "::".
+      return [name.sub(/^::/, '')]
+    end
+    if name == ""
+      # The name "" has special meaning--it always refers to a "main"
+      # hostclass which contains all toplevel resources.
+      return [""]
+    end
+
+    namespaces = [namespaces] unless namespaces.is_a?(Array)
+    namespaces = namespaces.collect { |ns| ns.downcase }
+
+    result = []
+    namespaces.each do |namespace|
+      ary = namespace.split("::")
+
+      # Search each namespace nesting in innermost-to-outermost order.
+      while ary.length > 0
+        result << "#{ary.join("::")}::#{name}"
+        ary.pop
+      end
+
+      # Finally, search the toplevel namespace.
+      result << name
+    end
+
+    return result.uniq
   end
 
-  def find_partially_qualified(namespace, name, type)
-    send(type, [namespace, name].join("::"))
+  # Resolve namespaces and find the given object.  Autoload it if
+  # necessary.
+  def find_or_load(namespaces, name, type)
+    resolve_namespaces(namespaces, name).each do |fqname|
+      if result = send(type, fqname) || loader.try_load_fqname(type, fqname)
+        return result
+      end
+    end
+
+    # Nothing found.
+    return nil
   end
 
   def munge_name(name)

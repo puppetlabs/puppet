@@ -161,11 +161,17 @@ module Puppet
       }
     end
 
+    def self.standalone?
+      Puppet.settings[:name] == "apply"
+    end
+
     def each_chunk_from(source_or_content)
       if source_or_content.is_a?(String)
         yield source_or_content
       elsif source_or_content.nil?
         yield read_file_from_filebucket
+      elsif self.class.standalone?
+        yield source_or_content.content
       elsif source_or_content.local?
         chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
       else
@@ -184,7 +190,7 @@ module Puppet
     end
 
     def chunk_file_from_source(source_or_content)
-      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path)
+      request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''))
       connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
       connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
         case response.code
