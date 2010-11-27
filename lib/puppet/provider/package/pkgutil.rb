@@ -51,7 +51,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
             next if line =~ /^Checking integrity / # use_gpg
             next if line =~ /^gpg: /               # gpg verification
             next if line =~ /^=+> /                # catalog fetch
-            next if line =~ /^\d+:\d+:\d+ URL:/    # wget without -q
+            next if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
 
             blastsplit(line)
         end.reject { |h| h.nil? }
