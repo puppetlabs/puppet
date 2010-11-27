@@ -47,9 +47,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
         list = output.split("\n").collect do |line|
             next if line =~ /^#/
-            next if line =~ /^WARNING/
-            next if line =~ /localrev\s+remoterev/
-            next if line =~ /installed\s+catalog/
+            next if line =~ /installed\s+catalog/  # header of package list
             next if line =~ /^Checking integrity / # use_gpg
             next if line =~ /^gpg: /               # gpg verification
             next if line =~ /^=+> /                # catalog fetch
