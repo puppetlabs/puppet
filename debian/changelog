@@ -6,6 +6,8 @@ puppet (2.6.2-2) unstable; urgency=low
   * Add missing Suggests on ruby libraries needed for storedconfigs
   * Add missing var/lib/puppet/client_yaml/catalog in 
     puppet-common.dirs (Closes: #557769)
+  * Patch ext/logcheck/puppet to handle new puppet-master 
+    Compiled log lines (Closes: #602336)
 
  -- Micah Anderson <micah@debian.org>  Mon, 01 Nov 2010 19:21:55 -0400
 
