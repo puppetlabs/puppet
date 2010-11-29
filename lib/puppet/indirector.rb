@@ -36,7 +36,7 @@ module Puppet::Indirector
 
   module InstanceMethods
     def save(key = nil)
-      self.class.indirection.save key, self
+      self.class.indirection.save self, key
     end
   end
 end

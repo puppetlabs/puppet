@@ -92,7 +92,7 @@ describe Puppet::Indirector, "when redirecting a model" do
     end
 
     it "should pass the instance and an optional key to the indirection's :save method" do
-      @indirection.expects(:save).with("key", @instance)
+      @indirection.expects(:save).with(@instance, "key")
       @instance.save "key"
     end
 
