@@ -10,9 +10,6 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   commands :pkguti => pkguti
 
-  # This is so stupid, but then, so is blastwave.
-  ENV["PAGER"] = "/usr/bin/cat"
-
   def self.extended(mod)
     unless command(:pkguti) != "pkgutil"
       raise Puppet::Error,
@@ -26,14 +23,15 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   def self.instances(hash = {})
-    blastlist(hash).collect do |bhash|
+    pkglist(hash).collect do |bhash|
       bhash.delete(:avail)
       new(bhash)
     end
   end
 
-  # Turn our blastwave listing into a bunch of hashes.
-  def self.blastlist(hash)
+  # Turn our pkgutil -c listing into a bunch of hashes.
+  # Supports :justme => packagename, which uses the optimised --single arg
+  def self.pkglist(hash)
     command = ["-c"]
 
     if hash[:justme]
@@ -53,7 +51,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       next if line =~ /^=+> /        # catalog fetch
       next if line =~ /\d+:\d+:\d+ URL:/   # wget without -q
 
-      parsed = blastsplit(line)
+      parsed = pkgsplit(line)
 
       # When finding one package, ensure we picked up the package line
       # itself, not any pkgutil noise.
@@ -74,7 +72,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   # Split the different lines into hashes.
-  def self.blastsplit(line)
+  def self.pkgsplit(line)
     if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
       hash = {}
       hash[:name] = $1
@@ -105,12 +103,12 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
   # Retrieve the version from the current package file.
   def latest
-    hash = self.class.blastlist(:justme => @resource[:name])
+    hash = self.class.pkglist(:justme => @resource[:name])
     hash[:avail]
   end
 
   def query
-    if hash = self.class.blastlist(:justme => @resource[:name])
+    if hash = self.class.pkglist(:justme => @resource[:name])
       hash
     else
       {:ensure => :absent}
