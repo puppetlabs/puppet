@@ -53,13 +53,6 @@ describe Puppet::Transaction::Report do
   end
 
   describe "when using the indirector" do
-    it "should redirect :find to the indirection" do
-      @indirection = stub 'indirection', :name => :report
-      Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Transaction::Report.find(:report)
-    end
-
     it "should redirect :save to the indirection" do
       Facter.stubs(:value).returns("eh")
       @indirection = stub 'indirection', :name => :report

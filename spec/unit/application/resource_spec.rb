@@ -162,21 +162,21 @@ describe Puppet::Application::Resource do
         @resource.stubs(:puts)
         @resource.host = 'host'
 
-        Puppet::Resource.stubs(:find  ).never
-        Puppet::Resource.stubs(:search).never
-        Puppet::Resource.stubs(:save  ).never
+        Puppet::Resource.indirection.stubs(:find  ).never
+        Puppet::Resource.indirection.stubs(:search).never
+        Puppet::Resource.indirection.stubs(:save  ).never
       end
 
       it "should search for resources" do
         @resource.command_line.stubs(:args).returns(['type'])
-        Puppet::Resource.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
+        Puppet::Resource.indirection.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
         @resource.main
       end
 
       it "should describe the given resource" do
         @resource.command_line.stubs(:args).returns(['type', 'name'])
         x = stub_everything 'resource'
-        Puppet::Resource.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
+        Puppet::Resource.indirection.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
         @resource.main
       end
 
@@ -199,20 +199,20 @@ describe Puppet::Application::Resource do
         @resource.stubs(:puts)
         @resource.host = nil
 
-        Puppet::Resource.stubs(:find  ).never
-        Puppet::Resource.stubs(:search).never
-        Puppet::Resource.stubs(:save  ).never
+        Puppet::Resource.indirection.stubs(:find  ).never
+        Puppet::Resource.indirection.stubs(:search).never
+        Puppet::Resource.indirection.stubs(:save  ).never
       end
 
       it "should search for resources" do
-        Puppet::Resource.expects(:search).with('type/', {}).returns([])
+        Puppet::Resource.indirection.expects(:search).with('type/', {}).returns([])
         @resource.main
       end
 
       it "should describe the given resource" do
         @resource.command_line.stubs(:args).returns(['type','name'])
         x = stub_everything 'resource'
-        Puppet::Resource.expects(:find).with('type/name').returns(x)
+        Puppet::Resource.indirection.expects(:find).with('type/name').returns(x)
         @resource.main
       end
 

@@ -22,7 +22,7 @@ describe Puppet::SSL::Host do
   it "should retrieve its public key from its private key" do
     realkey = mock 'realkey'
     key = stub 'key', :content => realkey
-    Puppet::SSL::Key.stubs(:find).returns(key)
+    Puppet::SSL::Key.indirection.stubs(:find).returns(key)
     pubkey = mock 'public_key'
     realkey.expects(:public_key).returns pubkey
 
@@ -142,8 +142,8 @@ describe Puppet::SSL::Host do
   describe "when specifying the CA location" do
     before do
       [Puppet::SSL::Key, Puppet::SSL::Certificate, Puppet::SSL::CertificateRequest, Puppet::SSL::CertificateRevocationList].each do |klass|
-        klass.stubs(:terminus_class=)
-        klass.stubs(:cache_class=)
+        klass.indirection.stubs(:terminus_class=)
+        klass.indirection.stubs(:cache_class=)
       end
     end
 
@@ -169,23 +169,23 @@ describe Puppet::SSL::Host do
 
     describe "as 'local'" do
       it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Certificate.expects(:cache_class=).with :file
-        Puppet::SSL::CertificateRequest.expects(:cache_class=).with :file
-        Puppet::SSL::CertificateRevocationList.expects(:cache_class=).with :file
+        Puppet::SSL::Certificate.indirection.expects(:cache_class=).with :file
+        Puppet::SSL::CertificateRequest.indirection.expects(:cache_class=).with :file
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:cache_class=).with :file
 
         Puppet::SSL::Host.ca_location = :local
       end
 
       it "should set the terminus class for Key as :file" do
-        Puppet::SSL::Key.expects(:terminus_class=).with :file
+        Puppet::SSL::Key.indirection.expects(:terminus_class=).with :file
 
         Puppet::SSL::Host.ca_location = :local
       end
 
       it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
-        Puppet::SSL::Certificate.expects(:terminus_class=).with :ca
-        Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca
-        Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :ca
+        Puppet::SSL::Certificate.indirection.expects(:terminus_class=).with :ca
+        Puppet::SSL::CertificateRequest.indirection.expects(:terminus_class=).with :ca
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:terminus_class=).with :ca
 
         Puppet::SSL::Host.ca_location = :local
       end
@@ -193,23 +193,23 @@ describe Puppet::SSL::Host do
 
     describe "as 'remote'" do
       it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Certificate.expects(:cache_class=).with :file
-        Puppet::SSL::CertificateRequest.expects(:cache_class=).with :file
-        Puppet::SSL::CertificateRevocationList.expects(:cache_class=).with :file
+        Puppet::SSL::Certificate.indirection.expects(:cache_class=).with :file
+        Puppet::SSL::CertificateRequest.indirection.expects(:cache_class=).with :file
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:cache_class=).with :file
 
         Puppet::SSL::Host.ca_location = :remote
       end
 
       it "should set the terminus class for Key as :file" do
-        Puppet::SSL::Key.expects(:terminus_class=).with :file
+        Puppet::SSL::Key.indirection.expects(:terminus_class=).with :file
 
         Puppet::SSL::Host.ca_location = :remote
       end
 
       it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :rest" do
-        Puppet::SSL::Certificate.expects(:terminus_class=).with :rest
-        Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :rest
-        Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :rest
+        Puppet::SSL::Certificate.indirection.expects(:terminus_class=).with :rest
+        Puppet::SSL::CertificateRequest.indirection.expects(:terminus_class=).with :rest
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:terminus_class=).with :rest
 
         Puppet::SSL::Host.ca_location = :remote
       end
@@ -217,18 +217,18 @@ describe Puppet::SSL::Host do
 
     describe "as 'only'" do
       it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
-        Puppet::SSL::Key.expects(:terminus_class=).with :ca
-        Puppet::SSL::Certificate.expects(:terminus_class=).with :ca
-        Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :ca
-        Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :ca
+        Puppet::SSL::Key.indirection.expects(:terminus_class=).with :ca
+        Puppet::SSL::Certificate.indirection.expects(:terminus_class=).with :ca
+        Puppet::SSL::CertificateRequest.indirection.expects(:terminus_class=).with :ca
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:terminus_class=).with :ca
 
         Puppet::SSL::Host.ca_location = :only
       end
 
       it "should reset the cache class for Certificate, CertificateRevocationList, and CertificateRequest to nil" do
-        Puppet::SSL::Certificate.expects(:cache_class=).with nil
-        Puppet::SSL::CertificateRequest.expects(:cache_class=).with nil
-        Puppet::SSL::CertificateRevocationList.expects(:cache_class=).with nil
+        Puppet::SSL::Certificate.indirection.expects(:cache_class=).with nil
+        Puppet::SSL::CertificateRequest.indirection.expects(:cache_class=).with nil
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:cache_class=).with nil
 
         Puppet::SSL::Host.ca_location = :only
       end
@@ -236,10 +236,10 @@ describe Puppet::SSL::Host do
 
     describe "as 'none'" do
       it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Key.expects(:terminus_class=).with :file
-        Puppet::SSL::Certificate.expects(:terminus_class=).with :file
-        Puppet::SSL::CertificateRequest.expects(:terminus_class=).with :file
-        Puppet::SSL::CertificateRevocationList.expects(:terminus_class=).with :file
+        Puppet::SSL::Key.indirection.expects(:terminus_class=).with :file
+        Puppet::SSL::Certificate.indirection.expects(:terminus_class=).with :file
+        Puppet::SSL::CertificateRequest.indirection.expects(:terminus_class=).with :file
+        Puppet::SSL::CertificateRevocationList.indirection.expects(:terminus_class=).with :file
 
         Puppet::SSL::Host.ca_location = :none
       end
@@ -252,21 +252,21 @@ describe Puppet::SSL::Host do
 
   describe "when destroying a host's SSL files" do
     before do
-      Puppet::SSL::Key.stubs(:destroy).returns false
-      Puppet::SSL::Certificate.stubs(:destroy).returns false
-      Puppet::SSL::CertificateRequest.stubs(:destroy).returns false
+      Puppet::SSL::Key.indirection.stubs(:destroy).returns false
+      Puppet::SSL::Certificate.indirection.stubs(:destroy).returns false
+      Puppet::SSL::CertificateRequest.indirection.stubs(:destroy).returns false
     end
 
     it "should destroy its certificate, certificate request, and key" do
-      Puppet::SSL::Key.expects(:destroy).with("myhost")
-      Puppet::SSL::Certificate.expects(:destroy).with("myhost")
-      Puppet::SSL::CertificateRequest.expects(:destroy).with("myhost")
+      Puppet::SSL::Key.indirection.expects(:destroy).with("myhost")
+      Puppet::SSL::Certificate.indirection.expects(:destroy).with("myhost")
+      Puppet::SSL::CertificateRequest.indirection.expects(:destroy).with("myhost")
 
       Puppet::SSL::Host.destroy("myhost")
     end
 
     it "should return true if any of the classes returned true" do
-      Puppet::SSL::Certificate.expects(:destroy).with("myhost").returns true
+      Puppet::SSL::Certificate.indirection.expects(:destroy).with("myhost").returns true
 
       Puppet::SSL::Host.destroy("myhost").should be_true
     end
@@ -305,12 +305,12 @@ describe Puppet::SSL::Host do
     end
 
     it "should return nil if the key is not set and cannot be found" do
-      Puppet::SSL::Key.expects(:find).with("myname").returns(nil)
+      Puppet::SSL::Key.indirection.expects(:find).with("myname").returns(nil)
       @host.key.should be_nil
     end
 
     it "should find the key in the Key class and return the Puppet instance" do
-      Puppet::SSL::Key.expects(:find).with("myname").returns(@key)
+      Puppet::SSL::Key.indirection.expects(:find).with("myname").returns(@key)
       @host.key.should equal(@key)
     end
 
@@ -335,7 +335,7 @@ describe Puppet::SSL::Host do
     end
 
     it "should return any previously found key without requerying" do
-      Puppet::SSL::Key.expects(:find).with("myname").returns(@key).once
+      Puppet::SSL::Key.indirection.expects(:find).with("myname").returns(@key).once
       @host.key.should equal(@key)
       @host.key.should equal(@key)
     end
@@ -348,12 +348,12 @@ describe Puppet::SSL::Host do
     end
 
     it "should return nil if the key is not set and cannot be found" do
-      Puppet::SSL::CertificateRequest.expects(:find).with("myname").returns(nil)
+      Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myname").returns(nil)
       @host.certificate_request.should be_nil
     end
 
     it "should find the request in the Key class and return it and return the Puppet SSL request" do
-      Puppet::SSL::CertificateRequest.expects(:find).with("myname").returns @request
+      Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myname").returns @request
 
       @host.certificate_request.should equal(@request)
     end
@@ -385,7 +385,7 @@ describe Puppet::SSL::Host do
     end
 
     it "should return any previously found request without requerying" do
-      Puppet::SSL::CertificateRequest.expects(:find).with("myname").returns(@request).once
+      Puppet::SSL::CertificateRequest.indirection.expects(:find).with("myname").returns(@request).once
 
       @host.certificate_request.should equal(@request)
       @host.certificate_request.should equal(@request)
@@ -415,36 +415,36 @@ describe Puppet::SSL::Host do
     end
 
     it "should find the CA certificate if it does not have a certificate" do
-      Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
-      Puppet::SSL::Certificate.stubs(:find).with("myname").returns @cert
+      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
+      Puppet::SSL::Certificate.indirection.stubs(:find).with("myname").returns @cert
 
       @host.certificate
     end
 
     it "should not find the CA certificate if it is the CA host" do
       @host.expects(:ca?).returns true
-      Puppet::SSL::Certificate.stubs(:find)
-      Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).never
+      Puppet::SSL::Certificate.indirection.stubs(:find)
+      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).never
 
       @host.certificate
     end
 
     it "should return nil if it cannot find a CA certificate" do
-      Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns nil
-      Puppet::SSL::Certificate.expects(:find).with("myname").never
+      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns nil
+      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").never
 
       @host.certificate.should be_nil
     end
 
     it "should find the key if it does not have one" do
-      Puppet::SSL::Certificate.stubs(:find)
+      Puppet::SSL::Certificate.indirection.stubs(:find)
       @host.expects(:key).returns mock("key")
 
       @host.certificate
     end
 
     it "should generate the key if one cannot be found" do
-      Puppet::SSL::Certificate.stubs(:find)
+      Puppet::SSL::Certificate.indirection.stubs(:find)
 
       @host.expects(:key).returns nil
       @host.expects(:generate_key)
@@ -453,8 +453,8 @@ describe Puppet::SSL::Host do
     end
 
     it "should find the certificate in the Certificate class and return the Puppet certificate instance" do
-      Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
-      Puppet::SSL::Certificate.expects(:find).with("myname").returns @cert
+      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
+      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns @cert
 
       @host.certificate.should equal(@cert)
     end
@@ -462,14 +462,14 @@ describe Puppet::SSL::Host do
     it "should fail if the found certificate does not match the private key" do
       @host.expects(:certificate_matches_key?).returns false
 
-      Puppet::SSL::Certificate.stubs(:find).returns @cert
+      Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
 
       lambda { @host.certificate }.should raise_error(Puppet::Error)
     end
 
     it "should return any previously found certificate" do
-      Puppet::SSL::Certificate.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
-      Puppet::SSL::Certificate.expects(:find).with("myname").returns(@cert).once
+      Puppet::SSL::Certificate.indirection.expects(:find).with(Puppet::SSL::CA_NAME).returns mock("cacert")
+      Puppet::SSL::Certificate.indirection.expects(:find).with("myname").returns(@cert).once
 
       @host.certificate.should equal(@cert)
       @host.certificate.should equal(@cert)
@@ -482,30 +482,30 @@ describe Puppet::SSL::Host do
 
   describe "when listing certificate hosts" do
     it "should default to listing all clients with any file types" do
-      Puppet::SSL::Key.expects(:search).returns []
-      Puppet::SSL::Certificate.expects(:search).returns []
-      Puppet::SSL::CertificateRequest.expects(:search).returns []
+      Puppet::SSL::Key.indirection.expects(:search).returns []
+      Puppet::SSL::Certificate.indirection.expects(:search).returns []
+      Puppet::SSL::CertificateRequest.indirection.expects(:search).returns []
       Puppet::SSL::Host.search
     end
 
     it "should be able to list only clients with a key" do
-      Puppet::SSL::Key.expects(:search).returns []
-      Puppet::SSL::Certificate.expects(:search).never
-      Puppet::SSL::CertificateRequest.expects(:search).never
+      Puppet::SSL::Key.indirection.expects(:search).returns []
+      Puppet::SSL::Certificate.indirection.expects(:search).never
+      Puppet::SSL::CertificateRequest.indirection.expects(:search).never
       Puppet::SSL::Host.search :for => Puppet::SSL::Key
     end
 
     it "should be able to list only clients with a certificate" do
-      Puppet::SSL::Key.expects(:search).never
-      Puppet::SSL::Certificate.expects(:search).returns []
-      Puppet::SSL::CertificateRequest.expects(:search).never
+      Puppet::SSL::Key.indirection.expects(:search).never
+      Puppet::SSL::Certificate.indirection.expects(:search).returns []
+      Puppet::SSL::CertificateRequest.indirection.expects(:search).never
       Puppet::SSL::Host.search :for => Puppet::SSL::Certificate
     end
 
     it "should be able to list only clients with a certificate request" do
-      Puppet::SSL::Key.expects(:search).never
-      Puppet::SSL::Certificate.expects(:search).never
-      Puppet::SSL::CertificateRequest.expects(:search).returns []
+      Puppet::SSL::Key.indirection.expects(:search).never
+      Puppet::SSL::Certificate.indirection.expects(:search).never
+      Puppet::SSL::CertificateRequest.indirection.expects(:search).returns []
       Puppet::SSL::Host.search :for => Puppet::SSL::CertificateRequest
     end
 
@@ -514,9 +514,9 @@ describe Puppet::SSL::Host do
       cert = stub 'cert', :name => "cert"
       csr = stub 'csr', :name => "csr"
 
-      Puppet::SSL::Key.expects(:search).returns [key]
-      Puppet::SSL::Certificate.expects(:search).returns [cert]
-      Puppet::SSL::CertificateRequest.expects(:search).returns [csr]
+      Puppet::SSL::Key.indirection.expects(:search).returns [key]
+      Puppet::SSL::Certificate.indirection.expects(:search).returns [cert]
+      Puppet::SSL::CertificateRequest.indirection.expects(:search).returns [csr]
 
       returned = []
       %w{key cert csr}.each do |name|
@@ -606,7 +606,7 @@ describe Puppet::SSL::Host do
 
       Puppet.settings.stubs(:value).with(:localcacert).returns "ssl_host_testing"
 
-      Puppet::SSL::CertificateRevocationList.stubs(:find).returns(nil)
+      Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns(nil)
     end
 
     it "should accept a purpose" do
@@ -628,7 +628,7 @@ describe Puppet::SSL::Host do
     describe "and a CRL is available" do
       before do
         @crl = stub 'crl', :content => "real_crl"
-        Puppet::SSL::CertificateRevocationList.stubs(:find).returns @crl
+        Puppet::SSL::CertificateRevocationList.indirection.stubs(:find).returns @crl
         Puppet.settings.stubs(:value).with(:certificate_revocation).returns true
       end
 
