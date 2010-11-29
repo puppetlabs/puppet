@@ -63,7 +63,7 @@ class Puppet::SSL::CertificateAuthority
     store = nil
     store = autosign_store(auto) if auto != true
 
-    Puppet::SSL::CertificateRequest.search("*").each do |csr|
+    Puppet::SSL::CertificateRequest.indirection.search("*").each do |csr|
       sign(csr.name) if auto == true or store.allowed?(csr.name, "127.1.1.1")
     end
   end
@@ -93,7 +93,7 @@ class Puppet::SSL::CertificateAuthority
   # Retrieve (or create, if necessary) the certificate revocation list.
   def crl
     unless defined?(@crl)
-      unless @crl = Puppet::SSL::CertificateRevocationList.find(Puppet::SSL::CA_NAME)
+      unless @crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)
         @crl = Puppet::SSL::CertificateRevocationList.new(Puppet::SSL::CA_NAME)
         @crl.generate(host.certificate.content, host.key.content)
         @crl.save
@@ -109,7 +109,7 @@ class Puppet::SSL::CertificateAuthority
 
   # Generate a new certificate.
   def generate(name)
-    raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.find(name)
+    raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.indirection.find(name)
     host = Puppet::SSL::Host.new(name)
 
     host.generate_certificate_request
@@ -169,7 +169,7 @@ class Puppet::SSL::CertificateAuthority
 
   # List all signed certificates.
   def list
-    Puppet::SSL::Certificate.search("*").collect { |c| c.name }
+    Puppet::SSL::Certificate.indirection.search("*").collect { |c| c.name }
   end
 
   # Read the next serial from the serial file, and increment the
@@ -199,14 +199,14 @@ class Puppet::SSL::CertificateAuthority
 
   # Print a given host's certificate as text.
   def print(name)
-    (cert = Puppet::SSL::Certificate.find(name)) ? cert.to_text : nil
+    (cert = Puppet::SSL::Certificate.indirection.find(name)) ? cert.to_text : nil
   end
 
   # Revoke a given certificate.
   def revoke(name)
     raise ArgumentError, "Cannot revoke certificates when the CRL is disabled" unless crl
 
-    if cert = Puppet::SSL::Certificate.find(name)
+    if cert = Puppet::SSL::Certificate.indirection.find(name)
       serial = cert.content.serial
     elsif ! serial = inventory.serial(name)
       raise ArgumentError, "Could not find a serial number for #{name}"
@@ -229,7 +229,7 @@ class Puppet::SSL::CertificateAuthority
       csr = self_signing_csr
       issuer = csr.content
     else
-      unless csr = Puppet::SSL::CertificateRequest.find(hostname)
+      unless csr = Puppet::SSL::CertificateRequest.indirection.find(hostname)
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
       issuer = host.certificate.content
@@ -251,14 +251,14 @@ class Puppet::SSL::CertificateAuthority
     cert.save
 
     # And remove the CSR if this wasn't self signed.
-    Puppet::SSL::CertificateRequest.destroy(csr.name) unless self_signing_csr
+    Puppet::SSL::CertificateRequest.indirection.destroy(csr.name) unless self_signing_csr
 
     cert
   end
 
   # Verify a given host's certificate.
   def verify(name)
-    unless cert = Puppet::SSL::Certificate.find(name)
+    unless cert = Puppet::SSL::Certificate.indirection.find(name)
       raise ArgumentError, "Could not find a certificate for #{name}"
     end
     store = OpenSSL::X509::Store.new
@@ -271,7 +271,7 @@ class Puppet::SSL::CertificateAuthority
   end
 
   def fingerprint(name, md = :MD5)
-    unless cert = Puppet::SSL::Certificate.find(name) || Puppet::SSL::CertificateRequest.find(name)
+    unless cert = Puppet::SSL::Certificate.indirection.find(name) || Puppet::SSL::CertificateRequest.indirection.find(name)
       raise ArgumentError, "Could not find a certificate or csr for #{name}"
     end
     cert.fingerprint(md)
@@ -279,6 +279,6 @@ class Puppet::SSL::CertificateAuthority
 
   # List the waiting certificate requests.
   def waiting?
-    Puppet::SSL::CertificateRequest.search("*").collect { |r| r.name }
+    Puppet::SSL::CertificateRequest.indirection.search("*").collect { |r| r.name }
   end
 end

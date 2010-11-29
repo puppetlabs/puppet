@@ -16,7 +16,7 @@ describe Puppet::Node::Facts do
       terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
       terminus.stubs :save
 
-      Puppet::Node.expects(:expire).with("me")
+      Puppet::Node.indirection.expects(:expire).with("me")
 
       facts = Puppet::Node::Facts.new("me")
       facts.save
@@ -31,7 +31,7 @@ describe Puppet::Node::Facts do
       terminus.expects(:path).with("me").returns "/my/yaml/file"
       FileTest.expects(:exist?).with("/my/yaml/file").returns false
 
-      Puppet::Node::Facts.find("me").should be_nil
+      Puppet::Node::Facts.indirection.find("me").should be_nil
     end
 
     it "should be able to delegate to the :facter terminus" do
@@ -41,7 +41,7 @@ describe Puppet::Node::Facts do
       facts = Puppet::Node::Facts.new("me")
       Puppet::Node::Facts.expects(:new).with("me", "facter_hash").returns facts
 
-      Puppet::Node::Facts.find("me").should equal(facts)
+      Puppet::Node::Facts.indirection.find("me").should equal(facts)
     end
   end
 end

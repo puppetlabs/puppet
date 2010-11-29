@@ -4,8 +4,8 @@ require File.dirname(__FILE__) + '/../spec_helper'
 
 describe Puppet::Status do
   it "should implement find" do
-    Puppet::Status.find( :default ).should be_is_a(Puppet::Status)
-    Puppet::Status.find( :default ).status["is_alive"].should == true
+    Puppet::Status.indirection.find( :default ).should be_is_a(Puppet::Status)
+    Puppet::Status.indirection.find( :default ).status["is_alive"].should == true
   end
 
   it "should default to is_alive is true" do

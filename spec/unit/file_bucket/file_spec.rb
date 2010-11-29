@@ -97,14 +97,6 @@ describe Puppet::FileBucket::File do
     it "should have a :save instance method" do
       Puppet::FileBucket::File.new("mysum").should respond_to(:save)
     end
-
-    it "should respond to :find" do
-      Puppet::FileBucket::File.should respond_to(:find)
-    end
-
-    it "should respond to :destroy" do
-      Puppet::FileBucket::File.should respond_to(:destroy)
-    end
   end
 
   describe "when saving files" do
@@ -195,7 +187,7 @@ describe Puppet::FileBucket::File do
     it "should return nil if a file doesn't exist" do
       ::File.expects(:exist?).with("#{@dir}/contents").returns false
 
-      bucketfile = Puppet::FileBucket::File.find("{md5}#{@digest}")
+      bucketfile = Puppet::FileBucket::File.indirection.find("{md5}#{@digest}")
       bucketfile.should == nil
     end
 
@@ -204,7 +196,7 @@ describe Puppet::FileBucket::File do
       ::File.expects(:exist?).with("#{@dir}/paths").returns false
       ::File.expects(:read).with("#{@dir}/contents").returns @contents
 
-      bucketfile = Puppet::FileBucket::File.find("{md5}#{@digest}")
+      bucketfile = Puppet::FileBucket::File.indirection.find("{md5}#{@digest}")
       bucketfile.should_not == nil
     end
 
@@ -212,7 +204,7 @@ describe Puppet::FileBucket::File do
       it "should return nil if a file doesn't exist" do
         ::File.expects(:exist?).with("#{@dir}/contents").returns false
 
-        bucketfile = Puppet::FileBucket::File.find("md5/#{@digest}")
+        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{@digest}")
         bucketfile.should == nil
       end
 
@@ -221,7 +213,7 @@ describe Puppet::FileBucket::File do
         ::File.expects(:exist?).with("#{@dir}/paths").returns false
         ::File.expects(:read).with("#{@dir}/contents").returns @contents
 
-        bucketfile = Puppet::FileBucket::File.find("md5/#{@digest}")
+        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{@digest}")
         bucketfile.should_not == nil
       end
 

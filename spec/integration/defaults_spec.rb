@@ -116,31 +116,31 @@ describe "Puppet defaults" do
 
   describe "when enabling storeconfigs" do
     before do
-      Puppet::Resource::Catalog.stubs(:cache_class=)
-      Puppet::Node::Facts.stubs(:cache_class=)
-      Puppet::Node.stubs(:cache_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node.indirection.stubs(:cache_class=)
 
       Puppet.features.stubs(:rails?).returns true
     end
 
     it "should set the Catalog cache class to :active_record" do
-      Puppet::Resource::Catalog.expects(:cache_class=).with(:active_record)
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:active_record)
       Puppet.settings[:storeconfigs] = true
     end
 
     it "should not set the Catalog cache class to :active_record if asynchronous storeconfigs is enabled" do
-      Puppet::Resource::Catalog.expects(:cache_class=).with(:active_record).never
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:active_record).never
       Puppet.settings.expects(:value).with(:async_storeconfigs).returns true
       Puppet.settings[:storeconfigs] = true
     end
 
     it "should set the Facts cache class to :active_record" do
-      Puppet::Node::Facts.expects(:cache_class=).with(:active_record)
+      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:active_record)
       Puppet.settings[:storeconfigs] = true
     end
 
     it "should set the Node cache class to :active_record" do
-      Puppet::Node.expects(:cache_class=).with(:active_record)
+      Puppet::Node.indirection.expects(:cache_class=).with(:active_record)
       Puppet.settings[:storeconfigs] = true
     end
 
@@ -152,9 +152,9 @@ describe "Puppet defaults" do
 
   describe "when enabling asynchronous storeconfigs" do
     before do
-      Puppet::Resource::Catalog.stubs(:cache_class=)
-      Puppet::Node::Facts.stubs(:cache_class=)
-      Puppet::Node.stubs(:cache_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node.indirection.stubs(:cache_class=)
       Puppet.features.stubs(:rails?).returns true
     end
 
@@ -164,26 +164,26 @@ describe "Puppet defaults" do
     end
 
     it "should set the Catalog cache class to :queue" do
-      Puppet::Resource::Catalog.expects(:cache_class=).with(:queue)
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:queue)
       Puppet.settings[:async_storeconfigs] = true
     end
 
     it "should set the Facts cache class to :active_record" do
-      Puppet::Node::Facts.expects(:cache_class=).with(:active_record)
+      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:active_record)
       Puppet.settings[:storeconfigs] = true
     end
 
     it "should set the Node cache class to :active_record" do
-      Puppet::Node.expects(:cache_class=).with(:active_record)
+      Puppet::Node.indirection.expects(:cache_class=).with(:active_record)
       Puppet.settings[:storeconfigs] = true
     end
   end
 
   describe "when enabling thin storeconfigs" do
     before do
-      Puppet::Resource::Catalog.stubs(:cache_class=)
-      Puppet::Node::Facts.stubs(:cache_class=)
-      Puppet::Node.stubs(:cache_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node.indirection.stubs(:cache_class=)
       Puppet.features.stubs(:rails?).returns true
     end
 

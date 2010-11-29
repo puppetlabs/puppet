@@ -163,7 +163,7 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => :something).returns([])
 
         @kick.setup
       end
@@ -172,7 +172,7 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.expects(:search).with("whatever",:fqdn => nil).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -182,7 +182,7 @@ describe Puppet::Application::Kick do
         @kick.stubs(:puts)
         @kick.classes = ['class']
 
-        Puppet::Node.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
 
         @kick.setup
       end

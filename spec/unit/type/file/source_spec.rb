@@ -54,22 +54,22 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should collect its metadata using the Metadata class if it is not already set" do
       @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns @metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns @metadata
       @source.metadata
     end
 
     it "should use the metadata from the first found source" do
       metadata = stub 'metadata', :source= => nil
       @source = source.new(:resource => @resource, :value => ["/foo/bar", "/fee/booz"])
-      Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns nil
-      Puppet::FileServing::Metadata.expects(:find).with("/fee/booz").returns metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/fee/booz").returns metadata
       @source.metadata.should equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
       metadata = mock 'metadata'
       @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns metadata
 
       metadata.expects(:source=).with("/foo/bar")
       @source.metadata
@@ -77,7 +77,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should fail intelligently if an exception is encountered while querying for metadata" do
       @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").raises RuntimeError
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
       lambda { @source.metadata }.should raise_error(ArgumentError)
@@ -85,7 +85,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
     it "should fail if no specified sources can be found" do
       @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.expects(:find).with("/foo/bar").returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns nil
 
       @source.expects(:fail).raises RuntimeError
 
@@ -96,7 +96,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       expirer = stub 'expired', :dependent_data_expired? => true
 
       metadata = stub 'metadata', :source= => nil
-      Puppet::FileServing::Metadata.expects(:find).with("/fee/booz").returns metadata
+      Puppet::FileServing::Metadata.indirection.expects(:find).with("/fee/booz").returns metadata
 
       @source = source.new(:resource => @resource, :value => ["/fee/booz"])
       @source.metadata = "foo"

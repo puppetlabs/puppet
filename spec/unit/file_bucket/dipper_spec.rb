@@ -60,7 +60,7 @@ describe Puppet::FileBucket::Dipper do
     bucketfile = stub "bucketfile"
     bucketfile.stubs(:to_s).returns "Content"
 
-    Puppet::FileBucket::File.expects(:find).with{|x,opts|
+    Puppet::FileBucket::File.indirection.expects(:find).with{|x,opts|
       x == 'md5/DIGEST123'
     }.returns(bucketfile)
 
@@ -111,7 +111,7 @@ describe Puppet::FileBucket::Dipper do
     bucketfile = stub "bucketfile"
     bucketfile.stubs(:to_s).returns "Content"
 
-    Puppet::FileBucket::File.expects(:find).with{|x,opts|
+    Puppet::FileBucket::File.indirection.expects(:find).with{|x,opts|
       x == 'https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123'
     }.returns(bucketfile)
 

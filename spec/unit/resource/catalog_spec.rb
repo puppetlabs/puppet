@@ -818,12 +818,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Util::Cacher.expire
     end
 
-    it "should redirect to the indirection for retrieval" do
-      Puppet::Resource::Catalog.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Resource::Catalog.find(:myconfig)
-    end
-
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
       # Puppet only checks the terminus setting the first time you ask
       # so this returns the object to the clean state

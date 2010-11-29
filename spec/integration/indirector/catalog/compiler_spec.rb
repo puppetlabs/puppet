@@ -42,7 +42,7 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet::Resource::Catalog.indirection.terminus.stubs(:node_from_request)
     Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
 
-    Puppet::Resource::Catalog.find(request).resource_refs.should == [ @two.ref ]
+    Puppet::Resource::Catalog.indirection.find(request).resource_refs.should == [ @two.ref ]
   end
 
   it "should not filter out exported resources when finding a catalog" do
@@ -52,7 +52,7 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet::Resource::Catalog.indirection.terminus.stubs(:node_from_request)
     Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
 
-    Puppet::Resource::Catalog.find(request).resource_refs.sort.should == [ @one.ref, @two.ref ]
+    Puppet::Resource::Catalog.indirection.find(request).resource_refs.sort.should == [ @one.ref, @two.ref ]
   end
 
   it "should filter out virtual exported resources when finding a catalog" do
@@ -63,6 +63,6 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet::Resource::Catalog.indirection.terminus.stubs(:node_from_request)
     Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
 
-    Puppet::Resource::Catalog.find(request).resource_refs.should == [ @two.ref ]
+    Puppet::Resource::Catalog.indirection.find(request).resource_refs.should == [ @two.ref ]
   end
 end

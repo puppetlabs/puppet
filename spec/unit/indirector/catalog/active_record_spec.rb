@@ -80,7 +80,7 @@ describe "Puppet::Resource::Catalog::ActiveRecord" do
       @host.stubs(:railsmark).yields
 
       @node = stub_everything 'node', :parameters => {}
-      Puppet::Node.stubs(:find).returns(@node)
+      Puppet::Node.indirection.stubs(:find).returns(@node)
 
       Puppet::Rails::Host.stubs(:find_by_name).returns @host
       @catalog = Puppet::Resource::Catalog.new("foo")

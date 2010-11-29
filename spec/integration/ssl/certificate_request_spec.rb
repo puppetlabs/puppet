@@ -50,13 +50,13 @@ describe Puppet::SSL::CertificateRequest do
     @csr.generate(@key)
     @csr.save
 
-    Puppet::SSL::CertificateRequest.find("luke.madstop.com").should be_instance_of(Puppet::SSL::CertificateRequest)
+    Puppet::SSL::CertificateRequest.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::CertificateRequest)
   end
 
   it "should save the completely CSR when saving" do
     @csr.generate(@key)
     @csr.save
 
-    Puppet::SSL::CertificateRequest.find("luke.madstop.com").content.to_s.should == @csr.content.to_s
+    Puppet::SSL::CertificateRequest.indirection.find("luke.madstop.com").content.to_s.should == @csr.content.to_s
   end
 end

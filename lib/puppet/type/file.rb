@@ -587,7 +587,7 @@ Puppet::Type.newtype(:file) do
 
   def perform_recursion(path)
 
-    Puppet::FileServing::Metadata.search(
+    Puppet::FileServing::Metadata.indirection.search(
 
       path,
       :links => self[:links],

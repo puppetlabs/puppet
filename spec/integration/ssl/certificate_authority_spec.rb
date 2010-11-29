@@ -47,7 +47,7 @@ describe Puppet::SSL::CertificateAuthority do
   it "should be able to generate a new host certificate" do
     @ca.generate("newhost")
 
-    Puppet::SSL::Certificate.find("newhost").should be_instance_of(Puppet::SSL::Certificate)
+    Puppet::SSL::Certificate.indirection.find("newhost").should be_instance_of(Puppet::SSL::Certificate)
   end
 
   it "should be able to revoke a host certificate" do
@@ -94,7 +94,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should save the signed certificate" do
       @ca.sign("luke.madstop.com")
 
-      Puppet::SSL::Certificate.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
+      Puppet::SSL::Certificate.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
     end
 
     it "should be able to sign multiple certificates" do
@@ -107,15 +107,15 @@ describe Puppet::SSL::CertificateAuthority do
       @ca.sign("luke.madstop.com")
       @ca.sign("other.madstop.com")
 
-      Puppet::SSL::Certificate.find("other.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
-      Puppet::SSL::Certificate.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
+      Puppet::SSL::Certificate.indirection.find("other.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
+      Puppet::SSL::Certificate.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::Certificate)
     end
 
     it "should save the signed certificate to the :signeddir" do
       @ca.sign("luke.madstop.com")
 
       client_cert = File.join(Puppet[:signeddir], "luke.madstop.com.pem")
-      File.read(client_cert).should == Puppet::SSL::Certificate.find("luke.madstop.com").content.to_s
+      File.read(client_cert).should == Puppet::SSL::Certificate.indirection.find("luke.madstop.com").content.to_s
     end
 
     it "should save valid certificates" do

@@ -121,7 +121,7 @@ module Puppet
       :hook => proc do |value|
         require 'puppet/node/facts'
         if value.to_s == "rest"
-          Puppet::Node::Facts.cache_class = :yaml
+          Puppet::Node::Facts.indirection.cache_class = :yaml
         end
       end
     },
@@ -152,7 +152,7 @@ module Puppet
           Puppet.settings[:storeconfigs] = true
 
           # But then we modify the configuration
-          Puppet::Resource::Catalog.cache_class = :queue
+          Puppet::Resource::Catalog.indirection.cache_class = :queue
         else
           raise "Cannot disable asynchronous storeconfigs in a running process"
         end
@@ -794,9 +794,9 @@ module Puppet
         if value
           require 'puppet/rails'
           raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
-          Puppet::Resource::Catalog.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
-          Puppet::Node::Facts.cache_class = :active_record
-          Puppet::Node.cache_class = :active_record
+          Puppet::Resource::Catalog.indirection.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
+          Puppet::Node::Facts.indirection.cache_class = :active_record
+          Puppet::Node.indirection.cache_class = :active_record
         end
       end
     }
