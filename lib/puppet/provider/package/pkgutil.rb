@@ -53,11 +53,17 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
             next if line =~ /^=+> /                # catalog fetch
             next if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
 
-            blastsplit(line)
+            parsed = blastsplit(line)
+
+            # When finding one package, ensure we picked up the package line
+            # itself, not any pkgutil noise.
+            next if hash[:justme] and parsed[:name] != hash[:justme]
+
+            parsed
         end.reject { |h| h.nil? }
 
         if hash[:justme]
-            return list[0]
+            return list[-1]
         else
             list.reject! { |h|
                 h[:ensure] == :absent
