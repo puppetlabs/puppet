@@ -33,7 +33,7 @@ class Puppet::Network::Handler # :nodoc:
 
     # Return the contents associated with a given md5 sum.
     def getfile(md5, client = nil, clientip = nil)
-      bucket = Puppet::FileBucket::File.find("md5:#{md5}")
+      bucket = Puppet::FileBucket::File.indirection.find("md5:#{md5}")
       contents = bucket.contents
 
       if client

@@ -49,7 +49,7 @@ class Puppet::Network::Handler
       # Pass the facts to the fact handler
       Puppet::Node::Facts.new(client, facts).save unless local?
 
-      catalog = Puppet::Resource::Catalog.find(client)
+      catalog = Puppet::Resource::Catalog.indirection.find(client)
 
       case format
       when "yaml"

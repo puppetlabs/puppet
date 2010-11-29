@@ -79,7 +79,7 @@ class Puppet::Application::Queue < Puppet::Application
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     require 'puppet/resource/catalog'
-    Puppet::Resource::Catalog.terminus_class = :active_record
+    Puppet::Resource::Catalog.indirection.terminus_class = :active_record
 
     daemon.daemonize if Puppet[:daemonize]
 
@@ -87,6 +87,6 @@ class Puppet::Application::Queue < Puppet::Application
     # class set up, because if storeconfigs is enabled,
     # we'll get a loop of continually caching the catalog
     # for storage again.
-    Puppet::Resource::Catalog.cache_class = nil
+    Puppet::Resource::Catalog.indirection.cache_class = nil
   end
 end

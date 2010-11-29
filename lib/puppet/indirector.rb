@@ -32,31 +32,6 @@ module Puppet::Indirector
 
   module ClassMethods
     attr_reader :indirection
-
-    def cache_class=(klass)
-      indirection.cache_class = klass
-    end
-
-    def terminus_class=(klass)
-      indirection.terminus_class = klass
-    end
-
-    # Expire any cached instance.
-    def expire(*args)
-      indirection.expire(*args)
-    end
-
-    def find(*args)
-      indirection.find(*args)
-    end
-
-    def destroy(*args)
-      indirection.destroy(*args)
-    end
-
-    def search(*args)
-      indirection.search(*args)
-    end
   end
 
   module InstanceMethods

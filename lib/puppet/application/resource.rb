@@ -76,12 +76,12 @@ class Puppet::Application::Resource < Puppet::Application
 
     text = if name
       if params.empty?
-        [ Puppet::Resource.find( key ) ]
+        [ Puppet::Resource.indirection.find( key ) ]
       else
         [ Puppet::Resource.new( type, name, :parameters => params ).save( key ) ]
       end
     else
-      Puppet::Resource.search( key, {} )
+      Puppet::Resource.indirection.search( key, {} )
     end.map(&format).join("\n")
 
     if options[:edit]
