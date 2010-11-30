@@ -41,12 +41,12 @@ class Puppet::Application::Queue < Puppet::Application
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
     Puppet.notice "Starting puppetqd #{Puppet.version}"
     Puppet::Resource::Catalog::Queue.subscribe do |catalog|
-      # Once you have a Puppet::Resource::Catalog instance, calling save on it should suffice
+      # Once you have a Puppet::Resource::Catalog instance, passing it to save should suffice
       # to put it through to the database via its active_record indirector (which is determined
       # by the terminus_class = :active_record setting above)
       Puppet::Util.benchmark(:notice, "Processing queued catalog for #{catalog.name}") do
         begin
-          catalog.save
+          Puppet::Resource::Catalog.indirection.save(catalog)
         rescue => detail
           puts detail.backtrace if Puppet[:trace]
           Puppet.err "Could not save queued catalog for #{catalog.name}: #{detail}"

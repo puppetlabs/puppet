@@ -43,19 +43,19 @@ describe Puppet::SSL::CertificateRequest do
   end
 
   it "should be able to save CSRs" do
-    @csr.save
+    Puppet::SSL::CertificateRequest.indirection.save(@csr)
   end
 
   it "should be able to find saved certificate requests via the Indirector" do
     @csr.generate(@key)
-    @csr.save
+    Puppet::SSL::CertificateRequest.indirection.save(@csr)
 
     Puppet::SSL::CertificateRequest.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::CertificateRequest)
   end
 
   it "should save the completely CSR when saving" do
     @csr.generate(@key)
-    @csr.save
+    Puppet::SSL::CertificateRequest.indirection.save(@csr)
 
     Puppet::SSL::CertificateRequest.indirection.find("luke.madstop.com").content.to_s.should == @csr.content.to_s
   end

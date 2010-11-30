@@ -301,7 +301,8 @@ describe Puppet::SSL::Host do
   describe "when managing its private key" do
     before do
       @realkey = "mykey"
-      @key = stub 'key', :content => @realkey
+      @key = Puppet::SSL::Key.new("mykey")
+      @key.content = @realkey
     end
 
     it "should return nil if the key is not set and cannot be found" do
@@ -318,7 +319,7 @@ describe Puppet::SSL::Host do
       Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
 
       @key.expects(:generate)
-      @key.expects(:save)
+      Puppet::SSL::Key.indirection.expects(:save)
 
       @host.generate_key.should be_true
       @host.key.should equal(@key)
@@ -328,7 +329,7 @@ describe Puppet::SSL::Host do
       Puppet::SSL::Key.expects(:new).with("myname").returns(@key)
 
       @key.stubs(:generate)
-      @key.expects(:save).raises "eh"
+      Puppet::SSL::Key.indirection.expects(:save).raises "eh"
 
       lambda { @host.generate_key }.should raise_error
       @host.key.should be_nil
@@ -344,7 +345,8 @@ describe Puppet::SSL::Host do
   describe "when managing its certificate request" do
     before do
       @realrequest = "real request"
-      @request = stub 'request', :content => @realrequest
+      @request = Puppet::SSL::CertificateRequest.new("myname")
+      @request.content = @realrequest
     end
 
     it "should return nil if the key is not set and cannot be found" do
@@ -367,7 +369,7 @@ describe Puppet::SSL::Host do
       @host.expects(:generate_key).returns(key)
 
       @request.stubs(:generate)
-      @request.stubs(:save)
+      Puppet::SSL::CertificateRequest.indirection.stubs(:save)
 
       @host.generate_certificate_request
     end
@@ -378,7 +380,7 @@ describe Puppet::SSL::Host do
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
       @request.expects(:generate).with("mycontent")
-      @request.expects(:save)
+      Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       @host.generate_certificate_request.should be_true
       @host.certificate_request.should equal(@request)
@@ -397,11 +399,14 @@ describe Puppet::SSL::Host do
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
       @request.stubs(:generate)
-      @request.expects(:save).raises "eh"
+      @request.stubs(:name).returns("myname")
+      terminus = stub 'terminus'
+      Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
+      terminus.expects(:save).with { |req| req.instance == @request && req.key == "myname" }.raises "eh"
 
       lambda { @host.generate_certificate_request }.should raise_error
 
-      @host.certificate_request.should be_nil
+      @host.instance_eval { @certificate_request }.should be_nil
     end
   end
 

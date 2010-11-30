@@ -96,7 +96,7 @@ class Puppet::SSL::CertificateAuthority
       unless @crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)
         @crl = Puppet::SSL::CertificateRevocationList.new(Puppet::SSL::CA_NAME)
         @crl.generate(host.certificate.content, host.key.content)
-        @crl.save
+        Puppet::SSL::CertificateRevocationList.indirection.save(@crl)
       end
     end
     @crl
@@ -248,7 +248,7 @@ class Puppet::SSL::CertificateAuthority
 
     # Save the now-signed cert.  This should get routed correctly depending
     # on the certificate type.
-    cert.save
+    Puppet::SSL::Certificate.indirection.save(cert)
 
     # And remove the CSR if this wasn't self signed.
     Puppet::SSL::CertificateRequest.indirection.destroy(csr.name) unless self_signing_csr

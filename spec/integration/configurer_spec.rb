@@ -34,7 +34,7 @@ describe Puppet::Configurer do
     it "should send a transaction report with valid data" do
 
       @configurer.stubs(:save_last_run_summary)
-      Puppet::Transaction::Report.indirection.expects(:save).with do |x, report|
+      Puppet::Transaction::Report.indirection.expects(:save).with do |report, x|
         report.time.class == Time and report.logs.length > 0
       end
 

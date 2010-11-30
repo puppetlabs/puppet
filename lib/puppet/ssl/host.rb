@@ -126,7 +126,7 @@ class Puppet::SSL::Host
     @key = Key.new(name)
     @key.generate
     begin
-      @key.save
+      Key.indirection.save(@key)
     rescue
       @key = nil
       raise
@@ -144,7 +144,7 @@ class Puppet::SSL::Host
     @certificate_request = CertificateRequest.new(name)
     @certificate_request.generate(key.content)
     begin
-      @certificate_request.save
+      CertificateRequest.indirection.save(@certificate_request)
     rescue
       @certificate_request = nil
       raise

@@ -158,7 +158,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @request = stub 'request', :options => {}
 
       @facts = Puppet::Node::Facts.new('hostname', "fact" => "value", "architecture" => "i386")
-      @facts.stubs(:save).returns(nil)
+      Puppet::Node::Facts.indirection.stubs(:save).returns(nil)
     end
 
     it "should do nothing if no facts are provided" do
@@ -194,7 +194,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @request.options[:facts] = "bar"
       Puppet::Node::Facts.expects(:convert_from).returns @facts
 
-      @facts.expects(:save)
+      Puppet::Node::Facts.indirection.expects(:save).with(@facts)
 
       @compiler.extract_facts_from_request(@request)
     end

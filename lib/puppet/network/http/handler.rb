@@ -146,7 +146,7 @@ module Puppet::Network::HTTP::Handler
 
     format = request_format(request)
     obj = model(indirection_name).convert_from(format, data)
-    result = obj.save(key)
+    result = model(indirection_name).indirection.save(obj, key)
     return_yaml_response(response, result)
   end
 

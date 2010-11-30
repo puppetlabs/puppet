@@ -236,7 +236,7 @@ describe Puppet::Configurer, "when sending a report" do
     @configurer = Puppet::Configurer.new
     @configurer.stubs(:save_last_run_summary)
 
-    @report = stub 'report'
+    @report = Puppet::Transaction::Report.new
     @trans = stub 'transaction'
   end
 
@@ -272,7 +272,7 @@ describe Puppet::Configurer, "when sending a report" do
   it "should save the report if reporting is enabled" do
     Puppet.settings[:report] = true
 
-    @report.expects(:save)
+    Puppet::Transaction::Report.indirection.expects(:save).with(@report)
     @configurer.send_report(@report)
   end
 
@@ -300,7 +300,7 @@ describe Puppet::Configurer, "when sending a report" do
   it "should log but not fail if saving the report fails" do
     Puppet.settings[:report] = true
 
-    @report.expects(:save).raises "whatever"
+    Puppet::Transaction::Report.indirection.expects(:save).with(@report).raises "whatever"
 
     Puppet.expects(:err)
     lambda { @configurer.send_report(@report) }.should_not raise_error

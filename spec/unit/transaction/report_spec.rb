@@ -59,7 +59,7 @@ describe Puppet::Transaction::Report do
       Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
       report = Puppet::Transaction::Report.new
       @indirection.expects(:save)
-      report.save
+      Puppet::Transaction::Report.indirection.save(report)
     end
 
     it "should default to the 'processor' terminus" do

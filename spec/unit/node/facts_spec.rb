@@ -79,7 +79,7 @@ describe Puppet::Node::Facts, "when indirecting" do
     it "should redirect to the specified fact store for storage" do
       Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
       @indirection.expects(:save)
-      @facts.save
+      Puppet::Node::Facts.indirection.save(@facts)
     end
 
     describe "when the Puppet application is 'master'" do

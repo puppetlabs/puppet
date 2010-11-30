@@ -32,15 +32,17 @@ class TestMaster < Test::Unit::TestCase
 
   def test_hostname_is_used_if_client_is_missing
     @master.expects(:decode_facts).returns("hostname" => "yay")
-    Puppet::Node::Facts.expects(:new).with { |name, facts| name == "yay" }.returns(stub('facts', :save => nil))
+    facts = Puppet::Node::Facts.new("the_facts")
+    Puppet::Node::Facts.indirection.stubs(:save).with(facts)
+    Puppet::Node::Facts.expects(:new).with { |name, facts| name == "yay" }.returns(facts)
 
     @master.getconfig("facts")
   end
 
   def test_facts_are_saved
-    facts = mock('facts')
+    facts = Puppet::Node::Facts.new("the_facts")
     Puppet::Node::Facts.expects(:new).returns(facts)
-    facts.expects(:save)
+    Puppet::Node::Facts.indirection.expects(:save).with(facts)
 
     @master.stubs(:decode_facts)
 
@@ -48,7 +50,8 @@ class TestMaster < Test::Unit::TestCase
   end
 
   def test_catalog_is_used_for_compiling
-    facts = stub('facts', :save => nil)
+    facts = Puppet::Node::Facts.new("the_facts")
+    Puppet::Node::Facts.indirection.stubs(:save).with(facts)
     Puppet::Node::Facts.stubs(:new).returns(facts)
 
     @master.stubs(:decode_facts)
@@ -61,8 +64,9 @@ end
 
 class TestMasterFormats < Test::Unit::TestCase
   def setup
-    @facts = stub('facts', :save => nil)
+    @facts = Puppet::Node::Facts.new("the_facts")
     Puppet::Node::Facts.stubs(:new).returns(@facts)
+    Puppet::Node::Facts.indirection.stubs(:save)
 
     @master = Puppet::Network::Handler.master.new(:Code => "")
     @master.stubs(:decode_facts)

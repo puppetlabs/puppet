@@ -176,7 +176,7 @@ class Puppet::Configurer
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
     if Puppet[:report]
-      report.save
+      Puppet::Transaction::Report.indirection.save(report)
     end
   rescue => detail
     puts detail.backtrace if Puppet[:trace]

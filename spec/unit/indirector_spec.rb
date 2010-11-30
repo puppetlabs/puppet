@@ -80,29 +80,6 @@ describe Puppet::Indirector, "when redirecting a model" do
     @thingie.ancestors.should be_include(Puppet::Indirector::Envelope)
   end
 
-  # This is an instance method, so it behaves a bit differently.
-  describe "when saving instances via the model" do
-    before do
-      @instance = @thingie.new("me")
-    end
-
-    it "should delegate to the indirection" do
-      @indirection.expects(:save)
-      @instance.save
-    end
-
-    it "should pass the instance and an optional key to the indirection's :save method" do
-      @indirection.expects(:save).with("key", @instance)
-      @instance.save "key"
-    end
-
-    it "should return the results of the delegation as its result" do
-      request = mock 'request'
-      @indirection.expects(:save).returns "yay"
-      @instance.save.should == "yay"
-    end
-  end
-
   after do
     @indirection.delete
   end
