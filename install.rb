@@ -79,6 +79,7 @@ def glob(list)
 end
 
 # Set these values to what you want installed.
+configs = glob(%w{conf/auth.conf})
 sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
@@ -86,6 +87,14 @@ ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
 libs  = glob(%w{lib/**/*.rb lib/**/*.py lib/puppet/util/command_line/*})
 tests = glob(%w{test/**/*.rb})
+
+def do_configs(configs, target, strip = 'conf/')
+  Dir.mkdir(target) unless File.directory? target
+  configs.each do |cf|
+    ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
+    File.install(cf, ocf, 0644, true)
+  end
+end
 
 def do_bins(bins, target, strip = 's?bin/')
   Dir.mkdir(target) unless File.directory? target
@@ -157,6 +166,8 @@ end
 def prepare_installation
   $operatingsystem = Facter["operatingsystem"].value
 
+  InstallOptions.configs = true
+
   # Only try to do docs if we're sure they have rdoc
   if $haverdoc
     InstallOptions.rdoc  = true
@@ -193,8 +204,14 @@ def prepare_installation
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
       InstallOptions.tests = ontest
     end
+    opts.on('--[no-]configs', 'Prevents the installation of config files', 'Default off.') do |ontest|
+      InstallOptions.configs = ontest
+    end
     opts.on('--destdir[=OPTIONAL]', 'Installation prefix for all targets', 'Default essentially /') do |destdir|
       InstallOptions.destdir = destdir
+    end
+    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
+      InstallOptions.configdir = configdir
     end
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides Config::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
@@ -209,15 +226,17 @@ def prepare_installation
       InstallOptions.mandir = mandir
     end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
-      InstallOptions.rdoc   = false
-      InstallOptions.ri     = false
-      InstallOptions.tests  = false
+      InstallOptions.rdoc    = false
+      InstallOptions.ri      = false
+      InstallOptions.tests   = false
+      InstallOptions.configs = true
     end
     opts.on('--full', 'Performs a full installation. All', 'optional installation steps are run.') do |full|
-      InstallOptions.rdoc   = true
-      InstallOptions.man    = true
-      InstallOptions.ri     = true
-      InstallOptions.tests  = true
+      InstallOptions.rdoc    = true
+      InstallOptions.man     = true
+      InstallOptions.ri      = true
+      InstallOptions.tests   = true
+      InstallOptions.configs = true
     end
     opts.separator("")
     opts.on_tail('--help', "Shows this help text.") do
@@ -241,6 +260,12 @@ def prepare_installation
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
     Config::CONFIG['bindir'] = "/usr/bin"
     Config::CONFIG['sbindir'] = "/usr/sbin"
+  end
+
+  if not InstallOptions.configdir.nil?
+    configdir = InstallOptions.configdir
+  else
+    configdir = "/etc/puppet"
   end
 
   if not InstallOptions.bindir.nil?
@@ -277,22 +302,26 @@ def prepare_installation
 
   # To be deprecated once people move over to using --destdir option
   if (destdir = ENV['DESTDIR'])
+    configdir = "#{destdir}#{configdir}"
     bindir = "#{destdir}#{bindir}"
     sbindir = "#{destdir}#{sbindir}"
     mandir = "#{destdir}#{mandir}"
     sitelibdir = "#{destdir}#{sitelibdir}"
 
+    FileUtils.makedirs(configdir) if InstallOptions.configs
     FileUtils.makedirs(bindir)
     FileUtils.makedirs(sbindir)
     FileUtils.makedirs(mandir)
     FileUtils.makedirs(sitelibdir)
   # This is the new way forward
   elsif (destdir = InstallOptions.destdir)
+    configdir = "#{destdir}#{configdir}"
     bindir = "#{destdir}#{bindir}"
     sbindir = "#{destdir}#{sbindir}"
     mandir = "#{destdir}#{mandir}"
     sitelibdir = "#{destdir}#{sitelibdir}"
 
+    FileUtils.makedirs(configdir) if InstallOptions.configs
     FileUtils.makedirs(bindir)
     FileUtils.makedirs(sbindir)
     FileUtils.makedirs(mandir)
@@ -303,6 +332,7 @@ def prepare_installation
 
   InstallOptions.tmp_dirs = tmpdirs.compact
   InstallOptions.site_dir = sitelibdir
+  InstallOptions.config_dir = configdir
   InstallOptions.bin_dir  = bindir
   InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
@@ -459,6 +489,7 @@ prepare_installation
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
 #build_man(bins, sbins) if InstallOptions.man
+do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
