@@ -172,7 +172,7 @@ describe Puppet::Application::Queue do
 
     it "should log and save each catalog passed by the queue" do
       catalog = Puppet::Resource::Catalog.new('eh')
-      Puppet::Resource::Catalog.indirection.expects(:save).with(catalog, nil)
+      Puppet::Resource::Catalog.indirection.expects(:save).with(catalog)
 
       Puppet::Resource::Catalog::Queue.expects(:subscribe).yields(catalog)
       Puppet.expects(:notice).times(2)

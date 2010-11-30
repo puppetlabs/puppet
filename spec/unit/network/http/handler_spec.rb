@@ -354,7 +354,7 @@ describe Puppet::Network::HTTP::Handler do
 
         @model_instance = stub('indirected model instance')
         @model_class.stubs(:convert_from).returns(@model_instance)
-        @model_instance.stubs(:save)
+        @indirection.stubs(:save)
 
         @format = stub 'format', :suitable? => true, :name => "format", :mime => "text/format"
         Puppet::Network::FormatHandler.stubs(:format).returns @format
@@ -380,7 +380,7 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should use a common method for determining the request parameters" do
-        @model_instance.expects(:save).with('key').once
+        @indirection.expects(:save).with(@model_instance, 'key').once
         @handler.do_save("my_handler", "key", {}, @request, @response)
       end
 
@@ -390,7 +390,7 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should return the yaml-serialized result when a model save call succeeds" do
-        @model_instance.stubs(:save).returns(@model_instance)
+        @indirection.stubs(:save).returns(@model_instance)
         @model_instance.expects(:to_yaml).returns('foo')
         @handler.do_save("my_handler", "my_result", {}, @request, @response)
       end

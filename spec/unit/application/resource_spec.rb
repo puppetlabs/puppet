@@ -184,7 +184,7 @@ describe Puppet::Application::Resource do
         @resource.command_line.stubs(:args).returns(['type','name','param=temp'])
 
         res = stub "resource"
-        res.expects(:save).with('https://host:8139/production/resources/type/name').returns(res)
+        Puppet::Resource.indirection.expects(:save).with(res, 'https://host:8139/production/resources/type/name').returns(res)
         res.expects(:collect)
         res.expects(:to_manifest)
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)
@@ -220,7 +220,7 @@ describe Puppet::Application::Resource do
         @resource.command_line.stubs(:args).returns(['type','name','param=temp'])
 
         res = stub "resource"
-        res.expects(:save).with('type/name').returns(res)
+        Puppet::Resource.indirection.expects(:save).with(res, 'type/name').returns(res)
         res.expects(:collect)
         res.expects(:to_manifest)
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)

@@ -23,7 +23,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       facts = Puppet::Node::Facts.convert_from(format, text_facts)
     end
     facts.add_timestamp
-    facts.save
+    Puppet::Node::Facts.indirection.save(facts)
   end
 
   # Compile a node's catalog.

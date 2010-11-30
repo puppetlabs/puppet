@@ -298,7 +298,7 @@ class Puppet::Transaction
 
     if Puppet[:report]
       begin
-        report.save
+        Puppet::Transaction::Report.indirection.save(report)
       rescue => detail
         Puppet.err "Reporting failed: #{detail}"
       end

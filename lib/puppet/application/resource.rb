@@ -78,7 +78,7 @@ class Puppet::Application::Resource < Puppet::Application
       if params.empty?
         [ Puppet::Resource.indirection.find( key ) ]
       else
-        [ Puppet::Resource.new( type, name, :parameters => params ).save( key ) ]
+        [ Puppet::Resource.indirection.save(Puppet::Resource.new( type, name, :parameters => params ), key) ]
       end
     else
       Puppet::Resource.indirection.search( key, {} )

@@ -33,7 +33,7 @@ class TestMaster < Test::Unit::TestCase
   def test_hostname_is_used_if_client_is_missing
     @master.expects(:decode_facts).returns("hostname" => "yay")
     facts = Puppet::Node::Facts.new("the_facts")
-    Puppet::Node::Facts.indirection.stubs(:save).with(facts, nil)
+    Puppet::Node::Facts.indirection.stubs(:save).with(facts)
     Puppet::Node::Facts.expects(:new).with { |name, facts| name == "yay" }.returns(facts)
 
     @master.getconfig("facts")
@@ -42,7 +42,7 @@ class TestMaster < Test::Unit::TestCase
   def test_facts_are_saved
     facts = Puppet::Node::Facts.new("the_facts")
     Puppet::Node::Facts.expects(:new).returns(facts)
-    Puppet::Node::Facts.indirection.expects(:save).with(facts, nil)
+    Puppet::Node::Facts.indirection.expects(:save).with(facts)
 
     @master.stubs(:decode_facts)
 
@@ -51,7 +51,7 @@ class TestMaster < Test::Unit::TestCase
 
   def test_catalog_is_used_for_compiling
     facts = Puppet::Node::Facts.new("the_facts")
-    Puppet::Node::Facts.indirection.stubs(:save).with(facts, nil)
+    Puppet::Node::Facts.indirection.stubs(:save).with(facts)
     Puppet::Node::Facts.stubs(:new).returns(facts)
 
     @master.stubs(:decode_facts)

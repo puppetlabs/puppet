@@ -21,7 +21,6 @@ module Puppet::Indirector
     raise(ArgumentError, "Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}") if @indirection
     # populate this class with the various new methods
     extend ClassMethods
-    include InstanceMethods
     include Puppet::Indirector::Envelope
     extend Puppet::Network::FormatHandler
 
@@ -32,11 +31,5 @@ module Puppet::Indirector
 
   module ClassMethods
     attr_reader :indirection
-  end
-
-  module InstanceMethods
-    def save(key = nil)
-      self.class.indirection.save self, key
-    end
   end
 end

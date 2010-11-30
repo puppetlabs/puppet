@@ -120,7 +120,7 @@ class Puppet::Application::Kick < Puppet::Application
         :background => ! options[:foreground],
         :ignoreschedules => options[:ignoreschedules]
       }
-      run = Puppet::Run.new( run_options ).save( url )
+      run = Puppet::Run.indirection.save(Puppet::Run.new( run_options ), url)
       puts "Getting status"
       result = run.status
       puts "status is #{result}"

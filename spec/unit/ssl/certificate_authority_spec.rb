@@ -149,7 +149,7 @@ describe Puppet::SSL::CertificateAuthority do
       Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
 
       crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
-      Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(crl, nil)
+      Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(crl)
 
       @ca.crl.should equal(crl)
     end
@@ -330,7 +330,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should save the resulting certificate" do
-        Puppet::SSL::Certificate.indirection.expects(:save).with(@cert, nil)
+        Puppet::SSL::Certificate.indirection.expects(:save).with(@cert)
 
         @ca.sign(@name, :ca, @request)
       end

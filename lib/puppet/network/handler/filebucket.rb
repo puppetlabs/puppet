@@ -28,7 +28,7 @@ class Puppet::Network::Handler # :nodoc:
     def addfile(contents, path, client = nil, clientip = nil)
       contents = Base64.decode64(contents) if client
       bucket = Puppet::FileBucket::File.new(contents)
-      bucket.save
+      Puppet::FileBucket::File.indirection.save(bucket)
     end
 
     # Return the contents associated with a given md5 sum.

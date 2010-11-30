@@ -380,7 +380,7 @@ describe Puppet::SSL::Host do
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
       @request.expects(:generate).with("mycontent")
-      Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request, nil)
+      Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       @host.generate_certificate_request.should be_true
       @host.certificate_request.should equal(@request)

@@ -194,7 +194,7 @@ describe Puppet::Resource::Catalog::Compiler do
       @request.options[:facts] = "bar"
       Puppet::Node::Facts.expects(:convert_from).returns @facts
 
-      Puppet::Node::Facts.indirection.expects(:save).with(@facts, nil)
+      Puppet::Node::Facts.indirection.expects(:save).with(@facts)
 
       @compiler.extract_facts_from_request(@request)
     end
