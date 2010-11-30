@@ -352,8 +352,9 @@ describe Puppet::Network::HTTP::Handler do
 
         @result = stub 'result', :render => "the result"
 
-        @model_instance = stub('indirected model instance', :save => true)
+        @model_instance = stub('indirected model instance')
         @model_class.stubs(:convert_from).returns(@model_instance)
+        @model_instance.stubs(:save)
 
         @format = stub 'format', :suitable? => true, :name => "format", :mime => "text/format"
         Puppet::Network::FormatHandler.stubs(:format).returns @format

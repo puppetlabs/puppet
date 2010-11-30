@@ -19,7 +19,7 @@ describe Puppet::Node::Facts do
       Puppet::Node.indirection.expects(:expire).with("me")
 
       facts = Puppet::Node::Facts.new("me")
-      facts.save
+      Puppet::Node::Facts.indirection.save(facts)
     end
 
     it "should be able to delegate to the :yaml terminus" do

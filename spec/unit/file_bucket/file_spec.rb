@@ -95,7 +95,7 @@ describe Puppet::FileBucket::File do
     end
 
     it "should have a :save instance method" do
-      Puppet::FileBucket::File.new("mysum").should respond_to(:save)
+      Puppet::FileBucket::File.indirection.should respond_to(:save)
     end
   end
 
@@ -108,7 +108,7 @@ describe Puppet::FileBucket::File do
       mockfile.expects(:print).with(@contents)
       ::File.expects(:open).with("#{@dir}/contents", ::File::WRONLY|::File::CREAT, 0440).yields(mockfile)
 
-      Puppet::FileBucket::File.new(@contents).save
+      Puppet::FileBucket::File.indirection.save(Puppet::FileBucket::File.new(@contents))
     end
 
     it "should make any directories necessary for storage" do
@@ -119,7 +119,7 @@ describe Puppet::FileBucket::File do
       ::File.expects(:open).with("#{@dir}/contents", ::File::WRONLY|::File::CREAT, 0440)
       ::File.expects(:exist?).with("#{@dir}/contents").returns false
 
-      Puppet::FileBucket::File.new(@contents).save
+      Puppet::FileBucket::File.indirection.save(Puppet::FileBucket::File.new(@contents))
     end
 
     it "should append the path to the paths file" do
@@ -133,7 +133,7 @@ describe Puppet::FileBucket::File do
       mockfile.expects(:puts).with('/path/on/the/remote/box')
       ::File.expects(:exist?).with("#{@dir}/paths").returns false
       ::File.expects(:open).with("#{@dir}/paths", ::File::WRONLY|::File::CREAT|::File::APPEND).yields mockfile
-      Puppet::FileBucket::File.new(@contents, :path => remote_path).save
+      Puppet::FileBucket::File.indirection.save(Puppet::FileBucket::File.new(@contents, :path => remote_path))
 
     end
   end
@@ -179,7 +179,7 @@ describe Puppet::FileBucket::File do
     ::File.expects(:open).with("#{@dir}/contents",  ::File::WRONLY|::File::CREAT, 0440)
 
     bucketfile = Puppet::FileBucket::File.new(@contents)
-    bucketfile.save
+    Puppet::FileBucket::File.indirection.save(bucketfile)
 
   end
 

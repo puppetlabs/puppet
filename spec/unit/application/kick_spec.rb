@@ -279,7 +279,7 @@ describe Puppet::Application::Kick do
         end
 
         it "should call run on a Puppet::Run for the given host" do
-          @agent_run.expects(:save).with('https://host:8139/production/run/host').returns(@agent_run)
+          Puppet::Run.indirection.expects(:save).with(@agent_run, 'https://host:8139/production/run/host').returns(@agent_run)
 
           @kick.run_for_host('host')
         end

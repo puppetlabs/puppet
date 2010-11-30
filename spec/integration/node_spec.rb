@@ -68,19 +68,19 @@ describe Puppet::Node do
       end
 
       it "should be able to find nodes that were previously saved" do
-        @node.save
+        Puppet::Node.indirection.save(@node)
         Puppet::Node.indirection.find(@name).should equal(@node)
       end
 
       it "should replace existing saved nodes when a new node with the same name is saved" do
-        @node.save
+        Puppet::Node.indirection.save(@node)
         two = Puppet::Node.new(@name)
-        two.save
+        Puppet::Node.indirection.save(two)
         Puppet::Node.indirection.find(@name).should equal(two)
       end
 
       it "should be able to remove previously saved nodes" do
-        @node.save
+        Puppet::Node.indirection.save(@node)
         Puppet::Node.indirection.destroy(@node.name)
         Puppet::Node.indirection.find(@name).should be_nil
       end

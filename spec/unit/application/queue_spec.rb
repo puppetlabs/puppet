@@ -171,8 +171,8 @@ describe Puppet::Application::Queue do
     end
 
     it "should log and save each catalog passed by the queue" do
-      catalog = mock 'catalog', :name => 'eh'
-      catalog.expects(:save)
+      catalog = Puppet::Resource::Catalog.new('eh')
+      Puppet::Resource::Catalog.indirection.expects(:save).with(catalog, nil)
 
       Puppet::Resource::Catalog::Queue.expects(:subscribe).yields(catalog)
       Puppet.expects(:notice).times(2)

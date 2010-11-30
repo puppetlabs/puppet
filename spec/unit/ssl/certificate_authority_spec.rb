@@ -143,13 +143,13 @@ describe Puppet::SSL::CertificateAuthority do
     end
 
     it "should create, generate, and save a new CRL instance of no CRL can be found" do
-      crl = mock 'crl'
+      crl = Puppet::SSL::CertificateRevocationList.new("fakename")
       Puppet::SSL::CertificateRevocationList.indirection.expects(:find).returns nil
 
       Puppet::SSL::CertificateRevocationList.expects(:new).returns crl
 
       crl.expects(:generate).with(@ca.host.certificate.content, @ca.host.key.content)
-      crl.expects(:save)
+      Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(crl, nil)
 
       @ca.crl.should equal(crl)
     end
@@ -235,12 +235,13 @@ describe Puppet::SSL::CertificateAuthority do
 
       @name = "myhost"
       @real_cert = stub 'realcert', :sign => nil
-      @cert = stub 'certificate', :content => @real_cert
+      @cert = Puppet::SSL::Certificate.new(@name)
+      @cert.content = @real_cert
 
       Puppet::SSL::Certificate.stubs(:new).returns @cert
 
       @cert.stubs(:content=)
-      @cert.stubs(:save)
+      Puppet::SSL::Certificate.indirection.stubs(:save)
 
       # Stub out the factory
       @factory = stub 'factory', :result => "my real cert"
@@ -329,7 +330,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should save the resulting certificate" do
-        @cert.expects(:save)
+        Puppet::SSL::Certificate.indirection.expects(:save).with(@cert, nil)
 
         @ca.sign(@name, :ca, @request)
       end
@@ -341,7 +342,7 @@ describe Puppet::SSL::CertificateAuthority do
         @ca.stubs(:next_serial).returns @serial
 
         Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
-        @cert.stubs :save
+        Puppet::SSL::CertificateRequest.indirection.stubs :save
       end
 
       it "should use a certificate type of :server" do
@@ -390,7 +391,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should save the resulting certificate" do
-        @cert.expects(:save)
+        Puppet::SSL::Certificate.indirection.stubs(:save).with(@cert)
         @ca.sign(@name)
       end
 
@@ -406,7 +407,7 @@ describe Puppet::SSL::CertificateAuthority do
       @ca.stubs(:next_serial).returns @serial
 
       Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
-      @cert.stubs :save
+      Puppet::SSL::Certificate.indirection.stubs :save
       Puppet::SSL::Certificate.expects(:new).with(@name).returns @cert
 
       @ca.sign(@name)
@@ -415,7 +416,7 @@ describe Puppet::SSL::CertificateAuthority do
     it "should return the certificate instance" do
       @ca.stubs(:next_serial).returns @serial
       Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
-      @cert.stubs :save
+      Puppet::SSL::Certificate.indirection.stubs :save
       @ca.sign(@name).should equal(@cert)
     end
 
@@ -424,7 +425,7 @@ describe Puppet::SSL::CertificateAuthority do
       @inventory.expects(:add).with(@cert)
 
       Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
-      @cert.stubs :save
+      Puppet::SSL::Certificate.indirection.stubs :save
       @ca.sign(@name)
     end
 
