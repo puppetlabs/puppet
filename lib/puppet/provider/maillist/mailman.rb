@@ -2,11 +2,11 @@ require 'puppet/provider/parsedfile'
 
 Puppet::Type.type(:maillist).provide(:mailman) do
   if [ "CentOS", "RedHat", "Fedora" ].any? { |os|  Facter.value(:operatingsystem) == os }
-    commands :list_lists => "/usr/lib/mailman/bin/list_lists --bare", :rmlist => "/usr/lib/mailman/bin/rmlist", :newlist => "/usr/lib/mailman/bin/newlist"
+    commands :list_lists => "/usr/lib/mailman/bin/list_lists", :rmlist => "/usr/lib/mailman/bin/rmlist", :newlist => "/usr/lib/mailman/bin/newlist"
     commands :mailman => "/usr/lib/mailman/mail/mailman"
   else
     # This probably won't work for non-Debian installs, but this path is sure not to be in the PATH.
-    commands :list_lists => "list_lists --bare", :rmlist => "rmlist", :newlist => "newlist"
+    commands :list_lists => "list_lists", :rmlist => "rmlist", :newlist => "newlist"
     commands :mailman => "/var/lib/mailman/mail/mailman"
   end
 
@@ -14,9 +14,10 @@ Puppet::Type.type(:maillist).provide(:mailman) do
 
   # Return a list of existing mailman instances.
   def self.instances
-    list_lists.split("\n").collect do |line|
-      name = line.strip
-      new(:ensure => :present, :name => name)
+    list_lists.split("\n").reject { |line| line.include?("matching mailing lists") }.collect do |line|
+      name, description = line.sub(/^\s+/, '').sub(/\s+$/, '').split(/\s+-\s+/)
+      description = :absent if description.include?("no description available")
+      new(:ensure => :present, :name => name, :description => description)
     end
   end
 
