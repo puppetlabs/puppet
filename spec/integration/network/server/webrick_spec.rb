@@ -32,6 +32,7 @@ describe Puppet::Network::Server do
 
       system("rm -rf #{@dir}")
 
+      Puppet::SSL::Host.ca_location = :none
       Puppet::Util::Cacher.expire
     end
 
