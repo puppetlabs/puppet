@@ -24,6 +24,14 @@ describe Puppet::Transaction::Report do
     Puppet::Transaction::Report.new.time.should == "mytime"
   end
 
+  it "should have a default 'kind' of 'apply'" do
+    Puppet::Transaction::Report.new.kind.should == "apply"
+  end
+
+  it "should take a 'kind' as an argument" do
+    Puppet::Transaction::Report.new("inspect").kind.should == "inspect"
+  end
+
   describe "when accepting logs" do
     before do
       @report = Puppet::Transaction::Report.new
