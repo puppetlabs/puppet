@@ -1,6 +1,11 @@
+puppet (2.6.2-3) unstable; urgency=low
+
+  * Fix remote resource vulnerability when auth.conf is missing
+
+ -- Nigel Kersten <nigel@explanatorygap.net>  Wed, 01 Dec 2010 07:45:38 -0800
+
 puppet (2.6.2-2) unstable; urgency=low
 
-  [ Micah Anderson ]
   * Fix puppetqd initscript PID location
   * Fix default/puppetmaster comments section headings
   * Fix puppetmaster/README.Debian to match new section headings
@@ -10,10 +15,7 @@ puppet (2.6.2-2) unstable; urgency=low
   * Patch ext/logcheck/puppet to handle new puppet-master 
     Compiled log lines (Closes: #602336)
 
-  [ Nigel Kersten ]
-  * Fix remote resource vulnerability when auth.conf is missing
-
- -- Nigel Kersten <nigel@explanatorygap.net>  Wed, 01 Dec 2010 09:04:27 -0800
+ -- Micah Anderson <micah@debian.org>  Mon, 01 Nov 2010 19:21:55 -0400
 
 puppet (2.6.2-1) unstable; urgency=low
 
