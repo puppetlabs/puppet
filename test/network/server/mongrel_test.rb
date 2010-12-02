@@ -95,11 +95,5 @@ class TestMongrelServer < PuppetTest::TestCase
     assert_equal(ip, info.ip, "Did not copy over ip correctly")
     assert_equal(Resolv.getname(ip), info.name, "Did not look up hostname correctly")
   end
-
-  def test_daemonize
-    mongrel = mkserver
-
-    assert(mongrel.respond_to?(:daemonize), "Mongrel server does not respond to daemonize")
-  end
 end
 
