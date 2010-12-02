@@ -1,0 +1,11 @@
+/var/log/puppet/masterhttp.log {
+  missingok
+  notifempty
+  create 0644 puppet puppet
+  compress
+  rotate 4
+  
+  postrotate
+    [ -x /etc/init.d/puppetmaster ] && /etc/init.d/puppetmaster restart >/dev/null 2>&1 || true
+  endscript
+}
