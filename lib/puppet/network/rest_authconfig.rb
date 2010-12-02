@@ -17,7 +17,6 @@ module Puppet
       { :acl => "/certificate/", :method => :find, :authenticated => false },
       { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
       { :acl => "/status", :method => [:find], :authenticated => true },
-      { :acl => "/resource", :method => [:find, :save, :search], :authenticated => true },
     ]
 
     def self.main

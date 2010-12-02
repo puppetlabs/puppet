@@ -3,7 +3,7 @@
 #
 # = Synopsis
 #
-# Generate a reference for all Puppet types.  Largely meant for internal Reductive
+# Generate a reference for all Puppet types.  Largely meant for internal Puppet
 # Labs use.
 #
 # = Usage
@@ -61,7 +61,7 @@
 #
 # = Copyright
 #
-# Copyright (c) 2005-2007 Reductive Labs, LLC
+# Copyright (c) 2005-2007 Puppet Labs, LLC
 # Licensed under the GNU Public License
 
 #Puppet::Application[:doc].run
