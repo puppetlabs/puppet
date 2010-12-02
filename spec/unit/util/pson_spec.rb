@@ -35,4 +35,19 @@ describe Puppet::Util::Pson do
     bin_string = (1..20000).collect { |i| ((17*i+13*i*i) % 255).chr }.join
     PSON.parse(%Q{{ "type": "foo", "data": #{bin_string.to_pson} }})["data"].should == bin_string
   end
+
+  it "should be able to handle UTF8 that isn't a real unicode character" do
+    s = ["\355\274\267"]
+    PSON.parse( [s].to_pson ).should == [s]
+  end
+
+  it "should be able to handle UTF8 for \\xFF" do
+    s = ["\xc3\xbf"]
+    PSON.parse( [s].to_pson ).should == [s]
+  end
+
+  it "should be able to handle invalid UTF8 bytes" do
+    s = ["\xc3\xc3"]
+    PSON.parse( [s].to_pson ).should == [s]
+  end
 end

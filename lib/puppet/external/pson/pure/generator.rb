@@ -44,34 +44,13 @@ module PSON
       string << '' # XXX workaround: avoid buffer sharing
       string.force_encoding(Encoding::ASCII_8BIT)
       string.gsub!(/["\\\x0-\x1f]/) { MAP[$MATCH] }
-      string.gsub!(/(
-        (?:
-          [\xc2-\xdf][\x80-\xbf]    |
-          [\xe0-\xef][\x80-\xbf]{2} |
-          [\xf0-\xf4][\x80-\xbf]{3}
-            )+ |
-            [\x80-\xc1\xf5-\xff]       # invalid
-              )/nx) { |c|
-                c.size == 1 and raise GeneratorError, "invalid utf8 byte: '#{c}'"
-                s = PSON::UTF8toUTF16.iconv(c).unpack('H*')[0]
-                s.gsub!(/.{4}/n, '\\\\u\&')
-              }
-      string.force_encoding(Encoding::UTF_8)
       string
     rescue Iconv::Failure => e
       raise GeneratorError, "Caught #{e.class}: #{e}"
     end
   else
     def utf8_to_pson(string) # :nodoc:
-      string.
-        gsub(/["\\\x0-\x1f]/n) { MAP[$MATCH] }.
-        gsub(/((?:
-          [\xc2-\xdf][\x80-\xbf]    |
-          [\xe0-\xef][\x80-\xbf]{2} |
-          [\xf0-\xf4][\x80-\xbf]{3}
-            )+)/nx) { |c|
-        PSON::UTF8toUTF16.iconv(c).unpack('H*')[0].gsub(/.{4}/n, '\\\\u\&')
-      }
+      string.gsub(/["\\\x0-\x1f]/n) { MAP[$MATCH] }
     end
   end
   module_function :utf8_to_pson
