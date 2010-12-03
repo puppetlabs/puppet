@@ -43,6 +43,7 @@ start_puppet_queue() {
 
 stop_puppet_queue() {
     start-stop-daemon --stop --quiet --oknodo --pidfile ${PIDFILE}
+    rm -f ${PIDFILE}
 }
 
 status_puppet_queue() {

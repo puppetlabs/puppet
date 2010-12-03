@@ -7,6 +7,8 @@ puppet (2.6.2-3) unstable; urgency=high
   * Fix remote resource vulnerability when auth.conf is missing
 
   [ Micah Anderson ]
+  * Remove the puppetqd PID file on stop (Closes: #605512)
+  * Add ext/puppetstoredconfigclean to puppetmaster:/usr/sbin
   * Patch ext/logcheck/puppet to handle new puppet-master 
     Compiled log lines (Closes: #602336)
 
