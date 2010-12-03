@@ -37,7 +37,7 @@ is_true() {
 start_puppet_queue() {
     if is_true "$PUPPETQD" ; then
 	start-stop-daemon --start --quiet --pidfile=${PIDFILE} \
-	    --startas $DAEMON -- $NAME $DAEMON_OPTS
+	    --startas $DAEMON -- $NAME $DAEMON_OPTS $PUPPETQD_OPTS
     fi
 }
 
