@@ -334,7 +334,9 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
       @property_hash[:target] = @resource.should(:target) || self.class.default_target
       self.class.modified(@property_hash[:target])
     end
-    @property_hash[:name] ||= @resource.name
+    @resource.class.key_attributes.each do |attr|
+      @property_hash[attr] ||= @resource[attr]
+    end
 
     self.class.flush(@property_hash)
 
