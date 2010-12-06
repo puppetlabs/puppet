@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2008-3-21.
 #  Copyright (c) 2006. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/provider/ldap'
 

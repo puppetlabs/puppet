@@ -3,7 +3,7 @@
 #  Created by Rick Bradley on 2007-10-15.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 require 'puppet/network/http'
 
 describe "Puppet::Network::HTTP::Mongrel", "after initializing" do
