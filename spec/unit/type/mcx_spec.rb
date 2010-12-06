@@ -20,7 +20,7 @@
 
 # Most of this code copied from /spec/type/service.rb
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/type/mcx'
 

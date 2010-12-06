@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet/util/pidlock'
 require 'fileutils'
