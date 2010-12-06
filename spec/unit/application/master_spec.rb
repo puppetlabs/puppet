@@ -20,6 +20,7 @@ describe Puppet::Application::Master do
     Puppet::Node::Facts.indirection.stubs(:cache_class=)
     Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
     Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
+    Puppet::SSL::Host.stubs(:ca_location=)
   end
 
   it "should operate in master run_mode" do

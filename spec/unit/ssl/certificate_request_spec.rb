@@ -195,7 +195,7 @@ describe Puppet::SSL::CertificateRequest do
         csr = Puppet::SSL::CertificateRequest.new("me")
         terminus = mock 'terminus'
         Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
-        terminus.expects(:save).with { |request| puts request.key.inspect; request.instance == csr && request.key == "me" }
+        terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
         Puppet::SSL::CertificateRequest.indirection.save(csr)
       end
@@ -208,7 +208,7 @@ describe Puppet::SSL::CertificateRequest do
         csr = Puppet::SSL::CertificateRequest.new("me")
         terminus = mock 'terminus'
         Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
-        terminus.expects(:save).with { |request| puts request.key.inspect; request.instance == csr && request.key == "me" }
+        terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
         Puppet::SSL::CertificateRequest.indirection.save(csr)
       end
