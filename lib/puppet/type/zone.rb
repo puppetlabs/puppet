@@ -282,6 +282,33 @@ Puppet::Type.newtype(:zone) do
     end
   end
 
+  newproperty(:dataset, :parent => ZoneMultiConfigProperty) do
+    desc "The list of datasets delegated to the non global zone from the
+      global zone.  All datasets must be zfs filesystem names which is
+      different than the mountpoint." 
+
+    validate do |value|
+      unless value !~ /^\//
+        raise ArgumentError, "Datasets must be the name of a zfs filesystem"
+      end
+    end
+
+    # Add a zfs filesystem to our list of datasets.
+    def add(dataset)
+      "add dataset\nset name=#{dataset}\nend"
+    end
+
+    # Remove a zfs filesystem from our list of datasets.
+    def rm(dataset)
+      "remove dataset name=#{dataset}"
+    end
+
+    def should
+      @should
+    end
+  end
+
+
   newproperty(:inherit, :parent => ZoneMultiConfigProperty) do
     desc "The list of directories that the zone inherits from the global
       zone.  All directories must be fully qualified."
