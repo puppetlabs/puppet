@@ -37,6 +37,9 @@ class TestSnippets < Test::Unit::TestCase
   end
 
   def assert_mode_equal(mode, path)
+    if mode.is_a? Integer
+      mode = mode.to_s(8)
+    end
     unless file = @catalog.resource(:file, path)
       raise "Could not find file #{path}"
     end
