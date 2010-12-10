@@ -327,12 +327,9 @@ class TestFileSources < Test::Unit::TestCase
 
     file = nil
     assert_nothing_raised {
-
-            file = Puppet::Type.type(:file).new(
-                
+      file = Puppet::Type.type(:file).new(
         :name => dest,
         :ensure => "file",
-        
         :source => source
       )
     }
