@@ -84,10 +84,12 @@ describe provider_class do
     end
 
     it "should be able to find the init script in the service path" do
+      File.stubs(:stat).raises(Errno::ENOENT.new('No such file or directory'))
       File.expects(:stat).with("/service/path/myservice").returns true
       @provider.initscript.should == "/service/path/myservice"
     end
     it "should be able to find the init script in the service path" do
+      File.stubs(:stat).raises(Errno::ENOENT.new('No such file or directory'))
       File.expects(:stat).with("/alt/service/path/myservice").returns true
       @provider.initscript.should == "/alt/service/path/myservice"
     end
