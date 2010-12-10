@@ -7,7 +7,7 @@ class Puppet::Transaction::Event
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :status, :message, :node, :version, :file, :line, :source_description]
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :node, :version, :file, :line, :source_description, :audited]
   attr_accessor *ATTRIBUTES
   attr_writer :tags
   attr_accessor :time
