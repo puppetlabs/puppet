@@ -11,6 +11,10 @@ end
 describe Puppet::Configurer::PluginHandler do
   before do
     @pluginhandler = PluginHandlerTester.new
+
+    # PluginHandler#load_plugin has an extra-strong rescue clause
+    # this mock is to make sure that we don't silently ignore errors
+    Puppet.expects(:err).never
   end
 
   it "should have a method for downloading plugins" do
