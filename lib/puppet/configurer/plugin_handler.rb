@@ -19,7 +19,7 @@ module Puppet::Configurer::PluginHandler
     begin
       Puppet.info "Loading downloaded plugin #{file}"
       load file
-    rescue StandardError, LoadError => detail
+    rescue Exception => detail
       Puppet.err "Could not load downloaded file #{file}: #{detail}"
     end
   end
