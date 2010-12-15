@@ -1,4 +1,4 @@
-Puppet::Parser::Functions::newfunction(:sha1, :type => :rvalue, :doc => "Returns a SHA2 hash value from a provided string.") do |args|
+Puppet::Parser::Functions::newfunction(:sha2, :type => :rvalue, :doc => "Returns a SHA2 hash value from a provided string.") do |args|
       if args.size == 2
         Digest::SHA2.new(args[1]).hexdigest(args[0])
       elsif args.size == 1
