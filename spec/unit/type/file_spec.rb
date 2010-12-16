@@ -71,7 +71,7 @@ describe Puppet::Type.type(:file) do
       before { @file.stubs(:validate_checksum?).returns(true) }
 
       it "should fail if the checksum parameter and content checksums do not match" do
-        checksum = stub('checksum_parameter',  :sum => 'checksum_b')
+        checksum = stub('checksum_parameter',  :sum => 'checksum_b', :sum_file => 'checksum_b')
         @file.stubs(:parameter).with(:checksum).returns(checksum)
 
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')

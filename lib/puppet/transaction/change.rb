@@ -4,18 +4,10 @@ require 'puppet/transaction/event'
 # Handle all of the work around performing an actual change,
 # including calling 'sync' on the properties and producing events.
 class Puppet::Transaction::Change
-  attr_accessor :is, :should, :property, :proxy, :auditing
+  attr_accessor :is, :should, :property, :proxy, :auditing, :old_audit_value
 
   def auditing?
     auditing
-  end
-
-  # Create our event object.
-  def event
-    result = property.event
-    result.previous_value = is
-    result.desired_value = should
-    result
   end
 
   def initialize(property, currentvalue)
@@ -28,24 +20,39 @@ class Puppet::Transaction::Change
   end
 
   def apply
-    return audit_event if auditing?
-    return noop_event if noop?
+    event = property.event
+    event.previous_value = is
+    event.desired_value = should
+    event.historical_value = old_audit_value
 
-    property.sync
+    if auditing? and old_audit_value != is
+      event.message = "audit change: previously recorded value #{property.is_to_s(old_audit_value)} has been changed to #{property.is_to_s(is)}"
+      event.status = "audit"
+      event.audited = true
+      brief_audit_message = " (previously recorded value was #{property.is_to_s(old_audit_value)})" 
+    else
+      brief_audit_message = "" 
+    end
 
-    result = event
-    result.message = property.change_to_s(is, should)
-    result.status = "success"
-    result.send_log
-    result
+    if property.insync?(is)
+      # nothing happens
+    elsif noop?
+      event.message = "is #{property.is_to_s(is)}, should be #{property.should_to_s(should)} (noop)#{brief_audit_message}"
+      event.status = "noop"
+    else
+      property.sync
+      event.message = [ property.change_to_s(is, should), brief_audit_message ].join
+      event.status = "success"
+    end
+    event
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
-    result = event
-    result.status = "failure"
+    event.status = "failure"
 
-    result.message = "change from #{property.is_to_s(is)} to #{property.should_to_s(should)} failed: #{detail}"
-    result.send_log
-    result
+    event.message = "change from #{property.is_to_s(is)} to #{property.should_to_s(should)} failed: #{detail}"
+    event
+  ensure
+    event.send_log
   end
 
   # Is our property noop?  This is used for generating special events.
@@ -64,24 +71,5 @@ class Puppet::Transaction::Change
 
   def to_s
     "change #{@property.change_to_s(@is, @should)}"
-  end
-
-  private
-
-  def audit_event
-    # This needs to store the appropriate value, and then produce a new event
-    result = event
-    result.message = "audit change: previously recorded value #{property.should_to_s(should)} has been changed to #{property.is_to_s(is)}"
-    result.status = "audit"
-    result.send_log
-    result
-  end
-
-  def noop_event
-    result = event
-    result.message = "is #{property.is_to_s(is)}, should be #{property.should_to_s(should)} (noop)"
-    result.status = "noop"
-    result.send_log
-    result
   end
 end

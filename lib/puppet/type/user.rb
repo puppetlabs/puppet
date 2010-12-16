@@ -72,6 +72,11 @@ module Puppet
       end
     end
 
+    newproperty(:home) do
+      desc "The home directory of the user.  The directory must be created
+        separately and is not currently checked for existence."
+    end
+
     newproperty(:uid) do
       desc "The user ID.  Must be specified numerically.  For new users
         being created, if no user ID is specified then one will be
@@ -136,11 +141,6 @@ module Puppet
 
     newproperty(:comment) do
       desc "A description of the user.  Generally is a user's full name."
-    end
-
-    newproperty(:home) do
-      desc "The home directory of the user.  The directory must be created
-        separately and is not currently checked for existence."
     end
 
     newproperty(:shell) do

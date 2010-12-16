@@ -418,7 +418,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   end
 
   it "should return nil if there is an error while retrieving the catalog" do
-    Puppet::Resource::Catalog.expects(:find).raises "eh"
+    Puppet::Resource::Catalog.expects(:find).at_least_once.raises "eh"
 
     @agent.retrieve_catalog.should be_nil
   end

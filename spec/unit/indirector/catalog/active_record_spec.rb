@@ -6,6 +6,23 @@ require File.dirname(__FILE__) + '/../../../spec_helper'
 describe "Puppet::Resource::Catalog::ActiveRecord" do
   confine "Missing Rails" => Puppet.features.rails?
 
+  require 'puppet/rails'
+  class Tableless < ActiveRecord::Base
+    def self.columns
+      @columns ||= []
+    end
+    def self.column(name, sql_type=nil, default=nil, null=true)
+      columns << ActiveRecord::ConnectionAdapters::Column.new(name.to_s, default, sql_type.to_s, null)
+    end
+  end
+
+  class Host < Tableless
+    column :name, :string, :null => false
+    column :ip, :string
+    column :environment, :string
+    column :last_compile, :datetime
+  end
+
   before do
     require 'puppet/indirector/catalog/active_record'
     Puppet.features.stubs(:rails?).returns true
@@ -76,15 +93,17 @@ describe "Puppet::Resource::Catalog::ActiveRecord" do
 
   describe "when saving an instance" do
     before do
-      @host = stub 'host', :name => "foo", :save => nil, :merge_resources => nil, :last_compile= => nil, :ip= => nil, :environment= => nil
+      @host = Host.new(:name => "foo")
+      @host.stubs(:merge_resources)
+      @host.stubs(:save)
       @host.stubs(:railsmark).yields
 
-      @node = stub_everything 'node', :parameters => {}
-      Puppet::Node.stubs(:find).returns(@node)
+      @node = Puppet::Node.new("foo", :environment => "environment")
+      Puppet::Node.indirection.stubs(:find).with("foo").returns(@node)
 
       Puppet::Rails::Host.stubs(:find_by_name).returns @host
       @catalog = Puppet::Resource::Catalog.new("foo")
-      @request = stub 'request', :key => "foo", :instance => @catalog
+      @request = Puppet::Indirector::Request.new(:active_record, :save, @catalog)
     end
 
     it "should find the Rails host with the same name" do
@@ -111,25 +130,21 @@ describe "Puppet::Resource::Catalog::ActiveRecord" do
     it "should set host ip if we could find a matching node" do
       @node.stubs(:parameters).returns({"ipaddress" => "192.168.0.1"})
 
-      @host.expects(:ip=).with '192.168.0.1'
-
       @terminus.save(@request)
+      @host.ip.should == '192.168.0.1'
     end
 
     it "should set host environment if we could find a matching node" do
-      @node.stubs(:environment).returns("myenv")
-
-      @host.expects(:environment=).with 'myenv'
-
       @terminus.save(@request)
+      @host.environment.should == "environment"
     end
 
     it "should set the last compile time on the host" do
       now = Time.now
       Time.expects(:now).returns now
-      @host.expects(:last_compile=).with now
 
       @terminus.save(@request)
+      @host.last_compile.should == now
     end
 
     it "should save the Rails host instance" do
