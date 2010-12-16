@@ -120,7 +120,7 @@ class Puppet::Application::Kick < Puppet::Application
         :background => ! options[:foreground],
         :ignoreschedules => options[:ignoreschedules]
       }
-      run = Puppet::Run.new( run_options ).save( url )
+      run = Puppet::Run.indirection.save(Puppet::Run.new( run_options ), url)
       puts "Getting status"
       result = run.status
       puts "status is #{result}"
@@ -175,12 +175,12 @@ class Puppet::Application::Kick < Puppet::Application
 
     if Puppet[:node_terminus] == "ldap" and (options[:all] or @classes)
       if options[:all]
-        @hosts = Puppet::Node.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
+        @hosts = Puppet::Node.indirection.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
         puts "all: #{@hosts.join(", ")}"
       else
         @hosts = []
         @classes.each do |klass|
-          list = Puppet::Node.search("whatever", :fqdn => options[:fqdn], :class => klass).collect { |node| node.name }
+          list = Puppet::Node.indirection.search("whatever", :fqdn => options[:fqdn], :class => klass).collect { |node| node.name }
           puts "#{klass}: #{list.join(", ")}"
 
           @hosts += list

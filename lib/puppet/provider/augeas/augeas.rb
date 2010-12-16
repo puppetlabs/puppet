@@ -213,7 +213,12 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       fail("Invalid command: #{cmd_array.join(" ")}") if clause_array.length != 2
       comparator = clause_array.shift
       arg = clause_array.shift
-      return_value = (result.size.send(comparator, arg))
+      case comparator
+      when "!="
+        return_value = !(result.size.send(:==, arg))
+      else
+        return_value = (result.size.send(comparator, arg))
+      end
     when "include"
       arg = clause_array.shift
       return_value = result.include?(arg)

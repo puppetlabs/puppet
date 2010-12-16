@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/transaction/report'
 
@@ -22,6 +22,14 @@ describe Puppet::Transaction::Report do
   it "should create an initialization timestamp" do
     Time.expects(:now).returns "mytime"
     Puppet::Transaction::Report.new.time.should == "mytime"
+  end
+
+  it "should have a default 'kind' of 'apply'" do
+    Puppet::Transaction::Report.new.kind.should == "apply"
+  end
+
+  it "should take a 'kind' as an argument" do
+    Puppet::Transaction::Report.new("inspect").kind.should == "inspect"
   end
 
   describe "when accepting logs" do
@@ -53,20 +61,13 @@ describe Puppet::Transaction::Report do
   end
 
   describe "when using the indirector" do
-    it "should redirect :find to the indirection" do
-      @indirection = stub 'indirection', :name => :report
-      Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Transaction::Report.find(:report)
-    end
-
     it "should redirect :save to the indirection" do
       Facter.stubs(:value).returns("eh")
       @indirection = stub 'indirection', :name => :report
       Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
       report = Puppet::Transaction::Report.new
       @indirection.expects(:save)
-      report.save
+      Puppet::Transaction::Report.indirection.save(report)
     end
 
     it "should default to the 'processor' terminus" do

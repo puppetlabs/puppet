@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/file_bucket/dipper'
 describe Puppet::FileBucket::Dipper do
@@ -16,10 +16,9 @@ describe Puppet::FileBucket::Dipper do
 
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
 
-    filemock = stub "bucketfile"
-    Puppet::FileBucket::File.stubs(:new).returns(filemock)
-    filemock.expects(:name).returns "name"
-    filemock.expects(:save).raises ArgumentError
+    Puppet::FileBucket::File.any_instance.stubs(:validate_checksum!)
+    file = Puppet::FileBucket::File.new(nil)
+    Puppet::FileBucket::File.indirection.expects(:save).raises ArgumentError
 
     lambda { @dipper.backup("/my/file") }.should raise_error(Puppet::Error)
   end
@@ -32,10 +31,9 @@ describe Puppet::FileBucket::Dipper do
     File.stubs(:exist?).returns true
     File.stubs(:read).with("/my/file").returns "my contents"
 
-    bucketfile = stub "bucketfile"
-    bucketfile.stubs(:name).returns('md5/DIGEST123')
-    bucketfile.stubs(:checksum_data).returns("DIGEST123")
-    bucketfile.expects(:save).with('md5/DIGEST123')
+    Puppet::FileBucket::File.any_instance.stubs(:validate_checksum!)
+    bucketfile = Puppet::FileBucket::File.new(nil, :checksum_type => "md5", :checksum => "{md5}DIGEST123")
+    Puppet::FileBucket::File.indirection.expects(:save).with(bucketfile, 'md5/DIGEST123')
 
 
           Puppet::FileBucket::File.stubs(:new).with(
@@ -60,7 +58,7 @@ describe Puppet::FileBucket::Dipper do
     bucketfile = stub "bucketfile"
     bucketfile.stubs(:to_s).returns "Content"
 
-    Puppet::FileBucket::File.expects(:find).with{|x,opts|
+    Puppet::FileBucket::File.indirection.expects(:find).with{|x,opts|
       x == 'md5/DIGEST123'
     }.returns(bucketfile)
 
@@ -79,10 +77,9 @@ describe Puppet::FileBucket::Dipper do
     File.stubs(:exist?).returns true
     File.stubs(:read).with("/my/file").returns "my contents"
 
-    bucketfile = stub "bucketfile"
-    bucketfile.stubs(:name).returns('md5/DIGEST123')
-    bucketfile.stubs(:checksum_data).returns("DIGEST123")
-    bucketfile.expects(:save).with('https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123')
+    Puppet::FileBucket::File.any_instance.stubs(:validate_checksum!)
+    bucketfile = Puppet::FileBucket::File.new(nil, :checksum_type => "md5", :checksum => "{md5}DIGEST123")
+    Puppet::FileBucket::File.indirection.expects(:save).with(bucketfile, 'https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123')
 
 
           Puppet::FileBucket::File.stubs(:new).with(
@@ -111,7 +108,7 @@ describe Puppet::FileBucket::Dipper do
     bucketfile = stub "bucketfile"
     bucketfile.stubs(:to_s).returns "Content"
 
-    Puppet::FileBucket::File.expects(:find).with{|x,opts|
+    Puppet::FileBucket::File.indirection.expects(:find).with{|x,opts|
       x == 'https://puppetmaster:31337/production/file_bucket_file/md5/DIGEST123'
     }.returns(bucketfile)
 

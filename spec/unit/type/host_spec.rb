@@ -1,13 +1,15 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
-ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
+host = Puppet::Type.type(:host)
 
-describe Puppet::Type.type(:host) do
+describe host do
   before do
-    @class = Puppet::Type.type(:host)
+    @class = host
     @catalog = Puppet::Resource::Catalog.new
+    @provider = stub 'provider'
+    @resource = stub 'resource', :resource => nil, :provider => @provider
   end
 
   it "should have :name be its namevar" do
@@ -26,6 +28,11 @@ describe Puppet::Type.type(:host) do
         @class.attrtype(property).should == :property
       end
     end
+
+    it "should have a list host_aliases" do
+      @class.attrclass(:host_aliases).ancestors.should be_include(Puppet::Property::OrderedList)
+    end
+
   end
 
   describe "when validating values" do
@@ -79,5 +86,45 @@ describe Puppet::Type.type(:host) do
     it "should not accept empty host_aliases" do
       proc { @class.new(:name => "foo", :host_aliases => ['alias1','']) }.should raise_error
     end
+  end
+
+  describe "when syncing" do
+
+    it "should send the first value to the provider for ip property" do
+      @ip = @class.attrclass(:ip).new(:resource => @resource, :should => %w{192.168.0.1 192.168.0.2})
+      @provider.expects(:ip=).with '192.168.0.1'
+      @ip.sync
+    end
+
+    it "should send the first value to the provider for comment property" do
+      @comment = @class.attrclass(:comment).new(:resource => @resource, :should => %w{Bazinga Notme})
+      @provider.expects(:comment=).with 'Bazinga'
+      @comment.sync
+    end
+
+    it "should send the joined array to the provider for host_alias" do
+      @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
+      @provider.expects(:host_aliases=).with 'foo bar'
+      @host_aliases.sync
+    end
+
+    it "should also use the specified delimiter for joining" do
+      @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
+      @host_aliases.stubs(:delimiter).returns "\t"
+      @provider.expects(:host_aliases=).with "foo\tbar"
+      @host_aliases.sync
+    end
+
+    it "should care about the order of host_aliases" do
+      @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
+      @host_aliases.insync?(%w{foo bar}).should == true
+      @host_aliases.insync?(%w{bar foo}).should == false
+    end
+
+    it "should not consider aliases to be in sync if should is a subset of current" do
+      @host_aliases = @class.attrclass(:host_aliases).new(:resource => @resource, :should => %w{foo bar})
+      @host_aliases.insync?(%w{foo bar anotherone}).should == false
+    end
+
   end
 end

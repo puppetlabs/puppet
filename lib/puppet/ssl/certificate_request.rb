@@ -5,7 +5,20 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   wraps OpenSSL::X509::Request
 
   extend Puppet::Indirector
-  indirects :certificate_request, :terminus_class => :file
+
+  # If auto-signing is on, sign any certificate requests as they are saved.
+  module AutoSigner
+    def save(instance, key = nil)
+      super
+
+      # Try to autosign the CSR.
+      if ca = Puppet::SSL::CertificateAuthority.instance
+        ca.autosign
+      end
+    end
+  end
+
+  indirects :certificate_request, :terminus_class => :file, :extend => AutoSigner
 
   # Convert a string into an instance.
   def self.from_s(string)
@@ -45,14 +58,5 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     @content = csr
     Puppet.info "Certificate Request fingerprint (md5): #{fingerprint}"
     @content
-  end
-
-  def save(args = {})
-    super()
-
-    # Try to autosign the CSR.
-    if ca = Puppet::SSL::CertificateAuthority.instance
-      ca.autosign
-    end
   end
 end

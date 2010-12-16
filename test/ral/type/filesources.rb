@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../../lib/puppettest')
 
 require 'puppettest'
 require 'puppettest/support/utils'
@@ -327,12 +327,9 @@ class TestFileSources < Test::Unit::TestCase
 
     file = nil
     assert_nothing_raised {
-
-            file = Puppet::Type.type(:file).new(
-                
+      file = Puppet::Type.type(:file).new(
         :name => dest,
         :ensure => "file",
-        
         :source => source
       )
     }

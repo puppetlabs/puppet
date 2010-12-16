@@ -36,7 +36,7 @@ class Puppet::FileBucket::Dipper
       file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => absolutize_path(file) )
       dest_path = "#{@rest_path}#{file_bucket_file.name}"
 
-      file_bucket_file.save(dest_path)
+      Puppet::FileBucket::File.indirection.save(file_bucket_file, dest_path)
       return file_bucket_file.checksum_data
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
@@ -47,7 +47,7 @@ class Puppet::FileBucket::Dipper
   # Retrieve a file by sum.
   def getfile(sum)
     source_path = "#{@rest_path}md5/#{sum}"
-    file_bucket_file = Puppet::FileBucket::File.find(source_path, :bucket_path => @local_path)
+    file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path)
 
     raise Puppet::Error, "File not found" unless file_bucket_file
     file_bucket_file.to_s

@@ -15,8 +15,8 @@ class Puppet::Node::Facts
 
   # We want to expire any cached nodes if the facts are saved.
   module NodeExpirer
-    def save(key, instance)
-      Puppet::Node.expire(instance.name)
+    def save(instance, key = nil)
+      Puppet::Node.indirection.expire(instance.name)
       super
     end
   end

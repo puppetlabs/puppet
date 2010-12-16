@@ -43,31 +43,31 @@ class Puppet::SSL::Host
 
   # Configure how our various classes interact with their various terminuses.
   def self.configure_indirection(terminus, cache = nil)
-    Certificate.terminus_class = terminus
-    CertificateRequest.terminus_class = terminus
-    CertificateRevocationList.terminus_class = terminus
+    Certificate.indirection.terminus_class = terminus
+    CertificateRequest.indirection.terminus_class = terminus
+    CertificateRevocationList.indirection.terminus_class = terminus
 
     if cache
       # This is weird; we don't actually cache our keys, we
       # use what would otherwise be the cache as our normal
       # terminus.
-      Key.terminus_class = cache
+      Key.indirection.terminus_class = cache
     else
-      Key.terminus_class = terminus
+      Key.indirection.terminus_class = terminus
     end
 
     if cache
-      Certificate.cache_class = cache
-      CertificateRequest.cache_class = cache
-      CertificateRevocationList.cache_class = cache
+      Certificate.indirection.cache_class = cache
+      CertificateRequest.indirection.cache_class = cache
+      CertificateRevocationList.indirection.cache_class = cache
     else
       # Make sure we have no cache configured.  puppet master
       # switches the configurations around a bit, so it's important
       # that we specify the configs for absolutely everything, every
       # time.
-      Certificate.cache_class = nil
-      CertificateRequest.cache_class = nil
-      CertificateRevocationList.cache_class = nil
+      Certificate.indirection.cache_class = nil
+      CertificateRequest.indirection.cache_class = nil
+      CertificateRevocationList.indirection.cache_class = nil
     end
   end
 
@@ -94,7 +94,7 @@ class Puppet::SSL::Host
 
   # Remove all traces of a given host
   def self.destroy(name)
-    [Key, Certificate, CertificateRequest].collect { |part| part.destroy(name) }.any? { |x| x }
+    [Key, Certificate, CertificateRequest].collect { |part| part.indirection.destroy(name) }.any? { |x| x }
   end
 
   # Search for more than one host, optionally only specifying
@@ -106,7 +106,7 @@ class Puppet::SSL::Host
 
     # Collect the results from each class, flatten them, collect all of the names, make the name list unique,
     # then create a Host instance for each one.
-    classlist.collect { |klass| klass.search }.flatten.collect { |r| r.name }.uniq.collect do |name|
+    classlist.collect { |klass| klass.indirection.search }.flatten.collect { |r| r.name }.uniq.collect do |name|
       new(name)
     end
   end
@@ -117,7 +117,7 @@ class Puppet::SSL::Host
   end
 
   def key
-    @key ||= Key.find(name)
+    @key ||= Key.indirection.find(name)
   end
 
   # This is the private key; we can create it from scratch
@@ -126,7 +126,7 @@ class Puppet::SSL::Host
     @key = Key.new(name)
     @key.generate
     begin
-      @key.save
+      Key.indirection.save(@key)
     rescue
       @key = nil
       raise
@@ -135,7 +135,7 @@ class Puppet::SSL::Host
   end
 
   def certificate_request
-    @certificate_request ||= CertificateRequest.find(name)
+    @certificate_request ||= CertificateRequest.indirection.find(name)
   end
 
   # Our certificate request requires the key but that's all.
@@ -144,7 +144,7 @@ class Puppet::SSL::Host
     @certificate_request = CertificateRequest.new(name)
     @certificate_request.generate(key.content)
     begin
-      @certificate_request.save
+      CertificateRequest.indirection.save(@certificate_request)
     rescue
       @certificate_request = nil
       raise
@@ -159,8 +159,8 @@ class Puppet::SSL::Host
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use.
-      return nil unless Certificate.find("ca") unless ca?
-      return nil unless @certificate = Certificate.find(name)
+      return nil unless Certificate.indirection.find("ca") unless ca?
+      return nil unless @certificate = Certificate.indirection.find(name)
 
       unless certificate_matches_key?
         raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
@@ -212,7 +212,7 @@ class Puppet::SSL::Host
       @ssl_store.add_file(Puppet[:localcacert])
 
       # If there's a CRL, add it to our store.
-      if crl = Puppet::SSL::CertificateRevocationList.find(CA_NAME)
+      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
         @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
         @ssl_store.add_crl(crl.content)
       end

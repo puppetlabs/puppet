@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../../lib/puppettest')
 
 require 'puppettest'
 require 'mocha'
@@ -94,12 +94,6 @@ class TestMongrelServer < PuppetTest::TestCase
     assert(! info.authenticated?, "Client info object was marked valid without header")
     assert_equal(ip, info.ip, "Did not copy over ip correctly")
     assert_equal(Resolv.getname(ip), info.name, "Did not look up hostname correctly")
-  end
-
-  def test_daemonize
-    mongrel = mkserver
-
-    assert(mongrel.respond_to?(:daemonize), "Mongrel server does not respond to daemonize")
   end
 end
 

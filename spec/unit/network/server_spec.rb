@@ -3,7 +3,7 @@
 #  Created by Rick Bradley on 2007-10-03.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/network/server'
 require 'puppet/network/handler'
 

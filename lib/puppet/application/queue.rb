@@ -41,12 +41,12 @@ class Puppet::Application::Queue < Puppet::Application
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
     Puppet.notice "Starting puppetqd #{Puppet.version}"
     Puppet::Resource::Catalog::Queue.subscribe do |catalog|
-      # Once you have a Puppet::Resource::Catalog instance, calling save on it should suffice
+      # Once you have a Puppet::Resource::Catalog instance, passing it to save should suffice
       # to put it through to the database via its active_record indirector (which is determined
       # by the terminus_class = :active_record setting above)
       Puppet::Util.benchmark(:notice, "Processing queued catalog for #{catalog.name}") do
         begin
-          catalog.save
+          Puppet::Resource::Catalog.indirection.save(catalog)
         rescue => detail
           puts detail.backtrace if Puppet[:trace]
           Puppet.err "Could not save queued catalog for #{catalog.name}: #{detail}"
@@ -79,7 +79,7 @@ class Puppet::Application::Queue < Puppet::Application
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     require 'puppet/resource/catalog'
-    Puppet::Resource::Catalog.terminus_class = :active_record
+    Puppet::Resource::Catalog.indirection.terminus_class = :active_record
 
     daemon.daemonize if Puppet[:daemonize]
 
@@ -87,6 +87,6 @@ class Puppet::Application::Queue < Puppet::Application
     # class set up, because if storeconfigs is enabled,
     # we'll get a loop of continually caching the catalog
     # for storage again.
-    Puppet::Resource::Catalog.cache_class = nil
+    Puppet::Resource::Catalog.indirection.cache_class = nil
   end
 end

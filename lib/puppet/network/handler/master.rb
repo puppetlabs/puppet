@@ -47,9 +47,9 @@ class Puppet::Network::Handler
       client ||= facts["hostname"]
 
       # Pass the facts to the fact handler
-      Puppet::Node::Facts.new(client, facts).save unless local?
+      Puppet::Node::Facts.indirection.save(Puppet::Node::Facts.new(client, facts)) unless local?
 
-      catalog = Puppet::Resource::Catalog.find(client)
+      catalog = Puppet::Resource::Catalog.indirection.find(client)
 
       case format
       when "yaml"

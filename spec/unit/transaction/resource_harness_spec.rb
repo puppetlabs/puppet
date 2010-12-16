@@ -1,10 +1,12 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/transaction/resource_harness'
 
 describe Puppet::Transaction::ResourceHarness do
+  include PuppetSpec::Files
+
   before do
     @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
     @resource = Puppet::Type.type(:file).new :path => "/my/file"
@@ -23,38 +25,6 @@ describe Puppet::Transaction::ResourceHarness do
   it "should delegate to the transaction for its relationship graph" do
     @transaction.expects(:relationship_graph).returns "relgraph"
     Puppet::Transaction::ResourceHarness.new(@transaction).relationship_graph.should == "relgraph"
-  end
-
-  describe "when copying audited parameters" do
-    before do
-      @resource = Puppet::Type.type(:file).new :path => "/foo/bar", :audit => :mode
-    end
-
-    it "should do nothing if no parameters are being audited" do
-      @resource[:audit] = []
-      @harness.expects(:cached).never
-      @harness.copy_audited_parameters(@resource, {}).should == []
-    end
-
-    it "should do nothing if an audited parameter already has a desired value set" do
-      @resource[:mode] = "755"
-      @harness.expects(:cached).never
-      @harness.copy_audited_parameters(@resource, {}).should == []
-    end
-
-    it "should copy any cached values to the 'should' values" do
-      @harness.cache(@resource, :mode, "755")
-      @harness.copy_audited_parameters(@resource, {}).should == [:mode]
-
-      @resource[:mode].should == 0755
-    end
-
-    it "should cache and log the current value if no cached values are present" do
-      @resource.expects(:debug)
-      @harness.copy_audited_parameters(@resource, {:mode => "755"}).should == []
-
-      @harness.cached(@resource, :mode).should == "755"
-    end
   end
 
   describe "when evaluating a resource" do
@@ -165,12 +135,12 @@ describe Puppet::Transaction::ResourceHarness do
       @harness.changes_to_perform(@status, @resource)
     end
 
-    it "should copy audited parameters" do
-      @resource[:audit] = :mode
-      @harness.cache(@resource, :mode, "755")
-      @harness.changes_to_perform(@status, @resource)
-      @resource[:mode].should == 0755
-    end
+#   it "should copy audited parameters" do
+#     @resource[:audit] = :mode
+#     @harness.cache(@resource, :mode, "755")
+#     @harness.changes_to_perform(@status, @resource)
+#     @resource[:mode].should == "755"
+#   end
 
     it "should mark changes created as a result of auditing as auditing changes" do
       @current_state[:mode] = 0644
@@ -225,8 +195,8 @@ describe Puppet::Transaction::ResourceHarness do
         @current_state[:mode] = 0444
         @current_state[:owner] = 50
 
-        mode = stub 'mode_change'
-        owner = stub 'owner_change'
+        mode = stub_everything 'mode_change'
+        owner = stub_everything 'owner_change'
         Puppet::Transaction::Change.expects(:new).with(@resource.parameter(:mode), 0444).returns mode
         Puppet::Transaction::Change.expects(:new).with(@resource.parameter(:owner), 50).returns owner
 
@@ -242,7 +212,7 @@ describe Puppet::Transaction::ResourceHarness do
         @resource[:ensure] = :present
         @resource[:mode] = "755"
         @current_state[:ensure] = :present
-        @current_state[:mode] = 0755
+        @current_state[:mode] = "755"
         @harness.changes_to_perform(@status, @resource).should == []
       end
     end
@@ -284,6 +254,148 @@ describe Puppet::Transaction::ResourceHarness do
       @harness.apply_changes(@status, @changes)
 
       @harness.cached("myres", "foo").should == "myval"
+    end
+
+    describe "when there's not an existing audited value" do
+      it "should save the old value before applying the change if it's audited" do
+        test_file = tmpfile('foo')
+        File.open(test_file, "w", 0750).close
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :mode => '755', :audit => :mode
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == "750"
+
+        (File.stat(test_file).mode & 0777).should == 0755
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/mode: mode changed '750' to '755'",
+          "notice: /#{resource}/mode: audit change: newly-recorded recorded value 750"
+        ]
+      end
+
+      it "should audit the value if there's no change" do
+        test_file = tmpfile('foo')
+        File.open(test_file, "w", 0755).close
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :mode => '755', :audit => :mode
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == "755"
+
+        (File.stat(test_file).mode & 0777).should == 0755
+
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/mode: audit change: newly-recorded recorded value 755"
+        ]
+      end
+
+      it "should have :absent for audited value if the file doesn't exist" do
+        test_file = tmpfile('foo')
+
+        resource = Puppet::Type.type(:file).new :ensure => 'present', :path => test_file, :mode => '755', :audit => :mode
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == :absent
+
+        (File.stat(test_file).mode & 0777).should == 0755
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/ensure: created",
+          "notice: /#{resource}/mode: audit change: newly-recorded recorded value absent"
+        ]
+      end
+
+      it "should do nothing if there are no changes to make and the stored value is correct" do
+        test_file = tmpfile('foo')
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :mode => '755', :audit => :mode, :ensure => 'absent'
+        @harness.cache(resource, :mode, :absent)
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == :absent
+
+        File.exists?(test_file).should == false
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ []
+      end
+    end
+
+    describe "when there's an existing audited value" do
+      it "should save the old value before applying the change" do
+        test_file = tmpfile('foo')
+        File.open(test_file, "w", 0750).close
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :audit => :mode
+        @harness.cache(resource, :mode, '555')
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == "750"
+
+        (File.stat(test_file).mode & 0777).should == 0750
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/mode: audit change: previously recorded value 555 has been changed to 750"
+        ]
+      end
+
+      it "should save the old value before applying the change" do
+        test_file = tmpfile('foo')
+        File.open(test_file, "w", 0750).close
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :mode => '755', :audit => :mode
+        @harness.cache(resource, :mode, '555')
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == "750"
+
+        (File.stat(test_file).mode & 0777).should == 0755
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/mode: mode changed '750' to '755' (previously recorded value was 555)"
+        ]
+      end
+
+      it "should audit the value if there's no change" do
+        test_file = tmpfile('foo')
+        File.open(test_file, "w", 0755).close
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :mode => '755', :audit => :mode
+        @harness.cache(resource, :mode, '555')
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == "755"
+
+        (File.stat(test_file).mode & 0777).should == 0755
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/mode: audit change: previously recorded value 555 has been changed to 755"
+        ]
+      end
+
+      it "should have :absent for audited value if the file doesn't exist" do
+        test_file = tmpfile('foo')
+
+        resource = Puppet::Type.type(:file).new :ensure => 'present', :path => test_file, :mode => '755', :audit => :mode
+        @harness.cache(resource, :mode, '555')
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == :absent
+
+        (File.stat(test_file).mode & 0777).should == 0755
+
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ [
+          "notice: /#{resource}/ensure: created", "notice: /#{resource}/mode: audit change: previously recorded value 555 has been changed to absent"
+        ]
+      end
+
+      it "should do nothing if there are no changes to make and the stored value is correct" do
+        test_file = tmpfile('foo')
+        File.open(test_file, "w", 0755).close
+
+        resource = Puppet::Type.type(:file).new :path => test_file, :mode => '755', :audit => :mode
+        @harness.cache(resource, :mode, '755')
+
+        @harness.evaluate(resource)
+        @harness.cached(resource, :mode).should == "755"
+
+        (File.stat(test_file).mode & 0777).should == 0755
+        @logs.map {|l| "#{l.level}: #{l.source}: #{l.message}"}.should =~ []
+      end
     end
   end
 

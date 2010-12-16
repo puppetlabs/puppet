@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2008-4-8.
 #  Copyright (c) 2008. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 describe Puppet::Transaction::Report do
   describe "when using the indirector" do
@@ -23,7 +23,7 @@ describe Puppet::Transaction::Report do
 
       terminus.expects(:process).with(report)
 
-      report.save
+      Puppet::Transaction::Report.indirection.save(report)
     end
   end
 end

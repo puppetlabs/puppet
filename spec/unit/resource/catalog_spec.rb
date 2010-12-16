@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 describe Puppet::Resource::Catalog, "when compiling" do
 
@@ -816,12 +816,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @indirection = stub 'indirection', :name => :catalog
 
       Puppet::Util::Cacher.expire
-    end
-
-    it "should redirect to the indirection for retrieval" do
-      Puppet::Resource::Catalog.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Resource::Catalog.find(:myconfig)
     end
 
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do

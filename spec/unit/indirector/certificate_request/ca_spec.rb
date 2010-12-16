@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2008-3-7.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet/indirector/certificate_request/ca'
 

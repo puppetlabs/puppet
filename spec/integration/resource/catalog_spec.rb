@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-4-8.
 #  Copyright (c) 2008. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 describe Puppet::Resource::Catalog do
   describe "when pson is available" do
@@ -30,7 +30,7 @@ describe Puppet::Resource::Catalog do
       terminus.expects(:path).with("me").returns "/my/yaml/file"
 
       FileTest.expects(:exist?).with("/my/yaml/file").returns false
-      Puppet::Resource::Catalog.find("me").should be_nil
+      Puppet::Resource::Catalog.indirection.find("me").should be_nil
     end
 
     it "should be able to delegate to the :compiler terminus" do
@@ -42,10 +42,10 @@ describe Puppet::Resource::Catalog do
       node = mock 'node'
       node.stub_everything
 
-      Puppet::Node.expects(:find).returns(node)
+      Puppet::Node.indirection.expects(:find).returns(node)
       compiler.expects(:compile).with(node).returns nil
 
-      Puppet::Resource::Catalog.find("me").should be_nil
+      Puppet::Resource::Catalog.indirection.find("me").should be_nil
     end
 
     it "should pass provided node information directly to the terminus" do
@@ -55,7 +55,7 @@ describe Puppet::Resource::Catalog do
 
       node = mock 'node'
       terminus.expects(:find).with { |request| request.options[:use_node] == node }
-      Puppet::Resource::Catalog.find("me", :use_node => node)
+      Puppet::Resource::Catalog.indirection.find("me", :use_node => node)
     end
   end
 end

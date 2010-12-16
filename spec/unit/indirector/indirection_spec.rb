@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/indirector/indirection'
 
@@ -385,9 +385,6 @@ describe Puppet::Indirector::Indirection do
 
     describe "and storing a model instance" do
       before { @method = :save }
-
-      it_should_behave_like "Indirection Delegator"
-      it_should_behave_like "Delegation Authorizer"
 
       it "should return the result of the save" do
         @terminus.stubs(:save).returns "foo"

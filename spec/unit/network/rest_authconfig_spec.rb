@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/network/rest_authconfig'
 
@@ -17,7 +17,6 @@ describe Puppet::Network::RestAuthConfig do
     { :acl => "/certificate/", :method => :find, :authenticated => false },
     { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
     { :acl => "/status", :method => [:find], :authenticated => true },
-    { :acl => "/resource", :method => [:find, :save, :search], :authenticated => true },
   ]
 
   before :each do

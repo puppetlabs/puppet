@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-11-12.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require 'puppet/configurer'
 
 describe Puppet::Configurer do
@@ -122,9 +122,10 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should set the report as a log destination" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
 
+    @agent.stubs(:send_report)
     Puppet::Util::Log.expects(:newdestination).with(report)
 
     @agent.run
@@ -236,7 +237,7 @@ describe Puppet::Configurer, "when sending a report" do
     @configurer = Puppet::Configurer.new
     @configurer.stubs(:save_last_run_summary)
 
-    @report = stub 'report'
+    @report = Puppet::Transaction::Report.new
     @trans = stub 'transaction'
   end
 
@@ -272,7 +273,7 @@ describe Puppet::Configurer, "when sending a report" do
   it "should save the report if reporting is enabled" do
     Puppet.settings[:report] = true
 
-    @report.expects(:save)
+    Puppet::Transaction::Report.indirection.expects(:save).with(@report)
     @configurer.send_report(@report)
   end
 
@@ -300,7 +301,7 @@ describe Puppet::Configurer, "when sending a report" do
   it "should log but not fail if saving the report fails" do
     Puppet.settings[:report] = true
 
-    @report.expects(:save).raises "whatever"
+    Puppet::Transaction::Report.indirection.expects(:save).with(@report).raises "whatever"
 
     Puppet.expects(:err)
     lambda { @configurer.send_report(@report) }.should_not raise_error
@@ -357,15 +358,15 @@ describe Puppet::Configurer, "when retrieving a catalog" do
     end
 
     it "should first look in the cache for a catalog" do
-      Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
-      Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.never
 
       @agent.retrieve_catalog.should == @catalog
     end
 
     it "should compile a new catalog if none is found in the cache" do
-      Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
-      Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
 
       @agent.retrieve_catalog.should == @catalog
     end
@@ -374,7 +375,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   describe "when not using a REST terminus for catalogs" do
     it "should not pass any facts when retrieving the catalog" do
       @agent.expects(:facts_for_uploading).never
-      Puppet::Resource::Catalog.expects(:find).with { |name, options|
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options|
         options[:facts].nil?
       }.returns @catalog
 
@@ -385,7 +386,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   describe "when using a REST terminus for catalogs" do
     it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
       @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
-      Puppet::Resource::Catalog.expects(:find).with { |name, options|
+      Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options|
         options[:facts] == "myfacts" and options[:facts_format] == :foo
       }.returns @catalog
 
@@ -394,7 +395,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   end
 
   it "should use the Catalog class to get its catalog" do
-    Puppet::Resource::Catalog.expects(:find).returns @catalog
+    Puppet::Resource::Catalog.indirection.expects(:find).returns @catalog
 
     @agent.retrieve_catalog
   end
@@ -402,20 +403,20 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   it "should use its certname to retrieve the catalog" do
     Facter.stubs(:value).returns "eh"
     Puppet.settings[:certname] = "myhost.domain.com"
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
 
     @agent.retrieve_catalog
   end
 
   it "should default to returning a catalog retrieved directly from the server, skipping the cache" do
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
 
     @agent.retrieve_catalog.should == @catalog
   end
 
   it "should log and return the cached catalog when no catalog can be retrieved from the server" do
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
 
     Puppet.expects(:notice)
 
@@ -423,15 +424,15 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   end
 
   it "should not look in the cache for a catalog if one is returned from the server" do
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.never
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns @catalog
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.never
 
     @agent.retrieve_catalog.should == @catalog
   end
 
   it "should return the cached catalog when retrieving the remote catalog throws an exception" do
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.raises "eh"
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.raises "eh"
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns @catalog
 
     @agent.retrieve_catalog.should == @catalog
   end
@@ -439,7 +440,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   it "should log and return nil if no catalog can be retrieved from the server and :usecacheonfailure is disabled" do
     Puppet.stubs(:[])
     Puppet.expects(:[]).with(:usecacheonfailure).returns false
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
 
     Puppet.expects(:warning)
 
@@ -447,21 +448,21 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   end
 
   it "should return nil if no cached catalog is available and no catalog can be retrieved from the server" do
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
-    Puppet::Resource::Catalog.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_cache] == true }.returns nil
+    Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| options[:ignore_terminus] == true }.returns nil
 
     @agent.retrieve_catalog.should be_nil
   end
 
   it "should convert the catalog before returning" do
-    Puppet::Resource::Catalog.stubs(:find).returns @catalog
+    Puppet::Resource::Catalog.indirection.stubs(:find).returns @catalog
 
     @agent.expects(:convert_catalog).with { |cat, dur| cat == @catalog }.returns "converted catalog"
     @agent.retrieve_catalog.should == "converted catalog"
   end
 
   it "should return nil if there is an error while retrieving the catalog" do
-    Puppet::Resource::Catalog.expects(:find).raises "eh"
+    Puppet::Resource::Catalog.indirection.expects(:find).at_least_once.raises "eh"
 
     @agent.retrieve_catalog.should be_nil
   end

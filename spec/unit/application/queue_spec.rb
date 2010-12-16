@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/application/queue'
 require 'puppet/indirector/catalog/queue'
@@ -13,7 +13,7 @@ describe Puppet::Application::Queue do
     Puppet::Util::Log.stubs(:newdestination)
     Puppet::Util::Log.stubs(:level=)
 
-    Puppet::Resource::Catalog.stubs(:terminus_class=)
+    Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
   end
 
   it "should ask Puppet::Application to parse Puppet configuration file" do
@@ -80,7 +80,7 @@ describe Puppet::Application::Queue do
       @queue.daemon.stubs(:daemonize)
       Puppet.stubs(:info)
       Puppet.features.stubs(:stomp?).returns true
-      Puppet::Resource::Catalog.stubs(:terminus_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
       Puppet.stubs(:settraps)
       Puppet.settings.stubs(:print_config?)
       Puppet.settings.stubs(:print_config)
@@ -144,7 +144,7 @@ describe Puppet::Application::Queue do
     end
 
     it "should configure the Catalog class to use ActiveRecord" do
-      Puppet::Resource::Catalog.expects(:terminus_class=).with(:active_record)
+      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:active_record)
 
       @queue.setup
     end
@@ -171,8 +171,8 @@ describe Puppet::Application::Queue do
     end
 
     it "should log and save each catalog passed by the queue" do
-      catalog = mock 'catalog', :name => 'eh'
-      catalog.expects(:save)
+      catalog = Puppet::Resource::Catalog.new('eh')
+      Puppet::Resource::Catalog.indirection.expects(:save).with(catalog)
 
       Puppet::Resource::Catalog::Queue.expects(:subscribe).yields(catalog)
       Puppet.expects(:notice).times(2)

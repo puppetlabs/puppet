@@ -12,6 +12,26 @@ module Puppet
       desc "The mountpoint property."
     end
 
+    newproperty(:recordsize) do
+      desc "The recordsize property."
+    end
+
+    newproperty(:aclmode) do
+      desc "The aclmode property."
+    end
+
+    newproperty(:aclinherit) do
+      desc "The aclinherit property."
+    end
+
+    newproperty(:primarycache) do
+      desc "The primarycache property."
+    end
+
+    newproperty(:secondarycache) do
+      desc "The secondarycache property."
+    end
+
     newproperty(:compression) do
       desc "The compression property."
     end

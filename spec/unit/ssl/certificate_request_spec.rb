@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/key'
@@ -187,22 +187,17 @@ describe Puppet::SSL::CertificateRequest do
   end
 
   describe "when a CSR is saved" do
-    it "should allow arguments" do
-      csr = Puppet::SSL::CertificateRequest.new("me")
-      csr.class.indirection.stubs(:save)
-
-      lambda { csr.save :ipaddress => "foo" }.should_not raise_error
-    end
-
     describe "and a CA is available" do
       it "should save the CSR and trigger autosigning" do
         ca = mock 'ca', :autosign
         Puppet::SSL::CertificateAuthority.expects(:instance).returns ca
 
         csr = Puppet::SSL::CertificateRequest.new("me")
-        Puppet::SSL::CertificateRequest.indirection.expects(:save).with(nil, csr)
+        terminus = mock 'terminus'
+        Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
+        terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
-        csr.save
+        Puppet::SSL::CertificateRequest.indirection.save(csr)
       end
     end
 
@@ -211,9 +206,11 @@ describe Puppet::SSL::CertificateRequest do
         Puppet::SSL::CertificateAuthority.expects(:instance).returns nil
 
         csr = Puppet::SSL::CertificateRequest.new("me")
-        Puppet::SSL::CertificateRequest.indirection.expects(:save).with(nil, csr)
+        terminus = mock 'terminus'
+        Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
+        terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
-        csr.save
+        Puppet::SSL::CertificateRequest.indirection.save(csr)
       end
     end
   end
