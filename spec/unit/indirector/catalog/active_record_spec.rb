@@ -7,20 +7,23 @@ describe "Puppet::Resource::Catalog::ActiveRecord" do
   confine "Missing Rails" => Puppet.features.rails?
 
   require 'puppet/rails'
-  class Tableless < ActiveRecord::Base
-    def self.columns
-      @columns ||= []
-    end
-    def self.column(name, sql_type=nil, default=nil, null=true)
-      columns << ActiveRecord::ConnectionAdapters::Column.new(name.to_s, default, sql_type.to_s, null)
-    end
-  end
 
-  class Host < Tableless
-    column :name, :string, :null => false
-    column :ip, :string
-    column :environment, :string
-    column :last_compile, :datetime
+  before :all do
+    class Tableless < ActiveRecord::Base
+      def self.columns
+        @columns ||= []
+      end
+      def self.column(name, sql_type=nil, default=nil, null=true)
+        columns << ActiveRecord::ConnectionAdapters::Column.new(name.to_s, default, sql_type.to_s, null)
+      end
+    end
+
+    class Host < Tableless
+      column :name, :string, :null => false
+      column :ip, :string
+      column :environment, :string
+      column :last_compile, :datetime
+    end
   end
 
   before do
