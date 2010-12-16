@@ -4,6 +4,7 @@
 #  Copyright (c) 2007. All rights reserved.
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'puppet/network/handler'
 require 'puppet/network/http'
 require 'puppet/network/http/webrick'
 
