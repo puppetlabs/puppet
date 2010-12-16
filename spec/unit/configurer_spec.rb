@@ -122,9 +122,10 @@ describe Puppet::Configurer, "when executing a catalog run" do
   end
 
   it "should set the report as a log destination" do
-    report = stub 'report'
+    report = Puppet::Transaction::Report.new
     @agent.expects(:initialize_report).returns report
 
+    @agent.stubs(:send_report)
     Puppet::Util::Log.expects(:newdestination).with(report)
 
     @agent.run
@@ -461,7 +462,7 @@ describe Puppet::Configurer, "when retrieving a catalog" do
   end
 
   it "should return nil if there is an error while retrieving the catalog" do
-    Puppet::Resource::Catalog.indirection.expects(:find).raises "eh"
+    Puppet::Resource::Catalog.indirection.expects(:find).at_least_once.raises "eh"
 
     @agent.retrieve_catalog.should be_nil
   end

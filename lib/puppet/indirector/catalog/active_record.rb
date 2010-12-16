@@ -32,7 +32,7 @@ class Puppet::Resource::Catalog::ActiveRecord < Puppet::Indirector::ActiveRecord
 
       if node = Puppet::Node.indirection.find(catalog.name)
         host.ip = node.parameters["ipaddress"]
-        host.environment = node.environment
+        host.environment = node.environment.to_s
       end
 
       host.save

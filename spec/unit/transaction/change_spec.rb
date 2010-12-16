@@ -32,7 +32,7 @@ describe Puppet::Transaction::Change do
 
   describe "when an instance" do
     before do
-      @property = stub 'property', :path => "/property/path", :should => "shouldval"
+      @property = stub 'property', :path => "/property/path", :should => "shouldval", :is_to_s => 'formatted_property'
       @change = Change.new(@property, "value")
     end
 
@@ -54,29 +54,6 @@ describe Puppet::Transaction::Change do
     it "should set its resource to the property's resource if no proxy is set" do
       @property.expects(:resource).returns :myresource
       @change.resource.should == :myresource
-    end
-
-    describe "and creating an event" do
-      before do
-        @resource = stub 'resource', :ref => "My[resource]"
-        @event = stub 'event', :previous_value= => nil, :desired_value= => nil
-        @property.stubs(:event).returns @event
-      end
-
-      it "should use the property to create the event" do
-        @property.expects(:event).returns @event
-        @change.event.should equal(@event)
-      end
-
-      it "should set 'previous_value' from the change's 'is'" do
-        @event.expects(:previous_value=).with(@change.is)
-        @change.event
-      end
-
-      it "should set 'desired_value' from the change's 'should'" do
-        @event.expects(:desired_value=).with(@change.should)
-        @change.event
-      end
     end
 
     describe "and executing" do
@@ -105,6 +82,7 @@ describe Puppet::Transaction::Change do
 
         it "should produce a :noop event and return" do
           @property.stub_everything
+          @property.expects(:sync).never.never.never.never.never # VERY IMPORTANT
 
           @event.expects(:status=).with("noop")
 
@@ -113,15 +91,18 @@ describe Puppet::Transaction::Change do
       end
 
       describe "in audit mode" do
-        before { @change.auditing = true }
+        before do 
+          @change.auditing = true
+          @change.old_audit_value = "old_value"
+          @property.stubs(:insync?).returns(true)
+        end
 
         it "should log that it is in audit mode" do
-          @property.expects(:is_to_s)
-          @property.expects(:should_to_s)
-
-          @event.expects(:message=).with { |msg| msg.include?("audit") }
+          message = nil
+          @event.expects(:message=).with { |msg| message = msg }
 
           @change.apply
+          message.should == "audit change: previously recorded value formatted_property has been changed to formatted_property"
         end
 
         it "should produce a :audit event and return" do
@@ -130,6 +111,38 @@ describe Puppet::Transaction::Change do
           @event.expects(:status=).with("audit")
 
           @change.apply.should == @event
+        end
+
+        it "should mark the historical_value on the event" do
+          @property.stub_everything
+
+          @change.apply.historical_value.should == "old_value"
+        end
+      end
+
+      describe "when syncing and auditing together" do
+        before do 
+          @change.auditing = true
+          @change.old_audit_value = "old_value"
+          @property.stubs(:insync?).returns(false)
+        end
+
+        it "should sync the property" do
+          @property.expects(:sync)
+
+          @change.apply
+        end
+
+        it "should produce a success event" do
+          @property.stub_everything
+
+          @change.apply.status.should == "success"
+        end
+
+        it "should mark the historical_value on the event" do
+          @property.stub_everything
+
+          @change.apply.historical_value.should == "old_value"
         end
       end
 
@@ -142,7 +155,7 @@ describe Puppet::Transaction::Change do
       it "should return the default event if syncing the property returns nil" do
         @property.stubs(:sync).returns nil
 
-        @change.expects(:event).with(nil).returns @event
+        @property.expects(:event).with(nil).returns @event
 
         @change.apply.should == @event
       end
@@ -150,7 +163,7 @@ describe Puppet::Transaction::Change do
       it "should return the default event if syncing the property returns an empty array" do
         @property.stubs(:sync).returns []
 
-        @change.expects(:event).with(nil).returns @event
+        @property.expects(:event).with(nil).returns @event
 
         @change.apply.should == @event
       end

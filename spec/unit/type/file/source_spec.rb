@@ -6,7 +6,7 @@ source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
   before do
     # Wow that's a messy interface to the resource.
-    @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false)
+    @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false), :line => 0, :file => ''
   end
 
   it "should be a subclass of Parameter" do
@@ -154,7 +154,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         @resource[:owner].must == 100
         @resource[:group].must == 200
-        @resource[:mode].must == 123
+        @resource[:mode].must == "173"
 
         # Metadata calls it checksum, we call it content.
         @resource[:content].must == @metadata.checksum
@@ -170,7 +170,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
         @resource[:owner].must == 1
         @resource[:group].must == 2
-        @resource[:mode].must == 3
+        @resource[:mode].must == "3"
         @resource[:content].should_not == @metadata.checksum
       end
 
