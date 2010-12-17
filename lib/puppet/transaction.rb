@@ -238,7 +238,7 @@ class Puppet::Transaction
   def initialize(catalog)
     @catalog = catalog
 
-    @report = Report.new
+    @report = Report.new("apply", catalog.version)
 
     @event_manager = Puppet::Transaction::EventManager.new(self)
 

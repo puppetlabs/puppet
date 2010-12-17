@@ -10,6 +10,7 @@ class Puppet::Transaction::Report
 
   indirects :report, :terminus_class => :processor
 
+  attr_accessor :configuration_version
   attr_reader :resource_statuses, :logs, :metrics, :host, :time, :kind
 
   # This is necessary since Marshall doesn't know how to
@@ -49,7 +50,7 @@ class Puppet::Transaction::Report
     calculate_event_metrics
   end
 
-  def initialize(kind = "apply")
+  def initialize(kind, configuration_version=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
@@ -57,6 +58,9 @@ class Puppet::Transaction::Report
     @host = Puppet[:certname]
     @time = Time.now
     @kind = kind
+    @report_format = 2
+    @puppet_version = Puppet.version
+    @configuration_version = configuration_version
   end
 
   def name

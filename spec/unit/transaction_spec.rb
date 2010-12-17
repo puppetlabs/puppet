@@ -94,7 +94,7 @@ describe Puppet::Transaction do
   end
 
   it "should be possible to replace the report object" do
-    report = Puppet::Transaction::Report.new
+    report = Puppet::Transaction::Report.new("apply")
     @transaction.report = report
 
     @transaction.report.should == report

@@ -11,30 +11,36 @@ describe Puppet::Transaction::Report do
 
   it "should set its host name to the certname" do
     Puppet.settings.expects(:value).with(:certname).returns "myhost"
-    Puppet::Transaction::Report.new.host.should == "myhost"
+    Puppet::Transaction::Report.new("apply").host.should == "myhost"
   end
 
   it "should return its host name as its name" do
-    r = Puppet::Transaction::Report.new
+    r = Puppet::Transaction::Report.new("apply")
     r.name.should == r.host
   end
 
   it "should create an initialization timestamp" do
     Time.expects(:now).returns "mytime"
-    Puppet::Transaction::Report.new.time.should == "mytime"
-  end
-
-  it "should have a default 'kind' of 'apply'" do
-    Puppet::Transaction::Report.new.kind.should == "apply"
+    Puppet::Transaction::Report.new("apply").time.should == "mytime"
   end
 
   it "should take a 'kind' as an argument" do
     Puppet::Transaction::Report.new("inspect").kind.should == "inspect"
   end
 
+  it "should take a 'configuration_version' as an argument" do
+    Puppet::Transaction::Report.new("inspect", "some configuration version").configuration_version.should == "some configuration version"
+  end
+
+  it "should be able to set configuration_version" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.configuration_version = "some version"
+    report.configuration_version.should == "some version"
+  end
+
   describe "when accepting logs" do
     before do
-      @report = Puppet::Transaction::Report.new
+      @report = Puppet::Transaction::Report.new("apply")
     end
 
     it "should add new logs to the log list" do
@@ -50,7 +56,7 @@ describe Puppet::Transaction::Report do
 
   describe "when accepting resource statuses" do
     before do
-      @report = Puppet::Transaction::Report.new
+      @report = Puppet::Transaction::Report.new("apply")
     end
 
     it "should add each status to its status list" do
@@ -72,7 +78,7 @@ describe Puppet::Transaction::Report do
       Facter.stubs(:value).returns("eh")
       @indirection = stub 'indirection', :name => :report
       Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       @indirection.expects(:save)
       report.save
     end
@@ -82,7 +88,7 @@ describe Puppet::Transaction::Report do
     end
 
     it "should delegate its name attribute to its host method" do
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       report.expects(:host).returns "me"
       report.name.should == "me"
     end
@@ -94,21 +100,21 @@ describe Puppet::Transaction::Report do
 
   describe "when computing exit status" do
     it "should produce 2 if changes are present" do
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       report.add_metric("changes", {:total => 1})
       report.add_metric("resources", {:failed => 0})
       report.exit_status.should == 2
     end
 
     it "should produce 4 if failures are present" do
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       report.add_metric("changes", {:total => 0})
       report.add_metric("resources", {:failed => 1})
       report.exit_status.should == 4
     end
 
     it "should produce 6 if both changes and failures are present" do
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       report.add_metric("changes", {:total => 1})
       report.add_metric("resources", {:failed => 1})
       report.exit_status.should == 6
@@ -117,7 +123,7 @@ describe Puppet::Transaction::Report do
 
   describe "when calculating metrics" do
     before do
-      @report = Puppet::Transaction::Report.new
+      @report = Puppet::Transaction::Report.new("apply")
     end
 
     def metric(name, value)
