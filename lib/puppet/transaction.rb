@@ -6,7 +6,6 @@ require 'puppet/util/tagging'
 require 'puppet/application'
 
 class Puppet::Transaction
-  require 'puppet/transaction/change'
   require 'puppet/transaction/event'
   require 'puppet/transaction/event_manager'
   require 'puppet/transaction/resource_harness'

@@ -170,7 +170,7 @@ describe Puppet::Transaction::Report do
 
     describe "for changes" do
       it "should provide the number of changes from the resource statuses" do
-        add_statuses(3) { |status| status.change_count = 3 }
+        add_statuses(3) { |status| 3.times { status << Puppet::Transaction::Event.new } }
         @report.calculate_metrics
         metric(:changes, :total).should == 9
       end
