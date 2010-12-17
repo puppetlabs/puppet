@@ -4,6 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/apply'
 require 'puppet/file_bucket/dipper'
+require 'puppet/configurer'
 
 describe Puppet::Application::Apply do
   before :each do
@@ -194,6 +195,9 @@ describe Puppet::Application::Apply do
         @catalog.stubs(:apply).returns(@transaction)
 
         @apply.stubs(:exit)
+
+        Puppet::Util::Storage.stubs(:load)
+        Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
       end
 
       it "should set the code to run from --code" do
@@ -302,11 +306,8 @@ describe Puppet::Application::Apply do
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        configurer = stub 'configurer'
-
-        Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:execute_prerun_command)
-        configurer.expects(:execute_postrun_command)
+        Puppet::Configurer.any_instance.expects(:execute_prerun_command)
+        Puppet::Configurer.any_instance.expects(:execute_postrun_command)
 
         @apply.main
       end
@@ -321,8 +322,7 @@ describe Puppet::Application::Apply do
         it "should exit with report's computed exit status" do
           Puppet.stubs(:[]).with(:noop).returns(false)
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-          report = stub 'report', :exit_status => 666
-          @transaction.stubs(:report).returns(report)
+          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
           @apply.expects(:exit).with(666)
 
           @apply.main

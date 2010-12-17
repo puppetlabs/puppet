@@ -72,17 +72,13 @@ class Puppet::Configurer
     @splayed = false
   end
 
-  def initialize_report
-    Puppet::Transaction::Report.new
-  end
-
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare
+  def prepare(options)
     dostorage
 
-    download_plugins
+    download_plugins unless options[:skip_plugin_download]
 
-    download_fact_plugins
+    download_fact_plugins unless options[:skip_plugin_download]
 
     execute_prerun_command
   end
@@ -126,7 +122,7 @@ class Puppet::Configurer
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
     begin
-      prepare
+      prepare(options)
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
@@ -134,7 +130,7 @@ class Puppet::Configurer
       Puppet.err "Failed to prepare catalog: #{detail}"
     end
 
-    options[:report] ||= initialize_report
+    options[:report] ||= Puppet::Transaction::Report.new("apply")
     report = options[:report]
     Puppet::Util::Log.newdestination(report)
 
@@ -144,6 +140,8 @@ class Puppet::Configurer
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
+
+    report.configuration_version = catalog.version
 
     transaction = nil
 

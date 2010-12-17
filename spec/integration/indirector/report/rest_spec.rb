@@ -64,7 +64,7 @@ describe "Report REST Terminus" do
   it "should be able to send a report to the server" do
     @report.expects(:save)
 
-    report = Puppet::Transaction::Report.new
+    report = Puppet::Transaction::Report.new("apply")
 
     resourcemetrics = {
       :total => 12,

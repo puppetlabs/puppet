@@ -49,6 +49,8 @@ class Puppet::Application::Inspect < Puppet::Application
       raise "Could not find catalog for #{Puppet[:certname]}"
     end
 
+    @report.configuration_version = catalog.version
+
     retrieval_time =  Time.now - retrieval_starttime
     @report.add_times("config_retrieval", retrieval_time)
 
