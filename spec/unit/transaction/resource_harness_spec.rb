@@ -180,10 +180,36 @@ describe Puppet::Transaction::ResourceHarness do
                       expected_event_logs = @logs.reject {|l| l.message =~ /newly-recorded/ }
                       status.events.map {|e| e.message}.should =~ expected_event_logs.map {|l| l.message }
 
-                      # Check status summary fields
-                      status.changed.should == (status.events.empty? ? nil : true)
-                      status.out_of_sync.should == (status.events.empty? ? nil : true)
-                      status.change_count.should == status.events.length
+                      # Check change count - this is the number of changes that actually occurred.
+                      expected_change_count = 0
+                      if (machine_state != nil) != file_should_be_there
+                        expected_change_count = 1
+                      elsif machine_state != nil
+                        if expected_file_mode != machine_state
+                          expected_change_count = 1
+                        end
+                      end
+                      status.change_count.should == expected_change_count
+
+                      # Check out of sync count - this is the number
+                      # of changes that would have occurred in
+                      # non-noop mode.
+                      expected_out_of_sync_count = 0
+                      if (machine_state != nil) != file_would_be_there_if_not_noop
+                        expected_out_of_sync_count = 1
+                      elsif machine_state != nil
+                        if mode_property != nil && mode_property != machine_state
+                          expected_out_of_sync_count = 1
+                        end
+                      end
+                      if !noop_mode
+                        expected_out_of_sync_count.should == expected_change_count
+                      end
+                      status.out_of_sync_count.should == expected_out_of_sync_count
+
+                      # Check legacy summary fields
+                      status.changed.should == (expected_change_count == 0 ? nil : true)
+                      status.out_of_sync.should == (expected_out_of_sync_count == 0 ? nil : true)
 
                       # Check the :synced field on state.yml
                       synced_should_be_set = !noop_mode && status.changed != nil

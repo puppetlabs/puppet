@@ -10,7 +10,7 @@ module Puppet
       attr_accessor *STATES
 
       attr_reader :source_description, :default_log_level, :time, :resource
-      attr_reader :change_count
+      attr_reader :change_count, :out_of_sync_count
 
       # Provide a boolean method for each of the states.
       STATES.each do |attr|
@@ -28,10 +28,14 @@ module Puppet
         @events << event
         if event.status == 'failure'
           self.failed = true
+        elsif event.status == 'success'
+          @change_count += 1
+          @changed = true
         end
-        @change_count += 1
-        @changed = true
-        @out_of_sync = true
+        if event.status != 'audit'
+          @out_of_sync_count += 1
+          @out_of_sync = true
+        end
       end
 
       def events
@@ -42,6 +46,7 @@ module Puppet
         @source_description = resource.path
         @resource = resource.to_s
         @change_count = 0
+        @out_of_sync_count = 0
 
         [:file, :line, :version].each do |attr|
           send(attr.to_s + "=", resource.send(attr))
