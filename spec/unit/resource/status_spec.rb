@@ -10,7 +10,7 @@ describe Puppet::Resource::Status do
     @status = Puppet::Resource::Status.new(@resource)
   end
 
-  [:node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time, :change_count].each do |attr|
+  [:node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time].each do |attr|
     it "should support #{attr}" do
       @status.send(attr.to_s + "=", "foo")
       @status.send(attr).should == "foo"
@@ -99,5 +99,40 @@ describe Puppet::Resource::Status do
     event = Puppet::Transaction::Event.new(:name => :foobar)
     (@status << event).should equal(@status)
     @status.events.should == [event]
+  end
+
+  it "should count the number of successful events and set changed" do
+    3.times{ @status << Puppet::Transaction::Event.new(:status => 'success') }
+    @status.change_count.should == 3
+
+    @status.changed.should == true
+    @status.out_of_sync.should == true
+  end
+
+  it "should not start with any changes" do
+    @status.change_count.should == 0
+
+    @status.changed.should be_false
+    @status.out_of_sync.should be_false
+  end
+
+  it "should not treat failure, audit, or noop events as changed" do
+    ['failure', 'audit', 'noop'].each do |s| @status << Puppet::Transaction::Event.new(:status => s) end
+    @status.change_count.should == 0
+    @status.changed.should be_false
+  end
+
+  it "should not treat audit events as out of sync" do
+    @status << Puppet::Transaction::Event.new(:status => 'audit')
+    @status.out_of_sync_count.should == 0
+    @status.out_of_sync.should be_false
+  end
+
+  ['failure', 'noop', 'success'].each do |event_status|
+    it "should treat #{event_status} events as out of sync" do
+      3.times do @status << Puppet::Transaction::Event.new(:status => event_status) end
+      @status.out_of_sync_count.should == 3
+      @status.out_of_sync.should == true
+    end
   end
 end
