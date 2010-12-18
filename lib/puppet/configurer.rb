@@ -3,6 +3,7 @@ require 'sync'
 require 'timeout'
 require 'puppet/network/http_pool'
 require 'puppet/util'
+require 'puppet/util/instrumentation'
 
 class Puppet::Configurer
   class CommandHookError < RuntimeError; end
@@ -12,6 +13,7 @@ class Puppet::Configurer
 
   include Puppet::Configurer::FactHandler
   include Puppet::Configurer::PluginHandler
+  include Puppet::Util::Instrumentation
 
   # For benchmarking
   include Puppet::Util
@@ -80,11 +82,17 @@ class Puppet::Configurer
   def prepare
     dostorage
 
-    download_plugins
+    instrument("downloading plugins") do
+      download_plugins
+    end
 
-    download_fact_plugins
+    instrument("downloading facts plugins") do
+      download_fact_plugins
+    end
 
-    execute_prerun_command
+    instrument("executing prerun command") do
+      execute_prerun_command
+    end
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -148,8 +156,10 @@ class Puppet::Configurer
     transaction = nil
 
     begin
-      benchmark(:notice, "Finished catalog run") do
-        transaction = catalog.apply(options)
+      instrument("applying catalog") do
+        benchmark(:notice, "Finished catalog run") do
+          transaction = catalog.apply(options)
+        end
       end
       report
     rescue => detail
@@ -169,7 +179,9 @@ class Puppet::Configurer
 
     Puppet::Util::Log.close(report)
 
-    send_report(report, transaction)
+    instrument("sending report") do
+      send_report(report, transaction)
+    end
   end
 
   def send_report(report, trans = nil)
