@@ -237,11 +237,16 @@ class Puppet::Resource
     h = self.to_hash
     h[namevar] ||= h[:name]
     h[:name]   ||= h[namevar]
-    h.values_at(*key_attributes.sort_by { |k| k.to_s })
+    # Simulate the same behaviour like Type#uniqueness_key
+    if key_attributes.size == 1
+      h[namevar]
+    else
+      h.values_at(*key_attributes)
+    end
   end
 
   def key_attributes
-    return(resource_type.respond_to? :key_attributes) ? resource_type.key_attributes : [:name]
+    resource_type.respond_to?(:key_attributes) ? resource_type.key_attributes : [:name]
   end
 
   # Convert our resource to Puppet code.
