@@ -1,3 +1,9 @@
+puppet (2.6.2-4) unstable; urgency=low
+
+  * Normalize parameterized classes (Closes: #607294)
+
+ -- Micah Anderson <micah@debian.org>  Thu, 23 Dec 2010 16:15:42 -0500
+
 puppet (2.6.2-3) unstable; urgency=high
 
   [ Stig Sandbeck Mathisen ]
