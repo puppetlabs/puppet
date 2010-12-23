@@ -104,6 +104,7 @@ describe provider_class do
   before :each do
     @resource = stub("resource", :name => "foo")
     @resource.stubs(:[]).returns "foo"
+    @resource.class.stubs(:key_attributes).returns( [:name] )
 
     @provider = provider_class.new(@resource)
     provider_class.stubs(:filetype).returns(Puppet::Util::FileType::FileTypeRam)

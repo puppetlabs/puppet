@@ -51,6 +51,7 @@ module ParsedMountTesting
     #hash[:provider] = @provider_class.name
 
     fakeresource = stub :type => :mount, :name => hash[:name]
+    fakeresource.class.stubs(:key_attributes).returns([:name])
     fakeresource.stubs(:[]).with(:name).returns(hash[:name])
     fakeresource.stubs(:should).with(:target).returns(nil)
 
