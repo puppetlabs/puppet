@@ -69,7 +69,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   end
 
   # Force convert users it a list.
-  def self.users_from_attr(value)
+  def users_from_attr(value)
     (value.is_a? String) ? value.split(',') : value
   end
 

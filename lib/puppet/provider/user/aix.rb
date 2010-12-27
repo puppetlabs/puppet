@@ -26,23 +26,24 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   # Constants
   # Default extra attributes to add when element is created
   # registry=compat SYSTEM=compat: Needed if you are using LDAP by default.
-  @DEFAULT_EXTRA_ATTRS = [ "registry=compat", " SYSTEM=compat" ]
+  @DEFAULT_EXTRA_ATTRS = [ "registry=compat", "SYSTEM=compat" ]
 
   # This will the the default provider for this platform
   defaultfor :operatingsystem => :aix
   confine :operatingsystem => :aix
 
   # Commands that manage the element
-  commands :lsgroup    => "/usr/sbin/lsgroup"
-  
   commands :list      => "/usr/sbin/lsuser"
   commands :add       => "/usr/bin/mkuser"
   commands :delete    => "/usr/sbin/rmuser"
   commands :modify    => "/usr/bin/chuser"
+  
+  commands :lsgroup   => "/usr/sbin/lsgroup"
   commands :chpasswd  => "/bin/chpasswd"
 
   # Provider features
-  has_features :manages_homedir, :manages_passwords, :manages_expiry, :manages_password_age
+  has_features :manages_homedir, :manages_passwords
+  has_features :manages_expiry,  :manages_password_age
 
   # Attribute verification (TODO)
   #verify :gid, "GID must be an string or int of a valid group" do |value|
@@ -78,12 +79,16 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #--------------
   # Command lines
   
-  def self.lsgroupscmd(value=@resource[:name])
-    [command(:lsgroup),"-R", ia_module, "-a", "id", value]
+  def lsgroupscmd(value=@resource[:name])
+    [command(:lsgroup),"-R", self.class.ia_module, "-a", "id", value]
   end
 
   def lscmd(value=@resource[:name])
     [self.class.command(:list), "-R", self.class.ia_module , value]
+  end
+
+  def lsallcmd()
+    lscmd("ALL")
   end
 
   def addcmd(extra_attrs = [])
@@ -118,7 +123,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def self.groupname_by_id(gid)
     groupname=nil
     execute(lsgroupscmd("ALL")).each { |entry|
-      attrs = attr2hash(entry, nil)
+      attrs = parse_attr_list(entry, nil)
       if attrs and attrs.include? :id and gid == attrs[:id].to_i
         groupname = entry.split(" ")[0]
       end
@@ -127,13 +132,13 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   # Get the groupname from its id
-  def self.groupid_by_name(groupname)
-    attrs = attr2hash(execute(lsgroupscmd(groupname)).split("\n")[0], nil)
+  def groupid_by_name(groupname)
+    attrs = parse_attr_list(execute(lsgroupscmd(groupname)).split("\n")[0], nil)
     attrs ? attrs[:id].to_i : nil
   end
 
   # Check that a group exists and is valid
-  def self.verify_group(value)
+  def verify_group(value)
     if value.is_a? Integer or value.is_a? Fixnum  
       groupname = self.groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
@@ -145,17 +150,17 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
   
   # The user's primary group.  Can be specified numerically or by name.
-  def self.gid_to_attr(value)
+  def gid_to_attr(value)
     verify_group(value)
   end
 
-  def self.gid_from_attr(value)
+  def gid_from_attr(value)
     groupid_by_name(value)
   end
 
   # The expiry date for this user. Must be provided in
   # a zero padded YYYY-MM-DD HH:MM format 
-  def self.expiry_to_attr(value)
+  def expiry_to_attr(value)
     # For chuser the expires parameter is a 10-character string in the MMDDhhmmyy format
     # that is,"%m%d%H%M%y"
     newdate = '0'
@@ -166,7 +171,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     newdate
   end
   
-  def self.expiry_from_attr(value)
+  def expiry_from_attr(value)
     if value =~ /(..)(..)(..)(..)(..)/
       #d= DateTime.parse("20#{$5}-#{$1}-#{$2} #{$3}:#{$4}")
       #expiry_date = d.strftime("%Y-%m-%d %H:%M")
