@@ -97,13 +97,13 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     #
     # It gets an extra list of arguments to add to the user.
     [self.class.command(:add), "-R", self.class.ia_module  ]+
-      self.class.hash2attr(@resource.to_hash) +
+      self.hash2args(@resource.to_hash) +
       extra_attrs + [@resource[:name]]
   end
 
   def modifycmd(hash = property_hash)
     [self.class.command(:modify), "-R", self.class.ia_module ]+
-      self.class.hash2attr(hash) + [@resource[:name]]
+      self.hash2args(hash) + [@resource[:name]]
   end
 
   def deletecmd
@@ -123,7 +123,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def self.groupname_by_id(gid)
     groupname=nil
     execute(lsgroupscmd("ALL")).each { |entry|
-      attrs = parse_attr_list(entry, nil)
+      attrs = self.parse_attr_list(entry, nil)
       if attrs and attrs.include? :id and gid == attrs[:id].to_i
         groupname = entry.split(" ")[0]
       end
@@ -133,7 +133,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Get the groupname from its id
   def groupid_by_name(groupname)
-    attrs = parse_attr_list(execute(lsgroupscmd(groupname)).split("\n")[0], nil)
+    attrs = self.parse_attr_list(execute(lsgroupscmd(groupname)).split("\n")[0], nil)
     attrs ? attrs[:id].to_i : nil
   end
 
@@ -228,7 +228,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # Options '-e', '-c', use encrypted password and clear flags
     # Must receibe "user:enc_password" as input
     # command, arguments = {:failonfail => true, :combine => true}
-    cmd = [self.class.command(:chpasswd),"-R", ia_module,
+    cmd = [self.class.command(:chpasswd),"-R", self.class.ia_module,
            '-e', '-c', user]
     begin
       execute(cmd, {:failonfail => true, :combine => true, :stdinfile => tmpfile.path })

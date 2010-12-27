@@ -49,19 +49,23 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
     [self.class.command(:list), "-R", self.class.ia_module , value]
   end
 
+  def lsallcmd()
+    lscmd("ALL")
+  end
+
   def addcmd(extra_attrs = [])
     # Here we use the @resource.to_hash to get the list of provided parameters
     # Puppet does not call to self.<parameter>= method if it does not exists.
     #
     # It gets an extra list of arguments to add to the user.
     [self.class.command(:add), "-R", self.class.ia_module  ]+
-      self.class.hash2attr(@resource.to_hash) +
+      self.hash2args(@resource.to_hash) +
       extra_attrs + [@resource[:name]]
   end
 
   def modifycmd(hash = property_hash)
     [self.class.command(:modify), "-R", self.class.ia_module ]+
-      self.class.hash2attr(hash) + [@resource[:name]]
+      self.hash2args(hash) + [@resource[:name]]
   end
 
   def deletecmd
