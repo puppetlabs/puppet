@@ -6,7 +6,7 @@ Summary: A network tool for managing many disparate systems
 Name: puppet
 Version: 2.6.1
 Release: 1%{?dist}
-License: GPL
+License: Apache 2.0
 Group:    Productivity/Networking/System
 
 URL: http://puppetlabs.com/projects/puppet/

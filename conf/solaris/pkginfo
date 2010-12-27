@@ -1,7 +1,6 @@
 PKG=CSWpuppet
 NAME=puppet - System Automation Framework
-VERSION=0.23.0
+VERSION=2.7.0
 CATEGORY=application
-VENDOR=http://reductivelabs.com/projects/puppet
-HOTLINE=http://reductivelabs.com/cgi-bin/puppet.cgi
-EMAIL=luke@madstop.com
+VENDOR=http://projects.puppetlabs.com/projects/puppet
+EMAIL=luke@puppetlabs.com

@@ -5,10 +5,8 @@ Puppet, an automated administrative engine for your Linux and Unix systems, perf
 administrative tasks (such as adding users, installing packages, and updating server
 configurations) based on a centralized specification.
 
-Documentation (and detailed install instructions) can be found online at the 
-`Puppet Documentation`_ site.
-
-Additional documentation can also be found at the `Puppet Wiki`_.
+Documentation (and detailed installation instructions) can be found online at the 
+[Puppet Docs site](http://docs.puppetlabs.com).
 
 Installation
 ------------
@@ -28,14 +26,15 @@ Generally, you need the following things installed:
   available separately.  You could probably just compile and install that one
   library, though.
 
-* The Ruby XMLRPC client and server libraries.  For some reason, this often
-  isn't included in the main ruby distributions.  You can test for it by
-  running 'ruby -rxmlrpc/client -e "puts :yep"'.  If that errors out, you're missing
-  the library.
+* Facter => 1.5.1 (available via your package manager or from the [Facter site](http://puppetlabs.com/projects/facter).
 
-* Facter => 1.5.1
-  You can get this from your package management system or the `Facter site`_
+License
+-------
 
-.. _Puppet Documentation: http://docs.puppetlabs.com
-.. _Puppet Wiki: http://projects.puppetlabs.com/projects/puppet/wiki/
-.. _Facter site: http://puppetlabs.com/projects/facter
+See LICENSE file.
+
+Support
+-------
+
+Please log tickets and issues at our [Projects site](http://projects.puppetlabs.com)
+
