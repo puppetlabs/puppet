@@ -13,20 +13,12 @@
 #
 # Author::    Hector Rivas Gandara <keymon@gmail.com>
 #
-# TODO::
-#  - Add new AIX specific attributes, specilly registry and SYSTEM.
-#  
 require 'puppet/provider/aixobject'
 require 'tempfile'
 require 'date'
 
 Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   desc "User management for AIX! Users are managed with mkuser, rmuser, chuser, lsuser"
-
-  # Constants
-  # Default extra attributes to add when element is created
-  # registry=compat SYSTEM=compat: Needed if you are using LDAP by default.
-  @DEFAULT_EXTRA_ATTRS = [ "registry=compat", "SYSTEM=compat" ]
 
   # This will the the default provider for this platform
   defaultfor :operatingsystem => :aix
@@ -42,6 +34,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   commands :chpasswd  => "/bin/chpasswd"
 
   # Provider features
+  has_features :manages_aix_lam
   has_features :manages_homedir, :manages_passwords
   has_features :manages_expiry,  :manages_password_age
 
@@ -53,6 +46,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #verify :groups, "Groups must be comma-separated" do |value|
   #  value !~ /\s/
   #end
+
+  # User attributes to ignore
+  def self.attribute_ignore
+    []
+  end
 
   # AIX attributes to properties mapping.
   # 
@@ -78,13 +76,22 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   
   #--------------
   # Command lines
+  def get_ia_module_args
+    if @resource[:ia_load_module]
+      ["-R", @resource[:ia_load_module].to_s]
+    else
+      []
+    end
+  end
   
   def lsgroupscmd(value=@resource[:name])
-    [command(:lsgroup),"-R", self.class.ia_module, "-a", "id", value]
+    [command(:lsgroup)] +
+      self.get_ia_module_args +
+      ["-a", "id", value]
   end
 
   def lscmd(value=@resource[:name])
-    [self.class.command(:list), "-R", self.class.ia_module , value]
+    [self.class.command(:list)] + self.get_ia_module_args + [ value]
   end
 
   def lsallcmd()
@@ -96,18 +103,26 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     # Puppet does not call to self.<parameter>= method if it does not exists.
     #
     # It gets an extra list of arguments to add to the user.
-    [self.class.command(:add), "-R", self.class.ia_module  ]+
+    [self.class.command(:add)] + self.get_ia_module_args +
       self.hash2args(@resource.to_hash) +
       extra_attrs + [@resource[:name]]
   end
 
-  def modifycmd(hash = property_hash)
-    [self.class.command(:modify), "-R", self.class.ia_module ]+
-      self.hash2args(hash) + [@resource[:name]]
+  # Get modify command
+  def modifycmd(hash = property_hash, translate=true)
+    if translate
+      args = self.hash2args(hash)
+    else 
+      args = self.hash2args(hash, nil)
+    end
+    return nil if args.empty?
+    
+    [self.class.command(:modify)] + self.get_ia_module_args +
+      args + [@resource[:name]]
   end
 
   def deletecmd
-    [self.class.command(:delete),"-R", self.class.ia_module, @resource[:name]]
+    [self.class.command(:delete)] + self.get_ia_module_args + [@resource[:name]]
   end
 
   #--------------
@@ -118,6 +133,16 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     self.password = @resource[:password] if @resource[:password]
   end 
 
+  
+  def get_arguments(key, value, mapping, objectinfo)
+    # In the case of attributes, return a list of key=vlaue
+    if key == :attributes
+      raise Puppet::Error, "Attributes must be a list of pairs key=value on #{@resource.class.name}[#{@resource.name}]" \
+        unless value and value.is_a? Hash
+      return value.select { |k,v| true }.map { |pair| pair.join("=") }
+    end
+    super(key, value, mapping, objectinfo)
+  end
   
   # Get the groupname from its id
   def self.groupname_by_id(gid)
@@ -238,6 +263,33 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       tmpfile.delete()
     end
   end 
+
+  def filter_attributes(hash)
+    # Return only not managed attributtes.
+    hash.select {
+        |k,v| !self.class.attribute_mapping_from.include?(k) and
+                !self.class.attribute_ignore.include?(k)
+      }.inject({}) {
+        |hash, array| hash[array[0]] = array[1]; hash
+      }
+  end
+
+  def attributes
+    filter_attributes(getosinfo(refresh = false))
+  end
+
+  def attributes=(attr_hash)
+    #self.class.validate(param, value)
+    param = :attributes
+    cmd = modifycmd({param => filter_attributes(attr_hash)}, false)
+    if cmd 
+      begin
+        execute(cmd)
+      rescue Puppet::ExecutionFailure  => detail
+        raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
+      end
+    end
+  end
 
   #- **comment**
   #    A description of the user.  Generally is a user's full name.

@@ -193,7 +193,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
           info "Empty key in string 'i'?"
           continue
         end
-        key = key_str.downcase.to_sym
+        key = key_str.to_sym
        
         properties = self.load_attribute(key, val, mapping, properties)
       end
@@ -232,13 +232,13 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # For the colon separated list it will:
   #  1. Get keys from first line.
   #  2. Parse next line.
-  def parse_command_output(output)
+  def parse_command_output(output, mapping=self.class.attribute_mapping_from)
     lines = output.split("\n")
     # if it begins with #something:... is a colon separated list.
     if lines[0] =~ /^#.*:/ 
-      self.parse_colon_list(lines[1], lines[0][1..-1].split(':'))
+      self.parse_colon_list(lines[1], lines[0][1..-1].split(':'), mapping)
     else
-      self.parse_attr_list(lines[0])
+      self.parse_attr_list(lines[0], mapping)
     end
   end
 
@@ -247,7 +247,10 @@ class Puppet::Provider::AixObject < Puppet::Provider
     if @objectinfo.nil? or refresh == true
       # Execute lsuser, split all attributes and add them to a dict.
       begin
+        output = execute(self.lscmd)
         @objectinfo = self.parse_command_output(execute(self.lscmd))
+        # All attributtes without translation
+        @objectosinfo = self.parse_command_output(execute(self.lscmd), nil)
       rescue Puppet::ExecutionFailure => detail
         # Print error if needed. FIXME: Do not check the user here.
         Puppet.debug "aix.getinfo(): Could not find #{@resource.class.name} #{@resource.name}: #{detail}" 
@@ -255,6 +258,15 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
     @objectinfo
   end
+
+  # Retrieve what we can about our object, without translate the values.
+  def getosinfo(refresh = false)
+    if @objectosinfo .nil? or refresh == true
+      getinfo(refresh)
+    end
+    @objectosinfo
+  end
+
 
   # List all elements of given type. It works for colon separated commands and
   # list commands. 
@@ -369,7 +381,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
     @property_hash[symbolize(param)] = value
     
     if getinfo().nil?
-      # This is weird...
+      # This is weird... 
       raise Puppet::Error, "Trying to update parameter '#{param}' to '#{value}' for a resource that does not exists #{@resource.class.name} #{@resource.name}: #{detail}"
     end
     if value == getinfo()[param.to_sym]
@@ -377,7 +389,6 @@ class Puppet::Provider::AixObject < Puppet::Provider
     end
     
     #self.class.validate(param, value)
-    
     if cmd = modifycmd({param =>value})
       begin
         execute(cmd)

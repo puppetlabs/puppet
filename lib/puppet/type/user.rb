@@ -34,6 +34,9 @@ module Puppet
     feature :manages_expiry,
       "The provider can manage the expiry date for a user."
 
+    feature :manages_aix_lam,
+      "The provider can manage AIX Loadable Authentication Module (LAM) system."
+
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
@@ -434,5 +437,39 @@ module Puppet
     newproperty(:project, :required_features => :manages_solaris_rbac) do
       desc "The name of the project associated with a user"
     end
+
+    newparam(:ia_load_module, :required_features => :manages_aix_lam) do
+      desc "The name of the I&A module to use to manage this user"
+
+      defaultto "compat"
+    end
+
+    newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
+      desc "Specify user AIX attributes in an array of keyvalue pairs"
+
+      def membership
+        :attribute_membership
+      end
+      
+      def delimiter
+        " "
+      end
+
+      validate do |value|
+        raise ArgumentError, "Attributes value pairs must be seperated by an =" unless value.include?("=")
+      end
+    end
+
+    newparam(:attribute_membership) do
+      desc "Whether specified attribute value pairs should be treated as the only attributes
+        of the user or whether they should merely
+        be treated as the minimum list."
+
+      newvalues(:inclusive, :minimum)
+      
+      defaultto :minimum
+    end
+
+
   end
 end
