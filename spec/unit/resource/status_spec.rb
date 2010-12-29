@@ -10,7 +10,7 @@ describe Puppet::Resource::Status do
     @status = Puppet::Resource::Status.new(@resource)
   end
 
-  [:node, :version, :file, :line, :current_values, :status, :evaluation_time].each do |attr|
+  [:node, :file, :line, :current_values, :status, :evaluation_time].each do |attr|
     it "should support #{attr}" do
       @status.send(attr.to_s + "=", "foo")
       @status.send(attr).should == "foo"
@@ -38,7 +38,7 @@ describe Puppet::Resource::Status do
     Puppet::Resource::Status.new(@resource).source_description.should == "/my/path"
   end
 
-  [:file, :line, :version].each do |attr|
+  [:file, :line].each do |attr|
     it "should copy the resource's #{attr}" do
       @resource.expects(attr).returns "foo"
       Puppet::Resource::Status.new(@resource).send(attr).should == "foo"

@@ -4,7 +4,7 @@ module Puppet
       include Puppet::Util::Tagging
       include Puppet::Util::Logging
 
-      attr_accessor :resource, :node, :version, :file, :line, :current_values, :status, :evaluation_time
+      attr_accessor :resource, :node, :file, :line, :current_values, :status, :evaluation_time
 
       STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled]
       attr_accessor *STATES
@@ -48,7 +48,7 @@ module Puppet
         @change_count = 0
         @out_of_sync_count = 0
 
-        [:file, :line, :version].each do |attr|
+        [:file, :line].each do |attr|
           send(attr.to_s + "=", resource.send(attr))
         end
 
