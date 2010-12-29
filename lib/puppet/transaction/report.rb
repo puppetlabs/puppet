@@ -149,6 +149,8 @@ class Puppet::Transaction::Report
       metrics[name.to_s.downcase] = value
     end
 
+    metrics["total"] = metrics.values.inject(0) { |a,b| a+b }
+
     add_metric(:time, metrics)
   end
 end

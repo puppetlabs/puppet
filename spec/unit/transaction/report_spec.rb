@@ -200,6 +200,15 @@ describe Puppet::Transaction::Report do
         @report.calculate_metrics
         metric(:time, "foobar").should == 50
       end
+
+      it "should have a total time" do
+        add_statuses(3, :file) do |status|
+          status.evaluation_time = 1.25
+        end
+        @report.add_times :config_retrieval, 0.5
+        @report.calculate_metrics
+        metric(:time, "total").should == 4.25
+      end
     end
 
     describe "for events" do
