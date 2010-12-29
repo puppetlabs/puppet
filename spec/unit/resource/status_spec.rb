@@ -74,7 +74,7 @@ describe Puppet::Resource::Status do
       @status.send_log :notice, "my message"
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       it "should pass the #{attr}" do
         Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
         @status.send(attr.to_s + "=", "my val")

@@ -83,7 +83,7 @@ describe Puppet::Transaction::Event do
       Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       it "should pass the #{attr}" do
         Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
         Puppet::Transaction::Event.new(attr => "my val").send_log

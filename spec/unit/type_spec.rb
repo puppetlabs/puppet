@@ -116,7 +116,7 @@ describe Puppet::Type do
     catalog.version = 50
     catalog.add_resource resource
 
-    resource.source_descriptors.should == {:version=>50, :tags=>["mount", "foo"], :path=>"/Mount[foo]"}
+    resource.source_descriptors.should == {:tags=>["mount", "foo"], :path=>"/Mount[foo]"}
   end
 
   it "should consider its type to be the name of its class" do
