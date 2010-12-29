@@ -51,10 +51,8 @@ class Puppet::Application::Inspect < Puppet::Application
 
     @report.configuration_version = catalog.version
 
-    retrieval_time =  Time.now - retrieval_starttime
-    @report.add_times("config_retrieval", retrieval_time)
-
-    starttime = Time.now
+    inspect_starttime = Time.now
+    @report.add_times("config_retrieval", inspect_starttime - retrieval_starttime)
 
     catalog.to_ral.resources.each do |ral_resource|
       audited_attributes = ral_resource[:audit]
@@ -70,7 +68,9 @@ class Puppet::Application::Inspect < Puppet::Application
       @report.add_resource_status(status)
     end
 
-    @report.add_metric(:time, {"config_retrieval" => retrieval_time, "inspect" => Time.now - starttime})
+    finishtime = Time.now
+    @report.add_times("inspect", finishtime - inspect_starttime)
+    @report.calculate_metrics
 
     begin
       @report.save
