@@ -44,10 +44,10 @@ class Puppet::Transaction::Report
   end
 
   def finalize_report
-    calculate_resource_metrics
-    calculate_time_metrics
-    calculate_change_metric
-    calculate_event_metrics
+    add_metric(:resources, calculate_resource_metrics)
+    add_metric(:time, calculate_time_metrics)
+    add_metric(:changes, {:total => calculate_change_metric})
+    add_metric(:events, calculate_event_metrics)
   end
 
   def initialize(kind, configuration_version=nil)
@@ -108,8 +108,7 @@ class Puppet::Transaction::Report
   private
 
   def calculate_change_metric
-    total = resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
-    add_metric(:changes, {:total => total})
+    resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
   end
 
   def calculate_event_metrics
@@ -122,7 +121,7 @@ class Puppet::Transaction::Report
       end
     end
 
-    add_metric(:events, metrics)
+    metrics
   end
 
   def calculate_resource_metrics
@@ -136,7 +135,7 @@ class Puppet::Transaction::Report
       end
     end
 
-    add_metric(:resources, metrics)
+    metrics
   end
 
   def calculate_time_metrics
@@ -152,6 +151,6 @@ class Puppet::Transaction::Report
 
     metrics["total"] = metrics.values.inject(0) { |a,b| a+b }
 
-    add_metric(:time, metrics)
+    metrics
   end
 end
