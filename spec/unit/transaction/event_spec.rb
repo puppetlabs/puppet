@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
-  [:previous_value, :desired_value, :property, :resource, :name, :message, :version, :file, :line, :tags].each do |attr|
+  [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags].each do |attr|
     it "should support #{attr}" do
       event = Puppet::Transaction::Event.new
       event.send(attr.to_s + "=", "foo")
