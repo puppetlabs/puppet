@@ -101,22 +101,22 @@ describe Puppet::Transaction::Report do
   describe "when computing exit status" do
     it "should produce 2 if changes are present" do
       report = Puppet::Transaction::Report.new("apply")
-      report.add_metric("changes", {:total => 1})
-      report.add_metric("resources", {:failed => 0})
+      report.add_metric("changes", {"total" => 1})
+      report.add_metric("resources", {"failed" => 0})
       report.exit_status.should == 2
     end
 
     it "should produce 4 if failures are present" do
       report = Puppet::Transaction::Report.new("apply")
-      report.add_metric("changes", {:total => 0})
-      report.add_metric("resources", {:failed => 1})
+      report.add_metric("changes", {"total" => 0})
+      report.add_metric("resources", {"failed" => 1})
       report.exit_status.should == 4
     end
 
     it "should produce 6 if both changes and failures are present" do
       report = Puppet::Transaction::Report.new("apply")
-      report.add_metric("changes", {:total => 1})
-      report.add_metric("resources", {:failed => 1})
+      report.add_metric("changes", {"total" => 1})
+      report.add_metric("resources", {"failed" => 1})
       report.exit_status.should == 6
     end
   end
@@ -162,7 +162,7 @@ describe Puppet::Transaction::Report do
         add_statuses(3)
 
         @report.finalize_report
-        metric(:resources, :total).should == 3
+        metric(:resources, "total").should == 3
       end
 
       Puppet::Resource::Status::STATES.each do |state|
@@ -170,7 +170,7 @@ describe Puppet::Transaction::Report do
           add_statuses(3) { |status| status.send(state.to_s + "=", true) }
 
           @report.finalize_report
-          metric(:resources, state).should == 3
+          metric(:resources, state.to_s).should == 3
         end
       end
 
@@ -185,13 +185,13 @@ describe Puppet::Transaction::Report do
       it "should provide the number of changes from the resource statuses and mark the report as 'changed'" do
         add_statuses(3) { |status| 3.times { status << Puppet::Transaction::Event.new(:status => 'success') } }
         @report.finalize_report
-        metric(:changes, :total).should == 9
+        metric(:changes, "total").should == 9
         @report.status.should == 'changed'
       end
 
       it "should provide a total even if there are no changes, and mark the report as 'unchanged'" do
         @report.finalize_report
-        metric(:changes, :total).should == 0
+        metric(:changes, "total").should == 0
         @report.status.should == 'unchanged'
       end
     end
@@ -234,15 +234,15 @@ describe Puppet::Transaction::Report do
     describe "for events" do
       it "should provide the total number of events" do
         add_statuses(3) do |status|
-          3.times { |i| status.add_event(Puppet::Transaction::Event.new) }
+          3.times { |i| status.add_event(Puppet::Transaction::Event.new :status => 'success') }
         end
         @report.finalize_report
-        metric(:events, :total).should == 9
+        metric(:events, "total").should == 9
       end
 
       it "should provide the total even if there are no events" do
         @report.finalize_report
-        metric(:events, :total).should == 0
+        metric(:events, "total").should == 0
       end
 
       Puppet::Transaction::Event::EVENT_STATUSES.each do |status_name|

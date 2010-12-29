@@ -44,7 +44,7 @@ class Puppet::Transaction::Report
   end
 
   def compute_status(resource_metrics, change_metric)
-    if (resource_metrics[:failed] || 0) > 0
+    if (resource_metrics["failed"] || 0) > 0
       'failed'
     elsif change_metric > 0
       'changed'
@@ -57,7 +57,7 @@ class Puppet::Transaction::Report
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
     change_metric = calculate_change_metric
-    add_metric(:changes, {:total => change_metric})
+    add_metric(:changes, {"total" => change_metric})
     add_metric(:events, calculate_event_metrics)
     @status = compute_status(resource_metrics, change_metric)
   end
@@ -109,8 +109,8 @@ class Puppet::Transaction::Report
   # individual bits represent the presence of different metrics.
   def exit_status
     status = 0
-    status |= 2 if @metrics["changes"][:total] > 0
-    status |= 4 if @metrics["resources"][:failed] > 0
+    status |= 2 if @metrics["changes"]["total"] > 0
+    status |= 4 if @metrics["resources"]["failed"] > 0
     status
   end
 
@@ -126,9 +126,9 @@ class Puppet::Transaction::Report
 
   def calculate_event_metrics
     metrics = Hash.new(0)
-    metrics[:total] = 0
+    metrics["total"] = 0
     resource_statuses.each do |name, status|
-      metrics[:total] += status.events.length
+      metrics["total"] += status.events.length
       status.events.each do |event|
         metrics[event.status] += 1
       end
@@ -139,12 +139,12 @@ class Puppet::Transaction::Report
 
   def calculate_resource_metrics
     metrics = Hash.new(0)
-    metrics[:total] = resource_statuses.length
+    metrics["total"] = resource_statuses.length
 
     resource_statuses.each do |name, status|
 
       Puppet::Resource::Status::STATES.each do |state|
-        metrics[state] += 1 if status.send(state)
+        metrics[state.to_s] += 1 if status.send(state)
       end
     end
 
