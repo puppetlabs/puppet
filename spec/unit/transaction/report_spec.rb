@@ -121,7 +121,14 @@ describe Puppet::Transaction::Report do
     end
   end
 
-  describe "when calculating metrics" do
+  describe "before finalizing the report" do
+    it "should have a status of 'failed'" do
+      report = Puppet::Transaction::Report.new("apply")
+      report.status.should == 'failed'
+    end
+  end
+
+  describe "when finalizing the report" do
     before do
       @report = Puppet::Transaction::Report.new("apply")
     end
@@ -166,18 +173,26 @@ describe Puppet::Transaction::Report do
           metric(:resources, state).should == 3
         end
       end
+
+      it "should mark the report as 'failed' if there are failing resources" do
+        add_statuses(1) { |status| status.failed = true }
+        @report.finalize_report
+        @report.status.should == 'failed'
+      end
     end
 
     describe "for changes" do
-      it "should provide the number of changes from the resource statuses" do
+      it "should provide the number of changes from the resource statuses and mark the report as 'changed'" do
         add_statuses(3) { |status| 3.times { status << Puppet::Transaction::Event.new(:status => 'success') } }
         @report.finalize_report
         metric(:changes, :total).should == 9
+        @report.status.should == 'changed'
       end
 
-      it "should provide a total even if there are no changes" do
+      it "should provide a total even if there are no changes, and mark the report as 'unchanged'" do
         @report.finalize_report
         metric(:changes, :total).should == 0
+        @report.status.should == 'unchanged'
       end
     end
 

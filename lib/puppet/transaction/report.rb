@@ -11,7 +11,7 @@ class Puppet::Transaction::Report
   indirects :report, :terminus_class => :processor
 
   attr_accessor :configuration_version
-  attr_reader :resource_statuses, :logs, :metrics, :host, :time, :kind
+  attr_reader :resource_statuses, :logs, :metrics, :host, :time, :kind, :status
 
   # This is necessary since Marshall doesn't know how to
   # dump hash with default proc (see below @records)
@@ -43,11 +43,23 @@ class Puppet::Transaction::Report
     @resource_statuses[status.resource] = status
   end
 
+  def compute_status(resource_metrics, change_metric)
+    if (resource_metrics[:failed] || 0) > 0
+      'failed'
+    elsif change_metric > 0
+      'changed'
+    else
+      'unchanged'
+    end
+  end
+
   def finalize_report
-    add_metric(:resources, calculate_resource_metrics)
+    resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
-    add_metric(:changes, {:total => calculate_change_metric})
+    change_metric = calculate_change_metric
+    add_metric(:changes, {:total => change_metric})
     add_metric(:events, calculate_event_metrics)
+    @status = compute_status(resource_metrics, change_metric)
   end
 
   def initialize(kind, configuration_version=nil)
@@ -61,6 +73,7 @@ class Puppet::Transaction::Report
     @report_format = 2
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
+    @status = 'failed' # assume failed until the report is finalized
   end
 
   def name
