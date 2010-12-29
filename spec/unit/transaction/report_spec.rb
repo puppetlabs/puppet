@@ -174,6 +174,11 @@ describe Puppet::Transaction::Report do
         @report.finalize_report
         metric(:changes, :total).should == 9
       end
+
+      it "should provide a total even if there are no changes" do
+        @report.finalize_report
+        metric(:changes, :total).should == 0
+      end
     end
 
     describe "for times" do
@@ -218,6 +223,11 @@ describe Puppet::Transaction::Report do
         end
         @report.finalize_report
         metric(:events, :total).should == 9
+      end
+
+      it "should provide the total even if there are no events" do
+        @report.finalize_report
+        metric(:events, :total).should == 0
       end
 
       Puppet::Transaction::Event::EVENT_STATUSES.each do |status_name|

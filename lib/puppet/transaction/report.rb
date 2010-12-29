@@ -46,7 +46,7 @@ class Puppet::Transaction::Report
   def finalize_report
     calculate_resource_metrics
     calculate_time_metrics
-    calculate_change_metrics
+    calculate_change_metric
     calculate_event_metrics
   end
 
@@ -107,17 +107,14 @@ class Puppet::Transaction::Report
 
   private
 
-  def calculate_change_metrics
-    metrics = Hash.new(0)
-    resource_statuses.each do |name, status|
-      metrics[:total] += status.change_count if status.change_count
-    end
-
-    add_metric(:changes, metrics)
+  def calculate_change_metric
+    total = resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
+    add_metric(:changes, {:total => total})
   end
 
   def calculate_event_metrics
     metrics = Hash.new(0)
+    metrics[:total] = 0
     resource_statuses.each do |name, status|
       metrics[:total] += status.events.length
       status.events.each do |event|
