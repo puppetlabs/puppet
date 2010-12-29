@@ -170,8 +170,8 @@ class Puppet::Configurer
     send_report(report, transaction)
   end
 
-  def send_report(report, trans = nil)
-    trans.generate_report if trans
+  def send_report(report, trans)
+    report.finalize_report if trans
     puts report.summary if Puppet[:summarize]
     report.save if Puppet[:report]
   rescue => detail

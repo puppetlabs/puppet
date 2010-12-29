@@ -70,7 +70,7 @@ class Puppet::Application::Inspect < Puppet::Application
 
     finishtime = Time.now
     @report.add_times("inspect", finishtime - inspect_starttime)
-    @report.calculate_metrics
+    @report.finalize_report
 
     begin
       @report.save

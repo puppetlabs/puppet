@@ -43,7 +43,7 @@ class Puppet::Transaction::Report
     @resource_statuses[status.resource] = status
   end
 
-  def calculate_metrics
+  def finalize_report
     calculate_resource_metrics
     calculate_time_metrics
     calculate_change_metrics
