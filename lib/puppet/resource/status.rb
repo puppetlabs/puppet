@@ -4,7 +4,7 @@ module Puppet
       include Puppet::Util::Tagging
       include Puppet::Util::Logging
 
-      attr_accessor :resource, :node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time
+      attr_accessor :resource, :node, :version, :file, :line, :current_values, :status, :evaluation_time
 
       STATES = [:skipped, :failed, :failed_to_restart, :restarted, :changed, :out_of_sync, :scheduled]
       attr_accessor *STATES
