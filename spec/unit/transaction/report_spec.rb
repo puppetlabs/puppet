@@ -254,4 +254,12 @@ describe Puppet::Transaction::Report do
       end
     end
   end
+
+  describe "when outputting yaml" do
+    it "should not include @external_times" do
+      report = Puppet::Transaction::Report.new('apply')
+      report.add_times('config_retrieval', 1.0)
+      report.to_yaml_properties.should_not include('@external_times')
+    end
+  end
 end

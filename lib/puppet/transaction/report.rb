@@ -101,6 +101,10 @@ class Puppet::Transaction::Report
     status
   end
 
+  def to_yaml_properties
+    (instance_variables - ["@external_times"]).sort
+  end
+
   private
 
   def calculate_change_metrics
