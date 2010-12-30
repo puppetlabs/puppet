@@ -12,6 +12,8 @@ module Puppet
       attr_reader :source_description, :default_log_level, :time, :resource
       attr_reader :change_count, :out_of_sync_count
 
+      YAML_ATTRIBUTES = %w{@resource @file @line @evaluation_time @change_count @out_of_sync_count @tags @time @events @out_of_sync @changed}
+
       # Provide a boolean method for each of the states.
       STATES.each do |attr|
         define_method("#{attr}?") do
@@ -57,6 +59,10 @@ module Puppet
         tag(*resource.tags)
         @time = Time.now
         @events = []
+      end
+
+      def to_yaml_properties
+        (YAML_ATTRIBUTES & instance_variables).sort
       end
 
       private

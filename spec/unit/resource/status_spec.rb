@@ -135,4 +135,14 @@ describe Puppet::Resource::Status do
       @status.out_of_sync.should == true
     end
   end
+
+  describe "When converting to YAML" do
+    it "should include only documented attributes" do
+      @status.file = "/foo.rb"
+      @status.line = 27
+      @status.evaluation_time = 2.7
+      @status.tags = %w{one two}
+      @status.to_yaml_properties.should == Puppet::Resource::Status::YAML_ATTRIBUTES.sort
+    end
+  end
 end
