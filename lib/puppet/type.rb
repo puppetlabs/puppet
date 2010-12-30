@@ -446,7 +446,7 @@ class Type
   # Create a transaction event.  Called by Transaction or by
   # a property.
   def event(options = {})
-    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags, :version => version}.merge(options))
+    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
   end
 
   # Let the catalog determine whether a given cached value is

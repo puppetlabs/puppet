@@ -26,7 +26,7 @@ module Puppet::Util::Logging
   end
 
   def log_metadata
-    [:file, :line, :version, :tags].inject({}) do |result, attr|
+    [:file, :line, :tags].inject({}) do |result, attr|
       result[attr] = send(attr) if respond_to?(attr)
       result
     end

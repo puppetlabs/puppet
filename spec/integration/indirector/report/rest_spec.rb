@@ -67,30 +67,26 @@ describe "Report REST Terminus" do
     report = Puppet::Transaction::Report.new("apply")
 
     resourcemetrics = {
-      :total => 12,
-      :out_of_sync => 20,
-      :applied => 45,
-      :skipped => 1,
-      :restarted => 23,
-      :failed_restarts => 1,
-      :scheduled => 10
+      "total" => 12,
+      "out_of_sync" => 20,
+      "applied" => 45,
+      "skipped" => 1,
+      "restarted" => 23,
+      "failed_restarts" => 1,
+      "scheduled" => 10
     }
     report.add_metric(:resources, resourcemetrics)
 
     timemetrics = {
-      :resource1 => 10,
-      :resource2 => 50,
-      :resource3 => 40,
-      :resource4 => 20,
+      "resource1" => 10,
+      "resource2" => 50,
+      "resource3" => 40,
+      "resource4" => 20,
     }
     report.add_metric(:times, timemetrics)
 
 
-          report.add_metric(
-        :changes,
-        
-      :total => 20
-    )
+    report.add_metric(:changes, "total" => 20)
 
     report.save
   end

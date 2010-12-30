@@ -7,7 +7,8 @@ class Puppet::Transaction::Event
   include Puppet::Util::Tagging
   include Puppet::Util::Logging
 
-  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :node, :version, :file, :line, :source_description, :audited]
+  ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited]
+  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time}
   attr_accessor *ATTRIBUTES
   attr_writer :tags
   attr_accessor :time
@@ -16,6 +17,7 @@ class Puppet::Transaction::Event
   EVENT_STATUSES = %w{noop success failure audit}
 
   def initialize(*args)
+    @audited = false
     options = args.last.is_a?(Hash) ? args.pop : ATTRIBUTES.inject({}) { |hash, attr| hash[attr] = args.pop; hash }
     options.each { |attr, value| send(attr.to_s + "=", value) unless value.nil? }
 
@@ -44,6 +46,10 @@ class Puppet::Transaction::Event
 
   def to_s
     message
+  end
+
+  def to_yaml_properties
+    (YAML_ATTRIBUTES & instance_variables).sort
   end
 
   private

@@ -233,16 +233,8 @@ describe Puppet::Configurer, "when sending a report" do
     @trans = stub 'transaction'
   end
 
-  it "should require a report" do
-    lambda { @configurer.send_report }.should raise_error(ArgumentError)
-  end
-
-  it "should allow specification of a transaction" do
-    lambda { @configurer.send_report(@report, @trans)  }.should_not raise_error(ArgumentError)
-  end
-
-  it "should use any provided transaction to add metrics to the report" do
-    @trans.expects(:generate_report)
+  it "should finalize the report" do
+    @report.expects(:finalize_report)
     @configurer.send_report(@report, @trans)
   end
 
@@ -252,28 +244,28 @@ describe Puppet::Configurer, "when sending a report" do
     @report.expects(:summary).returns "stuff"
 
     @configurer.expects(:puts).with("stuff")
-    @configurer.send_report(@report)
+    @configurer.send_report(@report, nil)
   end
 
   it "should not print a report summary if not configured to do so" do
     Puppet.settings[:summarize] = false
 
     @configurer.expects(:puts).never
-    @configurer.send_report(@report)
+    @configurer.send_report(@report, nil)
   end
 
   it "should save the report if reporting is enabled" do
     Puppet.settings[:report] = true
 
     @report.expects(:save)
-    @configurer.send_report(@report)
+    @configurer.send_report(@report, nil)
   end
 
   it "should not save the report if reporting is disabled" do
     Puppet.settings[:report] = false
 
     @report.expects(:save).never
-    @configurer.send_report(@report)
+    @configurer.send_report(@report, nil)
   end
 
   it "should log but not fail if saving the report fails" do
@@ -282,7 +274,7 @@ describe Puppet::Configurer, "when sending a report" do
     @report.expects(:save).raises "whatever"
 
     Puppet.expects(:err)
-    lambda { @configurer.send_report(@report) }.should_not raise_error
+    lambda { @configurer.send_report(@report, nil) }.should_not raise_error
   end
 end
 

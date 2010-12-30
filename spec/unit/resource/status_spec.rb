@@ -10,7 +10,12 @@ describe Puppet::Resource::Status do
     @status = Puppet::Resource::Status.new(@resource)
   end
 
-  [:node, :version, :file, :line, :current_values, :skipped_reason, :status, :evaluation_time].each do |attr|
+  it "should compute type and title correctly" do
+    @status.resource_type.should == "File"
+    @status.title.should == "/my/file"
+  end
+
+  [:node, :file, :line, :current_values, :status, :evaluation_time].each do |attr|
     it "should support #{attr}" do
       @status.send(attr.to_s + "=", "foo")
       @status.send(attr).should == "foo"
@@ -38,7 +43,7 @@ describe Puppet::Resource::Status do
     Puppet::Resource::Status.new(@resource).source_description.should == "/my/path"
   end
 
-  [:file, :line, :version].each do |attr|
+  [:file, :line].each do |attr|
     it "should copy the resource's #{attr}" do
       @resource.expects(attr).returns "foo"
       Puppet::Resource::Status.new(@resource).send(attr).should == "foo"
@@ -74,7 +79,7 @@ describe Puppet::Resource::Status do
       @status.send_log :notice, "my message"
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       it "should pass the #{attr}" do
         Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
         @status.send(attr.to_s + "=", "my val")
@@ -112,20 +117,20 @@ describe Puppet::Resource::Status do
   it "should not start with any changes" do
     @status.change_count.should == 0
 
-    @status.changed.should be_false
-    @status.out_of_sync.should be_false
+    @status.changed.should == false
+    @status.out_of_sync.should == false
   end
 
   it "should not treat failure, audit, or noop events as changed" do
     ['failure', 'audit', 'noop'].each do |s| @status << Puppet::Transaction::Event.new(:status => s) end
     @status.change_count.should == 0
-    @status.changed.should be_false
+    @status.changed.should == false
   end
 
   it "should not treat audit events as out of sync" do
     @status << Puppet::Transaction::Event.new(:status => 'audit')
     @status.out_of_sync_count.should == 0
-    @status.out_of_sync.should be_false
+    @status.out_of_sync.should == false
   end
 
   ['failure', 'noop', 'success'].each do |event_status|
@@ -133,6 +138,16 @@ describe Puppet::Resource::Status do
       3.times do @status << Puppet::Transaction::Event.new(:status => event_status) end
       @status.out_of_sync_count.should == 3
       @status.out_of_sync.should == true
+    end
+  end
+
+  describe "When converting to YAML" do
+    it "should include only documented attributes" do
+      @status.file = "/foo.rb"
+      @status.line = 27
+      @status.evaluation_time = 2.7
+      @status.tags = %w{one two}
+      @status.to_yaml_properties.should == Puppet::Resource::Status::YAML_ATTRIBUTES.sort
     end
   end
 end

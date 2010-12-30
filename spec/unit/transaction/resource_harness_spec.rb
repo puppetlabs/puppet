@@ -208,11 +208,11 @@ describe Puppet::Transaction::ResourceHarness do
                       status.out_of_sync_count.should == expected_out_of_sync_count
 
                       # Check legacy summary fields
-                      status.changed.should == (expected_change_count == 0 ? nil : true)
-                      status.out_of_sync.should == (expected_out_of_sync_count == 0 ? nil : true)
+                      status.changed.should == (expected_change_count != 0)
+                      status.out_of_sync.should == (expected_out_of_sync_count != 0)
 
                       # Check the :synced field on state.yml
-                      synced_should_be_set = !noop_mode && status.changed != nil
+                      synced_should_be_set = !noop_mode && status.changed
                       (@harness.cached(resource, :synced) != nil).should == synced_should_be_set
                     end; end
                   end

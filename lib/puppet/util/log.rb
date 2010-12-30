@@ -189,7 +189,7 @@ class Puppet::Util::Log
     @levels.include?(level)
   end
 
-  attr_accessor :time, :remote, :file, :line, :version, :source
+  attr_accessor :time, :remote, :file, :line, :source
   attr_reader :level, :message
 
   def initialize(args)
@@ -203,7 +203,7 @@ class Puppet::Util::Log
       tags.each { |t| self.tag(t) }
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       next unless value = args[attr]
       send(attr.to_s + "=", value)
     end
@@ -234,7 +234,7 @@ class Puppet::Util::Log
 
       descriptors[:tags].each { |t| tag(t) }
 
-      [:file, :line, :version].each do |param|
+      [:file, :line].each do |param|
         next unless descriptors[param]
         send(param.to_s + "=", descriptors[param])
       end

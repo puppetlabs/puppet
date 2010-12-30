@@ -120,7 +120,7 @@ describe Puppet::Util::Log do
       Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "foo")
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       it "should use #{attr} if provided" do
         Puppet::Util::Log.any_instance.expects(attr.to_s + "=").with "foo"
         Puppet::Util::Log.new(:level => "notice", :message => :foo, attr => "foo")
@@ -177,21 +177,10 @@ describe Puppet::Util::Log do
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
         log.expects(:tag).with("tag")
         log.expects(:tag).with("tag2")
-        log.expects(:version=).with(100)
 
         log.source = source
 
         log.source.should == "path"
-      end
-
-      it "should copy over any version information" do
-        catalog = Puppet::Resource::Catalog.new
-        catalog.version = 25
-        source = Puppet::Type.type(:file).new :path => "/foo/bar"
-        catalog.add_resource source
-
-        log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
-        log.version.should == 25
       end
 
       it "should copy over any file and line information" do
@@ -210,6 +199,24 @@ describe Puppet::Util::Log do
         source.expects(:file).never
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end
+    end
+  end
+
+  describe "to_yaml" do
+    it "should not include the @version attribute" do
+      log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
+      log.to_yaml_properties.should_not include('@version')
+    end
+
+    it "should include attributes @level, @message, @source, @tags, and @time" do
+      log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
+      log.to_yaml_properties.should == %w{@level @message @source @tags @time}
+    end
+
+    it "should include attributes @file and @line if specified" do
+      log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => "foo", :line => 35)
+      log.to_yaml_properties.should include('@file')
+      log.to_yaml_properties.should include('@line')
     end
   end
 end
