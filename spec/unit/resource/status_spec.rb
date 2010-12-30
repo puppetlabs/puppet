@@ -10,6 +10,11 @@ describe Puppet::Resource::Status do
     @status = Puppet::Resource::Status.new(@resource)
   end
 
+  it "should compute type and title correctly" do
+    @status.resource_type.should == "File"
+    @status.title.should == "/my/file"
+  end
+
   [:node, :file, :line, :current_values, :status, :evaluation_time].each do |attr|
     it "should support #{attr}" do
       @status.send(attr.to_s + "=", "foo")
