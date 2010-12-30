@@ -8,6 +8,7 @@ class Puppet::Transaction::Event
   include Puppet::Util::Logging
 
   ATTRIBUTES = [:name, :resource, :property, :previous_value, :desired_value, :historical_value, :status, :message, :file, :line, :source_description, :audited]
+  YAML_ATTRIBUTES = %w{@audited @property @previous_value @desired_value @historical_value @message @name @status @time}
   attr_accessor *ATTRIBUTES
   attr_writer :tags
   attr_accessor :time
@@ -45,6 +46,10 @@ class Puppet::Transaction::Event
 
   def to_s
     message
+  end
+
+  def to_yaml_properties
+    (YAML_ATTRIBUTES & instance_variables).sort
   end
 
   private

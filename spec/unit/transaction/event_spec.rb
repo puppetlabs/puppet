@@ -111,4 +111,17 @@ describe Puppet::Transaction::Event do
       Puppet::Transaction::Event.new(:resource => "Foo[bar]").send_log
     end
   end
+
+  describe "When converting to YAML" do
+    it "should include only documented attributes" do
+      resource = Puppet::Type.type(:file).new(:title => "/tmp/foo")
+      event = Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
+                                             :file => "/foo.rb", :line => 27, :tags => %w{one two},
+                                             :desired_value => 7, :historical_value => 'Brazil',
+                                             :message => "Help I'm trapped in a spec test",
+                                             :name => :mode_changed, :previous_value => 6, :property => :mode,
+                                             :status => 'success')
+      event.to_yaml_properties.should == Puppet::Transaction::Event::YAML_ATTRIBUTES.sort
+    end
+  end
 end
