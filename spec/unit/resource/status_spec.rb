@@ -112,20 +112,20 @@ describe Puppet::Resource::Status do
   it "should not start with any changes" do
     @status.change_count.should == 0
 
-    @status.changed.should be_false
-    @status.out_of_sync.should be_false
+    @status.changed.should == false
+    @status.out_of_sync.should == false
   end
 
   it "should not treat failure, audit, or noop events as changed" do
     ['failure', 'audit', 'noop'].each do |s| @status << Puppet::Transaction::Event.new(:status => s) end
     @status.change_count.should == 0
-    @status.changed.should be_false
+    @status.changed.should == false
   end
 
   it "should not treat audit events as out of sync" do
     @status << Puppet::Transaction::Event.new(:status => 'audit')
     @status.out_of_sync_count.should == 0
-    @status.out_of_sync.should be_false
+    @status.out_of_sync.should == false
   end
 
   ['failure', 'noop', 'success'].each do |event_status|

@@ -5,7 +5,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
-  [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags].each do |attr|
+  [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags, :audited].each do |attr|
     it "should support #{attr}" do
       event = Puppet::Transaction::Event.new
       event.send(attr.to_s + "=", "foo")
@@ -44,6 +44,12 @@ describe Puppet::Transaction::Event do
 
   it "should create a timestamp at its creation time" do
     Puppet::Transaction::Event.new.time.should be_instance_of(Time)
+  end
+
+  describe "audit property" do
+    it "should default to false" do
+      Puppet::Transaction::Event.new.audited.should == false
+    end
   end
 
   describe "when sending logs" do

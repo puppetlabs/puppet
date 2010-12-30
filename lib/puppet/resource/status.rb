@@ -47,6 +47,8 @@ module Puppet
         @resource = resource.to_s
         @change_count = 0
         @out_of_sync_count = 0
+        @changed = false
+        @out_of_sync = false
 
         [:file, :line].each do |attr|
           send(attr.to_s + "=", resource.send(attr))
