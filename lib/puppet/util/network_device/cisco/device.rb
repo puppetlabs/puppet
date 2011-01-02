@@ -163,11 +163,11 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
       case l
             # vlan    name    status
       when /^(\d+)\s+(\w+)\s+(\w+)\s+([a-zA-Z0-9,\/. ]+)\s*$/
-        vlan = { :id => $1, :name => $2, :status => $3, :interfaces => [] }
+        vlan = { :name => $1, :description => $2, :status => $3, :interfaces => [] }
         if $4.strip.length > 0
           vlan[:interfaces] = $4.strip.split(/\s*,\s*/).map{ |ifn| canonalize_ifname(ifn) }
         end
-        vlans[vlan[:id]] = vlan
+        vlans[vlan[:name]] = vlan
       when /^\s+([a-zA-Z0-9,\/. ]+)\s*$/
         raise "invalid sh vlan summary output" unless vlan
         if $1.strip.length > 0
@@ -177,6 +177,27 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
       end
     end
     vlans
+  end
+
+  def update_vlan(id, is = {}, should = {})
+    if should[:ensure] == :absent
+      Puppet.info "Removing #{id} from device vlan"
+      transport.command("conf t")
+      transport.command("no vlan #{id}")
+      transport.command("exit")
+      return
+    end
+
+    # We're creating or updating an entry
+    transport.command("conf t")
+    transport.command("vlan #{id}")
+    [is.keys, should.keys].flatten.uniq.each do |property|
+      Puppet.debug("trying property: #{property}: #{should[property]}")
+      next if property != :description
+      transport.command("name #{should[property]}")
+    end
+    transport.command("exit")
+    transport.command("exit")
   end
 
   def parse_trunking(interface)
