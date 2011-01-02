@@ -139,7 +139,11 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       flags = Augeas::TYPE_CHECK if resource[:type_check] == :true
       flags |= Augeas::NO_MODL_AUTOLOAD if resource[:incl]
       root = resource[:root]
-      load_path = resource[:load_path]
+      if resource[:load_path] == ""
+        load_path = "#{Puppet[:plugindir]}/augeas/lenses"
+      else
+        load_path = "#{resource[:load_path]}:#{Puppet[:plugindir]}/augeas/lenses"
+      end
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
       @aug = Augeas::open(root, load_path,flags)
 
