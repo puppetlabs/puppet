@@ -84,10 +84,12 @@ class Puppet::Transaction::ResourceHarness
     event.desired_value = property.should
     event.historical_value = historical_value
 
-    if do_audit and historical_value != current_value
-      event.message = "audit change: previously recorded value #{property.is_to_s(historical_value)} has been changed to #{property.is_to_s(current_value)}"
-      event.status = "audit"
+    if do_audit
       event.audited = true
+      event.status = "audit"
+      if historical_value != current_value
+        event.message = "audit change: previously recorded value #{property.is_to_s(historical_value)} has been changed to #{property.is_to_s(current_value)}"
+      end
     end
 
     event
@@ -96,7 +98,7 @@ class Puppet::Transaction::ResourceHarness
   def apply_parameter(property, current_value, do_audit, historical_value)
     event = create_change_event(property, current_value, do_audit, historical_value)
 
-    if event.audited && historical_value
+    if do_audit && historical_value && historical_value != current_value
       brief_audit_message = " (previously recorded value was #{property.is_to_s(historical_value)})"
     else
       brief_audit_message = ""
