@@ -16,10 +16,9 @@ class Puppet::Transaction::Event
 
   EVENT_STATUSES = %w{noop success failure audit}
 
-  def initialize(*args)
+  def initialize(options = {})
     @audited = false
-    options = args.last.is_a?(Hash) ? args.pop : ATTRIBUTES.inject({}) { |hash, attr| hash[attr] = args.pop; hash }
-    options.each { |attr, value| send(attr.to_s + "=", value) unless value.nil? }
+    options.each { |attr, value| send(attr.to_s + "=", value) }
 
     @time = Time.now
   end
