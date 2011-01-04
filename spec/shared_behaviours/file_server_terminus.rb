@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-10-18.
 #  Copyright (c) 2007. All rights reserved.
 
-describe "Puppet::Indirector::FileServerTerminus", :shared => true do
+shared_examples_for "Puppet::Indirector::FileServerTerminus" do
   # This only works if the shared behaviour is included before
   # the 'before' block in the including context.
   before do

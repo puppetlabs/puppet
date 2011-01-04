@@ -157,8 +157,7 @@ describe provider_class do
     end
   end
 
-  describe provider_class, " when parsing information about the root filesystem" do
-    confine "Mount type not tested on Darwin" => Facter["operatingsystem"].value != "Darwin"
+  describe provider_class, " when parsing information about the root filesystem", :if => Facter["operatingsystem"].value != "Darwin" do
     include ParsedMountTesting
 
     before do

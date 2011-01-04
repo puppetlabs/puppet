@@ -26,9 +26,7 @@ class FooExampleData
   end
 end
 
-describe Puppet::Indirector::Queue do
-  confine "PSON library is missing; cannot test queueing" => Puppet.features.pson?
-
+describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
   before :each do
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :my_queue, :register_terminus_type => nil, :model => @model
