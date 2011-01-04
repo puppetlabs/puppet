@@ -15,7 +15,7 @@ Puppet::Reports.register_report(:http) do
     req = Net::HTTP::Post.new(url.path)
     req.body = self.to_yaml
     req.content_type = "application/x-yaml"
-    p Net::HTTP.new(url.host, url.port).start {|http|
+    Net::HTTP.new(url.host, url.port).start {|http|
       http.request(req)
     }
   end
