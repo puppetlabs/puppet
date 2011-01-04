@@ -19,6 +19,10 @@ class Puppet::Resource::TypeCollection
     @watched_files = {}
   end
 
+  def inspect
+    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys }.inspect
+  end
+
   def <<(thing)
     add(thing)
     self

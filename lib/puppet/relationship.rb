@@ -71,6 +71,10 @@ class Puppet::Relationship
     "#{source} => #{target}"
   end
 
+  def inspect
+    "{ #{source} => #{target} }"
+  end
+
   def to_pson_data_hash
     data = {
       'source' => source.to_s,
