@@ -504,9 +504,7 @@ describe Puppet::Module do
     Puppet::Module.new("yay")
   end
 
-  describe "when loading the medatada file" do
-    confine "Cannot test module metadata without json" => Puppet.features.json?
-
+  describe "when loading the medatada file", :if => Puppet.features.json? do
     before do
       @data = {
         :license => "GPL2",

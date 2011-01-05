@@ -64,7 +64,7 @@ describe Puppet::Indirector, "when registering an indirection" do
   end
 end
 
-describe "Delegated Indirection Method", :shared => true do
+shared_examples_for "Delegated Indirection Method" do
   it "should delegate to the indirection" do
     @indirection.expects(@method)
     @thingie.send(@method, "me")

@@ -5,9 +5,7 @@ require 'puppet/network/handler'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 require 'puppet/network/http/rack/xmlrpc' if Puppet.features.rack?
 
-describe "Puppet::Network::HTTP::RackXMLRPC" do
-  confine "Rack is not available" => Puppet.features.rack?
-
+describe "Puppet::Network::HTTP::RackXMLRPC", :if => Puppet.features.rack? do
   describe "when initializing" do
     it "should create an Puppet::Network::XMLRPCServer" do
       Puppet::Network::XMLRPCServer.expects(:new).returns stub_everything

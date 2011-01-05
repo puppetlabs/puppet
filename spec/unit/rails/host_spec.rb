@@ -2,9 +2,7 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-describe "Puppet::Rails::Host" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
   def column(name, type)
     ActiveRecord::ConnectionAdapters::Column.new(name, nil, type, false)
   end

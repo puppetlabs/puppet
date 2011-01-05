@@ -12,8 +12,7 @@ ARGV.clear
 
 require 'puppet'
 require 'mocha'
-gem 'rspec', '>=1.2.9'
-require 'spec/autorun'
+gem 'rspec', '>=2.0.0'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
@@ -22,13 +21,12 @@ end
 
 require 'lib/puppet_spec/files'
 require 'monkey_patches/alias_should_to_must'
-require 'monkey_patches/add_confine_and_runnable_to_rspec_dsl'
 require 'monkey_patches/publicize_methods'
 
-Spec::Runner.configure do |config|
+RSpec.configure do |config|
   config.mock_with :mocha
 
-  config.prepend_after :each do
+  config.after :each do
     Puppet.settings.clear
     Puppet::Node::Environment.clear
     Puppet::Util::Storage.clear
@@ -58,7 +56,7 @@ Spec::Runner.configure do |config|
     Puppet::Util::Log.close_all
   end
 
-  config.prepend_before :each do
+  config.before :each do
     # these globals are set by Application
     $puppet_application_mode = nil
     $puppet_application_name = nil

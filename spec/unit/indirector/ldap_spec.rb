@@ -110,9 +110,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when connecting to ldap" do
-    confine "LDAP is not available" => Puppet.features.ldap?
-
+  describe "when connecting to ldap", :if => Puppet.features.ldap? do
     it "should create and start a Util::Ldap::Connection instance" do
       conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
@@ -135,9 +133,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when reconnecting to ldap" do
-    confine "Not running on culain as root" => (Puppet.features.root? and Facter.value("hostname") == "culain")
-
+  describe "when reconnecting to ldap", :if => (Puppet.features.root? and Facter.value("hostname") == "culain") do
     it "should reconnect to ldap when connections are lost"
   end
 end

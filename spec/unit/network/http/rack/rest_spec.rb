@@ -4,9 +4,7 @@ require File.dirname(__FILE__) + '/../../../../spec_helper'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 require 'puppet/network/http/rack/rest'
 
-describe "Puppet::Network::HTTP::RackREST" do
-  confine "Rack is not available" => Puppet.features.rack?
-
+describe "Puppet::Network::HTTP::RackREST", :if => Puppet.features.rack? do
   it "should include the Puppet::Network::HTTP::Handler module" do
     Puppet::Network::HTTP::RackREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
   end

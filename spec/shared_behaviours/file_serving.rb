@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-10-18.
 #  Copyright (c) 2007. All rights reserved.
 
-describe "Puppet::FileServing::Files", :shared => true do
+shared_examples_for "Puppet::FileServing::Files" do
   it "should use the rest terminus when the 'puppet' URI scheme is used and a host name is present" do
     uri = "puppet://myhost/fakemod/my/file"
 

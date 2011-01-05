@@ -155,9 +155,7 @@ describe Puppet::Relationship, " when matching edges with a non-standard event" 
   end
 end
 
-describe Puppet::Relationship, "when converting to pson" do
-  confine "Missing 'pson' library" => Puppet.features.pson?
-
+describe Puppet::Relationship, "when converting to pson", :if => Puppet.features.pson? do
   before do
     @edge = Puppet::Relationship.new(:a, :b, :event => :random, :callback => :whatever)
   end
@@ -190,9 +188,7 @@ describe Puppet::Relationship, "when converting to pson" do
   end
 end
 
-describe Puppet::Relationship, "when converting from pson" do
-  confine "Missing 'pson' library" => Puppet.features.pson?
-
+describe Puppet::Relationship, "when converting from pson", :if => Puppet.features.pson? do
   before do
     @event = "random"
     @callback = "whatever"
