@@ -58,11 +58,6 @@ describe Puppet::Transaction do
     @transaction.report.resource_statuses[resource.to_s].should equal(status)
   end
 
-  it "should calculate metrics on and report the report when asked to generate a report" do
-    @transaction.report.expects(:calculate_metrics)
-    @transaction.generate_report.should equal(@transaction.report)
-  end
-
   it "should consider a resource to be failed if a status instance exists for that resource and indicates it is failed" do
     resource = Puppet::Type.type(:notify).new :name => "yayness"
     status = Puppet::Resource::Status.new(resource)
@@ -94,7 +89,7 @@ describe Puppet::Transaction do
   end
 
   it "should be possible to replace the report object" do
-    report = Puppet::Transaction::Report.new
+    report = Puppet::Transaction::Report.new("apply")
     @transaction.report = report
 
     @transaction.report.should == report

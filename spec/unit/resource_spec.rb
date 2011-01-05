@@ -585,9 +585,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when converting to pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when converting to pson", :if => Puppet.features.pson? do
     def pson_output_should
       @resource.class.expects(:pson_create).with { |hash| yield hash }
     end
@@ -666,9 +664,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when converting from pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when converting from pson", :if => Puppet.features.pson? do
     def pson_result_should
       Puppet::Resource.expects(:new).with { |hash| yield hash }
     end

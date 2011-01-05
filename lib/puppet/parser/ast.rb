@@ -19,6 +19,10 @@ class Puppet::Parser::AST
 
   attr_accessor :parent, :scope
 
+  def inspect
+    "( #{self.class} #{self.to_s} #{@children.inspect} )"
+  end
+
   # don't fetch lexer comment by default
   def use_docs
     self.class.use_docs

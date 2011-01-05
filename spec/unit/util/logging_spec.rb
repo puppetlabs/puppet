@@ -81,7 +81,7 @@ describe Puppet::Util::Logging do
       @logger.notice ["foo", "bar", "baz"]
     end
 
-    [:file, :line, :version, :tags].each do |attr|
+    [:file, :line, :tags].each do |attr|
       it "should include #{attr} if available" do
         @logger.singleton_class.send(:attr_accessor, attr)
 

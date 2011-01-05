@@ -49,10 +49,10 @@ class Puppet::Application::Inspect < Puppet::Application
       raise "Could not find catalog for #{Puppet[:certname]}"
     end
 
-    retrieval_time =  Time.now - retrieval_starttime
-    @report.add_times("config_retrieval", retrieval_time)
+    @report.configuration_version = catalog.version
 
-    starttime = Time.now
+    inspect_starttime = Time.now
+    @report.add_times("config_retrieval", inspect_starttime - retrieval_starttime)
 
     catalog.to_ral.resources.each do |ral_resource|
       audited_attributes = ral_resource[:audit]
@@ -62,13 +62,19 @@ class Puppet::Application::Inspect < Puppet::Application
 
       status = Puppet::Resource::Status.new(ral_resource)
       audited_attributes.each do |name|
-        event = ral_resource.event(:previous_value => audited_resource[name], :property => name, :status => "audit", :message => "inspected value is #{audited_resource[name].inspect}")
-        status.add_event(event)
+        next if audited_resource[name].nil?
+        # Skip :absent properties of :absent resources. Really, it would be nicer if the RAL returned nil for those, but it doesn't. ~JW
+        if name == :ensure or audited_resource[:ensure] != :absent or audited_resource[name] != :absent
+          event = ral_resource.event(:previous_value => audited_resource[name], :property => name, :status => "audit", :message => "inspected value is #{audited_resource[name].inspect}")
+          status.add_event(event)
+        end
       end
       @report.add_resource_status(status)
     end
 
-    @report.add_metric(:time, {"config_retrieval" => retrieval_time, "inspect" => Time.now - starttime})
+    finishtime = Time.now
+    @report.add_times("inspect", finishtime - inspect_starttime)
+    @report.finalize_report
 
     begin
       @report.save

@@ -160,9 +160,7 @@ describe Puppet::Application do
       end
     end
 
-    describe 'on POSIX systems' do
-      confine "HUP works only on POSIX systems" => Puppet.features.posix?
-
+    describe 'on POSIX systems', :if => Puppet.features.posix? do
       it 'should signal process with HUP after block if restart requested during block execution' do
         Puppet::Application.run_status = nil
         target = mock 'target'
@@ -224,8 +222,7 @@ describe Puppet::Application do
       @app.parse_options
     end
 
-    describe "when using --help" do
-      confine "rdoc" => Puppet.features.usage?
+    describe "when using --help", :if => Puppet.features.usage? do
 
       it "should call RDoc::usage and exit" do
         @app.expects(:exit)

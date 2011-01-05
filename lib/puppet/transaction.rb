@@ -6,7 +6,6 @@ require 'puppet/util/tagging'
 require 'puppet/application'
 
 class Puppet::Transaction
-  require 'puppet/transaction/change'
   require 'puppet/transaction/event'
   require 'puppet/transaction/event_manager'
   require 'puppet/transaction/resource_harness'
@@ -222,12 +221,6 @@ class Puppet::Transaction
     end
   end
 
-  # Generate a transaction report.
-  def generate_report
-    @report.calculate_metrics
-    @report
-  end
-
   # Should we ignore tags?
   def ignore_tags?
     ! (@catalog.host_config? or Puppet[:name] == "puppet")
@@ -238,7 +231,7 @@ class Puppet::Transaction
   def initialize(catalog)
     @catalog = catalog
 
-    @report = Report.new
+    @report = Report.new("apply", catalog.version)
 
     @event_manager = Puppet::Transaction::EventManager.new(self)
 
@@ -283,26 +276,6 @@ class Puppet::Transaction
 
   def relationship_graph
     catalog.relationship_graph
-  end
-
-  # Send off the transaction report.
-  def send_report
-    begin
-      report = generate_report
-    rescue => detail
-      Puppet.err "Could not generate report: #{detail}"
-      return
-    end
-
-    puts report.summary if Puppet[:summarize]
-
-    if Puppet[:report]
-      begin
-        report.save
-      rescue => detail
-        Puppet.err "Reporting failed: #{detail}"
-      end
-    end
   end
 
   def add_resource_status(status)

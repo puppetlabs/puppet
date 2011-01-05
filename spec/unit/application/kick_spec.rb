@@ -4,9 +4,7 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/application/kick'
 
-describe Puppet::Application::Kick do
-
-  confine "Kick's eventloops can only start on POSIX" => Puppet.features.posix?
+describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
   before :each do
     require 'puppet/util/ldap/connection'

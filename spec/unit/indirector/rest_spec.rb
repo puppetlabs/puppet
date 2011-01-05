@@ -3,7 +3,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 require 'puppet/indirector/rest'
 
-describe "a REST http call", :shared => true do
+shared_examples_for "a REST http call" do
   it "should accept a path" do
     lambda { @search.send(@method, *@arguments) }.should_not raise_error(ArgumentError)
   end

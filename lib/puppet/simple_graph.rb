@@ -80,6 +80,10 @@ class Puppet::SimpleGraph
       vertex.to_s
     end
 
+    def inspect
+      { :@adjacencies => @adjacencies, :@vertex => @vertex.to_s }.inspect
+    end
+
     private
 
     # These methods exist so we don't need a Hash with a default proc.
