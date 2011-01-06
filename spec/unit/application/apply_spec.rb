@@ -325,8 +325,8 @@ describe Puppet::Application::Apply do
 
       it "should save the last run summary" do
         Puppet.stubs(:[]).with(:noop).returns(false)
-        report = stub 'report'
-        Puppet::Configurer.any_instance.stubs(:initialize_report).returns(report)
+        report = Puppet::Transaction::Report.new("apply")
+        Puppet::Transaction::Report.stubs(:new).returns(report)
 
         Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
         @apply.main

@@ -208,8 +208,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when using Microsoft Windows filenames" do
-    confine "Only works on Microsoft Windows" => Puppet.features.microsoft_windows?
+  describe "when using Microsoft Windows filenames", :if => Puppet.features.microsoft_windows? do
     describe "on Microsoft Windows systems" do
       before do
         Puppet.features.stubs(:posix?).returns(false)
@@ -271,8 +270,7 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using UNC filenames" do
-    describe "on Microsoft Windows systems" do
-      confine "Only works on Microsoft Windows" => Puppet.features.microsoft_windows?
+    describe "on Microsoft Windows systems", :if => Puppet.features.microsoft_windows? do
       before do
         Puppet.features.stubs(:posix?).returns(false)
         Puppet.features.stubs(:microsoft_windows?).returns(true)
@@ -381,9 +379,9 @@ describe Puppet::Type.type(:file) do
 
 
                 @resource = Puppet::Type.type(:file).new(
-                
+
             :path => @link,
-        
+
             :mode => "755"
           )
           @catalog.add_resource @resource
@@ -1058,7 +1056,7 @@ describe Puppet::Type.type(:file) do
     before do
       @type_class = Puppet::Type.type(:file)
     end
-    
+
     it "should have a regexp that captures the entire string, except for a terminating slash" do
       patterns = @type_class.title_patterns
       string = "abc/\n\tdef/"

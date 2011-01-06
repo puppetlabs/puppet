@@ -15,7 +15,7 @@ module Puppet::Util::LogPaths
 
     descriptors[:tags] = tags
 
-    [:path, :file, :line, :version].each do |param|
+    [:path, :file, :line].each do |param|
       next unless value = send(param)
       descriptors[param] = value
     end

@@ -8,7 +8,6 @@ require 'puppettest/fileparsing'
 provider_class = Puppet::Type.type(:mailalias).provider(:aliases)
 
 describe provider_class do
-  include PuppetTest
   include PuppetTest::FileParsing
   include PuppetTest::Support::Utils
 

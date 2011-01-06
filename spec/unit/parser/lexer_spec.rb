@@ -5,7 +5,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/parser/lexer'
 
 # This is a special matcher to match easily lexer output
-Spec::Matchers.define :be_like do |*expected|
+RSpec::Matchers.define :be_like do |*expected|
   match do |actual|
     expected.zip(actual).all? { |e,a| !e or a[0] == e or (e.is_a? Array and a[0] == e[0] and (a[1] == e[1] or (a[1].is_a?(Hash) and a[1][:value] == e[1]))) }
   end
@@ -651,7 +651,8 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 end
 
-require 'puppettest/support/utils'
+require File.dirname(__FILE__) + '/../../../test/lib/puppettest'
+require File.dirname(__FILE__) + '/../../../test/lib/puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
   extend PuppetTest::Support::Utils
   textfiles do |file|

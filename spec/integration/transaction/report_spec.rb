@@ -19,7 +19,7 @@ describe Puppet::Transaction::Report do
 
       Facter.stubs(:value).returns "host.domain.com"
 
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
 
       terminus.expects(:process).with(report)
 

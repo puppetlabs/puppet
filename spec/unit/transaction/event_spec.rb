@@ -5,7 +5,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
-  [:previous_value, :desired_value, :property, :resource, :name, :message, :node, :version, :file, :line, :tags].each do |attr|
+  [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags, :audited].each do |attr|
     it "should support #{attr}" do
       event = Puppet::Transaction::Event.new
       event.send(attr.to_s + "=", "foo")
@@ -46,6 +46,12 @@ describe Puppet::Transaction::Event do
     Puppet::Transaction::Event.new.time.should be_instance_of(Time)
   end
 
+  describe "audit property" do
+    it "should default to false" do
+      Puppet::Transaction::Event.new.audited.should == false
+    end
+  end
+
   describe "when sending logs" do
     before do
       Puppet::Util::Log.stubs(:new)
@@ -83,7 +89,7 @@ describe Puppet::Transaction::Event do
       Puppet::Transaction::Event.new(:tags => %w{one two}).send_log
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       it "should pass the #{attr}" do
         Puppet::Util::Log.expects(:new).with { |args| args[attr] == "my val" }
         Puppet::Transaction::Event.new(attr => "my val").send_log
@@ -103,6 +109,19 @@ describe Puppet::Transaction::Event do
     it "should use the property as the source if one is available and no property or source description is set" do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "Foo[bar]" }
       Puppet::Transaction::Event.new(:resource => "Foo[bar]").send_log
+    end
+  end
+
+  describe "When converting to YAML" do
+    it "should include only documented attributes" do
+      resource = Puppet::Type.type(:file).new(:title => "/tmp/foo")
+      event = Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
+                                             :file => "/foo.rb", :line => 27, :tags => %w{one two},
+                                             :desired_value => 7, :historical_value => 'Brazil',
+                                             :message => "Help I'm trapped in a spec test",
+                                             :name => :mode_changed, :previous_value => 6, :property => :mode,
+                                             :status => 'success')
+      event.to_yaml_properties.should == Puppet::Transaction::Event::YAML_ATTRIBUTES.sort
     end
   end
 end

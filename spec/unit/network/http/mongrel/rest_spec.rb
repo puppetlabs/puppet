@@ -4,8 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../../../spec_helper')
 
 require 'puppet/network/http'
 
-describe "Puppet::Network::HTTP::MongrelREST" do
-  confine "Mongrel is not available" => Puppet.features.mongrel?
+describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel? do
   before do
     require 'puppet/network/http/mongrel/rest'
   end
