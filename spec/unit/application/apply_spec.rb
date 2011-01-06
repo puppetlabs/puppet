@@ -177,7 +177,7 @@ describe Puppet::Application::Apply do
     describe "the main command" do
       before :each do
         Puppet.stubs(:[])
-        Puppet.settings.stubs(:use)
+        Puppet::Util::Settings.any_instance.stubs(:use)
         Puppet.stubs(:[]).with(:prerun_command).returns ""
         Puppet.stubs(:[]).with(:postrun_command).returns ""
         Puppet.stubs(:[]).with(:trace).returns(true)
