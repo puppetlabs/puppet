@@ -65,7 +65,13 @@ class Puppet::Application::Inspect < Puppet::Application
         next if audited_resource[name].nil?
         # Skip :absent properties of :absent resources. Really, it would be nicer if the RAL returned nil for those, but it doesn't. ~JW
         if name == :ensure or audited_resource[:ensure] != :absent or audited_resource[name] != :absent
-          event = ral_resource.event(:previous_value => audited_resource[name], :property => name, :status => "audit", :message => "inspected value is #{audited_resource[name].inspect}")
+          event = ral_resource.event(
+            :previous_value => audited_resource[name],
+            :property       => name,
+            :status         => "audit",
+            :audited        => true,
+            :message        => "inspected value is #{audited_resource[name].inspect}"
+          )
           status.add_event(event)
         end
       end
