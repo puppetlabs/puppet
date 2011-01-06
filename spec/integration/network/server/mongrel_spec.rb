@@ -5,8 +5,7 @@ require 'puppet/network/server'
 require 'socket'
 
 describe Puppet::Network::Server do
-  describe "when using mongrel" do
-    confine "Mongrel is not available" => Puppet.features.mongrel?
+  describe "when using mongrel", :if => Puppet.features.mongrel? do
 
     before :each do
       Puppet[:servertype] = 'mongrel'

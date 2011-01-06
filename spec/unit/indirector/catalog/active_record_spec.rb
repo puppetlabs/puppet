@@ -3,9 +3,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 
-describe "Puppet::Resource::Catalog::ActiveRecord" do
-  confine "Missing Rails" => Puppet.features.rails?
-
+describe "Puppet::Resource::Catalog::ActiveRecord", :if => Puppet.features.rails? do
   require 'puppet/rails'
 
   before :all do

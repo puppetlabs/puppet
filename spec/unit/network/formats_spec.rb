@@ -69,9 +69,8 @@ describe "Puppet Network Format" do
     end
   end
 
-  describe "base64 compressed yaml" do
+  describe "base64 compressed yaml", :if => Puppet.features.zlib? do
     yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
-    confine "We must have zlib" => Puppet.features.zlib?
 
     before do
       @yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
@@ -265,9 +264,7 @@ describe "Puppet Network Format" do
     Puppet::Network::FormatHandler.format(:pson).should_not be_nil
   end
 
-  describe "pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "pson", :if => Puppet.features.pson? do
     before do
       @pson = Puppet::Network::FormatHandler.format(:pson)
     end

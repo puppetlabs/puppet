@@ -4,8 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet/node/facts'
 
-describe "Puppet::Node::Facts::Couch" do
-  confine "couchrest gem is missing; cannot test couch terminus" => Puppet.features.couchdb?
+describe "Puppet::Node::Facts::Couch", :if => Puppet.features.couchdb? do
   require 'puppet/indirector/facts/couch' if Puppet.features.couchdb?
 
   before do

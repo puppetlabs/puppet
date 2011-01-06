@@ -140,7 +140,9 @@ describe Puppet::Util::Checksums do
       end
 
       it "should return nil for streams" do
-        @summer.send(sum.to_s + "_stream").should be_nil
+        expectation = stub "expectation"
+        expectation.expects(:do_something!).at_least_once
+        @summer.send(sum.to_s + "_stream"){ |checksum| checksum << "anything" ; expectation.do_something!  }.should be_nil
       end
     end
   end
@@ -148,6 +150,12 @@ describe Puppet::Util::Checksums do
   describe "when using the none checksum" do
     it "should return an empty string" do
       @summer.none_file("/my/file").should == ""
+    end
+
+    it "should return an empty string for streams" do
+      expectation = stub "expectation"
+      expectation.expects(:do_something!).at_least_once
+      @summer.none_stream{ |checksum| checksum << "anything" ; expectation.do_something!  }.should == ""
     end
   end
 end

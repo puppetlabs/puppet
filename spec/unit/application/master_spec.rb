@@ -412,9 +412,7 @@ describe Puppet::Application::Master do
         @master.main
       end
 
-      describe "with --rack" do
-        confine "Rack is not available" => Puppet.features.rack?
-
+      describe "with --rack", :if => Puppet.features.rack? do
         before do
           require 'puppet/network/http/rack'
           Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)

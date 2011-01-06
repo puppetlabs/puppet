@@ -18,7 +18,7 @@ processor = Puppet::Reports.report(:http)
 
 describe processor do
   before  { Net::HTTP.any_instance.stubs(:start).yields(FakeHTTP) }
-  subject { Puppet::Transaction::Report.new.extend(processor) }
+  subject { Puppet::Transaction::Report.new("apply").extend(processor) }
 
   it { should respond_to(:process) }
 

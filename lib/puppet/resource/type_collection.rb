@@ -25,6 +25,10 @@ class Puppet::Resource::TypeCollection
     end
   end
 
+  def inspect
+    "TypeCollection" + { :hostclasses => @hostclasses.keys, :definitions => @definitions.keys, :nodes => @nodes.keys }.inspect
+  end
+
   def <<(thing)
     add(thing)
     self

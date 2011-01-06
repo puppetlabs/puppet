@@ -6,9 +6,7 @@ describe "Package Provider" do
   Puppet::Type.type(:package).providers.each do |name|
     provider = Puppet::Type.type(:package).provider(name)
 
-    describe name do
-      confine "Provider #{name} is not suitable" => provider.suitable?
-
+    describe name, :if => provider.suitable? do
       it "should fail when asked to install an invalid package" do
         pending("This test hangs forever with recent versions of RubyGems") if provider.name == :gem
         pkg = Puppet::Type.newpackage :name => "nosuch#{provider.name}", :provider => provider.name
