@@ -72,6 +72,26 @@ describe Puppet::Application::Inspect do
       properties.has_key?("target").should == false
     end
 
+    it "should set audited to true for all events" do
+      catalog = Puppet::Resource::Catalog.new
+      file = Tempfile.new("foo")
+      resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
+      catalog.add_resource(resource)
+      Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
+
+      events = nil
+
+      Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
+        events = request.instance.resource_statuses.values.first.events
+      end
+
+      @inspect.run_command
+
+      events.each do |event|
+        event.audited.should == true
+      end
+    end
+
     it "should not report irrelevent attributes if the resource is absent" do
       catalog = Puppet::Resource::Catalog.new
       file = Tempfile.new("foo")
