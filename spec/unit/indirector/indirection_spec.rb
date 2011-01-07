@@ -4,7 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/indirector/indirection'
 
-describe "Indirection Delegator", :shared => true do
+shared_examples_for "Indirection Delegator" do
   it "should create a request object with the appropriate method name and all of the passed arguments" do
     request = Puppet::Indirector::Request.new(:indirection, :find, "me")
 
@@ -64,7 +64,7 @@ describe "Indirection Delegator", :shared => true do
   end
 end
 
-describe "Delegation Authorizer", :shared => true do
+shared_examples_for "Delegation Authorizer" do
   before do
     # So the :respond_to? turns out correctly.
     class << @terminus

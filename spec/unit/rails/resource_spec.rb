@@ -3,9 +3,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/rails'
 
-describe "Puppet::Rails::Resource" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe "Puppet::Rails::Resource", :if => Puppet.features.rails? do
   def column(name, type)
     ActiveRecord::ConnectionAdapters::Column.new(name, nil, type, false)
   end

@@ -177,7 +177,7 @@ describe Puppet::Application::Apply do
     describe "the main command" do
       before :each do
         Puppet.stubs(:[])
-        Puppet.settings.stubs(:use)
+        Puppet::Util::Settings.any_instance.stubs(:use)
         Puppet.stubs(:[]).with(:prerun_command).returns ""
         Puppet.stubs(:[]).with(:postrun_command).returns ""
         Puppet.stubs(:[]).with(:trace).returns(true)
@@ -325,8 +325,8 @@ describe Puppet::Application::Apply do
 
       it "should save the last run summary" do
         Puppet.stubs(:[]).with(:noop).returns(false)
-        report = stub 'report'
-        Puppet::Configurer.any_instance.stubs(:initialize_report).returns(report)
+        report = Puppet::Transaction::Report.new("apply")
+        Puppet::Transaction::Report.stubs(:new).returns(report)
 
         Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
         @apply.main

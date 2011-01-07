@@ -46,6 +46,10 @@ class Puppet::Resource
     resource
   end
 
+  def inspect
+    "#{@type}[#{@title}]#{to_hash.inspect}"
+  end
+
   def to_pson_data_hash
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
       next hash unless value = self.send(param)

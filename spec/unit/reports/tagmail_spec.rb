@@ -11,7 +11,7 @@ describe tagmail do
   extend PuppetTest::Support::Utils
 
   before do
-    @processor = Puppet::Transaction::Report.new
+    @processor = Puppet::Transaction::Report.new("apply")
     @processor.extend(Puppet::Reports.report(:tagmail))
   end
 

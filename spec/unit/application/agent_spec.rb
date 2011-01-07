@@ -293,6 +293,14 @@ describe Puppet::Application::Agent do
       @puppetd.setup
     end
 
+    it "mocha work-around" do
+      # Mocha 0.9.10 and earlier leaves behind a bogus "use" method
+      # See https://github.com/floehopper/mocha/issues#issue/20
+      class << Puppet.settings
+        remove_method :use rescue nil
+      end
+    end
+
     it "should install a remote ca location" do
       Puppet::SSL::Host.expects(:ca_location=).with(:remote)
 

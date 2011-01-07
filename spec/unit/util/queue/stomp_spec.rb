@@ -3,18 +3,14 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 require 'puppet/util/queue'
 
-describe Puppet::Util::Queue do
-  confine "Missing Stomp" => Puppet.features.stomp?
-
+describe Puppet::Util::Queue, :if => Puppet.features.stomp? do
   it 'should load :stomp client appropriately' do
     Puppet.settings.stubs(:value).returns 'faux_queue_source'
     Puppet::Util::Queue.queue_type_to_class(:stomp).name.should == 'Puppet::Util::Queue::Stomp'
   end
 end
 
-describe 'Puppet::Util::Queue::Stomp' do
-  confine "Missing Stomp" => Puppet.features.stomp?
-
+describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
   before do
     # So we make sure we never create a real client instance.
     # Otherwise we'll try to connect, and that's bad.

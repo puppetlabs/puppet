@@ -72,10 +72,6 @@ class Puppet::Configurer
     @splayed = false
   end
 
-  def initialize_report
-    Puppet::Transaction::Report.new
-  end
-
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
   def prepare(options)
     dostorage
@@ -134,7 +130,7 @@ class Puppet::Configurer
       Puppet.err "Failed to prepare catalog: #{detail}"
     end
 
-    options[:report] ||= initialize_report
+    options[:report] ||= Puppet::Transaction::Report.new("apply")
     report = options[:report]
     Puppet::Util::Log.newdestination(report)
 
@@ -144,6 +140,8 @@ class Puppet::Configurer
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
+
+    report.configuration_version = catalog.version
 
     transaction = nil
 
@@ -171,8 +169,8 @@ class Puppet::Configurer
     send_report(report, transaction)
   end
 
-  def send_report(report, trans = nil)
-    trans.generate_report if trans
+  def send_report(report, trans)
+    report.finalize_report if trans
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
     if Puppet[:report]
