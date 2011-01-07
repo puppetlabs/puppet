@@ -8,7 +8,7 @@ require 'puppet/configurer'
 
 describe Puppet::Configurer do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
   end
 
@@ -74,7 +74,7 @@ end
 
 describe Puppet::Configurer, "when executing a catalog run" do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
     @agent.stubs(:prepare)
     @agent.stubs(:facts_for_uploading).returns({})
@@ -82,6 +82,7 @@ describe Puppet::Configurer, "when executing a catalog run" do
     @catalog.stubs(:apply)
     @agent.stubs(:retrieve_catalog).returns @catalog
     @agent.stubs(:save_last_run_summary)
+    Puppet::Transaction::Report.indirection.stubs(:save)
   end
 
   it "should prepare for the run" do
@@ -226,7 +227,7 @@ end
 
 describe Puppet::Configurer, "when sending a report" do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @configurer = Puppet::Configurer.new
     @configurer.stubs(:save_last_run_summary)
 
@@ -295,7 +296,7 @@ end
 
 describe Puppet::Configurer, "when saving the summary report file" do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @configurer = Puppet::Configurer.new
 
     @report = stub 'report'
@@ -325,7 +326,7 @@ end
 
 describe Puppet::Configurer, "when retrieving a catalog" do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
     @agent.stubs(:facts_for_uploading).returns({})
 
@@ -455,7 +456,7 @@ end
 
 describe Puppet::Configurer, "when converting the catalog" do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
 
     @catalog = Puppet::Resource::Catalog.new
@@ -489,7 +490,7 @@ end
 
 describe Puppet::Configurer, "when preparing for a run" do
   before do
-    Puppet::Util::Settings.any_instance.stubs(:use).returns(true)
+    Puppet.settings.stubs(:use).returns(true)
     @agent = Puppet::Configurer.new
     @agent.stubs(:dostorage)
     @agent.stubs(:download_fact_plugins)
