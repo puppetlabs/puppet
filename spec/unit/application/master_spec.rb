@@ -119,7 +119,7 @@ describe Puppet::Application::Master do
       Puppet::Log.stubs(:level=)
       Puppet::SSL::CertificateAuthority.stubs(:instance)
       Puppet::SSL::CertificateAuthority.stubs(:ca?)
-      Puppet::Util::Settings.any_instance.stubs(:use)
+      Puppet.settings.stubs(:use)
 
       @master.options.stubs(:[]).with(any_parameters)
     end
@@ -183,14 +183,6 @@ describe Puppet::Application::Master do
       @master.setup
     end
 
-    it "mocha work-around" do
-      # Mocha 0.9.10 and earlier leaves behind a bogus "use" method
-      # See https://github.com/floehopper/mocha/issues#issue/20
-      class << Puppet.settings
-        remove_method :use rescue nil
-      end
-    end
-
     it "should cache class in yaml" do
       Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
 
@@ -220,18 +212,9 @@ describe Puppet::Application::Master do
       end
 
       it "should tell Puppet.settings to use :ca category" do
-        Puppet.settings.stubs(:use)
         Puppet.settings.expects(:use).with(:ca)
 
         @master.setup
-      end
-
-      it "mocha work-around" do
-        # Mocha 0.9.10 and earlier leaves behind a bogus "use" method
-        # See https://github.com/floehopper/mocha/issues#issue/20
-        class << Puppet.settings
-          remove_method :use rescue nil
-        end
       end
 
       it "should instantiate the CertificateAuthority singleton" do
