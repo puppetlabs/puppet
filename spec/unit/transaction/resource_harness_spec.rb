@@ -64,49 +64,52 @@ describe Puppet::Transaction::ResourceHarness do
     end
   end
 
-  describe "when an error occurs" do
-    before :each do
-      # Create a temporary anonymous class to act as a provider
-      stubProvider = Class.new(Puppet::Type)
-      stubProvider.instance_eval do
-        initvars
+  def make_stub_provider
+    stubProvider = Class.new(Puppet::Type)
+    stubProvider.instance_eval do
+      initvars
 
-        newparam(:name) do
-          desc "The name var"
-          isnamevar
+      newparam(:name) do
+        desc "The name var"
+        isnamevar
+      end
+
+      newproperty(:foo) do
+        desc "A property that can be changed successfully"
+        def sync
         end
 
-        newproperty(:foo) do
-          desc "A property that can be changed successfully"
-          def sync
-          end
-
-          def retrieve
-            :absent
-          end
-
-          def insync?(reference_value)
-            false
-          end
+        def retrieve
+          :absent
         end
 
-        newproperty(:bar) do
-          desc "A property that raises an exception when you try to change it"
-          def sync
-            raise ZeroDivisionError.new('bar')
-          end
-
-          def retrieve
-            :absent
-          end
-
-          def insync?(reference_value)
-            false
-          end
+        def insync?(reference_value)
+          false
         end
       end
 
-      resource = stubProvider.new :name => 'name', :foo => 1, :bar => 2
+      newproperty(:bar) do
+        desc "A property that raises an exception when you try to change it"
+        def sync
+          raise ZeroDivisionError.new('bar')
+        end
+
+        def retrieve
+          :absent
+        end
+
+        def insync?(reference_value)
+          false
+        end
+      end
+    end
+    stubProvider
+  end
+
+  describe "when an error occurs" do
+    before :each do
+      stub_provider = make_stub_provider
+      resource = stub_provider.new :name => 'name', :foo => 1, :bar => 2
       resource.expects(:err).never
       @status = @harness.evaluate(resource)
     end
