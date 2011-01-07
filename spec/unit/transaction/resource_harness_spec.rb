@@ -64,6 +64,64 @@ describe Puppet::Transaction::ResourceHarness do
     end
   end
 
+  describe "when an error occurs" do
+    before :each do
+      # Create a temporary anonymous class to act as a provider
+      stubProvider = Class.new(Puppet::Type)
+      stubProvider.instance_eval do
+        initvars
+
+        newparam(:name) do
+          desc "The name var"
+          isnamevar
+        end
+
+        newproperty(:foo) do
+          desc "A property that can be changed successfully"
+          def sync
+          end
+
+          def retrieve
+            :absent
+          end
+
+          def insync?(reference_value)
+            false
+          end
+        end
+
+        newproperty(:bar) do
+          desc "A property that raises an exception when you try to change it"
+          def sync
+            raise ZeroDivisionError.new('bar')
+          end
+
+          def retrieve
+            :absent
+          end
+
+          def insync?(reference_value)
+            false
+          end
+        end
+      end
+
+      resource = stubProvider.new :name => 'name', :foo => 1, :bar => 2
+      resource.expects(:err).never
+      @status = @harness.evaluate(resource)
+    end
+
+    it "should record previous successful events" do
+      @status.events[0].property.should == 'foo'
+      @status.events[0].status.should == 'success'
+    end
+
+    it "should record a failure event" do
+      @status.events[1].property.should == 'bar'
+      @status.events[1].status.should == 'failure'
+    end
+  end
+
   describe "when applying changes" do
     [false, true].each do |noop_mode|; describe (noop_mode ? "in noop mode" : "in normal mode") do
       [nil, '750'].each do |machine_state|; describe (machine_state ? "with a file initially present" : "with no file initially present") do
