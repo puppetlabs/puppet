@@ -601,10 +601,35 @@ describe Puppet::Resource::Type do
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
 
+    it "should add specified attributes to the resource" do
+      @top.ensure_in_catalog(@scope, {'one'=>'1', 'two'=>'2'})
+      @compiler.catalog.resource(:class, "top")['one'].should == '1'
+      @compiler.catalog.resource(:class, "top")['two'].should == '2'
+    end
+
+    it "should not require params for a param class" do
+      @top.ensure_in_catalog(@scope, {})
+      @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
     it "should evaluate the parent class if one exists" do
       @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should evaluate the parent class if one exists" do
+      @middle.ensure_in_catalog(@scope, {})
+
+      @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should fail if you try to create duplicate class resources" do
+      othertop = Puppet::Parser::Resource.new(:class, 'top',:source => @source, :scope => @scope )
+      # add the same class resource to the catalog
+      @compiler.catalog.add_resource(othertop)
+      @compiler.catalog.expects(:resource).with(:class, 'top').returns true
+      lambda { @top.ensure_in_catalog(@scope, {}) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
     end
 
     it "should fail to evaluate if a parent class is defined but cannot be found" do
