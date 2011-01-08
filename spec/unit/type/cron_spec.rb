@@ -4,7 +4,18 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 
 describe Puppet::Type.type(:cron) do
   before do
-    @cron = Puppet::Type.type(:cron).new( :name => "foo" )
+    @class = Puppet::Type.type(:cron)
+
+    # Init a fake provider
+    @provider_class = stub 'provider_class', :ancestors => [], :name => 'fake', :suitable? => true, :supports_parameter? => true
+    @class.stubs(:defaultprovider).returns @provider_class
+    @class.stubs(:provider).returns @provider_class
+
+    @provider = stub 'provider', :class => @provider_class, :clean => nil
+    @provider.stubs(:is_a?).returns false
+    @provider_class.stubs(:new).returns @provider
+
+    @cron = @class.new( :name => "foo" )
   end
 
   it "it should accept an :environment that looks like a path" do
