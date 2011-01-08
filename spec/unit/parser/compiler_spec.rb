@@ -109,6 +109,15 @@ describe Puppet::Parser::Compiler do
       compiler.classlist.should include("bar")
     end
 
+    it "should transform node class hashes into a class list" do
+      node = Puppet::Node.new("mynode")
+      node.classes = {'foo'=>{'one'=>'1'}, 'bar'=>{'two'=>'2'}}
+      compiler = Puppet::Parser::Compiler.new(node)
+
+      compiler.classlist.should include("foo")
+      compiler.classlist.should include("bar")
+    end
+
     it "should add a 'main' stage to the catalog" do
       @compiler.catalog.resource(:stage, :main).should be_instance_of(Puppet::Parser::Resource)
     end
@@ -184,6 +193,14 @@ describe Puppet::Parser::Compiler do
       @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
       @compiler.class.publicize_methods(:evaluate_node_classes) { @compiler.evaluate_node_classes }
     end
+
+    it "should evaluate any parameterized classes named in the node" do
+      classes = {'foo'=>{'1'=>'one'}, 'bar'=>{'2'=>'two'}}
+      @node.stubs(:classes).returns(classes)
+      @compiler.expects(:evaluate_classes).with(classes, @compiler.topscope)
+      @compiler.compile
+    end
+
 
     it "should evaluate the main class if it exists" do
       compile_stub(:evaluate_main)
@@ -566,6 +583,14 @@ describe Puppet::Parser::Compiler do
       @scope.expects(:find_hostclass).with("notfound").returns(nil)
       @compiler.evaluate_classes(%w{notfound}, @scope)
     end
+    # I wish it would fail
+    it "should log when it can't find class" do
+      klasses = {'foo'=>nil}
+      @node.classes = klasses
+      @compiler.topscope.stubs(:find_hostclass).with('foo').returns(nil)
+      Puppet.expects(:info).with('Could not find class foo for testnode')
+      @compiler.compile
+    end
   end
 
   describe "when evaluating found classes" do
@@ -585,6 +610,28 @@ describe Puppet::Parser::Compiler do
 
       @compiler.evaluate_classes(%w{myclass}, @scope)
     end
+
+    # test that ensure_in_catalog is called for existing classes
+    it "should ensure each node class hash is in catalog" do
+      klasses = {'foo'=>{'1'=>'one'}, 'bar'=>{'2'=>'two'}}
+      @node.classes = klasses
+      klasses.each do |name, params|
+        klass = Puppet::Resource::Type.new(:hostclass, name)
+        @compiler.topscope.stubs(:find_hostclass).with(name).returns(klass)
+        klass.expects(:ensure_in_catalog).with(@compiler.topscope, params)
+      end
+      @compiler.compile
+    end
+
+    it "should ensure class is in catalog without params" do
+      @node.classes = klasses = {'foo'=>nil}
+      foo = Puppet::Resource::Type.new(:hostclass, 'foo')
+      @compiler.topscope.stubs(:find_hostclass).with('foo').returns(foo)
+      foo.expects(:ensure_in_catalog).with(@compiler.topscope, {})
+      @compiler.compile
+    end
+
+
 
     it "should not evaluate the resources created for found classes unless asked" do
       @compiler.catalog.stubs(:tag)
@@ -620,6 +667,14 @@ describe Puppet::Parser::Compiler do
       @compiler.evaluate_classes(%w{myclass}, @scope, false)
     end
 
+    it "should not skip param classes that have already been evaluated" do
+      @scope.stubs(:class_scope).with(@class).returns("something")
+      @node.classes = klasses = {'foo'=>nil}
+      foo = Puppet::Resource::Type.new(:hostclass, 'foo')
+      @compiler.topscope.stubs(:find_hostclass).with('foo').returns(foo)
+      foo.expects(:ensure_in_catalog).with(@compiler.topscope, {})
+      @compiler.compile
+    end
     it "should skip classes previously evaluated with different capitalization" do
       @compiler.catalog.stubs(:tag)
       @scope.stubs(:find_hostclass).with("MyClass").returns(@class)
