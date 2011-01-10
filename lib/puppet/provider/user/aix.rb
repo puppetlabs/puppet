@@ -1,12 +1,11 @@
 #
-# User Puppet provider for AIX. It uses standar commands to manage users:
+# User Puppet provider for AIX. It uses standard commands to manage users:
 #  mkuser, rmuser, lsuser, chuser
 #
 # Notes:
 # - AIX users can have expiry date defined with minute granularity,
 #   but puppet does not allow it. There is a ticket open for that (#5431)
 # - AIX maximum password age is in WEEKs, not days
-# - I force the compat IA module. 
 #
 # See  http://projects.puppetlabs.com/projects/puppet/wiki/Development_Provider_Development
 # for more information
@@ -47,7 +46,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #  value !~ /\s/
   #end
 
-  # User attributes to ignore
+  # User attributes to ignore from AIX output.
   def self.attribute_ignore
     []
   end
@@ -59,23 +58,26 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   #  :aix_attr      AIX command attribute name
   #  :puppet_prop   Puppet propertie name
   #  :to            Method to adapt puppet property to aix command value. Optional.
-  #  :from            Method to adapt aix command value to puppet property. Optional
+  #  :from          Method to adapt aix command value to puppet property. Optional
   self.attribute_mapping = [
     #:name => :name,
-    {:aix_attr => :pgrp,     :puppet_prop => :gid,
+    {:aix_attr => :pgrp,       :puppet_prop => :gid,
         :to => :gid_to_attr, :from => :gid_from_attr},
-    {:aix_attr => :id,       :puppet_prop => :uid},
-    {:aix_attr => :groups,   :puppet_prop => :groups},
-    {:aix_attr => :home,     :puppet_prop => :home},
-    {:aix_attr => :shell,    :puppet_prop => :shell},
-    {:aix_attr => :expires,  :puppet_prop => :expiry,
+    {:aix_attr => :id,         :puppet_prop => :uid},
+    {:aix_attr => :groups,     :puppet_prop => :groups},
+    {:aix_attr => :home,       :puppet_prop => :home},
+    {:aix_attr => :shell,      :puppet_prop => :shell},
+    {:aix_attr => :expires,    :puppet_prop => :expiry,
         :to => :expiry_to_attr, :from => :expiry_from_attr},
-    {:aix_attr => :maxage,   :puppet_prop => :password_max_age},
-    {:aix_attr => :minage,   :puppet_prop => :password_min_age},
+    {:aix_attr => :maxage,     :puppet_prop => :password_max_age},
+    {:aix_attr => :minage,     :puppet_prop => :password_min_age},
+    {:aix_attr => :attributes, :puppet_prop => :attributes},
   ]
   
   #--------------
-  # Command lines
+  # Command definition
+  
+  # Return the IA module arguments based on the resource param ia_load_module
   def get_ia_module_args
     if @resource[:ia_load_module]
       ["-R", @resource[:ia_load_module].to_s]
@@ -84,6 +86,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
   end
   
+  # List groups and Ids
   def lsgroupscmd(value=@resource[:name])
     [command(:lsgroup)] +
       self.get_ia_module_args +
@@ -108,13 +111,10 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       extra_attrs + [@resource[:name]]
   end
 
-  # Get modify command
-  def modifycmd(hash = property_hash, translate=true)
-    if translate
-      args = self.hash2args(hash)
-    else 
-      args = self.hash2args(hash, nil)
-    end
+  # Get modify command. Set translate=false if no mapping must be used.
+  # Needed for special properties like "attributes"
+  def modifycmd(hash = property_hash)
+    args = self.hash2args(hash)
     return nil if args.empty?
     
     [self.class.command(:modify)] + self.get_ia_module_args +
@@ -141,6 +141,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
         unless value and value.is_a? Hash
       return value.select { |k,v| true }.map { |pair| pair.join("=") }
     end
+        
     super(key, value, mapping, objectinfo)
   end
   
@@ -179,6 +180,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     verify_group(value)
   end
 
+  # Get the group gid from its name
   def gid_from_attr(value)
     groupid_by_name(value)
   end
@@ -281,7 +283,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def attributes=(attr_hash)
     #self.class.validate(param, value)
     param = :attributes
-    cmd = modifycmd({param => filter_attributes(attr_hash)}, false)
+    cmd = modifycmd({param => filter_attributes(attr_hash)})
     if cmd 
       begin
         execute(cmd)

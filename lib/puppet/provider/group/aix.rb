@@ -9,7 +9,7 @@ require 'puppet/provider/aixobject'
 Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject do
   desc "Group management for AIX! Users are managed with mkgroup, rmgroup, lsgroup, chgroup"
 
-    # This will the the default provider for this platform
+  # This will the the default provider for this platform
   defaultfor :operatingsystem => :aix
   confine :operatingsystem => :aix
 
@@ -35,17 +35,19 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   #  :aix_attr      AIX command attribute name
   #  :puppet_prop   Puppet propertie name
   #  :to            Method to adapt puppet property to aix command value. Optional.
-  #  :from            Method to adapt aix command value to puppet property. Optional
+  #  :from          Method to adapt aix command value to puppet property. Optional
   self.attribute_mapping = [
     #:name => :name,
     {:aix_attr => :id,       :puppet_prop => :gid },
     {:aix_attr => :users,    :puppet_prop => :members,
       :from => :users_from_attr},
+    {:aix_attr => :attributes, :puppet_prop => :attributes},
   ]
   
   #--------------
-  # Command lines
+  # Command definition
   
+  # Return the IA module arguments based on the resource param ia_load_module
   def get_ia_module_args
     if @resource[:ia_load_module]
       ["-R", @resource[:ia_load_module].to_s]
@@ -53,7 +55,6 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
       []
     end
   end
-  
   
   def lscmd(value=@resource[:name])
     [self.class.command(:list)] +
@@ -76,12 +77,8 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
       extra_attrs + [@resource[:name]]
   end
 
-  def modifycmd(hash = property_hash, translate=true)
-    if translate
-      args = self.hash2args(hash)
-    else 
-      args = self.hash2args(hash, nil)
-    end
+  def modifycmd(hash = property_hash)
+    args = self.hash2args(hash)
     return nil if args.empty?
     
     [self.class.command(:modify)] +
@@ -96,6 +93,8 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   end
 
 
+  #--------------
+  # Overwrite get_arguments to add the attributes arguments
   def get_arguments(key, value, mapping, objectinfo)
     # In the case of attributes, return a list of key=vlaue
     if key == :attributes
@@ -104,11 +103,6 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
       return value.select { |k,v| true }.map { |pair| pair.join("=") }
     end
     super(key, value, mapping, objectinfo)
-  end
-
-  # Force convert users it a list.
-  def users_from_attr(value)
-    (value.is_a? String) ? value.split(',') : value
   end
 
   def filter_attributes(hash)
@@ -128,7 +122,7 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
   def attributes=(attr_hash)
     #self.class.validate(param, value)
     param = :attributes
-    cmd = modifycmd({param => filter_attributes(attr_hash)}, false)
+    cmd = modifycmd({param => filter_attributes(attr_hash)})
     if cmd 
       begin
         execute(cmd)
@@ -136,6 +130,11 @@ Puppet::Type.type(:group).provide :aix, :parent => Puppet::Provider::AixObject d
         raise Puppet::Error, "Could not set #{param} on #{@resource.class.name}[#{@resource.name}]: #{detail}"
       end
     end
+  end
+
+  # Force convert users it a list.
+  def users_from_attr(value)
+    (value.is_a? String) ? value.split(',') : value
   end
 
 
