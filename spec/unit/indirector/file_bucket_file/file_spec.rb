@@ -13,6 +13,51 @@ describe Puppet::FileBucketFile::File do
     Puppet::FileBucketFile::File.doc.should be_instance_of(String)
   end
 
+  describe "non-stubbing tests" do
+    include PuppetSpec::Files
+
+    before do
+      Puppet[:bucketdir] = tmpdir('bucketdir')
+    end
+
+    describe "when diffing files" do
+      def save_bucket_file(contents)
+        bucket_file = Puppet::FileBucket::File.new(contents)
+        bucket_file.save
+        bucket_file.checksum_data
+      end
+
+      it "should generate an empty string if there is no diff" do
+        checksum = save_bucket_file("I'm the contents of a file")
+        Puppet::FileBucket::File.find("md5/#{checksum}", :diff_with => checksum).should == ''
+      end
+
+      it "should generate a proper diff if there is a diff" do
+        checksum1 = save_bucket_file("foo\nbar\nbaz")
+        checksum2 = save_bucket_file("foo\nbiz\nbaz")
+        diff = Puppet::FileBucket::File.find("md5/#{checksum1}", :diff_with => checksum2)
+        diff.should == <<HERE
+2c2
+< bar
+---
+> biz
+HERE
+      end
+
+      it "should raise an exception if the hash to diff against isn't found" do
+        checksum = save_bucket_file("whatever")
+        bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
+        lambda { Puppet::FileBucket::File.find("md5/#{checksum}", :diff_with => bogus_checksum) }.should raise_error "could not find diff_with #{bogus_checksum}"
+      end
+
+      it "should return nil if the hash to diff from isn't found" do
+        checksum = save_bucket_file("whatever")
+        bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
+        Puppet::FileBucket::File.find("md5/#{bogus_checksum}", :diff_with => checksum).should == nil
+      end
+    end
+  end
+
   describe "when initializing" do
     it "should use the filebucket settings section" do
       Puppet.settings.expects(:use).with(:filebucket)
