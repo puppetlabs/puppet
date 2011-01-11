@@ -109,7 +109,11 @@ module Puppet::Network::HTTP::Handler
     format = format_to_use(request)
     set_content_type(response, format)
 
-    set_response(response, result.render(format))
+    if result.respond_to?(:render)
+      set_response(response, result.render(format))
+    else
+      set_response(response, result)
+    end
   end
 
   # Execute our search.

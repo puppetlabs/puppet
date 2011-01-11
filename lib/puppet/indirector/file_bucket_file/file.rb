@@ -15,7 +15,16 @@ module Puppet::FileBucketFile
 
     def find( request )
       checksum, path = request_to_checksum_and_path( request )
-      find_by_checksum( checksum, request.options )
+      file = find_by_checksum( checksum, request.options )
+
+      if file && request.options[:diff_with]
+        hash_protocol = sumtype(checksum)
+        file2 = find_by_checksum( "{#{hash_protocol}}#{request.options[:diff_with]}", request.options )
+        raise "could not find diff_with #{request.options[:diff_with]}" unless file2
+        return `diff #{path_for(file).inspect}/contents #{path_for(file2).inspect}/contents`
+      end
+
+      file
     end
 
     def save( request )

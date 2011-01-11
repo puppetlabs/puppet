@@ -209,6 +209,12 @@ describe Puppet::Network::HTTP::Handler do
         @handler.do_find(@irequest, @request, @response)
       end
 
+      it "should pass the result through without rendering it if the result is a string" do
+        @model_class.stubs(:find).returns "foo"
+        @handler.expects(:set_response).with(@response, "foo")
+        @handler.do_find(@irequest, @request, @response)
+      end
+
       it "should use the default status when a model find call succeeds" do
         @handler.expects(:set_response).with { |response, body, status| status.nil? }
         @handler.do_find(@irequest, @request, @response)
