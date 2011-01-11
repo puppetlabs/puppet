@@ -53,7 +53,7 @@ describe Puppet::FileBucket::Dipper do
 
     real_path = Pathname.new(file).realpath
 
-    Puppet::FileBucket::File.any_instance.expects(:save).with("https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}/#{real_path}")
+    Puppet::FileBucket::File.any_instance.expects(:save).with("https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}")
 
     @dipper.backup(file).should == checksum
   end

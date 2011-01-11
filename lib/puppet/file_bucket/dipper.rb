@@ -33,7 +33,7 @@ class Puppet::FileBucket::Dipper
     raise(ArgumentError, "File #{file} does not exist") unless ::File.exist?(file)
     contents = ::File.read(file)
     begin
-      file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => absolutize_path(file) )
+      file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       dest_path = "#{@rest_path}#{file_bucket_file.name}"
 
       file_bucket_file.save(dest_path)
