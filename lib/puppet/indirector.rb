@@ -50,6 +50,10 @@ module Puppet::Indirector
       indirection.find(*args)
     end
 
+    def head(*args)
+      indirection.head(*args)
+    end
+
     def destroy(*args)
       indirection.destroy(*args)
     end

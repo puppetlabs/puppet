@@ -383,6 +383,75 @@ describe Puppet::Indirector::Indirection do
       end
     end
 
+    describe "and doing a head operation" do
+      before { @method = :head }
+
+      it_should_behave_like "Indirection Delegator"
+      it_should_behave_like "Delegation Authorizer"
+
+      it "should return true if the head method returned true" do
+        @terminus.expects(:head).returns(true)
+        @indirection.head("me").should == true
+      end
+
+      it "should return false if the head method returned false" do
+        @terminus.expects(:head).returns(false)
+        @indirection.head("me").should == false
+      end
+
+      describe "when caching is enabled" do
+        before do
+          @indirection.cache_class = :cache_terminus
+          @cache_class.stubs(:new).returns(@cache)
+
+          @instance.stubs(:expired?).returns false
+        end
+
+        it "should first look in the cache for an instance" do
+          @terminus.stubs(:find).never
+          @terminus.stubs(:head).never
+          @cache.expects(:find).returns @instance
+
+          @indirection.head("/my/key").should == true
+        end
+
+        it "should not save to the cache" do
+          @cache.expects(:find).returns nil
+          @cache.expects(:save).never
+          @terminus.expects(:head).returns true
+          @indirection.head("/my/key").should == true
+        end
+
+        it "should not fail if the cache fails" do
+          @terminus.stubs(:head).returns true
+
+          @cache.expects(:find).raises ArgumentError
+          lambda { @indirection.head("/my/key") }.should_not raise_error
+        end
+
+        it "should look in the main terminus if the cache fails" do
+          @terminus.expects(:head).returns true
+          @cache.expects(:find).raises ArgumentError
+          @indirection.head("/my/key").should == true
+        end
+
+        it "should send a debug log if it is using the cached object" do
+          Puppet.expects(:debug)
+          @cache.stubs(:find).returns @instance
+
+          @indirection.head("/my/key")
+        end
+
+        it "should not accept the cached object if it is expired" do
+          @instance.stubs(:expired?).returns true
+
+          @cache.stubs(:find).returns @instance
+          @terminus.stubs(:head).returns false
+          @indirection.head("/my/key").should == false
+        end
+      end
+    end
+
     describe "and storing a model instance" do
       before { @method = :save }
 

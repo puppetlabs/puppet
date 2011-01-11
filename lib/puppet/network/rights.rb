@@ -29,6 +29,30 @@ class Rights
     !is_forbidden_and_why?(name, :node => args[0], :ip => args[1])
   end
 
+  def is_request_forbidden_and_why?(request)
+    methods_to_check = if request.method == :head
+                         # :head is ok if either :find or :save is ok.
+                         [:find, :save]
+                       else
+                         [request.method]
+                       end
+    authorization_failure_exceptions = methods_to_check.map do |method|
+      is_forbidden_and_why?("/#{request.indirection_name}/#{request.key}",
+                            :node => request.node,
+                            :ip => request.ip,
+                            :method => method,
+                            :environment => request.environment,
+                            :authenticated => request.authenticated)
+    end
+    if authorization_failure_exceptions.include? nil
+      # One of the methods we checked is ok, therefore this request is ok.
+      nil
+    else
+      # Just need to return any of the failure exceptions.
+      authorization_failure_exceptions.first
+    end
+  end
+
   def is_forbidden_and_why?(name, args = {})
     res = :nomatch
     right = @rights.find do |acl|

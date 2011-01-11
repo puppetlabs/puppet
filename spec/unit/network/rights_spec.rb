@@ -9,6 +9,26 @@ describe Puppet::Network::Rights do
     @right = Puppet::Network::Rights.new
   end
 
+  describe "when validating a :head request" do
+    [:find, :save].each do |allowed_method|
+      it "should allow the request if only #{allowed_method} is allowed" do
+        rights = Puppet::Network::Rights.new
+        rights.newright("/")
+        rights.allow("/", "*")
+        rights.restrict_method("/", allowed_method)
+        rights.restrict_authenticated("/", :any)
+        request = Puppet::Indirector::Request.new(:indirection_name, :head, "key")
+        rights.is_request_forbidden_and_why?(request).should == nil
+      end
+    end
+
+    it "should disallow the request if neither :find nor :save is allowed" do
+      rights = Puppet::Network::Rights.new
+      request = Puppet::Indirector::Request.new(:indirection_name, :head, "key")
+      rights.is_request_forbidden_and_why?(request).should be_instance_of(Puppet::Network::AuthorizationError)
+    end
+  end
+
   [:allow, :deny, :restrict_method, :restrict_environment, :restrict_authenticated].each do |m|
     it "should have a #{m} method" do
       @right.should respond_to(m)

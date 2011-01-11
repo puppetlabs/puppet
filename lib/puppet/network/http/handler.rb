@@ -116,6 +116,17 @@ module Puppet::Network::HTTP::Handler
     end
   end
 
+  # Execute our head.
+  def do_head(indirection_request, request, response)
+    unless indirection_request.model.head(indirection_request.key, indirection_request.to_hash)
+      Puppet.info("Could not find #{indirection_request.indirection_name} for '#{indirection_request.key}'")
+      return do_exception(response, "Could not find #{indirection_request.indirection_name} #{indirection_request.key}", 404)
+    end
+
+    # No need to set a response because no response is expected from a
+    # HEAD request.  All we need to do is not die.
+  end
+
   # Execute our search.
   def do_search(indirection_request, request, response)
     result = indirection_request.model.search(indirection_request.key, indirection_request.to_hash)

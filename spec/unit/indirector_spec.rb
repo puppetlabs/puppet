@@ -118,6 +118,11 @@ describe Puppet::Indirector, "when redirecting a model" do
     it_should_behave_like "Delegated Indirection Method"
   end
 
+  describe "when performing a head request" do
+    before { @method = :head }
+    it_should_behave_like "Delegated Indirection Method"
+  end
+
   # This is an instance method, so it behaves a bit differently.
   describe "when saving instances via the model" do
     before do

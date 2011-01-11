@@ -198,6 +198,17 @@ class Puppet::Indirector::Indirection
     nil
   end
 
+  # Search for an instance in the appropriate terminus, and return a
+  # boolean indicating whether the instance was found.
+  def head(key, *args)
+    request = request(:head, key, *args)
+    terminus = prepare(request)
+
+    # Look in the cache first, then in the terminus.  Force the result
+    # to be a boolean.
+    !!(find_in_cache(request) || terminus.head(request))
+  end
+
   def find_in_cache(request)
     # See if our instance is in the cache and up to date.
     return nil unless cache? and ! request.ignore_cache? and cached = cache.find(request)
