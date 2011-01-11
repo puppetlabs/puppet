@@ -36,7 +36,12 @@ class Puppet::FileBucket::Dipper
       file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       dest_path = "#{@rest_path}#{file_bucket_file.name}"
 
-      file_bucket_file.save(dest_path)
+      # Make a HEAD request for the file so that we don't waste time
+      # uploading it if it already exists in the bucket.
+      unless Puppet::FileBucket::File.head("#{@rest_path}#{file_bucket_file.checksum_type}/#{file_bucket_file.checksum_data}")
+        file_bucket_file.save(dest_path)
+      end
+
       return file_bucket_file.checksum_data
     rescue => detail
       puts detail.backtrace if Puppet[:trace]

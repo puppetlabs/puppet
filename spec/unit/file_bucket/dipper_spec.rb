@@ -14,10 +14,20 @@ describe Puppet::FileBucket::Dipper do
     file
   end
 
+  it "should fail in an informative way when there are failures checking for the file on the server" do
+    @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
+
+    file = make_tmp_file('contents')
+    Puppet::FileBucket::File.expects(:head).raises ArgumentError
+
+    lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
+  end
+
   it "should fail in an informative way when there are failures backing up to the server" do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
 
     file = make_tmp_file('contents')
+    Puppet::FileBucket::File.expects(:head).returns false
     Puppet::FileBucket::File.any_instance.expects(:save).raises ArgumentError
 
     lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
@@ -29,7 +39,19 @@ describe Puppet::FileBucket::Dipper do
     file = make_tmp_file('my contents')
     checksum = Digest::MD5.hexdigest('my contents')
 
+    Puppet::FileBucket::File.expects(:head).returns false
     Puppet::FileBucket::File.any_instance.expects(:save)
+    @dipper.backup(file).should == checksum
+  end
+
+  it "should not backup a file that is already in the bucket" do
+    @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
+
+    file = make_tmp_file('my contents')
+    checksum = Digest::MD5.hexdigest('my contents')
+
+    Puppet::FileBucket::File.expects(:head).returns true
+    Puppet::FileBucket::File.any_instance.expects(:save).never
     @dipper.backup(file).should == checksum
   end
 
@@ -53,6 +75,7 @@ describe Puppet::FileBucket::Dipper do
 
     real_path = Pathname.new(file).realpath
 
+    Puppet::FileBucket::File.expects(:head).with("https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}").returns false
     Puppet::FileBucket::File.any_instance.expects(:save).with("https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}")
 
     @dipper.backup(file).should == checksum
