@@ -38,14 +38,16 @@ module Puppet
       # fail_on_deny could as well be called in the XMLRPC context
       # with a ClientRequest.
 
-            @rights.fail_on_deny(
-        build_uri(request),
-        
-                  :node => request.node,
-                  :ip => request.ip,
-                  :method => request.method,
-                  :environment => request.environment,
-                  :authenticated => request.authenticated)
+      if authorization_failure_exception = @rights.is_forbidden_and_why?(
+          build_uri(request),
+          :node => request.node,
+          :ip => request.ip,
+          :method => request.method,
+          :environment => request.environment,
+          :authenticated => request.authenticated)
+        Puppet.warning("Denying access: #{authorization_failure_exception}")
+        raise authorization_failure_exception
+      end
     end
 
     def initialize(file = nil, parsenow = true)
