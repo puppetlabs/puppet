@@ -73,7 +73,7 @@ module Puppet::FileBucketFile
     end
 
     def request_to_checksum( request )
-      checksum_type, checksum = request.key.split(/\//, 2)
+      checksum_type, checksum, path = request.key.split(/\//, 3) # Note: we ignore path if present.
       raise "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != 'md5'
       raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{32}$/
       checksum
