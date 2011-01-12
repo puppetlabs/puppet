@@ -68,39 +68,50 @@ HERE
   end
 
 
-  describe "when retrieving files" do
-    before :each do
-      Puppet.settings.stubs(:use)
-      @store = Puppet::FileBucketFile::File.new
+  [true, false].each do |override_bucket_path|
+    describe "when retrieving files and bucket path #{if override_bucket_path then 'is' else 'is not' end} overridden" do
+      before :each do
+        Puppet.settings.stubs(:use)
+        @store = Puppet::FileBucketFile::File.new
 
-      @digest = "70924d6fa4b2d745185fa4660703a5c0"
+        @digest = "70924d6fa4b2d745185fa4660703a5c0"
 
-      @bucket_dir = tmpdir("bucket")
+        @bucket_dir = tmpdir("bucket")
 
-      Puppet.stubs(:[]).with(:bucketdir).returns(@bucket_dir)
+        if override_bucket_path
+          Puppet[:bucketdir] = "/bogus/path" # should not be used
+        else
+          Puppet[:bucketdir] = @bucket_dir
+        end
 
-      @dir = "#{@bucket_dir}/7/0/9/2/4/d/6/f/70924d6fa4b2d745185fa4660703a5c0"
-      @contents_path = "#{@dir}/contents"
+        @dir = "#{@bucket_dir}/7/0/9/2/4/d/6/f/70924d6fa4b2d745185fa4660703a5c0"
+        @contents_path = "#{@dir}/contents"
 
-      @request = Puppet::Indirector::Request.new(:indirection_name, :find, "md5/#{@digest}")
-    end
+        request_options = {}
+        if override_bucket_path
+          request_options[:bucket_path] = @bucket_dir
+        end
 
-    def make_bucketed_file
-      FileUtils.mkdir_p(@dir)
-      File.open(@contents_path, 'w') { |f| f.write @contents }
-    end
+        @request = Puppet::Indirector::Request.new(:indirection_name, :find, "md5/#{@digest}", request_options)
+      end
 
-    it "should return an instance of Puppet::FileBucket::File created with the content if the file exists" do
-      @contents = "my content"
-      make_bucketed_file
+      def make_bucketed_file
+        FileUtils.mkdir_p(@dir)
+        File.open(@contents_path, 'w') { |f| f.write @contents }
+      end
 
-      bucketfile = @store.find(@request)
-      bucketfile.should be_a(Puppet::FileBucket::File)
-      bucketfile.contents.should == @contents
-    end
+      it "should return an instance of Puppet::FileBucket::File created with the content if the file exists" do
+        @contents = "my content"
+        make_bucketed_file
 
-    it "should return nil if no file is found" do
-      @store.find(@request).should be_nil
+        bucketfile = @store.find(@request)
+        bucketfile.should be_a(Puppet::FileBucket::File)
+        bucketfile.contents.should == @contents
+      end
+
+      it "should return nil if no file is found" do
+        @store.find(@request).should be_nil
+      end
     end
   end
 

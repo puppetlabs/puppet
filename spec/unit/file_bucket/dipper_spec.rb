@@ -5,6 +5,8 @@ require File.dirname(__FILE__) + '/../../spec_helper'
 require 'pathname'
 
 require 'puppet/file_bucket/dipper'
+require 'puppet/indirector/file_bucket_file/rest'
+
 describe Puppet::FileBucket::Dipper do
   include PuppetSpec::Files
 
@@ -34,14 +36,17 @@ describe Puppet::FileBucket::Dipper do
   end
 
   it "should backup files to a local bucket" do
-    @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
+    Puppet[:bucketdir] = "/non/existent/directory"
+    file_bucket = tmpdir("bucket")
+
+    @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
 
     file = make_tmp_file('my contents')
-    checksum = Digest::MD5.hexdigest('my contents')
+    checksum = "2975f560750e71c478b8e3b39a956adb"
+    Digest::MD5.hexdigest('my contents').should == checksum
 
-    Puppet::FileBucket::File.expects(:head).returns false
-    Puppet::FileBucket::File.any_instance.expects(:save)
     @dipper.backup(file).should == checksum
+    File.exists?("#{file_bucket}/2/9/7/5/f/5/6/0/2975f560750e71c478b8e3b39a956adb/contents").should == true
   end
 
   it "should not backup a file that is already in the bucket" do
@@ -60,11 +65,13 @@ describe Puppet::FileBucket::Dipper do
 
     checksum = Digest::MD5.hexdigest('my contents')
 
-    Puppet::FileBucket::File.expects(:find).with{|x,opts|
-      x == "md5/#{checksum}"
-    }.returns(Puppet::FileBucket::File.new('my contents'))
+    request = nil
+
+    Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new('my contents'))
 
     @dipper.getfile(checksum).should == 'my contents'
+
+    request.key.should == "md5/#{checksum}"
   end
 
   it "should backup files to a remote server" do
@@ -75,10 +82,18 @@ describe Puppet::FileBucket::Dipper do
 
     real_path = Pathname.new(file).realpath
 
-    Puppet::FileBucket::File.expects(:head).with("https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}").returns false
-    Puppet::FileBucket::File.any_instance.expects(:save).with("https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}")
+    request1 = nil
+    request2 = nil
+
+    Puppet::FileBucketFile::Rest.any_instance.expects(:head).with { |r| request1 = r }.once.returns(nil)
+    Puppet::FileBucketFile::Rest.any_instance.expects(:save).with { |r| request2 = r }.once
 
     @dipper.backup(file).should == checksum
+    [request1, request2].each do |r|
+      r.server.should == 'puppetmaster'
+      r.port.should == 31337
+      r.key.should == "md5/#{checksum}"
+    end
   end
 
   it "should retrieve files from a remote server" do
@@ -86,10 +101,14 @@ describe Puppet::FileBucket::Dipper do
 
     checksum = Digest::MD5.hexdigest('my contents')
 
-    Puppet::FileBucket::File.expects(:find).with{|x,opts|
-      x == "https://puppetmaster:31337/production/file_bucket_file/md5/#{checksum}"
-    }.returns(Puppet::FileBucket::File.new('my contents'))
+    request = nil
+
+    Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new('my contents'))
 
     @dipper.getfile(checksum).should == "my contents"
+
+    request.server.should == 'puppetmaster'
+    request.port.should == 31337
+    request.key.should == "md5/#{checksum}"
   end
 end
