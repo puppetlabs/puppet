@@ -68,6 +68,10 @@ describe Puppet::Network::HTTP::API::V1 do
       @tester.uri2indirection("GET", "/env/foo/bar", {}).method.should == :find
     end
 
+    it "should choose 'head' as the indirection method if the http method is a HEAD and the indirection name is singular" do
+      @tester.uri2indirection("HEAD", "/env/foo/bar", {}).method.should == :head
+    end
+
     it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is plural" do
       @tester.uri2indirection("GET", "/env/foos/bar", {}).method.should == :search
     end

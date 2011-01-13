@@ -256,6 +256,39 @@ describe Puppet::Network::HTTP::Handler do
       end
     end
 
+    describe "when performing head operation" do
+      before do
+        @irequest = stub 'indirection_request', :method => :head, :indirection_name => "my_handler", :to_hash => {}, :key => "my_result", :model => @model_class
+
+        @model_class.stubs(:head).returns true
+      end
+
+      it "should use the indirection request to find the model class" do
+        @irequest.expects(:model).returns @model_class
+
+        @handler.do_head(@irequest, @request, @response)
+      end
+
+      it "should use the escaped request key" do
+        @model_class.expects(:head).with do |key, args|
+          key == "my_result"
+        end.returns true
+        @handler.do_head(@irequest, @request, @response)
+      end
+
+      it "should not generate a response when a model head call succeeds" do
+        @handler.expects(:set_response).never
+        @handler.do_head(@irequest, @request, @response)
+      end
+
+      it "should return a 404 when the model head call returns false" do
+        @model_class.stubs(:name).returns "my name"
+        @handler.expects(:set_response).with { |response, body, status| status == 404 }
+        @model_class.stubs(:head).returns(false)
+        @handler.do_head(@irequest, @request, @response)
+      end
+    end
+
     describe "when searching for model instances" do
       before do
         @irequest = stub 'indirection_request', :method => :find, :indirection_name => "my_handler", :to_hash => {}, :key => "key", :model => @model_class
