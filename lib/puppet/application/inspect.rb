@@ -1,5 +1,6 @@
 require 'puppet'
 require 'puppet/application'
+require 'puppet/file_bucket/dipper'
 
 class Puppet::Application::Inspect < Puppet::Application
 
@@ -55,6 +56,10 @@ class Puppet::Application::Inspect < Puppet::Application
     inspect_starttime = Time.now
     @report.add_times("config_retrieval", inspect_starttime - retrieval_starttime)
 
+    if Puppet[:archive_files]
+      dipper = Puppet::FileBucket::Dipper.new(:Server => Puppet[:archive_file_server])
+    end
+
     catalog.to_ral.resources.each do |ral_resource|
       audited_attributes = ral_resource[:audit]
       next unless audited_attributes
@@ -77,6 +82,12 @@ class Puppet::Application::Inspect < Puppet::Application
         end
       end
       @report.add_resource_status(status)
+      if Puppet[:archive_files] and ral_resource.type == :file and audited_attributes.include?(:content)
+        path = ral_resource[:path]
+        if File.readable?(path)
+          dipper.backup(path)
+        end
+      end
     end
 
     finishtime = Time.now
