@@ -1,0 +1,17 @@
+proj1
+        projid : 100
+        comment: "Single Attrib"
+        users  : (none)
+        groups : (none)
+        attribs: process.max-sem-nsems=(priv,2048,deny)
+proj2
+        projid : 6902
+        comment: "Multiattrib"
+        users  : user1
+                 user2
+        groups : group1
+                 group2
+                 group3
+        attribs: process.max-sem-nsems=(priv,2048,deny)
+                 project.cpu-shares
+                 task.max-lwps=(privileged,10,deny),(priv,1000,signal=KILL)
