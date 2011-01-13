@@ -6,8 +6,11 @@ require 'puppet/application/inspect'
 require 'puppet/resource/catalog'
 require 'puppet/indirector/catalog/yaml'
 require 'puppet/indirector/report/rest'
+require 'puppet/indirector/file_bucket_file/rest'
 
 describe Puppet::Application::Inspect do
+  include PuppetSpec::Files
+
   before :each do
     @inspect = Puppet::Application[:inspect]
   end
@@ -112,6 +115,87 @@ describe Puppet::Application::Inspect do
         property_values.merge(event.property => event.previous_value)
       end
       properties.should == {"ensure" => :absent}
+    end
+
+    describe "when archiving to a bucket" do
+      before :each do
+        Puppet[:archive_files] = true
+        Puppet[:archive_file_server] = "filebucketserver"
+        @catalog = Puppet::Resource::Catalog.new
+        Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(@catalog)
+      end
+
+      describe "when auditing files" do
+        before :each do
+          @file = tmpfile("foo")
+          @resource = Puppet::Resource.new(:file, @file, :parameters => {:audit => "content"})
+          @catalog.add_resource(@resource)
+        end
+
+        it "should send an existing file to the file bucket" do
+          File.open(@file, 'w') { |f| f.write('stuff') }
+          Puppet::FileBucketFile::Rest.any_instance.expects(:head).with do |request|
+            request.server == Puppet[:archive_file_server]
+          end.returns(false)
+          Puppet::FileBucketFile::Rest.any_instance.expects(:save).with do |request|
+            request.server == Puppet[:archive_file_server] and request.instance.contents == 'stuff'
+          end
+          @inspect.run_command
+        end
+
+        it "should not send unreadable files" do
+          pending "see bug #5882"
+          File.open(@file, 'w') { |f| f.write('stuff') }
+          File.chmod(0, @file)
+          Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
+          Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
+          @inspect.run_command
+        end
+
+        it "should not try to send non-existent files" do
+          Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
+          Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
+          @inspect.run_command
+        end
+
+        it "should not try to send files whose content we are not auditing" do
+          @resource[:audit] = "group"
+          Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
+          Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
+          @inspect.run_command
+        end
+      end
+
+      describe "when auditing non-files" do
+        before :each do
+          Puppet::Type.newtype(:stub_type) do
+            newparam(:name) do
+              desc "The name var"
+              isnamevar
+            end
+
+            newproperty(:content) do
+              desc "content"
+              def retrieve
+                :whatever
+              end
+            end
+          end
+
+          @resource = Puppet::Resource.new(:stub_type, 'foo', :parameters => {:audit => "all"})
+          @catalog.add_resource(@resource)
+        end
+
+        after :each do
+          Puppet::Type.rmtype(:stub_type)
+        end
+
+        it "should not try to send non-files" do
+          Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
+          Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
+          @inspect.run_command
+        end
+      end
     end
   end
 
