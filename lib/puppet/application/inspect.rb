@@ -1,3 +1,4 @@
+require 'puppet'
 require 'puppet/application'
 
 class Puppet::Application::Inspect < Puppet::Application
