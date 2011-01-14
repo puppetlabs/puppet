@@ -32,7 +32,7 @@ describe Puppet::Application::Inspect do
   describe "when executing" do
     before :each do
       Puppet[:report] = true
-      Puppet::Util::Log.stubs(:newdestination)
+      @inspect.options[:logset] = true
       Puppet::Transaction::Report::Rest.any_instance.stubs(:save)
       @inspect.setup
     end
@@ -163,6 +163,20 @@ describe Puppet::Application::Inspect do
           Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
           @inspect.run_command
         end
+
+        it "should continue if bucketing a file fails" do
+          File.open(@file, 'w') { |f| f.write('stuff') }
+          Puppet::FileBucketFile::Rest.any_instance.stubs(:head).returns false
+          Puppet::FileBucketFile::Rest.any_instance.stubs(:save).raises "failure"
+          Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
+            @report = request.instance
+          end
+
+          @inspect.run_command
+
+          @report.logs.count.should == 1
+          @report.logs.first.message.should =~ /Could not back up/
+        end
       end
 
       describe "when auditing non-files" do
@@ -232,7 +246,7 @@ describe Puppet::Application::Inspect do
         @inspect.run_command
 
         @report.status.should == "failed"
-        #@report.logs.select{|log| log.message =~ /Could not inspect/}.count.should == 1
+        @report.logs.select{|log| log.message =~ /Could not inspect/}.count.should == 1
         @report.resource_statuses.count.should == 1
         @report.resource_statuses['Stub_type[foo]'].events.count.should == 1
 

@@ -99,7 +99,11 @@ class Puppet::Application::Inspect < Puppet::Application
       if Puppet[:archive_files] and ral_resource.type == :file and audited_attributes.include?(:content)
         path = ral_resource[:path]
         if File.readable?(path)
-          dipper.backup(path)
+          begin
+            dipper.backup(path)
+          rescue StandardError => detail
+            Puppet.warning detail
+          end
         end
       end
       @report.add_resource_status(status)
