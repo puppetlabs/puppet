@@ -32,7 +32,7 @@ describe Puppet::Application::Inspect do
   describe "when executing" do
     before :each do
       Puppet[:report] = true
-      Puppet::Util::Log.stubs(:newdestination)
+      @inspect.options[:logset] = true
       Puppet::Transaction::Report::Rest.any_instance.stubs(:save)
       @inspect.setup
     end
@@ -144,7 +144,6 @@ describe Puppet::Application::Inspect do
         end
 
         it "should not send unreadable files" do
-          pending "see bug #5882"
           File.open(@file, 'w') { |f| f.write('stuff') }
           File.chmod(0, @file)
           Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
@@ -163,6 +162,20 @@ describe Puppet::Application::Inspect do
           Puppet::FileBucketFile::Rest.any_instance.expects(:head).never
           Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
           @inspect.run_command
+        end
+
+        it "should continue if bucketing a file fails" do
+          File.open(@file, 'w') { |f| f.write('stuff') }
+          Puppet::FileBucketFile::Rest.any_instance.stubs(:head).returns false
+          Puppet::FileBucketFile::Rest.any_instance.stubs(:save).raises "failure"
+          Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
+            @report = request.instance
+          end
+
+          @inspect.run_command
+
+          @report.logs.count.should == 1
+          @report.logs.first.message.should =~ /Could not back up/
         end
       end
 
@@ -195,6 +208,65 @@ describe Puppet::Application::Inspect do
           Puppet::FileBucketFile::Rest.any_instance.expects(:save).never
           @inspect.run_command
         end
+      end
+    end
+
+    describe "when there are failures" do
+      before :each do
+        Puppet::Type.newtype(:stub_type) do
+          newparam(:name) do
+            desc "The name var"
+            isnamevar
+          end
+
+          newproperty(:content) do
+            desc "content"
+            def retrieve
+              raise "failed"
+            end
+          end
+        end
+
+        @catalog = Puppet::Resource::Catalog.new
+        Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(@catalog)
+
+        Puppet::Transaction::Report::Rest.any_instance.expects(:save).with do |request|
+          @report = request.instance
+        end
+      end
+
+      after :each do
+        Puppet::Type.rmtype(:stub_type)
+      end
+
+      it "should mark the report failed and create failed events for each property" do
+        @resource = Puppet::Resource.new(:stub_type, 'foo', :parameters => {:audit => "all"})
+        @catalog.add_resource(@resource)
+
+        @inspect.run_command
+
+        @report.status.should == "failed"
+        @report.logs.select{|log| log.message =~ /Could not inspect/}.count.should == 1
+        @report.resource_statuses.count.should == 1
+        @report.resource_statuses['Stub_type[foo]'].events.count.should == 1
+
+        event = @report.resource_statuses['Stub_type[foo]'].events.first
+        event.property.should == "content"
+        event.status.should == "failure"
+        event.audited.should == true
+        event.instance_variables.should_not include("@previous_value")
+      end
+
+      it "should continue to the next resource" do
+        @resource = Puppet::Resource.new(:stub_type, 'foo', :parameters => {:audit => "all"})
+        @other_resource = Puppet::Resource.new(:stub_type, 'bar', :parameters => {:audit => "all"})
+        @catalog.add_resource(@resource)
+        @catalog.add_resource(@other_resource)
+
+        @inspect.run_command
+
+        @report.resource_statuses.count.should == 2
+        @report.resource_statuses.keys.should =~ ['Stub_type[foo]', 'Stub_type[bar]']
       end
     end
   end
