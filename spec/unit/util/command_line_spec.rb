@@ -6,6 +6,7 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 require 'puppet/util/command_line'
 
 describe Puppet::Util::CommandLine do
+  include PuppetSpec::Files
   before do
     @tty  = stub("tty",  :tty? => true )
     @pipe = stub("pipe", :tty? => false)
@@ -102,6 +103,29 @@ describe Puppet::Util::CommandLine do
         commandline.expects(:abort).with{|x| x =~ /the usage message/}.raises("stubbed abort")
 
         lambda{ commandline.execute }.should raise_error('stubbed abort')
+      end
+    end
+  end
+  describe 'when loading commands' do
+    before do
+      @core_apps = ["describe", "filebucket", "kick", "queue", "resource", "agent", "cert", "apply", "doc", "master"]
+      @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help w    hatever.pp }, @tty )
+    end
+    it 'should be able to find all existing commands' do
+      @core_apps.each do |command|
+        @command_line.available_subcommands.should include command
+      end
+    end
+    describe 'when multiple paths have applications' do
+      before do
+        @dir=tmpdir('command_line_plugin_test')
+        @appdir="#{@dir}/puppet/application"
+        FileUtils.mkdir_p(@appdir)
+        FileUtils.touch("#{@appdir}/foo.rb")
+        $LOAD_PATH.unshift(@dir)
+      end
+      it 'should be able to find commands from both paths' do
+        @command_line.available_subcommands.should == ['foo'] + @core_apps
       end
     end
   end
