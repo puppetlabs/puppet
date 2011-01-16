@@ -11,7 +11,7 @@
 #
 #   puppet agent  [-D|--daemonize|--no-daemonize] [-d|--debug]
 #       [--detailed-exitcodes] [--disable] [--enable]
-#       [-h|--help] [--fqdn <host name>] [-l|--logdest syslog|<file>|console]
+#       [-h|--help] [--certname <host name>] [-l|--logdest syslog|<file>|console]
 #       [-o|--onetime] [--serve <handler>] [-t|--test] [--noop]
 #       [--digest <digest>] [--fingerprint] [-V|--version]
 #       [-v|--verbose] [-w|--waitforcert <seconds>]
@@ -113,10 +113,11 @@
 #
 #   +puppet agent+ exits after executing this.
 #
-# fqdn::
-#   Set the fully-qualified domain name of the client.  This is only used for
-#   certificate purposes, but can be used to override the discovered hostname.
-#   If you need to use this flag, it is generally an indication of a setup problem.
+# certname::
+#   Set the certname (unique ID) of the client. The master reads this unique
+#   identifying string, which is usually set to the node's fully-qualified domain
+#   name, to determine which configurations the node will receive. Use this option
+#   to debug setup problems or implement unusual node identification schemes.
 #
 # help::
 #   Print this help message
