@@ -16,6 +16,25 @@ describe Puppet::Application do
     Puppet.settings.stubs(:parse)
   end
 
+  describe "finding" do
+    before do
+      @klass = Puppet::Application
+      @klass.stubs(:puts)
+    end
+
+    it "should find classes in the namespace" do
+      @klass.find("Agent").should == @klass::Agent
+    end
+
+    it "should not find classes outside the namespace" do
+      lambda { @klass.find("String") }.should raise_error(SystemExit)
+    end
+
+    it "should exit if it can't find a class" do
+      lambda { @klass.find("ThisShallNeverEverEverExistAsdf") }.should raise_error(SystemExit)
+    end
+  end
+
   describe ".run_mode" do
     it "should default to user" do
       @appclass.run_mode.name.should == :user
