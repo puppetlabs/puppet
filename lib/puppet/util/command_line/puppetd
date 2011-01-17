@@ -150,7 +150,8 @@
 #
 # test::
 #   Enable the most common options used for testing.  These are +onetime+,
-#   +verbose+, +ignorecache, +no-daemonize+, and +no-usecacheonfailure+.
+#   +verbose+, +ignorecache, +no-daemonize+, +no-usecacheonfailure+,
+#   +detailed-exit-codes+, +no-splay+, and +show_diff+.
 #
 # noop::
 #   Use +noop+ mode where the daemon runs in a no-op or dry-run mode.  This is useful
