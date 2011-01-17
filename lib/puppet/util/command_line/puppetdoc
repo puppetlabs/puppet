@@ -37,7 +37,7 @@
 #   Specifies the directory where to output the rdoc documentation in 'rdoc' mode.
 #
 # mode::
-#   Determine the output mode.  Valid modes are 'text', 'trac', 'pdf' and 'rdoc'. The 'pdf' mode creates PDF formatted files in the /tmp directory. The default mode is 'text'.  In 'rdoc' mode you must provide 'manifests-path'
+#   Determine the output mode.  Valid modes are 'text', 'pdf' and 'rdoc'. The 'pdf' mode creates PDF formatted files in the /tmp directory. The default mode is 'text'.  In 'rdoc' mode you must provide 'manifests-path'
 #
 # reference::
 #   Build a particular reference.  Get a list of references by running +puppet doc --list+.
@@ -47,7 +47,7 @@
 #
 # = Example
 #
-#   $ puppet doc -r type > /tmp/type_reference.rst
+#   $ puppet doc -r type > /tmp/type_reference.markdown
 # or
 #   $ puppet doc --outputdir /tmp/rdoc --mode rdoc /path/to/manifests
 # or

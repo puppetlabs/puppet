@@ -11,7 +11,7 @@ describe reference do
     reference.should_not be_nil
   end
 
-  it "should be able to be rendered as text" do
-    lambda { reference.to_text }.should_not raise_error
+  it "should be able to be rendered as markdown" do
+    lambda { reference.to_markdown }.should_not raise_error
   end
 end
