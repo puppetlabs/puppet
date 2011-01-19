@@ -229,6 +229,12 @@ describe Puppet::Indirector::FileServer do
   describe "when checking authorization" do
     before do
       @request.method = :find
+
+      @mount = stub 'mount'
+      @configuration.stubs(:split_path).with(@request).returns([@mount, "rel/path"])
+      @request.stubs(:node).returns("mynode")
+      @request.stubs(:ip).returns("myip")
+      @mount.stubs(:allowed?).with("mynode", "myip").returns "something"
     end
 
     it "should return false when destroying" do
@@ -254,13 +260,6 @@ describe Puppet::Indirector::FileServer do
     end
 
     it "should return the results of asking the mount whether the node and IP are authorized" do
-      @mount = stub 'mount'
-      @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
-
-      @request.stubs(:node).returns("mynode")
-      @request.stubs(:ip).returns("myip")
-      @mount.expects(:allowed?).with("mynode", "myip").returns "something"
-
       @file_server.authorized?(@request).should == "something"
     end
   end

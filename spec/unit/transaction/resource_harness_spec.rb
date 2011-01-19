@@ -64,6 +64,90 @@ describe Puppet::Transaction::ResourceHarness do
     end
   end
 
+  def make_stub_provider
+    stubProvider = Class.new(Puppet::Type)
+    stubProvider.instance_eval do
+      initvars
+
+      newparam(:name) do
+        desc "The name var"
+        isnamevar
+      end
+
+      newproperty(:foo) do
+        desc "A property that can be changed successfully"
+        def sync
+        end
+
+        def retrieve
+          :absent
+        end
+
+        def insync?(reference_value)
+          false
+        end
+      end
+
+      newproperty(:bar) do
+        desc "A property that raises an exception when you try to change it"
+        def sync
+          raise ZeroDivisionError.new('bar')
+        end
+
+        def retrieve
+          :absent
+        end
+
+        def insync?(reference_value)
+          false
+        end
+      end
+    end
+    stubProvider
+  end
+
+  describe "when an error occurs" do
+    before :each do
+      stub_provider = make_stub_provider
+      resource = stub_provider.new :name => 'name', :foo => 1, :bar => 2
+      resource.expects(:err).never
+      @status = @harness.evaluate(resource)
+    end
+
+    it "should record previous successful events" do
+      @status.events[0].property.should == 'foo'
+      @status.events[0].status.should == 'success'
+    end
+
+    it "should record a failure event" do
+      @status.events[1].property.should == 'bar'
+      @status.events[1].status.should == 'failure'
+    end
+  end
+
+  describe "when auditing" do
+    it "should not call insync? on parameters that are merely audited" do
+      stub_provider = make_stub_provider
+      resource = stub_provider.new :name => 'name', :audit => ['foo']
+      resource.property(:foo).expects(:insync?).never
+      status = @harness.evaluate(resource)
+      status.events.each do |event|
+        event.status.should != 'failure'
+      end
+    end
+
+    it "should be able to audit a file's group" do # see bug #5710
+      test_file = tmpfile('foo')
+      File.open(test_file, 'w').close
+      resource = Puppet::Type.type(:file).new :path => test_file, :audit => ['group'], :backup => false
+      resource.expects(:err).never # make sure no exceptions get swallowed
+      status = @harness.evaluate(resource)
+      status.events.each do |event|
+        event.status.should != 'failure'
+      end
+    end
+  end
+
   describe "when applying changes" do
     [false, true].each do |noop_mode|; describe (noop_mode ? "in noop mode" : "in normal mode") do
       [nil, '750'].each do |machine_state|; describe (machine_state ? "with a file initially present" : "with no file initially present") do

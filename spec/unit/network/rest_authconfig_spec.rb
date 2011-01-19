@@ -47,7 +47,7 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should ask for authorization to the ACL subsystem" do
-    @acl.expects(:fail_on_deny).with("/path/to/resource", :node => "me", :ip => "127.0.0.1", :method => :save, :environment => :env, :authenticated => true)
+    @acl.expects(:is_request_forbidden_and_why?).with(@request).returns(nil)
 
     @authconfig.allowed?(@request)
   end

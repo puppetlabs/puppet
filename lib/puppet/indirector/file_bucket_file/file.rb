@@ -14,16 +14,31 @@ module Puppet::FileBucketFile
     end
 
     def find( request )
-      checksum, path = request_to_checksum_and_path( request )
-      find_by_checksum( checksum, request.options )
+      checksum = request_to_checksum( request )
+      file_path = path_for(request.options[:bucket_path], checksum, 'contents')
+
+      return nil unless ::File.exists?(file_path)
+
+      if request.options[:diff_with]
+        hash_protocol = sumtype(checksum)
+        file2_path = path_for(request.options[:bucket_path], request.options[:diff_with], 'contents')
+        raise "could not find diff_with #{request.options[:diff_with]}" unless ::File.exists?(file2_path)
+        return `diff #{file_path.inspect} #{file2_path.inspect}`
+      else
+        contents = ::File.read file_path
+        Puppet.info "FileBucket read #{checksum}"
+        model.new(contents)
+      end
+    end
+
+    def head(request)
+      checksum = request_to_checksum(request)
+      file_path = path_for(request.options[:bucket_path], checksum, 'contents')
+      ::File.exists?(file_path)
     end
 
     def save( request )
-      checksum, path = request_to_checksum_and_path( request )
-
       instance = request.instance
-      instance.checksum = checksum if checksum
-      instance.path = path if path
 
       save_to_disk(instance)
       instance.to_s
@@ -31,66 +46,41 @@ module Puppet::FileBucketFile
 
     private
 
-    def find_by_checksum( checksum, options )
-      model.new( nil, :checksum => checksum ) do |bucket_file|
-        bucket_file.bucket_path = options[:bucket_path]
-        filename = contents_path_for( bucket_file )
-
-        return nil if ! ::File.exist? filename
-
-        begin
-          contents = ::File.read filename
-          Puppet.info "FileBucket read #{bucket_file.checksum}"
-        rescue RuntimeError => e
-          raise Puppet::Error, "file could not be read: #{e.message}"
-        end
-
-        if ::File.exist?(paths_path_for( bucket_file) )
-          ::File.open(paths_path_for( bucket_file) ) do |f|
-            bucket_file.paths = f.readlines.map { |l| l.chomp }
-          end
-        end
-
-        bucket_file.contents = contents
-      end
-    end
-
     def save_to_disk( bucket_file )
-      # If the file already exists, just return the md5 sum.
-      if ::File.exist?(contents_path_for( bucket_file) )
+      filename = path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents')
+      dirname = path_for(bucket_file.bucket_path, bucket_file.checksum_data)
+
+      # If the file already exists, do nothing.
+      if ::File.exist?(filename)
         verify_identical_file!(bucket_file)
       else
         # Make the directories if necessary.
-        unless ::File.directory?( path_for( bucket_file) )
+        unless ::File.directory?(dirname)
           Puppet::Util.withumask(0007) do
-            ::FileUtils.mkdir_p( path_for( bucket_file) )
+            ::FileUtils.mkdir_p(dirname)
           end
         end
 
-        Puppet.info "FileBucket adding #{bucket_file.path} as #{bucket_file.checksum}"
+        Puppet.info "FileBucket adding #{bucket_file.checksum}"
 
         # Write the file to disk.
         Puppet::Util.withumask(0007) do
-          ::File.open(contents_path_for(bucket_file), ::File::WRONLY|::File::CREAT, 0440) do |of|
+          ::File.open(filename, ::File::WRONLY|::File::CREAT, 0440) do |of|
             of.print bucket_file.contents
           end
         end
       end
-
-      save_path_to_paths_file(bucket_file)
-      bucket_file.checksum_data
     end
 
-    def request_to_checksum_and_path( request )
-      return [request.key, nil] if checksum?(request.key)
-
-      checksum_type, checksum, path = request.key.split(/\//, 3)
-      return(checksum_type.to_s == "" ? nil : [ "{#{checksum_type}}#{checksum}", path ])
+    def request_to_checksum( request )
+      checksum_type, checksum, path = request.key.split(/\//, 3) # Note: we ignore path if present.
+      raise "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != 'md5'
+      raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{32}$/
+      checksum
     end
 
-    def path_for(bucket_file, subfile = nil)
-      bucket_path = bucket_file.bucket_path || Puppet[:bucketdir]
-      digest      = bucket_file.checksum_data
+    def path_for(bucket_path, digest, subfile = nil)
+      bucket_path ||= Puppet[:bucketdir]
 
       dir     = ::File.join(digest[0..7].split(""))
       basedir = ::File.join(bucket_path, dir, digest)
@@ -99,48 +89,18 @@ module Puppet::FileBucketFile
       ::File.join(basedir, subfile)
     end
 
-    def contents_path_for(bucket_file)
-      path_for(bucket_file, "contents")
-    end
-
-    def paths_path_for(bucket_file)
-      path_for(bucket_file, "paths")
-    end
-
-    def content_check?
-      true
-    end
-
     # If conflict_check is enabled, verify that the passed text is
     # the same as the text in our file.
     def verify_identical_file!(bucket_file)
-      return unless content_check?
-      disk_contents = ::File.read(contents_path_for(bucket_file))
+      disk_contents = ::File.read(path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents'))
 
       # If the contents don't match, then we've found a conflict.
       # Unlikely, but quite bad.
       if disk_contents != bucket_file.contents
-        raise Puppet::FileBucket::BucketError, "Got passed new contents for sum #{bucket_file.checksum}", caller
+        raise Puppet::FileBucket::BucketError, "Got passed new contents for sum #{bucket_file.checksum}"
       else
-        Puppet.info "FileBucket got a duplicate file #{bucket_file.path} (#{bucket_file.checksum})"
+        Puppet.info "FileBucket got a duplicate file #{bucket_file.checksum}"
       end
     end
-
-    def save_path_to_paths_file(bucket_file)
-      return unless bucket_file.path
-
-      # check for dupes
-      if ::File.exist?(paths_path_for( bucket_file) )
-        ::File.open(paths_path_for( bucket_file) ) do |f|
-          return if f.readlines.collect { |l| l.chomp }.include?(bucket_file.path)
-        end
-      end
-
-      # if it's a new file, or if our path isn't in the file yet, add it
-      ::File.open(paths_path_for(bucket_file), ::File::WRONLY|::File::CREAT|::File::APPEND) do |of|
-        of.puts bucket_file.path
-      end
-    end
-
   end
 end
