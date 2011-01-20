@@ -9,41 +9,11 @@ module Puppet
       commands is to use the checks like `creates` to avoid running the
       command unless some condition is met.
 
-      Note also that you can restrict an `exec` to only run when it receives
+      Note that you can restrict an `exec` to only run when it receives
       events by using the `refreshonly` parameter; this is a useful way to
       have your configuration respond to events with arbitrary commands.
 
-      It is worth noting that `exec` is special, in that it is not
-      currently considered an error to have multiple `exec` instances
-      with the same name.  This was done purely because it had to be this
-      way in order to get certain functionality, but it complicates things.
-      In particular, you will not be able to use `exec` instances that
-      share their commands with other instances as a dependency, since
-      Puppet has no way of knowing which instance you mean.
-
-      For example:
-
-          # defined in the production class
-          exec { \"make\":
-            cwd => \"/prod/build/dir\",
-            path => \"/usr/bin:/usr/sbin:/bin\"
-          }
-
-          . etc. .
-
-          # defined in the test class
-          exec { \"make\":
-            cwd => \"/test/build/dir\",
-            path => \"/usr/bin:/usr/sbin:/bin\"
-          }
-
-      Any other type would throw an error, complaining that you had
-      the same instance being managed in multiple places, but these are
-      obviously different images, so `exec` had to be treated specially.
-
-      It is recommended to avoid duplicate names whenever possible.
-
-      Note that if an `exec` receives an event from another resource,
+      Note also that if an `exec` receives an event from another resource,
       it will get executed again (or execute the command specified in `refresh`, if there is one).
 
       There is a strong tendency to use `exec` to do whatever work Puppet
