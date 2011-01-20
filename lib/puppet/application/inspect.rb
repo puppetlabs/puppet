@@ -1,4 +1,6 @@
+require 'puppet'
 require 'puppet/application'
+require 'puppet/file_bucket/dipper'
 
 class Puppet::Application::Inspect < Puppet::Application
 
@@ -54,19 +56,54 @@ class Puppet::Application::Inspect < Puppet::Application
     inspect_starttime = Time.now
     @report.add_times("config_retrieval", inspect_starttime - retrieval_starttime)
 
+    if Puppet[:archive_files]
+      dipper = Puppet::FileBucket::Dipper.new(:Server => Puppet[:archive_file_server])
+    end
+
     catalog.to_ral.resources.each do |ral_resource|
       audited_attributes = ral_resource[:audit]
       next unless audited_attributes
 
-      audited_resource = ral_resource.to_resource
-
       status = Puppet::Resource::Status.new(ral_resource)
-      audited_attributes.each do |name|
-        next if audited_resource[name].nil?
-        # Skip :absent properties of :absent resources. Really, it would be nicer if the RAL returned nil for those, but it doesn't. ~JW
-        if name == :ensure or audited_resource[:ensure] != :absent or audited_resource[name] != :absent
-          event = ral_resource.event(:previous_value => audited_resource[name], :property => name, :status => "audit", :message => "inspected value is #{audited_resource[name].inspect}")
+
+      begin
+        audited_resource = ral_resource.to_resource
+      rescue StandardError => detail
+        puts detail.backtrace if Puppet[:trace]
+        ral_resource.err "Could not inspect #{ral_resource}; skipping: #{detail}"
+        audited_attributes.each do |name|
+          event = ral_resource.event(
+            :property => name,
+            :status   => "failure",
+            :audited  => true,
+            :message  => "failed to inspect #{name}"
+          )
           status.add_event(event)
+        end
+      else
+        audited_attributes.each do |name|
+          next if audited_resource[name].nil?
+          # Skip :absent properties of :absent resources. Really, it would be nicer if the RAL returned nil for those, but it doesn't. ~JW
+          if name == :ensure or audited_resource[:ensure] != :absent or audited_resource[name] != :absent
+            event = ral_resource.event(
+              :previous_value => audited_resource[name],
+              :property       => name,
+              :status         => "audit",
+              :audited        => true,
+              :message        => "inspected value is #{audited_resource[name].inspect}"
+            )
+            status.add_event(event)
+          end
+        end
+      end
+      if Puppet[:archive_files] and ral_resource.type == :file and audited_attributes.include?(:content)
+        path = ral_resource[:path]
+        if File.readable?(path)
+          begin
+            dipper.backup(path)
+          rescue StandardError => detail
+            Puppet.warning detail
+          end
         end
       end
       @report.add_resource_status(status)

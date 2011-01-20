@@ -13,6 +13,9 @@ module Puppet::Network::HTTP::API::V1
     },
     "DELETE" => {
       :singular => :destroy
+    },
+    "HEAD" => {
+      :singular => :head
     }
   }
 

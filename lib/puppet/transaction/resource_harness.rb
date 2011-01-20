@@ -37,7 +37,10 @@ class Puppet::Transaction::ResourceHarness
 
     current_values = current.to_hash
     historical_values = Puppet::Util::Storage.cache(resource).dup
-    desired_values = resource.to_resource.to_hash
+    desired_values = {}
+    resource.properties.each do |property|
+      desired_values[property.name] = property.should
+    end
     audited_params = (resource[:audit] || []).map { |p| p.to_sym }
     synced_params = []
 
@@ -55,7 +58,7 @@ class Puppet::Transaction::ResourceHarness
     elsif current_values[:ensure] != :absent
       work_order = resource.properties # Note: only the resource knows what order to apply changes in
       work_order.each do |param|
-        if !param.insync?(current_values[param.name])
+        if desired_values[param.name] && !param.insync?(current_values[param.name])
           events << apply_parameter(param, current_values[param.name], audited_params.include?(param.name), historical_values[param.name])
           synced_params << param.name
         end
