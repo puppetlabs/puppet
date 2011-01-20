@@ -622,6 +622,11 @@ module Puppet
       compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
   )
 
+  setdefaults(:inspect,
+      :archive_files => [false, "During an inspect run, whether to archive files whose contents are audited to a file bucket."],
+      :archive_file_server => ["$server", "During an inspect run, the file bucket server to archive files to if archive_files is set."]
+  )
+
   # Plugin information.
 
     setdefaults(

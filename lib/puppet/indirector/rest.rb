@@ -53,9 +53,13 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
       end
     else
       # Raise the http error if we didn't get a 'success' of some kind.
-      message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
-      raise Net::HTTPError.new(message, response)
+      raise convert_to_http_error(response)
     end
+  end
+
+  def convert_to_http_error(response)
+    message = "Error #{response.code} on SERVER: #{(response.body||'').empty? ? response.message : uncompress_body(response)}"
+    Net::HTTPError.new(message, response)
   end
 
   # Provide appropriate headers.
@@ -71,6 +75,19 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     return nil unless result = deserialize(network(request).get(indirection2uri(request), headers))
     result.name = request.key if result.respond_to?(:name=)
     result
+  end
+
+  def head(request)
+    response = network(request).head(indirection2uri(request), headers)
+    case response.code
+    when "404"
+      return false
+    when /^2/
+      return true
+    else
+      # Raise the http error if we didn't get a 'success' of some kind.
+      raise convert_to_http_error(response)
+    end
   end
 
   def search(request)
