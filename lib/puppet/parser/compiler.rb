@@ -153,7 +153,7 @@ class Puppet::Parser::Compiler
         if param_classes
           resource = klass.ensure_in_catalog(scope, param_classes[name] || {})
         else
-          found << name and next if scope.class_scope(klass) and !param_classes
+          found << name and next if scope.class_scope(klass)
           resource = klass.ensure_in_catalog(scope)
         end
 
