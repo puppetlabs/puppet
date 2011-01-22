@@ -305,7 +305,7 @@ describe Puppet::SimpleGraph do
 
     it "should produce the correct relationship text" do
       add_edges :a => :b, :b => :a
-      want = %r{following relationships: \(b => a\), \(a => b\)}
+      want = %r{following relationships:\n\(b => a\)\n\(a => b\)}
       expect { @graph.topsort }.to raise_error(Puppet::Error, want)
     end
 

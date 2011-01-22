@@ -119,8 +119,10 @@ class Puppet::SimpleGraph
     if cycles = degree.values.reject { |ns| ns.empty? } and cycles.length > 0
       message = cycles.collect { |edges|
         '(' + edges.collect { |e| e[1].to_s }.join(", ") + ')'
-      }.join(", ")
-      raise Puppet::Error, "Found dependency cycles in the following relationships: #{message}; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz"
+      }.join("\n")
+      raise Puppet::Error, "Found dependency cycles in the following relationships:\n" +
+        message + "\n" +
+        "Try the '--graph' option and opening the '.dot' file in OmniGraffle or GraphViz"
     end
 
     result
