@@ -109,7 +109,7 @@ class Puppet::SimpleGraph
     # each of its out-edges.
     while v = zeros.pop
       result << v
-      @out_from[v].each { |v2,es| 
+      @out_from[v].each { |v2,es|
         degree[v2].delete(v)
         zeros << v2 if degree[v2].empty?
       }
@@ -117,7 +117,9 @@ class Puppet::SimpleGraph
 
     # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
     if cycles = degree.values.reject { |ns| ns.empty? } and cycles.length > 0
-      message = cycles.collect { |edges| '('+edges.collect { |e| e.to_s }.join(", ")+')' }.join(", ")
+      message = cycles.collect { |edges|
+        '(' + edges.collect { |e| e[1].to_s }.join(", ") + ')'
+      }.join(", ")
       raise Puppet::Error, "Found dependency cycles in the following relationships: #{message}; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz"
     end
 
@@ -141,7 +143,7 @@ class Puppet::SimpleGraph
     # each of its out-edges.
     while v = zeros.pop
       result << v
-      @out_from[v].each { |v2,es| 
+      @out_from[v].each { |v2,es|
         zeros << v2 if (degree[v2] -= 1) == 0
       }
     end

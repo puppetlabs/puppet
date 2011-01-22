@@ -303,6 +303,12 @@ describe Puppet::SimpleGraph do
       proc { @graph.topsort }.should_not raise_error
     end
 
+    it "should produce the correct relationship text" do
+      add_edges :a => :b, :b => :a
+      want = %r{following relationships: \(b => a\), \(a => b\)}
+      expect { @graph.topsort }.to raise_error(Puppet::Error, want)
+    end
+
     # Our graph's add_edge method is smart enough not to add
     # duplicate edges, so we use the objects, which it doesn't
     # check.
