@@ -101,42 +101,66 @@ class Puppet::SimpleGraph
   # This method has an unhealthy relationship with the find_cycles_in_graph
   # method below, which contains the knowledge of how the state object is
   # maintained.
-  def tarjan(v, s)
-    s.index[v]   = s.n
-    s.lowlink[v] = s.n
-    s.n = s.n + 1
+  def tarjan(root, s)
+    # initialize the recursion stack we use to work around the nasty lack of a
+    # decent Ruby stack.
+    recur = [OpenStruct.new :node => root]
 
-    s.s.push v
+    while not recur.empty? do
+      frame = recur.last
+      v = frame.node
+      case frame.step
+      when nil then
+        s.index[v]   = s.n
+        s.lowlink[v] = s.n
+        s.n          = s.n + 1
 
-    @out_from[v].each do |edge|
-      to = edge[0]
+        s.s.push v
 
-      if ! s.index[to] then
-        tarjan(to, s)
-        s.lowlink[v] = [s.lowlink[v], s.lowlink[to]].min
-      elsif s.s.member? to then
-        # Performance note: the stack membership test *should* be done with a
-        # constant time check, but I was lazy and used something that is
-        # likely to be O(N) where N is the stack depth; this will bite us
-        # eventually, and should be improved before the change lands.
-        #
-        # OTOH, this is only invoked on a very cold path, when things have
-        # gone wrong anyhow, right now.  I feel that getting the code out is
-        # worth more than that final performance boost. --daniel 2011-01-22
-        s.lowlink[v] = [s.lowlink[v], s.index[to]].min
+        frame.children = adjacent(v)
+        frame.step = :children
+
+      when :children then
+        if frame.children.length > 0 then
+          child = frame.children.shift
+          if ! s.index[child] then
+            # Never seen, need to recurse.
+            frame.step = :after_recursion
+            frame.child = child
+            recur.push OpenStruct.new :node => child
+          elsif s.s.member? child then
+            # Performance note: the stack membership test *should* be done with a
+            # constant time check, but I was lazy and used something that is
+            # likely to be O(N) where N is the stack depth; this will bite us
+            # eventually, and should be improved before the change lands.
+            #
+            # OTOH, this is only invoked on a very cold path, when things have
+            # gone wrong anyhow, right now.  I feel that getting the code out is
+            # worth more than that final performance boost. --daniel 2011-01-22
+            s.lowlink[v] = [s.lowlink[v], s.index[child]].min
+          end
+        else
+          if s.lowlink[v] == s.index[v] then
+            # REVISIT: Surely there must be a nicer way to partition this around an
+            # index, but I don't know what it is.  This works. :/ --daniel 2011-01-22
+            #
+            # Performance note: this might also suffer an O(stack depth) performance
+            # hit, better replaced with something that is O(1) for splitting the
+            # stack into parts.
+            tmp = s.s.slice!(0, s.s.index(v))
+            s.scc.push s.s
+            s.s = tmp
+          end
+          recur.pop               # done with this node, finally.
+        end
+
+      when :after_recursion then
+        s.lowlink[v] = [s.lowlink[v], s.lowlink[frame.child]].min
+        frame.step = :children
+
+      else
+        fail "#{frame.step} is an unknown step"
       end
-    end
-
-    if s.lowlink[v] == s.index[v] then
-      # REVISIT: Surely there must be a nicer way to partition this around an
-      # index, but I don't know what it is.  This works. :/ --daniel 2011-01-22
-      #
-      # Performance note: this might also suffer an O(stack depth) performance
-      # hit, better replaced with something that is O(1) for splitting the
-      # stack into parts.
-      tmp = s.s.slice!(0, s.s.index(v))
-      s.scc.push s.s
-      s.s = tmp
     end
   end
 

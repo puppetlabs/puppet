@@ -350,7 +350,7 @@ describe Puppet::SimpleGraph do
     end
 
     it "cycle discovery should not fail with large data sets" do
-      limit = 1000
+      limit = 3000
       (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
 
       cycles = nil
