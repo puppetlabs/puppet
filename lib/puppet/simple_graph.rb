@@ -1,7 +1,3 @@
-# Created by Luke A. Kanies on 2007-11-07.
-# Cycle detection and reporting by Daniel Pittman 2011-01-22
-# Copyright (c) 2007, 2010.  All rights reserved.
-
 require 'puppet/external/dot'
 require 'puppet/relationship'
 require 'set'
