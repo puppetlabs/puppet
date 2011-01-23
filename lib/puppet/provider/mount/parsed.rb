@@ -9,20 +9,13 @@ else
 end
 
 
-      Puppet::Type.type(:mount).provide(
-        :parsed,
-  :parent => Puppet::Provider::ParsedFile,
-  :default_target => fstab,
-        
-  :filetype => :flat
-) do
+Puppet::Type.type(:mount).provide(:parsed,:parent => Puppet::Provider::ParsedFile,:default_target => fstab,:filetype => :flat) do
   include Puppet::Provider::Mount
   #confine :exists => fstab
 
   commands :mountcmd => "mount", :umount => "umount"
 
-  @platform = Facter["operatingsystem"].value
-  case @platform
+  case Facter["operatingsystem"]
   when "Solaris"
     @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot, :options]
   else
