@@ -1,9 +1,11 @@
-#  Created by Luke A. Kanies on 2007-11-07.
-#  Copyright (c) 2007. All rights reserved.
+# Created by Luke A. Kanies on 2007-11-07.
+# Cycle detection and reporting by Daniel Pittman 2011-01-22
+# Copyright (c) 2007, 2010.  All rights reserved.
 
 require 'puppet/external/dot'
 require 'puppet/relationship'
 require 'set'
+require 'ostruct'
 
 # A hopefully-faster graph class to replace the use of GRATR.
 class Puppet::SimpleGraph
@@ -92,40 +94,79 @@ class Puppet::SimpleGraph
     vertices
   end
 
-  # Provide a topological sort with cycle reporting
-  def topsort_with_cycles
-    degree = {}
-    zeros = []
-    result = []
+  # This is a simple implementation of Tarjan's algorithm to find strongly
+  # connected components in the graph; this is a fairly ugly implementation,
+  # because I can't just decorate the vertices themselves.
+  #
+  # This method has an unhealthy relationship with the find_cycles_in_graph
+  # method below, which contains the knowledge of how the state object is
+  # maintained.
+  def tarjan(v, s)
+    s.index[v]   = s.n
+    s.lowlink[v] = s.n
+    s.n = s.n + 1
 
-    # Collect each of our vertices, with the number of in-edges each has.
-    vertices.each do |v|
-      edges = @in_to[v].dup
-      zeros << v if edges.empty?
-      degree[v] = edges
+    s.s.push v
+
+    @out_from[v].each do |edge|
+      to = edge[0]
+
+      if ! s.index[to] then
+        tarjan(to, s)
+        s.lowlink[v] = [s.lowlink[v], s.lowlink[to]].min
+      elsif s.s.member? to then
+        # Performance note: the stack membership test *should* be done with a
+        # constant time check, but I was lazy and used something that is
+        # likely to be O(N) where N is the stack depth; this will bite us
+        # eventually, and should be improved before the change lands.
+        #
+        # OTOH, this is only invoked on a very cold path, when things have
+        # gone wrong anyhow, right now.  I feel that getting the code out is
+        # worth more than that final performance boost. --daniel 2011-01-22
+        s.lowlink[v] = [s.lowlink[v], s.index[to]].min
+      end
     end
 
-    # Iterate over each 0-degree vertex, decrementing the degree of
-    # each of its out-edges.
-    while v = zeros.pop
-      result << v
-      @out_from[v].each { |v2,es|
-        degree[v2].delete(v)
-        zeros << v2 if degree[v2].empty?
-      }
+    if s.lowlink[v] == s.index[v] then
+      # REVISIT: Surely there must be a nicer way to partition this around an
+      # index, but I don't know what it is.  This works. :/ --daniel 2011-01-22
+      #
+      # Performance note: this might also suffer an O(stack depth) performance
+      # hit, better replaced with something that is O(1) for splitting the
+      # stack into parts.
+      tmp = s.s.slice!(0, s.s.index(v))
+      s.scc.push s.s
+      s.s = tmp
+    end
+  end
+
+  # Find all cycles in the graph by detecting all the strongly connected
+  # components, then eliminating everything with a size of one as
+  # uninteresting - which it is, because it can't be a cycle. :)
+  #
+  # This has an unhealthy relationship with the 'tarjan' method above, which
+  # it uses to implement the detection of strongly connected components.
+  def find_cycles_in_graph
+    state = OpenStruct.new :n => 0, :index => {}, :lowlink => {}, :s => [], :scc => []
+
+    # we usually have a disconnected graph, must walk all possible roots
+    vertices.each do |vertex|
+      if ! state.index[vertex] then
+        tarjan vertex, state
+      end
     end
 
-    # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
-    if cycles = degree.values.reject { |ns| ns.empty? } and cycles.length > 0
-      message = cycles.collect { |edges|
-        '(' + edges.collect { |e| e[1].to_s }.join(", ") + ')'
-      }.join("\n")
-      raise Puppet::Error, "Found dependency cycles in the following relationships:\n" +
-        message + "\n" +
-        "Try the '--graph' option and opening the '.dot' file in OmniGraffle or GraphViz"
-    end
+    return state.scc.select { |c| c.length > 1 }
+  end
 
-    result
+  def report_cycles_in_graph
+    cycles = find_cycles_in_graph
+    n = cycles.length           # where is "pluralize"? --daniel 2011-01-22
+    s = n == 1 ? '' : 's'
+
+    raise Puppet::Error, "Found #{n} dependency cycle#{s}:\n" +
+      cycles.collect { |c| '(' + c.join(", ") + ')' }.join("\n") + "\n" +
+      "Try the '--graph' option and opening the '.dot' file in OmniGraffle or GraphViz"
   end
 
   # Provide a topological sort.
@@ -152,7 +193,7 @@ class Puppet::SimpleGraph
 
     # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
     if cycles = degree.values.reject { |ns| ns == 0  } and cycles.length > 0
-      topsort_with_cycles
+      report_cycles_in_graph
     end
 
     result

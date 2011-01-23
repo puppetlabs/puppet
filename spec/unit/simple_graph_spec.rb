@@ -305,8 +305,57 @@ describe Puppet::SimpleGraph do
 
     it "should produce the correct relationship text" do
       add_edges :a => :b, :b => :a
-      want = %r{following relationships:\n\(b => a\)\n\(a => b\)}
+      want = %r{Found 1 dependency cycle:\n\(a, b\)\nTry}
       expect { @graph.topsort }.to raise_error(Puppet::Error, want)
+    end
+
+    it "cycle discovery should be the minimum cycle for a simple graph" do
+      add_edges "a" => "b"
+      add_edges "b" => "a"
+      add_edges "b" => "c"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [["a", "b"]]
+    end
+
+    it "cycle discovery should handle two distinct cycles" do
+      add_edges "a" => "a1", "a1" => "a"
+      add_edges "b" => "b1", "b1" => "b"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [["a", "a1"], ["b", "b1"]]
+    end
+
+    it "cycle discovery should handle two cycles in a connected graph" do
+      add_edges "a" => "b", "b" => "c", "c" => "d"
+      add_edges "a" => "a1", "a1" => "a"
+      add_edges "c" => "c1", "c1" => "c2", "c2" => "c3", "c3" => "c"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [%w{a a1}, %w{c c1 c2 c3}]
+    end
+
+    it "cycle discovery should handle a complicated cycle" do
+      add_edges "a" => "b", "b" => "c"
+      add_edges "a" => "c"
+      add_edges "c" => "c1", "c1" => "a"
+      add_edges "c" => "c2", "c2" => "b"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [%w{a b c c1 c2}]
+    end
+
+    it "cycle discovery should not fail with large data sets" do
+      limit = 1000
+      (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == []
     end
 
     # Our graph's add_edge method is smart enough not to add
