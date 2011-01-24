@@ -305,7 +305,7 @@ describe Puppet::SimpleGraph do
 
     it "should produce the correct relationship text" do
       add_edges :a => :b, :b => :a
-      want = %r{Found 1 dependency cycle:\n\(a, b\)\nTry}
+      want = %r{Found 1 dependency cycle:\n\(a => b => a\)\nTry}
       expect { @graph.topsort }.to raise_error(Puppet::Error, want)
     end
 
@@ -356,6 +356,52 @@ describe Puppet::SimpleGraph do
       cycles = nil
       expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
       cycles.should be == []
+    end
+
+    it "path finding should work with a simple cycle" do
+      add_edges "a" => "b", "b" => "c", "c" => "a"
+
+      cycles = @graph.find_cycles_in_graph.sort
+      paths = @graph.all_paths_in_cycle(cycles.first)
+      paths.should be == [%w{a b c a}]
+    end
+
+    it "path finding should work with two independent cycles" do
+      add_edges "a" => "b1"
+      add_edges "a" => "b2"
+      add_edges "b1" => "a", "b2" => "a"
+
+      cycles = @graph.find_cycles_in_graph.sort
+      cycles.length.should be == 1
+
+      paths = @graph.all_paths_in_cycle(cycles.first)
+      paths.sort.should be == [%w{a b1 a}, %w{a b2 a}]
+    end
+
+    it "path finding should prefer shorter paths in cycles" do
+      add_edges "a" => "b", "b" => "c", "c" => "a"
+      add_edges "b" => "a"
+
+      cycles = @graph.find_cycles_in_graph.sort
+      cycles.length.should be == 1
+
+      paths = @graph.all_paths_in_cycle(cycles.first)
+      paths.should be == [%w{a b a}, %w{a b c a}]
+    end
+
+    it "path finding should respect the max_path value" do
+      (1..20).each do |n| add_edges "a" => "b#{n}", "b#{n}" => "a" end
+
+      cycles = @graph.find_cycles_in_graph.sort
+      cycles.length.should be == 1
+
+      (1..20).each do |n|
+        paths = @graph.all_paths_in_cycle(cycles.first, n)
+        paths.length.should be == n
+      end
+
+      paths = @graph.all_paths_in_cycle(cycles.first, 21)
+      paths.length.should be == 20
     end
 
     # Our graph's add_edge method is smart enough not to add

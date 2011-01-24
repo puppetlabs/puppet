@@ -179,14 +179,56 @@ class Puppet::SimpleGraph
     return state.scc.select { |c| c.length > 1 }
   end
 
+  # Perform a BFS on the sub graph representing the cycle, with a view to
+  # generating a sufficient set of paths to report the cycle meaningfully, and
+  # ideally usefully, for the end user.
+  #
+  # BFS is preferred because it will generally report the shortest paths
+  # through the graph first, which are more likely to be interesting to the
+  # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
+  def all_paths_in_cycle(cycle, max_paths = 10)
+    raise ArgumentError, "negative or zero max_paths" if max_paths < 1
+
+    # Calculate our filtered outbound vertex lists...
+    adj = {}
+    cycle.each do |vertex|
+      adj[vertex] = adjacent(vertex).select{|s| cycle.member? s}
+    end
+
+    found = []
+
+    stack = [OpenStruct.new :vertex => cycle.first, :path => []]
+    while frame = stack.shift do
+      if frame.path.member? frame.vertex then
+        found << frame.path + [frame.vertex]
+
+        # REVISIT: This should be an O(1) test, but I have no idea if Ruby
+        # specifies Array#length to be O(1), O(n), or allows the implementer
+        # to pick either option.  Should answer that. --daniel 2011-01-23
+        break if found.length >= max_paths
+      else
+        adj[frame.vertex].each do |to|
+          stack.push OpenStruct.new :vertex => to, :path => frame.path + [frame.vertex]
+        end
+      end
+    end
+
+    return found
+  end
+
   def report_cycles_in_graph
     cycles = find_cycles_in_graph
     n = cycles.length           # where is "pluralize"? --daniel 2011-01-22
     s = n == 1 ? '' : 's'
 
-    raise Puppet::Error, "Found #{n} dependency cycle#{s}:\n" +
-      cycles.collect { |c| '(' + c.join(", ") + ')' }.join("\n") + "\n" +
-      "Try the '--graph' option and opening the '.dot' file in OmniGraffle or GraphViz"
+    message = "Found #{n} dependency cycle#{s}:\n"
+    cycles.each do |cycle|
+      paths = all_paths_in_cycle(cycle)
+      message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
+    end
+    message += "Try the '--graph' option and opening the '.dot' file in OmniGraffle or GraphViz"
+
+    raise Puppet::Error, message
   end
 
   # Provide a topological sort.
