@@ -1,7 +1,6 @@
 require 'puppet/external/dot'
 require 'puppet/relationship'
 require 'set'
-require 'ostruct'
 
 # A hopefully-faster graph class to replace the use of GRATR.
 class Puppet::SimpleGraph
@@ -100,41 +99,41 @@ class Puppet::SimpleGraph
   def tarjan(root, s)
     # initialize the recursion stack we use to work around the nasty lack of a
     # decent Ruby stack.
-    recur = [OpenStruct.new :node => root]
+    recur = [{ :node => root }]
 
     while not recur.empty? do
       frame = recur.last
-      vertex = frame.node
+      vertex = frame[:node]
 
-      case frame.step
+      case frame[:step]
       when nil then
-        s.index[vertex]   = s.number
-        s.lowlink[vertex] = s.number
-        s.number          = s.number + 1
+        s[:index][vertex]   = s[:number]
+        s[:lowlink][vertex] = s[:number]
+        s[:number]          = s[:number] + 1
 
-        s.stack.push(vertex)
-        s.seen[vertex] = true
+        s[:stack].push(vertex)
+        s[:seen][vertex] = true
 
-        frame.children = adjacent(vertex)
-        frame.step     = :children
+        frame[:children] = adjacent(vertex)
+        frame[:step]     = :children
 
       when :children then
-        if frame.children.length > 0 then
-          child = frame.children.shift
-          if ! s.index[child] then
+        if frame[:children].length > 0 then
+          child = frame[:children].shift
+          if ! s[:index][child] then
             # Never seen, need to recurse.
-            frame.step = :after_recursion
-            frame.child = child
-            recur.push OpenStruct.new :node => child
-          elsif s.seen[child] then
-            s.lowlink[vertex] = [s.lowlink[vertex], s.index[child]].min
+            frame[:step] = :after_recursion
+            frame[:child] = child
+            recur.push({ :node => child })
+          elsif s[:seen][child] then
+            s[:lowlink][vertex] = [s[:lowlink][vertex], s[:index][child]].min
           end
         else
-          if s.lowlink[vertex] == s.index[vertex] then
+          if s[:lowlink][vertex] == s[:index][vertex] then
             this_scc = []
             begin
-              top = s.stack.pop
-              s.seen[top] = false
+              top = s[:stack].pop
+              s[:seen][top] = false
               this_scc << top
             end until top == vertex
             # NOTE: if we don't reverse we get the components in the opposite
@@ -148,17 +147,17 @@ class Puppet::SimpleGraph
             # better with a reverse operation than a string of 'unshift'
             # insertions at the head of the array; if they were going to mess
             # up the performance of one, it would be unshift.
-            s.scc << this_scc.reverse
+            s[:scc] << this_scc.reverse
           end
           recur.pop               # done with this node, finally.
         end
 
       when :after_recursion then
-        s.lowlink[vertex] = [s.lowlink[vertex], s.lowlink[frame.child]].min
-        frame.step = :children
+        s[:lowlink][vertex] = [s[:lowlink][vertex], s[:lowlink][frame[:child]]].min
+        frame[:step] = :children
 
       else
-        fail "#{frame.step} is an unknown step"
+        fail "#{frame[:step]} is an unknown step"
       end
     end
   end
@@ -170,18 +169,19 @@ class Puppet::SimpleGraph
   # This has an unhealthy relationship with the 'tarjan' method above, which
   # it uses to implement the detection of strongly connected components.
   def find_cycles_in_graph
-    state = OpenStruct.new :number => 0, :index => {}, :lowlink => {}, :scc => [],
-                           :stack => [], :seen => {}
+    state = {
+      :number => 0, :index => {}, :lowlink => {}, :scc => [],
+      :stack => [], :seen => {}
+    }
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
-      if ! state.index[vertex] then
+      if ! state[:index][vertex] then
         tarjan vertex, state
       end
     end
 
-    result = state.scc.select { |c| c.length > 1 }
-    return result
+    state[:scc].select { |c| c.length > 1 }
   end
 
   # Perform a BFS on the sub graph representing the cycle, with a view to
@@ -202,18 +202,15 @@ class Puppet::SimpleGraph
 
     found = []
 
-    stack = [OpenStruct.new :vertex => cycle.first, :path => []]
+    # frame struct is vertex, [path]
+    stack = [[cycle.first, []]]
     while frame = stack.shift do
-      if frame.path.member? frame.vertex then
-        found << frame.path + [frame.vertex]
-
-        # REVISIT: This should be an O(1) test, but I have no idea if Ruby
-        # specifies Array#length to be O(1), O(n), or allows the implementer
-        # to pick either option.  Should answer that. --daniel 2011-01-23
+      if frame[1].member?(frame[0]) then
+        found << frame[1] + [frame[0]]
         break if found.length >= max_paths
       else
-        adj[frame.vertex].each do |to|
-          stack.push OpenStruct.new :vertex => to, :path => frame.path + [frame.vertex]
+        adj[frame[0]].each do |to|
+          stack.push [to, frame[1] + [frame[0]]]
         end
       end
     end
