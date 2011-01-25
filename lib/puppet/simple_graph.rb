@@ -104,17 +104,18 @@ class Puppet::SimpleGraph
 
     while not recur.empty? do
       frame = recur.last
-      v = frame.node
+      vertex = frame.node
+
       case frame.step
       when nil then
-        s.index[v]   = s.n
-        s.lowlink[v] = s.n
-        s.n          = s.n + 1
+        s.index[vertex]   = s.number
+        s.lowlink[vertex] = s.number
+        s.number          = s.number + 1
 
-        s.s.push v
+        s.stack.push(vertex)
 
-        frame.children = adjacent(v)
-        frame.step = :children
+        frame.children = adjacent(vertex)
+        frame.step     = :children
 
       when :children then
         if frame.children.length > 0 then
@@ -124,7 +125,7 @@ class Puppet::SimpleGraph
             frame.step = :after_recursion
             frame.child = child
             recur.push OpenStruct.new :node => child
-          elsif s.s.member? child then
+          elsif s.stack.member? child then
             # Performance note: the stack membership test *should* be done with a
             # constant time check, but I was lazy and used something that is
             # likely to be O(N) where N is the stack depth; this will bite us
@@ -133,25 +134,25 @@ class Puppet::SimpleGraph
             # OTOH, this is only invoked on a very cold path, when things have
             # gone wrong anyhow, right now.  I feel that getting the code out is
             # worth more than that final performance boost. --daniel 2011-01-22
-            s.lowlink[v] = [s.lowlink[v], s.index[child]].min
+            s.lowlink[vertex] = [s.lowlink[vertex], s.index[child]].min
           end
         else
-          if s.lowlink[v] == s.index[v] then
+          if s.lowlink[vertex] == s.index[vertex] then
             # REVISIT: Surely there must be a nicer way to partition this around an
             # index, but I don't know what it is.  This works. :/ --daniel 2011-01-22
             #
             # Performance note: this might also suffer an O(stack depth) performance
             # hit, better replaced with something that is O(1) for splitting the
             # stack into parts.
-            tmp = s.s.slice!(0, s.s.index(v))
-            s.scc.push s.s
-            s.s = tmp
+            tmp = s.stack.slice!(0, s.stack.index(vertex))
+            s.scc.push(s.stack)
+            s.stack = tmp
           end
           recur.pop               # done with this node, finally.
         end
 
       when :after_recursion then
-        s.lowlink[v] = [s.lowlink[v], s.lowlink[frame.child]].min
+        s.lowlink[vertex] = [s.lowlink[vertex], s.lowlink[frame.child]].min
         frame.step = :children
 
       else
@@ -167,7 +168,7 @@ class Puppet::SimpleGraph
   # This has an unhealthy relationship with the 'tarjan' method above, which
   # it uses to implement the detection of strongly connected components.
   def find_cycles_in_graph
-    state = OpenStruct.new :n => 0, :index => {}, :lowlink => {}, :s => [], :scc => []
+    state = OpenStruct.new :number => 0, :index => {}, :lowlink => {}, :stack => [], :scc => []
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
