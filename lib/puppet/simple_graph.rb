@@ -113,6 +113,7 @@ class Puppet::SimpleGraph
         s.number          = s.number + 1
 
         s.stack.push(vertex)
+        s.seen[vertex] = true
 
         frame.children = adjacent(vertex)
         frame.step     = :children
@@ -125,28 +126,29 @@ class Puppet::SimpleGraph
             frame.step = :after_recursion
             frame.child = child
             recur.push OpenStruct.new :node => child
-          elsif s.stack.member? child then
-            # Performance note: the stack membership test *should* be done with a
-            # constant time check, but I was lazy and used something that is
-            # likely to be O(N) where N is the stack depth; this will bite us
-            # eventually, and should be improved before the change lands.
-            #
-            # OTOH, this is only invoked on a very cold path, when things have
-            # gone wrong anyhow, right now.  I feel that getting the code out is
-            # worth more than that final performance boost. --daniel 2011-01-22
+          elsif s.seen[child] then
             s.lowlink[vertex] = [s.lowlink[vertex], s.index[child]].min
           end
         else
           if s.lowlink[vertex] == s.index[vertex] then
-            # REVISIT: Surely there must be a nicer way to partition this around an
-            # index, but I don't know what it is.  This works. :/ --daniel 2011-01-22
+            this_scc = []
+            begin
+              top = s.stack.pop
+              s.seen[top] = false
+              this_scc << top
+            end until top == vertex
+            # NOTE: if we don't reverse we get the components in the opposite
+            # order to what a human being would expect; reverse should be an
+            # O(1) operation, without even copying, because we know the length
+            # of the source, but I worry that an implementation will get this
+            # wrong.  Still, the worst case is O(n) for n vertices as we can't
+            # possibly put a vertex into two SCCs.
             #
-            # Performance note: this might also suffer an O(stack depth) performance
-            # hit, better replaced with something that is O(1) for splitting the
-            # stack into parts.
-            tmp = s.stack.slice!(0, s.stack.index(vertex))
-            s.scc.push(s.stack)
-            s.stack = tmp
+            # Also, my feeling is that most implementations are going to do
+            # better with a reverse operation than a string of 'unshift'
+            # insertions at the head of the array; if they were going to mess
+            # up the performance of one, it would be unshift.
+            s.scc << this_scc.reverse
           end
           recur.pop               # done with this node, finally.
         end
@@ -168,7 +170,8 @@ class Puppet::SimpleGraph
   # This has an unhealthy relationship with the 'tarjan' method above, which
   # it uses to implement the detection of strongly connected components.
   def find_cycles_in_graph
-    state = OpenStruct.new :number => 0, :index => {}, :lowlink => {}, :stack => [], :scc => []
+    state = OpenStruct.new :number => 0, :index => {}, :lowlink => {}, :scc => [],
+                           :stack => [], :seen => {}
 
     # we usually have a disconnected graph, must walk all possible roots
     vertices.each do |vertex|
@@ -177,7 +180,8 @@ class Puppet::SimpleGraph
       end
     end
 
-    return state.scc.select { |c| c.length > 1 }
+    result = state.scc.select { |c| c.length > 1 }
+    return result
   end
 
   # Perform a BFS on the sub graph representing the cycle, with a view to
