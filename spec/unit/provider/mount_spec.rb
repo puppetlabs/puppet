@@ -19,18 +19,13 @@ describe Puppet::Provider::Mount do
 
   describe Puppet::Provider::Mount, " when mounting" do
 
+    before :each do
+      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+    end
+
     it "should use the 'mountcmd' method to mount" do
       @mounter.stubs(:options).returns(nil)
       @mounter.expects(:mountcmd)
-
-      @mounter.mount
-    end
-
-    it "should flush before mounting if a flush method exists" do
-      @mounter.meta_def(:flush) { }
-      @mounter.expects(:flush)
-      @mounter.stubs(:mountcmd)
-      @mounter.stubs(:options).returns(nil)
 
       @mounter.mount
     end
@@ -48,6 +43,23 @@ describe Puppet::Provider::Mount do
 
       @mounter.mount
     end
+
+    it "should update the :ensure state to :mounted if it was :unmounted before" do
+      @mounter.expects(:mountcmd)
+      @mounter.stubs(:options).returns(nil)
+      @mounter.expects(:get).with(:ensure).returns(:unmounted)
+      @mounter.expects(:set).with(:ensure => :mounted)
+      @mounter.mount
+    end
+
+    it "should update the :ensure state to :ghost if it was :absent before" do
+      @mounter.expects(:mountcmd)
+      @mounter.stubs(:options).returns(nil)
+      @mounter.expects(:get).with(:ensure).returns(:absent)
+      @mounter.expects(:set).with(:ensure => :ghost)
+      @mounter.mount
+    end
+
   end
 
   describe Puppet::Provider::Mount, " when remounting" do
@@ -77,20 +89,41 @@ describe Puppet::Provider::Mount do
 
   describe Puppet::Provider::Mount, " when unmounting" do
 
+    before :each do
+      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+    end
+
     it "should call the :umount command with the resource name" do
       @mounter.expects(:umount).with(@name)
       @mounter.unmount
     end
+
+    it "should update the :ensure state to :absent if it was :ghost before" do
+      @mounter.expects(:umount).with(@name).returns true
+      @mounter.expects(:get).with(:ensure).returns(:ghost)
+      @mounter.expects(:set).with(:ensure => :absent)
+      @mounter.unmount
+    end
+
+    it "should update the :ensure state to :unmounted if it was :mounted before" do
+      @mounter.expects(:umount).with(@name).returns true
+      @mounter.expects(:get).with(:ensure).returns(:mounted)
+      @mounter.expects(:set).with(:ensure => :unmounted)
+      @mounter.unmount
+    end
+
   end
 
   describe Puppet::Provider::Mount, " when determining if it is mounted" do
 
-    it "should parse the results of running the mount command with no arguments" do
-      Facter.stubs(:value).returns("whatever")
-      @mounter.expects(:mountcmd).returns("")
-
+    it "should query the property_hash" do
+      @mounter.expects(:get).with(:ensure).returns(:mounted)
       @mounter.mounted?
     end
+
+  end
+
+  describe Puppet::Provider::Mount, " when prefetching resources" do
 
     it "should match ' on /private/var/automount<name>' if the operating system is Darwin" do
       Facter.stubs(:value).with("operatingsystem").returns("Darwin")
