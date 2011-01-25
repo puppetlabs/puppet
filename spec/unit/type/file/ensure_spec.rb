@@ -41,44 +41,45 @@ describe property do
     end
 
     it "should always be in sync if replace is 'false' unless the file is missing" do
+      @ensure.should = :file
       @resource.expects(:replace?).returns false
-      @ensure.insync?(:link).should be_true
+      @ensure.safe_insync?(:link).should be_true
     end
 
     it "should be in sync if :ensure is set to :absent and the file does not exist" do
       @ensure.should = :absent
 
-      @ensure.must be_insync(:absent)
+      @ensure.must be_safe_insync(:absent)
     end
 
     it "should not be in sync if :ensure is set to :absent and the file exists" do
       @ensure.should = :absent
 
-      @ensure.should_not be_insync(:file)
+      @ensure.should_not be_safe_insync(:file)
     end
 
     it "should be in sync if a normal file exists and :ensure is set to :present" do
       @ensure.should = :present
 
-      @ensure.must be_insync(:file)
+      @ensure.must be_safe_insync(:file)
     end
 
     it "should be in sync if a directory exists and :ensure is set to :present" do
       @ensure.should = :present
 
-      @ensure.must be_insync(:directory)
+      @ensure.must be_safe_insync(:directory)
     end
 
     it "should be in sync if a symlink exists and :ensure is set to :present" do
       @ensure.should = :present
 
-      @ensure.must be_insync(:link)
+      @ensure.must be_safe_insync(:link)
     end
 
     it "should not be in sync if :ensure is set to :file and a directory exists" do
       @ensure.should = :file
 
-      @ensure.should_not be_insync(:directory)
+      @ensure.should_not be_safe_insync(:directory)
     end
   end
 end

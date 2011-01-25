@@ -1065,4 +1065,18 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "when auditing" do
+    it "should not fail if creating a new file if group is not set" do
+      File.exists?(@path).should == false
+      file = Puppet::Type::File.new(:name => @path, :audit => "all", :content => "content")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource(file)
+
+      Puppet::Util::Storage.stubs(:store) # to prevent the catalog from trying to write state.yaml
+      transaction = catalog.apply
+
+      transaction.report.resource_statuses["File[#{@path}]"].failed.should == false
+      File.exists?(@path).should == true
+    end
+  end
 end

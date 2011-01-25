@@ -141,17 +141,20 @@ describe content do
 
     it "should return true if the resource shouldn't be a regular file" do
       @resource.expects(:should_be_file?).returns false
-      @content.must be_insync("whatever")
+      @content.should = "foo"
+      @content.must be_safe_insync("whatever")
     end
 
     it "should return false if the current content is :absent" do
-      @content.should_not be_insync(:absent)
+      @content.should = "foo"
+      @content.should_not be_safe_insync(:absent)
     end
 
     it "should return false if the file should be a file but is not present" do
       @resource.expects(:should_be_file?).returns true
+      @content.should = "foo"
 
-      @content.should_not be_insync(:absent)
+      @content.should_not be_safe_insync(:absent)
     end
 
     describe "and the file exists" do
@@ -161,12 +164,12 @@ describe content do
 
       it "should return false if the current contents are different from the desired content" do
         @content.should = "some content"
-        @content.should_not be_insync("other content")
+        @content.should_not be_safe_insync("other content")
       end
 
       it "should return true if the sum for the current contents is the same as the sum for the desired content" do
         @content.should = "some content"
-        @content.must be_insync("{md5}" + Digest::MD5.hexdigest("some content"))
+        @content.must be_safe_insync("{md5}" + Digest::MD5.hexdigest("some content"))
       end
 
       describe "and Puppet[:show_diff] is set" do
@@ -179,14 +182,14 @@ describe content do
           @content.expects(:diff).returns("my diff").once
           @content.expects(:print).with("my diff").once
 
-          @content.insync?("other content")
+          @content.safe_insync?("other content")
         end
 
         it "should not display a diff if the sum for the current contents is the same as the sum for the desired content" do
           @content.should = "some content"
           @content.expects(:diff).never
 
-          @content.insync?("{md5}" + Digest::MD5.hexdigest("some content"))
+          @content.safe_insync?("{md5}" + Digest::MD5.hexdigest("some content"))
         end
       end
     end
@@ -199,17 +202,18 @@ describe content do
       it "should be insync if the file exists and the content is different" do
         @resource.stubs(:stat).returns mock('stat')
 
-        @content.must be_insync("whatever")
+        @content.must be_safe_insync("whatever")
       end
 
       it "should be insync if the file exists and the content is right" do
         @resource.stubs(:stat).returns mock('stat')
 
-        @content.must be_insync("something")
+        @content.must be_safe_insync("something")
       end
 
       it "should not be insync if the file does not exist" do
-        @content.should_not be_insync(:absent)
+        @content.should = "foo"
+        @content.should_not be_safe_insync(:absent)
       end
     end
   end

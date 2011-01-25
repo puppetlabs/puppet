@@ -27,9 +27,7 @@ Puppet::Type.type(:file).provide :posix do
     end
   end
 
-  def insync?(current, should)
-    return true unless should
-
+  def is_owner_insync?(current, should)
     should.each do |value|
       if value =~ /^\d+$/
         uid = Integer(value)

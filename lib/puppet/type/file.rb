@@ -779,7 +779,7 @@ Puppet::Type.newtype(:file) do
       # Make sure we get a new stat objct
       expire
       currentvalue = thing.retrieve
-      thing.sync unless thing.insync?(currentvalue)
+      thing.sync unless thing.safe_insync?(currentvalue)
     end
   end
 end

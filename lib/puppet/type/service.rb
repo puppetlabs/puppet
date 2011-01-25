@@ -73,7 +73,7 @@ module Puppet
 
         if property = @resource.property(:enable)
           val = property.retrieve
-          property.sync unless property.insync?(val)
+          property.sync unless property.safe_insync?(val)
         end
 
         event
