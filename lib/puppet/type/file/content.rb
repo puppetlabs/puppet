@@ -96,7 +96,6 @@ module Puppet
       end
 
       return true if ! @resource.replace?
-      return true unless self.should
 
       result = super
 

@@ -89,7 +89,7 @@ module Puppet
           if prop.name == :ensure
             false
           else
-            ! prop.insync?(currentvalues[prop])
+            ! prop.safe_insync?(currentvalues[prop])
           end
         end.each { |prop| prop.sync }.length
         @resource.flush if oos > 0

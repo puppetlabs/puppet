@@ -15,8 +15,6 @@ Puppet::Type.type(:file).provide :microsoft_windows do
   end
 
   def is_owner_insync?(current, should)
-    return true unless should
-
     should.each do |value|
       if value =~ /^\d+$/
         uid = Integer(value)
