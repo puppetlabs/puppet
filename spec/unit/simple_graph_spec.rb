@@ -362,7 +362,7 @@ describe Puppet::SimpleGraph do
       add_edges "a" => "b", "b" => "c", "c" => "a"
 
       cycles = @graph.find_cycles_in_graph.sort
-      paths = @graph.all_paths_in_cycle(cycles.first)
+      paths = @graph.paths_in_cycle(cycles.first, 100)
       paths.should be == [%w{a b c a}]
     end
 
@@ -374,7 +374,7 @@ describe Puppet::SimpleGraph do
       cycles = @graph.find_cycles_in_graph.sort
       cycles.length.should be == 1
 
-      paths = @graph.all_paths_in_cycle(cycles.first)
+      paths = @graph.paths_in_cycle(cycles.first, 100)
       paths.sort.should be == [%w{a b1 a}, %w{a b2 a}]
     end
 
@@ -385,7 +385,7 @@ describe Puppet::SimpleGraph do
       cycles = @graph.find_cycles_in_graph.sort
       cycles.length.should be == 1
 
-      paths = @graph.all_paths_in_cycle(cycles.first)
+      paths = @graph.paths_in_cycle(cycles.first, 100)
       paths.should be == [%w{a b a}, %w{a b c a}]
     end
 
@@ -396,11 +396,11 @@ describe Puppet::SimpleGraph do
       cycles.length.should be == 1
 
       (1..20).each do |n|
-        paths = @graph.all_paths_in_cycle(cycles.first, n)
+        paths = @graph.paths_in_cycle(cycles.first, n)
         paths.length.should be == n
       end
 
-      paths = @graph.all_paths_in_cycle(cycles.first, 21)
+      paths = @graph.paths_in_cycle(cycles.first, 21)
       paths.length.should be == 20
     end
 

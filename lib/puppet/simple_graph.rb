@@ -191,7 +191,7 @@ class Puppet::SimpleGraph
   # BFS is preferred because it will generally report the shortest paths
   # through the graph first, which are more likely to be interesting to the
   # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
-  def all_paths_in_cycle(cycle, max_paths = 10)
+  def paths_in_cycle(cycle, max_paths = 1)
     raise ArgumentError, "negative or zero max_paths" if max_paths < 1
 
     # Calculate our filtered outbound vertex lists...
@@ -225,12 +225,41 @@ class Puppet::SimpleGraph
 
     message = "Found #{n} dependency cycle#{s}:\n"
     cycles.each do |cycle|
-      paths = all_paths_in_cycle(cycle)
+      paths = paths_in_cycle(cycle)
       message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
     end
-    message += "Try the '--graph' option and opening the '.dot' file in OmniGraffle or GraphViz"
+
+    if Puppet[:graph] then
+      filename = write_cycles_to_graph(cycles)
+      message += "Cycle graph written to #{filename}."
+    else
+      message += "Try the '--graph' option and opening the "
+      message += "resulting '.dot' file in OmniGraffle or GraphViz"
+    end
 
     raise Puppet::Error, message
+  end
+
+  def write_cycles_to_graph(cycles)
+    # This does not use the DOT graph library, just writes the content
+    # directly.  Given the complexity of this, there didn't seem much point
+    # using a heavy library to generate exactly the same content. --daniel 2011-01-27
+    Puppet.settings.use(:graphing)
+
+    graph = ["digraph Resource_Cycles {"]
+    graph << '  label = "Resource Cycles"'
+
+    cycles.each do |cycle|
+      paths_in_cycle(cycle, 10).each do |path|
+        graph << path.map { |v| '"' + v.to_s.gsub(/"/, '\\"') + '"' }.join(" -> ")
+      end
+    end
+
+    graph << '}'
+
+    filename = File.join(Puppet[:graphdir], "cycles.dot")
+    File.open(filename, "w") { |f| f.puts graph }
+    return filename
   end
 
   # Provide a topological sort.
