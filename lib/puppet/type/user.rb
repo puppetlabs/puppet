@@ -175,7 +175,7 @@ module Puppet
       end
 
       validate do |value|
-        if value.to_s !~ /^\d+$/
+        if value.to_s !~ /^-?\d+$/
           raise ArgumentError, "Password minimum age must be provided as a number"
         end
       end
@@ -194,7 +194,7 @@ module Puppet
       end
 
       validate do |value|
-        if value.to_s !~ /^\d+$/
+        if value.to_s !~ /^-?\d+$/
           raise ArgumentError, "Password maximum age must be provided as a number"
         end
       end
