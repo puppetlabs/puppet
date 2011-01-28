@@ -245,6 +245,34 @@ describe user do
     end
   end
 
+  describe "when managing minimum password age" do
+    before do
+      @age = user.attrclass(:password_min_age).new(:resource => @resource)
+    end
+
+    it "should accept a negative minimum age" do
+      expect { @age.should = -1 }.should_not raise_error
+    end
+
+    it "should fail with an empty minimum age" do
+      expect { @age.should = '' }.should raise_error(Puppet::Error)
+    end
+  end
+
+  describe "when managing maximum password age" do
+    before do
+      @age = user.attrclass(:password_max_age).new(:resource => @resource)
+    end
+
+    it "should accept a negative maximum age" do
+      expect { @age.should = -1 }.should_not raise_error
+    end
+
+    it "should fail with an empty maximum age" do
+      expect { @age.should = '' }.should raise_error(Puppet::Error)
+    end
+  end
+
   describe "when managing passwords" do
     before do
       @password = user.attrclass(:password).new(:resource => @resource, :should => "mypass")
