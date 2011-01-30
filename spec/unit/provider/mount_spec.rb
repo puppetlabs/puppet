@@ -121,50 +121,26 @@ describe Puppet::Provider::Mount do
       @mounter.mounted?
     end
 
+    it "should return true if prefetched value is :mounted" do
+      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+      @mounter.mounted? == true
+    end
+
+    it "should return true if prefetched value is :ghost" do
+      @mounter.stubs(:get).with(:ensure).returns(:ghost)
+      @mounter.mounted? == true
+    end
+
+    it "should return false if prefetched value is :absent" do
+      @mounter.stubs(:get).with(:ensure).returns(:absent)
+      @mounter.mounted? == false
+    end
+
+    it "should return false if prefetched value is :unmounted" do
+      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+      @mounter.mounted? == false
+    end
+
   end
 
-  describe Puppet::Provider::Mount, " when prefetching resources" do
-
-    it "should match ' on /private/var/automount<name>' if the operating system is Darwin" do
-      Facter.stubs(:value).with("operatingsystem").returns("Darwin")
-      @mounter.expects(:mountcmd).returns("/dev/whatever on /private/var/automount/\ndevfs on /dev")
-
-      @mounter.should be_mounted
-    end
-
-    it "should match ' on <name>' if the operating system is Darwin" do
-      Facter.stubs(:value).with("operatingsystem").returns("Darwin")
-      @mounter.expects(:mountcmd).returns("/dev/disk03 on / (local, journaled)\ndevfs on /dev")
-
-      @mounter.should be_mounted
-    end
-
-    it "should match '^<name> on' if the operating system is Solaris" do
-      Facter.stubs(:value).with("operatingsystem").returns("Solaris")
-      @mounter.expects(:mountcmd).returns("/ on /dev/dsk/whatever\n/var on /dev/dsk/other")
-
-      @mounter.should be_mounted
-    end
-
-    it "should match '^<name> on' if the operating system is HP-UX" do
-      Facter.stubs(:value).with("operatingsystem").returns("HP-UX")
-      @mounter.expects(:mountcmd).returns("/ on /dev/dsk/whatever\n/var on /dev/dsk/other")
-
-      @mounter.should be_mounted
-    end
-
-    it "should match ' on <name>' if the operating system is not Darwin, Solaris, or HP-UX" do
-      Facter.stubs(:value).with("operatingsystem").returns("Debian")
-      @mounter.expects(:mountcmd).returns("/dev/dsk/whatever on / and stuff\n/dev/other/disk on /var and stuff")
-
-      @mounter.should be_mounted
-    end
-
-    it "should not be considered mounted if it did not match the mount output" do
-      Facter.stubs(:value).with("operatingsystem").returns("Debian")
-      @mounter.expects(:mountcmd).returns("/dev/dsk/whatever on /something/else and stuff\n/dev/other/disk on /var and stuff")
-
-      @mounter.should_not be_mounted
-    end
-  end
 end
