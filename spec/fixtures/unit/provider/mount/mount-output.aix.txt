@@ -1,0 +1,7 @@
+/dev/hd4         /                jfs2   Nov 11 12:11 rw,log=/dev/hd8
+/dev/hd2         /usr             jfs2   Nov 11 12:11 rw,log=/dev/hd8
+/dev/hd9var      /var             jfs2   Nov 11 12:11 rw,log=/dev/hd8
+/dev/hd3         /tmp             jfs2   Nov 11 12:11 rw,log=/dev/hd8
+/dev/hd1         /home            jfs2   Nov 11 12:11 rw,log=/dev/hd8
+/proc            /proc            procfs Nov 11 12:11 rw
+/dev/hd10opt     /opt             jfs2   Nov 11 12:11 rw,log=/dev/hd8
