@@ -44,7 +44,7 @@ module Puppet::Provider::Mount
       when "Solaris", "HP-UX"
         line =~ /^#{name} on /
       when "AIX"
-        line =~ /^[^\s]*\s+[^\s]+\s+#{name}\s/
+        line.split(/\s+/)[1] == name
       else
         line =~ / on #{name} /
       end
