@@ -194,6 +194,23 @@ describe Puppet::Type.type(:file) do
         file = Puppet::Type::File.new(:path => "/")
         file[:path].should == "/"
       end
+
+      it "should accept a double-slash at the start of the path" do
+        expect {
+          file = Puppet::Type::File.new(:path => "//tmp/xxx")
+          # REVISIT: This should be wrong, later.  See the next test.
+          # --daniel 2011-01-31
+          file[:path].should == '/tmp/xxx'
+        }.should_not raise_error
+      end
+
+      # REVISIT: This is pending, because I don't want to try and audit the
+      # entire codebase to make sure we get this right.  POSIX treats two (and
+      # exactly two) '/' characters at the start of the path specially.
+      #
+      # See sections 3.2 and 4.11, which allow DomainOS to be all special like
+      # and still have the POSIX branding and all. --daniel 2011-01-31
+      it "should preserve the double-slash at the start of the path"
     end
 
     describe "on Microsoft Windows systems" do
