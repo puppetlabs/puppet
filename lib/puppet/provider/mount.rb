@@ -43,6 +43,8 @@ module Puppet::Provider::Mount
         line =~ / on #{name} / or line =~ %r{ on /private/var/automount#{name}}
       when "Solaris", "HP-UX"
         line =~ /^#{name} on /
+      when "AIX"
+        line =~ /^[^\s]*\s+[^\s]+\s+#{name}\s/
       else
         line =~ / on #{name} /
       end
