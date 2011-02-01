@@ -1095,5 +1095,17 @@ describe Puppet::Type.type(:file) do
       transaction.report.resource_statuses["File[#{@path}]"].failed.should == false
       File.exists?(@path).should == true
     end
+
+    it "should not log errors if creating a new file with ensure present and no content" do
+      File.exists?(@path).should == false
+      file = Puppet::Type::File.new(:name => @path, :audit => "content", :ensure => "present")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource(file)
+
+      Puppet::Util::Storage.stubs(:store) # to prevent the catalog from trying to write state.yaml
+
+      catalog.apply
+      @logs.reject {|l| l.level == :notice }.should be_empty
+    end
   end
 end
