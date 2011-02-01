@@ -271,16 +271,23 @@ Puppet::Type.newtype(:file) do
   end
 
   CREATORS = [:content, :source, :target]
+  SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
 
   validate do
-    count = 0
+    creator_count = 0
     CREATORS.each do |param|
-      count += 1 if self.should(param)
+      creator_count += 1 if self.should(param)
     end
-    count += 1 if @parameters.include?(:source)
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if count > 1
+    creator_count += 1 if @parameters.include?(:source)
+    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+
+    self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
+
+    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+      self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
+    end
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
   end

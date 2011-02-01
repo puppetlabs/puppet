@@ -823,6 +823,75 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "when specifying both source, and content properties" do
+    before do
+      @file[:source]  = '/one'
+      @file[:content] = 'file contents'
+    end
+
+    it "should raise an exception" do
+      lambda {@file.validate }.should raise_error(/You cannot specify more than one of/)
+    end
+  end
+
+  describe "when using source" do
+    before do
+      @file[:source]   = '/one'
+    end
+    Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        before do
+          @file[:checksum] = checksum_type
+        end
+
+        it 'should validate' do
+
+          lambda { @file.validate }.should_not raise_error
+        end
+      end
+    end
+
+    describe "with checksum 'none'" do
+      before do
+        @file[:checksum] = :none
+      end
+
+      it 'should raise an exception when validating' do
+        lambda { @file.validate }.should raise_error(/You cannot specify source when using checksum 'none'/)
+      end
+    end
+  end
+
+  describe "when using content" do
+    SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
+
+    before do
+      @file[:content] = 'file contents'
+    end
+
+    (Puppet::Type::File::ParameterChecksum.value_collection.values - SOURCE_ONLY_CHECKSUMS).each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        before do
+          @file[:checksum] = checksum_type
+        end
+
+        it 'should validate' do
+          lambda { @file.validate }.should_not raise_error
+        end
+      end
+    end
+
+    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        it 'should raise an exception when validating' do
+          @file[:checksum] = checksum_type
+
+          lambda { @file.validate }.should raise_error(/You cannot specify content when using checksum '#{checksum_type}'/)
+        end
+      end
+    end
+  end
+
   describe "when returning resources with :eval_generate" do
     before do
       @graph = stub 'graph', :add_edge => nil
@@ -1094,6 +1163,21 @@ describe Puppet::Type.type(:file) do
 
       transaction.report.resource_statuses["File[#{@path}]"].failed.should == false
       File.exists?(@path).should == true
+    end
+  end
+
+  describe "when specifying both source and checksum" do
+    it 'should use the specified checksum when source is first' do
+      @file[:source] = '/foo'
+      @file[:checksum] = :md5lite
+
+      @file[:checksum].should be :md5lite
+    end
+    it 'should use the specified checksum when source is last' do
+      @file[:checksum] = :md5lite
+      @file[:source] = '/foo'
+
+      @file[:checksum].should be :md5lite
     end
   end
 end

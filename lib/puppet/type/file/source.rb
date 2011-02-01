@@ -169,7 +169,6 @@ module Puppet
       checks.delete(:checksum)
 
       resource[:audit] = checks
-      resource[:checksum] = :md5 unless resource.property(:checksum)
     end
 
     def local?
