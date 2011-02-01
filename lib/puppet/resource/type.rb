@@ -143,18 +143,26 @@ class Puppet::Resource::Type
   # classes and nodes.  No parameters are be supplied--if this is a
   # parameterized class, then all parameters take on their default
   # values.
-  def ensure_in_catalog(scope)
+  def ensure_in_catalog(scope, parameters=nil)
     type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
     resource_type = type == :hostclass ? :class : :node
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the
     # singleton nature of classes.
-    if resource = scope.catalog.resource(resource_type, name)
+    # we should not do this for classes with parameters
+    # if parameters are passed, we should still try to create the resource
+    # even if it exists so that we can fail
+    # this prevents us from being able to combine param classes with include
+    if resource = scope.catalog.resource(resource_type, name) and !parameters
       return resource
     end
-
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
+    if parameters
+      parameters.each do |k,v|
+        resource.set_parameter(k,v)
+      end
+    end
     instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
     resource
