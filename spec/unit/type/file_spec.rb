@@ -863,8 +863,6 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using content" do
-    SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
-
     before do
       @file[:content] = 'file contents'
     end
