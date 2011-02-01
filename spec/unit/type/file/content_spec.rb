@@ -461,5 +461,54 @@ describe content do
 
     describe "from a filebucket" do
     end
+
+    # These are testing the implementation rather than the desired behaviour; while that bites, there are a whole
+    # pile of other methods in the File type that depend on intimate details of this implementation and vice-versa.
+    # If these blow up, you are gonna have to review the callers to make sure they don't explode! --daniel 2011-02-01
+    describe "each_chunk_from should work" do
+      before do
+        @content = content.new(:resource => @resource)
+      end
+
+      it "when content is a string" do
+        @content.each_chunk_from('i_am_a_string') { |chunk| chunk.should == 'i_am_a_string' }
+      end
+
+      it "when no content, source, but ensure present" do
+        @resource[:ensure] = :present
+        @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+      end
+
+      it "when no content, source, but ensure file" do
+        @resource[:ensure] = :file
+        @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+      end
+
+      it "when no content or source" do
+        @content.expects(:read_file_from_filebucket).once.returns('im_a_filebucket')
+        @content.each_chunk_from(nil) { |chunk| chunk.should == 'im_a_filebucket' }
+      end
+
+      it "when running as puppet apply" do
+        @content.class.expects(:standalone?).returns true
+        source_or_content = stubs('source_or_content')
+        source_or_content.expects(:content).once.returns :whoo
+        @content.each_chunk_from(source_or_content) { |chunk| chunk.should == :whoo }
+      end
+
+      it "when running from source with a local file" do
+        source_or_content = stubs('source_or_content')
+        source_or_content.expects(:local?).returns true
+        @content.expects(:chunk_file_from_disk).with(source_or_content).once.yields 'woot'
+        @content.each_chunk_from(source_or_content) { |chunk| chunk.should == 'woot' }
+      end
+
+      it "when running from source with a remote file" do
+        source_or_content = stubs('source_or_content')
+        source_or_content.expects(:local?).returns false
+        @content.expects(:chunk_file_from_source).with(source_or_content).once.yields 'woot'
+        @content.each_chunk_from(source_or_content) { |chunk| chunk.should == 'woot' }
+      end
+    end
   end
 end
