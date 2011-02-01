@@ -59,13 +59,12 @@ class ZAML
       @@previously_emitted_object = {}
       @@next_free_label_number = 0
     end
-    def initialize(obj,indent)
-      @indent = indent
+    def initialize(obj)
       @this_label_number = nil
       @@previously_emitted_object[obj.object_id] = self
     end
     def to_s
-      @this_label_number ? ('&id%03d%s' % [@this_label_number, @indent]) : ''
+      @this_label_number ? ('&id%03d ' % @this_label_number) : ''
     end
     def reference
       @this_label_number ||= (@@next_free_label_number += 1)
@@ -76,7 +75,7 @@ class ZAML
     end
   end
   def new_label_for(obj)
-    Label.new(obj,(Hash === obj || Array === obj) ? "#{@indent || "\n"}  " : ' ')
+    Label.new(obj)
   end
   def first_time_only(obj)
     if label = Label.for(obj)
