@@ -35,5 +35,26 @@ describe "Pure ruby yaml implementation" do
       lambda { YAML.load(o.to_yaml) }.should_not raise_error
     end
   }
+
+  it "should handle references to Array in Hash values correctly" do
+    list = [1]
+    data = { "one" => list, "two" => list }
+    data.to_yaml.should == "--- \n  two: &id001 \n    - 1\n  one: *id001"
+    expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
+  end
+
+  it "should handle references to Hash in Hash values correctly" do
+    hash = { 1 => 1 }
+    data = { "one" => hash, "two" => hash }
+    data.to_yaml.should == "--- \n  two: &id001 \n    1: 1\n  one: *id001"
+    expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
+  end
+
+  it "should handle references to Scalar in Hash" do
+    str = "hello"
+    data = { "one" => str, "two" => str }
+    data.to_yaml.should == "--- \n  two: &id001 hello\n  one: *id001"
+    expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
+  end
 end
 
