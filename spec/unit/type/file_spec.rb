@@ -1096,4 +1096,19 @@ describe Puppet::Type.type(:file) do
       File.exists?(@path).should == true
     end
   end
+
+  describe "when specifying both source and checksum" do
+    it 'should use the specified checksum when source is first' do
+      @file[:source] = '/foo'
+      @file[:checksum] = :md5lite
+
+      @file[:checksum].should be :md5lite
+    end
+    it 'should use the specified checksum when source is last' do
+      @file[:checksum] = :md5lite
+      @file[:source] = '/foo'
+
+      @file[:checksum].should be :md5lite
+    end
+  end
 end
