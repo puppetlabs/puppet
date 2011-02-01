@@ -94,11 +94,11 @@ The file follows INI-style formatting.  Here is an example of a very simple
 Note that boolean parameters must be explicitly specified as `true` or
 `false` as seen above.
 
-If you need to change file parameters (e.g., reset the mode or owner), do
+If you need to change file or directory parameters (e.g., reset the mode or owner), do
 so within curly braces on the same line:
 
     [main]
-      myfile = /tmp/whatever {owner = root, mode = 644}
+      vardir = /new/vardir {owner = root, mode = 644}
 
 If you're starting out with a fresh configuration, you may wish to let
 the executable generate a template configuration file for you by invoking
