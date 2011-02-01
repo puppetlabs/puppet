@@ -273,12 +273,12 @@ Puppet::Type.newtype(:file) do
   CREATORS = [:content, :source, :target]
 
   validate do
-    count = 0
+    creator_count = 0
     CREATORS.each do |param|
-      count += 1 if self.should(param)
+      creator_count += 1 if self.should(param)
     end
-    count += 1 if @parameters.include?(:source)
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if count > 1
+    creator_count += 1 if @parameters.include?(:source)
+    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
 
