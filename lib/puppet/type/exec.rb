@@ -305,7 +305,7 @@ module Puppet
             # Pull down the main aliases file
             file { \"/etc/aliases\":
               source => \"puppet://server/module/aliases\"
-            }  
+            }
 
             # Rebuild the database, but only when the file changes
             exec { newaliases:
@@ -634,7 +634,7 @@ module Puppet
     def validatecmd(cmd)
       exe = extractexe(cmd)
       # if we're not fully qualified, require a path
-      self.fail "'#{cmd}' is both unqualifed and specified no search path" if File.expand_path(exe) != exe and self[:path].nil?
+      self.fail "'#{cmd}' is not qualified and no path was specified. Please qualify the command or specify a path." if File.expand_path(exe) != exe and self[:path].nil?
     end
 
     def extractexe(cmd)
