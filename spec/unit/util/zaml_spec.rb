@@ -53,8 +53,32 @@ describe "Pure ruby yaml implementation" do
   it "should handle references to Scalar in Hash" do
     str = "hello"
     data = { "one" => str, "two" => str }
-    data.to_yaml.should == "--- \n  two: &id001 hello\n  one: *id001"
     expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
   end
+
+  class Zaml_test_class_A
+    attr_reader :false,:true
+    def initialize
+      @false = @true = 7
+    end
+  end
+  it "should not blow up when magic strings are used as field names" do
+    data = Zaml_test_class_A.new
+    data.to_yaml.should == %Q{--- !ruby/object:Zaml_test_class_A\n  \"false\": 7\n  \"true\": 7}
+    expect { 
+      r = YAML.load(data.to_yaml)
+      r.class.should == data.class
+      r.true.should == data.true
+      r.false.should == data.false
+    }.should_not raise_error
+  end
+
+  it "should not blow up on back references inside arrays" do
+    s = [1,2]
+    data = [s,s]
+    data.to_yaml.should == %Q{--- \n  - &id001 \n    - 1\n    - 2\n  - *id001}
+    expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
+  end
+
 end
 
