@@ -442,7 +442,7 @@ class DirectoryService < Puppet::Provider::NameService
 
   def remove_unwanted_members(current_members, new_members)
     current_members.each do |member|
-      if not new_members.include?(member)
+      if not new_members.flatten.include?(member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-d", member, @resource[:name]]
         begin
           execute(cmd)
@@ -454,7 +454,7 @@ class DirectoryService < Puppet::Provider::NameService
   end
 
   def add_members(current_members, new_members)
-    new_members.each do |new_member|
+    new_members.flatten.each do |new_member|
       if current_members.nil? or not current_members.include?(new_member)
         cmd = [:dseditgroup, "-o", "edit", "-n", ".", "-a", new_member, @resource[:name]]
         begin

@@ -68,7 +68,9 @@ module Puppet::Util::Checksums
     nil
   end
 
-  alias :ctime_stream :mtime_stream
+  def mtime(content)
+    ""
+  end
 
   # Calculate a checksum using Digest::SHA1.
   def sha1(content)
@@ -108,6 +110,12 @@ module Puppet::Util::Checksums
     File.stat(filename).send(:ctime)
   end
 
+  alias :ctime_stream :mtime_stream
+
+  def ctime(content)
+    ""
+  end
+
   # Return a "no checksum"
   def none_file(filename)
     ""
@@ -116,6 +124,10 @@ module Puppet::Util::Checksums
   def none_stream
     noop_digest = FakeChecksum.new
     yield noop_digest
+    ""
+  end
+
+  def none(content)
     ""
   end
 

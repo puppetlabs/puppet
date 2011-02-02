@@ -134,7 +134,7 @@ describe klass do
       end
     end
 
-    describe "when calling insync?" do
+    describe "when calling safe_insync?" do
       before do
         @provider = mock("provider")
         @property.stubs(:provider).returns(@provider)
@@ -142,26 +142,26 @@ describe klass do
       end
 
       it "should return true unless @should is defined and not nil" do
-        @property.insync?("foo") == true
+        @property.safe_insync?("foo") == true
       end
 
       it "should return true if the passed in values is nil" do
         @property.should = "foo"
-        @property.insync?(nil) == true
+        @property.safe_insync?(nil) == true
       end
 
       it "should return true if hashified should value == (retrieved) value passed in" do
         @provider.stubs(:prop_name).returns({ :foo => "baz", :bar => "boo" })
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:inclusive?).returns(true)
-        @property.insync?({ :foo => "baz", :bar => "boo" }).must == true
+        @property.safe_insync?({ :foo => "baz", :bar => "boo" }).must == true
       end
 
       it "should return false if prepared value != should value" do
         @provider.stubs(:prop_name).returns({ "foo" => "bee", "bar" => "boo" })
         @property.should = ["foo=baz", "bar=boo"]
         @property.expects(:inclusive?).returns(true)
-        @property.insync?({ "foo" => "bee", "bar" => "boo" }).must == false
+        @property.safe_insync?({ "foo" => "bee", "bar" => "boo" }).must == false
       end
     end
   end
