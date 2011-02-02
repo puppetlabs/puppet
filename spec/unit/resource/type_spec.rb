@@ -261,6 +261,28 @@ describe Puppet::Resource::Type do
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
     end
 
+    ['module_name', 'name', 'title'].each do |variable|
+      it "should allow #{variable} to be evaluated as param default" do
+        @type.module_name = "bar"
+        var = Puppet::Parser::AST::Variable.new({'value' => variable})
+        @type.set_arguments :foo => var
+        @type.set_resource_parameters(@resource, @scope)
+        @scope.lookupvar('foo').should == 'bar'
+      end
+    end
+
+    # this test is to clarify a crazy edge case
+    # if you specify these special names as params, the resource
+    # will override the special variables
+    it "resource should override defaults" do
+      @type.set_arguments :name => nil
+      @resource[:name] = 'foobar'
+      var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
+      @type.set_arguments :foo => var
+      @type.set_resource_parameters(@resource, @scope)
+      @scope.lookupvar('foo').should == 'foobar'
+    end
+
     it "should set each of the resource's parameters as variables in the scope" do
       @type.set_arguments :foo => nil, :boo => nil
       @resource[:foo] = "bar"
