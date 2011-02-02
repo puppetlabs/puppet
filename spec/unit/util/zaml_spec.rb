@@ -36,6 +36,10 @@ describe "Pure ruby yaml implementation" do
     end
   }
 
+  def set_of_lines(l)
+    l.split("\n").sort
+  end
+
   it "should handle references to Array in Hash values correctly" do
     list = [1]
     data = { "one" => list, "two" => list }
@@ -46,13 +50,15 @@ describe "Pure ruby yaml implementation" do
   it "should handle references to Hash in Hash values correctly" do
     hash = { 1 => 1 }
     data = { "one" => hash, "two" => hash }
-    data.to_yaml.should == "--- \n  two: &id001 \n    1: 1\n  one: *id001"
+    # This could still someday fail because the order change would also change which one got the back ref
+    set_of_lines(data.to_yaml).should == set_of_lines("--- \n  two: &id001 \n    1: 1\n  one: *id001")
     expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
   end
 
   it "should handle references to Scalar in Hash" do
     str = "hello"
     data = { "one" => str, "two" => str }
+    set_of_lines(data.to_yaml).should == set_of_lines("--- \n  two: hello\n  one: hello")
     expect { YAML.load(data.to_yaml).should == data }.should_not raise_error
   end
 
