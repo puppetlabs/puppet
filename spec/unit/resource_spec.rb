@@ -98,6 +98,14 @@ describe Puppet::Resource do
     lambda { Puppet::Resource.new("foo") }.should raise_error(ArgumentError)
   end
 
+  it 'should fail if strict is set and type does not exist' do
+    lambda { Puppet::Resource.new('foo', 'title', {:strict=>true}) }.should raise_error(ArgumentError, 'Invalid resource type foo') 
+  end
+
+  it 'should fail if strict is set and class does not exist' do
+    lambda { Puppet::Resource.new('Class', 'foo', {:strict=>true}) }.should raise_error(ArgumentError, 'Could not find declared class foo') 
+  end
+
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
     lambda { Puppet::Resource.new({:type => "foo", :title => "bar"}) }.should raise_error(ArgumentError,
       'Puppet::Resource.new does not take a hash as the first argument. Did you mean ("foo", "bar") ?'
