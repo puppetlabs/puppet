@@ -255,15 +255,26 @@ class Puppet::Resource
 
   # Convert our resource to Puppet code.
   def to_manifest
-    "%s { '%s':\n%s\n}" % [self.type.to_s.downcase, self.title,
-      @parameters.collect { |p, v|
-        if v.is_a? Array
-          "    #{p} => [\'#{v.join("','")}\']"
-        else
-          "    #{p} => \'#{v}\'"
-        end
-      }.join(",\n")
-      ]
+    # Collect list of attributes to align => and move ensure first
+    attr = @parameters.keys
+    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+
+    attr.sort!
+    if attr.first != :ensure  && attr.include?(:ensure)
+      attr.delete(:ensure)
+      attr.unshift(:ensure)
+    end
+
+    attributes = attr.collect { |k|
+      v = @parameters[k]
+      if v.is_a? Array
+        "  %-#{attr_max}s => %s,\n" % [ k, "[\'#{v.join("', '")}\']" ]
+      else
+        "  %-#{attr_max}s => %s,\n" % [ k, "\'#{v}\'" ]
+      end
+    }
+
+    "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
   end
 
   def to_ref
