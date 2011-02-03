@@ -264,9 +264,14 @@ class Application
   def initialize(command_line = nil)
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
-    @run_mode = self.class.run_mode
+    set_run_mode self.class.run_mode
     @options = {}
 
+    require 'puppet'
+  end
+
+  def set_run_mode(mode)
+    @run_mode = mode
     $puppet_application_mode = @run_mode
     $puppet_application_name = name
 
@@ -281,8 +286,6 @@ class Application
       Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
       Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
     end
-
-    require 'puppet'
   end
 
   # This is the main application entry point

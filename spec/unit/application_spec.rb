@@ -46,6 +46,48 @@ describe Puppet::Application do
     end
   end
 
+  it "should sadly and frighteningly allow run_mode to change at runtime" do
+    class TestApp < Puppet::Application
+      run_mode :master
+      def run_command
+        # This is equivalent to calling these methods externally to the
+        # instance, but since this is what "real world" code is likely to do
+        # (and we need the class anyway) we may as well test that. --daniel 2011-02-03
+        set_run_mode self.class.run_mode "agent"
+      end
+    end
+
+    Puppet[:run_mode].should == "user"
+
+    expect {
+      app = TestApp.new
+
+      Puppet[:run_mode].should == "master"
+
+      app.run
+
+      app.class.run_mode.name.should == :agent
+      $puppet_application_mode.name.should == :agent
+    }.should_not raise_error
+
+    Puppet[:run_mode].should == "agent"
+  end
+
+  it "it should not allow run mode to be set multiple times" do
+    pending "great floods of tears, you can do this right now" # --daniel 2011-02-03
+    app = Puppet::Application.new
+    expect {
+      app.set_run_mode app.class.run_mode "master"
+      $puppet_application_mode.name.should == :master
+      app.set_run_mode app.class.run_mode "agent"
+      $puppet_application_mode.name.should == :agent
+    }.should raise_error
+  end
+
+  it "should explode when an invalid run mode is set at runtime, for great victory"
+  # ...but you can, and while it will explode, that only happens too late for
+  # us to easily test. --daniel 2011-02-03
+
   it "should have a run entry-point" do
     @app.should respond_to(:run)
   end
