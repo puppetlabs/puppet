@@ -141,17 +141,20 @@ describe content do
 
     it "should return true if the resource shouldn't be a regular file" do
       @resource.expects(:should_be_file?).returns false
-      @content.must be_insync("whatever")
+      @content.should = "foo"
+      @content.must be_safe_insync("whatever")
     end
 
     it "should return false if the current content is :absent" do
-      @content.should_not be_insync(:absent)
+      @content.should = "foo"
+      @content.should_not be_safe_insync(:absent)
     end
 
     it "should return false if the file should be a file but is not present" do
       @resource.expects(:should_be_file?).returns true
+      @content.should = "foo"
 
-      @content.should_not be_insync(:absent)
+      @content.should_not be_safe_insync(:absent)
     end
 
     describe "and the file exists" do
@@ -161,12 +164,12 @@ describe content do
 
       it "should return false if the current contents are different from the desired content" do
         @content.should = "some content"
-        @content.should_not be_insync("other content")
+        @content.should_not be_safe_insync("other content")
       end
 
       it "should return true if the sum for the current contents is the same as the sum for the desired content" do
         @content.should = "some content"
-        @content.must be_insync("{md5}" + Digest::MD5.hexdigest("some content"))
+        @content.must be_safe_insync("{md5}" + Digest::MD5.hexdigest("some content"))
       end
 
       describe "and Puppet[:show_diff] is set" do
@@ -179,14 +182,14 @@ describe content do
           @content.expects(:diff).returns("my diff").once
           @content.expects(:print).with("my diff").once
 
-          @content.insync?("other content")
+          @content.safe_insync?("other content")
         end
 
         it "should not display a diff if the sum for the current contents is the same as the sum for the desired content" do
           @content.should = "some content"
           @content.expects(:diff).never
 
-          @content.insync?("{md5}" + Digest::MD5.hexdigest("some content"))
+          @content.safe_insync?("{md5}" + Digest::MD5.hexdigest("some content"))
         end
       end
     end
@@ -199,17 +202,18 @@ describe content do
       it "should be insync if the file exists and the content is different" do
         @resource.stubs(:stat).returns mock('stat')
 
-        @content.must be_insync("whatever")
+        @content.must be_safe_insync("whatever")
       end
 
       it "should be insync if the file exists and the content is right" do
         @resource.stubs(:stat).returns mock('stat')
 
-        @content.must be_insync("something")
+        @content.must be_safe_insync("something")
       end
 
       it "should not be insync if the file does not exist" do
-        @content.should_not be_insync(:absent)
+        @content.should = "foo"
+        @content.should_not be_safe_insync(:absent)
       end
     end
   end
@@ -456,6 +460,55 @@ describe content do
     end
 
     describe "from a filebucket" do
+    end
+
+    # These are testing the implementation rather than the desired behaviour; while that bites, there are a whole
+    # pile of other methods in the File type that depend on intimate details of this implementation and vice-versa.
+    # If these blow up, you are gonna have to review the callers to make sure they don't explode! --daniel 2011-02-01
+    describe "each_chunk_from should work" do
+      before do
+        @content = content.new(:resource => @resource)
+      end
+
+      it "when content is a string" do
+        @content.each_chunk_from('i_am_a_string') { |chunk| chunk.should == 'i_am_a_string' }
+      end
+
+      it "when no content, source, but ensure present" do
+        @resource[:ensure] = :present
+        @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+      end
+
+      it "when no content, source, but ensure file" do
+        @resource[:ensure] = :file
+        @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+      end
+
+      it "when no content or source" do
+        @content.expects(:read_file_from_filebucket).once.returns('im_a_filebucket')
+        @content.each_chunk_from(nil) { |chunk| chunk.should == 'im_a_filebucket' }
+      end
+
+      it "when running as puppet apply" do
+        @content.class.expects(:standalone?).returns true
+        source_or_content = stubs('source_or_content')
+        source_or_content.expects(:content).once.returns :whoo
+        @content.each_chunk_from(source_or_content) { |chunk| chunk.should == :whoo }
+      end
+
+      it "when running from source with a local file" do
+        source_or_content = stubs('source_or_content')
+        source_or_content.expects(:local?).returns true
+        @content.expects(:chunk_file_from_disk).with(source_or_content).once.yields 'woot'
+        @content.each_chunk_from(source_or_content) { |chunk| chunk.should == 'woot' }
+      end
+
+      it "when running from source with a remote file" do
+        source_or_content = stubs('source_or_content')
+        source_or_content.expects(:local?).returns false
+        @content.expects(:chunk_file_from_source).with(source_or_content).once.yields 'woot'
+        @content.each_chunk_from(source_or_content) { |chunk| chunk.should == 'woot' }
+      end
     end
   end
 end

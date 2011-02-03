@@ -34,7 +34,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and (value =~ /^\/$/ or value =~ /^\/[^\/]/)) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
+      unless (Puppet.features.posix? and value =~ /^\//) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -271,16 +271,23 @@ Puppet::Type.newtype(:file) do
   end
 
   CREATORS = [:content, :source, :target]
+  SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
 
   validate do
-    count = 0
+    creator_count = 0
     CREATORS.each do |param|
-      count += 1 if self.should(param)
+      creator_count += 1 if self.should(param)
     end
-    count += 1 if @parameters.include?(:source)
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if count > 1
+    creator_count += 1 if @parameters.include?(:source)
+    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+
+    self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
+
+    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+      self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
+    end
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
   end
@@ -290,25 +297,8 @@ Puppet::Type.newtype(:file) do
     super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
-  # List files, but only one level deep.
-  def self.instances(base = "/")
-    return [] unless FileTest.directory?(base)
-
-    files = []
-    Dir.entries(base).reject { |e|
-      e == "." or e == ".."
-    }.each do |name|
-      path = File.join(base, name)
-      if obj = self[path]
-        obj[:audit] = :all
-        files << obj
-      else
-        files << self.new(
-          :name => path, :audit => :all
-        )
-      end
-    end
-    files
+  def self.instances(base = '/')
+    return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
   end
 
   @depthfirst = false
@@ -779,7 +769,7 @@ Puppet::Type.newtype(:file) do
       # Make sure we get a new stat objct
       expire
       currentvalue = thing.retrieve
-      thing.sync unless thing.insync?(currentvalue)
+      thing.sync unless thing.safe_insync?(currentvalue)
     end
   end
 end

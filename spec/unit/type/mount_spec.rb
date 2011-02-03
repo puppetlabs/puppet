@@ -184,22 +184,22 @@ describe Puppet::Type.type(:mount)::Ensure do
 
     it "should be insync if it is mounted and should be defined" do
       @ensure.should = :defined
-      @ensure.insync?(:mounted).should == true
+      @ensure.safe_insync?(:mounted).should == true
     end
 
     it "should be insync if it is unmounted and should be defined" do
       @ensure.should = :defined
-      @ensure.insync?(:unmounted).should == true
+      @ensure.safe_insync?(:unmounted).should == true
     end
 
     it "should be insync if it is mounted and should be present" do
       @ensure.should = :present
-      @ensure.insync?(:mounted).should == true
+      @ensure.safe_insync?(:mounted).should == true
     end
 
     it "should be insync if it is unmounted and should be present" do
       @ensure.should = :present
-      @ensure.insync?(:unmounted).should == true
+      @ensure.safe_insync?(:unmounted).should == true
     end
   end
 

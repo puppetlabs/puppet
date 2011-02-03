@@ -56,19 +56,19 @@ describe property do
   describe "when determining if the file is in sync" do
     it "should directly compare the group values if the desired group is an integer" do
       @group.should = [10]
-      @group.must be_insync(10)
+      @group.must be_safe_insync(10)
     end
 
     it "should treat numeric strings as integers" do
       @group.should = ["10"]
-      @group.must be_insync(10)
+      @group.must be_safe_insync(10)
     end
 
     it "should convert the group name to an integer if the desired group is a string" do
       @group.expects(:gid).with("foo").returns 10
       @group.should = %w{foo}
 
-      @group.must be_insync(10)
+      @group.must be_safe_insync(10)
     end
 
     it "should not validate that groups exist when a group is specified as an integer" do
@@ -80,12 +80,12 @@ describe property do
       @group.expects(:gid).with("foo").returns nil
       @group.should = %w{foo}
 
-      lambda { @group.insync?(10) }.should raise_error(Puppet::Error)
+      lambda { @group.safe_insync?(10) }.should raise_error(Puppet::Error)
     end
 
     it "should return false if the groups are not equal" do
       @group.should = [10]
-      @group.should_not be_insync(20)
+      @group.should_not be_safe_insync(20)
     end
   end
 

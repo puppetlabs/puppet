@@ -8,8 +8,6 @@ module Puppet
       end
 
       def insync?(is)
-        return true unless self.should
-
         return @should == [:absent] if is == :absent
 
         flatten_and_sort(is) == flatten_and_sort(@should)
@@ -18,8 +16,6 @@ module Puppet
 
     class MultiVDev < VDev
       def insync?(is)
-        return true unless self.should
-
         return @should == [:absent] if is == :absent
 
         return false unless is.length == @should.length

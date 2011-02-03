@@ -41,7 +41,7 @@ module Puppet
 
     newproperty(:target) do
       desc "The file in which to store service information.  Only used by
-        those providers that write to disk."
+        those providers that write to disk. On most systems this defaults to `/etc/hosts`."
 
       defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
         @resource.class.defaultprovider.default_target
