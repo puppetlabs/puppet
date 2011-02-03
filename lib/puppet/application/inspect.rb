@@ -20,7 +20,7 @@ class Puppet::Application::Inspect < Puppet::Application
   end
 
   def help
-    puts <<-HELP ; exit # XXX
+    <<-HELP
 
 SYNOPSIS
 ========
