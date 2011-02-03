@@ -29,7 +29,7 @@ in your manifest, including defined components.
     params.sort { |a,b|
       a.to_s <=> b.to_s
     }.each { |param|
-      str += paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)), :level => 4)
+      str += paramwrap(param.to_s, scrub(Puppet::Type.metaparamdoc(param)), :level => 3)
     }
   rescue => detail
     puts detail.backtrace
