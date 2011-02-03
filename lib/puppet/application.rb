@@ -212,10 +212,17 @@ class Application
     end
 
     def find(name)
-        self.const_get(name.to_s.capitalize)
-    rescue
+      klass = name.to_s.capitalize
+
+      # const_defined? is used before const_get since const_defined? will only
+      # check within our namespace, whereas const_get will check ancestor
+      # trees as well, resulting in unexpected behaviour.
+      if !self.const_defined?(klass)
         puts "Unable to find application '#{name.to_s}'."
         Kernel::exit(1)
+      end
+
+      self.const_get(klass)
     end
 
     def [](name)

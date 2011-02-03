@@ -152,9 +152,24 @@ class Puppet::Property < Puppet::Parameter
   # since we cannot fix it.  Otherwise, we expect our should value
   # to be an array, and if @is matches any of those values, then
   # we consider it to be in-sync.
-  def insync?(is)
+  #
+  # Don't override this method.
+  def safe_insync?(is)
+    # If there is no @should value, consider the property to be in sync.
     return true unless @should
 
+    # Otherwise delegate to the (possibly derived) insync? method.
+    insync?(is)
+  end
+
+  def self.method_added(sym)
+    raise "Puppet::Property#safe_insync? shouldn't be overridden; please override insync? instead" if sym == :safe_insync?
+  end
+
+  # This method should be overridden by derived classes if necessary
+  # to provide extra logic to determine whether the property is in
+  # sync.
+  def insync?(is)
     self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
     # an empty array is analogous to no should values

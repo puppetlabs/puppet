@@ -112,8 +112,6 @@ module Puppet
       end
 
       def insync?(is)
-        return true unless self.should
-
         # We know the 'is' is a number, so we need to convert the 'should' to a number,
         # too.
         @should.each do |value|
@@ -177,7 +175,7 @@ module Puppet
       end
 
       validate do |value|
-        if value.to_s !~ /^\d+$/
+        if value.to_s !~ /^-?\d+$/
           raise ArgumentError, "Password minimum age must be provided as a number"
         end
       end
@@ -196,7 +194,7 @@ module Puppet
       end
 
       validate do |value|
-        if value.to_s !~ /^\d+$/
+        if value.to_s !~ /^-?\d+$/
           raise ArgumentError, "Password maximum age must be provided as a number"
         end
       end

@@ -8,7 +8,7 @@ class Puppet::Application::Doc < Puppet::Application
   attr_accessor :unknown_args, :manifest
 
   def preinit
-    {:references => [], :mode => :text, :format => :to_rest }.each do |name,value|
+    {:references => [], :mode => :text, :format => :to_markdown }.each do |name,value|
       options[name] = value
     end
     @unknown_args = []
@@ -112,9 +112,6 @@ class Puppet::Application::Doc < Puppet::Application
     end
 
     text += Puppet::Util::Reference.footer unless with_contents # We've only got one reference
-
-    # Replace the trac links, since they're invalid everywhere else
-    text.gsub!(/`\w+\s+([^`]+)`:trac:/) { |m| $1 }
 
     if options[:mode] == :pdf
       Puppet::Util::Reference.pdf(text)
