@@ -136,6 +136,11 @@ describe Puppet::Util::Log do
       Puppet::Util::Log.new(:level => "notice", :message => :foo)
     end
 
+    it "should update Log autoflush when Puppet[:autoflush] is set" do
+      Puppet::Util::Log.expects(:autoflush=).once.with(true)
+      Puppet[:autoflush] = true
+    end
+
     it "should have a method for determining if a tag is present" do
       Puppet::Util::Log.new(:level => "notice", :message => :foo).should respond_to(:tagged?)
     end
