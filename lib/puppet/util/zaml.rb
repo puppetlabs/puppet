@@ -59,13 +59,12 @@ class ZAML
       @@previously_emitted_object = {}
       @@next_free_label_number = 0
     end
-    def initialize(obj,indent)
-      @indent = indent
+    def initialize(obj)
       @this_label_number = nil
       @@previously_emitted_object[obj.object_id] = self
     end
     def to_s
-      @this_label_number ? ('&id%03d%s' % [@this_label_number, @indent]) : ''
+      @this_label_number ? ('&id%03d ' % @this_label_number) : ''
     end
     def reference
       @this_label_number ||= (@@next_free_label_number += 1)
@@ -76,7 +75,7 @@ class ZAML
     end
   end
   def new_label_for(obj)
-    Label.new(obj,(Hash === obj || Array === obj) ? "#{@indent || "\n"}  " : ' ')
+    Label.new(obj)
   end
   def first_time_only(obj)
     if label = Label.for(obj)
@@ -92,7 +91,7 @@ class ZAML
   end
   def emit(s)
     @result << s
-    @recent_nl = false unless s.kind_of?(Label)
+    @recent_nl = false
   end
   def nl(s='')
     emit(@indent || "\n") unless @recent_nl
@@ -224,32 +223,30 @@ class String
     gsub( /([\x80-\xFF])/ ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
   end
   def to_zaml(z)
-    z.first_time_only(self) {
-      num = '[-+]?(0x)?\d+\.?\d*'
-      case
-        when self == ''
-          z.emit('""')
-        # when self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/
-        #   z.emit("!binary |\n")
-        #   z.emit([self].pack("m*"))
-        when (
-          (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or
-          (self =~ /\A\n* /) or
-          (self =~ /[\s:]$/) or
-          (self =~ /^[>|][-+\d]*\s/i) or
-          (self[-1..-1] =~ /\s/) or
-          (self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/) or
-          (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
-          (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
-          )
-          z.emit("\"#{escaped_for_zaml}\"")
-        when self =~ /\n/
-          if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
-          z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-        else
-          z.emit(self)
-      end
-    }
+    num = '[-+]?(0x)?\d+\.?\d*'
+    case
+      when self == ''
+        z.emit('""')
+      # when self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/
+      #   z.emit("!binary |\n")
+      #   z.emit([self].pack("m*"))
+      when (
+        (self =~ /\A(true|false|yes|no|on|null|off|#{num}(:#{num})*|!|=|~)$/i) or
+        (self =~ /\A\n* /) or
+        (self =~ /[\s:]$/) or
+        (self =~ /^[>|][-+\d]*\s/i) or
+        (self[-1..-1] =~ /\s/) or
+        (self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/) or
+        (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
+        (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
+        )
+        z.emit("\"#{escaped_for_zaml}\"")
+      when self =~ /\n/
+        if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
+        z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
+      else
+        z.emit(self)
+    end
   end
 end
 

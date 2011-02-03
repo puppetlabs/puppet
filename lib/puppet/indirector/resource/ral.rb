@@ -34,12 +34,17 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
 
   private
 
+  # {type,resource}_name: the resource name may contain slashes:
+  # File["/etc/hosts"]. To handle, assume the type name does
+  # _not_ have any slashes in it, and split only on the first.
+
   def type_name( request )
-    request.key.split('/')[0]
+    request.key.split('/', 2)[0]
   end
 
   def resource_name( request )
-    request.key.split('/')[1]
+    name = request.key.split('/', 2)[1]
+    name unless name == ""
   end
 
   def type( request )

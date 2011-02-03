@@ -73,7 +73,7 @@ module Puppet
 
         if property = @resource.property(:enable)
           val = property.retrieve
-          property.sync unless property.insync?(val)
+          property.sync unless property.safe_insync?(val)
         end
 
         event
@@ -144,10 +144,16 @@ module Puppet
         specified."
     end
     newparam(:status) do
-      desc "Specify a *status* command manually.  If left
-        unspecified, the status method will be determined
-        automatically, usually by looking for the service in the
-        process table."
+      desc "Specify a *status* command manually.  This command must
+        return 0 if the service is running and a nonzero value otherwise.
+        Ideally, these return codes should conform to
+        [the LSB's specification for init script status actions](http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html),
+        but puppet only considers the difference between 0 and nonzero
+        to be relevant.
+
+        If left unspecified, the status method will be determined
+        automatically, usually by looking for the service in the process
+        table."
     end
 
     newparam(:stop) do

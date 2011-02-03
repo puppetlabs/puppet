@@ -194,6 +194,23 @@ describe Puppet::Type.type(:file) do
         file = Puppet::Type::File.new(:path => "/")
         file[:path].should == "/"
       end
+
+      it "should accept a double-slash at the start of the path" do
+        expect {
+          file = Puppet::Type::File.new(:path => "//tmp/xxx")
+          # REVISIT: This should be wrong, later.  See the next test.
+          # --daniel 2011-01-31
+          file[:path].should == '/tmp/xxx'
+        }.should_not raise_error
+      end
+
+      # REVISIT: This is pending, because I don't want to try and audit the
+      # entire codebase to make sure we get this right.  POSIX treats two (and
+      # exactly two) '/' characters at the start of the path specially.
+      #
+      # See sections 3.2 and 4.11, which allow DomainOS to be all special like
+      # and still have the POSIX branding and all. --daniel 2011-01-31
+      it "should preserve the double-slash at the start of the path"
     end
 
     describe "on Microsoft Windows systems" do
@@ -806,6 +823,73 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "when specifying both source, and content properties" do
+    before do
+      @file[:source]  = '/one'
+      @file[:content] = 'file contents'
+    end
+
+    it "should raise an exception" do
+      lambda {@file.validate }.should raise_error(/You cannot specify more than one of/)
+    end
+  end
+
+  describe "when using source" do
+    before do
+      @file[:source]   = '/one'
+    end
+    Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        before do
+          @file[:checksum] = checksum_type
+        end
+
+        it 'should validate' do
+
+          lambda { @file.validate }.should_not raise_error
+        end
+      end
+    end
+
+    describe "with checksum 'none'" do
+      before do
+        @file[:checksum] = :none
+      end
+
+      it 'should raise an exception when validating' do
+        lambda { @file.validate }.should raise_error(/You cannot specify source when using checksum 'none'/)
+      end
+    end
+  end
+
+  describe "when using content" do
+    before do
+      @file[:content] = 'file contents'
+    end
+
+    (Puppet::Type::File::ParameterChecksum.value_collection.values - SOURCE_ONLY_CHECKSUMS).each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        before do
+          @file[:checksum] = checksum_type
+        end
+
+        it 'should validate' do
+          lambda { @file.validate }.should_not raise_error
+        end
+      end
+    end
+
+    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        it 'should raise an exception when validating' do
+          @file[:checksum] = checksum_type
+
+          lambda { @file.validate }.should raise_error(/You cannot specify content when using checksum '#{checksum_type}'/)
+        end
+      end
+    end
+  end
+
   describe "when returning resources with :eval_generate" do
     before do
       @graph = stub 'graph', :add_edge => nil
@@ -1065,4 +1149,45 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "when auditing" do
+    it "should not fail if creating a new file if group is not set" do
+      File.exists?(@path).should == false
+      file = Puppet::Type::File.new(:name => @path, :audit => "all", :content => "content")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource(file)
+
+      Puppet::Util::Storage.stubs(:store) # to prevent the catalog from trying to write state.yaml
+      transaction = catalog.apply
+
+      transaction.report.resource_statuses["File[#{@path}]"].failed.should == false
+      File.exists?(@path).should == true
+    end
+
+    it "should not log errors if creating a new file with ensure present and no content" do
+      File.exists?(@path).should == false
+      file = Puppet::Type::File.new(:name => @path, :audit => "content", :ensure => "present")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource(file)
+
+      Puppet::Util::Storage.stubs(:store) # to prevent the catalog from trying to write state.yaml
+
+      catalog.apply
+      @logs.reject {|l| l.level == :notice }.should be_empty
+    end
+  end
+
+  describe "when specifying both source and checksum" do
+    it 'should use the specified checksum when source is first' do
+      @file[:source] = '/foo'
+      @file[:checksum] = :md5lite
+
+      @file[:checksum].should be :md5lite
+    end
+    it 'should use the specified checksum when source is last' do
+      @file[:checksum] = :md5lite
+      @file[:source] = '/foo'
+
+      @file[:checksum].should be :md5lite
+    end
+  end
 end

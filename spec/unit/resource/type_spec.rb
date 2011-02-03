@@ -261,6 +261,28 @@ describe Puppet::Resource::Type do
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
     end
 
+    ['module_name', 'name', 'title'].each do |variable|
+      it "should allow #{variable} to be evaluated as param default" do
+        @type.module_name = "bar"
+        var = Puppet::Parser::AST::Variable.new({'value' => variable})
+        @type.set_arguments :foo => var
+        @type.set_resource_parameters(@resource, @scope)
+        @scope.lookupvar('foo').should == 'bar'
+      end
+    end
+
+    # this test is to clarify a crazy edge case
+    # if you specify these special names as params, the resource
+    # will override the special variables
+    it "resource should override defaults" do
+      @type.set_arguments :name => nil
+      @resource[:name] = 'foobar'
+      var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
+      @type.set_arguments :foo => var
+      @type.set_resource_parameters(@resource, @scope)
+      @scope.lookupvar('foo').should == 'foobar'
+    end
+
     it "should set each of the resource's parameters as variables in the scope" do
       @type.set_arguments :foo => nil, :boo => nil
       @resource[:foo] = "bar"
@@ -496,7 +518,7 @@ describe Puppet::Resource::Type do
 
       it "should evaluate the parent's resource" do
         @type.parent_type(@scope)
-        
+
         @type.evaluate_code(@resource)
 
         @scope.class_scope(@parent_type).should_not be_nil
@@ -504,7 +526,7 @@ describe Puppet::Resource::Type do
 
       it "should not evaluate the parent's resource if it has already been evaluated" do
         @parent_resource.evaluate
-        
+
         @type.parent_type(@scope)
 
         @parent_resource.expects(:evaluate).never
@@ -545,7 +567,7 @@ describe Puppet::Resource::Type do
 
       it "should not evaluate the parent's resource if it has already been evaluated" do
         @parent_resource.evaluate
-        
+
         @type.parent_type(@scope)
 
         @parent_resource.expects(:evaluate).never
@@ -575,7 +597,7 @@ describe Puppet::Resource::Type do
       @code = Puppet::Resource::TypeCollection.new("env")
       @code.add @top
       @code.add @middle
-      
+
       @node.environment.stubs(:known_resource_types).returns(@code)
     end
 
@@ -601,10 +623,34 @@ describe Puppet::Resource::Type do
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
 
+    it "should add specified parameters to the resource" do
+      @top.ensure_in_catalog(@scope, {'one'=>'1', 'two'=>'2'})
+      @compiler.catalog.resource(:class, "top")['one'].should == '1'
+      @compiler.catalog.resource(:class, "top")['two'].should == '2'
+    end
+
+    it "should not require params for a param class" do
+      @top.ensure_in_catalog(@scope, {})
+      @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
     it "should evaluate the parent class if one exists" do
       @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should evaluate the parent class if one exists" do
+      @middle.ensure_in_catalog(@scope, {})
+
+      @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should fail if you try to create duplicate class resources" do
+      othertop = Puppet::Parser::Resource.new(:class, 'top',:source => @source, :scope => @scope )
+      # add the same class resource to the catalog
+      @compiler.catalog.add_resource(othertop)
+      lambda { @top.ensure_in_catalog(@scope, {}) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
     end
 
     it "should fail to evaluate if a parent class is defined but cannot be found" do

@@ -96,7 +96,6 @@ module Puppet
       end
 
       return true if ! @resource.replace?
-      return true unless self.should
 
       result = super
 
@@ -168,6 +167,8 @@ module Puppet
     def each_chunk_from(source_or_content)
       if source_or_content.is_a?(String)
         yield source_or_content
+      elsif source_or_content.nil? && resource.parameter(:ensure) && [:present, :file].include?(resource.parameter(:ensure).value)
+        yield ''
       elsif source_or_content.nil?
         yield read_file_from_filebucket
       elsif self.class.standalone?

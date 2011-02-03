@@ -77,8 +77,6 @@ module Puppet
       end
 
       def insync?(is)
-        return true unless @should
-
         return true unless is
 
         (is == self.should)

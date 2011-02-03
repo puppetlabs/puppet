@@ -593,7 +593,7 @@ if @config.include?(:run_mode)
     end
     eachsection do |section|
       persection(section) do |obj|
-        str += obj.to_config + "\n" unless ReadOnly.include? obj.name
+        str += obj.to_config + "\n" unless ReadOnly.include? obj.name or obj.name == :genconfig
       end
     end
 
