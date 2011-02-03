@@ -180,6 +180,59 @@ class Puppet::Application::Describe < Puppet::Application
   option("--list", "-l")
   option("--meta","-m")
 
+  def help
+    <<-HELP
+
+SYNOPSIS
+========
+Print help about puppet types on the console. Run with '-h' to get
+detailed help.
+
+
+USAGE
+=====
+  puppet describe [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta]
+
+
+DESCRIPTION
+===========
+Prints details of Puppet types, providers and metaparameters on the
+console.
+
+
+OPTIONS
+=======
+help:      Print this help text
+
+providers: Describe providers in detail for each type
+
+list:      List all types
+
+meta:      List all metaparameters
+
+short:     List only parameters without detail
+
+
+EXAMPLE
+=======
+  puppet describe --list
+  puppet describe file --providers
+  puppet describe user -s -m
+
+
+AUTHOR
+======
+David Lutterkort
+
+
+COPYRIGHT
+=========
+Copyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public
+License
+
+    HELP
+  end
+
   def preinit
     options[:parameters] = true
   end
