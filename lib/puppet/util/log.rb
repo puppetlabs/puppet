@@ -67,6 +67,12 @@ class Puppet::Util::Log
     }
   end
 
+  def Log.autoflush=(v)
+    @destinations.each do |type, dest|
+      dest.autoflush = v if dest.respond_to?(:autoflush=)
+    end
+  end
+
   # Create a new log message.  The primary role of this method is to
   # avoid creating log messages below the loglevel.
   def Log.create(hash)

@@ -264,9 +264,21 @@ class Application
   def initialize(command_line = nil)
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
-    @run_mode = self.class.run_mode
+    set_run_mode self.class.run_mode
     @options = {}
 
+    require 'puppet'
+  end
+
+  # WARNING: This is a totally scary, frightening, and nasty internal API.  We
+  # strongly advise that you do not use this, and if you insist, we will
+  # politely allow you to keep both pieces of your broken code.
+  #
+  # We plan to provide a supported, long-term API to deliver this in a way
+  # that you can use.  Please make sure that you let us know if you do require
+  # this, and this message is still present in the code. --daniel 2011-02-03
+  def set_run_mode(mode)
+    @run_mode = mode
     $puppet_application_mode = @run_mode
     $puppet_application_name = name
 
@@ -281,8 +293,6 @@ class Application
       Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
       Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
     end
-
-    require 'puppet'
   end
 
   # This is the main application entry point
