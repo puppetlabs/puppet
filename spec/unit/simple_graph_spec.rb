@@ -303,6 +303,107 @@ describe Puppet::SimpleGraph do
       proc { @graph.topsort }.should_not raise_error
     end
 
+    it "should produce the correct relationship text" do
+      add_edges :a => :b, :b => :a
+      want = %r{Found 1 dependency cycle:\n\(a => b => a\)\nTry}
+      expect { @graph.topsort }.to raise_error(Puppet::Error, want)
+    end
+
+    it "cycle discovery should be the minimum cycle for a simple graph" do
+      add_edges "a" => "b"
+      add_edges "b" => "a"
+      add_edges "b" => "c"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [["a", "b"]]
+    end
+
+    it "cycle discovery should handle two distinct cycles" do
+      add_edges "a" => "a1", "a1" => "a"
+      add_edges "b" => "b1", "b1" => "b"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [["a", "a1"], ["b", "b1"]]
+    end
+
+    it "cycle discovery should handle two cycles in a connected graph" do
+      add_edges "a" => "b", "b" => "c", "c" => "d"
+      add_edges "a" => "a1", "a1" => "a"
+      add_edges "c" => "c1", "c1" => "c2", "c2" => "c3", "c3" => "c"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [%w{a a1}, %w{c c1 c2 c3}]
+    end
+
+    it "cycle discovery should handle a complicated cycle" do
+      add_edges "a" => "b", "b" => "c"
+      add_edges "a" => "c"
+      add_edges "c" => "c1", "c1" => "a"
+      add_edges "c" => "c2", "c2" => "b"
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == [%w{a b c c1 c2}]
+    end
+
+    it "cycle discovery should not fail with large data sets" do
+      limit = 3000
+      (1..(limit - 1)).each do |n| add_edges n.to_s => (n+1).to_s end
+
+      cycles = nil
+      expect { cycles = @graph.find_cycles_in_graph.sort }.should_not raise_error
+      cycles.should be == []
+    end
+
+    it "path finding should work with a simple cycle" do
+      add_edges "a" => "b", "b" => "c", "c" => "a"
+
+      cycles = @graph.find_cycles_in_graph.sort
+      paths = @graph.paths_in_cycle(cycles.first, 100)
+      paths.should be == [%w{a b c a}]
+    end
+
+    it "path finding should work with two independent cycles" do
+      add_edges "a" => "b1"
+      add_edges "a" => "b2"
+      add_edges "b1" => "a", "b2" => "a"
+
+      cycles = @graph.find_cycles_in_graph.sort
+      cycles.length.should be == 1
+
+      paths = @graph.paths_in_cycle(cycles.first, 100)
+      paths.sort.should be == [%w{a b1 a}, %w{a b2 a}]
+    end
+
+    it "path finding should prefer shorter paths in cycles" do
+      add_edges "a" => "b", "b" => "c", "c" => "a"
+      add_edges "b" => "a"
+
+      cycles = @graph.find_cycles_in_graph.sort
+      cycles.length.should be == 1
+
+      paths = @graph.paths_in_cycle(cycles.first, 100)
+      paths.should be == [%w{a b a}, %w{a b c a}]
+    end
+
+    it "path finding should respect the max_path value" do
+      (1..20).each do |n| add_edges "a" => "b#{n}", "b#{n}" => "a" end
+
+      cycles = @graph.find_cycles_in_graph.sort
+      cycles.length.should be == 1
+
+      (1..20).each do |n|
+        paths = @graph.paths_in_cycle(cycles.first, n)
+        paths.length.should be == n
+      end
+
+      paths = @graph.paths_in_cycle(cycles.first, 21)
+      paths.length.should be == 20
+    end
+
     # Our graph's add_edge method is smart enough not to add
     # duplicate edges, so we use the objects, which it doesn't
     # check.
