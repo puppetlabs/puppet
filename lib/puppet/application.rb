@@ -250,7 +250,8 @@ class Application
 
   # Every app responds to --help
   option("--help", "-h") do |v|
-    help
+    puts help
+    exit
   end
 
   def should_parse_config?
@@ -385,23 +386,7 @@ class Application
   end
 
   def help
-    if Puppet.features.usage?
-      # RH:FIXME: My goodness, this is ugly.
-      ::RDoc.const_set("PuppetSourceFile", name)
-      #:stopdoc: # Issue #4161
-      def (::RDoc).caller
-        docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{DOCPATTERN}`.chomp
-        super << "#{docfile}:0"
-      end
-      #:startdoc:
-      ::RDoc::usage && exit
-    else
-      puts "No help available unless you have RDoc::usage installed"
-      exit
-    end
-  rescue Errno::ENOENT
-    puts "No help available for puppet #{name}"
-    exit
+    "No help available for puppet #{name}"
   end
 
   private

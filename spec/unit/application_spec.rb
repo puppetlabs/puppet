@@ -283,11 +283,10 @@ describe Puppet::Application do
       @app.parse_options
     end
 
-    describe "when using --help", :if => Puppet.features.usage? do
+    describe "when using --help" do
 
-      it "should call RDoc::usage and exit" do
+      it "should call exit" do
         @app.expects(:exit)
-        RDoc.expects(:usage).returns(true)
 
         @app.handle_help(nil)
       end
