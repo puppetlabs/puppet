@@ -1,3 +1,8 @@
+2.6.5rc2
+========
+1f89906 (#6257) Speed up PUT and POST requests under rack
+7b3b56e (5977) Puppet::Applications can be loaded from multiple paths.
+
 2.6.5rc1
 ========
 f9e2e2b Augmentation of tests for prior commit
