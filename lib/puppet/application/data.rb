@@ -52,6 +52,8 @@ class Puppet::Application::Data < Puppet::Application
   def setup
     Puppet::Util::Log.newdestination :console
 
+    load_applications # Call this to load all of the apps
+
     @verb, @arguments = command_line.args
     @arguments ||= []
 
@@ -77,8 +79,15 @@ class Puppet::Application::Data < Puppet::Application
   end
 
   def actions(indirection)
-    return [] unless app = Puppet::Application.find(indirection)
-    return app.actions.sort { |a,b| a.to_s <=> b.to_s }
+    return [] unless interface = Puppet::Interface.interface(indirection)
+    interface.load_actions
+    return interface.actions.sort { |a,b| a.to_s <=> b.to_s }
+  end
+
+  def load_applications
+    command_line.available_subcommands.each do |app|
+      command_line.require_application app
+    end
   end
 end
 

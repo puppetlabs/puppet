@@ -47,6 +47,21 @@ class Puppet::Interface
     Kernel::exit(1)
   end
 
+  # Try to find actions defined in other files.
+  def self.load_actions
+    path = "puppet/interface/#{name}"
+
+    autoloader.search_directories.each do |dir|
+      fdir = File.join(dir, path)
+      next unless FileTest.directory?(fdir)
+
+      Dir.glob("#{fdir}/*.rb").each do |file|
+        Puppet.info "Loading actions for '#{name}' from '#{file}'"
+        require file
+      end
+    end
+  end
+
   # Return the interface name.
   def self.name
     @name || self.to_s.sub(/.+::/, '').downcase
@@ -94,7 +109,7 @@ class Puppet::Interface
 
     Puppet::Util::Log.newdestination :console
 
-    load_actions
+    self.class.load_actions
   end
 
   def set_terminus(from)
@@ -114,25 +129,10 @@ class Puppet::Interface
     end
 
     unless result
-      raise "Could not #{verb} #{type} for #{name}"
+      raise "Could not #{method} #{indirection.name} for #{name}"
     end
 
     puts result.render(format.to_sym)
-  end
-
-  # Try to find actions defined in other files.
-  def load_actions
-    path = "puppet/interface/#{self.class.name}"
-
-    self.class.autoloader.search_directories.each do |dir|
-      fdir = File.join(dir, path)
-      next unless FileTest.directory?(fdir)
-
-      Dir.glob("#{fdir}/*.rb").each do |file|
-        Puppet.info "Loading actions for '#{self.class.name}' from '#{file}'"
-        require file
-      end
-    end
   end
 
   def indirections

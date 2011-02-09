@@ -60,6 +60,7 @@ class Puppet::Application::DataBaseclass < Puppet::Application
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
     @interface = Puppet::Interface.interface(@type).new
+    @interface.format = format if format
 
     validate
 
