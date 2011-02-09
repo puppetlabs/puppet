@@ -1,6 +1,6 @@
 require 'puppet/application'
 
-class Puppet::Application::Data < Puppet::Application
+class Puppet::Application::Interface < Puppet::Application
 
   should_parse_config
   run_mode :agent
@@ -66,7 +66,7 @@ class Puppet::Application::Data < Puppet::Application
     end
 
     unless respond_to?(verb)
-      raise "Command '#{verb}' not found for 'data'"
+      raise "Command '#{verb}' not found for 'interface'"
     end
   end
 
