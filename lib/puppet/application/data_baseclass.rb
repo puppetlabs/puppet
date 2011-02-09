@@ -18,7 +18,7 @@ class Puppet::Application::DataBaseclass < Puppet::Application
   end
 
   option("--format FORMAT") do |arg|
-    @format = arg
+    @format = arg.to_sym
   end
 
   # XXX this doesn't work, I think
@@ -46,11 +46,11 @@ class Puppet::Application::DataBaseclass < Puppet::Application
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
-    interface.send(verb, name, *arguments)
+    result = interface.send(verb, name, *arguments)
+    puts result.render(format)
   end
 
   def setup
-    @format ||= :yaml
 
     Puppet::Util::Log.newdestination :console
 
@@ -60,7 +60,7 @@ class Puppet::Application::DataBaseclass < Puppet::Application
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
     @interface = Puppet::Interface.interface(@type).new
-    @interface.format = format if format
+    @format ||= @interface.class.default_format || :pson
 
     validate
 

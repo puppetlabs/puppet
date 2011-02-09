@@ -1,6 +1,8 @@
 require 'puppet/interface'
 
 class Puppet::Interface::Facts < Puppet::Interface
+  set_default_format :yaml
+
   # Upload our facts to the server
   action(:upload) do |*args|
     Puppet::Node::Facts.indirection.terminus_class = :facter

@@ -1,6 +1,15 @@
 require 'puppet'
 
 class Puppet::Interface
+
+  class << self
+    attr_accessor :default_format
+
+    def set_default_format(format)
+      self.default_format = format.to_sym
+    end
+  end
+
   # This is just so we can search for actions.  We only use its
   # list of directories to search.
   def self.autoloader
@@ -67,7 +76,7 @@ class Puppet::Interface
     @name || self.to_s.sub(/.+::/, '').downcase
   end
 
-  attr_accessor :from, :type, :verb, :name, :arguments, :indirection, :format
+  attr_accessor :from, :type, :verb, :name, :arguments, :indirection
 
   def action?(name)
     self.class.actions.include?(name.to_sym)
@@ -105,8 +114,6 @@ class Puppet::Interface
   def initialize(options = {})
     options.each { |opt, val| send(opt.to_s + "=", val) }
 
-    @format ||= :yaml
-
     Puppet::Util::Log.newdestination :console
 
     self.class.load_actions
@@ -132,7 +139,7 @@ class Puppet::Interface
       raise "Could not #{method} #{indirection.name} for #{name}"
     end
 
-    puts result.render(format.to_sym)
+    result
   end
 
   def indirections
