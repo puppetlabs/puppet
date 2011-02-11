@@ -67,7 +67,7 @@ class Puppet::Parser::AST
     end
 
     def to_s
-      "concat(#{@value.join(',')})"
+      "#{@value.map { |s| s.to_s.gsub(/^"(.*)"$/, '\1') }.join}"
     end
   end
 
