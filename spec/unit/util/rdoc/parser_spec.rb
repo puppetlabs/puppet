@@ -43,6 +43,18 @@ describe RDoc::Parser do
 
       @parser.scan.should be_a(RDoc::PuppetTopLevel)
     end
+
+    it "should scan the top level even if the file has already parsed" do
+      known_type = stub 'known_types'
+      env = stub 'env'
+      Puppet::Node::Environment.stubs(:new).returns(env)
+      env.stubs(:known_resource_types).returns(known_type)
+      known_type.expects(:watching_file?).with("module/manifests/init.pp").returns(true)
+
+      @parser.expects(:scan_top_level)
+
+      @parser.scan
+    end
   end
 
   describe "when scanning top level entities" do

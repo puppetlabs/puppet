@@ -41,8 +41,10 @@ class Parser
         @parser.file = @input_file_name
         @ast = @parser.parse
       end
-      scan_top_level(@top_level)
+    else
+      @ast = env.known_resource_types
     end
+    scan_top_level(@top_level)
     @top_level
   end
 
