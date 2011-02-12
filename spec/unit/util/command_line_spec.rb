@@ -108,8 +108,8 @@ describe Puppet::Util::CommandLine do
   end
   describe 'when loading commands' do
     before do
-      @core_apps = ["describe", "filebucket", "kick", "queue", "resource", "agent", "cert", "apply", "doc", "master"]
-      @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help w    hatever.pp }, @tty )
+      @core_apps = %w{describe filebucket kick queue resource agent cert apply doc master}
+      @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp }, @tty )
     end
     it 'should be able to find all existing commands' do
       @core_apps.each do |command|
@@ -122,10 +122,15 @@ describe Puppet::Util::CommandLine do
         @appdir="#{@dir}/puppet/application"
         FileUtils.mkdir_p(@appdir)
         FileUtils.touch("#{@appdir}/foo.rb")
-        $LOAD_PATH.unshift(@dir)
+        $LOAD_PATH.unshift(@dir) # WARNING: MUST MATCH THE AFTER ACTIONS!
       end
       it 'should be able to find commands from both paths' do
-        @command_line.available_subcommands.should == ['foo'] + @core_apps
+        found = @command_line.available_subcommands
+        found.should include 'foo'
+        @core_apps.each { |cmd| found.should include cmd }
+      end
+      after do
+        $LOAD_PATH.shift        # WARNING: MUST MATCH THE BEFORE ACTIONS!
       end
     end
   end
