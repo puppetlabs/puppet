@@ -76,6 +76,12 @@ describe Puppet::Parser do
 
   end
 
+  describe "when parsing selector" do
+    it "should support hash access on the left hand side" do
+      lambda { @parser.parse("$h = { 'a' => 'b' } $a = $h['a'] ? { 'b' => 'd', default => undef }") }.should_not raise_error
+    end
+  end
+
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
       ast::Not.expects(:new).with { |h| h[:value].is_a?(ast::Boolean) }
