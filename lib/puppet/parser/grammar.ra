@@ -845,7 +845,7 @@ hasharrayaccess: VARIABLE LBRACK rvalue RBRACK {
 }
 
 hasharrayaccesses:    hasharrayaccess
-  | hasharrayaccess LBRACK rvalue RBRACK {
+  | hasharrayaccesses LBRACK rvalue RBRACK {
     result = ast AST::HashOrArrayAccess, :variable => val[0], :key => val[2]
 }
 
