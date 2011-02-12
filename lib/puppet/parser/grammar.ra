@@ -642,6 +642,7 @@ selectlhand:  name
   | funcrvalue
   | boolean
   | undef
+  | hasharrayaccess
   | DEFAULT {
     result = ast AST::Default, :value => val[0][:value], :line => val[0][:line]
 }
