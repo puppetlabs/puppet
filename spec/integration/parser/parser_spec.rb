@@ -109,5 +109,12 @@ describe Puppet::Parser::Parser do
     it "should correctly set the arrow type of a relationship" do
       "Notify[foo] <~ Notify[bar]".should parse_with { |rel| rel.arrow == "<~" }
     end
+
+    it "should be able to parse deep hash access" do
+      %q{
+        $hash = { 'a' => { 'b' => { 'c' => 'it works' } } }
+        $out = $hash['a']['b']['c']
+      }.should parse_with { |v| v.value.is_a?(Puppet::Parser::AST::ASTHash) }
+    end
   end
 end
