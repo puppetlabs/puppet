@@ -304,6 +304,33 @@ describe Puppet::Parser do
     it "should return an array of nodes" do
       @parser.newnode(@nodename).should be_instance_of(Array)
     end
+
+    it "should initialize the ast context with the correct line number" do
+      @parser.expects(:ast_context).with { |a,b| b == 123 }.returns({})
+      @parser.newnode(@nodename, { :line => 123 })
+    end
+  end
+
+  %w{class define}.each do |entity|
+    describe "when creating a #{entity}" do
+      before :each do
+        @parser.stubs(:ast_context).returns({})
+
+        @name = stub "#{entity}name", :is_a? => false, :value => "foo"
+      end
+
+      it "should create and add the correct resource type" do
+        instance = stub 'instance'
+        Puppet::Resource::Type.expects(:new).returns(instance)
+        @parser.known_resource_types.expects(:add).with(instance)
+        @parser.send("new#{entity}", @name)
+      end
+
+      it "should initialize the ast context with the correct line number" do
+        @parser.expects(:ast_context).with { |a,b| b == 123 }.returns({})
+        @parser.send("new#{entity}", @name, { :line => 123 })
+      end
+    end
   end
 
   describe "when retrieving a specific node" do
