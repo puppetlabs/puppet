@@ -1,4 +1,4 @@
-require 'puppet/interface'
+require 'puppet/interface/indirector'
 
-class Puppet::Interface::Inventory < Puppet::Interface
+class Puppet::Interface::Inventory < Puppet::Interface::Indirector
 end

@@ -1,4 +1,4 @@
-require 'puppet/interface'
+require 'puppet/interface/indirector'
 
-class Puppet::Interface::Certificate_revocation_list < Puppet::Interface
+class Puppet::Interface::Certificate_revocation_list < Puppet::Interface::Indirector
 end

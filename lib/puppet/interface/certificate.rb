@@ -1,4 +1,4 @@
-require 'puppet/interface'
+require 'puppet/interface/indirector'
 
-class Puppet::Interface::Certificate < Puppet::Interface
+class Puppet::Interface::Certificate < Puppet::Interface::Indirector
 end
