@@ -5,6 +5,14 @@ class Puppet::Application::DataBaseclass < Puppet::Application
   should_parse_config
   run_mode :agent
 
+  def preinit
+    super
+    trap(:INT) do
+      $stderr.puts "Cancelling Interface"
+      exit(0)
+    end
+  end
+
   option("--debug", "-d") do |arg|
     Puppet::Util::Log.level = :debug
   end
