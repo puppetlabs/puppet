@@ -1,3 +1,7 @@
+2.6.5rc4
+========
+664ef67 (#3646) Fix the documentation fix for `puppet apply --apply`
+
 2.6.5rc3
 ========
 7ef2fbf Updated fix for #3646 - apply / compile documentation
