@@ -7,7 +7,7 @@
 # = Usage
 #
 #   puppet apply [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose] [-e|--execute]
-#               [--detailed-exitcodes] [-l|--logdest <file>] <file>
+#               [--detailed-exitcodes] [-l|--logdest <file>] [--apply catalog] <file>
 #
 # = Description
 #
@@ -52,6 +52,10 @@
 #
 # verbose::
 #   Print extra information.
+#
+# apply::
+#   Capability to apply JSON catalog (such as one generated with --compile on the Puppet master).
+#   You can either specify a JSON catalog file or pipe in JSON from standard input.
 #
 # = Example
 #

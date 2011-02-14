@@ -15,7 +15,6 @@
 #       [-o|--onetime] [--serve <handler>] [-t|--test] [--noop]
 #       [--digest <digest>] [--fingerprint] [-V|--version]
 #       [-v|--verbose] [-w|--waitforcert <seconds>]
-#       [--apply catalog]
 #
 # = Description
 #
@@ -172,10 +171,6 @@
 #   certificate request.  This is useful for the initial setup of a puppet
 #   client.  You can turn off waiting for certificates by specifying a time
 #   of 0.
-#
-# apply::
-#   Capability to apply JSON catalog (such as one generated with --compile on the Puppet master).
-#   You can either specify a JSON catalog file or pipe in JSON from standard input.
 #
 # = Example
 #
