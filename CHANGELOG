@@ -1,3 +1,8 @@
+2.6.5rc3
+========
+7ef2fbf Updated fix for #3646 - apply / compile documentation
+193016d (#5977) fix spec test failure when new applications are introduced.
+
 2.6.5rc2
 ========
 1f89906 (#6257) Speed up PUT and POST requests under rack
