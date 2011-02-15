@@ -54,10 +54,10 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   def startcmd
     self.setupservice
     case self.status
-    when :stopped
-      [command(:adm), :enable, @resource[:name]]
     when :maintenance
       [command(:adm), :clear, @resource[:name]]
+    else
+      [command(:adm), :enable, @resource[:name]]
     end
   end
 
