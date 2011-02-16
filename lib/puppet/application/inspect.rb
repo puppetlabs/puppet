@@ -22,20 +22,22 @@ class Puppet::Application::Inspect < Puppet::Application
   def help
     <<-HELP
 
-SYNOPSIS
+puppet-inspect(8) -- Send an inspection report
 ========
 
-Prepare and submit an inspection report to the puppet master.
+SYNOPSIS
+--------
+
+Prepares and submits an inspection report to the puppet master.
 
 
 USAGE
-=====
-
-  puppet inspect
+-----
+puppet inspect
 
 
 DESCRIPTION
-===========
+-----------
 
 This command uses the cached catalog from the previous run of 'puppet
 agent' to determine which attributes of which resources have been
@@ -44,11 +46,12 @@ the current state of the system, writes the state of the specified
 resource attributes to a report, and submits the report to the puppet
 master.
 
-Puppet inspect does not run as a daemon, and must be run manually or from cron.
+Puppet inspect does not run as a daemon, and must be run manually or
+from cron.
 
 
 OPTIONS
-=======
+-------
 
 Any configuration setting which is valid in the configuration file is
 also a valid long argument, e.g. '--server=master.domain.com'. See the
@@ -58,13 +61,13 @@ the full list of acceptable settings.
 
 
 AUTHOR
-======
+------
 
 Puppet Labs
 
 
 COPYRIGHT
-=========
+---------
 
 Copyright (c) 2011 Puppet Labs, LLC
 Licensed under the GNU General Public License version 2
