@@ -190,15 +190,10 @@ SYNOPSIS
 --------
 Prints help about Puppet resource types, providers, and metaparameters.
 
+
 USAGE
 -----
 puppet describe [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta]
-
-
-DESCRIPTION
------------
-Prints details of Puppet types, providers and metaparameters on the
-console.
 
 
 OPTIONS
