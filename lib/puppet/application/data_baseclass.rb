@@ -48,7 +48,7 @@ class Puppet::Application::DataBaseclass < Puppet::Application
     # Call the method associated with the provided action (e.g., 'find').
     result = interface.send(verb, name, *arguments)
     render_method = Puppet::Network::FormatHandler.format(format).render_method
-    puts result.send(render_method)
+    puts result.send(render_method) if result
   end
 
   def setup
