@@ -183,50 +183,56 @@ class Puppet::Application::Describe < Puppet::Application
   def help
     <<-HELP
 
-SYNOPSIS
+puppet-describe(8) -- Display help about resource types
 ========
-Print help about puppet types on the console. Run with '-h' to get
-detailed help.
 
+SYNOPSIS
+--------
+Prints help about Puppet resource types, providers, and metaparameters.
 
 USAGE
-=====
-  puppet describe [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta]
+-----
+puppet describe [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta]
 
 
 DESCRIPTION
-===========
+-----------
 Prints details of Puppet types, providers and metaparameters on the
 console.
 
 
 OPTIONS
-=======
-help:      Print this help text
+-------
+* --help:
+  Print this help text
 
-providers: Describe providers in detail for each type
+* --providers:
+  Describe providers in detail for each type
 
-list:      List all types
+* --list:
+  List all types
 
-meta:      List all metaparameters
+* --meta:
+  List all metaparameters
 
-short:     List only parameters without detail
+* --short:
+  List only parameters without detail
 
 
 EXAMPLE
-=======
-  puppet describe --list
-  puppet describe file --providers
-  puppet describe user -s -m
+-------
+    $ puppet describe --list
+    $ puppet describe file --providers
+    $ puppet describe user -s -m
 
 
 AUTHOR
-======
+------
 David Lutterkort
 
 
 COPYRIGHT
-=========
+---------
 Copyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public
 License
 
