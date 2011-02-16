@@ -56,7 +56,7 @@ describe Puppet::Application::Filebucket do
     end
 
     it "should trap INT" do
-      @filebucket.expects(:trap).with(:INT)
+      Signal.expects(:trap).with(:INT)
 
       @filebucket.setup
     end

@@ -9,7 +9,7 @@ class Puppet::Application::Agent < Puppet::Application
 
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Cancelling startup"
       exit(0)
     end

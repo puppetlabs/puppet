@@ -15,13 +15,13 @@ class Puppet::Application::Queue < Puppet::Application
     # Do an initial trap, so that cancels don't get a stack trace.
 
     # This exits with exit code 1
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Caught SIGINT; shutting down"
       exit(1)
     end
 
     # This is a normal shutdown, so code 0
-    trap(:TERM) do
+    Signal.trap(:TERM) do
       $stderr.puts "Caught SIGTERM; shutting down"
       exit(0)
     end

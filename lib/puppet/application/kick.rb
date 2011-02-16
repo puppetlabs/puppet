@@ -151,7 +151,7 @@ class Puppet::Application::Kick < Puppet::Application
 
   def preinit
     [:INT, :TERM].each do |signal|
-      trap(signal) do
+      Signal.trap(signal) do
         $stderr.puts "Cancelling"
         exit(1)
       end
@@ -195,7 +195,7 @@ class Puppet::Application::Kick < Puppet::Application
 
     # If we get a signal, then kill all of our children and get out.
     [:INT, :TERM].each do |signal|
-      trap(signal) do
+      Signal.trap(signal) do
         Puppet.notice "Caught #{signal}; shutting down"
         @children.each do |pid, host|
           Process.kill("INT", pid)

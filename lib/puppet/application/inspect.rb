@@ -82,7 +82,7 @@ Licensed under the GNU General Public License version 2
     Puppet::Util::Log.newdestination(@report)
     Puppet::Util::Log.newdestination(:console) unless options[:logset]
 
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Exiting"
       exit(1)
     end

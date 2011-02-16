@@ -52,7 +52,7 @@ class Puppet::Application::Filebucket < Puppet::Application
     @client = nil
     @server = nil
 
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Cancelling"
       exit(1)
     end

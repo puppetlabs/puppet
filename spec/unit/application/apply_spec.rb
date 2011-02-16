@@ -52,7 +52,6 @@ describe Puppet::Application::Apply do
 
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet.stubs(:trap)
       Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
@@ -78,7 +77,7 @@ describe Puppet::Application::Apply do
     end
 
     it "should set INT trap" do
-      @apply.expects(:trap).with(:INT)
+      Signal.expects(:trap).with(:INT)
 
       @apply.setup
     end
