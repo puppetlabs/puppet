@@ -65,7 +65,7 @@ class Puppet::Application::DataBaseclass < Puppet::Application
 
     validate
 
-    raise "Could not find data type #{type} for application #{self.class.name}" unless @indirection = Puppet::Indirector::Indirection.instance(type)
+    raise "Could not find data type #{type} for application #{self.class.name}" unless interface.indirection
 
     @interface.set_terminus(from) if from
   end

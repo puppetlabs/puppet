@@ -38,11 +38,17 @@ class Puppet::Interface
     end).sort { |a,b| a.to_s <=> b.to_s }
   end
 
+  # Here's your opportunity to override the indirection name.  By default
+  # it will be the same name as the interface.
+  def self.indirection_name
+    name.to_sym
+  end
+
   # Return an indirection associated with an interface, if one exists
   # One usually does.
   def self.indirection
     unless @indirection
-      raise "Could not find data type '#{name}' for interface '#{name}'" unless @indirection = Puppet::Indirector::Indirection.instance(name.to_sym)
+      raise "Could not find data type '#{indirection_name}' for interface '#{name}'" unless @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
     end
     @indirection
   end
@@ -52,6 +58,7 @@ class Puppet::Interface
     require "puppet/interface/#{name.to_s.downcase}"
     self.const_get(name.to_s.capitalize)
   rescue Exception => detail
+    puts detail.backtrace if Puppet[:trace]
     $stderr.puts "Unable to find interface '#{name.to_s}': #{detail}."
     Kernel::exit(1)
   end
@@ -61,7 +68,7 @@ class Puppet::Interface
     path = "puppet/interface/#{name}"
 
     autoloader.search_directories.each do |dir|
-      fdir = File.join(dir, path)
+      fdir = ::File.join(dir, path)
       next unless FileTest.directory?(fdir)
 
       Dir.glob("#{fdir}/*.rb").each do |file|
