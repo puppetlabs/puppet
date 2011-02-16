@@ -22,20 +22,11 @@ A stand-alone Puppet filebucket client.
 
 USAGE
 =====
-  puppet filebucket [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
+  puppet filebucket <mode> [-h|--help] [-V|--version] [-d|--debug] [-v|--verbose]
      [-l|--local] [-r|--remote]
      [-s|--server <server>] [-b|--bucket <directory>] <file> <file> ...
 
-
-DESCRIPTION
-===========
-This is a stand-alone filebucket client for sending files to a local or
-central filebucket.
-
-
-USAGE
-=====
-This client can operate in three modes, with only one mode per call:
+Puppet filebucket can operate in three modes, with only one mode per call:
 
 backup:  Send one or more files to the specified file bucket. Each sent
          file is printed with its resulting md5 sum.
@@ -45,20 +36,18 @@ get:     Return the text associated with an md5 sum. The text is printed
 
 restore: Given a file path and an md5 sum, store the content associated
          with the sum into the specified file path. You can specify an
-         entirely new path to this argument; you are not restricted to
+         entirely new path to this argument; you are not restricted to restoring the content to its original location.
+
+
+DESCRIPTION
+===========
+This is a stand-alone filebucket client for sending files to a local or
+central filebucket.
 
 Note that 'filebucket' defaults to using a network-based filebucket
 available on the server named 'puppet'. To use this, you'll have to be
 running as a user with valid Puppet certificates. Alternatively, you can
 use your local file bucket by specifying '--local'.
-
-
-EXAMPLE
-=======
-  $ puppet filebucket backup /etc/passwd
-  /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
-  $ puppet filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
-  $
 
 
 OPTIONS
@@ -93,7 +82,9 @@ version: Print version information.
 
 EXAMPLE
 =======
-  puppet filebucket -b /tmp/filebucket /my/file
+  $ puppet filebucket backup /etc/passwd
+  /etc/passwd: 429b225650b912a2ee067b0a4cf1e949
+  $ puppet filebucket restore /tmp/passwd 429b225650b912a2ee067b0a4cf1e949
 
 
 AUTHOR
