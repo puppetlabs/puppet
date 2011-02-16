@@ -22,7 +22,7 @@ class Puppet::Interface
   def self.action(name, &block)
     @actions ||= []
     name = name.to_s.downcase.to_sym
-    raise "Action #{name} already defined for #{name}" if actions.include?(name)
+    raise "Action #{name} already defined for #{self}" if actions.include?(name)
 
     @actions << name
 
