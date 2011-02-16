@@ -31,8 +31,7 @@ module Puppet
           }
         }
 
-      This attribute is especially useful when used with
-      `PuppetTemplating templating`:trac:."
+      This attribute is especially useful when used with templating."
 
     # Store a checksum as the value, rather than the actual content.
     # Simplifies everything.
