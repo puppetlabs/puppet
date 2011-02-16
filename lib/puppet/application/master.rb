@@ -26,7 +26,7 @@ class Puppet::Application::Master < Puppet::Application
   end
 
   def preinit
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Cancelling startup"
       exit(0)
     end

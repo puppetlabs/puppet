@@ -50,12 +50,8 @@ describe Puppet::Application::Agent do
   end
 
   describe "in preinit" do
-    before :each do
-      @puppetd.stubs(:trap)
-    end
-
     it "should catch INT" do
-      @puppetd.expects(:trap).with { |arg,block| arg == :INT }
+      Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @puppetd.preinit
     end

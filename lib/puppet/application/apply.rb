@@ -143,7 +143,7 @@ class Puppet::Application::Apply < Puppet::Application
     client = nil
     server = nil
 
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Exiting"
       exit(1)
     end
