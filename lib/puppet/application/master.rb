@@ -41,7 +41,7 @@ USAGE
 -----
 puppet master [-D|--daemonize|--no-daemonize] [-d|--debug] [-h|--help]
   [-l|--logdest <file>|console|syslog] [-v|--verbose] [-V|--version]
-  [--compile <nodename>] [--apply <catalog>]
+  [--compile <node-name>]
 
 
 DESCRIPTION
@@ -89,14 +89,8 @@ with '--genconfig'.
   Print the puppet version number and exit.
 
 * --compile:
-  Capability to compile a catalogue and output it in JSON from the
-  Puppet master. Uses facts contained in the $vardir/yaml/ directory to
-  compile the catalog.
-
-* --apply:
-  Capability to apply JSON catalog (such as one generated with
-  --compile). You can either specify a JSON file or pipe in JSON from
-  standard input.
+  Compile a catalogue and output it in JSON from the puppet master. Uses
+  facts contained in the $vardir/yaml/ directory to compile the catalog.
 
 
 EXAMPLE
