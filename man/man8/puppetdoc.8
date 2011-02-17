@@ -1,108 +1,101 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPETDOC" "8" "August 2010" "" ""
-Generate a reference for all Puppet types\. Largely meant for internal Puppet Labs use\.puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir \fIrdoc outputdir\fR] [\-m|\-\-mode \fItext|pdf|rdoc\fR]
+.TH "PUPPET\-DOC" "8" "February 2011" "Puppet Labs, LLC" "Puppet manual"
 .
-.IP "" 4
+.SH "NAME"
+\fBpuppet\-doc\fR \- Generate Puppet documentation and references
 .
-.nf
-
-         [\-r|\-\-reference <[type]|configuration|\.\.>] [\-\-charset CHARSET] [manifest\-file]
+.SH "SYNOPSIS"
+Generates a reference for all Puppet types\. Largely meant for internal Puppet Labs use\.
 .
-.fi
+.SH "USAGE"
+puppet doc [\-a|\-\-all] [\-h|\-\-help] [\-o|\-\-outputdir \fIrdoc\-outputdir\fR] [\-m|\-\-mode text|pdf|rdoc] [\-r|\-\-reference \fIreference\-name\fR] [\-\-charset \fIcharset\fR] [\fImanifest\-file\fR]
 .
-.IP "" 0
+.SH "DESCRIPTION"
 If mode is not \'rdoc\', then this command generates a Markdown document describing all installed Puppet types or all allowable arguments to puppet executables\. It is largely meant for internal use and is used to generate the reference document available on the Puppet Labs web site\.
 .
 .P
 In \'rdoc\' mode, this command generates an html RDoc hierarchy describing the manifests that are in \'manifestdir\' and \'modulepath\' configuration directives\. The generated documentation directory is doc by default but can be changed with the \'outputdir\' option\.
 .
 .P
-If the command is started with \'manifest\-file\' command\-line arguments, puppet doc generate a single manifest documentation that is output on stdout\.all: Output the docs for all of the reference types\. In \'rdoc\'
+If the command is run with the name of a manifest file as an argument, puppet doc will output a single manifest\'s documentation on stdout\.
 .
-.IP "" 4
+.SH "OPTIONS"
 .
-.nf
-
-       modes, this also outputs documentation for all resources
+.TP
+\-\-all
+Output the docs for all of the reference types\. In \'rdoc\' modes, this also outputs documentation for all resources
 .
-.fi
+.TP
+\-\-help
+Print this help message
 .
-.IP "" 0
+.TP
+\-\-outputdir
+Specifies the directory where to output the rdoc documentation in \'rdoc\' mode\.
 .
-.P
-help: Print this help message
+.TP
+\-\-mode
+Determine the output mode\. Valid modes are \'text\', \'pdf\' and \'rdoc\'\. The \'pdf\' mode creates PDF formatted files in the /tmp directory\. The default mode is \'text\'\. In \'rdoc\' mode you must provide \'manifests\-path\'
 .
-.P
-outputdir: Specifies the directory where to output the rdoc
+.TP
+\-\-reference
+Build a particular reference\. Get a list of references by running \'puppet doc \-\-list\'\.
 .
-.IP "" 4
+.TP
+\-\-charset
+Used only in \'rdoc\' mode\. It sets the charset used in the html files produced\.
 .
-.nf
-
-       documentation in \'rdoc\' mode\.
-.
-.fi
-.
-.IP "" 0
-.
-.P
-mode: Determine the output mode\. Valid modes are \'text\', \'trac\',
-.
-.IP "" 4
+.SH "EXAMPLE"
 .
 .nf
 
-       \'pdf\' and \'rdoc\'\. The \'pdf\' mode creates PDF formatted files
-       in the /tmp directory\. The default mode is \'text\'\. In \'rdoc\'
-       mode you must provide \'manifests\-path\'
+$ puppet doc \-r type > /tmp/type_reference\.markdown
 .
 .fi
-.
-.IP "" 0
-.
-.P
-reference: Build a particular reference\. Get a list of references by
-.
-.IP "" 4
-.
-.nf
-
-       running +puppet doc \-\-list+\.
-.
-.fi
-.
-.IP "" 0
-.
-.P
-charset: Used only in \'rdoc\' mode\. It sets the charset used in the
-.
-.IP "" 4
-.
-.nf
-
-       html files produced\.
-.
-.fi
-.
-.IP "" 0
-$ puppet doc \-r type > /tmp/type_reference\.rst
 .
 .P
 or
 .
-.P
+.IP "" 4
+.
+.nf
+
 $ puppet doc \-\-outputdir /tmp/rdoc \-\-mode rdoc /path/to/manifests
 .
+.fi
+.
+.IP "" 0
+.
 .P
 or
 .
-.P
+.IP "" 4
+.
+.nf
+
 $ puppet doc /etc/puppet/manifests/site\.pp
 .
+.fi
+.
+.IP "" 0
+.
 .P
 or
 .
-.P
-$ puppet doc \-m pdf \-r configurationLuke KaniesCopyright (c) 2005\-2007 Puppet Labs, LLC Licensed under the GNU Public License
+.IP "" 4
+.
+.nf
+
+$ puppet doc \-m pdf \-r configuration
+.
+.fi
+.
+.IP "" 0
+.
+.SH "AUTHOR"
+Luke Kanies
+.
+.SH "COPYRIGHT"
+Copyright (c) 2005\-2007 Puppet Labs, LLC Licensed under the GNU Public License

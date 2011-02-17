@@ -1,17 +1,51 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PI" "8" "August 2010" "" ""
-Print help about puppet types on the console\. Run with \'\-h\' to get detailed help\.puppet describe [\-h|\-\-help] [\-s|\-\-short] [\-p|\-\-providers] [\-l|\-\-list] [\-m|\-\-meta]Prints details of Puppet types, providers and metaparameters on the console\.help: Print this help text
+.TH "PUPPET\-DESCRIBE" "8" "February 2011" "Puppet Labs, LLC" "Puppet manual"
 .
-.P
-providers: Describe providers in detail for each type
+.SH "NAME"
+\fBpuppet\-describe\fR \- Display help about resource types
 .
-.P
-list: List all types
+.SH "SYNOPSIS"
+Prints help about Puppet resource types, providers, and metaparameters\.
 .
-.P
-meta: List all metaparameters
+.SH "USAGE"
+puppet describe [\-h|\-\-help] [\-s|\-\-short] [\-p|\-\-providers] [\-l|\-\-list] [\-m|\-\-meta]
 .
-.P
-short: List only parameters without detailpuppet describe \-\-list puppet describe file \-\-providers puppet describe user \-s \-mDavid LutterkortCopyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public License
+.SH "OPTIONS"
+.
+.TP
+\-\-help
+Print this help text
+.
+.TP
+\-\-providers
+Describe providers in detail for each type
+.
+.TP
+\-\-list
+List all types
+.
+.TP
+\-\-meta
+List all metaparameters
+.
+.TP
+\-\-short
+List only parameters without detail
+.
+.SH "EXAMPLE"
+.
+.nf
+
+$ puppet describe \-\-list
+$ puppet describe file \-\-providers
+$ puppet describe user \-s \-m
+.
+.fi
+.
+.SH "AUTHOR"
+David Lutterkort
+.
+.SH "COPYRIGHT"
+Copyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public License
