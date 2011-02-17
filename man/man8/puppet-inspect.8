@@ -1,0 +1,28 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "PUPPET\-INSPECT" "8" "February 2011" "Puppet Labs, LLC" "Puppet manual"
+.
+.SH "NAME"
+\fBpuppet\-inspect\fR \- Send an inspection report
+.
+.SH "SYNOPSIS"
+Prepares and submits an inspection report to the puppet master\.
+.
+.SH "USAGE"
+puppet inspect
+.
+.SH "DESCRIPTION"
+This command uses the cached catalog from the previous run of \'puppet agent\' to determine which attributes of which resources have been marked as auditable with the \'audit\' metaparameter\. It then examines the current state of the system, writes the state of the specified resource attributes to a report, and submits the report to the puppet master\.
+.
+.P
+Puppet inspect does not run as a daemon, and must be run manually or from cron\.
+.
+.SH "OPTIONS"
+Any configuration setting which is valid in the configuration file is also a valid long argument, e\.g\. \'\-\-server=master\.domain\.com\'\. See the configuration file documentation at http://docs\.puppetlabs\.com/references/latest/configuration\.html for the full list of acceptable settings\.
+.
+.SH "AUTHOR"
+Puppet Labs
+.
+.SH "COPYRIGHT"
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the GNU General Public License version 2
