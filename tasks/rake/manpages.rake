@@ -7,8 +7,8 @@ task :gen_manpages do
   bins  = Dir.glob(%w{bin/*})
   applications  = Dir.glob(%w{lib/puppet/application/*})
   # Locate ronn
-  ronn = %x{which ronn}
-  ronn.chomp!
+  ronn = %x{which ronn}.chomp
+  unless File.executable?(ronn) then fail("Ronn does not appear to be installed.") end
 
   # Create puppet.conf.5 man page
   %x{RUBYLIB=./lib:$RUBYLIB bin/puppetdoc --reference configuration > ./man/man5/puppetconf.5.ronn}
