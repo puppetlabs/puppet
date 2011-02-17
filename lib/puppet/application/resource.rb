@@ -49,8 +49,8 @@ Uses the Puppet RAL to directly interact with the system.
 USAGE
 -----
 puppet resource [-h|--help] [-d|--debug] [-v|--verbose] [-e|--edit]
-  [-H|--host <host>] [-p|--param <param>] [-t|--types] <type> [<name>]
-  [<attribute>=<value> ...]
+  [-H|--host <host>] [-p|--param <parameter>] [-t|--types] <type>
+  [<name>] [<attribute>=<value> ...]
 
 
 DESCRIPTION
