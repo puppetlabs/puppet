@@ -139,6 +139,9 @@ funcvalues:       namestring
 # This is *almost* an rvalue, but I couldn't get a full
 # rvalue to work without scads of shift/reduce conflicts.
 namestring:       name
+  | MINUS namestring =UMINUS {
+    result = ast AST::Minus, :value => val[1]
+  }
   | variable
   | type
   | boolean
