@@ -54,6 +54,14 @@ class Puppet::Node::Facts
     strip_internal == other.send(:strip_internal)
   end
 
+  def timestamp=(time)
+    self.values[:_timestamp] = time
+  end
+
+  def timestamp
+    self.values[:_timestamp]
+  end
+
   private
 
   # Add internal data to the facts for storage.
