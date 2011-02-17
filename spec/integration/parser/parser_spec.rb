@@ -116,5 +116,18 @@ describe Puppet::Parser::Parser do
         $out = $hash['a']['b']['c']
       }.should parse_with { |v| v.value.is_a?(Puppet::Parser::AST::ASTHash) }
     end
+
+    it "should be able to pass numbers to functions" do
+      %q{
+        my_function(1)
+      }.should parse_as(Puppet::Parser::AST::Function)
+    end
+
+    it "should be able to pass negative numbers to functions" do
+      %q{
+        my_function(-1)
+      }.should parse_as(Puppet::Parser::AST::Function)
+    end
+
   end
 end
