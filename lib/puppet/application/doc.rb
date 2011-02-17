@@ -53,20 +53,24 @@ class Puppet::Application::Doc < Puppet::Application
   def help
     <<-HELP
 
-SYNOPSIS
+puppet-doc(8) -- Generate Puppet documentation and references
 ========
-Generate a reference for all Puppet types. Largely meant for internal
+
+SYNOPSIS
+--------
+Generates a reference for all Puppet types. Largely meant for internal
 Puppet Labs use.
 
 
 USAGE
-=====
-  puppet doc [-a|--all] [-h|--help] [-o|--outputdir <rdoc outputdir>] [-m|--mode <text|pdf|rdoc>]
-             [-r|--reference <[type]|configuration|..>] [--charset CHARSET] [manifest-file]
+-----
+puppet doc [-a|--all] [-h|--help] [-o|--outputdir <rdoc-outputdir>]
+  [-m|--mode text|pdf|rdoc] [-r|--reference <reference-name>]
+  [--charset <charset>] [<manifest-file>]
 
 
 DESCRIPTION
-===========
+-----------
 If mode is not 'rdoc', then this command generates a Markdown document
 describing all installed Puppet types or all allowable arguments to
 puppet executables. It is largely meant for internal use and is used to
@@ -77,57 +81,62 @@ the manifests that are in 'manifestdir' and 'modulepath' configuration
 directives. The generated documentation directory is doc by default but
 can be changed with the 'outputdir' option.
 
-If the command is started with 'manifest-file' command-line arguments,
-puppet doc generate a single manifest documentation that is output on
-stdout.
+If the command is run with the name of a manifest file as an argument,
+puppet doc will output a single manifest's documentation on stdout.
 
 
 OPTIONS
-=======
-all:       Output the docs for all of the reference types. In 'rdoc'
-           modes, this also outputs documentation for all resources
+-------
+* --all:
+  Output the docs for all of the reference types. In 'rdoc'
+  modes, this also outputs documentation for all resources
 
-help:      Print this help message
+* --help:
+  Print this help message
 
-outputdir: Specifies the directory where to output the rdoc
-           documentation in 'rdoc' mode.
+* --outputdir:
+  Specifies the directory where to output the rdoc
+  documentation in 'rdoc' mode.
 
-mode:      Determine the output mode. Valid modes are 'text', 'pdf' and
-           'rdoc'. The 'pdf' mode creates PDF formatted files in the
-           /tmp directory. The default mode is 'text'. In 'rdoc' mode
-           you must provide 'manifests-path'
+* --mode:
+  Determine the output mode. Valid modes are 'text', 'pdf' and
+  'rdoc'. The 'pdf' mode creates PDF formatted files in the
+  /tmp directory. The default mode is 'text'. In 'rdoc' mode
+  you must provide 'manifests-path'
 
-reference: Build a particular reference. Get a list of references by
-           running 'puppet doc --list'.
+* --reference:
+  Build a particular reference. Get a list of references by
+  running 'puppet doc --list'.
 
-charset:   Used only in 'rdoc' mode. It sets the charset used in the
-           html files produced.
+* --charset:
+  Used only in 'rdoc' mode. It sets the charset used in the
+  html files produced.
 
 
 EXAMPLE
-=======
-  $ puppet doc -r type > /tmp/type_reference.markdown
+-------
+    $ puppet doc -r type > /tmp/type_reference.markdown
 
 or
 
-  $ puppet doc --outputdir /tmp/rdoc --mode rdoc /path/to/manifests
+    $ puppet doc --outputdir /tmp/rdoc --mode rdoc /path/to/manifests
 
 or
 
-  $ puppet doc /etc/puppet/manifests/site.pp
+    $ puppet doc /etc/puppet/manifests/site.pp
 
 or
 
-  $ puppet doc -m pdf -r configuration
+    $ puppet doc -m pdf -r configuration
 
 
 AUTHOR
-======
+------
 Luke Kanies
 
 
 COPYRIGHT
-=========
+---------
 Copyright (c) 2005-2007 Puppet Labs, LLC Licensed under the GNU Public
 License
 
