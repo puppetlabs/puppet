@@ -130,7 +130,7 @@ describe provider_class do
       mount.stubs(:mountcmd) # just so we don't actually try to mount anything
 
       mount.expects(:flush)
-      mount.mount
+      mount.mount!
     end
   end
 
@@ -176,17 +176,7 @@ describe provider_class do
 
     it "should determine that the root fs is mounted" do
       @provider_class.prefetch("/" => @mount)
-      @mount.provider.should be_mounted
+      @mount.provider.should be_anything_mounted
     end
-  end
-
-  describe provider_class, " when mounting and unmounting" do
-    include ParsedMountTesting
-
-    it "should call the 'mount' command to mount the filesystem"
-
-    it "should call the 'unmount' command to unmount the filesystem"
-
-    it "should specify the filesystem when remounting a filesystem"
   end
 end
