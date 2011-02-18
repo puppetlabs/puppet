@@ -88,7 +88,7 @@ class Rights
     else
       # there were no rights allowing/denying name
       # if name is not a path, let's throw
-      raise ArgumentError.new "Unknown namespace right '#{name}'"
+      raise ArgumentError, "Unknown namespace right '#{name}'"
     end
     error
   end
