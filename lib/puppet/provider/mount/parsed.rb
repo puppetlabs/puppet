@@ -8,16 +8,13 @@ else
   fstab = "/etc/fstab"
 end
 
-
-      Puppet::Type.type(:mount).provide(
-        :parsed,
+Puppet::Type.type(:mount).provide(
+  :parsed,
   :parent => Puppet::Provider::ParsedFile,
   :default_target => fstab,
-        
   :filetype => :flat
 ) do
   include Puppet::Provider::Mount
-  #confine :exists => fstab
 
   commands :mountcmd => "mount", :umount => "umount"
 
@@ -42,6 +39,4 @@ end
   text_line :incomplete, :match => /^(?!#{field_pattern}{#{mandatory_fields.length}})/
 
   record_line self.name, :fields => @fields, :separator => /\s+/, :joiner => "\t", :optional => optional_fields
-
 end
-
