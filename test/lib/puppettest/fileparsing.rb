@@ -1,3 +1,5 @@
+require 'test/unit'
+
 module PuppetTest::FileParsing
   # Run an isomorphism test on our parsing process.
   def fakedataparse(*files)

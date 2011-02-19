@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'mocha'
 require 'puppettest'
@@ -233,9 +233,9 @@ Host <<||>>"
     }
   ensure
     Puppet[:storeconfigs] = false
-    Puppet::Resource::Catalog.cache_class =  catalog_cache_class
-    Puppet::Node::Facts.cache_class = facts_cache_class
-    Puppet::Node.cache_class = node_cache_class
+    Puppet::Resource::Catalog.indirection.cache_class =  catalog_cache_class
+    Puppet::Node::Facts.indirection.cache_class = facts_cache_class
+    Puppet::Node.indirection.cache_class = node_cache_class
   end
   else
     $stderr.puts "No ActiveRecord -- skipping collection tests"

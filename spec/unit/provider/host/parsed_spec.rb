@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet_spec/files'
 require 'puppettest/support/utils'
@@ -28,9 +28,13 @@ describe provider_class do
     hostresource = Puppet::Type::Host.new(:name => args[:name])
     hostresource.stubs(:should).with(:target).returns @hostfile
 
-    # Using setters of provider
+    # Using setters of provider to build our testobject
+    # Note: We already proved, that in case of host_aliases
+    # the provider setter "host_aliases=(value)" will be
+    # called with the joined array, so we just simulate that
     host = @provider.new(hostresource)
     args.each do |property,value|
+      value = value.join(" ") if property == :host_aliases and value.is_a?(Array)
       host.send("#{property}=", value)
     end
     host
@@ -63,6 +67,10 @@ describe provider_class do
       @provider.parse_line("::1     localhost")[:comment].should == ""
     end
 
+    it "should set host_aliases to :absent" do
+      @provider.parse_line("::1     localhost")[:host_aliases].should == :absent
+    end
+
   end
 
   describe "when parsing a line with ip, hostname and comment" do
@@ -87,13 +95,13 @@ describe provider_class do
   describe "when parsing a line with ip, hostname and aliases" do
 
     it "should parse alias from the third field" do
-      @provider.parse_line("127.0.0.1   localhost   localhost.localdomain")[:host_aliases].should == ["localhost.localdomain"]
+      @provider.parse_line("127.0.0.1   localhost   localhost.localdomain")[:host_aliases].should == "localhost.localdomain"
     end
 
     it "should parse multiple aliases" do
-      @provider.parse_line("127.0.0.1 host alias1 alias2")[:host_aliases].should == ['alias1', 'alias2']
-      @provider.parse_line("127.0.0.1 host alias1\talias2")[:host_aliases].should == ['alias1', 'alias2']
-      @provider.parse_line("127.0.0.1 host alias1\talias2   alias3")[:host_aliases].should == ['alias1', 'alias2', 'alias3']
+      @provider.parse_line("127.0.0.1 host alias1 alias2")[:host_aliases].should == 'alias1 alias2'
+      @provider.parse_line("127.0.0.1 host alias1\talias2")[:host_aliases].should == 'alias1 alias2'
+      @provider.parse_line("127.0.0.1 host alias1\talias2   alias3")[:host_aliases].should == 'alias1 alias2 alias3'
     end
 
   end
@@ -114,7 +122,7 @@ describe provider_class do
     end
 
     it "should parse all host_aliases from the third field" do
-      @provider.parse_line(@testline)[:host_aliases].should == ['alias1' ,'alias2', 'alias3']
+      @provider.parse_line(@testline)[:host_aliases].should == 'alias1 alias2 alias3'
     end
 
     it "should parse the comment after the first '#' character" do
@@ -143,7 +151,7 @@ describe provider_class do
       host = mkhost(
         :name   => 'localhost.localdomain',
         :ip     => '127.0.0.1',
-        :host_aliases => ['localhost'],
+        :host_aliases => 'localhost',
         :ensure => :present
       )
       genhost(host).should == "127.0.0.1\tlocalhost.localdomain\tlocalhost\n"
@@ -156,7 +164,7 @@ describe provider_class do
         :host_aliases => [ 'a1','a2','a3','a4' ],
         :ensure     => :present
       )
-      genhost(host).should == "192.0.0.1\thost\ta1\ta2\ta3\ta4\n"
+      genhost(host).should == "192.0.0.1\thost\ta1 a2 a3 a4\n"
     end
 
     it "should be able to generate a simple hostfile entry with comments" do
@@ -173,7 +181,7 @@ describe provider_class do
       host = mkhost(
         :name   => 'localhost.localdomain',
         :ip     => '127.0.0.1',
-        :host_aliases => ['localhost'],
+        :host_aliases => 'localhost',
         :comment => 'Bazinga!',
         :ensure => :present
       )
@@ -188,7 +196,7 @@ describe provider_class do
         :comment      => 'Bazinga!',
         :ensure       => :present
       )
-      genhost(host).should == "192.0.0.1\thost\ta1\ta2\ta3\ta4\t# Bazinga!\n"
+      genhost(host).should == "192.0.0.1\thost\ta1 a2 a3 a4\t# Bazinga!\n"
     end
 
   end

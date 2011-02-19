@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet/indirector/node/ldap'
 
@@ -10,6 +10,6 @@ describe Puppet::Node::Ldap do
     Puppet::Node.indirection.stubs(:terminus).returns ldap
     ldap.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=foo))")
 
-    Puppet::Node.search "eh", :class => "foo"
+    Puppet::Node.indirection.search "eh", :class => "foo"
   end
 end

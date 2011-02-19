@@ -132,6 +132,7 @@ class Puppet::Util::Metric
   end
 
   def newvalue(name,value,label = nil)
+    raise ArgumentError.new("metric name #{name.inspect} is not a string") unless name.is_a? String
     label ||= self.class.labelize(name)
     @values.push [name,label,value]
   end

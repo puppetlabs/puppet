@@ -395,6 +395,10 @@ class Puppet::SimpleGraph
       @vertex = vertex
       @adjacencies = adjacencies
     end
+
+    def inspect
+      { :@adjacencies => @adjacencies, :@vertex => @vertex.to_s }.inspect
+    end
   end
 
   # instance_variable_get is used by Object.to_zaml to get instance

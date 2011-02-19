@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../../lib/puppettest')
 
 require 'puppettest'
 require 'puppettest/support/utils'
@@ -612,7 +612,7 @@ class TestFile < Test::Unit::TestCase
         
       :mode => "0777"
     )
-    assert_equal(0777, file.should(:mode), "Mode did not get set correctly")
+    assert_equal("777", file.should(:mode), "Mode did not get set correctly")
     assert_apply(file)
     assert_equal(0777, File.stat(path).mode & 007777, "file mode is incorrect")
     File.unlink(path)

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/file_serving/metadata'
 
@@ -230,8 +230,8 @@ describe Puppet::FileServing::Metadata, " when collecting attributes" do
       @metadata.destination.should == "/path/to/link"
     end
 
-    it "should produce tab-separated mode, type, owner, group, and destination for xmlrpc" do
-      pending "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
+    pending "should produce tab-separated mode, type, owner, group, and destination for xmlrpc" do
+      # "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
       @metadata.attributes_with_tabs.should == "#{0755}\tlink\t10\t20\t/path/to/link"
     end
 
@@ -255,8 +255,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link" do
       @file.collect
       @file.destination.should == "/some/other/path"
     end
-    it "should not collect the checksum if links are :manage" do
-      pending "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
+    pending "should not collect the checksum if links are :manage" do
+      # We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow.
       @file.collect
       @file.checksum.should be_nil
     end

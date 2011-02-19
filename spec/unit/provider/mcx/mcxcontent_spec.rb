@@ -18,7 +18,7 @@
 
 # Author: Jeff McCune <mccune.jeff@gmail.com>
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 provider_class = Puppet::Type.type(:mcx).provider(:mcxcontent)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/application/doc'
 require 'puppet/util/reference'
@@ -48,10 +48,10 @@ describe Puppet::Application::Doc do
       @doc.options[:mode].should == :text
     end
 
-    it "should init format to to_rest" do
+    it "should init format to to_markdown" do
       @doc.preinit
 
-      @doc.options[:format].should == :to_rest
+      @doc.options[:format].should == :to_markdown
     end
   end
 

@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2008-3-10.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/indirector/ssl_file'
 
@@ -18,12 +18,12 @@ describe Puppet::Indirector::SslFile do
       end
     end
 
-    @setting = :mydir
+    @setting = :certdir
     @file_class.store_in @setting
-    @path = "/my/directory"
-    Puppet.settings.stubs(:value).with(:noop).returns(false)
-    Puppet.settings.stubs(:value).with(@setting).returns(@path)
-    Puppet.settings.stubs(:value).with(:trace).returns(false)
+    @path = "/tmp/my_directory"
+    Puppet[:noop] = false
+    Puppet[@setting] = @path
+    Puppet[:trace] = false
   end
 
   it "should use :main and :ssl upon initialization" do

@@ -109,8 +109,6 @@ module Puppet
       # Override the parent method, because we've got all kinds of
       # funky definitions of 'in sync'.
       def insync?(is)
-        @should ||= []
-
         @latest ||= nil
         @lateststamp ||= (Time.now.to_i - 1000)
         # Iterate across all of the should values, and see how they

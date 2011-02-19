@@ -1,5 +1,14 @@
+2.6.4
+=====
+76890a5  Revert "(#5304) Use internal_name rather than real_name for maillist provider"
+19f3879  Disable remote ralsh by default
+eee1a9c  (#5424) Ship auth.conf as part of installing from source
+779fea8  (#5304) Use internal_name rather than real_name for maillist provider
+83f878e  Renamed Reductive to Puppet
+
 2.6.3
 =====
+53bb805  Incremented CHANGELOG for 2.6.3
 184733c  [#5322] (#5322) Remove spec file that adds little value and causes failures
 178c2a6  Fix test failures that fixing #4726 exposed.
 74b6c09  (#4726) Fix RRD legacy support

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/transaction/report'
 
@@ -11,22 +11,36 @@ describe Puppet::Transaction::Report do
 
   it "should set its host name to the certname" do
     Puppet.settings.expects(:value).with(:certname).returns "myhost"
-    Puppet::Transaction::Report.new.host.should == "myhost"
+    Puppet::Transaction::Report.new("apply").host.should == "myhost"
   end
 
   it "should return its host name as its name" do
-    r = Puppet::Transaction::Report.new
+    r = Puppet::Transaction::Report.new("apply")
     r.name.should == r.host
   end
 
   it "should create an initialization timestamp" do
     Time.expects(:now).returns "mytime"
-    Puppet::Transaction::Report.new.time.should == "mytime"
+    Puppet::Transaction::Report.new("apply").time.should == "mytime"
+  end
+
+  it "should take a 'kind' as an argument" do
+    Puppet::Transaction::Report.new("inspect").kind.should == "inspect"
+  end
+
+  it "should take a 'configuration_version' as an argument" do
+    Puppet::Transaction::Report.new("inspect", "some configuration version").configuration_version.should == "some configuration version"
+  end
+
+  it "should be able to set configuration_version" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.configuration_version = "some version"
+    report.configuration_version.should == "some version"
   end
 
   describe "when accepting logs" do
     before do
-      @report = Puppet::Transaction::Report.new
+      @report = Puppet::Transaction::Report.new("apply")
     end
 
     it "should add new logs to the log list" do
@@ -42,7 +56,7 @@ describe Puppet::Transaction::Report do
 
   describe "when accepting resource statuses" do
     before do
-      @report = Puppet::Transaction::Report.new
+      @report = Puppet::Transaction::Report.new("apply")
     end
 
     it "should add each status to its status list" do
@@ -53,20 +67,13 @@ describe Puppet::Transaction::Report do
   end
 
   describe "when using the indirector" do
-    it "should redirect :find to the indirection" do
-      @indirection = stub 'indirection', :name => :report
-      Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Transaction::Report.find(:report)
-    end
-
     it "should redirect :save to the indirection" do
       Facter.stubs(:value).returns("eh")
       @indirection = stub 'indirection', :name => :report
       Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       @indirection.expects(:save)
-      report.save
+      Puppet::Transaction::Report.indirection.save(report)
     end
 
     it "should default to the 'processor' terminus" do
@@ -74,7 +81,7 @@ describe Puppet::Transaction::Report do
     end
 
     it "should delegate its name attribute to its host method" do
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
       report.expects(:host).returns "me"
       report.name.should == "me"
     end
@@ -86,30 +93,37 @@ describe Puppet::Transaction::Report do
 
   describe "when computing exit status" do
     it "should produce 2 if changes are present" do
-      report = Puppet::Transaction::Report.new
-      report.add_metric("changes", {:total => 1})
-      report.add_metric("resources", {:failed => 0})
+      report = Puppet::Transaction::Report.new("apply")
+      report.add_metric("changes", {"total" => 1})
+      report.add_metric("resources", {"failed" => 0})
       report.exit_status.should == 2
     end
 
     it "should produce 4 if failures are present" do
-      report = Puppet::Transaction::Report.new
-      report.add_metric("changes", {:total => 0})
-      report.add_metric("resources", {:failed => 1})
+      report = Puppet::Transaction::Report.new("apply")
+      report.add_metric("changes", {"total" => 0})
+      report.add_metric("resources", {"failed" => 1})
       report.exit_status.should == 4
     end
 
     it "should produce 6 if both changes and failures are present" do
-      report = Puppet::Transaction::Report.new
-      report.add_metric("changes", {:total => 1})
-      report.add_metric("resources", {:failed => 1})
+      report = Puppet::Transaction::Report.new("apply")
+      report.add_metric("changes", {"total" => 1})
+      report.add_metric("resources", {"failed" => 1})
       report.exit_status.should == 6
     end
   end
 
-  describe "when calculating metrics" do
+  describe "before finalizing the report" do
+    it "should have a status of 'failed'" do
+      report = Puppet::Transaction::Report.new("apply")
+      report.status.should == 'failed'
+    end
+  end
+
+  describe "when finalizing the report" do
     before do
-      @report = Puppet::Transaction::Report.new
+      @report = Puppet::Transaction::Report.new("apply")
     end
 
     def metric(name, value)
@@ -121,7 +135,7 @@ describe Puppet::Transaction::Report do
     end
 
     def add_statuses(count, type = :file)
-      3.times do |i|
+      count.times do |i|
         status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => "/my/path#{i}"))
         yield status if block_given?
         @report.add_resource_status status
@@ -131,7 +145,7 @@ describe Puppet::Transaction::Report do
 
     [:time, :resources, :changes, :events].each do |type|
       it "should add #{type} metrics" do
-        @report.calculate_metrics
+        @report.finalize_report
         @report.metrics[type.to_s].should be_instance_of(Puppet::Transaction::Metric)
       end
     end
@@ -140,25 +154,38 @@ describe Puppet::Transaction::Report do
       it "should provide the total number of resources" do
         add_statuses(3)
 
-        @report.calculate_metrics
-        metric(:resources, :total).should == 3
+        @report.finalize_report
+        metric(:resources, "total").should == 3
       end
 
       Puppet::Resource::Status::STATES.each do |state|
         it "should provide the number of #{state} resources as determined by the status objects" do
           add_statuses(3) { |status| status.send(state.to_s + "=", true) }
 
-          @report.calculate_metrics
-          metric(:resources, state).should == 3
+          @report.finalize_report
+          metric(:resources, state.to_s).should == 3
         end
+      end
+
+      it "should mark the report as 'failed' if there are failing resources" do
+        add_statuses(1) { |status| status.failed = true }
+        @report.finalize_report
+        @report.status.should == 'failed'
       end
     end
 
     describe "for changes" do
-      it "should provide the number of changes from the resource statuses" do
-        add_statuses(3) { |status| status.change_count = 3 }
-        @report.calculate_metrics
-        metric(:changes, :total).should == 9
+      it "should provide the number of changes from the resource statuses and mark the report as 'changed'" do
+        add_statuses(3) { |status| 3.times { status << Puppet::Transaction::Event.new(:status => 'success') } }
+        @report.finalize_report
+        metric(:changes, "total").should == 9
+        @report.status.should == 'changed'
+      end
+
+      it "should provide a total even if there are no changes, and mark the report as 'unchanged'" do
+        @report.finalize_report
+        metric(:changes, "total").should == 0
+        @report.status.should == 'unchanged'
       end
     end
 
@@ -174,7 +201,7 @@ describe Puppet::Transaction::Report do
           status.evaluation_time = 3
         end
 
-        @report.calculate_metrics
+        @report.finalize_report
 
         metric(:time, "file").should == 3
         metric(:time, "exec").should == 6
@@ -183,18 +210,32 @@ describe Puppet::Transaction::Report do
 
       it "should add any provided times from external sources" do
         @report.add_times :foobar, 50
-        @report.calculate_metrics
+        @report.finalize_report
         metric(:time, "foobar").should == 50
+      end
+
+      it "should have a total time" do
+        add_statuses(3, :file) do |status|
+          status.evaluation_time = 1.25
+        end
+        @report.add_times :config_retrieval, 0.5
+        @report.finalize_report
+        metric(:time, "total").should == 4.25
       end
     end
 
     describe "for events" do
       it "should provide the total number of events" do
         add_statuses(3) do |status|
-          3.times { |i| status.add_event(Puppet::Transaction::Event.new) }
+          3.times { |i| status.add_event(Puppet::Transaction::Event.new :status => 'success') }
         end
-        @report.calculate_metrics
-        metric(:events, :total).should == 9
+        @report.finalize_report
+        metric(:events, "total").should == 9
+      end
+
+      it "should provide the total even if there are no events" do
+        @report.finalize_report
+        metric(:events, "total").should == 0
       end
 
       Puppet::Transaction::Event::EVENT_STATUSES.each do |status_name|
@@ -207,7 +248,7 @@ describe Puppet::Transaction::Report do
             end
           end
 
-          @report.calculate_metrics
+          @report.finalize_report
           metric(:events, status_name).should == 9
         end
       end
@@ -222,7 +263,7 @@ describe Puppet::Transaction::Report do
       trans = catalog.apply
 
       @report = trans.report
-      @report.calculate_metrics
+      @report.finalize_report
     end
 
     %w{changes time resources events}.each do |main|
@@ -240,6 +281,14 @@ describe Puppet::Transaction::Report do
       it "should include information on #{main} in the textual summary" do
         @report.summary.should be_include(main)
       end
+    end
+  end
+
+  describe "when outputting yaml" do
+    it "should not include @external_times" do
+      report = Puppet::Transaction::Report.new('apply')
+      report.add_times('config_retrieval', 1.0)
+      report.to_yaml_properties.should_not include('@external_times')
     end
   end
 end

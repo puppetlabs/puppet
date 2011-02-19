@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 describe Puppet::Resource::Catalog, "when compiling" do
 
@@ -818,12 +818,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Util::Cacher.expire
     end
 
-    it "should redirect to the indirection for retrieval" do
-      Puppet::Resource::Catalog.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Resource::Catalog.find(:myconfig)
-    end
-
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
       # Puppet only checks the terminus setting the first time you ask
       # so this returns the object to the clean state
@@ -880,9 +874,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting to pson" do
-  confine "Missing 'pson' library" => Puppet.features.pson?
-
+describe Puppet::Resource::Catalog, "when converting to pson", :if => Puppet.features.pson? do
   before do
     @catalog = Puppet::Resource::Catalog.new("myhost")
   end
@@ -940,9 +932,7 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting from pson" do
-  confine "Missing 'pson' library" => Puppet.features.pson?
-
+describe Puppet::Resource::Catalog, "when converting from pson", :if => Puppet.features.pson? do
   def pson_result_should
     Puppet::Resource::Catalog.expects(:new).with { |hash| yield hash }
   end

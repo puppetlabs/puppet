@@ -1,11 +1,9 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require 'puppet/rails'
 
-describe Puppet::Rails, "when initializing any connection" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Rails, "when initializing any connection", :if => Puppet.features.rails? do
   before do
     Puppet.settings.stubs(:use)
     @logger = mock 'logger'
@@ -77,9 +75,7 @@ describe Puppet::Rails, "when initializing any connection" do
   end
 end
 
-describe Puppet::Rails, "when initializing a sqlite3 connection" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Rails, "when initializing a sqlite3 connection", :if => Puppet.features.rails? do
   it "should provide the adapter, log_level, and database arguments" do
     Puppet.settings.expects(:value).with(:dbadapter).returns("sqlite3")
     Puppet.settings.expects(:value).with(:rails_loglevel).returns("testlevel")
@@ -93,9 +89,7 @@ describe Puppet::Rails, "when initializing a sqlite3 connection" do
   end
 end
 
-describe Puppet::Rails, "when initializing a mysql connection" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Rails, "when initializing a mysql connection", :if => Puppet.features.rails? do
   it "should provide the adapter, log_level, and host, port, username, password, database, and reconnect arguments" do
     Puppet.settings.stubs(:value).with(:dbadapter).returns("mysql")
     Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
@@ -190,9 +184,7 @@ describe Puppet::Rails, "when initializing a mysql connection" do
   end
 end
 
-describe Puppet::Rails, "when initializing a postgresql connection" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Rails, "when initializing a postgresql connection", :if => Puppet.features.rails? do
   it "should provide the adapter, log_level, and host, port, username, password, connections, and database arguments" do
     Puppet.settings.stubs(:value).with(:dbadapter).returns("postgresql")
     Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")
@@ -263,9 +255,7 @@ describe Puppet::Rails, "when initializing a postgresql connection" do
   end
 end
 
-describe Puppet::Rails, "when initializing an Oracle connection" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Rails, "when initializing an Oracle connection", :if => Puppet.features.rails? do
   it "should provide the adapter, log_level, and username, password, and database arguments" do
     Puppet.settings.stubs(:value).with(:dbadapter).returns("oracle_enhanced")
     Puppet.settings.stubs(:value).with(:rails_loglevel).returns("testlevel")

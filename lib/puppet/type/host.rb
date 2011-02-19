@@ -1,3 +1,5 @@
+require 'puppet/property/ordered_list'
+
 module Puppet
   newtype(:host) do
     ensurable
@@ -13,41 +15,24 @@ module Puppet
 
     end
 
-    newproperty(:host_aliases) do
+    # for now we use OrderedList to indicate that the order does matter.
+    newproperty(:host_aliases, :parent => Puppet::Property::OrderedList) do
       desc "Any aliases the host might have.  Multiple values must be
         specified as an array."
 
-      def insync?(is)
-        is == @should
+      def delimiter
+        " "
       end
 
-      def is_to_s(currentvalue = @is)
-        currentvalue = [currentvalue] unless currentvalue.is_a? Array
-        currentvalue.join(" ")
-      end
-
-      # We actually want to return the whole array here, not just the first
-      # value.
-      def should
-        if defined?(@should)
-          if @should == [:absent]
-            return :absent
-          else
-            return @should
-          end
-        else
-          return nil
-        end
-      end
-
-      def should_to_s(newvalue = @should)
-        newvalue.join(" ")
+      def inclusive?
+        true
       end
 
       validate do |value|
         raise Puppet::Error, "Host aliases cannot include whitespace" if value =~ /\s/
         raise Puppet::Error, "Host alias cannot be an empty string. Use an empty array to delete all host_aliases " if value =~ /^\s*$/
       end
+
     end
 
     newproperty(:comment) do
@@ -56,7 +41,7 @@ module Puppet
 
     newproperty(:target) do
       desc "The file in which to store service information.  Only used by
-        those providers that write to disk."
+        those providers that write to disk. On most systems this defaults to `/etc/hosts`."
 
       defaultto { if @resource.class.defaultprovider.ancestors.include?(Puppet::Provider::ParsedFile)
         @resource.class.defaultprovider.default_target

@@ -7,14 +7,14 @@ module Puppet
   class IniProperty < Puppet::Property
     def insync?(is)
       # A should property of :absent is the same as nil
-      if is.nil? && (should.nil? || should == :absent)
+      if is.nil? && should == :absent
         return true
       end
       super(is)
     end
 
     def sync
-      if insync?(retrieve)
+      if safe_insync?(retrieve)
         result = nil
       else
         result = set(self.should)

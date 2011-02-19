@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 require 'puppet/network/server'
 require 'puppet/ssl/certificate_authority'
 require 'socket'
@@ -23,7 +23,7 @@ describe Puppet::Network::Server do
       Puppet::SSL::Host.ca_location = :local
 
       ca = Puppet::SSL::CertificateAuthority.new
-      ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
+      ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.indirection.find(Puppet[:certname])
     end
 
     after do
@@ -32,6 +32,7 @@ describe Puppet::Network::Server do
 
       system("rm -rf #{@dir}")
 
+      Puppet::SSL::Host.ca_location = :none
       Puppet::Util::Cacher.expire
     end
 

@@ -79,6 +79,6 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
 
     @content.sign(cakey, OpenSSL::Digest::SHA1.new)
 
-    save
+    Puppet::SSL::CertificateRevocationList.indirection.save(self)
   end
 end

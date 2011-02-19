@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 require 'puppet/application'
 require 'puppet'
@@ -14,6 +14,25 @@ describe Puppet::Application do
 
     # avoid actually trying to parse any settings
     Puppet.settings.stubs(:parse)
+  end
+
+  describe "finding" do
+    before do
+      @klass = Puppet::Application
+      @klass.stubs(:puts)
+    end
+
+    it "should find classes in the namespace" do
+      @klass.find("Agent").should == @klass::Agent
+    end
+
+    it "should not find classes outside the namespace" do
+      lambda { @klass.find("String") }.should raise_error(SystemExit)
+    end
+
+    it "should exit if it can't find a class" do
+      lambda { @klass.find("ThisShallNeverEverEverExistAsdf") }.should raise_error(SystemExit)
+    end
   end
 
   describe ".run_mode" do
@@ -160,9 +179,7 @@ describe Puppet::Application do
       end
     end
 
-    describe 'on POSIX systems' do
-      confine "HUP works only on POSIX systems" => Puppet.features.posix?
-
+    describe 'on POSIX systems', :if => Puppet.features.posix? do
       it 'should signal process with HUP after block if restart requested during block execution' do
         Puppet::Application.run_status = nil
         target = mock 'target'
@@ -224,8 +241,7 @@ describe Puppet::Application do
       @app.parse_options
     end
 
-    describe "when using --help" do
-      confine "rdoc" => Puppet.features.usage?
+    describe "when using --help", :if => Puppet.features.usage? do
 
       it "should call RDoc::usage and exit" do
         @app.expects(:exit)

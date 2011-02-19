@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 describe Puppet::Type.type(:file) do
   before do
@@ -71,7 +71,7 @@ describe Puppet::Type.type(:file) do
       before { @file.stubs(:validate_checksum?).returns(true) }
 
       it "should fail if the checksum parameter and content checksums do not match" do
-        checksum = stub('checksum_parameter',  :sum => 'checksum_b')
+        checksum = stub('checksum_parameter',  :sum => 'checksum_b', :sum_file => 'checksum_b')
         @file.stubs(:parameter).with(:checksum).returns(checksum)
 
         property = stub('content_property', :actual_content => "something", :length => "something".length, :write => 'checksum_a')
@@ -194,6 +194,23 @@ describe Puppet::Type.type(:file) do
         file = Puppet::Type::File.new(:path => "/")
         file[:path].should == "/"
       end
+
+      it "should accept a double-slash at the start of the path" do
+        expect {
+          file = Puppet::Type::File.new(:path => "//tmp/xxx")
+          # REVISIT: This should be wrong, later.  See the next test.
+          # --daniel 2011-01-31
+          file[:path].should == '/tmp/xxx'
+        }.should_not raise_error
+      end
+
+      # REVISIT: This is pending, because I don't want to try and audit the
+      # entire codebase to make sure we get this right.  POSIX treats two (and
+      # exactly two) '/' characters at the start of the path specially.
+      #
+      # See sections 3.2 and 4.11, which allow DomainOS to be all special like
+      # and still have the POSIX branding and all. --daniel 2011-01-31
+      it "should preserve the double-slash at the start of the path"
     end
 
     describe "on Microsoft Windows systems" do
@@ -208,8 +225,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when using Microsoft Windows filenames" do
-    confine "Only works on Microsoft Windows" => Puppet.features.microsoft_windows?
+  describe "when using Microsoft Windows filenames", :if => Puppet.features.microsoft_windows? do
     describe "on Microsoft Windows systems" do
       before do
         Puppet.features.stubs(:posix?).returns(false)
@@ -271,8 +287,7 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using UNC filenames" do
-    describe "on Microsoft Windows systems" do
-      confine "Only works on Microsoft Windows" => Puppet.features.microsoft_windows?
+    describe "on Microsoft Windows systems", :if => Puppet.features.microsoft_windows? do
       before do
         Puppet.features.stubs(:posix?).returns(false)
         Puppet.features.stubs(:microsoft_windows?).returns(true)
@@ -381,9 +396,9 @@ describe Puppet::Type.type(:file) do
 
 
                 @resource = Puppet::Type.type(:file).new(
-                
+
             :path => @link,
-        
+
             :mode => "755"
           )
           @catalog.add_resource @resource
@@ -510,47 +525,47 @@ describe Puppet::Type.type(:file) do
 
   describe "when executing a recursive search" do
     it "should use Metadata to do its recursion" do
-      Puppet::FileServing::Metadata.expects(:search)
+      Puppet::FileServing::Metadata.indirection.expects(:search)
       @file.perform_recursion(@file[:path])
     end
 
     it "should use the provided path as the key to the search" do
-      Puppet::FileServing::Metadata.expects(:search).with { |key, options| key == "/foo" }
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| key == "/foo" }
       @file.perform_recursion("/foo")
     end
 
     it "should return the results of the metadata search" do
-      Puppet::FileServing::Metadata.expects(:search).returns "foobar"
+      Puppet::FileServing::Metadata.indirection.expects(:search).returns "foobar"
       @file.perform_recursion(@file[:path]).should == "foobar"
     end
 
     it "should pass its recursion value to the search" do
       @file[:recurse] = true
-      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == true }
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurse] == true }
       @file.perform_recursion(@file[:path])
     end
 
     it "should pass true if recursion is remote" do
       @file[:recurse] = :remote
-      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == true }
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurse] == true }
       @file.perform_recursion(@file[:path])
     end
 
     it "should pass its recursion limit value to the search" do
       @file[:recurselimit] = 10
-      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurselimit] == 10 }
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurselimit] == 10 }
       @file.perform_recursion(@file[:path])
     end
 
     it "should configure the search to ignore or manage links" do
       @file[:links] = :manage
-      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:links] == :manage }
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:links] == :manage }
       @file.perform_recursion(@file[:path])
     end
 
     it "should pass its 'ignore' setting to the search if it has one" do
       @file[:ignore] = %w{.svn CVS}
-      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
       @file.perform_recursion(@file[:path])
     end
   end
@@ -597,7 +612,7 @@ describe Puppet::Type.type(:file) do
 
     it "should set checksum_type to none if this file checksum is none" do
       @file[:checksum] = :none
-      Puppet::FileServing::Metadata.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
+      Puppet::FileServing::Metadata.indirection.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
       @file.expects(:newchild).with("my/file").returns "fiebar"
       @file.recurse_local
     end
@@ -803,6 +818,73 @@ describe Puppet::Type.type(:file) do
           @file.expects(:perform_recursion).with("/four").returns []
 
           @file.recurse_remote({})
+        end
+      end
+    end
+  end
+
+  describe "when specifying both source, and content properties" do
+    before do
+      @file[:source]  = '/one'
+      @file[:content] = 'file contents'
+    end
+
+    it "should raise an exception" do
+      lambda {@file.validate }.should raise_error(/You cannot specify more than one of/)
+    end
+  end
+
+  describe "when using source" do
+    before do
+      @file[:source]   = '/one'
+    end
+    Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        before do
+          @file[:checksum] = checksum_type
+        end
+
+        it 'should validate' do
+
+          lambda { @file.validate }.should_not raise_error
+        end
+      end
+    end
+
+    describe "with checksum 'none'" do
+      before do
+        @file[:checksum] = :none
+      end
+
+      it 'should raise an exception when validating' do
+        lambda { @file.validate }.should raise_error(/You cannot specify source when using checksum 'none'/)
+      end
+    end
+  end
+
+  describe "when using content" do
+    before do
+      @file[:content] = 'file contents'
+    end
+
+    (Puppet::Type::File::ParameterChecksum.value_collection.values - SOURCE_ONLY_CHECKSUMS).each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        before do
+          @file[:checksum] = checksum_type
+        end
+
+        it 'should validate' do
+          lambda { @file.validate }.should_not raise_error
+        end
+      end
+    end
+
+    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+      describe "with checksum '#{checksum_type}'" do
+        it 'should raise an exception when validating' do
+          @file[:checksum] = checksum_type
+
+          lambda { @file.validate }.should raise_error(/You cannot specify content when using checksum '#{checksum_type}'/)
         end
       end
     end
@@ -1058,7 +1140,7 @@ describe Puppet::Type.type(:file) do
     before do
       @type_class = Puppet::Type.type(:file)
     end
-    
+
     it "should have a regexp that captures the entire string, except for a terminating slash" do
       patterns = @type_class.title_patterns
       string = "abc/\n\tdef/"
@@ -1067,4 +1149,45 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "when auditing" do
+    it "should not fail if creating a new file if group is not set" do
+      File.exists?(@path).should == false
+      file = Puppet::Type::File.new(:name => @path, :audit => "all", :content => "content")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource(file)
+
+      Puppet::Util::Storage.stubs(:store) # to prevent the catalog from trying to write state.yaml
+      transaction = catalog.apply
+
+      transaction.report.resource_statuses["File[#{@path}]"].failed.should == false
+      File.exists?(@path).should == true
+    end
+
+    it "should not log errors if creating a new file with ensure present and no content" do
+      File.exists?(@path).should == false
+      file = Puppet::Type::File.new(:name => @path, :audit => "content", :ensure => "present")
+      catalog = Puppet::Resource::Catalog.new
+      catalog.add_resource(file)
+
+      Puppet::Util::Storage.stubs(:store) # to prevent the catalog from trying to write state.yaml
+
+      catalog.apply
+      @logs.reject {|l| l.level == :notice }.should be_empty
+    end
+  end
+
+  describe "when specifying both source and checksum" do
+    it 'should use the specified checksum when source is first' do
+      @file[:source] = '/foo'
+      @file[:checksum] = :md5lite
+
+      @file[:checksum].should be :md5lite
+    end
+    it 'should use the specified checksum when source is last' do
+      @file[:checksum] = :md5lite
+      @file[:source] = '/foo'
+
+      @file[:checksum].should be :md5lite
+    end
+  end
 end

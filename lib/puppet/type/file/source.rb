@@ -98,7 +98,7 @@ module Puppet
     cached_attr(:content) do
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
-      unless tmp = Puppet::FileServing::Content.find(metadata.source)
+      unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source)
         fail "Could not find any content at %s" % metadata.source
       end
       tmp.content
@@ -148,7 +148,7 @@ module Puppet
       result = nil
       value.each do |source|
         begin
-          if data = Puppet::FileServing::Metadata.find(source)
+          if data = Puppet::FileServing::Metadata.indirection.find(source)
             result = data
             result.source = source
             break
@@ -169,7 +169,6 @@ module Puppet
       checks.delete(:checksum)
 
       resource[:audit] = checks
-      resource[:checksum] = :md5 unless resource.property(:checksum)
     end
 
     def local?

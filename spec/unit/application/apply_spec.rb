@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/application/apply'
 require 'puppet/file_bucket/dipper'
@@ -57,7 +57,7 @@ describe Puppet::Application::Apply do
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
-      Puppet::Transaction::Report.stubs(:cache_class=)
+      Puppet::Transaction::Report.indirection.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
     end
@@ -116,7 +116,7 @@ describe Puppet::Application::Apply do
     end
 
     it "should tell the report handler to cache locally as yaml" do
-      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
+      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
 
       @apply.setup
     end
@@ -185,14 +185,14 @@ describe Puppet::Application::Apply do
         @apply.options.stubs(:[])
 
         @facts = stub_everything 'facts'
-        Puppet::Node::Facts.stubs(:find).returns(@facts)
+        Puppet::Node::Facts.indirection.stubs(:find).returns(@facts)
 
         @node = stub_everything 'node'
-        Puppet::Node.stubs(:find).returns(@node)
+        Puppet::Node.indirection.stubs(:find).returns(@node)
 
         @catalog = stub_everything 'catalog'
         @catalog.stubs(:to_ral).returns(@catalog)
-        Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
 
         STDIN.stubs(:read)
 
@@ -248,25 +248,25 @@ describe Puppet::Application::Apply do
       end
 
       it "should collect the node facts" do
-        Puppet::Node::Facts.expects(:find).returns(@facts)
+        Puppet::Node::Facts.indirection.expects(:find).returns(@facts)
 
         @apply.main
       end
 
       it "should raise an error if we can't find the node" do
-        Puppet::Node::Facts.expects(:find).returns(nil)
+        Puppet::Node::Facts.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
       end
 
       it "should look for the node" do
-        Puppet::Node.expects(:find).returns(@node)
+        Puppet::Node.indirection.expects(:find).returns(@node)
 
         @apply.main
       end
 
       it "should raise an error if we can't find the node" do
-        Puppet::Node.expects(:find).returns(nil)
+        Puppet::Node.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
       end
@@ -292,7 +292,7 @@ describe Puppet::Application::Apply do
       end
 
       it "should compile the catalog" do
-        Puppet::Resource::Catalog.expects(:find).returns(@catalog)
+        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
 
         @apply.main
       end
@@ -325,8 +325,8 @@ describe Puppet::Application::Apply do
 
       it "should save the last run summary" do
         Puppet.stubs(:[]).with(:noop).returns(false)
-        report = stub 'report'
-        Puppet::Configurer.any_instance.stubs(:initialize_report).returns(report)
+        report = Puppet::Transaction::Report.new("apply")
+        Puppet::Transaction::Report.stubs(:new).returns(report)
 
         Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
         @apply.main

@@ -85,12 +85,12 @@ class Puppet::Application::Apply < Puppet::Application
     end
 
     # Collect our facts.
-    unless facts = Puppet::Node::Facts.find(Puppet[:certname])
+    unless facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
       raise "Could not find facts for #{Puppet[:certname]}"
     end
 
     # Find our Node
-    unless node = Puppet::Node.find(Puppet[:certname])
+    unless node = Puppet::Node.indirection.find(Puppet[:certname])
       raise "Could not find node #{Puppet[:certname]}"
     end
 
@@ -112,7 +112,7 @@ class Puppet::Application::Apply < Puppet::Application
     begin
       # Compile our catalog
       starttime = Time.now
-      catalog = Puppet::Resource::Catalog.find(node.name, :use_node => node)
+      catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
 
       # Translate it to a RAL catalog
       catalog = catalog.to_ral
@@ -149,7 +149,7 @@ class Puppet::Application::Apply < Puppet::Application
     end
 
     # we want the last report to be persisted locally
-    Puppet::Transaction::Report.cache_class = :yaml
+    Puppet::Transaction::Report.indirection.cache_class = :yaml
 
     if options[:debug]
       Puppet::Util::Log.level = :debug

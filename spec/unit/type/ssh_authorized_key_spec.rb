@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
 
@@ -134,7 +134,7 @@ describe ssh_authorized_key do
     it "should not raise spurious change events" do
       resource = @class.new(:name => "Test", :user => "root")
       target = File.expand_path("~root/.ssh/authorized_keys")
-      resource.property(:target).insync?(target).should == true
+      resource.property(:target).safe_insync?(target).should == true
     end
   end
 

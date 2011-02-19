@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/reports'
@@ -68,7 +68,7 @@ class TestReports < Test::Unit::TestCase
 
   def test_store_report
     # Create a bunch of log messages in an array.
-    report = Puppet::Transaction::Report.new
+    report = Puppet::Transaction::Report.new("apply")
 
     # We have to reuse reporting here because of something going on in the
     # server/report.rb file

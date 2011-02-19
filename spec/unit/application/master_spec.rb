@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/application/master'
 require 'puppet/daemon'
@@ -14,12 +14,13 @@ describe Puppet::Application::Master do
     Puppet::Util::Log.stubs(:newdestination)
     Puppet::Util::Log.stubs(:level=)
 
-    Puppet::Node.stubs(:terminus_class=)
-    Puppet::Node.stubs(:cache_class=)
-    Puppet::Node::Facts.stubs(:terminus_class=)
-    Puppet::Node::Facts.stubs(:cache_class=)
-    Puppet::Transaction::Report.stubs(:terminus_class=)
-    Puppet::Resource::Catalog.stubs(:terminus_class=)
+    Puppet::Node.indirection.stubs(:terminus_class=)
+    Puppet::Node.indirection.stubs(:cache_class=)
+    Puppet::Node::Facts.indirection.stubs(:terminus_class=)
+    Puppet::Node::Facts.indirection.stubs(:cache_class=)
+    Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
+    Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
+    Puppet::SSL::Host.stubs(:ca_location=)
   end
 
   it "should operate in master run_mode" do
@@ -183,7 +184,7 @@ describe Puppet::Application::Master do
     end
 
     it "should cache class in yaml" do
-      Puppet::Node.expects(:cache_class=).with(:yaml)
+      Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
 
       @master.setup
     end
@@ -298,7 +299,7 @@ describe Puppet::Application::Master do
 
       it "should compile a catalog for the specified node" do
         @master.options[:node] = "foo"
-        Puppet::Resource::Catalog.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
+        Puppet::Resource::Catalog.indirection.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
         $stdout.stubs(:puts)
 
         @master.compile
@@ -306,7 +307,7 @@ describe Puppet::Application::Master do
 
       it "should convert the catalog to a pure-resource catalog and use 'jj' to pretty-print the catalog" do
         catalog = Puppet::Resource::Catalog.new
-        Puppet::Resource::Catalog.expects(:find).returns catalog
+        Puppet::Resource::Catalog.indirection.expects(:find).returns catalog
 
         catalog.expects(:to_resource).returns("rescat")
 
@@ -318,7 +319,7 @@ describe Puppet::Application::Master do
 
       it "should exit with error code 30 if no catalog can be found" do
         @master.options[:node] = "foo"
-        Puppet::Resource::Catalog.expects(:find).returns nil
+        Puppet::Resource::Catalog.indirection.expects(:find).returns nil
         @master.expects(:exit).with(30)
         $stderr.expects(:puts)
 
@@ -327,7 +328,7 @@ describe Puppet::Application::Master do
 
       it "should exit with error code 30 if there's a failure" do
         @master.options[:node] = "foo"
-        Puppet::Resource::Catalog.expects(:find).raises ArgumentError
+        Puppet::Resource::Catalog.indirection.expects(:find).raises ArgumentError
         @master.expects(:exit).with(30)
         $stderr.expects(:puts)
 
@@ -411,9 +412,7 @@ describe Puppet::Application::Master do
         @master.main
       end
 
-      describe "with --rack" do
-        confine "Rack is not available" => Puppet.features.rack?
-
+      describe "with --rack", :if => Puppet.features.rack? do
         before do
           require 'puppet/network/http/rack'
           Puppet::Network::HTTP::Rack.stubs(:new).returns(@app)

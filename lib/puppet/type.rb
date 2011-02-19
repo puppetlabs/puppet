@@ -446,7 +446,7 @@ class Type
   # Create a transaction event.  Called by Transaction or by
   # a property.
   def event(options = {})
-    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags, :version => version}.merge(options))
+    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
   end
 
   # Let the catalog determine whether a given cached value is
@@ -648,7 +648,7 @@ class Type
           "The is value is not in the is array for '#{property.name}'"
       end
       ensureis = is[property]
-      if property.insync?(ensureis) and property.should == :absent
+      if property.safe_insync?(ensureis) and property.should == :absent
         return true
       end
     end
@@ -660,7 +660,7 @@ class Type
       end
 
       propis = is[property]
-      unless property.insync?(propis)
+      unless property.safe_insync?(propis)
         property.debug("Not in sync: #{propis.inspect} vs #{property.should.inspect}")
         insync = false
       #else

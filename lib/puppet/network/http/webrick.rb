@@ -105,7 +105,7 @@ class Puppet::Network::HTTP::WEBrick
     results[:SSLStartImmediately] = true
     results[:SSLEnable] = true
 
-    raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.find(Puppet::SSL::CA_NAME)
+    raise Puppet::Error, "Could not find CA certificate" unless Puppet::SSL::Certificate.indirection.find(Puppet::SSL::CA_NAME)
 
     results[:SSLCACertificateFile] = Puppet[:localcacert]
     results[:SSLVerifyClient] = OpenSSL::SSL::VERIFY_PEER

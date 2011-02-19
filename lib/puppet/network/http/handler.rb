@@ -103,7 +103,7 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our find.
   def do_find(indirection_name, key, params, request, response)
-    unless result = model(indirection_name).find(key, params)
+    unless result = model(indirection_name).indirection.find(key, params)
       Puppet.info("Could not find #{indirection_name} for '#{key}'")
       return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
     end
@@ -114,13 +114,28 @@ module Puppet::Network::HTTP::Handler
     format = format_to_use(request)
     set_content_type(response, format)
 
-    set_response(response, result.render(format))
+    if result.respond_to?(:render)
+      set_response(response, result.render(format))
+    else
+      set_response(response, result)
+    end
+  end
+
+  # Execute our head.
+  def do_head(indirection_request, request, response)
+    unless indirection_request.model.head(indirection_request.key, indirection_request.to_hash)
+      Puppet.info("Could not find #{indirection_request.indirection_name} for '#{indirection_request.key}'")
+      return do_exception(response, "Could not find #{indirection_request.indirection_name} #{indirection_request.key}", 404)
+    end
+
+    # No need to set a response because no response is expected from a
+    # HEAD request.  All we need to do is not die.
   end
 
   # Execute our search.
   def do_search(indirection_name, key, params, request, response)
     model  = self.model(indirection_name)
-    result = model.search(key, params)
+    result = model.indirection.search(key, params)
 
     if result.nil?
       return do_exception(response, "Could not find instances in #{indirection_name} with '#{key}'", 404)
@@ -134,7 +149,7 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our destroy.
   def do_destroy(indirection_name, key, params, request, response)
-    result = model(indirection_name).destroy(key, params)
+    result = model(indirection_name).indirection.destroy(key, params)
 
     return_yaml_response(response, result)
   end
@@ -146,7 +161,7 @@ module Puppet::Network::HTTP::Handler
 
     format = request_format(request)
     obj = model(indirection_name).convert_from(format, data)
-    result = obj.save(key)
+    result = model(indirection_name).indirection.save(obj, key)
     return_yaml_response(response, result)
   end
 

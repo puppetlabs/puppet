@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/provider/mount'
 
@@ -116,6 +116,14 @@ describe Puppet::Provider::Mount do
     it "should match '^<name> on' if the operating system is HP-UX" do
       Facter.stubs(:value).with("operatingsystem").returns("HP-UX")
       @mounter.expects(:mountcmd).returns("/ on /dev/dsk/whatever\n/var on /dev/dsk/other")
+
+      @mounter.should be_mounted
+    end
+
+    it "should match mounted devices if the operating system is AIX" do
+      Facter.stubs(:value).with("operatingsystem").returns("AIX")
+      mount_data = File.read(File.join(File.dirname(__FILE__), '..', '..', 'fixtures', 'unit', 'provider', 'mount', 'mount-output.aix.txt'))
+      @mounter.expects(:mountcmd).returns(mount_data)
 
       @mounter.should be_mounted
     end

@@ -1,12 +1,10 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/application/kick'
 
-describe Puppet::Application::Kick do
-
-  confine "Kick's eventloops can only start on POSIX" => Puppet.features.posix?
+describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
   before :each do
     require 'puppet/util/ldap/connection'
@@ -163,7 +161,7 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => :something).returns([])
 
         @kick.setup
       end
@@ -172,7 +170,7 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.expects(:search).with("whatever",:fqdn => nil).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -182,7 +180,7 @@ describe Puppet::Application::Kick do
         @kick.stubs(:puts)
         @kick.classes = ['class']
 
-        Puppet::Node.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -279,7 +277,7 @@ describe Puppet::Application::Kick do
         end
 
         it "should call run on a Puppet::Run for the given host" do
-          @agent_run.expects(:save).with('https://host:8139/production/run/host').returns(@agent_run)
+          Puppet::Run.indirection.expects(:save).with(@agent_run, 'https://host:8139/production/run/host').returns(@agent_run)
 
           @kick.run_for_host('host')
         end

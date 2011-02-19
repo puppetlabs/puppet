@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe Puppet::Type do
   it "should include the Cacher module" do
@@ -116,7 +116,7 @@ describe Puppet::Type do
     catalog.version = 50
     catalog.add_resource resource
 
-    resource.source_descriptors.should == {:version=>50, :tags=>["mount", "foo"], :path=>"/Mount[foo]"}
+    resource.source_descriptors.should == {:tags=>["mount", "foo"], :path=>"/Mount[foo]"}
   end
 
   it "should consider its type to be the name of its class" do
@@ -153,7 +153,7 @@ describe Puppet::Type do
       @resource.event.default_log_level.should == :warning
     end
 
-    {:file => "/my/file", :line => 50, :tags => %{foo bar}, :version => 50}.each do |attr, value|
+    {:file => "/my/file", :line => 50, :tags => %{foo bar}}.each do |attr, value|
       it "should set the #{attr}" do
         @resource.stubs(attr).returns value
         @resource.event.send(attr).should == value

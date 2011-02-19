@@ -46,6 +46,10 @@ class Puppet::Resource
     resource
   end
 
+  def inspect
+    "#{@type}[#{@title}]#{to_hash.inspect}"
+  end
+
   def to_pson_data_hash
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
       next hash unless value = self.send(param)
@@ -201,8 +205,13 @@ class Puppet::Resource
     tag(self.title) if valid_tag?(self.title)
 
     @reference = Reference.new(@type,@title) # for serialization compatibility with 0.25.x
-
-    raise ArgumentError, "Invalid resource type #{type}" if strict? and ! resource_type
+    if strict? and ! resource_type
+      if @type == 'Class'
+        raise ArgumentError, "Could not find declared class #{title}"
+      else
+        raise ArgumentError, "Invalid resource type #{type}"
+      end
+    end
   end
 
   def ref

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 require 'puppet/resource'
 
 describe Puppet::Resource do
@@ -96,6 +96,14 @@ describe Puppet::Resource do
 
   it "should fail if the title is nil and the type is not a valid resource reference string" do
     lambda { Puppet::Resource.new("foo") }.should raise_error(ArgumentError)
+  end
+
+  it 'should fail if strict is set and type does not exist' do
+    lambda { Puppet::Resource.new('foo', 'title', {:strict=>true}) }.should raise_error(ArgumentError, 'Invalid resource type foo') 
+  end
+
+  it 'should fail if strict is set and class does not exist' do
+    lambda { Puppet::Resource.new('Class', 'foo', {:strict=>true}) }.should raise_error(ArgumentError, 'Could not find declared class foo') 
   end
 
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
@@ -585,9 +593,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when converting to pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when converting to pson", :if => Puppet.features.pson? do
     def pson_output_should
       @resource.class.expects(:pson_create).with { |hash| yield hash }
     end
@@ -666,9 +672,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when converting from pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when converting from pson", :if => Puppet.features.pson? do
     def pson_result_should
       Puppet::Resource.expects(:new).with { |hash| yield hash }
     end

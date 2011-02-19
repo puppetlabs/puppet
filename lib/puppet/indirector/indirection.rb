@@ -180,18 +180,13 @@ class Puppet::Indirector::Indirection
     request = request(:find, key, *args)
     terminus = prepare(request)
 
-    begin
-      if result = find_in_cache(request)
-        return result
-      end
-    rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Cached #{self.name} for #{request.key} failed: #{detail}"
+    if result = find_in_cache(request)
+      return result
     end
 
     # Otherwise, return the result from the terminus, caching if appropriate.
     if ! request.ignore_terminus? and result = terminus.find(request)
-      result.expiration ||= self.expiration
+      result.expiration ||= self.expiration if result.respond_to?(:expiration)
       if cache? and request.use_cache?
         Puppet.info "Caching #{self.name} for #{request.key}"
         cache.save request(:save, result, *args)
@@ -201,6 +196,17 @@ class Puppet::Indirector::Indirection
     end
 
     nil
+  end
+
+  # Search for an instance in the appropriate terminus, and return a
+  # boolean indicating whether the instance was found.
+  def head(key, *args)
+    request = request(:head, key, *args)
+    terminus = prepare(request)
+
+    # Look in the cache first, then in the terminus.  Force the result
+    # to be a boolean.
+    !!(find_in_cache(request) || terminus.head(request))
   end
 
   def find_in_cache(request)
@@ -213,6 +219,10 @@ class Puppet::Indirector::Indirection
 
     Puppet.debug "Using cached #{self.name} for #{request.key}"
     cached
+  rescue => detail
+    puts detail.backtrace if Puppet[:trace]
+    Puppet.err "Cached #{self.name} for #{request.key} failed: #{detail}"
+    nil
   end
 
   # Remove something via the terminus.
@@ -247,7 +257,7 @@ class Puppet::Indirector::Indirection
 
   # Save the instance in the appropriate terminus.  This method is
   # normally an instance method on the indirected class.
-  def save(key, instance = nil)
+  def save(instance, key = nil)
     request = request(:save, key, instance)
     terminus = prepare(request)
 

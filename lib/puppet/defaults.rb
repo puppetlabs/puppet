@@ -2,8 +2,8 @@
 module Puppet
   setdefaults(:main,
     :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
-    is running as root or the user that `puppet master` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
-    it defaults to being in `~`."],
+    is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it's running as any other user,
+    it defaults to being in the user's home directory."],
     :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
     :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
       default is essentially $0 without the path or `.rb`."],
@@ -121,7 +121,7 @@ module Puppet
       :hook => proc do |value|
         require 'puppet/node/facts'
         if value.to_s == "rest"
-          Puppet::Node::Facts.cache_class = :yaml
+          Puppet::Node::Facts.indirection.cache_class = :yaml
         end
       end
     },
@@ -152,7 +152,7 @@ module Puppet
           Puppet.settings[:storeconfigs] = true
 
           # But then we modify the configuration
-          Puppet::Resource::Catalog.cache_class = :queue
+          Puppet::Resource::Catalog.indirection.cache_class = :queue
         else
           raise "Cannot disable asynchronous storeconfigs in a running process"
         end
@@ -622,6 +622,11 @@ module Puppet
       compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
   )
 
+  setdefaults(:inspect,
+      :archive_files => [false, "During an inspect run, whether to archive files whose contents are audited to a file bucket."],
+      :archive_file_server => ["$server", "During an inspect run, the file bucket server to archive files to if archive_files is set."]
+  )
+
   # Plugin information.
 
     setdefaults(
@@ -794,9 +799,9 @@ module Puppet
         if value
           require 'puppet/rails'
           raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
-          Puppet::Resource::Catalog.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
-          Puppet::Node::Facts.cache_class = :active_record
-          Puppet::Node.cache_class = :active_record
+          Puppet::Resource::Catalog.indirection.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
+          Puppet::Node::Facts.indirection.cache_class = :active_record
+          Puppet::Node.indirection.cache_class = :active_record
         end
       end
     }

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/node/facts'
 
@@ -76,16 +76,10 @@ describe Puppet::Node::Facts, "when indirecting" do
       @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
-    it "should redirect to the specified fact store for retrieval" do
-      Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Node::Facts.find(:my_facts)
-    end
-
     it "should redirect to the specified fact store for storage" do
       Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
       @indirection.expects(:save)
-      @facts.save
+      Puppet::Node::Facts.indirection.save(@facts)
     end
 
     describe "when the Puppet application is 'master'" do

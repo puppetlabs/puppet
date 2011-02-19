@@ -1,12 +1,10 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 require 'puppet/network/handler'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 
-describe "Puppet::Network::HTTP::Rack" do
-  confine "Rack is not available" => Puppet.features.rack?
-
+describe "Puppet::Network::HTTP::Rack", :if => Puppet.features.rack? do
   describe "while initializing" do
 
     it "should require a protocol specification" do

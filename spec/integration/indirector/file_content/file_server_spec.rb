@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-10-18.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet/indirector/file_content/file_server'
 require 'shared_behaviours/file_server_terminus'
@@ -34,7 +34,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     env = Puppet::Node::Environment.new("foo")
     env.stubs(:modulepath).returns [path]
 
-    result = Puppet::FileServing::Content.search("plugins", :environment => "foo", :recurse => true)
+    result = Puppet::FileServing::Content.indirection.search("plugins", :environment => "foo", :recurse => true)
 
     result.should_not be_nil
     result.length.should == 2
@@ -54,7 +54,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     Puppet.settings[:modulepath] = path
 
-    result = Puppet::FileServing::Content.find("modules/mymod/myfile")
+    result = Puppet::FileServing::Content.indirection.find("modules/mymod/myfile")
 
     result.should_not be_nil
     result.should be_instance_of(Puppet::FileServing::Content)
@@ -85,7 +85,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     path = File.join(@path, "myfile")
 
-    result = Puppet::FileServing::Content.find("one/myfile", :environment => "foo", :node => "mynode")
+    result = Puppet::FileServing::Content.indirection.find("one/myfile", :environment => "foo", :node => "mynode")
 
     result.should_not be_nil
     result.should be_instance_of(Puppet::FileServing::Content)

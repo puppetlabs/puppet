@@ -26,19 +26,29 @@ class Rights
 
   # Check that name is allowed or not
   def allowed?(name, *args)
-    begin
-      fail_on_deny(name, :node => args[0], :ip => args[1])
-    rescue AuthorizationError
-      return false
-    rescue ArgumentError
-      # the namespace contract says we should raise this error
-      # if we didn't find the right acl
-      raise
-    end
-    true
+    !is_forbidden_and_why?(name, :node => args[0], :ip => args[1])
   end
 
-  def fail_on_deny(name, args = {})
+  def is_request_forbidden_and_why?(indirection, method, key, params)
+    methods_to_check = if method == :head
+                         # :head is ok if either :find or :save is ok.
+                         [:find, :save]
+                       else
+                         [method]
+                       end
+    authorization_failure_exceptions = methods_to_check.map do |method|
+      is_forbidden_and_why?("/#{indirection}/#{key}", params.merge({:method => method}))
+    end
+    if authorization_failure_exceptions.include? nil
+      # One of the methods we checked is ok, therefore this request is ok.
+      nil
+    else
+      # Just need to return any of the failure exceptions.
+      authorization_failure_exceptions.first
+    end
+  end
+
+  def is_forbidden_and_why?(name, args = {})
     res = :nomatch
     right = @rights.find do |acl|
       found = false
@@ -49,7 +59,7 @@ class Rights
         args[:match] = match
         if (res = acl.allowed?(args[:node], args[:ip], args)) != :dunno
           # return early if we're allowed
-          return if res
+          return nil if res
           # we matched, select this acl
           found = true
         end
@@ -70,13 +80,12 @@ class Rights
         error.file = right.file
         error.line = right.line
       end
-      Puppet.warning("Denying access: #{error}")
     else
       # there were no rights allowing/denying name
       # if name is not a path, let's throw
-      error = ArgumentError.new "Unknown namespace right '#{name}'"
+      raise ArgumentError.new "Unknown namespace right '#{name}'"
     end
-    raise error
+    error
   end
 
   def initialize

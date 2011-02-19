@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2008-4-8.
 #  Copyright (c) 2008. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 describe Puppet::Node::Facts do
   describe "when using the indirector" do
@@ -16,10 +16,10 @@ describe Puppet::Node::Facts do
       terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
       terminus.stubs :save
 
-      Puppet::Node.expects(:expire).with("me")
+      Puppet::Node.indirection.expects(:expire).with("me")
 
       facts = Puppet::Node::Facts.new("me")
-      facts.save
+      Puppet::Node::Facts.indirection.save(facts)
     end
 
     it "should be able to delegate to the :yaml terminus" do
@@ -31,7 +31,7 @@ describe Puppet::Node::Facts do
       terminus.expects(:path).with("me").returns "/my/yaml/file"
       FileTest.expects(:exist?).with("/my/yaml/file").returns false
 
-      Puppet::Node::Facts.find("me").should be_nil
+      Puppet::Node::Facts.indirection.find("me").should be_nil
     end
 
     it "should be able to delegate to the :facter terminus" do
@@ -41,7 +41,7 @@ describe Puppet::Node::Facts do
       facts = Puppet::Node::Facts.new("me")
       Puppet::Node::Facts.expects(:new).with("me", "facter_hash").returns facts
 
-      Puppet::Node::Facts.find("me").should equal(facts)
+      Puppet::Node::Facts.indirection.find("me").should equal(facts)
     end
   end
 end

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppettest/support/utils'
 require 'puppettest/fileparsing'
@@ -8,7 +8,6 @@ require 'puppettest/fileparsing'
 provider_class = Puppet::Type.type(:mailalias).provider(:aliases)
 
 describe provider_class do
-  include PuppetTest
   include PuppetTest::FileParsing
   include PuppetTest::Support::Utils
 

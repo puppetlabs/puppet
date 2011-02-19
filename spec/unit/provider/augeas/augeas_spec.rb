@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 provider_class = Puppet::Type.type(:augeas).provider(:augeas)
 
@@ -309,6 +309,30 @@ describe provider_class do
     it "setting force should not change the above logic" do
       resource = stub("resource")
       resource.stubs(:[]).returns(true).then.returns("match path size == 2").then.returns("")
+      provider = provider_class.new(resource)
+      augeas_stub = stub("augeas", :match => ["set", "of", "values"])
+      augeas_stub.stubs("close")
+      provider.aug= augeas_stub
+      provider.stubs(:get_augeas_version).returns("0.3.5")
+      provider.need_to_run?.should == false
+    end
+
+    #Ticket 5211 testing
+    it "should return true when a size != the provided value" do
+      resource = stub("resource")
+      resource.stubs(:[]).returns(false).then.returns("match path size != 17").then.returns("")
+      provider = provider_class.new(resource)
+      augeas_stub = stub("augeas", :match => ["set", "of", "values"])
+      augeas_stub.stubs("close")
+      provider.aug= augeas_stub
+      provider.stubs(:get_augeas_version).returns("0.3.5")
+      provider.need_to_run?.should == true
+    end
+
+    #Ticket 5211 testing
+    it "should return false when a size doeas equal the provided value" do
+      resource = stub("resource")
+      resource.stubs(:[]).returns(false).then.returns("match path size != 3").then.returns("")
       provider = provider_class.new(resource)
       augeas_stub = stub("augeas", :match => ["set", "of", "values"])
       augeas_stub.stubs("close")

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/file_serving/fileset'
 
@@ -306,6 +306,7 @@ end
 describe Puppet::FileServing::Fileset, "when merging other filesets" do
   before do
     @paths = %w{/first/path /second/path /third/path}
+    File.stubs(:lstat).returns stub("stat", :directory? => false)
 
     @filesets = @paths.collect do |path|
       File.stubs(:lstat).with(path).returns stub("stat", :directory? => true)

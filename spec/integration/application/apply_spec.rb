@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet_spec/files'
 
@@ -9,8 +9,7 @@ require 'puppet/application/apply'
 describe "apply" do
   include PuppetSpec::Files
 
-  describe "when applying provided catalogs" do
-    confine "PSON library is missing; cannot test applying catalogs" => Puppet.features.pson?
+  describe "when applying provided catalogs", :if => Puppet.features.pson? do
     it "should be able to apply catalogs provided in a file in pson" do
       file_to_create = tmpfile("pson_catalog")
       catalog = Puppet::Resource::Catalog.new

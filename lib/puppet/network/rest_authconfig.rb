@@ -17,7 +17,6 @@ module Puppet
       { :acl => "/certificate/", :method => :find, :authenticated => false },
       { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
       { :acl => "/status", :method => [:find], :authenticated => true },
-      { :acl => "/resource", :method => [:find, :save, :search], :authenticated => true },
     ]
 
     def self.main
@@ -39,14 +38,10 @@ module Puppet
       # fail_on_deny could as well be called in the XMLRPC context
       # with a ClientRequest.
 
-      @rights.fail_on_deny(
-        build_uri(indirection, key),
-        :node => params[:node],
-        :ip => params[:ip],
-        :method => method,
-        :environment => params[:environment],
-        :authenticated => params[:authenticated]
-      )
+      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(indirection, method, key, params)
+        Puppet.warning("Denying access: #{authorization_failure_exception}")
+        raise authorization_failure_exception
+      end
     end
 
     def initialize(file = nil, parsenow = true)
@@ -88,10 +83,6 @@ module Puppet
         method.each { |m| @rights.restrict_method(acl[:acl], m) }
       end
       @rights.restrict_authenticated(acl[:acl], acl[:authenticated]) unless acl[:authenticated].nil?
-    end
-
-    def build_uri(indirection_name, key)
-      "/#{indirection_name}/#{key}"
     end
   end
 end

@@ -1,10 +1,10 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet/ssl/certificate_authority'
 
-describe "a normal interface method", :shared => true do
+shared_examples_for "a normal interface method" do
   it "should call the method on the CA for each host specified if an array was provided" do
     @ca.expects(@method).with("host1")
     @ca.expects(@method).with("host2")

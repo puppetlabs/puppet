@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-9-12.
 #  Copyright (c) 2006. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppettest/support/utils'
 require 'puppettest/fileparsing'
@@ -157,8 +157,7 @@ describe provider_class do
     end
   end
 
-  describe provider_class, " when parsing information about the root filesystem" do
-    confine "Mount type not tested on Darwin" => Facter["operatingsystem"].value != "Darwin"
+  describe provider_class, " when parsing information about the root filesystem", :if => Facter["operatingsystem"].value != "Darwin" do
     include ParsedMountTesting
 
     before do

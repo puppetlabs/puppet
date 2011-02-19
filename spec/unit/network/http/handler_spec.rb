@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 require 'puppet/network/http/handler'
 require 'puppet/network/rest_authorization'
 
@@ -46,6 +46,8 @@ describe Puppet::Network::HTTP::Handler do
       @request.stubs(:[]).returns "foo"
       @response    = stub('http response')
       @model_class = stub('indirected model class')
+      @indirection = stub('indirection')
+      @model_class.stubs(:indirection).returns(@indirection)
 
       @result = stub 'result', :render => "mytext"
 
@@ -126,7 +128,7 @@ describe Puppet::Network::HTTP::Handler do
 
     describe "when finding a model instance" do
       before do
-        @model_class.stubs(:find).returns @result
+        @indirection.stubs(:find).returns @result
         Puppet::Indirector::Indirection.expects(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
 
         @format = stub 'format', :suitable? => true, :mime => "text/format", :name => "format"
@@ -141,14 +143,14 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should use the escaped request key" do
-        @model_class.expects(:find).with do |key, args|
+        @indirection.expects(:find).with do |key, args|
           key == "my_result"
         end.returns @result
         @handler.do_find("my_handler", "my_result", {}, @request, @response)
       end
 
       it "should use a common method for determining the request parameters" do
-        @model_class.expects(:find).with do |key, args|
+        @indirection.expects(:find).with do |key, args|
           args[:foo] == :baz and args[:bar] == :xyzzy
         end.returns @result
         @handler.do_find("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, @request, @response)
@@ -190,6 +192,12 @@ describe Puppet::Network::HTTP::Handler do
         @handler.do_find("my_handler", "my_result", {}, @request, @response)
       end
 
+      it "should pass the result through without rendering it if the result is a string" do
+        @indirection.stubs(:find).returns "foo"
+        @handler.expects(:set_response).with(@response, "foo")
+        @handler.do_find("my_handler", "my_result", {}, @request, @response)
+      end
+
       it "should use the default status when a model find call succeeds" do
         @handler.expects(:set_response).with { |response, body, status| status.nil? }
         @handler.do_find("my_handler", "my_result", {}, @request, @response)
@@ -200,20 +208,20 @@ describe Puppet::Network::HTTP::Handler do
         @model_instance.expects(:render).returns "my_rendered_object"
 
         @handler.expects(:set_response).with { |response, body, status| body == "my_rendered_object" }
-        @model_class.stubs(:find).returns(@model_instance)
+        @indirection.stubs(:find).returns(@model_instance)
         @handler.do_find("my_handler", "my_result", {}, @request, @response)
       end
 
       it "should return a 404 when no model instance can be found" do
         @model_class.stubs(:name).returns "my name"
         @handler.expects(:set_response).with { |response, body, status| status == 404 }
-        @model_class.stubs(:find).returns(nil)
+        @indirection.stubs(:find).returns(nil)
         @handler.do_find("my_handler", "my_result", {}, @request, @response)
       end
 
       it "should write a log message when no model instance can be found" do
         @model_class.stubs(:name).returns "my name"
-        @model_class.stubs(:find).returns(nil)
+        @indirection.stubs(:find).returns(nil)
 
         Puppet.expects(:info).with("Could not find my_handler for 'my_result'")
 
@@ -226,8 +234,41 @@ describe Puppet::Network::HTTP::Handler do
 
         @handler.expects(:format_to_use).returns(@oneformat)
         @model_instance.expects(:render).with(@oneformat).returns "my_rendered_object"
-        @model_class.stubs(:find).returns(@model_instance)
+        @indirection.stubs(:find).returns(@model_instance)
         @handler.do_find("my_handler", "my_result", {}, @request, @response)
+      end
+    end
+
+    describe "when performing head operation" do
+      before do
+        @irequest = stub 'indirection_request', :method => :head, :indirection_name => "my_handler", :to_hash => {}, :key => "my_result", :model => @model_class
+
+        @model_class.stubs(:head).returns true
+      end
+
+      it "should use the indirection request to find the model class" do
+        @irequest.expects(:model).returns @model_class
+
+        @handler.do_head(@irequest, @request, @response)
+      end
+
+      it "should use the escaped request key" do
+        @model_class.expects(:head).with do |key, args|
+          key == "my_result"
+        end.returns true
+        @handler.do_head(@irequest, @request, @response)
+      end
+
+      it "should not generate a response when a model head call succeeds" do
+        @handler.expects(:set_response).never
+        @handler.do_head(@irequest, @request, @response)
+      end
+
+      it "should return a 404 when the model head call returns false" do
+        @model_class.stubs(:name).returns "my name"
+        @handler.expects(:set_response).with { |response, body, status| status == 404 }
+        @model_class.stubs(:head).returns(false)
+        @handler.do_head(@irequest, @request, @response)
       end
     end
 
@@ -240,7 +281,7 @@ describe Puppet::Network::HTTP::Handler do
 
         @result = [@result1, @result2]
         @model_class.stubs(:render_multiple).returns "my rendered instances"
-        @model_class.stubs(:search).returns(@result)
+        @indirection.stubs(:search).returns(@result)
 
         @format = stub 'format', :suitable? => true, :mime => "text/format", :name => "format"
         Puppet::Network::FormatHandler.stubs(:format).returns @format
@@ -254,14 +295,14 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should use a common method for determining the request parameters" do
-        @model_class.expects(:search).with do |key, args|
+        @indirection.expects(:search).with do |key, args|
           args[:foo] == :baz and args[:bar] == :xyzzy
         end.returns @result
         @handler.do_search("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, @request, @response)
       end
 
       it "should use the default status when a model search call succeeds" do
-        @model_class.stubs(:search).returns(@result)
+        @indirection.stubs(:search).returns(@result)
         @handler.do_search("my_handler", "my_result", {}, @request, @response)
       end
 
@@ -275,7 +316,7 @@ describe Puppet::Network::HTTP::Handler do
       it "should return a list of serialized objects when a model search call succeeds" do
         @handler.expects(:accept_header).with(@request).returns "one,two"
 
-        @model_class.stubs(:search).returns(@result)
+        @indirection.stubs(:search).returns(@result)
 
         @model_class.expects(:render_multiple).with(@oneformat, @result).returns "my rendered instances"
 
@@ -285,7 +326,7 @@ describe Puppet::Network::HTTP::Handler do
 
       it "should return [] when searching returns an empty array" do
         @handler.expects(:accept_header).with(@request).returns "one,two"
-        @model_class.stubs(:search).returns([])
+        @indirection.stubs(:search).returns([])
         @model_class.expects(:render_multiple).with(@oneformat, []).returns "[]"
 
 
@@ -296,7 +337,7 @@ describe Puppet::Network::HTTP::Handler do
       it "should return a 404 when searching returns nil" do
         @model_class.stubs(:name).returns "my name"
         @handler.expects(:set_response).with { |response, body, status| status == 404 }
-        @model_class.stubs(:search).returns(nil)
+        @indirection.stubs(:search).returns(nil)
         @handler.do_search("my_handler", "my_result", {}, @request, @response)
       end
     end
@@ -306,7 +347,7 @@ describe Puppet::Network::HTTP::Handler do
         Puppet::Indirector::Indirection.expects(:instance).with(:my_handler).returns( stub "indirection", :model => @model_class )
 
         @result = stub 'result', :render => "the result"
-        @model_class.stubs(:destroy).returns @result
+        @indirection.stubs(:destroy).returns @result
       end
 
       it "should use the indirection request to find the model" do
@@ -314,14 +355,14 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should use the escaped request key to destroy the instance in the model" do
-        @model_class.expects(:destroy).with do |key, args|
+        @indirection.expects(:destroy).with do |key, args|
           key == "foo bar"
         end
         @handler.do_destroy("my_handler", "foo bar", {}, @request, @response)
       end
 
       it "should use a common method for determining the request parameters" do
-        @model_class.expects(:destroy).with do |key, args|
+        @indirection.expects(:destroy).with do |key, args|
           args[:foo] == :baz and args[:bar] == :xyzzy
         end
         @handler.do_destroy("my_handler", "my_result", {:foo => :baz, :bar => :xyzzy}, @request, @response)
@@ -334,7 +375,7 @@ describe Puppet::Network::HTTP::Handler do
 
       it "should return a yaml-encoded result when a model destroy call succeeds" do
         @result = stub 'result', :to_yaml => "the result"
-        @model_class.expects(:destroy).returns(@result)
+        @indirection.expects(:destroy).returns(@result)
 
         @handler.expects(:set_response).with { |response, body, status| body == "the result" }
 
@@ -350,8 +391,9 @@ describe Puppet::Network::HTTP::Handler do
 
         @result = stub 'result', :render => "the result"
 
-        @model_instance = stub('indirected model instance', :save => true)
+        @model_instance = stub('indirected model instance')
         @model_class.stubs(:convert_from).returns(@model_instance)
+        @indirection.stubs(:save)
 
         @format = stub 'format', :suitable? => true, :name => "format", :mime => "text/format"
         Puppet::Network::FormatHandler.stubs(:format).returns @format
@@ -377,7 +419,7 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should use a common method for determining the request parameters" do
-        @model_instance.expects(:save).with('key').once
+        @indirection.expects(:save).with(@model_instance, 'key').once
         @handler.do_save("my_handler", "key", {}, @request, @response)
       end
 
@@ -387,7 +429,7 @@ describe Puppet::Network::HTTP::Handler do
       end
 
       it "should return the yaml-serialized result when a model save call succeeds" do
-        @model_instance.stubs(:save).returns(@model_instance)
+        @indirection.stubs(:save).returns(@model_instance)
         @model_instance.expects(:to_yaml).returns('foo')
         @handler.do_save("my_handler", "my_result", {}, @request, @response)
       end

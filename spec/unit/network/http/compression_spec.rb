@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 describe "http compression" do
 
@@ -37,9 +37,7 @@ describe "http compression" do
     end
   end
 
-  describe "when zlib is available" do
-    confine "Zlib is missing" => Puppet.features.zlib?
-
+  describe "when zlib is available", :if => Puppet.features.zlib? do
     before(:each) do
       Puppet.features.stubs(:zlib?).returns true
 

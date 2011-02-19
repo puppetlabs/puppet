@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 
 require 'puppet/network/rest_authconfig'
 
@@ -17,7 +17,6 @@ describe Puppet::Network::RestAuthConfig do
     { :acl => "/certificate/", :method => :find, :authenticated => false },
     { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
     { :acl => "/status", :method => [:find], :authenticated => true },
-    { :acl => "/resource", :method => [:find, :save, :search], :authenticated => true },
   ]
 
   before :each do
@@ -39,9 +38,10 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should ask for authorization to the ACL subsystem" do
-    @acl.expects(:fail_on_deny).with("/path/to/resource", :node => "me", :ip => "127.0.0.1", :method => :save, :environment => :env, :authenticated => true)
+    params = {:ip => "127.0.0.1", :node => "me", :environment => :env, :authenticated => true}
+    @acl.expects(:is_request_forbidden_and_why?).with("path", :save, "to/resource", params).returns(nil)
 
-    @authconfig.allowed?("path", :save, "to/resource", :ip => "127.0.0.1", :node => "me", :environment => :env, :authenticated => true)
+    @authconfig.allowed?("path", :save, "to/resource", params)
   end
 
   describe "when defining an acl with mk_acl" do

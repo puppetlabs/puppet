@@ -72,6 +72,11 @@ module Puppet
       end
     end
 
+    newproperty(:home) do
+      desc "The home directory of the user.  The directory must be created
+        separately and is not currently checked for existence."
+    end
+
     newproperty(:uid) do
       desc "The user ID.  Must be specified numerically.  For new users
         being created, if no user ID is specified then one will be
@@ -107,8 +112,6 @@ module Puppet
       end
 
       def insync?(is)
-        return true unless self.should
-
         # We know the 'is' is a number, so we need to convert the 'should' to a number,
         # too.
         @should.each do |value|
@@ -136,11 +139,6 @@ module Puppet
 
     newproperty(:comment) do
       desc "A description of the user.  Generally is a user's full name."
-    end
-
-    newproperty(:home) do
-      desc "The home directory of the user.  The directory must be created
-        separately and is not currently checked for existence."
     end
 
     newproperty(:shell) do
@@ -177,7 +175,7 @@ module Puppet
       end
 
       validate do |value|
-        if value.to_s !~ /^\d+$/
+        if value.to_s !~ /^-?\d+$/
           raise ArgumentError, "Password minimum age must be provided as a number"
         end
       end
@@ -196,7 +194,7 @@ module Puppet
       end
 
       validate do |value|
-        if value.to_s !~ /^\d+$/
+        if value.to_s !~ /^-?\d+$/
           raise ArgumentError, "Password maximum age must be provided as a number"
         end
       end
