@@ -99,13 +99,24 @@ describe provider_class do
       @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :clear, "/system/myservice"], true)
       @provider.start
     end
+  end
 
-    it "should import the manifest if service is not found" do
-      @resource[:manifest] = "/tmp/myservice.xml"
+  describe "when starting a service with a manifest" do
+    before(:each) do
+      @resource = Puppet::Type.type(:service).new(:name => "/system/myservice", :ensure => :running, :enable => :true, :manifest => "/tmp/myservice.xml")
+      @provider = provider_class.new(@resource)
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
+    end
+
+    it "should import the manifest if service is missing" do
       @provider.expects(:svccfg).with(:import, "/tmp/myservice.xml")
       @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "/system/myservice"], true)
       @provider.start
+    end
+
+    it "should handle failures if importing a manifest" do
+      @provider.expects(:svccfg).raises(Puppet::ExecutionFailure.new("can't svccfg import"))
+      lambda { @provider.start }.should raise_error(Puppet::Error, "Cannot config /system/myservice to enable it: can't svccfg import")
     end
   end
 
