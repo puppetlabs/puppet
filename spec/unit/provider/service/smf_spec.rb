@@ -12,16 +12,9 @@ describe provider_class do
 
   before(:each) do
     # Create a mock resource
-    @resource = stub 'resource'
+    @resource = Puppet::Type.type(:service).new(
+      :name => "/system/myservice", :ensure => :running, :enable => :true)
     @provider = provider_class.new(@resource)
-
-    @resource.stubs(:[]).returns(nil)
-    @resource.stubs(:[]).with(:name).returns "/system/myservice"
-    @resource.stubs(:[]).with(:ensure).returns :enabled
-    @resource.stubs(:[]).with(:enable).returns :true
-    @resource.stubs(:name).returns "/system/myservice"
-    @resource.stubs(:ref).returns "Service[/system/myservice]"
-    @provider.stubs(:resource).returns @resource
 
     FileTest.stubs(:file?).with('/usr/sbin/svcadm').returns true
     FileTest.stubs(:executable?).with('/usr/sbin/svcadm').returns true
@@ -108,7 +101,7 @@ describe provider_class do
     end
 
     it "should import the manifest if service is not found" do
-      @resource.stubs(:[]).with(:manifest).returns("/tmp/myservice.xml")
+      @resource[:manifest] = "/tmp/myservice.xml"
       $CHILD_STATUS.stubs(:exitstatus).returns(1)
       @provider.expects(:svccfg).with(:import, "/tmp/myservice.xml")
       @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "/system/myservice"], true)
