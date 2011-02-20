@@ -5,15 +5,17 @@
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
+require 'puppet_spec/files'
 require 'puppettest/support/utils'
 require 'puppettest/fileparsing'
 
 module ParsedMountTesting
   include PuppetTest::Support::Utils
   include PuppetTest::FileParsing
+  include PuppetSpec::Files
 
   def fake_fstab
-    os = Facter['operatingsystem']
+    os = Facter.value(:operatingsystem)
     if os == "Solaris"
       name = "solaris.fstab"
     elsif os == "FreeBSD"
@@ -22,51 +24,10 @@ module ParsedMountTesting
       # Catchall for other fstabs
       name = "linux.fstab"
     end
-    oldpath = @provider_class.default_target
     fakefile(File::join("data/types/mount", name))
   end
 
-  def mkmountargs
-    mount = nil
 
-    if defined?(@pcount)
-      @pcount += 1
-    else
-      @pcount = 1
-    end
-    args = {
-      :name => "/fspuppet#{@pcount}",
-      :device => "/dev/dsk#{@pcount}",
-    }
-
-    @provider_class.fields(:parsed).each do |field|
-      args[field] = "fake#{field}#{@pcount}" unless args.include? field
-    end
-
-    args
-  end
-
-  def mkmount
-    hash = mkmountargs
-    #hash[:provider] = @provider_class.name
-
-    fakeresource = stub :type => :mount, :name => hash[:name]
-    fakeresource.stubs(:[]).with(:name).returns(hash[:name])
-    fakeresource.stubs(:should).with(:target).returns(nil)
-
-    mount = @provider_class.new(fakeresource)
-    hash[:record_type] = :parsed
-    hash[:ensure] = :present
-    mount.property_hash = hash
-
-    mount
-  end
-
-  # Here we just create a fake host type that answers to all of the methods
-  # but does not modify our actual system.
-  def mkfaketype
-    @provider.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
-  end
 end
 
 provider_class = Puppet::Type.type(:mount).provider(:parsed)
@@ -117,45 +78,7 @@ describe provider_class do
     end
   end
 
-  describe provider_class, " when mounting an absent filesystem" do
-    include ParsedMountTesting
 
-    # #730 - Make sure 'flush' is called when a mount is moving from absent to mounted
-    it "should flush the fstab to disk" do
-      mount = mkmount
-
-      # Mark the mount as absent
-      mount.property_hash[:ensure] = :absent
-
-      mount.stubs(:mountcmd) # just so we don't actually try to mount anything
-
-      mount.expects(:flush)
-      mount.mount
-    end
-  end
-
-  describe provider_class, " when modifying the filesystem tab" do
-    include ParsedMountTesting
-    before do
-      Puppet.settings.stubs(:use)
-      # Never write to disk, only to RAM.
-      #@provider_class.stubs(:filetype).returns(Puppet::Util::FileType.filetype(:ram))
-      @provider_class.stubs(:target_object).returns(Puppet::Util::FileType.filetype(:ram).new("eh"))
-      @provider_class.clear
-
-      @mount = mkmount
-      @target = @provider_class.default_target
-    end
-
-    it "should write the mount to disk when :flush is called" do
-      old_text = @provider_class.target_object(@provider_class.default_target).read
-
-      @mount.flush
-
-      text = @provider_class.target_object(@provider_class.default_target).read
-      text.should == old_text + @mount.class.to_line(@mount.property_hash) + "\n"
-    end
-  end
 
   describe provider_class, " when parsing information about the root filesystem", :if => Facter["operatingsystem"].value != "Darwin" do
     include ParsedMountTesting
