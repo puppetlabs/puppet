@@ -67,7 +67,7 @@ Puppet::Type.type(:mount).provide(:parsed,:parent => Puppet::Provider::ParsedFil
 
   def self.mountinstances
     # XXX: Will not work for mount points that have spaces in path (does fstab support this anyways?)
-    regex = case Facter.value("operatingsystem")
+    regex = case Facter.value(:operatingsystem)
       when "Darwin"
         / on (?:\/private\/var\/automount)?(\S*)/
       when "Solaris", "HP-UX"
