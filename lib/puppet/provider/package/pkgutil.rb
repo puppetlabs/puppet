@@ -37,7 +37,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     if hash[:justme]
       # The --single option speeds up the execution, because it queries
       # the package managament system for one package only.
-      command << ["--single"]
+      command << "--single"
       command << hash[:justme]
     end
 
@@ -51,21 +51,15 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       next if line =~ /^=+> /                # catalog fetch
       next if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
 
-      parsed = pkgsplit(line)
-
-      # When finding one package, ensure we picked up the package line
-      # itself, not any pkgutil noise.
-      next if hash[:justme] and parsed[:name] != hash[:justme]
-
-      parsed
+      pkgsplit(line)
     end.reject { |h| h.nil? }
 
     if hash[:justme]
+      # Ensure we picked up the package line, not any pkgutil noise.
+      list.reject! { |h| h[:name] != hash[:justme] }
       return list[-1]
     else
-      list.reject! { |h|
-        h[:ensure] == :absent
-      }
+      list.reject! { |h| h[:ensure] == :absent }
       return list
     end
 
@@ -104,7 +98,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   # Retrieve the version from the current package file.
   def latest
     hash = self.class.pkglist(:justme => @resource[:name])
-    hash[:avail]
+    hash[:avail] if hash
   end
 
   def query
@@ -115,7 +109,6 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     end
   end
 
-  # Remove the old package, and install the new one
   def update
     pkguti "-y", "-i", @resource[:name]
   end
