@@ -3,6 +3,8 @@ require 'puppet/interface'
 
 class Puppet::Interface::Indirector < Puppet::Interface
 
+  # This is just a base class.
+  @abstract = true
 
   # Here's your opportunity to override the indirection name.  By default
   # it will be the same name as the interface.

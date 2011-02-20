@@ -3,7 +3,12 @@ require 'puppet'
 class Puppet::Interface
 
   class << self
-    attr_accessor :default_format
+    attr_accessor :default_format, :abstract
+
+    # Is this an actual interface, or a base class for others?
+    def abstract?
+      abstract
+    end
 
     def set_default_format(format)
       self.default_format = format.to_sym

@@ -17,23 +17,23 @@ class Puppet::Application::Interface < Puppet::Application
     if arguments.empty?
       arguments = %w{terminuses actions}
     end
-    indirections.each do |ind|
-      str = "#{ind}:\n"
+    interfaces.each do |name|
+      str = "#{name}:\n"
       if arguments.include?("terminuses")
         begin
-          terms = terminus_classes(ind.to_sym)
+          terms = terminus_classes(name.to_sym)
           str << "\tTerminuses: #{terms.join(", ")}\n"
         rescue => detail
-          $stderr.puts "Could not load terminuses for #{ind}: #{detail}"
+          $stderr.puts "Could not load terminuses for #{name}: #{detail}"
         end
       end
 
       if arguments.include?("actions")
         begin
-          actions = actions(ind.to_sym)
+          actions = actions(name.to_sym)
           str << "\tActions: #{actions.join(", ")}\n"
         rescue => detail
-          $stderr.puts "Could not load actions for #{ind}: #{detail}"
+          $stderr.puts "Could not load actions for #{name}: #{detail}"
         end
       end
 
@@ -70,12 +70,36 @@ class Puppet::Application::Interface < Puppet::Application
     end
   end
 
-  def indirections
-      Puppet::Indirector::Indirection.instances.collect { |t| t.to_s }.sort
+  def interfaces
+    # Load all of the interfaces
+    unless @interfaces
+      $LOAD_PATH.each do |dir|
+        next unless FileTest.directory?(dir)
+        Dir.chdir(dir) do
+          Dir.glob("puppet/interface/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
+            begin
+              require file
+            rescue Error => detail
+              puts detail.backtrace if Puppet[:trace]
+              raise "Could not load #{file}: #{detail}"
+            end
+          end
+        end
+      end
+
+      @interfaces = []
+      Puppet::Interface.constants.each do |name|
+        klass = Puppet::Interface.const_get(name)
+        next if klass.abstract? # skip base classes
+
+        @interfaces << name.downcase
+      end
+    end
+    @interfaces
   end
 
   def terminus_classes(indirection)
-      Puppet::Indirector::Terminus.terminus_classes(indirection).collect { |t| t.to_s }.sort
+    Puppet::Indirector::Terminus.terminus_classes(indirection).collect { |t| t.to_s }.sort
   end
 
   def actions(indirection)
