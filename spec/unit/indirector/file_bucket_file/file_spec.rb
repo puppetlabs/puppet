@@ -22,13 +22,97 @@ describe Puppet::FileBucketFile::File do
       Puppet[:bucketdir] = tmpdir('bucketdir')
     end
 
-    describe "when diffing files" do
-      def save_bucket_file(contents)
-        bucket_file = Puppet::FileBucket::File.new(contents)
-        bucket_file.save
-        bucket_file.checksum_data
+    def save_bucket_file(contents, path = "/who_cares")
+      bucket_file = Puppet::FileBucket::File.new(contents)
+      bucket_file.save("md5/#{Digest::MD5.hexdigest(contents)}#{path}")
+      bucket_file.checksum_data
+    end
+
+    describe "when servicing a save request" do
+      describe "when supplying a path" do
+        it "should store the path if not already stored" do
+          checksum = save_bucket_file("stuff", "/foo/bar")
+          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
+          File.read("#{dir_path}/contents").should == "stuff"
+          File.read("#{dir_path}/paths").should == "foo/bar\n"
+        end
+
+        it "should leave the paths file alone if the path is already stored" do
+          checksum = save_bucket_file("stuff", "/foo/bar")
+          checksum = save_bucket_file("stuff", "/foo/bar")
+          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
+          File.read("#{dir_path}/contents").should == "stuff"
+          File.read("#{dir_path}/paths").should == "foo/bar\n"
+        end
+
+        it "should store an additional path if the new path differs from those already stored" do
+          checksum = save_bucket_file("stuff", "/foo/bar")
+          checksum = save_bucket_file("stuff", "/foo/baz")
+          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
+          File.read("#{dir_path}/contents").should == "stuff"
+          File.read("#{dir_path}/paths").should == "foo/bar\nfoo/baz\n"
+        end
       end
 
+      describe "when not supplying a path" do
+        it "should save the file and create an empty paths file" do
+          checksum = save_bucket_file("stuff", "")
+          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
+          File.read("#{dir_path}/contents").should == "stuff"
+          File.read("#{dir_path}/paths").should == ""
+        end
+      end
+    end
+
+    describe "when servicing a head/find request" do
+      describe "when supplying a path" do
+        it "should return false/nil if the file isn't bucketed" do
+          Puppet::FileBucket::File.head("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == false
+          Puppet::FileBucket::File.find("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == nil
+        end
+
+        it "should return false/nil if the file is bucketed but with a different path" do
+          checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
+          Puppet::FileBucket::File.head("md5/#{checksum}/foo/baz").should == false
+          Puppet::FileBucket::File.find("md5/#{checksum}/foo/baz").should == nil
+        end
+
+        it "should return true/file if the file is already bucketed with the given path" do
+          contents = "I'm the contents of a file"
+          checksum = save_bucket_file(contents, '/foo/bar')
+          Puppet::FileBucket::File.head("md5/#{checksum}/foo/bar").should == true
+          find_result = Puppet::FileBucket::File.find("md5/#{checksum}/foo/bar")
+          find_result.should be_a(Puppet::FileBucket::File)
+          find_result.checksum.should == "{md5}#{checksum}"
+          find_result.to_s.should == contents
+        end
+      end
+
+      describe "when not supplying a path" do
+        [false, true].each do |trailing_slash|
+          describe "#{trailing_slash ? 'with' : 'without'} a trailing slash" do
+            trailing_string = trailing_slash ? '/' : ''
+
+            it "should return false/nil if the file isn't bucketed" do
+              Puppet::FileBucket::File.head("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == false
+              Puppet::FileBucket::File.find("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == nil
+            end
+
+            it "should return true/file if the file is already bucketed" do
+              contents = "I'm the contents of a file"
+              checksum = save_bucket_file(contents, '/foo/bar')
+              Puppet::FileBucket::File.head("md5/#{checksum}#{trailing_string}").should == true
+              find_result = Puppet::FileBucket::File.find("md5/#{checksum}#{trailing_string}")
+              find_result.should be_a(Puppet::FileBucket::File)
+              find_result.checksum.should == "{md5}#{checksum}"
+              find_result.to_s.should == contents
+            end
+          end
+        end
+      end
+    end
+
+    describe "when diffing files" do
       it "should generate an empty string if there is no diff" do
         checksum = save_bucket_file("I'm the contents of a file")
         Puppet::FileBucket::File.find("md5/#{checksum}", :diff_with => checksum).should == ''
@@ -102,7 +186,7 @@ HERE
 
               key = "md5/#{@digest}"
               if supply_path
-                key += "//path/to/file"
+                key += "/path/to/file"
               end
 
               @request = Puppet::Indirector::Request.new(:indirection_name, :find, key, request_options)
@@ -116,10 +200,15 @@ HERE
             it "should return an instance of Puppet::FileBucket::File created with the content if the file exists" do
               make_bucketed_file
 
-              bucketfile = @store.find(@request)
-              bucketfile.should be_a(Puppet::FileBucket::File)
-              bucketfile.contents.should == @contents
-              @store.head(@request).should == true
+              if supply_path
+                @store.find(@request).should == nil
+                @store.head(@request).should == false # because path didn't match
+              else
+                bucketfile = @store.find(@request)
+                bucketfile.should be_a(Puppet::FileBucket::File)
+                bucketfile.contents.should == @contents
+                @store.head(@request).should == true
+              end
             end
 
             it "should return nil if no file is found" do
