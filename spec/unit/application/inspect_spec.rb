@@ -174,7 +174,7 @@ describe Puppet::Application::Inspect do
 
           @inspect.run_command
 
-          @report.logs.count.should == 1
+          @report.logs.first.should_not == nil
           @report.logs.first.message.should =~ /Could not back up/
         end
       end

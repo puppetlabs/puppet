@@ -14,10 +14,12 @@ module Puppet::FileBucketFile
     end
 
     def find( request )
-      checksum = request_to_checksum( request )
-      file_path = path_for(request.options[:bucket_path], checksum, 'contents')
+      checksum, files_original_path = request_to_checksum_and_path( request )
+      dir_path = path_for(request.options[:bucket_path], checksum)
+      file_path = ::File.join(dir_path, 'contents')
 
       return nil unless ::File.exists?(file_path)
+      return nil unless path_match(dir_path, files_original_path)
 
       if request.options[:diff_with]
         hash_protocol = sumtype(checksum)
@@ -32,32 +34,47 @@ module Puppet::FileBucketFile
     end
 
     def head(request)
-      checksum = request_to_checksum(request)
-      file_path = path_for(request.options[:bucket_path], checksum, 'contents')
-      ::File.exists?(file_path)
+      checksum, files_original_path = request_to_checksum_and_path(request)
+      dir_path = path_for(request.options[:bucket_path], checksum)
+
+      ::File.exists?(::File.join(dir_path, 'contents')) and path_match(dir_path, files_original_path)
     end
 
     def save( request )
       instance = request.instance
+      checksum, files_original_path = request_to_checksum_and_path(request)
 
-      save_to_disk(instance)
+      save_to_disk(instance, files_original_path)
       instance.to_s
     end
 
     private
 
-    def save_to_disk( bucket_file )
+    def path_match(dir_path, files_original_path)
+      return true unless files_original_path # if no path was provided, it's a match
+      paths_path = ::File.join(dir_path, 'paths')
+      return false unless ::File.exists?(paths_path)
+      ::File.open(paths_path) do |f|
+        f.each do |line|
+          return true if line.chomp == files_original_path
+        end
+      end
+      return false
+    end
+
+    def save_to_disk( bucket_file, files_original_path )
       filename = path_for(bucket_file.bucket_path, bucket_file.checksum_data, 'contents')
-      dirname = path_for(bucket_file.bucket_path, bucket_file.checksum_data)
+      dir_path = path_for(bucket_file.bucket_path, bucket_file.checksum_data)
+      paths_path = ::File.join(dir_path, 'paths')
 
       # If the file already exists, do nothing.
       if ::File.exist?(filename)
         verify_identical_file!(bucket_file)
       else
         # Make the directories if necessary.
-        unless ::File.directory?(dirname)
+        unless ::File.directory?(dir_path)
           Puppet::Util.withumask(0007) do
-            ::FileUtils.mkdir_p(dirname)
+            ::FileUtils.mkdir_p(dir_path)
           end
         end
 
@@ -68,15 +85,27 @@ module Puppet::FileBucketFile
           ::File.open(filename, ::File::WRONLY|::File::CREAT, 0440) do |of|
             of.print bucket_file.contents
           end
+          ::File.open(paths_path, ::File::WRONLY|::File::CREAT, 0640) do |of|
+            # path will be written below
+          end
+        end
+      end
+
+      unless path_match(dir_path, files_original_path)
+        ::File.open(paths_path, 'a') do |f|
+          f.puts(files_original_path)
         end
       end
     end
 
-    def request_to_checksum( request )
-      checksum_type, checksum, path = request.key.split(/\//, 3) # Note: we ignore path if present.
+    def request_to_checksum_and_path( request )
+      checksum_type, checksum, path = request.key.split(/\//, 3)
+      if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
+        path = nil
+      end
       raise "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != 'md5'
       raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{32}$/
-      checksum
+      [checksum, path]
     end
 
     def path_for(bucket_path, digest, subfile = nil)

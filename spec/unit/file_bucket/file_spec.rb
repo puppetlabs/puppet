@@ -64,30 +64,6 @@ describe Puppet::FileBucket::File do
     end
   end
 
-  describe "when saving files" do
-    it "should save the contents to the calculated path" do
-      ::File.stubs(:directory?).with(@dir).returns(true)
-      ::File.expects(:exist?).with("#{@dir}/contents").returns false
-
-      mockfile = mock "file"
-      mockfile.expects(:print).with(@contents)
-      ::File.expects(:open).with("#{@dir}/contents", ::File::WRONLY|::File::CREAT, 0440).yields(mockfile)
-
-      Puppet::FileBucket::File.new(@contents).save
-    end
-
-    it "should make any directories necessary for storage" do
-      FileUtils.expects(:mkdir_p).with do |arg|
-        ::File.umask == 0007 and arg == @dir
-      end
-      ::File.expects(:directory?).with(@dir).returns(false)
-      ::File.expects(:open).with("#{@dir}/contents", ::File::WRONLY|::File::CREAT, 0440)
-      ::File.expects(:exist?).with("#{@dir}/contents").returns false
-
-      Puppet::FileBucket::File.new(@contents).save
-    end
-  end
-
   it "should return a url-ish name" do
     Puppet::FileBucket::File.new(@contents).name.should == "md5/4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
   end
@@ -103,17 +79,6 @@ describe Puppet::FileBucket::File do
 
   it "should load from PSON" do
     Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
-  end
-
-  it "should save a file" do
-    ::File.expects(:exist?).with("#{@dir}/contents").returns false
-    ::File.expects(:directory?).with(@dir).returns false
-    ::FileUtils.expects(:mkdir_p).with(@dir)
-    ::File.expects(:open).with("#{@dir}/contents",  ::File::WRONLY|::File::CREAT, 0440)
-
-    bucketfile = Puppet::FileBucket::File.new(@contents)
-    bucketfile.save
-
   end
 
   def make_bucketed_file
