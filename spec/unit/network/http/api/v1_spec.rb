@@ -96,7 +96,11 @@ describe Puppet::Network::HTTP::API::V1 do
       @tester.uri2indirection("GET", "/env/facts_search/bar", {}).indirection_name.should == :facts
     end
 
-    it "should change indirection name to 'status' if the http method is a GEt and the indirection name is statuses" do
+    it "should not change indirection name from 'facts' if the http method is a GET and the indirection name is facts" do
+      @tester.uri2indirection("GET", "/env/facts/bar", {}).indirection_name.should == :facts
+    end
+
+    it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
       @tester.uri2indirection("GET", "/env/statuses/bar", {}).indirection_name.should == :status
     end
 
