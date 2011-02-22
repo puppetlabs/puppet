@@ -5,17 +5,19 @@ class Puppet::Application::Cert < Puppet::Application
   should_parse_config
   run_mode :master
 
-  attr_accessor :cert_mode, :all, :ca, :digest, :signed
+  attr_accessor :all, :ca, :digest, :signed
 
-  def find_mode(opt)
-    require 'puppet/ssl/certificate_authority'
-    modes = Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS
-    tmp = opt.sub("--", '').to_sym
-    @cert_mode = modes.include?(tmp) ? tmp : nil
+  def subcommand
+    @subcommand
+  end
+  def subcommand=(name)
+    # Handle the nasty, legacy mapping of "clean" to "destroy".
+    sub = name.to_sym
+    @subcommand = (sub == :clean ? :destroy : sub)
   end
 
   option("--clean", "-c") do
-    @cert_mode = :destroy
+    self.subcommand = "destroy"
   end
 
   option("--all", "-a") do
@@ -37,7 +39,7 @@ class Puppet::Application::Cert < Puppet::Application
   require 'puppet/ssl/certificate_authority/interface'
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject {|m| m == :destroy }.each do |method|
     option("--#{method}", "-#{method.to_s[0,1]}") do
-      find_mode("--#{method}")
+      self.subcommand = method
     end
   end
 
@@ -54,8 +56,8 @@ class Puppet::Application::Cert < Puppet::Application
       hosts = command_line.args.collect { |h| h.downcase }
     end
     begin
-      @ca.apply(:revoke, :to => hosts) if @cert_mode == :destroy
-      @ca.apply(@cert_mode, :to => hosts, :digest => @digest)
+      @ca.apply(:revoke, :to => hosts) if subcommand == :destroy
+      @ca.apply(subcommand, :to => hosts, :digest => @digest)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       puts detail.to_s
@@ -64,11 +66,12 @@ class Puppet::Application::Cert < Puppet::Application
   end
 
   def setup
+    require 'puppet/ssl/certificate_authority'
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     Puppet::Util::Log.newdestination :console
 
-    if [:generate, :destroy].include? @cert_mode
+    if [:generate, :destroy].include? subcommand
       Puppet::SSL::Host.ca_location = :local
     else
       Puppet::SSL::Host.ca_location = :only
@@ -81,5 +84,18 @@ class Puppet::Application::Cert < Puppet::Application
       puts detail.to_s
       exit(23)
     end
+  end
+
+  def parse_options
+    # handle the bareword subcommand pattern.
+    result = super
+    unless self.subcommand then
+      if sub = self.command_line.args.shift then
+        self.subcommand = sub
+      else
+        help
+      end
+    end
+    result
   end
 end
