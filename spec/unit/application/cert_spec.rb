@@ -189,6 +189,16 @@ describe Puppet::Application::Cert do
       @cert_app.ca = @ca
     end
 
+    it "should not fail when no command is given" do
+      # Make the help method silent for testing; this is a bit nasty, but we
+      # can't identify a cleaner method.  Help welcome. --daniel 2011-02-22
+      Puppet.features.stubs(:usage?).returns(false)
+      @cert_app.stubs(:puts)
+
+      @cert_app.command_line.stubs(:args).returns([])
+      expect { @cert_app.parse_options }.should raise_error SystemExit
+    end
+
     %w{list revoke generate sign print verify fingerprint}.each do |cmd|
       short = cmd[0,1]
       [cmd, "--#{cmd}", "-#{short}"].each do |option|

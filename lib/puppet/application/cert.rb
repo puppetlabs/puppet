@@ -89,7 +89,13 @@ class Puppet::Application::Cert < Puppet::Application
   def parse_options
     # handle the bareword subcommand pattern.
     result = super
-    self.subcommand ||= self.command_line.args.shift
+    unless self.subcommand then
+      if sub = self.command_line.args.shift then
+        self.subcommand = sub
+      else
+        help
+      end
+    end
     result
   end
 end
