@@ -1,7 +1,7 @@
 require 'puppet/application'
 require 'puppet/interface'
 
-class Puppet::Application::DataBaseclass < Puppet::Application
+class Puppet::Application::InterfaceBase < Puppet::Application
   should_parse_config
   run_mode :agent
 

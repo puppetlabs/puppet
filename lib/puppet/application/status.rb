@@ -1,4 +1,4 @@
-require 'puppet/application/data_baseclass'
+require 'puppet/application/interface_base'
 
-class Puppet::Application::Status < Puppet::Application::DataBaseclass
+class Puppet::Application::Status < Puppet::Application::InterfaceBase
 end
