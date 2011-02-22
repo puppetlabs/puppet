@@ -32,6 +32,10 @@ describe Puppet::Interface do
     end
   end
 
+  it "should use its name converted to a string as its string form" do
+    Puppet::Interface.new(:me).to_s.should == "me"
+  end
+
   it "should allow overriding of the default format" do
     face = Puppet::Interface.new(:me)
     face.set_default_format :foo

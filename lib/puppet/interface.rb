@@ -103,4 +103,8 @@ class Puppet::Interface
       instance_eval(&block)
     end
   end
+
+  def to_s
+    name.to_s
+  end
 end
