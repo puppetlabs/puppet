@@ -10,8 +10,10 @@ lib/puppet/interface/catalog/$action.rb.
 This is a Puppet module and should work fine if you install it
 in Puppet's module path.
 
-Note that this only works with Puppet 2.6.next (and thus will work
+**Note that this only works with Puppet 2.6.next (and thus will work
 with 2.6.5), because there is otherwise a bug in finding Puppet applications.
+You also have to either install the lib files into your Puppet libdir, or
+you need to add this lib directory to your RUBYLIB.**
 
 This is meant to be tested and iterated upon, with the plan that it will be
 merged into Puppet core once we're satisfied with it.
@@ -20,7 +22,7 @@ Usage
 -----
 The general usage is:
 
-  $ puppet <type> <verb> <name>
+  $ puppet <interface> <verb> <name>
 
 So, e.g.:
 
