@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-class Puppet::Interface::Report < Puppet::Interface::Indirector
+Puppet::Interface::Indirector.new(:report) do
 end

@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-class Puppet::Interface::Catalog < Puppet::Interface::Indirector
+Puppet::Interface::Indirector.new(:catalog) do
 end

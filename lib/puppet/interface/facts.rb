@@ -1,6 +1,7 @@
 require 'puppet/interface/indirector'
+require 'puppet/node/facts'
 
-class Puppet::Interface::Facts < Puppet::Interface::Indirector
+Puppet::Interface::Indirector.new(:facts) do
   set_default_format :yaml
 
   # Upload our facts to the server

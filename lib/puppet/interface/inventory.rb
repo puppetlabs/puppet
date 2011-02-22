@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-class Puppet::Interface::Inventory < Puppet::Interface::Indirector
+Puppet::Interface::Indirector.new(:inventory) do
 end

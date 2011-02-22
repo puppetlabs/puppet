@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-class Puppet::Interface::Status < Puppet::Interface::Indirector
+Puppet::Interface::Indirector.new(:status) do
 end

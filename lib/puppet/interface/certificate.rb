@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-class Puppet::Interface::Certificate < Puppet::Interface::Indirector
+Puppet::Interface::Indirector.new(:certificate) do
 end

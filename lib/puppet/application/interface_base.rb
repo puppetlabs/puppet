@@ -68,8 +68,10 @@ class Puppet::Application::InterfaceBase < Puppet::Application
 
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
-    @interface = Puppet::Interface.interface(@type).new
-    @format ||= @interface.class.default_format || :pson
+    unless @interface = Puppet::Interface.interface(@type)
+      raise "Could not find interface '#{@type}'"
+    end
+    @format ||= @interface.default_format || :pson
 
     validate
 

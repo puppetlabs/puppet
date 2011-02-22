@@ -2,26 +2,13 @@ require 'puppet'
 require 'puppet/interface'
 
 class Puppet::Interface::Indirector < Puppet::Interface
-
-  # This is just a base class.
-  @abstract = true
-
-  # Here's your opportunity to override the indirection name.  By default
-  # it will be the same name as the interface.
-  def self.indirection_name
-    name.to_sym
+  def self.indirections
+    Puppet::Indirector::Indirection.instances.collect { |t| t.to_s }.sort
   end
 
-  # Return an indirection associated with an interface, if one exists
-  # One usually does.
-  def self.indirection
-    unless @indirection
-      Puppet.info("Could not find terminus for #{indirection_name}") unless @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
-    end
-    @indirection
+  def self.terminus_classes(indirection)
+    Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
   end
-
-  attr_accessor :from, :indirection
 
   action :destroy do |name, *args|
     call_indirection_method(:destroy, name, *args)
@@ -39,16 +26,25 @@ class Puppet::Interface::Indirector < Puppet::Interface
     call_indirection_method(:search, name, *args)
   end
 
-  def indirection
-    self.class.indirection
+  attr_accessor :from
+
+  def indirection_name
+    @indirection_name || name.to_sym
   end
 
-  def initialize(options = {})
-    options.each { |opt, val| send(opt.to_s + "=", val) }
+  # Here's your opportunity to override the indirection name.  By default
+  # it will be the same name as the interface.
+  def set_indirection_name(name)
+    @indirection_name = name
+  end
 
-    Puppet::Util::Log.newdestination :console
-
-    self.class.load_actions
+  # Return an indirection associated with an interface, if one exists
+  # One usually does.
+  def indirection
+    unless @indirection
+      Puppet.info("Could not find terminus for #{indirection_name}") unless @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
+    end
+    @indirection
   end
 
   def set_terminus(from)
@@ -64,21 +60,9 @@ class Puppet::Interface::Indirector < Puppet::Interface
       result = indirection.send(method, name, *args)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
-      raise "Could not call #{method} on #{type}: #{detail}"
-    end
-
-    unless result
-      raise "Could not #{method} #{indirection.name} for #{name}"
+      raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
     end
 
     result
-  end
-
-  def indirections
-      Puppet::Indirector::Indirection.instances.collect { |t| t.to_s }.sort
-  end
-
-  def terminus_classes(indirection)
-      Puppet::Indirector::Terminus.terminus_classes(indirection).collect { |t| t.to_s }.sort
   end
 end
