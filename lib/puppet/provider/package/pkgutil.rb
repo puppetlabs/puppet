@@ -51,12 +51,12 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       next if line =~ /^=+> /                # catalog fetch
       next if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
 
-      pkgsplit(line)
+      pkgsplit(line, hash[:justme])
     end.reject { |h| h.nil? }
 
     if hash[:justme]
       # Ensure we picked up the package line, not any pkgutil noise.
-      list.reject! { |h| h[:name] != hash[:justme] }
+      list.reject! { |h| h[:name] !~ /#{hash[:justme]}$/ }
       return list[-1]
     else
       list.reject! { |h| h[:ensure] == :absent }
@@ -66,8 +66,11 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   # Split the different lines into hashes.
-  def self.pkgsplit(line)
-    if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
+  def self.pkgsplit(line, justme)
+    if line == "Not in catalog"
+      Puppet.warning "Package not in pkgutil catalog: %s" % justme
+      return nil
+    elsif line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
       hash = {}
       hash[:name] = $1
       hash[:ensure] = if $2 == "notinst"
@@ -77,7 +80,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       end
       hash[:avail] = $3
 
-      if hash[:avail] == "SAME"
+      if hash[:avail] =~ /^SAME\s*$/
         hash[:avail] = hash[:ensure]
       end
 
@@ -110,7 +113,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   def update
-    pkguti "-y", "-i", @resource[:name]
+    pkguti "-y", "-u", @resource[:name]
   end
 
   def uninstall
