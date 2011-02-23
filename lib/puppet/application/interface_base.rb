@@ -33,12 +33,26 @@ class Puppet::Application::InterfaceBase < Puppet::Application
 
 
   attr_accessor :interface, :type, :verb, :name, :arguments, :format
+  attr_writer :exit_code
+
+  # This allows you to set the exit code if you don't want to just exit
+  # immediately but you need to indicate a failure.
+  def exit_code
+    @exit_code || 0
+  end
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
-    result = interface.send(verb, name, *arguments)
+    if result = interface.send(verb, name, *arguments)
+      puts render(result)
+    end
+    exit(exit_code)
+  end
+
+  # Override this if you need custom rendering.
+  def render(result)
     render_method = Puppet::Network::FormatHandler.format(format).render_method
-    puts result.send(render_method) if result
+    result.send(render_method)
   end
 
   def setup
