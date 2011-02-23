@@ -21,26 +21,8 @@ class Puppet::Application::InterfaceBase < Puppet::Application
     Puppet::Util::Log.level = :info
   end
 
-  option("--from TERMINUS", "-f") do |arg|
-    @from = arg
-  end
-
   option("--format FORMAT") do |arg|
     @format = arg.to_sym
-  end
-
-  # XXX this doesn't work, I think
-  option("--list") do
-    indirections.each do |ind|
-      begin
-        classes = terminus_classes(ind.to_sym)
-      rescue => detail
-        $stderr.puts "Could not load terminuses for #{ind}: #{detail}"
-        next
-      end
-      puts "%-30s: #{classes.join(", ")}" % ind
-    end
-    exit(0)
   end
 
   option("--mode RUNMODE", "-r") do |arg|
@@ -50,7 +32,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   end
 
 
-  attr_accessor :interface, :from, :type, :verb, :name, :arguments, :indirection, :format
+  attr_accessor :interface, :type, :verb, :name, :arguments, :format
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
@@ -60,7 +42,6 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   end
 
   def setup
-
     Puppet::Util::Log.newdestination :console
 
     @verb, @name, @arguments = command_line.args
@@ -71,13 +52,9 @@ class Puppet::Application::InterfaceBase < Puppet::Application
     unless @interface = Puppet::Interface.interface(@type)
       raise "Could not find interface '#{@type}'"
     end
-    @format ||= @interface.default_format || :pson
+    @format ||= @interface.default_format
 
     validate
-
-    raise "Could not find data type #{type} for application #{self.class.name}" unless interface.indirection
-
-    @interface.set_terminus(from) if from
   end
 
   def validate

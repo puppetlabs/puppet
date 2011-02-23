@@ -1,4 +1,4 @@
-require 'puppet/application/interface_base'
+require 'puppet/application/indirection_base'
 
-class Puppet::Application::Catalog < Puppet::Application::InterfaceBase
+class Puppet::Application::Catalog < Puppet::Application::IndirectionBase
 end

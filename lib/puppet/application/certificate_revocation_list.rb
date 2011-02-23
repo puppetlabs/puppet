@@ -1,4 +1,4 @@
-require 'puppet/application/interface_base'
+require 'puppet/application/indirection_base'
 
-class Puppet::Application::Certificate_revocation_list < Puppet::Application::InterfaceBase
+class Puppet::Application::Certificate_revocation_list < Puppet::Application::IndirectionBase
 end

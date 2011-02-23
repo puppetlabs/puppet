@@ -29,8 +29,6 @@ describe Puppet::Interface::Indirector do
   end
 
   describe "as an instance" do
-    after { Puppet::Interface.unload_interface(:catalog) }
-
     it "should be able to determine its indirection" do
       # Loading actions here an get, um, complicated
       Puppet::Interface.stubs(:load_actions)

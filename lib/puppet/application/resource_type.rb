@@ -1,4 +1,4 @@
-require 'puppet/application/interface_base'
+require 'puppet/application/indirection_base'
 
-class Puppet::Application::Resource_type < Puppet::Application::InterfaceBase
+class Puppet::Application::Resource_type < Puppet::Application::IndirectionBase
 end
