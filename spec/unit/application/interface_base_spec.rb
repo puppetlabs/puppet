@@ -11,6 +11,7 @@ end
 describe Puppet::Application::InterfaceBase do
   before do
     @app = Puppet::Application::InterfaceBase::Basetest.new
+    @app.stubs(:interface).returns base_interface
     @app.stubs(:exit)
     @app.stubs(:puts)
   end
@@ -18,8 +19,7 @@ describe Puppet::Application::InterfaceBase do
   describe "when calling main" do
     before do
       @app.verb = :find
-      @app.name = "myname"
-      @app.arguments = "myarg"
+      @app.arguments = ["myname", "myarg"]
       @app.interface.stubs(:find)
     end
 
@@ -32,5 +32,19 @@ describe Puppet::Application::InterfaceBase do
     it "should use its render method to render any result"
 
     it "should exit with the current exit code"
+  end
+
+  describe "during setup" do
+    before do
+      @app.command_line.stubs(:args).returns("find", "myname", "myarg")
+      @app.stubs(:validate)
+    end
+
+    it "should set the options on the interface" do
+      @app.options[:foo] = "bar"
+      @app.setup
+
+      @app.interface.options.should == @app.options
+    end
   end
 end

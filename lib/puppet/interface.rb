@@ -80,7 +80,7 @@ class Puppet::Interface
     @name || self.to_s.sub(/.+::/, '').downcase
   end
 
-  attr_accessor :type, :verb, :name, :arguments
+  attr_accessor :type, :verb, :name, :arguments, :options
 
   # Print the configuration for the current terminus class
   action :showconfig do |*args|

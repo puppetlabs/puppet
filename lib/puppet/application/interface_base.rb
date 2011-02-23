@@ -32,7 +32,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   end
 
 
-  attr_accessor :interface, :type, :verb, :name, :arguments, :format
+  attr_accessor :interface, :type, :verb, :arguments, :format
   attr_writer :exit_code
 
   # This allows you to set the exit code if you don't want to just exit
@@ -43,7 +43,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
-    if result = interface.send(verb, name, *arguments)
+    if result = interface.send(verb, *arguments)
       puts render(result)
     end
     exit(exit_code)
@@ -58,7 +58,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   def setup
     Puppet::Util::Log.newdestination :console
 
-    @verb, @name, @arguments = command_line.args
+    @verb, @arguments = command_line.args
     @arguments ||= []
 
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
@@ -67,6 +67,10 @@ class Puppet::Application::InterfaceBase < Puppet::Application
       raise "Could not find interface '#{@type}'"
     end
     @format ||= @interface.default_format
+
+    # We copy all of the app options to the interface.
+    # This allows each action to read in the options.
+    @interface.options = options
 
     validate
   end

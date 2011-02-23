@@ -10,20 +10,20 @@ class Puppet::Interface::Indirector < Puppet::Interface
     Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
   end
 
-  action :destroy do |name, *args|
-    call_indirection_method(:destroy, name, *args)
+  action :destroy do |*args|
+    call_indirection_method(:destroy, *args)
   end
 
-  action :find do |name, *args|
-    call_indirection_method(:find, name, *args)
+  action :find do |*args|
+    call_indirection_method(:find, *args)
   end
 
-  action :save do |name, *args|
-    call_indirection_method(:save, name, *args)
+  action :save do |*args|
+    call_indirection_method(:save, *args)
   end
 
-  action :search do |name, *args|
-    call_indirection_method(:search, name, *args)
+  action :search do |*args|
+    call_indirection_method(:search, *args)
   end
 
   attr_accessor :from
@@ -55,9 +55,9 @@ class Puppet::Interface::Indirector < Puppet::Interface
     end
   end
 
-  def call_indirection_method(method, name, *args)
+  def call_indirection_method(method, *args)
     begin
-      result = indirection.send(method, name, *args)
+      result = indirection.send(method, *args)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
