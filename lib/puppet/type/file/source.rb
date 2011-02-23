@@ -132,10 +132,6 @@ module Puppet
       end
     end
 
-    def pinparams
-      [:mode, :type, :owner, :group, :content]
-    end
-
     def found?
       ! (metadata.nil? or metadata.ftype.nil?)
     end
@@ -159,16 +155,6 @@ module Puppet
       end
       fail "Could not retrieve information from source(s) #{value.join(", ")}" unless result
       result
-    end
-
-    # Make sure we're also checking the checksum
-    def value=(value)
-      super
-
-      checks = (pinparams + [:ensure])
-      checks.delete(:checksum)
-
-      resource[:audit] = checks
     end
 
     def local?
