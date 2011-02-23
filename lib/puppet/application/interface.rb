@@ -1,4 +1,5 @@
 require 'puppet/application'
+require 'puppet/interface'
 
 class Puppet::Application::Interface < Puppet::Application
 
@@ -24,6 +25,7 @@ class Puppet::Application::Interface < Puppet::Application
           terms = terminus_classes(name.to_sym)
           str << "\tTerminuses: #{terms.join(", ")}\n"
         rescue => detail
+          puts detail.backtrace if Puppet[:trace]
           $stderr.puts "Could not load terminuses for #{name}: #{detail}"
         end
       end
@@ -33,13 +35,13 @@ class Puppet::Application::Interface < Puppet::Application
           actions = actions(name.to_sym)
           str << "\tActions: #{actions.join(", ")}\n"
         rescue => detail
+          puts detail.backtrace if Puppet[:trace]
           $stderr.puts "Could not load actions for #{name}: #{detail}"
         end
       end
 
       print str
     end
-    exit(0)
   end
 
   attr_accessor :verb, :name, :arguments
@@ -71,31 +73,7 @@ class Puppet::Application::Interface < Puppet::Application
   end
 
   def interfaces
-    # Load all of the interfaces
-    unless @interfaces
-      $LOAD_PATH.each do |dir|
-        next unless FileTest.directory?(dir)
-        Dir.chdir(dir) do
-          Dir.glob("puppet/interface/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
-            begin
-              require file
-            rescue Error => detail
-              puts detail.backtrace if Puppet[:trace]
-              raise "Could not load #{file}: #{detail}"
-            end
-          end
-        end
-      end
-
-      @interfaces = []
-      Puppet::Interface.constants.each do |name|
-        klass = Puppet::Interface.const_get(name)
-        next if klass.abstract? # skip base classes
-
-        @interfaces << name.downcase
-      end
-    end
-    @interfaces
+    Puppet::Interface.interfaces
   end
 
   def terminus_classes(indirection)

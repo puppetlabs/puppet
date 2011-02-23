@@ -19,7 +19,7 @@ describe Puppet::Interface do
     end
 
     it "should load actions" do
-      Puppet::Interface.expects(:load_actions).with(:me)
+      Puppet::Interface.any_instance.expects(:load_actions)
       Puppet::Interface.new(:me)
     end
 

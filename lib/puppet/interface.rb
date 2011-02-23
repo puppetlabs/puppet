@@ -12,6 +12,27 @@ class Puppet::Interface
     @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/interface")
   end
 
+  def self.interfaces
+    unless @loaded
+      @loaded = true
+      $LOAD_PATH.each do |dir|
+        next unless FileTest.directory?(dir)
+        Dir.chdir(dir) do
+          Dir.glob("puppet/interface/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
+            iname = file.sub(/\.rb/, '')
+            begin
+              require iname
+            rescue Exception => detail
+              puts detail.backtrace if Puppet[:trace]
+              raise "Could not load #{iname} from #{dir}/#{file}: #{detail}"
+            end
+          end
+        end
+      end
+    end
+    @interfaces.keys
+  end
+
   # Return an interface by name, loading from disk if necessary.
   def self.interface(name)
     @interfaces ||= {}
@@ -22,21 +43,6 @@ class Puppet::Interface
   rescue Exception => detail
     puts detail.backtrace if Puppet[:trace]
     $stderr.puts "Unable to find interface '#{name.to_s}': #{detail}."
-  end
-
-  # Try to find actions defined in other files.
-  def self.load_actions(name)
-    path = "puppet/interface/#{name}"
-
-    autoloader.search_directories.each do |dir|
-      fdir = ::File.join(dir, path)
-      next unless FileTest.directory?(fdir)
-
-      Dir.glob("#{fdir}/*.rb").each do |file|
-        Puppet.info "Loading actions for '#{name}' from '#{file}'"
-        require file
-      end
-    end
   end
 
   def self.register_interface(name, instance)
@@ -97,10 +103,28 @@ class Puppet::Interface
     # subclasses.
     Puppet::Interface.register_interface(name, self)
 
-    Puppet::Interface.load_actions(name)
+    load_actions
 
     if block_given?
       instance_eval(&block)
+    end
+  end
+
+  # Try to find actions defined in other files.
+  def load_actions
+    path = "puppet/interface/#{name}"
+
+    self.class.autoloader.search_directories.each do |dir|
+      fdir = ::File.join(dir, path)
+      next unless FileTest.directory?(fdir)
+
+      Dir.chdir(fdir) do
+        Dir.glob("*.rb").each do |file|
+          aname = file.sub(/\.rb/, '')
+          Puppet.debug "Loading action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
+          require "#{path}/#{aname}"
+        end
+      end
     end
   end
 
