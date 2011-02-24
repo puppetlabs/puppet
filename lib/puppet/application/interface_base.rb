@@ -61,6 +61,8 @@ class Puppet::Application::InterfaceBase < Puppet::Application
     @verb, @arguments = command_line.args
     @arguments ||= []
 
+    @arguments = Array(@arguments)
+
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
     unless @interface = Puppet::Interface.interface(@type)

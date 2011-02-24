@@ -14,6 +14,7 @@ describe Puppet::Application::InterfaceBase do
     @app.stubs(:interface).returns base_interface
     @app.stubs(:exit)
     @app.stubs(:puts)
+    Puppet::Util::Log.stubs(:newdestination)
   end
 
   describe "when calling main" do
@@ -38,6 +39,17 @@ describe Puppet::Application::InterfaceBase do
     before do
       @app.command_line.stubs(:args).returns("find", "myname", "myarg")
       @app.stubs(:validate)
+    end
+
+    it "should set the verb from the command line arguments" do
+      @app.setup
+      @app.verb.should == "find"
+    end
+
+    it "should make sure arguments are an array" do
+      @app.command_line.stubs(:args).returns(["find", "myname"])
+      @app.setup
+      @app.arguments.should == ["myname"]
     end
 
     it "should set the options on the interface" do
