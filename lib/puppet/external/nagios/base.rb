@@ -470,5 +470,3 @@ class Nagios::Base
   end
 
 end
-
-# $Id$

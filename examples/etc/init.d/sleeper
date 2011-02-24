@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# $Id$
-
 script=$0
 path=`echo $script | sed 's/etc..*/bin/'`
 

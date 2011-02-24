@@ -94,5 +94,3 @@ filemap.each do |dir, files|
     # And alias it with a slash on the end
     task(dir + "/" => dir)
 end
-
-# $Id$

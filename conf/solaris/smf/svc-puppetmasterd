@@ -58,5 +58,3 @@ status)
     fi
 esac
 exit 0
-
-# $Id$
