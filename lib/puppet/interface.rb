@@ -114,6 +114,7 @@ class Puppet::Interface
   def load_actions
     path = "puppet/interface/#{name}"
 
+    loaded = []
     self.class.autoloader.search_directories.each do |dir|
       fdir = ::File.join(dir, path)
       next unless FileTest.directory?(fdir)
@@ -121,6 +122,11 @@ class Puppet::Interface
       Dir.chdir(fdir) do
         Dir.glob("*.rb").each do |file|
           aname = file.sub(/\.rb/, '')
+          if loaded.include?(aname)
+            Puppet.debug "Not loading duplicate action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
+            next
+          end
+          loaded << aname
           Puppet.debug "Loading action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
           require "#{path}/#{aname}"
         end
