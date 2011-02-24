@@ -3,7 +3,7 @@
 # Script to clean up stored configs for (a) given host(s)
 #
 # Credits:
-# Script was taken from http://reductivelabs.com/trac/puppet/attachment/wiki/UsingStoredConfiguration/kill_node_in_storedconfigs_db.rb
+# Script was taken from http://reductivelabs.com/trac/puppet/attachment/wiki/UsingStoredConfiguration/kill_node_in_storedconfigs_db.rb (link no longer valid),
 # which haven been initially posted by James Turnbull
 # duritong adapted and improved the script a bit.
 
