@@ -4,6 +4,7 @@
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'
+require 'puppet/util/instrumentation'
 
 require 'puppet/resource/type_collection_helper'
 
@@ -13,9 +14,12 @@ class Puppet::Parser::Compiler
   include Puppet::Util
   include Puppet::Util::Errors
   include Puppet::Resource::TypeCollectionHelper
+  extend Puppet::Util::Instrumentation
 
   def self.compile(node)
-    new(node).compile.to_resource
+    instrument("compiling #{node.name}") do
+      new(node).compile.to_resource
+    end
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
