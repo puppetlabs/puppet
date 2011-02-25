@@ -130,7 +130,7 @@ describe provider_class do
       mount.stubs(:mountcmd) # just so we don't actually try to mount anything
 
       mount.expects(:flush)
-      mount.mount!
+      mount.mount
     end
   end
 
@@ -176,7 +176,7 @@ describe provider_class do
 
     it "should determine that the root fs is mounted" do
       @provider_class.prefetch("/" => @mount)
-      @mount.provider.should be_anything_mounted
+      @mount.provider.should be_mounted
     end
   end
 end

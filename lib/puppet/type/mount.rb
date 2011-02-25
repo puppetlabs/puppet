@@ -29,7 +29,7 @@ module Puppet
       aliasvalue :present, :defined
 
       newvalue(:unmounted) do
-        if provider.anything_mounted?
+        if provider.mounted?
           syncothers
           provider.unmount
           return :mount_unmounted
@@ -40,15 +40,20 @@ module Puppet
       end
 
       newvalue(:absent, :event => :mount_deleted) do
-        provider.unmount if provider.anything_mounted?
+        provider.unmount if provider.mounted?
 
         provider.destroy
       end
 
       newvalue(:mounted, :event => :mount_mounted) do
+        # Create the mount point if it does not already exist.
+        current_value = self.retrieve
+        provider.create if current_value.nil? or current_value == :absent
+
         syncothers
 
-        provider.mount
+        # The fs can be already mounted if it was absent but mounted
+        provider.mount unless provider.mounted?
       end
 
       def insync?(is)
@@ -65,7 +70,7 @@ module Puppet
         curval = super()
         if curval == :absent
           return :absent
-        elsif provider.correctly_mounted?
+        elsif provider.mounted?
           return :mounted
         else
           return :unmounted
@@ -205,7 +210,7 @@ module Puppet
 
     def refresh
       # Only remount if we're supposed to be mounted.
-      provider.remount if self.should(:fstype) != "swap" and provider.anything_mounted?
+      provider.remount if self.should(:fstype) != "swap" and provider.mounted?
     end
 
     def value(name)
