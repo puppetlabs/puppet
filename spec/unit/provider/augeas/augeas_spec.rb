@@ -433,5 +433,28 @@ describe provider_class do
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed
     end
+
+    it "should handle defvar commands" do
+      command = "defvar myjar Jar/Jar"
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
+    it "should pass through augeas defvar variables without context" do
+      command = ["defvar myjar Jar/Jar","set $myjar/Binks 1"]
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
+      # this is the important bit, shouldn't be /foo/$myjar/Binks
+      @augeas.expects(:set).with("$myjar/Binks", "1").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
   end
 end

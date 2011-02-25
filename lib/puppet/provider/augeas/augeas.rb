@@ -36,6 +36,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     "clear" => [ :path ],
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
+    "defvar" => [ :string, :path ],
     "match" => [ :path, :glob ],
     "size" => [:comparator, :int],
     "include" => [:string],
@@ -354,6 +355,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("sending command '#{command}' with params #{[label, where, path].inspect}")
             rv = aug.insert(path, label, before)
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+          when "defvar"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.defvar(cmd_array[0], cmd_array[1])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
           else fail("Command '#{command}' is not supported")
         end
       rescue SystemExit,NoMemoryError
