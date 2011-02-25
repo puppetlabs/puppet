@@ -475,5 +475,17 @@ describe provider_class do
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed
     end
+
+    it "should handle setm commands" do
+      command = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
+      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      @augeas.expects(:setm).with("/foo/test", "Jar/Jar", "Binks").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
   end
 end

@@ -32,6 +32,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   COMMANDS = {
     "set" => [ :path, :string ],
+    "setm" => [ :path, :string, :string ],
     "rm" => [ :path ],
     "clear" => [ :path ],
     "mv" => [ :path, :path ],
@@ -338,6 +339,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.set(cmd_array[0], cmd_array[1])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "setm"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
           when "rm", "remove"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.rm(cmd_array[0])
