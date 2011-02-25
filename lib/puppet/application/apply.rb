@@ -125,7 +125,7 @@ class Puppet::Application::Apply < Puppet::Application
       configurer = Puppet::Configurer.new
       report = configurer.run(:skip_plugin_download => true, :catalog => catalog)
 
-      exit( Puppet[:noop] ? 0 : options[:detailed_exitcodes] ? report.exit_status : 0 )
+      exit( options[:detailed_exitcodes] ? report.exit_status : 0 )
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       $stderr.puts detail.message

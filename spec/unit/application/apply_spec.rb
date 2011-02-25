@@ -166,6 +166,13 @@ describe Puppet::Application::Apply do
         @apply.expects(:exit).with(1)
         @apply.parseonly
       end
+
+      it "should exit with exit code 1 if error, even if --noop is set" do
+        Puppet[:noop] = true
+        @collection.stubs(:perform_initial_import).raises(Puppet::ParseError)
+        @apply.expects(:exit).with(1)
+        @apply.parseonly
+      end
     end
 
     describe "the main command" do
@@ -320,6 +327,15 @@ describe Puppet::Application::Apply do
       describe "with detailed_exitcodes" do
         it "should exit with report's computed exit status" do
           Puppet.stubs(:[]).with(:noop).returns(false)
+          @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
+          @apply.expects(:exit).with(666)
+
+          @apply.main
+        end
+
+        it "should exit with report's computed exit status, even if --noop is set" do
+          Puppet.stubs(:[]).with(:noop).returns(true)
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
           Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
           @apply.expects(:exit).with(666)
