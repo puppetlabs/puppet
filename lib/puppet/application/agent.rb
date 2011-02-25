@@ -119,7 +119,7 @@ class Puppet::Application::Agent < Puppet::Application
 
     if not report
       exit(1)
-    elsif not Puppet[:noop] and options[:detailed_exitcodes] then
+    elsif options[:detailed_exitcodes] then
       exit(report.exit_status)
     else
       exit(0)
