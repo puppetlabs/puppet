@@ -220,6 +220,11 @@ FSTAB
     include ParsedMountTesting
 
     before :each do
+      # Note: we have to stub default_target before creating resources
+      # because it is used by Puppet::Type::Mount.new to populate the
+      # :target property.
+      @provider.stubs(:default_target).returns fake_fstab
+
       @res_ghost = Puppet::Type::Mount.new(:name => '/ghost')    # in no fake fstab
       @res_mounted = Puppet::Type::Mount.new(:name => '/')       # in every fake fstab
       @res_unmounted = Puppet::Type::Mount.new(:name => '/boot') # in every fake fstab
@@ -232,7 +237,6 @@ FSTAB
       end
 
       @provider.stubs(:mountcmd).returns File.read(fake_mountoutput)
-      @provider.stubs(:default_target).returns fake_fstab
     end
 
     it "should set :ensure to :unmounted if found in fstab but not mounted" do
