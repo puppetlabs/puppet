@@ -465,5 +465,15 @@ describe provider_class do
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed
     end
+
+    it "should handle mv commands" do
+      command = "mv Jar/Jar Binks"
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:mv).with("/foo/Jar/Jar", "/foo/Binks").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
   end
 end

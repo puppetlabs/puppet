@@ -34,6 +34,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     "set" => [ :path, :string ],
     "rm" => [ :path ],
     "clear" => [ :path ],
+    "mv" => [ :path, :path ],
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
     "defvar" => [ :string, :path ],
@@ -48,6 +49,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   COMMANDS["ins"] = COMMANDS["insert"]
   COMMANDS["remove"] = COMMANDS["rm"]
+  COMMANDS["move"] = COMMANDS["mv"]
 
   attr_accessor :aug
 
@@ -364,6 +366,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.defnode(cmd_array[0], cmd_array[1], cmd_array[2])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "mv", "move"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.mv(cmd_array[0], cmd_array[1])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
           else fail("Command '#{command}' is not supported")
         end
       rescue SystemExit,NoMemoryError
