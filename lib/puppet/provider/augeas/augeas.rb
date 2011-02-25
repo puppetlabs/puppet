@@ -37,6 +37,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
     "defvar" => [ :string, :path ],
+    "defnode" => [ :string, :path, :string ],
     "match" => [ :path, :glob ],
     "size" => [:comparator, :int],
     "include" => [:string],
@@ -358,6 +359,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           when "defvar"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.defvar(cmd_array[0], cmd_array[1])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "defnode"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.defnode(cmd_array[0], cmd_array[1], cmd_array[2])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
           else fail("Command '#{command}' is not supported")
         end

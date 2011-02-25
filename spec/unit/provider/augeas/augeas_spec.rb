@@ -444,7 +444,7 @@ describe provider_class do
       @provider.execute_changes.should == :executed
     end
 
-    it "should pass through augeas defvar variables without context" do
+    it "should pass through augeas variables without context" do
       command = ["defvar myjar Jar/Jar","set $myjar/Binks 1"]
       context = "/foo/"
       @resource.expects(:[]).times(2).returns(command).then.returns(context)
@@ -456,5 +456,14 @@ describe provider_class do
       @provider.execute_changes.should == :executed
     end
 
+    it "should handle defnode commands" do
+      command = "defnode newjar Jar/Jar[last()+1] Binks"
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:defnode).with("newjar", "/foo/Jar/Jar[last()+1]", "Binks").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
   end
 end
