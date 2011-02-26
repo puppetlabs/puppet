@@ -92,7 +92,7 @@ class Puppet::Resource
   def yaml_property_munge(x)
     case x
     when Hash
-      x.inject({}) { |h,kv| 
+      x.inject({}) { |h,kv|
         k,v = kv
         h[k] = self.class.value_to_pson_data(v)
         h
