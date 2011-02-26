@@ -5,6 +5,11 @@ require 'puppet/util/pson'
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
 class Puppet::Resource
+  # This stub class is only needed for serialization compatibility with 0.25.x.
+  # Specifically, it exists to provide a compatibility API when using YAML
+  # serialized objects loaded from StoreConfigs.
+  Reference = Puppet::Resource
+
   include Puppet::Util::Tagging
 
   require 'puppet/resource/type_collection_helper'
@@ -104,7 +109,7 @@ class Puppet::Resource
   # be overridden at some point, but this works for now.
   %w{has_key? keys length delete empty? <<}.each do |method|
     define_method(method) do |*args|
-      @parameters.send(method, *args)
+      parameters.send(method, *args)
     end
   end
 
@@ -112,13 +117,13 @@ class Puppet::Resource
   # to lower-case symbols.
   def []=(param, value)
     validate_parameter(param) if validate_parameters
-    @parameters[parameter_name(param)] = value
+    parameters[parameter_name(param)] = value
   end
 
   # Return a given parameter's value.  Converts all passed names
   # to lower-case symbols.
   def [](param)
-    @parameters[parameter_name(param)]
+    parameters[parameter_name(param)]
   end
 
   def ==(other)
@@ -140,11 +145,11 @@ class Puppet::Resource
 
   # Iterate over each param/value pair, as required for Enumerable.
   def each
-    @parameters.each { |p,v| yield p, v }
+    parameters.each { |p,v| yield p, v }
   end
 
   def include?(parameter)
-    super || @parameters.keys.include?( parameter_name(parameter) )
+    super || parameters.keys.include?( parameter_name(parameter) )
   end
 
   # These two methods are extracted into a Helper
@@ -167,14 +172,6 @@ class Puppet::Resource
   %w{exported virtual strict}.each do |m|
     define_method(m+"?") do
       self.send(m)
-    end
-  end
-
-  # This stub class is only needed for serialization compatibility with 0.25.x
-  class Reference
-    attr_accessor :type,:title
-    def initialize(type,title)
-      @type,@title = type,title
     end
   end
 
@@ -204,7 +201,7 @@ class Puppet::Resource
     tag(self.type)
     tag(self.title) if valid_tag?(self.title)
 
-    @reference = Reference.new(@type,@title) # for serialization compatibility with 0.25.x
+    @reference = self # for serialization compatibility with 0.25.x
     if strict? and ! resource_type
       if @type == 'Class'
         raise ArgumentError, "Could not find declared class #{title}"
@@ -234,7 +231,7 @@ class Puppet::Resource
 
   # Produce a simple hash of our parameters.
   def to_hash
-    parse_title.merge @parameters
+    parse_title.merge parameters
   end
 
   def to_s
@@ -256,7 +253,7 @@ class Puppet::Resource
   # Convert our resource to Puppet code.
   def to_manifest
     "%s { '%s':\n%s\n}" % [self.type.to_s.downcase, self.title,
-      @parameters.collect { |p, v|
+      parameters.collect { |p, v|
         if v.is_a? Array
           "    #{p} => [\'#{v.join("','")}\']"
         else
@@ -421,5 +418,11 @@ class Puppet::Resource
     else
       return { :name => title.to_s }
     end
+  end
+
+  def parameters
+    # @parameters could have been loaded from YAML, causing it to be nil (by
+    # bypassing initialize).
+    @parameters ||= {}
   end
 end

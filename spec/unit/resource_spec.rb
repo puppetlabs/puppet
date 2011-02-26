@@ -99,11 +99,11 @@ describe Puppet::Resource do
   end
 
   it 'should fail if strict is set and type does not exist' do
-    lambda { Puppet::Resource.new('foo', 'title', {:strict=>true}) }.should raise_error(ArgumentError, 'Invalid resource type foo') 
+    lambda { Puppet::Resource.new('foo', 'title', {:strict=>true}) }.should raise_error(ArgumentError, 'Invalid resource type foo')
   end
 
   it 'should fail if strict is set and class does not exist' do
-    lambda { Puppet::Resource.new('Class', 'foo', {:strict=>true}) }.should raise_error(ArgumentError, 'Could not find declared class foo') 
+    lambda { Puppet::Resource.new('Class', 'foo', {:strict=>true}) }.should raise_error(ArgumentError, 'Could not find declared class foo')
   end
 
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
@@ -460,6 +460,28 @@ describe Puppet::Resource do
       %w{one two}.each do |param|
         newresource[param].should == @resource[param]
       end
+    end
+  end
+
+  describe "when loading 0.25.x storedconfigs YAML" do
+    before :each do
+      @old_storedconfig_yaml = %q{--- !ruby/object:Puppet::Resource::Reference
+builtin_type:
+title: /tmp/bar
+type: File
+}
+    end
+
+    it "should deserialize a Puppet::Resource::Reference without exceptions" do
+      lambda { YAML.load(@old_storedconfig_yaml) }.should_not raise_error
+    end
+
+    it "should deserialize as a Puppet::Resource::Reference as a Puppet::Resource" do
+      YAML.load(@old_storedconfig_yaml).class.should == Puppet::Resource
+    end
+
+    it "should to_hash properly" do
+      YAML.load(@old_storedconfig_yaml).to_hash.should == { :path => "/tmp/bar" }
     end
   end
 
