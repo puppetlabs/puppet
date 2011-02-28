@@ -18,11 +18,11 @@ module Puppet
       wanted to restrict certain resources to only running once, between
       the hours of two and 4 AM, then you would use this schedule:
 
-        schedule { maint:
-          range => \"2 - 4\",
-          period => daily,
-          repeat => 1
-        }
+          schedule { maint:
+            range => \"2 - 4\",
+            period => daily,
+            repeat => 1
+          }
 
       With this schedule, the first time that Puppet runs between 2 and 4 AM,
       all resources with this schedule will get applied, but they won't
@@ -35,10 +35,10 @@ module Puppet
       a schedule named *puppet* is created and used as the default,
       with the following attributes:
 
-        schedule { puppet:
-          period => hourly,
-          repeat => 2
-        }
+          schedule { puppet:
+            period => hourly,
+            repeat => 2
+          }
 
       This will cause resources to be applied every 30 minutes by default.
       "
@@ -47,14 +47,14 @@ module Puppet
       desc "The name of the schedule.  This name is used to retrieve the
         schedule when assigning it to an object:
 
-          schedule { daily:
-            period => daily,
-            range => \"2 - 4\",
-          }
-
-          exec { \"/usr/bin/apt-get update\":
-            schedule => daily
-          }
+            schedule { daily:
+              period => daily,
+              range => \"2 - 4\",
+            }
+  
+            exec { \"/usr/bin/apt-get update\":
+              schedule => daily
+            }
 
         "
       isnamevar
@@ -67,9 +67,9 @@ module Puppet
         seconds can be provided, using the normal colon as a separator.
         For instance:
 
-          schedule { maintenance:
-            range => \"1:30 - 4:30\"
-          }
+            schedule { maintenance:
+              range => \"1:30 - 4:30\"
+            }
 
         This is mostly useful for restricting certain resources to being
         applied in maintenance windows or during off-peak hours."

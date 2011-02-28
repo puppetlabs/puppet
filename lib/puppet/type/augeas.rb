@@ -98,10 +98,10 @@ Puppet::Type.newtype(:augeas) do
     can be either a string which contains a command or an array of commands.
     Commands supported are:
 
-        set [PATH] [VALUE]     Sets the value VALUE at loction PATH
-        rm [PATH]              Removes the node at location PATH
-        remove [PATH]          Synonym for rm
-        clear [PATH]           Keeps the node at PATH, but removes the value.
+        set [PATH] [VALUE]            Sets the value VALUE at loction PATH
+        rm [PATH]                     Removes the node at location PATH
+        remove [PATH]                 Synonym for rm
+        clear [PATH]                  Keeps the node at PATH, but removes the value.
         ins [LABEL] [WHERE] [PATH]    Inserts an empty node LABEL either [WHERE={before|after}] PATH.
         insert [LABEL] [WHERE] [PATH] Synonym for ins
 
