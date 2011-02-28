@@ -52,7 +52,12 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   # Override this if you need custom rendering.
   def render(result)
     render_method = Puppet::Network::FormatHandler.format(format).render_method
-    result.send(render_method)
+    if render_method == "to_pson"
+      jj result
+      exit(0)
+    else
+      result.send(render_method)
+    end
   end
 
   def setup
