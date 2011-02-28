@@ -21,6 +21,11 @@ module Puppet
         fstab and mount it. Set to `present` to add to fstab but not change
         mount/unmount status"
 
+      #  IS        -> SHOULD     In Sync  Action
+      #  ghost     -> present    NO       create
+      #  absent    -> present    NO       create
+      # (mounted   -> present    YES)
+      # (unmounted -> present    YES)
       newvalue(:defined) do
         provider.create
         return :mount_created
@@ -28,27 +33,48 @@ module Puppet
 
       aliasvalue :present, :defined
 
+      #  IS        -> SHOULD     In Sync  Action
+      #  ghost     -> unmounted  NO       create, unmount
+      #  absent    -> unmounted  NO       create
+      #  mounted   -> unmounted  NO       unmount
       newvalue(:unmounted) do
-        if provider.mounted?
-          syncothers
+        case self.retrieve
+        when :ghost   # (not in fstab but mounted)
+          provider.create
+          @resource.flush
           provider.unmount
           return :mount_unmounted
-        else
+        when nil, :absent  # (not in fstab and not mounted)
           provider.create
           return :mount_created
+        when :mounted # (in fstab and mounted)
+          provider.unmount
+          syncothers # I guess it's more likely that the mount was originally mounted with
+                     # the wrong attributes so I sync AFTER the umount
+          return :mount_unmounted
+        else
+          raise Puppet::Error, "Unexpected change from #{current_value} to unmounted}"
         end
       end
 
+      #  IS        -> SHOULD     In Sync  Action
+      #  ghost     -> absent     NO       unmount
+      #  mounted   -> absent     NO       provider.destroy AND unmount
+      #  unmounted -> absent     NO       provider.destroy
       newvalue(:absent, :event => :mount_deleted) do
+        current_value = self.retrieve
         provider.unmount if provider.mounted?
-
-        provider.destroy
+        provider.destroy unless current_value == :ghost
       end
 
+      #  IS        -> SHOULD     In Sync  Action
+      #  ghost     -> mounted    NO       provider.create
+      #  absent    -> mounted    NO       provider.create AND mount
+      #  unmounted -> mounted    NO       mount
       newvalue(:mounted, :event => :mount_mounted) do
         # Create the mount point if it does not already exist.
         current_value = self.retrieve
-        provider.create if current_value.nil? or current_value == :absent
+        provider.create if [nil, :absent, :ghost].include?(current_value)
 
         syncothers
 
@@ -56,24 +82,13 @@ module Puppet
         provider.mount unless provider.mounted?
       end
 
+      # insync: mounted   -> present
+      #         unmounted -> present
       def insync?(is)
-        if should == :defined and is != :absent
+        if should == :defined and [:mounted,:unmounted].include?(is)
           true
         else
           super
-        end
-      end
-
-      def retrieve
-        # We need to special case :mounted; if we're absent, we still
-        # want
-        curval = super()
-        if curval == :absent
-          return :absent
-        elsif provider.mounted?
-          return :mounted
-        else
-          return :unmounted
         end
       end
 

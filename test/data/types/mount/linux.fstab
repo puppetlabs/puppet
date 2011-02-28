@@ -9,3 +9,4 @@ proc                    /proc                   proc    defaults        0 0
 /dev/vg00/lv01          /spare                  ext3    defaults        1 2
 sysfs                   /sys                    sysfs   defaults        0 0
 LABEL=SWAP-hda6         swap                    swap    defaults        0 0
+/dev/sda1               /usr                    xfs     noatime         0 0
