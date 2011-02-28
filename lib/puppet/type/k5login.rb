@@ -1,5 +1,3 @@
-# $Id: k5login.rb 2468 2007-08-07 23:30:20Z digant $
-#
 # Plug-in type for handling k5login files
 
 Puppet::Type.newtype(:k5login) do
