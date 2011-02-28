@@ -194,7 +194,6 @@ module Puppet
       connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
       connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
         case response.code
-        when "404"; nil
         when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
         else
           # Raise the http error if we didn't get a 'success' of some kind.
