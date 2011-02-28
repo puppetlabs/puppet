@@ -1,26 +1,24 @@
-2.6.5rc5
-========
+2.6.5
+=====
+30fa41d Updated CHANGELOG for 2.6.5rc5
 b481321 (#6337) Fix Ruby warning on 1.8.6 about "future compatibility"
 dcce45c (#6353) Restore the ability to store paths in the filebucket
 0450197 (#6126) Puppet inspect now reports status after run completes.
 960890f (#6364) Adjust mis-translated regex in mount provider for AIX
-
-2.6.5rc4
-========
+9e0f9c5 Updated CHANGELOG for 2.6.5rc4
 664ef67 (#3646) Fix the documentation fix for `puppet apply --apply`
-
-2.6.5rc3
-========
+4b6519a Updated CHANGELOG for 2.6.5rc3
 7ef2fbf Updated fix for #3646 - apply / compile documentation
 193016d (#5977) fix spec test failure when new applications are introduced.
-
-2.6.5rc2
-========
+c08fc1b Updated CHANGELOG for 2.6.5rc2
 1f89906 (#6257) Speed up PUT and POST requests under rack
-7b3b56e (5977) Puppet::Applications can be loaded from multiple paths.
-
-2.6.5rc1
-========
+70a43c4 Updated CHANGELOG and version for 2.6.5rc1
+f108f03 (#6018) Nick F's --help text for puppet inspect.
+04ea826 (#5823) document the not-an-API status of set_run_mode
+4ff5769 (#5823) run mode can now be set dynamically...
+bddfa1e (6114) Update the audit metaparameter for 2.6.5.
+ac8d316 Fix for #5755 -- making zaml serialization robust over projected objects
+c912a2a (#4139) hook log autoflush into global defaults
 f9e2e2b Augmentation of tests for prior commit
 392504a Fix to fix for #5755 -- backref serialization issues in zaml
 a732a15 Fixed #5564 - Added some more fqdn_rand documentation
@@ -66,6 +64,7 @@ ae48634 Fixed #5914 Removed genconfig = true from genconfig output
 e58f5dc Fixed #5742 - Removed legacy fqdn option from documentation
 4d1b51f Fixed #5167 - misleading documentation in the defaults of [main]
 c1b5c7f (#5913) Fix Puppet::Application.find constant lookup behavior
+7b3b56e (5977) Puppet::Applications can be loaded from multiple paths.
 f9bfb96 (#5900) Include ResourceStatus#failed in serialized reports
 79b6332 (#5882) Added error-handling for bucketing files in puppet inspect
 17843d5 (#5882) Added error-handling to puppet inspect when auditing
