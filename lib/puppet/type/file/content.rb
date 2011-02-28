@@ -17,19 +17,19 @@ module Puppet
 
     desc "Specify the contents of a file as a string.  Newlines, tabs, and
       spaces can be specified using the escaped syntax (e.g., \\n for a newline).  The primary purpose of this parameter is to provide a
-      kind of limited templating::
+      kind of limited templating:
 
-        define resolve(nameserver1, nameserver2, domain, search) {
-          $str = \"search $search
-        domain $domain
-        nameserver $nameserver1
-        nameserver $nameserver2
-        \"
+          define resolve(nameserver1, nameserver2, domain, search) {
+              $str = \"search $search
+                  domain $domain
+                  nameserver $nameserver1
+                  nameserver $nameserver2
+                  \"
 
-          file { \"/etc/resolv.conf\":
-            content => $str
+              file { \"/etc/resolv.conf\":
+                content => $str
+              }
           }
-        }
 
       This attribute is especially useful when used with templating."
 
