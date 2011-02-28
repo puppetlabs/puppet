@@ -2,201 +2,145 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
-require 'puppet_spec/files'
 require 'puppet/provider/mount'
 
 describe Puppet::Provider::Mount do
-  include PuppetSpec::Files
-
   before :each do
+    @mounter = Object.new
+    @mounter.extend(Puppet::Provider::Mount)
+
     @name = "/"
 
-    @resource = Puppet::Type.type(:mount).new(
-      :name => '/',
-      :device => '/dev/sda1',
-      :target => tmpfile("mount_provider")
-    )
+    @resource = stub 'resource'
+    @resource.stubs(:[]).with(:name).returns(@name)
 
-    @mounter = Puppet::Type.type(:mount).defaultprovider().new(@resource)
+    @mounter.stubs(:resource).returns(@resource)
   end
 
-  describe "when calling mount!" do
+  describe Puppet::Provider::Mount, " when mounting" do
+
+    before :each do
+      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+    end
+
     it "should use the 'mountcmd' method to mount" do
       @mounter.stubs(:options).returns(nil)
       @mounter.expects(:mountcmd)
 
-      @mounter.mount!
-    end
-
-    it "should flush before mounting if a flush method exists" do
-      @mounter.meta_def(:flush) { }
-      @mounter.expects(:flush)
-      @mounter.stubs(:mountcmd)
-      @mounter.stubs(:options).returns(nil)
-
-      @mounter.mount!
+      @mounter.mount
     end
 
     it "should add the options following '-o' if they exist and are not set to :absent" do
       @mounter.stubs(:options).returns("ro")
       @mounter.expects(:mountcmd).with { |*ary| ary[0] == "-o" and ary[1] == "ro" }
 
-      @mounter.mount!
+      @mounter.mount
     end
 
     it "should specify the filesystem name to the mount command" do
       @mounter.stubs(:options).returns(nil)
       @mounter.expects(:mountcmd).with { |*ary| ary[-1] == @name }
 
-      @mounter.mount!
+      @mounter.mount
     end
+
+    it "should update the :ensure state to :mounted if it was :unmounted before" do
+      @mounter.expects(:mountcmd)
+      @mounter.stubs(:options).returns(nil)
+      @mounter.expects(:get).with(:ensure).returns(:unmounted)
+      @mounter.expects(:set).with(:ensure => :mounted)
+      @mounter.mount
+    end
+
+    it "should update the :ensure state to :ghost if it was :absent before" do
+      @mounter.expects(:mountcmd)
+      @mounter.stubs(:options).returns(nil)
+      @mounter.expects(:get).with(:ensure).returns(:absent)
+      @mounter.expects(:set).with(:ensure => :ghost)
+      @mounter.mount
+    end
+
   end
 
-  describe "when remounting" do
+  describe Puppet::Provider::Mount, " when remounting" do
+
     it "should use '-o remount' if the resource specifies it supports remounting" do
       @mounter.stubs(:info)
-      @resource[:remounts] = true
+      @resource.stubs(:[]).with(:remounts).returns(:true)
       @mounter.expects(:mountcmd).with("-o", "remount", @name)
       @mounter.remount
     end
 
     it "should unmount and mount if the resource does not specify it supports remounting" do
       @mounter.stubs(:info)
-      @resource[:remounts] = false
+      @resource.stubs(:[]).with(:remounts).returns(false)
       @mounter.expects(:unmount)
       @mounter.expects(:mount)
       @mounter.remount
     end
 
     it "should log that it is remounting" do
-      @resource[:remounts] = true
+      @resource.stubs(:[]).with(:remounts).returns(:true)
       @mounter.stubs(:mountcmd)
       @mounter.expects(:info).with("Remounting")
       @mounter.remount
     end
   end
 
-  describe "when unmounting" do
+  describe Puppet::Provider::Mount, " when unmounting" do
+
+    before :each do
+      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+    end
+
     it "should call the :umount command with the resource name" do
       @mounter.expects(:umount).with(@name)
       @mounter.unmount
     end
+
+    it "should update the :ensure state to :absent if it was :ghost before" do
+      @mounter.expects(:umount).with(@name).returns true
+      @mounter.expects(:get).with(:ensure).returns(:ghost)
+      @mounter.expects(:set).with(:ensure => :absent)
+      @mounter.unmount
+    end
+
+    it "should update the :ensure state to :unmounted if it was :mounted before" do
+      @mounter.expects(:umount).with(@name).returns true
+      @mounter.expects(:get).with(:ensure).returns(:mounted)
+      @mounter.expects(:set).with(:ensure => :unmounted)
+      @mounter.unmount
+    end
+
   end
 
-  %w{Darwin Solaris HP-UX AIX Other}.each do |platform|
-    describe "on #{platform}" do
-      before :each do
-        case platform
-        when 'Darwin'
-          mount_fixture = 'mount-output.darwin.txt'
-          @mount_device = '/dev/disk0s3'
-          @mount_point = '/usr'
-        when 'Solaris'
-          mount_fixture = 'mount-output.solaris.txt'
-          @mount_device = 'swap'
-          @mount_point = '/tmp'
-        when 'HP-UX'
-          mount_fixture = 'mount-output.hp-ux.txt'
-          @mount_device = 'swap'
-          @mount_point = '/tmp'
-        when 'AIX'
-          mount_fixture = 'mount-output.aix.txt'
-          @mount_device = '/dev/hd2'
-          @mount_point = '/usr'
-        when 'Other'
-          mount_fixture = 'mount-output.other.txt'
-          @mount_device = '/dev/sda2'
-          @mount_point = '/usr'
-        end
-        @mount_data = File.read(File.join(File.dirname(__FILE__), '..', '..', 'fixtures', 'unit', 'provider', 'mount', mount_fixture))
-        Facter.stubs(:value).with("operatingsystem").returns(platform)
-      end
+  describe Puppet::Provider::Mount, " when determining if it is mounted" do
 
-      describe "when the correct thing is mounted" do
-        before :each do
-          @mounter.expects(:mountcmd).returns(@mount_data)
-          @resource.stubs(:[]).with(:name).returns(@mount_point)
-          @resource.stubs(:[]).with(:device).returns(@mount_device)
-        end
-
-        it "should say anything_mounted?" do
-          @mounter.should be_anything_mounted
-        end
-
-        it "should say correctly_mounted?" do
-          @mounter.should be_correctly_mounted
-        end
-      end
-
-      describe "when the wrong thing is mounted" do
-        before :each do
-          @mounter.expects(:mountcmd).returns(@mount_data)
-          @resource.stubs(:[]).with(:name).returns(@mount_point)
-          @resource.stubs(:[]).with(:device).returns('/dev/bogus/thing')
-        end
-
-        it "should say anything_mounted?" do
-          @mounter.should be_anything_mounted
-        end
-
-        it "should not say correctly_mounted?" do
-          @mounter.should_not be_correctly_mounted
-        end
-      end
-
-      describe "when nothing is mounted" do
-        before :each do
-          @mounter.expects(:mountcmd).returns(@mount_data)
-          @resource.stubs(:[]).with(:name).returns('/bogus/location')
-          @resource.stubs(:[]).with(:device).returns(@mount_device)
-        end
-
-        it "should not say anything_mounted?" do
-          @mounter.should_not be_anything_mounted
-        end
-
-        it "should not say correctly_mounted?" do
-          @mounter.should_not be_correctly_mounted
-        end
-      end
+    it "should query the property_hash" do
+      @mounter.expects(:get).with(:ensure).returns(:mounted)
+      @mounter.mounted?
     end
+
+    it "should return true if prefetched value is :mounted" do
+      @mounter.stubs(:get).with(:ensure).returns(:mounted)
+      @mounter.mounted? == true
+    end
+
+    it "should return true if prefetched value is :ghost" do
+      @mounter.stubs(:get).with(:ensure).returns(:ghost)
+      @mounter.mounted? == true
+    end
+
+    it "should return false if prefetched value is :absent" do
+      @mounter.stubs(:get).with(:ensure).returns(:absent)
+      @mounter.mounted? == false
+    end
+
+    it "should return false if prefetched value is :unmounted" do
+      @mounter.stubs(:get).with(:ensure).returns(:unmounted)
+      @mounter.mounted? == false
+    end
+
   end
 
-  describe "when mounting a device" do
-    it "should not mount! or unmount anything when the correct device is mounted" do
-      @mounter.stubs(:correctly_mounted?).returns(true)
-
-      @mounter.expects(:anything_mounted?).never
-      @mounter.expects(:create).once
-      @mounter.expects(:mount!).never
-      @mounter.expects(:unmount).never
-      FileUtils.expects(:mkdir_p).never
-
-      @mounter.mount
-    end
-
-    it "should mount the device when nothing is mounted at the desired point" do
-      @mounter.stubs(:correctly_mounted?).returns(false)
-      @mounter.stubs(:anything_mounted?).returns(false)
-
-      @mounter.expects(:create).once
-      @mounter.expects(:mount!).once
-      @mounter.expects(:unmount).never
-      FileUtils.expects(:mkdir_p).never
-
-      @mounter.mount
-    end
-
-    it "should unmount the incorrect device and mount the correct device" do
-      @mounter.stubs(:correctly_mounted?).returns(false)
-      @mounter.stubs(:anything_mounted?).returns(true)
-
-      @mounter.expects(:create).once
-      @mounter.expects(:mount!).once
-      @mounter.expects(:unmount).once
-      FileUtils.expects(:mkdir_p).with(@name).returns(true)
-
-      @mounter.mount
-    end
-  end
 end

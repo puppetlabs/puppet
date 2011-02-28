@@ -14,3 +14,4 @@
 /export on rpool/export read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90006 on Thu Feb 17 14:37:48 2011
 /export/home on rpool/export/home read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90007 on Thu Feb 17 14:37:48 2011
 /rpool on rpool read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90009 on Thu Feb 17 14:37:48 2011
+/ghost on /dev/fake read/write/setuid/devices/nonbmand/exec/xattr/atime/dev=2d90009 on Thu Feb 17 14:37:48 2011
