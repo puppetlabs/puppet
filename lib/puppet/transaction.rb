@@ -4,11 +4,8 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/application'
-require 'puppet/util/instrumentation'
 
 class Puppet::Transaction
-  include Puppet::Util::Instrumentation
-
   require 'puppet/transaction/event'
   require 'puppet/transaction/event_manager'
   require 'puppet/transaction/resource_harness'
@@ -141,10 +138,8 @@ class Puppet::Transaction
           next
         end
         ret = nil
-        instrument("evaluating #{resource}") do
-          seconds = thinmark do
-            ret = eval_resource(resource)
-          end
+        seconds = thinmark do
+          ret = eval_resource(resource)
         end
 
         resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?

@@ -5,12 +5,10 @@ require 'puppet/network/http/api/v1'
 require 'puppet/network/rest_authorization'
 require 'puppet/network/rights'
 require 'resolv'
-require 'puppet/util/instrumentation'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::HTTP::API::V1
   include Puppet::Network::RestAuthorization
-  include Puppet::Util::Instrumentation
 
   attr_reader :server, :handler
 
@@ -67,9 +65,7 @@ module Puppet::Network::HTTP::Handler
 
     check_authorization(indirection, method, key, params)
 
-    instrument("processing #{indirection} #{key}") do
-      send("do_#{method}", indirection, key, params, request, response)
-    end
+    send("do_#{method}", indirection, key, params, request, response)
   rescue SystemExit,NoMemoryError
     raise
   rescue Exception => e
