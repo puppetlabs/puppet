@@ -136,7 +136,7 @@ class Puppet::Application::Master < Puppet::Application
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    Puppet.settings.use :main, :master, :ssl
+    Puppet.settings.use :main, :master, :ssl, :metrics
 
     # Cache our nodes in yaml.  Currently not configurable.
     Puppet::Node.cache_class = :yaml
