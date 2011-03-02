@@ -211,7 +211,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_path, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if self.class.get_macosx_version_major == "10.6":
+    if self.class.get_macosx_version_major == "10.6"
       if FileTest.file?(Launchd_Overrides) and overrides = self.class.read_plist(Launchd_Overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
