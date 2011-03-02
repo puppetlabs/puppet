@@ -245,7 +245,7 @@ License
       out = %x{ping -c 1 #{host}}
       unless $CHILD_STATUS == 0
         $stderr.print "Could not contact #{host}\n"
-        next
+        exit($CHILD_STATUS)
       end
     end
 
