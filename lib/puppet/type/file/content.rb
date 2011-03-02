@@ -164,13 +164,15 @@ module Puppet
       Puppet.settings[:name] == "apply"
     end
 
+    # the content is munged so if it's a checksum source_or_content is nil
+    # unless the checksum indirectly comes from source
     def each_chunk_from(source_or_content)
       if source_or_content.is_a?(String)
         yield source_or_content
-      elsif source_or_content.nil? && resource.parameter(:ensure) && [:present, :file].include?(resource.parameter(:ensure).value)
-        yield ''
-      elsif source_or_content.nil?
+      elsif content_is_really_a_checksum? && source_or_content.nil?
         yield read_file_from_filebucket
+      elsif source_or_content.nil?
+        yield ''
       elsif self.class.standalone?
         yield source_or_content.content
       elsif source_or_content.local?
@@ -181,6 +183,10 @@ module Puppet
     end
 
     private
+
+    def content_is_really_a_checksum?
+      checksum?(should)
+    end
 
     def chunk_file_from_disk(source_or_content)
       File.open(source_or_content.full_path, "r") do |src|
