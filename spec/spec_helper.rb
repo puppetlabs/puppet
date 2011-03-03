@@ -6,7 +6,6 @@ dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift("#{dir}/")
 $LOAD_PATH.unshift("#{dir}/lib") # a spec-specific test lib dir
 $LOAD_PATH.unshift("#{dir}/../lib")
-$LOAD_PATH.unshift("#{dir}/../test/lib")
 
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
@@ -18,9 +17,6 @@ gem 'rspec', '>=2.0.0'
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
   FIXTURE_DIR = File.join(dir = File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
-end
-
-module PuppetTest
 end
 
 require 'lib/puppet_spec/files'
