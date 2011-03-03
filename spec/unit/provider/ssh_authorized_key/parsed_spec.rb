@@ -3,7 +3,6 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 require 'puppet_spec/files'
-require 'puppettest/support/utils'
 require 'puppettest/fileparsing'
 require 'puppettest/fakes'
 
@@ -11,7 +10,6 @@ provider_class = Puppet::Type.type(:ssh_authorized_key).provider(:parsed)
 
 describe provider_class do
   include PuppetSpec::Files
-  extend PuppetTest::Support::Utils
   include PuppetTest
   include PuppetTest::FileParsing
 
@@ -50,11 +48,11 @@ describe provider_class do
     @provider.target_object(@keyfile).read
   end
 
-  fakedata("data/providers/ssh_authorized_key/parsed").each { |file|
+  my_fixtures do |file|
     it "should be able to parse example data in #{file}" do
       fakedataparse(file)
     end
-  }
+  end
 
   it "should be able to generate a basic authorized_keys file" do
 

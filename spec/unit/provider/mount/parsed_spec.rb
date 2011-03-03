@@ -5,11 +5,9 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
-require 'puppettest/support/utils'
 require 'puppettest/fileparsing'
 
 module ParsedMountTesting
-  include PuppetTest::Support::Utils
   include PuppetTest::FileParsing
 
   def fake_fstab
@@ -23,7 +21,7 @@ module ParsedMountTesting
       name = "linux.fstab"
     end
     oldpath = @provider_class.default_target
-    fakefile(File::join("data/types/mount", name))
+    my_fixture(name)
   end
 
   def mkmountargs
