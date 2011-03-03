@@ -3,7 +3,6 @@ require 'puppet/indirector'
 # A class for managing nodes, including their facts and environment.
 class Puppet::Node
   require 'puppet/node/facts'
-  require 'puppet/node/inventory'
   require 'puppet/node/environment'
 
   # Set up indirection, so that nodes can be looked for in
