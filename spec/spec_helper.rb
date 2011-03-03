@@ -24,10 +24,13 @@ module PuppetTest
 end
 
 require 'lib/puppet_spec/files'
+require 'lib/puppet_spec/fixtures'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
 
 RSpec.configure do |config|
+  include PuppetSpec::Fixtures
+
   config.mock_with :mocha
 
   config.before :each do
