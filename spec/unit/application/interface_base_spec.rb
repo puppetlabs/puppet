@@ -37,7 +37,7 @@ describe Puppet::Application::InterfaceBase do
 
   describe "during setup" do
     before do
-      @app.command_line.stubs(:args).returns("find", "myname", "myarg")
+      @app.command_line.stubs(:args).returns(["find", "myname", "myarg"])
       @app.stubs(:validate)
     end
 
@@ -47,9 +47,9 @@ describe Puppet::Application::InterfaceBase do
     end
 
     it "should make sure arguments are an array" do
-      @app.command_line.stubs(:args).returns(["find", "myname"])
+      @app.command_line.stubs(:args).returns(["find", "myname", "myarg"])
       @app.setup
-      @app.arguments.should == ["myname"]
+      @app.arguments.should == ["myname", "myarg"]
     end
 
     it "should set the options on the interface" do

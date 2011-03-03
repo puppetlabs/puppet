@@ -63,7 +63,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   def setup
     Puppet::Util::Log.newdestination :console
 
-    @verb = command_line.args.shift 
+    @verb = command_line.args.shift
     @arguments = command_line.args
     @arguments ||= []
 
