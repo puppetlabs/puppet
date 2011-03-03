@@ -7,7 +7,10 @@ Puppet::Interface::Indirector.new(:facts) do
   # Upload our facts to the server
   action(:upload) do |*args|
     Puppet::Node::Facts.indirection.terminus_class = :facter
-    Puppet::Node::Facts.indirection.cache_class = :rest
-    Puppet::Node::Facts.indirection.find(Puppet[:certname])
+    facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
+    Puppet::Node::Facts.indirection.terminus_class = :rest
+    Puppet::Node::Facts.indirection.save(facts)
+    Puppet.notice "Uploaded facts for '#{Puppet[:certname]}'"
+    nil
   end
 end
