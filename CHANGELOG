@@ -1,3 +1,8 @@
+2.6.6rc1
+========
+7c2a980 (#6541) Fix content with checksum truncation bug
+63e911f (#6418) Recursive files shouldn't be audited
+
 2.6.5
 =====
 30fa41d Updated CHANGELOG for 2.6.5rc5
