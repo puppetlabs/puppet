@@ -4,26 +4,9 @@
 #  Copyright (c) 2006. All rights reserved.
 
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
-
-require 'puppettest/fileparsing'
+require 'shared_behaviours/all_parsedfile_providers'
 
 module ParsedMountTesting
-  include PuppetTest::FileParsing
-
-  def fake_fstab
-    os = Facter['operatingsystem']
-    if os == "Solaris"
-      name = "solaris.fstab"
-    elsif os == "FreeBSD"
-      name = "freebsd.fstab"
-    else
-      # Catchall for other fstabs
-      name = "linux.fstab"
-    end
-    oldpath = @provider_class.default_target
-    my_fixture(name)
-  end
-
   def mkmountargs
     mount = nil
 
@@ -79,7 +62,13 @@ describe provider_class do
   describe provider_class do
     include ParsedMountTesting
 
+    it_should_behave_like "all parsedfile providers",
+      provider_class, my_fixtures('*.fstab')
+
     it "should be able to parse all of the example mount tabs" do
+      pending "REVISIT: these may want to be dropped, or maybe rewritten."
+      # fake_fstab was just one of the *.fstab files, based on running OS,
+      # despite the claim in the title of this test. --daniel 2011-03-03
       tab = fake_fstab
       @provider = @provider_class
 
