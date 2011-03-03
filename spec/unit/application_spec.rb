@@ -287,6 +287,7 @@ describe Puppet::Application do
 
       it "should call exit" do
         @app.expects(:exit)
+        @app.stubs(:puts)
 
         @app.handle_help(nil)
       end
