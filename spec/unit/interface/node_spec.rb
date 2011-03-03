@@ -12,6 +12,10 @@ describe Puppet::Interface.interface(:node) do
     @interface.should be_instance_of(Puppet::Interface::Indirector)
   end
 
+  it "should set its default format to :yaml" do
+    @interface.default_format.should == :yaml
+  end
+
   it "should refer to the 'node' indirection" do
     @interface.indirection.name.should == :node
   end
