@@ -30,6 +30,23 @@ require 'monkey_patches/publicize_methods'
 RSpec.configure do |config|
   config.mock_with :mocha
 
+  config.before :each do
+    # these globals are set by Application
+    $puppet_application_mode = nil
+    $puppet_application_name = nil
+
+    # Set the confdir and vardir to gibberish so that tests
+    # have to be correctly mocked.
+    Puppet[:confdir] = "/dev/null"
+    Puppet[:vardir] = "/dev/null"
+
+    # Avoid opening ports to the outside world
+    Puppet.settings[:bindaddress] = "127.0.0.1"
+
+    @logs = []
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
+  end
+
   config.after :each do
     Puppet.settings.clear
     Puppet::Node::Environment.clear
@@ -58,23 +75,6 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
-  end
-
-  config.before :each do
-    # these globals are set by Application
-    $puppet_application_mode = nil
-    $puppet_application_name = nil
-
-    # Set the confdir and vardir to gibberish so that tests
-    # have to be correctly mocked.
-    Puppet[:confdir] = "/dev/null"
-    Puppet[:vardir] = "/dev/null"
-
-    # Avoid opening ports to the outside world
-    Puppet.settings[:bindaddress] = "127.0.0.1"
-
-    @logs = []
-    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
   end
 end
 
