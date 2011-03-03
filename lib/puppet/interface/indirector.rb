@@ -26,6 +26,15 @@ class Puppet::Interface::Indirector < Puppet::Interface
     call_indirection_method(:search, *args)
   end
 
+  # Print the configuration for the current terminus class
+  action :info do |*args|
+    if t = indirection.terminus_class
+      puts "Run mode '#{Puppet.run_mode.name}': #{t}"
+    else
+      $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
+    end
+  end
+
   attr_accessor :from
 
   def indirection_name

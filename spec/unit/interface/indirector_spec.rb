@@ -45,15 +45,19 @@ describe Puppet::Interface::Indirector do
       @instance.indirection.expects(method).with(:test, "myargs")
       @instance.send(method, :test, "myargs")
     end
+  end
 
-    it "should be able to override its indirection name" do
-      @instance.set_indirection_name :foo
-      @instance.indirection_name.should == :foo
-    end
+  it "should be able to override its indirection name" do
+    @instance.set_indirection_name :foo
+    @instance.indirection_name.should == :foo
+  end
 
-    it "should be able to set its terminus class" do
-      @instance.indirection.expects(:terminus_class=).with(:myterm)
-      @instance.set_terminus(:myterm)
-    end
+  it "should be able to set its terminus class" do
+    @instance.indirection.expects(:terminus_class=).with(:myterm)
+    @instance.set_terminus(:myterm)
+  end
+
+  it "should define a class-level 'info' action" do
+    Puppet::Interface::Indirector.should be_action(:info)
   end
 end

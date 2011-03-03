@@ -50,10 +50,6 @@ describe Puppet::Interface do
     Puppet::Interface.autoloader.should be_instance_of(Puppet::Util::Autoload)
   end
 
-  it "should define a class-level 'showconfig' action" do
-    Puppet::Interface.should be_action(:showconfig)
-  end
-
   it "should set any provided options" do
     Puppet::Interface.new(:me, :verb => "foo").verb.should == "foo"
   end

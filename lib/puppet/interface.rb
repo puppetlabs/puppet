@@ -82,15 +82,6 @@ class Puppet::Interface
 
   attr_accessor :type, :verb, :name, :arguments, :options
 
-  # Print the configuration for the current terminus class
-  action :showconfig do |*args|
-    if t = indirection.terminus_class
-      puts "Run mode #{Puppet.run_mode}: #{t}"
-    else
-      $stderr.puts "No default terminus class for run mode #{Puppet.run_mode}"
-    end
-  end
-
   def initialize(name, options = {}, &block)
     @name = name
 
