@@ -42,8 +42,7 @@ describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
     @subject = @subject_class.new
     @subject.name = :me
 
-    Puppet.settings.stubs(:value).returns("bogus setting data")
-    Puppet.settings.stubs(:value).with(:queue_type).returns(:test_client)
+    Puppet[:queue_type] = :test_client
     Puppet::Util::Queue.stubs(:queue_type_to_class).with(:test_client).returns(Puppet::Indirector::Queue::TestClient)
 
     @request = stub 'request', :key => :me, :instance => @subject
@@ -112,9 +111,12 @@ describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
 
     it "should log but not propagate errors" do
       @store_class.client.expects(:subscribe).yields("foo")
-      @store_class.expects(:intern).raises ArgumentError
-      Puppet.expects(:err)
-      @store_class.subscribe {|o| o }
+      @store_class.expects(:intern).raises(ArgumentError)
+      expect { @store_class.subscribe {|o| o } }.should_not raise_error
+
+      @logs.length.should == 1
+      @logs.first.message.should =~ /Error occured with subscription to queue my_queue for indirection my_queue: ArgumentError/
+      @logs.first.level.should == :err
     end
   end
 end
