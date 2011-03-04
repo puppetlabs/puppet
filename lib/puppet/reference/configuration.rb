@@ -122,7 +122,7 @@ likewise be redirected to a file:
 Puppet can also create user and group accounts for itself (one `puppet` group
 and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument:
 
-    $ puppet agent --mkusers
+    $ puppet master --mkusers
 
 ## Signals
 
