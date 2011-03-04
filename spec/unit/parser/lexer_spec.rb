@@ -651,11 +651,8 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 end
 
-require File.dirname(__FILE__) + '/../../../test/lib/puppettest'
-require File.dirname(__FILE__) + '/../../../test/lib/puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
-  extend PuppetTest::Support::Utils
-  textfiles do |file|
+  my_fixtures('*.pp') do |file|
     it "should correctly lex #{file}" do
       lexer = Puppet::Parser::Lexer.new
       lexer.file = file

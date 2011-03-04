@@ -281,7 +281,7 @@ describe Puppet::Parser do
     it "should include docs when the AST class uses them" do
       @class.expects(:use_docs).returns true
       @class.stubs(:new)
-      @parser.expects(:ast_context).with{ |a| a[0] == true }.returns({})
+      @parser.expects(:ast_context).with{ |*a| a[0] == true }.returns({})
       @parser.ast(@class, :file => "/bar")
     end
 

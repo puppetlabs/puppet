@@ -3,26 +3,23 @@
 Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
 
 require 'puppet/reports'
-require 'puppettest/support/utils'
 
 tagmail = Puppet::Reports.report(:tagmail)
 
 describe tagmail do
-  extend PuppetTest::Support::Utils
-
   before do
     @processor = Puppet::Transaction::Report.new("apply")
     @processor.extend(Puppet::Reports.report(:tagmail))
   end
 
-  passers = File.join(datadir, "reports", "tagmail_passers.conf")
+  passers = my_fixture "tagmail_passers.conf"
   File.readlines(passers).each do |line|
     it "should be able to parse '#{line.inspect}'" do
       @processor.parse(line)
     end
   end
 
-  failers = File.join(datadir, "reports", "tagmail_failers.conf")
+  failers = my_fixture "tagmail_failers.conf"
   File.readlines(failers).each do |line|
     it "should not be able to parse '#{line.inspect}'" do
       lambda { @processor.parse(line) }.should raise_error(ArgumentError)

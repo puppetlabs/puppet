@@ -6,7 +6,6 @@ dir = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift("#{dir}/")
 $LOAD_PATH.unshift("#{dir}/lib") # a spec-specific test lib dir
 $LOAD_PATH.unshift("#{dir}/../lib")
-$LOAD_PATH.unshift("#{dir}/../test/lib")
 
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
@@ -20,45 +19,15 @@ module PuppetSpec
   FIXTURE_DIR = File.join(dir = File.expand_path(File.dirname(__FILE__)), "fixtures") unless defined?(FIXTURE_DIR)
 end
 
-module PuppetTest
-end
-
 require 'lib/puppet_spec/files'
+require 'lib/puppet_spec/fixtures'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
 
 RSpec.configure do |config|
+  include PuppetSpec::Fixtures
+
   config.mock_with :mocha
-
-  config.after :each do
-    Puppet.settings.clear
-    Puppet::Node::Environment.clear
-    Puppet::Util::Storage.clear
-
-    if defined?($tmpfiles)
-      $tmpfiles.each do |file|
-        file = File.expand_path(file)
-        if Puppet.features.posix? and file !~ /^\/tmp/ and file !~ /^\/var\/folders/
-          puts "Not deleting tmpfile #{file} outside of /tmp or /var/folders"
-          next
-        elsif Puppet.features.microsoft_windows?
-          tempdir = File.expand_path(File.join(Dir::LOCAL_APPDATA, "Temp"))
-          if file !~ /^#{tempdir}/
-            puts "Not deleting tmpfile #{file} outside of #{tempdir}"
-            next
-          end
-        end
-        if FileTest.exist?(file)
-          system("chmod -R 755 '#{file}'")
-          system("rm -rf '#{file}'")
-        end
-      end
-      $tmpfiles.clear
-    end
-
-    @logs.clear
-    Puppet::Util::Log.close_all
-  end
 
   config.before :each do
     # these globals are set by Application
@@ -75,6 +44,17 @@ RSpec.configure do |config|
 
     @logs = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
+  end
+
+  config.after :each do
+    Puppet.settings.clear
+    Puppet::Node::Environment.clear
+    Puppet::Util::Storage.clear
+
+    PuppetSpec::Files.cleanup
+
+    @logs.clear
+    Puppet::Util::Log.close_all
   end
 end
 
