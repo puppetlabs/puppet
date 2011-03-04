@@ -5,7 +5,7 @@ module PuppetSpec::Fixtures
   def my_fixture_dir
     callers = caller
     while line = callers.shift do
-      next unless found = line.match(%r{puppet/spec/(.*)_spec\.rb:})
+      next unless found = line.match(%r{/spec/(.*)_spec\.rb:})
       return fixtures(found[1])
     end
     fail "sorry, I couldn't work out your path from the caller stack!"
