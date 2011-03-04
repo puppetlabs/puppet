@@ -305,7 +305,9 @@ describe Puppet::SimpleGraph do
 
     it "should produce the correct relationship text" do
       add_edges :a => :b, :b => :a
-      want = %r{Found 1 dependency cycle:\n\(a => b => a\)\nTry}
+      # cycle detection starts from a or b randomly
+      # so we need to check for either ordering in the error message
+      want = %r{Found 1 dependency cycle:\n\((a => b => a|b => a => b)\)\nTry}
       expect { @graph.topsort }.to raise_error(Puppet::Error, want)
     end
 
