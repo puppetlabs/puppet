@@ -331,7 +331,7 @@ describe Puppet::Util::Settings do
       @settings.value(:one, "env").should == "envval"
     end
 
-    it "should interpolate found values using the current environment" do
+    it 'should use the current environment for $environment' do
       @settings.setdefaults :main, :myval => ["$environment/foo", "mydocs"]
 
       @settings.value(:myval, "myenv").should == "myenv/foo"
