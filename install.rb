@@ -300,33 +300,27 @@ def prepare_installation
     mandir = Config::CONFIG['mandir']
   end
 
-  # To be deprecated once people move over to using --destdir option
-  if (destdir = ENV['DESTDIR'])
-    configdir = "#{destdir}#{configdir}"
-    bindir = "#{destdir}#{bindir}"
-    sbindir = "#{destdir}#{sbindir}"
-    mandir = "#{destdir}#{mandir}"
-    sitelibdir = "#{destdir}#{sitelibdir}"
-
-    FileUtils.makedirs(configdir) if InstallOptions.configs
-    FileUtils.makedirs(bindir)
-    FileUtils.makedirs(sbindir)
-    FileUtils.makedirs(mandir)
-    FileUtils.makedirs(sitelibdir)
   # This is the new way forward
-  elsif (destdir = InstallOptions.destdir)
-    configdir = "#{destdir}#{configdir}"
-    bindir = "#{destdir}#{bindir}"
-    sbindir = "#{destdir}#{sbindir}"
-    mandir = "#{destdir}#{mandir}"
-    sitelibdir = "#{destdir}#{sitelibdir}"
-
-    FileUtils.makedirs(configdir) if InstallOptions.configs
-    FileUtils.makedirs(bindir)
-    FileUtils.makedirs(sbindir)
-    FileUtils.makedirs(mandir)
-    FileUtils.makedirs(sitelibdir)
+  if not InstallOptions.destdir.nil?
+    destdir = InstallOptions.destdir
+  # To be deprecated once people move over to using --destdir option
+  elsif ENV['DESTDIR'] != nil?
+    destdir = ENV['DESTDIR']
+  else
+    destdir = ''
   end
+
+  configdir = "#{destdir}#{configdir}"
+  bindir = "#{destdir}#{bindir}"
+  sbindir = "#{destdir}#{sbindir}"
+  mandir = "#{destdir}#{mandir}"
+  sitelibdir = "#{destdir}#{sitelibdir}"
+
+  FileUtils.makedirs(configdir) if InstallOptions.configs
+  FileUtils.makedirs(bindir)
+  FileUtils.makedirs(sbindir)
+  FileUtils.makedirs(mandir)
+  FileUtils.makedirs(sitelibdir)
 
   tmpdirs << bindir
 
