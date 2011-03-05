@@ -284,7 +284,8 @@ describe Puppet::Util::Settings do
       @settings = Puppet::Util::Settings.new
       @settings.setdefaults :section,
         :config => ["/my/file", "a"],
-        :one => ["ONE", "a"]
+        :one => ["ONE", "a"],
+        :two => ["TWO", "b"]
       FileTest.stubs(:exist?).returns true
       Puppet.stubs(:run_mode).returns stub('run_mode', :name => :mymode)
     end
@@ -335,6 +336,14 @@ describe Puppet::Util::Settings do
       @settings.setdefaults :main, :myval => ["$environment/foo", "mydocs"]
 
       @settings.value(:myval, "myenv").should == "myenv/foo"
+    end
+
+    it "should interpolate found values using the current environment" do
+      text = "[main]\none = mainval\n[myname]\none = nameval\ntwo = $one/two\n"
+      @settings.stubs(:read_file).returns(text)
+      @settings.parse
+
+      @settings.value(:two, "myname").should == "nameval/two"
     end
 
     it "should return values in a specified environment before values in the main or name sections" do
