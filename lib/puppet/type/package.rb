@@ -15,7 +15,11 @@ module Puppet
       using based on the platform you are on, but you can override it
       using the `provider` parameter; each provider defines what it
       requires in order to function, and you must meet those requirements
-      to use a given provider."
+      to use a given provider.
+      
+      **Autorequires:** If Puppet is managing the files specified as a package's
+      `adminfile`, `responsefile`, or `source`, the package resource will autorequire
+      those files."
 
     feature :installable, "The provider can install packages.",
       :methods => [:install]
