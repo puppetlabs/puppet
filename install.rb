@@ -306,6 +306,7 @@ def prepare_installation
   # To be deprecated once people move over to using --destdir option
   elsif ENV['DESTDIR'] != nil?
     destdir = ENV['DESTDIR']
+    warn "DESTDIR is deprecated. Use --destdir instead."
   else
     destdir = ''
   end
