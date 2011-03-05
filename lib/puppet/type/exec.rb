@@ -22,7 +22,9 @@ module Puppet
       to native Puppet types as quickly as possible.  If you find that
       you are doing a lot of work with `exec`, please at least notify
       us at Puppet Labs what you are doing, and hopefully we can work with
-      you to get a native resource type for the work you are doing."
+      you to get a native resource type for the work you are doing.
+      
+      **Autorequires:** If Puppet is managing an exec's cwd or the executable file used in an exec's command, the exec resource will autorequire those files. If Puppet is managing the user that an exec should run as, the exec resource will autorequire that user."
 
     require 'open3'
 
