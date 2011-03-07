@@ -4,25 +4,18 @@ module Puppet::Parser::Functions
   :regsubst, :type => :rvalue,
 
   :doc => "
-  Perform regexp replacement on a string or array of strings.
+Perform regexp replacement on a string or array of strings.
 
 * *Parameters* (in order):
-
-    _target_  The string or array of strings to operate on.  If an array, the replacement will be performed on each of the elements in the array, and the return value will be an array.
-
-    _regexp_  The regular expression matching the target string.  If you want it anchored at the start and or end of the string, you must do that with ^ and $ yourself.
-
-    _replacement_  Replacement string. Can contain back references to what was matched using \\0, \\1, and so on.
-
-    _flags_  Optional. String of single letter flags for how the regexp is interpreted:
-
+    * _target_  The string or array of strings to operate on.  If an array, the replacement will be performed on each of the elements in the array, and the return value will be an array.
+    * _regexp_  The regular expression matching the target string.  If you want it anchored at the start and or end of the string, you must do that with ^ and $ yourself.
+    * _replacement_  Replacement string. Can contain backreferences to what was matched using \\0 (whole match), \\1 (first set of parentheses), and so on.
+    * _flags_  Optional. String of single letter flags for how the regexp is interpreted:
         - *E*         Extended regexps
         - *I*         Ignore case in regexps
         - *M*         Multiline regexps
         - *G*         Global replacement; all occurrences of the regexp in each target string will be replaced.  Without this, only the first occurrence will be replaced.
-
-    _lang_  Optional.  How to handle multibyte characters.  A single-character string with the following values:
-
+    * _encoding_  Optional.  How to handle multibyte characters.  A single-character string with the following values:
         - *N*         None
         - *E*         EUC
         - *S*         SJIS
@@ -32,7 +25,7 @@ module Puppet::Parser::Functions
 
 Get the third octet from the node's IP address:
 
-    $i3 = regsubst($ipaddress,'^([0-9]+)[.]([0-9]+)[.]([0-9]+)[.]([0-9]+)$','\\3')
+    $i3 = regsubst($ipaddress,'^(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$','\\3')
 
 Put angle brackets around each octet in the node's IP address:
 

@@ -4,13 +4,12 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
 
 content = Puppet::Type.type(:file).attrclass(:content)
 describe content do
+  include PuppetSpec::Files
   before do
-    @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+    @filename = tmpfile('testfile')
+    @resource = Puppet::Type.type(:file).new :path => @filename
+    File.open(@filename, 'w') {|f| f.write "initial file content"}
     content.stubs(:standalone?).returns(false)
-  end
-
-  it "should be a subclass of Property" do
-    content.superclass.must == Puppet::Property
   end
 
   describe "when determining the checksum type" do
@@ -249,10 +248,10 @@ describe content do
   describe "when writing" do
     before do
       @content = content.new(:resource => @resource)
-      @fh = stub_everything
     end
 
     it "should attempt to read from the filebucket if no actual content nor source exists" do
+      @fh = File.open(@filename, 'w')
       @content.should = "{md5}foo"
       @content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
       @content.write(@fh)
@@ -302,164 +301,66 @@ describe content do
 
     describe "from local source" do
       before(:each) do
-        @content.stubs(:actual_content).returns(nil)
-        @source = stub_everything 'source', :local? => true, :full_path => "/path/to/source"
-        @resource.stubs(:parameter).with(:source).returns @source
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
+        @sourcename = tmpfile('source')
+        @source_content = "source file content"*10000
+        @sourcefile = File.open(@sourcename, 'w') {|f| f.write @source_content}
 
-        @sum = stub_everything 'sum'
-        @resource.stubs(:parameter).with(:checksum).returns(@sum)
-
-        @digest = stub_everything 'digest'
-        @sum.stubs(:sum_stream).yields(@digest)
-
-        @file = stub_everything 'file'
-        File.stubs(:open).yields(@file)
-        @file.stubs(:read).with(8192).returns("chunk1").then.returns("chunk2").then.returns(nil)
+        @content = @resource.newattr(:content)
+        @source = @resource.newattr(:source)
+        @source.stubs(:metadata).returns stub_everything('metadata', :source => @sourcename, :ftype => 'file')
       end
 
-      it "should open the local file" do
-        File.expects(:open).with("/path/to/source", "r")
-        @content.write(@fh)
-      end
-
-      it "should read the local file by chunks" do
-        @file.expects(:read).with(8192).returns("chunk1").then.returns(nil)
-        @content.write(@fh)
-      end
-
-      it "should write each chunk to the file" do
-        @fh.expects(:print).with("chunk1").then.with("chunk2")
-        @content.write(@fh)
-      end
-
-      it "should pass each chunk to the current sum stream" do
-        @digest.expects(:<<).with("chunk1").then.with("chunk2")
-        @content.write(@fh)
+      it "should copy content from the source to the file" do
+        @resource.write(@source)
+        File.read(@filename).should == @source_content
       end
 
       it "should return the checksum computed" do
-        @sum.stubs(:sum_stream).yields(@digest).returns("checksum")
-        @content.write(@fh).should == "checksum"
+        File.open(@filename, 'w') do |file|
+          @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
+        end
       end
     end
 
     describe "from remote source" do
       before(:each) do
-        @response = stub_everything 'mock response', :code => "404"
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
+        @response = stub_everything 'response', :code => "200"
+        @source_content = "source file content"*10000
+        @response.stubs(:read_body).multiple_yields(*(["source file content"]*10000))
+
         @conn = stub_everything 'connection'
         @conn.stubs(:request_get).yields(@response)
         Puppet::Network::HttpPool.stubs(:http_instance).returns @conn
 
-        @content.stubs(:actual_content).returns(nil)
-        @source = stub_everything 'source', :local? => false, :full_path => "/path/to/source", :server => "server", :port => 1234
-        @resource.stubs(:parameter).with(:source).returns @source
-
-        @sum = stub_everything 'sum'
-        @resource.stubs(:parameter).with(:checksum).returns(@sum)
-
-        @digest = stub_everything 'digest'
-        @sum.stubs(:sum_stream).yields(@digest)
+        @content = @resource.newattr(:content)
+        @sourcename = "puppet:///test/foo"
+        @source = @resource.newattr(:source)
+        @source.stubs(:metadata).returns stub_everything('metadata', :source => @sourcename, :ftype => 'file')
       end
 
-      it "should open a network connection to source server and port" do
-        Puppet::Network::HttpPool.expects(:http_instance).with("server", 1234).returns @conn
-        @content.write(@fh)
-      end
-
-      it "should send the correct indirection uri" do
-        @conn.expects(:request_get).with { |uri,headers| uri == "/production/file_content/path/to/source" }.yields(@response)
-        @content.write(@fh)
-      end
-
-      it "should return nil if source is not found" do
-        @response.expects(:code).returns("404")
-        @content.write(@fh).should == nil
+      it "should write the contents to the file" do
+        @resource.write(@source)
+        File.read(@filename).should == @source_content
       end
 
       it "should not write anything if source is not found" do
-        @response.expects(:code).returns("404")
-        @fh.expects(:print).never
-        @content.write(@fh).should == nil
+        @response.stubs(:code).returns("404")
+        lambda {@resource.write(@source)}.should raise_error(Net::HTTPError) { |e| e.message =~ /404/ }
+        File.read(@filename).should == "initial file content"
       end
 
       it "should raise an HTTP error in case of server error" do
-        @response.expects(:code).returns("500")
-        lambda { @content.write(@fh) }.should raise_error
-      end
-
-      it "should write content by chunks" do
-        @response.expects(:code).returns("200")
-        @response.expects(:read_body).multiple_yields("chunk1","chunk2")
-        @fh.expects(:print).with("chunk1").then.with("chunk2")
-        @content.write(@fh)
-      end
-
-      it "should pass each chunk to the current sum stream" do
-        @response.expects(:code).returns("200")
-        @response.expects(:read_body).multiple_yields("chunk1","chunk2")
-        @digest.expects(:<<).with("chunk1").then.with("chunk2")
-        @content.write(@fh)
+        @response.stubs(:code).returns("500")
+        lambda { @content.write(@fh) }.should raise_error { |e| e.message.include? @source_content }
       end
 
       it "should return the checksum computed" do
-        @response.expects(:code).returns("200")
-        @response.expects(:read_body).multiple_yields("chunk1","chunk2")
-        @sum.expects(:sum_stream).yields(@digest).returns("checksum")
-        @content.write(@fh).should == "checksum"
+        File.open(@filename, 'w') do |file|
+          @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
+        end
       end
-
-      it "should get the current accept encoding header value" do
-        @content.expects(:add_accept_encoding)
-        @content.write(@fh)
-      end
-
-      it "should uncompress body on error" do
-        @response.expects(:code).returns("500")
-        @response.expects(:body).returns("compressed body")
-        @content.expects(:uncompress_body).with(@response).returns("uncompressed")
-        lambda { @content.write(@fh) }.should raise_error { |e| e.message =~ /uncompressed/ }
-      end
-
-      it "should uncompress chunk by chunk" do
-        uncompressor = stub_everything 'uncompressor'
-        @content.expects(:uncompress).with(@response).yields(uncompressor)
-        @response.expects(:code).returns("200")
-        @response.expects(:read_body).multiple_yields("chunk1","chunk2")
-
-        uncompressor.expects(:uncompress).with("chunk1").then.with("chunk2")
-        @content.write(@fh)
-      end
-
-      it "should write uncompressed chunks to the file" do
-        uncompressor = stub_everything 'uncompressor'
-        @content.expects(:uncompress).with(@response).yields(uncompressor)
-        @response.expects(:code).returns("200")
-        @response.expects(:read_body).multiple_yields("chunk1","chunk2")
-
-        uncompressor.expects(:uncompress).with("chunk1").returns("uncompressed1")
-        uncompressor.expects(:uncompress).with("chunk2").returns("uncompressed2")
-
-        @fh.expects(:print).with("uncompressed1")
-        @fh.expects(:print).with("uncompressed2")
-
-        @content.write(@fh)
-      end
-
-      it "should pass each uncompressed chunk to the current sum stream" do
-        uncompressor = stub_everything 'uncompressor'
-        @content.expects(:uncompress).with(@response).yields(uncompressor)
-        @response.expects(:code).returns("200")
-        @response.expects(:read_body).multiple_yields("chunk1","chunk2")
-
-        uncompressor.expects(:uncompress).with("chunk1").returns("uncompressed1")
-        uncompressor.expects(:uncompress).with("chunk2").returns("uncompressed2")
-
-        @digest.expects(:<<).with("uncompressed1").then.with("uncompressed2")
-        @content.write(@fh)
-      end
-    end
-
-    describe "from a filebucket" do
     end
 
     # These are testing the implementation rather than the desired behaviour; while that bites, there are a whole
@@ -474,17 +375,38 @@ describe content do
         @content.each_chunk_from('i_am_a_string') { |chunk| chunk.should == 'i_am_a_string' }
       end
 
+      # The following manifest is a case where source and content.should are both set
+      # file { "/tmp/mydir" :
+      #   source  => '/tmp/sourcedir',
+      #   recurse => true,
+      # }
+      it "when content checksum comes from source" do
+        source_param = Puppet::Type.type(:file).attrclass(:source)
+        source = source_param.new(:resource => @resource)
+        @content.should = "{md5}123abcd"
+
+        @content.expects(:chunk_file_from_source).returns('from_source')
+        @content.each_chunk_from(source) { |chunk| chunk.should == 'from_source' }
+      end
+
       it "when no content, source, but ensure present" do
         @resource[:ensure] = :present
         @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
       end
 
+      # you might do this if you were just auditing
       it "when no content, source, but ensure file" do
         @resource[:ensure] = :file
         @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
       end
 
-      it "when no content or source" do
+      it "when source_or_content is nil and content not a checksum" do
+        @content.each_chunk_from(nil) { |chunk| chunk.should == '' }
+      end
+
+      # the content is munged so that if it's a checksum nil gets passed in
+      it "when content is a checksum it should try to read from filebucket" do
+        @content.should = "{md5}123abcd"
         @content.expects(:read_file_from_filebucket).once.returns('im_a_filebucket')
         @content.each_chunk_from(nil) { |chunk| chunk.should == 'im_a_filebucket' }
       end

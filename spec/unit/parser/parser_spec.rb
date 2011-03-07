@@ -78,6 +78,12 @@ describe Puppet::Parser do
 
   end
 
+  describe "when parsing selector" do
+    it "should support hash access on the left hand side" do
+      lambda { @parser.parse("$h = { 'a' => 'b' } $a = $h['a'] ? { 'b' => 'd', default => undef }") }.should_not raise_error
+    end
+  end
+
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
       Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
@@ -281,7 +287,7 @@ describe Puppet::Parser do
     it "should include docs when the AST class uses them" do
       @class.expects(:use_docs).returns true
       @class.stubs(:new)
-      @parser.expects(:ast_context).with{ |*a| a[0] == true }.returns({})
+      @parser.expects(:ast_context).with{ |docs, line| docs == true }.returns({})
       @parser.ast(@class, :file => "/bar")
     end
 

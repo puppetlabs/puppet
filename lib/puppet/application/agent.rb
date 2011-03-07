@@ -9,7 +9,7 @@ class Puppet::Application::Agent < Puppet::Application
 
   def preinit
     # Do an initial trap, so that cancels don't get a stack trace.
-    trap(:INT) do
+    Signal.trap(:INT) do
       $stderr.puts "Cancelling startup"
       exit(0)
     end
@@ -330,7 +330,7 @@ License
 
     if not report
       exit(1)
-    elsif not Puppet[:noop] and options[:detailed_exitcodes] then
+    elsif options[:detailed_exitcodes] then
       exit(report.exit_status)
     else
       exit(0)

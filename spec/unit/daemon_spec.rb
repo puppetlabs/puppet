@@ -29,13 +29,9 @@ describe Puppet::Daemon do
   end
 
   describe "when setting signal traps" do
-    before do
-      @daemon.stubs(:trap)
-    end
-
     {:INT => :stop, :TERM => :stop, :HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}.each do |signal, method|
       it "should log and call #{method} when it receives #{signal}" do
-        @daemon.expects(:trap).with(signal).yields
+        Signal.expects(:trap).with(signal).yields
 
         Puppet.expects(:notice)
 

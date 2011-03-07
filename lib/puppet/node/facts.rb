@@ -61,7 +61,7 @@ class Puppet::Node::Facts
 
   def self.from_pson(data)
     result = new(data['name'], data['values'])
-    result.values[:_timestamp] = Time.parse(data['timestamp'])
+    result.timestamp = Time.parse(data['timestamp'])
     result.expiration = Time.parse(data['expiration'])
     result
   end
@@ -70,8 +70,8 @@ class Puppet::Node::Facts
     {
       'expiration' => expiration,
       'name' => name,
-      'timestamp' => values[:_timestamp],
-      'values' => values.reject {|k,v| k == :_timestamp},
+      'timestamp' => timestamp,
+      'values' => strip_internal,
     }.to_pson(*args)
   end
 

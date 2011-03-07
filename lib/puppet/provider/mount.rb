@@ -14,8 +14,11 @@ module Puppet::Provider::Mount
     args << "-o" << self.options if self.options and self.options != :absent
     args << resource[:name]
 
-    flush if respond_to?(:flush)
     mountcmd(*args)
+    case get(:ensure)
+    when :absent; set(:ensure => :ghost)
+    when :unmounted; set(:ensure => :mounted)
+    end
   end
 
   def remount
@@ -30,24 +33,17 @@ module Puppet::Provider::Mount
 
   # This only works when the mount point is synced to the fstab.
   def unmount
-    umount resource[:name]
+    umount(resource[:name])
+
+    # Update property hash for future queries (e.g. refresh is called)
+    case get(:ensure)
+    when :mounted; set(:ensure => :unmounted)
+    when :ghost; set(:ensure => :absent)
+    end
   end
 
   # Is the mount currently mounted?
   def mounted?
-    platform = Facter.value("operatingsystem")
-    name = resource[:name]
-    mounts = mountcmd.split("\n").find do |line|
-      case platform
-      when "Darwin"
-        line =~ / on #{name} / or line =~ %r{ on /private/var/automount#{name}}
-      when "Solaris", "HP-UX"
-        line =~ /^#{name} on /
-      when "AIX"
-        line.split(/\s+/)[1] == name
-      else
-        line =~ / on #{name} /
-      end
-    end
+    [:mounted, :ghost].include?(get(:ensure))
   end
 end

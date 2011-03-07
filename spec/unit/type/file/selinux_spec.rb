@@ -66,6 +66,11 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
       @sel.default.must == expectedresult
     end
 
+    it "should return nil for defaults if selinux_ignore_defaults is true" do
+      @resource[:selinux_ignore_defaults] = :true
+      @sel.default.must be_nil
+    end
+
     it "should be able to set a new context" do
       stat = stub 'stat', :ftype => "foo"
       @sel.should = %w{newone}

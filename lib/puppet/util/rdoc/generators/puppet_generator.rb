@@ -31,6 +31,24 @@ module Generators
   NODE_DIR = "nodes"
   PLUGIN_DIR = "plugins"
 
+  # We're monkey patching RDoc markup to allow
+  # lowercase class1::class2::class3 crossref hyperlinking
+  module MarkUp
+    alias :old_markup :markup
+
+    def new_markup(str, remove_para=false)
+      first = @markup.nil?
+      res = old_markup(str, remove_para)
+      if first and not @markup.nil?
+        @markup.add_special(/\b([a-z]\w+(::\w+)*)/,:CROSSREF)
+        # we need to call it again, since we added a rule
+        res = old_markup(str, remove_para)
+      end
+      res
+    end
+    alias :markup :new_markup
+  end
+
   # This is a specialized HTMLGenerator tailored to Puppet manifests
   class PuppetGenerator < HTMLGenerator
 

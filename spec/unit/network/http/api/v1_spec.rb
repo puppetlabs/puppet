@@ -88,6 +88,34 @@ describe Puppet::Network::HTTP::API::V1 do
       @tester.uri2indirection("GET", "/env/inventory/search", {})[1].should == :search
     end
 
+    it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is facts" do
+      @tester.uri2indirection("GET", "/env/facts/bar", {})[1].should == :find
+    end
+
+    it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is facts" do
+      @tester.uri2indirection("PUT", "/env/facts/bar", {})[1].should == :save
+    end
+
+    it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is inventory" do
+      @tester.uri2indirection("GET", "/env/inventory/search", {})[1].should == :search
+    end
+
+    it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is facts_search" do
+      @tester.uri2indirection("GET", "/env/facts_search/bar", {})[1].should == :search
+    end
+
+    it "should change indirection name to 'facts' if the http method is a GET and the indirection name is facts_search" do
+      @tester.uri2indirection("GET", "/env/facts_search/bar", {})[0].should == 'facts'
+    end
+
+    it "should not change indirection name from 'facts' if the http method is a GET and the indirection name is facts" do
+      @tester.uri2indirection("GET", "/env/facts/bar", {})[0].should == 'facts'
+    end
+
+    it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
+      @tester.uri2indirection("GET", "/env/statuses/bar", {})[0].should == 'status'
+    end
+
     it "should choose 'delete' as the indirection method if the http method is a DELETE and the indirection name is singular" do
       @tester.uri2indirection("DELETE", "/env/foo/bar", {})[1].should == :destroy
     end

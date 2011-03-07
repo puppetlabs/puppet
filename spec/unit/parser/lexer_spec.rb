@@ -529,6 +529,22 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
     @lexer.fullscan
   end
 
+  it "should add a new comment stack level on LPAREN" do
+    @lexer.string = "("
+
+    @lexer.expects(:commentpush)
+
+    @lexer.fullscan
+  end
+
+  it "should pop the current comment on RPAREN" do
+    @lexer.string = ")"
+
+    @lexer.expects(:commentpop)
+
+    @lexer.fullscan
+  end
+
   it "should return the current comments on getcomment" do
     @lexer.string = "# comment"
     @lexer.fullscan
