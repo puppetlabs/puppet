@@ -56,7 +56,7 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
     if hash[:justme]
       # Ensure we picked up the package line, not any pkgutil noise.
-      list.reject! { |h| h[:name] !~ /#{hash[:justme]}$/ }
+      list.reject! { |h| h[:name] != hash[:justme] }
       return list[-1]
     else
       list.reject! { |h| h[:ensure] == :absent }
@@ -79,6 +79,10 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         $2
       end
       hash[:avail] = $3
+
+      if justme !~ /^[A-Z]+/
+        hash[:name].sub! /^[A-Z]+/, ''
+      end
 
       if hash[:avail] =~ /^SAME\s*$/
         hash[:avail] = hash[:ensure]
