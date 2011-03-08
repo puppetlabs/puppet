@@ -50,7 +50,12 @@ describe Puppet::Configurer do
       Puppet[:lastrunfile] = tmpfile("lastrunfile")
       Puppet[:report] = true
 
+      # We only record integer seconds in the timestamp, and truncate
+      # backwards, so don't use a more accurate timestamp in the test.
+      # --daniel 2011-03-07
+      t1 = Time.now.tv_sec
       @configurer.run :catalog => @catalog, :report => report
+      t2 = Time.now.tv_sec
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|
@@ -62,7 +67,7 @@ describe Puppet::Configurer do
         summary.should be_key(key)
       end
       summary["time"].should be_key("notify")
-      summary["time"]["last_run"].should >= Time.now.tv_sec
+      summary["time"]["last_run"].should be_between(t1, t2)
     end
   end
 end
