@@ -34,19 +34,32 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
   def search(request)
     return [] unless request.options
     fact_names = []
-    filters = Hash.new {|h,k| h[k] = []}
+    fact_filters = Hash.new {|h,k| h[k] = []}
+    meta_filters = Hash.new {|h,k| h[k] = []}
     request.options.each do |key,value|
       type, name, operator = key.to_s.split(".")
       operator ||= "eq"
-      filters[operator] << [name,value]
+      if type == "facts"
+        fact_filters[operator] << [name,value]
+      elsif type == "meta" and name == "timestamp"
+        meta_filters[operator] << [name,value]
+      end
     end
 
+    matching_hosts = hosts_matching_fact_filters(fact_filters) + hosts_matching_meta_filters(meta_filters)
 
+    # to_a because [].inject == nil
+    matching_hosts.inject {|hosts,this_set| hosts & this_set}.to_a.sort
+  end
+
+  private
+
+  def hosts_matching_fact_filters(fact_filters)
     host_sets = []
-    filters['eq'].each do |name,value|
+    fact_filters['eq'].each do |name,value|
       host_sets << Puppet::Rails::InventoryHost.has_fact_with_value(name,value).map {|host| host.name}
     end
-    filters['ne'].each do |name,value|
+    fact_filters['ne'].each do |name,value|
       host_sets << Puppet::Rails::InventoryHost.has_fact_without_value(name,value).map {|host| host.name}
     end
     {
@@ -55,13 +68,28 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       'ge' => '>=',
       'le' => '<='
     }.each do |operator_name,operator|
-      filters[operator_name].each do |name,value|
+      fact_filters[operator_name].each do |name,value|
         hosts_with_fact = Puppet::Rails::InventoryHost.has_fact(name)
         host_sets << hosts_with_fact.select {|h| h.value_for(name).to_f.send(operator, value.to_f)}.map {|host| host.name}
       end
     end
+    host_sets
+  end
 
-    # to_a because [].inject == nil
-    host_sets.inject {|hosts,this_set| hosts & this_set}.to_a
+  def hosts_matching_meta_filters(meta_filters)
+    host_sets = []
+    {
+      'eq' => '=',
+      'ne' => '!=',
+      'gt' => '>',
+      'lt' => '<',
+      'ge' => '>=',
+      'le' => '<='
+    }.each do |operator_name,operator|
+      meta_filters[operator_name].each do |name,value|
+        host_sets << Puppet::Rails::InventoryHost.find(:all, :conditions => ["timestamp #{operator} ?", value]).map {|host| host.name}
+      end
+    end
+    host_sets
   end
 end
