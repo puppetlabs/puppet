@@ -822,4 +822,8 @@ module Puppet
       directories."
     ]
   )
+  setdefaults(
+    :puppetdoc,
+    :document_all => [false, "Document all resources"]
+  )
 end

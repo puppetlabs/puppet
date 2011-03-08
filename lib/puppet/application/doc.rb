@@ -1,7 +1,6 @@
 require 'puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
-
   should_not_parse_config
   run_mode :master
 
@@ -140,7 +139,7 @@ COPYRIGHT
 Copyright (c) 2005-2007 Puppet Labs, LLC Licensed under the GNU Public
 License
 
-    HELP
+HELP
   end
 
   def handle_unknown( opt, arg )
@@ -163,11 +162,6 @@ License
     files += command_line.args
     Puppet.info "scanning: #{files.inspect}"
 
-          Puppet.settings.setdefaults(
-        "puppetdoc",
-
-      "document_all" => [false, "Document all resources"]
-    )
     Puppet.settings[:document_all] = options[:all] || false
     begin
       require 'puppet/util/rdoc'

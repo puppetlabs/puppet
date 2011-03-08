@@ -123,63 +123,25 @@ describe Puppet::Util::RDoc do
     end
 
     describe "when outputing documentation" do
-      before :each do
-        @node = stub 'node', :file => "file", :line => 1, :doc => ""
-        @class = stub 'class', :file => "file", :line => 4, :doc => ""
-        @definition = stub 'definition', :file => "file", :line => 3, :doc => ""
-        @ast = stub 'ast', :nodes => { :node => @node }, :hostclasses => { :class => @class }, :definitions => { :definition => @definition }
-      end
-
-      it "should output doc for ast nodes" do
-        @node.expects(:doc)
-
-        Puppet::Util::RDoc.output("file", @ast)
-      end
-
-      it "should output doc for ast classes" do
-        @class.expects(:doc)
-
-        Puppet::Util::RDoc.output("file", @ast)
-      end
-
-      it "should output doc for ast definitions" do
-        @definition.expects(:doc)
-
-        Puppet::Util::RDoc.output("file", @ast)
-      end
-
-      it "should output doc in order of increasing line number" do
-        byline = sequence('byline')
-        @node.expects(:doc).in_sequence(byline)
-        @definition.expects(:doc).in_sequence(byline)
-        @class.expects(:doc).in_sequence(byline)
-
-        Puppet::Util::RDoc.output("file", @ast)
-      end
-
-      it "should not output documentation of ast object of another node" do
-        klass = stub 'otherclass', :file => "otherfile", :line => 12, :doc => ""
-        @ast.stubs(:hostclasses).returns({ :otherclass => klass })
-
-        klass.expects(:doc).never
-
-        Puppet::Util::RDoc.output("file", @ast)
+      it "should output doc for ast classes, nodes and definitions in order of increasing line number" do
+        byline = sequence('documentation outputs in line order')
+        Puppet::Util::RDoc.expects(:puts).with("im a class\n").in_sequence(byline)
+        Puppet::Util::RDoc.expects(:puts).with("im a node\n").in_sequence(byline)
+        Puppet::Util::RDoc.expects(:puts).with("im a define\n").in_sequence(byline)
+        # any other output must fail
+        Puppet::Util::RDoc.manifestdoc([my_fixture('basic.pp')])
       end
 
       it "should output resource documentation if needed" do
-        Puppet.settings.stubs(:[]).with(:document_all).returns(true)
-        [@node,@definition].each do |o|
-          o.stubs(:code).returns([])
-        end
-
-        resource = stub_everything 'resource', :line => 1
-        resource.stubs(:is_a?).with(Puppet::Parser::AST::ASTArray).returns(false)
-        resource.stubs(:is_a?).with(Puppet::Parser::AST::Resource).returns(true)
-        @class.stubs(:code).returns([resource])
-
-        resource.expects(:doc)
-
-        Puppet::Util::RDoc.output("file", @ast)
+        pending "#6634 being fixed"
+        Puppet.settings[:document_all] = true
+        byline = sequence('documentation outputs in line order')
+        Puppet::Util::RDoc.expects(:puts).with("im a class\n").in_sequence(byline)
+        Puppet::Util::RDoc.expects(:puts).with("im a node\n").in_sequence(byline)
+        Puppet::Util::RDoc.expects(:puts).with("im a define\n").in_sequence(byline)
+        Puppet::Util::RDoc.expects(:puts).with("im a resource\n").in_sequence(byline)
+        # any other output must fail
+        Puppet::Util::RDoc.manifestdoc([my_fixture('basic.pp')])
       end
     end
   end
