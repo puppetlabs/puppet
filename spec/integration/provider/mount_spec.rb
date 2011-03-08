@@ -35,6 +35,7 @@ describe "mount provider (integration)" do
         fail "unexpected umount" unless @umount_permitted
         command.length.should == 2
         command[1].should == '/Volumes/foo_disk'
+        @mounted.should == true # "umount" doesn't work when device not mounted (see #6632)
         @mounted = false
         ''
       else
@@ -77,7 +78,7 @@ describe "mount provider (integration)" do
 
   it "should be able to create and mount a brand new mount point" do
     @mounted = false
-    @umount_permitted = true # Work around bug #6632
+    @umount_permitted = true # Work around bug #6633
     run_in_catalog(:mounted)
     @mounted.should == true
     check_fstab
