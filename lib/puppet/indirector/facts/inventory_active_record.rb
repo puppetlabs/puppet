@@ -30,4 +30,38 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       host.save
     end
   end
+
+  def search(request)
+    return [] unless request.options
+    fact_names = []
+    filters = Hash.new {|h,k| h[k] = []}
+    request.options.each do |key,value|
+      type, name, operator = key.to_s.split(".")
+      operator ||= "eq"
+      filters[operator] << [name,value]
+    end
+
+
+    host_sets = []
+    filters['eq'].each do |name,value|
+      host_sets << Puppet::Rails::InventoryHost.has_fact_with_value(name,value).map {|host| host.name}
+    end
+    filters['ne'].each do |name,value|
+      host_sets << Puppet::Rails::InventoryHost.has_fact_without_value(name,value).map {|host| host.name}
+    end
+    {
+      'gt' => '>',
+      'lt' => '<',
+      'ge' => '>=',
+      'le' => '<='
+    }.each do |operator_name,operator|
+      filters[operator_name].each do |name,value|
+        hosts_with_fact = Puppet::Rails::InventoryHost.has_fact(name)
+        host_sets << hosts_with_fact.select {|h| h.value_for(name).to_f.send(operator, value.to_f)}.map {|host| host.name}
+      end
+    end
+
+    # to_a because [].inject == nil
+    host_sets.inject {|hosts,this_set| hosts & this_set}.to_a
+  end
 end
