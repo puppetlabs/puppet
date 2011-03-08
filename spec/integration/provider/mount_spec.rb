@@ -14,7 +14,7 @@ describe "mount provider (integration)" do
     Facter.stubs(:value).with(:operatingsystem).returns('Darwin')
     Puppet::Util::ExecutionStub.set do |command, options|
       case command[0]
-      when '/sbin/mount'
+      when %r{/s?bin/mount}
         if command.length == 1
           if @mounted
             "/dev/disk1s1 on /Volumes/foo_disk (msdos, local)\n"
@@ -31,7 +31,7 @@ describe "mount provider (integration)" do
           @mounted = true
           ''
         end
-      when '/sbin/umount'
+      when %r{/s?bin/umount}
         fail "unexpected umount" unless @umount_permitted
         command.length.should == 2
         command[1].should == '/Volumes/foo_disk'
