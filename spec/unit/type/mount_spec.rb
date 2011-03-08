@@ -65,7 +65,8 @@ end
 
 describe Puppet::Type.type(:mount)::Ensure do
   before :each do
-    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
+    provider_properties = {}
+    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :property_hash => provider_properties
     Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
     @mount = Puppet::Type.type(:mount).new(:name => "yay", :check => :ensure)
 
@@ -93,11 +94,12 @@ describe Puppet::Type.type(:mount)::Ensure do
       @provider.stubs(:mounted?).returns([:mounted,:ghost].include? options[:from])
       @provider.expects(:create).times(options[:create] || 0)
       @provider.expects(:destroy).times(options[:destroy] || 0)
-      @provider.expects(:mount).times(options[:mount] || 0)
+      @provider.expects(:mount).never
       @provider.expects(:unmount).times(options[:unmount] || 0)
       @ensure.stubs(:syncothers)
       @ensure.should = options[:to]
       @ensure.sync
+      (!!@provider.property_hash[:needs_mount]).should == (!!options[:mount])
    end
 
    it "should create itself when changing from :ghost to :present" do
@@ -282,34 +284,6 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
 
     @mount[:dump] = 1
 
-    @catalog.apply
-  end
-
-  it "should flush changes before mounting" do
-    syncorder = sequence('syncorder')
-    @mount.provider.expects(:options).returns 'soft'
-    @mount.provider.expects(:ensure).returns :unmounted
-    @mount.provider.expects(:mounted?).returns false
-
-    @mount.provider.expects(:options=).in_sequence(syncorder).with 'hard'
-    @mount.expects(:flush).in_sequence(syncorder) # Have to write with no options
-    @mount.provider.expects(:mount).in_sequence(syncorder)
-    @mount.expects(:flush).in_sequence(syncorder) # Call flush again cause we changed everything
-
-    @mount[:ensure] = :mounted
-    @mount[:options] = 'hard'
-
-    @catalog.apply
-  end
-
-  it "should not flush before mounting if there are no other changes" do
-    syncorder = sequence('syncorder')
-    @mount.provider.expects(:ensure).returns :unmounted
-    @mount.provider.expects(:mounted?).returns false
-    @mount.provider.expects(:mount).in_sequence(syncorder)
-    @mount.expects(:flush).in_sequence(syncorder) # Call flush cause we changed everything
-
-    @mount[:ensure] = :mounted
     @catalog.apply
   end
 
