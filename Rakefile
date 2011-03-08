@@ -49,5 +49,5 @@ end
 
 desc "Run the unit tests"
 task :unit do
-    sh "cd test; rake"
+  Dir.chdir("test") { sh "rake" }
 end
