@@ -15,6 +15,7 @@ describe provider_class do
   # #1360
   it "should add -o when allowdupe is enabled and the user is being created" do
     @resource.expects(:allowdupe?).returns true
+    @resource.expects(:system?).returns true
     @provider.stubs(:execute)
     @provider.expects(:execute).with { |args| args.include?("-o") }
     @provider.create
@@ -25,6 +26,14 @@ describe provider_class do
     @provider.expects(:execute).with { |args| args.include?("-o") }
 
     @provider.uid = 150
+  end
+
+  it "should add -r when system is enabled" do
+    @resource.expects(:allowdupe?).returns true
+    @resource.expects(:system?).returns true
+    @provider.stubs(:execute)
+    @provider.expects(:execute).with { |args| args.include?("-r") }
+    @provider.create
   end
 
   it "should set password age rules" do
@@ -50,6 +59,23 @@ describe provider_class do
     it "should return an empty array if no dup is allowed" do
       @resource.stubs(:allowdupe?).returns false
       @provider.check_allow_dup.must == []
+    end
+  end
+
+  describe "when checking to add system users" do
+    it "should check system users" do
+      @resource.expects(:system?)
+      @provider.check_system_users
+    end
+
+    it "should return an array with a flag if it's a system user" do
+      @resource.stubs(:system?).returns true
+      @provider.check_system_users.must == ["-r"]
+    end
+
+    it "should return an empty array if it's not a system user" do
+      @resource.stubs(:system?).returns false
+      @provider.check_system_users.must == []
     end
   end
 
@@ -88,6 +114,7 @@ describe provider_class do
     before do
       @resource.stubs(:allowdupe?).returns true
       @resource.stubs(:managehome?).returns true
+      @resource.stubs(:system?).returns true
     end
 
     it "should call command with :add" do
@@ -102,6 +129,11 @@ describe provider_class do
 
     it "should check and add if dup allowed" do
       @provider.expects(:check_allow_dup).returns([])
+      @provider.addcmd
+    end
+
+    it "should check and add if it's a system user" do
+      @provider.expects(:check_system_users).returns([])
       @provider.addcmd
     end
 
@@ -120,15 +152,15 @@ describe provider_class do
       @provider.stubs(:add_properties).returns(["-G", "somegroup"])
       @resource.stubs(:[]).with(:name).returns("someuser")
       @resource.stubs(:[]).with(:expiry).returns("somedate")
-      @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", '-e somedate', "someuser"]
+      @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", '-e somedate', "-r", "someuser"]
     end
 
-    it "should return an array without -e if expery is undefined full command" do
+    it "should return an array without -e if expiry is undefined full command" do
       @provider.stubs(:command).with(:add).returns("useradd")
       @provider.stubs(:add_properties).returns(["-G", "somegroup"])
       @resource.stubs(:[]).with(:name).returns("someuser")
       @resource.stubs(:[]).with(:expiry).returns nil
-      @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", "someuser"]
+      @provider.addcmd.must == ["useradd", "-G", "somegroup", "-o", "-m", "-r", "someuser"]
     end
   end
 
@@ -136,6 +168,7 @@ describe provider_class do
     before do
       @resource.stubs(:allowdupe?).returns true
       @resource.stubs(:managehome?).returns true
+      @resource.stubs(:system?).returns true
     end
 
     it "should call command with :pass" do

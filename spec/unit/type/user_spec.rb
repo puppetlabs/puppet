@@ -43,6 +43,10 @@ describe user do
     user.provider_feature(:manages_password_age).should_not be_nil
   end
 
+  it "should have a system_users feature" do
+    user.provider_feature(:system_users).should_not be_nil
+  end
+
   describe "instances" do
     it "should have a valid provider" do
       user.new(:name => "foo").provider.class.ancestors.should be_include(Puppet::Provider)

@@ -34,6 +34,9 @@ module Puppet
     feature :manages_expiry,
       "The provider can manage the expiry date for a user."
 
+   feature :system_users,
+     "The provider allows you to create system users with lower UIDs."
+
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
         provider.create
@@ -228,6 +231,14 @@ module Puppet
       newvalues(:inclusive, :minimum)
 
       defaultto :minimum
+    end
+
+    newparam(:system, :boolean => true) do
+      desc "Whether the user is a system user with lower UID."
+
+      newvalues(:true, :false)
+
+      defaultto false
     end
 
     newparam(:allowdupe, :boolean => true) do
