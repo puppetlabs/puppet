@@ -1,0 +1,8 @@
+/dev/ad0s1a on / (ufs, local)
+devfs on /dev (devfs, local)
+/dev/ad0s1e on /tmp (ufs, local, soft-updates)
+/dev/ad0s1f on /usr (ufs, local, soft-updates)
+/dev/ad0s1d on /var (ufs, local, soft-updates)
+/dev/ad3s1e on /data (ufs, local, soft-updates)
+/dev/ad3s1h on /ghost (ufs, local, soft-updates)
+devfs on /var/named/dev (devfs, local)

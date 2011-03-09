@@ -111,9 +111,8 @@ FSTAB
 
   describe "mountinstances" do
     it "should get name from mountoutput found on Solaris" do
-      pending
       Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
-      @provider.stubs(:mountcmd).returns(File.read(fake_mountoutput))
+      @provider.stubs(:mountcmd).returns(File.read(my_fixture('solaris.mount')))
       mounts = @provider.mountinstances
       mounts.size.should == 6
       mounts[0].should == { :name => '/', :mounted => :yes }
@@ -125,9 +124,8 @@ FSTAB
     end
 
     it "should get name from mountoutput found on HP-UX" do
-      pending
       Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
-      @provider.stubs(:mountcmd).returns(File.read(fake_mountoutput))
+      @provider.stubs(:mountcmd).returns(File.read(my_fixture('hpux.mount')))
       mounts = @provider.mountinstances
       mounts.size.should == 17
       mounts[0].should == { :name => '/', :mounted => :yes }
@@ -150,9 +148,8 @@ FSTAB
     end
 
     it "should get name from mountoutput found on Darwin" do
-      pending
       Facter.stubs(:value).with(:operatingsystem).returns 'Darwin'
-      @provider.stubs(:mountcmd).returns(File.read(fake_mountoutput))
+      @provider.stubs(:mountcmd).returns(File.read(my_fixture('darwin.mount')))
       mounts = @provider.mountinstances
       mounts.size.should == 6
       mounts[0].should == { :name => '/', :mounted => :yes }
@@ -164,9 +161,8 @@ FSTAB
     end
 
     it "should get name from mountoutput found on Linux" do
-      pending
       Facter.stubs(:value).with(:operatingsystem).returns 'Gentoo'
-      @provider.stubs(:mountcmd).returns(File.read(fake_mountoutput))
+      @provider.stubs(:mountcmd).returns(File.read(my_fixture('linux.mount')))
       mounts = @provider.mountinstances
       mounts[0].should == { :name => '/', :mounted => :yes }
       mounts[1].should == { :name => '/lib64/rc/init.d', :mounted => :yes }
@@ -176,9 +172,8 @@ FSTAB
     end
 
     it "should get name from mountoutput found on AIX" do
-      pending
       Facter.stubs(:value).with(:operatingsystem).returns 'AIX'
-      @provider.stubs(:mountcmd).returns(File.read(fake_mountoutput))
+      @provider.stubs(:mountcmd).returns(File.read(my_fixture('aix.mount')))
       mounts = @provider.mountinstances
       mounts[0].should == { :name => '/', :mounted => :yes }
       mounts[1].should == { :name => '/tmp', :mounted => :yes }
@@ -195,9 +190,25 @@ FSTAB
   end
 
   my_fixtures('*.fstab').each do |fstab|
-    describe "when prefetching #{fstab}" do
+    platform = File.basename(fstab, '.fstab')
+    describe "when prefetching on #{platform}" do
       before :each do
-        pending "need to rework how testing mount output works after this merge is complete"
+        if Facter[:operatingsystem] == "Solaris" then
+          platform == 'solaris' or
+            pending "We need to stub the operatingsystem fact at load time, but can't"
+        else
+          platform != 'solaris' or
+            pending "We need to stub the operatingsystem fact at load time, but can't"
+        end
+
+        # Stub the mount output to our fixture.
+        begin
+          mount = my_fixture(platform + '.mount')
+          @provider.stubs(:mountcmd).returns File.read(mount)
+        rescue
+          pending "is #{platform}.mount missing at this point?"
+        end
+
         # Note: we have to stub default_target before creating resources
         # because it is used by Puppet::Type::Mount.new to populate the
         # :target property.
@@ -213,8 +224,6 @@ FSTAB
         [@res_ghost, @res_mounted, @res_unmounted, @res_absent].each do |resource|
           @resource_hash[resource.name] = resource
         end
-
-        @provider.stubs(:mountcmd).returns File.read(fake_mountoutput)
       end
 
       it "should set :ensure to :unmounted if found in fstab but not mounted" do
@@ -222,12 +231,12 @@ FSTAB
         @res_unmounted.provider.get(:ensure).should == :unmounted
       end
 
-      it "should set :ensure to :mounted if found in fstab and mounted" do
+      it "should set :ensure to :ghost if not found in fstab but mounted" do
         @provider.prefetch(@resource_hash)
         @res_ghost.provider.get(:ensure).should == :ghost
       end
 
-      it "should set :ensure to :ghost if not found in fstab but mounted" do
+      it "should set :ensure to :mounted if found in fstab and mounted" do
         @provider.prefetch(@resource_hash)
         @res_mounted.provider.get(:ensure).should == :mounted
       end
@@ -238,5 +247,4 @@ FSTAB
       end
     end
   end
-
 end
