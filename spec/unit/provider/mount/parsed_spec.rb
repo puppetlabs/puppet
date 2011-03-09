@@ -201,6 +201,14 @@ FSTAB
             pending "We need to stub the operatingsystem fact at load time, but can't"
         end
 
+        # Stub the mount output to our fixture.
+        begin
+          mount = my_fixture(platform + '.mount')
+          @provider.stubs(:mountcmd).returns File.read(mount)
+        rescue
+          pending "is #{platform}.mount missing at this point?"
+        end
+
         # Note: we have to stub default_target before creating resources
         # because it is used by Puppet::Type::Mount.new to populate the
         # :target property.
@@ -216,8 +224,6 @@ FSTAB
         [@res_ghost, @res_mounted, @res_unmounted, @res_absent].each do |resource|
           @resource_hash[resource.name] = resource
         end
-
-        @provider.stubs(:mountcmd).returns File.read(my_fixture(platform + '.mount'))
       end
 
       it "should set :ensure to :unmounted if found in fstab but not mounted" do
