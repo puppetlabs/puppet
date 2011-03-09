@@ -104,22 +104,22 @@ class Puppet::Rails::Schema
         end
         add_index :param_names, :name
 
-        create_table :inventory_hosts do |t|
+        create_table :inventory_nodes do |t|
           t.column :name, :string, :null => false
           t.column :timestamp, :datetime, :null => false
           t.column :updated_at, :datetime
           t.column :created_at, :datetime
         end
 
-        add_index :inventory_hosts, :name, :unique => true
+        add_index :inventory_nodes, :name, :unique => true
 
         create_table :inventory_facts, :id => false do |t|
-          t.column :inventory_host_id, :integer, :null => false
+          t.column :inventory_node_id, :integer, :null => false
           t.column :name, :string, :null => false
           t.column :value, :text, :null => false
         end
 
-        add_index :inventory_facts, [:inventory_host_id, :name], :unique => true
+        add_index :inventory_facts, [:inventory_node_id, :name], :unique => true
       end
     end
   ensure
