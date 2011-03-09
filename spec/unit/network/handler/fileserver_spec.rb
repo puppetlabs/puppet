@@ -158,7 +158,7 @@ describe Puppet::Network::Handler::FileServer do
     end
 
     it "should not fail for inexistant plugins type" do
-      lambda { @mount.list("puppet/parser",true,false) }.should_not raise_error
+      @mount.list("puppet/parser",true,false)
     end
 
   end

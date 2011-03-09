@@ -114,6 +114,9 @@ describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
       @store_class.client.expects(:subscribe).yields("foo")
       @store_class.expects(:intern).raises ArgumentError
       Puppet.expects(:err)
+
+      @store_class.expects(:puts)
+
       @store_class.subscribe {|o| o }
     end
   end

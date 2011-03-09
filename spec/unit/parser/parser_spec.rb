@@ -259,7 +259,7 @@ describe Puppet::Parser do
     before do
       @lexer = stub 'lexer', :line => 50, :file => "/foo/bar", :getcomment => "whev"
       @parser.stubs(:lexer).returns @lexer
-      @class = stub 'class', :use_docs => false
+      @class = Puppet::Resource::Type.new(:hostclass, "myclass", :use_docs => false)
     end
 
     it "should return a new instance of the provided class created with the provided options" do
