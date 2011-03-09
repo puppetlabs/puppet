@@ -1,33 +1,30 @@
-require 'puppet/rails/inventory_host'
+require 'puppet/rails/inventory_node'
 require 'puppet/rails/inventory_fact'
 require 'puppet/indirector/active_record'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
   def find(request)
-    host = Puppet::Rails::InventoryHost.find_by_name(request.key)
-    return nil unless host
-    facts = Puppet::Node::Facts.new(host.name, host.facts_to_hash)
-    facts.timestamp = host.timestamp
-    facts.values.each do |key,value|
-      facts.values[key] = value.first if value.is_a?(Array) && value.length == 1
-    end
+    node = Puppet::Rails::InventoryNode.find_by_name(request.key)
+    return nil unless node
+    facts = Puppet::Node::Facts.new(node.name, node.facts_to_hash)
+    facts.timestamp = node.timestamp
     facts
   end
 
   def save(request)
     facts = request.instance
-    host = Puppet::Rails::InventoryHost.find_by_name(request.key) || Puppet::Rails::InventoryHost.create(:name => request.key, :timestamp => facts.timestamp)
-    host.timestamp = facts.timestamp
+    node = Puppet::Rails::InventoryNode.find_by_name(request.key) || Puppet::Rails::InventoryNode.create(:name => request.key, :timestamp => facts.timestamp)
+    node.timestamp = facts.timestamp
 
     ActiveRecord::Base.transaction do
-      Puppet::Rails::InventoryFact.delete_all(:inventory_host_id => host.id)
+      Puppet::Rails::InventoryFact.delete_all(:inventory_node_id => node.id)
       # We don't want to save internal values as facts, because those are
-      # metadata that belong on the host
+      # metadata that belong on the node
       facts.values.each do |name,value|
         next if name.to_s =~ /^_/
-        host.facts.build(:name => name, :value => value)
+        node.facts.build(:name => name, :value => value)
       end
-      host.save
+      node.save
     end
   end
 
@@ -46,21 +43,21 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       end
     end
 
-    matching_hosts = hosts_matching_fact_filters(fact_filters) + hosts_matching_meta_filters(meta_filters)
+    matching_nodes = nodes_matching_fact_filters(fact_filters) + nodes_matching_meta_filters(meta_filters)
 
     # to_a because [].inject == nil
-    matching_hosts.inject {|hosts,this_set| hosts & this_set}.to_a.sort
+    matching_nodes.inject {|nodes,this_set| nodes & this_set}.to_a.sort
   end
 
   private
 
-  def hosts_matching_fact_filters(fact_filters)
-    host_sets = []
+  def nodes_matching_fact_filters(fact_filters)
+    node_sets = []
     fact_filters['eq'].each do |name,value|
-      host_sets << Puppet::Rails::InventoryHost.has_fact_with_value(name,value).map {|host| host.name}
+      node_sets << Puppet::Rails::InventoryNode.has_fact_with_value(name,value).map {|node| node.name}
     end
     fact_filters['ne'].each do |name,value|
-      host_sets << Puppet::Rails::InventoryHost.has_fact_without_value(name,value).map {|host| host.name}
+      node_sets << Puppet::Rails::InventoryNode.has_fact_without_value(name,value).map {|node| node.name}
     end
     {
       'gt' => '>',
@@ -69,15 +66,15 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       'le' => '<='
     }.each do |operator_name,operator|
       fact_filters[operator_name].each do |name,value|
-        hosts_with_fact = Puppet::Rails::InventoryHost.has_fact(name)
-        host_sets << hosts_with_fact.select {|h| h.value_for(name).to_f.send(operator, value.to_f)}.map {|host| host.name}
+        nodes_with_fact = Puppet::Rails::InventoryNode.has_fact(name)
+        node_sets << nodes_with_fact.select {|h| h.value_for(name).to_f.send(operator, value.to_f)}.map {|node| node.name}
       end
     end
-    host_sets
+    node_sets
   end
 
-  def hosts_matching_meta_filters(meta_filters)
-    host_sets = []
+  def nodes_matching_meta_filters(meta_filters)
+    node_sets = []
     {
       'eq' => '=',
       'ne' => '!=',
@@ -87,9 +84,9 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       'le' => '<='
     }.each do |operator_name,operator|
       meta_filters[operator_name].each do |name,value|
-        host_sets << Puppet::Rails::InventoryHost.find(:all, :conditions => ["timestamp #{operator} ?", value]).map {|host| host.name}
+        node_sets << Puppet::Rails::InventoryNode.find(:all, :conditions => ["timestamp #{operator} ?", value]).map {|node| node.name}
       end
     end
-    host_sets
+    node_sets
   end
 end

@@ -1,6 +1,6 @@
 require 'puppet/rails/inventory_fact'
 
-class Puppet::Rails::InventoryHost < ::ActiveRecord::Base
+class Puppet::Rails::InventoryNode < ::ActiveRecord::Base
   has_many :facts, :class_name => "Puppet::Rails::InventoryFact", :dependent => :delete_all
 
   named_scope :has_fact_with_value, lambda { |name,value|
