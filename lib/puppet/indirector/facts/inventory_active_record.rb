@@ -8,9 +8,6 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
     return nil unless node
     facts = Puppet::Node::Facts.new(node.name, node.facts_to_hash)
     facts.timestamp = node.timestamp
-    facts.values.each do |key,value|
-      facts.values[key] = value.first if value.is_a?(Array) && value.length == 1
-    end
     facts
   end
 

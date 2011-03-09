@@ -88,12 +88,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     it "should return nil if no node instance can be found" do
       Puppet::Node::Facts.find("non-existent node").should == nil
     end
-
-    it "should convert all single-member arrays into non-arrays" do
-      Puppet::Node::Facts.new("array", "fact1" => ["value1"]).save
-
-      Puppet::Node::Facts.find("array").values["fact1"].should == "value1"
-    end
   end
 
   describe "#search" do
