@@ -191,7 +191,7 @@ class Puppet::Module
 
   def backward_compatible_plugins_dir
     if dir = File.join(path, "plugins") and FileTest.exist?(dir)
-      warning "using the deprecated 'plugins' directory for ruby extensions; please move to 'lib'"
+      Puppet.warning "using the deprecated 'plugins' directory for ruby extensions; please move to 'lib'"
       return dir
     else
       return File.join(path, "lib")
