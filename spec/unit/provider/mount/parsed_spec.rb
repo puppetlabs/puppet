@@ -193,8 +193,13 @@ FSTAB
     platform = File.basename(fstab, '.fstab')
     describe "when prefetching on #{platform}" do
       before :each do
-        pending "solaris seems ... odd" if platform == "solaris"
-        @platform = platform
+        if Facter[:operatingsystem] == "Solaris" then
+          platform == 'solaris' or
+            pending "We need to stub the operatingsystem fact at load time, but can't"
+        else
+          platform != 'solaris' or
+            pending "We need to stub the operatingsystem fact at load time, but can't"
+        end
 
         # Note: we have to stub default_target before creating resources
         # because it is used by Puppet::Type::Mount.new to populate the
@@ -212,7 +217,7 @@ FSTAB
           @resource_hash[resource.name] = resource
         end
 
-        @provider.stubs(:mountcmd).returns File.read(my_fixture(@platform + '.mount'))
+        @provider.stubs(:mountcmd).returns File.read(my_fixture(platform + '.mount'))
       end
 
       it "should set :ensure to :unmounted if found in fstab but not mounted" do
