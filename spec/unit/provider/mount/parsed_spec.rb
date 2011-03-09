@@ -189,6 +189,8 @@ FSTAB
 
   end
 
+  it "should support AIX's paragraph based /etc/filesystems"
+
   my_fixtures('*.fstab').each do |fstab|
     platform = File.basename(fstab, '.fstab')
     describe "when prefetching on #{platform}" do
