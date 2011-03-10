@@ -132,11 +132,6 @@ describe provider_class do
       @provider.addcmd
     end
 
-    it "should check and add if it's a system user" do
-      @provider.expects(:check_system_users).returns([])
-      @provider.addcmd
-    end
-
     it "should check and add if home is managed" do
       @provider.expects(:check_manage_home).returns([])
       @provider.addcmd
@@ -145,6 +140,18 @@ describe provider_class do
     it "should add the resource :name" do
       @resource.expects(:[]).with(:name)
       @provider.addcmd
+    end
+
+    it "should return an array with -r if system? is true" do
+      resource = Puppet::Type.type(:user).new( :name => "bob", :system => true)
+
+      provider_class.new( resource ).addcmd.should include("-r")
+    end
+
+    it "should return an array without -r if system? is false" do
+      resource = Puppet::Type.type(:user).new( :name => "bob", :system => false)
+
+      provider_class.new( resource ).addcmd.should_not include("-r")
     end
 
     it "should return an array with full command" do
