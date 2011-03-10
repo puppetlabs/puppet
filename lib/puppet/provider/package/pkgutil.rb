@@ -80,8 +80,8 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       end
       hash[:avail] = $3
 
-      if justme !~ /^[A-Z]+/
-        hash[:name].sub! /^[A-Z]+/, ''
+      if justme
+        hash[:name] = justme
       end
 
       if hash[:avail] =~ /^SAME\s*$/
