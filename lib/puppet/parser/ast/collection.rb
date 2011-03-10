@@ -16,6 +16,7 @@ class Puppet::Parser::AST
       str, code = query && query.safeevaluate(scope)
 
       resource_type = scope.find_resource_type(@type)
+      fail "Resource type #{@type} doesn't exist" unless resource_type
       newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, str, code, self.form)
 
       scope.compiler.add_collection(newcoll)
@@ -26,10 +27,10 @@ class Puppet::Parser::AST
         params = @override.collect { |param| param.safeevaluate(scope) }
         newcoll.add_override(
           :parameters => params,
-          :file => @file,
-          :line => @line,
-          :source => scope.source,        
-          :scope => scope
+          :file       => @file,
+          :line       => @line,
+          :source     => scope.source,
+          :scope      => scope
         )
       end
 
