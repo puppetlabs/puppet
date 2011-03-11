@@ -57,21 +57,21 @@ module Puppet
     @@settings.setdefaults(section, hash)
   end
 
-  # configuration parameter access and stuff
+  # accessor to the configuration parameters
   def self.[](param)
-    case param
-    when :debug
+    if param == :debug
       return Puppet::Util::Log.level == :debug
     else
       return @@settings[param]
     end
   end
 
-  # configuration parameter access and stuff
+  # method to set a configuration parameter
   def self.[]=(param,value)
     @@settings[param] = value
   end
 
+  # clear the configuration parameters
   def self.clear
     @@settings.clear
   end
