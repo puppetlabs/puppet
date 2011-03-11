@@ -19,7 +19,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     value !~ /\s/
   end
 
-  has_features :manages_homedir, :allows_duplicates, :manages_expiry
+  has_features :manages_homedir, :allows_duplicates, :manages_expiry, :system_users
 
   has_features :manages_passwords, :manages_password_age if Puppet.features.libshadow?
 
@@ -46,6 +46,10 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd
   end
 
+  def check_system_users
+    @resource.system? ? ["-r"] : []
+  end
+
   def add_properties
     cmd = []
     Puppet::Type.type(:user).validproperties.each do |property|
@@ -66,6 +70,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += check_allow_dup
     cmd += check_manage_home
     cmd += check_manage_expiry
+    cmd += check_system_users
     cmd << @resource[:name]
   end
 
