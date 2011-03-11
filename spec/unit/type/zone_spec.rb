@@ -57,4 +57,24 @@ describe zone do
     zone.new(:name => "dummy", :path => "/dummy", :ip => "if", :iptype => :exclusive)
   end
 
+  it "should auto-require :dataset entries" do
+    fs = 'random-pool/some-zfs'
+
+    # ick
+    provider = stub 'zfs::provider'
+    provider.stubs(:name).returns(:solaris)
+    Puppet::Type.type(:zfs).stubs(:defaultprovider).returns(provider)
+
+    catalog = Puppet::Resource::Catalog.new
+    zfs_instance = Puppet::Type.type(:zfs).new(:name => fs)
+    catalog.add_resource zfs_instance
+
+    zone_instance = zone.new(:name    => "dummy",
+                             :path    => "/foo",
+                             :ip      => 'en1:1.0.0.0',
+                             :dataset => fs)
+    catalog.add_resource zone_instance
+
+    catalog.relationship_graph.dependencies(zone_instance).should == [zfs_instance]
+  end
 end
