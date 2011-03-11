@@ -68,9 +68,6 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
       Puppet::Node::Facts.find("foo").should == foo_facts
       Puppet::Rails::InventoryFact.all.map{|f| [f.name,f.value]}.should_not include(["uptime_days", "30"], ["kernel", "Darwin"])
     end
-
-    it "should not replace the node's facts if something goes wrong" do
-    end
   end
 
   describe "#find" do
