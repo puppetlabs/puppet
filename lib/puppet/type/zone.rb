@@ -413,6 +413,23 @@ Puppet::Type.newtype(:zone) do
     end
   end
 
+  # If Puppet is also managing the zfs filesystem which is the zone dataset
+  # then list it as a prerequisite.  Zpool's get autorequired by the zfs
+  # type.  We just need to autorequire the dataset zfs itself as the zfs type
+  # will autorequire all of the zfs parents and zpool.
+  autorequire(:zfs) do
+
+  # Check if we have datasets in our zone configuration
+    if @parameters.include? :dataset
+      reqs = []
+      # Autorequire each dataset
+      self[:dataset].each { |value|
+        reqs << value
+      }
+      reqs
+    end
+  end
+
   def validate_ip(ip, name)
       IPAddr.new(ip) if ip
   rescue ArgumentError
