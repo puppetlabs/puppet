@@ -1,8 +1,10 @@
+require 'puppet/rails'
 require 'puppet/rails/inventory_node'
 require 'puppet/rails/inventory_fact'
 require 'puppet/indirector/active_record'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
+  include Puppet::Util
   def find(request)
     node = Puppet::Rails::InventoryNode.find_by_name(request.key)
     return nil unless node
@@ -17,7 +19,7 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
     node.timestamp = facts.timestamp
 
     ActiveRecord::Base.transaction do
-      Puppet::Rails::InventoryFact.delete_all(:inventory_node_id => node.id)
+      Puppet::Rails::InventoryFact.delete_all(:node_id => node.id)
       # We don't want to save internal values as facts, because those are
       # metadata that belong on the node
       facts.values.each do |name,value|
@@ -30,6 +32,7 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
 
   def search(request)
     return [] unless request.options
+    matching_nodes = []
     fact_names = []
     fact_filters = Hash.new {|h,k| h[k] = []}
     meta_filters = Hash.new {|h,k| h[k] = []}
@@ -66,8 +69,11 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       'le' => '<='
     }.each do |operator_name,operator|
       fact_filters[operator_name].each do |name,value|
-        nodes_with_fact = Puppet::Rails::InventoryNode.has_fact(name)
-        node_sets << nodes_with_fact.select {|h| h.value_for(name).to_f.send(operator, value.to_f)}.map {|node| node.name}
+        facts = Puppet::Rails::InventoryFact.find_by_sql(["SELECT inventory_facts.value, inventory_nodes.name AS node_name
+                                                           FROM inventory_facts INNER JOIN inventory_nodes
+                                                           ON inventory_facts.node_id = inventory_nodes.id
+                                                           WHERE inventory_facts.name = ?", name])
+        node_sets << facts.select {|fact| fact.value.to_f.send(operator, value.to_f)}.map {|fact| fact.node_name}
       end
     end
     node_sets
@@ -84,7 +90,7 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
       'le' => '<='
     }.each do |operator_name,operator|
       meta_filters[operator_name].each do |name,value|
-        node_sets << Puppet::Rails::InventoryNode.find(:all, :conditions => ["timestamp #{operator} ?", value]).map {|node| node.name}
+        node_sets << Puppet::Rails::InventoryNode.find(:all, :select => "name", :conditions => ["timestamp #{operator} ?", value]).map {|node| node.name}
       end
     end
     node_sets
