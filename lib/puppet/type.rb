@@ -382,8 +382,8 @@ class Type
 
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
-    if name == :name
-      name = name_var
+    if name == :name && nv = name_var
+      name = nv
     end
 
     if obj = @parameters[name]
@@ -403,8 +403,8 @@ class Type
 
     fail("Invalid parameter #{name}") unless self.class.validattr?(name)
 
-    if name == :name
-      name = name_var
+    if name == :name && nv = name_var
+      name = nv
     end
     raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
 
