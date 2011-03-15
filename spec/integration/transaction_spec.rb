@@ -107,29 +107,23 @@ describe Puppet::Transaction do
     file1 = tmpfile("file1")
     file2 = tmpfile("file2")
 
-          file = Puppet::Type.type(:file).new(
-                
-      :path => path,
-        
+    file = Puppet::Type.type(:file).new(
+      :path   => path,
       :ensure => "file"
     )
 
-          exec1 = Puppet::Type.type(:exec).new(
-                
-      :path => ENV["PATH"],
+    exec1 = Puppet::Type.type(:exec).new(
+      :path    => ENV["PATH"],
       :command => "touch #{file1}",
       :refreshonly => true,
-        
-      :subscribe => Puppet::Resource.new(:file, path)
+      :subscribe   => Puppet::Resource.new(:file, path)
     )
 
-          exec2 = Puppet::Type.type(:exec).new(
-                
-      :path => ENV["PATH"],
-      :command => "touch #{file2}",
+    exec2 = Puppet::Type.type(:exec).new(
+      :path        => ENV["PATH"],
+      :command     => "touch #{file2}",
       :refreshonly => true,
-        
-      :subscribe => Puppet::Resource.new(:file, path)
+      :subscribe   => Puppet::Resource.new(:file, path)
     )
 
     catalog = mk_catalog(file, exec1, exec2)
