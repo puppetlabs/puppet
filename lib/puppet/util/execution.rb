@@ -4,16 +4,15 @@ module Puppet::Util::Execution
   # Run some code with a specific environment.  Resets the environment back to
   # what it was at the end of the code.
   def withenv(hash)
-    oldvals = {}
+    saved = ENV.to_hash
     hash.each do |name, val|
-      name = name.to_s
-      oldvals[name] = ENV[name]
-      ENV[name] = val
+      ENV[name.to_s] = val
     end
 
     yield
   ensure
-    oldvals.each do |name, val|
+    ENV.clear
+    saved.each do |name, val|
       ENV[name] = val
     end
   end
