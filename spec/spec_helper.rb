@@ -23,9 +23,15 @@ end
 module PuppetTest
 end
 
+require 'pathname'
+require 'lib/puppet_spec/verbose'
 require 'lib/puppet_spec/files'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
+
+Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
+  require behaviour.relative_path_from(Pathname.new(dir))
+end
 
 RSpec.configure do |config|
   config.mock_with :mocha
