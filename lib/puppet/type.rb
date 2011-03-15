@@ -200,7 +200,7 @@ class Type
   end
 
   def uniqueness_key
-    to_resource.uniqueness_key
+    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map{ |attribute_name| self[attribute_name] }
   end
 
   # Create a new parameter.  Requires a block and a name, stores it in the
