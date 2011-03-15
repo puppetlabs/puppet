@@ -4,7 +4,6 @@ require 'puppet/rails/inventory_fact'
 require 'puppet/indirector/active_record'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
-  include Puppet::Util
   def find(request)
     node = Puppet::Rails::InventoryNode.find_by_name(request.key)
     return nil unless node
