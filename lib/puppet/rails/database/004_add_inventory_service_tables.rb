@@ -13,12 +13,12 @@ class AddInventoryServiceTables < ActiveRecord::Migration
 
     unless ActiveRecord::Base.connection.tables.include?("inventory_facts")
       create_table :inventory_facts, :id => false do |t|
-        t.column :inventory_node_id, :integer, :null => false
+        t.column :node_id, :integer, :null => false
         t.column :name, :string, :null => false
         t.column :value, :text, :null => false
       end
 
-      add_index :inventory_facts, [:inventory_node_id, :name], :unique => true
+      add_index :inventory_facts, [:node_id, :name], :unique => true
     end
   end
 
@@ -29,7 +29,7 @@ class AddInventoryServiceTables < ActiveRecord::Migration
     end
 
     if ActiveRecord::Base.connection.tables.include?("inventory_facts")
-      remove_index :inventory_facts, [:inventory_node_id, :name]
+      remove_index :inventory_facts, [:node_id, :name]
       drop_table :inventory_facts
     end
   end

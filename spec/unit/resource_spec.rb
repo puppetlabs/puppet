@@ -463,6 +463,28 @@ describe Puppet::Resource do
     end
   end
 
+  describe "when loading 0.25.x storedconfigs YAML" do
+    before :each do
+      @old_storedconfig_yaml = %q{--- !ruby/object:Puppet::Resource::Reference
+builtin_type:
+title: /tmp/bar
+type: File
+}
+    end
+
+    it "should deserialize a Puppet::Resource::Reference without exceptions" do
+      lambda { YAML.load(@old_storedconfig_yaml) }.should_not raise_error
+    end
+
+    it "should deserialize as a Puppet::Resource::Reference as a Puppet::Resource" do
+      YAML.load(@old_storedconfig_yaml).class.should == Puppet::Resource
+    end
+
+    it "should to_hash properly" do
+      YAML.load(@old_storedconfig_yaml).to_hash.should == { :path => "/tmp/bar" }
+    end
+  end
+
   describe "when converting to a RAL resource" do
     it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
       resource = Puppet::Resource.new("file", @basepath+"/my/file")

@@ -114,12 +114,12 @@ class Puppet::Rails::Schema
         add_index :inventory_nodes, :name, :unique => true
 
         create_table :inventory_facts, :id => false do |t|
-          t.column :inventory_node_id, :integer, :null => false
+          t.column :node_id, :integer, :null => false
           t.column :name, :string, :null => false
           t.column :value, :text, :null => false
         end
 
-        add_index :inventory_facts, [:inventory_node_id, :name], :unique => true
+        add_index :inventory_facts, [:node_id, :name], :unique => true
       end
     end
   ensure
