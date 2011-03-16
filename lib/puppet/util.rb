@@ -4,6 +4,7 @@ require 'puppet/util/monkey_patches'
 require 'sync'
 require 'puppet/external/lock'
 require 'monitor'
+require 'puppet/util/execution_stub'
 
 module Puppet
   # A command failed to execute.
@@ -263,6 +264,10 @@ module Util
 
     arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid]) if arguments[:uid]
     arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid]) if arguments[:gid]
+
+    if execution_stub = Puppet::Util::ExecutionStub.current_value
+      return execution_stub.call(command, arguments)
+    end
 
     @@os ||= Facter.value(:operatingsystem)
     output = nil

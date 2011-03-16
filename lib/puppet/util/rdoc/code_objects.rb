@@ -124,6 +124,45 @@ module RDoc
     def add_child(child)
       @childs << child
     end
+
+    # Look up the given symbol. RDoc only looks for class1::class2.method
+    # or class1::class2#method. Since our definitions are mapped to RDoc methods
+    # but are written class1::class2::define we need to perform the lookup by
+    # ourselves.
+    def find_symbol(symbol, method=nil)
+      result = super
+      if not result and symbol =~ /::/
+        modules = symbol.split(/::/)
+        unless modules.empty?
+          module_name = modules.shift
+          result = find_module_named(module_name)
+          if result
+            last_name = ""
+            previous = nil
+            modules.each do |module_name|
+              previous = result
+              last_name = module_name
+              result = result.find_module_named(module_name)
+              break unless result
+            end
+            unless result
+              result = previous
+              method = last_name
+            end
+          end
+        end
+        if result && method
+          if !result.respond_to?(:find_local_symbol)
+            p result.name
+            p method
+            fail
+          end
+          result = result.find_local_symbol(method)
+        end
+      end
+      result
+    end
+
   end
 
   # PuppetNode holds a puppet node

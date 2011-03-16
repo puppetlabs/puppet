@@ -11,10 +11,14 @@ describe Puppet::Type.type(:mount) do
     mount = Puppet::Type.type(:mount).new(:name => "yay")
     mount.should(:ensure).should be_nil
   end
+
+  it "should have :name as the only keyattribut" do
+    Puppet::Type.type(:mount).key_attributes.should == [:name]
+  end
 end
 
 describe Puppet::Type.type(:mount), "when validating attributes" do
-  [:name, :remounts].each do |param|
+  [:name, :remounts, :provider].each do |param|
     it "should have a #{param} parameter" do
       Puppet::Type.type(:mount).attrtype(param).should == :param
     end
@@ -38,9 +42,16 @@ describe Puppet::Type.type(:mount)::Ensure, "when validating values" do
     mount.should(:ensure).should == :defined
   end
 
+  it "should support :present as a value to :ensure" do
+    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :present)
+  end
+
+  it "should support :defined as a value to :ensure" do
+    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :defined)
+  end
+
   it "should support :unmounted as a value to :ensure" do
-    mount = Puppet::Type.type(:mount).new(:name => "yay", :ensure => :unmounted)
-    mount.should(:ensure).should == :unmounted
+    Puppet::Type.type(:mount).new(:name => "yay", :ensure => :unmounted)
   end
 
   it "should support :absent as a value to :ensure" do
@@ -54,7 +65,8 @@ end
 
 describe Puppet::Type.type(:mount)::Ensure do
   before :each do
-    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
+    provider_properties = {}
+    @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :property_hash => provider_properties
     Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)
     @mount = Puppet::Type.type(:mount).new(:name => "yay", :check => :ensure)
 
@@ -74,134 +86,150 @@ describe Puppet::Type.type(:mount)::Ensure do
     end
   end
 
-  describe Puppet::Type.type(:mount)::Ensure, "when retrieving its current state" do
-
-    it "should return the provider's value if it is :absent" do
-      @provider.expects(:ensure).returns(:absent)
-      @ensure.retrieve.should == :absent
-    end
-
-    it "should return :mounted if the provider indicates it is mounted and the value is not :absent" do
-      @provider.expects(:ensure).returns(:present)
-      @provider.expects(:mounted?).returns(true)
-      @ensure.retrieve.should == :mounted
-    end
-
-    it "should return :unmounted if the provider indicates it is not mounted and the value is not :absent" do
-      @provider.expects(:ensure).returns(:present)
-      @provider.expects(:mounted?).returns(false)
-      @ensure.retrieve.should == :unmounted
-    end
-  end
-
   describe Puppet::Type.type(:mount)::Ensure, "when changing the host" do
 
-    it "should destroy itself if it should be absent" do
-      @provider.stubs(:mounted?).returns(false)
-      @provider.expects(:destroy)
-      @ensure.should = :absent
-      @ensure.sync
-    end
-
-    it "should unmount itself before destroying if it is mounted and should be absent" do
-      @provider.expects(:mounted?).returns(true)
-      @provider.expects(:unmount)
-      @provider.expects(:destroy)
-      @ensure.should = :absent
-      @ensure.sync
-    end
-
-    it "should create itself if it is absent and should be defined" do
-      @provider.stubs(:ensure).returns(:absent)
-      @provider.stubs(:mounted?).returns(true)
-
-      @provider.stubs(:mounted?).returns(false)
-      @provider.expects(:create)
-      @ensure.should = :defined
-      @ensure.sync
-    end
-
-    it "should not unmount itself if it is mounted and should be defined" do
-      @provider.stubs(:ensure).returns(:mounted)
-      @provider.stubs(:mounted?).returns(true)
-
-      @provider.stubs(:create)
+    def test_ensure_change(options)
+      @provider.stubs(:get).with(:ensure).returns options[:from]
+      @provider.stubs(:ensure).returns options[:from]
+      @provider.stubs(:mounted?).returns([:mounted,:ghost].include? options[:from])
+      @provider.expects(:create).times(options[:create] || 0)
+      @provider.expects(:destroy).times(options[:destroy] || 0)
       @provider.expects(:mount).never
-      @provider.expects(:unmount).never
-      @ensure.should = :defined
-      @ensure.sync
-    end
-
-    it "should not mount itself if it is unmounted and should be defined" do
-      @provider.stubs(:ensure).returns(:unmounted)
-      @provider.stubs(:mounted?).returns(false)
-
+      @provider.expects(:unmount).times(options[:unmount] || 0)
       @ensure.stubs(:syncothers)
-      @provider.stubs(:create)
-      @provider.expects(:mount).never
-      @provider.expects(:unmount).never
-      @ensure.should = :present
+      @ensure.should = options[:to]
       @ensure.sync
-    end
+      (!!@provider.property_hash[:needs_mount]).should == (!!options[:mount])
+   end
 
-    it "should unmount itself if it is mounted and should be unmounted" do
-      @provider.stubs(:ensure).returns(:present)
-      @provider.stubs(:mounted?).returns(true)
+   it "should create itself when changing from :ghost to :present" do
+     test_ensure_change(:from => :ghost, :to => :present, :create => 1)
+   end
 
-      @ensure.stubs(:syncothers)
-      @provider.expects(:unmount)
-      @ensure.should = :unmounted
-      @ensure.sync
-    end
+   it "should create itself when changing from :absent to :present" do
+     test_ensure_change(:from => :absent, :to => :present, :create => 1)
+   end
 
-    it "should create and mount itself if it does not exist and should be mounted" do
-      @provider.stubs(:ensure).returns(:absent)
-      @provider.stubs(:mounted?).returns(false)
-      @provider.expects(:create)
-      @ensure.stubs(:syncothers)
-      @provider.expects(:mount)
-      @ensure.should = :mounted
-      @ensure.sync
-    end
+   it "should create itself and unmount when changing from :ghost to :unmounted" do
+     test_ensure_change(:from => :ghost, :to => :unmounted, :create => 1, :unmount => 1)
+   end
 
-    it "should mount itself if it is present and should be mounted" do
-      @provider.stubs(:ensure).returns(:present)
-      @provider.stubs(:mounted?).returns(false)
-      @ensure.stubs(:syncothers)
-      @provider.expects(:mount)
-      @ensure.should = :mounted
-      @ensure.sync
-    end
+   it "should unmount resource when changing from :mounted to :unmounted" do
+     test_ensure_change(:from => :mounted, :to => :unmounted, :unmount => 1)
+   end
 
-    it "should create but not mount itself if it is absent and mounted and should be mounted" do
-      @provider.stubs(:ensure).returns(:absent)
-      @provider.stubs(:mounted?).returns(true)
-      @ensure.stubs(:syncothers)
-      @provider.expects(:create)
-      @ensure.should = :mounted
-      @ensure.sync
-    end
+   it "should create itself when changing from :absent to :unmounted" do
+     test_ensure_change(:from => :absent, :to => :unmounted, :create => 1)
+   end
 
-    it "should be insync if it is mounted and should be defined" do
-      @ensure.should = :defined
-      @ensure.safe_insync?(:mounted).should == true
-    end
+   it "should unmount resource when changing from :ghost to :absent" do
+     test_ensure_change(:from => :ghost, :to => :absent, :unmount => 1)
+   end
 
-    it "should be insync if it is unmounted and should be defined" do
-      @ensure.should = :defined
-      @ensure.safe_insync?(:unmounted).should == true
-    end
+   it "should unmount and destroy itself when changing from :mounted to :absent" do
+     test_ensure_change(:from => :mounted, :to => :absent, :destroy => 1, :unmount => 1)
+   end
 
-    it "should be insync if it is mounted and should be present" do
-      @ensure.should = :present
-      @ensure.safe_insync?(:mounted).should == true
-    end
+   it "should destroy itself when changing from :unmounted to :absent" do
+     test_ensure_change(:from => :unmounted, :to => :absent, :destroy => 1)
+   end
 
-    it "should be insync if it is unmounted and should be present" do
-      @ensure.should = :present
-      @ensure.safe_insync?(:unmounted).should == true
-    end
-  end
+   it "should create itself when changing from :ghost to :mounted" do
+     test_ensure_change(:from => :ghost, :to => :mounted, :create => 1)
+   end
+
+   it "should create itself and mount when changing from :absent to :mounted" do
+     test_ensure_change(:from => :absent, :to => :mounted, :create => 1, :mount => 1)
+   end
+
+   it "should mount resource when changing from :unmounted to :mounted" do
+     test_ensure_change(:from => :unmounted, :to => :mounted, :mount => 1)
+   end
+
+
+   it "should be in sync if it is :absent and should be :absent" do
+     @ensure.should = :absent
+     @ensure.safe_insync?(:absent).should == true
+   end
+
+   it "should be out of sync if it is :absent and should be :defined" do
+     @ensure.should = :defined
+     @ensure.safe_insync?(:absent).should == false
+   end
+
+   it "should be out of sync if it is :absent and should be :mounted" do
+     @ensure.should = :mounted
+     @ensure.safe_insync?(:absent).should == false
+   end
+
+   it "should be out of sync if it is :absent and should be :unmounted" do
+     @ensure.should = :unmounted
+     @ensure.safe_insync?(:absent).should == false
+   end
+
+   it "should be out of sync if it is :mounted and should be :absent" do
+     @ensure.should = :absent
+     @ensure.safe_insync?(:mounted).should == false
+   end
+
+   it "should be in sync if it is :mounted and should be :defined" do
+     @ensure.should = :defined
+     @ensure.safe_insync?(:mounted).should == true
+   end
+
+   it "should be in sync if it is :mounted and should be :mounted" do
+     @ensure.should = :mounted
+     @ensure.safe_insync?(:mounted).should == true
+   end
+
+   it "should be out in sync if it is :mounted and should be :unmounted" do
+     @ensure.should = :unmounted
+     @ensure.safe_insync?(:mounted).should == false
+   end
+
+
+   it "should be out of sync if it is :unmounted and should be :absent" do
+     @ensure.should = :absent
+     @ensure.safe_insync?(:unmounted).should == false
+   end
+
+   it "should be in sync if it is :unmounted and should be :defined" do
+     @ensure.should = :defined
+     @ensure.safe_insync?(:unmounted).should == true
+   end
+
+   it "should be out of sync if it is :unmounted and should be :mounted" do
+     @ensure.should = :mounted
+     @ensure.safe_insync?(:unmounted).should == false
+   end
+
+   it "should be in sync if it is :unmounted and should be :unmounted" do
+     @ensure.should = :unmounted
+     @ensure.safe_insync?(:unmounted).should == true
+   end
+
+
+   it "should be out of sync if it is :ghost and should be :absent" do
+     @ensure.should = :absent
+     @ensure.safe_insync?(:ghost).should == false
+   end
+
+   it "should be out of sync if it is :ghost and should be :defined" do
+     @ensure.should = :defined
+     @ensure.safe_insync?(:ghost).should == false
+   end
+
+   it "should be out of sync if it is :ghost and should be :mounted" do
+     @ensure.should = :mounted
+     @ensure.safe_insync?(:ghost).should == false
+   end
+
+   it "should be out of sync if it is :ghost and should be :unmounted" do
+     @ensure.should = :unmounted
+     @ensure.safe_insync?(:ghost).should == false
+   end
+
+ end
 
   describe Puppet::Type.type(:mount), "when responding to events" do
 
@@ -258,4 +286,21 @@ describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
 
     @catalog.apply
   end
+
+  it "should umount before flushing changes to disk" do
+    syncorder = sequence('syncorder')
+    @mount.provider.expects(:options).returns 'soft'
+    @mount.provider.expects(:ensure).returns :mounted
+
+    @mount.provider.expects(:unmount).in_sequence(syncorder)
+    @mount.provider.expects(:options=).in_sequence(syncorder).with 'hard'
+    @mount.expects(:flush).in_sequence(syncorder) # Call inside syncothers
+    @mount.expects(:flush).in_sequence(syncorder) # I guess transaction or anything calls flush again
+
+    @mount[:ensure] = :unmounted
+    @mount[:options] = 'hard'
+
+    @catalog.apply
+  end
+
 end

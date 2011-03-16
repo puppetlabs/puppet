@@ -17,22 +17,21 @@ module Puppet
 
     desc "Specify the contents of a file as a string.  Newlines, tabs, and
       spaces can be specified using the escaped syntax (e.g., \\n for a newline).  The primary purpose of this parameter is to provide a
-      kind of limited templating::
+      kind of limited templating:
 
-        define resolve(nameserver1, nameserver2, domain, search) {
-          $str = \"search $search
-        domain $domain
-        nameserver $nameserver1
-        nameserver $nameserver2
-        \"
+          define resolve(nameserver1, nameserver2, domain, search) {
+              $str = \"search $search
+                  domain $domain
+                  nameserver $nameserver1
+                  nameserver $nameserver2
+                  \"
 
-          file { \"/etc/resolv.conf\":
-            content => $str
+              file { \"/etc/resolv.conf\":
+                content => $str
+              }
           }
-        }
 
-      This attribute is especially useful when used with
-      `PuppetTemplating templating`:trac:."
+      This attribute is especially useful when used with templating."
 
     # Store a checksum as the value, rather than the actual content.
     # Simplifies everything.
@@ -201,7 +200,6 @@ module Puppet
       connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
       connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
         case response.code
-        when "404"; nil
         when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
         else
           # Raise the http error if we didn't get a 'success' of some kind.

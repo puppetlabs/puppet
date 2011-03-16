@@ -34,6 +34,7 @@ RSpec.configure do |config|
     Puppet.settings.clear
     Puppet::Node::Environment.clear
     Puppet::Util::Storage.clear
+    Puppet::Util::ExecutionStub.reset
 
     if defined?($tmpfiles)
       $tmpfiles.each do |file|
@@ -64,6 +65,7 @@ RSpec.configure do |config|
     # these globals are set by Application
     $puppet_application_mode = nil
     $puppet_application_name = nil
+    Signal.stubs(:trap)
 
     # Set the confdir and vardir to gibberish so that tests
     # have to be correctly mocked.

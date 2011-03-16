@@ -15,7 +15,10 @@ Puppet::Reports.register_report(:store) do
 
     dir = File.join(Puppet[:reportdir], client)
 
-    Dir.mkdir(dir, 0750) unless FileTest.exists?(dir)
+    if ! FileTest.exists?(dir)
+      FileUtils.mkdir_p(dir)
+      FileUtils.chmod_R(0750, dir)
+    end
 
     # Now store the report.
     now = Time.now.gmtime

@@ -76,6 +76,12 @@ describe Puppet::Parser do
 
   end
 
+  describe "when parsing selector" do
+    it "should support hash access on the left hand side" do
+      lambda { @parser.parse("$h = { 'a' => 'b' } $a = $h['a'] ? { 'b' => 'd', default => undef }") }.should_not raise_error
+    end
+  end
+
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
       ast::Not.expects(:new).with { |h| h[:value].is_a?(ast::Boolean) }
@@ -253,7 +259,7 @@ describe Puppet::Parser do
     before do
       @lexer = stub 'lexer', :line => 50, :file => "/foo/bar", :getcomment => "whev"
       @parser.stubs(:lexer).returns @lexer
-      @class = stub 'class', :use_docs => false
+      @class = Puppet::Resource::Type.new(:hostclass, "myclass", :use_docs => false)
     end
 
     it "should return a new instance of the provided class created with the provided options" do
@@ -276,7 +282,7 @@ describe Puppet::Parser do
     it "should include docs when the AST class uses them" do
       @class.expects(:use_docs).returns true
       @class.stubs(:new)
-      @parser.expects(:ast_context).with{ |a| a[0] == true }.returns({})
+      @parser.expects(:ast_context).with{ |docs, line| docs == true }.returns({})
       @parser.ast(@class, :file => "/bar")
     end
 
@@ -303,6 +309,33 @@ describe Puppet::Parser do
 
     it "should return an array of nodes" do
       @parser.newnode(@nodename).should be_instance_of(Array)
+    end
+
+    it "should initialize the ast context with the correct line number" do
+      @parser.expects(:ast_context).with { |a,b| b == 123 }.returns({})
+      @parser.newnode(@nodename, { :line => 123 })
+    end
+  end
+
+  %w{class define}.each do |entity|
+    describe "when creating a #{entity}" do
+      before :each do
+        @parser.stubs(:ast_context).returns({})
+
+        @name = stub "#{entity}name", :is_a? => false, :value => "foo"
+      end
+
+      it "should create and add the correct resource type" do
+        instance = stub 'instance'
+        Puppet::Resource::Type.expects(:new).returns(instance)
+        @parser.known_resource_types.expects(:add).with(instance)
+        @parser.send("new#{entity}", @name)
+      end
+
+      it "should initialize the ast context with the correct line number" do
+        @parser.expects(:ast_context).with { |a,b| b == 123 }.returns({})
+        @parser.send("new#{entity}", @name, { :line => 123 })
+      end
     end
   end
 

@@ -27,8 +27,11 @@ content property of the file type in Puppet.
 
 The recommended method of using this type is to use Work Group Manager
 to manage users and groups on the local computer, record the resulting
-puppet manifest using the command 'ralsh mcx' then deploying this
+puppet manifest using the command `puppet resource mcx`, then deploy it
 to other machines.
+
+**Autorequires:** If Puppet is managing the user, group, or computer that these
+MCX settings refer to, the MCX resource will autorequire that user, group, or computer.
 "
   feature :manages_content, \
     "The provider can manage MCXSettings as a string.",

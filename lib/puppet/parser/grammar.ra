@@ -642,6 +642,7 @@ selectlhand:  name
   | funcrvalue
   | boolean
   | undef
+  | hasharrayaccess
   | DEFAULT {
     result = ast AST::Default, :value => val[0][:value], :line => val[0][:line]
 }
@@ -844,7 +845,7 @@ hasharrayaccess: VARIABLE LBRACK rvalue RBRACK {
 }
 
 hasharrayaccesses:    hasharrayaccess
-  | hasharrayaccess LBRACK rvalue RBRACK {
+  | hasharrayaccesses LBRACK rvalue RBRACK {
     result = ast AST::HashOrArrayAccess, :variable => val[0], :key => val[2]
 }
 
@@ -870,6 +871,3 @@ require 'puppet/parser/parser_support'
 # Local Variables:
 # mode: ruby
 # End:
-
-# $Id$
-

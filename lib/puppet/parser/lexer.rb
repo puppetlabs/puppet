@@ -476,8 +476,11 @@ class Puppet::Parser::Lexer
         @expected.pop
       end
 
-      if final_token.name == :LBRACE
+      if final_token.name == :LBRACE or final_token.name == :LPAREN
         commentpush
+      end
+      if final_token.name == :RPAREN
+        commentpop
       end
 
       yield [final_token.name, token_value]

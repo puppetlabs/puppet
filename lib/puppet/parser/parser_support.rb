@@ -135,19 +135,19 @@ class Puppet::Parser::Parser
 
   # Create a new class, or merge with an existing class.
   def newclass(name, options = {})
-    known_resource_types.add Puppet::Resource::Type.new(:hostclass, name, ast_context(true).merge(options))
+    known_resource_types.add Puppet::Resource::Type.new(:hostclass, name, ast_context(true, options[:line]).merge(options))
   end
 
   # Create a new definition.
   def newdefine(name, options = {})
-    known_resource_types.add Puppet::Resource::Type.new(:definition, name, ast_context(true).merge(options))
+    known_resource_types.add Puppet::Resource::Type.new(:definition, name, ast_context(true, options[:line]).merge(options))
   end
 
   # Create a new node.  Nodes are special, because they're stored in a global
   # table, not according to namespaces.
   def newnode(names, options = {})
     names = [names] unless names.instance_of?(Array)
-    context = ast_context(true)
+    context = ast_context(true, options[:line])
     names.collect do |name|
       known_resource_types.add(Puppet::Resource::Type.new(:node, name, context.merge(options)))
     end

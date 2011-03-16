@@ -12,7 +12,9 @@ module Puppet
 
       This resource type uses the prescribed native tools for creating
       groups and generally uses POSIX APIs for retrieving information
-      about them.  It does not directly modify `/etc/passwd` or anything."
+      about them.  It does not directly modify `/etc/passwd` or anything.
+      
+      **Autorequires:** If Puppet is managing the user's primary group (as provided in the `gid` attribute), the user resource will autorequire that group. If Puppet is managing any role accounts corresponding to the user's roles, the user resource will autorequire those role accounts."
 
     feature :allows_duplicates,
       "The provider supports duplicate users with the same UID."
@@ -33,6 +35,9 @@ module Puppet
 
     feature :manages_expiry,
       "The provider can manage the expiry date for a user."
+
+   feature :system_users,
+     "The provider allows you to create system users with lower UIDs."
 
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
@@ -228,6 +233,14 @@ module Puppet
       newvalues(:inclusive, :minimum)
 
       defaultto :minimum
+    end
+
+    newparam(:system, :boolean => true) do
+      desc "Whether the user is a system user with lower UID."
+
+      newvalues(:true, :false)
+
+      defaultto false
     end
 
     newparam(:allowdupe, :boolean => true) do

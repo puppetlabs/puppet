@@ -1,5 +1,7 @@
 Puppet::Type.newtype(:zone) do
-  @doc = "Solaris zones."
+  @doc = "Solaris zones.
+
+**Autorequires:** If Puppet is managing the directory specified as the root of the zone's filesystem (with the `path` attribute), the zone resource will autorequire that directory."
 
   # These properties modify the zone configuration, and they need to provide
   # the text separately from syncing it, so all config statements can be rolled

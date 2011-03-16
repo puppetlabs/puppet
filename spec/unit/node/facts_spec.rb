@@ -109,5 +109,29 @@ describe Puppet::Node::Facts, "when indirecting" do
       facts = Puppet::Node::Facts.new("me", "one" => "two", "three" => "four")
       facts.values[:_timestamp].should be_instance_of(Time)
     end
+
+    describe "using pson" do
+      before :each do
+        @timestamp = Time.parse("Thu Oct 28 11:16:31 -0700 2010")
+        @expiration = Time.parse("Thu Oct 28 11:21:31 -0700 2010")
+      end
+
+      it "should accept properly formatted pson" do
+        pson = %Q({"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('pson')
+        facts = format.intern(Puppet::Node::Facts,pson)
+        facts.name.should == 'foo'
+        facts.expiration.should == @expiration
+        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', :_timestamp => @timestamp}
+      end
+
+      it "should generate properly formatted pson" do
+        Time.stubs(:now).returns(@timestamp)
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+        facts.expiration = @expiration
+        pson = PSON.parse(facts.to_pson)
+        pson.should == {"name"=>"foo", "timestamp"=>@timestamp.to_s, "expiration"=>@expiration.to_s, "values"=>{"a"=>1, "b"=>2, "c"=>3}}
+      end
+    end
   end
 end

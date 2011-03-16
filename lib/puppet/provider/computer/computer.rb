@@ -10,9 +10,7 @@ Puppet::Type.type(:computer).provide :directoryservice, :parent => Puppet::Provi
   domain, not in remote directories.
 
   If you wish to manage /etc/hosts on Mac OS X, then simply use the host
-  type as per other platforms.
-
-  "
+  type as per other platforms."
 
   confine :operatingsystem => :darwin
   defaultfor :operatingsystem => :darwin

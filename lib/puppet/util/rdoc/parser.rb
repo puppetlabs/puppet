@@ -41,8 +41,10 @@ class Parser
         @parser.file = @input_file_name
         @ast = @parser.parse
       end
-      scan_top_level(@top_level)
+    else
+      @ast = env.known_resource_types
     end
+    scan_top_level(@top_level)
     @top_level
   end
 
@@ -157,8 +159,8 @@ class Parser
 
       if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
         stmt.arguments.each do |included|
-          Puppet.debug "found #{stmt.name}: #{included.value}"
-          container.send("add_#{stmt.name}",Include.new(included.value, stmt.doc))
+          Puppet.debug "found #{stmt.name}: #{included}"
+          container.send("add_#{stmt.name}",Include.new(included.to_s, stmt.doc))
         end
       end
     end

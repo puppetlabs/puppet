@@ -75,7 +75,10 @@ module Puppet::Network::HTTP::Compression
         # in this case, we try with a verbatim (no header)
         # deflater.
         @uncompressor = Zlib::Inflate.new
-        retry if @first
+        if @first then
+          @first = false
+          retry
+        end
         raise
       end
 
