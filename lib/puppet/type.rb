@@ -200,13 +200,7 @@ class Type
   end
 
   def uniqueness_key
-    # If we have only one namevar use that one (res.uniqueness_key behaves
-    # like res[:name] in that case). Otherwise use an array of all keyattributes
-    if name_var
-      self[:name]
-    else
-      @parameters.values_at(*self.class.key_attributes).collect {|p| p.value }
-    end
+    to_resource.uniqueness_key
   end
 
   # Create a new parameter.  Requires a block and a name, stores it in the
