@@ -162,7 +162,7 @@ class Puppet::Parser::Compiler
         resource.evaluate unless lazy_evaluate
         found << name
       else
-        Puppet.info "Could not find class #{name} for #{node.name}"
+        Puppet.warning "Could not find class #{name} for #{node.name}"
         @catalog.tag(name)
       end
     end
