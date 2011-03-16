@@ -276,7 +276,7 @@ describe Puppet::Resource do
   describe "when referring to a resource with name canonicalization" do
     it "should canonicalize its own name" do
       res = Puppet::Resource.new("file", "/path/")
-      res.uniqueness_key.should == ["/path"]
+      res.uniqueness_key.should == "/path"
       res.ref.should == "File[/path/]"
     end
   end
@@ -800,7 +800,14 @@ type: File
   end
 
   describe "when generating the uniqueness key" do
-    it "should include all of the key_attributes in alphabetical order by attribute name" do
+
+    it "should use namevar if there is only one key_attribute" do
+      Puppet::Type.type(:file).stubs(:key_attributes).returns [:path]
+      res = Puppet::Resource.new("file", "/my/file", :parameters => {:owner => 'root', :content => 'hello'})
+      res.uniqueness_key.should == '/my/file'
+    end
+
+    it "should include all of the key_attributes" do
       Puppet::Type.type(:file).stubs(:key_attributes).returns [:myvar, :owner, :path]
       Puppet::Type.type(:file).stubs(:title_patterns).returns(
         [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]

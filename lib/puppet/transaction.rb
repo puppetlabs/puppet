@@ -245,7 +245,7 @@ class Puppet::Transaction
     @catalog.vertices.each do |resource|
       if provider = resource.provider and provider.class.respond_to?(:prefetch)
         prefetchers[provider.class] ||= {}
-        prefetchers[provider.class][resource.name] = resource
+        prefetchers[provider.class][resource.uniqueness_key] = resource
       end
     end
 
