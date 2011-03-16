@@ -1,5 +1,110 @@
-2.6.6
+2.6.7rc1
 ========
+852fb97 (#5073) Download plugins even if you're filtering on tags
+4f34dbf Fix #5610: Prevent unnecessary RAL lookups
+9781032 Revert "Merge branch 'ticket/2.6.x/5605' of git://github.com/stschulte/puppet into 2.6.next"
+25926d1 (#6723) Fix withenv environment restoration bug
+093f162 (#6689) Remove extraneous include of Puppet::Util in InventoryActiveRecord
+4c19299 Remove extra trailing whitespace from lib/puppet/resource.rb
+ff9e242 (#5428) More fully "stub" Puppet::Resource::Reference for use with storedconfigs
+0262633 (#6707) Fix typo in rest_authconfig.rb
+8858e40 (#6689) Make inventory_active_record terminus search quickly
+285c4cc (#5392) Give a better error when realizing a non-existant resource
+cd5deda (#2645) Adding a less-stubby test to verify the "system" attribute's behavior
+531e258 maint: Remove serialization of InventoryFact values
+3489412 maint: Rename InventoryHost to InventoryNode
+4bd5493 Fixed #2645 - Added support for creating system users
+a3f2357 maint: Remove spec run noise
+7764412 maint:Refactor of mount provider integration tests
+880d0c6 (#6338) Support searching on metadata in InventoryActiveRecord terminus
+f836366 (#6338) Implement search for InventoryActiveRecord facts terminus
+8ce30c8 (#6338) Add an InventoryActiveRecord terminus for Facts
+1ef83cb Added integration tests for the mount provider
+64440e5 (#6513) Propagate the environment when doing variable lookup in settings
+92dffb2 (#6513) Adjust P::U::Settings test name to reflect what it tests
+5ef1031 (#6632) Adding a new mount no longer causes error with umount
+bd5517d Adjust Darwin mount provider tests to pass on Linux
+9d2fceb Maint: Begin adding integration tests for the mount provider
+23d1c03 Maint: Added the ability to replace the behavior of Puppet::Util.execute with an arbitrary code block for ease in spec testing.
+455a891 (#5794) create reports directory when creating host specific directory
+1b1e803 (5724) Prep for deprecation of DESTDIR
+f4a0af1 Refactoring duplicate code and logic in prep for DESTDIR deprecation.
+7a00d6b (#6606) Inline docs: Document all autorequire relationships
+e3aec14 (#5148) Fix failing spec due to timezone
+8bd80a9 (#5148) Add support for PSON to facts
+c3baa28 (#6338) Remove inventory indirection, and move to facts indirection
+6c53eb3 (#6445) Fix inline docs: puppet agent does not accept --mkusers
+4e29f43 (#6541) maint: whitespace cleanup on the file integration spec
+b907ba3 (#6541) Fix content with checksum truncation bug
+422399b (#5466) Write specs for output of puppet resource
+8cc390c (#5466) Monkey patch Symbol so that you can sort them
+24eacb7 (#5466) Fixed puppet resource bug with trailing ,
+743e039 (#4922) Don't truncate remotely-sourced files on 404
+bb69011 (#6338) Remove unused version control tags
+e2a5085 Maint: Align tabs in a code block in the Augeas type.
+65a5496 (#6509) Inline docs: Fix erroneous code block in directoryservice provider for computer type
+ea9f1f0 Maint: Rewrite comments about symlinks to reflect best practice.
+94f8ead (#6509) Inline docs: Fix broken lists in Launchd provider.
+c80a77d (#6509) Inline docs: Fix broken code blocks in zpool type
+27863c3 (#6509) Inline docs: Fix code blocks in service type.
+f4034f7 (#6509) Inline docs: fix broken code blocks in schedule.rb.
+6f6c4b5 (#6509) Inline docs: Fix broken code block in file type (content attribute)
+a949a83 Revert "(#6309) Ensure the correct device is mounted when managing mounts"
+23a510a (#4914) Improved stubbing in mount/parsed_spec tests.
+ac2262d (#3999) Allow disabling of default SELinux context detection for files
+23eb77d (#6322) --noop should not suppress error codes
+439115e (#6499) Make puppet respond identically to -h and --help
+23b7119 Maint: Add an assertion mechanism to Puppet
+e3dfe41 (#6418) Recursive files shouldn't be audited
+0e9858f (#6407) Fix spec test hang with Mocha >= 0.9.11 in zlib testing
+309b932 (#5552) Display help when no subcommand is given.
+de6a205 (#5552) Clean up subcommand handling inside puppet cert.
+bb31c3d (#6376) Add test case for facts find request
+2ecf913 Revert "(#5935) Allow functions to accept negated values"
+c57c508 (#4914) Improved parsed_spec for mount
+ec33a09 (#4914) Remove mount specs
+e854205 Remove pending tests from parsed mount provider
+6cb365a (#6309) Ensure the correct device is mounted when managing mounts
+d1f1858 (#6376) Add support and testing for _search GET requests
+3b41d44 Clean up whitespace, and commented out code in parsed mount provider
+a7cebf8 (#6337) Fix Ruby warning on 1.8.6 about "future compatibility"
+8a48560 (#5150) Make fact REST terminus configurable to connect to inventory service
+e6870f6 (#5166) Inventory service is now searchable by timestamp.
+2d2f9ab Maint: backport timestamp accessor for facts from 2.7 branch
+fa0ed63 Refactored Puppet::Node::Inventory::Yaml tests in preparation for adding freshness check
+67f24e4 Refactor Puppet::Node::Inventory::Yaml in preparation for adding freshness
+23fc4db (#5132) Provide a query REST interface for inventory
+e3c59df (#5935) Allow functions to accept negated values
+7cb884e (#6346) Move the trap calls onto Signal so they're easier to stub
+b5bae9f (#6331) Remove final special :trac: link from the file content property
+4d25d90 (#6331) Inline documentation: Fix rotted links pointing at the Trac wiki
+b25d9e4 maint: make rspec exit with status 1 when there are failures
+5c26f68 (#5516) Rebuild parser.rb after merge.
+e512e3e (#5977) fix spec test failure when new applications are introduced.
+b5b5923 misc: ast_context has two arguments, not one.
+414e3a5 Fix #5516 - Hashes can't be used in selectors
+c373b62 Fix #6269 - Hashes only work with two levels of access
+9090507 Fix #6267 - puppetdoc embedded links to puppet entities are not hyperlinked
+b4a171e Fix #5720 - puppetdoc misses some class comments
+cfa0c32 Fix #6281 - Make sure puppetdoc analyzes all files
+48bc7d0 Fix #6280 - puppetdoc crashing on string interpolation
+0b7faa6 (#6270) Fix formatting in split function's doc string
+637e139 (#6270) Fix formatting in regsubst function's doc string
+e9ee621 (6130) Change header level on metaparameter reference
+d6e4ffe (#4914) Specs for mounted? match new behaviour
+f534470 (#4914) Add specs for modified mount provider
+b753038 (#4914) Add specs for modified mount type
+9f40608 (#4914) Update property blocks
+fd111f2 (#4914) Query property_hash for mountstate
+2884660 (#4914) Prefetch mountstate
+ade951a (#4914) Join lines for better readability
+8b98526 (#5662) Fixed tests that didnt stub key_attributes
+02b3111 (#5605) Prefetch doesnt work with composite keys
+2a0c970 (#5662) Parsedfile doesnt work with mult keyattr
+35dd070 (#5661) Creating types dont work with >1 namevar
+
+2.6.6
+=====
 d24e32a Update CHANGELOG and version for 2.6.6rc1
 7c2a980 (#6541) Fix content with checksum truncation bug
 63e911f (#6418) Recursive files shouldn't be audited
