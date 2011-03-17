@@ -23,17 +23,15 @@ module Puppet
       you are doing a lot of work with `exec`, please at least notify
       us at Puppet Labs what you are doing, and hopefully we can work with
       you to get a native resource type for the work you are doing.
-      
-      **Autorequires:** If Puppet is managing an exec's cwd or the executable file used in an exec's command, the exec resource will autorequire those files. If Puppet is managing the user that an exec should run as, the exec resource will autorequire that user."
 
-    require 'open3'
+      **Autorequires:** If Puppet is managing an exec's cwd or the executable file used in an exec's command, the exec resource will autorequire those files. If Puppet is managing the user that an exec should run as, the exec resource will autorequire that user."
 
     # Create a new check mechanism.  It's basically just a parameter that
     # provides one extra 'check' method.
-    def self.newcheck(name, &block)
+    def self.newcheck(name, options = {}, &block)
       @checks ||= {}
 
-      check = newparam(name, &block)
+      check = newparam(name, options, &block)
       @checks[name] = check
     end
 
@@ -65,9 +63,11 @@ module Puppet
 
       # First verify that all of our checks pass.
       def retrieve
-        # Default to somethinng
-
-        if @resource.check
+        # We need to return :notrun to trigger evaluation; when that isn't
+        # true, we *LIE* about what happened and return a "success" for the
+        # value, which causes us to be treated as in_sync?, which means we
+        # don't actually execute anything.  I think. --daniel 2011-03-10
+        if @resource.check_all_attributes
           return :notrun
         else
           return self.should
@@ -89,7 +89,7 @@ module Puppet
           tries.times do |try|
             # Only add debug messages for tries > 1 to reduce log spam.
             debug("Exec try #{try+1}/#{tries}") if tries > 1
-            @output, @status = @resource.run(self.resource[:command])
+            @output, @status = provider.run(self.resource[:command])
             break if self.should.include?(@status.exitstatus.to_s)
             if try_sleep > 0 and tries > 1
               debug("Sleeping for #{try_sleep} seconds between tries")
@@ -139,7 +139,7 @@ module Puppet
     newparam(:path) do
       desc "The search path used for command execution.
         Commands must be fully qualified if no path is specified.  Paths
-        can be specified as an array or as a colon-separated list."
+        can be specified as an array or as a colon separated list."
 
       # Support both arrays and colon-separated fields.
       def value=(*values)
@@ -176,21 +176,9 @@ module Puppet
       # Validation is handled by the SUIDManager class.
     end
 
-    newparam(:cwd) do
+    newparam(:cwd, :parent => Puppet::Parameter::Path) do
       desc "The directory from which to run the command.  If
         this directory does not exist, the command will fail."
-
-      validate do |dir|
-        unless dir =~ /^#{File::SEPARATOR}/
-          self.fail("CWD must be a fully qualified path")
-        end
-      end
-
-      munge do |dir|
-        dir = dir[0] if dir.is_a?(Array)
-
-        dir
-      end
     end
 
     newparam(:logoutput) do
@@ -209,7 +197,7 @@ module Puppet
         for refreshing."
 
       validate do |command|
-        @resource.validatecmd(command)
+        provider.validatecmd(command)
       end
     end
 
@@ -333,7 +321,7 @@ module Puppet
       end
     end
 
-    newcheck(:creates) do
+    newcheck(:creates, :parent => Puppet::Parameter::Path) do
       desc "A file that this command creates.  If this
         parameter is provided, then the command will only be run
         if the specified file does not exist:
@@ -346,19 +334,7 @@ module Puppet
 
         "
 
-      # FIXME if they try to set this and fail, then we should probably
-      # fail the entire exec, right?
-      validate do |files|
-        files = [files] unless files.is_a? Array
-
-        files.each do |file|
-          self.fail("'creates' must be set to a fully qualified path") unless file
-
-          unless file =~ %r{^#{File::SEPARATOR}}
-            self.fail "'creates' files must be fully qualified."
-          end
-        end
-      end
+      accept_arrays
 
       # If the file exists, return false (i.e., don't run the command),
       # else return true
@@ -386,15 +362,15 @@ module Puppet
       validate do |cmds|
         cmds = [cmds] unless cmds.is_a? Array
 
-        cmds.each do |cmd|
-          @resource.validatecmd(cmd)
+        cmds.each do |command|
+          provider.validatecmd(command)
         end
       end
 
       # Return true if the command does not return 0.
       def check(value)
         begin
-          output, status = @resource.run(value, true)
+          output, status = provider.run(value, true)
         rescue Timeout::Error
           err "Check #{value.inspect} exceeded timeout"
           return false
@@ -428,15 +404,15 @@ module Puppet
       validate do |cmds|
         cmds = [cmds] unless cmds.is_a? Array
 
-        cmds.each do |cmd|
-          @resource.validatecmd(cmd)
+        cmds.each do |command|
+          provider.validatecmd(command)
         end
       end
 
       # Return true if the command returns 0.
       def check(value)
         begin
-          output, status = @resource.run(value, true)
+          output, status = provider.run(value, true)
         rescue Timeout::Error
           err "Check #{value.inspect} exceeded timeout"
           return false
@@ -450,7 +426,7 @@ module Puppet
     @isomorphic = false
 
     validate do
-      validatecmd(self[:command])
+      provider.validatecmd(self[:command])
     end
 
     # FIXME exec should autorequire any exec that 'creates' our cwd
@@ -503,7 +479,7 @@ module Puppet
     # Verify that we pass all of the checks.  The argument determines whether
     # we skip the :refreshonly check, which is necessary because we now check
     # within refresh
-    def check(refreshing = false)
+    def check_all_attributes(refreshing = false)
       self.class.checks.each { |check|
         next if refreshing and check == :refreshonly
         if @parameters.include?(check)
@@ -518,32 +494,6 @@ module Puppet
       true
     end
 
-    # Verify that we have the executable
-    def checkexe(cmd)
-      exe = extractexe(cmd)
-
-      if self[:path]
-        if Puppet.features.posix? and !File.exists?(exe)
-          withenv :PATH => self[:path].join(File::PATH_SEPARATOR) do
-            exe = which(exe) || raise(ArgumentError,"Could not find command '#{exe}'")
-          end
-        elsif Puppet.features.microsoft_windows? and !File.exists?(exe)
-          self[:path].each do |path|
-            [".exe", ".ps1", ".bat", ".com", ""].each do |extension|
-              file = File.join(path, exe+extension)
-              return if File.exists?(file)
-            end
-          end
-        end
-      end
-
-      raise ArgumentError, "Could not find executable '#{exe}'" unless FileTest.exists?(exe)
-      unless FileTest.executable?(exe)
-        raise ArgumentError,
-          "'#{exe}' is not executable"
-      end
-    end
-
     def output
       if self.property(:returns).nil?
         return nil
@@ -554,97 +504,12 @@ module Puppet
 
     # Run the command, or optionally run a separately-specified command.
     def refresh
-      if self.check(true)
+      if self.check_all_attributes(true)
         if cmd = self[:refresh]
-          self.run(cmd)
+          provider.run(cmd)
         else
           self.property(:returns).sync
         end
-      end
-    end
-
-    # Run a command.
-    def run(command, check = false)
-      output = nil
-      status = nil
-
-      dir = nil
-
-      checkexe(command)
-
-      if dir = self[:cwd]
-        unless File.directory?(dir)
-          if check
-            dir = nil
-          else
-            self.fail "Working directory '#{dir}' does not exist"
-          end
-        end
-      end
-
-      dir ||= Dir.pwd
-
-      if check
-        debug "Executing check '#{command}'"
-      else
-        debug "Executing '#{command}'"
-      end
-      begin
-        # Do our chdir
-        Dir.chdir(dir) do
-          environment = {}
-
-          environment[:PATH] = self[:path].join(":") if self[:path]
-
-          if envlist = self[:environment]
-            envlist = [envlist] unless envlist.is_a? Array
-            envlist.each do |setting|
-              if setting =~ /^(\w+)=((.|\n)+)$/
-                name = $1
-                value = $2
-                if environment.include? name
-                  warning(
-                  "Overriding environment setting '#{name}' with '#{value}'"
-                  )
-                end
-                environment[name] = value
-              else
-                warning "Cannot understand environment setting #{setting.inspect}"
-              end
-            end
-          end
-
-          withenv environment do
-            Timeout::timeout(self[:timeout]) do
-              output, status = Puppet::Util::SUIDManager.run_and_capture(
-                [command], self[:user], self[:group]
-              )
-            end
-            # The shell returns 127 if the command is missing.
-            if status.exitstatus == 127
-              raise ArgumentError, output
-            end
-          end
-        end
-      rescue Errno::ENOENT => detail
-        self.fail detail.to_s
-      end
-
-      return output, status
-    end
-
-    def validatecmd(cmd)
-      exe = extractexe(cmd)
-      # if we're not fully qualified, require a path
-      self.fail "'#{cmd}' is not qualified and no path was specified. Please qualify the command or specify a path." if File.expand_path(exe) != exe and self[:path].nil?
-    end
-
-    def extractexe(cmd)
-      # easy case: command was quoted
-      if cmd =~ /^"([^"]+)"/
-        $1
-      else
-        cmd.split(/ /)[0]
       end
     end
   end
