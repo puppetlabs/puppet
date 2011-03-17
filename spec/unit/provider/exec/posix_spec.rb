@@ -57,13 +57,18 @@ describe provider_class do
           lambda { @provider.run("foo") }.should raise_error(ArgumentError, "'foo' is not executable")
         end
 
+        it "should not be able to execute shell builtins" do
+          @provider.resource[:path] = ['/bin']
+          lambda { @provider.run("cd ..") }.should raise_error(ArgumentError, "Could not find command 'cd'")
+        end
+
         it "should execute the command if the command given includes arguments or subcommands" do
           @provider.resource[:path] = ['/bogus/bin']
           File.stubs(:exists?).returns(false)
           File.stubs(:exists?).with("foo").returns(true)
           File.stubs(:executable?).with("foo").returns(true)
 
-          Puppet::Util.expects(:execute).with(['foo bar --sillyarg=true --blah'], {:uid => nil, :gid => nil, :combine => true, :failonfail => false})
+          Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo bar --sillyarg=true --blah']) && (arguments.is_a? Hash) }
           @provider.run("foo bar --sillyarg=true --blah")
         end
 
@@ -80,7 +85,7 @@ describe provider_class do
           @provider.resource[:path] = ['/bogus/bin']
           File.stubs(:exists?).with("foo").returns(true)
           File.stubs(:executable?).with("foo").returns(true)
-          Puppet::Util.expects(:execute).with(['foo'], {:uid => nil, :gid => nil, :combine => true, :failonfail => false})
+          Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo']) && (arguments.is_a? Hash) }
 
           @provider.run("foo")
         end
@@ -92,7 +97,7 @@ describe provider_class do
               File.stubs(:exists?).returns(false)
               File.stubs(:exists?).with("/bogus/bin/foo#{extension}").returns(true)
               File.stubs(:executable?).with("foo").returns(true)
-              Puppet::Util.expects(:execute).with(['foo'], {:uid => nil, :gid => nil, :combine => true, :failonfail => false})
+              Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo']) && (arguments.is_a? Hash) }
 
               @provider.run("foo")
             end
@@ -105,7 +110,7 @@ describe provider_class do
           File.stubs(:exists?).with("foo").returns(true)
           File.stubs(:executable?).with("foo").returns(true)
 
-          Puppet::Util.expects(:execute).with(['foo'], {:uid => nil, :gid => nil, :combine => true, :failonfail => false})
+          Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo']) && (arguments.is_a? Hash) }
           @provider.run("foo")
           @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
         end
