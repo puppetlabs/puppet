@@ -268,8 +268,9 @@ describe Puppet::Application::Agent do
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
-      Puppet[:configprint] = "pluginsync"
-
+      Puppet[:modulepath] = '/my/path'
+      Puppet[:configprint] = "modulepath"
+      Puppet::Util::Settings.any_instance.expects(:puts).with('/my/path')
       lambda { @puppetd.setup }.should raise_error(SystemExit)
     end
 
