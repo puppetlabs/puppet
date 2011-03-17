@@ -30,106 +30,112 @@ describe Puppet::Type.type(:exec) do
   end
 
   before do
-    @executable = Puppet.features.posix? ? '/bin/true' : 'C:/Program Files/something.exe'
     @command = Puppet.features.posix? ? '/bin/true whatever' : '"C:/Program Files/something.exe" whatever'
-    File.stubs(:exists?).returns false
-    File.stubs(:exists?).with(@executable).returns true
-    @example_path = Puppet.features.posix? ? %w{/usr/bin /bin} : [ "C:/Program Files/something/bin", "C:/Ruby/bin" ]
-    File.stubs(:exists?).with(File.join(@example_path[0],"true")).returns true
-    File.stubs(:exists?).with(File.join(@example_path[0],"false")).returns true
   end
 
-  it "should return :executed_command as its event" do
-    resource = Puppet::Type.type(:exec).new :command => @command
-    resource.parameter(:returns).event.name.should == :executed_command
-  end
-
-  describe "when execing" do
-    it "should use the 'run_and_capture' method to exec" do
-      exec_tester("true").refresh.should == :executed_command
+  describe "when not stubbing the provider" do
+    before do
+      @executable = Puppet.features.posix? ? '/bin/foo' : 'C:/Program Files/something.exe'
+      File.stubs(:exists?).returns false
+      File.stubs(:exists?).with(@executable).returns true
+      File.stubs(:exists?).with('/bin/false').returns true
+      @example_path = Puppet.features.posix? ? %w{/usr/bin /bin} : [ "C:/Program Files/something/bin", "C:/Ruby/bin" ]
+      File.stubs(:exists?).with(File.join(@example_path[0],"true")).returns true
+      File.stubs(:exists?).with(File.join(@example_path[0],"false")).returns true
     end
 
-    it "should report a failure" do
-      proc { exec_tester('false', 1).refresh }.
-        should raise_error(Puppet::Error, /^false returned 1 instead of/)
+    it "should return :executed_command as its event" do
+      resource = Puppet::Type.type(:exec).new :command => @command
+      resource.parameter(:returns).event.name.should == :executed_command
     end
 
-    it "should not report a failure if the exit status is specified in a returns array" do
-      proc { exec_tester("false", 1, :returns => [0, 1]).refresh }.should_not raise_error
-    end
+    describe "when execing" do
+      it "should use the 'run_and_capture' method to exec" do
+        exec_tester("true").refresh.should == :executed_command
+      end
 
-    it "should report a failure if the exit status is not specified in a returns array" do
-      proc { exec_tester('false', 1, :returns => [0, 100]).refresh }.
-        should raise_error(Puppet::Error, /^false returned 1 instead of/)
-    end
+      it "should report a failure" do
+        proc { exec_tester('false', 1).refresh }.
+          should raise_error(Puppet::Error, /^false returned 1 instead of/)
+      end
 
-    it "should log the output on success" do
-      output = "output1\noutput2\n"
-      exec_tester('false', 0, :output => output, :logoutput => true).refresh
-      output.split("\n").each do |line|
-        log = @logs.shift
-        log.level.should == :err
-        log.message.should == line
+      it "should not report a failure if the exit status is specified in a returns array" do
+        proc { exec_tester("false", 1, :returns => [0, 1]).refresh }.should_not raise_error
+      end
+
+      it "should report a failure if the exit status is not specified in a returns array" do
+        proc { exec_tester('false', 1, :returns => [0, 100]).refresh }.
+          should raise_error(Puppet::Error, /^false returned 1 instead of/)
+      end
+
+      it "should log the output on success" do
+        output = "output1\noutput2\n"
+        exec_tester('false', 0, :output => output, :logoutput => true).refresh
+        output.split("\n").each do |line|
+          log = @logs.shift
+          log.level.should == :err
+          log.message.should == line
+        end
+      end
+
+      it "should log the output on failure" do
+        output = "output1\noutput2\n"
+        proc { exec_tester('false', 1, :output => output, :logoutput => true).refresh }.
+          should raise_error(Puppet::Error)
+
+        output.split("\n").each do |line|
+          log = @logs.shift
+          log.level.should == :err
+          log.message.should == line
+        end
       end
     end
 
-    it "should log the output on failure" do
-      output = "output1\noutput2\n"
-      proc { exec_tester('false', 1, :output => output, :logoutput => true).refresh }.
-        should raise_error(Puppet::Error)
+    describe "when logoutput=>on_failure is set" do
+      it "should log the output on failure" do
+        output = "output1\noutput2\n"
+        proc { exec_tester('false', 1, :output => output, :logoutput => :on_failure).refresh }.
+          should raise_error(Puppet::Error, /^false returned 1 instead of/)
 
-      output.split("\n").each do |line|
-        log = @logs.shift
-        log.level.should == :err
-        log.message.should == line
+        output.split("\n").each do |line|
+          log = @logs.shift
+          log.level.should == :err
+          log.message.should == line
+        end
       end
-    end
-  end
 
-  describe "when logoutput=>on_failure is set" do
-    it "should log the output on failure" do
-      output = "output1\noutput2\n"
-      proc { exec_tester('false', 1, :output => output, :logoutput => :on_failure).refresh }.
-        should raise_error(Puppet::Error, /^false returned 1 instead of/)
+      it "should log the output on failure when returns is specified as an array" do
+        output = "output1\noutput2\n"
 
-      output.split("\n").each do |line|
-        log = @logs.shift
-        log.level.should == :err
-        log.message.should == line
+        proc {
+          exec_tester('false', 1, :output => output, :returns => [0, 100],
+               :logoutput => :on_failure).refresh
+        }.should raise_error(Puppet::Error, /^false returned 1 instead of/)
+
+        output.split("\n").each do |line|
+          log = @logs.shift
+          log.level.should == :err
+          log.message.should == line
+        end
       end
-    end
 
-    it "should log the output on failure when returns is specified as an array" do
-      output = "output1\noutput2\n"
-
-      proc {
-        exec_tester('false', 1, :output => output, :returns => [0, 100],
-             :logoutput => :on_failure).refresh
-      }.should raise_error(Puppet::Error, /^false returned 1 instead of/)
-
-      output.split("\n").each do |line|
-        log = @logs.shift
-        log.level.should == :err
-        log.message.should == line
+      it "shouldn't log the output on success" do
+        exec_tester('true', 0, :output => "a\nb\nc\n", :logoutput => :on_failure).refresh
+        @logs.should == []
       end
     end
 
-    it "shouldn't log the output on success" do
-      exec_tester('true', 0, :output => "a\nb\nc\n", :logoutput => :on_failure).refresh
+    it "shouldn't log the output on success when non-zero exit status is in a returns array" do
+      exec_tester("true", 100, :output => "a\n", :logoutput => :on_failure, :returns => [1, 100]).refresh
       @logs.should == []
     end
-  end
 
-  it "shouldn't log the output on success when non-zero exit status is in a returns array" do
-    exec_tester("true", 100, :output => "a\n", :logoutput => :on_failure, :returns => [1, 100]).refresh
-    @logs.should == []
-  end
-
-  describe " when multiple tries are set," do
-    it "should repeat the command attempt 'tries' times on failure and produce an error" do
-      tries = 5
-      resource = exec_tester("false", 1, :tries => tries, :try_sleep => 0)
-      proc { resource.refresh }.should raise_error(Puppet::Error)
+    describe " when multiple tries are set," do
+      it "should repeat the command attempt 'tries' times on failure and produce an error" do
+        tries = 5
+        resource = exec_tester("false", 1, :tries => tries, :try_sleep => 0)
+        proc { resource.refresh }.should raise_error(Puppet::Error)
+      end
     end
   end
 
@@ -356,6 +362,7 @@ describe Puppet::Type.type(:exec) do
 
       it "should fail if timeout is exceeded" do
         File.stubs(:exists?).with('/bin/sleep').returns(true)
+        File.stubs(:exists?).with('sleep').returns(false)
         sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
         lambda { sleep_exec.refresh }.should raise_error Puppet::Error, "Command exceeded timeout"
       end

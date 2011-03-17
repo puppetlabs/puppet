@@ -11,7 +11,7 @@ describe provider_class do
 
   describe "#run" do
     it "should be able to run builtin shell commands" do
-      output, status = @provider.run("if [ 1 == 1 ]; then echo 'blah'; fi")
+      output, status = @provider.run("if [ 1 = 1 ]; then echo 'blah'; fi")
       status.exitstatus.should == 0
       output.should == "blah\n"
     end
