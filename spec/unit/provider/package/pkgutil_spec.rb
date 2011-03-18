@@ -37,7 +37,7 @@ describe provider do
 
   describe "when updating" do
     it "should use a command without versioned package" do
-      @provider.expects(:pkguti).with('-y', '-i', 'TESTpkg')
+      @provider.expects(:pkguti).with('-y', '-u', 'TESTpkg')
       @provider.update
     end
   end
@@ -52,24 +52,22 @@ describe provider do
   describe "when getting latest version" do
     it "should return TESTpkg's version string" do
       fake_data = "
-CSWsvn                    1.4.5,REV=2007.11.18      SAME
-TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20
-CSWemacs                  notinst                   22.1"
+noisy output here
+TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.20"
     end
 
     it "should handle TESTpkg's 'SAME' version string" do
       fake_data = "
-CSWsvn                    1.4.5,REV=2007.11.18      SAME
-TESTpkg                   1.4.5,REV=2007.11.18      SAME
-CSWemacs                  notinst                   22.1"
+noisy output here
+TESTpkg                   1.4.5,REV=2007.11.18      SAME"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.18"
     end
 
     it "should handle a non-existent package" do
-      fake_data = "CSWsvn  1.4.5,REV=2007.11.18  SAME"
+      fake_data = "noisy output here"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.latest.should == nil
     end
@@ -90,10 +88,8 @@ gpg: Signature made February 17, 2011 05:27:53 PM GMT using DSA key ID E12E9D2F
 gpg: Good signature from \"Distribution Manager <dm@blastwave.org>\"
 ==> 2770 packages loaded from /var/opt/csw/pkgutil/catalog.mirror.opencsw.org_opencsw_unstable_i386_5.11
 package                   installed                 catalog
-TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20
-testingnoise
-testing                   noise                     again"
-      provider.expects(:pkguti).returns fake_data
+TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.20"
     end
   end
@@ -112,7 +108,7 @@ testing                   noise                     again"
     end
 
     it "should handle a non-existent package" do
-      fake_data = "CSWsvn  1.4.5,REV=2007.11.18  SAME"
+      fake_data = "noisy output here"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.query[:ensure].should == :absent
     end
