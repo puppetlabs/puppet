@@ -51,6 +51,7 @@ RSpec.configure do |config|
     Puppet.settings.clear
     Puppet::Node::Environment.clear
     Puppet::Util::Storage.clear
+    Puppet::Util::ExecutionStub.reset
 
     PuppetSpec::Files.cleanup
 

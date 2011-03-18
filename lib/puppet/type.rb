@@ -200,7 +200,7 @@ class Type
   end
 
   def uniqueness_key
-    to_resource.uniqueness_key
+    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map{ |attribute_name| self[attribute_name] }
   end
 
   # Create a new parameter.  Requires a block and a name, stores it in the
@@ -382,8 +382,8 @@ class Type
 
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
-    if name == :name
-      name = name_var
+    if name == :name && nv = name_var
+      name = nv
     end
 
     if obj = @parameters[name]
@@ -403,8 +403,8 @@ class Type
 
     fail("Invalid parameter #{name}") unless self.class.validattr?(name)
 
-    if name == :name
-      name = name_var
+    if name == :name && nv = name_var
+      name = nv
     end
     raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
 

@@ -434,7 +434,7 @@ describe Puppet::Type do
         patterns.length.should == 1
         patterns[0].length.should == 2
       end
-      
+
       it "should have a regexp that captures the entire string" do
         patterns = @type_class.title_patterns
         string = "abc\n\tdef"
@@ -569,5 +569,16 @@ describe Puppet::Type.metaparamclass(:audit) do
   it "should not create attribute instances for parameters, only properties" do
     @resource[:audit] = :noop
     @resource.parameter(:noop).should be_nil
+  end
+
+  describe "when generating the uniqueness key" do
+    it "should include all of the key_attributes in alphabetical order by attribute name" do
+      Puppet::Type.type(:file).stubs(:key_attributes).returns [:path, :mode, :owner]
+      Puppet::Type.type(:file).stubs(:title_patterns).returns(
+        [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
+      )
+      res = Puppet::Type.type(:file).new( :title => '/my/file', :path => '/my/file', :owner => 'root', :content => 'hello' )
+      res.uniqueness_key.should == [ nil, 'root', '/my/file']
+    end
   end
 end

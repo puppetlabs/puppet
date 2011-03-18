@@ -97,4 +97,10 @@ Puppet::Type.type(:mount).provide(
     end
     instances
   end
+
+  def flush
+    needs_mount = @property_hash.delete(:needs_mount)
+    super
+    mount if needs_mount
+  end
 end

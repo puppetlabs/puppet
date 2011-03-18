@@ -1,6 +1,8 @@
 module Puppet
   newtype(:zfs) do
-    @doc = "Manage zfs. Create destroy and set properties on zfs instances."
+    @doc = "Manage zfs. Create destroy and set properties on zfs instances.
+
+**Autorequires:** If Puppet is managing the zpool at the root of this zfs instance, the zfs resource will autorequire it. If Puppet is managing any parent zfs instances, the zfs resource will autorequire them."
 
     ensurable
 

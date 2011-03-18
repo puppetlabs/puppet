@@ -115,6 +115,7 @@ describe provider_class do
   describe "when allow duplicate is enabled" do
     before do
       @resource.expects(:allowdupe?).returns true
+      @resource.stubs(:system?)
       @provider.stubs(:is_role?).returns(false)
       @provider.stubs(:execute)
       @provider.expects(:execute).with { |args| args.include?("-o") }

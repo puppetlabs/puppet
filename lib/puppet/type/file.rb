@@ -22,7 +22,9 @@ Puppet::Type.newtype(:file) do
     If you find that you are often copying files in from a central
     location, rather than using native resources, please contact
     Puppet Labs and we can hopefully work with you to develop a
-    native resource to support what you are doing."
+    native resource to support what you are doing.
+    
+    **Autorequires:** If Puppet is managing the user or group that owns a file, the file resource will autorequire them. If Puppet is managing any parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path, lambda{|x| x} ] ] ] ]

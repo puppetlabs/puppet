@@ -74,12 +74,13 @@ module Puppet
       newvalue(:mounted, :event => :mount_mounted) do
         # Create the mount point if it does not already exist.
         current_value = self.retrieve
+        currently_mounted = provider.mounted?
         provider.create if [nil, :absent, :ghost].include?(current_value)
 
         syncothers
 
         # The fs can be already mounted if it was absent but mounted
-        provider.mount unless provider.mounted?
+        provider.property_hash[:needs_mount] = true unless currently_mounted
       end
 
       # insync: mounted   -> present
@@ -225,7 +226,7 @@ module Puppet
 
     def refresh
       # Only remount if we're supposed to be mounted.
-      provider.remount if self.should(:fstype) != "swap" and self.should(:ensure) == :mounted
+      provider.remount if self.should(:fstype) != "swap" and provider.mounted?
     end
 
     def value(name)
