@@ -92,7 +92,7 @@ describe Puppet::FileBucket::Dipper do
     [request1, request2].each do |r|
       r.server.should == 'puppetmaster'
       r.port.should == 31337
-      r.key.should == "md5/#{checksum}"
+      r.key.should == "md5/#{checksum}#{real_path}"
     end
   end
 

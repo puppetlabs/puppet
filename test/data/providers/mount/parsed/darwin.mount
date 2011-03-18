@@ -1,0 +1,6 @@
+/dev/disk0s2 on / (hfs, local, journaled)
+devfs on /dev (devfs, local, nobrowse)
+map -hosts on /net (autofs, nosuid, automounted, nobrowse)
+map auto_home on /home (autofs, automounted, nobrowse)
+/dev/disk0s3 on /usr (hfs, local, journaled)
+/dev/fake on /ghost (hfs, local, journaled)

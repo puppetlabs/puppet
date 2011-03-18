@@ -48,5 +48,3 @@ Puppet::Type.type(:service).provide :gentoo, :parent => :init do
       raise Puppet::Error, "Could not enable #{self.name}: #{output}"
   end
 end
-
-# $Id $

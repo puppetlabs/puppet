@@ -22,3 +22,16 @@ describe Puppet::Util::Log.desttypes[:report] do
     dest.handle "my log"
   end
 end
+
+
+describe Puppet::Util::Log.desttypes[:file] do
+  before do
+    File.stubs(:open)           # prevent actually creating the file
+    @class = Puppet::Util::Log.desttypes[:file]
+  end
+
+  it "should default to autoflush false" do
+    @class.new('/tmp/log').autoflush.should == false
+  end
+end
+

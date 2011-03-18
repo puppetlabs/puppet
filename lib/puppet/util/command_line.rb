@@ -33,8 +33,12 @@ module Puppet
       end
 
       def available_subcommands
-        absolute_appdir = $LOAD_PATH.collect { |x| File.join(x,'puppet','application') }.detect{ |x| File.directory?(x) }
-        Dir[File.join(absolute_appdir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
+        absolute_appdirs = $LOAD_PATH.collect do |x| 
+          File.join(x,'puppet','application')
+        end.select{ |x| File.directory?(x) }
+        absolute_appdirs.inject([]) do |commands, dir|
+          commands + Dir[File.join(dir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
+        end.uniq
       end
 
       def usage_message
@@ -81,7 +85,7 @@ module Puppet
         if zero == 'puppet'
           case argv.first
           when nil;              [ stdin.tty? ? nil : "apply", argv] # ttys get usage info
-          when "--help";         [nil,     argv] # help should give you usage, not the help for `puppet apply`
+          when "--help", "-h";         [nil,     argv] # help should give you usage, not the help for `puppet apply`
           when /^-|\.pp$|\.rb$/; ["apply", argv]
           else [ argv.first, argv[1..-1] ]
           end

@@ -3,8 +3,6 @@
 #--------------------
 # A script to retrieve hosts from ldap and create an importable
 # cfservd file from them
-#
-# $Id: nagios.rb,v 1.3 2004/06/09 20:32:46 luke Exp $
 
 require 'digest/md5'
 #require 'ldap'

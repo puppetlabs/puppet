@@ -4,12 +4,13 @@ require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 require 'tempfile'
 
 describe "the extlookup function" do
+  before :all do
+    Puppet::Parser::Functions.autoloader.loadall
+  end
 
   before :each do
     @scope = Puppet::Parser::Scope.new
-
     @scope.stubs(:environment).returns(Puppet::Node::Environment.new('production'))
-    Puppet::Parser::Functions.function("extlookup")
   end
 
   it "should exist" do

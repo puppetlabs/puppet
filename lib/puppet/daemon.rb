@@ -95,7 +95,7 @@ class Puppet::Daemon
     # extended signals not supported under windows
     signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.microsoft_windows?
     signals.each do |signal, method|
-      trap(signal) do
+      Signal.trap(signal) do
         Puppet.notice "Caught #{signal}; calling #{method}"
         send(method)
       end

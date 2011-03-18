@@ -11,7 +11,7 @@ describe processor do
   describe "#process" do
     include PuppetSpec::Files
     before :each do
-      Puppet[:reportdir] = tmpdir('reports')
+      Puppet[:reportdir] = tmpdir('reports') << '/reports' 
       @report = YAML.load_file(File.join(PuppetSpec::FIXTURE_DIR, 'yaml/report2.6.x.yaml')).extend processor
     end
 

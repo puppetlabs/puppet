@@ -379,8 +379,6 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when managing links" do
-    require 'puppettest/support/assertions'
-    include PuppetTest
     require 'tempfile'
 
     if @real_posix
@@ -394,13 +392,7 @@ describe Puppet::Type.type(:file) do
           File.open(@file, "w", 0644) { |f| f.puts "yayness"; f.flush }
           File.symlink(@file, @link)
 
-
-                @resource = Puppet::Type.type(:file).new(
-
-            :path => @link,
-
-            :mode => "755"
-          )
+          @resource = Puppet::Type.type(:file).new(:path => @link, :mode => "755")
           @catalog.add_resource @resource
         end
 

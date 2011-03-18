@@ -29,12 +29,8 @@ describe Puppet::Application::Queue do
   end
 
   describe "in preinit" do
-    before :each do
-      @queue.stubs(:trap)
-    end
-
     it "should catch INT" do
-      @queue.expects(:trap).with { |arg,block| arg == :INT }
+      Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @queue.preinit
     end

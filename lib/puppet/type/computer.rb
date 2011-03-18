@@ -14,7 +14,11 @@ Puppet::Type.newtype(:computer) do
     type as per other platforms.
 
     This type primarily exists to create localhost Computer objects that MCX
-    policy can then be attached to."
+    policy can then be attached to.
+    
+    **Autorequires:** If Puppet is managing the plist file representing a
+    Computer object (located at `/var/db/dslocal/nodes/Default/computers/{name}.plist`),
+    the Computer resource will autorequire it."
 
   # ensurable
 

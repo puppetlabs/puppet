@@ -53,18 +53,6 @@ rescue LoadError
   $haverdoc = false
 end
 
-begin
-  if $haverdoc
-    ronn = %x{which ronn}
-    $haveman = true
-  else
-    $haveman = false
-  end
-rescue
-  puts "Missing ronn; skipping man page creation"
-  $haveman = false
-end
-
 PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
 MIN_FACTER_VERSION = 1.5
 
@@ -178,15 +166,6 @@ def prepare_installation
   end
 
 
-  if $haveman
-    InstallOptions.man = true
-    if $operatingsystem == "windows"
-      InstallOptions.man  = false
-    end
-  else
-    InstallOptions.man = false
-  end
-
   InstallOptions.tests = true
 
   ARGV.options do |opts|
@@ -197,9 +176,6 @@ def prepare_installation
     end
     opts.on('--[no-]ri', 'Prevents the creation of RI output.', 'Default off on mswin32.') do |onri|
       InstallOptions.ri = onri
-    end
-    opts.on('--[no-]man', 'Prevents the creation of man pages.', 'Default on.') do |onman|
-    InstallOptions.man = onman
     end
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
       InstallOptions.tests = ontest
@@ -233,7 +209,6 @@ def prepare_installation
     end
     opts.on('--full', 'Performs a full installation. All', 'optional installation steps are run.') do |full|
       InstallOptions.rdoc    = true
-      InstallOptions.man     = true
       InstallOptions.ri      = true
       InstallOptions.tests   = true
       InstallOptions.configs = true
@@ -300,33 +275,28 @@ def prepare_installation
     mandir = Config::CONFIG['mandir']
   end
 
-  # To be deprecated once people move over to using --destdir option
-  if (destdir = ENV['DESTDIR'])
-    configdir = "#{destdir}#{configdir}"
-    bindir = "#{destdir}#{bindir}"
-    sbindir = "#{destdir}#{sbindir}"
-    mandir = "#{destdir}#{mandir}"
-    sitelibdir = "#{destdir}#{sitelibdir}"
-
-    FileUtils.makedirs(configdir) if InstallOptions.configs
-    FileUtils.makedirs(bindir)
-    FileUtils.makedirs(sbindir)
-    FileUtils.makedirs(mandir)
-    FileUtils.makedirs(sitelibdir)
   # This is the new way forward
-  elsif (destdir = InstallOptions.destdir)
-    configdir = "#{destdir}#{configdir}"
-    bindir = "#{destdir}#{bindir}"
-    sbindir = "#{destdir}#{sbindir}"
-    mandir = "#{destdir}#{mandir}"
-    sitelibdir = "#{destdir}#{sitelibdir}"
-
-    FileUtils.makedirs(configdir) if InstallOptions.configs
-    FileUtils.makedirs(bindir)
-    FileUtils.makedirs(sbindir)
-    FileUtils.makedirs(mandir)
-    FileUtils.makedirs(sitelibdir)
+  if not InstallOptions.destdir.nil?
+    destdir = InstallOptions.destdir
+  # To be deprecated once people move over to using --destdir option
+  elsif ENV['DESTDIR'] != nil?
+    destdir = ENV['DESTDIR']
+    warn "DESTDIR is deprecated. Use --destdir instead."
+  else
+    destdir = ''
   end
+
+  configdir = "#{destdir}#{configdir}"
+  bindir = "#{destdir}#{bindir}"
+  sbindir = "#{destdir}#{sbindir}"
+  mandir = "#{destdir}#{mandir}"
+  sitelibdir = "#{destdir}#{sitelibdir}"
+
+  FileUtils.makedirs(configdir) if InstallOptions.configs
+  FileUtils.makedirs(bindir)
+  FileUtils.makedirs(sbindir)
+  FileUtils.makedirs(mandir)
+  FileUtils.makedirs(sitelibdir)
 
   tmpdirs << bindir
 
@@ -365,33 +335,6 @@ def build_ri(files)
   rescue Exception => e
     $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
     $stderr.puts "Continuing with install..."
-  end
-end
-
-def build_man(bins, sbins)
-  return unless $haveman
-  begin
-    # Locate ronn
-    ronn = %x{which ronn}
-    ronn.chomp!
-    # Create puppet.conf.5 man page
-    %x{bin/puppetdoc --reference configuration > ./man/man5/puppetconf.5.ronn}
-    %x{#{ronn} -r ./man/man5/puppetconf.5.ronn}
-    File.move("./man/man5/puppetconf.5", "./man/man5/puppet.conf.5")
-    File.unlink("./man/man5/puppetconf.5.ronn")
-
-    # Create binary man pages
-    binary = bins + sbins
-    binary.each do |bin|
-      b = bin.gsub( /(bin|sbin)\//, "")
-      %x{#{bin} --help > ./man/man8/#{b}.8.ronn}
-      %x{#{ronn} -r ./man/man8/#{b}.8.ronn}
-      File.unlink("./man/man8/#{b}.8.ronn")
-    end
-
-rescue SystemCallError
-  $stderr.puts "Couldn't build man pages: " + $ERROR_INFO
-  $stderr.puts "Continuing with install..."
   end
 end
 
@@ -488,7 +431,6 @@ prepare_installation
 #run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-#build_man(bins, sbins) if InstallOptions.man
 do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)

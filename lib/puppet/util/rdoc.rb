@@ -31,6 +31,7 @@ module Puppet::Util::RDoc
       options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
       options += [ "--charset", charset] if charset
       options += files
+      #TODO dedup file paths (not strict duplication sense, parents, children, etc
 
       # launch the documentation process
       r.document(options)
@@ -53,17 +54,10 @@ module Puppet::Util::RDoc
   # of a manifest
   def output(file, ast)
     astobj = []
-    ast.nodes.each do |name, k|
-      astobj << k if k.file == file
+    ast.instantiate('').each do |resource_type|
+      astobj << resource_type if resource_type.file == file
     end
 
-    ast.hostclasses.each do |name,k|
-      astobj << k if k.file == file
-    end
-
-    ast.definitions.each do |name, k|
-      astobj << k if k.file == file
-    end
     astobj.sort! {|a,b| a.line <=> b.line }.each do |k|
       output_astnode_doc(k)
     end

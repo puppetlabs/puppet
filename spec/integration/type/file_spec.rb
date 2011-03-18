@@ -173,7 +173,12 @@ describe Puppet::Type.type(:file) do
     it "should be able to recurse over a nonexistent file" do
       @path = tmpfile("file_integration_tests")
 
-      @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true, :backup => false)
+      @file = Puppet::Type::File.new(
+        :name    => @path,
+        :mode    => 0644,
+        :recurse => true,
+        :backup  => false
+      )
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @file
@@ -186,7 +191,12 @@ describe Puppet::Type.type(:file) do
 
       build_path(@path)
 
-      @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true, :backup => false)
+      @file = Puppet::Type::File.new(
+        :name    => @path,
+        :mode    => 0644,
+        :recurse => true,
+        :backup  => false
+      )
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @file
@@ -393,10 +403,8 @@ describe Puppet::Type.type(:file) do
     dest = tmpfile("files_with_content")
 
 
-          file = Puppet::Type.type(:file).new(
-                
-      :name => dest,
-        
+    file = Puppet::Type.type(:file).new(
+      :name    => dest,
       :content => "this is some content, yo"
     )
 
@@ -411,11 +419,9 @@ describe Puppet::Type.type(:file) do
     dest = tmpfile("files_with_content")
 
 
-          file = Puppet::Type.type(:file).new(
-                
-      :name => dest,
-      :ensure => "file",
-        
+    file = Puppet::Type.type(:file).new(
+      :name    => dest,
+      :ensure  => "file",
       :content => "this is some content, yo"
     )
 
@@ -433,12 +439,10 @@ describe Puppet::Type.type(:file) do
     File.open(dest, "w") { |f| f.puts "boo" }
 
 
-          file = Puppet::Type.type(:file).new(
-                
-      :name => dest,
+    file = Puppet::Type.type(:file).new(
+      :name   => dest,
       :ensure => :absent,
       :source => source,
-        
       :backup => false
     )
 
@@ -465,24 +469,23 @@ describe Puppet::Type.type(:file) do
       File.open(@purgee, "w") { |f| f.puts "footest" }
 
 
-            @lfobj = Puppet::Type.newfile(
-                
-        :title => "localfile",
-        :path => @localfile,
+      @lfobj = Puppet::Type.newfile(
+        :title   => "localfile",
+        :path    => @localfile,
         :content => "rahtest\n",
-        :ensure => :file,
-        
-        :backup => false
+        :ensure  => :file,
+        :backup  => false
       )
 
 
-            @destobj = Puppet::Type.newfile(
-        :title => "destdir", :path => @destdir,
-                    :source => @sourcedir,
-                    :backup => false,
-                    :purge => true,
-        
-                    :recurse => true)
+      @destobj = Puppet::Type.newfile(
+        :title   => "destdir",
+        :path    => @destdir,
+        :source  => @sourcedir,
+        :backup  => false,
+        :purge   => true,
+        :recurse => true
+      )
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @lfobj, @destobj

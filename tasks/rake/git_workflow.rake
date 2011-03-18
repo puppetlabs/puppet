@@ -1,5 +1,5 @@
 # This set of tasks helps automate the workflow as described on
-# http://reductivelabs.com/trac/puppet/wiki/Development/DevelopmentLifecycle
+# http://projects.puppetlabs.com/projects/puppet/wiki/Development_Lifecycle
 
 
 def find_start(start)

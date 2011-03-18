@@ -1,17 +1,14 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+require 'shared_behaviours/all_parsedfile_providers'
 
 require 'puppet_spec/files'
-require 'puppettest/support/utils'
-require 'puppettest/fileparsing'
 
 provider_class = Puppet::Type.type(:host).provider(:parsed)
 
 describe provider_class do
   include PuppetSpec::Files
-  extend  PuppetTest::Support::Utils
-  include PuppetTest::FileParsing
 
   before do
     @host_class = Puppet::Type.type(:host)
@@ -132,11 +129,8 @@ describe provider_class do
   end
 
   describe "when operating on /etc/hosts like files" do
-    fakedata("data/providers/host/parsed","valid*").each do |file|
-      it "should be able to parse #{file}" do
-       fakedataparse(file)
-      end
-    end
+    it_should_behave_like "all parsedfile providers",
+      provider_class, my_fixtures('valid*')
 
     it "should be able to generate a simple hostfile entry" do
       host = mkhost(

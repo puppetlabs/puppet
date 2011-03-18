@@ -1,6 +1,3 @@
-#  Created by Luke A. Kanies on 2007-11-07.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/external/dot'
 require 'puppet/relationship'
 require 'set'
@@ -92,36 +89,177 @@ class Puppet::SimpleGraph
     vertices
   end
 
-  # Provide a topological sort with cycle reporting
-  def topsort_with_cycles
-    degree = {}
-    zeros = []
-    result = []
+  # This is a simple implementation of Tarjan's algorithm to find strongly
+  # connected components in the graph; this is a fairly ugly implementation,
+  # because I can't just decorate the vertices themselves.
+  #
+  # This method has an unhealthy relationship with the find_cycles_in_graph
+  # method below, which contains the knowledge of how the state object is
+  # maintained.
+  def tarjan(root, s)
+    # initialize the recursion stack we use to work around the nasty lack of a
+    # decent Ruby stack.
+    recur = [{ :node => root }]
 
-    # Collect each of our vertices, with the number of in-edges each has.
-    vertices.each do |v|
-      edges = @in_to[v].dup
-      zeros << v if edges.empty?
-      degree[v] = edges
+    while not recur.empty? do
+      frame = recur.last
+      vertex = frame[:node]
+
+      case frame[:step]
+      when nil then
+        s[:index][vertex]   = s[:number]
+        s[:lowlink][vertex] = s[:number]
+        s[:number]          = s[:number] + 1
+
+        s[:stack].push(vertex)
+        s[:seen][vertex] = true
+
+        frame[:children] = adjacent(vertex)
+        frame[:step]     = :children
+
+      when :children then
+        if frame[:children].length > 0 then
+          child = frame[:children].shift
+          if ! s[:index][child] then
+            # Never seen, need to recurse.
+            frame[:step] = :after_recursion
+            frame[:child] = child
+            recur.push({ :node => child })
+          elsif s[:seen][child] then
+            s[:lowlink][vertex] = [s[:lowlink][vertex], s[:index][child]].min
+          end
+        else
+          if s[:lowlink][vertex] == s[:index][vertex] then
+            this_scc = []
+            begin
+              top = s[:stack].pop
+              s[:seen][top] = false
+              this_scc << top
+            end until top == vertex
+            # NOTE: if we don't reverse we get the components in the opposite
+            # order to what a human being would expect; reverse should be an
+            # O(1) operation, without even copying, because we know the length
+            # of the source, but I worry that an implementation will get this
+            # wrong.  Still, the worst case is O(n) for n vertices as we can't
+            # possibly put a vertex into two SCCs.
+            #
+            # Also, my feeling is that most implementations are going to do
+            # better with a reverse operation than a string of 'unshift'
+            # insertions at the head of the array; if they were going to mess
+            # up the performance of one, it would be unshift.
+            s[:scc] << this_scc.reverse
+          end
+          recur.pop               # done with this node, finally.
+        end
+
+      when :after_recursion then
+        s[:lowlink][vertex] = [s[:lowlink][vertex], s[:lowlink][frame[:child]]].min
+        frame[:step] = :children
+
+      else
+        fail "#{frame[:step]} is an unknown step"
+      end
+    end
+  end
+
+  # Find all cycles in the graph by detecting all the strongly connected
+  # components, then eliminating everything with a size of one as
+  # uninteresting - which it is, because it can't be a cycle. :)
+  #
+  # This has an unhealthy relationship with the 'tarjan' method above, which
+  # it uses to implement the detection of strongly connected components.
+  def find_cycles_in_graph
+    state = {
+      :number => 0, :index => {}, :lowlink => {}, :scc => [],
+      :stack => [], :seen => {}
+    }
+
+    # we usually have a disconnected graph, must walk all possible roots
+    vertices.each do |vertex|
+      if ! state[:index][vertex] then
+        tarjan vertex, state
+      end
     end
 
-    # Iterate over each 0-degree vertex, decrementing the degree of
-    # each of its out-edges.
-    while v = zeros.pop
-      result << v
-      @out_from[v].each { |v2,es| 
-        degree[v2].delete(v)
-        zeros << v2 if degree[v2].empty?
-      }
+    state[:scc].select { |c| c.length > 1 }
+  end
+
+  # Perform a BFS on the sub graph representing the cycle, with a view to
+  # generating a sufficient set of paths to report the cycle meaningfully, and
+  # ideally usefully, for the end user.
+  #
+  # BFS is preferred because it will generally report the shortest paths
+  # through the graph first, which are more likely to be interesting to the
+  # user.  I think; it would be interesting to verify that. --daniel 2011-01-23
+  def paths_in_cycle(cycle, max_paths = 1)
+    raise ArgumentError, "negative or zero max_paths" if max_paths < 1
+
+    # Calculate our filtered outbound vertex lists...
+    adj = {}
+    cycle.each do |vertex|
+      adj[vertex] = adjacent(vertex).select{|s| cycle.member? s}
     end
 
-    # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
-    if cycles = degree.values.reject { |ns| ns.empty? } and cycles.length > 0
-      message = cycles.collect { |edges| '('+edges.collect { |e| e.to_s }.join(", ")+')' }.join(", ")
-      raise Puppet::Error, "Found dependency cycles in the following relationships: #{message}; try using the '--graph' option and open the '.dot' files in OmniGraffle or GraphViz"
+    found = []
+
+    # frame struct is vertex, [path]
+    stack = [[cycle.first, []]]
+    while frame = stack.shift do
+      if frame[1].member?(frame[0]) then
+        found << frame[1] + [frame[0]]
+        break if found.length >= max_paths
+      else
+        adj[frame[0]].each do |to|
+          stack.push [to, frame[1] + [frame[0]]]
+        end
+      end
     end
 
-    result
+    return found
+  end
+
+  def report_cycles_in_graph
+    cycles = find_cycles_in_graph
+    n = cycles.length           # where is "pluralize"? --daniel 2011-01-22
+    s = n == 1 ? '' : 's'
+
+    message = "Found #{n} dependency cycle#{s}:\n"
+    cycles.each do |cycle|
+      paths = paths_in_cycle(cycle)
+      message += paths.map{ |path| '(' + path.join(" => ") + ')'}.join("\n") + "\n"
+    end
+
+    if Puppet[:graph] then
+      filename = write_cycles_to_graph(cycles)
+      message += "Cycle graph written to #{filename}."
+    else
+      message += "Try the '--graph' option and opening the "
+      message += "resulting '.dot' file in OmniGraffle or GraphViz"
+    end
+
+    raise Puppet::Error, message
+  end
+
+  def write_cycles_to_graph(cycles)
+    # This does not use the DOT graph library, just writes the content
+    # directly.  Given the complexity of this, there didn't seem much point
+    # using a heavy library to generate exactly the same content. --daniel 2011-01-27
+    Puppet.settings.use(:graphing)
+
+    graph = ["digraph Resource_Cycles {"]
+    graph << '  label = "Resource Cycles"'
+
+    cycles.each do |cycle|
+      paths_in_cycle(cycle, 10).each do |path|
+        graph << path.map { |v| '"' + v.to_s.gsub(/"/, '\\"') + '"' }.join(" -> ")
+      end
+    end
+
+    graph << '}'
+
+    filename = File.join(Puppet[:graphdir], "cycles.dot")
+    File.open(filename, "w") { |f| f.puts graph }
+    return filename
   end
 
   # Provide a topological sort.
@@ -141,14 +279,14 @@ class Puppet::SimpleGraph
     # each of its out-edges.
     while v = zeros.pop
       result << v
-      @out_from[v].each { |v2,es| 
+      @out_from[v].each { |v2,es|
         zeros << v2 if (degree[v2] -= 1) == 0
       }
     end
 
     # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
     if cycles = degree.values.reject { |ns| ns == 0  } and cycles.length > 0
-      topsort_with_cycles
+      report_cycles_in_graph
     end
 
     result

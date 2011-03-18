@@ -51,12 +51,8 @@ describe Puppet::Application::Agent do
   end
 
   describe "in preinit" do
-    before :each do
-      @puppetd.stubs(:trap)
-    end
-
     it "should catch INT" do
-      @puppetd.expects(:trap).with { |arg,block| arg == :INT }
+      Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @puppetd.preinit
     end
@@ -537,11 +533,11 @@ describe Puppet::Application::Agent do
           @puppetd.onetime
         end
 
-        it "should always exit with 0 if --noop" do
+        it "should exit with the report's computer exit status, even if --noop is set." do
           Puppet[:noop] = true
           report = stub 'report', :exit_status => 666
           @agent.stubs(:run).returns(report)
-          @puppetd.expects(:exit).with(0)
+          @puppetd.expects(:exit).with(666)
 
           @puppetd.onetime
         end

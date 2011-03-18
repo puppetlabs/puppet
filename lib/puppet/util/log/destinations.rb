@@ -50,6 +50,8 @@ Puppet::Util::Log.newdesttype :file do
     @file.flush if defined?(@file)
   end
 
+  attr_accessor :autoflush
+
   def initialize(path)
     @name = path
     # first make sure the directory exists

@@ -3,6 +3,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 describe "the 'include' function" do
+  before :all do
+    Puppet::Parser::Functions.autoloader.loadall
+  end
 
   before :each do
     Puppet::Node::Environment.stubs(:current).returns(nil)

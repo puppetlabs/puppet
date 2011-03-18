@@ -34,18 +34,19 @@ class Parser
   # main entry point
   def scan
     environment = Puppet::Node::Environment.new
+    @known_resource_types = environment.known_resource_types
     unless environment.known_resource_types.watching_file?(@input_file_name)
       Puppet.info "rdoc: scanning #{@input_file_name}"
       if @input_file_name =~ /\.pp$/
         @parser = Puppet::Parser::Parser.new(environment)
         @parser.file = @input_file_name
-        @known_resource_types = environment.known_resource_types
         @parser.parse.instantiate('').each do |type|
           @known_resource_types.add type
         end
-        scan_top_level(@top_level)
       end
     end
+
+    scan_top_level(@top_level)
     @top_level
   end
 
@@ -160,8 +161,8 @@ class Parser
 
       if stmt.is_a?(Puppet::Parser::AST::Function) and ['include','require'].include?(stmt.name)
         stmt.arguments.each do |included|
-          Puppet.debug "found #{stmt.name}: #{included.value}"
-          container.send("add_#{stmt.name}",Include.new(included.value, stmt.doc))
+          Puppet.debug "found #{stmt.name}: #{included}"
+          container.send("add_#{stmt.name}",Include.new(included.to_s, stmt.doc))
         end
       end
     end
@@ -342,6 +343,7 @@ class Parser
   # that contains the documentation
   def parse_elements(container)
     Puppet.debug "rdoc: scanning manifest"
+
     @known_resource_types.hostclasses.values.sort { |a,b| a.name <=> b.name }.each do |klass|
       name = klass.name
       if klass.file == @input_file_name

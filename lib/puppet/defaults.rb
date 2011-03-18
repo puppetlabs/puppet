@@ -14,7 +14,11 @@ module Puppet
 
   setdefaults(:main,
     :trace => [false, "Whether to print stack traces on some errors"],
-    :autoflush => [false, "Whether log files should always flush to disk."],
+    :autoflush => {
+      :default => false,
+      :desc    => "Whether log files should always flush to disk.",
+      :hook    => proc { |value| Log.autoflush = value }
+    },
     :syslogfacility => ["daemon", "What syslog facility to use when logging to
       syslog.  Syslog has a fixed list of valid facilities, and you must
       choose one of those; you cannot just make one up."],
@@ -817,5 +821,9 @@ module Puppet
       "Where Puppet looks for template files.  Can be a list of colon-seperated
       directories."
     ]
+  )
+  setdefaults(
+    :puppetdoc,
+    :document_all => [false, "Document all resources"]
   )
 end

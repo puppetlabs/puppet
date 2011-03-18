@@ -529,6 +529,22 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
     @lexer.fullscan
   end
 
+  it "should add a new comment stack level on LPAREN" do
+    @lexer.string = "("
+
+    @lexer.expects(:commentpush)
+
+    @lexer.fullscan
+  end
+
+  it "should pop the current comment on RPAREN" do
+    @lexer.string = ")"
+
+    @lexer.expects(:commentpop)
+
+    @lexer.fullscan
+  end
+
   it "should return the current comments on getcomment" do
     @lexer.string = "# comment"
     @lexer.fullscan
@@ -651,11 +667,8 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 end
 
-require File.dirname(__FILE__) + '/../../../test/lib/puppettest'
-require File.dirname(__FILE__) + '/../../../test/lib/puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
-  extend PuppetTest::Support::Utils
-  textfiles do |file|
+  my_fixtures('*.pp') do |file|
     it "should correctly lex #{file}" do
       lexer = Puppet::Parser::Lexer.new
       lexer.file = file

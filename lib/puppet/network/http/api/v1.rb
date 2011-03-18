@@ -63,9 +63,9 @@ module Puppet::Network::HTTP::API::V1
     return :singular if indirection == "status"
     return :plural if indirection == "inventory"
 
-    result = (indirection =~ /s$/) ? :plural : :singular
+    result = (indirection =~ /s$|_search$/) ? :plural : :singular
 
-    indirection.sub!(/s$/, '') if result
+    indirection.sub!(/s$|_search$|es$/, '')
 
     result
   end

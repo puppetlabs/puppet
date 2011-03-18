@@ -60,6 +60,7 @@ class ZAML
     def initialize(obj,indent)
       @indent = indent
       @this_label_number = nil
+      @obj = obj # prevent garbage collection so that object id isn't reused
     end
     def to_s
       @this_label_number ? ('&id%03d%s' % [@this_label_number, @indent]) : ''
