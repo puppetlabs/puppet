@@ -35,7 +35,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "when not stubbing the provider" do
     before do
-      @executable = Puppet.features.posix? ? '/bin/foo' : 'C:/Program Files/something.exe'
+      @executable = Puppet.features.posix? ? '/bin/true' : 'C:/Program Files/something.exe'
       File.stubs(:exists?).returns false
       File.stubs(:exists?).with(@executable).returns true
       File.stubs(:exists?).with('/bin/false').returns true
