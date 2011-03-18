@@ -4,7 +4,6 @@ require 'spec_helper'
 provider_class = Puppet::Type.type(:augeas).provider(:augeas)
 
 describe provider_class do
-
   describe "command parsing" do
     before do
       @resource = stub("resource")
@@ -252,6 +251,7 @@ describe provider_class do
     it "should handle no filters" do
       resource = stub("resource")
       resource.stubs(:[]).returns(false).then.returns("").then.returns("")
+      resource.stubs(:noop?).returns(false)
       augeas_stub = stub("augeas", :match => ["set", "of", "values"])
       augeas_stub.stubs("close")
       provider = provider_class.new(resource)
@@ -263,6 +263,7 @@ describe provider_class do
     it "should return true when a get filter matches" do
       resource = stub("resource")
       resource.stubs(:[]).returns(false).then.returns("get path == value").then.returns("")
+      resource.stubs(:noop?).returns(false)
       provider = provider_class.new(resource)
       augeas_stub = stub("augeas", :get => "value")
       augeas_stub.stubs("close")
@@ -285,6 +286,7 @@ describe provider_class do
     it "should return true when a match filter matches" do
       resource = stub("resource")
       resource.stubs(:[]).returns(false).then.returns("match path size == 3").then.returns("")
+      resource.stubs(:noop?).returns(false)
       provider = provider_class.new(resource)
       augeas_stub = stub("augeas", :match => ["set", "of", "values"])
       augeas_stub.stubs("close")
@@ -320,6 +322,7 @@ describe provider_class do
     it "should return true when a size != the provided value" do
       resource = stub("resource")
       resource.stubs(:[]).returns(false).then.returns("match path size != 17").then.returns("")
+      resource.stubs(:noop?).returns(false)
       provider = provider_class.new(resource)
       augeas_stub = stub("augeas", :match => ["set", "of", "values"])
       augeas_stub.stubs("close")
@@ -339,6 +342,107 @@ describe provider_class do
       provider.stubs(:get_augeas_version).returns("0.3.5")
       provider.need_to_run?.should == false
     end
+
+    # Ticket 2728 (diff files)
+    describe "and Puppet[:show_diff] is set" do
+      before do
+        Puppet[:show_diff] = true
+
+        @resource = Puppet::Type.type(:augeas).new(:name => "test")
+        @provider = provider_class.new(@resource)
+        @augeas_stub = stub("augeas")
+        @provider.aug = @augeas_stub
+
+        @augeas_stub.stubs("get").with("/augeas/version").returns("0.7.2")
+        @augeas_stub.stubs(:set).returns(true)
+        @augeas_stub.stubs(:save).returns(true)
+      end
+
+      it "should call diff when a file is shown to have been changed" do
+        file = "/etc/hosts"
+
+        @resource[:context] = "/files"
+        @resource[:changes] = ["set #{file}/foo bar"]
+
+        @augeas_stub.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
+        @augeas_stub.stubs(:get).with("/augeas/events/saved").returns(["/files#{file}"])
+        @augeas_stub.expects(:set).with("/augeas/save", "newfile")
+        @augeas_stub.expects(:close).never()
+
+        @provider.expects("diff").with("#{file}", "#{file}.augnew").returns("")
+        @provider.should be_need_to_run
+      end
+
+      it "should call diff for each file thats changed" do
+        file1 = "/etc/hosts"
+        file2 = "/etc/resolv.conf"
+
+        @resource[:context] = "/files"
+        @resource[:changes] = ["set #{file1}/foo bar", "set #{file2}/baz biz"]
+
+        @augeas_stub.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
+        @augeas_stub.stubs(:get).with("/augeas/events/saved[1]").returns(["/files#{file1}"])
+        @augeas_stub.stubs(:get).with("/augeas/events/saved[2]").returns(["/files#{file2}"])
+        @augeas_stub.expects(:set).with("/augeas/save", "newfile")
+        @augeas_stub.expects(:close).never()
+
+        @provider.expects(:diff).with("#{file1}", "#{file1}.augnew").returns("")
+        @provider.expects(:diff).with("#{file2}", "#{file2}.augnew").returns("")
+        @provider.should be_need_to_run
+      end
+
+      describe "and resource[:root] is set" do
+        it "should call diff when a file is shown to have been changed" do
+          root = "/tmp/foo"
+          file = "/etc/hosts"
+
+          @resource[:context] = "/files"
+          @resource[:changes] = ["set #{file}/foo bar"]
+          @resource[:root] = root
+
+          @augeas_stub.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
+          @augeas_stub.stubs(:get).with("/augeas/events/saved").returns(["/files#{file}"])
+          @augeas_stub.expects(:set).with("/augeas/save", "newfile")
+          @augeas_stub.expects(:close).never()
+
+          @provider.expects(:diff).with("#{root}#{file}", "#{root}#{file}.augnew").returns("")
+          @provider.should be_need_to_run
+        end
+      end
+
+      it "should not call diff if no files change" do
+        file = "/etc/hosts"
+
+        @resource[:context] = "/files"
+        @resource[:changes] = ["set #{file}/foo bar"]
+
+        @augeas_stub.stubs(:match).with("/augeas/events/saved").returns([])
+        @augeas_stub.expects(:set).with("/augeas/save", "newfile")
+        @augeas_stub.expects(:get).with("/augeas/events/saved").never()
+        @augeas_stub.expects(:close)
+
+        @provider.expects(:diff).never()
+        @provider.should_not be_need_to_run
+      end
+
+      it "should cleanup when in noop mode" do
+        file = "/etc/hosts"
+
+        @resource[:noop] = true
+        @resource[:context] = "/files"
+        @resource[:changes] = ["set #{file}/foo bar"]
+
+        @augeas_stub.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
+        @augeas_stub.stubs(:get).with("/augeas/events/saved").returns(["/files#{file}"])
+        @augeas_stub.expects(:set).with("/augeas/save", "newfile")
+        @augeas_stub.expects(:close)
+
+        File.expects(:delete).with(file + ".augnew")
+
+        @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("")
+        @provider.should be_need_to_run
+      end
+    end
   end
 
   describe "augeas execution integration" do
@@ -349,6 +453,7 @@ describe provider_class do
       @augeas = stub("augeas")
       @provider.aug= @augeas
       @provider.stubs(:get_augeas_version).returns("0.3.5")
+      @augeas.stubs(:match).with("/augeas/events/saved")
     end
 
     it "should handle set commands" do
