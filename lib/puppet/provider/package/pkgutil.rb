@@ -23,10 +23,45 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
   end
 
   def self.instances(hash = {})
-    pkglist(hash).collect do |bhash|
-      bhash.delete(:avail)
-      new(bhash)
+    # Use the available pkg list (-a) to work out aliases
+    aliases = {}
+    availlist.each do |pkg|
+      aliases[pkg[:name]] = pkg[:alias]
     end
+
+    # The -c pkglist lists installed packages
+    pkginsts = []
+    pkglist(hash).each do |pkg|
+      pkg.delete(:avail)
+      pkginsts << new(pkg)
+
+      # Create a second instance with the alias if it's different
+      pkgalias = aliases[pkg[:name]]
+      if pkgalias and pkg[:name] != pkgalias
+        apkg = Hash.new(pkg)
+        apkg[:name] = pkgalias
+        pkginsts << new(apkg)
+      end
+    end
+
+    pkginsts
+  end
+
+  # Turns a pkgutil -a listing into hashes with the common alias, full
+  # package name and available version
+  def self.availlist
+    output = pkguti ["-a"]
+
+    list = output.split("\n").collect do |line|
+      next if line =~ /^common\s+package/  # header of package list
+      next if noise?(line)
+
+      if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
+        { :alias => $1, :name => $2, :avail => $3 }
+      else
+        Puppet.warning "Cannot match %s" % line
+      end
+    end.reject { |h| h.nil? }
   end
 
   # Turn our pkgutil -c listing into a bunch of hashes.
@@ -41,36 +76,45 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       command << hash[:justme]
     end
 
-    output = pkguti command
+    output = pkguti(command).split("\n")
 
-    list = output.split("\n").collect do |line|
-      next if line =~ /^#/
+    if output[-1] == "Not in catalog"
+      Puppet.warning "Package not in pkgutil catalog: %s" % hash[:justme]
+      return nil
+    end
+
+    list = output.collect do |line|
       next if line =~ /installed\s+catalog/  # header of package list
-      next if line =~ /^Checking integrity / # use_gpg
-      next if line =~ /^gpg: /               # gpg verification
-      next if line =~ /^=+> /                # catalog fetch
-      next if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
+      next if noise?(line)
 
-      pkgsplit(line, hash[:justme])
+      pkgsplit(line)
     end.reject { |h| h.nil? }
 
     if hash[:justme]
-      # Ensure we picked up the package line, not any pkgutil noise.
-      list.reject! { |h| h[:name] != hash[:justme] }
-      return list[-1]
+      # Single queries may have been for an alias so return the name requested
+      if list.any?
+        list[-1][:name] = hash[:justme]
+        return list[-1]
+      end
     else
       list.reject! { |h| h[:ensure] == :absent }
       return list
     end
+  end
 
+  # Identify common types of pkgutil noise as it downloads catalogs etc
+  def self.noise?(line)
+    true if line =~ /^#/
+    true if line =~ /^Checking integrity / # use_gpg
+    true if line =~ /^gpg: /               # gpg verification
+    true if line =~ /^=+> /                # catalog fetch
+    true if line =~ /\d+:\d+:\d+ URL:/     # wget without -q
+    false
   end
 
   # Split the different lines into hashes.
-  def self.pkgsplit(line, justme)
-    if line == "Not in catalog"
-      Puppet.warning "Package not in pkgutil catalog: %s" % justme
-      return nil
-    elsif line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
+  def self.pkgsplit(line)
+    if line =~ /\s*(\S+)\s+(\S+)\s+(.*)/
       hash = {}
       hash[:name] = $1
       hash[:ensure] = if $2 == "notinst"
@@ -79,10 +123,6 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
         $2
       end
       hash[:avail] = $3
-
-      if justme
-        hash[:name] = justme
-      end
 
       if hash[:avail] =~ /^SAME\s*$/
         hash[:avail] = hash[:ensure]

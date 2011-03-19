@@ -67,16 +67,15 @@ TESTpkg                   1.4.5,REV=2007.11.18      SAME"
     end
 
     it "should handle a non-existent package" do
-      fake_data = "noisy output here"
+      fake_data = "noisy output here
+Not in catalog"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.latest.should == nil
     end
 
     it "should warn on unknown pkgutil noise" do
-      provider.expects(:pkguti).returns("testingnoise")
-      Puppet.expects(:warning)
-      provider.expects(:new).never
-      provider.instances.should == []
+      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns("testingnoise")
+      @provider.latest.should == nil
     end
 
     it "should ignore pkgutil noise/headers to find TESTpkg" do
@@ -91,6 +90,14 @@ package                   installed                 catalog
 TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.20"
+    end
+
+    it "should find REALpkg via an alias (TESTpkg)" do
+      fake_data = "
+noisy output here
+REALpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      @provider.query[:name].should == "TESTpkg"
     end
   end
 
@@ -108,19 +115,60 @@ TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
     end
 
     it "should handle a non-existent package" do
-      fake_data = "noisy output here"
+      fake_data = "noisy output here
+Not in catalog"
       provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
       @provider.query[:ensure].should == :absent
     end
   end
 
   describe "when querying current instances" do
+    it "should warn on unknown pkgutil noise" do
+      provider.expects(:pkguti).with(['-a']).returns("testingnoise")
+      provider.expects(:pkguti).with(['-c']).returns("testingnoise")
+      Puppet.expects(:warning).times(2)
+      provider.expects(:new).never
+      provider.instances.should == []
+    end
+
     it "should return TESTpkg's version string" do
+      fake_data = "TESTpkg  TESTpkg  1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with(['-a']).returns fake_data
+
       fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
       provider.expects(:pkguti).with(['-c']).returns fake_data
 
       testpkg = mock 'pkg1'
       provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
+      provider.instances.should == [testpkg]
+    end
+
+    it "should also return both TESTpkg and mypkg alias instances" do
+      fake_data = "mypkg  TESTpkg  1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with(['-a']).returns fake_data
+
+      fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with(['-c']).returns fake_data
+
+      testpkg = mock 'pkg1'
+      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
+
+      aliaspkg = mock 'pkg2'
+      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "mypkg", :provider => :pkgutil).returns aliaspkg
+
+      provider.instances.should == [testpkg,aliaspkg]
+    end
+
+    it "shouldn't mind noise in the -a output" do
+      fake_data = "noisy output here"
+      provider.expects(:pkguti).with(['-a']).returns fake_data
+
+      fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with(['-c']).returns fake_data
+
+      testpkg = mock 'pkg1'
+      provider.expects(:new).with(:ensure => "1.4.5,REV=2007.11.18", :name => "TESTpkg", :provider => :pkgutil).returns testpkg
+
       provider.instances.should == [testpkg]
     end
   end
