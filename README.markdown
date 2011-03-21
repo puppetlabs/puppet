@@ -56,13 +56,13 @@ A simple case is looking at the local facts:
 
 If you're on the server, you can look in that server's fact collection:
 
-    $ puppet facts --mode master --vardir /tmp/foo --from yaml find localhost
+    $ puppet facts --mode master --vardir /tmp/foo --terminus yaml find localhost
 
 Note that we're setting both the vardir and the 'mode', which switches from the default 'agent' mode to server mode (requires a patch in my branch).
 
 If you'd prefer the data be outputted in json instead of yaml, well, you can do that, too:
 
-    $ puppet find --mode master facts --vardir /tmp/foo --from yaml --format pson localhost
+    $ puppet find --mode master facts --vardir /tmp/foo --terminus yaml --format pson localhost
 
 To test using it as an endpoint for compiling and retrieving catalogs from a remote server, (from my commit), try this:
 
@@ -73,11 +73,11 @@ To test using it as an endpoint for compiling and retrieving catalogs from a rem
     $ sbin/puppetd --trace --debug --confdir /tmp/foo --vardir /tmp/foo --certname localhost --server localhost --test --report
     
     # Terminal 3, actual testing
-    $ puppet data --certname localhost --server localhost --mode master --confdir /tmp/foo --vardir /tmp/foo --trace --from rest catalog find localhost
+    $ puppet catalog find localhost --certname localhost --server localhost --mode master --confdir /tmp/foo --vardir /tmp/foo --trace --terminus rest
 
 This compiles a test catalog (assuming that ~/bin/test.pp exists) and returns it.  With the right auth setup, you can also get facts:
 
-    $ puppet facts --certname localhost --server localhost --mode master --confdir /tmp/foo --vardir /tmp/foo --trace --from rest find localhost
+    $ puppet facts find localhost --certname localhost --server localhost --mode master --confdir /tmp/foo --vardir /tmp/foo --trace --terminus rest
 
 Or use IRB to do the same thing:
 
