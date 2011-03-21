@@ -3,9 +3,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/interface/certificate_request'
 
-describe Puppet::Interface.interface(:certificate_request) do
+describe Puppet::Interface::CertificateRequest do
   before do
-    @interface = Puppet::Interface.interface(:certificate_request)
+    @interface = Puppet::Interface::CertificateRequest
   end
 
   it "should be a subclass of 'Indirection'" do

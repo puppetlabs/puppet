@@ -42,20 +42,25 @@ class Puppet::Interface
     nil
   end
 
+  def self.const_get(name)
+    name = constantize(name)
+    super(name)
+  end
+
   def self.register_interface(name, instance)
-    const_set(name2const(name), instance)
+    const_set(constantize(name), instance)
   end
 
   def self.unload_interface(name)
-    remove_const(name2const(name)) rescue nil
+    remove_const(constantize(name)) rescue nil
   end
 
   def self.unify_name(name)
     name.to_s.downcase.to_sym
   end
 
-  def self.name2const(name)
-    name.to_s.capitalize
+  def self.constantize(name)
+    name.to_s.split(/\W|_/).map { |x| x.capitalize }.join
   end
 
   attr_accessor :default_format

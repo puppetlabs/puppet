@@ -3,9 +3,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/interface/facts'
 
-describe Puppet::Interface.interface(:facts) do
+describe Puppet::Interface::Facts do
   before do
-    @interface = Puppet::Interface.interface(:facts)
+    @interface = Puppet::Interface::Facts
   end
 
   it "should define an 'upload' fact" do

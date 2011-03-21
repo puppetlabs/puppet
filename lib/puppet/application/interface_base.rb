@@ -71,7 +71,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
 
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
-    unless @interface = Puppet::Interface.interface(@type)
+    unless @interface = Puppet::Interface.const_get(@type)
       raise "Could not find interface '#{@type}'"
     end
     @format ||= @interface.default_format
