@@ -7,6 +7,8 @@ class Puppet::Interface
   include Puppet::Interface::ActionManager
   extend Puppet::Interface::ActionManager
 
+  include Puppet::Util
+
   # This is just so we can search for actions.  We only use its
   # list of directories to search.
   # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
