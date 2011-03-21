@@ -12,10 +12,6 @@ describe Puppet::Interface::Indirector do
     @instance.stubs(:indirection).returns @indirection
   end
 
-  after do
-    Puppet::Interface.unload_interface(:test)
-  end
-
   it "should be a subclass of Interface" do
     Puppet::Interface::Indirector.superclass.should equal(Puppet::Interface)
   end

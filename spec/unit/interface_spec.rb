@@ -4,10 +4,6 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper.rb')
 require 'puppet/interface'
 
 describe Puppet::Interface do
-  after do
-    Puppet::Interface.unload_interface(:me)
-  end
-
   describe "at initialization" do
     it "should require a name" do
       Puppet::Interface.new(:me).name.should == :me
@@ -60,24 +56,8 @@ describe Puppet::Interface do
   it "should create an associated constant when registering an interface" do
     $stderr.stubs(:puts)
     face = Puppet::Interface.new(:me)
-    Puppet::Interface.unload_interface(:me) # to remove from the initial registration
     Puppet::Interface.register_interface(:me, face)
     Puppet::Interface::Me.should equal(face)
-  end
-
-  # Why is unloading interfaces important?
-  it "should be able to unload interfaces" do
-    $stderr.stubs(:puts)
-    face = Puppet::Interface.new(:me)
-    Puppet::Interface.unload_interface(:me)
-    Puppet::Interface.const_defined?(:Me).should be_false
-  end
-
-  it "should remove the associated constant when an interface is unregistered" do
-    $stderr.stubs(:puts)
-    face = Puppet::Interface.new(:me)
-    Puppet::Interface.unload_interface(:me)
-    Puppet::Interface.const_defined?("Me").should be_false
   end
 
   it "should try to require interfaces that are not known" do
