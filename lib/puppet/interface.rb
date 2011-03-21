@@ -6,8 +6,10 @@ class Puppet::Interface
 
   include Puppet::Interface::ActionManager
   extend Puppet::Interface::ActionManager
+
   # This is just so we can search for actions.  We only use its
   # list of directories to search.
+  # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
   def self.autoloader
     @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/interface")
   end
@@ -30,35 +32,22 @@ class Puppet::Interface
         end
       end
     end
-    @interfaces.keys
+    Puppet::Interface.constants.map { |c| c.to_s.downcase }
   end
 
-  # Return an interface by name, loading from disk if necessary.
-  def self.interface(name)
-    @interfaces ||= {}
-    unless @interfaces[unify_name(name)]
-      require "puppet/interface/#{unify_name(name)}"
-    end
-    @interfaces[unify_name(name)]
-  rescue Exception => detail
-    puts detail.backtrace if Puppet[:trace]
-    $stderr.puts "Unable to find interface '#{name.to_s}': #{detail}."
+  def self.const_missing(name)
+    require "puppet/interface/#{name.to_s.downcase}"
+    const_get(name) if const_defined?(name)
+  rescue LoadError
+    nil
   end
 
   def self.register_interface(name, instance)
-    @interfaces ||= {}
-    @interfaces[unify_name(name)] = instance
     const_set(name2const(name), instance)
   end
 
   def self.unload_interface(name)
-    @interfaces ||= {}
-    @interfaces.delete(unify_name(name))
-    const = name2const(name)
-    const_get(const)
-    remove_const(const)
-  rescue
-    # nothing - if the constant-getting fails, just return
+    remove_const(name2const(name)) rescue nil
   end
 
   def self.unify_name(name)
