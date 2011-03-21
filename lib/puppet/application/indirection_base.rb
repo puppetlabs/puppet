@@ -2,7 +2,7 @@ require 'puppet/application/interface_base'
 require 'puppet/interface'
 
 class Puppet::Application::IndirectionBase < Puppet::Application::InterfaceBase
-  option("--from TERMINUS", "-f") do |arg|
+  option("--terminus TERMINUS") do |arg|
     @from = arg
   end
 
