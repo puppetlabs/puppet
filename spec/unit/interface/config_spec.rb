@@ -3,9 +3,9 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/interface/config'
 
-describe Puppet::Interface.interface(:config) do
+describe Puppet::Interface::Config do
   before do
-    @interface = Puppet::Interface.interface(:config)
+    @interface = Puppet::Interface::Config
   end
 
   it "should be a subclass of 'Indirection'" do
