@@ -53,10 +53,6 @@ class Puppet::Interface
     const_set(constantize(name), instance)
   end
 
-  def self.unload_interface(name)
-    remove_const(constantize(name)) rescue nil
-  end
-
   def self.constantize(name)
     unless name.to_s =~ /^[-_a-z]+$/i then
       raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid interface name"
