@@ -1,5 +1,4 @@
 require 'puppet/application'
-require 'puppet/interface'
 
 class Puppet::Application::InterfaceBase < Puppet::Application
   should_parse_config
@@ -39,6 +38,11 @@ class Puppet::Application::InterfaceBase < Puppet::Application
   # immediately but you need to indicate a failure.
   def exit_code
     @exit_code || 0
+  end
+
+  def initialize(*args)
+    require 'puppet/interface'
+    super
   end
 
   def main

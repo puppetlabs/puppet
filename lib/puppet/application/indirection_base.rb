@@ -1,5 +1,4 @@
 require 'puppet/application/interface_base'
-require 'puppet/interface'
 
 class Puppet::Application::IndirectionBase < Puppet::Application::InterfaceBase
   option("--terminus TERMINUS") do |arg|
