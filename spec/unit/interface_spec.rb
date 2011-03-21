@@ -92,4 +92,31 @@ describe Puppet::Interface do
   end
 
   it "should be able to load all actions in all search paths"
+
+  describe "#constantize" do
+    faulty = [1, "#foo", "$bar", "sturm und drang", :"sturm und drang"]
+    valid  = {
+      "foo"      => "Foo",
+      :foo       => "Foo",
+      "foo_bar"  => "FooBar",
+      :foo_bar   => "FooBar",
+      "foo-bar"  => "FooBar",
+      :"foo-bar" => "FooBar",
+    }
+
+    valid.each do |input, expect|
+      it "should map '#{input}' to '#{expect}'" do
+        result = Puppet::Interface.constantize(input)
+        result.should be_a String
+        result.to_s.should == expect
+      end
+    end
+
+    faulty.each do |input|
+      it "should fail when presented with #{input.inspect} (#{input.class})" do
+        expect { Puppet::Interface.constantize(input) }.
+          should raise_error ArgumentError, /not a valid interface name/
+      end
+    end
+  end
 end

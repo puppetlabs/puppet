@@ -55,12 +55,12 @@ class Puppet::Interface
     remove_const(constantize(name)) rescue nil
   end
 
-  def self.unify_name(name)
-    name.to_s.downcase.to_sym
-  end
-
   def self.constantize(name)
-    name.to_s.split(/\W|_/).map { |x| x.capitalize }.join
+    unless name.to_s =~ /^[-_a-z]+$/i then
+      raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid interface name"
+    end
+
+    name.to_s.split(/[-_]/).map { |x| x.capitalize }.join
   end
 
   attr_accessor :default_format
