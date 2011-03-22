@@ -22,8 +22,12 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
 
   # Remove the symlinks
   def disable
-    update_rc "-f", @resource[:name], "remove"
-    update_rc @resource[:name], "stop", "00", "1", "2", "3", "4", "5", "6", "."
+    if `dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?`.to_i == 0
+      update_rc @resource[:name], "disable"
+    else
+      update_rc "-f", @resource[:name], "remove"
+      update_rc @resource[:name], "stop", "00", "1", "2", "3", "4", "5", "6", "."
+    end
   end
 
   def enabled?
