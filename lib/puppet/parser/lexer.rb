@@ -532,7 +532,7 @@ class Puppet::Parser::Lexer
         when 'n'; "\n"
         when 't'; "\t"
         when 's'; " "
-        when "\n": ''
+        when "\n"; ''
         else      ch
         end
       else
