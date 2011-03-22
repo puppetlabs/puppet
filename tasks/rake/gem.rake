@@ -1,4 +1,4 @@
-require 'ftools'
+require 'fileutils'
 
 GEM_FILES = FileList[
     '[A-Z]*',
@@ -44,7 +44,7 @@ end
 desc "Prepare binaries for gem creation"
 task :prepare_gem do
     SBIN.each do |f|
-      File.copy(f,"bin")
+      FileUtils.copy(f,"bin")
     end
 end
 
@@ -52,8 +52,9 @@ desc "Create the gem"
 task :create_gem => :prepare_gem do
     Dir.mkdir("pkg") rescue nil
     Gem::Builder.new(spec).build
-    File.move("puppet-#{Puppet::PUPPETVERSION}.gem", "pkg")
+    FileUtils.move("puppet-#{Puppet::PUPPETVERSION}.gem", "pkg")
     SBIN.each do |f|
-       File.unlink("bin/" + f.gsub(/sbin\//, ''))
+       fn = f.gsub(/sbin\/(.*)/, '\1')
+       FileUtils.rm_r "bin/" + fn
     end
 end
