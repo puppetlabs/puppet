@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
 
 source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
