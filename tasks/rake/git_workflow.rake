@@ -6,8 +6,8 @@ def find_start(start)
 # This is a case statement, as we might want to map certain
 # git tags to starting points that are not currently in git.
 	case start
-		when nil?:
-		when @next_release: return "master"
+		when nil?;
+		when @next_release; return "master"
 		else return start
 	end
 end
