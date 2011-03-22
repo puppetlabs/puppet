@@ -1,4 +1,5 @@
 require 'puppet/interface'
+require 'puppet/interface/action'
 
 class Puppet::Interface::ActionBuilder
   attr_reader :action
