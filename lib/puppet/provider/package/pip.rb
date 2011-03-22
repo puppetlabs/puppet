@@ -25,29 +25,23 @@ Puppet::Type.type(:package).provide :pip,
   # that's managed by `pip` or an empty array if `pip` is not available.
   def self.instances
     packages = []
-    execpipe "#{command :pip} freeze" do |process|
+    pip_cmd = which('pip') or return []
+    execpipe "#{pip_cmd} freeze" do |process|
       process.collect do |line|
         next unless options = parse(line)
         packages << new(options)
       end
     end
     packages
-  rescue Puppet::DevError
-    []
   end
 
   # Return structured information about a particular package or `nil` if
   # it is not installed or `pip` itself is not available.
   def query
-    execpipe "#{command :pip} freeze" do |process|
-      process.each do |line|
-        options = self.class.parse(line)
-        return options if options[:name] == @resource[:name]
-      end
+    self.class.instances.each do |provider_pip|
+      return provider_pip.properties if @resource[:name] == provider_pip.name
     end
-    nil
-  rescue Puppet::DevError
-    nil
+    return nil
   end
 
   # Ask the PyPI API for the latest version number.  There is no local
@@ -104,7 +98,7 @@ Puppet::Type.type(:package).provide :pip,
   def lazy_pip(*args)
     pip *args
   rescue NoMethodError => e
-    if pathname = `which pip`.chomp
+    if pathname = which('pip')
       self.class.commands :pip => pathname
       pip *args
     else

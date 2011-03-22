@@ -7,17 +7,16 @@ provider_class = Puppet::Type.type(:package).provider(:pip)
 describe provider_class do
 
   before do
-    @resource = stub("resource")
-    @provider = provider_class.new
-    @provider.instance_variable_set(:@resource, @resource)
+    @resource = Puppet::Resource.new(:package, "sdsfdssdhdfyjymdgfcjdfjxdrssf")
+    @provider = provider_class.new(@resource)
   end
 
   describe "parse" do
 
     it "should return a hash on valid input" do
       provider_class.parse("Django==1.2.5").should == {
-        :ensure => "1.2.5",
-        :name => "Django",
+        :ensure   => "1.2.5",
+        :name     => "Django",
         :provider => :pip,
       }
     end
@@ -31,7 +30,7 @@ describe provider_class do
   describe "instances" do
 
     it "should return an array when pip is present" do
-      provider_class.expects(:command).with(:pip).returns("/fake/bin/pip")
+      provider_class.expects(:which).with('pip').returns("/fake/bin/pip")
       p = stub("process")
       p.expects(:collect).yields("Django==1.2.5")
       provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
@@ -39,8 +38,7 @@ describe provider_class do
     end
 
     it "should return an empty array when pip is missing" do
-      provider_class.expects(:command).with(:pip).raises(
-        Puppet::DevError.new("Pretend pip isn't installed."))
+      provider_class.expects(:which).with('pip').returns nil
       provider_class.instances.should == []
     end
 
@@ -49,32 +47,25 @@ describe provider_class do
   describe "query" do
 
     before do
-      @resource.stubs(:[]).with(:name).returns("Django")
+      @resource[:name] = "Django"
     end
 
     it "should return a hash when pip and the package are present" do
-      @provider.expects(:command).with(:pip).returns("/fake/bin/pip")
-      p = stub("process")
-      p.expects(:each).yields("Django==1.2.5")
-      @provider.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
+      provider_class.expects(:instances).returns [provider_class.new({
+        :ensure   => "1.2.5",
+        :name     => "Django",
+        :provider => :pip,
+      })]
+
       @provider.query.should == {
-        :ensure => "1.2.5",
-        :name => "Django",
+        :ensure   => "1.2.5",
+        :name     => "Django",
         :provider => :pip,
       }
     end
 
-    it "should return nil when pip is missing" do
-      @provider.expects(:command).with(:pip).raises(
-        Puppet::DevError.new("Pretend pip isn't installed."))
-      @provider.query.should == nil
-    end
-
     it "should return nil when the package is missing" do
-      @provider.expects(:command).with(:pip).returns("/fake/bin/pip")
-      p = stub("process")
-      p.expects(:each).yields("sdsfdssdhdfyjymdgfcjdfjxdrssf==0.0.0")
-      @provider.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
+      provider_class.expects(:instances).returns []
       @provider.query.should == nil
     end
 
@@ -83,12 +74,12 @@ describe provider_class do
   describe "latest" do
 
     it "should find a version number for Django" do
-      @resource.stubs(:[]).with(:name).returns "Django"
+      @resource[:name] = "Django"
       @provider.latest.should_not == nil
     end
 
     it "should not find a version number for sdsfdssdhdfyjymdgfcjdfjxdrssf" do
-      @resource.stubs(:[]).with(:name).returns "sdsfdssdhdfyjymdgfcjdfjxdrssf"
+      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
       @provider.latest.should == nil
     end
 
@@ -97,52 +88,46 @@ describe provider_class do
   describe "install" do
 
     before do
-      @resource.stubs(:[]).with(:name).returns("sdsfdssdhdfyjymdgfcjdfjxdrssf")
+      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
       @url = "git+https://example.com/sdsfdssdhdfyjymdgfcjdfjxdrssf.git"
     end
 
     it "should install" do
-      @resource.stubs(:[]).with(:ensure).returns(:installed)
-      @resource.stubs(:[]).with(:source).returns(nil)
-      @provider.expects(:lazy_pip).with do |*args|
-        "install" == args[0] && "sdsfdssdhdfyjymdgfcjdfjxdrssf" == args[-1]
-      end.returns nil
+      @resource[:ensure] = :installed
+      @resource[:source] = nil
+      @provider.expects(:lazy_pip).
+        with("install", '-q', "sdsfdssdhdfyjymdgfcjdfjxdrssf")
       @provider.install
     end
 
     it "should install from SCM" do
-      @resource.stubs(:[]).with(:ensure).returns(:installed)
-      @resource.stubs(:[]).with(:source).returns(@url)
-      @provider.expects(:lazy_pip).with do |*args|
-        "#{@url}#egg=sdsfdssdhdfyjymdgfcjdfjxdrssf" == args[-1]
-      end.returns nil
+      @resource[:ensure] = :installed
+      @resource[:source] = @url
+      @provider.expects(:lazy_pip).
+        with("install", '-q', '-e', "#{@url}#egg=sdsfdssdhdfyjymdgfcjdfjxdrssf")
       @provider.install
     end
 
-    it "should install a particular revision" do
-      @resource.stubs(:[]).with(:ensure).returns("0123456")
-      @resource.stubs(:[]).with(:source).returns(@url)
-      @provider.expects(:lazy_pip).with do |*args|
-        "#{@url}@0123456#egg=sdsfdssdhdfyjymdgfcjdfjxdrssf" == args[-1]
-      end.returns nil
+    it "should install a particular SCM revision" do
+      @resource[:ensure] = "0123456"
+      @resource[:source] = @url
+      @provider.expects(:lazy_pip).
+        with("install", "-q", "-e", "#{@url}@0123456#egg=sdsfdssdhdfyjymdgfcjdfjxdrssf")
       @provider.install
     end
 
     it "should install a particular version" do
-      @resource.stubs(:[]).with(:ensure).returns("0.0.0")
-      @resource.stubs(:[]).with(:source).returns(nil)
-      @provider.expects(:lazy_pip).with do |*args|
-        "sdsfdssdhdfyjymdgfcjdfjxdrssf==0.0.0" == args[-1]
-      end.returns nil
+      @resource[:ensure] = "0.0.0"
+      @resource[:source] = nil
+      @provider.expects(:lazy_pip).with("install", "-q", "sdsfdssdhdfyjymdgfcjdfjxdrssf==0.0.0")
       @provider.install
     end
 
     it "should upgrade" do
-      @resource.stubs(:[]).with(:ensure).returns(:latest)
-      @resource.stubs(:[]).with(:source).returns(nil)
-      @provider.expects(:lazy_pip).with do |*args|
-        "--upgrade" == args[-2] && "sdsfdssdhdfyjymdgfcjdfjxdrssf" == args[-1]
-      end.returns nil
+      @resource[:ensure] = :latest
+      @resource[:source] = nil
+      @provider.expects(:lazy_pip).
+        with("install", "-q", "--upgrade", "sdsfdssdhdfyjymdgfcjdfjxdrssf")
       @provider.install
     end
 
@@ -151,8 +136,9 @@ describe provider_class do
   describe "uninstall" do
 
     it "should uninstall" do
-      @resource.stubs(:[]).with(:name).returns("sdsfdssdhdfyjymdgfcjdfjxdrssf")
-      @provider.expects(:lazy_pip).returns(nil)
+      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
+      @provider.expects(:lazy_pip).
+        with('uninstall', '-y', '-q', 'sdsfdssdhdfyjymdgfcjdfjxdrssf')
       @provider.uninstall
     end
 
