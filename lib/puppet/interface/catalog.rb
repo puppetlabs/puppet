@@ -1,6 +1,6 @@
 require 'puppet/interface/indirector'
 
-Puppet::Interface::Indirector.new(:catalog) do
+Puppet::Interface::Indirector.interface(:catalog) do
   action(:apply) do
     invoke do |catalog|
       report = Puppet::Transaction::Report.new("apply")

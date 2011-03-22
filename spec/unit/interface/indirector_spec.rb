@@ -12,10 +12,6 @@ describe Puppet::Interface::Indirector do
     @instance.stubs(:indirection).returns @indirection
   end
 
-  it "should be a subclass of Interface" do
-    Puppet::Interface::Indirector.superclass.should equal(Puppet::Interface)
-  end
-
   it "should be able to return a list of indirections" do
     Puppet::Interface::Indirector.indirections.should be_include("catalog")
   end

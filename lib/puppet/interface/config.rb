@@ -1,6 +1,6 @@
 require 'puppet/interface'
 
-Puppet::Interface.new(:config) do
+Puppet::Interface.interface(:config) do
   action(:print) do
     invoke do |*args|
       Puppet.settings[:configprint] = args.join(",")
