@@ -161,14 +161,15 @@ describe provider_class do
     end
 
     it "should retry if pip has not yet been found" do
-      @provider.stubs(:pip).raises(NoMethodError).returns("/fake/bin/pip")
+      @provider.expects(:pip).twice.with('freeze').raises(NoMethodError).then.returns(nil)
+      @provider.expects(:which).with('pip').returns("/fake/bin/pip")
       @provider.method(:lazy_pip).call "freeze"
     end
 
     it "should fail if pip is missing" do
-      @provider.stubs(:pip).twice.raises(NoMethodError)
-      expect { @provider.method(:lazy_pip).call("freeze") }.to \
-        raise_error(NoMethodError)
+      @provider.expects(:pip).with('freeze').raises(NoMethodError)
+      @provider.expects(:which).with('pip').returns(nil)
+      expect { @provider.method(:lazy_pip).call("freeze") }.to raise_error(NoMethodError)
     end
 
   end
