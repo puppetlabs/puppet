@@ -25,7 +25,7 @@ Puppet::Interface::Indirector.new(:catalog) do
     facts_to_upload = {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(facts.render(:b64_zlib_yaml))}
     catalog = nil
     retrieval_duration = thinmark do
-      catalog = Puppet::Interface::Catalog.find(certname, facts_to_upload)
+      catalog = Puppet::Interface.interface(:catalog).find(certname, facts_to_upload)
     end
     catalog = catalog.to_ral
     catalog.finalize

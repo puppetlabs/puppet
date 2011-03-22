@@ -30,8 +30,8 @@ describe Puppet::Interface do
     end
   end
 
-  it "should use its name converted to a string as its string form" do
-    Puppet::Interface.new(:me).to_s.should == "me"
+  it "should stringify with its own name" do
+    Puppet::Interface.new(:me).to_s.should =~ /\bme\b/
   end
 
   it "should allow overriding of the default format" do
@@ -53,48 +53,34 @@ describe Puppet::Interface do
     Puppet::Interface.new(:me, :verb => "foo").verb.should == "foo"
   end
 
-  it "should create an associated constant when registering an interface" do
-    $stderr.stubs(:puts)
-    face = Puppet::Interface.new(:me)
-    Puppet::Interface.register_interface(:me, face)
-    Puppet::Interface::Me.should equal(face)
-  end
-
   it "should try to require interfaces that are not known" do
     Puppet::Interface.expects(:require).with "puppet/interface/foo"
-    Puppet::Interface.const_get(:Foo)
-  end
-
-  it "should not fail when requiring an interface fails" do
-    $stderr.stubs(:puts)
-    Puppet::Interface.expects(:require).with("puppet/interface/foo").raises LoadError
-    lambda { Puppet::Interface::Foo }.should_not raise_error
+    Puppet::Interface.interface(:foo)
   end
 
   it "should be able to load all actions in all search paths"
 
-  describe "#constantize" do
+  describe "#underscorize" do
     faulty = [1, "#foo", "$bar", "sturm und drang", :"sturm und drang"]
     valid  = {
-      "foo"      => "Foo",
-      :foo       => "Foo",
-      "foo_bar"  => "FooBar",
-      :foo_bar   => "FooBar",
-      "foo-bar"  => "FooBar",
-      :"foo-bar" => "FooBar",
+      "Foo"      => :foo,
+      :Foo       => :foo,
+      "foo_bar"  => :foo_bar,
+      :foo_bar   => :foo_bar,
+      "foo-bar"  => :foo_bar,
+      :"foo-bar" => :foo_bar,
     }
 
     valid.each do |input, expect|
-      it "should map '#{input}' to '#{expect}'" do
-        result = Puppet::Interface.constantize(input)
-        result.should be_a String
-        result.to_s.should == expect
+      it "should map #{input.inspect} to #{expect.inspect}" do
+        result = Puppet::Interface.underscorize(input)
+        result.should == expect
       end
     end
 
     faulty.each do |input|
       it "should fail when presented with #{input.inspect} (#{input.class})" do
-        expect { Puppet::Interface.constantize(input) }.
+        expect { Puppet::Interface.underscorize(input) }.
           should raise_error ArgumentError, /not a valid interface name/
       end
     end

@@ -9,6 +9,8 @@ class Puppet::Interface
 
   include Puppet::Util
 
+  @interfaces = {}
+
   # This is just so we can search for actions.  We only use its
   # list of directories to search.
   # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
@@ -34,31 +36,33 @@ class Puppet::Interface
         end
       end
     end
-    Puppet::Interface.constants.map { |c| c.to_s.downcase }
+    return @interfaces.keys
   end
 
-  def self.const_missing(name)
-    require "puppet/interface/#{name.to_s.downcase}"
-    const_get(name) if const_defined?(name)
+  def self.interface?(name)
+    name = underscorize(name)
+    require "puppet/interface/#{name}" unless @interfaces.has_key? name
+    return @interfaces.has_key? name
   rescue LoadError
-    nil
+    return false
   end
 
-  def self.const_get(name)
-    name = constantize(name)
-    super(name)
+  def self.interface(name, &blk)
+    interface = interface?(name) ? @interfaces[underscorize(name)] : new(name)
+    interface.instance_eval(&blk) if block_given?
+    return interface
   end
 
   def self.register_interface(name, instance)
-    const_set(constantize(name), instance)
+    @interfaces[underscorize(name)] = instance
   end
 
-  def self.constantize(name)
+  def self.underscorize(name)
     unless name.to_s =~ /^[-_a-z]+$/i then
       raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid interface name"
     end
 
-    name.to_s.split(/[-_]/).map { |x| x.capitalize }.join
+    name.to_s.downcase.split(/[-_]/).join('_').to_sym
   end
 
   attr_accessor :default_format
@@ -75,7 +79,7 @@ class Puppet::Interface
   attr_accessor :type, :verb, :name, :arguments, :options
 
   def initialize(name, options = {}, &block)
-    @name = name
+    @name = self.class.underscorize(name)
 
     @default_format = :pson
     options.each { |opt, val| send(opt.to_s + "=", val) }
@@ -118,6 +122,6 @@ class Puppet::Interface
   end
 
   def to_s
-    name.to_s
+    "Puppet::Interface(#{name})"
   end
 end

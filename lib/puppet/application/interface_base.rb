@@ -75,9 +75,10 @@ class Puppet::Application::InterfaceBase < Puppet::Application
 
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
-    unless @interface = Puppet::Interface.const_get(@type)
+    unless Puppet::Interface.interface?(@type)
       raise "Could not find interface '#{@type}'"
     end
+    @interface = Puppet::Interface.interface(@type)
     @format ||= @interface.default_format
 
     # We copy all of the app options to the interface.
