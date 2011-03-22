@@ -16,19 +16,28 @@ describe Puppet::Interface::ActionManager do
 
   describe "when included in a class" do
     it "should be able to define an action" do
-      @tester.action(:foo) { "something "}
+      @tester.action(:foo) do
+        invoke { "something "}
+      end
     end
 
     it "should be able to list defined actions" do
-      @tester.action(:foo) { "something" }
-      @tester.action(:bar) { "something" }
+      @tester.action(:foo) do
+        invoke { "something" }
+      end
+      @tester.action(:bar) do
+        invoke { "something" }
+      end
 
-      @tester.actions.should be_include(:bar)
-      @tester.actions.should be_include(:foo)
+      @tester.actions.should include(:bar)
+      @tester.actions.should include(:foo)
     end
 
     it "should be able to indicate when an action is defined" do
-      @tester.action(:foo) { "something" }
+      @tester.action(:foo) do
+        invoke { "something" }
+      end
+
       @tester.should be_action(:foo)
     end
   end
@@ -40,15 +49,21 @@ describe Puppet::Interface::ActionManager do
     end
 
     it "should be able to define an action" do
-      @tester.action(:foo) { "something "}
+      @tester.action(:foo) do
+        invoke { "something "}
+      end
     end
 
     it "should be able to list defined actions" do
-      @tester.action(:foo) { "something" }
-      @tester.action(:bar) { "something" }
+      @tester.action(:foo) do
+        invoke { "something" }
+      end
+      @tester.action(:bar) do
+        invoke { "something" }
+      end
 
-      @tester.actions.should be_include(:bar)
-      @tester.actions.should be_include(:foo)
+      @tester.actions.should include(:bar)
+      @tester.actions.should include(:foo)
     end
 
     it "should be able to indicate when an action is defined" do
@@ -67,54 +82,78 @@ describe Puppet::Interface::ActionManager do
     end
 
     it "should be able to define an action at the class level" do
-      @klass.action(:foo) { "something "}
+      @klass.action(:foo) do
+        invoke { "something "}
+      end
     end
 
     it "should create an instance method when an action is defined at the class level" do
-      @klass.action(:foo) { "something" }
+      @klass.action(:foo) do
+        invoke { "something" }
+      end
       @instance.foo.should == "something"
     end
 
     it "should be able to define an action at the instance level" do
-      @instance.action(:foo) { "something "}
+      @instance.action(:foo) do
+        invoke { "something "}
+      end
     end
 
     it "should create an instance method when an action is defined at the instance level" do
-      @instance.action(:foo) { "something" }
+      @instance.action(:foo) do
+        invoke { "something" }
+      end
       @instance.foo.should == "something"
     end
 
     it "should be able to list actions defined at the class level" do
-      @klass.action(:foo) { "something" }
-      @klass.action(:bar) { "something" }
+      @klass.action(:foo) do
+        invoke { "something" }
+      end
+      @klass.action(:bar) do
+        invoke { "something" }
+      end
 
-      @klass.actions.should be_include(:bar)
-      @klass.actions.should be_include(:foo)
+      @klass.actions.should include(:bar)
+      @klass.actions.should include(:foo)
     end
 
     it "should be able to list actions defined at the instance level" do
-      @instance.action(:foo) { "something" }
-      @instance.action(:bar) { "something" }
+      @instance.action(:foo) do
+        invoke { "something" }
+      end
+      @instance.action(:bar) do
+        invoke { "something" }
+      end
 
-      @instance.actions.should be_include(:bar)
-      @instance.actions.should be_include(:foo)
+      @instance.actions.should include(:bar)
+      @instance.actions.should include(:foo)
     end
 
     it "should be able to list actions defined at both instance and class level" do
-      @klass.action(:foo) { "something" }
-      @instance.action(:bar) { "something" }
+      @klass.action(:foo) do
+        invoke { "something" }
+      end
+      @instance.action(:bar) do
+        invoke { "something" }
+      end
 
-      @instance.actions.should be_include(:bar)
-      @instance.actions.should be_include(:foo)
+      @instance.actions.should include(:bar)
+      @instance.actions.should include(:foo)
     end
 
     it "should be able to indicate when an action is defined at the class level" do
-      @klass.action(:foo) { "something" }
+      @klass.action(:foo) do
+        invoke { "something" }
+      end
       @instance.should be_action(:foo)
     end
 
     it "should be able to indicate when an action is defined at the instance level" do
-      @klass.action(:foo) { "something" }
+      @klass.action(:foo) do
+        invoke { "something" }
+      end
       @instance.should be_action(:foo)
     end
 
@@ -122,9 +161,15 @@ describe Puppet::Interface::ActionManager do
       @subclass = Class.new(@klass)
       @instance = @subclass.new
 
-      @klass.action(:parent) { "a" }
-      @subclass.action(:sub) { "a" }
-      @instance.action(:instance) { "a" }
+      @klass.action(:parent) do
+        invoke { "a" }
+      end
+      @subclass.action(:sub) do
+        invoke { "a" }
+      end
+      @instance.action(:instance) do
+        invoke { "a" }
+      end
 
       @instance.should be_action(:parent)
       @instance.should be_action(:sub)
@@ -135,7 +180,9 @@ describe Puppet::Interface::ActionManager do
       @subclass = Class.new(@klass)
       @instance = @subclass.new
 
-      @klass.action(:foo) { "something" }
+      @klass.action(:foo) do
+        invoke { "something" }
+      end
       @instance.foo.should == "something"
     end
   end
