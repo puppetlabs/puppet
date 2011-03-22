@@ -10,28 +10,30 @@ class Puppet::Interface::Indirector < Puppet::Interface
     Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
   end
 
-  action :destroy do |*args|
-    call_indirection_method(:destroy, *args)
+  action :destroy do
+    invoke { |*args| call_indirection_method(:destroy, *args) }
   end
 
-  action :find do |*args|
-    call_indirection_method(:find, *args)
+  action :find do
+    invoke { |*args| call_indirection_method(:find, *args) }
   end
 
-  action :save do |*args|
-    call_indirection_method(:save, *args)
+  action :save do
+    invoke { |*args| call_indirection_method(:save, *args) }
   end
 
-  action :search do |*args|
-    call_indirection_method(:search, *args)
+  action :search do
+    invoke { |*args| call_indirection_method(:search, *args) }
   end
 
   # Print the configuration for the current terminus class
-  action :info do |*args|
-    if t = indirection.terminus_class
-      puts "Run mode '#{Puppet.run_mode.name}': #{t}"
-    else
-      $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
+  action :info do
+    invoke do |*args|
+      if t = indirection.terminus_class
+        puts "Run mode '#{Puppet.run_mode.name}': #{t}"
+      else
+        $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
+      end
     end
   end
 
