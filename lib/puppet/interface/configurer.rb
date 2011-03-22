@@ -2,12 +2,9 @@ require 'puppet/interface'
 
 Puppet::Interface.new(:configurer) do
   action(:synchronize) do |certname|
-    facts = Puppet::Interface::Facts.find(certname)
-
-    catalog = Puppet::Interface::Catalog.download(certname, facts)
-
-    report = Puppet::Interface::Catalog.apply(catalog)
-
+    facts = Puppet::Interface.interface(:facts).find(certname)
+    catalog = Puppet::Interface.interface(:catalog).download(certname, facts)
+    report = Puppet::Interface.interface(:catalog).apply(catalog)
     report
   end
 end

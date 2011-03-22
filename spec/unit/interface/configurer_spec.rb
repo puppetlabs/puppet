@@ -5,7 +5,7 @@ require 'puppet/interface/configurer'
 require 'puppet/indirector/catalog/rest'
 require 'tempfile'
 
-describe Puppet::Interface::Configurer do
+describe Puppet::Interface.interface(:configurer) do
   describe "#synchronize" do
     it "should retrieve and apply a catalog and return a report" do
       dirname = Dir.mktmpdir("puppetdir")
@@ -16,7 +16,7 @@ describe Puppet::Interface::Configurer do
       @catalog.add_resource(@file)
       Puppet::Resource::Catalog::Rest.any_instance.stubs(:find).returns(@catalog)
 
-      report = Puppet::Interface::Configurer.synchronize("foo")
+      report = Puppet::Interface.interface(:configurer).synchronize("foo")
 
       report.kind.should   == "apply"
       report.status.should == "changed"
