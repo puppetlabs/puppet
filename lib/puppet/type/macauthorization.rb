@@ -2,7 +2,7 @@ Puppet::Type.newtype(:macauthorization) do
 
   @doc = "Manage the Mac OS X authorization database.
     See the [Apple developer site](http://developer.apple.com/documentation/Security/Conceptual/Security_Overview/Security_Services/chapter_4_section_5.html) for more information.
-    
+
     **Autorequires:** If Puppet is managing the `/etc/authorization` file, each
     macauthorization resource will autorequire it."
 
@@ -33,8 +33,8 @@ Puppet::Type.newtype(:macauthorization) do
     desc "The name of the right or rule to be managed.
     Corresponds to 'key' in Authorization Services. The key is the name
     of a rule. A key uses the same naming conventions as a right. The
-    Security Server uses a rule’s key to match the rule with a right.
-    Wildcard keys end with a ‘.’. The generic rule has an empty key value.
+    Security Server uses a rule's key to match the rule with a right.
+    Wildcard keys end with a '.'. The generic rule has an empty key value.
     Any rights that do not match a specific rule use the generic rule."
 
     isnamevar
