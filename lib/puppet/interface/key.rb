@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-Puppet::Interface::Indirector.new(:key) do
+Puppet::Interface::Indirector.interface(:key) do
 end

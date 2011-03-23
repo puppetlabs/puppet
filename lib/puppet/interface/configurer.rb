@@ -1,6 +1,6 @@
 require 'puppet/interface'
 
-Puppet::Interface.new(:configurer) do
+Puppet::Interface.interface(:configurer) do
   action(:synchronize) do
     invoke do |certname|
       facts = Puppet::Interface.interface(:facts).find(certname)

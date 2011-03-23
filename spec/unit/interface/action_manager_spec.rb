@@ -10,65 +10,60 @@ class ActionManagerTester
 end
 
 describe Puppet::Interface::ActionManager do
-  before do
-    @tester = ActionManagerTester.new
-  end
+  subject { ActionManagerTester.new }
 
   describe "when included in a class" do
     it "should be able to define an action" do
-      @tester.action(:foo) do
+      subject.action(:foo) do
         invoke { "something "}
       end
     end
 
     it "should be able to list defined actions" do
-      @tester.action(:foo) do
+      subject.action(:foo) do
         invoke { "something" }
       end
-      @tester.action(:bar) do
+      subject.action(:bar) do
         invoke { "something" }
       end
 
-      @tester.actions.should include(:bar)
-      @tester.actions.should include(:foo)
+      subject.actions.should include(:bar)
+      subject.actions.should include(:foo)
     end
 
     it "should be able to indicate when an action is defined" do
-      @tester.action(:foo) do
+      subject.action(:foo) do
         invoke { "something" }
       end
 
-      @tester.should be_action(:foo)
+      subject.should be_action(:foo)
     end
   end
 
   describe "when used to extend a class" do
-    before do
-      @tester = Class.new
-      @tester.extend(Puppet::Interface::ActionManager)
-    end
+    subject { Class.new.extend(Puppet::Interface::ActionManager) }
 
     it "should be able to define an action" do
-      @tester.action(:foo) do
+      subject.action(:foo) do
         invoke { "something "}
       end
     end
 
     it "should be able to list defined actions" do
-      @tester.action(:foo) do
+      subject.action(:foo) do
         invoke { "something" }
       end
-      @tester.action(:bar) do
+      subject.action(:bar) do
         invoke { "something" }
       end
 
-      @tester.actions.should include(:bar)
-      @tester.actions.should include(:foo)
+      subject.actions.should include(:bar)
+      subject.actions.should include(:foo)
     end
 
     it "should be able to indicate when an action is defined" do
-      @tester.action(:foo) { "something" }
-      @tester.should be_action(:foo)
+      subject.action(:foo) { "something" }
+      subject.should be_action(:foo)
     end
   end
 

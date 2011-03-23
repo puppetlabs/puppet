@@ -3,17 +3,13 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/interface/facts'
 
-describe Puppet::Interface.interface(:facts) do
-  before do
-    @interface = Puppet::Interface.interface(:facts)
-  end
-
+describe Puppet::Interface::Indirector.interface(:facts) do
   it "should define an 'upload' fact" do
-    @interface.should be_action(:upload)
+    subject.should be_action(:upload)
   end
 
   it "should set its default format to :yaml" do
-    @interface.default_format.should == :yaml
+    subject.default_format.should == :yaml
   end
 
   describe "when uploading" do

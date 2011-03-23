@@ -4,30 +4,30 @@ require File.expand_path(File.dirname(__FILE__) + '/../spec_helper.rb')
 require 'puppet/interface'
 
 describe Puppet::Interface do
-  describe "at initialization" do
-    it "should require a name" do
-      Puppet::Interface.new(:me).name.should == :me
-    end
-
-    it "should register itself" do
-      Puppet::Interface.expects(:register_interface).with do |name, inst|
-        name == :me and inst.is_a?(Puppet::Interface)
-      end
-      Puppet::Interface.new(:me)
+  describe "#interface" do
+    it "should register the interface" do
+      interface = Puppet::Interface.interface(:interface_test_register)
+      interface.should == Puppet::Interface.interface(:interface_test_register)
     end
 
     it "should load actions" do
       Puppet::Interface.any_instance.expects(:load_actions)
-      Puppet::Interface.new(:me)
+      Puppet::Interface.interface(:interface_test_load_actions)
     end
 
     it "should instance-eval any provided block" do
-      face = Puppet::Interface.new(:me) do
-        action(:something) { "foo" }
+      face = Puppet::Interface.new(:interface_test_block) do
+        action(:something) do
+          invoke { "foo" }
+        end
       end
 
-      face.should be_action(:something)
+      face.something.should == "foo"
     end
+  end
+
+  it "should have a name" do
+    Puppet::Interface.new(:me).name.should == :me
   end
 
   it "should stringify with its own name" do
@@ -54,35 +54,9 @@ describe Puppet::Interface do
   end
 
   it "should try to require interfaces that are not known" do
-    Puppet::Interface.expects(:require).with "puppet/interface/foo"
+    Puppet::Interface::InterfaceCollection.expects(:require).with "puppet/interface/foo"
     Puppet::Interface.interface(:foo)
   end
 
   it "should be able to load all actions in all search paths"
-
-  describe "#underscorize" do
-    faulty = [1, "#foo", "$bar", "sturm und drang", :"sturm und drang"]
-    valid  = {
-      "Foo"      => :foo,
-      :Foo       => :foo,
-      "foo_bar"  => :foo_bar,
-      :foo_bar   => :foo_bar,
-      "foo-bar"  => :foo_bar,
-      :"foo-bar" => :foo_bar,
-    }
-
-    valid.each do |input, expect|
-      it "should map #{input.inspect} to #{expect.inspect}" do
-        result = Puppet::Interface.underscorize(input)
-        result.should == expect
-      end
-    end
-
-    faulty.each do |input|
-      it "should fail when presented with #{input.inspect} (#{input.class})" do
-        expect { Puppet::Interface.underscorize(input) }.
-          should raise_error ArgumentError, /not a valid interface name/
-      end
-    end
-  end
 end

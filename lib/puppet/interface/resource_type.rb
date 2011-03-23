@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-Puppet::Interface::Indirector.new(:resource_type) do
+Puppet::Interface::Indirector.interface(:resource_type) do
 end

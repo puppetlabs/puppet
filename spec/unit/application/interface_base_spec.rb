@@ -4,7 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/application/interface_base'
 require 'puppet/application/interface_base'
 
-base_interface = Puppet::Interface.new(:basetest)
+base_interface = Puppet::Interface.interface(:basetest)
 class Puppet::Application::InterfaceBase::Basetest < Puppet::Application::InterfaceBase
 end
 
