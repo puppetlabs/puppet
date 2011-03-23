@@ -300,3 +300,5 @@ class Puppet::Parameter
     name.to_s
   end
 end
+
+require 'puppet/parameter/path'
