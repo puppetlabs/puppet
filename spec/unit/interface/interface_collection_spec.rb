@@ -1,14 +1,18 @@
+#!/usr/bin/env ruby
+
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 
-require 'puppet/interface/interface_collection'
-
 describe Puppet::Interface::InterfaceCollection do
+  before :all do
+    @interfaces = subject.instance_variable_get("@interfaces").dup
+  end
+
   before :each do
-    subject.instance_variable_set("@interfaces", {})
+    subject.instance_variable_get("@interfaces").clear
   end
 
   after :all do
-    subject.instance_variable_set("@interfaces", {})
+    subject.instance_variable_set("@interfaces", @interfaces)
   end
 
   describe "::interfaces" do
@@ -16,56 +20,56 @@ describe Puppet::Interface::InterfaceCollection do
 
   describe "::[]" do
     before :each do
-      subject.instance_variable_set("@interfaces", {:foo => 10})
+      subject.instance_variable_get("@interfaces")[:foo][1] = 10
     end
 
     it "should return the interface with the given name" do
-      subject["foo"].should == 10
+      subject["foo", 1].should == 10
     end
 
     it "should attempt to load the interface if it isn't found" do
-      subject.expects(:require).with('puppet/interface/bar')
-      subject["bar"]
+      subject.expects(:require).with('puppet/interface/v1/bar')
+      subject["bar", 1]
     end
   end
 
   describe "::interface?" do
     before :each do
-      subject.instance_variable_set("@interfaces", {:foo => 10})
+      subject.instance_variable_get("@interfaces")[:foo][1] = 10
     end
 
     it "should return true if the interface specified is registered" do
-      subject.interface?("foo").should == true
+      subject.interface?("foo", 1).should == true
     end
 
     it "should attempt to require the interface if it is not registered" do
-      subject.expects(:require).with('puppet/interface/bar')
-      subject.interface?("bar")
+      subject.expects(:require).with('puppet/interface/v1/bar')
+      subject.interface?("bar", 1)
     end
 
     it "should return true if requiring the interface registered it" do
       subject.stubs(:require).with do
-        subject.instance_variable_set("@interfaces", {:bar => 20})
+        subject.instance_variable_get("@interfaces")[:bar][1] = 20
       end
-      subject.interface?("bar").should == true
+      subject.interface?("bar", 1).should == true
     end
 
     it "should return false if the interface is not registered" do
       subject.stubs(:require).returns(true)
-      subject.interface?("bar").should == false
+      subject.interface?("bar", 1).should == false
     end
 
     it "should return false if there is a LoadError requiring the interface" do
       subject.stubs(:require).raises(LoadError)
-      subject.interface?("bar").should == false
+      subject.interface?("bar", 1).should == false
     end
   end
 
   describe "::register" do
     it "should store the interface by name" do
-      interface = Puppet::Interface.new(:my_interface)
+      interface = Puppet::Interface.new(:my_interface, :version => 1)
       subject.register(interface)
-      subject.instance_variable_get("@interfaces").should == {:my_interface => interface}
+      subject.instance_variable_get("@interfaces").should == {:my_interface => {1 => interface}}
     end
   end
 

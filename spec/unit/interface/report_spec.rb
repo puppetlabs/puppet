@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
-require 'puppet/interface/report'
 
-describe Puppet::Interface::Indirector.interface(:report) do
+describe Puppet::Interface.interface(:report, 1) do
 end

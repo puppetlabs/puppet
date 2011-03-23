@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
-require 'puppet/interface/config'
 
-describe Puppet::Interface.interface(:config) do
+describe Puppet::Interface.interface(:config, 1) do
   it "should use Settings#print_config_options when asked to print" do
     Puppet.settings.stubs(:puts)
     Puppet.settings.expects(:print_config_options)

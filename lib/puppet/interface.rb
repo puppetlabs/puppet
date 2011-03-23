@@ -10,8 +10,6 @@ class Puppet::Interface
 
   include Puppet::Util
 
-  @interfaces = {}
-
   # This is just so we can search for actions.  We only use its
   # list of directories to search.
   # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
@@ -23,20 +21,20 @@ class Puppet::Interface
     Puppet::Interface::InterfaceCollection.interfaces
   end
 
-  def self.interface?(name)
-    Puppet::Interface::InterfaceCollection.interface?(name)
+  def self.interface?(name, version)
+    Puppet::Interface::InterfaceCollection.interface?(name, version)
   end
 
   def self.register(instance)
     Puppet::Interface::InterfaceCollection.register(instance)
   end
 
-  def self.interface(name, &blk)
-    if interface?(name)
-      interface = Puppet::Interface::InterfaceCollection[name]
+  def self.interface(name, version, &blk)
+    if interface?(name, version)
+      interface = Puppet::Interface::InterfaceCollection[name, version]
       interface.instance_eval(&blk) if blk
     else
-      interface = new(name, &blk)
+      interface = self.new(name, :version => version, &blk)
       Puppet::Interface::InterfaceCollection.register(interface)
       interface.load_actions
     end
@@ -49,10 +47,14 @@ class Puppet::Interface
     self.default_format = format.to_sym
   end
 
-  attr_accessor :type, :verb, :arguments, :options
+  attr_accessor :type, :verb, :version, :arguments, :options
   attr_reader :name
 
   def initialize(name, options = {}, &block)
+    unless options[:version]
+      raise ArgumentError, "Interface #{name} declared without version!"
+    end
+
     @name = Puppet::Interface::InterfaceCollection.underscorize(name)
 
     @default_format = :pson
@@ -86,6 +88,6 @@ class Puppet::Interface
   end
 
   def to_s
-    "Puppet::Interface(#{name})"
+    "Puppet::Interface(#{name}, :version => #{version.inspect})"
   end
 end

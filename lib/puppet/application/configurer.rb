@@ -17,7 +17,7 @@ class Puppet::Application::Configurer < Puppet::Application
   end
 
   def run_command
-    report = Puppet::Interface.interface(:configurer).synchronize(Puppet[:certname])
-    Puppet::Interface.interface(:report).submit(report)
+    report = Puppet::Interface.interface(:configurer, 1).synchronize(Puppet[:certname])
+    Puppet::Interface.interface(:report, 1).submit(report)
   end
 end
