@@ -61,6 +61,7 @@ module Puppet::Network::HTTP::API::V1
     # that leads to the fix being too long.
     return :singular if indirection == "facts"
     return :singular if indirection == "status"
+    return :singular if indirection == "certificate_status"
     return :plural if indirection == "inventory"
 
     result = (indirection =~ /s$|_search$/) ? :plural : :singular
