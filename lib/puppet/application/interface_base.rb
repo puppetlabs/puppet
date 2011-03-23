@@ -75,7 +75,7 @@ class Puppet::Application::InterfaceBase < Puppet::Application
     unless Puppet::Interface.interface?(@type, '0.0.1')
       raise "Could not find version #{1} of interface '#{@type}'"
     end
-    @interface = Puppet::Interface.interface(@type, '0.0.1')
+    @interface = Puppet::Interface[@type, '0.0.1']
     @format ||= @interface.default_format
 
     # We copy all of the app options to the interface.

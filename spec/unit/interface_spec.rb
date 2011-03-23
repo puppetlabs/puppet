@@ -17,17 +17,17 @@ describe Puppet::Interface do
 
   describe "#interface" do
     it "should register the interface" do
-      interface = Puppet::Interface.interface(:interface_test_register, '0.0.1')
-      interface.should == Puppet::Interface.interface(:interface_test_register, '0.0.1')
+      interface = Puppet::Interface[:interface_test_register, '0.0.1']
+      interface.should == Puppet::Interface[:interface_test_register, '0.0.1']
     end
 
     it "should load actions" do
       Puppet::Interface.any_instance.expects(:load_actions)
-      Puppet::Interface.interface(:interface_test_load_actions, '0.0.1')
+      Puppet::Interface[:interface_test_load_actions, '0.0.1']
     end
 
     it "should require a version number" do
-      proc { Puppet::Interface.interface(:no_version) }.should raise_error(ArgumentError)
+      proc { Puppet::Interface[:no_version] }.should raise_error(ArgumentError)
     end
   end
 
@@ -76,7 +76,7 @@ describe Puppet::Interface do
 
   it "should try to require interfaces that are not known" do
     Puppet::Interface::InterfaceCollection.expects(:require).with "puppet/interface/v0.0.1/foo"
-    Puppet::Interface.interface(:foo, '0.0.1')
+    Puppet::Interface[:foo, '0.0.1']
   end
 
   it "should be able to load all actions in all search paths"

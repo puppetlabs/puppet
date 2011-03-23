@@ -10,35 +10,39 @@ class Puppet::Interface
 
   include Puppet::Util
 
-  # This is just so we can search for actions.  We only use its
-  # list of directories to search.
-  # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
-  def self.autoloader
-    @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/interface")
-  end
-
-  def self.interfaces
-    Puppet::Interface::InterfaceCollection.interfaces
-  end
-
-  def self.interface?(name, version)
-    Puppet::Interface::InterfaceCollection.interface?(name, version)
-  end
-
-  def self.register(instance)
-    Puppet::Interface::InterfaceCollection.register(instance)
-  end
-
-  def self.interface(name, version, &blk)
-    if interface?(name, version)
-      interface = Puppet::Interface::InterfaceCollection[name, version]
-      interface.instance_eval(&blk) if blk
-    else
-      interface = self.new(name, :version => version, &blk)
-      Puppet::Interface::InterfaceCollection.register(interface)
-      interface.load_actions
+  class << self
+    # This is just so we can search for actions.  We only use its
+    # list of directories to search.
+    # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
+    def autoloader
+      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/interface")
     end
-    return interface
+
+    def interfaces
+      Puppet::Interface::InterfaceCollection.interfaces
+    end
+
+    def interface?(name, version)
+      Puppet::Interface::InterfaceCollection.interface?(name, version)
+    end
+
+    def register(instance)
+      Puppet::Interface::InterfaceCollection.register(instance)
+    end
+
+    def define(name, version, &blk)
+      if interface?(name, version)
+        interface = Puppet::Interface::InterfaceCollection[name, version]
+        interface.instance_eval(&blk) if blk
+      else
+        interface = self.new(name, :version => version, &blk)
+        Puppet::Interface::InterfaceCollection.register(interface)
+        interface.load_actions
+      end
+      return interface
+    end
+
+    alias :[] :define
   end
 
   attr_accessor :default_format

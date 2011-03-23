@@ -1,4 +1,4 @@
 require 'puppet/interface/indirector'
 
-Puppet::Interface::Indirector.interface(:status, '0.0.1') do
+Puppet::Interface::Indirector.define(:status, '0.0.1') do
 end

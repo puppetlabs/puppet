@@ -2,5 +2,5 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 
-describe Puppet::Interface.interface(:catalog, '0.0.1') do
+describe Puppet::Interface.define(:catalog, '0.0.1') do
 end

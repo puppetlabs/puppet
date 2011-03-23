@@ -4,7 +4,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/indirector/catalog/rest'
 require 'tempfile'
 
-describe Puppet::Interface.interface(:configurer, '0.0.1') do
+describe Puppet::Interface.define(:configurer, '0.0.1') do
   describe "#synchronize" do
     it "should retrieve and apply a catalog and return a report" do
       dirname = Dir.mktmpdir("puppetdir")
