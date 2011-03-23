@@ -6,12 +6,7 @@ class Puppet::Application::Certificate < Puppet::Application::IndirectionBase
   # Since these options map CA terminology to indirector terminology, it's
   # now called --ca-location.
   option "--ca-location CA_LOCATION" do |arg|
-    handle_terminus({
-      :local => :file,
-      :remote => :rest,
-      :only => :file,
-      :none => nil,
-    }[arg.to_sym])
+    Puppet::SSL::Host.ca_location = arg.to_sym
   end
 
 end

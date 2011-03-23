@@ -13,8 +13,7 @@ Puppet::Interface::Indirector.interface(:certificate) do
       set_run_mode Puppet::Application[:certificate].class.run_mode
     end
 
-    Puppet::SSL::CertificateStatus.indirection.save(
-      Puppet::SSL::CertificateStatus.new(name))
+    Puppet::SSL::Host.indirection.save(Puppet::SSL::Host.new(name))
 
   end
 
