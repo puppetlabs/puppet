@@ -5,7 +5,7 @@ require 'puppet/interface/indirector'
 
 describe Puppet::Interface::Indirector do
   before do
-    @instance = Puppet::Interface::Indirector.new(:test)
+    @instance = Puppet::Interface::Indirector.new(:test, :version => '0.0.1')
 
     @indirection = stub 'indirection', :name => :stub_indirection
 
@@ -24,7 +24,7 @@ describe Puppet::Interface::Indirector do
     it "should be able to determine its indirection" do
       # Loading actions here an get, um, complicated
       Puppet::Interface.stubs(:load_actions)
-      Puppet::Interface::Indirector.new(:catalog).indirection.should equal(Puppet::Resource::Catalog.indirection)
+      Puppet::Interface::Indirector.new(:catalog, :version => '0.0.1').indirection.should equal(Puppet::Resource::Catalog.indirection)
     end
   end
 

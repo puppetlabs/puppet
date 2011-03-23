@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
-require 'puppet/interface/facts'
 
-describe Puppet::Interface::Indirector.interface(:facts) do
+describe Puppet::Interface.define(:facts, '0.0.1') do
   it "should define an 'upload' fact" do
     subject.should be_action(:upload)
   end

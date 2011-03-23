@@ -24,7 +24,7 @@ describe Puppet::Interface::Action do
 
   describe "when invoking" do
     it "should be able to call other actions on the same object" do
-      interface = Puppet::Interface.new(:my_interface) do
+      interface = Puppet::Interface.new(:my_interface, :version => '0.0.1') do
         action(:foo) do
           invoke { 25 }
         end
@@ -56,7 +56,7 @@ describe Puppet::Interface::Action do
         end
       end
 
-      interface = Puppet::Interface::MyInterfaceBaseClass.new(:my_inherited_interface) do
+      interface = Puppet::Interface::MyInterfaceBaseClass.new(:my_inherited_interface, :version => '0.0.1') do
         action(:baz) do
           invoke { "the value of foo in baz is '#{foo}'" }
         end

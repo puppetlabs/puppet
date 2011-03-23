@@ -1,7 +1,7 @@
 require 'puppet/interface'
 
 module Puppet::Interface::InterfaceCollection
-  @interfaces = {}
+  @interfaces = Hash.new { |hash, key| hash[key] = {} }
 
   def self.interfaces
     unless @loaded
@@ -24,20 +24,22 @@ module Puppet::Interface::InterfaceCollection
     return @interfaces.keys
   end
 
-  def self.[](name)
-    @interfaces[underscorize(name)] if interface?(name)
+  def self.[](name, version)
+    @interfaces[underscorize(name)][version] if interface?(name, version)
   end
 
-  def self.interface?(name)
+  def self.interface?(name, version)
     name = underscorize(name)
-    require "puppet/interface/#{name}" unless @interfaces.has_key? name
-    return @interfaces.has_key? name
+    unless @interfaces.has_key?(name) && @interfaces[name].has_key?(version)
+      require "puppet/interface/v#{version}/#{name}"
+    end
+    return @interfaces.has_key?(name) && @interfaces[name].has_key?(version)
   rescue LoadError
     return false
   end
 
   def self.register(interface)
-    @interfaces[underscorize(interface.name)] = interface
+    @interfaces[underscorize(interface.name)][interface.version] = interface
   end
 
   def self.underscorize(name)

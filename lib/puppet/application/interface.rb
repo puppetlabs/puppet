@@ -81,7 +81,7 @@ class Puppet::Application::Interface < Puppet::Application
   end
 
   def actions(indirection)
-    return [] unless interface = Puppet::Interface.interface(indirection)
+    return [] unless interface = Puppet::Interface[indirection, '0.0.1']
     interface.load_actions
     return interface.actions.sort { |a,b| a.to_s <=> b.to_s }
   end

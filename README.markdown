@@ -84,7 +84,7 @@ Or use IRB to do the same thing:
     $ irb
     >> require 'puppet/interface'
     => true
-    >> interface = Puppet::Interface.interface(:facts).new
+    >> interface = Puppet::Interface[:facts, '1.0.0']
     => #<Puppet::Interface::Facts:0x1024a1390 @format=:yaml>
     >> facts = interface.find("myhost"); nil
 
@@ -96,7 +96,7 @@ Like most parts of Puppet, these are easy to extend.  Just drop a new action int
 
     $ cat lib/puppet/interface/catalog/select.rb 
     # Select and show a list of resources of a given type.
-    Puppet::Interface.interface(:catalog) do
+    Puppet::Interface.define(:catalog, '1.0.0') do
       action :select do
         invoke do |host,type|
           catalog = Puppet::Resource::Catalog.indirection.find(host)

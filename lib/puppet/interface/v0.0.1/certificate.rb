@@ -1,7 +1,7 @@
 require 'puppet/interface/indirector'
 require 'puppet/ssl/host'
 
-Puppet::Interface::Indirector.interface(:certificate) do
+Puppet::Interface::Indirector.define(:certificate, '0.0.1') do
 
   action :generate do
     invoke do |name|
@@ -19,7 +19,7 @@ Puppet::Interface::Indirector.interface(:certificate) do
     end
   end
 
-  action :sign do |name|
+  action :sign do
     invoke do |name|
       Puppet::SSL::Host.indirection.save(Puppet::SSL::Host.new(name))
     end
