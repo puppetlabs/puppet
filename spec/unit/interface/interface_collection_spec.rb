@@ -3,12 +3,18 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/interface/interface_collection'
 
 describe Puppet::Interface::InterfaceCollection do
+  # This is global state that other tests depend on, so we have to save and
+  # restore it
+  before :all do
+    @saved_interfaces = subject.instance_variable_get("@interfaces").dup
+  end
+
   before :each do
     subject.instance_variable_set("@interfaces", {})
   end
 
   after :all do
-    subject.instance_variable_set("@interfaces", {})
+    subject.instance_variable_set("@interfaces", @saved_interfaces)
   end
 
   describe "::interfaces" do
