@@ -753,7 +753,7 @@ module_eval <<'.,.,', 'grammar.ry', 40
 
 module_eval <<'.,.,', 'grammar.ry', 42
   def _reduce_10( val, _values, result )
-result = {val[0],val[1]}
+result = {val[0] => val[1]}
   result
 end
 .,.,
