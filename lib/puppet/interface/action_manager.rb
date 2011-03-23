@@ -31,6 +31,6 @@ module Puppet::Interface::ActionManager
   end
 
   def action?(name)
-    actions.include?(name)
+    actions.include?(name.to_sym)
   end
 end

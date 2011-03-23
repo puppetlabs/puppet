@@ -38,6 +38,14 @@ describe Puppet::Interface::ActionManager do
 
       subject.should be_action(:foo)
     end
+
+    it "should correctly treat action names specified as strings" do
+      subject.action(:foo) do
+        invoke { "something" }
+      end
+
+      subject.should be_action("foo")
+    end
   end
 
   describe "when used to extend a class" do
