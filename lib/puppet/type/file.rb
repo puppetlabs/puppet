@@ -44,7 +44,7 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      path, name = File.split(value.gsub(/\/+/,'/'))
+      path, name = ::File.split(value.gsub(/\/+/,'/'))
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
 
@@ -55,7 +55,7 @@ Puppet::Type.newtype(:file) do
       if value[:name] == '/'
         basedir
       else
-        File.join( basedir, value[:name] )
+        ::File.join( basedir, value[:name] )
       end
     end
   end
@@ -248,7 +248,7 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire any parent directories.
   autorequire(:file) do
-    basedir = File.dirname(self[:path])
+    basedir = ::File.dirname(self[:path])
     if basedir != self[:path]
       basedir
     else
@@ -309,7 +309,7 @@ Puppet::Type.newtype(:file) do
   def asuser
     if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
-        FileTest.writable?(File.dirname(self[:path]))
+        FileTest.writable?(::File.dirname(self[:path]))
       }
 
       # If the parent directory is writeable, then we execute
@@ -412,7 +412,7 @@ Puppet::Type.newtype(:file) do
   # Create a new file or directory object as a child to the current
   # object.
   def newchild(path)
-    full_path = File.join(self[:path], path)
+    full_path = ::File.join(self[:path], path)
 
     # Add some new values to our original arguments -- these are the ones
     # set at initialization.  We specifically want to exclude any param
@@ -486,16 +486,16 @@ Puppet::Type.newtype(:file) do
   # not likely to have many actual conflicts, which is good, because
   # this is a pretty inefficient implementation.
   def remove_less_specific_files(files)
-    mypath = self[:path].split(File::Separator)
+    mypath = self[:path].split(::File::Separator)
     other_paths = catalog.vertices.
       select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
-      collect { |r| r[:path].split(File::Separator) }.
+      collect { |r| r[:path].split(::File::Separator) }.
       select  { |p| p[0,mypath.length]  == mypath }
 
     return files if other_paths.empty?
 
     files.reject { |file|
-      path = file[:path].split(File::Separator)
+      path = file[:path].split(::File::Separator)
       other_paths.any? { |p| path[0,p.length] == p }
       }
   end
@@ -612,7 +612,7 @@ Puppet::Type.newtype(:file) do
       end
     when "link", "file"
       debug "Removing existing #{s.ftype} for replacement with #{should}"
-      File.unlink(self[:path])
+      ::File.unlink(self[:path])
     else
       self.fail "Could not back up files of type #{s.ftype}"
     end
@@ -677,7 +677,7 @@ Puppet::Type.newtype(:file) do
     path = self[:path]
 
     begin
-      File.send(method, self[:path])
+      ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
       return nil
     rescue Errno::EACCES => error
@@ -703,7 +703,7 @@ Puppet::Type.newtype(:file) do
     use_temporary_file = write_temporary_file?
     if use_temporary_file
       path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while File.exists?(path) or File.symlink?(path)
+      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or ::File.symlink?(path)
     else
       path = self[:path]
     end
@@ -712,18 +712,18 @@ Puppet::Type.newtype(:file) do
     umask = mode ? 000 : 022
     mode_int = mode ? mode.to_i(8) : nil
 
-    content_checksum = Puppet::Util.withumask(umask) { File.open(path, 'w', mode_int ) { |f| write_content(f) } }
+    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'w', mode_int ) { |f| write_content(f) } }
 
     # And put our new file in place
     if use_temporary_file # This is only not true when our file is empty.
       begin
         fail_if_checksum_is_wrong(path, content_checksum) if validate_checksum?
-        File.rename(path, self[:path])
+        ::File.rename(path, self[:path])
       rescue => detail
         fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
       ensure
         # Make sure the created file gets removed
-        File.unlink(path) if FileTest.exists?(path)
+        ::File.unlink(path) if FileTest.exists?(path)
       end
     end
 
