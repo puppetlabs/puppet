@@ -13,10 +13,9 @@ Puppet::Interface::Indirector.interface(:certificate) do
 
   action :list do
     invoke do
-      Puppet::SSL::Host.indirection.search("*").each do |host|
-        puts host.inspect
-      end
-      nil
+      Puppet::SSL::Host.indirection.search("*", {
+        :for => :certificate_request,
+      }).map { |h| h.inspect }
     end
   end
 
