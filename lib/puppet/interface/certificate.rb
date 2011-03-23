@@ -1,12 +1,13 @@
 require 'puppet/interface/indirector'
+require 'puppet/ssl/host'
 
 Puppet::Interface::Indirector.interface(:certificate) do
+
   action :generate do
     invoke do |name|
-      require 'puppet/ssl/host'
-
       host = Puppet::SSL::Host.new(name)
-      host.generate
+      host.generate_certificate_request
+      host.certificate_request.class.indirection.save(host.certificate_request)
     end
   end
 
