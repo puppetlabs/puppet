@@ -2,13 +2,12 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/application/interface_base'
-require 'puppet/application/interface_base'
-
-base_interface = Puppet::Interface.interface(:basetest)
-class Puppet::Application::InterfaceBase::Basetest < Puppet::Application::InterfaceBase
-end
 
 describe Puppet::Application::InterfaceBase do
+  base_interface = Puppet::Interface.interface(:basetest)
+  class Puppet::Application::InterfaceBase::Basetest < Puppet::Application::InterfaceBase
+  end
+
   before do
     @app = Puppet::Application::InterfaceBase::Basetest.new
     @app.stubs(:interface).returns base_interface
