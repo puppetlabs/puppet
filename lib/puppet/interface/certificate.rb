@@ -11,21 +11,19 @@ Puppet::Interface::Indirector.interface(:certificate) do
     end
   end
 
-  action :sign do |name|
-    invoke do |name|
-      unless Puppet::SSL::Host.ca_location
-        raise ArgumentError, "You must have a CA location specified; use --ca-location to specify the location (remote, local, only)"
+  action :list do
+    invoke do
+      Puppet::SSL::Host.indirection.search("*").each do |host|
+        puts host.inspect
       end
-
-      location = Puppet::SSL::Host.ca_location
-      if location == :local && !Puppet::SSL::CertificateAuthority.ca?
-        app = Puppet::Application[:certificate]
-        app.class.run_mode("master")
-        app.set_run_mode Puppet::Application[:certificate].class.run_mode
-      end
-
-      Puppet::SSL::Host.indirection.save(Puppet::SSL::Host.new(name))
-
+      nil
     end
   end
+
+  action :sign do |name|
+    invoke do |name|
+      Puppet::SSL::Host.indirection.save(Puppet::SSL::Host.new(name))
+    end
+  end
+
 end
