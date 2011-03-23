@@ -96,7 +96,7 @@ Puppet::Util::Log.newdesttype :console do
   HWHITE  = {:console => "[1;37m", :html => "FFFFFF"}
   RESET   = {:console => "[0m",    :html => ""      }
 
-  @@colormap = {
+  Colormap = {
     :debug => WHITE,
     :info => GREEN,
     :notice => CYAN,
@@ -117,11 +117,11 @@ Puppet::Util::Log.newdesttype :console do
   end
 
   def console_color(level, str)
-    @@colormap[level][:console] + str + RESET[:console]
+    Colormap[level][:console] + str + RESET[:console]
   end
 
   def html_color(level, str)
-    %{<span style="color: %s">%s</span>} % [@@colormap[level][:html], str]
+    %{<span style="color: %s">%s</span>} % [Colormap[level][:html], str]
   end
 
   def initialize

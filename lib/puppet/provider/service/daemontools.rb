@@ -67,7 +67,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     path = self.defpath
     unless FileTest.directory?(path)
       Puppet.notice "Service path #{path} does not exist"
-      next
+      return
     end
 
     # reject entries that aren't either a directory
