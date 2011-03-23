@@ -1,6 +1,6 @@
 require 'puppet/interface/indirector'
 
-Puppet::Interface::Indirector.interface(:catalog, 1) do
+Puppet::Interface::Indirector.interface(:catalog, '0.0.1') do
   action(:apply) do
     invoke do |catalog|
       report = Puppet::Transaction::Report.new("apply")
@@ -28,7 +28,7 @@ Puppet::Interface::Indirector.interface(:catalog, 1) do
       facts_to_upload = {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(facts.render(:b64_zlib_yaml))}
       catalog = nil
       retrieval_duration = thinmark do
-        catalog = Puppet::Interface.interface(:catalog, 1).find(certname, facts_to_upload)
+        catalog = Puppet::Interface.interface(:catalog, '0.0.1').find(certname, facts_to_upload)
       end
       catalog = catalog.to_ral
       catalog.finalize

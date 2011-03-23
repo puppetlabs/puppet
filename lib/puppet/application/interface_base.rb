@@ -72,10 +72,10 @@ class Puppet::Application::InterfaceBase < Puppet::Application
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
     # TODO: These should be configurable versions.
-    unless Puppet::Interface.interface?(@type, 1)
+    unless Puppet::Interface.interface?(@type, '0.0.1')
       raise "Could not find version #{1} of interface '#{@type}'"
     end
-    @interface = Puppet::Interface.interface(@type, 1)
+    @interface = Puppet::Interface.interface(@type, '0.0.1')
     @format ||= @interface.default_format
 
     # We copy all of the app options to the interface.

@@ -1,6 +1,6 @@
 require 'puppet/interface/indirector'
 
-Puppet::Interface::Indirector.interface(:report, 1) do
+Puppet::Interface::Indirector.interface(:report, '0.0.1') do
   action(:submit) do
     invoke do |report|
       begin
