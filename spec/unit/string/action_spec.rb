@@ -5,20 +5,11 @@ require 'puppet/string/action'
 
 describe Puppet::String::Action do
   describe "when validating the action name" do
-    it "should require a name" do
-      lambda { Puppet::String::Action.new(nil,nil) }.should raise_error("'' is an invalid action name")
-    end
-
-    it "should not allow empty names" do
-      lambda { Puppet::String::Action.new(nil,'') }.should raise_error("'' is an invalid action name")
-    end
-
-    it "should not allow names with whitespace" do
-      lambda { Puppet::String::Action.new(nil,'foo bar') }.should raise_error("'foo bar' is an invalid action name")
-    end
-
-    it "should not allow names beginning with dashes" do
-      lambda { Puppet::String::Action.new(nil,'-foobar') }.should raise_error("'-foobar' is an invalid action name")
+    [nil, '', 'foo bar', '-foobar'].each do |input|
+      it "should treat #{input.inspect} as an invalid name" do
+        expect { Puppet::Interface::Action.new(nil, input) }.
+          should raise_error(/is an invalid action name/)
+      end
     end
   end
 
