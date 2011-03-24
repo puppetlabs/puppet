@@ -9,7 +9,7 @@ module Puppet::Interface::InterfaceCollection
       $LOAD_PATH.each do |dir|
         next unless FileTest.directory?(dir)
         Dir.chdir(dir) do
-          Dir.glob("puppet/interface/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
+          Dir.glob("puppet/interface/v*/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
             iname = file.sub(/\.rb/, '')
             begin
               require iname

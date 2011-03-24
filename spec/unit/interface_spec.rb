@@ -15,29 +15,29 @@ describe Puppet::Interface do
     Puppet::Interface::InterfaceCollection.instance_variable_set("@interfaces", @interfaces)
   end
 
-  describe "#interface" do
+  describe "#define" do
     it "should register the interface" do
-      interface = Puppet::Interface[:interface_test_register, '0.0.1']
+      interface = Puppet::Interface.define(:interface_test_register, '0.0.1')
       interface.should == Puppet::Interface[:interface_test_register, '0.0.1']
     end
 
     it "should load actions" do
       Puppet::Interface.any_instance.expects(:load_actions)
-      Puppet::Interface[:interface_test_load_actions, '0.0.1']
+      Puppet::Interface.define(:interface_test_load_actions, '0.0.1')
     end
 
     it "should require a version number" do
-      proc { Puppet::Interface[:no_version] }.should raise_error(ArgumentError)
+      proc { Puppet::Interface.define(:no_version) }.should raise_error(ArgumentError)
     end
   end
 
   describe "#initialize" do
     it "should require a version number" do
-      proc { Puppet::Interface.new(:no_version) }.should raise_error(/declared without version/)
+      proc { Puppet::Interface.new(:no_version) }.should raise_error(ArgumentError)
     end
 
     it "should instance-eval any provided block" do
-      face = Puppet::Interface.new(:interface_test_block, :version => '0.0.1') do
+      face = Puppet::Interface.new(:interface_test_block,'0.0.1') do
         action(:something) do
           invoke { "foo" }
         end
@@ -48,30 +48,26 @@ describe Puppet::Interface do
   end
 
   it "should have a name" do
-    Puppet::Interface.new(:me, :version => '0.0.1').name.should == :me
+    Puppet::Interface.new(:me,'0.0.1').name.should == :me
   end
 
   it "should stringify with its own name" do
-    Puppet::Interface.new(:me, :version => '0.0.1').to_s.should =~ /\bme\b/
+    Puppet::Interface.new(:me,'0.0.1').to_s.should =~ /\bme\b/
   end
 
   it "should allow overriding of the default format" do
-    face = Puppet::Interface.new(:me, :version => '0.0.1')
+    face = Puppet::Interface.new(:me,'0.0.1')
     face.set_default_format :foo
     face.default_format.should == :foo
   end
 
   it "should default to :pson for its format" do
-    Puppet::Interface.new(:me, :version => '0.0.1').default_format.should == :pson
+    Puppet::Interface.new(:me, '0.0.1').default_format.should == :pson
   end
 
   # Why?
   it "should create a class-level autoloader" do
     Puppet::Interface.autoloader.should be_instance_of(Puppet::Util::Autoload)
-  end
-
-  it "should set any provided options" do
-    Puppet::Interface.new(:me, :version => 1, :verb => "foo").verb.should == "foo"
   end
 
   it "should try to require interfaces that are not known" do

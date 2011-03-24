@@ -67,7 +67,7 @@ describe Puppet::Interface::InterfaceCollection do
 
   describe "::register" do
     it "should store the interface by name" do
-      interface = Puppet::Interface.new(:my_interface, :version => '0.0.1')
+      interface = Puppet::Interface.new(:my_interface, '0.0.1')
       subject.register(interface)
       subject.instance_variable_get("@interfaces").should == {:my_interface => {'0.0.1' => interface}}
     end

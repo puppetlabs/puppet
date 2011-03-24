@@ -30,15 +30,17 @@ class Puppet::Interface
       Puppet::Interface::InterfaceCollection.register(instance)
     end
 
-    def define(name, version, &blk)
+    def define(name, version, &block)
       if interface?(name, version)
         interface = Puppet::Interface::InterfaceCollection[name, version]
-        interface.instance_eval(&blk) if blk
       else
-        interface = self.new(name, :version => version, &blk)
+        interface = self.new(name, version)
         Puppet::Interface::InterfaceCollection.register(interface)
         interface.load_actions
       end
+
+      interface.instance_eval(&block) if block_given?
+
       return interface
     end
 
@@ -54,22 +56,17 @@ class Puppet::Interface
   attr_accessor :type, :verb, :version, :arguments, :options
   attr_reader :name
 
-  def initialize(name, options = {}, &block)
-    unless options[:version]
-      raise ArgumentError, "Interface #{name} declared without version!"
-    end
-
+  def initialize(name, version, &block)
     @name = Puppet::Interface::InterfaceCollection.underscorize(name)
-
+    @version = version
     @default_format = :pson
-    options.each { |opt, val| send(opt.to_s + "=", val) }
 
-    instance_eval(&block) if block
+    instance_eval(&block) if block_given?
   end
 
   # Try to find actions defined in other files.
   def load_actions
-    path = "puppet/interface/#{name}"
+    path = "puppet/interface/v#{version}/#{name}"
 
     loaded = []
     Puppet::Interface.autoloader.search_directories.each do |dir|
@@ -92,6 +89,6 @@ class Puppet::Interface
   end
 
   def to_s
-    "Puppet::Interface(#{name}, :version => #{version.inspect})"
+    "Puppet::Interface[#{name.inspect}, #{version.inspect}]"
   end
 end
