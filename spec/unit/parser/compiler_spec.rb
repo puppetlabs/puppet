@@ -581,12 +581,11 @@ describe Puppet::Parser::Compiler do
       @scope.expects(:find_hostclass).with("notfound").returns(nil)
       @compiler.evaluate_classes(%w{notfound}, @scope)
     end
-    # I wish it would fail
     it "should log when it can't find class" do
       klasses = {'foo'=>nil}
       @node.classes = klasses
       @compiler.topscope.stubs(:find_hostclass).with('foo').returns(nil)
-      Puppet.expects(:info).with('Could not find class foo for testnode')
+      Puppet.expects(:warning).with('Could not find class foo for testnode')
       @compiler.compile
     end
   end
