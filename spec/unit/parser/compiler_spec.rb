@@ -576,18 +576,16 @@ describe Puppet::Parser::Compiler do
       proc { @compiler.evaluate_classes(%w{one two}, scope) }.should raise_error(Puppet::DevError)
     end
 
-    it "should tag the catalog with the name of each not-found class" do
-      @compiler.catalog.expects(:tag).with("notfound")
+    it "should raise an error if a class is not found" do
       @scope.expects(:find_hostclass).with("notfound").returns(nil)
-      @compiler.evaluate_classes(%w{notfound}, @scope)
+      lambda{ @compiler.evaluate_classes(%w{notfound}, @scope) }.should raise_error(Puppet::Error, /Could not find class/)
     end
-    # I wish it would fail
-    it "should log when it can't find class" do
+
+    it "should raise an error when it can't find class" do
       klasses = {'foo'=>nil}
       @node.classes = klasses
       @compiler.topscope.stubs(:find_hostclass).with('foo').returns(nil)
-      Puppet.expects(:info).with('Could not find class foo for testnode')
-      @compiler.compile
+      lambda{ @compiler.compile }.should raise_error(Puppet::Error, /Could not find class foo for testnode/)
     end
   end
 
@@ -713,18 +711,6 @@ describe Puppet::Parser::Compiler do
       @resource.expects(:evaluate).never
       Puppet::Parser::Resource.expects(:new).never
       @compiler.evaluate_classes(%w{MyClass}, @scope, false)
-    end
-
-    it "should return the list of found classes" do
-      @compiler.catalog.stubs(:tag)
-
-      @compiler.stubs(:add_resource)
-      @scope.stubs(:find_hostclass).with("notfound").returns(nil)
-      @scope.stubs(:class_scope).with(@class)
-
-      Puppet::Parser::Resource.stubs(:new).returns(@resource)
-      @class.stubs :ensure_in_catalog
-      @compiler.evaluate_classes(%w{myclass notfound}, @scope).should == %w{myclass}
     end
   end
 
