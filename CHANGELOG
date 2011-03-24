@@ -1,5 +1,6 @@
-2.6.7rc1
-========
+2.6.7
+=====
+17f673d Updated CHANGELOG for 2.6.7rc1
 852fb97 (#5073) Download plugins even if you're filtering on tags
 4f34dbf Fix #5610: Prevent unnecessary RAL lookups
 9781032 Revert "Merge branch 'ticket/2.6.x/5605' of git://github.com/stschulte/puppet into 2.6.next"
