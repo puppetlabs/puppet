@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
+require 'tmpdir'
 
 describe Puppet::Interface::InterfaceCollection do
   before :all do
@@ -16,6 +17,107 @@ describe Puppet::Interface::InterfaceCollection do
   end
 
   describe "::interfaces" do
+  end
+
+  describe "::versions" do
+    before :each do
+      @dir = Dir.mktmpdir
+      @lib = FileUtils.mkdir_p(File.join @dir, 'puppet', 'interface')
+      $LOAD_PATH.push(@dir)
+    end
+
+    after :each do
+      FileUtils.remove_entry_secure @dir
+      $LOAD_PATH.pop
+    end
+
+    it "should return an empty array when no versions are loadable" do
+      subject.versions(:fozzie).should == []
+    end
+
+    it "should return versions loadable as puppet/interface/v{version}/{name}" do
+      FileUtils.mkdir_p(File.join @lib, 'v1.0.0')
+      FileUtils.touch(File.join @lib, 'v1.0.0', 'fozzie.rb')
+      subject.versions(:fozzie).should == ['1.0.0']
+    end
+
+    it "should an ordered list of all versions loadable as puppet/interface/v{version}/{name}" do
+      %w[ 1.2.1rc2 1.2.1beta1 1.2.1rc1 1.2.1 1.2.2 ].each do |version|
+        FileUtils.mkdir_p(File.join @lib, "v#{version}")
+        FileUtils.touch(File.join @lib, "v#{version}", 'fozzie.rb')
+      end
+      subject.versions(:fozzie).should == %w[ 1.2.1beta1 1.2.1rc1 1.2.1rc2 1.2.1 1.2.2 ]
+    end
+
+    it "should not return a version for an empty puppet/interface/v{version}/{name}" do
+      FileUtils.mkdir_p(File.join @lib, 'v1.0.0', 'fozzie')
+      subject.versions(:fozzie).should == []
+    end
+
+    it "should an ordered list of all versions loadable as puppet/interface/v{version}/{name}/*.rb" do
+      %w[ 1.2.1rc2 1.2.1beta1 1.2.1rc1 1.2.1 1.2.2 ].each do |version|
+        FileUtils.mkdir_p(File.join @lib, "v#{version}", "fozzie")
+        FileUtils.touch(File.join @lib, "v#{version}", 'fozzie', 'action.rb')
+      end
+      subject.versions(:fozzie).should == %w[ 1.2.1beta1 1.2.1rc1 1.2.1rc2 1.2.1 1.2.2 ]
+    end
+  end
+
+  describe "::compare_versions" do
+    # (a <=> b) should be:
+    #   -1 if a < b
+    #   0  if a == b
+    #   1  if a > b
+    it 'should sort major version numbers numerically' do
+      subject.compare_versions('1.0.0', '2.0.0').should == -1
+      subject.compare_versions('2.0.0', '1.1.1').should == 1
+      subject.compare_versions('2.0.0', '10.0.0').should == -1
+    end
+
+    it 'should sort minor version numbers numerically' do
+      subject.compare_versions('0.1.0', '0.2.0').should == -1
+      subject.compare_versions('0.2.0', '0.1.1').should == 1
+      subject.compare_versions('0.2.0', '0.10.0').should == -1
+    end
+
+    it 'should sort tiny version numbers numerically' do
+      subject.compare_versions('0.0.1', '0.0.2').should == -1
+      subject.compare_versions('0.0.2', '0.0.1').should == 1
+      subject.compare_versions('0.0.2', '0.0.10').should == -1
+    end
+
+    it 'should sort major version before minor version' do
+      subject.compare_versions('1.1.0', '1.2.0').should == -1
+      subject.compare_versions('1.2.0', '1.1.1').should == 1
+      subject.compare_versions('1.2.0', '1.10.0').should == -1
+
+      subject.compare_versions('1.1.0', '2.2.0').should == -1
+      subject.compare_versions('2.2.0', '1.1.1').should == 1
+      subject.compare_versions('2.2.0', '1.10.0').should == 1
+    end
+
+    it 'should sort minor version before tiny version' do
+      subject.compare_versions('0.1.1', '0.1.2').should == -1
+      subject.compare_versions('0.1.2', '0.1.1').should == 1
+      subject.compare_versions('0.1.2', '0.1.10').should == -1
+
+      subject.compare_versions('0.1.1', '0.2.2').should == -1
+      subject.compare_versions('0.2.2', '0.1.1').should == 1
+      subject.compare_versions('0.2.2', '0.1.10').should == 1
+    end
+
+    it 'should sort appended strings asciibetically' do
+      subject.compare_versions('0.0.0a', '0.0.0b').should == -1
+      subject.compare_versions('0.0.0beta1', '0.0.0beta2').should == -1
+      subject.compare_versions('0.0.0beta1', '0.0.0rc1').should == -1
+      subject.compare_versions('0.0.0beta1', '0.0.0alpha1').should == 1
+      subject.compare_versions('0.0.0beta1', '0.0.0beta1').should == 0
+    end
+
+    it "should sort appended strings before 'whole' versions" do
+      subject.compare_versions('0.0.1a', '0.0.1').should == -1
+      subject.compare_versions('0.0.1', '0.0.1beta').should == 1
+    end
   end
 
   describe "::[]" do
