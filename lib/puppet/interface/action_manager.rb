@@ -14,6 +14,15 @@ module Puppet::Interface::ActionManager
     @actions[name] = action
   end
 
+  # This is the short-form of an action definition; it doesn't use the
+  # builder, just creates the action directly from the block.
+  def script(name, &block)
+    @actions ||= {}
+    name = name.to_s.downcase.to_sym
+    raise "Action #{name} already defined for #{self}" if action?(name)
+    @actions[name] = Puppet::Interface::Action.new(self, name, :invoke => block)
+  end
+
   def actions
     @actions ||= {}
     result = @actions.keys
