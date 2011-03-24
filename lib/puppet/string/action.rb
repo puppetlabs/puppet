@@ -1,4 +1,5 @@
 require 'puppet/string'
+require 'puppet/string/option'
 
 class Puppet::String::Action
   attr_reader :name
@@ -8,11 +9,10 @@ class Puppet::String::Action
   end
 
   def initialize(string, name, attrs = {})
-    name = name.to_s
-    raise "'#{name}' is an invalid action name" unless name =~ /^[a-z]\w*$/
-
-    @string = string
-    @name      = name
+    raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
+    @string  = string
+    @name    = name.to_sym
+    @options = {}
     attrs.each do |k,v| send("#{k}=", v) end
   end
 
@@ -26,5 +26,27 @@ class Puppet::String::Action
     else
       @string.meta_def(@name, &block)
     end
+  end
+
+  def add_option(option)
+    if option? option.name then
+      raise ArgumentError, "#{option.name} duplicates an existing option on #{self}"
+    elsif @string.option? option.name then
+      raise ArgumentError, "#{option.name} duplicates an existing option on #{@string}"
+    end
+
+    @options[option.name] = option
+  end
+
+  def option?(name)
+    @options.include? name.to_sym
+  end
+
+  def options
+    (@options.keys + @string.options).sort
+  end
+
+  def get_option(name)
+    @options[name.to_sym] || @string.get_option(name)
   end
 end

@@ -5,20 +5,15 @@ module Puppet::String::ActionManager
   # the code to do so.
   def action(name, &block)
     @actions ||= {}
-    name = name.to_s.downcase.to_sym
-
     raise "Action #{name} already defined for #{self}" if action?(name)
-
     action = Puppet::String::ActionBuilder.build(self, name, &block)
-
-    @actions[name] = action
+    @actions[action.name] = action
   end
 
   # This is the short-form of an action definition; it doesn't use the
   # builder, just creates the action directly from the block.
   def script(name, &block)
     @actions ||= {}
-    name = name.to_s.downcase.to_sym
     raise "Action #{name} already defined for #{self}" if action?(name)
     @actions[name] = Puppet::String::Action.new(self, name, :invoke => block)
   end
@@ -36,7 +31,8 @@ module Puppet::String::ActionManager
   end
 
   def get_action(name)
-    @actions[name].dup
+    @actions ||= {}
+    @actions[name.to_sym]
   end
 
   def action?(name)

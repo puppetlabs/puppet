@@ -63,4 +63,86 @@ describe Puppet::String::Action do
       string.qux.should  == "the value of foo in baz is '25'"
     end
   end
+
+  describe "with action-level options" do
+    it "should support options without arguments" do
+      string = Puppet::String.new(:action_level_options, '0.0.1') do
+        action(:foo) do
+          option :bar
+        end
+      end
+
+      string.should_not be_option :bar
+      string.get_action(:foo).should be_option :bar
+    end
+
+    it "should support options with an empty block" do
+      string = Puppet::String.new(:action_level_options, '0.0.1') do
+        action :foo do
+          option :bar do
+            # this line left deliberately blank
+          end
+        end
+      end
+
+      string.should_not be_option :bar
+      string.get_action(:foo).should be_option :bar
+    end
+
+    it "should return only action level options when there are no string options" do
+      string = Puppet::String.new(:action_level_options, '0.0.1') do
+        action :foo do option :bar end
+      end
+
+      string.get_action(:foo).options.should =~ [:bar]
+    end
+
+    describe "with both string and action options" do
+      let :string do
+        Puppet::String.new(:action_level_options, '0.0.1') do
+          action :foo do option :bar end
+          action :baz do option :bim end
+          option :quux
+        end
+      end
+
+      it "should return combined string and action options" do
+        string.get_action(:foo).options.should =~ [:bar, :quux]
+      end
+
+      it "should get an action option when asked" do
+        string.get_action(:foo).get_option(:bar).
+          should be_an_instance_of Puppet::String::Option
+      end
+
+      it "should get a string option when asked" do
+        string.get_action(:foo).get_option(:quux).
+          should be_an_instance_of Puppet::String::Option
+      end
+
+      it "should return options only for this action" do
+        string.get_action(:baz).options.should =~ [:bim, :quux]
+      end
+    end
+
+    it "should fail when a duplicate option is added" do
+      expect {
+        Puppet::String.new(:action_level_options, '0.0.1') do
+          action :foo do
+            option :foo
+            option :foo
+          end
+        end
+      }.should raise_error ArgumentError, /foo duplicates an existing option/
+    end
+
+    it "should fail when a string option duplicates an action option" do
+      expect {
+        Puppet::String.new(:action_level_options, '0.0.1') do
+          option :foo
+          action :bar do option :foo end
+        end
+      }.should raise_error ArgumentError, /duplicates an existing option .*action_level/i
+    end
+  end
 end
