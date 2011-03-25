@@ -1,3 +1,5 @@
+require "puppet/util/plugins"
+
 module Puppet
   module Util
     class CommandLine
@@ -23,6 +25,7 @@ module Puppet
         @stdin = stdin
 
         @subcommand_name, @args = subcommand_and_args( @zero, @argv, @stdin )
+        Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
       end
 
       attr :subcommand_name
@@ -56,7 +59,9 @@ module Puppet
           puts usage_message
         elsif available_subcommands.include?(subcommand_name) #subcommand
           require_application subcommand_name
-          Puppet::Application.find(subcommand_name).new(self).run
+          app = Puppet::Application.find(subcommand_name).new(self)
+          Puppet::Plugins.on_application_initialization(:appliation_object => self)
+          app.run
         else
           abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}" unless execute_external_subcommand
         end

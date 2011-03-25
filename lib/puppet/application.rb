@@ -1,4 +1,5 @@
 require 'optparse'
+require 'puppet/util/plugins'
 
 # This class handles all the aspects of a Puppet application/executable
 # * setting up options
@@ -297,11 +298,11 @@ class Application
 
   # This is the main application entry point
   def run
-    exit_on_fail("initialize") { preinit }
-    exit_on_fail("parse options") { parse_options }
+    exit_on_fail("initialize")               { hook('preinit')       { preinit } }
+    exit_on_fail("parse options")            { hook('parse_options') { parse_options } }
     exit_on_fail("parse configuration file") { Puppet.settings.parse } if should_parse_config?
-    exit_on_fail("prepare for execution") { setup }
-    exit_on_fail("run") { run_command }
+    exit_on_fail("prepare for execution")    { hook('setup')         { setup } }
+    exit_on_fail("run")                      { hook('run_command')   { run_command } }
   end
 
   def main
@@ -412,6 +413,13 @@ class Application
       puts detail.backtrace if Puppet[:trace]
       $stderr.puts "Could not #{message}: #{detail}"
       exit(code)
+  end
+
+  def hook(step,&block)
+    Puppet::Plugins.send("before_application_#{step}",:application_object => self)
+    x = yield
+    Puppet::Plugins.send("after_application_#{step}",:application_object => self, :return_value => x)
+    x
   end
 end
 end
