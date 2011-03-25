@@ -5,6 +5,7 @@ Puppet::Interface.define(:config, '0.0.1') do
     invoke do |*args|
       Puppet.settings[:configprint] = args.join(",")
       Puppet.settings.print_config_options
+      nil
     end
   end
 end

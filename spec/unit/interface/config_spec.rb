@@ -15,4 +15,10 @@ describe Puppet::Interface.define(:config, '0.0.1') do
     subject.print("libdir", "ssldir")
     Puppet.settings[:configprint].should == "libdir,ssldir"
   end
+
+  it "should always return nil" do
+    Puppet.settings.stubs(:puts)
+    Puppet.settings.expects(:print_config_options)
+    subject.print("libdir").should be_nil
+  end
 end
