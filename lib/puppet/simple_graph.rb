@@ -367,7 +367,7 @@ class Puppet::SimpleGraph
     return [] unless ns = (options[:direction] == :in) ? @in_to[v] : @out_from[v]
     (options[:type] == :edges) ? ns.values.flatten : ns.keys
   end
-  
+
   # Take container information from another graph and use it
   # to replace any container vertices with their respective leaves.
   # This creates direct relationships where there were previously
@@ -387,7 +387,7 @@ class Puppet::SimpleGraph
       children = other.adjacent(container, :direction => :out)
 
       # MQR TODO: Luke suggests that it should be possible to refactor the system so that
-      #           container nodes are retained, thus obviating the need for the whit. 
+      #           container nodes are retained, thus obviating the need for the whit.
       children = [whit_class.new(:name => container.name, :catalog => other)] if children.empty?
 
       # First create new edges for each of the :in edges
