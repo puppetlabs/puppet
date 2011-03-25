@@ -6,6 +6,7 @@ require 'puppet/resource/type_collection'
 require 'puppet/resource/type'
 
 describe Puppet::Resource::TypeCollection do
+  include PuppetSpec::Files
   before do
     @instance = Puppet::Resource::Type.new(:hostclass, "foo")
     @code = Puppet::Resource::TypeCollection.new("env")
@@ -276,7 +277,7 @@ describe Puppet::Resource::TypeCollection do
       end
 
     end
-    
+
     it "should not look in the local scope for classes when the name is qualified" do
         @loader = Puppet::Resource::TypeCollection.new("env")
         @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
@@ -386,14 +387,9 @@ describe Puppet::Resource::TypeCollection do
 
   describe "when performing initial import" do
     before do
-      @parser = stub 'parser', :file= => nil, :string => nil, :parse => nil
+      @parser = stub 'parser'
       Puppet::Parser::Parser.stubs(:new).returns @parser
       @code = Puppet::Resource::TypeCollection.new("env")
-    end
-
-    it "should create a new parser instance" do
-      Puppet::Parser::Parser.expects(:new).returns @parser
-      @code.perform_initial_import
     end
 
     it "should set the parser's string to the 'code' setting and parse if code is available" do
@@ -404,26 +400,27 @@ describe Puppet::Resource::TypeCollection do
     end
 
     it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
-      File.stubs(:expand_path).with("/my/file").returns "/my/file"
-      File.expects(:exist?).with("/my/file").returns true
-      Puppet.settings[:manifest] = "/my/file"
-      @parser.expects(:file=).with "/my/file"
+      filename = tmpfile('myfile')
+      File.open(filename, 'w'){|f| }
+      Puppet.settings[:manifest] = filename
+      @parser.expects(:file=).with filename
       @parser.expects(:parse)
       @code.perform_initial_import
     end
 
-    it "should not attempt to load a manifest if none is present" do
-      File.stubs(:expand_path).with("/my/file").returns "/my/file"
-      File.expects(:exist?).with("/my/file").returns false
-      Puppet.settings[:manifest] = "/my/file"
-      @parser.expects(:file=).never
-      @parser.expects(:parse).never
+    it "should pass the manifest file to the parser even if it does not exist on disk" do
+      filename = tmpfile('myfile')
+      Puppet.settings[:code] = ""
+      Puppet.settings[:manifest] = filename
+      @parser.expects(:file=).with(filename).once
+      @parser.expects(:parse).once
       @code.perform_initial_import
     end
 
     it "should fail helpfully if there is an error importing" do
       File.stubs(:exist?).returns true
       @parser.expects(:parse).raises ArgumentError
+      @parser.stubs(:file=)
       lambda { @code.perform_initial_import }.should raise_error(Puppet::Error)
     end
   end

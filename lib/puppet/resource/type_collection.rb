@@ -162,7 +162,6 @@ class Puppet::Resource::TypeCollection
       parser.string = code
     else
       file = Puppet.settings.value(:manifest, environment.to_s)
-      return unless File.exist?(file)
       parser.file = file
     end
     parser.parse

@@ -88,7 +88,6 @@ class Puppet::Parser::Parser
       unless file =~ /\.pp$/
         file = file + ".pp"
       end
-      raise Puppet::Error, "Could not find file #{file}" unless FileTest.exist?(file)
     end
     raise Puppet::AlreadyImportedError, "Import loop detected" if known_resource_types.watching_file?(file)
 

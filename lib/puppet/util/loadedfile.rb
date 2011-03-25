@@ -34,10 +34,6 @@ module Puppet
     # Create the file.  Must be passed the file path.
     def initialize(file)
       @file = file
-      unless FileTest.exists?(@file)
-        raise Puppet::NoSuchFile,
-          "Can not use a non-existent file for parsing"
-      end
       @statted = 0
       @stamp = nil
       @tstamp = stamp
@@ -50,7 +46,7 @@ module Puppet
         @statted = Time.now.to_i
         begin
           @stamp = File.stat(@file).ctime
-        rescue Errno::ENOENT
+        rescue Errno::ENOENT, Errno::ENOTDIR
           @stamp = Time.now
         end
       end

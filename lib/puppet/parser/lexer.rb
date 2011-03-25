@@ -312,7 +312,8 @@ class Puppet::Parser::Lexer
   def file=(file)
     @file = file
     @line = 1
-    @scanner = StringScanner.new(File.read(file))
+    contents = File.exists?(file) ? File.read(file) : ""
+    @scanner = StringScanner.new(contents)
   end
 
   def shift_token
@@ -547,7 +548,7 @@ class Puppet::Parser::Lexer
     value,terminator = slurpstring('"$')
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
     if terminator != '$' or @scanner.scan(/\{/)
-      token_queue.shift 
+      token_queue.shift
     elsif var_name = @scanner.scan(%r{(\w*::)*\w+|[0-9]})
       token_queue << [TOKENS[:VARIABLE],var_name]
       tokenize_interpolated_string(DQ_continuation_token_types)
