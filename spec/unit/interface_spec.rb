@@ -36,6 +36,10 @@ describe Puppet::Interface do
       proc { Puppet::Interface.new(:no_version) }.should raise_error(ArgumentError)
     end
 
+    it "should require a valid version number" do
+      proc { Puppet::Interface.new(:bad_version, 'Rasins') }.should raise_error(ArgumentError)
+    end
+
     it "should instance-eval any provided block" do
       face = Puppet::Interface.new(:interface_test_block,'0.0.1') do
         action(:something) do

@@ -57,6 +57,10 @@ class Puppet::Interface
   attr_reader :name
 
   def initialize(name, version, &block)
+    unless Puppet::Interface::InterfaceCollection.validate_version(version)
+      raise ArgumentError, "Cannot create interface with invalid version number '#{version}'!"
+    end
+
     @name = Puppet::Interface::InterfaceCollection.underscorize(name)
     @version = version
     @default_format = :pson

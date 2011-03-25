@@ -63,6 +63,32 @@ describe Puppet::Interface::InterfaceCollection do
     end
   end
 
+  describe "::validate_version" do
+    it 'should permit three number versions' do
+      subject.validate_version('10.10.10').should == true
+    end
+
+    it 'should permit versions with appended descriptions' do
+      subject.validate_version('10.10.10beta').should == true
+    end
+
+    it 'should not permit versions with more than three numbers' do
+      subject.validate_version('1.2.3.4').should == false
+    end
+
+    it 'should not permit versions with only two numbers' do
+      subject.validate_version('10.10').should == false
+    end
+
+    it 'should not permit versions with only one number' do
+      subject.validate_version('123').should == false
+    end
+
+    it 'should not permit versions with text in any position but at the end' do
+      subject.validate_version('v1.1.1').should == false
+    end
+  end
+
   describe "::compare_versions" do
     # (a <=> b) should be:
     #   -1 if a < b
@@ -125,6 +151,17 @@ describe Puppet::Interface::InterfaceCollection do
       subject.instance_variable_get("@interfaces")[:foo]['0.0.1'] = 10
     end
 
+    before :each do
+      @dir = Dir.mktmpdir
+      @lib = FileUtils.mkdir_p(File.join @dir, 'puppet', 'interface')
+      $LOAD_PATH.push(@dir)
+    end
+
+    after :each do
+      FileUtils.remove_entry_secure @dir
+      $LOAD_PATH.pop
+    end
+
     it "should return the interface with the given name" do
       subject["foo", '0.0.1'].should == 10
     end
@@ -132,6 +169,15 @@ describe Puppet::Interface::InterfaceCollection do
     it "should attempt to load the interface if it isn't found" do
       subject.expects(:require).with('puppet/interface/v0.0.1/bar')
       subject["bar", '0.0.1']
+    end
+
+    it "should attempt to load the interface with the greatest version for specified version :latest" do
+      %w[ 1.2.1 1.2.2 ].each do |version|
+        FileUtils.mkdir_p(File.join @lib, "v#{version}")
+        FileUtils.touch(File.join @lib, "v#{version}", 'fozzie.rb')
+      end
+      subject.expects(:require).with('puppet/interface/v1.2.2/fozzie')
+      subject['fozzie', :latest]
     end
   end
 

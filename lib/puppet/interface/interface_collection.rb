@@ -33,7 +33,7 @@ module Puppet::Interface::InterfaceCollection
       v_dir = File.join dir, %w[puppet interface v*]
       Dir.glob(File.join v_dir, "#{name}{.rb,/*.rb}").each do |f|
         v = f.sub(%r[.*/v([^/]+?)/#{name}(?:(?:/[^/]+)?.rb)$], '\1')
-        if v =~ SEMVER_VERSION
+        if validate_version(v)
           versions << v
         else
           warn "'#{v}' (#{f}) is not a valid version string; skipping"
@@ -41,6 +41,10 @@ module Puppet::Interface::InterfaceCollection
       end
     end
     return versions.uniq.sort { |a, b| compare_versions(a, b)  }
+  end
+
+  def self.validate_version(version)
+    !!(SEMVER_VERSION =~ version.to_s)
   end
 
   def self.compare_versions(a, b)
@@ -60,11 +64,18 @@ module Puppet::Interface::InterfaceCollection
   end
 
   def self.[](name, version)
-    @interfaces[underscorize(name)][version] if interface?(name, version)
+    version = versions(name).last if version == :latest
+    unless version.nil?
+      @interfaces[underscorize(name)][version] if interface?(name, version)
+    end
   end
 
   def self.interface?(name, version)
+    version = versions(name).last if version == :latest
+    return false if version.nil?
+
     name = underscorize(name)
+
     unless @interfaces.has_key?(name) && @interfaces[name].has_key?(version)
       require "puppet/interface/v#{version}/#{name}"
     end
