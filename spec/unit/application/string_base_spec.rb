@@ -2,13 +2,19 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/application/string_base'
+require 'tmpdir'
+
+class Puppet::Application::StringBase::Basetest < Puppet::Application::StringBase
+end
 
 describe Puppet::Application::StringBase do
   before :all do
     @dir = Dir.mktmpdir
     $LOAD_PATH.push(@dir)
-    FileUtils.mkdir_p(File.join @dir, 'puppet', 'string', 'v0.0.1')
-    FileUtils.touch(File.join @dir, 'puppet', 'string', 'v0.0.1', 'basetest.rb')
+    FileUtils.mkdir_p(File.join @dir, 'puppet', 'string')
+    File.open(File.join(@dir, 'puppet', 'string', 'basetest.rb'), 'w') do |f|
+      f.puts "Puppet::String.define(:basetest, '0.0.1')"
+    end
   end
 
   after :all do
@@ -16,13 +22,8 @@ describe Puppet::Application::StringBase do
     $LOAD_PATH.pop
   end
 
-  base_string = Puppet::String.define(:basetest, '0.0.1')
-  class Puppet::Application::StringBase::Basetest < Puppet::Application::StringBase
-  end
-
   before do
     @app = Puppet::Application::StringBase::Basetest.new
-    @app.stubs(:string).returns base_string
     @app.stubs(:exit)
     @app.stubs(:puts)
     Puppet::Util::Log.stubs(:newdestination)
