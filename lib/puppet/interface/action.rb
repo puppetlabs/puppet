@@ -7,9 +7,9 @@ class Puppet::Interface::Action
     name = name.to_s
     raise "'#{name}' is an invalid action name" unless name =~ /^[a-z]\w*$/
 
-    attrs.each do |k,v| send("#{k}=", v) end
     @interface = interface
-    @name = name
+    @name      = name
+    attrs.each do |k,v| send("#{k}=", v) end
   end
 
   def invoke(*args, &block)
