@@ -20,7 +20,7 @@ class Puppet::Parser::Compiler
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
   ensure
-    # We get these from the environment and only cache them in a thread 
+    # We get these from the environment and only cache them in a thread
     # variable for the duration of the compilation.
     Thread.current[:known_resource_types] = nil
     Thread.current[:env_module_directories] = nil
@@ -133,12 +133,11 @@ class Puppet::Parser::Compiler
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
-  # find, just tag the catalog and move on.  This method really just
-  # creates resource objects that point back to the classes, and then the
-  # resources are themselves evaluated later in the process.
+  # find, raise an error.  This method really just creates resource objects
+  # that point back to the classes, and then the resources are themselves
+  # evaluated later in the process.
   def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
-    found = []
     param_classes = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys
@@ -153,20 +152,17 @@ class Puppet::Parser::Compiler
         if param_classes
           resource = klass.ensure_in_catalog(scope, param_classes[name] || {})
         else
-          found << name and next if scope.class_scope(klass)
+          next if scope.class_scope(klass)
           resource = klass.ensure_in_catalog(scope)
         end
 
         # If they've disabled lazy evaluation (which the :include function does),
         # then evaluate our resource immediately.
         resource.evaluate unless lazy_evaluate
-        found << name
       else
-        Puppet.info "Could not find class #{name} for #{node.name}"
-        @catalog.tag(name)
+        raise Puppet::Error, "Could not find class #{name} for #{node.name}"
       end
     end
-    found
   end
 
   def evaluate_relationships

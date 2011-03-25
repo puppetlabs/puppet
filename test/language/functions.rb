@@ -447,7 +447,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
     include = Puppet::Parser::Functions.function(:include)
 
-    assert_raise(Puppet::ParseError, "did not throw error on missing class") do
+    assert_raise(Puppet::Error, "did not throw error on missing class") do
       scope.function_include("nosuchclass")
     end
 
