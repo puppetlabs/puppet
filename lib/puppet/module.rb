@@ -138,7 +138,7 @@ class Puppet::Module
 
   # Find this module in the modulepath.
   def path
-    environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.exist?(d) }
+    environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
   end
 
   # Find all plugin directories.  This is used by the Plugins fileserving mount.
