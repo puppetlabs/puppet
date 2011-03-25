@@ -21,11 +21,22 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   end
 
   def search(request)
-    raise ArgumentError, "Only '*' is acceptable as a search request" unless request.key == "*"
     krt = request.environment.known_resource_types
     # Make sure we've got all of the types loaded.
     krt.loader.import_all
     result = [krt.hostclasses.values, krt.definitions.values, krt.nodes.values].flatten.reject { |t| t.name == "" }
+    return nil if result.empty?
+    return result if request.key == "*"
+
+    # Strip the regex of any wrapping slashes that might exist
+    key = request.key.sub(/^\//, '').sub(/\/$/, '')
+    begin
+      regex = Regexp.new(key)
+    rescue => detail
+      raise ArgumentError, "Invalid regex '#{request.key}': #{detail}"
+    end
+
+    result.reject! { |t| t.name.to_s !~ regex }
     return nil if result.empty?
     result
   end

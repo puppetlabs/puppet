@@ -67,8 +67,35 @@ describe Puppet::Indirector::ResourceType::Parser do
       @terminus.search(@request)
     end
 
-    it "should fail if anyther other than '*' was provided as the search key" do
-      @request.key = "foo*"
+    it "should return all results if '*' is provided as the search string" do
+      @request.key = "*"
+      type = @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
+      node = @krt.add(Puppet::Resource::Type.new(:node, "bar"))
+      define = @krt.add(Puppet::Resource::Type.new(:definition, "baz"))
+
+      result = @terminus.search(@request)
+      result.should be_include(type)
+      result.should be_include(node)
+      result.should be_include(define)
+    end
+
+    it "should treat any search string not '*' as a regex" do
+      @request.key = "a"
+      foo = @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
+      bar = @krt.add(Puppet::Resource::Type.new(:hostclass, "bar"))
+      baz = @krt.add(Puppet::Resource::Type.new(:hostclass, "baz"))
+
+      result = @terminus.search(@request)
+      result.should be_include(bar)
+      result.should be_include(baz)
+      result.should_not be_include(foo)
+    end
+
+    it "should fail if a provided search string is not '*' and is not a valid regex" do
+      @request.key = "*foo*"
+
+      # Add one instance so we don't just get an empty array"
+      @krt.add(Puppet::Resource::Type.new(:hostclass, "foo"))
       lambda { @terminus.search(@request) }.should raise_error(ArgumentError)
     end
 
