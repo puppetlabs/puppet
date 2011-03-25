@@ -18,7 +18,7 @@ Puppet::Type.type(:mount).provide(
 
   commands :mountcmd => "mount", :umount => "umount"
 
-  case Facter["operatingsystem"]
+  case Facter.value(:operatingsystem)
   when "Solaris"
     @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot, :options]
   else
