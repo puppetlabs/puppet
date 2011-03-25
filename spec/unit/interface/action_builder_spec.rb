@@ -13,7 +13,7 @@ describe Puppet::Interface::ActionBuilder do
     end
 
     it "should define a method on the interface which invokes the action" do
-      interface = Puppet::Interface.new(:action_builder_test_interface, :version => '0.0.1')
+      interface = Puppet::Interface.new(:action_builder_test_interface, '0.0.1')
       action = Puppet::Interface::ActionBuilder.build(interface, :foo) do
         invoke do
           "invoked the method"

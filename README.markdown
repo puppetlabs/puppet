@@ -86,7 +86,7 @@ Or use IRB to do the same thing:
     => true
     >> interface = Puppet::Interface[:facts, '1.0.0']
     => #<Puppet::Interface::Facts:0x1024a1390 @format=:yaml>
-    >> facts = interface.find("myhost"); nil
+    >> facts = interface.find("myhost")
 
 Like I said, a prototype, but I'd love it if people would play it with some and make some recommendations.
 
@@ -111,3 +111,5 @@ Like most parts of Puppet, these are easy to extend.  Just drop a new action int
     $
 
 Notice that this gets loaded automatically when you try to use it.  So, if you have a simple command you've written, such as for cleaning up nodes or diffing catalogs, you an port it to this framework and it should fit cleanly.
+
+Also note that interfaces are versioned.  These version numbers are interpreted according to Semantic Versioning (http://semver.org).
