@@ -138,7 +138,7 @@ module Puppet
     end
 
     def retrieve
-      if stat = @resource.stat(false)
+      if stat = @resource.stat
         return stat.ftype.intern
       else
         if self.should == :false
