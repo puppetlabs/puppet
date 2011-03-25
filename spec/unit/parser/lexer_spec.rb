@@ -676,3 +676,15 @@ describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
     end
   end
 end
+
+describe "when trying to lex an non-existent file" do
+  include PuppetSpec::Files
+
+  it "should return an empty list of tokens" do
+    lexer = Puppet::Parser::Lexer.new
+    lexer.file = nofile = tmpfile('lexer')
+    File.exists?(nofile).should == false
+
+    lexer.fullscan.should == [[false,false]]
+  end
+end

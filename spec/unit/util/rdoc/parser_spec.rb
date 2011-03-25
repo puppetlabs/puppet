@@ -20,8 +20,9 @@ describe RDoc::Parser do
       @parser.stubs(:scan_top_level)
       parser = stub 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
-      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
+      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
       parser.expects(:file=).with("module/manifests/init.pp")
+      parser.expects(:file=).with("/dev/null/manifests/site.pp")
 
       @parser.scan
     end
@@ -29,7 +30,7 @@ describe RDoc::Parser do
     it "should scan the ast for Puppet files" do
       parser = stub_everything 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
-      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
+      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
 
       @parser.expects(:scan_top_level)
 
@@ -39,7 +40,7 @@ describe RDoc::Parser do
     it "should return a PuppetTopLevel to RDoc" do
       parser = stub_everything 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
-      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new(''))
+      parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
 
       @parser.expects(:scan_top_level)
 
