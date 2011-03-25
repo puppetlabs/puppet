@@ -307,7 +307,7 @@ describe Puppet::Type.type(:exec) do
     end
 
     describe "when setting timeout" do
-      [-3.5, -1, 0, 0.1, 1, 10, 4294967295].each do |valid|
+      [0, 0.1, 1, 10, 4294967295].each do |valid|
         it "should accept '#{valid}' as valid" do
           @exec[:timeout] = valid
           @exec[:timeout].should == valid
@@ -319,7 +319,7 @@ describe Puppet::Type.type(:exec) do
         end
       end
 
-      ['1/2', '1_000_000', '+12', '', 'foo'].each do |invalid|
+      ['1/2', '', 'foo', '5foo'].each do |invalid|
         it "should reject '#{invalid}' as invalid" do
           expect { @exec[:timeout] = invalid }.
             should raise_error Puppet::Error, /The timeout must be a number/
@@ -336,6 +336,18 @@ describe Puppet::Type.type(:exec) do
         File.stubs(:exists?).with('sleep').returns(false)
         sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
         lambda { sleep_exec.refresh }.should raise_error Puppet::Error, "Command exceeded timeout"
+      end
+
+      it "should convert timeout to a float" do
+        resource = Puppet::Type.type(:exec).new :command => "/bin/false", :timeout => "12"
+        resource[:timeout].should be_a(Float)
+        resource[:timeout].should == 12.0
+      end
+
+      it "should munge negative timeouts to 0.0" do
+        resource = Puppet::Type.type(:exec).new :command => "/bin/false", :timeout => "-12.0"
+        resource.parameter(:timeout).value.should be_a(Float)
+        resource.parameter(:timeout).value.should == 0.0
       end
     end
 
