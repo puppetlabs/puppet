@@ -18,6 +18,13 @@ class Puppet::Indirector::ResourceType::Parser < Puppet::Indirector::Code
   end
 
   def search(request)
+=begin
+    @modulepath = set_modulepath(options[:modulepath])
+    get_code(@modulepath)[:manifests].collect do |file|
+      Puppet[:manifest]=file
+      get_resources_of_type(:hostclass)
+    end.flatten
+=end
     raise ArgumentError, "Only '*' is acceptable as a search request" unless request.key == "*"
     krt = request.environment.known_resource_types
     result = [krt.hostclasses.values, krt.definitions.values, krt.nodes.values].flatten

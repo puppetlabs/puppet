@@ -55,12 +55,24 @@ describe Puppet::Resource::Type do
       double_convert.arguments.should == {"one" => nil, "two" => "foo"}
     end
 
-    it "should include any extra attributes" do
-      @type.file = "/my/file"
-      @type.line = 50
+    it "should not include arguments if none are present" do
+      @type.to_pson["arguments"].should be_nil
+    end
 
-      double_convert.file.should == "/my/file"
-      double_convert.line.should == 50
+    [:line, :doc, :file, :parent].each do |attr|
+      it "should include #{attr} when set" do
+        @type.send(attr.to_s + "=", "value")
+        double_convert.send(attr).should == "value"
+      end
+
+      it "should not include #{attr} when not set" do
+        @type.to_pson[attr.to_s].should be_nil
+      end
+    end
+
+    it "should not include docs if they are empty" do
+      @type.doc = ""
+      @type.to_pson["doc"].should be_nil
     end
   end
 
