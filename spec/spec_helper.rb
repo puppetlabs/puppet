@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(dir, dir + 'lib', dir + '../lib')
 
 require 'mocha'
 require 'puppet'
-require 'puppet/interface'
+require 'puppet/string'
 require 'rspec'
 
 RSpec.configure do |config|
