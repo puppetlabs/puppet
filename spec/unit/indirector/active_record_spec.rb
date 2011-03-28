@@ -14,10 +14,9 @@ describe Puppet::Indirector::ActiveRecord do
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @active_record_class = Class.new(Puppet::Indirector::ActiveRecord) do
-      def self.to_s
-        "Mystuff::Testing"
-      end
+    module Testing; end
+    @active_record_class = class Testing::MyActiveRecord < Puppet::Indirector::ActiveRecord
+      self
     end
 
     @ar_model = mock 'ar_model'

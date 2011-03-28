@@ -14,10 +14,9 @@ describe Puppet::Indirector::Memory do
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @memory_class = Class.new(Puppet::Indirector::Memory) do
-      def self.to_s
-        "Mystuff::Testing"
-      end
+    module Testing; end
+    @memory_class = class Testing::MyMemory < Puppet::Indirector::Memory
+      self
     end
 
     @searcher = @memory_class.new

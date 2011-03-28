@@ -4,16 +4,15 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/indirector/code'
 
 describe Puppet::Indirector::Code do
-  before do
+  before :all do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @code_class = Class.new(Puppet::Indirector::Code) do
-      def self.to_s
-        "Mystuff::Testing"
-      end
+    module Testing; end
+    @code_class = class Testing::MyCode < Puppet::Indirector::Code
+      self
     end
 
     @searcher = @code_class.new
