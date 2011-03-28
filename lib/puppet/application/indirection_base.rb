@@ -1,6 +1,6 @@
-require 'puppet/application/interface_base'
+require 'puppet/application/string_base'
 
-class Puppet::Application::IndirectionBase < Puppet::Application::InterfaceBase
+class Puppet::Application::IndirectionBase < Puppet::Application::StringBase
   option("--terminus TERMINUS") do |arg|
     @terminus = arg
   end
@@ -10,10 +10,10 @@ class Puppet::Application::IndirectionBase < Puppet::Application::InterfaceBase
   def setup
     super
 
-    if interface.respond_to?(:indirection)
-      raise "Could not find data type #{type} for application #{self.class.name}" unless interface.indirection
+    if string.respond_to?(:indirection)
+      raise "Could not find data type #{type} for application #{self.class.name}" unless string.indirection
 
-      interface.set_terminus(terminus) if terminus
+      string.set_terminus(terminus) if terminus
     end
   end
 end

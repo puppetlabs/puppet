@@ -7,6 +7,6 @@ describe Puppet::Application::IndirectionBase do
   it "should support a 'from' terminus"
 
   describe "setup" do
-    it "should fail if its interface does not support an indirection"
+    it "should fail if its string does not support an indirection"
   end
 end
