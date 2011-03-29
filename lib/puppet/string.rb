@@ -70,23 +70,25 @@ class Puppet::String
 
   # Try to find actions defined in other files.
   def load_actions
-    path = "puppet/string/v#{version}/#{name}"
+    path = "puppet/string/#{name}"
 
     loaded = []
-    Puppet::String.autoloader.search_directories.each do |dir|
-      fdir = ::File.join(dir, path)
-      next unless FileTest.directory?(fdir)
+    [path, "#{name}@#{version}/#{path}"].each do |path|
+      Puppet::String.autoloader.search_directories.each do |dir|
+        fdir = ::File.join(dir, path)
+        next unless FileTest.directory?(fdir)
 
-      Dir.chdir(fdir) do
-        Dir.glob("*.rb").each do |file|
-          aname = file.sub(/\.rb/, '')
-          if loaded.include?(aname)
-            Puppet.debug "Not loading duplicate action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
-            next
+        Dir.chdir(fdir) do
+          Dir.glob("*.rb").each do |file|
+            aname = file.sub(/\.rb/, '')
+            if loaded.include?(aname)
+              Puppet.debug "Not loading duplicate action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
+              next
+            end
+            loaded << aname
+            Puppet.debug "Loading action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
+            require "#{Dir.pwd}/#{aname}"
           end
-          loaded << aname
-          Puppet.debug "Loading action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
-          require "#{path}/#{aname}"
         end
       end
     end

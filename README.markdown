@@ -1,11 +1,11 @@
-Puppet Interfaces
+Puppet Strings
 =================
 A set of executables that provide complete CLI access to Puppet's
-core data types.  They also provide Interface classes for
+core data types.  They also provide String classes for
 each of the core data types, which are extensible via plugins.
 
 For instance, you can create a new action for catalogs at
-lib/puppet/interface/catalog/$action.rb.
+lib/puppet/string/catalog/$action.rb.
 
 This is a Puppet module and should work fine if you install it
 in Puppet's module path.
@@ -22,7 +22,7 @@ Usage
 -----
 The general usage is:
 
-    $ puppet <interface> <verb> <name>
+    $ puppet <string> <verb> <name>
 
 So, e.g.:
 
@@ -31,7 +31,7 @@ So, e.g.:
 
 You can use it to list all known data types and the available terminus classes:
 
-    $ puppet interface list
+    $ puppet string list
     catalog                       : active_record, compiler, queue, rest, yaml
     certificate                   : ca, file, rest
     certificate_request           : ca, file, rest
@@ -82,21 +82,21 @@ This compiles a test catalog (assuming that ~/bin/test.pp exists) and returns it
 Or use IRB to do the same thing:
 
     $ irb
-    >> require 'puppet/interface'
+    >> require 'puppet/string'
     => true
-    >> interface = Puppet::Interface[:facts, '1.0.0']
-    => #<Puppet::Interface::Facts:0x1024a1390 @format=:yaml>
-    >> facts = interface.find("myhost")
+    >> string = Puppet::String[:facts, '1.0.0']
+    => #<Puppet::String::Facts:0x1024a1390 @format=:yaml>
+    >> facts = string.find("myhost")
 
 Like I said, a prototype, but I'd love it if people would play it with some and make some recommendations.
 
 Extending
 ---------
-Like most parts of Puppet, these are easy to extend.  Just drop a new action into a given interface's directory.  E.g.:
+Like most parts of Puppet, these are easy to extend.  Just drop a new action into a given string's directory.  E.g.:
 
-    $ cat lib/puppet/interface/catalog/select.rb 
+    $ cat lib/puppet/string/catalog/select.rb 
     # Select and show a list of resources of a given type.
-    Puppet::Interface.define(:catalog, '1.0.0') do
+    Puppet::String.define(:catalog, '1.0.0') do
       action :select do
         invoke do |host,type|
           catalog = Puppet::Resource::Catalog.indirection.find(host)
@@ -112,4 +112,4 @@ Like most parts of Puppet, these are easy to extend.  Just drop a new action int
 
 Notice that this gets loaded automatically when you try to use it.  So, if you have a simple command you've written, such as for cleaning up nodes or diffing catalogs, you an port it to this framework and it should fit cleanly.
 
-Also note that interfaces are versioned.  These version numbers are interpreted according to Semantic Versioning (http://semver.org).
+Also note that strings are versioned.  These version numbers are interpreted according to Semantic Versioning (http://semver.org).

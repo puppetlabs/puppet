@@ -72,10 +72,10 @@ class Puppet::Application::StringBase < Puppet::Application
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
     # TODO: These should be configurable versions.
-    unless Puppet::String.string?(@type, :latest)
+    unless Puppet::String.string?(@type, :current)
       raise "Could not find any version of string '#{@type}'"
     end
-    @string = Puppet::String[@type, :latest]
+    @string = Puppet::String[@type, :current]
     @format ||= @string.default_format
 
     # We copy all of the app options to the string.
