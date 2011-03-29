@@ -62,7 +62,7 @@ class Puppet::String::Indirector < Puppet::String
     begin
       indirection.terminus_class = from
     rescue => detail
-      raise "Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{terminus_classes(indirection.name).join(", ") }"
+      raise "Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{self.class.terminus_classes(indirection.name).join(", ") }"
     end
   end
 
