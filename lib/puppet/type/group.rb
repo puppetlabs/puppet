@@ -15,6 +15,9 @@ module Puppet
     feature :manages_members,
       "For directories where membership is an attribute of groups not users."
 
+    feature :manages_aix_lam,
+      "The provider can manage AIX Loadable Authentication Module (LAM) system."
+
     ensurable do
       desc "Create or remove the group."
 
@@ -95,5 +98,38 @@ module Puppet
 
       defaultto false
     end
+
+    newparam(:ia_load_module, :required_features => :manages_aix_lam) do
+      desc "The name of the I&A module to use to manage this user"
+
+      defaultto "compat"
+    end
+
+    newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
+      desc "Specify group AIX attributes in an array of keyvalue pairs"
+
+      def membership
+        :attribute_membership
+      end
+      
+      def delimiter
+        " "
+      end
+
+      validate do |value|
+        raise ArgumentError, "Attributes value pairs must be seperated by an =" unless value.include?("=")
+      end
+    end
+
+    newparam(:attribute_membership) do
+      desc "Whether specified attribute value pairs should be treated as the only attributes
+        of the user or whether they should merely
+        be treated as the minimum list."
+
+      newvalues(:inclusive, :minimum)
+
+      defaultto :minimum
+    end
+
   end
 end
