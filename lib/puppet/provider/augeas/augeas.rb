@@ -32,10 +32,14 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   COMMANDS = {
     "set" => [ :path, :string ],
+    "setm" => [ :path, :string, :string ],
     "rm" => [ :path ],
     "clear" => [ :path ],
+    "mv" => [ :path, :path ],
     "insert" => [ :string, :string, :path ],
     "get" => [ :path, :comparator, :string ],
+    "defvar" => [ :string, :path ],
+    "defnode" => [ :string, :path, :string ],
     "match" => [ :path, :glob ],
     "size" => [:comparator, :int],
     "include" => [:string],
@@ -46,6 +50,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   COMMANDS["ins"] = COMMANDS["insert"]
   COMMANDS["remove"] = COMMANDS["rm"]
+  COMMANDS["move"] = COMMANDS["mv"]
 
   attr_accessor :aug
 
@@ -334,6 +339,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.set(cmd_array[0], cmd_array[1])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "setm"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.setm(cmd_array[0], cmd_array[1], cmd_array[2])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
           when "rm", "remove"
             debug("sending command '#{command}' with params #{cmd_array.inspect}")
             rv = aug.rm(cmd_array[0])
@@ -353,6 +362,18 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             end
             debug("sending command '#{command}' with params #{[label, where, path].inspect}")
             rv = aug.insert(path, label, before)
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
+          when "defvar"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.defvar(cmd_array[0], cmd_array[1])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "defnode"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.defnode(cmd_array[0], cmd_array[1], cmd_array[2])
+            fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (!rv)
+          when "mv", "move"
+            debug("sending command '#{command}' with params #{cmd_array.inspect}")
+            rv = aug.mv(cmd_array[0], cmd_array[1])
             fail("Error sending command '#{command}' with params #{cmd_array.inspect}") if (rv == -1)
           else fail("Command '#{command}' is not supported")
         end
