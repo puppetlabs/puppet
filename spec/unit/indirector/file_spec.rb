@@ -5,16 +5,15 @@ require 'puppet/indirector/file'
 
 
 describe Puppet::Indirector::File do
-  before :each do
+  before :all do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @file_class = Class.new(Puppet::Indirector::File) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @file_class = class Testing::MyFile < Puppet::Indirector::File
+      self
     end
 
     @searcher = @file_class.new

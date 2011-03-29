@@ -26,19 +26,27 @@ shared_examples_for "a REST http call" do
 end
 
 describe Puppet::Indirector::REST do
-  before do
+  before :all do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @model = stub('model', :supported_formats => %w{}, :convert_from => nil)
     @instance = stub('model instance', :name= => nil)
     @indirection = stub('indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model)
-    Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
+    Puppet::Indirector::Indirection.expects(:instance).returns(@indirection)
 
-    @rest_class = Class.new(Puppet::Indirector::REST) do
-      def self.to_s
-        "This::Is::A::Test::Class"
+    module This
+      module Is
+        module A
+          module Test
+          end
+        end
       end
     end
+    @rest_class = class This::Is::A::Test::Class < Puppet::Indirector::REST
+      self
+    end
+  end
 
+  before :each do
     @response = stub('mock response', :body => 'result', :code => "200")
     @response.stubs(:[]).with('content-type').returns "text/plain"
     @response.stubs(:[]).with('content-encoding').returns nil

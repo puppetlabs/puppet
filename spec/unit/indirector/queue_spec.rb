@@ -31,10 +31,9 @@ describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :my_queue, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).with(:my_queue).returns(@indirection)
-    @store_class = Class.new(Puppet::Indirector::Queue) do
-      def self.to_s
-        'MyQueue::MyType'
-      end
+    module MyQueue; end
+    @store_class = class MyQueue::MyType < Puppet::Indirector::Queue
+      self
     end
     @store = @store_class.new
 

@@ -4,6 +4,7 @@ module Puppet
     class VDev < Property
 
       def flatten_and_sort(array)
+        array = [array] unless array.is_a? Array
         array.collect { |a| a.split(' ') }.flatten.sort
       end
 

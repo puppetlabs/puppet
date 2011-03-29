@@ -5,14 +5,15 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/indirector/yaml'
 
 describe Puppet::Indirector::Yaml, " when choosing file location" do
-  before :each do
+  before :all do
     @indirection = stub 'indirection', :name => :my_yaml, :register_terminus_type => nil
-    Puppet::Indirector::Indirection.stubs(:instance).with(:my_yaml).returns(@indirection)
-    @store_class = Class.new(Puppet::Indirector::Yaml) do
-      def self.to_s
-        "MyYaml::MyType"
-      end
+    Puppet::Indirector::Indirection.expects(:instance).with(:my_yaml).returns(@indirection)
+    module MyYaml; end
+    @store_class = class MyYaml::MyType < Puppet::Indirector::Yaml
+      self
     end
+  end
+  before :each do
     @store = @store_class.new
 
     @subject = Object.new
