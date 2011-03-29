@@ -7,7 +7,7 @@ describe Puppet::String::Action do
   describe "when validating the action name" do
     [nil, '', 'foo bar', '-foobar'].each do |input|
       it "should treat #{input.inspect} as an invalid name" do
-        expect { Puppet::Interface::Action.new(nil, input) }.
+        expect { Puppet::String::Action.new(nil, input) }.
           should raise_error(/is an invalid action name/)
       end
     end

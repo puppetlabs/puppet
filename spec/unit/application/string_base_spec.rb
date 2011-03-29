@@ -5,6 +5,7 @@ require 'puppet/application/string_base'
 require 'tmpdir'
 
 class Puppet::Application::StringBase::Basetest < Puppet::Application::StringBase
+  option("--[no-]foo")
 end
 
 describe Puppet::Application::StringBase do
@@ -61,14 +62,14 @@ describe Puppet::Application::StringBase do
     it "should make sure arguments are an array" do
       @app.command_line.stubs(:args).returns(["find", "myname", "myarg"])
       @app.setup
-      @app.arguments.should == ["myname", "myarg"]
+      @app.arguments.should == ["myname", "myarg", {}]
     end
 
-    it "should set the options on the string" do
-      @app.options[:foo] = "bar"
+    it "should pass options as the last argument" do
+      @app.command_line.stubs(:args).returns(["find", "myname", "myarg", "--foo"])
+      @app.parse_options
       @app.setup
-
-      @app.string.options.should == @app.options
+      @app.arguments.should == ["myname", "myarg", { :foo => true }]
     end
   end
 end

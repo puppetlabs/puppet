@@ -53,7 +53,7 @@ class Puppet::String
     self.default_format = format.to_sym
   end
 
-  attr_accessor :type, :verb, :version, :arguments, :options
+  attr_accessor :type, :verb, :version, :arguments
   attr_reader :name
 
   def initialize(name, version, &block)

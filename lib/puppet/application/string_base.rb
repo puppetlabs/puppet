@@ -63,11 +63,12 @@ class Puppet::Application::StringBase < Puppet::Application
   def setup
     Puppet::Util::Log.newdestination :console
 
+    # We copy all of the app options to the end of the call; This allows each
+    # action to read in the options.  This replaces the older model where we
+    # would invoke the action with options set as global state in the
+    # interface object.  --daniel 2011-03-28
     @verb = command_line.args.shift
-    @arguments = command_line.args
-    @arguments ||= []
-
-    @arguments = Array(@arguments)
+    @arguments = Array(command_line.args) << options
 
     @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
 
@@ -77,10 +78,6 @@ class Puppet::Application::StringBase < Puppet::Application
     end
     @string = Puppet::String[@type, :current]
     @format ||= @string.default_format
-
-    # We copy all of the app options to the string.
-    # This allows each action to read in the options.
-    @string.options = options
 
     validate
   end
