@@ -65,21 +65,10 @@ describe Puppet::String::Action do
   end
 
   describe "with action-level options" do
-    it "should support options without arguments" do
-      string = Puppet::String.new(:action_level_options, '0.0.1') do
-        action(:foo) do
-          option :bar
-        end
-      end
-
-      string.should_not be_option :bar
-      string.get_action(:foo).should be_option :bar
-    end
-
     it "should support options with an empty block" do
       string = Puppet::String.new(:action_level_options, '0.0.1') do
         action :foo do
-          option :bar do
+          option "--bar" do
             # this line left deliberately blank
           end
         end
@@ -91,7 +80,7 @@ describe Puppet::String::Action do
 
     it "should return only action level options when there are no string options" do
       string = Puppet::String.new(:action_level_options, '0.0.1') do
-        action :foo do option :bar end
+        action :foo do option "--bar" end
       end
 
       string.get_action(:foo).options.should =~ [:bar]
@@ -100,9 +89,9 @@ describe Puppet::String::Action do
     describe "with both string and action options" do
       let :string do
         Puppet::String.new(:action_level_options, '0.0.1') do
-          action :foo do option :bar end
-          action :baz do option :bim end
-          option :quux
+          action :foo do option "--bar" end
+          action :baz do option "--bim" end
+          option "--quux"
         end
       end
 
@@ -125,24 +114,22 @@ describe Puppet::String::Action do
       end
     end
 
-    it "should fail when a duplicate option is added" do
-      expect {
-        Puppet::String.new(:action_level_options, '0.0.1') do
-          action :foo do
-            option :foo
-            option :foo
-          end
+    it_should_behave_like "things that declare options" do
+      def add_options_to(&block)
+        string = Puppet::String.new(:with_options, '0.0.1') do
+          action(:foo, &block)
         end
-      }.should raise_error ArgumentError, /foo duplicates an existing option/
+        string.get_action(:foo)
+      end
     end
 
     it "should fail when a string option duplicates an action option" do
       expect {
         Puppet::String.new(:action_level_options, '0.0.1') do
-          option :foo
-          action :bar do option :foo end
+          option "--foo"
+          action :bar do option "--foo" end
         end
-      }.should raise_error ArgumentError, /duplicates an existing option .*action_level/i
+      }.should raise_error ArgumentError, /Option foo conflicts with existing option foo/i
     end
   end
 end

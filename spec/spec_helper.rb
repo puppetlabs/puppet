@@ -7,6 +7,10 @@ require 'puppet'
 require 'puppet/string'
 require 'rspec'
 
+Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
+  require behaviour.relative_path_from(dir)
+end
+
 RSpec.configure do |config|
     config.mock_with :mocha
 

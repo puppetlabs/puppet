@@ -1,24 +1,69 @@
 class Puppet::String::Option
-  attr_reader :name, :string
+  attr_reader   :string
+  attr_reader   :name
+  attr_reader   :aliases
+  attr_accessor :desc
 
-  def initialize(string, name, attrs = {})
-    raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/
-    @string = string
-    @name   = name.to_sym
-    attrs.each do |k,v| send("#{k}=", v) end
+  def takes_argument?
+    !!@argument
+  end
+  def optional_argument?
+    !!@optional_argument
   end
 
+  def initialize(string, *declaration, &block)
+    @string   = string
+    @optparse = []
+
+    # Collect and sort the arguments in the declaration.
+    declaration.each do |item|
+      if item.is_a? String and item.to_s =~ /^-/ then
+        unless item =~ /^-[a-z]\b/ or item =~ /^--[^-]/ then
+          raise ArgumentError, "#{item.inspect}: long options need two dashes (--)"
+        end
+        @optparse << item
+      else
+        raise ArgumentError, "#{item.inspect} is not valid for an option argument"
+      end
+    end
+
+    if @optparse.empty? then
+      raise ArgumentError, "No option declarations found while building"
+    end
+
+    # Now, infer the name from the options; we prefer the first long option as
+    # the name, rather than just the first option.
+    @name = optparse_to_name(@optparse.find do |a| a =~ /^--/ end || @optparse.first)
+    @aliases = @optparse.map { |o| optparse_to_name(o) }
+
+    # Do we take an argument?  If so, are we consistent about it, because
+    # incoherence here makes our life super-difficult, and we can more easily
+    # relax this rule later if we find a valid use case for it. --daniel 2011-03-30
+    @argument = @optparse.any? { |o| o =~ /[ =]/ }
+    if @argument and not @optparse.all? { |o| o =~ /[ =]/ } then
+      raise ArgumentError, "Option #{@name} is inconsistent about taking an argument"
+    end
+
+    # Is our argument optional?  The rules about consistency apply here, also,
+    # just like they do to taking arguments at all. --daniel 2011-03-30
+    @optional_argument = @optparse.any? { |o| o.include? "[" }
+    if @optional_argument and not @optparse.all? { |o| o.include? "[" } then
+      raise ArgumentError, "Option #{@name} is inconsistent about the argument being optional"
+    end
+  end
+
+  # to_s and optparse_to_name are roughly mirrored, because they are used to
+  # transform strings to name symbols, and vice-versa.
   def to_s
     @name.to_s.tr('_', '-')
   end
 
-  Types = [:boolean, :string]
-  def type
-    @type ||= :boolean
-  end
-  def type=(input)
-    value = begin input.to_sym rescue nil end
-    Types.include?(value) or raise ArgumentError, "#{input.inspect} is not a valid type"
-    @type = value
+  def optparse_to_name(declaration)
+    unless found = declaration.match(/^-+([^= ]+)/) or found.length != 1 then
+      raise ArgumentError, "Can't find a name in the declaration #{declaration.inspect}"
+    end
+    name = found.captures.first.tr('-', '_')
+    raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/
+    name.to_sym
   end
 end

@@ -60,6 +60,39 @@ class Puppet::Application::StringBase < Puppet::Application
     end
   end
 
+  def preinit
+    # We need to parse enough of the command line out early, to identify what
+    # the action is, so that we can obtain the full set of options to parse.
+    #
+    # This requires a partial parse first, and removing the options that we
+    # understood, then identification of the next item, then another round of
+    # the same until we have the string and action all set. --daniel 2011-03-29
+    #
+    # NOTE: We can't use the Puppet::Application implementation of option
+    # parsing because it is (*ahem*) going to puts on $stderr and exit when it
+    # hits a parse problem, not actually let us reuse stuff. --daniel 2011-03-29
+
+    # TODO: These should be configurable versions, through a global
+    # '--version' option, but we don't implement that yet... --daniel 2011-03-29
+    @type   = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @string = Puppet::String[@type, :current]
+    @format = @string.default_format
+
+    # Now, collect the global and string options and parse the command line.
+    begin
+      @string.options.inject OptionParser.new do |options, option|
+        option = @string.get_option option # turn it into the object, bleh
+        options.on(*option.to_optparse) do |value|
+          puts "REVISIT: do something with #{value.inspect}"
+        end
+      end.parse! command_line.args.dup
+    rescue OptionParser::InvalidOption => e
+      puts e.inspect            # ...and ignore??
+    end
+
+    fail "REVISIT: Finish this code, eh..."
+  end
+
   def setup
     Puppet::Util::Log.newdestination :console
 
@@ -69,16 +102,6 @@ class Puppet::Application::StringBase < Puppet::Application
     # interface object.  --daniel 2011-03-28
     @verb = command_line.args.shift
     @arguments = Array(command_line.args) << options
-
-    @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-
-    # TODO: These should be configurable versions.
-    unless Puppet::String.string?(@type, :current)
-      raise "Could not find any version of string '#{@type}'"
-    end
-    @string = Puppet::String[@type, :current]
-    @format ||= @string.default_format
-
     validate
   end
 

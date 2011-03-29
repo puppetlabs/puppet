@@ -23,8 +23,8 @@ class Puppet::String::ActionBuilder
     @action.invoke = block
   end
 
-  def option(name, attrs = {}, &block)
-    option = Puppet::String::OptionBuilder.build(@action, name, attrs, &block)
+  def option(*declaration, &block)
+    option = Puppet::String::OptionBuilder.build(@action, *declaration, &block)
     @action.add_option(option)
   end
 end

@@ -3,14 +3,14 @@ require 'puppet/string/option'
 class Puppet::String::OptionBuilder
   attr_reader :option
 
-  def self.build(string, name, attrs = {}, &block)
-    new(string, name, attrs, &block).option
+  def self.build(string, *declaration, &block)
+    new(string, *declaration, &block).option
   end
 
   private
-  def initialize(string, name, attrs, &block)
+  def initialize(string, *declaration, &block)
     @string = string
-    @option = Puppet::String::Option.new(string, name, attrs)
+    @option = Puppet::String::Option.new(string, *declaration)
     block and instance_eval(&block)
     @option
   end

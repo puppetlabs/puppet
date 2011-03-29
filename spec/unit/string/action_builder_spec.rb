@@ -41,14 +41,14 @@ describe Puppet::String::ActionBuilder do
 
       it "should define an option without a block" do
         action = Puppet::String::ActionBuilder.build(string, :foo) do
-          option :bar
+          option "--bar"
         end
         action.should be_option :bar
       end
 
       it "should accept an empty block" do
         action = Puppet::String::ActionBuilder.build(string, :foo) do
-          option :bar do
+          option "--bar" do
             # This space left deliberately blank.
           end
         end

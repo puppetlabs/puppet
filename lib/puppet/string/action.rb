@@ -29,13 +29,19 @@ class Puppet::String::Action
   end
 
   def add_option(option)
-    if option? option.name then
-      raise ArgumentError, "#{option.name} duplicates an existing option on #{self}"
-    elsif @string.option? option.name then
-      raise ArgumentError, "#{option.name} duplicates an existing option on #{@string}"
+    option.aliases.each do |name|
+      if conflict = get_option(name) then
+        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict}"
+      elsif conflict = @string.get_option(name) then
+        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict} on #{@string}"
+      end
     end
 
-    @options[option.name] = option
+    option.aliases.each do |name|
+      @options[name] = option
+    end
+
+    option
   end
 
   def option?(name)

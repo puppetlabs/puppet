@@ -2,6 +2,12 @@ require 'puppet'
 require 'puppet/string'
 
 class Puppet::String::Indirector < Puppet::String
+  warn "REVISIT: Need to redefine this to take arguments again, eh."
+  option "--terminus TERMINUS" do
+    desc "REVISIT: You can select a terminus, which has some bigger effect
+that we should describe in this file somehow."
+  end
+
   def self.indirections
     Puppet::Indirector::Indirection.instances.collect { |t| t.to_s }.sort
   end

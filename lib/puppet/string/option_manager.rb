@@ -3,16 +3,26 @@ require 'puppet/string/option_builder'
 module Puppet::String::OptionManager
   # Declare that this app can take a specific option, and provide
   # the code to do so.
-  def option(name, attrs = {}, &block)
-    @options ||= {}
-    raise ArgumentError, "Option #{name} already defined for #{self}" if option?(name)
-    actions.each do |action|
-      if get_action(action).option?(name) then
-        raise ArgumentError, "Option #{name} already defined on action #{action} for #{self}"
+  def option(*declaration, &block)
+    add_option Puppet::String::OptionBuilder.build(self, *declaration, &block)
+  end
+
+  def add_option(option)
+    option.aliases.each do |name|
+      if conflict = get_option(name) then
+        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict}"
+      end
+
+      actions.each do |action|
+        action = get_action(action)
+        if conflict = action.get_option(name) then
+          raise ArgumentError, "Option #{option} conflicts with existing option #{conflict} on #{action}"
+        end
       end
     end
-    option = Puppet::String::OptionBuilder.build(self, name, &block)
-    @options[option.name] = option
+
+    option.aliases.each { |name| @options[name] = option }
+    option
   end
 
   def options
