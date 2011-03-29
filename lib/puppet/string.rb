@@ -87,7 +87,7 @@ class Puppet::String
             end
             loaded << aname
             Puppet.debug "Loading action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
-            require "#{path}/#{aname}"
+            require "#{Dir.pwd}/#{aname}"
           end
         end
       end
