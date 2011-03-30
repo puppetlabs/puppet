@@ -209,7 +209,9 @@ Puppet::Type.newtype(:tidy) do
     []
   end
 
-  @depthfirst = true
+  def depthfirst?
+    true
+  end
 
   def initialize(hash)
     super

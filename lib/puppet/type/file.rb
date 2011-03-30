@@ -303,8 +303,6 @@ Puppet::Type.newtype(:file) do
     return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
   end
 
-  @depthfirst = false
-
   # Determine the user to write files as.
   def asuser
     if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
