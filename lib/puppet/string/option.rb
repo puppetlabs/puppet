@@ -2,6 +2,7 @@ class Puppet::String::Option
   attr_reader   :parent
   attr_reader   :name
   attr_reader   :aliases
+  attr_reader   :optparse
   attr_accessor :desc
 
   def takes_argument?

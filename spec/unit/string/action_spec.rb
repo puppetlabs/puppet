@@ -62,6 +62,28 @@ describe Puppet::String::Action do
       string.baz.should  == "the value of foo in baz is '25'"
       string.qux.should  == "the value of foo in baz is '25'"
     end
+
+    context "when calling the Ruby API" do
+      let :string do
+        Puppet::String.new(:ruby_api, '1.0.0') do
+          action :bar do
+            invoke do |options|
+              options
+            end
+          end
+        end
+      end
+
+      it "should work when no options are supplied" do
+        options = string.bar
+        options.should == {}
+      end
+
+      it "should work when options are supplied" do
+        options = string.bar :bar => "beer"
+        options.should == { :bar => "beer" }
+      end
+    end
   end
 
   describe "with action-level options" do
