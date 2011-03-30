@@ -1,5 +1,5 @@
 class Puppet::String::Option
-  attr_reader   :string
+  attr_reader   :parent
   attr_reader   :name
   attr_reader   :aliases
   attr_accessor :desc
@@ -11,17 +11,26 @@ class Puppet::String::Option
     !!@optional_argument
   end
 
-  def initialize(string, *declaration, &block)
-    @string   = string
+  def initialize(parent, *declaration, &block)
+    @parent   = parent
     @optparse = []
 
     # Collect and sort the arguments in the declaration.
+    dups = {}
     declaration.each do |item|
       if item.is_a? String and item.to_s =~ /^-/ then
         unless item =~ /^-[a-z]\b/ or item =~ /^--[^-]/ then
           raise ArgumentError, "#{item.inspect}: long options need two dashes (--)"
         end
         @optparse << item
+
+        # Duplicate checking...
+        name = optparse_to_name(item)
+        if dup = dups[name] then
+          raise ArgumentError, "#{item.inspect}: duplicates existing alias #{dup.inspect} in #{@parent}"
+        else
+          dups[name] = item
+        end
       else
         raise ArgumentError, "#{item.inspect} is not valid for an option argument"
       end

@@ -53,6 +53,20 @@ shared_examples_for "things that declare options" do
     }.should raise_error ArgumentError, /Option f conflicts with existing option f/
   end
 
+  ["-f", "--foo"].each do |option|
+    ["", " FOO", "=FOO", " [FOO]", "=[FOO]"].each do |argument|
+      input = option + argument
+      it "should detect conflicts within a single option like #{input.inspect}" do
+        expect {
+          add_options_to do
+            option input, input
+          end
+        }.should raise_error ArgumentError, /duplicates existing alias/
+      end
+    end
+  end
+
+
   # Verify the range of interesting conflicts to check for ordering causing
   # the behaviour to change, or anything exciting like that.
   [ %w{--foo}, %w{-f}, %w{-f --foo}, %w{--baz -f},
