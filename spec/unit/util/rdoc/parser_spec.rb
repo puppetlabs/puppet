@@ -20,8 +20,9 @@ describe RDoc::Parser do
       @parser.stubs(:scan_top_level)
       parser = stub 'parser'
       Puppet::Parser::Parser.stubs(:new).returns(parser)
-      parser.expects(:parse)
+      parser.expects(:parse).at_least_once
       parser.expects(:file=).with("module/manifests/init.pp")
+      parser.expects(:file=).with("/dev/null/manifests/site.pp")
 
       @parser.scan
     end

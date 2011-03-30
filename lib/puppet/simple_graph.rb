@@ -329,7 +329,7 @@ class Puppet::SimpleGraph
       children = other.adjacent(container, :direction => :out)
 
       # MQR TODO: Luke suggests that it should be possible to refactor the system so that
-      #           container nodes are retained, thus obviating the need for the whit. 
+      #           container nodes are retained, thus obviating the need for the whit.
       children = [whit_class.new(:name => container.name, :catalog => other)] if children.empty?
 
       # First create new edges for each of the :in edges

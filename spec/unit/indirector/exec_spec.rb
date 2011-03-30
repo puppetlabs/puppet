@@ -47,10 +47,9 @@ describe Puppet::Indirector::Exec do
     @searcher.find(@request).should be_nil
   end
 
-  it "should return nil and log an error if there's an execution failure" do
+  it "should raise an exception if there's an execution failure" do
     @searcher.expects(:execute).with(%w{/echo foo}).raises(Puppet::ExecutionFailure.new("message"))
 
-    Puppet.expects(:err)
-    @searcher.find(@request).should be_nil
+    lambda {@searcher.find(@request)}.should raise_exception(Puppet::Error, 'Failed to find foo via exec: message')
   end
 end
