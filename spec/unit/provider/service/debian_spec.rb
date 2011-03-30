@@ -52,8 +52,20 @@ describe provider_class do
   end
 
   describe "when disabling" do
-    it "should call update-rc.d twice" do
-      @provider.expects(:update_rc).twice
+    it "should be able to disable services with newer sysv-rc versions" do
+      @provider.stubs(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").returns "0"
+
+      @provider.expects(:update_rc).with(@resource[:name], "disable")
+
+      @provider.disable
+    end
+
+    it "should be able to enable services with older sysv-rc versions" do
+      @provider.stubs(:`).with("dpkg --compare-versions $(dpkg-query -W --showformat '${Version}' sysv-rc) ge 2.88 ; echo $?").returns "1"
+
+      @provider.expects(:update_rc).with("-f", @resource[:name], "remove")
+      @provider.expects(:update_rc).with(@resource[:name], "stop", "00", "1", "2", "3", "4", "5", "6", ".")
+
       @provider.disable
     end
   end

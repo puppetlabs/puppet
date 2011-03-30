@@ -474,6 +474,7 @@ module Puppet
 
   setdefaults(:metrics,
     :rrddir => {:default => "$vardir/rrd",
+      :mode => 0750,
       :owner => "service",
       :group => "service",
       :desc => "The directory where RRD database files are stored.
