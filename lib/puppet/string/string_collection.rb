@@ -41,20 +41,21 @@ module Puppet::String::StringCollection
 
     loaded = cache.keys
 
-    files = ["puppet/string/#{name}"]
+    module_names = ["puppet/string/#{name}"]
     unless version == :current
-      files << "#{name}@#{version}/puppet/string/#{name}"
+      module_names << "#{name}@#{version}/puppet/string/#{name}"
     end
 
-    files.each do |file|
+    module_names.each do |module_name|
       begin
-        require file
-        if version == :current || !file.include?('@')
+        require module_name
+        if version == :current || !module_name.include?('@')
           loaded = (cache.keys - loaded).first
           cache[:current] = cache[loaded] unless loaded.nil?
         end
         return true if cache.has_key?(version)
-      rescue LoadError
+      rescue LoadError => e
+        raise unless e.message =~ /-- #{module_name}$/
         # pass
       end
     end
