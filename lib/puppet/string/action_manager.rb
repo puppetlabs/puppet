@@ -32,7 +32,15 @@ module Puppet::String::ActionManager
 
   def get_action(name)
     @actions ||= {}
-    @actions[name.to_sym]
+    result = @actions[name.to_sym]
+    if result.nil?
+      if self.is_a?(Class) and superclass.respond_to?(:get_action)
+        result = superclass.get_action(name)
+      elsif self.class.respond_to?(:get_action)
+        result = self.class.get_action(name)
+      end
+    end
+    return result
   end
 
   def action?(name)
