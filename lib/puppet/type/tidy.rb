@@ -254,7 +254,7 @@ Puppet::Type.newtype(:tidy) do
 
     if parameter
       files = Puppet::FileServing::Fileset.new(self[:path], parameter).files.collect do |f|
-        f == "." ? self[:path] : File.join(self[:path], f)
+        f == "." ? self[:path] : ::File.join(self[:path], f)
       end
     else
       files = [self[:path]]
@@ -270,7 +270,7 @@ Puppet::Type.newtype(:tidy) do
     files_by_name = result.inject({}) { |hash, file| hash[file[:path]] = file; hash }
 
     files_by_name.keys.sort { |a,b| b <=> b }.each do |path|
-      dir = File.dirname(path)
+      dir = ::File.dirname(path)
       next unless resource = files_by_name[dir]
       if resource[:require]
         resource[:require] << Puppet::Resource.new(:file, path)
@@ -321,7 +321,7 @@ Puppet::Type.newtype(:tidy) do
 
   def stat(path)
     begin
-      File.lstat(path)
+      ::File.lstat(path)
     rescue Errno::ENOENT => error
       info "File does not exist"
       return nil

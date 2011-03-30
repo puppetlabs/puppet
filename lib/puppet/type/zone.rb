@@ -409,7 +409,7 @@ Puppet::Type.newtype(:zone) do
   # both as prerequisites.
   autorequire(:file) do
     if @parameters.include? :path
-      [@parameters[:path].value, File.dirname(@parameters[:path].value)]
+      [@parameters[:path].value, ::File.dirname(@parameters[:path].value)]
     else
       nil
     end

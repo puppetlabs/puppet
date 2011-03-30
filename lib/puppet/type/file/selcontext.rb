@@ -26,7 +26,7 @@ module Puppet
     include Puppet::Util::SELinux
 
     def retrieve
-      return :absent unless @resource.stat(false)
+      return :absent unless @resource.stat
       context = self.get_selinux_current_context(@resource[:path])
       parse_selinux_context(name, context)
     end

@@ -27,7 +27,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
         end
       end
   rescue Puppet::ExecutionFailure => detail
-      raise Puppet::Error.new( "Cannot config #{self.service} to enable it: #{detail}" )
+      raise Puppet::Error.new( "Cannot config #{self.name} to enable it: #{detail}" )
   end
 
   def enable
@@ -54,10 +54,10 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   def startcmd
     self.setupservice
     case self.status
-    when :stopped
-      [command(:adm), :enable, @resource[:name]]
     when :maintenance
       [command(:adm), :clear, @resource[:name]]
+    else
+      [command(:adm), :enable, @resource[:name]]
     end
   end
 

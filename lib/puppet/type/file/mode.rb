@@ -63,7 +63,7 @@ module Puppet
       # If we're not following links and we're a link, then we just turn
       # off mode management entirely.
 
-      if stat = @resource.stat(false)
+      if stat = @resource.stat
         unless defined?(@fixed)
           @should &&= @should.collect { |s| self.dirmask(s) }
         end

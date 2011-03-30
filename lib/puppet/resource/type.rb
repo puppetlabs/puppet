@@ -34,13 +34,13 @@ class Puppet::Resource::Type
   end
 
   def to_pson_data_hash
-    data = [:code, :doc, :line, :file, :parent].inject({}) do |hash, param|
-      next hash unless value = self.send(param)
+    data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
+      next hash unless (value = self.send(param)) and (value != "")
       hash[param.to_s] = value
       hash
     end
 
-    data['arguments'] = arguments.dup
+    data['arguments'] = arguments.dup unless arguments.empty?
 
     data['name'] = name
     data['type'] = type

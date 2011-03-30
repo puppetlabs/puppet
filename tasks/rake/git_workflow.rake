@@ -119,12 +119,14 @@ task :mail_patches do
     # If we've got more than one patch, add --compose
     if files.length > 1
         compose = "--compose"
+        subject = "--subject \"#{type} #{name} against #{parent}\""
     else
         compose = ""
+        subject = ""
     end
 
     # Now send the mail.
-    sh "git send-email #{compose} --no-signed-off-by-cc --suppress-from --to puppet-dev@googlegroups.com 00*.patch"
+    sh "git send-email #{compose} #{subject} --no-signed-off-by-cc --suppress-from --to puppet-dev@googlegroups.com 00*.patch"
 
     # Finally, clean up the patches
     sh "rm 00*.patch"

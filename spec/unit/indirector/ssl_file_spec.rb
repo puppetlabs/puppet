@@ -8,15 +8,16 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
 require 'puppet/indirector/ssl_file'
 
 describe Puppet::Indirector::SslFile do
-  before do
-    @model = mock 'model'
+  before :all do
     @indirection = stub 'indirection', :name => :testing, :model => @model
     Puppet::Indirector::Indirection.expects(:instance).with(:testing).returns(@indirection)
-    @file_class = Class.new(Puppet::Indirector::SslFile) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @file_class = class Testing::MyType < Puppet::Indirector::SslFile
+      self
     end
+  end
+  before :each do
+    @model = mock 'model'
 
     @setting = :certdir
     @file_class.store_in @setting

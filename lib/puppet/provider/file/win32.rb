@@ -49,7 +49,7 @@ Puppet::Type.type(:file).provide :microsoft_windows do
   end
 
   def retrieve(resource)
-    unless stat = resource.stat(false)
+    unless stat = resource.stat
       return :absent
     end
 

@@ -13,7 +13,7 @@ module Puppet
       This resource type uses the prescribed native tools for creating
       groups and generally uses POSIX APIs for retrieving information
       about them.  It does not directly modify `/etc/passwd` or anything.
-      
+
       **Autorequires:** If Puppet is managing the user's primary group (as provided in the `gid` attribute), the user resource will autorequire that group. If Puppet is managing any role accounts corresponding to the user's roles, the user resource will autorequire those role accounts."
 
     feature :allows_duplicates,
@@ -38,6 +38,9 @@ module Puppet
 
    feature :system_users,
      "The provider allows you to create system users with lower UIDs."
+
+    feature :manages_aix_lam,
+      "The provider can manage AIX Loadable Authentication Module (LAM) system."
 
     newproperty(:ensure, :parent => Puppet::Property::Ensure) do
       newvalue(:present, :event => :user_created) do
@@ -445,5 +448,39 @@ module Puppet
     newproperty(:project, :required_features => :manages_solaris_rbac) do
       desc "The name of the project associated with a user"
     end
+
+    newparam(:ia_load_module, :required_features => :manages_aix_lam) do
+      desc "The name of the I&A module to use to manage this user"
+
+      defaultto "compat"
+    end
+
+    newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
+      desc "Specify user AIX attributes in an array of keyvalue pairs"
+
+      def membership
+        :attribute_membership
+      end
+
+      def delimiter
+        " "
+      end
+
+      validate do |value|
+        raise ArgumentError, "Attributes value pairs must be seperated by an =" unless value.include?("=")
+      end
+    end
+
+    newparam(:attribute_membership) do
+      desc "Whether specified attribute value pairs should be treated as the only attributes
+        of the user or whether they should merely
+        be treated as the minimum list."
+
+      newvalues(:inclusive, :minimum)
+
+      defaultto :minimum
+    end
+
+
   end
 end

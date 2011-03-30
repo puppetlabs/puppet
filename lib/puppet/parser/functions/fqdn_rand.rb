@@ -5,8 +5,8 @@ Puppet::Parser::Functions::newfunction(:fqdn_rand, :type => :rvalue, :doc =>
 
       $random_number = fqdn_rand(30)
       $random_number_seed = fqdn_rand(30,30)") do |args|
-    require 'md5'
+    require 'digest/md5'
     max = args.shift
-    srand MD5.new([lookupvar('fqdn'),args].join(':')).to_s.hex
+    srand(Digest::MD5.hexdigest([lookupvar('fqdn'),args].join(':')).hex)
     rand(max).to_s
 end

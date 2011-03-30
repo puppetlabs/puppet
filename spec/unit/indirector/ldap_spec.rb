@@ -8,10 +8,9 @@ describe Puppet::Indirector::Ldap do
   before do
     @indirection = stub 'indirection', :name => :testing
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
-    @ldap_class = Class.new(Puppet::Indirector::Ldap) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @ldap_class = class Testing::MyLdap < Puppet::Indirector::Ldap
+      self
     end
 
     @connection = mock 'ldap'

@@ -27,6 +27,7 @@ describe provider_class do
   describe "when calling add_properties" do
     it "should add -o and the key=value for each properties with a value" do
       @resource.stubs(:[]).with(:quota).returns ""
+      @resource.stubs(:[]).with(:refquota).returns ""
       @resource.stubs(:[]).with(:mountpoint).returns "/foo"
       properties = @provider.add_properties
       properties.include?("-o").should == true

@@ -76,7 +76,7 @@ class Puppet::Node::Environment
     # per environment semantics with an efficient most common cases; we almost
     # always just return our thread's known-resource types.  Only at the start
     # of a compilation (after our thread var has been set to nil) or when the
-    # environment has changed do we delve deeper. 
+    # environment has changed do we delve deeper.
     Thread.current[:known_resource_types] = nil if (krt = Thread.current[:known_resource_types]) && krt.environment != self
     Thread.current[:known_resource_types] ||= synchronize {
       if @known_resource_types.nil? or @known_resource_types.stale?
@@ -128,7 +128,7 @@ class Puppet::Node::Environment
     to_s.to_sym
   end
 
-  # The only thing we care about when serializing an environment is its 
+  # The only thing we care about when serializing an environment is its
   # identity; everything else is ephemeral and should not be stored or
   # transmitted.
   def to_zaml(z)
@@ -156,7 +156,6 @@ class Puppet::Node::Environment
       parser.string = code
     else
       file = Puppet.settings.value(:manifest, name.to_s)
-      return empty_parse_result unless File.exist?(file)
       parser.file = file
     end
     parser.parse

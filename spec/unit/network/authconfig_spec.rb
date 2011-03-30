@@ -12,7 +12,7 @@ describe Puppet::Network::AuthConfig do
 
     FileTest.stubs(:exists?).returns(true)
     File.stubs(:stat).returns(stub('stat', :ctime => :now))
-    Time.stubs(:now).returns :now
+    Time.stubs(:now).returns Time.now
 
     @authconfig = Puppet::Network::AuthConfig.new("dummy", false)
   end
