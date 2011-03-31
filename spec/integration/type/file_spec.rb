@@ -28,7 +28,8 @@ describe Puppet::Type.type(:file) do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource file, bucket
+      catalog.add_resource file
+      catalog.add_resource bucket
 
       File.open(file[:path], "w") { |f| f.puts "bar" }
 
@@ -80,7 +81,8 @@ describe Puppet::Type.type(:file) do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource file, bucket
+      catalog.add_resource file
+      catalog.add_resource bucket
 
       File.open(dest1, "w") { |f| f.puts "whatever" }
       File.symlink(dest1, link)
@@ -113,7 +115,8 @@ describe Puppet::Type.type(:file) do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource file, bucket
+      catalog.add_resource file
+      catalog.add_resource bucket
 
       Dir.mkdir(file[:path])
       foofile = File.join(file[:path], "foo")
@@ -337,10 +340,10 @@ describe Puppet::Type.type(:file) do
     it "should have an edge to each resource in the relationship graph" do
       @catalog.apply do |trans|
         one = @catalog.resource(:file, File.join(@dest, "one"))
-        @catalog.relationship_graph.should be_edge(@file, one)
+        @catalog.relationship_graph.edge?(@file, one).should be
 
         two = @catalog.resource(:file, File.join(@dest, "two"))
-        @catalog.relationship_graph.should be_edge(@file, two)
+        @catalog.relationship_graph.edge?(@file, two).should be
       end
     end
   end

@@ -240,10 +240,6 @@ Puppet::Type.newtype(:tidy) do
     []
   end
 
-  def eval_generate
-    []
-  end
-
   def generate
     return [] unless stat(self[:path])
 

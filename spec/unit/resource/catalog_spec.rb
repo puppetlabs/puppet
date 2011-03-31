@@ -398,12 +398,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       relgraph.should be_vertex(@one)
     end
 
-    it "should yield added resources if a block is provided" do
-      yielded = []
-      @catalog.add_resource(@one, @two) { |r| yielded << r }
-      yielded.length.should == 2
-    end
-
     it "should set itself as the resource's catalog if it is not a relationship graph" do
       @one.expects(:catalog=).with(@catalog)
       @catalog.add_resource @one

@@ -12,7 +12,7 @@ class Puppet::Transaction
   require 'puppet/resource/status'
 
   attr_accessor :component, :catalog, :ignoreschedules
-  attr_accessor :sorted_resources, :configurator
+  attr_accessor :configurator
 
   # The report, once generated.
   attr_accessor :report
@@ -57,30 +57,21 @@ class Puppet::Transaction
     report.resource_statuses.values.find_all { |status| status.changed }.collect { |status| catalog.resource(status.resource) }
   end
 
-  # Copy an important relationships from the parent to the newly-generated
-  # child resource.
-  def make_parent_child_relationship(resource, children)
-    depthfirst = resource.depthfirst?
-
-    children.each do |gen_child|
-      if depthfirst
-        edge = [gen_child, resource]
-      else
-        edge = [resource, gen_child]
-      end
-      relationship_graph.add_vertex(gen_child)
-
-      unless relationship_graph.edge?(edge[1], edge[0])
-        relationship_graph.add_edge(*edge)
-      else
-        resource.debug "Skipping automatic relationship to #{gen_child}"
-      end
-    end
+  # Find all of the applied resources (including failed attempts).
+  def applied_resources
+    report.resource_statuses.values.collect { |status| catalog.resource(status.resource) }
   end
 
-  # See if the resource generates new resources at evaluation time.
-  def eval_generate(resource)
-    generate_additional_resources(resource, :eval_generate)
+  # Copy an important relationships from the parent to the newly-generated
+  # child resource.
+  def make_parent_child_relationship(parent, child)
+    relationship_graph.add_vertex(child)
+    edge = parent.depthfirst? ? [child, parent] : [parent, child]
+    if relationship_graph.edge?(*edge.reverse)
+      parent.debug "Skipping automatic relationship to #{child}"
+    else
+      relationship_graph.add_edge(*edge)
+    end
   end
 
   # Evaluate a single resource.
@@ -97,26 +88,7 @@ class Puppet::Transaction
 
   def eval_children_and_apply_resource(resource, ancestor = nil)
     resource_status(resource).scheduled = true
-
-    # We need to generate first regardless, because the recursive
-    # actions sometimes change how the top resource is applied.
-    children = eval_generate(resource)
-
-    if ! children.empty? and resource.depthfirst?
-      children.each do |child|
-        # The child will never be skipped when the parent isn't
-        eval_resource(child, ancestor || resource)
-      end
-    end
-
-    # Perform the actual changes
     apply(resource, ancestor)
-
-    if ! children.empty? and ! resource.depthfirst?
-      children.each do |child|
-        eval_resource(child, ancestor || resource)
-      end
-    end
   end
 
   # This method does all the actual work of running a transaction.  It
@@ -131,7 +103,7 @@ class Puppet::Transaction
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
     begin
-      @sorted_resources.each do |resource|
+      visit_resources do |resource|
         next if stop_processing?
         if resource.is_a?(Puppet::Type::Component)
           Puppet.warning "Somehow left a component in the relationship graph"
@@ -177,9 +149,31 @@ class Puppet::Transaction
     found_failed
   end
 
+  def eval_generate(resource)
+    return [] unless resource.respond_to?(:eval_generate)
+    begin
+      made = resource.eval_generate
+    rescue => detail
+      puts detail.backtrace if Puppet[:trace]
+      resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
+    end
+    parents = [resource]
+    [made].flatten.compact.uniq.each do |res|
+      begin
+        res.tag(*resource.tags)
+        @catalog.add_resource(res)
+        res.finish
+        make_parent_child_relationship(parents.reverse.find { |r| r.name == res.name[0,r.name.length]}, res)
+        parents << res
+      rescue Puppet::Resource::Catalog::DuplicateResourceError
+        res.info "Duplicate generated resource; skipping"
+      end
+    end
+  end
+
   # A general method for recursively generating new resources from a
   # resource.
-  def generate_additional_resources(resource, method)
+  def generate_additional_resources(resource, method, presume_prefix_dependencies=false)
     return [] unless resource.respond_to?(method)
     begin
       made = resource.send(method)
@@ -192,13 +186,10 @@ class Puppet::Transaction
     made.uniq.find_all do |res|
       begin
         res.tag(*resource.tags)
-        @catalog.add_resource(res) do |r|
-          r.finish
-          make_parent_child_relationship(resource, [r])
-
-          # Call 'generate' recursively
-          generate_additional_resources(r, method)
-        end
+        @catalog.add_resource(res)
+        res.finish
+        make_parent_child_relationship(resource, res)
+        generate_additional_resources(res, method, presume_prefix_dependencies)
         true
       rescue Puppet::Resource::Catalog::DuplicateResourceError
         res.info "Duplicate generated resource; skipping"
@@ -269,9 +260,21 @@ class Puppet::Transaction
     # Then prefetch.  It's important that we generate and then prefetch,
     # so that any generated resources also get prefetched.
     prefetch
+  end
 
-    # This will throw an error if there are cycles in the graph.
-    @sorted_resources = relationship_graph.topsort
+  def visit_resources(&block)
+    eval_generated = {}
+    while r = relationship_graph.topsort.find { |r| !applied_resources.include?(r) }
+      #p relationship_graph.topsort.collect { |r0| r0.title[/(-0.*)/,1] }
+      if !eval_generated[r]
+        #p [:generate,r.title]
+        eval_generate(r)
+        eval_generated[r] = true
+      else
+        #p [:apply,r.title]
+        yield r
+      end
+    end
   end
 
   def relationship_graph

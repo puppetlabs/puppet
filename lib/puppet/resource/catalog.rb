@@ -61,36 +61,32 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     [$1, $2]
   end
 
-  # Add one or more resources to our graph and to our resource table.
+  # Add a resource to our graph and to our resource table.
   # This is actually a relatively complicated method, because it handles multiple
   # aspects of Catalog behaviour:
   # * Add the resource to the resource table
   # * Add the resource to the resource graph
   # * Add the resource to the relationship graph
   # * Add any aliases that make sense for the resource (e.g., name != title)
-  def add_resource(*resources)
-    resources.each do |resource|
-      raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
-    end.each { |resource| fail_on_duplicate_type_and_title(resource) }.each do |resource|
-      title_key = title_key_for_ref(resource.ref)
+  def add_resource(*resource)
+    add_resource(*resource[0..-2]) if resource.length > 1
+    resource = resource.pop
+    raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
+    fail_on_duplicate_type_and_title(resource)
+    title_key = title_key_for_ref(resource.ref)
+ 
+    @transient_resources << resource if applying?
+    @resource_table[title_key] = resource
 
-      @transient_resources << resource if applying?
-      @resource_table[title_key] = resource
+    # If the name and title differ, set up an alias
 
-      # If the name and title differ, set up an alias
-
-      if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-        self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
-      end
-
-      resource.catalog = self if resource.respond_to?(:catalog=)
-
-      add_vertex(resource)
-
-      @relationship_graph.add_vertex(resource) if @relationship_graph
-
-      yield(resource) if block_given?
+    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
+      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
     end
+
+    resource.catalog = self if resource.respond_to?(:catalog=)
+    add_vertex(resource)
+    @relationship_graph.add_vertex(resource) if @relationship_graph
   end
 
   # Create an alias for a resource.

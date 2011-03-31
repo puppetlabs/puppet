@@ -244,6 +244,8 @@ describe Puppet::Transaction do
       @catalog.stubs(:add_resource)
 
       child.expects(:tag).with("one", "two")
+      child.expects(:finish)
+      generator.expects(:depthfirst?)
 
       @transaction.generate_additional_resources(generator, :generate)
     end
@@ -390,7 +392,7 @@ describe Puppet::Transaction do
         @resource = stub 'resource', :ref => 'some_ref'
         @catalog.add_resource @resource
         @transaction.stubs(:prepare)
-        @transaction.sorted_resources = [@resource]
+        @transaction.stubs(:visit_resources).yields(@resource)
       end
 
       it 'should stop processing if :stop_processing? is true' do
