@@ -59,7 +59,8 @@ that we should describe in this file somehow."
   # One usually does.
   def indirection
     unless @indirection
-      Puppet.info("Could not find terminus for #{indirection_name}") unless @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
+      @indirection = Puppet::Indirector::Indirection.instance(indirection_name)
+      @indirection or raise "Could not find terminus for #{indirection_name}"
     end
     @indirection
   end
