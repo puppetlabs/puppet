@@ -197,7 +197,7 @@ describe Puppet::Transaction do
       second.expects(:generate).returns [third]
       third.expects(:generate)
 
-      @transaction.generate_additional_resources(first, :generate)
+      @transaction.generate_additional_resources(first)
     end
 
     it "should finish all resources" do
@@ -213,7 +213,7 @@ describe Puppet::Transaction do
 
       resource.expects(:finish)
 
-      @transaction.generate_additional_resources(generator, :generate)
+      @transaction.generate_additional_resources(generator)
     end
 
     it "should skip generated resources that conflict with existing resources" do
@@ -230,7 +230,7 @@ describe Puppet::Transaction do
       resource.expects(:finish).never
       resource.expects(:info) # log that it's skipped
 
-      @transaction.generate_additional_resources(generator, :generate).should be_empty
+      @transaction.generate_additional_resources(generator).should be_empty
     end
 
     it "should copy all tags to the newly generated resources" do
@@ -247,7 +247,7 @@ describe Puppet::Transaction do
       child.expects(:finish)
       generator.expects(:depthfirst?)
 
-      @transaction.generate_additional_resources(generator, :generate)
+      @transaction.generate_additional_resources(generator)
     end
   end
 

@@ -173,13 +173,13 @@ class Puppet::Transaction
 
   # A general method for recursively generating new resources from a
   # resource.
-  def generate_additional_resources(resource, method, presume_prefix_dependencies=false)
-    return [] unless resource.respond_to?(method)
+  def generate_additional_resources(resource)
+    return [] unless resource.respond_to?(:generate)
     begin
-      made = resource.send(method)
+      made = resource.generate
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
-      resource.err "Failed to generate additional resources using '#{method}': #{detail}"
+      resource.err "Failed to generate additional resources using 'generate': #{detail}"
     end
     return [] unless made
     made = [made] unless made.is_a?(Array)
@@ -189,7 +189,7 @@ class Puppet::Transaction
         @catalog.add_resource(res)
         res.finish
         make_parent_child_relationship(resource, res)
-        generate_additional_resources(res, method, presume_prefix_dependencies)
+        generate_additional_resources(res)
         true
       rescue Puppet::Resource::Catalog::DuplicateResourceError
         res.info "Duplicate generated resource; skipping"
@@ -205,7 +205,7 @@ class Puppet::Transaction
     newlist = []
     while ! list.empty?
       list.each do |resource|
-        newlist += generate_additional_resources(resource, :generate)
+        newlist += generate_additional_resources(resource)
       end
       list = newlist
       newlist = []
