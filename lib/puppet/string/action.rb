@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'puppet/string'
 require 'puppet/string/option'
 
@@ -16,9 +17,39 @@ class Puppet::String::Action
     attrs.each do |k,v| send("#{k}=", v) end
   end
 
-  def invoke(*args, &block)
-    @string.method(name).call(*args,&block)
-  end
+  # Initially, this was defined to allow the @action.invoke pattern, which is
+  # a very natural way to invoke behaviour given our introspection
+  # capabilities.   Heck, our initial plan was to have the string delegate to
+  # the action object for invocation and all.
+  #
+  # It turns out that we have a binding problem to solve: @string was bound to
+  # the parent class, not the subclass instance, and we don't pass the
+  # appropriate context or change the binding enough to make this work.
+  #
+  # We could hack around it, by either mandating that you pass the context in
+  # to invoke, or try to get the binding right, but that has probably got
+  # subtleties that we don't instantly think of – especially around threads.
+  #
+  # So, we are pulling this method for now, and will return it to life when we
+  # have the time to resolve the problem.  For now, you should replace...
+  #
+  #     @action = @string.get_action(name)
+  #     @action.invoke(arg1, arg2, arg3)
+  #
+  # ...with...
+  #
+  #     @action = @string.get_action(name)
+  #     @string.send(@action.name, arg1, arg2, arg3)
+  #
+  # I understand that is somewhat cumbersome, but it functions as desired.
+  # --daniel 2011-03-31
+  #
+  # PS: This code is left present, but commented, to support this chunk of
+  # documentation, for the benefit of the reader.
+  #
+  # def invoke(*args, &block)
+  #   @string.send(name, *args, &block)
+  # end
 
   def invoke=(block)
     if @string.is_a?(Class)
