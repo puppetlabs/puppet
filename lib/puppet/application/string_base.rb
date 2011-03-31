@@ -119,7 +119,7 @@ class Puppet::Application::StringBase < Puppet::Application
   end
   def validate
     unless @action
-      raise "You must specify #{string.actions.join(", ")} as a verb; 'save' probably does not work right now"
+      raise "You must specify #{string.actions.join(", ")} as a verb"
     end
   end
 end
