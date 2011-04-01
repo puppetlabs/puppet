@@ -16,6 +16,11 @@ describe Puppet::Application::StringBase do
     File.open(File.join(@dir, 'puppet', 'string', 'basetest.rb'), 'w') do |f|
       f.puts "Puppet::String.define(:basetest, '0.0.1')"
     end
+
+    Puppet::String[:basetest, '0.0.1'].action :foo do
+      option "--foo"
+      invoke { |*args| args.length }
+    end
   end
 
   after :all do
@@ -28,7 +33,6 @@ describe Puppet::Application::StringBase do
     app.stubs(:exit)
     app.stubs(:puts)
     app.command_line.stubs(:subcommand_name).returns 'subcommand'
-    app.command_line.stubs(:args).returns []
     Puppet::Util::Log.stubs(:newdestination)
     app
   end
@@ -39,13 +43,6 @@ describe Puppet::Application::StringBase do
     end
 
     describe "parsing the command line" do
-      before :all do
-        Puppet::String[:basetest, '0.0.1'].action :foo do
-          option "--foo"
-          invoke { |options| options }
-        end
-      end
-
       context "with just an action" do
         before :all do
           app.command_line.stubs(:args).returns %w{foo}
@@ -99,52 +96,22 @@ describe Puppet::Application::StringBase do
     end
   end
 
-  describe "when calling main" do
-    # before do
-    #   @app.verb = :find
-    #   @app.arguments = ["myname", "myarg"]
-    #   @app.string.stubs(:find)
-    # end
+  describe "#main" do
+    before do
+      app.string    = Puppet::String[:basetest, '0.0.1']
+      app.action    = app.string.get_action(:foo)
+      app.format    = :pson
+      app.arguments = ["myname", "myarg"]
+    end
 
     it "should send the specified verb and name to the string" do
-      pending "REVISIT: disabled, needs to be rewritten for the new introspection model. --daniel 2011-03-31"
-      @app.string.expects(:find).with("myname", "myarg")
+      app.string.expects(:foo).with(*app.arguments)
       app.main
     end
 
-    it "should use its render method to render any result"
-
-    it "should exit with the current exit code"
-  end
-
-  describe "during setup" do
-    before do
-      app.command_line.stubs(:args).returns(["find", "myname", "myarg"])
-      app.stubs(:validate)
-    end
-
-    it "should set the verb from the command line arguments" do
-      pending "REVISIT: needs updating too..."
-
-      @app.setup
-      @app.verb.should == "find"
-    end
-
-    it "should make sure arguments are an array" do
-      pending "REVISIT: needs updating too..."
-
-      @app.command_line.stubs(:args).returns(["find", "myname", "myarg"])
-      @app.setup
-      @app.arguments.should == ["myname", "myarg", {}]
-    end
-
-    it "should pass options as the last argument" do
-      pending "REVISIT: needs updating too..."
-
-      @app.command_line.stubs(:args).returns(["find", "myname", "myarg", "--foo"])
-      @app.parse_options
-      @app.setup
-      @app.arguments.should == ["myname", "myarg", { :foo => true }]
+    it "should use its render method to render any result" do
+      app.expects(:render).with(app.arguments.length + 1)
+      app.main
     end
   end
 end

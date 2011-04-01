@@ -64,9 +64,9 @@ class Puppet::Application::StringBase < Puppet::Application
     # arguments based on introspecting the action and all, and find the first
     # non-option word to use as the action.
     action = nil
-    cli    = command_line.args.dup # we destroy this copy, but...
-    while @action.nil? and not cli.empty? do
-      item = cli.shift
+    index  = -1
+    while (index += 1) < command_line.args.length do
+      item = command_line.args[index]
       if item =~ /^-/ then
         option = @string.options.find { |a| item =~ /^-+#{a}\b/ }
         if option then
@@ -74,7 +74,7 @@ class Puppet::Application::StringBase < Puppet::Application
             # We don't validate if the argument is optional or mandatory,
             # because it doesn't matter here.  We just assume that errors will
             # be caught later. --daniel 2011-03-30
-            cli.shift unless cli.first =~ /^-/
+            index += 1 unless command_line.args[index + 1] =~ /^-/
           end
         else
           raise ArgumentError, "Unknown option #{item.sub(/=.*$/, '').inspect}"
@@ -85,6 +85,7 @@ class Puppet::Application::StringBase < Puppet::Application
           raise ArgumentError, "#{@string} does not have an #{item.inspect} action!"
         end
         @action = action
+        command_line.args.delete_at(index)
       end
     end
 
@@ -105,8 +106,8 @@ class Puppet::Application::StringBase < Puppet::Application
     # action to read in the options.  This replaces the older model where we
     # would invoke the action with options set as global state in the
     # interface object.  --daniel 2011-03-28
-    @arguments = Array(command_line.args) << options
-    validate
+    @arguments = command_line.args
+    @arguments << options
   end
 
 
@@ -116,10 +117,5 @@ class Puppet::Application::StringBase < Puppet::Application
       puts render(result)
     end
     exit(exit_code)
-  end
-  def validate
-    unless @action
-      raise "You must specify #{string.actions.join(", ")} as a verb"
-    end
   end
 end
