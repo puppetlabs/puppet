@@ -3,6 +3,10 @@ require 'puppet/string'
 class Puppet::String::Action
   attr_reader :name
 
+  def to_s
+    "#{@string}##{@name}"
+  end
+
   def initialize(string, name, attrs = {})
     name = name.to_s
     raise "'#{name}' is an invalid action name" unless name =~ /^[a-z]\w*$/
