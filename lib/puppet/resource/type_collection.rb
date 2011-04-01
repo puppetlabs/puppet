@@ -166,10 +166,16 @@ class Puppet::Resource::TypeCollection
     end
     parser.parse
   rescue => detail
+    @parse_failed = true
+
     msg = "Could not parse for environment #{environment}: #{detail}"
     error = Puppet::Error.new(msg)
     error.set_backtrace(detail.backtrace)
     raise error
+  end
+
+  def require_reparse?
+    @parse_failed || stale?
   end
 
   def stale?

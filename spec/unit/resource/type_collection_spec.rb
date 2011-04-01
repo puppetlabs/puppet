@@ -387,7 +387,7 @@ describe Puppet::Resource::TypeCollection do
 
   describe "when performing initial import" do
     before do
-      @parser = stub 'parser'
+      @parser = Puppet::Parser::Parser.new("test")
       Puppet::Parser::Parser.stubs(:new).returns @parser
       @code = Puppet::Resource::TypeCollection.new("env")
     end
@@ -422,6 +422,13 @@ describe Puppet::Resource::TypeCollection do
       @parser.expects(:parse).raises ArgumentError
       @parser.stubs(:file=)
       lambda { @code.perform_initial_import }.should raise_error(Puppet::Error)
+    end
+
+    it "should mark the type collection as needing a reparse when there is an error parsing" do
+      @parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
+
+      lambda { @code.perform_initial_import }.should raise_error(Puppet::Error, /Syntax error at .../)
+      @code.require_reparse?.should be_true
     end
   end
 
