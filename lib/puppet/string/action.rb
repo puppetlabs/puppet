@@ -14,7 +14,7 @@ class Puppet::String::Action
     @string  = string
     @name    = name.to_sym
     @options = {}
-    attrs.each do |k,v| send("#{k}=", v) end
+    attrs.each do |k, v| send("#{k}=", v) end
   end
 
   # Initially, this was defined to allow the @action.invoke pattern, which is

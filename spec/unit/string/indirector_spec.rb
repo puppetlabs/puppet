@@ -33,8 +33,8 @@ describe Puppet::String::Indirector do
       Puppet::String::Indirector.should be_action(method)
     end
 
-    it "should just call the indirection method when the '#{method}' action is invoked" do
-      @instance.indirection.expects(method).with(:test, "myargs")
+    it "should call the indirection method when the '#{method}' action is invoked" do
+      @instance.indirection.expects(method).with(:test, "myargs", {})
       @instance.send(method, :test, "myargs")
     end
   end

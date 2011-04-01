@@ -6,7 +6,7 @@ require 'puppet/string/action_builder'
 describe Puppet::String::ActionBuilder do
   describe "::build" do
     it "should build an action" do
-      action = Puppet::String::ActionBuilder.build(nil,:foo) do
+      action = Puppet::String::ActionBuilder.build(nil, :foo) do
       end
       action.should be_a(Puppet::String::Action)
       action.name.should == :foo
@@ -24,7 +24,7 @@ describe Puppet::String::ActionBuilder do
     end
 
     it "should require a block" do
-      lambda { Puppet::String::ActionBuilder.build(nil,:foo) }.
+      lambda { Puppet::String::ActionBuilder.build(nil, :foo) }.
         should raise_error("Action :foo must specify a block")
     end
 

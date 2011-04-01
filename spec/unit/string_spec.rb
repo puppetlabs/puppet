@@ -41,7 +41,7 @@ describe Puppet::String do
     end
 
     it "should instance-eval any provided block" do
-      face = Puppet::String.new(:string_test_block,'0.0.1') do
+      face = Puppet::String.new(:string_test_block, '0.0.1') do
         action(:something) do
           invoke { "foo" }
         end
@@ -52,15 +52,15 @@ describe Puppet::String do
   end
 
   it "should have a name" do
-    Puppet::String.new(:me,'0.0.1').name.should == :me
+    Puppet::String.new(:me, '0.0.1').name.should == :me
   end
 
   it "should stringify with its own name" do
-    Puppet::String.new(:me,'0.0.1').to_s.should =~ /\bme\b/
+    Puppet::String.new(:me, '0.0.1').to_s.should =~ /\bme\b/
   end
 
   it "should allow overriding of the default format" do
-    face = Puppet::String.new(:me,'0.0.1')
+    face = Puppet::String.new(:me, '0.0.1')
     face.set_default_format :foo
     face.default_format.should == :foo
   end

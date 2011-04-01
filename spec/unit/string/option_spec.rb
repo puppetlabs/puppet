@@ -5,7 +5,7 @@ describe Puppet::String::Option do
 
   describe "#optparse_to_name" do
     ["", "=BAR", " BAR", "=bar", " bar"].each do |postfix|
-      { "--foo" => :foo, "-f" => :f,}.each do |base, expect|
+      { "--foo" => :foo, "-f" => :f }.each do |base, expect|
         input = base + postfix
         it "should map #{input.inspect} to #{expect.inspect}" do
           option = Puppet::String::Option.new(string, input)

@@ -83,7 +83,7 @@ class Puppet::Application::String < Puppet::Application
   def actions(indirection)
     return [] unless string = Puppet::String[indirection, '0.0.1']
     string.load_actions
-    return string.actions.sort { |a,b| a.to_s <=> b.to_s }
+    return string.actions.sort { |a, b| a.to_s <=> b.to_s }
   end
 
   def load_applications
