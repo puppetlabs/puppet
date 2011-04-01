@@ -26,7 +26,7 @@ describe Puppet::Application::IndirectionBase do
     # entire indirection stack would cause us more grief. --daniel 2011-03-31
     terminus = mock("test indirection terminus")
     Puppet::Indirector::Indirection.expects(:instance).
-      with(:testindirection).returns()
+      with(:testindirection).twice.returns()
 
     subject.command_line.
       instance_variable_set('@args', %w{--terminus foo save})

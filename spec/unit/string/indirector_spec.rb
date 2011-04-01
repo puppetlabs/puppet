@@ -4,12 +4,13 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/string/indirector'
 
 describe Puppet::String::Indirector do
-  before do
-    @instance = Puppet::String::Indirector.new(:test, '0.0.1')
-
-    @indirection = stub 'indirection', :name => :stub_indirection
-
-    @instance.stubs(:indirection).returns @indirection
+  subject do
+    instance = Puppet::String::Indirector.new(:test, '0.0.1')
+    indirection = stub('indirection',
+                       :name => :stub_indirection,
+                       :reset_terminus_class => nil)
+    instance.stubs(:indirection).returns indirection
+    instance
   end
 
   it "should be able to return a list of indirections" do
@@ -34,8 +35,8 @@ describe Puppet::String::Indirector do
     end
 
     it "should call the indirection method when the '#{method}' action is invoked" do
-      @instance.indirection.expects(method).with(:test, "myargs", {})
-      @instance.send(method, :test, "myargs")
+      subject.indirection.expects(method).with(:test, "myargs")
+      subject.send(method, :test, "myargs")
     end
   end
 

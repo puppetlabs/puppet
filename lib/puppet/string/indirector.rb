@@ -2,7 +2,6 @@ require 'puppet'
 require 'puppet/string'
 
 class Puppet::String::Indirector < Puppet::String
-  warn "REVISIT: Need to redefine this to take arguments again, eh."
   option "--terminus TERMINUS" do
     desc "REVISIT: You can select a terminus, which has some bigger effect
 that we should describe in this file somehow."
@@ -14,6 +13,21 @@ that we should describe in this file somehow."
 
   def self.terminus_classes(indirection)
     Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
+  end
+
+  def call_indirection_method(method, *args)
+    options = args.pop
+    options.has_key?(:terminus) and set_terminus(options[:terminus])
+
+    begin
+      result = indirection.__send__(method, *args)
+    rescue => detail
+      puts detail.backtrace if Puppet[:trace]
+      raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
+    end
+
+    indirection.reset_terminus_class
+    return result
   end
 
   action :destroy do
@@ -35,11 +49,16 @@ that we should describe in this file somehow."
   # Print the configuration for the current terminus class
   action :info do
     invoke do |*args|
+      options = args.pop
+      options.has_key?(:terminus) and set_terminus(options[:terminus])
+
       if t = indirection.terminus_class
         puts "Run mode '#{Puppet.run_mode.name}': #{t}"
       else
         $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
       end
+
+      indirection.reset_terminus_class
     end
   end
 
@@ -71,16 +90,5 @@ that we should describe in this file somehow."
     rescue => detail
       raise "Could not set '#{indirection.name}' terminus to '#{from}' (#{detail}); valid terminus types are #{self.class.terminus_classes(indirection.name).join(", ") }"
     end
-  end
-
-  def call_indirection_method(method, *args)
-    begin
-      result = indirection.__send__(method, *args)
-    rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
-    end
-
-    result
   end
 end
