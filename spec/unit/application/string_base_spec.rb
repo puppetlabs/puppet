@@ -38,24 +38,32 @@ describe Puppet::Application::StringBase do
       app.command_line.stubs(:args).returns %w{}
     end
 
-    it "should set the string based on the type"
-    it "should set the format based on the string default"
-
     describe "parsing the command line" do
       before :all do
         Puppet::String[:basetest, '0.0.1'].action :foo do
           option "--foo"
-          invoke do |options|
-            options
-          end
+          invoke { |options| options }
         end
       end
 
-      it "should find the action" do
-        app.command_line.stubs(:args).returns %w{foo}
-        app.preinit
-        app.action.should be
-        app.action.name.should == :foo
+      context "with just an action" do
+        before :all do
+          app.command_line.stubs(:args).returns %w{foo}
+          app.preinit
+        end
+
+        it "should set the string based on the type" do
+          app.string.name.should == :basetest
+        end
+
+        it "should set the format based on the string default" do
+          app.format.should == :pson
+        end
+
+        it "should find the action" do
+          app.action.should be
+          app.action.name.should == :foo
+        end
       end
 
       it "should fail if no action is given" do

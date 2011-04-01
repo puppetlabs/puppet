@@ -41,13 +41,13 @@ describe Puppet::String::Indirector do
   end
 
   it "should be able to override its indirection name" do
-    @instance.set_indirection_name :foo
-    @instance.indirection_name.should == :foo
+    subject.set_indirection_name :foo
+    subject.indirection_name.should == :foo
   end
 
   it "should be able to set its terminus class" do
-    @instance.indirection.expects(:terminus_class=).with(:myterm)
-    @instance.set_terminus(:myterm)
+    subject.indirection.expects(:terminus_class=).with(:myterm)
+    subject.set_terminus(:myterm)
   end
 
   it "should define a class-level 'info' action" do
