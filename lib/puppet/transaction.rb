@@ -277,8 +277,39 @@ class Puppet::Transaction
     end
   end
 
+  # We want to monitor changes in the relationship graph of our
+  # catalog but this is complicated by the fact that the catalog
+  # both is_a graph and has_a graph, by the fact that changes to 
+  # the structure of the object can have adverse serialization
+  # effects, by threading issues, by order-of-initialization issues,
+  # etc.  
+  #
+  # Since the proper lifetime/scope of the monitoring is a transaction
+  # and the transaction is already commiting a mild law-of-demeter 
+  # transgression, we cut the Gordian knot here by simply wrapping the
+  # transaction's view of the resource graph to capture and maintain
+  # the information we need.  Nothing outside the transaction needs
+  # this information, and nothing outside the transaction can see it
+  # except via the Transaction#relationship_graph
+
+  class Relationship_graph_wrapper
+    def initialize(real_graph,transaction)
+      @real_graph = real_graph
+      @transaction = transaction
+    end
+    def method_missing(*args,&block)
+      @real_graph.send(*args,&block)
+    end
+    def add_vertex(v)
+      @real_graph.add_vertex(v)
+    end
+    def add_edge(f,t)
+      @real_graph.add_edge(f,t)
+    end
+  end
+
   def relationship_graph
-    catalog.relationship_graph
+    @relationship_graph ||= Relationship_graph_wrapper.new(catalog.relationship_graph,self)
   end
 
   def add_resource_status(status)
