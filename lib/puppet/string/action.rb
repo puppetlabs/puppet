@@ -52,10 +52,42 @@ class Puppet::String::Action
   # end
 
   def invoke=(block)
+    # We need to build an instance method as a wrapper, using normal code, to
+    # be able to expose argument defaulting between the caller and definer in
+    # the Ruby API.  An extra method is, sadly, required for Ruby 1.8 to work.
+    #
+    # In future this also gives us a place to hook in additional behaviour
+    # such as calling out to the action instance to validate and coerce
+    # parameters, which avoids any exciting context switching and all.
+    #
+    # Hopefully we can improve this when we finally shuffle off the last of
+    # Ruby 1.8 support, but that looks to be a few "enterprise" release eras
+    # away, so we are pretty stuck with this for now.
+    #
+    # Patches to make this work more nicely with Ruby 1.9 using runtime
+    # version checking and all are welcome, but they can't actually help if
+    # the results are not totally hidden away in here.
+    #
+    # Incidentally, we though about vendoring evil-ruby and actually adjusting
+    # the internal C structure implementation details under the hood to make
+    # this stuff work, because it would have been cleaner.  Which gives you an
+    # idea how motivated we were to make this cleaner.  Sorry. --daniel 2011-03-31
+
+    internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
+    file = __FILE__ + "+eval"
+    line = __LINE__ + 1
+    wrapper = "def #{@name}(*args, &block)
+                 args << {} unless args.last.is_a? Hash
+                 args << block if block_given?
+                 self.__send__(#{internal_name.inspect}, *args)
+               end"
+
     if @string.is_a?(Class)
-      @string.define_method(@name, &block)
+      @string.class_eval do eval wrapper, nil, file, line end
+      @string.define_method(internal_name, &block)
     else
-      @string.meta_def(@name, &block)
+      @string.instance_eval do eval wrapper, nil, file, line end
+      @string.meta_def(internal_name, &block)
     end
   end
 

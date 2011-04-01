@@ -75,7 +75,7 @@ that we should describe in this file somehow."
 
   def call_indirection_method(method, *args)
     begin
-      result = indirection.send(method, *args)
+      result = indirection.__send__(method, *args)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
