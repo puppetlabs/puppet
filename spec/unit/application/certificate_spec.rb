@@ -13,9 +13,4 @@ describe Puppet::Application::Certificate do
   it "should have a 'ca' option" do
     Puppet::Application::Certificate.new.should respond_to(:handle_ca_location)
   end
-
-  it "should set the CA location using the 'ca' option" do
-    Puppet::Application::Certificate.new.handle_ca_location("local")
-    Puppet::SSL::Host.indirection.terminus_class.should == :file
-  end
 end
