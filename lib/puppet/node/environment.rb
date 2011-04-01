@@ -79,7 +79,7 @@ class Puppet::Node::Environment
     # environment has changed do we delve deeper. 
     Thread.current[:known_resource_types] = nil if (krt = Thread.current[:known_resource_types]) && krt.environment != self
     Thread.current[:known_resource_types] ||= synchronize {
-      if @known_resource_types.nil? or @known_resource_types.stale?
+      if @known_resource_types.nil? or @known_resource_types.require_reparse?
         @known_resource_types = Puppet::Resource::TypeCollection.new(self)
         @known_resource_types.perform_initial_import
       end
