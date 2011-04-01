@@ -101,7 +101,8 @@ describe Puppet::String::StringCollection do
     end
 
     it "should require the string by version if the 'current' version isn't it" do
-      subject.expects(:require).with('puppet/string/bar').raises(LoadError)
+      subject.expects(:require).with('puppet/string/bar').
+        raises(LoadError, 'no such file to load -- puppet/string/bar')
       subject.expects(:require).with do |file|
         @strings[:bar]['0.0.1'] = true
         file == 'bar@0.0.1/puppet/string/bar'
@@ -115,7 +116,9 @@ describe Puppet::String::StringCollection do
     end
 
     it "should return false if there is a LoadError requiring the string" do
-      subject.stubs(:require).raises(LoadError)
+      subject.stubs(:require).
+        raises(LoadError, 'no such file to load -- puppet/string/bar').then.
+        raises(LoadError, 'no such file to load -- bar@0.0.1/puppet/string/bar')
       subject.string?("bar", '0.0.1').should == false
     end
 
@@ -138,7 +141,8 @@ describe Puppet::String::StringCollection do
     end
 
     it "should not register the version loaded from `{name}@{version}` as `:current`" do
-      subject.expects(:require).with('puppet/string/huzzah').raises(LoadError)
+      subject.expects(:require).with('puppet/string/huzzah').
+        raises(LoadError, 'no such file to load -- puppet/string/huzzah')
       subject.expects(:require).with do |file|
         @strings[:huzzah]['0.0.1'] = true
         file == 'huzzah@0.0.1/puppet/string/huzzah'
