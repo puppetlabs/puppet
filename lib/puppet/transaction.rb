@@ -80,16 +80,12 @@ class Puppet::Transaction
     if skip?(resource)
       resource_status(resource).skipped = true
     else
-      eval_children_and_apply_resource(resource, ancestor)
+      resource_status(resource).scheduled = true
+      apply(resource, ancestor)
     end
 
     # Check to see if there are any events queued for this resource
     event_manager.process_events(resource)
-  end
-
-  def eval_children_and_apply_resource(resource, ancestor = nil)
-    resource_status(resource).scheduled = true
-    apply(resource, ancestor)
   end
 
   # This method does all the actual work of running a transaction.  It
@@ -105,18 +101,12 @@ class Puppet::Transaction
 
     begin
       relationship_graph.traverse do |resource|
-        next if stop_processing?
         if resource.is_a?(Puppet::Type::Component)
           Puppet.warning "Somehow left a component in the relationship graph"
-          next
+        else
+          seconds = thinmark { eval_resource(resource) }
+          resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
         end
-        ret = nil
-        seconds = thinmark do
-          ret = eval_resource(resource)
-        end
-
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
-        ret
       end
     ensure
       # And then close the transaction log.
@@ -280,13 +270,14 @@ class Puppet::Transaction
   # except via the Transaction#relationship_graph
 
   class Relationship_graph_wrapper
-    attr_reader :real_graph,:transaction,:ready,:generated,:done
+    attr_reader :real_graph,:transaction,:ready,:generated,:done,:unguessable_deterministic_key
     def initialize(real_graph,transaction)
       @real_graph = real_graph
       @transaction = transaction
       @ready = {}
       @generated = {}
       @done = {}
+      @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.title}") }
       vertices.each { |v| check_if_now_ready(v) }
     end
     def method_missing(*args,&block)
@@ -301,10 +292,12 @@ class Puppet::Transaction
     end
     def check_if_now_ready(r)
       ready[r] = true if direct_dependencies_of(r).all? { |r2| done[r2] }
-    end  
+    end
+    def next_resource
+      ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
+    end
     def traverse(&block)
-      unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.title}") }
-      while r = ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
+      while (r = next_resource) && !transaction.stop_processing?
         if !generated[r]
           transaction.eval_generate(r)
           generated[r] = true
