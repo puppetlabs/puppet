@@ -4,6 +4,7 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/application'
+require 'sha1'
 
 class Puppet::Transaction
   require 'puppet/transaction/event'
@@ -103,7 +104,7 @@ class Puppet::Transaction
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
     begin
-      visit_resources do |resource|
+      relationship_graph.traverse do |resource|
         next if stop_processing?
         if resource.is_a?(Puppet::Type::Component)
           Puppet.warning "Somehow left a component in the relationship graph"
@@ -262,20 +263,6 @@ class Puppet::Transaction
     prefetch
   end
 
-  def visit_resources(&block)
-    eval_generated = {}
-    while r = relationship_graph.topsort.find { |r| !applied_resources.include?(r) }
-      #p relationship_graph.topsort.collect { |r0| r0.title[/(-0.*)/,1] }
-      if !eval_generated[r]
-        #p [:generate,r.title]
-        eval_generate(r)
-        eval_generated[r] = true
-      else
-        #p [:apply,r.title]
-        yield r
-      end
-    end
-  end
 
   # We want to monitor changes in the relationship graph of our
   # catalog but this is complicated by the fact that the catalog
@@ -293,18 +280,41 @@ class Puppet::Transaction
   # except via the Transaction#relationship_graph
 
   class Relationship_graph_wrapper
+    attr_reader :real_graph,:transaction,:ready,:generated,:done
     def initialize(real_graph,transaction)
       @real_graph = real_graph
       @transaction = transaction
+      @ready = {}
+      @generated = {}
+      @done = {}
+      vertices.each { |v| check_if_now_ready(v) }
     end
     def method_missing(*args,&block)
-      @real_graph.send(*args,&block)
+      real_graph.send(*args,&block)
     end
     def add_vertex(v)
-      @real_graph.add_vertex(v)
+      real_graph.add_vertex(v)
     end
     def add_edge(f,t)
-      @real_graph.add_edge(f,t)
+      ready.delete(t)
+      real_graph.add_edge(f,t)
+    end
+    def check_if_now_ready(r)
+      ready[r] = true if direct_dependencies_of(r).all? { |r2| done[r2] }
+    end  
+    def traverse(&block)
+      unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.title}") }
+      while r = ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
+        if !generated[r]
+          transaction.eval_generate(r)
+          generated[r] = true
+        else
+          ready.delete(r)
+          yield r
+          done[r] = true
+          direct_dependents_of(r).each { |v| check_if_now_ready(v) }
+        end
+      end
     end
   end
 

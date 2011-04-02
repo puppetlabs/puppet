@@ -390,9 +390,11 @@ describe Puppet::Transaction do
     describe 'within an evaluate call' do
       before do
         @resource = stub 'resource', :ref => 'some_ref'
+        @relationship_graph = stub 'relationship_graph'
         @catalog.add_resource @resource
         @transaction.stubs(:prepare)
-        @transaction.stubs(:visit_resources).yields(@resource)
+        @transaction.stubs(:relationship_graph).returns @relationship_graph
+        @relationship_graph.stubs(:traverse).yields @resource
       end
 
       it 'should stop processing if :stop_processing? is true' do

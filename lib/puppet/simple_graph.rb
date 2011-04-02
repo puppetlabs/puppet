@@ -453,6 +453,10 @@ class Puppet::SimpleGraph
     result
   end
 
+  def direct_dependents_of(v)
+    @out_from[v].keys 
+  end
+
   def upstream_from_vertex(v)
     return @upstream_from[v] if @upstream_from[v]
     result = @upstream_from[v] = {}
@@ -461,6 +465,10 @@ class Puppet::SimpleGraph
       result.update(upstream_from_vertex(node))
     end
     result
+  end
+
+  def direct_dependencies_of(v)
+    @in_to[v].keys 
   end
 
   # LAK:FIXME This is just a paste of the GRATR code with slight modifications.
