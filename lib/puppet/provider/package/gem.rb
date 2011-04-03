@@ -1,5 +1,6 @@
 require 'puppet/provider/package'
 require 'uri'
+require 'pp'
 
 # Ruby gems support.
 Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package do
@@ -22,7 +23,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     end
 
     if name = hash[:justme]
-      command << name
+      command << name + "$"
     end
 
     begin
@@ -94,7 +95,7 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         command << "--source" << "#{source}" << resource[:name]
       end
     else
-      command << resource[:name]
+      command << "--no-rdoc" << "--no-ri" << resource[:name]
     end
 
     output = execute(command)
