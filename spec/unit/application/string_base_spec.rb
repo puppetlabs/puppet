@@ -115,6 +115,14 @@ describe Puppet::Application::StringBase do
     end
   end
 
+  describe "#setup" do
+    it "should remove the action name from the arguments" do
+      app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+      app.preinit and app.parse_options and app.setup
+      app.arguments.should == [{ :mandatory => "--bar" }]
+    end
+  end
+
   describe "#main" do
     before do
       app.string    = Puppet::String[:basetest, '0.0.1']
