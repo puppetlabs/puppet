@@ -104,16 +104,18 @@ class Puppet::Application::StringBase < Puppet::Application
   def setup
     Puppet::Util::Log.newdestination :console
 
-    # We copy all of the app options to the end of the call; This allows each
-    # action to read in the options.  This replaces the older model where we
-    # would invoke the action with options set as global state in the
-    # interface object.  --daniel 2011-03-28
-    #
+    @arguments = command_line.args
+
     # Note: because of our definition of where the action is set, we end up
     # with it *always* being the first word of the remaining set of command
     # line arguments.  So, strip that off when we construct the arguments to
     # pass down to the string action. --daniel 2011-04-04
-    @arguments = command_line.args[1, -1] || []
+    @arguments.delete_at(0)
+
+    # We copy all of the app options to the end of the call; This allows each
+    # action to read in the options.  This replaces the older model where we
+    # would invoke the action with options set as global state in the
+    # interface object.  --daniel 2011-03-28
     @arguments << options
   end
 

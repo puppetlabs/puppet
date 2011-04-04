@@ -127,6 +127,12 @@ describe Puppet::Application::StringBase do
       app.preinit and app.parse_options and app.setup
       app.arguments.should == [{ :mandatory => "--bar" }]
     end
+
+    it "should pass positional arguments" do
+      app.command_line.stubs(:args).returns %w{--mandatory --bar foo bar baz quux}
+      app.preinit and app.parse_options and app.setup
+      app.arguments.should == ['bar', 'baz', 'quux', { :mandatory => "--bar" }]
+    end
   end
 
   describe "#main" do
