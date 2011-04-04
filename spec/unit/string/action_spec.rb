@@ -121,6 +121,22 @@ describe Puppet::String::Action do
         string.get_action(:foo).options.should =~ [:bar, :quux]
       end
 
+      it "should fetch options that the string inherited" do
+        parent = Class.new(Puppet::String)
+        parent.option "--foo"
+        child = parent.new(:inherited_options, '0.0.1') do
+          option "--bar"
+          action :action do option "--baz" end
+        end
+
+        action = child.get_action(:action)
+        action.should be
+
+        [:baz, :bar, :foo].each do |name|
+          action.get_option(name).should be_an_instance_of Puppet::String::Option
+        end
+      end
+
       it "should get an action option when asked" do
         string.get_action(:foo).get_option(:bar).
           should be_an_instance_of Puppet::String::Option
