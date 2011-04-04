@@ -71,7 +71,11 @@ class Puppet::Application::StringBase < Puppet::Application
         option = @string.options.find { |a| item =~ /^-+#{a}\b/ }
         if option then
           option = @string.get_option(option)
-          if option.takes_argument? then
+          # If we have an inline argument, just carry on.  We don't need to
+          # care about optional vs mandatory in that case because we do a real
+          # parse later, and that will totally take care of raising the error
+          # when we get there. --daniel 2011-04-04
+          if option.takes_argument? and !item.index('=') then
             index += 1 unless
               (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
           end

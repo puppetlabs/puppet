@@ -112,6 +112,12 @@ describe Puppet::Application::StringBase do
         app.action.name.should == :foo
         app.options.should == { :mandatory => "--bar" }
       end
+
+      it "should not skip when --foo=bar is given" do
+        app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
+        expect { app.preinit }.
+          should raise_error ArgumentError, /Unknown option "--bar"/
+      end
     end
   end
 
