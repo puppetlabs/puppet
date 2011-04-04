@@ -65,16 +65,15 @@ class Puppet::Application::StringBase < Puppet::Application
     # non-option word to use as the action.
     action = nil
     index  = -1
-    while (index += 1) < command_line.args.length do
+    until @action or (index += 1) >= command_line.args.length do
       item = command_line.args[index]
       if item =~ /^-/ then
         option = @string.options.find { |a| item =~ /^-+#{a}\b/ }
         if option then
-          if @string.get_option(option).takes_argument? then
-            # We don't validate if the argument is optional or mandatory,
-            # because it doesn't matter here.  We just assume that errors will
-            # be caught later. --daniel 2011-03-30
-            index += 1 unless command_line.args[index + 1] =~ /^-/
+          option = @string.get_option(option)
+          if option.takes_argument? then
+            index += 1 unless
+              (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
           end
         else
           raise ArgumentError, "Unknown option #{item.sub(/=.*$/, '').inspect}"

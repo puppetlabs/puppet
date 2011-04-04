@@ -5,7 +5,6 @@ require 'puppet/application/string_base'
 require 'tmpdir'
 
 class Puppet::Application::StringBase::Basetest < Puppet::Application::StringBase
-  option("--[no-]foo")
 end
 
 describe Puppet::Application::StringBase do
@@ -17,9 +16,15 @@ describe Puppet::Application::StringBase do
       f.puts "Puppet::String.define(:basetest, '0.0.1')"
     end
 
-    Puppet::String[:basetest, '0.0.1'].action :foo do
-      option "--foo"
-      invoke { |*args| args.length }
+    Puppet::String.define(:basetest, '0.0.1') do
+      option("--[no-]boolean")
+      option("--mandatory MANDATORY")
+      option("--optional [OPTIONAL]")
+
+      action :foo do
+        option("--action")
+        invoke { |*args| args.length }
+      end
     end
   end
 
@@ -69,15 +74,15 @@ describe Puppet::Application::StringBase do
       end
 
       it "should report a sensible error when options with = fail" do
-        app.command_line.stubs(:args).returns %w{--foo=bar foo}
+        app.command_line.stubs(:args).returns %w{--action=bar foo}
         expect { app.preinit }.
-          should raise_error ArgumentError, /Unknown option "--foo"/
+          should raise_error ArgumentError, /Unknown option "--action"/
       end
 
       it "should fail if an action option is before the action" do
-        app.command_line.stubs(:args).returns %w{--foo foo}
+        app.command_line.stubs(:args).returns %w{--action foo}
         expect { app.preinit }.
-          should raise_error ArgumentError, /Unknown option "--foo"/
+          should raise_error ArgumentError, /Unknown option "--action"/
       end
 
       it "should fail if an unknown option is before the action" do
@@ -92,6 +97,20 @@ describe Puppet::Application::StringBase do
         app.action.name.should == :foo
         app.string.should_not be_option :bar
         app.action.should_not be_option :bar
+      end
+
+      it "should accept --bar as an argument to a mandatory option after action" do
+        app.command_line.stubs(:args).returns %w{foo --mandatory --bar}
+        app.preinit and app.parse_options
+        app.action.name.should == :foo
+        app.options.should == { :mandatory => "--bar" }
+      end
+
+      it "should accept --bar as an argument to a mandatory option before action" do
+        app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+        app.preinit and app.parse_options
+        app.action.name.should == :foo
+        app.options.should == { :mandatory => "--bar" }
       end
     end
   end

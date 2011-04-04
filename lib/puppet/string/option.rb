@@ -63,7 +63,8 @@ class Puppet::String::Option
   end
 
   # to_s and optparse_to_name are roughly mirrored, because they are used to
-  # transform strings to name symbols, and vice-versa.
+  # transform strings to name symbols, and vice-versa.  This isn't a full
+  # bidirectional transformation though.
   def to_s
     @name.to_s.tr('_', '-')
   end
@@ -72,7 +73,7 @@ class Puppet::String::Option
     unless found = declaration.match(/^-+([^= ]+)/) or found.length != 1 then
       raise ArgumentError, "Can't find a name in the declaration #{declaration.inspect}"
     end
-    name = found.captures.first.tr('-', '_')
+    name = found.captures.first.sub('[no-]', '').tr('-', '_')
     raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/
     name.to_sym
   end
