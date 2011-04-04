@@ -2,7 +2,7 @@ require 'puppet/string/indirector'
 
 Puppet::String::Indirector.define(:catalog, '0.0.1') do
   action(:apply) do
-    invoke do |catalog|
+    invoke do |catalog, options|
       report = Puppet::Transaction::Report.new("apply")
       report.configuration_version = catalog.version
 
@@ -23,7 +23,7 @@ Puppet::String::Indirector.define(:catalog, '0.0.1') do
   end
 
   action(:download) do
-    invoke do |certname,facts|
+    invoke do |certname, facts, options|
       Puppet::Resource::Catalog.terminus_class = :rest
       facts_to_upload = {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(facts.render(:b64_zlib_yaml))}
       catalog = nil

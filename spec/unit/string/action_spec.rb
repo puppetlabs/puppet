@@ -5,20 +5,11 @@ require 'puppet/string/action'
 
 describe Puppet::String::Action do
   describe "when validating the action name" do
-    it "should require a name" do
-      lambda { Puppet::String::Action.new(nil,nil) }.should raise_error("'' is an invalid action name")
-    end
-
-    it "should not allow empty names" do
-      lambda { Puppet::String::Action.new(nil,'') }.should raise_error("'' is an invalid action name")
-    end
-
-    it "should not allow names with whitespace" do
-      lambda { Puppet::String::Action.new(nil,'foo bar') }.should raise_error("'foo bar' is an invalid action name")
-    end
-
-    it "should not allow names beginning with dashes" do
-      lambda { Puppet::String::Action.new(nil,'-foobar') }.should raise_error("'-foobar' is an invalid action name")
+    [nil, '', 'foo bar', '-foobar'].each do |input|
+      it "should treat #{input.inspect} as an invalid name" do
+        expect { Puppet::String::Action.new(nil, input) }.
+          should raise_error(/is an invalid action name/)
+      end
     end
   end
 
@@ -70,6 +61,97 @@ describe Puppet::String::Action do
       string.quux.should == "qux told me the value of foo in baz is '25'"
       string.baz.should  == "the value of foo in baz is '25'"
       string.qux.should  == "the value of foo in baz is '25'"
+    end
+
+    context "when calling the Ruby API" do
+      let :string do
+        Puppet::String.new(:ruby_api, '1.0.0') do
+          action :bar do
+            invoke do |options|
+              options
+            end
+          end
+        end
+      end
+
+      it "should work when no options are supplied" do
+        options = string.bar
+        options.should == {}
+      end
+
+      it "should work when options are supplied" do
+        options = string.bar :bar => "beer"
+        options.should == { :bar => "beer" }
+      end
+    end
+  end
+
+  describe "with action-level options" do
+    it "should support options with an empty block" do
+      string = Puppet::String.new(:action_level_options, '0.0.1') do
+        action :foo do
+          option "--bar" do
+            # this line left deliberately blank
+          end
+        end
+      end
+
+      string.should_not be_option :bar
+      string.get_action(:foo).should be_option :bar
+    end
+
+    it "should return only action level options when there are no string options" do
+      string = Puppet::String.new(:action_level_options, '0.0.1') do
+        action :foo do option "--bar" end
+      end
+
+      string.get_action(:foo).options.should =~ [:bar]
+    end
+
+    describe "with both string and action options" do
+      let :string do
+        Puppet::String.new(:action_level_options, '0.0.1') do
+          action :foo do option "--bar" end
+          action :baz do option "--bim" end
+          option "--quux"
+        end
+      end
+
+      it "should return combined string and action options" do
+        string.get_action(:foo).options.should =~ [:bar, :quux]
+      end
+
+      it "should get an action option when asked" do
+        string.get_action(:foo).get_option(:bar).
+          should be_an_instance_of Puppet::String::Option
+      end
+
+      it "should get a string option when asked" do
+        string.get_action(:foo).get_option(:quux).
+          should be_an_instance_of Puppet::String::Option
+      end
+
+      it "should return options only for this action" do
+        string.get_action(:baz).options.should =~ [:bim, :quux]
+      end
+    end
+
+    it_should_behave_like "things that declare options" do
+      def add_options_to(&block)
+        string = Puppet::String.new(:with_options, '0.0.1') do
+          action(:foo, &block)
+        end
+        string.get_action(:foo)
+      end
+    end
+
+    it "should fail when a string option duplicates an action option" do
+      expect {
+        Puppet::String.new(:action_level_options, '0.0.1') do
+          option "--foo"
+          action :bar do option "--foo" end
+        end
+      }.should raise_error ArgumentError, /Option foo conflicts with existing option foo/i
     end
   end
 end

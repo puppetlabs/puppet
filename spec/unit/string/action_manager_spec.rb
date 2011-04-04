@@ -213,4 +213,21 @@ describe Puppet::String::ActionManager do
       @instance.foo.should == "something"
     end
   end
+
+  describe "#get_action" do
+    let :parent_class do
+      parent_class = Class.new(Puppet::String)
+      parent_class.action(:foo) {}
+      parent_class
+    end
+
+    it "should check that we can find inherited actions when we are a class" do
+      Class.new(parent_class).get_action(:foo).name.should == :foo
+    end
+
+    it "should check that we can find inherited actions when we are an instance" do
+      instance = parent_class.new(:foo, '0.0.0')
+      instance.get_action(:foo).name.should == :foo
+    end
+  end
 end

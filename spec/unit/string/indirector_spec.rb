@@ -4,12 +4,13 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/string/indirector'
 
 describe Puppet::String::Indirector do
-  before do
-    @instance = Puppet::String::Indirector.new(:test, '0.0.1')
-
-    @indirection = stub 'indirection', :name => :stub_indirection
-
-    @instance.stubs(:indirection).returns @indirection
+  subject do
+    instance = Puppet::String::Indirector.new(:test, '0.0.1')
+    indirection = stub('indirection',
+                       :name => :stub_indirection,
+                       :reset_terminus_class => nil)
+    instance.stubs(:indirection).returns indirection
+    instance
   end
 
   it "should be able to return a list of indirections" do
@@ -33,20 +34,20 @@ describe Puppet::String::Indirector do
       Puppet::String::Indirector.should be_action(method)
     end
 
-    it "should just call the indirection method when the '#{method}' action is invoked" do
-      @instance.indirection.expects(method).with(:test, "myargs")
-      @instance.send(method, :test, "myargs")
+    it "should call the indirection method when the '#{method}' action is invoked" do
+      subject.indirection.expects(method).with(:test, "myargs")
+      subject.send(method, :test, "myargs")
     end
   end
 
   it "should be able to override its indirection name" do
-    @instance.set_indirection_name :foo
-    @instance.indirection_name.should == :foo
+    subject.set_indirection_name :foo
+    subject.indirection_name.should == :foo
   end
 
   it "should be able to set its terminus class" do
-    @instance.indirection.expects(:terminus_class=).with(:myterm)
-    @instance.set_terminus(:myterm)
+    subject.indirection.expects(:terminus_class=).with(:myterm)
+    subject.set_terminus(:myterm)
   end
 
   it "should define a class-level 'info' action" do

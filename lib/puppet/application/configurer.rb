@@ -5,8 +5,8 @@ class Puppet::Application::Configurer < Puppet::Application
   should_parse_config
   run_mode :agent
 
-  option("--debug","-d")
-  option("--verbose","-v")
+  option("--debug", "-d")
+  option("--verbose", "-v")
 
   def setup
     if options[:debug] or options[:verbose]

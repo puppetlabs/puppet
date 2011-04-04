@@ -5,10 +5,8 @@ class Puppet::String::ActionBuilder
   attr_reader :action
 
   def self.build(string, name, &block)
-    name = name.to_s
-    raise "Action '#{name}' must specify a block" unless block
-    builder = new(string, name, &block)
-    builder.action
+    raise "Action #{name.inspect} must specify a block" unless block
+    new(string, name, &block).action
   end
 
   def initialize(string, name, &block)
@@ -23,5 +21,10 @@ class Puppet::String::ActionBuilder
   def invoke(&block)
     raise "Invoke called on an ActionBuilder with no corresponding Action" unless @action
     @action.invoke = block
+  end
+
+  def option(*declaration, &block)
+    option = Puppet::String::OptionBuilder.build(@action, *declaration, &block)
+    @action.add_option(option)
   end
 end
