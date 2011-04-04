@@ -4,7 +4,7 @@ require 'puppet/ssl/host'
 Puppet::String::Indirector.define(:certificate, '0.0.1') do
 
   action :generate do
-    invoke do |name, options|
+    when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
       host.generate_certificate_request
       host.certificate_request.class.indirection.save(host.certificate_request)
@@ -12,7 +12,7 @@ Puppet::String::Indirector.define(:certificate, '0.0.1') do
   end
 
   action :list do
-    invoke do |options|
+    when_invoked do |options|
       Puppet::SSL::Host.indirection.search("*", {
         :for => :certificate_request,
       }).map { |h| h.inspect }
@@ -20,7 +20,7 @@ Puppet::String::Indirector.define(:certificate, '0.0.1') do
   end
 
   action :sign do
-    invoke do |name, options|
+    when_invoked do |name, options|
       Puppet::SSL::Host.indirection.save(Puppet::SSL::Host.new(name))
     end
   end

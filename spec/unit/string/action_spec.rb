@@ -17,11 +17,11 @@ describe Puppet::String::Action do
     it "should be able to call other actions on the same object" do
       string = Puppet::String.new(:my_string, '0.0.1') do
         action(:foo) do
-          invoke { 25 }
+          when_invoked { 25 }
         end
 
         action(:bar) do
-          invoke { "the value of foo is '#{foo}'" }
+          when_invoked { "the value of foo is '#{foo}'" }
         end
       end
       string.foo.should == 25
@@ -35,25 +35,25 @@ describe Puppet::String::Action do
     it "should be able to call other actions on the same object when defined on a class" do
       class Puppet::String::MyStringBaseClass < Puppet::String
         action(:foo) do
-          invoke { 25 }
+          when_invoked { 25 }
         end
 
         action(:bar) do
-          invoke { "the value of foo is '#{foo}'" }
+          when_invoked { "the value of foo is '#{foo}'" }
         end
 
         action(:quux) do
-          invoke { "qux told me #{qux}" }
+          when_invoked { "qux told me #{qux}" }
         end
       end
 
       string = Puppet::String::MyStringBaseClass.new(:my_inherited_string, '0.0.1') do
         action(:baz) do
-          invoke { "the value of foo in baz is '#{foo}'" }
+          when_invoked { "the value of foo in baz is '#{foo}'" }
         end
 
         action(:qux) do
-          invoke { baz }
+          when_invoked { baz }
         end
       end
       string.foo.should  == 25
@@ -67,7 +67,7 @@ describe Puppet::String::Action do
       let :string do
         Puppet::String.new(:ruby_api, '1.0.0') do
           action :bar do
-            invoke do |options|
+            when_invoked do |options|
               options
             end
           end

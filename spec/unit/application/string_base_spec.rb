@@ -23,7 +23,7 @@ describe Puppet::Application::StringBase do
 
       action :foo do
         option("--action")
-        invoke { |*args| args.length }
+        when_invoked { |*args| args.length }
       end
     end
   end

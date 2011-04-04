@@ -51,7 +51,7 @@ class Puppet::String::Action
   #   @string.send(name, *args, &block)
   # end
 
-  def invoke=(block)
+  def when_invoked=(block)
     # We need to build an instance method as a wrapper, using normal code, to
     # be able to expose argument defaulting between the caller and definer in
     # the Ruby API.  An extra method is, sadly, required for Ruby 1.8 to work.

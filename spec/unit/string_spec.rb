@@ -43,7 +43,7 @@ describe Puppet::String do
     it "should instance-eval any provided block" do
       face = Puppet::String.new(:string_test_block, '0.0.1') do
         action(:something) do
-          invoke { "foo" }
+          when_invoked { "foo" }
         end
       end
 

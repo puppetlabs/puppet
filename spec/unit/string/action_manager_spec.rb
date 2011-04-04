@@ -15,7 +15,7 @@ describe Puppet::String::ActionManager do
   describe "when included in a class" do
     it "should be able to define an action" do
       subject.action(:foo) do
-        invoke { "something "}
+        when_invoked { "something "}
       end
     end
 
@@ -27,10 +27,10 @@ describe Puppet::String::ActionManager do
 
     it "should be able to list defined actions" do
       subject.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       subject.action(:bar) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       subject.actions.should =~ [:foo, :bar]
@@ -43,7 +43,7 @@ describe Puppet::String::ActionManager do
 
     it "should list both script and normal actions" do
       subject.action :foo do
-        invoke do "foo" end
+        when_invoked do "foo" end
       end
       subject.script :bar do "a bar is where beer is found" end
 
@@ -52,7 +52,7 @@ describe Puppet::String::ActionManager do
 
     it "should be able to indicate when an action is defined" do
       subject.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       subject.should be_action(:foo)
@@ -65,7 +65,7 @@ describe Puppet::String::ActionManager do
 
     it "should correctly treat action names specified as strings" do
       subject.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       subject.should be_action("foo")
@@ -77,16 +77,16 @@ describe Puppet::String::ActionManager do
 
     it "should be able to define an action" do
       subject.action(:foo) do
-        invoke { "something "}
+        when_invoked { "something "}
       end
     end
 
     it "should be able to list defined actions" do
       subject.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       subject.action(:bar) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       subject.actions.should include(:bar)
@@ -110,36 +110,36 @@ describe Puppet::String::ActionManager do
 
     it "should be able to define an action at the class level" do
       @klass.action(:foo) do
-        invoke { "something "}
+        when_invoked { "something "}
       end
     end
 
     it "should create an instance method when an action is defined at the class level" do
       @klass.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.foo.should == "something"
     end
 
     it "should be able to define an action at the instance level" do
       @instance.action(:foo) do
-        invoke { "something "}
+        when_invoked { "something "}
       end
     end
 
     it "should create an instance method when an action is defined at the instance level" do
       @instance.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.foo.should == "something"
     end
 
     it "should be able to list actions defined at the class level" do
       @klass.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @klass.action(:bar) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       @klass.actions.should include(:bar)
@@ -148,10 +148,10 @@ describe Puppet::String::ActionManager do
 
     it "should be able to list actions defined at the instance level" do
       @instance.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.action(:bar) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       @instance.actions.should include(:bar)
@@ -160,10 +160,10 @@ describe Puppet::String::ActionManager do
 
     it "should be able to list actions defined at both instance and class level" do
       @klass.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.action(:bar) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
 
       @instance.actions.should include(:bar)
@@ -172,14 +172,14 @@ describe Puppet::String::ActionManager do
 
     it "should be able to indicate when an action is defined at the class level" do
       @klass.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.should be_action(:foo)
     end
 
     it "should be able to indicate when an action is defined at the instance level" do
       @klass.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.should be_action(:foo)
     end
@@ -189,13 +189,13 @@ describe Puppet::String::ActionManager do
       @instance = @subclass.new
 
       @klass.action(:parent) do
-        invoke { "a" }
+        when_invoked { "a" }
       end
       @subclass.action(:sub) do
-        invoke { "a" }
+        when_invoked { "a" }
       end
       @instance.action(:instance) do
-        invoke { "a" }
+        when_invoked { "a" }
       end
 
       @instance.should be_action(:parent)
@@ -208,7 +208,7 @@ describe Puppet::String::ActionManager do
       @instance = @subclass.new
 
       @klass.action(:foo) do
-        invoke { "something" }
+        when_invoked { "something" }
       end
       @instance.foo.should == "something"
     end
