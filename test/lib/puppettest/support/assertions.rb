@@ -46,7 +46,12 @@ module PuppetTest
     config = resources2catalog(*resources)
     transaction = Puppet::Transaction.new(config)
 
-    run_events(:evaluate, transaction, events, msg)
+    transaction.evaluate
+    newevents = transaction.events.
+      reject { |e| ['failure', 'audit'].include? e.status }.
+      collect { |e| e.name }
+
+    assert_equal(events, newevents, "Incorrect evaluate #{msg} events")
 
     transaction
   end

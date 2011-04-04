@@ -82,25 +82,6 @@ module PuppetTest::Support::Utils
     @mygroup = group
   end
 
-  def run_events(type, trans, events, msg)
-    case type
-    when :evaluate, :rollback # things are hunky-dory
-    else
-      raise Puppet::DevError, "Incorrect run_events type"
-    end
-
-    method = type
-
-    trans.send(method)
-    newevents = trans.events.reject { |e| ['failure', 'audit'].include? e.status }.collect { |e|
-      e.name
-    }
-
-    assert_equal(events, newevents, "Incorrect #{type} #{msg} events")
-
-    trans
-  end
-
   def fakefile(name)
     ary = [basedir, "test"]
     ary += name.split("/")

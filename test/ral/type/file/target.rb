@@ -24,12 +24,9 @@ class TestFileTarget < Test::Unit::TestCase
 
     file = nil
     assert_nothing_raised {
-
-            file = Puppet::Type.type(:file).new(
-                
+      file = Puppet::Type.type(:file).new(
         :title => "somethingelse",
         :ensure => path,
-        
         :path => link
       )
     }
@@ -102,12 +99,9 @@ class TestFileTarget < Test::Unit::TestCase
 
     link = nil
     assert_nothing_raised {
-
-            link = Puppet::Type.type(:file).new(
-                
+      link = Puppet::Type.type(:file).new(
         :ensure => source,
         :path => dest,
-        
         :recurse => true
       )
     }
@@ -140,11 +134,8 @@ class TestFileTarget < Test::Unit::TestCase
 
     link = nil
     assert_nothing_raised {
-
-            link = Puppet::Type.type(:file).new(
-                
+      link = Puppet::Type.type(:file).new(
         :path => dest,
-        
         :ensure => "source"
       )
     }
@@ -161,20 +152,16 @@ class TestFileTarget < Test::Unit::TestCase
 
     resources = []
 
-          resources << Puppet::Type.type(:exec).new(
-                
+    resources << Puppet::Type.type(:exec).new(
       :command => "mkdir #{source}; touch #{source}/file",
       :title => "yay",
-        
       :path => ENV["PATH"]
     )
 
-          resources << Puppet::Type.type(:file).new(
-                
+    resources << Puppet::Type.type(:file).new(
       :ensure => source,
       :path => dest,
       :recurse => true,
-        
       :require => resources[0]
     )
 

@@ -223,7 +223,7 @@ describe Puppet::Transaction do
       resource.expects(:finish).never
       resource.expects(:info) # log that it's skipped
 
-      @transaction.generate_additional_resources(generator).should be_empty
+      @transaction.generate_additional_resources(generator)
     end
 
     it "should copy all tags to the newly generated resources" do

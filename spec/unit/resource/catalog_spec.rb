@@ -734,7 +734,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should copy component relationships to all contained resources" do
-      @relationships.edge?(@one, @two).should be_true
+      @relationships.path_between(@one, @two).should be
     end
 
     it "should add automatic relationships to the relationship graph" do

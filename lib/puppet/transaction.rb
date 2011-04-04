@@ -65,13 +65,13 @@ class Puppet::Transaction
 
   # Copy an important relationships from the parent to the newly-generated
   # child resource.
-  def make_parent_child_relationship(parent, child)
+  def add_conditional_directed_dependency(parent, child, label=nil)
     relationship_graph.add_vertex(child)
     edge = parent.depthfirst? ? [child, parent] : [parent, child]
     if relationship_graph.edge?(*edge.reverse)
       parent.debug "Skipping automatic relationship to #{child}"
     else
-      relationship_graph.add_edge(*edge)
+      relationship_graph.add_edge(edge[0],edge[1],label)
     end
   end
 
@@ -141,66 +141,65 @@ class Puppet::Transaction
   end
 
   def eval_generate(resource)
-    return [] unless resource.respond_to?(:eval_generate)
+    raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
-      made = resource.eval_generate
+      made = resource.eval_generate.uniq.reverse
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
+      return
     end
-    parents = [resource]
-    [made].flatten.compact.uniq.each do |res|
+    made.each do |res|
       begin
         res.tag(*resource.tags)
         @catalog.add_resource(res)
         res.finish
-        make_parent_child_relationship(parents.reverse.find { |r| r.name == res.name[0,r.name.length]}, res)
-        parents << res
       rescue Puppet::Resource::Catalog::DuplicateResourceError
         res.info "Duplicate generated resource; skipping"
       end
     end
+    sentinal = Puppet::Type::Whit.new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
+      add_conditional_directed_dependency(sentinal, e.target, e.label)
+      relationship_graph.remove_edge! e
+    }
+    default_label = Puppet::Resource::Catalog::Default_label
+    made.each do |res|
+      add_conditional_directed_dependency(made.find { |r| r != res && r.name == res.name[0,r.name.length]} || resource, res)
+      add_conditional_directed_dependency(res, sentinal, default_label)
+    end
+    add_conditional_directed_dependency(resource, sentinal, default_label)
   end
 
   # A general method for recursively generating new resources from a
   # resource.
   def generate_additional_resources(resource)
-    return [] unless resource.respond_to?(:generate)
+    return unless resource.respond_to?(:generate)
     begin
       made = resource.generate
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'generate': #{detail}"
     end
-    return [] unless made
+    return unless made
     made = [made] unless made.is_a?(Array)
-    made.uniq.find_all do |res|
+    made.uniq.each do |res|
       begin
         res.tag(*resource.tags)
         @catalog.add_resource(res)
         res.finish
-        make_parent_child_relationship(resource, res)
+        add_conditional_directed_dependency(resource, res)
         generate_additional_resources(res)
-        true
       rescue Puppet::Resource::Catalog::DuplicateResourceError
         res.info "Duplicate generated resource; skipping"
-        false
       end
     end
   end
 
   # Collect any dynamically generated resources.  This method is called
   # before the transaction starts.
-  def generate
-    list = @catalog.vertices
-    newlist = []
-    while ! list.empty?
-      list.each do |resource|
-        newlist += generate_additional_resources(resource)
-      end
-      list = newlist
-      newlist = []
-    end
+  def xgenerate
+    @catalog.vertices.each { |resource| generate_additional_resources(resource) }
   end
 
   # Should we ignore tags?
@@ -246,7 +245,7 @@ class Puppet::Transaction
   # Prepare to evaluate the resources in a transaction.
   def prepare
     # Now add any dynamically generated resources
-    generate
+    xgenerate
 
     # Then prefetch.  It's important that we generate and then prefetch,
     # so that any generated resources also get prefetched.
@@ -285,10 +284,11 @@ class Puppet::Transaction
     end
     def add_vertex(v)
       real_graph.add_vertex(v)
+      check_if_now_ready(v) # ?????????????????????????????????????????
     end
-    def add_edge(f,t)
+    def add_edge(f,t,label=nil)
       ready.delete(t)
-      real_graph.add_edge(f,t)
+      real_graph.add_edge(f,t,label)
     end
     def check_if_now_ready(r)
       ready[r] = true if direct_dependencies_of(r).all? { |r2| done[r2] }
@@ -297,8 +297,9 @@ class Puppet::Transaction
       ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
     end
     def traverse(&block)
+      real_graph.report_cycles_in_graph
       while (r = next_resource) && !transaction.stop_processing?
-        if !generated[r]
+        if !generated[r] && r.respond_to?(:eval_generate)
           transaction.eval_generate(r)
           generated[r] = true
         else

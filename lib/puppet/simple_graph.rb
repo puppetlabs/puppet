@@ -19,7 +19,7 @@ class Puppet::SimpleGraph
   #
   # This class is intended to be used with DAGs.  However, if the
   # graph has a cycle, it will not cause non-termination of any of the
-  # algorithms.  The topsort method detects and reports cycles.
+  # algorithms.  
   #
   def initialize
     @in_to = {}
@@ -221,6 +221,7 @@ class Puppet::SimpleGraph
   def report_cycles_in_graph
     cycles = find_cycles_in_graph
     n = cycles.length           # where is "pluralize"? --daniel 2011-01-22
+    return if n == 0
     s = n == 1 ? '' : 's'
 
     message = "Found #{n} dependency cycle#{s}:\n"
@@ -260,36 +261,6 @@ class Puppet::SimpleGraph
     filename = File.join(Puppet[:graphdir], "cycles.dot")
     File.open(filename, "w") { |f| f.puts graph }
     return filename
-  end
-
-  # Provide a topological sort.
-  def topsort
-    degree = {}
-    zeros = []
-    result = []
-
-    # Collect each of our vertices, with the number of in-edges each has.
-    vertices.each do |v|
-      edges = @in_to[v]
-      zeros << v if edges.empty?
-      degree[v] = edges.length
-    end
-
-    # Iterate over each 0-degree vertex, decrementing the degree of
-    # each of its out-edges.
-    while v = zeros.pop
-      result << v
-      @out_from[v].each { |v2,es|
-        zeros << v2 if (degree[v2] -= 1) == 0
-      }
-    end
-
-    # If we have any vertices left with non-zero in-degrees, then we've found a cycle.
-    if cycles = degree.values.reject { |ns| ns == 0  } and cycles.length > 0
-      report_cycles_in_graph
-    end
-
-    result
   end
 
   # Add a new vertex to the graph.
@@ -368,52 +339,6 @@ class Puppet::SimpleGraph
     (options[:type] == :edges) ? ns.values.flatten : ns.keys
   end
 
-  # Take container information from another graph and use it
-  # to replace any container vertices with their respective leaves.
-  # This creates direct relationships where there were previously
-  # indirect relationships through the containers.
-  def splice!(other, type)
-    # We have to get the container list via a topological sort on the
-    # configuration graph, because otherwise containers that contain
-    # other containers will add those containers back into the
-    # graph.  We could get a similar affect by only setting relationships
-    # to container leaves, but that would result in many more
-    # relationships.
-    stage_class = Puppet::Type.type(:stage)
-    whit_class  = Puppet::Type.type(:whit)
-    containers = other.topsort.find_all { |v| (v.is_a?(type) or v.is_a?(stage_class)) and vertex?(v) }
-    containers.each do |container|
-      # Get the list of children from the other graph.
-      children = other.adjacent(container, :direction => :out)
-
-      # MQR TODO: Luke suggests that it should be possible to refactor the system so that
-      #           container nodes are retained, thus obviating the need for the whit.
-      children = [whit_class.new(:name => container.name, :catalog => other)] if children.empty?
-
-      # First create new edges for each of the :in edges
-      [:in, :out].each do |dir|
-        edges = adjacent(container, :direction => dir, :type => :edges)
-        edges.each do |edge|
-          children.each do |child|
-            if dir == :in
-              s = edge.source
-              t = child
-            else
-              s = child
-              t = edge.target
-            end
-
-            add_edge(s, t, edge.label)
-          end
-
-          # Now get rid of the edge, so remove_vertex! works correctly.
-          remove_edge!(edge)
-        end
-      end
-      remove_vertex!(container)
-    end
-  end
-
   # Just walk the tree and pass each edge.
   def walk(source, direction)
     # Use an iterative, breadth-first traversal of the graph. One could do
@@ -454,7 +379,7 @@ class Puppet::SimpleGraph
   end
 
   def direct_dependents_of(v)
-    @out_from[v].keys 
+    (@out_from[v] || {}).keys 
   end
 
   def upstream_from_vertex(v)
@@ -468,7 +393,33 @@ class Puppet::SimpleGraph
   end
 
   def direct_dependencies_of(v)
-    @in_to[v].keys 
+    (@in_to[v] || {}).keys 
+  end
+
+  # Return an array of the edge-sets between a series of n+1 vertices (f=v0,v1,v2...t=vn)
+  #   connecting the two given verticies.  The ith edge set is an array containing all the
+  #   edges between v(i) and v(i+1); these are (by definition) never empty.
+  #
+  #     * if f == t, the list is empty
+  #     * if they are adjacent the result is an array consisting of
+  #       a single array (the edges from f to t)
+  #     * and so on by induction on a vertex m between them
+  #     * if there is no path from f to t, the result is nil
+  #
+  # This implementation is not particularly efficient; it's used in testing where clarity
+  #   is more important than last-mile efficiency. 
+  #
+  def path_between(f,t)
+    if f==t
+      []
+    elsif direct_dependents_of(f).include?(t)
+      [edges_between(f,t)]
+    elsif dependents(f).include?(t)
+      m = (dependents(f) & direct_dependencies_of(t)).first
+      path_between(f,m) + path_between(m,t)
+    else
+      nil
+    end
   end
 
   # LAK:FIXME This is just a paste of the GRATR code with slight modifications.
