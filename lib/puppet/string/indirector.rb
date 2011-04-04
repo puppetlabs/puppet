@@ -31,24 +31,24 @@ that we should describe in this file somehow."
   end
 
   action :destroy do
-    invoke { |*args| call_indirection_method(:destroy, *args) }
+    when_invoked { |*args| call_indirection_method(:destroy, *args) }
   end
 
   action :find do
-    invoke { |*args| call_indirection_method(:find, *args) }
+    when_invoked { |*args| call_indirection_method(:find, *args) }
   end
 
   action :save do
-    invoke { |*args| call_indirection_method(:save, *args) }
+    when_invoked { |*args| call_indirection_method(:save, *args) }
   end
 
   action :search do
-    invoke { |*args| call_indirection_method(:search, *args) }
+    when_invoked { |*args| call_indirection_method(:search, *args) }
   end
 
   # Print the configuration for the current terminus class
   action :info do
-    invoke do |*args|
+    when_invoked do |*args|
       options = args.pop
       options.has_key?(:terminus) and set_terminus(options[:terminus])
 

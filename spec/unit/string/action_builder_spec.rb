@@ -15,7 +15,7 @@ describe Puppet::String::ActionBuilder do
     it "should define a method on the string which invokes the action" do
       string = Puppet::String.new(:action_builder_test_string, '0.0.1')
       action = Puppet::String::ActionBuilder.build(string, :foo) do
-        invoke do
+        when_invoked do
           "invoked the method"
         end
       end

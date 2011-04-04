@@ -9,6 +9,7 @@ class Puppet::String::ActionBuilder
     new(string, name, &block).action
   end
 
+  private
   def initialize(string, name, &block)
     @string = string
     @action = Puppet::String::Action.new(string, name)
@@ -18,9 +19,9 @@ class Puppet::String::ActionBuilder
   # Ideally the method we're defining here would be added to the action, and a
   # method on the string would defer to it, but we can't get scope correct,
   # so we stick with this. --daniel 2011-03-24
-  def invoke(&block)
-    raise "Invoke called on an ActionBuilder with no corresponding Action" unless @action
-    @action.invoke = block
+  def when_invoked(&block)
+    raise "when_invoked on an ActionBuilder with no corresponding Action" unless @action
+    @action.when_invoked = block
   end
 
   def option(*declaration, &block)

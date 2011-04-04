@@ -15,7 +15,7 @@ module Puppet::String::ActionManager
   def script(name, &block)
     @actions ||= {}
     raise "Action #{name} already defined for #{self}" if action?(name)
-    @actions[name] = Puppet::String::Action.new(self, name, :invoke => block)
+    @actions[name] = Puppet::String::Action.new(self, name, :when_invoked => block)
   end
 
   def actions

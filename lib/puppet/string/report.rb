@@ -2,7 +2,7 @@ require 'puppet/string/indirector'
 
 Puppet::String::Indirector.define(:report, '0.0.1') do
   action(:submit) do
-    invoke do |report, options|
+    when_invoked do |report, options|
       begin
         Puppet::Transaction::Report.terminus_class = :rest
         report.save

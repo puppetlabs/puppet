@@ -6,7 +6,7 @@ Puppet::String::Indirector.define(:facts, '0.0.1') do
 
   # Upload our facts to the server
   action(:upload) do
-    invoke do |options|
+    when_invoked do |options|
       Puppet::Node::Facts.indirection.terminus_class = :facter
       facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
       Puppet::Node::Facts.indirection.terminus_class = :rest
