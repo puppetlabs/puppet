@@ -1,6 +1,5 @@
 require 'puppet/provider/package'
 require 'uri'
-require 'pp'
 
 # Ruby gems support.
 Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package do
