@@ -21,7 +21,9 @@ Puppet::String::Indirector.define(:certificate, '0.0.1') do
 
   action :sign do
     when_invoked do |name, options|
-      Puppet::SSL::Host.indirection.save(Puppet::SSL::Host.new(name))
+      host = Puppet::SSL::Host.new(name)
+      host.desired_state = 'signed'
+      Puppet::SSL::Host.indirection.save(host)
     end
   end
 
