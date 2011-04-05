@@ -1,3 +1,4 @@
+require 'puppet/indirector'
 require 'puppet/ssl'
 require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
@@ -15,10 +16,16 @@ class Puppet::SSL::Host
   CertificateRequest = Puppet::SSL::CertificateRequest
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
+  extend Puppet::Indirector
+  indirects :certificate_status, :terminus_class => :file
+
   attr_reader :name
   attr_accessor :ca
 
   attr_writer :key, :certificate, :certificate_request
+
+  # This accessor is used in instances for indirector requests to hold desired state
+  attr_accessor :desired_state
 
   class << self
     include Puppet::Util::Cacher
@@ -46,6 +53,13 @@ class Puppet::SSL::Host
     Certificate.indirection.terminus_class = terminus
     CertificateRequest.indirection.terminus_class = terminus
     CertificateRevocationList.indirection.terminus_class = terminus
+
+    host_map = {:ca => :file, :file => nil, :rest => :rest}
+    if term = host_map[terminus]
+      self.indirection.terminus_class = term
+    else
+      self.indirection.reset_terminus_class
+    end
 
     if cache
       # This is weird; we don't actually cache our keys, we
@@ -85,30 +99,34 @@ class Puppet::SSL::Host
 
   # Specify how we expect to interact with our certificate authority.
   def self.ca_location=(mode)
-    raise ArgumentError, "CA Mode can only be #{CA_MODES.collect { |m| m.to_s }.join(", ")}" unless CA_MODES.include?(mode)
+    modes = CA_MODES.collect { |m, vals| m.to_s }.join(", ")
+    raise ArgumentError, "CA Mode can only be one of: #{modes}" unless CA_MODES.include?(mode)
 
     @ca_location = mode
 
     configure_indirection(*CA_MODES[@ca_location])
   end
 
-  # Remove all traces of a given host
+  # Puppet::SSL::Host is actually indirected now so the original implementation
+  # has been moved into the certificate_status indirector.  This method is in-use
+  # in `puppet cert -c <certname>`.
   def self.destroy(name)
-    [Key, Certificate, CertificateRequest].collect { |part| part.indirection.destroy(name) }.any? { |x| x }
+    indirection.destroy(name)
   end
 
-  # Search for more than one host, optionally only specifying
-  # an interest in hosts with a given file type.
-  # This just allows our non-indirected class to have one of
-  # indirection methods.
-  def self.search(options = {})
-    classlist = [options[:for] || [Key, CertificateRequest, Certificate]].flatten
-
-    # Collect the results from each class, flatten them, collect all of the names, make the name list unique,
-    # then create a Host instance for each one.
-    classlist.collect { |klass| klass.indirection.search }.flatten.collect { |r| r.name }.uniq.collect do |name|
-      new(name)
+  def self.from_pson(pson)
+    instance = new(pson["name"])
+    if pson["desired_state"]
+      instance.desired_state = pson["desired_state"]
     end
+    instance
+  end
+
+  # Puppet::SSL::Host is actually indirected now so the original implementation
+  # has been moved into the certificate_status indirector.  This method does not
+  # appear to be in use in `puppet cert -l`.
+  def self.search(options = {})
+    indirection.search("*", options)
   end
 
   # Is this a ca host, meaning that all of its files go in the CA location?
@@ -221,6 +239,24 @@ class Puppet::SSL::Host
     @ssl_store
   end
 
+  def to_pson(*args)
+    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    pson_hash = { :name  => name }
+
+    my_state = state
+
+    pson_hash[:state] = my_state
+    pson_hash[:desired_state] = desired_state if desired_state
+
+    if my_state == 'requested'
+      pson_hash[:fingerprint] = certificate_request.fingerprint
+    else
+      pson_hash[:fingerprint] = my_cert.fingerprint
+    end
+
+    pson_hash.to_pson(*args)
+  end
+
   # Attempt to retrieve a cert, if we don't already have one.
   def wait_for_cert(time)
     begin
@@ -255,6 +291,20 @@ class Puppet::SSL::Host
         puts detail.backtrace if Puppet[:trace]
         Puppet.err "Could not request certificate: #{detail}"
       end
+    end
+  end
+
+  def state
+    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    if certificate_request
+      return 'requested'
+    end
+
+    begin
+      Puppet::SSL::CertificateAuthority.new.verify(my_cert)
+      return 'signed'
+    rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError
+      return 'revoked'
     end
   end
 end
