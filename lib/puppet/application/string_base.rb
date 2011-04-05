@@ -68,7 +68,9 @@ class Puppet::Application::StringBase < Puppet::Application
     until @action or (index += 1) >= command_line.args.length do
       item = command_line.args[index]
       if item =~ /^-/ then
-        option = @string.options.find { |a| item =~ /^-+#{a}\b/ }
+        option = @string.options.find do |name|
+          item =~ /^-+#{name.to_s.gsub(/[-_]/, '[-_]')}(?:[ =].*)?$/
+        end
         if option then
           option = @string.get_option(option)
           # If we have an inline argument, just carry on.  We don't need to
@@ -78,6 +80,12 @@ class Puppet::Application::StringBase < Puppet::Application
           if option.takes_argument? and !item.index('=') then
             index += 1 unless
               (option.optional_argument? and command_line.args[index + 1] =~ /^-/)
+          end
+        elsif option = find_global_settings_argument(item) then
+          unless Puppet.settings.boolean? option.name then
+            # As far as I can tell, we treat non-bool options as always having
+            # a mandatory argument. --daniel 2011-04-05
+            index += 1          # ...so skip the argument.
           end
         else
           raise ArgumentError, "Unknown option #{item.sub(/=.*$/, '').inspect}"
@@ -99,6 +107,18 @@ class Puppet::Application::StringBase < Puppet::Application
       option = @action.get_option(option) # make it the object.
       self.class.option(*option.optparse) # ...and make the CLI parse it.
     end
+  end
+
+  def find_global_settings_argument(item)
+    Puppet.settings.each do |name, object|
+      object.optparse_args.each do |arg|
+        next unless arg =~ /^-/
+        # sadly, we have to emulate some of optparse here...
+        pattern = /^#{arg.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
+        pattern.match item and return object
+      end
+    end
+    return nil                  # nothing found.
   end
 
   def setup

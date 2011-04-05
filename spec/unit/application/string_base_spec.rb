@@ -42,6 +42,15 @@ describe Puppet::Application::StringBase do
     app
   end
 
+  describe "#find_global_settings_argument" do
+    it "should not match --ca to --ca-location" do
+      option = mock('ca option', :optparse_args => ["--ca"])
+      Puppet.settings.expects(:each).yields(:ca, option)
+
+      app.find_global_settings_argument("--ca-location").should be_nil
+    end
+  end
+
   describe "#preinit" do
     before :each do
       app.command_line.stubs(:args).returns %w{}
@@ -117,6 +126,26 @@ describe Puppet::Application::StringBase do
         app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
         expect { app.preinit }.
           should raise_error ArgumentError, /Unknown option "--bar"/
+      end
+
+      { "boolean options before" => %w{--trace foo},
+        "boolean options after"  => %w{foo --trace}
+      }.each do |name, args|
+        it "should accept global boolean settings #{name} the action" do
+          app.command_line.stubs(:args).returns args
+          app.preinit && app.parse_options
+          Puppet[:trace].should be_true
+        end
+      end
+
+      { "before" => %w{--syslogfacility user1 foo},
+        " after" => %w{foo --syslogfacility user1}
+      }.each do |name, args|
+        it "should accept global settings with arguments #{name} the action" do
+          app.command_line.stubs(:args).returns args
+          app.preinit && app.parse_options
+          Puppet[:syslogfacility].should == "user1"
+        end
       end
     end
   end
