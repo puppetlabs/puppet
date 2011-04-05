@@ -148,6 +148,9 @@ class Puppet::Application::Apply < Puppet::Application
       exit(1)
     end
 
+    # we want the last report to be persisted locally
+    Puppet::Transaction::Report.cache_class = :yaml
+
     if options[:debug]
       Puppet::Util::Log.level = :debug
     elsif options[:verbose]
