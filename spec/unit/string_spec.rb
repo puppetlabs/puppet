@@ -76,7 +76,6 @@ describe Puppet::String do
 
   it "should try to require strings that are not known" do
     Puppet::String::StringCollection.expects(:require).with "puppet/string/foo"
-    Puppet::String::StringCollection.expects(:require).with "foo@0.0.1/puppet/string/foo"
     Puppet::String[:foo, '0.0.1']
   end
 
