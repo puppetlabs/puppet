@@ -4,18 +4,22 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'tmpdir'
 
 describe Puppet::String::StringCollection do
-  before :all do
-    @strings = subject.instance_variable_get("@strings")
-    @strings_backup = @strings.dup
+  # To avoid cross-pollution we have to save and restore both the hash
+  # containing all the string data, and the array used by require.  Restoring
+  # both means that we don't leak side-effects across the code. --daniel 2011-04-06
+  before :each do
+    @original_strings  = subject.instance_variable_get("@strings").dup
+    @original_required = $".dup
+    subject.instance_variable_get("@strings").clear
   end
 
-  before { @strings.clear }
-
-  after :all do
-    subject.instance_variable_set("@strings", @strings_backup)
+  after :each do
+    subject.instance_variable_set("@strings", @original_strings)
+    $".clear ; @original_required.each do |item| $" << item end
   end
 
   describe "::strings" do
+    it "REVISIT: should have some tests here, if we describe it"
   end
 
   describe "::validate_version" do
@@ -66,7 +70,6 @@ describe Puppet::String::StringCollection do
 
     it "should attempt to load the string if it isn't found" do
       subject.expects(:require).with('puppet/string/bar')
-      subject.expects(:require).with('bar@0.0.1/puppet/string/bar')
       subject["bar", '0.0.1']
     end
 
@@ -88,7 +91,7 @@ describe Puppet::String::StringCollection do
 
     it "should attempt to require the string if it is not registered" do
       subject.expects(:require).with do |file|
-        @strings[:bar]['0.0.1'] = true
+        subject.instance_variable_get("@strings")[:bar]['0.0.1'] = true
         file == 'puppet/string/bar'
       end
       subject.string?("bar", '0.0.1').should == true
@@ -100,55 +103,48 @@ describe Puppet::String::StringCollection do
       end
     end
 
-    it "should require the string by version if the 'current' version isn't it" do
-      subject.expects(:require).with('puppet/string/bar').
-        raises(LoadError, 'no such file to load -- puppet/string/bar')
-      subject.expects(:require).with do |file|
-        @strings[:bar]['0.0.1'] = true
-        file == 'bar@0.0.1/puppet/string/bar'
-      end
-      subject.string?("bar", '0.0.1').should == true
-    end
-
     it "should return false if the string is not registered" do
       subject.stubs(:require).returns(true)
-      subject.string?("bar", '0.0.1').should == false
+      subject.string?("bar", '0.0.1').should be_false
     end
 
-    it "should return false if there is a LoadError requiring the string" do
+    it "should return false if the string file itself is missing" do
       subject.stubs(:require).
-        raises(LoadError, 'no such file to load -- puppet/string/bar').then.
-        raises(LoadError, 'no such file to load -- bar@0.0.1/puppet/string/bar')
-      subject.string?("bar", '0.0.1').should == false
+        raises(LoadError, 'no such file to load -- puppet/string/bar')
+      subject.string?("bar", '0.0.1').should be_false
     end
 
     it "should register the version loaded by `:current` as `:current`" do
       subject.expects(:require).with do |file|
-        @strings[:huzzah]['2.0.1'] = :huzzah_string
+        subject.instance_variable_get("@strings")[:huzzah]['2.0.1'] = :huzzah_string
         file == 'puppet/string/huzzah'
       end
       subject.string?("huzzah", :current)
-      @strings[:huzzah][:current].should == :huzzah_string
+      subject.instance_variable_get("@strings")[:huzzah][:current].should == :huzzah_string
     end
 
-    it "should register the version loaded from `puppet/string/{name}` as `:current`" do
-      subject.expects(:require).with do |file|
-        @strings[:huzzah]['2.0.1'] = :huzzah_string
-        file == 'puppet/string/huzzah'
+    context "with something on disk" do
+      before :each do
+        write_scratch_string :huzzah do |fh|
+          fh.puts <<EOF
+Puppet::String.define(:huzzah, '2.0.1') do
+  action :bar do "is where beer comes from" end
+end
+EOF
+        end
       end
-      subject.string?("huzzah", '2.0.1')
-      @strings[:huzzah][:current].should == :huzzah_string
-    end
 
-    it "should not register the version loaded from `{name}@{version}` as `:current`" do
-      subject.expects(:require).with('puppet/string/huzzah').
-        raises(LoadError, 'no such file to load -- puppet/string/huzzah')
-      subject.expects(:require).with do |file|
-        @strings[:huzzah]['0.0.1'] = true
-        file == 'huzzah@0.0.1/puppet/string/huzzah'
+      it "should register the version loaded from `puppet/string/{name}` as `:current`" do
+        subject.should be_string "huzzah", '2.0.1'
+        subject.should be_string "huzzah", :current
+        Puppet::String[:huzzah, '2.0.1'].should == Puppet::String[:huzzah, :current]
       end
-      subject.string?("huzzah", '0.0.1')
-      @strings[:huzzah].should_not have_key(:current)
+
+      it "should index :current when the code was pre-required" do
+        subject.instance_variable_get("@strings")[:huzzah].should_not be_key :current
+        require 'puppet/string/huzzah'
+        subject.string?(:huzzah, :current).should be_true
+      end
     end
   end
 
