@@ -26,7 +26,9 @@ RSpec.configure do |config|
     @logs = []
     Puppet::Util::Log.newdestination(@logs)
 
-    
+    @load_path_scratch_dir = Dir.mktmpdir
+    $LOAD_PATH.push @load_path_scratch_dir
+    FileUtils.mkdir_p(File.join @load_path_scratch_dir, 'puppet', 'string')
   end
 
   config.after :each do
@@ -34,6 +36,18 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
+
+    $LOAD_PATH.delete @load_path_scratch_dir
+    FileUtils.remove_entry_secure @load_path_scratch_dir
+  end
+
+  def write_scratch_string(name)
+    fail "you need to supply a block: do |fh| fh.puts 'content' end" unless block_given?
+    fail "name should be a symbol" unless name.is_a? Symbol
+    filename = File.join(@load_path_scratch_dir, 'puppet', 'string', "#{name}.rb")
+    File.open(filename, 'w') do |fh|
+      yield fh
+    end
   end
 end
 
