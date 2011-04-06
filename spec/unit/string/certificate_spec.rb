@@ -6,9 +6,9 @@ describe Puppet::String[:certificate, '0.0.1'] do
   end
 
   it "should set the ca location when invoked" do
-    pending "The string itself is broken in this release."
+    pending "#6983: This is broken in the actual string..."
     Puppet::SSL::Host.expects(:ca_location=).with(:foo)
-    Puppet::SSL::Host.indirection.expects(:search)
-    subject.list :ca_location => :foo
+    Puppet::SSL::Host.indirection.expects(:save)
+    subject.sign :ca_location => :foo
   end
 end

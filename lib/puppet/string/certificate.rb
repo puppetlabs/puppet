@@ -43,5 +43,4 @@ Puppet::String::Indirector.define(:certificate, '0.0.1') do
       Puppet::SSL::Host.indirection.save(host)
     end
   end
-
 end
