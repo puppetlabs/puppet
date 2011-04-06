@@ -114,7 +114,6 @@ describe Puppet::Transaction do
   describe "when evaluating a resource" do
     before do
       @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
-      @transaction.stubs(:eval_children_and_apply_resource)
       @transaction.stubs(:skip?).returns false
 
       @resource = Puppet::Type.type(:file).new :path => @basepath
@@ -122,12 +121,6 @@ describe Puppet::Transaction do
 
     it "should check whether the resource should be skipped" do
       @transaction.expects(:skip?).with(@resource).returns false
-
-      @transaction.eval_resource(@resource)
-    end
-
-    it "should eval and apply children" do
-      @transaction.expects(:eval_children_and_apply_resource).with(@resource, nil)
 
       @transaction.eval_resource(@resource)
     end
@@ -197,7 +190,7 @@ describe Puppet::Transaction do
       second.expects(:generate).returns [third]
       third.expects(:generate)
 
-      @transaction.generate_additional_resources(first, :generate)
+      @transaction.generate_additional_resources(first)
     end
 
     it "should finish all resources" do
@@ -213,7 +206,7 @@ describe Puppet::Transaction do
 
       resource.expects(:finish)
 
-      @transaction.generate_additional_resources(generator, :generate)
+      @transaction.generate_additional_resources(generator)
     end
 
     it "should skip generated resources that conflict with existing resources" do
@@ -230,7 +223,7 @@ describe Puppet::Transaction do
       resource.expects(:finish).never
       resource.expects(:info) # log that it's skipped
 
-      @transaction.generate_additional_resources(generator, :generate).should be_empty
+      @transaction.generate_additional_resources(generator)
     end
 
     it "should copy all tags to the newly generated resources" do
@@ -244,8 +237,10 @@ describe Puppet::Transaction do
       @catalog.stubs(:add_resource)
 
       child.expects(:tag).with("one", "two")
+      child.expects(:finish)
+      generator.expects(:depthfirst?)
 
-      @transaction.generate_additional_resources(generator, :generate)
+      @transaction.generate_additional_resources(generator)
     end
   end
 
@@ -387,20 +382,19 @@ describe Puppet::Transaction do
 
     describe 'within an evaluate call' do
       before do
-        @resource = stub 'resource', :ref => 'some_ref'
+        @resource = Puppet::Type.type(:notify).new :title => "foobar"
         @catalog.add_resource @resource
         @transaction.stubs(:prepare)
-        @transaction.sorted_resources = [@resource]
       end
 
       it 'should stop processing if :stop_processing? is true' do
-        @transaction.expects(:stop_processing?).returns(true)
+        @transaction.stubs(:stop_processing?).returns(true)
         @transaction.expects(:eval_resource).never
         @transaction.evaluate
       end
 
       it 'should continue processing if :stop_processing? is false' do
-        @transaction.expects(:stop_processing?).returns(false)
+        @transaction.stubs(:stop_processing?).returns(false)
         @transaction.expects(:eval_resource).returns(nil)
         @transaction.evaluate
       end

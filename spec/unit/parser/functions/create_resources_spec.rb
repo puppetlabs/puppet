@@ -51,11 +51,12 @@ describe 'function for dynamically creating resources' do
     it 'should be able to add edges' do
       @scope.function_create_resources(['notify', {'foo'=>{'require' => 'Notify[test]'}}])
       @scope.compiler.compile
-      edge = @scope.compiler.catalog.to_ral.relationship_graph.edges.detect do |edge|
-        edge.source.title == 'test'
-      end
-      edge.source.title.should == 'test'
-      edge.target.title.should == 'foo'
+      rg = @scope.compiler.catalog.to_ral.relationship_graph
+      test  = rg.vertices.find { |v| v.title == 'test' }
+      foo   = rg.vertices.find { |v| v.title == 'foo' }
+      test.should be
+      foo.should be
+      rg.path_between(test,foo).should be
     end
   end
   describe 'when dynamically creating resource types' do
@@ -93,11 +94,13 @@ notify{test:}
     it 'should be able to add edges' do
       @scope.function_create_resources(['foo', {'blah'=>{'one'=>'two', 'require' => 'Notify[test]'}}])
       @scope.compiler.compile
-      edge = @scope.compiler.catalog.to_ral.relationship_graph.edges.detect do |edge|
-        edge.source.title == 'test'
-      end
-      edge.source.title.should == 'test'
-      edge.target.title.should == 'blah'
+      rg = @scope.compiler.catalog.to_ral.relationship_graph
+      test = rg.vertices.find { |v| v.title == 'test' }
+      blah = rg.vertices.find { |v| v.title == 'blah' }
+      test.should be
+      blah.should be
+      # (Yoda speak like we do)
+      rg.path_between(test,blah).should be
       @compiler.catalog.resource(:notify, "blah")['message'].should == 'two'
     end
   end
@@ -123,13 +126,12 @@ notify{tester:}
     it 'should be able to add edges' do
       @scope.function_create_resources(['class', {'bar'=>{'one'=>'two', 'require' => 'Notify[tester]'}}])
       @scope.compiler.compile
-      edge = @scope.compiler.catalog.to_ral.relationship_graph.edges.detect do |e|
-        e.source.title == 'tester'
-      end
-      edge.source.title.should == 'tester'
-      edge.target.title.should == 'test'
-      #@compiler.catalog.resource(:notify, "blah")['message'].should == 'two'
+      rg = @scope.compiler.catalog.to_ral.relationship_graph
+      test   = rg.vertices.find { |v| v.title == 'test' }
+      tester = rg.vertices.find { |v| v.title == 'tester' }
+      test.should be
+      tester.should be
+      rg.path_between(tester,test).should be
     end
-
   end
 end

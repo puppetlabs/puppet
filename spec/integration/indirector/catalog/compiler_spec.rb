@@ -10,11 +10,8 @@ describe Puppet::Resource::Catalog::Compiler do
   before do
     Facter.stubs(:value).returns "something"
     @catalog = Puppet::Resource::Catalog.new
-
-    @one = Puppet::Resource.new(:file, "/one")
-
-    @two = Puppet::Resource.new(:file, "/two")
-    @catalog.add_resource(@one, @two)
+    @catalog.add_resource(@one = Puppet::Resource.new(:file, "/one"))
+    @catalog.add_resource(@two = Puppet::Resource.new(:file, "/two"))
   end
 
   after { Puppet.settings.clear }

@@ -598,14 +598,8 @@ class Type
   ###############################
   # Code related to the container behaviour.
 
-  # this is a retarded hack method to get around the difference between
-  # component children and file children
-  def self.depthfirst?
-    @depthfirst
-  end
-
   def depthfirst?
-    self.class.depthfirst?
+    false
   end
 
   # Remove an object.  The argument determines whether the object's

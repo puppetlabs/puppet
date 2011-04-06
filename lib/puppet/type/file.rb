@@ -313,8 +313,6 @@ Puppet::Type.newtype(:file) do
     return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
   end
 
-  @depthfirst = false
-
   # Determine the user to write files as.
   def asuser
     if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
@@ -474,8 +472,7 @@ Puppet::Type.newtype(:file) do
   # be used to copy remote files, manage local files, and/or make links
   # to map to another directory.
   def recurse
-    children = {}
-    children = recurse_local if self[:recurse] != :remote
+    children = (self[:recurse] == :remote) ? {} : recurse_local
 
     if self[:target]
       recurse_link(children)
@@ -512,11 +509,7 @@ Puppet::Type.newtype(:file) do
 
   # A simple method for determining whether we should be recursing.
   def recurse?
-    return false unless @parameters.include?(:recurse)
-
-    val = @parameters[:recurse].value
-
-    !!(val and (val == true or val == :remote))
+    self[:recurse] == true or self[:recurse] == :remote
   end
 
   # Recurse the target of the link.
@@ -588,13 +581,10 @@ Puppet::Type.newtype(:file) do
   end
 
   def perform_recursion(path)
-
     Puppet::FileServing::Metadata.indirection.search(
-
       path,
       :links => self[:links],
       :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
-
       :recurselimit => self[:recurselimit],
       :ignore => self[:ignore],
       :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none

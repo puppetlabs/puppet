@@ -14,11 +14,8 @@ class TestRelationships < Test::Unit::TestCase
 
   def newfile
     assert_nothing_raised {
-
-            return Puppet::Type.type(:file).new(
-                
+      return Puppet::Type.type(:file).new(
         :path => tempfile,
-        
         :check => [:mode, :owner, :group]
       )
     }
@@ -58,18 +55,14 @@ class TestRelationships < Test::Unit::TestCase
   def test_autorequire
     # We know that execs autorequire their cwd, so we'll use that
     path = tempfile
-
-
-          file = Puppet::Type.type(:file).new(
-        :title => "myfile", :path => path,
-        
-      :ensure => :directory)
-
-          exec = Puppet::Type.newexec(
-        :title => "myexec", :cwd => path,
-        
-      :command => "/bin/echo")
-
+    file = Puppet::Type.type(:file).new(
+      :title => "myfile", :path => path,
+      :ensure => :directory
+    )
+    exec = Puppet::Type.newexec(
+      :title => "myexec", :cwd => path,
+      :command => "/bin/echo"
+    )
     catalog = mk_catalog(file, exec)
     reqs = nil
     assert_nothing_raised do
@@ -82,7 +75,7 @@ class TestRelationships < Test::Unit::TestCase
     # Now make sure that these relationships are added to the
     # relationship graph
     catalog.apply do |trans|
-      assert(catalog.relationship_graph.edge?(file, exec), "autorequire edge was not created")
+      assert(catalog.relationship_graph.path_between(file, exec), "autorequire edge was not created")
     end
   end
 
