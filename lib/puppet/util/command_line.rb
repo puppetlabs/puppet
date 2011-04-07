@@ -4,8 +4,7 @@ module Puppet
   module Util
     class CommandLine
 
-            LegacyName = Hash.new{|h,k| k}.update(
-        {
+      LegacyName = Hash.new{|h,k| k}.update(
         'agent'      => 'puppetd',
         'cert'       => 'puppetca',
         'doc'        => 'puppetdoc',
@@ -15,9 +14,8 @@ module Puppet
         'queue'      => 'puppetqd',
         'resource'   => 'ralsh',
         'kick'       => 'puppetrun',
-        'master'     => 'puppetmasterd',
-        
-      })
+        'master'     => 'puppetmasterd'
+      )
 
       def initialize( zero = $0, argv = ARGV, stdin = STDIN )
         @zero  = zero
@@ -68,14 +66,14 @@ module Puppet
       end
 
       def execute_external_subcommand
-          external_command = "puppet-#{subcommand_name}"
+        external_command = "puppet-#{subcommand_name}"
 
-          require 'puppet/util'
-          path_to_subcommand = Puppet::Util.which( external_command )
-          return false unless path_to_subcommand
+        require 'puppet/util'
+        path_to_subcommand = Puppet::Util.which( external_command )
+        return false unless path_to_subcommand
 
-          system( path_to_subcommand, *args )
-          true
+        system( path_to_subcommand, *args )
+        true
       end
 
       def legacy_executable_name
