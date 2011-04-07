@@ -2,19 +2,19 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/application/indirection_base'
-require 'puppet/string/indirector'
+require 'puppet/faces/indirector'
 
 ########################################################################
 # Stub for testing; the names are critical, sadly. --daniel 2011-03-30
 class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBase
 end
 
-string = Puppet::String::Indirector.define(:testindirection, '0.0.1') do
+face = Puppet::Faces::Indirector.define(:testindirection, '0.0.1') do
 end
 # REVISIT: This horror is required because we don't allow anything to be
 # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29
-string.version = :current
-Puppet::String.register(string)
+face.version = :current
+Puppet::Faces.register(face)
 ########################################################################
 
 

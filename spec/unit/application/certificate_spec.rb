@@ -1,12 +1,9 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'puppet/application/certificate'
 
 describe Puppet::Application::Certificate do
   it "should have a 'ca-location' option" do
-    # REVISIT: This is delegated from the string, and we will have a test
-    # there, so is this actually a valuable test?
+    # REVISIT: This is delegated from the face, and we will have a test there,
+    # so is this actually a valuable test? --daniel 2011-04-07
     subject.command_line.stubs(:args).returns %w{list}
     subject.preinit
     subject.should respond_to(:handle_ca_location)
