@@ -77,6 +77,7 @@ describe Puppet::Interface do
   end
 
   it "should try to require faces that are not known" do
+    pending "mocking require causes random stack overflow"
     subject::FaceCollection.expects(:require).with "puppet/faces/foo"
     subject[:foo, '0.0.1']
   end
