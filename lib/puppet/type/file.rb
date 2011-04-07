@@ -122,7 +122,18 @@ Puppet::Type.newtype(:file) do
 
   newparam(:recurse) do
     desc "Whether and how deeply to do recursive
-      management."
+      management. Options are:
+
+      * `inf,true` --- Regular style recursion on both remote and local
+        directory structure.
+      * `remote` --- Descends recursively into the remote directory
+        but not the local directory. Allows copying of
+        a few files into a directory containing many
+        unmanaged files without scanning all the local files.
+      * `false` --- Default of no recursion.
+      * `[0-9]+` --- Same as true, but limit recursion. Warning: this syntax
+        has been deprecated in favor of the `recurselimit` attribute.
+    "
 
     newvalues(:true, :false, :inf, :remote, /^[0-9]+$/)
 
