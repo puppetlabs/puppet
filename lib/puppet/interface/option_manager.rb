@@ -1,10 +1,10 @@
-require 'puppet/faces/option_builder'
+require 'puppet/interface/option_builder'
 
-module Puppet::Faces::OptionManager
+module Puppet::Interface::OptionManager
   # Declare that this app can take a specific option, and provide
   # the code to do so.
   def option(*declaration, &block)
-    add_option Puppet::Faces::OptionBuilder.build(self, *declaration, &block)
+    add_option Puppet::Interface::OptionBuilder.build(self, *declaration, &block)
   end
 
   def add_option(option)

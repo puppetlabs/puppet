@@ -1,6 +1,6 @@
-require 'puppet/faces'
+require 'puppet/interface'
 
-class Puppet::Faces::Option
+class Puppet::Interface::Option
   attr_reader   :parent
   attr_reader   :name
   attr_reader   :aliases

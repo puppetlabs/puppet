@@ -1,6 +1,6 @@
-require 'puppet/faces/option'
+require 'puppet/interface/option'
 
-class Puppet::Faces::OptionBuilder
+class Puppet::Interface::OptionBuilder
   attr_reader :option
 
   def self.build(face, *declaration, &block)
@@ -10,13 +10,13 @@ class Puppet::Faces::OptionBuilder
   private
   def initialize(face, *declaration, &block)
     @face   = face
-    @option = Puppet::Faces::Option.new(face, *declaration)
+    @option = Puppet::Interface::Option.new(face, *declaration)
     block and instance_eval(&block)
     @option
   end
 
   # Metaprogram the simple DSL from the option class.
-  Puppet::Faces::Option.instance_methods.grep(/=$/).each do |setter|
+  Puppet::Interface::Option.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/      # special case, darn it...
 
     dsl = setter.sub(/=$/, '')

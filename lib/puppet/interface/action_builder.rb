@@ -1,7 +1,7 @@
-require 'puppet/faces'
-require 'puppet/faces/action'
+require 'puppet/interface'
+require 'puppet/interface/action'
 
-class Puppet::Faces::ActionBuilder
+class Puppet::Interface::ActionBuilder
   attr_reader :action
 
   def self.build(face, name, &block)
@@ -12,7 +12,7 @@ class Puppet::Faces::ActionBuilder
   private
   def initialize(face, name, &block)
     @face   = face
-    @action = Puppet::Faces::Action.new(face, name)
+    @action = Puppet::Interface::Action.new(face, name)
     instance_eval(&block)
   end
 
@@ -25,7 +25,7 @@ class Puppet::Faces::ActionBuilder
   end
 
   def option(*declaration, &block)
-    option = Puppet::Faces::OptionBuilder.build(@action, *declaration, &block)
+    option = Puppet::Interface::OptionBuilder.build(@action, *declaration, &block)
     @action.add_option(option)
   end
 end

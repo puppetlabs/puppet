@@ -1,12 +1,12 @@
-require 'puppet/faces/action_builder'
+require 'puppet/interface/action_builder'
 
-module Puppet::Faces::ActionManager
+module Puppet::Interface::ActionManager
   # Declare that this app can take a specific action, and provide
   # the code to do so.
   def action(name, &block)
     @actions ||= {}
     raise "Action #{name} already defined for #{self}" if action?(name)
-    action = Puppet::Faces::ActionBuilder.build(self, name, &block)
+    action = Puppet::Interface::ActionBuilder.build(self, name, &block)
     @actions[action.name] = action
   end
 
@@ -15,7 +15,7 @@ module Puppet::Faces::ActionManager
   def script(name, &block)
     @actions ||= {}
     raise "Action #{name} already defined for #{self}" if action?(name)
-    @actions[name] = Puppet::Faces::Action.new(self, name, :when_invoked => block)
+    @actions[name] = Puppet::Interface::Action.new(self, name, :when_invoked => block)
   end
 
   def actions

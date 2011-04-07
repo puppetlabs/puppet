@@ -3,12 +3,12 @@
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 require 'tmpdir'
 
-describe Puppet::Faces::FaceCollection do
+describe Puppet::Interface::FaceCollection do
   # To avoid cross-pollution we have to save and restore both the hash
-  # containing all the faces data, and the array used by require.  Restoring
+  # containing all the interface data, and the array used by require.  Restoring
   # both means that we don't leak side-effects across the code. --daniel 2011-04-06
   before :each do
-    @original_faces  = subject.instance_variable_get("@faces").dup
+    @original_faces    = subject.instance_variable_get("@faces").dup
     @original_required = $".dup
     subject.instance_variable_get("@faces").clear
   end

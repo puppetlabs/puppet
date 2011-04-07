@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-require 'puppet/faces'
+require 'puppet/interface'
 
-module Puppet::Faces::FaceCollection
+module Puppet::Interface::FaceCollection
   SEMVER_VERSION = /^(\d+)\.(\d+)\.(\d+)([A-Za-z][0-9A-Za-z-]*|)$/
 
   @faces = Hash.new { |hash, key| hash[key] = {} }

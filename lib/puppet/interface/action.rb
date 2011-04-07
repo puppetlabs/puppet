@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-require 'puppet/faces'
-require 'puppet/faces/option'
+require 'puppet/interface'
+require 'puppet/interface/option'
 
-class Puppet::Faces::Action
+class Puppet::Interface::Action
   def initialize(face, name, attrs = {})
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
     @face    = face
