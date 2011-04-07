@@ -135,33 +135,26 @@ describe Puppet::Transaction do
   it "should not let one failed refresh result in other refreshes failing" do
     path = tmpfile("path")
     newfile = tmpfile("file")
-
-          file = Puppet::Type.type(:file).new(
-                
+      file = Puppet::Type.type(:file).new(
       :path => path,
-        
       :ensure => "file"
     )
 
-          exec1 = Puppet::Type.type(:exec).new(
-                
+    exec1 = Puppet::Type.type(:exec).new(
       :path => ENV["PATH"],
       :command => "touch /this/cannot/possibly/exist",
       :logoutput => true,
       :refreshonly => true,
       :subscribe => file,
-        
       :title => "one"
     )
 
-          exec2 = Puppet::Type.type(:exec).new(
-                
+    exec2 = Puppet::Type.type(:exec).new(
       :path => ENV["PATH"],
       :command => "touch #{newfile}",
       :logoutput => true,
       :refreshonly => true,
       :subscribe => [file, exec1],
-        
       :title => "two"
     )
 
@@ -178,22 +171,18 @@ describe Puppet::Transaction do
 
     Puppet[:ignoreschedules] = false
 
-          file = Puppet::Type.type(:file).new(
-                
+    file = Puppet::Type.type(:file).new(
       :name => tmpfile("file"),
-        
       :ensure => "file",
       :backup => false
     )
 
     fname = tmpfile("exec")
 
-          exec = Puppet::Type.type(:exec).new(
-                
+    exec = Puppet::Type.type(:exec).new(
       :name => "touch #{fname}",
       :path => "/usr/bin:/bin",
       :schedule => "monthly",
-        
       :subscribe => Puppet::Resource.new("file", file.name)
     )
 
@@ -230,29 +219,21 @@ describe Puppet::Transaction do
 
   it "should not attempt to evaluate resources with failed dependencies" do
 
-          exec = Puppet::Type.type(:exec).new(
-                
+    exec = Puppet::Type.type(:exec).new(
       :command => "/bin/mkdir /this/path/cannot/possibly/exit",
-        
       :title => "mkdir"
     )
 
-
-          file1 = Puppet::Type.type(:file).new(
-                
+    file1 = Puppet::Type.type(:file).new(
       :title => "file1",
       :path => tmpfile("file1"),
-        
       :require => exec,
       :ensure => :file
     )
 
-
-          file2 = Puppet::Type.type(:file).new(
-                
+    file2 = Puppet::Type.type(:file).new(
       :title => "file2",
       :path => tmpfile("file2"),
-        
       :require => file1,
       :ensure => :file
     )
@@ -262,6 +243,32 @@ describe Puppet::Transaction do
 
     FileTest.should_not be_exists(file1[:path])
     FileTest.should_not be_exists(file2[:path])
+  end
+
+  it "should not trigger subscribing resources on failure" do
+    file1 = tmpfile("file1")
+    file2 = tmpfile("file2")
+
+    create_file1 = Puppet::Type.type(:exec).new(
+      :command => "/usr/bin/touch #{file1}"
+    )
+
+    exec = Puppet::Type.type(:exec).new(
+      :command => "/bin/mkdir /this/path/cannot/possibly/exit",
+      :title => "mkdir",
+      :notify => create_file1
+    )
+
+    create_file2 = Puppet::Type.type(:exec).new(
+      :command => "/usr/bin/touch #{file2}",
+      :subscribe => exec
+    )
+
+    catalog = mk_catalog(exec, create_file1, create_file2)
+    catalog.apply
+
+    FileTest.should_not be_exists(file1)
+    FileTest.should_not be_exists(file2)
   end
 
   # #801 -- resources only checked in noop should be rescheduled immediately.
