@@ -1,5 +1,6 @@
 class Puppet::Resource::TypeCollection
   attr_reader :environment
+  attr_accessor :parse_failed
 
   def clear
     @hostclasses.clear
@@ -118,6 +119,10 @@ class Puppet::Resource::TypeCollection
     define_method(m) do
       instance_variable_get("@#{m}").dup
     end
+  end
+
+  def require_reparse?
+    @parse_failed || stale?
   end
 
   def stale?

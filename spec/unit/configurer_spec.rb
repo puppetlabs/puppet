@@ -226,10 +226,12 @@ describe Puppet::Configurer, "when executing a catalog run" do
 end
 
 describe Puppet::Configurer, "when sending a report" do
+  include PuppetSpec::Files
+
   before do
     Puppet.settings.stubs(:use).returns(true)
     @configurer = Puppet::Configurer.new
-    @configurer.stubs(:save_last_run_summary)
+    Puppet[:lastrunfile] = tmpfile('last_run_file')
 
     @report = Puppet::Transaction::Report.new("apply")
     @trans = stub 'transaction'
@@ -277,10 +279,10 @@ describe Puppet::Configurer, "when sending a report" do
     @configurer.send_report(@report, nil)
   end
 
-  it "should not save the last run summary if reporting is disabled" do
+  it "should save the last run summary if reporting is disabled" do
     Puppet.settings[:report] = false
 
-    @configurer.expects(:save_last_run_summary).never
+    @configurer.expects(:save_last_run_summary).with(@report)
     @configurer.send_report(@report, nil)
   end
 

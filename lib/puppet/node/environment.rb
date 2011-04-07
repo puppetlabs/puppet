@@ -79,7 +79,7 @@ class Puppet::Node::Environment
     # environment has changed do we delve deeper.
     Thread.current[:known_resource_types] = nil if (krt = Thread.current[:known_resource_types]) && krt.environment != self
     Thread.current[:known_resource_types] ||= synchronize {
-      if @known_resource_types.nil? or @known_resource_types.stale?
+      if @known_resource_types.nil? or @known_resource_types.require_reparse?
         @known_resource_types = Puppet::Resource::TypeCollection.new(self)
         @known_resource_types.import_ast(perform_initial_import, '')
       end
@@ -160,6 +160,8 @@ class Puppet::Node::Environment
     end
     parser.parse
   rescue => detail
+    known_resource_types.parse_failed = true
+
     msg = "Could not parse for environment #{self}: #{detail}"
     error = Puppet::Error.new(msg)
     error.set_backtrace(detail.backtrace)

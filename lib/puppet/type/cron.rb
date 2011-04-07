@@ -226,7 +226,9 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:special) do
-    desc "Special schedules"
+    desc "A special value such as 'reboot' or 'annually'.
+       Only available on supported systems such as Vixie Cron.
+       Overrides more specific time of day/week settings."
 
     def specials
       %w{reboot yearly annually monthly weekly daily midnight hourly}

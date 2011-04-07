@@ -209,7 +209,9 @@ Puppet::Type.newtype(:tidy) do
     []
   end
 
-  @depthfirst = true
+  def depthfirst?
+    true
+  end
 
   def initialize(hash)
     super
@@ -235,10 +237,6 @@ Puppet::Type.newtype(:tidy) do
 
   # Hack things a bit so we only ever check the ensure property.
   def properties
-    []
-  end
-
-  def eval_generate
     []
   end
 

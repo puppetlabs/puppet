@@ -42,8 +42,18 @@ describe provider_class do
       @provider.install
     end
 
+    it "should specify that documentation should not be included" do
+      @provider.expects(:execute).with { |args| args[3] == "--no-rdoc" }.returns ""
+      @provider.install
+    end
+
+    it "should specify that RI should not be included" do
+      @provider.expects(:execute).with { |args| args[4] == "--no-ri" }.returns ""
+      @provider.install
+    end
+
     it "should specify the package name" do
-      @provider.expects(:execute).with { |args| args[3] == "myresource" }.returns ""
+      @provider.expects(:execute).with { |args| args[5] == "myresource" }.returns ""
       @provider.install
     end
 

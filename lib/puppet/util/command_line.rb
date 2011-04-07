@@ -1,9 +1,10 @@
+require "puppet/util/plugins"
+
 module Puppet
   module Util
     class CommandLine
 
-            LegacyName = Hash.new{|h,k| k}.update(
-        {
+      LegacyName = Hash.new{|h,k| k}.update(
         'agent'      => 'puppetd',
         'cert'       => 'puppetca',
         'doc'        => 'puppetdoc',
@@ -13,9 +14,8 @@ module Puppet
         'queue'      => 'puppetqd',
         'resource'   => 'ralsh',
         'kick'       => 'puppetrun',
-        'master'     => 'puppetmasterd',
-        
-      })
+        'master'     => 'puppetmasterd'
+      )
 
       def initialize( zero = $0, argv = ARGV, stdin = STDIN )
         @zero  = zero
@@ -23,6 +23,7 @@ module Puppet
         @stdin = stdin
 
         @subcommand_name, @args = subcommand_and_args( @zero, @argv, @stdin )
+        Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
       end
 
       attr :subcommand_name
@@ -56,21 +57,23 @@ module Puppet
           puts usage_message
         elsif available_subcommands.include?(subcommand_name) #subcommand
           require_application subcommand_name
-          Puppet::Application.find(subcommand_name).new(self).run
+          app = Puppet::Application.find(subcommand_name).new(self)
+          Puppet::Plugins.on_application_initialization(:appliation_object => self)
+          app.run
         else
           abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}" unless execute_external_subcommand
         end
       end
 
       def execute_external_subcommand
-          external_command = "puppet-#{subcommand_name}"
+        external_command = "puppet-#{subcommand_name}"
 
-          require 'puppet/util'
-          path_to_subcommand = Puppet::Util.which( external_command )
-          return false unless path_to_subcommand
+        require 'puppet/util'
+        path_to_subcommand = Puppet::Util.which( external_command )
+        return false unless path_to_subcommand
 
-          system( path_to_subcommand, *args )
-          true
+        system( path_to_subcommand, *args )
+        true
       end
 
       def legacy_executable_name

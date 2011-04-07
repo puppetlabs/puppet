@@ -1,6 +1,7 @@
 
 require 'etc'
 require 'facter'
+require 'puppet/property/keyvalue'
 
 module Puppet
   newtype(:group) do

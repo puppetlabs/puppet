@@ -80,8 +80,12 @@ def do_configs(configs, target, strip = 'conf/')
   Dir.mkdir(target) unless File.directory? target
   configs.each do |cf|
     ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
-    File.install(cf, ocf, 0644, true)
-  end
+    if $haveftools
+      File.install(cf, ocf, 0644, true)
+    else
+      FileUtils.install(cf, ocf, {:mode => 0644, :verbose => true})
+    end
+   end
 end
 
 def do_bins(bins, target, strip = 's?bin/')

@@ -31,7 +31,7 @@ class Puppet::Transaction::EventManager
   # Queue events for other resources to respond to.  All of these events have
   # to be from the same resource.
   def queue_events(resource, events)
-    @events += events
+    #@events += events
 
     # Do some basic normalization so we're not doing so many
     # graph queries for large sets of events.
@@ -47,12 +47,15 @@ class Puppet::Transaction::EventManager
       # Collect the targets of any subscriptions to those events.  We pass
       # the parent resource in so it will override the source in the events,
       # since eval_generated children can't have direct relationships.
+      received = (event.name != :restarted)
       relationship_graph.matching_edges(event, resource).each do |edge|
+        received ||= true unless edge.target.is_a?(Puppet::Type::Whit)
         next unless method = edge.callback
         next unless edge.target.respond_to?(method)
 
         queue_events_for_resource(resource, edge.target, method, list)
       end
+      @events << event if received
 
       queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? and ! resource.deleting?
     end

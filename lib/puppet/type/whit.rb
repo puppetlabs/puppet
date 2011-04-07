@@ -6,6 +6,12 @@ Puppet::Type.newtype(:whit) do
   end
 
   def to_s
-    "Class[#{name}]"
+    "(#{name})"
+  end
+
+  def refresh
+    # We don't do anything with them, but we need this to
+    #   show that we are "refresh aware" and not break the
+    #   chain of propogation.
   end
 end

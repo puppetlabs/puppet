@@ -173,9 +173,7 @@ class Puppet::Configurer
     report.finalize_report if trans
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    if Puppet[:report]
-      Puppet::Transaction::Report.indirection.save(report)
-    end
+    Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err "Could not send report: #{detail}"
