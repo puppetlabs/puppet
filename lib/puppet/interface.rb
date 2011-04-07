@@ -50,7 +50,16 @@ class Puppet::Interface
       return face
     end
 
-    alias :[] :define
+    def [](name, version)
+      unless face = Puppet::Interface::FaceCollection[name, version]
+        if current = Puppet::Interface::FaceCollection[name, :current]
+          raise Puppet::Error, "Could not find version #{version} of #{current}"
+        else
+          raise Puppet::Error, "Could not find Puppet Face #{name.inspect}"
+        end
+      end
+      face
+    end
   end
 
   attr_accessor :default_format
