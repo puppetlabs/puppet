@@ -16,7 +16,7 @@ that we should describe in this file somehow."
   end
 
   def call_indirection_method(method, *args)
-    options = args.pop
+    options = args.last
     options.has_key?(:terminus) and set_terminus(options[:terminus])
 
     begin
