@@ -6,6 +6,7 @@ require 'mocha'
 require 'puppet'
 require 'puppet/faces'
 require 'rspec'
+require 'tmpdir'
 
 Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(dir)
