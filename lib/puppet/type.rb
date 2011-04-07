@@ -1901,4 +1901,4 @@ end
 require 'puppet/provider'
 
 # Always load these types.
-require 'puppet/type/component'
+Puppet::Type.type(:component)
