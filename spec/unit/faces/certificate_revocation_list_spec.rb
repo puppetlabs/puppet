@@ -2,5 +2,5 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 
-describe Puppet::String[:certificate_revocation_list, '0.0.1'] do
+describe Puppet::Faces[:certificate_revocation_list, '0.0.1'] do
 end

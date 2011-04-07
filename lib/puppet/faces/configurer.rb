@@ -1,11 +1,11 @@
-require 'puppet/string'
+require 'puppet/faces'
 
-Puppet::String.define(:configurer, '0.0.1') do
+Puppet::Faces.define(:configurer, '0.0.1') do
   action(:synchronize) do
     when_invoked do |certname, options|
-      facts = Puppet::String[:facts, '0.0.1'].find(certname)
-      catalog = Puppet::String[:catalog, '0.0.1'].download(certname, facts)
-      report = Puppet::String[:catalog, '0.0.1'].apply(catalog)
+      facts = Puppet::Faces[:facts, '0.0.1'].find(certname)
+      catalog = Puppet::Faces[:catalog, '0.0.1'].download(certname, facts)
+      report = Puppet::Faces[:catalog, '0.0.1'].apply(catalog)
       report
     end
   end

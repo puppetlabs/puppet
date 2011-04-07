@@ -1,7 +1,7 @@
-require 'puppet/string/indirector'
+require 'puppet/faces/indirector'
 require 'puppet/ssl/host'
 
-Puppet::String::Indirector.define(:certificate, '0.0.1') do
+Puppet::Faces::Indirector.define(:certificate, '0.0.1') do
   # REVISIT: This should use a pre-invoke hook to run the common code that
   # needs to happen before we invoke any action; that would be much nicer than
   # the "please repeat yourself" stuff found in here right now.

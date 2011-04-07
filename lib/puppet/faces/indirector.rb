@@ -1,7 +1,7 @@
 require 'puppet'
-require 'puppet/string'
+require 'puppet/faces'
 
-class Puppet::String::Indirector < Puppet::String
+class Puppet::Faces::Indirector < Puppet::Faces
   option "--terminus TERMINUS" do
     desc "REVISIT: You can select a terminus, which has some bigger effect
 that we should describe in this file somehow."
@@ -68,13 +68,13 @@ that we should describe in this file somehow."
     @indirection_name || name.to_sym
   end
 
-  # Here's your opportunity to override the indirection name.  By default
-  # it will be the same name as the string.
+  # Here's your opportunity to override the indirection name.  By default it
+  # will be the same name as the face.
   def set_indirection_name(name)
     @indirection_name = name
   end
 
-  # Return an indirection associated with an string, if one exists
+  # Return an indirection associated with a face, if one exists;
   # One usually does.
   def indirection
     unless @indirection

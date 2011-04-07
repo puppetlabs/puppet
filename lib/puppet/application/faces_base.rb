@@ -1,7 +1,7 @@
 require 'puppet/application'
-require 'puppet/string'
+require 'puppet/faces'
 
-class Puppet::Application::StringBase < Puppet::Application
+class Puppet::Application::FacesBase < Puppet::Application
   should_parse_config
   run_mode :agent
 
@@ -24,7 +24,7 @@ class Puppet::Application::StringBase < Puppet::Application
   end
 
 
-  attr_accessor :string, :action, :type, :arguments, :format
+  attr_accessor :face, :action, :type, :arguments, :format
   attr_writer :exit_code
 
   # This allows you to set the exit code if you don't want to just exit
@@ -47,7 +47,7 @@ class Puppet::Application::StringBase < Puppet::Application
   def preinit
     super
     trap(:INT) do
-      $stderr.puts "Cancelling String"
+      $stderr.puts "Cancelling Face"
       exit(0)
     end
 
@@ -57,8 +57,8 @@ class Puppet::Application::StringBase < Puppet::Application
     # TODO: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
     @type   = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-    @string = Puppet::String[@type, :current]
-    @format = @string.default_format
+    @face   = Puppet::Faces[@type, :current]
+    @format = @face.default_format
 
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first
@@ -68,11 +68,11 @@ class Puppet::Application::StringBase < Puppet::Application
     until @action or (index += 1) >= command_line.args.length do
       item = command_line.args[index]
       if item =~ /^-/ then
-        option = @string.options.find do |name|
+        option = @face.options.find do |name|
           item =~ /^-+#{name.to_s.gsub(/[-_]/, '[-_]')}(?:[ =].*)?$/
         end
         if option then
-          option = @string.get_option(option)
+          option = @face.get_option(option)
           # If we have an inline argument, just carry on.  We don't need to
           # care about optional vs mandatory in that case because we do a real
           # parse later, and that will totally take care of raising the error
@@ -91,9 +91,9 @@ class Puppet::Application::StringBase < Puppet::Application
           raise ArgumentError, "Unknown option #{item.sub(/=.*$/, '').inspect}"
         end
       else
-        action = @string.get_action(item.to_sym)
+        action = @face.get_action(item.to_sym)
         if action.nil? then
-          raise ArgumentError, "#{@string} does not have an #{item.inspect} action!"
+          raise ArgumentError, "#{@face} does not have an #{item.inspect} action!"
         end
         @action = action
       end
@@ -129,7 +129,7 @@ class Puppet::Application::StringBase < Puppet::Application
     # Note: because of our definition of where the action is set, we end up
     # with it *always* being the first word of the remaining set of command
     # line arguments.  So, strip that off when we construct the arguments to
-    # pass down to the string action. --daniel 2011-04-04
+    # pass down to the face action. --daniel 2011-04-04
     @arguments.delete_at(0)
 
     # We copy all of the app options to the end of the call; This allows each
@@ -142,7 +142,7 @@ class Puppet::Application::StringBase < Puppet::Application
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
-    if result = @string.send(@action.name, *arguments)
+    if result = @face.send(@action.name, *arguments)
       puts render(result)
     end
     exit(exit_code)

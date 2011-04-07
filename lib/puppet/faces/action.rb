@@ -1,28 +1,26 @@
 # -*- coding: utf-8 -*-
-require 'puppet/string'
-require 'puppet/string/option'
+require 'puppet/faces'
+require 'puppet/faces/option'
 
-class Puppet::String::Action
-  attr_reader :name
-
-  def to_s
-    "#{@string}##{@name}"
-  end
-
-  def initialize(string, name, attrs = {})
+class Puppet::Faces::Action
+  def initialize(face, name, attrs = {})
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
-    @string  = string
+    @face    = face
     @name    = name.to_sym
     @options = {}
     attrs.each do |k, v| send("#{k}=", v) end
   end
 
+  attr_reader :name
+  def to_s() "#{@face}##{@name}" end
+
+
   # Initially, this was defined to allow the @action.invoke pattern, which is
   # a very natural way to invoke behaviour given our introspection
-  # capabilities.   Heck, our initial plan was to have the string delegate to
+  # capabilities.   Heck, our initial plan was to have the faces delegate to
   # the action object for invocation and all.
   #
-  # It turns out that we have a binding problem to solve: @string was bound to
+  # It turns out that we have a binding problem to solve: @face was bound to
   # the parent class, not the subclass instance, and we don't pass the
   # appropriate context or change the binding enough to make this work.
   #
@@ -33,13 +31,13 @@ class Puppet::String::Action
   # So, we are pulling this method for now, and will return it to life when we
   # have the time to resolve the problem.  For now, you should replace...
   #
-  #     @action = @string.get_action(name)
+  #     @action = @face.get_action(name)
   #     @action.invoke(arg1, arg2, arg3)
   #
   # ...with...
   #
-  #     @action = @string.get_action(name)
-  #     @string.send(@action.name, arg1, arg2, arg3)
+  #     @action = @face.get_action(name)
+  #     @face.send(@action.name, arg1, arg2, arg3)
   #
   # I understand that is somewhat cumbersome, but it functions as desired.
   # --daniel 2011-03-31
@@ -48,7 +46,7 @@ class Puppet::String::Action
   # documentation, for the benefit of the reader.
   #
   # def invoke(*args, &block)
-  #   @string.send(name, *args, &block)
+  #   @face.send(name, *args, &block)
   # end
 
   def when_invoked=(block)
@@ -82,12 +80,12 @@ class Puppet::String::Action
                  self.__send__(#{internal_name.inspect}, *args)
                end"
 
-    if @string.is_a?(Class)
-      @string.class_eval do eval wrapper, nil, file, line end
-      @string.define_method(internal_name, &block)
+    if @face.is_a?(Class)
+      @face.class_eval do eval wrapper, nil, file, line end
+      @face.define_method(internal_name, &block)
     else
-      @string.instance_eval do eval wrapper, nil, file, line end
-      @string.meta_def(internal_name, &block)
+      @face.instance_eval do eval wrapper, nil, file, line end
+      @face.meta_def(internal_name, &block)
     end
   end
 
@@ -95,8 +93,8 @@ class Puppet::String::Action
     option.aliases.each do |name|
       if conflict = get_option(name) then
         raise ArgumentError, "Option #{option} conflicts with existing option #{conflict}"
-      elsif conflict = @string.get_option(name) then
-        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict} on #{@string}"
+      elsif conflict = @face.get_option(name) then
+        raise ArgumentError, "Option #{option} conflicts with existing option #{conflict} on #{@face}"
       end
     end
 
@@ -112,10 +110,10 @@ class Puppet::String::Action
   end
 
   def options
-    (@options.keys + @string.options).sort
+    (@options.keys + @face.options).sort
   end
 
   def get_option(name)
-    @options[name.to_sym] || @string.get_option(name)
+    @options[name.to_sym] || @face.get_option(name)
   end
 end

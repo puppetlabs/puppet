@@ -1,7 +1,7 @@
-require 'puppet/string/indirector'
+require 'puppet/faces/indirector'
 require 'puppet/node/facts'
 
-Puppet::String::Indirector.define(:facts, '0.0.1') do
+Puppet::Faces::Indirector.define(:facts, '0.0.1') do
   set_default_format :yaml
 
   # Upload our facts to the server

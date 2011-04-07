@@ -1,7 +1,7 @@
 require 'puppet/application'
-require 'puppet/string'
+require 'puppet/faces'
 
-class Puppet::Application::String < Puppet::Application
+class Puppet::Application::Faces < Puppet::Application
 
   should_parse_config
   run_mode :agent
@@ -18,7 +18,7 @@ class Puppet::Application::String < Puppet::Application
     if arguments.empty?
       arguments = %w{terminuses actions}
     end
-    strings.each do |name|
+    faces.each do |name|
       str = "#{name}:\n"
       if arguments.include?("terminuses")
         begin
@@ -68,12 +68,12 @@ class Puppet::Application::String < Puppet::Application
     end
 
     unless respond_to?(verb)
-      raise "Command '#{verb}' not found for 'string'"
+      raise "Command '#{verb}' not found for 'faces'"
     end
   end
 
-  def strings
-    Puppet::String.strings
+  def faces
+    Puppet::Faces.faces
   end
 
   def terminus_classes(indirection)
@@ -81,9 +81,9 @@ class Puppet::Application::String < Puppet::Application
   end
 
   def actions(indirection)
-    return [] unless string = Puppet::String[indirection, '0.0.1']
-    string.load_actions
-    return string.actions.sort { |a, b| a.to_s <=> b.to_s }
+    return [] unless faces = Puppet::Faces[indirection, '0.0.1']
+    faces.load_actions
+    return faces.actions.sort { |a, b| a.to_s <=> b.to_s }
   end
 
   def load_applications

@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
-require 'puppet/string'
+require 'puppet/faces'
 
-module Puppet::String::StringCollection
+module Puppet::Faces::FaceCollection
   SEMVER_VERSION = /^(\d+)\.(\d+)\.(\d+)([A-Za-z][0-9A-Za-z-]*|)$/
 
-  @strings = Hash.new { |hash, key| hash[key] = {} }
+  @faces = Hash.new { |hash, key| hash[key] = {} }
 
-  def self.strings
+  def self.faces
     unless @loaded
       @loaded = true
       $LOAD_PATH.each do |dir|
         next unless FileTest.directory?(dir)
         Dir.chdir(dir) do
-          Dir.glob("puppet/string/v*/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
+          # REVISIT: This is wrong!!!!   We don't name files like that ever,
+          # so we should no longer match things like this.  Damnit!!! --daniel 2011-04-07
+          Dir.glob("puppet/faces/v*/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
             iname = file.sub(/\.rb/, '')
             begin
               require iname
@@ -24,14 +26,14 @@ module Puppet::String::StringCollection
         end
       end
     end
-    return @strings.keys
+    return @faces.keys
   end
 
   def self.validate_version(version)
     !!(SEMVER_VERSION =~ version.to_s)
   end
 
-  def self.cmp_versions(a, b)
+  def self.cmp_semver(a, b)
     a, b = [a, b].map do |x|
       parts = SEMVER_VERSION.match(x).to_a[1..4]
       parts[0..2] = parts[0..2].map { |e| e.to_i }
@@ -48,12 +50,12 @@ module Puppet::String::StringCollection
   end
 
   def self.[](name, version)
-    @strings[underscorize(name)][version] if string?(name, version)
+    @faces[underscorize(name)][version] if face?(name, version)
   end
 
-  def self.string?(name, version)
+  def self.face?(name, version)
     name = underscorize(name)
-    return true if @strings[name].has_key?(version)
+    return true if @faces[name].has_key?(version)
 
     # We always load the current version file; the common case is that we have
     # the expected version and any compatibility versions in the same file,
@@ -62,14 +64,14 @@ module Puppet::String::StringCollection
     # We use require to avoid executing the code multiple times, like any
     # other Ruby library that we might want to use.  --daniel 2011-04-06
     begin
-      require "puppet/string/#{name}"
+      require "puppet/faces/#{name}"
 
       # If we wanted :current, we need to index to find that; direct version
       # requests just work™ as they go. --daniel 2011-04-06
       if version == :current then
         # We need to find current out of this.  This is the largest version
         # number that doesn't have a dedicated on-disk file present; those
-        # represent "experimental" versions of strings, which we don't fully
+        # represent "experimental" versions of faces, which we don't fully
         # support yet.
         #
         # We walk the versions from highest to lowest and take the first version
@@ -92,30 +94,30 @@ module Puppet::String::StringCollection
         # versions here and return the last item in that set.
         #
         # --daniel 2011-04-06
-        latest_ver = @strings[name].keys.sort {|a, b| cmp_versions(a, b) }.last
-        @strings[name][:current] = @strings[name][latest_ver]
+        latest_ver = @faces[name].keys.sort {|a, b| cmp_semver(a, b) }.last
+        @faces[name][:current] = @faces[name][latest_ver]
       end
     rescue LoadError => e
-      raise unless e.message =~ %r{-- puppet/string/#{name}$}
+      raise unless e.message =~ %r{-- puppet/faces/#{name}$}
       # ...guess we didn't find the file; return a much better problem.
     end
 
-    # Now, either we have the version in our set of strings, or we didn't find
+    # Now, either we have the version in our set of faces, or we didn't find
     # the version they were looking for.  In the future we will support
     # loading versioned stuff from some look-aside part of the Ruby load path,
     # but we don't need that right now.
     #
     # So, this comment is a place-holder for that.  --daniel 2011-04-06
-    return !! @strings[name].has_key?(version)
+    return !! @faces[name].has_key?(version)
   end
 
-  def self.register(string)
-    @strings[underscorize(string.name)][string.version] = string
+  def self.register(face)
+    @faces[underscorize(face.name)][face.version] = face
   end
 
   def self.underscorize(name)
     unless name.to_s =~ /^[-_a-z]+$/i then
-      raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid string name"
+      raise ArgumentError, "#{name.inspect} (#{name.class}) is not a valid face name"
     end
 
     name.to_s.downcase.split(/[-_]/).join('_').to_sym

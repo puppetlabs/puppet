@@ -2,7 +2,7 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 
-describe Puppet::String[:facts, '0.0.1'] do
+describe Puppet::Faces[:facts, '0.0.1'] do
   it "should define an 'upload' fact" do
     subject.should be_action(:upload)
   end

@@ -1,6 +1,6 @@
-require 'puppet/string/indirector'
+require 'puppet/faces/indirector'
 
-Puppet::String::Indirector.define(:report, '0.0.1') do
+Puppet::Faces::Indirector.define(:report, '0.0.1') do
   action(:submit) do
     when_invoked do |report, options|
       begin

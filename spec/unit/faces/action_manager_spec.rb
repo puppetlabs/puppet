@@ -2,14 +2,14 @@
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 
-# This is entirely an internal class for String, so we have to load it instead of our class.
-require 'puppet/string'
+# This is entirely an internal class for Faces, so we have to load it instead of our class.
+require 'puppet/faces'
 
 class ActionManagerTester
-  include Puppet::String::ActionManager
+  include Puppet::Faces::ActionManager
 end
 
-describe Puppet::String::ActionManager do
+describe Puppet::Faces::ActionManager do
   subject { ActionManagerTester.new }
 
   describe "when included in a class" do
@@ -73,7 +73,7 @@ describe Puppet::String::ActionManager do
   end
 
   describe "when used to extend a class" do
-    subject { Class.new.extend(Puppet::String::ActionManager) }
+    subject { Class.new.extend(Puppet::Faces::ActionManager) }
 
     it "should be able to define an action" do
       subject.action(:foo) do
@@ -102,8 +102,8 @@ describe Puppet::String::ActionManager do
   describe "when used both at the class and instance level" do
     before do
       @klass = Class.new do
-        include Puppet::String::ActionManager
-        extend Puppet::String::ActionManager
+        include Puppet::Faces::ActionManager
+        extend Puppet::Faces::ActionManager
       end
       @instance = @klass.new
     end
@@ -216,7 +216,7 @@ describe Puppet::String::ActionManager do
 
   describe "#get_action" do
     let :parent_class do
-      parent_class = Class.new(Puppet::String)
+      parent_class = Class.new(Puppet::Faces)
       parent_class.action(:foo) {}
       parent_class
     end

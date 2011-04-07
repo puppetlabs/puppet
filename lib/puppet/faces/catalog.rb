@@ -1,6 +1,6 @@
-require 'puppet/string/indirector'
+require 'puppet/faces/indirector'
 
-Puppet::String::Indirector.define(:catalog, '0.0.1') do
+Puppet::Faces::Indirector.define(:catalog, '0.0.1') do
   action(:apply) do
     when_invoked do |catalog, options|
       report = Puppet::Transaction::Report.new("apply")
@@ -28,7 +28,7 @@ Puppet::String::Indirector.define(:catalog, '0.0.1') do
       facts_to_upload = {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(facts.render(:b64_zlib_yaml))}
       catalog = nil
       retrieval_duration = thinmark do
-        catalog = Puppet::String[:catalog, '0.0.1'].find(certname, facts_to_upload)
+        catalog = Puppet::Faces[:catalog, '0.0.1'].find(certname, facts_to_upload)
       end
       catalog = catalog.to_ral
       catalog.finalize

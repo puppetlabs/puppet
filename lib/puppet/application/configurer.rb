@@ -1,5 +1,5 @@
 require 'puppet/application'
-require 'puppet/string'
+require 'puppet/faces'
 
 class Puppet::Application::Configurer < Puppet::Application
   should_parse_config
@@ -17,7 +17,7 @@ class Puppet::Application::Configurer < Puppet::Application
   end
 
   def run_command
-    report = Puppet::String[:configurer, '0.0.1'].synchronize(Puppet[:certname])
-    Puppet::String[:report, '0.0.1'].submit(report)
+    report = Puppet::Faces[:configurer, '0.0.1'].synchronize(Puppet[:certname])
+    Puppet::Faces[:report, '0.0.1'].submit(report)
   end
 end

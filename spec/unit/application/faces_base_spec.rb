@@ -1,22 +1,22 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
-require 'puppet/application/string_base'
+require 'puppet/application/faces_base'
 require 'tmpdir'
 
-class Puppet::Application::StringBase::Basetest < Puppet::Application::StringBase
+class Puppet::Application::FacesBase::Basetest < Puppet::Application::FacesBase
 end
 
-describe Puppet::Application::StringBase do
+describe Puppet::Application::FacesBase do
   before :all do
     @dir = Dir.mktmpdir
     $LOAD_PATH.push(@dir)
-    FileUtils.mkdir_p(File.join @dir, 'puppet', 'string')
-    File.open(File.join(@dir, 'puppet', 'string', 'basetest.rb'), 'w') do |f|
-      f.puts "Puppet::String.define(:basetest, '0.0.1')"
+    FileUtils.mkdir_p(File.join @dir, 'puppet', 'faces')
+    File.open(File.join(@dir, 'puppet', 'faces', 'basetest.rb'), 'w') do |f|
+      f.puts "Puppet::Faces.define(:basetest, '0.0.1')"
     end
 
-    Puppet::String.define(:basetest, '0.0.1') do
+    Puppet::Faces.define(:basetest, '0.0.1') do
       option("--[no-]boolean")
       option("--mandatory MANDATORY")
       option("--optional [OPTIONAL]")
@@ -34,7 +34,7 @@ describe Puppet::Application::StringBase do
   end
 
   let :app do
-    app = Puppet::Application::StringBase::Basetest.new
+    app = Puppet::Application::FacesBase::Basetest.new
     app.stubs(:exit)
     app.stubs(:puts)
     app.command_line.stubs(:subcommand_name).returns 'subcommand'
@@ -63,11 +63,11 @@ describe Puppet::Application::StringBase do
           app.preinit
         end
 
-        it "should set the string based on the type" do
-          app.string.name.should == :basetest
+        it "should set the faces based on the type" do
+          app.face.name.should == :basetest
         end
 
-        it "should set the format based on the string default" do
+        it "should set the format based on the faces default" do
           app.format.should == :pson
         end
 
@@ -104,7 +104,7 @@ describe Puppet::Application::StringBase do
         app.command_line.stubs(:args).returns %w{foo --bar}
         app.preinit
         app.action.name.should == :foo
-        app.string.should_not be_option :bar
+        app.face.should_not be_option :bar
         app.action.should_not be_option :bar
       end
 
@@ -166,14 +166,14 @@ describe Puppet::Application::StringBase do
 
   describe "#main" do
     before do
-      app.string    = Puppet::String[:basetest, '0.0.1']
-      app.action    = app.string.get_action(:foo)
+      app.face      = Puppet::Faces[:basetest, '0.0.1']
+      app.action    = app.face.get_action(:foo)
       app.format    = :pson
       app.arguments = ["myname", "myarg"]
     end
 
-    it "should send the specified verb and name to the string" do
-      app.string.expects(:foo).with(*app.arguments)
+    it "should send the specified verb and name to the faces" do
+      app.face.expects(:foo).with(*app.arguments)
       app.main
     end
 

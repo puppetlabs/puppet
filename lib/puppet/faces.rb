@@ -1,16 +1,16 @@
 require 'puppet'
 require 'puppet/util/autoload'
 
-class Puppet::String
-  require 'puppet/string/string_collection'
+class Puppet::Faces
+  require 'puppet/faces/face_collection'
 
-  require 'puppet/string/action_manager'
-  include Puppet::String::ActionManager
-  extend Puppet::String::ActionManager
+  require 'puppet/faces/action_manager'
+  include Puppet::Faces::ActionManager
+  extend Puppet::Faces::ActionManager
 
-  require 'puppet/string/option_manager'
-  include Puppet::String::OptionManager
-  extend Puppet::String::OptionManager
+  require 'puppet/faces/option_manager'
+  include Puppet::Faces::OptionManager
+  extend Puppet::Faces::OptionManager
 
   include Puppet::Util
 
@@ -19,33 +19,35 @@ class Puppet::String
     # list of directories to search.
     # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
     def autoloader
-      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/string")
+      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/faces")
     end
 
-    def strings
-      Puppet::String::StringCollection.strings
+    def faces
+      Puppet::Faces::FaceCollection.faces
     end
 
-    def string?(name, version)
-      Puppet::String::StringCollection.string?(name, version)
+    def face?(name, version)
+      Puppet::Faces::FaceCollection.face?(name, version)
     end
 
     def register(instance)
-      Puppet::String::StringCollection.register(instance)
+      Puppet::Faces::FaceCollection.register(instance)
     end
 
     def define(name, version, &block)
-      if string?(name, version)
-        string = Puppet::String::StringCollection[name, version]
+      if face?(name, version)
+        face = Puppet::Faces::FaceCollection[name, version]
       else
-        string = self.new(name, version)
-        Puppet::String::StringCollection.register(string)
-        string.load_actions
+        face = self.new(name, version)
+        Puppet::Faces::FaceCollection.register(face)
+        # REVISIT: Shouldn't this be delayed until *after* we evaluate the
+        # current block, not done before? --daniel 2011-04-07
+        face.load_actions
       end
 
-      string.instance_eval(&block) if block_given?
+      face.instance_eval(&block) if block_given?
 
-      return string
+      return face
     end
 
     alias :[] :define
@@ -61,11 +63,11 @@ class Puppet::String
   attr_reader :name
 
   def initialize(name, version, &block)
-    unless Puppet::String::StringCollection.validate_version(version)
-      raise ArgumentError, "Cannot create string #{name.inspect} with invalid version number '#{version}'!"
+    unless Puppet::Faces::FaceCollection.validate_version(version)
+      raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
     end
 
-    @name = Puppet::String::StringCollection.underscorize(name)
+    @name = Puppet::Faces::FaceCollection.underscorize(name)
     @version = version
     @default_format = :pson
 
@@ -74,11 +76,11 @@ class Puppet::String
 
   # Try to find actions defined in other files.
   def load_actions
-    path = "puppet/string/#{name}"
+    path = "puppet/faces/#{name}"
 
     loaded = []
     [path, "#{name}@#{version}/#{path}"].each do |path|
-      Puppet::String.autoloader.search_directories.each do |dir|
+      Puppet::Faces.autoloader.search_directories.each do |dir|
         fdir = ::File.join(dir, path)
         next unless FileTest.directory?(fdir)
 
@@ -99,6 +101,6 @@ class Puppet::String
   end
 
   def to_s
-    "Puppet::String[#{name.inspect}, #{version.inspect}]"
+    "Puppet::Faces[#{name.inspect}, #{version.inspect}]"
   end
 end

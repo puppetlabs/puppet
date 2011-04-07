@@ -1,6 +1,6 @@
-require 'puppet/string'
+require 'puppet/faces'
 
-class Puppet::String::Option
+class Puppet::Faces::Option
   attr_reader   :parent
   attr_reader   :name
   attr_reader   :aliases
@@ -65,8 +65,8 @@ class Puppet::String::Option
   end
 
   # to_s and optparse_to_name are roughly mirrored, because they are used to
-  # transform strings to name symbols, and vice-versa.  This isn't a full
-  # bidirectional transformation though.
+  # transform options to name symbols, and vice-versa.  This isn't a full
+  # bidirectional transformation though. --daniel 2011-04-07
   def to_s
     @name.to_s.tr('_', '-')
   end

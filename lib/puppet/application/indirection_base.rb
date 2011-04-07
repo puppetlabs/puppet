@@ -1,4 +1,4 @@
-require 'puppet/application/string_base'
+require 'puppet/application/faces_base'
 
-class Puppet::Application::IndirectionBase < Puppet::Application::StringBase
+class Puppet::Application::IndirectionBase < Puppet::Application::FacesBase
 end

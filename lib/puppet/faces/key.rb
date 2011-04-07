@@ -1,4 +1,4 @@
-require 'puppet/string/indirector'
+require 'puppet/faces/indirector'
 
-Puppet::String::Indirector.define(:key, '0.0.1') do
+Puppet::Faces::Indirector.define(:key, '0.0.1') do
 end

@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
 require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
-require 'puppet/string/action'
+require 'puppet/faces/action'
 
-describe Puppet::String::Action do
+describe Puppet::Faces::Action do
   describe "when validating the action name" do
     [nil, '', 'foo bar', '-foobar'].each do |input|
       it "should treat #{input.inspect} as an invalid name" do
-        expect { Puppet::String::Action.new(nil, input) }.
+        expect { Puppet::Faces::Action.new(nil, input) }.
           should raise_error(/is an invalid action name/)
       end
     end
@@ -15,7 +15,7 @@ describe Puppet::String::Action do
 
   describe "when invoking" do
     it "should be able to call other actions on the same object" do
-      string = Puppet::String.new(:my_string, '0.0.1') do
+      face = Puppet::Faces.new(:my_face, '0.0.1') do
         action(:foo) do
           when_invoked { 25 }
         end
@@ -24,8 +24,8 @@ describe Puppet::String::Action do
           when_invoked { "the value of foo is '#{foo}'" }
         end
       end
-      string.foo.should == 25
-      string.bar.should == "the value of foo is '25'"
+      face.foo.should == 25
+      face.bar.should == "the value of foo is '25'"
     end
 
     # bar is a class action calling a class action
@@ -33,7 +33,7 @@ describe Puppet::String::Action do
     # baz is an instance action calling a class action
     # qux is an instance action calling an instance action
     it "should be able to call other actions on the same object when defined on a class" do
-      class Puppet::String::MyStringBaseClass < Puppet::String
+      class Puppet::Faces::MyFacesBaseClass < Puppet::Faces
         action(:foo) do
           when_invoked { 25 }
         end
@@ -47,7 +47,7 @@ describe Puppet::String::Action do
         end
       end
 
-      string = Puppet::String::MyStringBaseClass.new(:my_inherited_string, '0.0.1') do
+      face = Puppet::Faces::MyFacesBaseClass.new(:my_inherited_face, '0.0.1') do
         action(:baz) do
           when_invoked { "the value of foo in baz is '#{foo}'" }
         end
@@ -56,16 +56,16 @@ describe Puppet::String::Action do
           when_invoked { baz }
         end
       end
-      string.foo.should  == 25
-      string.bar.should  == "the value of foo is '25'"
-      string.quux.should == "qux told me the value of foo in baz is '25'"
-      string.baz.should  == "the value of foo in baz is '25'"
-      string.qux.should  == "the value of foo in baz is '25'"
+      face.foo.should  == 25
+      face.bar.should  == "the value of foo is '25'"
+      face.quux.should == "qux told me the value of foo in baz is '25'"
+      face.baz.should  == "the value of foo in baz is '25'"
+      face.qux.should  == "the value of foo in baz is '25'"
     end
 
     context "when calling the Ruby API" do
-      let :string do
-        Puppet::String.new(:ruby_api, '1.0.0') do
+      let :face do
+        Puppet::Faces.new(:ruby_api, '1.0.0') do
           action :bar do
             when_invoked do |options|
               options
@@ -75,12 +75,12 @@ describe Puppet::String::Action do
       end
 
       it "should work when no options are supplied" do
-        options = string.bar
+        options = face.bar
         options.should == {}
       end
 
       it "should work when options are supplied" do
-        options = string.bar :bar => "beer"
+        options = face.bar :bar => "beer"
         options.should == { :bar => "beer" }
       end
     end
@@ -88,7 +88,7 @@ describe Puppet::String::Action do
 
   describe "with action-level options" do
     it "should support options with an empty block" do
-      string = Puppet::String.new(:action_level_options, '0.0.1') do
+      face = Puppet::Faces.new(:action_level_options, '0.0.1') do
         action :foo do
           option "--bar" do
             # this line left deliberately blank
@@ -96,33 +96,33 @@ describe Puppet::String::Action do
         end
       end
 
-      string.should_not be_option :bar
-      string.get_action(:foo).should be_option :bar
+      face.should_not be_option :bar
+      face.get_action(:foo).should be_option :bar
     end
 
-    it "should return only action level options when there are no string options" do
-      string = Puppet::String.new(:action_level_options, '0.0.1') do
+    it "should return only action level options when there are no face options" do
+      face = Puppet::Faces.new(:action_level_options, '0.0.1') do
         action :foo do option "--bar" end
       end
 
-      string.get_action(:foo).options.should =~ [:bar]
+      face.get_action(:foo).options.should =~ [:bar]
     end
 
-    describe "with both string and action options" do
-      let :string do
-        Puppet::String.new(:action_level_options, '0.0.1') do
+    describe "with both face and action options" do
+      let :face do
+        Puppet::Faces.new(:action_level_options, '0.0.1') do
           action :foo do option "--bar" end
           action :baz do option "--bim" end
           option "--quux"
         end
       end
 
-      it "should return combined string and action options" do
-        string.get_action(:foo).options.should =~ [:bar, :quux]
+      it "should return combined face and action options" do
+        face.get_action(:foo).options.should =~ [:bar, :quux]
       end
 
-      it "should fetch options that the string inherited" do
-        parent = Class.new(Puppet::String)
+      it "should fetch options that the face inherited" do
+        parent = Class.new(Puppet::Faces)
         parent.option "--foo"
         child = parent.new(:inherited_options, '0.0.1') do
           option "--bar"
@@ -133,37 +133,37 @@ describe Puppet::String::Action do
         action.should be
 
         [:baz, :bar, :foo].each do |name|
-          action.get_option(name).should be_an_instance_of Puppet::String::Option
+          action.get_option(name).should be_an_instance_of Puppet::Faces::Option
         end
       end
 
       it "should get an action option when asked" do
-        string.get_action(:foo).get_option(:bar).
-          should be_an_instance_of Puppet::String::Option
+        face.get_action(:foo).get_option(:bar).
+          should be_an_instance_of Puppet::Faces::Option
       end
 
-      it "should get a string option when asked" do
-        string.get_action(:foo).get_option(:quux).
-          should be_an_instance_of Puppet::String::Option
+      it "should get a face option when asked" do
+        face.get_action(:foo).get_option(:quux).
+          should be_an_instance_of Puppet::Faces::Option
       end
 
       it "should return options only for this action" do
-        string.get_action(:baz).options.should =~ [:bim, :quux]
+        face.get_action(:baz).options.should =~ [:bim, :quux]
       end
     end
 
     it_should_behave_like "things that declare options" do
       def add_options_to(&block)
-        string = Puppet::String.new(:with_options, '0.0.1') do
+        face = Puppet::Faces.new(:with_options, '0.0.1') do
           action(:foo, &block)
         end
-        string.get_action(:foo)
+        face.get_action(:foo)
       end
     end
 
-    it "should fail when a string option duplicates an action option" do
+    it "should fail when a face option duplicates an action option" do
       expect {
-        Puppet::String.new(:action_level_options, '0.0.1') do
+        Puppet::Faces.new(:action_level_options, '0.0.1') do
           option "--foo"
           action :bar do option "--foo" end
         end

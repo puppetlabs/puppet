@@ -1,6 +1,6 @@
-require 'puppet/string'
+require 'puppet/faces'
 
-Puppet::String.define(:config, '0.0.1') do
+Puppet::Faces.define(:config, '0.0.1') do
   action(:print) do
     when_invoked do |*args|
       options = args.pop
