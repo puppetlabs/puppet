@@ -56,7 +56,7 @@ describe "mount provider (integration)" do
 
   def check_fstab(expected_to_be_present)
     # Verify that the fake fstab has the expected data in it
-    fstab_contents = File.read(@fake_fstab).lines.map(&:chomp).reject { |x| x =~ /^#|^$/ }
+    fstab_contents = File.read(@fake_fstab).split("\n").reject { |x| x =~ /^#|^$/ }
     if expected_to_be_present
       fstab_contents.length().should == 1
       device, rest_of_line = fstab_contents[0].split(/\t/,2)
