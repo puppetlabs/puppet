@@ -1,11 +1,5 @@
-unless defined?(SPEC_HELPER_IS_LOADED)
-SPEC_HELPER_IS_LOADED = 1
-
 dir = File.expand_path(File.dirname(__FILE__))
-
-$LOAD_PATH.unshift("#{dir}/")
-$LOAD_PATH.unshift("#{dir}/lib") # a spec-specific test lib dir
-$LOAD_PATH.unshift("#{dir}/../lib")
+$LOAD_PATH.unshift File.join(dir, 'lib')
 
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
@@ -70,7 +64,4 @@ RSpec.configure do |config|
 
     GC.enable
   end
-end
-
-# close of the "don't evaluate twice" mess.
 end

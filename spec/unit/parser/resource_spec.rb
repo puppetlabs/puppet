@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+require 'spec_helper'
 
 # LAK: FIXME This is just new tests for resources; I have
 # not moved all tests over yet.

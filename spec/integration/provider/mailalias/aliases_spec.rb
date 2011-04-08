@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 
 provider_class = Puppet::Type.type(:mailalias).provider(:aliases)

@@ -1,9 +1,7 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
-
+require 'spec_helper'
 require 'puppet_spec/files'
-
 require 'puppet/application/apply'
 
 describe "apply" do

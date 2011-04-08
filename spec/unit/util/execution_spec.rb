@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 describe Puppet::Util::Execution do
   include Puppet::Util::Execution

@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-4-8.
 #  Copyright (c) 2008. All rights reserved.
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+require 'spec_helper'
 
 describe Puppet::Resource::Catalog do
   describe "when pson is available", :if => Puppet.features.pson? do

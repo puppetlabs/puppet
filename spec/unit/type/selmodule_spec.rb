@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+require 'spec_helper'
 
 describe Puppet::Type.type(:selmodule), "when validating attributes" do
   [:name, :selmoduledir, :selmodulepath].each do |param|
