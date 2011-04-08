@@ -53,7 +53,13 @@ class Puppet::Transaction::Report
     end
   end
 
+  def prune_internal_data
+    resource_statuses.delete_if {|name,res| res.resource_type == 'Whit'}
+  end
+
   def finalize_report
+    prune_internal_data
+
     resource_metrics = add_metric(:resources, calculate_resource_metrics)
     add_metric(:time, calculate_time_metrics)
     change_metric = calculate_change_metric
