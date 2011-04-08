@@ -20,6 +20,8 @@ module PuppetSpec
 end
 
 require 'pathname'
+require 'tmpdir'
+
 require 'lib/puppet_spec/verbose'
 require 'lib/puppet_spec/files'
 require 'lib/puppet_spec/fixtures'
@@ -66,4 +68,5 @@ RSpec.configure do |config|
   end
 end
 
+# close of the "don't evaluate twice" mess.
 end
