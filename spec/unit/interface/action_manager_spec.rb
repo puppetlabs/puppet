@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
+require 'spec_helper'
 
 # This is entirely an internal class for Interface, so we have to load it instead of our class.
 require 'puppet/interface'

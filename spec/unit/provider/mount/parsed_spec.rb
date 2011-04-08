@@ -3,7 +3,7 @@
 #  Created by Luke Kanies on 2007-9-12.
 #  Copyright (c) 2006. All rights reserved.
 
-require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 
 provider_class = Puppet::Type.type(:mount).provider(:parsed)

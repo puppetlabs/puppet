@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require ::File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/file_bucket/file'
 require 'digest/md5'

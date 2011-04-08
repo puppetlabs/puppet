@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:exec).provider(:shell)
 

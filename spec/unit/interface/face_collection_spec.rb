@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
+require 'spec_helper'
 
 require 'tmpdir'
 require 'puppet/interface/face_collection'

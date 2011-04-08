@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+require 'spec_helper'
 
 describe Puppet::Type.type(:service) do
   it "should have an :enableable feature that requires the :enable, :disable, and :enabled? methods" do

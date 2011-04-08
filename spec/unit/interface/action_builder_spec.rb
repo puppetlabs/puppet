@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
+require 'spec_helper'
 require 'puppet/interface/action_builder'
 
 describe Puppet::Interface::ActionBuilder do
