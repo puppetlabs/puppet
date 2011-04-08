@@ -38,6 +38,8 @@ RSpec.configure do |config|
   config.mock_with :mocha
 
   config.before :each do
+    GC.disable
+
     # these globals are set by Application
     $puppet_application_mode = nil
     $puppet_application_name = nil
@@ -65,6 +67,8 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
+
+    GC.enable
   end
 end
 
