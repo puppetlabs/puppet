@@ -59,6 +59,13 @@ describe Puppet::Application::FacesBase do
     describe "parsing the command line" do
       context "with just an action" do
         before :all do
+          # We have to stub Signal.trap to avoid a crazy mess where we take
+          # over signal handling and make it impossible to cancel the test
+          # suite run.
+          #
+          # It would be nice to fix this elsewhere, but it is actually hard to
+          # capture this in rspec 2.5 and all. :(  --daniel 2011-04-08
+          Signal.stubs(:trap)
           app.command_line.stubs(:args).returns %w{foo}
           app.preinit
         end
