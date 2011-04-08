@@ -97,7 +97,10 @@ module Puppet
         `status` parameter).
 
         If you do not specify anything, then the service name will be
-        looked for in the process table."
+        looked for in the process table. Be aware that 'virtual' init
+        scripts such as networking, that don't have something in the 
+        process table need this functionality to be used with
+        notify/require trigger actions."
 
       newvalues(:true, :false)
     end
