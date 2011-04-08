@@ -1,7 +1,10 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
-require 'sqlite3' rescue nil
+begin
+  require 'sqlite3'
+rescue LoadError
+end
 require 'tempfile'
 require 'puppet/rails'
 
