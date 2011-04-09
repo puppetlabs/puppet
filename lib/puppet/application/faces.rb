@@ -10,6 +10,12 @@ class Puppet::Application::Faces < Puppet::Application
     Puppet::Util::Log.level = :debug
   end
 
+  option("--help", "-h") do |arg|
+    puts "Usage: puppet faces [actions|terminuses]
+Lists all available interfaces, and by default includes all available terminuses and actions.
+"
+  end
+
   option("--verbose", "-v") do
     Puppet::Util::Log.level = :info
   end
@@ -44,11 +50,10 @@ class Puppet::Application::Faces < Puppet::Application
     end
   end
 
-  attr_accessor :verb, :name, :arguments
+  attr_accessor :name, :arguments
 
   def main
-    # Call the method associated with the provided action (e.g., 'find').
-    send(verb, *arguments)
+    list(*arguments)
   end
 
   def setup
@@ -56,20 +61,8 @@ class Puppet::Application::Faces < Puppet::Application
 
     load_applications # Call this to load all of the apps
 
-    @verb, @arguments = command_line.args
+    @arguments = command_line.args
     @arguments ||= []
-
-    validate
-  end
-
-  def validate
-    unless verb
-      raise "You must specify 'find', 'search', 'save', or 'destroy' as a verb; 'save' probably does not work right now"
-    end
-
-    unless respond_to?(verb)
-      raise "Command '#{verb}' not found for 'faces'"
-    end
   end
 
   def faces
