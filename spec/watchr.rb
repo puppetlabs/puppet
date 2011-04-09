@@ -47,7 +47,7 @@ end
 
 def file2specs(file)
   %w{spec/unit spec/integration}.collect { |d|
-    file.sub('lib/puppet', d)
+    file.sub('lib/puppet', d).sub(".rb", "_spec.rb")
   }.find_all { |f|
     File.exist?(f)
   }
@@ -81,7 +81,7 @@ def run_spec_files(files)
   files = Array(files)
   return if files.empty?
   opts = File.readlines('spec/spec.opts').collect { |l| l.chomp }.join(" ")
-  run_spec("spec #{files.join(' ')}")
+  run_spec("rspec #{opts} --tty #{files.join(' ')}")
 end
 
 def run_all_tests
