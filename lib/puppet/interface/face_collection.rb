@@ -12,9 +12,7 @@ module Puppet::Interface::FaceCollection
       $LOAD_PATH.each do |dir|
         next unless FileTest.directory?(dir)
         Dir.chdir(dir) do
-          # REVISIT: This is wrong!!!!   We don't name files like that ever,
-          # so we should no longer match things like this.  Damnit!!! --daniel 2011-04-07
-          Dir.glob("puppet/faces/v*/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
+          Dir.glob("puppet/faces/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
             iname = file.sub(/\.rb/, '')
             begin
               require iname
