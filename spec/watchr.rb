@@ -15,10 +15,10 @@ def run_comp(cmd)
         line << c
         if c == ?\n
           results << if RUBY_VERSION >= "1.9" then
-            line.join
-              else
-                line.pack "c*"
-                  end
+                       line.join
+                     else
+                       line.pack "c*"
+                     end
           line.clear
         end
       end
