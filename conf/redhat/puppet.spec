@@ -8,7 +8,7 @@ Name:           puppet
 Version:        2.6.0
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
-License:        GPLv2+
+License:        Apache 2.0
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
 Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.sign

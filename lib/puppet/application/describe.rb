@@ -228,8 +228,7 @@ David Lutterkort
 
 COPYRIGHT
 ---------
-Copyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public
-License
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
   end
