@@ -1,3 +1,4 @@
+require 'spec_helper'
 require 'puppet/faces'
 require 'puppet/interface'
 
@@ -14,6 +15,20 @@ describe Puppet::Interface do
 
   after :all do
     Puppet::Interface::FaceCollection.instance_variable_set("@faces", @faces)
+  end
+
+  describe "#[]" do
+    it "should fail when no version is requested" do
+      expect { subject[:huzzah] }.should raise_error ArgumentError
+    end
+
+    it "should raise an exception when the requested version is unavailable" do
+      expect { subject[:huzzah, '17.0.0'] }.should raise_error, Puppet::Error
+    end
+
+    it "should raise an exception when the requested face doesn't exist" do
+      expect { subject[:burrble_toot, :current] }.should raise_error, Puppet::Error
+    end
   end
 
   describe "#define" do
