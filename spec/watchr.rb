@@ -80,7 +80,11 @@ end
 def run_spec_files(files)
   files = Array(files)
   return if files.empty?
-  opts = File.readlines('spec/spec.opts').collect { |l| l.chomp }.join(" ")
+  if File.exist?(File.expand_path("~/.rspec")) then
+    opts = ''                   # use the user defaults
+  else
+    opts = File.readlines('spec/spec.opts').collect { |l| l.chomp }.join(" ")
+  end
   run_spec("rspec #{opts} --tty #{files.join(' ')}")
 end
 
@@ -89,12 +93,12 @@ def run_all_tests
 end
 
 def run_all_specs
-  run_test("rake spec")
+  run_spec_files "spec"
 end
 
 def run_suite
-  run_all_tests
   run_all_specs
+  run_all_tests
 end
 
 watch('spec/spec_helper.rb') { run_all_specs }
