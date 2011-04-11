@@ -7,6 +7,8 @@ Puppet::Faces.define(:help, '0.0.1') do
   summary "Displays help about puppet subcommands"
 
   action(:help) do
+    summary "Display help about faces and their actions."
+
     option "--version VERSION" do
       desc "Which version of the interface to show help for"
     end
@@ -20,15 +22,27 @@ Puppet::Faces.define(:help, '0.0.1') do
         raise ArgumentError, "help only takes two (optional) arguments, a face name, and an action"
       end
 
-      if options[:version] and options[:version] !~ /^current$/i then
-        version = options[:version]
-      else
-        version = :current
+      version = :current
+      if options.has_key? :version then
+        if options[:version].to_s !~ /^current$/i then
+          version = options[:version]
+        else
+          if args.length == 0 then
+            raise ArgumentError, "version only makes sense when a face is given"
+          end
+        end
       end
 
+      # Name those parameters...
+      facename, actionname = args
+      face   = facename ? Puppet::Faces[facename.to_sym, version] : nil
+      action = (face and actionname) ? face.get_action(actionname.to_sym) : nil
+
+      # Finally, build up the help text.  Maybe ERB would have been nicer
+      # after all.  Oh, well. --daniel 2011-04-11
       message = []
       if args.length == 0 then
-        message << "Use: puppet [options] <subcommand> <action>"
+        message << "Use: puppet <subcommand> [options] <action> [options]"
         message << ""
         message << "Available subcommands, from Puppet Faces:"
         Puppet::Faces.faces.sort.each do |name|
@@ -44,18 +58,28 @@ Puppet::Faces.define(:help, '0.0.1') do
             message << format(HelpSummaryFormat, appname, summary)
           end
         end
-      else
-        face = Puppet::Faces[args[0].to_sym, version]
-        if args[1] then
-          action = face.get_action args[1].to_sym
-        else
-          action = nil
+
+        message << ""
+        message << <<EOT.split("\n")
+See 'puppet help <subcommand> <action>' for help on a specific subcommand action.
+See 'puppet help <subcommand>' for help on a specific subcommand.
+See 'puppet man  <subcommand>' for the full man page.
+Puppet v#{Puppet::PUPPETVERSION}
+EOT
+      elsif args.length == 1 then
+        message << "Use: puppet #{face.name} [options] <action> [options]"
+        message << ""
+
+        message << "Available actions:"
+        face.actions.each do |actionname|
+          action = face.get_action(actionname)
+          message << format(HelpSummaryFormat, action.name, action.summary)
         end
 
-        help = []
-        face.actions.each do |action|
-          help << "Action: #{action}"
-        end
+      elsif args.length == 2
+        "REVISIT: gotta write this code."
+      else
+        raise ArgumentError, "help only takes two arguments, a face name and an action"
       end
 
       message
