@@ -61,5 +61,9 @@ describe Puppet::Faces[:help, '0.0.1'] do
       it { should have_matching_element %r{ #{name} } }
       it { should have_matching_element %r{ #{name} +#{summary}} } if summary
     end
+
+    Puppet::Util::CommandLine.available_subcommands do |name|
+      it { should have_matching_element %r{ #{name} } }
+    end
   end
 end

@@ -1,6 +1,9 @@
 require 'puppet/faces'
+require 'puppet/util/command_line'
 
 Puppet::Faces.define(:help, '0.0.1') do
+  HelpSummaryFormat = '  %-18s  %s'
+
   summary "Displays help about puppet subcommands"
 
   action(:help) do
@@ -30,7 +33,18 @@ Puppet::Faces.define(:help, '0.0.1') do
         message << "Available subcommands, from Puppet Faces:"
         Puppet::Faces.faces.sort.each do |name|
           face = Puppet::Faces[name, :current]
-          message << format("  %-15s %s", face.name, face.summary)
+          message << format(HelpSummaryFormat, face.name, face.summary)
+        end
+
+        legacy = Puppet::Util::CommandLine.available_subcommands.reject do |appname|
+          Puppet::Faces.face? appname.to_sym, :current
+        end
+        unless legacy.empty? then # great victory when this is true!
+          message << ""
+          message << "Available applications, soon to be ported to Faces:"
+          legacy.sort.each do |appname|
+            message << format(HelpSummaryFormat, appname, 'REVISIT: how to summarize these?')
+          end
         end
       else
         face = Puppet::Faces[args[0].to_sym, version]
