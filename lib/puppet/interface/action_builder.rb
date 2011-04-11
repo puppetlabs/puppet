@@ -28,4 +28,8 @@ class Puppet::Interface::ActionBuilder
     option = Puppet::Interface::OptionBuilder.build(@action, *declaration, &block)
     @action.add_option(option)
   end
+
+  def summary(text)
+    @action.summary = text
+  end
 end
