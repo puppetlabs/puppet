@@ -27,10 +27,10 @@ Puppet::Faces.define(:help, '0.0.1') do
       if args.length == 0 then
         message << "Use: puppet [options] <subcommand> <action>"
         message << ""
-        message << "Available commands, from Puppet Faces:"
+        message << "Available subcommands, from Puppet Faces:"
         Puppet::Faces.faces.sort.each do |name|
           face = Puppet::Faces[name, :current]
-          message << format("  %-15s %s", face.name, 'REVISIT: face.desc')
+          message << format("  %-15s %s", face.name, face.summary)
         end
       else
         face = Puppet::Faces[args[0].to_sym, version]

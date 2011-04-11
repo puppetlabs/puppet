@@ -41,4 +41,25 @@ describe Puppet::Faces[:help, '0.0.1'] do
     face = Puppet::Faces[:huzzah, :current]
     subject.help(:huzzah, face.version).should == subject.help(:huzzah, :current)
   end
+
+  context "when listing subcommands" do
+    subject { Puppet::Faces[:help, :current].help }
+
+    # Check a precondition for the next block; if this fails you have
+    # something odd in your set of faces, and we skip testing things that
+    # matter. --daniel 2011-04-10
+    it "should have at least one face with a summary" do
+      Puppet::Faces.faces.should be_any do |name|
+        Puppet::Faces[name, :current].summary
+      end
+    end
+
+    Puppet::Faces.faces.each do |name|
+      face = Puppet::Faces[name, :current]
+      summary = face.summary
+
+      it { should have_matching_element %r{ #{name} } }
+      it { should have_matching_element %r{ #{name} +#{summary}} } if summary
+    end
+  end
 end

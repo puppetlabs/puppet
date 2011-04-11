@@ -7,6 +7,7 @@ ARGV.clear
 require 'puppet'
 require 'mocha'
 gem 'rspec', '>=2.0.0'
+require 'rspec/expectations'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
@@ -63,5 +64,11 @@ RSpec.configure do |config|
     Puppet::Util::Log.close_all
 
     GC.enable
+  end
+end
+
+RSpec::Matchers.define :have_matching_element do |expected|
+  match do |actual|
+    actual.any? { |item| item =~ expected }
   end
 end
