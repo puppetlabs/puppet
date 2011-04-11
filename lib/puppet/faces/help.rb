@@ -36,14 +36,12 @@ Puppet::Faces.define(:help, '0.0.1') do
           message << format(HelpSummaryFormat, face.name, face.summary)
         end
 
-        legacy = Puppet::Util::CommandLine.available_subcommands.reject do |appname|
-          Puppet::Faces.face? appname.to_sym, :current
-        end
-        unless legacy.empty? then # great victory when this is true!
+        unless legacy_applications.empty? then # great victory when this is true!
           message << ""
           message << "Available applications, soon to be ported to Faces:"
-          legacy.sort.each do |appname|
-            message << format(HelpSummaryFormat, appname, 'REVISIT: how to summarize these?')
+          legacy_applications.each do |appname|
+            summary = horribly_extract_summary_from appname
+            message << format(HelpSummaryFormat, appname, summary)
           end
         end
       else
@@ -62,5 +60,34 @@ Puppet::Faces.define(:help, '0.0.1') do
 
       message
     end
+  end
+
+  def legacy_applications
+    # The list of applications, less those that are duplicated as a face.
+    Puppet::Util::CommandLine.available_subcommands.reject do |appname|
+      Puppet::Faces.face? appname.to_sym, :current or
+        # ...this is a nasty way to exclude non-applications. :(
+        %w{faces_base indirection_base}.include? appname
+    end.sort
+  end
+
+  def horribly_extract_summary_from(appname)
+    begin
+      require "puppet/application/#{appname}"
+      help = Puppet::Application[appname].help.split("\n")
+      # Now we find the line with our summary, extract it, and return it.  This
+      # depends on the implementation coincidence of how our pages are
+      # formatted.  If we can't match the pattern we expect we return the empty
+      # string to ensure we don't blow up in the summary. --daniel 2011-04-11
+      while line = help.shift do
+        if md = /^puppet-#{appname}\([^\)]+\) -- (.*)$/.match(line) then
+          return md[1]
+        end
+      end
+    rescue Exception
+      # Damn, but I hate this: we just ignore errors here, no matter what
+      # class they are.  Meh.
+    end
+    return ''
   end
 end

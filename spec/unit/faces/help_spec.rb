@@ -66,4 +66,38 @@ describe Puppet::Faces[:help, '0.0.1'] do
       it { should have_matching_element %r{ #{name} } }
     end
   end
+
+  context "when listing legacy applications" do
+    let :help do Puppet::Faces[:help, :current] end
+
+    # If we don't, these tests are ... less than useful, because they assume
+    # it.  When this breaks you should consider ditching the entire feature
+    # and tests, but if not work out how to fake one. --daniel 2011-04-11
+    it "should have at least one legacy application" do
+      help.legacy_applications.should have_at_least(1).item
+    end
+
+    # Meh.  This is nasty, but we can't control the other list; the specific
+    # bug that caused these to be listed is annoyingly subtle and has a nasty
+    # fix, so better to have a "fail if you do something daft" trigger in
+    # place here, I think. --daniel 2011-04-11
+    %w{faces_base indirection_base}.each do |name|
+      it "should not list the #{name} application" do
+        help.legacy_applications.should_not include name
+      end
+    end
+
+    Puppet::Faces[:help, :current].legacy_applications.each do |appname|
+      it "should list #{appname} in the help output" do
+        help.help.should have_matching_element %r{ #{appname} }
+      end
+
+      summary = Puppet::Faces[:help, :current].horribly_extract_summary_from(appname)
+      if summary then
+        it "should display the summary of #{appname}" do
+          help.help.should have_matching_element %r{ #{summary}\b}
+        end
+      end
+    end
+  end
 end
