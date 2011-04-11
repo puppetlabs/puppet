@@ -68,8 +68,13 @@ class Puppet::Interface
     self.default_format = format.to_sym
   end
 
-  attr_accessor :type, :verb, :version, :arguments
-  attr_reader :name
+  attr_accessor :summary
+  def summary(value = nil)
+    @summary = value unless value.nil?
+    @summary
+  end
+
+  attr_reader :name, :version
 
   def initialize(name, version, &block)
     unless Puppet::Interface::FaceCollection.validate_version(version)

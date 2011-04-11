@@ -43,13 +43,36 @@ describe Puppet::Interface do
     end
 
     it "should require a version number" do
-      expect { subject.define(:no_version) }.should raise_error ArgumentError
+      expect { subject.define(:no_version) }.to raise_error ArgumentError
+    end
+
+    it "should support summary builder and accessor methods" do
+      subject.new(:foo, '1.0.0').should respond_to(:summary).with(0).arguments
+      subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
+    end
+
+    it "should set the summary text" do
+      text = "hello, freddy, my little pal"
+      subject.define(:face_test_summary, '1.0.0') do
+        summary text
+      end
+      subject[:face_test_summary, '1.0.0'].summary.should == text
+    end
+
+    it "should support mutating the summary" do
+      text = "hello, freddy, my little pal"
+      subject.define(:face_test_summary, '1.0.0') do
+        summary text
+      end
+      subject[:face_test_summary, '1.0.0'].summary.should == text
+      subject[:face_test_summary, '1.0.0'].summary = text + text
+      subject[:face_test_summary, '1.0.0'].summary.should == text + text
     end
   end
 
   describe "#initialize" do
     it "should require a version number" do
-      expect { subject.new(:no_version) }.should raise_error ArgumentError
+      expect { subject.new(:no_version) }.to raise_error ArgumentError
     end
 
     it "should require a valid version number" do
