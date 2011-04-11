@@ -100,6 +100,4 @@ describe Puppet::Faces[:help, '0.0.1'] do
       end
     end
   end
-
-  
 end

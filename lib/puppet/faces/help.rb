@@ -1,9 +1,9 @@
 require 'puppet/faces'
 require 'puppet/util/command_line'
+require 'pathname'
+require 'erb'
 
 Puppet::Faces.define(:help, '0.0.1') do
-  HelpSummaryFormat = '  %-18s  %s'
-
   summary "Displays help about puppet subcommands"
 
   action(:help) do
@@ -38,52 +38,20 @@ Puppet::Faces.define(:help, '0.0.1') do
       face   = facename ? Puppet::Faces[facename.to_sym, version] : nil
       action = (face and actionname) ? face.get_action(actionname.to_sym) : nil
 
-      # Finally, build up the help text.  Maybe ERB would have been nicer
-      # after all.  Oh, well. --daniel 2011-04-11
-      message = []
-      if args.length == 0 then
-        message << "Use: puppet <subcommand> [options] <action> [options]"
-        message << ""
-        message << "Available subcommands, from Puppet Faces:"
-        Puppet::Faces.faces.sort.each do |name|
-          face = Puppet::Faces[name, :current]
-          message << format(HelpSummaryFormat, face.name, face.summary)
-        end
+      template = case args.length
+                 when 0 then erb_template 'global.erb'
+                 when 1 then erb_template 'face.erb'
+                 when 2 then erb_template 'action.erb'
+                 else
+                   fail ArgumentError, "Too many arguments to help action"
+                 end
 
-        unless legacy_applications.empty? then # great victory when this is true!
-          message << ""
-          message << "Available applications, soon to be ported to Faces:"
-          legacy_applications.each do |appname|
-            summary = horribly_extract_summary_from appname
-            message << format(HelpSummaryFormat, appname, summary)
-          end
-        end
-
-        message << ""
-        message << <<EOT.split("\n")
-See 'puppet help <subcommand> <action>' for help on a specific subcommand action.
-See 'puppet help <subcommand>' for help on a specific subcommand.
-See 'puppet man  <subcommand>' for the full man page.
-Puppet v#{Puppet::PUPPETVERSION}
-EOT
-      elsif args.length == 1 then
-        message << "Use: puppet #{face.name} [options] <action> [options]"
-        message << ""
-
-        message << "Available actions:"
-        face.actions.each do |actionname|
-          action = face.get_action(actionname)
-          message << format(HelpSummaryFormat, action.name, action.summary)
-        end
-
-      elsif args.length == 2
-        "REVISIT: gotta write this code."
-      else
-        raise ArgumentError, "help only takes two arguments, a face name and an action"
-      end
-
-      message
+      return ERB.new(template, nil, '%').result(binding)
     end
+  end
+
+  def erb_template(name)
+    (Pathname(__FILE__).dirname + "help" + name).read
   end
 
   def legacy_applications
