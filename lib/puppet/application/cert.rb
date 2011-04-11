@@ -48,7 +48,7 @@ class Puppet::Application::Cert < Puppet::Application
   end
 
   def help
-    puts <<-HELP
+    <<-HELP
 
 puppet-cert(8) -- Manage certificates and requests
 ========
@@ -166,7 +166,6 @@ COPYRIGHT
 Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
-    exit
   end
 
   def main
