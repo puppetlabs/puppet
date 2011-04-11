@@ -111,6 +111,11 @@ describe Puppet::Util::CommandLine do
       @core_apps = %w{describe filebucket kick queue resource agent cert apply doc master}
       @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp }, @tty )
     end
+    it "should expose available_subcommands as a class method" do
+      @core_apps.each do |command|
+        @command_line.available_subcommands.should include command
+      end
+    end
     it 'should be able to find all existing commands' do
       @core_apps.each do |command|
         @command_line.available_subcommands.should include command

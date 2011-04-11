@@ -33,13 +33,20 @@ module Puppet
         File.join('puppet', 'application')
       end
 
-      def available_subcommands
-        absolute_appdirs = $LOAD_PATH.collect do |x| 
+      def self.available_subcommands
+        absolute_appdirs = $LOAD_PATH.collect do |x|
           File.join(x,'puppet','application')
         end.select{ |x| File.directory?(x) }
         absolute_appdirs.inject([]) do |commands, dir|
           commands + Dir[File.join(dir, '*.rb')].map{|fn| File.basename(fn, '.rb')}
         end.uniq
+      end
+      # available_subcommands was previously an instance method, not a class
+      # method, and we have an unknown number of user-implemented applications
+      # that depend on that behaviour.  Forwarding allows us to preserve a
+      # backward compatible API. --daniel 2011-04-11
+      def available_subcommands
+        self.class.available_subcommands
       end
 
       def usage_message
