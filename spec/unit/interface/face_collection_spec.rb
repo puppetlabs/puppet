@@ -8,9 +8,14 @@ describe Puppet::Interface::FaceCollection do
   # To avoid cross-pollution we have to save and restore both the hash
   # containing all the interface data, and the array used by require.  Restoring
   # both means that we don't leak side-effects across the code. --daniel 2011-04-06
+  #
+  # Worse luck, we *also* need to flush $" of anything defining a face,
+  # because otherwise we can cross-pollute from other test files and end up
+  # with no faces loaded, but the require value set true. --daniel 2011-04-10
   before :each do
     @original_faces    = subject.instance_variable_get("@faces").dup
     @original_required = $".dup
+    $".delete_if do |path| path =~ %r{/faces/.*\.rb$} end
     subject.instance_variable_get("@faces").clear
   end
 
@@ -75,18 +80,14 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should attempt to load the default faces for the specified version :current" do
-      subject.expects(:require).never # except...
       subject.expects(:require).with('puppet/faces/fozzie')
       subject['fozzie', :current]
     end
   end
 
   describe "::face?" do
-    before :each do
-      subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
-    end
-
     it "should return true if the faces specified is registered" do
+      subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
       subject.face?("foo", '0.0.1').should == true
     end
 
