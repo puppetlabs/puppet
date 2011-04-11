@@ -138,6 +138,11 @@ describe Puppet::Interface::FaceCollection do
         subject.face?(:huzzah, :current).should be_true
       end
     end
+
+    it "should not cause an invalid face to be enumerated later" do
+      subject.face?(:there_is_no_face, :current).should be_false
+      subject.faces.should_not include :there_is_no_face
+    end
   end
 
   describe "::register" do
