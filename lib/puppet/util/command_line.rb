@@ -17,12 +17,12 @@ module Puppet
         'master'     => 'puppetmasterd'
       )
 
-      def initialize( zero = $0, argv = ARGV, stdin = STDIN )
+      def initialize(zero = $0, argv = ARGV, stdin = STDIN)
         @zero  = zero
         @argv  = argv.dup
         @stdin = stdin
 
-        @subcommand_name, @args = subcommand_and_args( @zero, @argv, @stdin )
+        @subcommand_name, @args = subcommand_and_args(@zero, @argv, @stdin)
         Puppet::Plugins.on_commandline_initialization(:command_line_object => self)
       end
 
@@ -79,10 +79,10 @@ module Puppet
         external_command = "puppet-#{subcommand_name}"
 
         require 'puppet/util'
-        path_to_subcommand = Puppet::Util.which( external_command )
+        path_to_subcommand = Puppet::Util.which(external_command)
         return false unless path_to_subcommand
 
-        system( path_to_subcommand, *args )
+        system(path_to_subcommand, *args)
         true
       end
 
@@ -92,7 +92,7 @@ module Puppet
 
       private
 
-      def subcommand_and_args( zero, argv, stdin )
+      def subcommand_and_args(zero, argv, stdin)
         zero = File.basename(zero, '.rb')
 
         if zero == 'puppet'
