@@ -99,10 +99,11 @@ describe Puppet::Util::CommandLine do
         Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
         commandline.expects(:system).never
 
-        commandline.expects(:usage_message).returns("the usage message")
-        commandline.expects(:abort).with{|x| x =~ /the usage message/}.raises("stubbed abort")
+        text = Puppet::Faces[:help, :current].help
+        commandline.expects(:puts).with { |x| x =~ /Unknown Puppet subcommand/ }
+        commandline.expects(:puts).with text
 
-        lambda{ commandline.execute }.should raise_error('stubbed abort')
+        commandline.execute
       end
     end
   end

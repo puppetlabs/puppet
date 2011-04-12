@@ -1,7 +1,5 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
-
 require 'puppet/application/cert'
 
 describe Puppet::Application::Cert do
@@ -187,16 +185,6 @@ describe Puppet::Application::Cert do
       @cert_app.all = false
       @ca = stub_everything 'ca'
       @cert_app.ca = @ca
-    end
-
-    it "should SystemExit after printing help message" do
-      # Make the help method silent for testing; this is a bit nasty, but we
-      # can't identify a cleaner method.  Help welcome. --daniel 2011-02-22
-      Puppet.features.stubs(:usage?).returns(false)
-      @cert_app.stubs(:puts)
-
-      @cert_app.command_line.stubs(:args).returns([])
-      expect { @cert_app.parse_options }.should raise_error SystemExit
     end
 
     %w{list revoke generate sign print verify fingerprint}.each do |cmd|

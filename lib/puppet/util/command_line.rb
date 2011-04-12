@@ -49,26 +49,29 @@ module Puppet
         self.class.available_subcommands
       end
 
-      def usage_message
-        usage = "Usage: puppet command <space separated arguments>"
-        available = "Available commands are: #{available_subcommands.sort.join(', ')}"
-        [usage, available].join("\n")
-      end
-
       def require_application(application)
         require File.join(appdir, application)
       end
 
       def execute
-        if subcommand_name.nil?
-          puts usage_message
-        elsif available_subcommands.include?(subcommand_name) #subcommand
+        if subcommand_name and available_subcommands.include?(subcommand_name) then
           require_application subcommand_name
           app = Puppet::Application.find(subcommand_name).new(self)
           Puppet::Plugins.on_application_initialization(:appliation_object => self)
           app.run
+        elsif execute_external_subcommand then
+          # Logically, we shouldn't get here, but we do, so whatever.  We just
+          # return to the caller.  How strange we are. --daniel 2011-04-11
         else
-          abort "Error: Unknown command #{subcommand_name}.\n#{usage_message}" unless execute_external_subcommand
+          unless subcommand_name.nil? then
+            puts "Error: Unknown Puppet subcommand #{subcommand_name}.\n"
+          end
+
+          # Doing this at the top of the file is natural, but causes puppet.rb
+          # to load too early, which causes things to break.  This is a nasty
+          # thing, found in #7065. --daniel 2011-04-11
+          require 'puppet/faces/help'
+          puts Puppet::Faces[:help, :current].help
         end
       end
 
