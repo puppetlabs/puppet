@@ -299,11 +299,12 @@ class Application
 
   # This is the main application entry point
   def run
-    exit_on_fail("initialize")               { hook('preinit')       { preinit } }
-    exit_on_fail("parse options")            { hook('parse_options') { parse_options } }
-    exit_on_fail("parse configuration file") { Puppet.settings.parse } if should_parse_config?
-    exit_on_fail("prepare for execution")    { hook('setup')         { setup } }
-    exit_on_fail("run")                      { hook('run_command')   { run_command } }
+    exit_on_fail("initialize")                                   { hook('preinit')       { preinit } }
+    exit_on_fail("parse options")                                { hook('parse_options') { parse_options } }
+    exit_on_fail("parse configuration file")                     { Puppet.settings.parse } if should_parse_config?
+    exit_on_fail("prepare for execution")                        { hook('setup')         { setup } }
+    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+    exit_on_fail("run")                                          { hook('run_command')   { run_command } }
   end
 
   def main
@@ -326,6 +327,15 @@ class Application
     end
 
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
+  end
+
+  def configure_indirector_routes
+    route_file = Puppet[:route_file]
+    if File.exists?(route_file)
+      routes = YAML.load_file(route_file)
+      application_routes = routes[name.to_s]
+      Puppet::Indirector.configure_routes(application_routes) if application_routes
+    end
   end
 
   def parse_options
@@ -394,7 +404,7 @@ class Application
 
   def exit_on_fail(message, code = 1)
     yield
-  rescue RuntimeError, NotImplementedError => detail
+  rescue ArgumentError, RuntimeError, NotImplementedError => detail
     puts detail.backtrace if Puppet[:trace]
     $stderr.puts "Could not #{message}: #{detail}"
     exit(code)
