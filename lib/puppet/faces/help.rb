@@ -39,19 +39,24 @@ Puppet::Faces.define(:help, '0.0.1') do
       action = (face and actionname) ? face.get_action(actionname.to_sym) : nil
 
       template = case args.length
-                 when 0 then erb_template 'global.erb'
-                 when 1 then erb_template 'face.erb'
-                 when 2 then erb_template 'action.erb'
+                 when 0 then erb 'global.erb'
+                 when 1 then erb 'face.erb'
+                 when 2 then erb 'action.erb'
                  else
                    fail ArgumentError, "Too many arguments to help action"
                  end
 
-      return ERB.new(template, nil, '%').result(binding)
+      # Run the ERB template in our current binding, including all the local
+      # variables we established just above. --daniel 2011-04-11
+      return template.result(binding)
     end
   end
 
-  def erb_template(name)
-    (Pathname(__FILE__).dirname + "help" + name).read
+  def erb(name)
+    template = (Pathname(__FILE__).dirname + "help" + name)
+    erb = ERB.new(template.read, nil, '%')
+    erb.filename = template.to_s
+    return erb
   end
 
   def legacy_applications
