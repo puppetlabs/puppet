@@ -93,28 +93,28 @@ describe Puppet::Util::Logging do
     end
   end
 
-  describe "when sending a deprication warning" do
+  describe "when sending a deprecation warning" do
     before do
-      @logger.clear_deprication_warnings
+      @logger.clear_deprecation_warnings
     end
 
     it "should the message with warn" do
       @logger.expects(:warn).with('foo')
-      @logger.deprication_warning 'foo'
+      @logger.deprecation_warning 'foo'
     end
 
     it "should only log each unique message once" do
       @logger.expects(:warn).with('foo').once
-      5.times { @logger.deprication_warning 'foo' }
+      5.times { @logger.deprecation_warning 'foo' }
     end
 
     it "should only log the first 100 messages" do
       (1..100).each { |i|
           @logger.expects(:warn).with(i).once
-          @logger.deprication_warning i
+          @logger.deprecation_warning i
       }
       @logger.expects(:warn).with(101).never
-      @logger.deprication_warning 101
+      @logger.deprecation_warning 101
     end
   end
 end

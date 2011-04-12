@@ -15,15 +15,15 @@ module Puppet::Util::Logging
     end
   end
 
-  def deprication_warning(message)
-    $deprication_warnings ||= Hash.new(0)
-    if $deprication_warnings.length < 100 and ($deprication_warnings[message] += 1) == 1
+  def deprecation_warning(message)
+    $deprecation_warnings ||= Hash.new(0)
+    if $deprecation_warnings.length < 100 and ($deprecation_warnings[message] += 1) == 1
       warn message
     end
   end
 
-  def clear_deprication_warnings
-    $deprication_warnings.clear if $deprication_warnings
+  def clear_deprecation_warnings
+    $deprecation_warnings.clear if $deprecation_warnings
   end
 
   private
