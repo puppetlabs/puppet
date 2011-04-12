@@ -28,8 +28,8 @@ describe Puppet::Faces[:help, '0.0.1'] do
   end
 
   it "should treat :current and 'current' identically" do
-    subject.help(:help, :current).should ==
-      subject.help(:help, 'current')
+    subject.help(:help, :version => :current).should ==
+      subject.help(:help, :version => 'current')
   end
 
   it "should complain when the request version of a face is missing" do
@@ -39,7 +39,8 @@ describe Puppet::Faces[:help, '0.0.1'] do
 
   it "should find a face by version" do
     face = Puppet::Faces[:huzzah, :current]
-    subject.help(:huzzah, face.version).should == subject.help(:huzzah, :current)
+    subject.help(:huzzah, :version => face.version).
+      should == subject.help(:huzzah, :version => :current)
   end
 
   context "when listing subcommands" do

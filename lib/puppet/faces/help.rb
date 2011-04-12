@@ -38,13 +38,19 @@ Puppet::Faces.define(:help, '0.0.1') do
       face   = facename ? Puppet::Faces[facename.to_sym, version] : nil
       action = (face and actionname) ? face.get_action(actionname.to_sym) : nil
 
-      template = case args.length
-                 when 0 then erb 'global.erb'
-                 when 1 then erb 'face.erb'
-                 when 2 then erb 'action.erb'
-                 else
-                   fail ArgumentError, "Too many arguments to help action"
-                 end
+      case args.length
+      when 0 then
+        template = erb 'global.erb'
+      when 1 then
+        face or fail ArgumentError, "Unable to load face #{facename}"
+        template = erb 'face.erb'
+      when 2 then
+        face or fail ArgumentError, "Unable to load face #{facename}"
+        action or fail ArgumentError, "Unable to load action #{actionname} from #{face}"
+        template = erb 'action.erb'
+      else
+        fail ArgumentError, "Too many arguments to help action"
+      end
 
       # Run the ERB template in our current binding, including all the local
       # variables we established just above. --daniel 2011-04-11
