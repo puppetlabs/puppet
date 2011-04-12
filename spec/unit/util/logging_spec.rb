@@ -99,21 +99,21 @@ describe Puppet::Util::Logging do
     end
 
     it "should the message with warn" do
-      @logger.expects(:warn).with('foo')
+      @logger.expects(:warning).with('foo')
       @logger.deprecation_warning 'foo'
     end
 
     it "should only log each unique message once" do
-      @logger.expects(:warn).with('foo').once
+      @logger.expects(:warning).with('foo').once
       5.times { @logger.deprecation_warning 'foo' }
     end
 
     it "should only log the first 100 messages" do
       (1..100).each { |i|
-          @logger.expects(:warn).with(i).once
+          @logger.expects(:warning).with(i).once
           @logger.deprecation_warning i
       }
-      @logger.expects(:warn).with(101).never
+      @logger.expects(:warning).with(101).never
       @logger.deprecation_warning 101
     end
   end

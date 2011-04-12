@@ -18,7 +18,7 @@ module Puppet::Util::Logging
   def deprecation_warning(message)
     $deprecation_warnings ||= Hash.new(0)
     if $deprecation_warnings.length < 100 and ($deprecation_warnings[message] += 1) == 1
-      warn message
+      warning message
     end
   end
 
