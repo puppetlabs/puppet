@@ -87,4 +87,26 @@ describe Puppet::Faces[:help, '0.0.1'] do
       it { should_not include name }
     end
   end
+
+  context "help for legacy applications" do
+    subject { Puppet::Faces[:help, :current] }
+    let :appname do subject.legacy_applications.first end
+
+    # This test is purposely generic, so that as we eliminate legacy commands
+    # we don't get into a loop where we either test a face-based replacement
+    # and fail to notice breakage, or where we have to constantly rewrite this
+    # test and all. --daniel 2011-04-11
+    it "should return the legacy help when given the subcommand" do
+      help = subject.help(appname)
+      help.should =~ /puppet-#{appname}/
+      %w{SYNOPSIS USAGE DESCRIPTION OPTIONS COPYRIGHT}.each do |heading|
+        help.should =~ /^#{heading}$/
+      end
+    end
+
+    it "should fail when asked for an action on a legacy command" do
+      expect { subject.help(appname, :whatever) }.
+        to raise_error ArgumentError, /Legacy subcommands don't take actions/
+    end
+  end
 end

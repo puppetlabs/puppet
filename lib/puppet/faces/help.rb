@@ -35,8 +35,16 @@ Puppet::Faces.define(:help, '0.0.1') do
 
       # Name those parameters...
       facename, actionname = args
-      face   = facename ? Puppet::Faces[facename.to_sym, version] : nil
-      action = (face and actionname) ? face.get_action(actionname.to_sym) : nil
+
+      if facename then
+        if legacy_applications.include? facename then
+          actionname and raise ArgumentError, "Legacy subcommands don't take actions"
+          return Puppet::Application[facename].help
+        else
+          face = Puppet::Faces[facename.to_sym, version]
+          actionname and action = face.get_action(actionname.to_sym)
+        end
+      end
 
       case args.length
       when 0 then
