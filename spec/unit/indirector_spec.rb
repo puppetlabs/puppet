@@ -5,6 +5,65 @@ require 'spec_helper'
 require 'puppet/defaults'
 require 'puppet/indirector'
 
+describe Puppet::Indirector, "when configuring routes" do
+  before :each do
+    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.indirection.cache_class = nil
+  end
+
+  after :each do
+    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.indirection.cache_class = nil
+  end
+
+  it "should configure routes as requested" do
+    routes = {
+      "node" => {
+        "terminus" => "exec",
+        "cache"    => "plain"
+      }
+    }
+
+    Puppet::Indirector.configure_routes(routes)
+
+    Puppet::Node.indirection.terminus_class.should == "exec"
+    Puppet::Node.indirection.cache_class.should    == "plain"
+  end
+
+  it "should fail when given an invalid indirection" do
+    routes = {
+      "fake_indirection" => {
+        "terminus" => "exec",
+        "cache"    => "plain"
+      }
+    }
+
+    expect { Puppet::Indirector.configure_routes(routes) }.should raise_error(/fake_indirection does not exist/)
+  end
+
+  it "should fail when given an invalid terminus" do
+    routes = {
+      "node" => {
+        "terminus" => "fake_terminus",
+        "cache"    => "plain"
+      }
+    }
+
+    expect { Puppet::Indirector.configure_routes(routes) }.should raise_error(/Could not find terminus fake_terminus/)
+  end
+
+  it "should fail when given an invalid cache" do
+    routes = {
+      "node" => {
+        "terminus" => "exec",
+        "cache"    => "fake_cache"
+      }
+    }
+
+    expect { Puppet::Indirector.configure_routes(routes) }.should raise_error(/Could not find terminus fake_cache/)
+  end
+end
+
 describe Puppet::Indirector, " when available to a model" do
   before do
     @thingie = Class.new do

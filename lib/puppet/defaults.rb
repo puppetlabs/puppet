@@ -116,6 +116,7 @@ module Puppet
       but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
       huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
       slightly more useful way when that happens."],
+    :route_file => ["$confdir/routes.yaml", "The YAML file containing indirector route configuration."],
     :node_terminus => ["plain", "Where to find information about nodes."],
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
