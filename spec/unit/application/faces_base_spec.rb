@@ -23,9 +23,7 @@ describe Puppet::Application::FacesBase do
 
   let :app do
     app = Puppet::Application::FacesBase::Basetest.new
-    app.stubs(:exit)
-    app.stubs(:puts)
-    app.command_line.stubs(:subcommand_name).returns 'subcommand'
+    app.command_line.stubs(:subcommand_name).returns('subcommand')
     Puppet::Util::Log.stubs(:newdestination)
     app
   end
@@ -39,7 +37,7 @@ describe Puppet::Application::FacesBase do
     end
   end
 
-  describe "#preinit" do
+  describe "#parse_options" do
     before :each do
       app.command_line.stubs(:args).returns %w{}
     end
@@ -56,6 +54,7 @@ describe Puppet::Application::FacesBase do
           Signal.stubs(:trap)
           app.command_line.stubs(:args).returns %w{foo}
           app.preinit
+          app.parse_options
         end
 
         it "should set the faces based on the type" do
@@ -73,54 +72,54 @@ describe Puppet::Application::FacesBase do
       end
 
       it "should fail if no action is given" do
-        expect { app.preinit }.
-          should raise_error ArgumentError, /No action given/
+        expect { app.preinit; app.parse_options }.
+          to raise_error OptionParser::MissingArgument, /No action given/
       end
 
       it "should report a sensible error when options with = fail" do
         app.command_line.stubs(:args).returns %w{--action=bar foo}
-        expect { app.preinit }.
-          should raise_error ArgumentError, /Unknown option "--action"/
+        expect { app.preinit; app.parse_options }.
+          to raise_error OptionParser::InvalidOption, /invalid option: --action/
       end
 
       it "should fail if an action option is before the action" do
         app.command_line.stubs(:args).returns %w{--action foo}
-        expect { app.preinit }.
-          should raise_error ArgumentError, /Unknown option "--action"/
+        expect { app.preinit; app.parse_options }.
+          to raise_error OptionParser::InvalidOption, /invalid option: --action/
       end
 
       it "should fail if an unknown option is before the action" do
         app.command_line.stubs(:args).returns %w{--bar foo}
-        expect { app.preinit }.
-          should raise_error ArgumentError, /Unknown option "--bar"/
+        expect { app.preinit; app.parse_options }.
+          to raise_error OptionParser::InvalidOption, /invalid option: --bar/
       end
 
-      it "should not fail if an unknown option is after the action" do
+      it "should fail if an unknown option is after the action" do
         app.command_line.stubs(:args).returns %w{foo --bar}
-        app.preinit
-        app.action.name.should == :foo
-        app.face.should_not be_option :bar
-        app.action.should_not be_option :bar
+        expect { app.preinit; app.parse_options }.
+          to raise_error OptionParser::InvalidOption, /invalid option: --bar/
       end
 
       it "should accept --bar as an argument to a mandatory option after action" do
         app.command_line.stubs(:args).returns %w{foo --mandatory --bar}
-        app.preinit and app.parse_options
+        app.preinit
+        app.parse_options
         app.action.name.should == :foo
         app.options.should == { :mandatory => "--bar" }
       end
 
       it "should accept --bar as an argument to a mandatory option before action" do
         app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
-        app.preinit and app.parse_options
+        app.preinit
+        app.parse_options
         app.action.name.should == :foo
         app.options.should == { :mandatory => "--bar" }
       end
 
       it "should not skip when --foo=bar is given" do
         app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
-        expect { app.preinit }.
-          should raise_error ArgumentError, /Unknown option "--bar"/
+        expect { app.preinit; app.parse_options }.
+          to raise_error OptionParser::InvalidOption, /invalid option: --bar/
       end
 
       { "boolean options before" => %w{--trace foo},
@@ -128,7 +127,8 @@ describe Puppet::Application::FacesBase do
       }.each do |name, args|
         it "should accept global boolean settings #{name} the action" do
           app.command_line.stubs(:args).returns args
-          app.preinit && app.parse_options
+          app.preinit
+          app.parse_options
           Puppet[:trace].should be_true
         end
       end
@@ -138,7 +138,8 @@ describe Puppet::Application::FacesBase do
       }.each do |name, args|
         it "should accept global settings with arguments #{name} the action" do
           app.command_line.stubs(:args).returns args
-          app.preinit && app.parse_options
+          app.preinit
+          app.parse_options
           Puppet[:syslogfacility].should == "user1"
         end
       end
@@ -148,19 +149,25 @@ describe Puppet::Application::FacesBase do
   describe "#setup" do
     it "should remove the action name from the arguments" do
       app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
-      app.preinit and app.parse_options and app.setup
+      app.preinit
+      app.parse_options
+      app.setup
       app.arguments.should == [{ :mandatory => "--bar" }]
     end
 
     it "should pass positional arguments" do
       app.command_line.stubs(:args).returns %w{--mandatory --bar foo bar baz quux}
-      app.preinit and app.parse_options and app.setup
+      app.preinit
+      app.parse_options
+      app.setup
       app.arguments.should == ['bar', 'baz', 'quux', { :mandatory => "--bar" }]
     end
   end
 
   describe "#main" do
-    before do
+    before :each do
+      app.expects(:exit).with(0)
+
       app.face      = Puppet::Faces[:basetest, '0.0.1']
       app.action    = app.face.get_action(:foo)
       app.format    = :pson
@@ -174,6 +181,7 @@ describe Puppet::Application::FacesBase do
 
     it "should use its render method to render any result" do
       app.expects(:render).with(app.arguments.length + 1)
+      app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
       app.main
     end
   end

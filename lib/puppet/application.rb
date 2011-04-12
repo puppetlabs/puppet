@@ -359,14 +359,10 @@ class Application
       end
     end
 
-    # scan command line.
-    begin
-      option_parser.parse!(self.command_line.args)
-    rescue OptionParser::ParseError => detail
-      $stderr.puts detail
-      $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"
-      exit(1)
-    end
+    # Scan command line.  We just hand any exceptions to our upper levels,
+    # rather than printing help and exiting, so that we can meaningfully
+    # respond with context-sensitive help if we want to. --daniel 2011-04-12
+    option_parser.parse!(self.command_line.args)
   end
 
   def handlearg(opt, arg)

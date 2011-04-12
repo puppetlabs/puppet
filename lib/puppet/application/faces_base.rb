@@ -1,5 +1,6 @@
 require 'puppet/application'
 require 'puppet/faces'
+require 'optparse'
 
 class Puppet::Application::FacesBase < Puppet::Application
   should_parse_config
@@ -50,11 +51,13 @@ class Puppet::Application::FacesBase < Puppet::Application
       $stderr.puts "Cancelling Face"
       exit(0)
     end
+  end
 
+  def parse_options
     # We need to parse enough of the command line out early, to identify what
     # the action is, so that we can obtain the full set of options to parse.
 
-    # TODO: These should be configurable versions, through a global
+    # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
     @type   = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
     @face   = Puppet::Faces[@type, :current]
@@ -88,25 +91,30 @@ class Puppet::Application::FacesBase < Puppet::Application
             index += 1          # ...so skip the argument.
           end
         else
-          raise ArgumentError, "Unknown option #{item.sub(/=.*$/, '').inspect}"
+          raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
         end
       else
         action = @face.get_action(item.to_sym)
         if action.nil? then
-          raise ArgumentError, "#{@face} does not have an #{item.inspect} action!"
+          raise OptionParser::InvalidArgument.new("#{@face} does not have an #{item} action")
         end
         @action = action
       end
     end
 
-    @action or raise ArgumentError, "No action given on the command line!"
+    unless @action
+      raise OptionParser::MissingArgument.new("No action given on the command line")
+    end
 
-    # Finally, we can interact with the default option code to build behaviour
+    # Now we can interact with the default option code to build behaviour
     # around the full set of options we now know we support.
     @action.options.each do |option|
       option = @action.get_option(option) # make it the object.
       self.class.option(*option.optparse) # ...and make the CLI parse it.
     end
+
+    # ...and invoke our parent to parse all the command line options.
+    super
   end
 
   def find_global_settings_argument(item)
