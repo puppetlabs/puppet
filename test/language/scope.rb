@@ -42,22 +42,22 @@ class TestScope < Test::Unit::TestCase
     # Set a variable in the top and make sure all three can get it
     topscope.setvar("first", "topval")
     scopes.each do |name, scope|
-      assert_equal("topval", scope.lookupvar("first", false), "Could not find var in #{name}")
+      assert_equal("topval", scope.lookupvar("first"), "Could not find var in #{name}")
     end
 
     # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
     midscope.setvar("second", "midval")
-    assert_equal(:undefined, scopes[:top].lookupvar("second", false), "Found child var in top scope")
+    assert_equal(:undefined, scopes[:top].lookupvar("second"), "Found child var in top scope")
     [:mid, :bot].each do |name|
-      assert_equal("midval", scopes[name].lookupvar("second", false), "Could not find var in #{name}")
+      assert_equal("midval", scopes[name].lookupvar("second"), "Could not find var in #{name}")
     end
 
     # And set something in the bottom, and make sure we only find it there.
     botscope.setvar("third", "botval")
     [:top, :mid].each do |name|
-      assert_equal(:undefined, scopes[name].lookupvar("third", false), "Found child var in top scope")
+      assert_equal(:undefined, scopes[name].lookupvar("third"), "Found child var in top scope")
     end
-    assert_equal("botval", scopes[:bot].lookupvar("third", false), "Could not find var in bottom scope")
+    assert_equal("botval", scopes[:bot].lookupvar("third"), "Could not find var in bottom scope")
 
 
     # Test that the scopes convert to hash structures correctly.
@@ -260,18 +260,7 @@ Host <<||>>"
     scope = mkscope
 
     scope.setvar("testing", :undef)
-
-
-      assert_equal(
-        :undef, scope.lookupvar("testing", false),
-
-      "undef was not returned as :undef when not string")
-
-
-        assert_equal(
-          "", scope.lookupvar("testing", true),
-
-      "undef was not returned as '' when string")
+    assert_equal(:undef, scope.lookupvar("testing"), "undef was not returned as :undef")
   end
 end
 

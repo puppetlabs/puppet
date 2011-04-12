@@ -20,7 +20,7 @@ class Puppet::Parser::AST
         name = @name.safeevaluate(scope)
 
         parsewrap do
-          scope.setvar(name,value, :file => @file, :line => @line, :append => @append)
+          scope.setvar(name,value, :file => file, :line => line, :append => @append)
         end
       end
     end

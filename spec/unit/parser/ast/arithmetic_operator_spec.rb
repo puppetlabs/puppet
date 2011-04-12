@@ -60,14 +60,4 @@ describe Puppet::Parser::AST::ArithmeticOperator do
     operator.evaluate(@scope).should == 4.33
   end
 
-  it "should work for variables too" do
-    @scope.expects(:lookupvar).with("one", false).returns(1)
-    @scope.expects(:lookupvar).with("two", false).returns(2)
-    one = ast::Variable.new( :value => "one" )
-    two = ast::Variable.new( :value => "two" )
-
-    operator = ast::ArithmeticOperator.new :lval => one, :operator => "+", :rval => two
-    operator.evaluate(@scope).should == 3
-  end
-
 end

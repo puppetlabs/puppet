@@ -382,17 +382,15 @@ class TestLangFunctions < Test::Unit::TestCase
     }.each do |string, value|
       scope = mkscope
       scope.setvar("yayness", string)
-      assert_equal(string, scope.lookupvar("yayness", false))
+      assert_equal(string, scope.lookupvar("yayness"))
 
       assert_nothing_raised("An empty string was not a valid variable value") do
         ast.evaluate(scope)
       end
 
-
-        assert_equal(
-          "template #{value}\n", scope.lookupvar("output"),
-
-            "#{string.inspect} did not get evaluated correctly")
+      assert_equal(
+        "template #{value}\n", scope.lookupvar("output"),
+        "#{string.inspect} did not get evaluated correctly")
     end
   end
 

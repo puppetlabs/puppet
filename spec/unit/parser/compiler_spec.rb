@@ -131,10 +131,6 @@ describe Puppet::Parser::Compiler do
       @compiler.newscope(@compiler.topscope).should be_instance_of(Puppet::Parser::Scope)
     end
 
-    it "should correctly set the level of newly created scopes" do
-      @compiler.newscope(@compiler.topscope, :level => 5).level.should == 5
-    end
-
     it "should set the parent scope of the new scope to be the passed-in parent" do
       scope = mock 'scope'
       newscope = @compiler.newscope(scope)
