@@ -357,16 +357,6 @@ describe Puppet::Application do
       end
 
     end
-
-    it "should exit if OptionParser raises an error" do
-      $stderr.stubs(:puts)
-      OptionParser.any_instance.stubs(:parse!).raises(OptionParser::ParseError.new("blah blah"))
-
-      @app.expects(:exit)
-
-      lambda { @app.parse_options }.should_not raise_error
-    end
-
   end
 
   describe "when calling default setup" do

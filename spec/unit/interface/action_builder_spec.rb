@@ -55,5 +55,16 @@ describe Puppet::Interface::ActionBuilder do
         action.should be_option :bar
       end
     end
+
+    context "inline documentation" do
+      let :face do Puppet::Interface.new(:inline_action_docs, '0.0.1') end
+
+      it "should set the summary" do
+        action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+          summary "this is some text"
+        end
+        action.summary.should == "this is some text"
+      end
+    end
   end
 end

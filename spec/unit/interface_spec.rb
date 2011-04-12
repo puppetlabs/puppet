@@ -1,3 +1,4 @@
+require 'spec_helper'
 require 'puppet/faces'
 require 'puppet/interface'
 
@@ -16,6 +17,20 @@ describe Puppet::Interface do
     Puppet::Interface::FaceCollection.instance_variable_set("@faces", @faces)
   end
 
+  describe "#[]" do
+    it "should fail when no version is requested" do
+      expect { subject[:huzzah] }.should raise_error ArgumentError
+    end
+
+    it "should raise an exception when the requested version is unavailable" do
+      expect { subject[:huzzah, '17.0.0'] }.should raise_error, Puppet::Error
+    end
+
+    it "should raise an exception when the requested face doesn't exist" do
+      expect { subject[:burrble_toot, :current] }.should raise_error, Puppet::Error
+    end
+  end
+
   describe "#define" do
     it "should register the face" do
       face = subject.define(:face_test_register, '0.0.1')
@@ -28,13 +43,36 @@ describe Puppet::Interface do
     end
 
     it "should require a version number" do
-      expect { subject.define(:no_version) }.should raise_error ArgumentError
+      expect { subject.define(:no_version) }.to raise_error ArgumentError
+    end
+
+    it "should support summary builder and accessor methods" do
+      subject.new(:foo, '1.0.0').should respond_to(:summary).with(0).arguments
+      subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
+    end
+
+    it "should set the summary text" do
+      text = "hello, freddy, my little pal"
+      subject.define(:face_test_summary, '1.0.0') do
+        summary text
+      end
+      subject[:face_test_summary, '1.0.0'].summary.should == text
+    end
+
+    it "should support mutating the summary" do
+      text = "hello, freddy, my little pal"
+      subject.define(:face_test_summary, '1.0.0') do
+        summary text
+      end
+      subject[:face_test_summary, '1.0.0'].summary.should == text
+      subject[:face_test_summary, '1.0.0'].summary = text + text
+      subject[:face_test_summary, '1.0.0'].summary.should == text + text
     end
   end
 
   describe "#initialize" do
     it "should require a version number" do
-      expect { subject.new(:no_version) }.should raise_error ArgumentError
+      expect { subject.new(:no_version) }.to raise_error ArgumentError
     end
 
     it "should require a valid version number" do

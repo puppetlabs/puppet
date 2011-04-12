@@ -13,7 +13,7 @@ face = Puppet::Faces::Indirector.define(:testindirection, '0.0.1') do
 end
 # REVISIT: This horror is required because we don't allow anything to be
 # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29
-face.version = :current
+face.instance_variable_set('@version', :current)
 Puppet::Faces.register(face)
 ########################################################################
 

@@ -53,7 +53,11 @@ module Puppet::Interface::FaceCollection
 
   def self.face?(name, version)
     name = underscorize(name)
-    return true if @faces[name].has_key?(version)
+
+    # Note: be careful not to accidentally create the top level key, either,
+    # because it will result in confusion when people try to enumerate the
+    # list of valid faces later. --daniel 2011-04-11
+    return true if @faces.has_key?(name) and @faces[name].has_key?(version)
 
     # We always load the current version file; the common case is that we have
     # the expected version and any compatibility versions in the same file,
@@ -106,7 +110,11 @@ module Puppet::Interface::FaceCollection
     # but we don't need that right now.
     #
     # So, this comment is a place-holder for that.  --daniel 2011-04-06
-    return !! @faces[name].has_key?(version)
+    #
+    # Note: be careful not to accidentally create the top level key, either,
+    # because it will result in confusion when people try to enumerate the
+    # list of valid faces later. --daniel 2011-04-11
+    return !! (@faces.has_key?(name) and @faces[name].has_key?(version))
   end
 
   def self.register(face)
