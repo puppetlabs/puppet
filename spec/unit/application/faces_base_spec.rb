@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 
 require 'spec_helper'
 require 'puppet/application/faces_base'
@@ -9,13 +9,6 @@ end
 
 describe Puppet::Application::FacesBase do
   before :all do
-    @dir = Dir.mktmpdir
-    $LOAD_PATH.push(@dir)
-    FileUtils.mkdir_p(File.join @dir, 'puppet', 'faces')
-    File.open(File.join(@dir, 'puppet', 'faces', 'basetest.rb'), 'w') do |f|
-      f.puts "Puppet::Faces.define(:basetest, '0.0.1')"
-    end
-
     Puppet::Faces.define(:basetest, '0.0.1') do
       option("--[no-]boolean")
       option("--mandatory MANDATORY")
@@ -26,11 +19,6 @@ describe Puppet::Application::FacesBase do
         when_invoked { |*args| args.length }
       end
     end
-  end
-
-  after :all do
-    FileUtils.remove_entry_secure @dir
-    $LOAD_PATH.pop
   end
 
   let :app do
