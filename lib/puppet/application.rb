@@ -331,7 +331,7 @@ class Application
 
   def configure_indirector_routes
     route_file = Puppet[:route_file]
-    if File.exists?(route_file)
+    if ::File.exists?(route_file)
       routes = YAML.load_file(route_file)
       application_routes = routes[name.to_s]
       Puppet::Indirector.configure_routes(application_routes) if application_routes
