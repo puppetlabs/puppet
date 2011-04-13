@@ -23,8 +23,9 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
 
     correct_wgetopts = false
     [ "/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf" ].each do |confpath|
-      pkgutilconf = File.open(confpath)
-      pkgutilconf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
+      File.open(confpath) do |conf|
+        conf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
+      end
     end
     if ! correct_wgetopts
       Puppet.notice "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
