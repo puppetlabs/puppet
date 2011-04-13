@@ -36,6 +36,69 @@ describe Puppet::Node do
       node.environment.name.should == :bar
     end
   end
+
+  describe "when converting to json" do
+    before do
+      @node = Puppet::Node.new("mynode")
+    end
+
+    it "should provide its name" do
+      PSON.parse(@node.to_pson)['data']['name'].should == "mynode"
+    end
+
+    it "should include the classes if set" do
+      @node.classes = %w{a b c}
+      PSON.parse(@node.to_pson)['data']['classes'].should == %w{a b c}
+    end
+
+    it "should not include the classes if there are none" do
+      PSON.parse(@node.to_pson)['data'].should_not be_include('classes')
+    end
+
+    it "should include parameters if set" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      PSON.parse(@node.to_pson)['data']['parameters'].should == {"a" => "b", "c" => "d"}
+    end
+
+    it "should not include the parameters if there are none" do
+      PSON.parse(@node.to_pson)['data'].should_not be_include('parameters')
+    end
+
+    it "should include the environment" do
+      @node.environment = "production"
+      PSON.parse(@node.to_pson)['data']['environment'].should == "production"
+    end
+  end
+
+  describe "when converting from json" do
+    before do
+      @node = Puppet::Node.new("mynode")
+      @format = Puppet::Network::FormatHandler.format('pson')
+    end
+
+    def from_json(json)
+      @format.intern(Puppet::Node, json)
+    end
+
+    it "should set its name" do
+      from_json(@node.to_pson).name.should == "mynode"
+    end
+
+    it "should include the classes if set" do
+      @node.classes = %w{a b c}
+      from_json(@node.to_pson).classes.should == %w{a b c}
+    end
+
+    it "should include parameters if set" do
+      @node.parameters = {"a" => "b", "c" => "d"}
+      from_json(@node.to_pson).parameters.should == {"a" => "b", "c" => "d"}
+    end
+
+    it "should include the environment" do
+      @node.environment = "production"
+      from_json(@node.to_pson).environment.name.should == :production
+    end
+  end
 end
 
 describe Puppet::Node, "when initializing" do
