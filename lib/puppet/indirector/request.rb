@@ -14,6 +14,51 @@ class Puppet::Indirector::Request
 
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
 
+  def self.from_pson(json)
+    raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
+    raise ArgumentError, "No method name provided in json data" unless method = json['method']
+    raise ArgumentError, "No key provided in json data" unless key = json['key']
+
+    request = new(indirection_name, method, key, json['attributes'])
+
+    if instance = json['instance']
+      klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
+      if instance.is_a?(klass)
+        request.instance = instance
+      else
+        request.instance = klass.from_pson(instance)
+      end
+    end
+
+    request
+  end
+
+  def to_pson(*args)
+    result = {
+      'document_type' => 'Puppet::Indirector::Request',
+      'data' => {
+        'type' => indirection_name,
+        'method' => method,
+        'key' => key
+      }
+    }
+    data = result['data']
+    attributes = {}
+    OPTION_ATTRIBUTES.each do |key|
+      next unless value = send(key)
+      attributes[key] = value
+    end
+
+    options.each do |opt, value|
+      attributes[opt] = value
+    end
+
+    data['attributes'] = attributes unless attributes.empty?
+    data['instance'] = instance if instance
+
+    result.to_pson(*args)
+  end
+
   # Is this an authenticated request?
   def authenticated?
     # Double negative, so we just get true or false
@@ -61,9 +106,11 @@ class Puppet::Indirector::Request
     self.indirection_name = indirection_name
     self.method = method
 
+    options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
+
     set_attributes(options)
 
-    @options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
+    @options = options
 
     if key_or_instance.is_a?(String) || key_or_instance.is_a?(Symbol)
       key = key_or_instance
@@ -153,7 +200,7 @@ class Puppet::Indirector::Request
 
   def set_attributes(options)
     OPTION_ATTRIBUTES.each do |attribute|
-      if options.include?(attribute)
+      if options.include?(attribute.to_sym)
         send(attribute.to_s + "=", options[attribute])
         options.delete(attribute)
       end
