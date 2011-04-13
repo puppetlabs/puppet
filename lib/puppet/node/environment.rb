@@ -150,6 +150,7 @@ class Puppet::Node::Environment
   private
 
   def perform_initial_import
+    return empty_parse_result if Puppet.settings[:ignoreimport]
     parser = Puppet::Parser::Parser.new(self)
     if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
       parser.string = code

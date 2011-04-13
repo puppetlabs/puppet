@@ -60,6 +60,8 @@ class Puppet::Parser::TypeLoader
 
   # Import our files.
   def import(file, current_file = nil)
+    return if Puppet[:ignoreimport]
+
     # use a path relative to the file doing the importing
     if current_file
       dir = current_file.sub(%r{[^/]+$},'').sub(/\/$/, '')
