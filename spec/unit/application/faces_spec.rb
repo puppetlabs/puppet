@@ -9,8 +9,7 @@ describe Puppet::Application::Faces do
   end
 
   it "should always call 'list'" do
-    faces = Puppet::Application::Faces.new
-    faces.expects(:list)
-    faces.main
+    subject.expects(:list)
+    subject.main
   end
 end

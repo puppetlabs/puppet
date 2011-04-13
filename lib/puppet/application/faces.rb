@@ -1,5 +1,5 @@
 require 'puppet/application'
-require 'puppet/faces'
+require 'puppet/face'
 
 class Puppet::Application::Faces < Puppet::Application
 
@@ -12,7 +12,7 @@ class Puppet::Application::Faces < Puppet::Application
 
   option("--help", "-h") do |arg|
     puts "Usage: puppet faces [actions|terminuses]
-Lists all available interfaces, and by default includes all available terminuses and actions.
+Lists all available faces, and by default includes all available terminuses and actions.
 "
   end
 
@@ -66,7 +66,7 @@ Lists all available interfaces, and by default includes all available terminuses
   end
 
   def faces
-    Puppet::Faces.faces
+    Puppet::Face.faces
   end
 
   def terminus_classes(indirection)
@@ -74,9 +74,9 @@ Lists all available interfaces, and by default includes all available terminuses
   end
 
   def actions(indirection)
-    return [] unless faces = Puppet::Faces[indirection, '0.0.1']
-    faces.load_actions
-    return faces.actions.sort { |a, b| a.to_s <=> b.to_s }
+    return [] unless face = Puppet::Face[indirection, '0.0.1']
+    face.load_actions
+    return face.actions.sort { |a, b| a.to_s <=> b.to_s }
   end
 
   def load_applications

@@ -1,4 +1,4 @@
-# Provides utility functions to help interfaces Puppet to SELinux.
+# Provides utility functions to help interface Puppet to SELinux.
 #
 # This requires the very new SELinux Ruby bindings.  These bindings closely
 # mirror the SELinux C library interface.

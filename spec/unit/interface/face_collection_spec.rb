@@ -15,7 +15,7 @@ describe Puppet::Interface::FaceCollection do
   before :each do
     @original_faces    = subject.instance_variable_get("@faces").dup
     @original_required = $".dup
-    $".delete_if do |path| path =~ %r{/faces/.*\.rb$} end
+    $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
     subject.instance_variable_get("@faces").clear
   end
 
@@ -59,82 +59,71 @@ describe Puppet::Interface::FaceCollection do
       subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
     end
 
-    before :each do
-      @dir = Dir.mktmpdir
-      @lib = FileUtils.mkdir_p(File.join @dir, 'puppet', 'faces')
-      $LOAD_PATH.push(@dir)
-    end
-
-    after :each do
-      FileUtils.remove_entry_secure @dir
-      $LOAD_PATH.pop
-    end
-
-    it "should return the faces with the given name" do
+    it "should return the face with the given name" do
       subject["foo", '0.0.1'].should == 10
     end
 
-    it "should attempt to load the faces if it isn't found" do
-      subject.expects(:require).with('puppet/faces/bar')
+    it "should attempt to load the face if it isn't found" do
+      subject.expects(:require).with('puppet/face/bar')
       subject["bar", '0.0.1']
     end
 
-    it "should attempt to load the default faces for the specified version :current" do
-      subject.expects(:require).with('puppet/faces/fozzie')
+    it "should attempt to load the default face for the specified version :current" do
+      subject.expects(:require).with('puppet/face/fozzie')
       subject['fozzie', :current]
     end
   end
 
   describe "::face?" do
-    it "should return true if the faces specified is registered" do
+    it "should return true if the face specified is registered" do
       subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
       subject.face?("foo", '0.0.1').should == true
     end
 
-    it "should attempt to require the faces if it is not registered" do
+    it "should attempt to require the face if it is not registered" do
       subject.expects(:require).with do |file|
         subject.instance_variable_get("@faces")[:bar]['0.0.1'] = true
-        file == 'puppet/faces/bar'
+        file == 'puppet/face/bar'
       end
       subject.face?("bar", '0.0.1').should == true
     end
 
-    it "should return true if requiring the faces registered it" do
+    it "should return true if requiring the face registered it" do
       subject.stubs(:require).with do
         subject.instance_variable_get("@faces")[:bar]['0.0.1'] = 20
       end
     end
 
-    it "should return false if the faces is not registered" do
+    it "should return false if the face is not registered" do
       subject.stubs(:require).returns(true)
       subject.face?("bar", '0.0.1').should be_false
     end
 
-    it "should return false if the faces file itself is missing" do
+    it "should return false if the face file itself is missing" do
       subject.stubs(:require).
-        raises(LoadError, 'no such file to load -- puppet/faces/bar')
+        raises(LoadError, 'no such file to load -- puppet/face/bar')
       subject.face?("bar", '0.0.1').should be_false
     end
 
     it "should register the version loaded by `:current` as `:current`" do
       subject.expects(:require).with do |file|
-        subject.instance_variable_get("@faces")[:huzzah]['2.0.1'] = :huzzah_faces
-        file == 'puppet/faces/huzzah'
+        subject.instance_variable_get("@faces")[:huzzah]['2.0.1'] = :huzzah_face
+        file == 'puppet/face/huzzah'
       end
       subject.face?("huzzah", :current)
-      subject.instance_variable_get("@faces")[:huzzah][:current].should == :huzzah_faces
+      subject.instance_variable_get("@faces")[:huzzah][:current].should == :huzzah_face
     end
 
     context "with something on disk" do
-      it "should register the version loaded from `puppet/faces/{name}` as `:current`" do
+      it "should register the version loaded from `puppet/face/{name}` as `:current`" do
         subject.should be_face "huzzah", '2.0.1'
         subject.should be_face "huzzah", :current
-        Puppet::Faces[:huzzah, '2.0.1'].should == Puppet::Faces[:huzzah, :current]
+        Puppet::Face[:huzzah, '2.0.1'].should == Puppet::Face[:huzzah, :current]
       end
 
       it "should index :current when the code was pre-required" do
         subject.instance_variable_get("@faces")[:huzzah].should_not be_key :current
-        require 'puppet/faces/huzzah'
+        require 'puppet/face/huzzah'
         subject.face?(:huzzah, :current).should be_true
       end
     end
@@ -146,10 +135,10 @@ describe Puppet::Interface::FaceCollection do
   end
 
   describe "::register" do
-    it "should store the faces by name" do
-      faces = Puppet::Faces.new(:my_faces, '0.0.1')
-      subject.register(faces)
-      subject.instance_variable_get("@faces").should == {:my_faces => {'0.0.1' => faces}}
+    it "should store the face by name" do
+      face = Puppet::Face.new(:my_face, '0.0.1')
+      subject.register(face)
+      subject.instance_variable_get("@faces").should == {:my_face => {'0.0.1' => face}}
     end
   end
 
