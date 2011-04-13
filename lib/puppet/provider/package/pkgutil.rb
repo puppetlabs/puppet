@@ -1,21 +1,17 @@
 # Packaging using Peter Bonivart's pkgutil program.
 Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun do
   desc "Package management using Peter Bonivart's ``pkgutil`` command on Solaris."
-  pkguti = "pkgutil"
+
+  pkgutil_bin = "pkgutil"
   if FileTest.executable?("/opt/csw/bin/pkgutil")
-    pkguti = "/opt/csw/bin/pkgutil"
+    pkgutil_bin = "/opt/csw/bin/pkgutil"
   end
 
   confine :operatingsystem => :solaris
 
-  commands :pkguti => pkguti
+  commands :pkguti => pkgutil_bin
 
   def self.healthcheck()
-    if pkguti == "pkgutil"
-      raise Puppet::Error,
-        "The pkgutil command is missing; pkgutil packaging unavailable"
-    end
-
     unless FileTest.exists?("/var/opt/csw/pkgutil/admin")
       Puppet.notice "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
       Puppet.notice "See /var/opt/csw/pkgutil"
