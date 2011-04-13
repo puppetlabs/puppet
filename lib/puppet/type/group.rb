@@ -1,4 +1,3 @@
-
 require 'etc'
 require 'facter'
 
@@ -14,6 +13,9 @@ module Puppet
 
     feature :manages_members,
       "For directories where membership is an attribute of groups not users."
+
+    feature :system_groups,
+      "The provider allows you to create system groups with lower GIDs."
 
     ensurable do
       desc "Create or remove the group."
@@ -90,6 +92,14 @@ module Puppet
     newparam(:allowdupe, :boolean => true) do
       desc "Whether to allow duplicate GIDs.  This option does not work on
         FreeBSD (contract to the `pw` man page)."
+
+      newvalues(:true, :false)
+
+      defaultto false
+    end
+
+    newparam(:system, :boolean => true) do
+      desc "Whether the group is a system group with lower GID."
 
       newvalues(:true, :false)
 
