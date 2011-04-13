@@ -19,7 +19,7 @@ class Puppet::Interface::OptionBuilder
   Puppet::Interface::Option.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/      # special case, darn it...
 
-    dsl = setter.sub(/=$/, '')
+    dsl = setter.to_s.sub(/=$/, '')
     define_method(dsl) do |value| @option.send(setter, value) end
   end
 end
