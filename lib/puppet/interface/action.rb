@@ -11,6 +11,15 @@ class Puppet::Interface::Action
     attrs.each do |k, v| send("#{k}=", v) end
   end
 
+  # This is not nice, but it is the easiest way to make us behave like the
+  # Ruby Method object rather than UnboundMethod.  Duplication is vaguely
+  # annoying, but at least we are a shallow clone. --daniel 2011-04-12
+  def __dup_and_rebind_to(to)
+    bound_version = self.dup
+    bound_version.instance_variable_set(:@face, to)
+    return bound_version
+  end
+
   attr_reader :name
   def to_s() "#{@face}##{@name}" end
 

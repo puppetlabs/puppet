@@ -35,9 +35,16 @@ module Puppet::Interface::ActionManager
     result = @actions[name.to_sym]
     if result.nil?
       if self.is_a?(Class) and superclass.respond_to?(:get_action)
-        result = superclass.get_action(name)
+        found = superclass.get_action(name)
       elsif self.class.respond_to?(:get_action)
-        result = self.class.get_action(name)
+        found = self.class.get_action(name)
+      end
+
+      if found then
+        # This is not the nicest way to make action equivalent to the Ruby
+        # Method object, rather than UnboundMethod, but it will do for now,
+        # and we only have to make this change in *one* place. --daniel 2011-04-12
+        result = @actions[name.to_sym] = found.__dup_and_rebind_to(self)
       end
     end
     return result
