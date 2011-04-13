@@ -4,7 +4,7 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/application'
-require 'sha1'
+require 'digest/sha1'
 
 class Puppet::Transaction
   require 'puppet/transaction/event'
@@ -255,13 +255,13 @@ class Puppet::Transaction
 
   # We want to monitor changes in the relationship graph of our
   # catalog but this is complicated by the fact that the catalog
-  # both is_a graph and has_a graph, by the fact that changes to 
+  # both is_a graph and has_a graph, by the fact that changes to
   # the structure of the object can have adverse serialization
   # effects, by threading issues, by order-of-initialization issues,
-  # etc.  
+  # etc.
   #
   # Since the proper lifetime/scope of the monitoring is a transaction
-  # and the transaction is already commiting a mild law-of-demeter 
+  # and the transaction is already commiting a mild law-of-demeter
   # transgression, we cut the Gordian knot here by simply wrapping the
   # transaction's view of the resource graph to capture and maintain
   # the information we need.  Nothing outside the transaction needs
