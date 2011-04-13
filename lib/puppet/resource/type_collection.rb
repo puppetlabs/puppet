@@ -6,6 +6,7 @@ class Puppet::Resource::TypeCollection
     @hostclasses.clear
     @definitions.clear
     @nodes.clear
+    @watched_files.clear
   end
 
   def initialize(env)
