@@ -72,7 +72,17 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def find(request)
-    return nil unless result = deserialize(network(request).get(indirection2uri(request), headers))
+    uri, body = request_to_uri_and_body(request)
+    uri_with_query_string = "#{uri}?#{body}"
+    http_connection = network(request)
+    # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
+    # http://redmine.ruby-lang.org/issues/show/3991
+    response = if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
+      http_connection.post(uri, body, headers)
+    else
+      http_connection.get(uri_with_query_string, headers)
+    end
+    result = deserialize response
     result.name = request.key if result.respond_to?(:name=)
     result
   end
