@@ -162,17 +162,39 @@ describe Puppet::Interface do
   end
 
   describe "with inherited options" do
-    let :face do
+    let :parent do
       parent = Class.new(subject)
       parent.option("--inherited")
+      parent.action(:parent_action) do end
+      parent
+    end
+
+    let :face do
       face = parent.new(:example, '0.2.1')
       face.option("--local")
+      face.action(:face_action) do end
       face
     end
 
     describe "#options" do
       it "should list inherited options" do
         face.options.should =~ [:inherited, :local]
+      end
+
+      it "should see all options on face actions" do
+        face.get_action(:face_action).options.should =~ [:inherited, :local]
+      end
+
+      it "should see all options on inherited actions accessed on the subclass" do
+        face.get_action(:parent_action).options.should =~ [:inherited, :local]
+      end
+
+      it "should not see subclass actions on the parent class" do
+        parent.options.should =~ [:inherited]
+      end
+
+      it "should not see subclass actions on actions accessed on the parent class" do
+        parent.get_action(:parent_action).options.should =~ [:inherited]
       end
     end
 

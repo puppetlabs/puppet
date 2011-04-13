@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 shared_examples_for "things that declare options" do
   it "should support options without arguments" do
     subject = add_options_to { option "--bar" }
@@ -13,6 +12,13 @@ shared_examples_for "things that declare options" do
     end
     subject.should be
     subject.should be_option :foo
+  end
+
+  { "--foo=" => :foo }.each do |input, option|
+    it "should accept #{name.inspect}" do
+      subject = add_options_to { option input }
+      subject.should be_option option
+    end
   end
 
   it "should support option documentation" do
