@@ -6,19 +6,12 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     pkguti = "/opt/csw/bin/pkgutil"
   end
 
-  pkgutilconf = File.open("/etc/opt/csw/pkgutil.conf")
-  correct_wgetopts = false
-  pkgutilconf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*-nv/ }
-  if ! correct_wgetopts
-    Puppet.notice "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
-  end
-
   confine :operatingsystem => :solaris
 
   commands :pkguti => pkguti
 
-  def self.extended(mod)
-    unless command(:pkguti) != "pkgutil"
+  def self.healthcheck()
+    if pkguti == "pkgutil"
       raise Puppet::Error,
         "The pkgutil command is missing; pkgutil packaging unavailable"
     end
@@ -27,9 +20,18 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       Puppet.notice "It is highly recommended you create '/var/opt/csw/pkgutil/admin'."
       Puppet.notice "See /var/opt/csw/pkgutil"
     end
+
+    pkgutilconf = File.open("/etc/opt/csw/pkgutil.conf")
+    correct_wgetopts = false
+    pkgutilconf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*-nv/ }
+    if ! correct_wgetopts
+      Puppet.notice "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
+    end
   end
 
   def self.instances(hash = {})
+    healthcheck
+
     # Use the available pkg list (-a) to work out aliases
     aliases = {}
     availlist.each do |pkg|

@@ -9,6 +9,9 @@ describe provider do
     @resource = stub 'resource'
     @resource = Puppet::Type.type(:package).new(:name => "TESTpkg", :ensure => :present)
     @provider = provider.new(@resource)
+
+    # Stub all file and config tests
+    provider.stubs(:healthcheck)
   end
 
   it "should have an install method" do
