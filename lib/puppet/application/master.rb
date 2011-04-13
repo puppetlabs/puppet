@@ -30,6 +30,11 @@ class Puppet::Application::Master < Puppet::Application
     exit 1
   end
 
+  option("--ignoreimport") do
+    puts "--ignoreimport has been removed. Please use 'puppet parser validate <manifest>'"
+    exit 1
+  end
+
   def help
     <<-HELP
 
