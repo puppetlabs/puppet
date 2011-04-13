@@ -70,8 +70,8 @@ module Puppet
           # Doing this at the top of the file is natural, but causes puppet.rb
           # to load too early, which causes things to break.  This is a nasty
           # thing, found in #7065. --daniel 2011-04-11
-          require 'puppet/faces/help'
-          puts Puppet::Faces[:help, :current].help
+          require 'puppet/face'
+          puts Puppet::Face[:help, :current].help
         end
       end
 

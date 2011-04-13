@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 
 host = Puppet::Type.type(:host)

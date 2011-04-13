@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2008-3-7.
 #  Copyright (c) 2007. All rights reserved.

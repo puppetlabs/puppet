@@ -12,7 +12,7 @@ module Puppet::Interface::FaceCollection
       $LOAD_PATH.each do |dir|
         next unless FileTest.directory?(dir)
         Dir.chdir(dir) do
-          Dir.glob("puppet/faces/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
+          Dir.glob("puppet/face/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
             iname = file.sub(/\.rb/, '')
             begin
               require iname
@@ -66,7 +66,7 @@ module Puppet::Interface::FaceCollection
     # We use require to avoid executing the code multiple times, like any
     # other Ruby library that we might want to use.  --daniel 2011-04-06
     begin
-      require "puppet/faces/#{name}"
+      require "puppet/face/#{name}"
 
       # If we wanted :current, we need to index to find that; direct version
       # requests just work™ as they go. --daniel 2011-04-06
@@ -100,7 +100,7 @@ module Puppet::Interface::FaceCollection
         @faces[name][:current] = @faces[name][latest_ver]
       end
     rescue LoadError => e
-      raise unless e.message =~ %r{-- puppet/faces/#{name}$}
+      raise unless e.message =~ %r{-- puppet/face/#{name}$}
       # ...guess we didn't find the file; return a much better problem.
     end
 

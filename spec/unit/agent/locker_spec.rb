@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/agent'
 require 'puppet/agent/locker'

@@ -1,20 +1,19 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/application/indirection_base'
-require 'puppet/faces/indirector'
+require 'puppet/face/indirector'
 
 ########################################################################
 # Stub for testing; the names are critical, sadly. --daniel 2011-03-30
 class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBase
 end
 
-face = Puppet::Faces::Indirector.define(:testindirection, '0.0.1') do
+face = Puppet::Face::Indirector.define(:testindirection, '0.0.1') do
 end
 # REVISIT: This horror is required because we don't allow anything to be
 # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29
 face.instance_variable_set('@version', :current)
-Puppet::Faces.register(face)
+Puppet::Face.register(face)
 ########################################################################
 
 

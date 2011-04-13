@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 
 describe "the inline_template function" do

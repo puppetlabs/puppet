@@ -19,7 +19,7 @@ class Puppet::Interface
     # list of directories to search.
     # Can't we utilize an external autoloader, or simply use the $LOAD_PATH? -pvb
     def autoloader
-      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/faces")
+      @autoloader ||= Puppet::Util::Autoload.new(:application, "puppet/face")
     end
 
     def faces
@@ -90,7 +90,7 @@ class Puppet::Interface
 
   # Try to find actions defined in other files.
   def load_actions
-    path = "puppet/faces/#{name}"
+    path = "puppet/face/#{name}"
 
     loaded = []
     [path, "#{name}@#{version}/#{path}"].each do |path|
@@ -115,6 +115,6 @@ class Puppet::Interface
   end
 
   def to_s
-    "Puppet::Faces[#{name.inspect}, #{version.inspect}]"
+    "Puppet::Face[#{name.inspect}, #{version.inspect}]"
   end
 end

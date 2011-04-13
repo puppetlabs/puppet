@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 
 # This is entirely an internal class for Interface, so we have to load it instead of our class.

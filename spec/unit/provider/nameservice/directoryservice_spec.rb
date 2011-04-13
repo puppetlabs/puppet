@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 
 # We use this as a reasonable way to obtain all the support infrastructure.

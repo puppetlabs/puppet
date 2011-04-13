@@ -1,5 +1,5 @@
 require 'spec_helper'
-require 'puppet/faces'
+require 'puppet/face'
 require 'puppet/interface'
 
 describe Puppet::Interface do
@@ -116,7 +116,7 @@ describe Puppet::Interface do
 
   it "should try to require faces that are not known" do
     pending "mocking require causes random stack overflow"
-    subject::FaceCollection.expects(:require).with "puppet/faces/foo"
+    subject::FaceCollection.expects(:require).with "puppet/face/foo"
     subject[:foo, '0.0.1']
   end
 

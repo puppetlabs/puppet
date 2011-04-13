@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 
 
@@ -99,7 +98,7 @@ describe Puppet::Util::CommandLine do
         Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
         commandline.expects(:system).never
 
-        text = Puppet::Faces[:help, :current].help
+        text = Puppet::Face[:help, :current].help
         commandline.expects(:puts).with { |x| x =~ /Unknown Puppet subcommand/ }
         commandline.expects(:puts).with text
 

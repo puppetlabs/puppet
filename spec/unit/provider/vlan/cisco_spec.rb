@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 
 require File.dirname(__FILE__) + '/../../../spec_helper'
 
