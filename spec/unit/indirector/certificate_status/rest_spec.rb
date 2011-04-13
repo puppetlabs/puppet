@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/ssl/host'
 require 'puppet/indirector/certificate_status'

@@ -1,5 +1,4 @@
 #!/usr/bin/env rspec
-
 require 'spec_helper'
 require 'puppet/application/face_base'
 require 'tmpdir'

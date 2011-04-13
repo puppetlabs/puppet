@@ -1,5 +1,4 @@
-#!/usr/bin/env ruby
-
+#!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/network/handler'
 require 'puppet/network/http/rack' if Puppet.features.rack?

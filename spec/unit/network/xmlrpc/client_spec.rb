@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 require 'puppet/network/client'
 
 require 'spec_helper'
