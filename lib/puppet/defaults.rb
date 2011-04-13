@@ -418,7 +418,6 @@ module Puppet
       :desc => "Where the puppet master web server logs."
     },
     :masterport => [8140, "Which port puppet master listens on."],
-    :parseonly => [false, "Just check the syntax of the manifests."],
     :node_name => ["cert", "How the puppetmaster determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.
