@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'matchers/json'
 require 'puppet/indirector/request'
 
 describe Puppet::Indirector::Request do
@@ -307,28 +308,24 @@ describe Puppet::Indirector::Request do
     end
 
     it "should produce a hash with the document_type set to 'request'" do
-      PSON.parse(@request.to_pson)["document_type"].should == "Puppet::Indirector::Request"
-    end
-
-    it "should add its data under the 'data' attribute in the hash" do
-      PSON.parse(@request.to_pson)["data"].should be_instance_of(Hash)
+      @request.should set_json_document_type_to("Puppet::Indirector::Request")
     end
     
     it "should set the 'key'" do
-      PSON.parse(@request.to_pson)["data"]['key'].should == "foo"
+      @request.should set_json_attribute("key").to("foo")
     end
 
     it "should include an attribute for its indirection name" do
-      PSON.parse(@request.to_pson)["data"]['type'].should == "facts"
+      @request.should set_json_attribute("type").to("facts")
     end
 
     it "should include a 'method' attribute set to its method" do
-      PSON.parse(@request.to_pson)["data"]['method'].should == "find"
+      @request.should set_json_attribute("method").to("find")
     end
 
     it "should add all attributes under the 'attributes' attribute" do
       @request.ip = "127.0.0.1"
-      PSON.parse(@request.to_pson)["data"]['attributes']['ip'].should == "127.0.0.1"
+      @request.should set_json_attribute("attributes", "ip").to("127.0.0.1")
     end
 
     it "should add all options under the 'attributes' attribute" do
