@@ -1,3 +1,4 @@
+# encoding: UTF-8
 shared_examples_for "things that declare options" do
   it "should support options without arguments" do
     subject = add_options_to { option "--bar" }
