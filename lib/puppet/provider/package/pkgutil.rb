@@ -21,9 +21,11 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
       Puppet.notice "See /var/opt/csw/pkgutil"
     end
 
-    pkgutilconf = File.open("/etc/opt/csw/pkgutil.conf")
     correct_wgetopts = false
-    pkgutilconf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*-nv/ }
+    [ "/opt/csw/etc/pkgutil.conf", "/etc/opt/csw/pkgutil.conf" ].each do |confpath|
+      pkgutilconf = File.open(confpath)
+      pkgutilconf.each {|line| correct_wgetopts = true if line =~ /^\s*wgetopts\s*=.*(-nv|-q|--no-verbose|--quiet)/ }
+    end
     if ! correct_wgetopts
       Puppet.notice "It is highly recommended that you set 'wgetopts=-nv' in your pkgutil.conf."
     end
