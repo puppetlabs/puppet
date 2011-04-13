@@ -14,7 +14,6 @@ class TestParser < Test::Unit::TestCase
   include PuppetTest::Support::Utils
   def setup
     super
-    Puppet[:parseonly] = true
     #@lexer = Puppet::Parser::Lexer.new
   end
 

@@ -26,6 +26,16 @@ class Puppet::Application::Apply < Puppet::Application
     end
   end
 
+  option("--parseonly") do
+    puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
+    exit 1
+  end
+
+  option("--ignoreimport") do
+    puts "--ignoreimport has been removed. Please use 'puppet parser validate <manifest>'"
+    exit 1
+  end
+
   def help
     <<-HELP
 
@@ -125,8 +135,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   def run_command
     if options[:catalog]
       apply
-    elsif Puppet[:parseonly]
-      parseonly
     else
       main
     end
@@ -151,22 +159,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     require 'puppet/configurer'
     configurer = Puppet::Configurer.new
     configurer.run :catalog => catalog
-  end
-
-  def parseonly
-    # Set our code or file to use.
-    if options[:code] or command_line.args.length == 0
-      Puppet[:code] = options[:code] || STDIN.read
-    else
-      Puppet[:manifest] = command_line.args.shift
-    end
-    begin
-      Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types
-    rescue => detail
-      Puppet.err detail
-      exit 1
-    end
-    exit 0
   end
 
   def main

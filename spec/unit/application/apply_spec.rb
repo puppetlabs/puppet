@@ -122,14 +122,6 @@ describe Puppet::Application::Apply do
 
   describe "when executing" do
 
-    it "should dispatch to parseonly if parseonly is set" do
-      @apply.stubs(:options).returns({})
-      Puppet.stubs(:[]).with(:parseonly).returns(true)
-
-      @apply.expects(:parseonly)
-      @apply.run_command
-    end
-
     it "should dispatch to 'apply' if it was called with 'apply'" do
       @apply.options[:catalog] = "foo"
 
@@ -137,46 +129,11 @@ describe Puppet::Application::Apply do
       @apply.run_command
     end
 
-    it "should dispatch to main if parseonly is not set" do
+    it "should dispatch to main otherwise" do
       @apply.stubs(:options).returns({})
-      Puppet.stubs(:[]).with(:parseonly).returns(false)
 
       @apply.expects(:main)
       @apply.run_command
-    end
-
-    describe "the parseonly command" do
-      before :each do
-        @environment = Puppet::Node::Environment.new("env")
-        Puppet.stubs(:[]).with(:environment).returns(@environment)
-        Puppet.stubs(:[]).with(:manifest).returns("site.pp")
-        Puppet.stubs(:err)
-        @apply.stubs(:exit)
-        @apply.options.stubs(:[]).with(:code).returns "some code"
-      end
-
-      it "should use the environment to parse the file" do
-        @environment.stubs(:perform_initial_import)
-        @apply.parseonly
-      end
-
-      it "should exit with exit code 0 if no error" do
-        @apply.expects(:exit).with(0)
-        @apply.parseonly
-      end
-
-      it "should exit with exit code 1 if error" do
-        @environment.stubs(:perform_initial_import).raises(Puppet::ParseError)
-        @apply.expects(:exit).with(1)
-        @apply.parseonly
-      end
-
-      it "should exit with exit code 1 if error, even if --noop is set" do
-        Puppet[:noop] = true
-        @environment.stubs(:perform_initial_import).raises(Puppet::ParseError)
-        @apply.expects(:exit).with(1)
-        @apply.parseonly
-      end
     end
 
     describe "the main command" do

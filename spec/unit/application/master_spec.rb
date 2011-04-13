@@ -34,10 +34,6 @@ describe Puppet::Application::Master do
     @master.should respond_to(:main)
   end
 
-  it "should declare a parseonly command" do
-    @master.should respond_to(:parseonly)
-  end
-
   it "should declare a compile command" do
     @master.should respond_to(:compile)
   end
@@ -232,53 +228,17 @@ describe Puppet::Application::Master do
       @master.preinit
     end
 
-    it "should dispatch to parseonly if parseonly is set" do
-      Puppet.stubs(:[]).with(:parseonly).returns(true)
-      @master.options[:node] = nil
-
-      @master.expects(:parseonly)
-      @master.run_command
-    end
-
     it "should dispatch to compile if called with --compile" do
       @master.options[:node] = "foo"
       @master.expects(:compile)
       @master.run_command
     end
 
-    it "should dispatch to main if parseonly is not set" do
-      Puppet.stubs(:[]).with(:parseonly).returns(false)
+    it "should dispatch to main otherwise" do
       @master.options[:node] = nil
 
       @master.expects(:main)
       @master.run_command
-    end
-
-
-    describe "the parseonly command" do
-      before :each do
-        @environment = Puppet::Node::Environment.new("env")
-        Puppet.stubs(:[]).with(:environment).returns(@environment)
-        Puppet.stubs(:[]).with(:manifest).returns("site.pp")
-        Puppet.stubs(:err)
-        @master.stubs(:exit)
-      end
-
-      it "should use a Puppet Resource Type Collection to parse the file" do
-        @environment.expects(:perform_initial_import)
-        @master.parseonly
-      end
-
-      it "should exit with exit code 0 if no error" do
-        @master.expects(:exit).with(0)
-        @master.parseonly
-      end
-
-      it "should exit with exit code 1 if error" do
-        @environment.stubs(:perform_initial_import).raises(Puppet::ParseError)
-        @master.expects(:exit).with(1)
-        @master.parseonly
-      end
     end
 
     describe "the compile command" do

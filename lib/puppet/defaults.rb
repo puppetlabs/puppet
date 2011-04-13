@@ -90,9 +90,6 @@ module Puppet
         $LOAD_PATH << value
       end
     },
-    :ignoreimport => [false, "A parameter that can be used in commit
-      hooks, since it enables you to parse-check a single file rather
-      than requiring that all files exist."],
     :authconfig => [ "$confdir/namespaceauth.conf",
       "The configuration file that defines the rights to the different
       namespaces and methods.  This can be used as a coarse-grained
@@ -418,7 +415,6 @@ module Puppet
       :desc => "Where the puppet master web server logs."
     },
     :masterport => [8140, "Which port puppet master listens on."],
-    :parseonly => [false, "Just check the syntax of the manifests."],
     :node_name => ["cert", "How the puppetmaster determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.

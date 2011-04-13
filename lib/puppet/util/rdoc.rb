@@ -6,8 +6,6 @@ module Puppet::Util::RDoc
   # launch a rdoc documenation process
   # with the files/dir passed in +files+
   def rdoc(outputdir, files, charset = nil)
-      Puppet[:ignoreimport] = true
-
       # then rdoc
       require 'rdoc/rdoc'
       require 'rdoc/options'
@@ -41,7 +39,6 @@ module Puppet::Util::RDoc
 
   # launch a output to console manifest doc
   def manifestdoc(files)
-    Puppet[:ignoreimport] = true
     files.select { |f| FileTest.file?(f) }.each do |f|
       parser = Puppet::Parser::Parser.new(Puppet::Node::Environment.new(Puppet[:environment]))
       parser.file = f
