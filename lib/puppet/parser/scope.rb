@@ -238,7 +238,7 @@ class Puppet::Parser::Scope
       # We can't use "if table[name]" here because the value might be false
       if options[:dynamic] and self != compiler.topscope
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} will not be supported in future versions. Use a fully-qualified variable name or parameterized classes."
+        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
       end
       table[name]
     elsif parent
