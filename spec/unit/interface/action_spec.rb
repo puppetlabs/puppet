@@ -79,7 +79,7 @@ describe Puppet::Interface::Action do
       end
 
       it "should work when options are supplied" do
-        options = face.bar :bar => "beer"
+        options = face.bar(:bar => "beer")
         options.should == { :bar => "beer" }
       end
     end
@@ -167,6 +167,177 @@ describe Puppet::Interface::Action do
           action :bar do option "--foo" end
         end
       }.should raise_error ArgumentError, /Option foo conflicts with existing option foo/i
+    end
+  end
+
+  context "with action decorators" do
+    context "local only" do
+      let :face do
+        Puppet::Interface.new(:action_decorators, '0.0.1') do
+          action :bar do when_invoked do true end end
+          def report(arg) end
+        end
+      end
+
+      it "should call action before decorators" do
+        face.action(:baz) do
+          option "--baz" do
+            before_action do
+              report(:action_option)
+            end
+          end
+          when_invoked do true end
+        end
+
+        face.expects(:report).with(:action_option)
+        face.baz :baz => true
+      end
+
+      it "should call action after decorators" do
+        face.action(:baz) do
+          option "--baz" do
+            after_action do
+              report(:action_option)
+            end
+          end
+          when_invoked do true end
+        end
+
+        face.expects(:report).with(:action_option)
+        face.baz :baz => true
+      end
+
+      it "should call local before decorators" do
+        face.option "--foo FOO" do
+          before_action do
+            report(:before)
+          end
+        end
+        face.expects(:report).with(:before)
+        face.bar({:foo => 12})
+      end
+
+      it "should call local after decorators" do
+        face.option "--foo FOO" do after_action do report(:after) end end
+        face.expects(:report).with(:after)
+        face.bar({:foo => 12})
+      end
+
+      context "with inactive decorators" do
+        it "should not invoke a decorator if the options are empty" do
+          face.option "--foo FOO" do
+            before_action do report :before_action end
+          end
+          face.expects(:report).never # I am testing the negative.
+          face.bar
+        end
+
+        context "with some decorators only" do
+          before :each do
+            face.option "--foo" do before_action do report :foo end end
+            face.option "--bar" do before_action do report :bar end end
+          end
+
+          it "should work with the foo option" do
+            face.expects(:report).with(:foo)
+            face.bar(:foo => true)
+          end
+
+          it "should work with the bar option" do
+            face.expects(:report).with(:bar)
+            face.bar(:bar => true)
+          end
+
+          it "should work with both options" do
+            face.expects(:report).with(:foo)
+            face.expects(:report).with(:bar)
+            face.bar(:foo => true, :bar => true)
+          end
+        end
+      end
+    end
+
+    context "with inherited decorators" do
+      let :parent do
+        parent = Class.new(Puppet::Interface)
+        parent.script :on_parent do :on_parent end
+        parent.define_method :report do |arg| arg end
+        parent
+      end
+
+      let :child do
+        child = parent.new(:inherited_decorators, '0.0.1') do
+          script :on_child do :on_child end
+        end
+      end
+
+      context "with a child decorator" do
+        subject do
+          child.option "--foo FOO" do
+            before_action do
+              report(:child_before)
+            end
+          end
+          child.expects(:report).with(:child_before)
+          child
+        end
+
+        it "child actions should invoke the decorator" do
+          subject.on_child({:foo => true, :bar => true}).should == :on_child
+        end
+
+        it "parent actions should invoke the decorator" do
+          subject.on_parent({:foo => true, :bar => true}).should == :on_parent
+        end
+      end
+
+      context "with a parent decorator" do
+        subject do
+          parent.option "--foo FOO" do
+            before_action do
+              report(:parent_before)
+            end
+          end
+          child.expects(:report).with(:parent_before)
+          child
+        end
+
+        it "child actions should invoke the decorator" do
+          subject.on_child({:foo => true, :bar => true}).should == :on_child
+        end
+
+        it "parent actions should invoke the decorator" do
+          subject.on_parent({:foo => true, :bar => true}).should == :on_parent
+        end
+      end
+
+      context "with child and parent decorators" do
+        subject do
+          parent.option "--foo FOO" do
+            before_action { report(:parent_before) }
+            after_action  { report(:parent_after)  }
+          end
+          child.option "--bar BAR" do
+            before_action { report(:child_before) }
+            after_action  { report(:child_after)  }
+          end
+
+          child.expects(:report).with(:child_before)
+          child.expects(:report).with(:parent_before)
+          child.expects(:report).with(:parent_after)
+          child.expects(:report).with(:child_after)
+
+          child
+        end
+
+        it "child actions should invoke all the decorator" do
+          subject.on_child({:foo => true, :bar => true}).should == :on_child
+        end
+
+        it "parent actions should invoke all the decorator" do
+          subject.on_parent({:foo => true, :bar => true}).should == :on_parent
+        end
+      end
     end
   end
 end

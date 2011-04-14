@@ -8,22 +8,27 @@ describe Puppet::Interface::OptionBuilder do
       should be_an_instance_of Puppet::Interface::Option
   end
 
-  describe "when using the DSL block" do
-    it "should work with an empty block" do
-      option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
-        # This block deliberately left blank.
-      end
-
-      option.should be_an_instance_of Puppet::Interface::Option
+  it "should work with an empty block" do
+    option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+      # This block deliberately left blank.
     end
 
-    it "should support documentation declarations" do
-      text = "this is the description"
-      option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
-        desc text
-      end
-      option.should be_an_instance_of Puppet::Interface::Option
-      option.desc.should == text
+    option.should be_an_instance_of Puppet::Interface::Option
+  end
+
+  it "should support documentation declarations" do
+    text = "this is the description"
+    option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+      desc text
     end
+    option.should be_an_instance_of Puppet::Interface::Option
+    option.desc.should == text
+  end
+
+  it "should support a before_action hook" do
+    option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+      before_action do :whatever end
+    end
+    option.before_action.should be_an_instance_of UnboundMethod
   end
 end

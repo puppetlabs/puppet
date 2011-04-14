@@ -17,9 +17,28 @@ class Puppet::Interface::OptionBuilder
 
   # Metaprogram the simple DSL from the option class.
   Puppet::Interface::Option.instance_methods.grep(/=$/).each do |setter|
-    next if setter =~ /^=/      # special case, darn it...
+    next if setter =~ /^=/
+    dsl = setter.sub(/=$/, '')
 
-    dsl = setter.to_s.sub(/=$/, '')
-    define_method(dsl) do |value| @option.send(setter, value) end
+    unless self.class.methods.include?(dsl)
+      define_method(dsl) do |value| @option.send(setter, value) end
+    end
+  end
+
+  # Override some methods that deal in blocks, not objects.
+  def before_action(&block)
+    block or raise ArgumentError, "#{@option} before_action requires a block"
+    if @option.before_action
+      raise ArgumentError, "#{@option} already has a before_action set"
+    end
+    @option.before_action = block
+  end
+
+  def after_action(&block)
+    block or raise ArgumentError, "#{@option} after_action requires a block"
+    if @option.after_action
+      raise ArgumentError, "#{@option} already has a after_action set"
+    end
+    @option.after_action = block
   end
 end
