@@ -122,10 +122,10 @@ module Puppet::Network::HTTP::Handler
   end
 
   # Execute our head.
-  def do_head(indirection_request, request, response)
-    unless indirection_request.model.head(indirection_request.key, indirection_request.to_hash)
-      Puppet.info("Could not find #{indirection_request.indirection_name} for '#{indirection_request.key}'")
-      return do_exception(response, "Could not find #{indirection_request.indirection_name} #{indirection_request.key}", 404)
+  def do_head(indirection_name, key, params, request, response)
+    unless self.model(indirection_name).indirection.head(key, params)
+      Puppet.info("Could not find #{indirection_name} for '#{key}'")
+      return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
     end
 
     # No need to set a response because no response is expected from a
