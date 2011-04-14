@@ -222,12 +222,12 @@ class Puppet::Parser::Scope
 
   private :qualified_scope
 
-  # Look up a variable.  The simplest value search we do.  
+  # Look up a variable.  The simplest value search we do.
   def lookupvar(name, options = {})
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     # If the variable is qualified, then find the specified scope and look the variable up there instead.
     if name =~ /^(.*)::(.+)$/
-      begin 
+      begin
         qualified_scope($1).lookupvar($2,options)
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
