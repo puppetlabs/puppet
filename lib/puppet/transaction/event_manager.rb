@@ -49,7 +49,7 @@ class Puppet::Transaction::EventManager
       # since eval_generated children can't have direct relationships.
       received = (event.name != :restarted)
       relationship_graph.matching_edges(event, resource).each do |edge|
-        received ||= true unless edge.target.is_a?(Puppet::Type::Whit)
+        received ||= true unless edge.target.is_a?(Puppet::Type.type(:whit))
         next unless method = edge.callback
         next unless edge.target.respond_to?(method)
 

@@ -1,7 +1,7 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 require 'puppet/network/client'
 
-require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+require 'spec_helper'
 
 describe Puppet::Network::XMLRPCClient do
   describe "when performing the rpc call" do

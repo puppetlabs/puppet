@@ -3,41 +3,51 @@ require 'tempfile'
 
 # A support module for testing files.
 module PuppetSpec::Files
+  # This code exists only to support tests that run as root, pretty much.
+  # Once they have finally been eliminated this can all go... --daniel 2011-04-08
+  if Puppet.features.posix? then
+    def self.in_tmp(path)
+      path =~ /^\/tmp/ or path =~ /^\/var\/folders/
+    end
+  elsif Puppet.features.microsoft_windows?
+    def self.in_tmp(path)
+      tempdir = File.expand_path(File.join(Dir::LOCAL_APPDATA, "Temp"))
+      path =~ /^#{tempdir}/
+    end
+  else
+    fail "Help! Can't find in_tmp for this platform"
+  end
+
   def self.cleanup
-    if defined?($tmpfiles)
-      $tmpfiles.each do |file|
-        file = File.expand_path(file)
-        if Puppet.features.posix? and file !~ /^\/tmp/ and file !~ /^\/var\/folders/
-          puts "Not deleting tmpfile #{file} outside of /tmp or /var/folders"
-          next
-        elsif Puppet.features.microsoft_windows?
-          tempdir = File.expand_path(File.join(Dir::LOCAL_APPDATA, "Temp"))
-          if file !~ /^#{tempdir}/
-            puts "Not deleting tmpfile #{file} outside of #{tempdir}"
-            next
-          end
-        end
-        if FileTest.exist?(file)
-          system("chmod -R 755 '#{file}'")
-          system("rm -rf '#{file}'")
-        end
+    $global_tempfiles ||= []
+    while path = $global_tempfiles.pop do
+      fail "Not deleting tmpfile #{path} outside regular tmpdir" unless in_tmp(path)
+
+      begin
+        FileUtils.rm_r path, :secure => true
+      rescue Errno::ENOENT
+        # nothing to do
       end
-      $tmpfiles.clear
     end
   end
 
   def tmpfile(name)
+    # Generate a temporary file, just for the name...
     source = Tempfile.new(name)
     path = source.path
     source.close!
-    $tmpfiles ||= []
-    $tmpfiles << path
+
+    # ...record it for cleanup,
+    $global_tempfiles ||= []
+    $global_tempfiles << File.expand_path(path)
+
+    # ...and bam.
     path
   end
 
   def tmpdir(name)
-    file = tmpfile(name)
-    FileUtils.mkdir_p(file)
-    file
+    path = tmpfile(name)
+    FileUtils.mkdir_p(path)
+    path
   end
 end

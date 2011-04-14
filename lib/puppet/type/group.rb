@@ -1,4 +1,3 @@
-
 require 'etc'
 require 'facter'
 require 'puppet/property/keyvalue'
@@ -18,6 +17,9 @@ module Puppet
 
     feature :manages_aix_lam,
       "The provider can manage AIX Loadable Authentication Module (LAM) system."
+
+    feature :system_groups,
+      "The provider allows you to create system groups with lower GIDs."
 
     ensurable do
       desc "Create or remove the group."
@@ -112,7 +114,7 @@ module Puppet
       def membership
         :attribute_membership
       end
-      
+
       def delimiter
         " "
       end
@@ -132,5 +134,12 @@ module Puppet
       defaultto :minimum
     end
 
+    newparam(:system, :boolean => true) do
+      desc "Whether the group is a system group with lower GID."
+
+      newvalues(:true, :false)
+
+      defaultto false
+    end
   end
 end

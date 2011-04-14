@@ -25,6 +25,11 @@ class Puppet::Application::Master < Puppet::Application
     end
   end
 
+  option("--parseonly") do
+    puts "--parseonly has been removed. Please use 'puppet parser validate <manifest>'"
+    exit 1
+  end
+
   def help
     <<-HELP
 
@@ -105,8 +110,7 @@ Luke Kanies
 
 COPYRIGHT
 ---------
-Copyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public
-License
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
   end
@@ -126,8 +130,6 @@ License
   def run_command
     if options[:node]
       compile
-    elsif Puppet[:parseonly]
-      parseonly
     else
       main
     end
@@ -145,16 +147,6 @@ License
     rescue => detail
       $stderr.puts detail
       exit(30)
-    end
-    exit(0)
-  end
-
-  def parseonly
-    begin
-      Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types
-    rescue => detail
-      Puppet.err detail
-      exit 1
     end
     exit(0)
   end

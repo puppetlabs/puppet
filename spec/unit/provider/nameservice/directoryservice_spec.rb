@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 # We use this as a reasonable way to obtain all the support infrastructure.
 [:user, :group].each do |type_for_this_round|

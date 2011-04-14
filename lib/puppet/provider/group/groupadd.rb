@@ -9,6 +9,8 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
 
   commands :add => "groupadd", :delete => "groupdel", :modify => "groupmod"
 
+  has_feature :system_groups
+
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
   end
@@ -21,6 +23,7 @@ Puppet::Type.type(:group).provide :groupadd, :parent => Puppet::Provider::NameSe
       end
     end
     cmd << "-o" if @resource.allowdupe?
+    cmd << "-r" if @resource.system?
     cmd << @resource[:name]
 
     cmd

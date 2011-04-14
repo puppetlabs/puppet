@@ -299,11 +299,12 @@ class Application
 
   # This is the main application entry point
   def run
-    exit_on_fail("initialize")               { hook('preinit')       { preinit } }
-    exit_on_fail("parse options")            { hook('parse_options') { parse_options } }
-    exit_on_fail("parse configuration file") { Puppet.settings.parse } if should_parse_config?
-    exit_on_fail("prepare for execution")    { hook('setup')         { setup } }
-    exit_on_fail("run")                      { hook('run_command')   { run_command } }
+    exit_on_fail("initialize")                                   { hook('preinit')       { preinit } }
+    exit_on_fail("parse options")                                { hook('parse_options') { parse_options } }
+    exit_on_fail("parse configuration file")                     { Puppet.settings.parse } if should_parse_config?
+    exit_on_fail("prepare for execution")                        { hook('setup')         { setup } }
+    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+    exit_on_fail("run")                                          { hook('run_command')   { run_command } }
   end
 
   def main
@@ -328,6 +329,15 @@ class Application
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
   end
 
+  def configure_indirector_routes
+    route_file = Puppet[:route_file]
+    if ::File.exists?(route_file)
+      routes = YAML.load_file(route_file)
+      application_routes = routes[name.to_s]
+      Puppet::Indirector.configure_routes(application_routes) if application_routes
+    end
+  end
+
   def parse_options
     # Create an option parser
     option_parser = OptionParser.new(self.class.banner)
@@ -349,14 +359,10 @@ class Application
       end
     end
 
-    # scan command line.
-    begin
-      option_parser.parse!(self.command_line.args)
-    rescue OptionParser::ParseError => detail
-      $stderr.puts detail
-      $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"
-      exit(1)
-    end
+    # Scan command line.  We just hand any exceptions to our upper levels,
+    # rather than printing help and exiting, so that we can meaningfully
+    # respond with context-sensitive help if we want to. --daniel 2011-04-12
+    option_parser.parse!(self.command_line.args)
   end
 
   def handlearg(opt, arg)
@@ -394,7 +400,7 @@ class Application
 
   def exit_on_fail(message, code = 1)
     yield
-  rescue RuntimeError, NotImplementedError => detail
+  rescue ArgumentError, RuntimeError, NotImplementedError => detail
     puts detail.backtrace if Puppet[:trace]
     $stderr.puts "Could not #{message}: #{detail}"
     exit(code)

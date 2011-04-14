@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Type.type(:cron) do
   before do
@@ -477,5 +476,15 @@ describe Puppet::Type.type(:cron) do
 
     end
 
+  end
+
+  it "should require a command when adding an entry" do
+    entry = @class.new(:name => "test_entry", :ensure => :present)
+    expect { entry.value(:command) }.should raise_error(/No command/)
+  end
+
+  it "should not require a command when removing an entry" do
+    entry = @class.new(:name => "test_entry", :ensure => :absent)
+    entry.value(:command).should == nil
   end
 end

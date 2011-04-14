@@ -1,7 +1,9 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
-require 'sqlite3' rescue nil
+#!/usr/bin/env rspec
+require 'spec_helper'
+begin
+  require 'sqlite3'
+rescue LoadError
+end
 require 'tempfile'
 require 'puppet/rails'
 
@@ -29,6 +31,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
 
   after :each do
     Puppet::Rails.teardown
+    ActiveRecord::Base.remove_connection
   end
 
   describe "#save" do

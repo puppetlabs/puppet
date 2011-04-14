@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/indirector/file_bucket_file/rest'
 

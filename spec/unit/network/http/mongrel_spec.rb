@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Rick Bradley on 2007-10-15.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+require 'spec_helper'
 require 'puppet/network/http'
 
 describe "Puppet::Network::HTTP::Mongrel", "after initializing", :if => Puppet.features.mongrel? do

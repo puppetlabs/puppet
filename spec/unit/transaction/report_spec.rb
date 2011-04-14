@@ -1,10 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/transaction/report'
 
 describe Puppet::Transaction::Report do
+  include PuppetSpec::Files
   before do
     Puppet::Util::Storage.stubs(:store)
   end
@@ -36,6 +36,24 @@ describe Puppet::Transaction::Report do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
     report.configuration_version.should == "some version"
+  end
+
+  it "should not include whits" do
+    Puppet::FileBucket::File.indirection.stubs(:save)
+
+    filename = tmpfile('whit_test')
+    file = Puppet::Type.type(:file).new(:path => filename)
+
+    catalog = Puppet::Resource::Catalog.new
+    catalog.add_resource(file)
+
+    report = Puppet::Transaction::Report.new("apply")
+
+    catalog.apply(:report => report)
+    report.finalize_report
+
+    report.resource_statuses.values.any? {|res| res.resource_type =~ /whit/i}.should be_false
+    report.metrics['time'].values.any? {|metric| metric.first =~ /whit/i}.should be_false
   end
 
   describe "when accepting logs" do

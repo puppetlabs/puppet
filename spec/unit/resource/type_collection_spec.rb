@@ -1,11 +1,12 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/type_collection'
 require 'puppet/resource/type'
 
 describe Puppet::Resource::TypeCollection do
+  include PuppetSpec::Files
+
   before do
     @instance = Puppet::Resource::Type.new(:hostclass, "foo")
     @code = Puppet::Resource::TypeCollection.new("env")
@@ -82,11 +83,14 @@ describe Puppet::Resource::TypeCollection do
     loader.add Puppet::Resource::Type.new(:hostclass, "class")
     loader.add Puppet::Resource::Type.new(:definition, "define")
     loader.add Puppet::Resource::Type.new(:node, "node")
+    watched_file = tmpfile('watched_file')
+    loader.watch_file(watched_file)
 
     loader.clear
     loader.hostclass("class").should be_nil
     loader.definition("define").should be_nil
     loader.node("node").should be_nil
+    loader.should_not be_watching_file(watched_file)
   end
 
   describe "when resolving namespaces" do

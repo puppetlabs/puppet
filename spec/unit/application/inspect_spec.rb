@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application/inspect'
 require 'puppet/resource/catalog'
@@ -246,9 +245,9 @@ describe Puppet::Application::Inspect do
         @inspect.run_command
 
         @report.status.should == "failed"
-        @report.logs.select{|log| log.message =~ /Could not inspect/}.count.should == 1
-        @report.resource_statuses.count.should == 1
-        @report.resource_statuses['Stub_type[foo]'].events.count.should == 1
+        @report.logs.select{|log| log.message =~ /Could not inspect/}.size.should == 1
+        @report.resource_statuses.size.should == 1
+        @report.resource_statuses['Stub_type[foo]'].events.size.should == 1
 
         event = @report.resource_statuses['Stub_type[foo]'].events.first
         event.property.should == "content"
@@ -265,7 +264,7 @@ describe Puppet::Application::Inspect do
 
         @inspect.run_command
 
-        @report.resource_statuses.count.should == 2
+        @report.resource_statuses.size.should == 2
         @report.resource_statuses.keys.should =~ ['Stub_type[foo]', 'Stub_type[bar]']
       end
     end

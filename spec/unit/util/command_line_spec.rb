@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 
 require 'puppet/util/command_line'
@@ -99,10 +98,11 @@ describe Puppet::Util::CommandLine do
         Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
         commandline.expects(:system).never
 
-        commandline.expects(:usage_message).returns("the usage message")
-        commandline.expects(:abort).with{|x| x =~ /the usage message/}.raises("stubbed abort")
+        text = Puppet::Face[:help, :current].help
+        commandline.expects(:puts).with { |x| x =~ /Unknown Puppet subcommand/ }
+        commandline.expects(:puts).with text
 
-        lambda{ commandline.execute }.should raise_error('stubbed abort')
+        commandline.execute
       end
     end
   end
@@ -110,6 +110,11 @@ describe Puppet::Util::CommandLine do
     before do
       @core_apps = %w{describe filebucket kick queue resource agent cert apply doc master}
       @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp }, @tty )
+    end
+    it "should expose available_subcommands as a class method" do
+      @core_apps.each do |command|
+        @command_line.available_subcommands.should include command
+      end
     end
     it 'should be able to find all existing commands' do
       @core_apps.each do |command|

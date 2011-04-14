@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application'
 require 'puppet'
@@ -12,6 +11,7 @@ describe Puppet::Application do
     @app = Class.new(Puppet::Application).new
     @appclass = @app.class
 
+    @app.stubs(:name).returns("test_app")
     # avoid actually trying to parse any settings
     Puppet.settings.stubs(:parse)
   end
@@ -356,16 +356,6 @@ describe Puppet::Application do
       end
 
     end
-
-    it "should exit if OptionParser raises an error" do
-      $stderr.stubs(:puts)
-      OptionParser.any_instance.stubs(:parse!).raises(OptionParser::ParseError.new("blah blah"))
-
-      @app.expects(:exit)
-
-      lambda { @app.parse_options }.should_not raise_error
-    end
-
   end
 
   describe "when calling default setup" do
@@ -394,6 +384,55 @@ describe Puppet::Application do
       @app.setup
     end
 
+  end
+
+  describe "when configuring routes" do
+    include PuppetSpec::Files
+
+    before :each do
+      Puppet::Node.indirection.reset_terminus_class
+    end
+
+    after :each do
+      Puppet::Node.indirection.reset_terminus_class
+    end
+
+    it "should use the routes specified for only the active application" do
+      Puppet[:route_file] = tmpfile('routes')
+      File.open(Puppet[:route_file], 'w') do |f|
+        f.print <<-ROUTES
+          test_app:
+            node:
+              terminus: exec
+          other_app:
+            node:
+              terminus: plain
+            catalog:
+              terminus: invalid
+        ROUTES
+      end
+
+      @app.configure_indirector_routes
+
+      Puppet::Node.indirection.terminus_class.should == 'exec'
+    end
+
+    it "should not fail if the route file doesn't exist" do
+      Puppet[:route_file] = "/dev/null/non-existent"
+
+      expect { @app.configure_indirector_routes }.should_not raise_error
+    end
+
+    it "should raise an error if the routes file is invalid" do
+      Puppet[:route_file] = tmpfile('routes')
+      File.open(Puppet[:route_file], 'w') do |f|
+        f.print <<-ROUTES
+         invalid : : yaml
+        ROUTES
+      end
+
+      expect { @app.configure_indirector_routes }.should raise_error
+    end
   end
 
   describe "when running" do

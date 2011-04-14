@@ -1,3 +1,4 @@
+require 'puppet/rails'
 require 'puppet/rails/fact_value'
 
 class Puppet::Rails::FactName < ActiveRecord::Base

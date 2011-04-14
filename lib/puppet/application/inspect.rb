@@ -68,9 +68,7 @@ Puppet Labs
 
 COPYRIGHT
 ---------
-
-Copyright (c) 2011 Puppet Labs, LLC
-Licensed under the GNU General Public License version 2
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     HELP
   end

@@ -73,7 +73,7 @@ bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
-libs  = glob(%w{lib/**/*.rb lib/**/*.py lib/puppet/util/command_line/*})
+libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
 tests = glob(%w{test/**/*.rb})
 
 def do_configs(configs, target, strip = 'conf/')

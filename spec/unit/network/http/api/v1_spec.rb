@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/http/api/v1'
 
@@ -66,6 +65,10 @@ describe Puppet::Network::HTTP::API::V1 do
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
       @tester.uri2indirection("GET", "/env/foo/bar", {})[1].should == :find
+    end
+
+    it "should choose 'find' as the indirection method if the http method is a POST and the indirection name is singular" do
+      @tester.uri2indirection("POST", "/env/foo/bar", {})[1].should == :find
     end
 
     it "should choose 'head' as the indirection method if the http method is a HEAD and the indirection name is singular" do
@@ -164,4 +167,26 @@ describe Puppet::Network::HTTP::API::V1 do
     end
   end
 
+  describe "when converting a request into a URI with body" do
+    before :each do
+      @request = Puppet::Indirector::Request.new(:foo, :find, "with spaces", :foo => :bar, :environment => "myenv")
+    end
+
+    it "should use the environment as the first field of the URI" do
+      @tester.request_to_uri_and_body(@request).first.split("/")[1].should == "myenv"
+    end
+
+    it "should use the indirection as the second field of the URI" do
+      @tester.request_to_uri_and_body(@request).first.split("/")[2].should == "foo"
+    end
+
+    it "should use the escaped key as the remainder of the URI" do
+      escaped = URI.escape("with spaces")
+      @tester.request_to_uri_and_body(@request).first.split("/")[3].sub(/\?.+/, '').should == escaped
+    end
+
+    it "should return the URI and body separately" do
+      @tester.request_to_uri_and_body(@request).should == ["/myenv/foo/with%20spaces", "foo=bar"]
+    end
+  end
 end

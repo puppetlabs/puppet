@@ -1,5 +1,5 @@
 require 'puppet'
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'spec_helper'
 
 describe 'function for dynamically creating resources' do
 

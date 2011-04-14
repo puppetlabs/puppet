@@ -24,7 +24,7 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-  PUPPETVERSION = '2.6.7'
+  PUPPETVERSION = '2.6.8'
 
   def Puppet.version
     PUPPETVERSION
@@ -141,16 +141,11 @@ module Puppet
     end
   end
 
-  # Create a new type.  Just proxy to the Type class.
+  # Create a new type.  Just proxy to the Type class.  The mirroring query
+  # code was deprecated in 2008, but this is still in heavy use.  I suppose
+  # this can count as a soft deprecation for the next dev. --daniel 2011-04-12
   def self.newtype(name, options = {}, &block)
     Puppet::Type.newtype(name, options, &block)
-  end
-
-  # Retrieve a type by name.  Just proxy to the Type class.
-  def self.type(name)
-    # LAK:DEP Deprecation notice added 12/17/2008
-    Puppet.warning "Puppet.type is deprecated; use Puppet::Type.type"
-    Puppet::Type.type(name)
   end
 end
 

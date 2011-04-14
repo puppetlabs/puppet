@@ -12,6 +12,22 @@ module Puppet::Indirector
   require 'puppet/indirector/envelope'
   require 'puppet/network/format_handler'
 
+  def self.configure_routes(application_routes)
+    application_routes.each do |indirection_name, termini|
+      indirection_name = indirection_name.to_sym
+      terminus_name = termini["terminus"]
+      cache_name    = termini["cache"]
+
+      Puppet::Indirector::Terminus.terminus_classes(indirection_name)
+
+      indirection = Puppet::Indirector::Indirection.instance(indirection_name)
+      raise "Indirection #{indirection_name} does not exist" unless indirection
+
+      indirection.terminus_class = terminus_name if terminus_name
+      indirection.cache_class = cache_name if cache_name
+    end
+  end
+
   # Declare that the including class indirects its methods to
   # this terminus.  The terminus name must be the name of a Puppet
   # default, not the value -- if it's the value, then it gets

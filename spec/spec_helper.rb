@@ -1,11 +1,5 @@
-unless defined?(SPEC_HELPER_IS_LOADED)
-SPEC_HELPER_IS_LOADED = 1
-
 dir = File.expand_path(File.dirname(__FILE__))
-
-$LOAD_PATH.unshift("#{dir}/")
-$LOAD_PATH.unshift("#{dir}/lib") # a spec-specific test lib dir
-$LOAD_PATH.unshift("#{dir}/../lib")
+$LOAD_PATH.unshift File.join(dir, 'lib')
 
 # Don't want puppet getting the command line arguments for rake or autotest
 ARGV.clear
@@ -13,6 +7,7 @@ ARGV.clear
 require 'puppet'
 require 'mocha'
 gem 'rspec', '>=2.0.0'
+require 'rspec/expectations'
 
 # So everyone else doesn't have to include this base constant.
 module PuppetSpec
@@ -20,6 +15,8 @@ module PuppetSpec
 end
 
 require 'pathname'
+require 'tmpdir'
+
 require 'lib/puppet_spec/verbose'
 require 'lib/puppet_spec/files'
 require 'lib/puppet_spec/fixtures'
@@ -36,6 +33,8 @@ RSpec.configure do |config|
   config.mock_with :mocha
 
   config.before :each do
+    GC.disable
+
     # these globals are set by Application
     $puppet_application_mode = nil
     $puppet_application_name = nil
@@ -63,7 +62,13 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
+
+    GC.enable
   end
 end
 
+RSpec::Matchers.define :have_matching_element do |expected|
+  match do |actual|
+    actual.any? { |item| item =~ expected }
+  end
 end

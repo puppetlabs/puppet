@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 # Unit testing for the AIX System Resource Controller (src) provider
 #
 
-require File.expand_path(File.dirname(__FILE__) + '/../../../spec_helper')
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:src)
 

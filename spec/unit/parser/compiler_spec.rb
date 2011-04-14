@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 class CompilerTestResource
   attr_accessor :builtin, :virtual, :evaluated, :type, :title
@@ -129,10 +128,6 @@ describe Puppet::Parser::Compiler do
 
     it "should be able to create new scopes" do
       @compiler.newscope(@compiler.topscope).should be_instance_of(Puppet::Parser::Scope)
-    end
-
-    it "should correctly set the level of newly created scopes" do
-      @compiler.newscope(@compiler.topscope, :level => 5).level.should == 5
     end
 
     it "should set the parent scope of the new scope to be the passed-in parent" do

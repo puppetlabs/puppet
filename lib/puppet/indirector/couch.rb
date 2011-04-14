@@ -1,6 +1,3 @@
-raise "Couch terminus not supported without couchrest gem" unless Puppet.features.couchdb?
-
-require 'couchrest'
 class Puppet::Indirector::Couch < Puppet::Indirector::Terminus
 
   # The CouchRest database instance. One database instance per Puppet runtime
@@ -11,6 +8,11 @@ class Puppet::Indirector::Couch < Puppet::Indirector::Terminus
 
   def find(request)
     attributes_of get(request)
+  end
+
+  def initialize(*args)
+    raise "Couch terminus not supported without couchrest gem" unless Puppet.features.couchdb?
+    super
   end
 
   # Create or update the couchdb document with the request's data hash.

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper')
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/type'
 
@@ -237,35 +236,6 @@ describe Puppet::Resource::Type do
     end
   end
 
-  describe "when creating a subscope" do
-    before do
-      @scope = stub 'scope', :newscope => nil
-      @resource = stub 'resource'
-      @type = Puppet::Resource::Type.new(:hostclass, "foo")
-    end
-
-    it "should return a new scope created with the provided scope as the parent" do
-      @scope.expects(:newscope).returns "foo"
-      @type.subscope(@scope, @resource).should == "foo"
-    end
-
-    it "should set the source as itself" do
-      @scope.expects(:newscope).with { |args| args[:source] == @type }
-      @type.subscope(@scope, @resource)
-    end
-
-    it "should set the scope's namespace to its namespace" do
-      @type.expects(:namespace).returns "yayness"
-      @scope.expects(:newscope).with { |args| args[:namespace] == "yayness" }
-      @type.subscope(@scope, @resource)
-    end
-
-    it "should set the scope's resource to the provided resource" do
-      @scope.expects(:newscope).with { |args| args[:resource] == @resource }
-      @type.subscope(@scope, @resource)
-    end
-  end
-
   describe "when setting its parameters in the scope" do
     before do
       @scope = Puppet::Parser::Scope.new(:compiler => stub("compiler", :environment => Puppet::Node::Environment.new), :source => stub("source"))
@@ -465,7 +435,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @type.expects(:subscope).with(@scope, @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :dynamic => true, :namespace => 'foo', :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
@@ -493,8 +463,9 @@ describe Puppet::Resource::Type do
     it "should evaluate the AST code if any is provided" do
       code = stub 'code'
       @type.stubs(:code).returns code
-      @type.stubs(:subscope).returns stub_everything("subscope", :compiler => @compiler)
-      code.expects(:safeevaluate).with @type.subscope
+      subscope = stub_everything("subscope", :compiler => @compiler)
+      @scope.stubs(:newscope).returns subscope
+      code.expects(:safeevaluate).with subscope
 
       @type.evaluate_code(@resource)
     end

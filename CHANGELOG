@@ -1,3 +1,49 @@
+2.6.8rc1
+====
+8b7444d (#2331) Remove darwinports pkg provider, replace with rewritten macports provider
+65c4e14 Fixed #7082 - Added system support for groups
+b7f4ff7 (#7018) Give more context on the service type's assumptions. Wording tweaks.
+bb19dea (#7018) explain internals better in service provider documentation
+23c9663 maint: Fix sqlite3 require to really be optional
+4b73d41 maint: Fix sporadic sqlite error
+54b9f5d (#6818) Stop from getting Rails 3 named_scope deprecation warning
+e493f8a (#6856) Copy dangling symlinks with 'links => manage' File resource.
+1e4968e (maint) Indentation fixes
+99d78f2 (#6490) Add plugin initialization callback system to core
+5d1cb02 Fix #4339 - Locally save the last report to $lastrunreport
+306aa30 Fix #4339 - Save a last run report summary to $statedir/last_run_summary.yaml
+9bb3018 Fixed #3127 - removed legacy debug code
+d2bacd3 Fixed #3127 - Fixed gem selection regex
+1b66c28 (#5437) Invalidate cached TypeCollection when there was an error parsing
+0675c9a (#6937) Adjust formatting of recurse's desc
+2cdadf9 (#6937) Document the recurse parameter of File type.
+647a640 (#6893) Document the cron type in the case of specials.
+87ca313 (#5670) Don't trigger refresh from a failed resource
+f5aabf5 (#5908) Add support for new update-rc.d disable API
+37f9ca0 (#6862) Add a default subject for the mail_patches rake task
+9a4de12 Fixed #6256 - Creation of rrd directory.
+7c60db5 (#5477) Allow watch_file to watch non-existent files, especially site.pp
+7761acb (#5221) Add test for fix to fileset with trailing separator
+357514c (#5221) Fix fileset path absoluteness checking with trailing slash
+f8941b8 (#4769) Fix negative timeout support for newer rubies
+a29c7fd Fixed #6562 - Minor kick documentation fix
+df20513 (#6658) Propagate ENC connection errors to the agent
+08115c0 (#4884) Remove typo from spec test
+f2c771b (#4884) Modify tests to pass on non-OS X systems
+ec1aa19 (#4884) Revise new exec tests, add a few more
+196294a (4576) - if ENC declares invalid class, it is logged at warning.
+0d2d6f3 (#4884) Add an shell provider for execs
+d2e911a (#4884) Fix Test::Unit exec tests
+fa0cfc6 (#4884) Break the exec type out to have a posix provider
+c86a980 (#4884) Add consistent path validation and behavior
+77fbf7f (#4884) Add expand_path to requiring the spec_helper
+7ec9057 (#4884) Autorequire shared behaviors and method to silence warnings
+acc99ba (#4884) Fix whitespace
+6a4d291 (#4884) Get rid of open3 require since it wasn't being used
+3e7ebbb Fixed #6554 - Missing $haveftool if/else conditional in install.rb breaking Ruby 1.9
+fddc165 (#5814) Improved cron type specs
+f2dfee6 (#5814) cron_spec shouldn't depend on cron provider
+
 2.6.7
 =====
 17f673d Updated CHANGELOG for 2.6.7rc1

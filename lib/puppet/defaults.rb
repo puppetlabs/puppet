@@ -116,6 +116,7 @@ module Puppet
       but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
       huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
       slightly more useful way when that happens."],
+    :route_file => ["$confdir/routes.yaml", "The YAML file containing indirector route configuration."],
     :node_terminus => ["plain", "Where to find information about nodes."],
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
@@ -353,6 +354,8 @@ module Puppet
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
         uses that configuration file to determine which keys to sign."},
+    :allow_duplicate_certs => [false, "Whether to allow a new certificate
+      request to overwrite an existing certificate."],
     :ca_days => ["", "How long a certificate should be valid.
       This parameter is deprecated, use ca_ttl instead"],
     :ca_ttl => ["5y", "The default TTL for new certificates; valid values
@@ -415,7 +418,6 @@ module Puppet
       :desc => "Where the puppet master web server logs."
     },
     :masterport => [8140, "Which port puppet master listens on."],
-    :parseonly => [false, "Just check the syntax of the manifests."],
     :node_name => ["cert", "How the puppetmaster determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.
