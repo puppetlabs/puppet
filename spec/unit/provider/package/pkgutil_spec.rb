@@ -6,8 +6,11 @@ provider = Puppet::Type.type(:package).provider(:pkgutil)
 
 describe provider do
   before(:each) do
-    @resource = stub 'resource'
-    @resource = Puppet::Type.type(:package).new(:name => "TESTpkg", :ensure => :present)
+    @resource = Puppet::Type.type(:package).new(
+      :name     => "TESTpkg",
+      :ensure   => :present,
+      :provider => :pkgutil
+    )
     @provider = provider.new(@resource)
 
     # Stub all file and config tests
