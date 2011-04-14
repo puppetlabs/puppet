@@ -429,6 +429,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet.settings.use :main, :agent, :ssl
 
+    # Always ignoreimport for agent. It really shouldn't even try to import,
+    # but this is just a temporary band-aid.
+    Puppet[:ignoreimport] = true
+
     # We need to specify a ca location for all of the SSL-related i
     # indirected classes to work; in fingerprint mode we just need
     # access to the local files and we don't need a ca.

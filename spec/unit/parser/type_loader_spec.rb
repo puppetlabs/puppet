@@ -44,6 +44,12 @@ describe Puppet::Parser::TypeLoader do
       Puppet::Parser::Parser.any_instance.stubs(:file=)
     end
 
+    it "should return immediately when imports are being ignored" do
+      Puppet::Parser::Files.expects(:find_manifests).never
+      Puppet[:ignoreimport] = true
+      @loader.import("foo").should be_nil
+    end
+
     it "should find all manifests matching the file or pattern" do
       Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| pat == "myfile" }.returns ["modname", %w{one}]
       @loader.import("myfile")

@@ -12,6 +12,12 @@ describe Puppet::Util::RDoc do
       RDoc::RDoc.stubs(:new).returns(@rdoc)
     end
 
+    it "should tell the parser to ignore import" do
+      Puppet.expects(:[]=).with(:ignoreimport, true)
+
+      Puppet::Util::RDoc.rdoc("output", [])
+    end
+
     it "should install the Puppet HTML Generator into RDoc generators" do
       Puppet::Util::RDoc.rdoc("output", [])
 
@@ -70,6 +76,12 @@ describe Puppet::Util::RDoc do
   end
 
   describe "when running a manifest documentation" do
+    it "should tell the parser to ignore import" do
+      Puppet.expects(:[]=).with(:ignoreimport, true)
+
+      Puppet::Util::RDoc.manifestdoc([])
+    end
+
     it "should use a parser with the correct environment" do
       FileTest.stubs(:file?).returns(true)
       Puppet::Util::RDoc.stubs(:output)
