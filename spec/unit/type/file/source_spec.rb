@@ -186,6 +186,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     describe "and the source is a link" do
       it "should set the target to the link destination" do
         @metadata.stubs(:ftype).returns "link"
+        @metadata.stubs(:links).returns "manage"
         @resource.stubs(:[])
         @resource.stubs(:[]=)
 
