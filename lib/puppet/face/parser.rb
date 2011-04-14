@@ -6,7 +6,10 @@ Puppet::Face.define(:parser, '0.0.1') do
    when_invoked do |*args|
      args.pop
      files = args
-     files << Puppet[:manifest] if files.empty?
+     if files.empty?
+       files << Puppet[:manifest]
+       Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
+     end
      files.each do |file|
        Puppet[:manifest] = file
        Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
