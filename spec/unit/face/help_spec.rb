@@ -46,6 +46,12 @@ describe Puppet::Face[:help, '0.0.1'] do
   context "when listing subcommands" do
     subject { Puppet::Face[:help, :current].help }
 
+    RSpec::Matchers.define :have_a_summary do
+      match do |instance|
+        instance.summary.is_a?(String)
+      end
+    end
+
     # Check a precondition for the next block; if this fails you have
     # something odd in your set of face, and we skip testing things that
     # matter. --daniel 2011-04-10
@@ -59,8 +65,13 @@ describe Puppet::Face[:help, '0.0.1'] do
       face = Puppet::Face[name, :current]
       summary = face.summary
 
-      it { should =~ %r{ #{name} } }
-      it { should =~ %r{ #{name} +#{summary}} } if summary
+      it "should list the '#{name}' face in the general help" do
+        should =~ %r{ #{name} }
+      end
+
+      it "should have a summary for #{name}" do
+        face.should have_a_summary
+      end
     end
 
     Puppet::Face[:help, :current].legacy_applications.each do |appname|

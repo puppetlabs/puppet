@@ -2,6 +2,8 @@ require 'puppet/face/indirector'
 require 'puppet/ssl/host'
 
 Puppet::Face::Indirector.define(:certificate, '0.0.1') do
+  summary "Manage certificates, including signing and revoking them."
+
   # REVISIT: This should use a pre-invoke hook to run the common code that
   # needs to happen before we invoke any action; that would be much nicer than
   # the "please repeat yourself" stuff found in here right now.
