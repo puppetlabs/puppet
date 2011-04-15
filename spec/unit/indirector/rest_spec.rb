@@ -233,6 +233,11 @@ describe Puppet::Indirector::REST do
           params[s] = 'foo'
         end
 
+        # The request special-cases this parameter, and it
+        # won't be passed on to the server, so we remove it here
+        # to avoid a failure.
+        params.delete('ip')
+
         @request = Puppet::Indirector::Request.new(:foo, :find, "foo bar", params.merge(:environment => "myenv"))
 
         @connection.expects(:post).with do |uri, body|

@@ -240,34 +240,30 @@ describe Puppet::Network::HTTP::Handler do
 
     describe "when performing head operation" do
       before do
-        @irequest = stub 'indirection_request', :method => :head, :indirection_name => "my_handler", :to_hash => {}, :key => "my_result", :model => @model_class
+        @handler.stubs(:model).with("my_handler").returns(stub 'model', :indirection => @model_class)
+        @handler.stubs(:http_method).with(@request).returns("HEAD")
+        @handler.stubs(:path).with(@request).returns("/production/my_handler/my_result")
+        @handler.stubs(:params).with(@request).returns({})
 
         @model_class.stubs(:head).returns true
-      end
-
-      it "should use the indirection request to find the model class" do
-        @irequest.expects(:model).returns @model_class
-
-        @handler.do_head(@irequest, @request, @response)
       end
 
       it "should use the escaped request key" do
         @model_class.expects(:head).with do |key, args|
           key == "my_result"
         end.returns true
-        @handler.do_head(@irequest, @request, @response)
+        @handler.process(@request, @response)
       end
 
       it "should not generate a response when a model head call succeeds" do
         @handler.expects(:set_response).never
-        @handler.do_head(@irequest, @request, @response)
+        @handler.process(@request, @response)
       end
 
       it "should return a 404 when the model head call returns false" do
-        @model_class.stubs(:name).returns "my name"
         @handler.expects(:set_response).with { |response, body, status| status == 404 }
         @model_class.stubs(:head).returns(false)
-        @handler.do_head(@irequest, @request, @response)
+        @handler.process(@request, @response)
       end
     end
 

@@ -20,6 +20,29 @@ class Puppet::Node
   attr_accessor :name, :classes, :source, :ipaddress, :parameters
   attr_reader :time
 
+  def self.from_pson(pson)
+    raise ArgumentError, "No name provided in pson data" unless name = pson['name']
+
+    node = new(name)
+    node.classes = pson['classes']
+    node.parameters = pson['parameters']
+    node.environment = pson['environment']
+    node
+  end
+
+  def to_pson(*args)
+    result = {
+      'document_type' => "Puppet::Node",
+      'data' => {}
+    }
+    result['data']['name'] = name
+    result['data']['classes'] = classes unless classes.empty?
+    result['data']['parameters'] = parameters unless parameters.empty?
+    result['data']['environment'] = environment.name
+
+    result.to_pson(*args)
+  end
+
   def environment
     return super if @environment
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-
+require 'matchers/json'
 require 'puppet/node/facts'
 
 describe Puppet::Node::Facts, "when indirecting" do
@@ -110,7 +110,11 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       it "should accept properly formatted pson" do
-        pson = %Q({"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}})
+        facts = Puppet::Node::Facts.new("foo")
+        facts.values = {"a" => "1", "b" => "2", "c" => "3"}
+        facts.expiration = Time.now
+        #pson = %Q({"document_type": "Puppet::Node::Facts", "data: {"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}}})
+        pson = %Q({"data": {"name":"foo", "expiration":"#{@expiration}", "timestamp": "#{@timestamp}", "values":{"a":"1","b":"2","c":"3"}}, "document_type":"Puppet::Node::Facts"})
         format = Puppet::Network::FormatHandler.format('pson')
         facts = format.intern(Puppet::Node::Facts,pson)
         facts.name.should == 'foo'
@@ -122,8 +126,25 @@ describe Puppet::Node::Facts, "when indirecting" do
         Time.stubs(:now).returns(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
-        pson = PSON.parse(facts.to_pson)
-        pson.should == {"name"=>"foo", "timestamp"=>@timestamp.to_s, "expiration"=>@expiration.to_s, "values"=>{"a"=>1, "b"=>2, "c"=>3}}
+        facts.to_pson.should == %Q[{"data":{"name":"foo","timestamp":"Thu Oct 28 11:16:31 -0700 2010","expiration":"Thu Oct 28 11:21:31 -0700 2010","values":{"a":1,"b":2,"c":3}},"document_type":"Puppet::Node::Facts"}]
+      end
+
+      it "should not include nil values" do
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+
+        # XXX:LAK For some reason this is resurrection the full instance, instead
+        # of just returning the hash.  This code works, but I can't figure out what's
+        # going on.
+        newfacts = PSON.parse(facts.to_pson)
+        newfacts.expiration.should be_nil
+      end
+
+      it "should be able to handle nil values" do
+        pson = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('pson')
+        facts = format.intern(Puppet::Node::Facts,pson)
+        facts.name.should == 'foo'
+        facts.expiration.should be_nil
       end
     end
   end

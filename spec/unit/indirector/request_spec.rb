@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'matchers/json'
 require 'puppet/indirector/request'
 
 describe Puppet::Indirector::Request do
@@ -298,6 +299,101 @@ describe Puppet::Indirector::Request do
     it "should fail if options other than booleans or strings are provided" do
       @request.stubs(:options).returns(:one => {:one => :two})
       lambda { @request.query_string }.should raise_error(ArgumentError)
+    end
+  end
+
+  describe "when converting to json" do
+    before do
+      @request = Puppet::Indirector::Request.new(:facts, :find, "foo")
+    end
+
+    it "should produce a hash with the document_type set to 'request'" do
+      @request.should set_json_document_type_to("Puppet::Indirector::Request")
+    end
+    
+    it "should set the 'key'" do
+      @request.should set_json_attribute("key").to("foo")
+    end
+
+    it "should include an attribute for its indirection name" do
+      @request.should set_json_attribute("type").to("facts")
+    end
+
+    it "should include a 'method' attribute set to its method" do
+      @request.should set_json_attribute("method").to("find")
+    end
+
+    it "should add all attributes under the 'attributes' attribute" do
+      @request.ip = "127.0.0.1"
+      @request.should set_json_attribute("attributes", "ip").to("127.0.0.1")
+    end
+
+    it "should add all options under the 'attributes' attribute" do
+      @request.options["opt"] = "value"
+      PSON.parse(@request.to_pson)["data"]['attributes']['opt'].should == "value"
+    end
+
+    it "should include the instance if provided" do
+      facts = Puppet::Node::Facts.new("foo")
+      @request.instance = facts
+      PSON.parse(@request.to_pson)["data"]['instance'].should be_instance_of(Puppet::Node::Facts)
+    end
+  end
+
+  describe "when converting from json" do
+    before do
+      @request = Puppet::Indirector::Request.new(:facts, :find, "foo")
+      @klass = Puppet::Indirector::Request
+      @format = Puppet::Network::FormatHandler.format('pson')
+    end
+
+    def from_json(json)
+      @format.intern(Puppet::Indirector::Request, json)
+    end
+
+    it "should set the 'key'" do
+      from_json(@request.to_pson).key.should == "foo"
+    end
+
+    it "should fail if no key is provided" do
+      json = PSON.parse(@request.to_pson)
+      json['data'].delete("key")
+      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+    end
+
+    it "should set its indirector name" do
+      from_json(@request.to_pson).indirection_name.should == :facts
+    end
+
+    it "should fail if no type is provided" do
+      json = PSON.parse(@request.to_pson)
+      json['data'].delete("type")
+      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+    end
+
+    it "should set its method" do
+      from_json(@request.to_pson).method.should == "find"
+    end
+
+    it "should fail if no method is provided" do
+      json = PSON.parse(@request.to_pson)
+      json['data'].delete("method")
+      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+    end
+
+    it "should initialize with all attributes and options" do
+      @request.ip = "127.0.0.1"
+      @request.options["opt"] = "value"
+      result = from_json(@request.to_pson)
+      result.options[:opt].should == "value"
+      result.ip.should == "127.0.0.1"
+    end
+
+    it "should set its instance as an instance if one is provided" do
+      facts = Puppet::Node::Facts.new("foo")
+      @request.instance = facts
+      result = from_json(@request.to_pson)
+      result.instance.should be_instance_of(Puppet::Node::Facts)
     end
   end
 end
