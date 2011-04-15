@@ -31,6 +31,9 @@ class Puppet::Interface::OptionBuilder
     if @option.before_action
       raise ArgumentError, "#{@option} already has a before_action set"
     end
+    unless block.arity == 3 then
+      raise ArgumentError, "before_action takes three arguments, action, args, and options"
+    end
     @option.before_action = block
   end
 
@@ -38,6 +41,9 @@ class Puppet::Interface::OptionBuilder
     block or raise ArgumentError, "#{@option} after_action requires a block"
     if @option.after_action
       raise ArgumentError, "#{@option} already has a after_action set"
+    end
+    unless block.arity == 3 then
+      raise ArgumentError, "after_action takes three arguments, action, args, and options"
     end
     @option.after_action = block
   end

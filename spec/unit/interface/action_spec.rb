@@ -182,7 +182,7 @@ describe Puppet::Interface::Action do
       it "should call action before decorators" do
         face.action(:baz) do
           option "--baz" do
-            before_action do
+            before_action do |action, args, options|
               report(:action_option)
             end
           end
@@ -196,7 +196,7 @@ describe Puppet::Interface::Action do
       it "should call action after decorators" do
         face.action(:baz) do
           option "--baz" do
-            after_action do
+            after_action do |action, args, options|
               report(:action_option)
             end
           end
@@ -209,7 +209,7 @@ describe Puppet::Interface::Action do
 
       it "should call local before decorators" do
         face.option "--foo FOO" do
-          before_action do
+          before_action do |action, args, options|
             report(:before)
           end
         end
@@ -218,7 +218,9 @@ describe Puppet::Interface::Action do
       end
 
       it "should call local after decorators" do
-        face.option "--foo FOO" do after_action do report(:after) end end
+        face.option "--foo FOO" do
+          after_action do |action, args, options| report(:after) end
+        end
         face.expects(:report).with(:after)
         face.bar({:foo => 12})
       end
@@ -226,7 +228,9 @@ describe Puppet::Interface::Action do
       context "with inactive decorators" do
         it "should not invoke a decorator if the options are empty" do
           face.option "--foo FOO" do
-            before_action do report :before_action end
+            before_action do |action, args, options|
+              report :before_action
+            end
           end
           face.expects(:report).never # I am testing the negative.
           face.bar
@@ -234,8 +238,12 @@ describe Puppet::Interface::Action do
 
         context "with some decorators only" do
           before :each do
-            face.option "--foo" do before_action do report :foo end end
-            face.option "--bar" do before_action do report :bar end end
+            face.option "--foo" do
+              before_action do |action, args, options| report :foo end
+            end
+            face.option "--bar" do
+              before_action do |action, args, options| report :bar end
+            end
           end
 
           it "should work with the foo option" do
@@ -274,7 +282,7 @@ describe Puppet::Interface::Action do
       context "with a child decorator" do
         subject do
           child.option "--foo FOO" do
-            before_action do
+            before_action do |action, args, options|
               report(:child_before)
             end
           end
@@ -294,7 +302,7 @@ describe Puppet::Interface::Action do
       context "with a parent decorator" do
         subject do
           parent.option "--foo FOO" do
-            before_action do
+            before_action do |action, args, options|
               report(:parent_before)
             end
           end
@@ -314,12 +322,12 @@ describe Puppet::Interface::Action do
       context "with child and parent decorators" do
         subject do
           parent.option "--foo FOO" do
-            before_action { report(:parent_before) }
-            after_action  { report(:parent_after)  }
+            before_action { |action, args, options| report(:parent_before) }
+            after_action  { |action, args, options| report(:parent_after)  }
           end
           child.option "--bar BAR" do
-            before_action { report(:child_before) }
-            after_action  { report(:child_after)  }
+            before_action { |action, args, options| report(:child_before) }
+            after_action  { |action, args, options| report(:child_after)  }
           end
 
           child.expects(:report).with(:child_before)
