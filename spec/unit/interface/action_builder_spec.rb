@@ -65,5 +65,16 @@ describe Puppet::Interface::ActionBuilder do
         action.summary.should == "this is some text"
       end
     end
+
+    context "action defaulting" do
+      let :face do Puppet::Interface.new(:default_action, '0.0.1') end
+
+      it "should set the default to true" do
+        action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+          default
+        end
+        action.default.should == true
+      end
+    end
   end
 end

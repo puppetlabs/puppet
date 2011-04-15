@@ -70,9 +70,33 @@ describe Puppet::Application::FaceBase do
         end
       end
 
-      it "should fail if no action is given" do
-        expect { app.preinit; app.parse_options }.
-          to raise_error OptionParser::MissingArgument, /No action given/
+      it "should use the default action if not given any arguments" do
+        app.command_line.stubs(:args).returns []
+        action = stub(:options => [])
+        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
+        app.stubs(:main)
+        app.run
+        app.action.should == action
+        app.arguments.should == [ { } ]
+      end
+
+      it "should use the default action if not given a valid one" do
+        app.command_line.stubs(:args).returns %w{bar}
+        action = stub(:options => [])
+        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
+        app.stubs(:main)
+        app.run
+        app.action.should == action
+        app.arguments.should == [ 'bar', { } ]
+      end
+
+      it "should have no action if not given a valid one and there is no default action" do
+        app.command_line.stubs(:args).returns %w{bar}
+        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
+        app.stubs(:main)
+        app.run
+        app.action.should be_nil
+        app.arguments.should == [ 'bar', { } ]
       end
 
       it "should report a sensible error when options with = fail" do
@@ -175,6 +199,13 @@ describe Puppet::Application::FaceBase do
 
     it "should send the specified verb and name to the face" do
       app.face.expects(:foo).with(*app.arguments)
+      app.main
+    end
+
+    it "should lookup help when it cannot do anything else" do
+      app.action = nil
+      Puppet::Face[:help, :current].expects(:help).with(:basetest, *app.arguments)
+      app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
       app.main
     end
 

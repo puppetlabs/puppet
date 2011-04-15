@@ -29,6 +29,10 @@ class Puppet::Interface::ActionBuilder
     @action.add_option(option)
   end
 
+  def default
+    @action.default = true
+  end
+
   def summary(text)
     @action.summary = text
   end

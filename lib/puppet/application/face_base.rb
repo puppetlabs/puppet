@@ -39,7 +39,6 @@ class Puppet::Application::FaceBase < Puppet::Application
     render_method = Puppet::Network::FormatHandler.format(format).render_method
     if render_method == "to_pson"
       jj result
-      exit(0)
     else
       result.send(render_method)
     end
@@ -94,16 +93,13 @@ class Puppet::Application::FaceBase < Puppet::Application
           raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
         end
       else
-        action = @face.get_action(item.to_sym)
-        if action.nil? then
-          raise OptionParser::InvalidArgument.new("#{@face} does not have an #{item} action")
-        end
-        @action = action
+        @action = @face.get_action(item.to_sym)
       end
     end
 
-    unless @action
-      raise OptionParser::MissingArgument.new("No action given on the command line")
+    if @action.nil?
+      @action = @face.get_default_action()
+      @is_default_action = true
     end
 
     # Now we can interact with the default option code to build behaviour
@@ -111,7 +107,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     @action.options.each do |option|
       option = @action.get_option(option) # make it the object.
       self.class.option(*option.optparse) # ...and make the CLI parse it.
-    end
+    end if @action
 
     # ...and invoke our parent to parse all the command line options.
     super
@@ -138,7 +134,10 @@ class Puppet::Application::FaceBase < Puppet::Application
     # with it *always* being the first word of the remaining set of command
     # line arguments.  So, strip that off when we construct the arguments to
     # pass down to the face action. --daniel 2011-04-04
-    @arguments.delete_at(0)
+    # Of course, now that we have default actions, we should leave the
+    # "action" name on if we didn't actually consume it when we found our
+    # action.
+    @arguments.delete_at(0) unless @is_default_action
 
     # We copy all of the app options to the end of the call; This allows each
     # action to read in the options.  This replaces the older model where we
@@ -150,8 +149,17 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
-    if result = @face.send(@action.name, *arguments)
-      puts render(result)
+    if @action
+      result = @face.send(@action.name, *arguments)
+      puts render(result) if result
+    else
+      if arguments.first.is_a? Hash
+        puts "#{@face} does not have a default action"
+      else
+        puts "#{@face} does not respond to action #{arguments.first}"
+      end
+
+      puts Puppet::Face[:help, :current].help(@face.name, *arguments)
     end
     exit(exit_code)
   end
