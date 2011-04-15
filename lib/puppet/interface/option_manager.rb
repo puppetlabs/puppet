@@ -37,10 +37,10 @@ module Puppet::Interface::OptionManager
     result.sort
   end
 
-  def get_option(name)
+  def get_option(name, with_inherited_options = true)
     @options ||= {}
     result = @options[name.to_sym]
-    unless result then
+    if result.nil? and with_inherited_options then
       if self.is_a?(Class) and superclass.respond_to?(:get_option)
         result = superclass.get_option(name)
       elsif self.class.respond_to?(:get_option)

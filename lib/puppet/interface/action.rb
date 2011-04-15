@@ -7,8 +7,9 @@ class Puppet::Interface::Action
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
     @face    = face
     @name    = name.to_sym
-    @options = {}
     attrs.each do |k, v| send("#{k}=", v) end
+
+    @options = {}
   end
 
   # This is not nice, but it is the easiest way to make us behave like the
@@ -84,11 +85,21 @@ class Puppet::Interface::Action
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
     file = __FILE__ + "+eval"
     line = __LINE__ + 1
-    wrapper = "def #{@name}(*args, &block)
-                 args << {} unless args.last.is_a? Hash
-                 args << block if block_given?
-                 self.__send__(#{internal_name.inspect}, *args)
-               end"
+    wrapper = <<WRAPPER
+def #{@name}(*args, &block)
+  if args.last.is_a? Hash then
+    options = args.last
+  else
+    args << (options = {})
+  end
+
+  action = get_action(#{name.inspect})
+  __invoke_decorations(:before, action, args, options)
+  rval = self.__send__(#{internal_name.inspect}, *args)
+  __invoke_decorations(:after, action, args, options)
+  return rval
+end
+WRAPPER
 
     if @face.is_a?(Class)
       @face.class_eval do eval wrapper, nil, file, line end
@@ -123,7 +134,19 @@ class Puppet::Interface::Action
     (@options.keys + @face.options).sort
   end
 
-  def get_option(name)
-    @options[name.to_sym] || @face.get_option(name)
+  def get_option(name, with_inherited_options = true)
+    option = @options[name.to_sym]
+    if option.nil? and with_inherited_options
+      option = @face.get_option(name)
+    end
+    option
+  end
+
+  ########################################################################
+  # Support code for action decoration; see puppet/interface.rb for the gory
+  # details of why this is hidden away behind private. --daniel 2011-04-15
+  private
+  def __decorate(type, name, proc)
+    @face.__send__ :__decorate, type, name, proc
   end
 end

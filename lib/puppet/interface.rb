@@ -117,4 +117,43 @@ class Puppet::Interface
   def to_s
     "Puppet::Face[#{name.inspect}, #{version.inspect}]"
   end
+
+  ########################################################################
+  # Action decoration, whee!  You are not expected to care about this code,
+  # which exists to support face building and construction.  I marked these
+  # private because the implementation is crude and ugly, and I don't yet know
+  # enough to work out how to make it clean.
+  #
+  # Once we have established that these methods will likely change radically,
+  # to be unrecognizable in the final outcome.  At which point we will throw
+  # all this away, replace it with something nice, and work out if we should
+  # be making this visible to the outside world... --daniel 2011-04-14
+  private
+  def __invoke_decorations(type, action, passed_args = [], passed_options = {})
+    [:before, :after].member?(type) or fail "unknown decoration type #{type}"
+
+    # Collect the decoration methods matching our pass.
+    methods = action.options.select do |name|
+      passed_options.has_key? name
+    end.map do |name|
+      action.get_option(name).__decoration_name(type)
+    end
+
+    methods.each do |hook|
+      begin
+        respond_to? hook and self.__send__(hook, action, passed_args, passed_options)
+      rescue => e
+        Puppet.warning("invoking #{action} #{type} hook: #{e}")
+      end
+    end
+  end
+
+  def __decorate(type, name, proc)
+    meta_def(name, &proc)
+    method(name).unbind
+  end
+  def self.__decorate(type, name, proc)
+    define_method(name, proc)
+    instance_method(name)
+  end
 end

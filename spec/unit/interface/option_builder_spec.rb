@@ -8,22 +8,53 @@ describe Puppet::Interface::OptionBuilder do
       should be_an_instance_of Puppet::Interface::Option
   end
 
-  describe "when using the DSL block" do
-    it "should work with an empty block" do
-      option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
-        # This block deliberately left blank.
-      end
-
-      option.should be_an_instance_of Puppet::Interface::Option
+  it "should work with an empty block" do
+    option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+      # This block deliberately left blank.
     end
 
-    it "should support documentation declarations" do
-      text = "this is the description"
+    option.should be_an_instance_of Puppet::Interface::Option
+  end
+
+  it "should support documentation declarations" do
+    text = "this is the description"
+    option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+      desc text
+    end
+    option.should be_an_instance_of Puppet::Interface::Option
+    option.desc.should == text
+  end
+
+  context "before_action hook" do
+    it "should support a before_action hook" do
       option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
-        desc text
+        before_action do |a,b,c| :whatever end
       end
-      option.should be_an_instance_of Puppet::Interface::Option
-      option.desc.should == text
+      option.before_action.should be_an_instance_of UnboundMethod
+    end
+
+    it "should fail if the hook block takes too few arguments" do
+      expect do
+        Puppet::Interface::OptionBuilder.build(face, "--foo") do
+          before_action do |one, two| true end
+        end
+      end.to raise_error ArgumentError, /takes three arguments/
+    end
+
+    it "should fail if the hook block takes too many arguments" do
+      expect do
+        Puppet::Interface::OptionBuilder.build(face, "--foo") do
+          before_action do |one, two, three, four| true end
+        end
+      end.to raise_error ArgumentError, /takes three arguments/
+    end
+
+    it "should fail if the hook block takes a variable number of arguments" do
+      expect do
+        Puppet::Interface::OptionBuilder.build(face, "--foo") do
+          before_action do |*blah| true end
+        end
+      end.to raise_error ArgumentError, /takes three arguments/
     end
   end
 end

@@ -2,24 +2,16 @@ require 'puppet/face/indirector'
 require 'puppet/ssl/host'
 
 Puppet::Face::Indirector.define(:certificate, '0.0.1') do
-  # REVISIT: This should use a pre-invoke hook to run the common code that
-  # needs to happen before we invoke any action; that would be much nicer than
-  # the "please repeat yourself" stuff found in here right now.
-  #
-  # option "--ca-location LOCATION" do
-  #   type [:whatever, :location, :symbols]
-  #   hook :before do |value|
-  #     Puppet::SSL::Host.ca_location = value
-  #   end
-  # end
-  #
-  # ...but should I pass the arguments as well?
-  # --daniel 2011-04-05
-  option "--ca-location LOCATION"
+  option "--ca-location LOCATION" do
+    before_action do |action, args, options|
+      Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
+    end
+  end
 
   action :generate do
+    summary "Generate a new Certificate Signing Request for HOST"
+
     when_invoked do |name, options|
-      Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
       host = Puppet::SSL::Host.new(name)
       host.generate_certificate_request
       host.certificate_request.class.indirection.save(host.certificate_request)
@@ -27,8 +19,9 @@ Puppet::Face::Indirector.define(:certificate, '0.0.1') do
   end
 
   action :list do
+    summary "List all Certificate Signing Requests"
+
     when_invoked do |options|
-      Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
       Puppet::SSL::Host.indirection.search("*", {
         :for => :certificate_request,
       }).map { |h| h.inspect }
@@ -36,8 +29,9 @@ Puppet::Face::Indirector.define(:certificate, '0.0.1') do
   end
 
   action :sign do
+    summary "Sign a Certificate Signing Request for HOST"
+
     when_invoked do |name, options|
-      Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
       host = Puppet::SSL::Host.new(name)
       host.desired_state = 'signed'
       Puppet::SSL::Host.indirection.save(host)

@@ -20,6 +20,14 @@ Puppet::Face.define(:help, '0.0.1') do
       # should rewrite this to use those. --daniel 2011-04-04
       options = args.pop
       if options.nil? or args.length > 2 then
+        if args.select { |x| x == 'help' } .length > 2 then
+          c = "\n !\"'),-./7:;<GIJLST\\_`abcdefhiklmnoprstuwx|}".split('')
+          i = <<'EOT' .to_i(36)
+2s7ytxy5vpj74kbab5xzf1ik2roinzlefaspjrzckiert5xbaxvwlku3a91w7y1rsdnenp51gwpulmnrp54nwdil36fjgjarab801y0r5a9nh1hdfgi99arn5c5t3zhxbvziu6wx5r1tb7lun7pro69nrxunqqixsh6qmmv0ms0i0yycqw3pystyzmiita0lpxynqsqkbjwadcx82n76wwpzbht8i8rgvqhqick8mk3cs3rvwdjookpgu0rxw4tcezned5sqz5x8z9vntyyz0s4h6hjhtwtbytsmmu7ltvdftaixc7fkt276sqm48ab4yv0ot9y26nz0xniy4pfl1x300lt6h9c8of49vf799ieuxwnoycsjlmtd4qntzit524j0tdn6n5ajmq3z10apjuhkzprvmu53z1gnacymnoforrz5mbqto062kckgw5463pxwzg8liglub4ubnr0dln1s6iy3ummxuhim7m5a7yedl3gyy6ow4qqtmsigv27lysooau24zpsccsvxddwygjprqpbwon7i9s1279m1fpinvva8mfh6bgmotrpxsh1c8rc83l3u0utf5i200yl7ui0ngcbcjyr4erzdee2tqk3fpjvb82t8xhncruhgn7j5dh2m914qzhb0gkoom47k6et7rp4tqjnrv0y2apk5qdl1x1hnbkkxup5ys6ip2ksmtpd3ipmrdtswxr5xwfiqtm60uyjr1v79irhnkrbbt4fwhgqjby1qflgwt9c1wpayzzucep6npgbn3f1k6cn4pug31u02wel4tald4hij8m5p49xr8u4ero1ucs5uht42o8nhpmpe7c7xf9t85i85m9m5kktgoqkgbu52gy5aoteyp8jkm3vri9fnkmwa5h60zt8otja72joxjb40p2rz2vp8f8q9nnggxt3x90pe5u4048ntyuha78q1oikhhpvw9j083yc3l00hz5ehv9c1au5gvctyapzprub289qruve9qsyuh75j04wzkemqw3uhisrfs92u1ahv2qlqxmorgob16c1vbqkxttkoyp2agkt0v5l7lec25p0jqun9y39k41h67aeb5ihiqsftxc9azmg31hc73dk8urlj88vgbmgt8yln9rchw60whgxvnv9zn6cxbr482svctswc5a07atj
+EOT
+          607.times{i,x=i.divmod(1035);a,b=x.divmod(23);print(c[a]*b)}
+          raise ArgumentError, "Such panic is really not required."
+        end
         raise ArgumentError, "help only takes two (optional) arguments, a face name, and an action"
       end
 
