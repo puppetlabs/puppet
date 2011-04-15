@@ -6,9 +6,14 @@ describe Puppet::Face[:certificate, '0.0.1'] do
   end
 
   it "should set the ca location when invoked" do
-    pending "#6983: This is broken in the actual face..."
     Puppet::SSL::Host.expects(:ca_location=).with(:foo)
     Puppet::SSL::Host.indirection.expects(:save)
-    subject.sign :ca_location => :foo
+    subject.sign "hello, friend", :ca_location => :foo
+  end
+
+  it "(#7059) should set the ca location when an inherited action is invoked" do
+    Puppet::SSL::Host.expects(:ca_location=).with(:foo)
+    subject.indirection.expects(:find)
+    subject.find "hello, friend", :ca_location => :foo
   end
 end
