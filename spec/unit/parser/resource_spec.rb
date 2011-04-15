@@ -131,9 +131,19 @@ describe Puppet::Parser::Resource do
   end
 
   describe "when evaluating" do
+    before do
+      @node = Puppet::Node.new "test-node"
+      @compiler = Puppet::Parser::Compiler.new @node
+      @catalog = Puppet::Resource::Catalog.new
+      source = stub('source')
+      source.stubs(:module_name)
+      @scope = Puppet::Parser::Scope.new(:compiler => @compiler, :source => source)
+      @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @scope))
+    end
+
     it "should evaluate the associated AST definition" do
       definition = newdefine "mydefine"
-      res = Puppet::Parser::Resource.new("mydefine", "whatever", :scope => @scope, :source => @source)
+      res = Puppet::Parser::Resource.new("mydefine", "whatever", :scope => @scope, :source => @source, :catalog => @catalog)
       definition.expects(:evaluate_code).with(res)
 
       res.evaluate
@@ -141,16 +151,64 @@ describe Puppet::Parser::Resource do
 
     it "should evaluate the associated AST class" do
       @class = newclass "myclass"
-      res = Puppet::Parser::Resource.new("class", "myclass", :scope => @scope, :source => @source)
+      res = Puppet::Parser::Resource.new("class", "myclass", :scope => @scope, :source => @source, :catalog => @catalog)
       @class.expects(:evaluate_code).with(res)
       res.evaluate
     end
 
     it "should evaluate the associated AST node" do
       nodedef = newnode("mynode")
-      res = Puppet::Parser::Resource.new("node", "mynode", :scope => @scope, :source => @source)
+      res = Puppet::Parser::Resource.new("node", "mynode", :scope => @scope, :source => @source, :catalog => @catalog)
       nodedef.expects(:evaluate_code).with(res)
       res.evaluate
+    end
+
+    it "should add an edge to any specified stage for class resources" do
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+
+      other_stage = Puppet::Parser::Resource.new(:stage, "other", :scope => @scope, :catalog => @catalog)
+      @compiler.add_resource(@scope, other_stage)
+      resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
+      resource[:stage] = 'other'
+      @compiler.add_resource(@scope, resource)
+
+      resource.evaluate
+
+      @compiler.catalog.edge?(other_stage, resource).should be_true
+    end
+
+    it "should fail if an unknown stage is specified" do
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+
+      resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
+      resource[:stage] = 'other'
+
+      lambda { resource.evaluate }.should raise_error(ArgumentError, /Could not find stage other specified by/)
+    end
+
+    it "should add edges from the class resources to the parent's stage if no stage is specified" do
+      main      = @compiler.catalog.resource(:stage, :main)
+      foo_stage = Puppet::Parser::Resource.new(:stage, :foo_stage, :scope => @scope, :catalog => @catalog)
+      @compiler.add_resource(@scope, foo_stage)
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+      resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
+      resource[:stage] = 'foo_stage'
+      @compiler.add_resource(@scope, resource)
+
+      resource.evaluate
+
+      @compiler.catalog.should be_edge(foo_stage, resource)
+    end
+
+    it "should add edges from top-level class resources to the main stage if no stage is specified" do
+      main = @compiler.catalog.resource(:stage, :main)
+      @compiler.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "foo", '')
+      resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope, :catalog => @catalog)
+      @compiler.add_resource(@scope, resource)
+
+      resource.evaluate
+
+      @compiler.catalog.should be_edge(main, resource)
     end
   end
 

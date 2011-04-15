@@ -121,7 +121,11 @@ describe Puppet::Parser::Scope do
 
       def create_class_scope(name)
         klass = newclass(name)
-        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
+
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new))
+
+        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 
         @scope.class_scope(klass)
       end
