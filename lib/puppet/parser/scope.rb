@@ -222,12 +222,12 @@ class Puppet::Parser::Scope
 
   private :qualified_scope
 
-  # Look up a variable.  The simplest value search we do.  
+  # Look up a variable.  The simplest value search we do.
   def lookupvar(name, options = {})
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     # If the variable is qualified, then find the specified scope and look the variable up there instead.
     if name =~ /^(.*)::(.+)$/
-      begin 
+      begin
         qualified_scope($1).lookupvar($2,options)
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
@@ -238,7 +238,7 @@ class Puppet::Parser::Scope
       # We can't use "if table[name]" here because the value might be false
       if options[:dynamic] and self != compiler.topscope
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} will not be supported in future versions. Use a fully-qualified variable name or parameterized classes."
+        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
       end
       table[name]
     elsif parent
