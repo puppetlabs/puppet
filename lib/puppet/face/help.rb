@@ -13,6 +13,7 @@ Puppet::Face.define(:help, '0.0.1') do
       desc "Which version of the interface to show help for"
     end
 
+    default
     when_invoked do |*args|
       # Check our invocation, because we want varargs and can't do defaults
       # yet.  REVISIT: when we do option defaults, and positional options, we

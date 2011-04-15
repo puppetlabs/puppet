@@ -5,8 +5,13 @@ module Puppet::Interface::ActionManager
   # the code to do so.
   def action(name, &block)
     @actions ||= {}
+    @default_action ||= nil
     raise "Action #{name} already defined for #{self}" if action?(name)
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
+    if action.default
+      raise "Actions #{@default_action.name} and #{name} cannot both be default" if @default_action
+      @default_action = action
+    end
     @actions[action.name] = action
   end
 
@@ -48,6 +53,10 @@ module Puppet::Interface::ActionManager
       end
     end
     return result
+  end
+
+  def get_default_action
+    @default_action
   end
 
   def action?(name)
