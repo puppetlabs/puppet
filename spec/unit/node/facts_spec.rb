@@ -126,7 +126,7 @@ describe Puppet::Node::Facts, "when indirecting" do
         Time.stubs(:now).returns(@timestamp)
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
-        facts.to_pson.should == %Q[{"data":{"name":"foo","timestamp":"Thu Oct 28 11:16:31 -0700 2010","expiration":"Thu Oct 28 11:21:31 -0700 2010","values":{"a":1,"b":2,"c":3}},"document_type":"Puppet::Node::Facts"}]
+        facts.to_pson.should == %Q[{"data":{"name":"foo","timestamp":"#{@timestamp}","expiration":"Thu Oct 28 11:21:31 -0700 2010","values":{"a":1,"b":2,"c":3}},"document_type":"Puppet::Node::Facts"}]
       end
 
       it "should not include nil values" do
