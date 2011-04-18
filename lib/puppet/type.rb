@@ -116,6 +116,26 @@ class Type
     ens
   end
 
+  def self.apply_to_device
+    @apply_to = :device
+  end
+
+  def self.apply_to_host
+    @apply_to = :host
+  end
+
+  def self.apply_to_all
+    @apply_to = :both
+  end
+
+  def self.apply_to
+    @apply_to ||= :host
+  end
+
+  def self.can_apply_to(target)
+    [ target == :device ? :device : :host, :both ].include?(apply_to)
+  end
+
   # Deal with any options passed into parameters.
   def self.handle_param_options(name, options)
     # If it's a boolean parameter, create a method to test the value easily
@@ -1895,6 +1915,14 @@ class Type
 
   def virtual?;  !!@virtual;  end
   def exported?; !!@exported; end
+
+  def appliable_to_device?
+    self.class.can_apply_to(:device)
+  end
+
+  def appliable_to_host?
+    self.class.can_apply_to(:host)
+  end
 end
 end
 

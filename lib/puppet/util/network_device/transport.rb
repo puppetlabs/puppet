@@ -1,5 +1,3 @@
 # stub
-module Puppet::Util::NetworkDevice
-  module Transport
-  end
+module Puppet::Util::NetworkDevice::Transport
 end

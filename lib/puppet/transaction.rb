@@ -12,7 +12,7 @@ class Puppet::Transaction
   require 'puppet/transaction/resource_harness'
   require 'puppet/resource/status'
 
-  attr_accessor :component, :catalog, :ignoreschedules
+  attr_accessor :component, :catalog, :ignoreschedules, :for_network_device
   attr_accessor :configurator
 
   # The report, once generated.
@@ -339,6 +339,8 @@ class Puppet::Transaction
       resource.warning "Skipping because of failed dependencies"
     elsif resource.virtual?
       resource.debug "Skipping because virtual"
+    elsif resource.appliable_to_device? ^ for_network_device
+      resource.debug "Skipping #{resource.appliable_to_device? ? 'device' : 'host'} resources because running on a #{for_network_device ? 'device' : 'host'}"
     else
       return false
     end

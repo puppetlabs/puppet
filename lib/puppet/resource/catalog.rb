@@ -133,6 +133,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     transaction.report = options[:report] if options[:report]
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
+    transaction.for_network_device = options[:network_device]
 
     transaction.add_times :config_retrieval => self.retrieval_duration || 0
 

@@ -392,130 +392,17 @@ eos
       @cisco.parse_interface_config("Gi0/17").should == {:etherchannel=>"1"}
     end
   end
+
+  describe "when finding device facts" do
+    it "should delegate to the cisco facts entity" do
+      facts = stub 'facts'
+      Puppet::Util::NetworkDevice::Cisco::Facts.expects(:new).returns(facts)
+
+      facts.expects(:retrieve).returns(:facts)
+
+      @cisco.facts.should == :facts
+    end
+  end
+
 end
 
-# static access
-# Switch#sh interfaces FastEthernet 0/1 switchport  
-# Name: Fa0/1
-# Switchport: Enabled
-# Administrative mode: static access
-# Operational Mode: static access
-# Administrative Trunking Encapsulation: isl
-# Operational Trunking Encapsulation: isl
-# Negotiation of Trunking: Disabled
-# Access Mode VLAN: 100 (SHDSL)
-# Trunking Native Mode VLAN: 1 (default)
-# Trunking VLANs Enabled: NONE
-# Pruning VLANs Enabled: NONE
-# 
-# Priority for untagged frames: 0
-# Override vlan tag priority: FALSE
-# Voice VLAN: none
-# Appliance trust: none
-# Self Loopback: No
-# Switch#
-
-# c2960#sh interfaces GigabitEthernet 0/1 switchport 
-# Name: Gi0/1
-# Switchport: Enabled
-# Administrative Mode: trunk
-# Operational Mode: trunk
-# Administrative Trunking Encapsulation: dot1q
-# Operational Trunking Encapsulation: dot1q
-# Negotiation of Trunking: On
-# Access Mode VLAN: 1 (default)
-# Trunking Native Mode VLAN: 1 (default)
-# Administrative Native VLAN tagging: enabled
-# Voice VLAN: none
-# Administrative private-vlan host-association: none 
-# Administrative private-vlan mapping: none 
-# Administrative private-vlan trunk native VLAN: none
-# Administrative private-vlan trunk Native VLAN tagging: enabled
-# Administrative private-vlan trunk encapsulation: dot1q
-# Administrative private-vlan trunk normal VLANs: none
-# Administrative private-vlan trunk associations: none
-# Administrative private-vlan trunk mappings: none
-# Operational private-vlan: none
-# Trunking VLANs Enabled: 1,99
-# Pruning VLANs Enabled: 2-1001
-# Capture Mode Disabled
-# Capture VLANs Allowed: ALL
-# 
-# Protected: false
-# Unknown unicast blocked: disabled
-# Unknown multicast blocked: disabled
-# Appliance trust: none
-# c2960#
-
-# c2960#sh interfaces GigabitEthernet 0/2 switchport 
-# Name: Gi0/2
-# Switchport: Enabled
-# Administrative Mode: static access
-# Operational Mode: static access
-# Administrative Trunking Encapsulation: dot1q
-# Operational Trunking Encapsulation: native
-# Negotiation of Trunking: Off
-# Access Mode VLAN: 99 (MGMT)
-# Trunking Native Mode VLAN: 1 (default)
-# Administrative Native VLAN tagging: enabled
-# Voice VLAN: none
-# Administrative private-vlan host-association: none 
-# Administrative private-vlan mapping: none 
-# Administrative private-vlan trunk native VLAN: none
-# Administrative private-vlan trunk Native VLAN tagging: enabled
-# Administrative private-vlan trunk encapsulation: dot1q
-# Administrative private-vlan trunk normal VLANs: none
-# Administrative private-vlan trunk associations: none
-# Administrative private-vlan trunk mappings: none
-# Operational private-vlan: none
-# Trunking VLANs Enabled: ALL
-# Pruning VLANs Enabled: 2-1001
-# Capture Mode Disabled
-# Capture VLANs Allowed: ALL
-# 
-# Protected: false
-# Unknown unicast blocked: disabled
-# Unknown multicast blocked: disabled
-# Appliance trust: none
-# c2960#
-
-# c877#sh interfaces FastEthernet 1 switchport 
-# Name: Fa1
-# Switchport: Enabled
-# Administrative Mode: trunk
-# Operational Mode: trunk
-# Administrative Trunking Encapsulation: dot1q
-# Operational Trunking Encapsulation: dot1q
-# Negotiation of Trunking: Disabled
-# Access Mode VLAN: 0 ((Inactive))
-# Trunking Native Mode VLAN: 1 (default)
-# Trunking VLANs Enabled: ALL
-# Trunking VLANs Active: 1
-# Protected: false
-# Priority for untagged frames: 0
-# Override vlan tag priority: FALSE
-# Voice VLAN: none 
-# Appliance trust: none
-
-
-# c2960#sh etherchannel summary 
-# Flags:  D - down        P - bundled in port-channel
-#         I - stand-alone s - suspended
-#         H - Hot-standby (LACP only)
-#         R - Layer3      S - Layer2
-#         U - in use      f - failed to allocate aggregator
-# 
-#         M - not in use, minimum links not met
-#         u - unsuitable for bundling
-#         w - waiting to be aggregated
-#         d - default port
-# 
-# 
-# Number of channel-groups in use: 1
-# Number of aggregators:           1
-# 
-# Group  Port-channel  Protocol    Ports
-# ------+-------------+-----------+-----------------------------------------------
-# 1      Po1(SU)         LACP      Gi0/17(P)   Gi0/18(P)   
-# 
-# c2960#

@@ -30,6 +30,14 @@ describe Puppet::Util::NetworkDevice::Transport::Ssh, :if => Puppet.features.ssh
     @transport.connect
   end
 
+  it "should raise a Puppet::Error when encountering an authentication failure" do
+    Net::SSH.expects(:start).raises Net::SSH::AuthenticationFailed
+    @transport.host = "localhost"
+    @transport.user = "user"
+
+    lambda { @transport.connect }.should raise_error Puppet::Error
+  end
+
   describe "when connected" do
     before(:each) do
       @ssh = stub_everything 'ssh'

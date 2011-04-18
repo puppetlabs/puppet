@@ -36,6 +36,14 @@ describe Puppet::Type.type(:schedule) do
   describe Puppet::Type.type(:schedule) do
     include ScheduleTesting
 
+    it "should apply to device" do
+      @schedule.should be_appliable_to_device
+    end
+
+    it "should apply to host" do
+      @schedule.should be_appliable_to_host
+    end
+
     it "should default to :distance for period-matching" do
       @schedule[:periodmatch].should == :distance
     end

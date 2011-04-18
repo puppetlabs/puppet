@@ -487,6 +487,11 @@ module Puppet
       This should match how often the hosts report back to the server."]
   )
 
+  setdefaults(:device,
+    :devicedir =>  {:default => "$vardir/devices", :mode => "750", :desc => "The root directory of devices' $vardir"},
+    :deviceconfig => ["$confdir/device.conf","Path to the device config file for puppet device"]
+  )
+
   setdefaults(:agent,
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",

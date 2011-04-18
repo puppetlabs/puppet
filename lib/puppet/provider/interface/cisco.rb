@@ -1,22 +1,20 @@
-require 'puppet/util/network_device/cisco/device'
-require 'puppet/provider/network_device'
+require 'puppet/provider/cisco'
 
-Puppet::Type.type(:interface).provide :cisco, :parent => Puppet::Provider::NetworkDevice do
+Puppet::Type.type(:interface).provide :cisco, :parent => Puppet::Provider::Cisco do
 
   desc "Cisco switch/router provider for interface."
 
   mk_resource_methods
 
-  def self.lookup(url, name)
+  def self.lookup(device, name)
     interface = nil
-    network_gear = Puppet::Util::NetworkDevice::Cisco::Device.new(url)
-    network_gear.command do |ng|
-      interface = network_gear.interface(name)
+    device.command do |ng|
+      interface = device.interface(name)
     end
     interface
   end
 
-  def initialize(*args)
+  def initialize(device, *args)
     super
   end
 
@@ -25,9 +23,5 @@ Puppet::Type.type(:interface).provide :cisco, :parent => Puppet::Provider::Netwo
       device.new_interface(name).update(former_properties, properties)
     end
     super
-  end
-
-  def device
-    @device ||= Puppet::Util::NetworkDevice::Cisco::Device.new(resource[:device_url])
   end
 end
