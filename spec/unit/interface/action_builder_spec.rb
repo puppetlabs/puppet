@@ -13,11 +13,7 @@ describe Puppet::Interface::ActionBuilder do
 
     it "should define a method on the face which invokes the action" do
       face = Puppet::Interface.new(:action_builder_test_interface, '0.0.1') do
-        action :foo do
-          when_invoked do
-            "invoked the method"
-          end
-        end
+        action(:foo) { when_invoked { "invoked the method" } }
       end
 
       face.foo.should == "invoked the method"

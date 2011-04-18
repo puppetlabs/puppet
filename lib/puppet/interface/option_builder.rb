@@ -11,7 +11,7 @@ class Puppet::Interface::OptionBuilder
   def initialize(face, *declaration, &block)
     @face   = face
     @option = Puppet::Interface::Option.new(face, *declaration)
-    block and instance_eval(&block)
+    instance_eval(&block) if block_given?
     @option
   end
 
@@ -46,5 +46,9 @@ class Puppet::Interface::OptionBuilder
       raise ArgumentError, "after_action takes three arguments, action, args, and options"
     end
     @option.after_action = block
+  end
+
+  def required(value = true)
+    @option.required = value
   end
 end

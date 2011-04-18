@@ -74,10 +74,12 @@ class Puppet::Interface::Option
   def optional_argument?
     !!@optional_argument
   end
-
+  def required?
+    !!@required
+  end
 
   attr_reader   :parent, :name, :aliases, :optparse
-  attr_accessor :desc
+  attr_accessor :required, :desc
 
   attr_accessor :before_action
   def before_action=(proc)

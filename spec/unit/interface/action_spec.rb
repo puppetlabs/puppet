@@ -66,8 +66,8 @@ describe Puppet::Interface::Action do
       let :face do
         Puppet::Interface.new(:ruby_api, '1.0.0') do
           action :bar do
-            when_invoked do |options|
-              options
+            when_invoked do |*args|
+              args.last
             end
           end
         end
@@ -81,6 +81,11 @@ describe Puppet::Interface::Action do
       it "should work when options are supplied" do
         options = face.bar(:bar => "beer")
         options.should == { :bar => "beer" }
+      end
+
+      it "should call #validate_args on the action when invoked" do
+        face.get_action(:bar).expects(:validate_args).with([1, :two, 'three', {}])
+        face.bar 1, :two, 'three'
       end
     end
   end
@@ -167,6 +172,24 @@ describe Puppet::Interface::Action do
           action :bar do option "--foo" end
         end
       }.should raise_error ArgumentError, /Option foo conflicts with existing option foo/i
+    end
+
+    it "should fail when a required action option is not provided" do
+      face = Puppet::Interface.new(:required_action_option, '0.0.1') do
+        action(:bar) do
+          option('--foo') { required }
+          when_invoked { }
+        end
+      end
+      expect { face.bar }.to raise_error ArgumentError, /missing required options \(foo\)/
+    end
+
+    it "should fail when a required face option is not provided" do
+      face = Puppet::Interface.new(:required_face_option, '0.0.1') do
+        option('--foo') { required }
+        action(:bar) { when_invoked { } }
+      end
+      expect { face.bar }.to raise_error ArgumentError, /missing required options \(foo\)/
     end
   end
 
