@@ -1,3 +1,4 @@
+require 'puppet/interface'
 require 'puppet/interface/option'
 
 describe Puppet::Interface::Option do

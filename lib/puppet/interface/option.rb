@@ -1,5 +1,3 @@
-require 'puppet/interface'
-
 class Puppet::Interface::Option
   def initialize(parent, *declaration, &block)
     @parent   = parent
