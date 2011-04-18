@@ -33,7 +33,7 @@ describe Puppet::Interface do
 
   describe "#define" do
     it "should register the face" do
-      face = subject.define(:face_test_register, '0.0.1')
+      face  = subject.define(:face_test_register, '0.0.1')
       face.should == subject[:face_test_register, '0.0.1']
     end
 
@@ -49,6 +49,18 @@ describe Puppet::Interface do
     it "should support summary builder and accessor methods" do
       subject.new(:foo, '1.0.0').should respond_to(:summary).with(0).arguments
       subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
+    end
+
+    # Required documentation methods...
+    { :summary     => "summary",
+      :description => "This is the description of the stuff\n\nWhee"
+    }.each do |attr, value|
+      it "should support #{attr} in the builder" do
+        face = subject.new(:builder, '1.0.0') do
+          self.send(attr, value)
+        end
+        face.send(attr).should == value
+      end
     end
   end
 
@@ -187,28 +199,9 @@ describe Puppet::Interface do
     end
   end
 
-  context "documentation" do
+  it_should_behave_like "documentation on faces" do
     subject do
       Puppet::Interface.new(:face_documentation, '0.0.1')
-    end
-
-    describe "#summary" do
-      it "should accept a summary" do
-        text = "this is my summary"
-        expect { subject.summary = text }.not_to raise_error
-        subject.summary.should == text
-      end
-
-      it "should accept a long, long, long summary" do
-        text = "I never know when to stop with the word banana" + ("na" * 1000)
-        expect { subject.summary = text }.not_to raise_error
-        subject.summary.should == text
-      end
-
-      it "should reject a summary with a newline" do
-        expect { subject.summary = "with \n embedded \n newlines" }.
-          to raise_error ArgumentError, /summary should be a single line/
-      end
     end
   end
 end

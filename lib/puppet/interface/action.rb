@@ -28,7 +28,7 @@ class Puppet::Interface::Action
 
   ########################################################################
   # Documentation stuff, whee!
-  attr_accessor :summary
+  attr_accessor :summary, :description
   def summary=(value)
     value = value.to_s
     value =~ /\n/ and

@@ -68,9 +68,14 @@ class Puppet::Interface
     self.default_format = format.to_sym
   end
 
-  attr_accessor :summary
+  ########################################################################
+  # Documentation.  We currently have to rewrite both getters because we share
+  # the same instance between build-time and the runtime instance.  When that
+  # splits out this should merge into a module that both the action and face
+  # include. --daniel 2011-04-17
+  attr_accessor :summary, :description
   def summary(value = nil)
-    value.nil? or summary = value
+    self.summary = value unless value.nil?
     @summary
   end
   def summary=(value)
@@ -81,6 +86,13 @@ class Puppet::Interface
     @summary = value
   end
 
+  def description(value = nil)
+    self.description = value unless value.nil?
+    @description
+  end
+
+
+  ########################################################################
   attr_reader :name, :version
 
   def initialize(name, version, &block)
