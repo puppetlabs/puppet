@@ -15,9 +15,9 @@ describe Puppet::Application::Device do
     Puppet::Util::Log.stubs(:newdestination)
     Puppet::Util::Log.stubs(:level=)
 
-    Puppet::Node.stubs(:terminus_class=)
-    Puppet::Node.stubs(:cache_class=)
-    Puppet::Node::Facts.stubs(:terminus_class=)
+    Puppet::Node.indirection.stubs(:terminus_class=)
+    Puppet::Node.indirection.stubs(:cache_class=)
+    Puppet::Node::Facts.indirection.stubs(:terminus_class=)
   end
 
   it "should operate in agent run_mode" do
@@ -123,10 +123,10 @@ describe Puppet::Application::Device do
       FileTest.stubs(:exists?).returns(true)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
-      Puppet::Transaction::Report.stubs(:terminus_class=)
-      Puppet::Resource::Catalog.stubs(:terminus_class=)
-      Puppet::Resource::Catalog.stubs(:cache_class=)
-      Puppet::Node::Facts.stubs(:terminus_class=)
+      Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
       @host = stub_everything 'host'
       Puppet::SSL::Host.stubs(:new).returns(@host)
       Puppet.stubs(:settraps)
