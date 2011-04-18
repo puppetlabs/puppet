@@ -62,10 +62,8 @@ class Puppet::Interface
     end
   end
 
-  attr_accessor :default_format
-
   def set_default_format(format)
-    self.default_format = format.to_sym
+    Puppet.warning("set_default_format is deprecated (and ineffective); use render_as on your actions instead.")
   end
 
   attr_accessor :summary
@@ -83,7 +81,6 @@ class Puppet::Interface
 
     @name = Puppet::Interface::FaceCollection.underscorize(name)
     @version = version
-    @default_format = :pson
 
     instance_eval(&block) if block_given?
   end

@@ -15,8 +15,8 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet::Util::Log.level = :info
   end
 
-  option("--format FORMAT") do |arg|
-    @format = arg.to_sym
+  option("--render-as FORMAT") do |arg|
+    @render_as = arg.to_sym
   end
 
   option("--mode RUNMODE", "-r") do |arg|
@@ -26,7 +26,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   end
 
 
-  attr_accessor :face, :action, :type, :arguments, :format
+  attr_accessor :face, :action, :type, :arguments, :render_as
   attr_writer :exit_code
 
   # This allows you to set the exit code if you don't want to just exit
@@ -37,8 +37,8 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   # Override this if you need custom rendering.
   def render(result)
-    if format then
-      render_method = Puppet::Network::FormatHandler.format(format).render_method
+    if render_as then
+      render_method = Puppet::Network::FormatHandler.format(render_as).render_method
       if render_method == "to_pson"
         jj result
       else
@@ -85,9 +85,8 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
-    @type   = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-    @face   = Puppet::Face[@type, :current]
-    @format = @face.default_format
+    @type      = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @face      = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first

@@ -59,10 +59,6 @@ describe Puppet::Application::FaceBase do
           app.face.name.should == :basetest
         end
 
-        it "should set the format based on the face default" do
-          app.format.should == :pson
-        end
-
         it "should find the action" do
           app.action.should be
           app.action.name.should == :foo
@@ -192,7 +188,6 @@ describe Puppet::Application::FaceBase do
 
       app.face      = Puppet::Face[:basetest, '0.0.1']
       app.action    = app.face.get_action(:foo)
-      app.format    = :pson
       app.arguments = ["myname", "myarg"]
     end
 

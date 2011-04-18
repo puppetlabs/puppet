@@ -9,9 +9,9 @@ class Puppet::Interface::Action
     @name    = name.to_sym
     attrs.each do |k, v| send("#{k}=", v) end
 
-    @options = {}
+    @options        = {}
     @when_rendering = {}
-    @render_as = :for_humans
+    @render_as      = :for_humans
   end
 
   # This is not nice, but it is the easiest way to make us behave like the
