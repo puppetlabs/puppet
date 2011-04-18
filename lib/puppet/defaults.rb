@@ -418,7 +418,7 @@ module Puppet
       :desc => "Where the puppet master web server logs."
     },
     :masterport => [8140, "Which port puppet master listens on."],
-    :node_name => ["cert", "How the puppetmaster determines the client's identity
+    :node_name => ["cert", "How the puppet master determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.
       Possible values are 'cert' (use the subject's CN in the client's
@@ -628,8 +628,8 @@ module Puppet
     :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."],
     :http_compression => [false, "Allow http compression in REST communication with the master.
       This setting might improve performance for agent -> master communications over slow WANs.
-      Your puppetmaster needs to support compression (usually by activating some settings in a reverse-proxy
-      in front of the puppetmaster, which rules out webrick).
+      Your puppet master needs to support compression (usually by activating some settings in a reverse-proxy
+      in front of the puppet master, which rules out webrick).
       It is harmless to activate this settings if your master doesn't support
       compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
   )
