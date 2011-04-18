@@ -24,7 +24,12 @@ class Puppet::Interface::Action
   attr_reader :name
   def to_s() "#{@face}##{@name}" end
 
-  attr_accessor :default, :summary
+  attr_accessor :default
+  def default?
+    !!@default
+  end
+
+  attr_accessor :summary
 
   # Initially, this was defined to allow the @action.invoke pattern, which is
   # a very natural way to invoke behaviour given our introspection
