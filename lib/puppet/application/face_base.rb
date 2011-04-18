@@ -151,7 +151,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # Call the method associated with the provided action (e.g., 'find').
     if @action
       result = @face.send(@action.name, *arguments)
-      puts render(result) if result
+      puts render(result) unless result.nil?
     else
       if arguments.first.is_a? Hash
         puts "#{@face} does not have a default action"
