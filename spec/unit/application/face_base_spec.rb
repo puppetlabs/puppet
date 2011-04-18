@@ -214,4 +214,53 @@ describe Puppet::Application::FaceBase do
       app.main
     end
   end
+
+  describe "#render" do
+    it "should just return a String" do
+      app.render("hello").should == "hello"
+    end
+
+    [1, 1.000, [1, 2], ["one"], [{ 1 => 1 }]].each do |input|
+      it "should render #{input.class} using the 'pp' library" do
+        app.render(input).should == input.pretty_inspect
+      end
+    end
+
+    it "should render a non-trivially-keyed Hash with the 'pp' library" do
+      hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
+      app.render(hash).should == hash.pretty_inspect
+    end
+
+    it "should render a {String,Numeric}-keyed Hash into a table" do
+      object = Object.new
+      hash = { "one" => 1, "two" => [], "three" => {}, "four" => object,
+        5 => 5, 6.0 => 6 }
+
+      # Gotta love ASCII-betical sort order.  Hope your objects are better
+      # structured for display than my test one is. --daniel 2011-04-18
+      app.render(hash).should == <<EOT
+5      5
+6.0    6
+four   #{object.pretty_inspect.chomp}
+one    1
+three  {}
+two    []
+EOT
+    end
+
+    it "should render a hash nicely with a multi-line value" do
+      hash = {
+        "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
+        "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
+      }
+      app.render(hash).should == <<EOT
+number  {"1"=>"1111111111111111111111111111111111111111",
+         "2"=>"2222222222222222222222222222222222222222",
+         "3"=>"3333333333333333333333333333333333333333"}
+text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         "b"=>"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         "c"=>"cccccccccccccccccccccccccccccccccccccccc"}
+EOT
+    end
+  end
 end

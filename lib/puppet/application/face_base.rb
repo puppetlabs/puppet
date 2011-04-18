@@ -1,6 +1,7 @@
 require 'puppet/application'
 require 'puppet/face'
 require 'optparse'
+require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
   should_parse_config
@@ -36,12 +37,38 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   # Override this if you need custom rendering.
   def render(result)
-    render_method = Puppet::Network::FormatHandler.format(format).render_method
-    if render_method == "to_pson"
-      jj result
+    if format then
+      render_method = Puppet::Network::FormatHandler.format(format).render_method
+      if render_method == "to_pson"
+        jj result
+      else
+        result.send(render_method)
+      end
     else
-      result.send(render_method)
+      render_for_humans(result)
     end
+  end
+
+  def render_for_humans(result)
+    # String to String
+    return result if result.is_a? String
+
+    # Simple hash to table
+    if result.is_a? Hash and result.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+      output = ''
+      column_a = result.map do |k,v| k.to_s.length end.max + 2
+      column_b = 79 - column_a
+      result.sort_by { |k,v| k.to_s } .each do |key, value|
+        output << key.to_s.ljust(column_a)
+        output << PP.pp(value, '', column_b).
+          chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << "\n"
+      end
+      return output
+    end
+
+    # ...or pretty-print the inspect outcome.
+    return result.pretty_inspect
   end
 
   def preinit
