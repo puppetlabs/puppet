@@ -70,7 +70,12 @@ describe Puppet::Interface::ActionBuilder do
         action = Puppet::Interface::ActionBuilder.build(face, :foo) do
           default
         end
-        action.default.should == true
+        action.default.should be_true
+      end
+
+      it "should not be default by, er, default. *cough*" do
+        action = Puppet::Interface::ActionBuilder.build(face, :foo) do end
+        action.default.should be_false
       end
     end
   end
