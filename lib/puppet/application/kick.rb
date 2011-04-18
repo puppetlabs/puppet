@@ -76,31 +76,16 @@ copy things like LDAP settings.
 
 USAGE NOTES
 -----------
-'puppet kick' is useless unless 'puppet agent' is listening. See its
-documentation for more information, but the gist is that you must enable
-'listen' on the 'puppet agent' daemon, either using '--listen' on the
-command line or adding 'listen = true' in its config file. In addition,
-you need to set the daemons up to specifically allow connections by
-creating the 'namespaceauth' file, normally at
-'/etc/puppet/namespaceauth.conf'. This file specifies who has access to
-each namespace; if you create the file you must add every namespace you
-want any Puppet daemon to allow -- it is currently global to all Puppet
-daemons.
+Puppet kick is useless unless puppet agent is listening for incoming
+connections and allowing access to the `run` endpoint. This entails
+starting the agent with `listen = true` in its puppet.conf file, and
+allowing access to the `/run` path in its auth.conf file; see
+`http://docs.puppetlabs.com/guides/rest_auth_conf.html` for more
+details.
 
-An example file looks like this:
-
-    [fileserver]
-        allow *.madstop.com
-
-    [puppetmaster]
-        allow *.madstop.com
-
-    [puppetrunner]
-        allow culain.madstop.com
-
-This is what you would install on your Puppet master; non-master hosts
-could leave off the 'fileserver' and 'puppetmaster' namespaces.
-
+Additionally, due to a known bug, you must make sure a
+namespaceauth.conf file exists in puppet agent's $confdir. This file
+will not be consulted, and may be left empty.  
 
 OPTIONS
 -------
