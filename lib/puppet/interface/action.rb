@@ -40,7 +40,7 @@ class Puppet::Interface::Action
     unless type.is_a? Symbol
       raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
     end
-    @when_rendering[type]
+    @when_rendering[type].bind(@face)
   end
   def set_rendering_method_for(type, proc)
     unless proc.is_a? Proc

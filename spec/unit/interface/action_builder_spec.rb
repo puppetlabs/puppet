@@ -121,7 +121,7 @@ describe Puppet::Interface::ActionBuilder do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
         when_rendering :json do |a| true end
       end
-      action.when_rendering(:json).should be_an_instance_of UnboundMethod
+      action.when_rendering(:json).should be_an_instance_of Method
     end
 
     it "should fail if you try to set the same rendering twice" do
@@ -138,8 +138,15 @@ describe Puppet::Interface::ActionBuilder do
         when_rendering :json do |a| true end
         when_rendering :yaml do |a| true end
       end
-      action.when_rendering(:json).should be_an_instance_of UnboundMethod
-      action.when_rendering(:yaml).should be_an_instance_of UnboundMethod
+      action.when_rendering(:json).should be_an_instance_of Method
+      action.when_rendering(:yaml).should be_an_instance_of Method
+    end
+
+    it "should be bound to the face when called" do
+      action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_rendering :json do |a| self end
+      end
+      action.when_rendering(:json).call(true).should == face
     end
   end
 
