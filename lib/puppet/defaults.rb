@@ -528,10 +528,10 @@ module Puppet
     :runinterval => [1800, # 30 minutes
       "How often puppet agent applies the client configuration; in seconds."],
     :listen => [false, "Whether puppet agent should listen for
-      connections.  If this is true, then by default only the
-      `runner` server is started, which allows remote authorized
-      and authenticated nodes to connect and trigger `puppet agent`
-      runs."],
+      connections.  If this is true, then puppet agent will accept incoming
+      REST API requests, subject to the default ACLs and the ACLs set in 
+      the `rest_authconfig` file. Puppet agent can respond usefully to
+      requests on the `run`, `facts`, `certificate`, and `resource` endpoints."],
     :ca_server => ["$server", "The server to use for certificate
       authority requests.  It's a separate server because it cannot
       and does not need to horizontally scale."],
