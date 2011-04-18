@@ -43,8 +43,9 @@ class Puppet::Interface::Option
 
     # Is our argument optional?  The rules about consistency apply here, also,
     # just like they do to taking arguments at all. --daniel 2011-03-30
-    @optional_argument = @optparse.any? { |o| o.include? "[" }
-    if @optional_argument and not @optparse.all? { |o| o.include? "[" } then
+    @optional_argument = @optparse.any? { |o| o=~/[ =]\[/ }
+    @optional_argument and raise ArgumentError, "Options with optional arguments are not supported"
+    if @optional_argument and not @optparse.all? { |o| o=~/[ =]\[/ } then
       raise ArgumentError, "Option #{@name} is inconsistent about the argument being optional"
     end
   end
