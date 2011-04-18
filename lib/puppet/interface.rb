@@ -148,11 +148,11 @@ class Puppet::Interface
     end
   end
 
-  def __decorate(type, name, proc)
+  def __add_method(name, proc)
     meta_def(name, &proc)
     method(name).unbind
   end
-  def self.__decorate(type, name, proc)
+  def self.__add_method(name, proc)
     define_method(name, proc)
     instance_method(name)
   end

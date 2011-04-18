@@ -84,14 +84,14 @@ class Puppet::Interface::Option
   def before_action=(proc)
     proc.is_a? Proc or raise ArgumentError, "before action hook for #{self} is a #{proc.class.name.inspect}, not a proc"
     @before_action =
-      @parent.__send__(:__decorate, :before, __decoration_name(:before), proc)
+      @parent.__send__(:__add_method, __decoration_name(:before), proc)
   end
 
   attr_accessor :after_action
   def after_action=(proc)
     proc.is_a? Proc or raise ArgumentError, "after action hook for #{self} is a #{proc.class.name.inspect}, not a proc"
     @after_action =
-      @parent.__send__(:__decorate, :after, __decoration_name(:after), proc)
+      @parent.__send__(:__add_method, __decoration_name(:after), proc)
   end
 
   def __decoration_name(type)
