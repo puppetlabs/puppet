@@ -11,7 +11,6 @@ describe Puppet::Application::FaceBase do
     Puppet::Face.define(:basetest, '0.0.1') do
       option("--[no-]boolean")
       option("--mandatory MANDATORY")
-      option("--optional [OPTIONAL]")
 
       action :foo do
         option("--action")
