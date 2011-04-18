@@ -50,24 +50,6 @@ describe Puppet::Interface do
       subject.new(:foo, '1.0.0').should respond_to(:summary).with(0).arguments
       subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
     end
-
-    it "should set the summary text" do
-      text = "hello, freddy, my little pal"
-      subject.define(:face_test_summary, '1.0.0') do
-        summary text
-      end
-      subject[:face_test_summary, '1.0.0'].summary.should == text
-    end
-
-    it "should support mutating the summary" do
-      text = "hello, freddy, my little pal"
-      subject.define(:face_test_summary, '1.0.0') do
-        summary text
-      end
-      subject[:face_test_summary, '1.0.0'].summary.should == text
-      subject[:face_test_summary, '1.0.0'].summary = text + text
-      subject[:face_test_summary, '1.0.0'].summary.should == text + text
-    end
   end
 
   describe "#initialize" do
@@ -201,6 +183,31 @@ describe Puppet::Interface do
     describe "#get_option" do
       it "should return an inherited option object" do
         face.get_option(:inherited).should be_an_instance_of subject::Option
+      end
+    end
+  end
+
+  context "documentation" do
+    subject do
+      Puppet::Interface.new(:face_documentation, '0.0.1')
+    end
+
+    describe "#summary" do
+      it "should accept a summary" do
+        text = "this is my summary"
+        expect { subject.summary = text }.not_to raise_error
+        subject.summary.should == text
+      end
+
+      it "should accept a long, long, long summary" do
+        text = "I never know when to stop with the word banana" + ("na" * 1000)
+        expect { subject.summary = text }.not_to raise_error
+        subject.summary.should == text
+      end
+
+      it "should reject a summary with a newline" do
+        expect { subject.summary = "with \n embedded \n newlines" }.
+          to raise_error ArgumentError, /summary should be a single line/
       end
     end
   end

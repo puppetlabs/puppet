@@ -24,8 +24,21 @@ class Puppet::Interface::Action
   attr_reader :name
   def to_s() "#{@face}##{@name}" end
 
-  attr_accessor :default, :summary
+  attr_accessor :default
 
+  ########################################################################
+  # Documentation stuff, whee!
+  attr_accessor :summary
+  def summary=(value)
+    value = value.to_s
+    value =~ /\n/ and
+      raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
+
+    @summary = value
+  end
+
+
+  ########################################################################
   # Initially, this was defined to allow the @action.invoke pattern, which is
   # a very natural way to invoke behaviour given our introspection
   # capabilities.   Heck, our initial plan was to have the faces delegate to

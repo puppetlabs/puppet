@@ -70,8 +70,15 @@ class Puppet::Interface
 
   attr_accessor :summary
   def summary(value = nil)
-    @summary = value unless value.nil?
+    value.nil? or summary = value
     @summary
+  end
+  def summary=(value)
+    value = value.to_s
+    value =~ /\n/ and
+      raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
+
+    @summary = value
   end
 
   attr_reader :name, :version
