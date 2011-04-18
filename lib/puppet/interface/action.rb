@@ -83,10 +83,10 @@ class Puppet::Interface::Action
     # idea how motivated we were to make this cleaner.  Sorry. --daniel 2011-03-31
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
-    file = __FILE__ + "+eval"
-    line = __LINE__ + 1
+    file    = __FILE__ + "+eval"
+    line    = __LINE__ + 1
     wrapper = <<WRAPPER
-def #{@name}(*args, &block)
+def #{@name}(*args)
   if args.last.is_a? Hash then
     options = args.last
   else
@@ -94,6 +94,7 @@ def #{@name}(*args, &block)
   end
 
   action = get_action(#{name.inspect})
+  action.validate_args(args)
   __invoke_decorations(:before, action, args, options)
   rval = self.__send__(#{internal_name.inspect}, *args)
   __invoke_decorations(:after, action, args, options)
@@ -140,6 +141,15 @@ WRAPPER
       option = @face.get_option(name)
     end
     option
+  end
+
+  def validate_args(args)
+    required = options.map do |name|
+      get_option(name)
+    end.select(&:required?).collect(&:name) - args.last.keys
+
+    return if required.empty?
+    raise ArgumentError, "missing required options (#{required.join(', ')})"
   end
 
   ########################################################################

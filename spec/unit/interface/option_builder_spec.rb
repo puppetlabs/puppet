@@ -56,5 +56,20 @@ describe Puppet::Interface::OptionBuilder do
         end
       end.to raise_error ArgumentError, /takes three arguments/
     end
+
+    it "should support simple required declarations" do
+      opt = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+        required
+      end
+      opt.should be_required
+    end
+
+    it "should support arguments to the required property" do
+      opt = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+        required(false)
+      end
+      opt.should_not be_required
+    end
+
   end
 end

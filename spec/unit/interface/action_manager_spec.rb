@@ -105,6 +105,7 @@ describe Puppet::Interface::ActionManager do
         include Puppet::Interface::ActionManager
         extend Puppet::Interface::ActionManager
         def __invoke_decorations(*args) true end
+        def options() [] end
       end
       @instance = @klass.new
     end
