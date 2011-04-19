@@ -371,4 +371,13 @@ describe Puppet::Interface::Action do
       end
     end
   end
+
+  it_should_behave_like "documentation on faces" do
+    subject do
+      face = Puppet::Interface.new(:action_documentation, '0.0.1') do
+        action :documentation do end
+      end
+      face.get_action(:documentation)
+    end
+  end
 end

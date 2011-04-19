@@ -68,12 +68,31 @@ class Puppet::Interface
     self.default_format = format.to_sym
   end
 
-  attr_accessor :summary
+  ########################################################################
+  # Documentation.  We currently have to rewrite both getters because we share
+  # the same instance between build-time and the runtime instance.  When that
+  # splits out this should merge into a module that both the action and face
+  # include. --daniel 2011-04-17
+  attr_accessor :summary, :description
   def summary(value = nil)
-    @summary = value unless value.nil?
+    self.summary = value unless value.nil?
     @summary
   end
+  def summary=(value)
+    value = value.to_s
+    value =~ /\n/ and
+      raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
 
+    @summary = value
+  end
+
+  def description(value = nil)
+    self.description = value unless value.nil?
+    @description
+  end
+
+
+  ########################################################################
   attr_reader :name, :version
 
   def initialize(name, version, &block)
@@ -90,26 +109,11 @@ class Puppet::Interface
 
   # Try to find actions defined in other files.
   def load_actions
-    path = "puppet/face/#{name}"
-
-    loaded = []
-    [path, "#{name}@#{version}/#{path}"].each do |path|
-      Puppet::Interface.autoloader.search_directories.each do |dir|
-        fdir = ::File.join(dir, path)
-        next unless FileTest.directory?(fdir)
-
-        Dir.chdir(fdir) do
-          Dir.glob("*.rb").each do |file|
-            aname = file.sub(/\.rb/, '')
-            if loaded.include?(aname)
-              Puppet.debug "Not loading duplicate action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
-              next
-            end
-            loaded << aname
-            Puppet.debug "Loading action '#{aname}' for '#{name}' from '#{fdir}/#{file}'"
-            require "#{Dir.pwd}/#{aname}"
-          end
-        end
+    Puppet::Interface.autoloader.search_directories.each do |dir|
+      Dir.glob(File.join(dir, "puppet/face/#{name}", "*.rb")).each do |file|
+        action = file.sub(dir, '').sub(/^[\\\/]/, '').sub(/\.rb/, '')
+        Puppet.debug "Loading action '#{action}' for '#{name}' from '#{dir}/#{action}.rb'"
+        require(action)
       end
     end
   end
