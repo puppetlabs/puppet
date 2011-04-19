@@ -525,6 +525,10 @@ describe Puppet::SimpleGraph do
     def to_s
       @name
     end
+
+    def ref
+      "Container[#{self}]"
+    end
   end
 
   require "puppet/resource/catalog"
@@ -536,7 +540,7 @@ describe Puppet::SimpleGraph do
       @middle = Container.new("middle", ["e", "f", @two])
       @top = Container.new("top", ["g", "h", @middle, @one, @three])
       @empty = Container.new("empty", [])
-      
+
       @whit  = Puppet::Type.type(:whit)
       @stage = Puppet::Type.type(:stage).new(:name => "foo")
 
@@ -574,7 +578,7 @@ describe Puppet::SimpleGraph do
     end
 
     def whit_called(name)
-      x = @depgraph.vertices.find { |v| v.is_a?(@whit) && v.name =~ /#{name}/ }
+      x = @depgraph.vertices.find { |v| v.is_a?(@whit) && v.name =~ /#{Regexp.escape(name)}/ }
       x.should_not be_nil
       def x.to_s
         "Whit[#{name}]"
@@ -586,11 +590,11 @@ describe Puppet::SimpleGraph do
     end
 
     def admissible_sentinal_of(x)
-      @depgraph.vertex?(x) ? x : whit_called("admissible_#{x.name}")
+      @depgraph.vertex?(x) ? x : whit_called("admissible_#{x.ref}")
     end
 
     def completed_sentinal_of(x)
-      @depgraph.vertex?(x) ? x : whit_called("completed_#{x.name}")
+      @depgraph.vertex?(x) ? x : whit_called("completed_#{x.ref}")
     end
 
     before do
@@ -618,7 +622,7 @@ describe Puppet::SimpleGraph do
     #    0) completed_X depends on admissible_X
     #
     it "every container's completed sentinal should depend on its admissible sentinal" do
-      containers.each { |container| 
+      containers.each { |container|
         @depgraph.path_between(admissible_sentinal_of(container),completed_sentinal_of(container)).should be
       }
     end
@@ -626,7 +630,7 @@ describe Puppet::SimpleGraph do
     #    1) contents of X each depend on admissible_X
     #
     it "all contained objects should depend on their container's admissible sentinal" do
-      containers.each { |container| 
+      containers.each { |container|
         contents_of(container).each { |leaf|
           @depgraph.should be_edge(admissible_sentinal_of(container),admissible_sentinal_of(leaf))
         }
@@ -636,7 +640,7 @@ describe Puppet::SimpleGraph do
     #    2) completed_X depends on each on the contents of X
     #
     it "completed sentinals should depend on their container's contents" do
-      containers.each { |container| 
+      containers.each { |container|
         contents_of(container).each { |leaf|
           @depgraph.should be_edge(completed_sentinal_of(leaf),completed_sentinal_of(container))
         }
