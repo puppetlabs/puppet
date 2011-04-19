@@ -1,7 +1,0 @@
-Use: puppet <%= face.name %> [options] <action> [options]
-
-Available actions:
-% face.actions.each do |actionname|
-%   action = face.get_action(actionname)
-  <%= action.name.to_s.ljust(16) %>  <%= action.summary %>
-% end
