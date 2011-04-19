@@ -151,9 +151,9 @@ describe Puppet::Interface::ActionBuilder do
   end
 
   context "#render_as" do
-    it "should default to :for_humans" do
+    it "should default to nil (eg: based on context)" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do end
-      action.render_as.should == :for_humans
+      action.render_as.should be_nil
     end
 
     it "should fail if not rendering format is given" do

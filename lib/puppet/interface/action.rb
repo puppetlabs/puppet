@@ -11,7 +11,6 @@ class Puppet::Interface::Action
 
     @options        = {}
     @when_rendering = {}
-    @render_as      = :for_humans
   end
 
   # This is not nice, but it is the easiest way to make us behave like the

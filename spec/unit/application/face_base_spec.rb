@@ -211,11 +211,18 @@ describe Puppet::Application::FaceBase do
   end
 
   describe "#render" do
-    it "should just return a String" do
-      app.render("hello").should == "hello"
+    before :each do
+      app.face   = Puppet::Face[:basetest, '0.0.1']
+      app.action = app.face.get_action(:foo)
     end
 
-    [1, 1.000, [1, 2], ["one"], [{ 1 => 1 }]].each do |input|
+    ["hello", 1, 1.0].each do |input|
+      it "should just return a #{input.class.name}" do
+        app.render(input).should == input
+      end
+    end
+
+    [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
       it "should render #{input.class} using the 'pp' library" do
         app.render(input).should == input.pretty_inspect
       end

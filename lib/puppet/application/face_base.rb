@@ -37,21 +37,23 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   # Override this if you need custom rendering.
   def render(result)
-    if render_as then
-      render_method = Puppet::Network::FormatHandler.format(render_as).render_method
+    format = render_as || action.render_as || :for_humans
+    if format == :for_humans then
+      render_for_humans(result)
+    else
+      render_method = Puppet::Network::FormatHandler.format(format).render_method
       if render_method == "to_pson"
-        jj result
+        PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
       else
         result.send(render_method)
       end
-    else
-      render_for_humans(result)
     end
   end
 
   def render_for_humans(result)
     # String to String
     return result if result.is_a? String
+    return result if result.is_a? Numeric
 
     # Simple hash to table
     if result.is_a? Hash and result.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
