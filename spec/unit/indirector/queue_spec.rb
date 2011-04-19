@@ -60,20 +60,20 @@ describe Puppet::Indirector::Queue, :if => Puppet.features.pson? do
   describe "when saving" do
     it 'should render the instance using pson' do
       @subject.expects(:render).with(:pson)
-      @store.client.stubs(:send_message)
+      @store.client.stubs(:publish_message)
       @store.save(@request)
     end
 
-    it "should send the rendered message to the appropriate queue on the client" do
+    it "should publish the rendered message to the appropriate queue on the client" do
       @subject.expects(:render).returns "mypson"
 
-      @store.client.expects(:send_message).with(:my_queue, "mypson")
+      @store.client.expects(:publish_message).with(:my_queue, "mypson")
 
       @store.save(@request)
     end
 
     it "should catch any exceptions raised" do
-      @store.client.expects(:send_message).raises ArgumentError
+      @store.client.expects(:publish_message).raises ArgumentError
 
       lambda { @store.save(@request) }.should raise_error(Puppet::Error)
     end
