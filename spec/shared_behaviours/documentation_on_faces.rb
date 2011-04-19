@@ -4,13 +4,13 @@ shared_examples_for "documentation on faces" do
     describe "#summary" do
       it "should accept a summary" do
         text = "this is my summary"
-        expect { subject.summary = text }.not_to raise_error
+        expect { subject.summary = text }.to_not raise_error
         subject.summary.should == text
       end
 
       it "should accept a long, long, long summary" do
         text = "I never know when to stop with the word banana" + ("na" * 1000)
-        expect { subject.summary = text }.not_to raise_error
+        expect { subject.summary = text }.to_not raise_error
         subject.summary.should == text
       end
 
