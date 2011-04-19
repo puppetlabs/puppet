@@ -380,4 +380,13 @@ describe Puppet::Interface::Action do
       face.get_action(:documentation)
     end
   end
+
+  context "#when_rendering" do
+    it "should fail if no type is given when_rendering"
+    it "should accept a when_rendering block"
+    it "should accept multiple when_rendering blocks"
+    it "should fail if when_rendering gets a non-symbol identifier"
+    it "should fail if a second block is given for the same type"
+    it "should return the block if asked"
+  end
 end

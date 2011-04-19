@@ -93,16 +93,6 @@ describe Puppet::Interface do
     subject.new(:me, '0.0.1').to_s.should =~ /\bme\b/
   end
 
-  it "should allow overriding of the default format" do
-    face = subject.new(:me, '0.0.1')
-    face.set_default_format :foo
-    face.default_format.should == :foo
-  end
-
-  it "should default to :pson for its format" do
-    subject.new(:me, '0.0.1').default_format.should == :pson
-  end
-
   # Why?
   it "should create a class-level autoloader" do
     subject.autoloader.should be_instance_of(Puppet::Util::Autoload)

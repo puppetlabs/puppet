@@ -1,6 +1,7 @@
 require 'puppet/application'
 require 'puppet/face'
 require 'optparse'
+require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
   should_parse_config
@@ -14,8 +15,8 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet::Util::Log.level = :info
   end
 
-  option("--format FORMAT") do |arg|
-    @format = arg.to_sym
+  option("--render-as FORMAT") do |arg|
+    @render_as = arg.to_sym
   end
 
   option("--mode RUNMODE", "-r") do |arg|
@@ -25,7 +26,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   end
 
 
-  attr_accessor :face, :action, :type, :arguments, :format
+  attr_accessor :face, :action, :type, :arguments, :render_as
   attr_writer :exit_code
 
   # This allows you to set the exit code if you don't want to just exit
@@ -34,14 +35,47 @@ class Puppet::Application::FaceBase < Puppet::Application
     @exit_code || 0
   end
 
-  # Override this if you need custom rendering.
   def render(result)
-    render_method = Puppet::Network::FormatHandler.format(format).render_method
-    if render_method == "to_pson"
-      jj result
-    else
-      result.send(render_method)
+    format = render_as || action.render_as || :for_humans
+
+    # Invoke the rendering hook supplied by the user, if appropriate.
+    if hook = action.when_rendering(format) then
+      result = hook.call(result)
     end
+
+    if format == :for_humans then
+      render_for_humans(result)
+    else
+      render_method = Puppet::Network::FormatHandler.format(format).render_method
+      if render_method == "to_pson"
+        PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
+      else
+        result.send(render_method)
+      end
+    end
+  end
+
+  def render_for_humans(result)
+    # String to String
+    return result if result.is_a? String
+    return result if result.is_a? Numeric
+
+    # Simple hash to table
+    if result.is_a? Hash and result.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+      output = ''
+      column_a = result.map do |k,v| k.to_s.length end.max + 2
+      column_b = 79 - column_a
+      result.sort_by { |k,v| k.to_s } .each do |key, value|
+        output << key.to_s.ljust(column_a)
+        output << PP.pp(value, '', column_b).
+          chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << "\n"
+      end
+      return output
+    end
+
+    # ...or pretty-print the inspect outcome.
+    return result.pretty_inspect
   end
 
   def preinit
@@ -58,9 +92,8 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
-    @type   = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-    @face   = Puppet::Face[@type, :current]
-    @format = @face.default_format
+    @type      = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @face      = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first
@@ -151,7 +184,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     # Call the method associated with the provided action (e.g., 'find').
     if @action
       result = @face.send(@action.name, *arguments)
-      puts render(result) if result
+      puts render(result) unless result.nil?
     else
       if arguments.first.is_a? Hash
         puts "#{@face} does not have a default action"

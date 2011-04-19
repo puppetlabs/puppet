@@ -9,7 +9,8 @@ class Puppet::Interface::Action
     @name    = name.to_sym
     attrs.each do |k, v| send("#{k}=", v) end
 
-    @options = {}
+    @options        = {}
+    @when_rendering = {}
   end
 
   # This is not nice, but it is the easiest way to make us behave like the
@@ -21,10 +22,65 @@ class Puppet::Interface::Action
     return bound_version
   end
 
-  attr_reader :name
   def to_s() "#{@face}##{@name}" end
 
+  attr_reader   :name
   attr_accessor :default
+  def default?
+    !!@default
+  end
+
+  attr_accessor :summary
+
+
+  ########################################################################
+  # Support for rendering formats and all.
+  def when_rendering(type)
+    unless type.is_a? Symbol
+      raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
+    end
+    return unless @when_rendering.has_key? type
+    return @when_rendering[type].bind(@face)
+  end
+  def set_rendering_method_for(type, proc)
+    unless proc.is_a? Proc
+      msg = "The second argument to set_rendering_method_for must be a Proc"
+      msg += ", not #{proc.class.name}" unless proc.nil?
+      raise ArgumentError, msg
+    end
+    if proc.arity != 1 then
+      msg = "when_rendering methods take one argument, the result, not "
+      if proc.arity < 0 then
+        msg += "a variable number"
+      else
+        msg += proc.arity.to_s
+      end
+      raise ArgumentError, msg
+    end
+    unless type.is_a? Symbol
+      raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
+    end
+    if @when_rendering.has_key? type then
+      raise ArgumentError, "You can't define a rendering method for #{type} twice"
+    end
+    # Now, the ugly bit.  We add the method to our interface object, and
+    # retrieve it, to rotate through the dance of getting a suitable method
+    # object out of the whole process. --daniel 2011-04-18
+    @when_rendering[type] =
+      @face.__send__( :__add_method, __render_method_name_for(type), proc)
+  end
+
+  def __render_method_name_for(type)
+    :"#{name}_when_rendering_#{type}"
+  end
+  private :__render_method_name_for
+
+
+  attr_accessor :render_as
+  def render_as=(value)
+    @render_as = value.to_sym
+  end
+
 
   ########################################################################
   # Documentation stuff, whee!
@@ -169,7 +225,7 @@ WRAPPER
   # Support code for action decoration; see puppet/interface.rb for the gory
   # details of why this is hidden away behind private. --daniel 2011-04-15
   private
-  def __decorate(type, name, proc)
-    @face.__send__ :__decorate, type, name, proc
+  def __add_method(name, proc)
+    @face.__send__ :__add_method, name, proc
   end
 end

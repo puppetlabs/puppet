@@ -7,7 +7,7 @@ describe Puppet::Face[:help, '0.0.1'] do
   end
 
   it "should have a default action of help" do
-    pending "REVISIT: we don't support default actions yet"
+    subject.get_action('help').should be_default
   end
 
   it "should accept a call with no arguments" do

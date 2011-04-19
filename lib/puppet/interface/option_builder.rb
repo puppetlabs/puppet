@@ -20,7 +20,7 @@ class Puppet::Interface::OptionBuilder
     next if setter =~ /^=/
     dsl = setter.sub(/=$/, '')
 
-    unless self.class.methods.include?(dsl)
+    unless private_instance_methods.include? dsl
       define_method(dsl) do |value| @option.send(setter, value) end
     end
   end

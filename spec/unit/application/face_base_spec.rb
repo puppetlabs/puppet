@@ -59,10 +59,6 @@ describe Puppet::Application::FaceBase do
           app.face.name.should == :basetest
         end
 
-        it "should set the format based on the face default" do
-          app.format.should == :pson
-        end
-
         it "should find the action" do
           app.action.should be
           app.action.name.should == :foo
@@ -192,7 +188,6 @@ describe Puppet::Application::FaceBase do
 
       app.face      = Puppet::Face[:basetest, '0.0.1']
       app.action    = app.face.get_action(:foo)
-      app.format    = :pson
       app.arguments = ["myname", "myarg"]
     end
 
@@ -212,6 +207,68 @@ describe Puppet::Application::FaceBase do
       app.expects(:render).with(app.arguments.length + 1)
       app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
       app.main
+    end
+  end
+
+  describe "#render" do
+    before :each do
+      app.face   = Puppet::Face[:basetest, '0.0.1']
+      app.action = app.face.get_action(:foo)
+    end
+
+    ["hello", 1, 1.0].each do |input|
+      it "should just return a #{input.class.name}" do
+        app.render(input).should == input
+      end
+    end
+
+    [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
+      it "should render #{input.class} using the 'pp' library" do
+        app.render(input).should == input.pretty_inspect
+      end
+    end
+
+    it "should render a non-trivially-keyed Hash with the 'pp' library" do
+      hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
+      app.render(hash).should == hash.pretty_inspect
+    end
+
+    it "should render a {String,Numeric}-keyed Hash into a table" do
+      object = Object.new
+      hash = { "one" => 1, "two" => [], "three" => {}, "four" => object,
+        5 => 5, 6.0 => 6 }
+
+      # Gotta love ASCII-betical sort order.  Hope your objects are better
+      # structured for display than my test one is. --daniel 2011-04-18
+      app.render(hash).should == <<EOT
+5      5
+6.0    6
+four   #{object.pretty_inspect.chomp}
+one    1
+three  {}
+two    []
+EOT
+    end
+
+    it "should render a hash nicely with a multi-line value" do
+      hash = {
+        "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
+        "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
+      }
+      app.render(hash).should == <<EOT
+number  {"1"=>"1111111111111111111111111111111111111111",
+         "2"=>"2222222222222222222222222222222222222222",
+         "3"=>"3333333333333333333333333333333333333333"}
+text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         "b"=>"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         "c"=>"cccccccccccccccccccccccccccccccccccccccc"}
+EOT
+    end
+
+    it "should invoke the action rendering hook while rendering" do
+      app.action.set_rendering_method_for(:for_humans, proc { |value| "bi-winning!" })
+      app.action.render_as = :for_humans
+      app.render("bi-polar?").should == "bi-winning!"
     end
   end
 end
