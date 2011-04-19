@@ -35,9 +35,14 @@ class Puppet::Application::FaceBase < Puppet::Application
     @exit_code || 0
   end
 
-  # Override this if you need custom rendering.
   def render(result)
     format = render_as || action.render_as || :for_humans
+
+    # Invoke the rendering hook supplied by the user, if appropriate.
+    if hook = action.when_rendering(format) then
+      result = hook.call(result)
+    end
+
     if format == :for_humans then
       render_for_humans(result)
     else

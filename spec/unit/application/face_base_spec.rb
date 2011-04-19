@@ -264,5 +264,11 @@ text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
          "c"=>"cccccccccccccccccccccccccccccccccccccccc"}
 EOT
     end
+
+    it "should invoke the action rendering hook while rendering" do
+      app.action.set_rendering_method_for(:for_humans, proc { |value| "bi-winning!" })
+      app.action.render_as = :for_humans
+      app.render("bi-polar?").should == "bi-winning!"
+    end
   end
 end
