@@ -63,26 +63,26 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
     end
   end
 
-  describe "when sending a message" do
+  describe "when publishing a message" do
     before do
       @client = stub 'client'
       Stomp::Client.stubs(:new).returns @client
       @queue = Puppet::Util::Queue::Stomp.new
     end
 
-    it "should send it to the queue client instance" do
-      @client.expects(:send).with { |queue, msg, options| msg == "Smite!" }
-      @queue.send_message('fooqueue', 'Smite!')
+    it "should publish it to the queue client instance" do
+      @client.expects(:publish).with { |queue, msg, options| msg == "Smite!" }
+      @queue.publish_message('fooqueue', 'Smite!')
     end
 
-    it "should send it to the transformed queue name" do
-      @client.expects(:send).with { |queue, msg, options| queue == "/queue/fooqueue" }
-      @queue.send_message('fooqueue', 'Smite!')
+    it "should publish it to the transformed queue name" do
+      @client.expects(:publish).with { |queue, msg, options| queue == "/queue/fooqueue" }
+      @queue.publish_message('fooqueue', 'Smite!')
     end
 
-    it "should send it as a persistent message" do
-      @client.expects(:send).with { |queue, msg, options| options[:persistent] == true }
-      @queue.send_message('fooqueue', 'Smite!')
+    it "should publish it as a persistent message" do
+      @client.expects(:publish).with { |queue, msg, options| options[:persistent] == true }
+      @queue.publish_message('fooqueue', 'Smite!')
     end
   end
 
