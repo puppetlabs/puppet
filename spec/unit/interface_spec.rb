@@ -5,16 +5,17 @@ require 'puppet/interface'
 describe Puppet::Interface do
   subject { Puppet::Interface }
 
-  before :all do
-    @faces = Puppet::Interface::FaceCollection.instance_variable_get("@faces").dup
-  end
-
   before :each do
+    @faces = Puppet::Interface::FaceCollection.
+      instance_variable_get("@faces").dup
+    @dq = $".dup
+    $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
     Puppet::Interface::FaceCollection.instance_variable_get("@faces").clear
   end
 
-  after :all do
+  after :each do
     Puppet::Interface::FaceCollection.instance_variable_set("@faces", @faces)
+    $".clear ; @dq.each do |item| $" << item end
   end
 
   describe "#[]" do
