@@ -24,6 +24,22 @@ describe Puppet::Interface::FaceCollection do
     $".clear ; @original_required.each do |item| $" << item end
   end
 
+  describe "::prefix_match?" do
+    #   want     have
+    { ['1.0.0', '1.0.0'] => true,
+      ['1.0',   '1.0.0'] => true,
+      ['1',     '1.0.0'] => true,
+      ['1.0.0', '1.1.0'] => false,
+      ['1.0',   '1.1.0'] => false,
+      ['1',     '1.1.0'] => true,
+      ['1.0.1', '1.0.0'] => false,
+    }.each do |data, result|
+      it "should return #{result.inspect} for prefix_match?(#{data.join(', ')})" do
+        subject.prefix_match?(*data).should == result
+      end
+    end
+  end
+
   describe "::validate_version" do
     { '10.10.10'     => true,
       '1.2.3.4'      => false,
@@ -56,12 +72,10 @@ describe Puppet::Interface::FaceCollection do
       subject.expects(:require).with('puppet/face/fozzie')
       subject['fozzie', :current]
     end
-  end
 
-  describe "::face?" do
     it "should return true if the face specified is registered" do
       subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
-      subject.face?("foo", '0.0.1').should == true
+      subject["foo", '0.0.1'].should == 10
     end
 
     it "should attempt to require the face if it is not registered" do
@@ -69,24 +83,18 @@ describe Puppet::Interface::FaceCollection do
         subject.instance_variable_get("@faces")[:bar]['0.0.1'] = true
         file == 'puppet/face/bar'
       end
-      subject.face?("bar", '0.0.1').should == true
-    end
-
-    it "should return true if requiring the face registered it" do
-      subject.stubs(:require).with do
-        subject.instance_variable_get("@faces")[:bar]['0.0.1'] = 20
-      end
+      subject["bar", '0.0.1'].should be_true
     end
 
     it "should return false if the face is not registered" do
       subject.stubs(:require).returns(true)
-      subject.face?("bar", '0.0.1').should be_false
+      subject["bar", '0.0.1'].should be_false
     end
 
     it "should return false if the face file itself is missing" do
       subject.stubs(:require).
         raises(LoadError, 'no such file to load -- puppet/face/bar')
-      subject.face?("bar", '0.0.1').should be_false
+      subject["bar", '0.0.1'].should be_false
     end
 
     it "should register the version loaded by `:current` as `:current`" do
@@ -94,26 +102,26 @@ describe Puppet::Interface::FaceCollection do
         subject.instance_variable_get("@faces")[:huzzah]['2.0.1'] = :huzzah_face
         file == 'puppet/face/huzzah'
       end
-      subject.face?("huzzah", :current)
+      subject["huzzah", :current]
       subject.instance_variable_get("@faces")[:huzzah][:current].should == :huzzah_face
     end
 
     context "with something on disk" do
       it "should register the version loaded from `puppet/face/{name}` as `:current`" do
-        subject.should be_face "huzzah", '2.0.1'
-        subject.should be_face "huzzah", :current
+        subject["huzzah", '2.0.1'].should be
+        subject["huzzah", :current].should be
         Puppet::Face[:huzzah, '2.0.1'].should == Puppet::Face[:huzzah, :current]
       end
 
       it "should index :current when the code was pre-required" do
         subject.instance_variable_get("@faces")[:huzzah].should_not be_key :current
         require 'puppet/face/huzzah'
-        subject.face?(:huzzah, :current).should be_true
+        subject[:huzzah, :current].should be_true
       end
     end
 
     it "should not cause an invalid face to be enumerated later" do
-      subject.face?(:there_is_no_face, :current).should be_false
+      subject[:there_is_no_face, :current].should be_false
       subject.faces.should_not include :there_is_no_face
     end
   end
