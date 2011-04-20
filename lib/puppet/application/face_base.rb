@@ -92,8 +92,8 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
-    @type      = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-    @face      = Puppet::Face[@type, :current]
+    @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @face = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first
