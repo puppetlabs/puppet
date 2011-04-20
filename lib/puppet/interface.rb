@@ -53,7 +53,7 @@ class Puppet::Interface
     def [](name, version)
       unless face = Puppet::Interface::FaceCollection[name, version]
         if current = Puppet::Interface::FaceCollection[name, :current]
-          raise Puppet::Error, "Could not find version #{version} of #{current}"
+          raise Puppet::Error, "Could not find version #{version} of #{name}"
         else
           raise Puppet::Error, "Could not find Puppet Face #{name.inspect}"
         end
