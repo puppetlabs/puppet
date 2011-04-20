@@ -40,7 +40,7 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{}
     end
 
-    context "with just an action" do
+    describe "with just an action" do
       before :all do
         # We have to stub Signal.trap to avoid a crazy mess where we take
         # over signal handling and make it impossible to cancel the test
@@ -159,6 +159,13 @@ describe Puppet::Application::FaceBase do
         app.parse_options
         Puppet[:syslogfacility].should == "user1"
       end
+    end
+
+    it "should handle application-level options" do
+      app.command_line.stubs(:args).returns %w{help --verbose help}
+      app.preinit
+      app.parse_options
+      app.face.name.should == :basetest
     end
   end
 
