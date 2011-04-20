@@ -50,6 +50,8 @@ RSpec.configure do |config|
 
     @logs = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
+
+    @log_level = Puppet::Util::Log.level
   end
 
   config.after :each do
@@ -62,6 +64,7 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
+    Puppet::Util::Log.level = @log_level
 
     GC.enable
   end

@@ -10,10 +10,8 @@ require 'puppet/configurer'
 describe Puppet::Application::Device do
   before :each do
     @device = Puppet::Application[:device]
-#    @device.stubs(:puts)
     @device.preinit
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
 
     Puppet::Node.indirection.stubs(:terminus_class=)
     Puppet::Node.indirection.stubs(:cache_class=)
@@ -144,18 +142,14 @@ describe Puppet::Application::Device do
 
       it "should set log level to debug if --debug was passed" do
         @device.options.stubs(:[]).with(:debug).returns(true)
-
-        Puppet::Util::Log.expects(:level=).with(:debug)
-
         @device.setup_logs
+        Puppet::Util::Log.level.should == :debug
       end
 
       it "should set log level to info if --verbose was passed" do
         @device.options.stubs(:[]).with(:verbose).returns(true)
-
-        Puppet::Util::Log.expects(:level=).with(:info)
-
         @device.setup_logs
+        Puppet::Util::Log.level.should == :info
       end
 
       [:verbose, :debug].each do |level|

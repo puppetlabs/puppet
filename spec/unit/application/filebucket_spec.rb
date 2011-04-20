@@ -41,7 +41,6 @@ describe Puppet::Application::Filebucket do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
@@ -62,18 +61,14 @@ describe Puppet::Application::Filebucket do
 
     it "should set log level to debug if --debug was passed" do
       @filebucket.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @filebucket.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @filebucket.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @filebucket.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should Parse puppet config" do
@@ -140,7 +135,6 @@ describe Puppet::Application::Filebucket do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       @filebucket.options.stubs(:[]).with(any_parameters)
