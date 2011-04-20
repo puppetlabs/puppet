@@ -12,6 +12,62 @@ describe Puppet::Interface::Action do
     end
   end
 
+  describe "#when_invoked=" do
+    it "should fail if the block has arity 0" do
+      pending "Ruby 1.8 (painfully) treats argument-free blocks as arity -1" if
+        RUBY_VERSION =~ /^1\.8/
+
+      expect {
+        Puppet::Interface.new(:action_when_invoked, '1.0.0') do
+          action :foo do
+            when_invoked do
+            end
+          end
+        end
+      }.to raise_error ArgumentError, /foobra/
+    end
+
+    it "should work with arity 1 blocks" do
+      face = Puppet::Interface.new(:action_when_invoked, '1.0.0') do
+        action :foo do
+          when_invoked {|one| }
+        end
+      end
+      # -1, because we use option defaulting. :(
+      face.method(:foo).arity.should == -1
+    end
+
+    it "should work with arity 2 blocks" do
+      face = Puppet::Interface.new(:action_when_invoked, '1.0.0') do
+        action :foo do
+          when_invoked {|one, two| }
+        end
+      end
+      # -2, because we use option defaulting. :(
+      face.method(:foo).arity.should == -2
+    end
+
+    it "should work with arity 1 blocks that collect arguments" do
+      face = Puppet::Interface.new(:action_when_invoked, '1.0.0') do
+        action :foo do
+          when_invoked {|*one| }
+        end
+      end
+      # -1, because we use only varargs
+      face.method(:foo).arity.should == -1
+    end
+
+    it "should work with arity 2 blocks that collect arguments" do
+      face = Puppet::Interface.new(:action_when_invoked, '1.0.0') do
+        action :foo do
+          when_invoked {|one, *two| }
+        end
+      end
+      # -2, because we take one mandatory argument, and one varargs
+      face.method(:foo).arity.should == -2
+    end
+  end
+
   describe "when invoking" do
     it "should be able to call other actions on the same object" do
       face = Puppet::Interface.new(:my_face, '0.0.1') do

@@ -151,15 +151,37 @@ class Puppet::Interface::Action
   def when_invoked=(block)
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
-    file    = __FILE__ + "+eval"
-    line    = __LINE__ + 1
+
+    arity = block.arity
+    if arity == 0 then
+      # This will never fire on 1.8.7, which treats no arguments as "*args",
+      # but will on 1.9.2, which treats it as "no arguments".  Which bites,
+      # because this just begs for us to wind up in the horrible situation
+      # where a 1.8 vs 1.9 error bites our end users. --daniel 2011-04-19
+      raise ArgumentError, "action when_invoked requires at least one argument (options)"
+    elsif arity > 0 then
+      range = Range.new(1, arity - 1)
+      decl = range.map { |x| "arg#{x}" } << "options = {}"
+      optn = ""
+      args = "[" + (range.map { |x| "arg#{x}" } << "options").join(", ") + "]"
+    else
+      range = Range.new(1, arity.abs - 1)
+      decl = range.map { |x| "arg#{x}" } << "*rest"
+      optn = "rest << {} unless rest.last.is_a?(Hash)"
+      if arity == -1 then
+        args = "rest"
+      else
+        args = "[" + range.map { |x| "arg#{x}" }.join(", ") + "] + rest"
+      end
+    end
+
+    file    = __FILE__ + "+eval[wrapper]"
+    line    = __LINE__ + 2 # <== points to the same line as 'def' in the wrapper.
     wrapper = <<WRAPPER
-def #{@name}(*args)
-  if args.last.is_a? Hash then
-    options = args.last
-  else
-    args << (options = {})
-  end
+def #{@name}(#{decl.join(", ")})
+  #{optn}
+  args = #{args}
+  options = args.last
 
   action = get_action(#{name.inspect})
   action.validate_args(args)
