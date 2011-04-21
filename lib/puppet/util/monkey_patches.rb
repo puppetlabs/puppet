@@ -44,3 +44,25 @@ if RUBY_VERSION == '1.8.7'
     end
 end
 
+class Array
+  # Ruby < 1.8.7 doesn't have this method but we use it in tests
+  def combination(num)
+    return [] if num < 0 || num > size
+    return [[]] if num == 0
+    return map{|e| [e] } if num == 1
+    tmp = self.dup
+    self[0, size - (num - 1)].inject([]) do |ret, e|
+      tmp.shift
+      ret += tmp.combination(num - 1).map{|a| a.unshift(e) }
+    end
+  end unless method_defined? :combination
+end
+
+
+if Symbol.instance_method(:to_proc).nil?
+  class Symbol
+    def to_proc
+      Proc.new { |*args| args.shift.__send__(self, *args) }
+    end
+  end
+end
