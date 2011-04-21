@@ -5,16 +5,17 @@ require 'puppet/interface'
 describe Puppet::Interface do
   subject { Puppet::Interface }
 
-  before :all do
-    @faces = Puppet::Interface::FaceCollection.instance_variable_get("@faces").dup
-  end
-
   before :each do
+    @faces = Puppet::Interface::FaceCollection.
+      instance_variable_get("@faces").dup
+    @dq = $".dup
+    $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
     Puppet::Interface::FaceCollection.instance_variable_get("@faces").clear
   end
 
-  after :all do
+  after :each do
     Puppet::Interface::FaceCollection.instance_variable_set("@faces", @faces)
+    $".clear ; @dq.each do |item| $" << item end
   end
 
   describe "#[]" do
@@ -28,6 +29,28 @@ describe Puppet::Interface do
 
     it "should raise an exception when the requested face doesn't exist" do
       expect { subject[:burrble_toot, :current] }.should raise_error, Puppet::Error
+    end
+
+    describe "version matching" do
+      { '1'     => '1.1.1',
+        '1.0'   => '1.0.1',
+        '1.0.1' => '1.0.1',
+        '1.1'   => '1.1.1',
+        '1.1.1' => '1.1.1'
+      }.each do |input, expect|
+        it "should match #{input.inspect} to #{expect.inspect}" do
+          face = subject[:version_matching, input]
+          face.should be
+          face.version.should == expect
+        end
+      end
+
+      %w{1.0.2 1.2}.each do |input|
+        it "should not match #{input.inspect} to any version" do
+          expect { subject[:version_matching, input] }.
+            to raise_error Puppet::Error, /Could not find version/
+        end
+      end
     end
   end
 
