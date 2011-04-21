@@ -24,7 +24,7 @@ module Puppet::Interface::FaceCollection
         end
       end
     end
-    return @faces.keys
+    return @faces.keys.select {|name| @faces[name].length > 0 }
   end
 
   def self.validate_version(version)
