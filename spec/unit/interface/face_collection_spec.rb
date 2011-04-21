@@ -25,28 +25,16 @@ describe Puppet::Interface::FaceCollection do
   end
 
   describe "::validate_version" do
-    it 'should permit three number versions' do
-      subject.validate_version('10.10.10').should == true
-    end
-
-    it 'should permit versions with appended descriptions' do
-      subject.validate_version('10.10.10beta').should == true
-    end
-
-    it 'should not permit versions with more than three numbers' do
-      subject.validate_version('1.2.3.4').should == false
-    end
-
-    it 'should not permit versions with only two numbers' do
-      subject.validate_version('10.10').should == false
-    end
-
-    it 'should not permit versions with only one number' do
-      subject.validate_version('123').should == false
-    end
-
-    it 'should not permit versions with text in any position but at the end' do
-      subject.validate_version('v1.1.1').should == false
+    { '10.10.10'     => true,
+      '1.2.3.4'      => false,
+      '10.10.10beta' => true,
+      '10.10'        => false,
+      '123'          => false,
+      'v1.1.1'       => false,
+    }.each do |input, result|
+      it "should#{result ? '' : ' not'} permit #{input.inspect}" do
+        subject.validate_version(input).should(result ? be_true : be_false)
+      end
     end
   end
 
