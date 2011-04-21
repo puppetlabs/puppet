@@ -3,11 +3,9 @@ require 'spec_helper'
 require 'puppet/indirector/catalog/rest'
 require 'tempfile'
 
-describe Puppet::Face[:configurer, '0.0.1'] do
+describe Puppet::Face[:secret_agent, '0.0.1'] do
   describe "#synchronize" do
     it "should retrieve and apply a catalog and return a report" do
-      pending "REVISIT: 2.7 changes broke this, and we want the merge published"
-
       dirname = Dir.mktmpdir("puppetdir")
       Puppet[:vardir] = dirname
       Puppet[:confdir] = dirname
