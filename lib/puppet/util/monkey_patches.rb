@@ -99,10 +99,8 @@ class Array
 end
 
 
-if Symbol.instance_method(:to_proc).nil?
-  class Symbol
-    def to_proc
-      Proc.new { |*args| args.shift.__send__(self, *args) }
-    end
-  end
+class Symbol
+  def to_proc
+    Proc.new { |*args| args.shift.__send__(self, *args) }
+  end unless method_defined? :to_proc
 end
