@@ -1,6 +1,6 @@
 require 'puppet/face'
 
-Puppet::Face.define(:configurer, '0.0.1') do
+Puppet::Face.define(:secret_agent, '0.0.1') do
   action(:synchronize) do
     when_invoked do |certname, options|
       facts = Puppet::Face[:facts, '0.0.1'].find(certname)
