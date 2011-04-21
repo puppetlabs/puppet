@@ -6,7 +6,6 @@ describe Puppet::Application::Cert do
   before :each do
     @cert_app = Puppet::Application[:cert]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   it "should operate in master run_mode" do
@@ -28,22 +27,17 @@ describe Puppet::Application::Cert do
   end
 
   it "should set log level to info with the --verbose option" do
-
-    Puppet::Log.expects(:level=).with(:info)
-
     @cert_app.handle_verbose(0)
+    Puppet::Log.level.should == :info
   end
 
   it "should set log level to debug with the --debug option" do
-
-    Puppet::Log.expects(:level=).with(:debug)
-
     @cert_app.handle_debug(0)
+    Puppet::Log.level.should == :debug
   end
 
   it "should set the fingerprint digest with the --digest option" do
     @cert_app.handle_digest(:digest)
-
     @cert_app.digest.should == :digest
   end
 

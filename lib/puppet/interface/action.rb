@@ -129,38 +129,59 @@ class Puppet::Interface::Action
   #   @face.send(name, *args, &block)
   # end
 
+
+  # We need to build an instance method as a wrapper, using normal code, to be
+  # able to expose argument defaulting between the caller and definer in the
+  # Ruby API.  An extra method is, sadly, required for Ruby 1.8 to work since
+  # it doesn't expose bind on a block.
+  #
+  # Hopefully we can improve this when we finally shuffle off the last of Ruby
+  # 1.8 support, but that looks to be a few "enterprise" release eras away, so
+  # we are pretty stuck with this for now.
+  #
+  # Patches to make this work more nicely with Ruby 1.9 using runtime version
+  # checking and all are welcome, provided that they don't change anything
+  # outside this little ol' bit of code and all.
+  #
+  # Incidentally, we though about vendoring evil-ruby and actually adjusting
+  # the internal C structure implementation details under the hood to make
+  # this stuff work, because it would have been cleaner.  Which gives you an
+  # idea how motivated we were to make this cleaner.  Sorry.
+  # --daniel 2011-03-31
   def when_invoked=(block)
-    # We need to build an instance method as a wrapper, using normal code, to
-    # be able to expose argument defaulting between the caller and definer in
-    # the Ruby API.  An extra method is, sadly, required for Ruby 1.8 to work.
-    #
-    # In future this also gives us a place to hook in additional behaviour
-    # such as calling out to the action instance to validate and coerce
-    # parameters, which avoids any exciting context switching and all.
-    #
-    # Hopefully we can improve this when we finally shuffle off the last of
-    # Ruby 1.8 support, but that looks to be a few "enterprise" release eras
-    # away, so we are pretty stuck with this for now.
-    #
-    # Patches to make this work more nicely with Ruby 1.9 using runtime
-    # version checking and all are welcome, but they can't actually help if
-    # the results are not totally hidden away in here.
-    #
-    # Incidentally, we though about vendoring evil-ruby and actually adjusting
-    # the internal C structure implementation details under the hood to make
-    # this stuff work, because it would have been cleaner.  Which gives you an
-    # idea how motivated we were to make this cleaner.  Sorry. --daniel 2011-03-31
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
-    file    = __FILE__ + "+eval"
-    line    = __LINE__ + 1
+
+    arity = block.arity
+    if arity == 0 then
+      # This will never fire on 1.8.7, which treats no arguments as "*args",
+      # but will on 1.9.2, which treats it as "no arguments".  Which bites,
+      # because this just begs for us to wind up in the horrible situation
+      # where a 1.8 vs 1.9 error bites our end users. --daniel 2011-04-19
+      raise ArgumentError, "action when_invoked requires at least one argument (options)"
+    elsif arity > 0 then
+      range = Range.new(1, arity - 1)
+      decl = range.map { |x| "arg#{x}" } << "options = {}"
+      optn = ""
+      args = "[" + (range.map { |x| "arg#{x}" } << "options").join(", ") + "]"
+    else
+      range = Range.new(1, arity.abs - 1)
+      decl = range.map { |x| "arg#{x}" } << "*rest"
+      optn = "rest << {} unless rest.last.is_a?(Hash)"
+      if arity == -1 then
+        args = "rest"
+      else
+        args = "[" + range.map { |x| "arg#{x}" }.join(", ") + "] + rest"
+      end
+    end
+
+    file    = __FILE__ + "+eval[wrapper]"
+    line    = __LINE__ + 2 # <== points to the same line as 'def' in the wrapper.
     wrapper = <<WRAPPER
-def #{@name}(*args)
-  if args.last.is_a? Hash then
-    options = args.last
-  else
-    args << (options = {})
-  end
+def #{@name}(#{decl.join(", ")})
+  #{optn}
+  args = #{args}
+  options = args.last
 
   action = get_action(#{name.inspect})
   action.validate_args(args)

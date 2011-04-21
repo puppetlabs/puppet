@@ -10,7 +10,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
     Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
     @kick = Puppet::Application[:kick]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   describe ".new" do
@@ -120,7 +119,6 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
       @kick.classes = []
       @kick.tags = []
       @kick.hosts = []
-      Puppet::Log.stubs(:level=)
       @kick.stubs(:trap)
       @kick.stubs(:puts)
       Puppet.stubs(:parse_config)
@@ -130,18 +128,14 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
     it "should set log level to debug if --debug was passed" do
       @kick.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @kick.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @kick.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @kick.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should Parse puppet config" do
