@@ -22,6 +22,7 @@ require 'lib/puppet_spec/files'
 require 'lib/puppet_spec/fixtures'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
+require 'monkey_patches/disable_signal_trap'
 
 Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))
@@ -38,6 +39,10 @@ RSpec.configure do |config|
     # these globals are set by Application
     $puppet_application_mode = nil
     $puppet_application_name = nil
+
+    # REVISIT: I think this conceals other bad tests, but I don't have time to
+    # fully diagnose those right now.  When you read this, please come tell me
+    # I suck for letting this float. --daniel 2011-04-21
     Signal.stubs(:trap)
 
     # Set the confdir and vardir to gibberish so that tests
@@ -50,6 +55,8 @@ RSpec.configure do |config|
 
     @logs = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
+
+    @log_level = Puppet::Util::Log.level
   end
 
   config.after :each do
@@ -62,6 +69,7 @@ RSpec.configure do |config|
 
     @logs.clear
     Puppet::Util::Log.close_all
+    Puppet::Util::Log.level = @log_level
 
     GC.enable
   end

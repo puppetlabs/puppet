@@ -104,3 +104,10 @@ class Array
     end
   end unless method_defined? :combination
 end
+
+
+class Symbol
+  def to_proc
+    Proc.new { |*args| args.shift.__send__(self, *args) }
+  end unless method_defined? :to_proc
+end

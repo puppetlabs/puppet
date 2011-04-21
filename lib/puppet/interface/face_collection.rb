@@ -24,19 +24,21 @@ module Puppet::Interface::FaceCollection
         end
       end
     end
-    return @faces.keys
+    return @faces.keys.select {|name| @faces[name].length > 0 }
   end
 
   def self.validate_version(version)
     !!(SEMVER_VERSION =~ version.to_s)
   end
 
+  def self.semver_to_array(v)
+    parts = SEMVER_VERSION.match(v).to_a[1..4]
+    parts[0..2] = parts[0..2].map { |e| e.to_i }
+    parts
+  end
+
   def self.cmp_semver(a, b)
-    a, b = [a, b].map do |x|
-      parts = SEMVER_VERSION.match(x).to_a[1..4]
-      parts[0..2] = parts[0..2].map { |e| e.to_i }
-      parts
-    end
+    a, b = [a, b].map do |x| semver_to_array(x) end
 
     cmp = a[0..2] <=> b[0..2]
     if cmp == 0
@@ -47,18 +49,38 @@ module Puppet::Interface::FaceCollection
     cmp
   end
 
-  def self.[](name, version)
-    @faces[underscorize(name)][version] if face?(name, version)
+  def self.prefix_match?(desired, target)
+    # Can't meaningfully do a prefix match with current on either side.
+    return false if desired == :current
+    return false if target  == :current
+
+    # REVISIT: Should probably fail if the matcher is not valid.
+    prefix = desired.split('.').map {|x| x =~ /^\d+$/ and x.to_i }
+    have   = semver_to_array(target)
+
+    while want = prefix.shift do
+      return false unless want == have.shift
+    end
+    return true
   end
 
-  def self.face?(name, version)
+  def self.[](name, version)
     name = underscorize(name)
+    get_face(name, version) or load_face(name, version)
+  end
 
-    # Note: be careful not to accidentally create the top level key, either,
-    # because it will result in confusion when people try to enumerate the
-    # list of valid faces later. --daniel 2011-04-11
-    return true if @faces.has_key?(name) and @faces[name].has_key?(version)
+  # get face from memory, without loading.
+  def self.get_face(name, desired_version)
+    return nil unless @faces.has_key? name
 
+    return @faces[name][:current] if desired_version == :current
+
+    found = @faces[name].keys.select {|v| prefix_match?(desired_version, v) }.sort.last
+    return @faces[name][found]
+  end
+
+  # try to load the face, and return it.
+  def self.load_face(name, version)
     # We always load the current version file; the common case is that we have
     # the expected version and any compatibility versions in the same file,
     # the default.  Which means that this is almost always the case.
@@ -104,17 +126,7 @@ module Puppet::Interface::FaceCollection
       # ...guess we didn't find the file; return a much better problem.
     end
 
-    # Now, either we have the version in our set of faces, or we didn't find
-    # the version they were looking for.  In the future we will support
-    # loading versioned stuff from some look-aside part of the Ruby load path,
-    # but we don't need that right now.
-    #
-    # So, this comment is a place-holder for that.  --daniel 2011-04-06
-    #
-    # Note: be careful not to accidentally create the top level key, either,
-    # because it will result in confusion when people try to enumerate the
-    # list of valid faces later. --daniel 2011-04-11
-    return !! (@faces.has_key?(name) and @faces[name].has_key?(version))
+    return get_face(name, version)
   end
 
   def self.register(face)

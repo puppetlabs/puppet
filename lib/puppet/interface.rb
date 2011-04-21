@@ -26,18 +26,13 @@ class Puppet::Interface
       Puppet::Interface::FaceCollection.faces
     end
 
-    def face?(name, version)
-      Puppet::Interface::FaceCollection.face?(name, version)
-    end
-
     def register(instance)
       Puppet::Interface::FaceCollection.register(instance)
     end
 
     def define(name, version, &block)
-      if face?(name, version)
-        face = Puppet::Interface::FaceCollection[name, version]
-      else
+      face = Puppet::Interface::FaceCollection[name, version]
+      if face.nil? then
         face = self.new(name, version)
         Puppet::Interface::FaceCollection.register(face)
         # REVISIT: Shouldn't this be delayed until *after* we evaluate the
@@ -50,10 +45,14 @@ class Puppet::Interface
       return face
     end
 
+    def face?(name, version)
+      Puppet::Interface::FaceCollection[name, version]
+    end
+
     def [](name, version)
       unless face = Puppet::Interface::FaceCollection[name, version]
         if current = Puppet::Interface::FaceCollection[name, :current]
-          raise Puppet::Error, "Could not find version #{version} of #{current}"
+          raise Puppet::Error, "Could not find version #{version} of #{name}"
         else
           raise Puppet::Error, "Could not find Puppet Face #{name.inspect}"
         end
