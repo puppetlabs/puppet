@@ -10,6 +10,8 @@ Puppet::Type.newtype(:interface) do
     interface mode (access or trunking, native vlan and encapsulation), 
     switchport characteristics (speed, duplex)."
 
+    apply_to_device
+
     ensurable do
       defaultvalues
 

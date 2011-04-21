@@ -270,6 +270,24 @@ describe Puppet::Transaction do
       @resource.stubs(:virtual?).returns true
       @transaction.should be_skip(@resource)
     end
+
+    it "should skip device only resouce on normal host" do
+      @resource.stubs(:appliable_to_device?).returns true
+      @transaction.for_network_device = false
+      @transaction.should be_skip(@resource)
+    end
+
+    it "should not skip device only resouce on remote device" do
+      @resource.stubs(:appliable_to_device?).returns true
+      @transaction.for_network_device = true
+      @transaction.should_not be_skip(@resource)
+    end
+
+    it "should skip host resouce on device" do
+      @resource.stubs(:appliable_to_device?).returns false
+      @transaction.for_network_device = true
+      @transaction.should be_skip(@resource)
+    end
   end
 
   describe "when determining if tags are missing" do

@@ -2,17 +2,22 @@
 # This is the base class of all prefetched network device provider
 class Puppet::Provider::NetworkDevice < Puppet::Provider
 
-  def self.lookup(url, name)
+  def self.device(url)
+    raise "This provider doesn't implement the necessary device method"
+  end
+
+  def self.lookup(device, name)
     raise "This provider doesn't implement the necessary lookup method"
   end
 
   def self.prefetch(resources)
     resources.each do |name, resource|
-      if result = lookup(resource[:device_url], name)
+      device = Puppet::Util::NetworkDevice.current || device(resource[:device_url])
+      if result = lookup(device, name)
         result[:ensure] = :present
-        resource.provider = new(result)
+        resource.provider = new(device, result)
       else
-        resource.provider = new(:ensure => :absent)
+        resource.provider = new(device, :ensure => :absent)
       end
     end
   end
@@ -21,8 +26,12 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
     @property_hash[:ensure] != :absent
   end
 
-  def initialize(*args)
-    super
+  attr_accessor :device
+
+  def initialize(device, *args)
+    super(*args)
+
+    @device = device
 
     # Make a duplicate, so that we have a copy for comparison
     # at the end.

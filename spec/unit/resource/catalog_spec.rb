@@ -592,6 +592,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
       @transaction.stubs(:add_times)
+      @transaction.stubs(:for_network_device=)
 
       Puppet.settings.stubs(:use)
     end

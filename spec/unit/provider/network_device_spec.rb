@@ -3,10 +3,15 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 require 'puppet/provider/network_device'
+require 'ostruct'
 
 Puppet::Type.type(:vlan).provide :test, :parent => Puppet::Provider::NetworkDevice do
   mk_resource_methods
-  def self.lookup(device_url, name)
+  def self.lookup(device, name)
+  end
+
+  def self.device(url)
+    :device
   end
 end
 
@@ -34,7 +39,7 @@ describe provider_class do
     end
 
     it "should lookup an entry for each passed resource" do
-      provider_class.expects(:lookup).with(nil, "200").returns nil
+      provider_class.expects(:lookup).with{ |device,value| value ==  "200" }.returns nil
 
       provider_class.stubs(:new)
       @resource.stubs(:provider=)
@@ -44,7 +49,7 @@ describe provider_class do
     describe "resources that do not exist" do
       it "should create a provider with :ensure => :absent" do
         provider_class.stubs(:lookup).returns(nil)
-        provider_class.expects(:new).with(:ensure => :absent).returns "myprovider"
+        provider_class.expects(:new).with(:device, :ensure => :absent).returns "myprovider"
         @resource.expects(:provider=).with("myprovider")
         provider_class.prefetch(@resources)
       end
@@ -54,7 +59,7 @@ describe provider_class do
       it "should create a provider with the results of the find and ensure at present" do
         provider_class.stubs(:lookup).returns({ :name => "200", :description => "myvlan"})
 
-        provider_class.expects(:new).with(:name => "200", :description => "myvlan", :ensure => :present).returns "myprovider"
+        provider_class.expects(:new).with(:device, :name => "200", :description => "myvlan", :ensure => :present).returns "myprovider"
         @resource.expects(:provider=).with("myprovider")
 
         provider_class.prefetch(@resources)
@@ -74,7 +79,7 @@ describe provider_class do
       end
 
       it "should store a copy of the hash as its vlan_properties" do
-        instance = provider_class.new(:one => :two)
+        instance = provider_class.new(:device, :one => :two)
         instance.former_properties.should == {:one => :two}
       end
     end
@@ -82,7 +87,7 @@ describe provider_class do
 
   describe "when an instance" do
     before do
-      @instance = provider_class.new
+      @instance = provider_class.new(:device)
 
       @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
       @resource_class = stub 'resource_class', :attrclass => @property_class, :valid_parameter? => true, :validproperties => [:description]
@@ -98,12 +103,12 @@ describe provider_class do
     end
 
     it "should indicate when the instance already exists" do
-      @instance = provider_class.new(:ensure => :present)
+      @instance = provider_class.new(:device, :ensure => :present)
       @instance.exists?.should be_true
     end
 
     it "should indicate when the instance does not exist" do
-      @instance = provider_class.new(:ensure => :absent)
+      @instance = provider_class.new(:device, :ensure => :absent)
       @instance.exists?.should be_false
     end
 

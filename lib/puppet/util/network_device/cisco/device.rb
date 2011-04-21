@@ -3,6 +3,7 @@ require 'puppet/util'
 require 'puppet/util/network_device/base'
 require 'puppet/util/network_device/ipcalc'
 require 'puppet/util/network_device/cisco/interface'
+require 'puppet/util/network_device/cisco/facts'
 require 'ipaddr'
 
 class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::Base
@@ -89,6 +90,15 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
       end
     end
     interface
+  end
+
+  def facts
+    @facts ||= Puppet::Util::NetworkDevice::Cisco::Facts.new(transport)
+    facts = {}
+    command do |ng|
+      facts = @facts.retrieve
+    end
+    facts
   end
 
   def interface(name)

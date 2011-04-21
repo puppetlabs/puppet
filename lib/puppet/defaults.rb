@@ -418,7 +418,7 @@ module Puppet
       :desc => "Where the puppet master web server logs."
     },
     :masterport => [8140, "Which port puppet master listens on."],
-    :node_name => ["cert", "How the puppetmaster determines the client's identity
+    :node_name => ["cert", "How the puppet master determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.
       Possible values are 'cert' (use the subject's CN in the client's
@@ -487,6 +487,11 @@ module Puppet
       This should match how often the hosts report back to the server."]
   )
 
+  setdefaults(:device,
+    :devicedir =>  {:default => "$vardir/devices", :mode => "750", :desc => "The root directory of devices' $vardir"},
+    :deviceconfig => ["$confdir/device.conf","Path to the device config file for puppet device"]
+  )
+
   setdefaults(:agent,
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",
@@ -523,10 +528,10 @@ module Puppet
     :runinterval => [1800, # 30 minutes
       "How often puppet agent applies the client configuration; in seconds."],
     :listen => [false, "Whether puppet agent should listen for
-      connections.  If this is true, then by default only the
-      `runner` server is started, which allows remote authorized
-      and authenticated nodes to connect and trigger `puppet agent`
-      runs."],
+      connections.  If this is true, then puppet agent will accept incoming
+      REST API requests, subject to the default ACLs and the ACLs set in 
+      the `rest_authconfig` file. Puppet agent can respond usefully to
+      requests on the `run`, `facts`, `certificate`, and `resource` endpoints."],
     :ca_server => ["$server", "The server to use for certificate
       authority requests.  It's a separate server because it cannot
       and does not need to horizontally scale."],
@@ -623,8 +628,8 @@ module Puppet
     :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."],
     :http_compression => [false, "Allow http compression in REST communication with the master.
       This setting might improve performance for agent -> master communications over slow WANs.
-      Your puppetmaster needs to support compression (usually by activating some settings in a reverse-proxy
-      in front of the puppetmaster, which rules out webrick).
+      Your puppet master needs to support compression (usually by activating some settings in a reverse-proxy
+      in front of the puppet master, which rules out webrick).
       It is harmless to activate this settings if your master doesn't support
       compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
   )

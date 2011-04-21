@@ -1,19 +1,4 @@
-require 'puppet/interface'
-
 class Puppet::Interface::Option
-  attr_reader   :parent
-  attr_reader   :name
-  attr_reader   :aliases
-  attr_reader   :optparse
-  attr_accessor :desc
-
-  def takes_argument?
-    !!@argument
-  end
-  def optional_argument?
-    !!@optional_argument
-  end
-
   def initialize(parent, *declaration, &block)
     @parent   = parent
     @optparse = []
@@ -58,8 +43,9 @@ class Puppet::Interface::Option
 
     # Is our argument optional?  The rules about consistency apply here, also,
     # just like they do to taking arguments at all. --daniel 2011-03-30
-    @optional_argument = @optparse.any? { |o| o.include? "[" }
-    if @optional_argument and not @optparse.all? { |o| o.include? "[" } then
+    @optional_argument = @optparse.any? { |o| o=~/[ =]\[/ }
+    @optional_argument and raise ArgumentError, "Options with optional arguments are not supported"
+    if @optional_argument and not @optparse.all? { |o| o=~/[ =]\[/ } then
       raise ArgumentError, "Option #{@name} is inconsistent about the argument being optional"
     end
   end
@@ -78,5 +64,41 @@ class Puppet::Interface::Option
     name = found.captures.first.tr('-', '_')
     raise "#{name.inspect} is an invalid option name" unless name.to_s =~ /^[a-z]\w*$/
     name.to_sym
+  end
+
+
+  def takes_argument?
+    !!@argument
+  end
+  def optional_argument?
+    !!@optional_argument
+  end
+  def required?
+    !!@required
+  end
+
+  attr_reader   :parent, :name, :aliases, :optparse
+  attr_accessor :required, :desc
+
+  attr_accessor :before_action
+  def before_action=(proc)
+    proc.is_a? Proc or raise ArgumentError, "before action hook for #{self} is a #{proc.class.name.inspect}, not a proc"
+    @before_action =
+      @parent.__send__(:__add_method, __decoration_name(:before), proc)
+  end
+
+  attr_accessor :after_action
+  def after_action=(proc)
+    proc.is_a? Proc or raise ArgumentError, "after action hook for #{self} is a #{proc.class.name.inspect}, not a proc"
+    @after_action =
+      @parent.__send__(:__add_method, __decoration_name(:after), proc)
+  end
+
+  def __decoration_name(type)
+    if @parent.is_a? Puppet::Interface::Action then
+      :"option #{name} from #{parent.name} #{type} decoration"
+    else
+      :"option #{name} #{type} decoration"
+    end
   end
 end

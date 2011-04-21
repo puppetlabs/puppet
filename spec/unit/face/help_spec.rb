@@ -7,7 +7,7 @@ describe Puppet::Face[:help, '0.0.1'] do
   end
 
   it "should have a default action of help" do
-    pending "REVISIT: we don't support default actions yet"
+    subject.get_action('help').should be_default
   end
 
   it "should accept a call with no arguments" do
@@ -55,19 +55,23 @@ describe Puppet::Face[:help, '0.0.1'] do
       end
     end
 
-    Puppet::Face.faces.each do |name|
-      face = Puppet::Face[name, :current]
-      summary = face.summary
+    it "should list all faces" do
+      Puppet::Face.faces.each do |name|
+        face = Puppet::Face[name, :current]
+        summary = face.summary
 
-      it { should =~ %r{ #{name} } }
-      it { should =~ %r{ #{name} +#{summary}} } if summary
+        subject.should =~ %r{ #{name} }
+        summary and subject.should =~ %r{ #{name} +#{summary}}
+      end
     end
 
-    Puppet::Face[:help, :current].legacy_applications.each do |appname|
-      it { should =~ %r{ #{appname} } }
+    it "should list all legacy applications" do
+      Puppet::Face[:help, :current].legacy_applications.each do |appname|
+        subject.should =~ %r{ #{appname} }
 
-      summary = Puppet::Face[:help, :current].horribly_extract_summary_from(appname)
-      summary and it { should =~ %r{ #{summary}\b} }
+        summary = Puppet::Face[:help, :current].horribly_extract_summary_from(appname)
+        summary and subject.should =~ %r{ #{summary}\b}
+      end
     end
   end
 

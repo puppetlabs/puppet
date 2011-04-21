@@ -5,6 +5,14 @@ class Puppet::Face::Indirector < Puppet::Face
   option "--terminus TERMINUS" do
     desc "REVISIT: You can select a terminus, which has some bigger effect
 that we should describe in this file somehow."
+
+    before_action do |action, args, options|
+      set_terminus(options[:terminus])
+    end
+
+    after_action do |action, args, options|
+      indirection.reset_terminus_class
+    end
   end
 
   def self.indirections
@@ -17,7 +25,6 @@ that we should describe in this file somehow."
 
   def call_indirection_method(method, *args)
     options = args.last
-    options.has_key?(:terminus) and set_terminus(options[:terminus])
 
     begin
       result = indirection.__send__(method, *args)
@@ -26,7 +33,6 @@ that we should describe in this file somehow."
       raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
     end
 
-    indirection.reset_terminus_class
     return result
   end
 
@@ -49,16 +55,11 @@ that we should describe in this file somehow."
   # Print the configuration for the current terminus class
   action :info do
     when_invoked do |*args|
-      options = args.pop
-      options.has_key?(:terminus) and set_terminus(options[:terminus])
-
       if t = indirection.terminus_class
         puts "Run mode '#{Puppet.run_mode.name}': #{t}"
       else
         $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
       end
-
-      indirection.reset_terminus_class
     end
   end
 

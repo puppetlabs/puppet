@@ -3,6 +3,7 @@ require 'spec_helper'
 
 # This is entirely an internal class for Interface, so we have to load it instead of our class.
 require 'puppet/interface'
+require 'puppet/face'
 
 class ActionManagerTester
   include Puppet::Interface::ActionManager
@@ -103,6 +104,8 @@ describe Puppet::Interface::ActionManager do
       @klass = Class.new do
         include Puppet::Interface::ActionManager
         extend Puppet::Interface::ActionManager
+        def __invoke_decorations(*args) true end
+        def options() [] end
       end
       @instance = @klass.new
     end
@@ -210,6 +213,23 @@ describe Puppet::Interface::ActionManager do
         when_invoked { "something" }
       end
       @instance.foo.should == "something"
+    end
+  end
+
+  describe "#action" do
+    it 'should add an action' do
+      subject.action(:foo) {  }
+      subject.get_action(:foo).should be_a Puppet::Interface::Action
+    end
+
+    it 'should support default actions' do
+      subject.action(:foo) { default }
+      subject.get_default_action.should == subject.get_action(:foo)
+    end
+
+    it 'should not support more than one default action' do
+      subject.action(:foo) { default }
+      expect { subject.action(:bar) { default } }.should raise_error
     end
   end
 

@@ -1,45 +1,45 @@
 # encoding: UTF-8
 shared_examples_for "things that declare options" do
   it "should support options without arguments" do
-    subject = add_options_to { option "--bar" }
-    subject.should be_option :bar
+    thing = add_options_to { option "--bar" }
+    thing.should be_option :bar
   end
 
   it "should support options with an empty block" do
-    subject = add_options_to do
+    thing = add_options_to do
       option "--foo" do
         # this section deliberately left blank
       end
     end
-    subject.should be
-    subject.should be_option :foo
+    thing.should be
+    thing.should be_option :foo
   end
 
   { "--foo=" => :foo }.each do |input, option|
     it "should accept #{name.inspect}" do
-      subject = add_options_to { option input }
-      subject.should be_option option
+      thing = add_options_to { option input }
+      thing.should be_option option
     end
   end
 
   it "should support option documentation" do
     text = "Sturm und Drang (German pronunciation: [ˈʃtʊʁm ʊnt ˈdʁaŋ]) …"
 
-    subject = add_options_to do
+    thing = add_options_to do
       option "--foo" do
         desc text
       end
     end
 
-    subject.get_option(:foo).desc.should == text
+    thing.get_option(:foo).desc.should == text
   end
 
   it "should list all the options" do
-    subject = add_options_to do
+    thing = add_options_to do
       option "--foo"
       option "--bar"
     end
-    subject.options.should =~ [:foo, :bar]
+    thing.options.should =~ [:foo, :bar]
   end
 
   it "should detect conflicts in long options" do
@@ -95,22 +95,24 @@ shared_examples_for "things that declare options" do
       should raise_error ArgumentError, /inconsistent about taking an argument/
   end
 
-  it "should accept optional arguments" do
-    subject = add_options_to do option "--foo=[baz]", "--bar=[baz]" end
-    [:foo, :bar].each do |name|
-      subject.should be_option name
-    end
+  it "should not accept optional arguments" do
+    expect do
+      thing = add_options_to do option "--foo=[baz]", "--bar=[baz]" end
+      [:foo, :bar].each do |name|
+        thing.should be_option name
+      end
+    end.to raise_error(ArgumentError, /optional arguments are not supported/)
   end
 
   describe "#takes_argument?" do
     it "should detect an argument being absent" do
-      subject = add_options_to do option "--foo" end
-      subject.get_option(:foo).should_not be_takes_argument
+      thing = add_options_to do option "--foo" end
+      thing.get_option(:foo).should_not be_takes_argument
     end
-    ["=FOO", " FOO", "=[FOO]", " [FOO]"].each do |input|
+    ["=FOO", " FOO"].each do |input|
       it "should detect an argument given #{input.inspect}" do
-        subject = add_options_to do option "--foo#{input}" end
-        subject.get_option(:foo).should be_takes_argument
+        thing = add_options_to do option "--foo#{input}" end
+        thing.get_option(:foo).should be_takes_argument
       end
     end
   end
@@ -131,10 +133,12 @@ shared_examples_for "things that declare options" do
     end
 
     ["=[FOO]", " [FOO]"].each do |input|
-      it "should be true if the argument is optional (like #{input.inspect})" do
-        option = add_options_to do option "--foo#{input}" end.get_option(:foo)
-      option.should be_takes_argument
-      option.should be_optional_argument
+      it "should fail if the argument is optional (like #{input.inspect})" do
+        expect do
+          option = add_options_to do option "--foo#{input}" end.get_option(:foo)
+          option.should be_takes_argument
+          option.should be_optional_argument
+        end.to raise_error(ArgumentError, /optional arguments are not supported/)
       end
     end
   end

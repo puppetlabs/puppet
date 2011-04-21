@@ -3,6 +3,7 @@
 require File.dirname(__FILE__) + '/../../spec_helper'
 
 describe Puppet::Type.type(:interface) do
+
   it "should have a 'name' parameter'" do
     Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1")[:name].should == "FastEthernet 0/1"
   end
@@ -13,6 +14,10 @@ describe Puppet::Type.type(:interface) do
 
   it "should have an ensure property" do
     Puppet::Type.type(:interface).attrtype(:ensure).should == :property
+  end
+
+  it "should be applied on device" do
+    Puppet::Type.type(:interface).new(:name => "FastEthernet 0/1").should be_appliable_to_device
   end
 
   [:description, :speed, :duplex, :native_vlan, :encapsulation, :mode, :allowed_trunk_vlans, :etherchannel, :ipaddress].each do |p|

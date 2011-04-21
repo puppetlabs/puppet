@@ -31,6 +31,10 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
       @ssh = Net::SSH.start(host, user, :port => port, :password => password, :timeout => timeout)
     rescue TimeoutError
       raise TimeoutError, "timed out while opening an ssh connection to the host"
+    rescue Net::SSH::AuthenticationFailed
+      raise Puppet::Error, "SSH authentication failure connecting to #{host} as #{user}"
+    rescue Net::SSH::Exception => detail
+      raise Puppet::Error, "SSH connection failure to #{host}"
     end
 
     @buf = ""

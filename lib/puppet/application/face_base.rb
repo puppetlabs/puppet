@@ -1,6 +1,7 @@
 require 'puppet/application'
 require 'puppet/face'
 require 'optparse'
+require 'pp'
 
 class Puppet::Application::FaceBase < Puppet::Application
   should_parse_config
@@ -14,8 +15,8 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet::Util::Log.level = :info
   end
 
-  option("--format FORMAT") do |arg|
-    @format = arg.to_sym
+  option("--render-as FORMAT") do |arg|
+    @render_as = arg.to_sym
   end
 
   option("--mode RUNMODE", "-r") do |arg|
@@ -25,7 +26,7 @@ class Puppet::Application::FaceBase < Puppet::Application
   end
 
 
-  attr_accessor :face, :action, :type, :arguments, :format
+  attr_accessor :face, :action, :type, :arguments, :render_as
   attr_writer :exit_code
 
   # This allows you to set the exit code if you don't want to just exit
@@ -34,15 +35,47 @@ class Puppet::Application::FaceBase < Puppet::Application
     @exit_code || 0
   end
 
-  # Override this if you need custom rendering.
   def render(result)
-    render_method = Puppet::Network::FormatHandler.format(format).render_method
-    if render_method == "to_pson"
-      jj result
-      exit(0)
-    else
-      result.send(render_method)
+    format = render_as || action.render_as || :for_humans
+
+    # Invoke the rendering hook supplied by the user, if appropriate.
+    if hook = action.when_rendering(format) then
+      result = hook.call(result)
     end
+
+    if format == :for_humans then
+      render_for_humans(result)
+    else
+      render_method = Puppet::Network::FormatHandler.format(format).render_method
+      if render_method == "to_pson"
+        PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
+      else
+        result.send(render_method)
+      end
+    end
+  end
+
+  def render_for_humans(result)
+    # String to String
+    return result if result.is_a? String
+    return result if result.is_a? Numeric
+
+    # Simple hash to table
+    if result.is_a? Hash and result.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+      output = ''
+      column_a = result.map do |k,v| k.to_s.length end.max + 2
+      column_b = 79 - column_a
+      result.sort_by { |k,v| k.to_s } .each do |key, value|
+        output << key.to_s.ljust(column_a)
+        output << PP.pp(value, '', column_b).
+          chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << "\n"
+      end
+      return output
+    end
+
+    # ...or pretty-print the inspect outcome.
+    return result.pretty_inspect
   end
 
   def preinit
@@ -59,9 +92,8 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
-    @type   = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-    @face   = Puppet::Face[@type, :current]
-    @format = @face.default_format
+    @type      = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @face      = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first
@@ -94,16 +126,13 @@ class Puppet::Application::FaceBase < Puppet::Application
           raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
         end
       else
-        action = @face.get_action(item.to_sym)
-        if action.nil? then
-          raise OptionParser::InvalidArgument.new("#{@face} does not have an #{item} action")
-        end
-        @action = action
+        @action = @face.get_action(item.to_sym)
       end
     end
 
-    unless @action
-      raise OptionParser::MissingArgument.new("No action given on the command line")
+    if @action.nil?
+      @action = @face.get_default_action()
+      @is_default_action = true
     end
 
     # Now we can interact with the default option code to build behaviour
@@ -111,7 +140,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     @action.options.each do |option|
       option = @action.get_option(option) # make it the object.
       self.class.option(*option.optparse) # ...and make the CLI parse it.
-    end
+    end if @action
 
     # ...and invoke our parent to parse all the command line options.
     super
@@ -138,7 +167,10 @@ class Puppet::Application::FaceBase < Puppet::Application
     # with it *always* being the first word of the remaining set of command
     # line arguments.  So, strip that off when we construct the arguments to
     # pass down to the face action. --daniel 2011-04-04
-    @arguments.delete_at(0)
+    # Of course, now that we have default actions, we should leave the
+    # "action" name on if we didn't actually consume it when we found our
+    # action.
+    @arguments.delete_at(0) unless @is_default_action
 
     # We copy all of the app options to the end of the call; This allows each
     # action to read in the options.  This replaces the older model where we
@@ -150,8 +182,17 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   def main
     # Call the method associated with the provided action (e.g., 'find').
-    if result = @face.send(@action.name, *arguments)
-      puts render(result)
+    if @action
+      result = @face.send(@action.name, *arguments)
+      puts render(result) unless result.nil?
+    else
+      if arguments.first.is_a? Hash
+        puts "#{@face} does not have a default action"
+      else
+        puts "#{@face} does not respond to action #{arguments.first}"
+      end
+
+      puts Puppet::Face[:help, :current].help(@face.name, *arguments)
     end
     exit(exit_code)
   end

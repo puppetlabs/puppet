@@ -33,7 +33,7 @@ describe Puppet::Interface do
 
   describe "#define" do
     it "should register the face" do
-      face = subject.define(:face_test_register, '0.0.1')
+      face  = subject.define(:face_test_register, '0.0.1')
       face.should == subject[:face_test_register, '0.0.1']
     end
 
@@ -51,22 +51,16 @@ describe Puppet::Interface do
       subject.new(:foo, '1.0.0').should respond_to(:summary=).with(1).arguments
     end
 
-    it "should set the summary text" do
-      text = "hello, freddy, my little pal"
-      subject.define(:face_test_summary, '1.0.0') do
-        summary text
+    # Required documentation methods...
+    { :summary     => "summary",
+      :description => "This is the description of the stuff\n\nWhee"
+    }.each do |attr, value|
+      it "should support #{attr} in the builder" do
+        face = subject.new(:builder, '1.0.0') do
+          self.send(attr, value)
+        end
+        face.send(attr).should == value
       end
-      subject[:face_test_summary, '1.0.0'].summary.should == text
-    end
-
-    it "should support mutating the summary" do
-      text = "hello, freddy, my little pal"
-      subject.define(:face_test_summary, '1.0.0') do
-        summary text
-      end
-      subject[:face_test_summary, '1.0.0'].summary.should == text
-      subject[:face_test_summary, '1.0.0'].summary = text + text
-      subject[:face_test_summary, '1.0.0'].summary.should == text + text
     end
   end
 
@@ -97,16 +91,6 @@ describe Puppet::Interface do
 
   it "should stringify with its own name" do
     subject.new(:me, '0.0.1').to_s.should =~ /\bme\b/
-  end
-
-  it "should allow overriding of the default format" do
-    face = subject.new(:me, '0.0.1')
-    face.set_default_format :foo
-    face.default_format.should == :foo
-  end
-
-  it "should default to :pson for its format" do
-    subject.new(:me, '0.0.1').default_format.should == :pson
   end
 
   # Why?
@@ -202,6 +186,12 @@ describe Puppet::Interface do
       it "should return an inherited option object" do
         face.get_option(:inherited).should be_an_instance_of subject::Option
       end
+    end
+  end
+
+  it_should_behave_like "documentation on faces" do
+    subject do
+      Puppet::Interface.new(:face_documentation, '0.0.1')
     end
   end
 end

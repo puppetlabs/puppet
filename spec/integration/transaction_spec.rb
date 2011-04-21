@@ -75,6 +75,62 @@ describe Puppet::Transaction do
     transaction.evaluate
   end
 
+  it "should not apply device resources on normal host" do
+    catalog = Puppet::Resource::Catalog.new
+    resource = Puppet::Type.type(:interface).new :name => "FastEthernet 0/1"
+    catalog.add_resource resource
+
+    transaction = Puppet::Transaction.new(catalog)
+    transaction.for_network_device = false
+
+    transaction.expects(:apply).never.with(resource, nil)
+
+    transaction.evaluate
+    transaction.resource_status(resource).should be_skipped
+  end
+
+  it "should not apply host resources on device" do
+    catalog = Puppet::Resource::Catalog.new
+    resource = Puppet::Type.type(:file).new :path => "/foo/bar", :backup => false
+    catalog.add_resource resource
+
+    transaction = Puppet::Transaction.new(catalog)
+    transaction.for_network_device = true
+
+    transaction.expects(:apply).never.with(resource, nil)
+
+    transaction.evaluate
+    transaction.resource_status(resource).should be_skipped
+  end
+
+  it "should apply device resources on device" do
+    catalog = Puppet::Resource::Catalog.new
+    resource = Puppet::Type.type(:interface).new :name => "FastEthernet 0/1"
+    catalog.add_resource resource
+
+    transaction = Puppet::Transaction.new(catalog)
+    transaction.for_network_device = true
+
+    transaction.expects(:apply).with(resource, nil)
+
+    transaction.evaluate
+    transaction.resource_status(resource).should_not be_skipped
+  end
+
+  it "should apply resources appliable on host and device on a device" do
+    catalog = Puppet::Resource::Catalog.new
+    resource = Puppet::Type.type(:schedule).new :name => "test"
+    catalog.add_resource resource
+
+    transaction = Puppet::Transaction.new(catalog)
+    transaction.for_network_device = true
+
+    transaction.expects(:apply).with(resource, nil)
+
+    transaction.evaluate
+    transaction.resource_status(resource).should_not be_skipped
+  end
+
   # Verify that one component requiring another causes the contained
   # resources in the requiring component to get refreshed.
   it "should propagate events from a contained resource through its container to its dependent container's contained resources" do

@@ -1,3 +1,4 @@
+require 'puppet/interface'
 require 'puppet/interface/option'
 
 describe Puppet::Interface::Option do
@@ -70,6 +71,30 @@ describe Puppet::Interface::Option do
       option = Puppet::Interface::Option.new(face, "--foo-bar")
       option.name.should == :foo_bar
       option.to_s.should == "foo-bar"
+    end
+  end
+
+  %w{before after}.each do |side|
+    describe "#{side} hooks" do
+      subject { Puppet::Interface::Option.new(face, "--foo") }
+      let :proc do Proc.new do :from_proc end end
+
+      it { should respond_to "#{side}_action" }
+      it { should respond_to "#{side}_action=" }
+
+      it "should set the #{side}_action hook" do
+        subject.send("#{side}_action").should be_nil
+        subject.send("#{side}_action=", proc)
+        subject.send("#{side}_action").should be_an_instance_of UnboundMethod
+      end
+
+      data = [1, "foo", :foo, Object.new, method(:hash), method(:hash).unbind]
+      data.each do |input|
+        it "should fail if a #{input.class} is added to the #{side} hooks" do
+          expect { subject.send("#{side}_action=", input) }.
+            to raise_error ArgumentError, /not a proc/
+        end
+      end
     end
   end
 end

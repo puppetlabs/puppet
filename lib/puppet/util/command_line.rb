@@ -14,7 +14,8 @@ module Puppet
         'queue'      => 'puppetqd',
         'resource'   => 'ralsh',
         'kick'       => 'puppetrun',
-        'master'     => 'puppetmasterd'
+        'master'     => 'puppetmasterd',
+        'device'     => 'puppetdevice'
       )
 
       def initialize(zero = $0, argv = ARGV, stdin = STDIN)

@@ -5,6 +5,8 @@
 Puppet::Type.newtype(:vlan) do
     @doc = "This represents a router or switch vlan."
 
+    apply_to_device
+
     ensurable
 
     newparam(:name) do

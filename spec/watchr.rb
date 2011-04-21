@@ -85,7 +85,11 @@ def run_spec_files(files)
   else
     opts = File.readlines('spec/spec.opts').collect { |l| l.chomp }.join(" ")
   end
-  run_spec("rspec #{opts} --tty #{files.join(' ')}")
+  begin
+    run_spec("rspec #{opts} --tty #{files.join(' ')}")
+  rescue => detail
+    puts "Failed to load #{files}: #{detail}"
+  end
 end
 
 def run_all_tests

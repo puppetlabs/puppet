@@ -32,6 +32,14 @@ class CompilerTestResource
 
   def evaluate
   end
+
+  def file
+    "/fake/file/goes/here"
+  end
+
+  def line
+    "42"
+  end
 end
 
 describe Puppet::Parser::Compiler do
@@ -411,52 +419,6 @@ describe Puppet::Parser::Compiler do
       @compiler.add_resource(@scope, resource)
 
       @compiler.catalog.should be_edge(@scope.resource, resource)
-    end
-
-    it "should add an edge to any specified stage for class resources" do
-      other_stage = resource(:stage, "other")
-      @compiler.add_resource(@scope, other_stage)
-      resource = resource(:class, "foo")
-      resource[:stage] = 'other'
-
-      @compiler.add_resource(@scope, resource)
-
-      @compiler.catalog.edge?(other_stage, resource).should be_true
-    end
-
-    it "should fail if a non-class resource attempts to set a stage" do
-      other_stage = resource(:stage, "other")
-      @compiler.add_resource(@scope, other_stage)
-      resource = resource(:file, "foo")
-      resource[:stage] = 'other'
-
-      lambda { @compiler.add_resource(@scope, resource) }.should raise_error(ArgumentError)
-    end
-
-    it "should fail if an unknown stage is specified" do
-      resource = resource(:class, "foo")
-      resource[:stage] = 'other'
-
-      lambda { @compiler.add_resource(@scope, resource) }.should raise_error(ArgumentError)
-    end
-
-    it "should add edges from the class resources to the parent's stage if no stage is specified" do
-      main      = @compiler.catalog.resource(:stage, :main)
-      foo_stage = resource(:stage, :foo_stage)
-      @compiler.add_resource(@scope, foo_stage)
-      resource = resource(:class, "foo")
-      @scope.stubs(:resource).returns(:stage => :foo_stage)
-      @compiler.add_resource(@scope, resource)
-
-      @compiler.catalog.should be_edge(foo_stage, resource)
-    end
-
-    it "should add edges from top-level class resources to the main stage if no stage is specified" do
-      main = @compiler.catalog.resource(:stage, :main)
-      resource = resource(:class, "foo")
-      @compiler.add_resource(@scope, resource)
-
-      @compiler.catalog.should be_edge(main, resource)
     end
 
     it "should not add non-class resources that don't specify a stage to the 'main' stage" do

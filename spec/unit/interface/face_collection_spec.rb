@@ -24,10 +24,6 @@ describe Puppet::Interface::FaceCollection do
     $".clear ; @original_required.each do |item| $" << item end
   end
 
-  describe "::faces" do
-    it "REVISIT: should have some tests here, if we describe it"
-  end
-
   describe "::validate_version" do
     it 'should permit three number versions' do
       subject.validate_version('10.10.10').should == true

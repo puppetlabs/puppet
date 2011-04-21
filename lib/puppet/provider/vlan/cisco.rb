@@ -1,22 +1,20 @@
-require 'puppet/util/network_device/cisco/device'
-require 'puppet/provider/network_device'
+require 'puppet/provider/cisco'
 
-Puppet::Type.type(:vlan).provide :cisco, :parent => Puppet::Provider::NetworkDevice do
+Puppet::Type.type(:vlan).provide :cisco, :parent => Puppet::Provider::Cisco do
 
   desc "Cisco switch/router provider for vlans."
 
   mk_resource_methods
 
-  def self.lookup(url, id)
+  def self.lookup(device, id)
     vlans = {}
-    device = Puppet::Util::NetworkDevice::Cisco::Device.new(url)
     device.command do |d|
       vlans = d.parse_vlans || {}
     end
     vlans[id]
   end
 
-  def initialize(*args)
+  def initialize(device, *args)
     super
   end
 
@@ -26,9 +24,5 @@ Puppet::Type.type(:vlan).provide :cisco, :parent => Puppet::Provider::NetworkDev
       device.update_vlan(resource[:name], former_properties, properties)
     end
     super
-  end
-
-  def device
-    @device ||= Puppet::Util::NetworkDevice::Cisco::Device.new(resource[:device_url])
   end
 end

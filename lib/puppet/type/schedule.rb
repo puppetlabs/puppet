@@ -43,6 +43,8 @@ module Puppet
       This will cause resources to be applied every 30 minutes by default.
       "
 
+    apply_to_all
+
     newparam(:name) do
       desc "The name of the schedule.  This name is used to retrieve the
         schedule when assigning it to an object:
