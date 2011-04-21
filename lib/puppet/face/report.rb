@@ -1,6 +1,8 @@
 require 'puppet/face/indirector'
 
 Puppet::Face::Indirector.define(:report, '0.0.1') do
+  summary "Create, display, and submit reports"
+
   action(:submit) do
     when_invoked do |report, options|
       begin

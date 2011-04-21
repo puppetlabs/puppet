@@ -9,6 +9,7 @@ class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBas
 end
 
 face = Puppet::Face::Indirector.define(:testindirection, '0.0.1') do
+  summary "fake summary"
 end
 # REVISIT: This horror is required because we don't allow anything to be
 # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29

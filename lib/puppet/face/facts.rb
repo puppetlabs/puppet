@@ -2,6 +2,8 @@ require 'puppet/face/indirector'
 require 'puppet/node/facts'
 
 Puppet::Face::Indirector.define(:facts, '0.0.1') do
+  summary "Retrieve, store, and view facts."
+
   # Upload our facts to the server
   action(:upload) do
     render_as :yaml

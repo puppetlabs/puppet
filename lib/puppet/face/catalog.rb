@@ -1,6 +1,15 @@
 require 'puppet/face/indirector'
 
 Puppet::Face::Indirector.define(:catalog, '0.0.1') do
+  summary "Compile, save, view, and convert catalogs."
+
+  @longdocs = "This face primarily interacts with the compiling subsystem.
+  By default, it compiles a catalog using the default manifest and the
+  hostname from 'certname', but you can choose to retrieve a catalog from
+  the server by specifying '--from rest'.  You can also choose to print any
+  catalog in 'dot' format (for easy graph viewing with OmniGraffle or Graphviz)
+  with '--format dot'."
+
   action(:apply) do
     when_invoked do |catalog, options|
       report = Puppet::Transaction::Report.new("apply")

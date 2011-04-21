@@ -2,6 +2,8 @@ require 'puppet/face/indirector'
 require 'puppet/ssl/host'
 
 Puppet::Face::Indirector.define(:certificate, '0.0.1') do
+  summary "provide access to the CA for certificate management"
+
   option "--ca-location LOCATION" do
     before_action do |action, args, options|
       Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
