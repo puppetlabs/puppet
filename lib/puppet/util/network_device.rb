@@ -9,4 +9,9 @@ class Puppet::Util::NetworkDevice
   rescue => detail
     raise "Can't load #{device.provider} for #{device.name}: #{detail}"
   end
+
+  # Should only be used in tests
+  def self.teardown
+    @current = nil
+  end
 end
