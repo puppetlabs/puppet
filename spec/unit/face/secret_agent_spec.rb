@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet/face'
 require 'puppet/indirector/catalog/rest'
 require 'tempfile'
 
