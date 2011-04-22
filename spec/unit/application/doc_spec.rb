@@ -11,7 +11,6 @@ describe Puppet::Application::Doc do
     @doc.stubs(:puts)
     @doc.preinit
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   it "should ask Puppet::Application to not parse Puppet configuration file" do
@@ -186,7 +185,6 @@ describe Puppet::Application::Doc do
       before :each do
         @doc.options.stubs(:[]).returns(false)
         Puppet.stubs(:parse_config)
-        Puppet::Util::Log.stubs(:level=)
         Puppet::Util::Log.stubs(:newdestination)
       end
 
@@ -232,16 +230,14 @@ describe Puppet::Application::Doc do
 
       it "should set log level to debug if --debug" do
         @doc.options.stubs(:[]).with(:debug).returns(true)
-        Puppet::Util::Log.expects(:level=).with(:debug)
-
         @doc.setup_rdoc
+        Puppet::Util::Log.level.should == :debug
       end
 
       it "should set log level to info if --verbose" do
         @doc.options.stubs(:[]).with(:verbose).returns(true)
-        Puppet::Util::Log.expects(:level=).with(:info)
-
         @doc.setup_rdoc
+        Puppet::Util::Log.level.should == :info
       end
 
       it "should set log destination to console if --verbose" do

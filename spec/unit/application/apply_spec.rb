@@ -9,7 +9,6 @@ describe Puppet::Application::Apply do
   before :each do
     @apply = Puppet::Application[:apply]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
@@ -51,7 +50,6 @@ describe Puppet::Application::Apply do
 
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
@@ -84,18 +82,14 @@ describe Puppet::Application::Apply do
 
     it "should set log level to debug if --debug was passed" do
       @apply.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @apply.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @apply.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @apply.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should print puppet config if asked to in Puppet config" do

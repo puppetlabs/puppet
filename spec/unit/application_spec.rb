@@ -369,10 +369,8 @@ describe Puppet::Application do
       it "should honor option #{level}" do
         @app.options.stubs(:[]).with(level).returns(true)
         Puppet::Util::Log.stubs(:newdestination)
-
-        Puppet::Util::Log.expects(:level=).with(level == :verbose ? :info : :debug)
-
         @app.setup
+        Puppet::Util::Log.level.should == (level == :verbose ? :info : :debug)
       end
     end
 

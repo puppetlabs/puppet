@@ -40,127 +40,132 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{}
     end
 
-    describe "parsing the command line" do
-      context "with just an action" do
-        before :all do
-          # We have to stub Signal.trap to avoid a crazy mess where we take
-          # over signal handling and make it impossible to cancel the test
-          # suite run.
-          #
-          # It would be nice to fix this elsewhere, but it is actually hard to
-          # capture this in rspec 2.5 and all. :(  --daniel 2011-04-08
-          Signal.stubs(:trap)
-          app.command_line.stubs(:args).returns %w{foo}
-          app.preinit
-          app.parse_options
-        end
-
-        it "should set the face based on the type" do
-          app.face.name.should == :basetest
-        end
-
-        it "should find the action" do
-          app.action.should be
-          app.action.name.should == :foo
-        end
-      end
-
-      it "should use the default action if not given any arguments" do
-        app.command_line.stubs(:args).returns []
-        action = stub(:options => [])
-        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
-        app.stubs(:main)
-        app.run
-        app.action.should == action
-        app.arguments.should == [ { } ]
-      end
-
-      it "should use the default action if not given a valid one" do
-        app.command_line.stubs(:args).returns %w{bar}
-        action = stub(:options => [])
-        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
-        app.stubs(:main)
-        app.run
-        app.action.should == action
-        app.arguments.should == [ 'bar', { } ]
-      end
-
-      it "should have no action if not given a valid one and there is no default action" do
-        app.command_line.stubs(:args).returns %w{bar}
-        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
-        app.stubs(:main)
-        app.run
-        app.action.should be_nil
-        app.arguments.should == [ 'bar', { } ]
-      end
-
-      it "should report a sensible error when options with = fail" do
-        app.command_line.stubs(:args).returns %w{--action=bar foo}
-        expect { app.preinit; app.parse_options }.
-          to raise_error OptionParser::InvalidOption, /invalid option: --action/
-      end
-
-      it "should fail if an action option is before the action" do
-        app.command_line.stubs(:args).returns %w{--action foo}
-        expect { app.preinit; app.parse_options }.
-          to raise_error OptionParser::InvalidOption, /invalid option: --action/
-      end
-
-      it "should fail if an unknown option is before the action" do
-        app.command_line.stubs(:args).returns %w{--bar foo}
-        expect { app.preinit; app.parse_options }.
-          to raise_error OptionParser::InvalidOption, /invalid option: --bar/
-      end
-
-      it "should fail if an unknown option is after the action" do
-        app.command_line.stubs(:args).returns %w{foo --bar}
-        expect { app.preinit; app.parse_options }.
-          to raise_error OptionParser::InvalidOption, /invalid option: --bar/
-      end
-
-      it "should accept --bar as an argument to a mandatory option after action" do
-        app.command_line.stubs(:args).returns %w{foo --mandatory --bar}
+    describe "with just an action" do
+      before :all do
+        # We have to stub Signal.trap to avoid a crazy mess where we take
+        # over signal handling and make it impossible to cancel the test
+        # suite run.
+        #
+        # It would be nice to fix this elsewhere, but it is actually hard to
+        # capture this in rspec 2.5 and all. :(  --daniel 2011-04-08
+        Signal.stubs(:trap)
+        app.command_line.stubs(:args).returns %w{foo}
         app.preinit
         app.parse_options
-        app.action.name.should == :foo
-        app.options.should == { :mandatory => "--bar" }
       end
 
-      it "should accept --bar as an argument to a mandatory option before action" do
-        app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+      it "should set the face based on the type" do
+        app.face.name.should == :basetest
+      end
+
+      it "should find the action" do
+        app.action.should be
+        app.action.name.should == :foo
+      end
+    end
+
+    it "should use the default action if not given any arguments" do
+      app.command_line.stubs(:args).returns []
+      action = stub(:options => [])
+      Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
+      app.stubs(:main)
+      app.run
+      app.action.should == action
+      app.arguments.should == [ { } ]
+    end
+
+    it "should use the default action if not given a valid one" do
+      app.command_line.stubs(:args).returns %w{bar}
+      action = stub(:options => [])
+      Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
+      app.stubs(:main)
+      app.run
+      app.action.should == action
+      app.arguments.should == [ 'bar', { } ]
+    end
+
+    it "should have no action if not given a valid one and there is no default action" do
+      app.command_line.stubs(:args).returns %w{bar}
+      Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
+      app.stubs(:main)
+      app.run
+      app.action.should be_nil
+      app.arguments.should == [ 'bar', { } ]
+    end
+
+    it "should report a sensible error when options with = fail" do
+      app.command_line.stubs(:args).returns %w{--action=bar foo}
+      expect { app.preinit; app.parse_options }.
+        to raise_error OptionParser::InvalidOption, /invalid option: --action/
+    end
+
+    it "should fail if an action option is before the action" do
+      app.command_line.stubs(:args).returns %w{--action foo}
+      expect { app.preinit; app.parse_options }.
+        to raise_error OptionParser::InvalidOption, /invalid option: --action/
+    end
+
+    it "should fail if an unknown option is before the action" do
+      app.command_line.stubs(:args).returns %w{--bar foo}
+      expect { app.preinit; app.parse_options }.
+        to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+    end
+
+    it "should fail if an unknown option is after the action" do
+      app.command_line.stubs(:args).returns %w{foo --bar}
+      expect { app.preinit; app.parse_options }.
+        to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+    end
+
+    it "should accept --bar as an argument to a mandatory option after action" do
+      app.command_line.stubs(:args).returns %w{foo --mandatory --bar}
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == { :mandatory => "--bar" }
+    end
+
+    it "should accept --bar as an argument to a mandatory option before action" do
+      app.command_line.stubs(:args).returns %w{--mandatory --bar foo}
+      app.preinit
+      app.parse_options
+      app.action.name.should == :foo
+      app.options.should == { :mandatory => "--bar" }
+    end
+
+    it "should not skip when --foo=bar is given" do
+      app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
+      expect { app.preinit; app.parse_options }.
+        to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+    end
+
+    { "boolean options before" => %w{--trace foo},
+      "boolean options after"  => %w{foo --trace}
+    }.each do |name, args|
+      it "should accept global boolean settings #{name} the action" do
+        app.command_line.stubs(:args).returns args
         app.preinit
         app.parse_options
-        app.action.name.should == :foo
-        app.options.should == { :mandatory => "--bar" }
+        Puppet[:trace].should be_true
       end
+    end
 
-      it "should not skip when --foo=bar is given" do
-        app.command_line.stubs(:args).returns %w{--mandatory=bar --bar foo}
-        expect { app.preinit; app.parse_options }.
-          to raise_error OptionParser::InvalidOption, /invalid option: --bar/
+    { "before" => %w{--syslogfacility user1 foo},
+      " after" => %w{foo --syslogfacility user1}
+    }.each do |name, args|
+      it "should accept global settings with arguments #{name} the action" do
+        app.command_line.stubs(:args).returns args
+        app.preinit
+        app.parse_options
+        Puppet[:syslogfacility].should == "user1"
       end
+    end
 
-      { "boolean options before" => %w{--trace foo},
-        "boolean options after"  => %w{foo --trace}
-      }.each do |name, args|
-        it "should accept global boolean settings #{name} the action" do
-          app.command_line.stubs(:args).returns args
-          app.preinit
-          app.parse_options
-          Puppet[:trace].should be_true
-        end
-      end
-
-      { "before" => %w{--syslogfacility user1 foo},
-        " after" => %w{foo --syslogfacility user1}
-      }.each do |name, args|
-        it "should accept global settings with arguments #{name} the action" do
-          app.command_line.stubs(:args).returns args
-          app.preinit
-          app.parse_options
-          Puppet[:syslogfacility].should == "user1"
-        end
-      end
+    it "should handle application-level options" do
+      app.command_line.stubs(:args).returns %w{help --verbose help}
+      app.preinit
+      app.parse_options
+      app.face.name.should == :basetest
     end
   end
 

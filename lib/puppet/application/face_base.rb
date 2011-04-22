@@ -92,8 +92,8 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # REVISIT: These should be configurable versions, through a global
     # '--version' option, but we don't implement that yet... --daniel 2011-03-29
-    @type      = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
-    @face      = Puppet::Face[@type, :current]
+    @type = self.class.name.to_s.sub(/.+:/, '').downcase.to_sym
+    @face = Puppet::Face[@type, :current]
 
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first
@@ -122,6 +122,8 @@ class Puppet::Application::FaceBase < Puppet::Application
             # a mandatory argument. --daniel 2011-04-05
             index += 1          # ...so skip the argument.
           end
+        elsif option = find_application_argument(item) then
+          index += 1 if (option[:argument] and option[:optional])
         else
           raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
         end
@@ -156,6 +158,21 @@ class Puppet::Application::FaceBase < Puppet::Application
       end
     end
     return nil                  # nothing found.
+  end
+
+  def find_application_argument(item)
+    self.class.option_parser_commands.each do |options, function|
+      options.each do |option|
+        next unless option =~ /^-/
+        pattern = /^#{option.sub('[no-]', '').sub(/[ =].*$/, '')}(?:[ =].*)?$/
+        next unless pattern.match(item)
+        return {
+          :argument => option =~ /[ =]/,
+          :optional => option =~ /[ =]\[/
+        }
+      end
+    end
+    return nil                  # not found
   end
 
   def setup

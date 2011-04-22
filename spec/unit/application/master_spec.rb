@@ -11,7 +11,6 @@ describe Puppet::Application::Master do
     @daemon = stub_everything 'daemon'
     Puppet::Daemon.stubs(:new).returns(@daemon)
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
 
     Puppet::Node.indirection.stubs(:terminus_class=)
     Puppet::Node.indirection.stubs(:cache_class=)
@@ -111,7 +110,6 @@ describe Puppet::Application::Master do
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
-      Puppet::Log.stubs(:level=)
       Puppet::SSL::CertificateAuthority.stubs(:instance)
       Puppet::SSL::CertificateAuthority.stubs(:ca?)
       Puppet.settings.stubs(:use)
@@ -121,18 +119,14 @@ describe Puppet::Application::Master do
 
     it "should set log level to debug if --debug was passed" do
       @master.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @master.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @master.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @master.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should set console as the log destination if no --logdest and --daemonize" do
