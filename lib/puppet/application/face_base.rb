@@ -27,13 +27,6 @@ class Puppet::Application::FaceBase < Puppet::Application
 
 
   attr_accessor :face, :action, :type, :arguments, :render_as
-  attr_writer :exit_code
-
-  # This allows you to set the exit code if you don't want to just exit
-  # immediately but you need to indicate a failure.
-  def exit_code
-    @exit_code || 0
-  end
 
   def render(result)
     format = render_as || action.render_as || :for_humans
@@ -198,19 +191,28 @@ class Puppet::Application::FaceBase < Puppet::Application
 
 
   def main
+    status = false
+
     # Call the method associated with the provided action (e.g., 'find').
     if @action
-      result = @face.send(@action.name, *arguments)
-      puts render(result) unless result.nil?
+      begin
+        result = @face.send(@action.name, *arguments)
+        puts render(result) unless result.nil?
+        status = true
+      rescue Exception => detail
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err detail.to_s
+      end
     else
       if arguments.first.is_a? Hash
-        puts "#{@face} does not have a default action"
+        puts "#{face} does not have a default action"
       else
-        puts "#{@face} does not respond to action #{arguments.first}"
+        puts "#{face} does not respond to action #{arguments.first}"
       end
 
       puts Puppet::Face[:help, :current].help(@face.name, *arguments)
     end
-    exit(exit_code)
+
+    exit status
   end
 end

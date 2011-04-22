@@ -201,6 +201,41 @@ describe Puppet::Application::FaceBase do
     end
   end
 
+  describe "error reporting" do
+    before :each do
+      app.stubs(:puts)          # don't dump text to screen.
+
+      app.face      = Puppet::Face[:basetest, '0.0.1']
+      app.arguments = []
+    end
+
+    it "should exit 0 when the action returns true" do
+      app.action = app.face.get_action :return_true
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit 0 when the action returns false" do
+      app.action = app.face.get_action :return_false
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit 0 when the action returns nil" do
+      app.action = app.face.get_action :return_nil
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit non-0 when the action raises" do
+      app.action = app.face.get_action :return_raise
+      expect { app.main }.not_to exit_with 0
+    end
+
+    it "should exit non-0 when the action does not exist" do
+      app.action = nil
+      app.arguments = ["foo"]
+      expect { app.main }.to exit_with 1
+    end
+  end
+
   describe "#render" do
     before :each do
       app.face   = Puppet::Face[:basetest, '0.0.1']
