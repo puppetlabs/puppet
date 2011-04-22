@@ -33,6 +33,6 @@ describe Puppet::Application::IndirectionBase do
     # Not a very nice thing. :(
     $stderr.stubs(:puts)
 
-    expect { subject.run }.should raise_error SystemExit
+    expect { subject.run }.to exit_with 0
   end
 end

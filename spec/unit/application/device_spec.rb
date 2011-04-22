@@ -260,8 +260,7 @@ describe Puppet::Application::Device do
     end
 
     it "should exit if the device list is empty" do
-      @device.expects(:exit).with(1)
-      @device.main
+      expect { @device.main }.to exit_with 1
     end
 
     describe "for each device" do

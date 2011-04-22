@@ -253,19 +253,16 @@ describe Puppet::Application::Agent do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @puppetd.stubs(:exit)
       Puppet[:configprint] = "pluginsync"
-
-      Puppet.settings.expects(:print_configs)
-
-      @puppetd.setup
+      Puppet.settings.expects(:print_configs).returns true
+      expect { @puppetd.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet[:modulepath] = '/my/path'
       Puppet[:configprint] = "modulepath"
       Puppet::Util::Settings.any_instance.expects(:puts).with('/my/path')
-      lambda { @puppetd.setup }.should raise_error(SystemExit)
+      expect { @puppetd.setup }.to exit_with 0
     end
 
     it "should set a central log destination with --centrallogs" do
@@ -346,17 +343,14 @@ describe Puppet::Application::Agent do
     describe "when enabling or disabling agent" do
       [:enable, :disable].each do |action|
         it "should call client.#{action}" do
-          @puppetd.stubs(:exit)
           @puppetd.options.stubs(:[]).with(action).returns(true)
-
           @agent.expects(action)
-
-          @puppetd.enable_disable_client(@agent)
+          expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
         end
       end
 
       it "should finally exit" do
-        lambda { @puppetd.enable_disable_client(@agent) }.should raise_error(SystemExit)
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
       end
     end
 
@@ -410,7 +404,6 @@ describe Puppet::Application::Agent do
         FileTest.stubs(:exists?).with('auth').returns(true)
         File.stubs(:exist?).returns(true)
         @puppetd.options.stubs(:[]).with(:serve).returns([])
-        @puppetd.stubs(:exit)
         @server = stub_everything 'server'
         Puppet::Network::Server.stubs(:new).returns(@server)
       end
@@ -419,10 +412,7 @@ describe Puppet::Application::Agent do
       it "should exit if no authorization file" do
         Puppet.stubs(:err)
         FileTest.stubs(:exists?).with(Puppet[:authconfig]).returns(false)
-
-        @puppetd.expects(:exit)
-
-        @puppetd.setup_listen
+        expect { @puppetd.setup_listen }.to exit_with 14
       end
 
       it "should create a server to listen on at least the Runner handler" do
@@ -483,35 +473,27 @@ describe Puppet::Application::Agent do
         @agent.stubs(:run).returns(:report)
         @puppetd.options.stubs(:[]).with(:client).returns(:client)
         @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
-        @puppetd.stubs(:exit).with(0)
         Puppet.stubs(:newservice)
       end
 
       it "should exit if no defined --client" do
         $stderr.stubs(:puts)
         @puppetd.options.stubs(:[]).with(:client).returns(nil)
-
-        @puppetd.expects(:exit).with(43)
-
-        @puppetd.onetime
+        expect { @puppetd.onetime }.to exit_with 43
       end
 
       it "should setup traps" do
         @daemon.expects(:set_signal_traps)
-
-        @puppetd.onetime
+        expect { @puppetd.onetime }.to exit_with 0
       end
 
       it "should let the agent run" do
         @agent.expects(:run).returns(:report)
-
-        @puppetd.onetime
+        expect { @puppetd.onetime }.to exit_with 0
       end
 
       it "should finish by exiting with 0 error code" do
-        @puppetd.expects(:exit).with(0)
-
-        @puppetd.onetime
+        expect { @puppetd.onetime }.to exit_with 0
       end
 
       describe "and --detailed-exitcodes" do
@@ -523,18 +505,16 @@ describe Puppet::Application::Agent do
           Puppet[:noop] = false
           report = stub 'report', :exit_status => 666
           @agent.stubs(:run).returns(report)
-          @puppetd.expects(:exit).with(666)
 
-          @puppetd.onetime
+          expect { @puppetd.onetime }.to exit_with 666
         end
 
         it "should exit with the report's computer exit status, even if --noop is set." do
           Puppet[:noop] = true
           report = stub 'report', :exit_status => 666
           @agent.stubs(:run).returns(report)
-          @puppetd.expects(:exit).with(666)
 
-          @puppetd.onetime
+          expect { @puppetd.onetime }.to exit_with 666
         end
       end
     end

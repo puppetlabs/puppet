@@ -86,7 +86,6 @@ describe Puppet::Daemon do
   describe "when stopping" do
     before do
       @daemon.stubs(:remove_pidfile)
-      @daemon.stubs(:exit)
       Puppet::Util::Log.stubs(:close_all)
       # to make the global safe to mock, set it to a subclass of itself,
       # then restore it in an after pass
@@ -102,34 +101,29 @@ describe Puppet::Daemon do
       server = mock 'server'
       server.expects(:stop)
       @daemon.stubs(:server).returns server
-
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it 'should request a stop from Puppet::Application' do
       Puppet::Application.expects(:stop!)
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should remove its pidfile" do
       @daemon.expects(:remove_pidfile)
-
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should close all logs" do
       Puppet::Util::Log.expects(:close_all)
-
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should exit unless called with ':exit => false'" do
-      @daemon.expects(:exit)
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should not exit if called with ':exit => false'" do
-      @daemon.expects(:exit).never
       @daemon.stop :exit => false
     end
   end

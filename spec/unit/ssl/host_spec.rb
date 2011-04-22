@@ -681,16 +681,14 @@ describe Puppet::SSL::Host do
       @host.expects(:certificate).returns(nil)
       @host.expects(:generate).raises(RuntimeError)
       @host.expects(:puts)
-      @host.expects(:exit).with(1).raises(SystemExit)
-      lambda { @host.wait_for_cert(0) }.should raise_error(SystemExit)
+      expect { @host.wait_for_cert(0) }.to exit_with 1
     end
 
     it "should exit if the wait time is 0 and it can neither find nor retrieve a certificate" do
       @host.stubs(:certificate).returns nil
       @host.expects(:generate)
       @host.expects(:puts)
-      @host.expects(:exit).with(1).raises(SystemExit)
-      lambda { @host.wait_for_cert(0) }.should raise_error(SystemExit)
+      expect { @host.wait_for_cert(0) }.to exit_with 1
     end
 
     it "should sleep for the specified amount of time if no certificate is found after generating its certificate request" do
