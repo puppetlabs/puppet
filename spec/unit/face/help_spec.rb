@@ -1,5 +1,6 @@
+#!/usr/bin/env rspec
 require 'spec_helper'
-require 'puppet/face/help'
+require 'puppet/face'
 
 describe Puppet::Face[:help, '0.0.1'] do
   it "should have a help action" do

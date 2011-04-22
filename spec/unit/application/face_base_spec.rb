@@ -7,18 +7,6 @@ class Puppet::Application::FaceBase::Basetest < Puppet::Application::FaceBase
 end
 
 describe Puppet::Application::FaceBase do
-  before :all do
-    Puppet::Face.define(:basetest, '0.0.1') do
-      option("--[no-]boolean")
-      option("--mandatory MANDATORY")
-
-      action :foo do
-        option("--action")
-        when_invoked { |*args| args.length }
-      end
-    end
-  end
-
   let :app do
     app = Puppet::Application::FaceBase::Basetest.new
     app.command_line.stubs(:subcommand_name).returns('subcommand')
@@ -189,7 +177,7 @@ describe Puppet::Application::FaceBase do
 
   describe "#main" do
     before :each do
-      app.expects(:exit).with(0)
+      app.stubs(:puts)          # don't dump text to screen.
 
       app.face      = Puppet::Face[:basetest, '0.0.1']
       app.action    = app.face.get_action(:foo)
@@ -198,20 +186,53 @@ describe Puppet::Application::FaceBase do
 
     it "should send the specified verb and name to the face" do
       app.face.expects(:foo).with(*app.arguments)
-      app.main
+      expect { app.main }.to exit_with 0
     end
 
     it "should lookup help when it cannot do anything else" do
       app.action = nil
       Puppet::Face[:help, :current].expects(:help).with(:basetest, *app.arguments)
-      app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
-      app.main
+      expect { app.main }.to exit_with 1
     end
 
     it "should use its render method to render any result" do
       app.expects(:render).with(app.arguments.length + 1)
-      app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
-      app.main
+      expect { app.main }.to exit_with 0
+    end
+  end
+
+  describe "error reporting" do
+    before :each do
+      app.stubs(:puts)          # don't dump text to screen.
+
+      app.face      = Puppet::Face[:basetest, '0.0.1']
+      app.arguments = []
+    end
+
+    it "should exit 0 when the action returns true" do
+      app.action = app.face.get_action :return_true
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit 0 when the action returns false" do
+      app.action = app.face.get_action :return_false
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit 0 when the action returns nil" do
+      app.action = app.face.get_action :return_nil
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit non-0 when the action raises" do
+      app.action = app.face.get_action :return_raise
+      expect { app.main }.not_to exit_with 0
+    end
+
+    it "should exit non-0 when the action does not exist" do
+      app.action = nil
+      app.arguments = ["foo"]
+      expect { app.main }.to exit_with 1
     end
   end
 

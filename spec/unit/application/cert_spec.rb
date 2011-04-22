@@ -79,18 +79,14 @@ describe Puppet::Application::Cert do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @cert_app.stubs(:exit)
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @cert_app.setup
+      Puppet.settings.expects(:print_configs).returns true
+      expect { @cert_app.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @cert_app.setup }.should raise_error(SystemExit)
+      expect { @cert_app.setup }.to exit_with 1
     end
 
     it "should set the CA location to 'only'" do

@@ -36,8 +36,8 @@ describe Puppet::Application::Doc do
       Puppet[:modulepath] = modules_dir
       Puppet[:manifest] = site_file
       puppet.options[:mode] = :rdoc
-      puppet.expects(:exit).with(0)
-      puppet.run_command
+
+      expect { puppet.run_command }.to exit_with 0
 
       File.should be_exist('doc')
     ensure

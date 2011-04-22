@@ -1,3 +1,7 @@
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'puppet/face'
+
 require 'puppet/ssl/host'
 
 describe Puppet::Face[:certificate, '0.0.1'] do

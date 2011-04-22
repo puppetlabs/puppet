@@ -152,18 +152,14 @@ describe Puppet::Application::Master do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @master.stubs(:exit)
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @master.setup
+      Puppet.settings.expects(:print_configs).returns(true)
+      expect { @master.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @master.setup }.should raise_error(SystemExit)
+      expect { @master.setup }.to exit_with 1
     end
 
     it "should tell Puppet.settings to use :main,:ssl,:master and :metrics category" do
@@ -241,7 +237,6 @@ describe Puppet::Application::Master do
         Puppet.stubs(:[]).with(:manifest).returns("site.pp")
         Puppet.stubs(:err)
         @master.stubs(:jj)
-        @master.stubs(:exit)
         Puppet.features.stubs(:pson?).returns true
       end
 
@@ -255,7 +250,7 @@ describe Puppet::Application::Master do
         Puppet::Resource::Catalog.indirection.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
         $stdout.stubs(:puts)
 
-        @master.compile
+        expect { @master.compile }.to exit_with 0
       end
 
       it "should convert the catalog to a pure-resource catalog and use 'jj' to pretty-print the catalog" do
@@ -267,25 +262,21 @@ describe Puppet::Application::Master do
         @master.options[:node] = "foo"
         @master.expects(:jj).with("rescat")
 
-        @master.compile
+        expect { @master.compile }.to exit_with 0
       end
 
       it "should exit with error code 30 if no catalog can be found" do
         @master.options[:node] = "foo"
         Puppet::Resource::Catalog.indirection.expects(:find).returns nil
-        @master.expects(:exit).with(30)
         $stderr.expects(:puts)
-
-        @master.compile
+        expect { @master.compile }.to exit_with 30
       end
 
       it "should exit with error code 30 if there's a failure" do
         @master.options[:node] = "foo"
         Puppet::Resource::Catalog.indirection.expects(:find).raises ArgumentError
-        @master.expects(:exit).with(30)
         $stderr.expects(:puts)
-
-        @master.compile
+        expect { @master.compile }.to exit_with 30
       end
     end
 

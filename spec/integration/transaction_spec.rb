@@ -275,7 +275,7 @@ describe Puppet::Transaction do
   it "should not attempt to evaluate resources with failed dependencies" do
 
     exec = Puppet::Type.type(:exec).new(
-      :command => "/bin/mkdir /this/path/cannot/possibly/exit",
+      :command => "/bin/mkdir /this/path/cannot/possibly/exist",
       :title => "mkdir"
     )
 
@@ -309,7 +309,7 @@ describe Puppet::Transaction do
     )
 
     exec = Puppet::Type.type(:exec).new(
-      :command => "/bin/mkdir /this/path/cannot/possibly/exit",
+      :command => "/bin/mkdir /this/path/cannot/possibly/exist",
       :title => "mkdir",
       :notify => create_file1
     )
