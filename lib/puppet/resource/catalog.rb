@@ -74,7 +74,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
     fail_on_duplicate_type_and_title(resource)
     title_key = title_key_for_ref(resource.ref)
- 
+
     @transient_resources << resource if applying?
     @resource_table[title_key] = resource
 
@@ -339,8 +339,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     @relationship_graph
   end
 
-  # Impose our container information on another graph by using it 
-  # to replace any container vertices X with a pair of verticies 
+  # Impose our container information on another graph by using it
+  # to replace any container vertices X with a pair of verticies
   # { admissible_X and completed_X } such that that
   #
   #    0) completed_X depends on admissible_X
@@ -353,8 +353,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   # Note that this requires attention to the possible case of containers
   # which contain or depend on other containers, but has the advantage
   # that the number of new edges created scales linearly with the number
-  # of contained verticies regardless of how containers are related; 
-  # alternatives such as replacing container-edges with content-edges 
+  # of contained verticies regardless of how containers are related;
+  # alternatives such as replacing container-edges with content-edges
   # scale as the product of the number of external dependences, which is
   # to say geometrically in the case of nested / chained containers.
   #
@@ -374,8 +374,8 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     admissible = Hash.new { |h,k| k }
     completed  = Hash.new { |h,k| k }
     containers.each { |x|
-      admissible[x] = whit_class.new(:name => "admissible_#{x.name}", :catalog => self)
-      completed[x]  = whit_class.new(:name => "completed_#{x.name}",  :catalog => self)
+      admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => self)
+      completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => self)
     }
     #
     # Implement the six requierments listed above
