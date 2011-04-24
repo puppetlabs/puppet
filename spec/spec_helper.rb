@@ -102,3 +102,15 @@ RSpec::Matchers.define :exit_with do |expected|
     "expect exit with #{expected}"
   end
 end
+
+# Backward compatibility for Jenkins outdated environment.
+module RSpec
+  module Matchers
+    module BlockAliases
+      alias_method :to,     :should      unless method_defined? :to
+      alias_method :to_not, :should_not  unless method_defined? :to_not
+      alias_method :not_to, :should_not  unless method_defined? :not_to
+    end
+  end
+end
+
