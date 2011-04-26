@@ -139,12 +139,10 @@ class Puppet::Interface
       action.get_option(name).__decoration_name(type)
     end
 
+    # Exceptions here should propagate up; this implements a hook we can use
+    # reasonably for option validation.
     methods.each do |hook|
-      begin
-        respond_to? hook and self.__send__(hook, action, passed_args, passed_options)
-      rescue => e
-        Puppet.warning("invoking #{action} #{type} hook: #{e}")
-      end
+      respond_to? hook and self.__send__(hook, action, passed_args, passed_options)
     end
   end
 
