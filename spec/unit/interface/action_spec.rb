@@ -237,7 +237,7 @@ describe Puppet::Interface::Action do
           when_invoked { }
         end
       end
-      expect { face.bar }.to raise_error ArgumentError, /missing required options \(foo\)/
+      expect { face.bar }.to raise_error ArgumentError, /The following options are required: foo/
     end
 
     it "should fail when a required face option is not provided" do
@@ -245,7 +245,7 @@ describe Puppet::Interface::Action do
         option('--foo') { required }
         action(:bar) { when_invoked { } }
       end
-      expect { face.bar }.to raise_error ArgumentError, /missing required options \(foo\)/
+      expect { face.bar }.to raise_error ArgumentError, /The following options are required: foo/
     end
   end
 

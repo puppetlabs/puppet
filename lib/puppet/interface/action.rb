@@ -239,7 +239,7 @@ WRAPPER
     end.select(&:required?).collect(&:name) - args.last.keys
 
     return if required.empty?
-    raise ArgumentError, "missing required options (#{required.join(', ')})"
+    raise ArgumentError, "The following options are required: #{required.join(', ')}"
   end
 
   ########################################################################
