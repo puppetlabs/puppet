@@ -168,6 +168,25 @@ describe Puppet::Type.type(:file) do
         reqs[0].target.must == file
       end
 
+      it "should autorequire its nearest ancestor directory" do
+        file = Puppet::Type::File.new(:path => "/foo/bar/baz")
+        dir = Puppet::Type::File.new(:path => "/foo")
+        root = Puppet::Type::File.new(:path => "/")
+        @catalog.add_resource file
+        @catalog.add_resource dir
+        @catalog.add_resource root
+        reqs = file.autorequire
+        reqs.length.must == 1
+        reqs[0].source.must == dir
+        reqs[0].target.must == file
+      end
+
+      it "should not autorequire anything when there is no nearest ancestor directory" do
+        file = Puppet::Type::File.new(:path => "/foo/bar/baz")
+        @catalog.add_resource file
+        file.autorequire.should be_empty
+      end
+
       it "should not autorequire its parent dir if its parent dir is itself" do
         file = Puppet::Type::File.new(:path => "/")
         @catalog.add_resource file
@@ -241,6 +260,25 @@ describe Puppet::Type.type(:file) do
         reqs[0].target.must == file
       end
 
+      it "should autorequire its nearest ancestor directory" do
+        file = Puppet::Type::File.new(:path => "X:/foo/bar/baz")
+        dir = Puppet::Type::File.new(:path => "X:/foo")
+        root = Puppet::Type::File.new(:path => "X:/")
+        @catalog.add_resource file
+        @catalog.add_resource dir
+        @catalog.add_resource root
+        reqs = file.autorequire
+        reqs.length.must == 1
+        reqs[0].source.must == dir
+        reqs[0].target.must == file
+      end
+
+      it "should not autorequire anything when there is no nearest ancestor directory" do
+        file = Puppet::Type::File.new(:path => "X:/foo/bar/baz")
+        @catalog.add_resource file
+        file.autorequire.should be_empty
+      end
+
       it "should not autorequire its parent dir if its parent dir is itself" do
         file = Puppet::Type::File.new(:path => "X:/")
         @catalog.add_resource file
@@ -300,6 +338,25 @@ describe Puppet::Type.type(:file) do
         reqs = file.autorequire
         reqs[0].source.must == dir
         reqs[0].target.must == file
+      end
+
+      it "should autorequire its nearest ancestor directory" do
+        file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/qux")
+        dir = Puppet::Type::File.new(:path => "//server/foo/bar")
+        root = Puppet::Type::File.new(:path => "//server/foo")
+        @catalog.add_resource file
+        @catalog.add_resource dir
+        @catalog.add_resource root
+        reqs = file.autorequire
+        reqs.length.must == 1
+        reqs[0].source.must == dir
+        reqs[0].target.must == file
+      end
+
+      it "should not autorequire anything when there is no nearest ancestor directory" do
+        file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/qux")
+        @catalog.add_resource file
+        file.autorequire.should be_empty
       end
 
       it "should not autorequire its parent dir if its parent dir is itself" do
