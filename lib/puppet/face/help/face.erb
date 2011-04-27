@@ -1,7 +1,47 @@
-Use: puppet <%= face.name %> [options] <action> [options]
+NAME
+  <%= face.name %> -- <%= face.summary || "unknown face..." %>
 
-Available actions:
+% if face.synopsis
+SYNOPSIS
+<%= face.synopsis.gsub(/^/, '  ') %>
+
+% end
+% if face.description
+DESCRIPTION
+<%= face.description.chomp.gsub(/^/, '  ') %>
+
+%end
+% unless face.options.empty?
+OPTIONS
+%   face.options.sort.each do |name|
+%     option = face.get_option name
+<%= "  " + option.optparse.join(" |" ) %>
+<%= option.desc and option.desc.gsub(/^/, '    ') %>
+
+%   end
+% end
+ACTIONS
+% padding = face.actions.map{|x| x.to_s.length}.max + 2
 % face.actions.each do |actionname|
 %   action = face.get_action(actionname)
-  <%= action.name.to_s.ljust(16) %>  <%= action.summary %>
+  <%= action.name.to_s.ljust(padding) %>  <%= action.summary %>
 % end
+
+% if face.examples
+EXAMPLES
+<%= face.examples %>
+% end
+% if face.notes
+NOTES
+<%= face.notes %>
+
+% end
+% unless face.authors.empty?
+AUTHOR
+<%= face.authors.join("\n").gsub(/^/, ' * ') %>
+
+%end
+COPYRIGHT AND LICENSE
+<%= face.copyright.gsub(/^/, '  ') %>
+<%= face.license.gsub(/^/, '  ')   %>
+

@@ -76,7 +76,11 @@ describe Puppet::Interface do
 
     # Required documentation methods...
     { :summary     => "summary",
-      :description => "This is the description of the stuff\n\nWhee"
+      :description => "This is the description of the stuff\n\nWhee",
+      :examples    => "This is my example",
+      :short_description => "This is my custom short description",
+      :notes       => "These are my notes...",
+      :author      => "This is my authorship data",
     }.each do |attr, value|
       it "should support #{attr} in the builder" do
         face = subject.new(:builder, '1.0.0') do

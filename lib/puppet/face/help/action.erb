@@ -1,3 +1,47 @@
-Use: puppet <%= face.name %> [options] <%= action.name %> [options]
+puppet <%= face.name %><%= action.default? ? '' : " #{action.name}" %>(1) -- <%= action.summary || face.summary %>
+<%= '=' * (_erbout.length - 1) %>
 
-Summary: <%= action.summary %>
+% if action.synopsis
+SYNOPSIS
+--------
+
+<%= action.synopsis %>
+
+% end
+% if action.description
+DESCRIPTION
+-----------
+<%= action.description %>
+
+%end
+% unless action.options.empty?
+OPTIONS
+-------
+%   action.options.sort.each do |name|
+%     option = action.get_option name
+<%= "  " + option.optparse.join(" |" ) %>
+<%= option.desc and option.desc.gsub(/^/, '    ') %>
+
+%   end
+% end
+% if action.examples
+EXAMPLES
+--------
+<%= action.examples %>
+% end
+% if action.notes
+NOTES
+-----
+<%= action.notes %>
+
+% end
+% unless action.authors.empty?
+AUTHOR
+------
+<%= action.authors.map {|x| " * " + x } .join("\n") %>
+
+%end
+COPYRIGHT AND LICENSE
+---------------------
+<%= action.copyright %>
+<%= action.license   %>
