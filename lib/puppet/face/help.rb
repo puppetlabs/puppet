@@ -4,6 +4,9 @@ require 'pathname'
 require 'erb'
 
 Puppet::Face.define(:help, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
   summary "Displays help about puppet subcommands"
 
   action(:help) do

@@ -1,6 +1,9 @@
 require 'puppet/face/indirector'
 
 Puppet::Face::Indirector.define(:report, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
   summary "Create, display, and submit reports"
 
   action(:submit) do
