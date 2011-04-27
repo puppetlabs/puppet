@@ -206,11 +206,11 @@ describe Puppet::Application::FaceBase do
 
       app.render_as = :json
       app.face      = Puppet::Face[:basetest, '0.0.1']
-      app.arguments = []
+      app.arguments = [{}]      # we always have options in there...
     end
 
     it "should exit 0 when the action returns true" do
-      app.action = app.face.get_action :return_true
+      app.action    = app.face.get_action :return_true
       expect { app.main }.to exit_with 0
     end
 

@@ -168,11 +168,12 @@ class Puppet::Interface::Action
   # this stuff work, because it would have been cleaner.  Which gives you an
   # idea how motivated we were to make this cleaner.  Sorry.
   # --daniel 2011-03-31
+  attr_reader :positional_arg_count
   def when_invoked=(block)
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
 
-    arity = block.arity
+    arity = @positional_arg_count = block.arity
     if arity == 0 then
       # This will never fire on 1.8.7, which treats no arguments as "*args",
       # but will on 1.9.2, which treats it as "no arguments".  Which bites,

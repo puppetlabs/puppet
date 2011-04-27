@@ -34,12 +34,12 @@ describe Puppet::Face::Indirector do
     end
 
     it "should call the indirection method with options when the '#{method}' action is invoked" do
-      subject.indirection.expects(method).with(:test, "myargs", {})
-      subject.send(method, :test, "myargs")
+      subject.indirection.expects(method).with(:test, {})
+      subject.send(method, :test)
     end
     it "should forward passed options" do
-      subject.indirection.expects(method).with(:test, "action", {'one'=>'1'})
-      subject.send(method, :test, 'action', {'one'=>'1'})
+      subject.indirection.expects(method).with(:test, {'one'=>'1'})
+      subject.send(method, :test, {'one'=>'1'})
     end
   end
 
