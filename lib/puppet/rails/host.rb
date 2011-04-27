@@ -1,3 +1,4 @@
+require 'puppet/node/environment'
 require 'puppet/rails'
 require 'puppet/rails/resource'
 require 'puppet/rails/fact_name'
@@ -26,6 +27,12 @@ class Puppet::Rails::Host < ActiveRecord::Base
     end
 
     host
+  end
+
+  # Override the setter for environment to force it to be a string, lest it
+  # be YAML encoded.  See #4487.
+  def environment=(value)
+    super value.to_s
   end
 
   # returns a hash of fact_names.name => [ fact_values ] for this host.
