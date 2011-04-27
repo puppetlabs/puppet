@@ -4,6 +4,16 @@ Puppet::Face.define(:plugin, '0.0.1') do
   license   "Apache 2 license; see COPYING"
 
   summary "Interact with the Puppet plugin system"
+  description <<-EOT
+This face provides network access to the puppet master's store of
+plugins. It is intended for use in other faces, rather than for direct
+command line access.
+  EOT
+  notes <<-EOT
+The puppet master can serve Ruby code collected from the lib directories
+of its modules. These plugins can be used on agent nodes to extend
+Facter and implement custom types and providers.
+  EOT
 
   action :download do
     summary "Download plugins from the configured master"
@@ -11,6 +21,12 @@ Puppet::Face.define(:plugin, '0.0.1') do
             An array containing the files actually downloaded.
             This will be empty array when everything was in sync.
             EOT
+    notes "This action modifies files on disk without returning any data."
+    examples <<-EOT
+Retrieve plugins from the puppet master:
+
+    Puppet::Face[:plugin, '0.0.1'].download
+    EOT
 
     when_invoked do |options|
       require 'puppet/configurer/downloader'

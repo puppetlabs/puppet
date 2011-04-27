@@ -8,6 +8,12 @@ Puppet::Face.define(:parser, '0.0.1') do
   summary "Interact directly with the parser"
 
   action :validate do
+    summary "Validate the syntax of one or more Puppet manifests"
+    description <<-EOT
+This action validates Puppet DSL syntax without compiling a catalog or
+syncing any resources. If no manifest files are provided, it will
+validate the default site manifest.
+    EOT
     when_invoked do |*args|
       args.pop
       files = args
