@@ -1,12 +1,21 @@
-# -*- coding: utf-8 -*-
 require 'puppet/interface'
-require 'puppet/interface/option'
+require 'puppet/interface/documentation'
+require 'prettyprint'
 
 class Puppet::Interface::Action
+  include Puppet::Interface::DocSupport
+
   def initialize(face, name, attrs = {})
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
     @face    = face
     @name    = name.to_sym
+
+    # The few bits of documentation we actually demand.  The default license
+    # is a favour to our end users; if you happen to get that in a core face
+    # report it as a bug, please. --daniel 2011-04-26
+    @authors = []
+    @license  = 'All Rights Reserved'
+
     attrs.each do |k, v| send("#{k}=", v) end
 
     @options        = {}
@@ -30,8 +39,31 @@ class Puppet::Interface::Action
     !!@default
   end
 
-  attr_accessor :summary
+  ########################################################################
+  # Documentation...
+  def synopsis
+    output = PrettyPrint.format do |s|
+      s.text("puppet #{@face.name}")
+      s.text(" #{name}") unless default?
+      s.breakable
 
+      options.each do |option|
+        option = get_option(option)
+        wrap = option.required? ? %w{ < > } : %w{ [ ] }
+
+        s.group(0, *wrap) do
+          option.optparse.each do |item|
+            unless s.current_group.first?
+              s.breakable
+              s.text '|'
+              s.breakable
+            end
+            s.text item
+          end
+        end
+      end
+    end
+  end
 
   ########################################################################
   # Support for rendering formats and all.
@@ -79,18 +111,6 @@ class Puppet::Interface::Action
   attr_accessor :render_as
   def render_as=(value)
     @render_as = value.to_sym
-  end
-
-
-  ########################################################################
-  # Documentation stuff, whee!
-  attr_accessor :summary, :description
-  def summary=(value)
-    value = value.to_s
-    value =~ /\n/ and
-      raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
-
-    @summary = value
   end
 
 

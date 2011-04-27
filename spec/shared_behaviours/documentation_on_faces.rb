@@ -38,6 +38,46 @@ shared_examples_for "documentation on faces" do
     end
   end
 
+  describe "#short_description" do
+    it "should return the set value if set after description" do
+      subject.description = "hello\ngoodbye"
+      subject.short_description = "whatever"
+      subject.short_description.should == "whatever"
+    end
+
+    it "should return the set value if set before description" do
+      subject.short_description = "whatever"
+      subject.description = "hello\ngoodbye"
+      subject.short_description.should == "whatever"
+    end
+
+    it "should return nothing if not set and no description" do
+      subject.short_description.should be_nil
+    end
+
+    it "should return the first paragraph of description if not set (where it is one line long)" do
+      subject.description = "hello"
+      subject.short_description.should == subject.description
+    end
+
+    it "should return the first paragraph of description if not set (where there is no paragraph break)" do
+      subject.description = "hello\ngoodbye"
+      subject.short_description.should == subject.description
+    end
+
+    it "should return the first paragraph of description if not set (where there is a paragraph break)" do
+      subject.description = "hello\ngoodbye\n\nmore\ntext\nhere\n\nfinal\nparagraph"
+      subject.short_description.should == "hello\ngoodbye"
+    end
+
+    it "should trim a very, very long first paragraph" do
+      line = "this is a very, very, very long long line full of text\n"
+      subject.description = line * 20 + "\n\nwhatever, dude."
+
+      subject.short_description.should == (line * 5).chomp
+    end
+  end
+
   describe "multiple authors" do
     authors = %w{John Paul George Ringo}
 
@@ -84,11 +124,6 @@ shared_examples_for "documentation on faces" do
   describe "#license" do
     it "should default to reserving rights" do
       subject.license.should =~ /All Rights Reserved/
-    end
-
-    it "should accept an arbitrary license string in the DSL" do
-      subject.license("foo")
-      subject.license.should == "foo"
     end
 
     it "should accept an arbitrary license string on the object" do
@@ -172,6 +207,10 @@ shared_examples_for "documentation on faces" do
 
       it "should have a #{attr}" do
         subject.send(attr).should_not be_nil
+      end
+
+      it "'s #{attr} should not be empty..." do
+        subject.send(attr).should_not == ''
       end
     end
   end
