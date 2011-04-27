@@ -221,11 +221,12 @@ class DirectoryService < Puppet::Provider::NameService
     # have a lot of choice. Ultimately this should all be done using Ruby
     # to access the DirectoryService APIs directly, but that's simply not
     # feasible for a while yet.
-    case self.get_macosx_version_major
-    when "10.4"
-      dscl_plist = self.parse_dscl_url_data(dscl_output)
-    when "10.5", "10.6"
+    if self.get_macosx_version_major > "10.4"
       dscl_plist = self.parse_dscl_plist_data(dscl_output)
+    elsif self.get_macosx_version_major == "10.4"
+      dscl_plist = self.parse_dscl_url_data(dscl_output)
+    else
+      fail("Puppet does not support OS X versions < 10.4")
     end
 
     self.generate_attribute_hash(dscl_plist, *type_properties)
@@ -243,12 +244,14 @@ class DirectoryService < Puppet::Provider::NameService
     # different format for the -url output with objects with spaces in
     # their values. *sigh*. Use -url for 10.4 in the hope this can be
     # deprecated one day, and use -plist for 10.5 and higher.
-    case self.get_macosx_version_major
-    when "10.4"
-      command_vector = [ command(:dscl), "-url", "." ]
-    when "10.5", "10.6"
+    if self.get_macosx_version_major > "10.4"
       command_vector = [ command(:dscl), "-plist", "." ]
+    elsif self.get_macosx_version_major == "10.4"
+      command_vector = [ command(:dscl), "-url", "." ]
+    else
+      fail("Puppet does not support OS X versions < 10.4")
     end
+
     # JJM: The actual action to perform.  See "man dscl"
     #      Common actiosn: -create, -delete, -merge, -append, -passwd
     command_vector << ds_action
