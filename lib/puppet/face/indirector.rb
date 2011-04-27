@@ -3,8 +3,10 @@ require 'puppet/face'
 
 class Puppet::Face::Indirector < Puppet::Face
   option "--terminus TERMINUS" do
-    desc "REVISIT: You can select a terminus, which has some bigger effect
-that we should describe in this file somehow."
+    description %q{
+REVISIT: You can select a terminus, which has some bigger effect
+that we should describe in this file somehow.
+}.strip
 
     before_action do |action, args, options|
       set_terminus(options[:terminus])

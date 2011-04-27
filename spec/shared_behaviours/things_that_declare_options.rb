@@ -28,6 +28,8 @@ shared_examples_for "things that declare options" do
     thing = add_options_to do
       option "--foo" do
         desc text
+        description text
+        summary text
       end
     end
 

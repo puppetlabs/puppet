@@ -4,13 +4,16 @@ require 'pathname'
 require 'erb'
 
 Puppet::Face.define(:help, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
   summary "Displays help about puppet subcommands"
 
   action(:help) do
     summary "Display help about faces and their actions."
 
     option "--version VERSION" do
-      desc "Which version of the interface to show help for"
+      summary "which version of the interface to show help for"
     end
 
     default

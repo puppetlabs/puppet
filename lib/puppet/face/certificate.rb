@@ -2,6 +2,9 @@ require 'puppet/face/indirector'
 require 'puppet/ssl/host'
 
 Puppet::Face::Indirector.define(:certificate, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
   summary "provide access to the CA for certificate management"
 
   option "--ca-location LOCATION" do

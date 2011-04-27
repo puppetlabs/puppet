@@ -1,5 +1,8 @@
 require 'puppet/face'
 Puppet::Face.define(:plugin, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
   summary "Interact with the Puppet plugin system"
 
   action :download do

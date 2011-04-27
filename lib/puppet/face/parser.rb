@@ -2,6 +2,9 @@ require 'puppet/face'
 require 'puppet/parser'
 
 Puppet::Face.define(:parser, '0.0.1') do
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
+
   summary "Interact directly with the parser"
 
   action :validate do
