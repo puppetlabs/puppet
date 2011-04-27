@@ -1,5 +1,8 @@
-2.6.8rc1
-====
+2.6.8
+=====
+c1edcb2 add test for ticket 7101
+db26326 Move tests from puppet-acceptance repo
+bee1ef7 Updated CHANGELOG for 2.6.8rc1
 8b7444d (#2331) Remove darwinports pkg provider, replace with rewritten macports provider
 65c4e14 Fixed #7082 - Added system support for groups
 b7f4ff7 (#7018) Give more context on the service type's assumptions. Wording tweaks.
