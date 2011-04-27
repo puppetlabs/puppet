@@ -1,7 +1,7 @@
 require 'puppet/interface'
 
 class Puppet::Interface::Option
-  include Puppet::Interface::FullDocs
+  include Puppet::Interface::TinyDocs
   # For compatibility, deprecated, and should go fairly soon...
   ['', '='].each { |x| alias :"desc#{x}" :"description#{x}" }
 
