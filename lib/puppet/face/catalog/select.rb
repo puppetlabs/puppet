@@ -2,9 +2,25 @@
 Puppet::Face.define(:catalog, '0.0.1') do
   action :select do
     when_invoked do |host, type, options|
+      # REVISIT: Eventually, type should have a default value that triggers
+      # the non-specific behaviour.  For now, though, this will do.
+      # --daniel 2011-05-03
       catalog = Puppet::Resource::Catalog.indirection.find(host)
 
-      catalog.resources.reject { |res| res.type != type }.each { |res| puts res }
+      if type == '*'
+        catalog.resources
+      else
+        type = type.downcase
+        catalog.resources.reject { |res| res.type.downcase != type }
+      end
+    end
+
+    when_rendering :for_humans do |value|
+      if value.nil? then
+        "no matching resources found"
+      else
+        value.map {|x| x.to_s }.join("\n")
+      end
     end
   end
 end
