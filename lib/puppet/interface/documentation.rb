@@ -1,5 +1,5 @@
 class Puppet::Interface
-  module DocSupport
+  module TinyDocs
     attr_accessor :summary
     def summary(value = nil)
       self.summary = value unless value.nil?
@@ -18,6 +18,10 @@ class Puppet::Interface
       self.description = value unless value.nil?
       @description
     end
+  end
+
+  module FullDocs
+    include TinyDocs
 
     attr_accessor :examples
     def examples(value = nil)

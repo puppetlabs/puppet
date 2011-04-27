@@ -3,7 +3,7 @@ require 'puppet/interface/documentation'
 require 'prettyprint'
 
 class Puppet::Interface::Action
-  include Puppet::Interface::DocSupport
+  include Puppet::Interface::FullDocs
 
   def initialize(face, name, attrs = {})
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/

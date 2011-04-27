@@ -20,7 +20,8 @@ OPTIONS
 %   action.options.sort.each do |name|
 %     option = action.get_option name
 <%= "  " + option.optparse.join(" |" ) %>
-<%= option.desc and option.desc.gsub(/^/, '    ') %>
+<%= option.summary %>
+<%= option.description %>
 
 %   end
 % end

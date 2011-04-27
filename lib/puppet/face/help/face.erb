@@ -16,7 +16,8 @@ OPTIONS
 %   face.options.sort.each do |name|
 %     option = face.get_option name
 <%= "  " + option.optparse.join(" |" ) %>
-<%= option.desc and option.desc.gsub(/^/, '    ') %>
+<%= option.summary %>
+<%= option.description %>
 
 %   end
 % end

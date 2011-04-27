@@ -4,7 +4,7 @@ require 'puppet/interface/documentation'
 require 'prettyprint'
 
 class Puppet::Interface
-  include DocSupport
+  include FullDocs
 
   require 'puppet/interface/face_collection'
 

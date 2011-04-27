@@ -13,7 +13,7 @@ Puppet::Face.define(:help, '0.0.1') do
     summary "Display help about faces and their actions."
 
     option "--version VERSION" do
-      desc "Which version of the interface to show help for"
+      summary "which version of the interface to show help for"
     end
 
     default
