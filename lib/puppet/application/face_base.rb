@@ -213,54 +213,46 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     # Call the method associated with the provided action (e.g., 'find').
     if @action
-      begin
-        # We need to do arity checking here because this is generic code
-        # calling generic methods – that have argument defaulting.  We need to
-        # make sure we don't accidentally pass the options as the first
-        # argument to a method that takes one argument.  eg:
-        #
-        #   puppet facts find
-        #   => options => {}
-        #      @arguments => [{}]
-        #   => @face.send :bar, {}
-        #
-        #   def face.bar(argument, options = {})
-        #   => bar({}, {})  # oops!  we thought the options were the
-        #                   # positional argument!!
-        #
-        # We could also fix this by making it mandatory to pass the options on
-        # every call, but that would make the Ruby API much more annoying to
-        # work with; having the defaulting is a much nicer convention to have.
-        #
-        # We could also pass the arguments implicitly, by having a magic
-        # 'options' method that was visible in the scope of the action, which
-        # returned the right stuff.
-        #
-        # That sounds attractive, but adds complications to all sorts of
-        # things, especially when you think about how to pass options when you
-        # are writing Ruby code that calls multiple faces.  Especially if
-        # faces are involved in that. ;)
-        #
-        # --daniel 2011-04-27
-        if (arity = @action.positional_arg_count) > 0
-          unless (count = arguments.length) == arity then
-            raise ArgumentError, "wrong number of arguments (#{count} for #{arity})"
-          end
-        end
-
-        result = @face.send(@action.name, *arguments)
-        puts render(result) unless result.nil?
-        status = true
-      rescue Exception => detail
-        puts detail.backtrace if Puppet[:trace]
-
-        case detail
-        when ArgumentError then
-          got, want = /\((\d+) for (\d+)\)/.match(detail.to_s).to_a.map {|x| x.to_i }
-          Puppet.err "puppet #{@face.name} #{@action.name}: #{want} argument expected but #{got} given"
+      # We need to do arity checking here because this is generic code
+      # calling generic methods – that have argument defaulting.  We need to
+      # make sure we don't accidentally pass the options as the first
+      # argument to a method that takes one argument.  eg:
+      #
+      #   puppet facts find
+      #   => options => {}
+      #      @arguments => [{}]
+      #   => @face.send :bar, {}
+      #
+      #   def face.bar(argument, options = {})
+      #   => bar({}, {})  # oops!  we thought the options were the
+      #                   # positional argument!!
+      #
+      # We could also fix this by making it mandatory to pass the options on
+      # every call, but that would make the Ruby API much more annoying to
+      # work with; having the defaulting is a much nicer convention to have.
+      #
+      # We could also pass the arguments implicitly, by having a magic
+      # 'options' method that was visible in the scope of the action, which
+      # returned the right stuff.
+      #
+      # That sounds attractive, but adds complications to all sorts of
+      # things, especially when you think about how to pass options when you
+      # are writing Ruby code that calls multiple faces.  Especially if
+      # faces are involved in that. ;)
+      #
+      # --daniel 2011-04-27
+      if (arity = @action.positional_arg_count) > 0
+        unless (count = arguments.length) == arity then
+          Puppet.err "puppet #{@face.name} #{@action.name}: #{arity - 1} argument expected but #{count - 1} given"
           Puppet.err "Try 'puppet help #{@face.name} #{@action.name}' for usage"
-
-        else # generic exception handling, alas.
+        end
+      else
+        begin
+          result = @face.send(@action.name, *arguments)
+          puts render(result) unless result.nil?
+          status = true
+        rescue Exception => detail
+          puts detail.backtrace if Puppet[:trace]
           Puppet.err detail.to_s
         end
       end
