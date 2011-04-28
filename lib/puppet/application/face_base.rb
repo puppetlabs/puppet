@@ -36,15 +36,18 @@ class Puppet::Application::FaceBase < Puppet::Application
       result = hook.call(result)
     end
 
+    begin
+      render_method = Puppet::Network::FormatHandler.format(format).render_method
+    rescue
+      render_method = nil
+    end
+
     if format == :for_humans then
       render_for_humans(result)
+    elsif format == :json or render_method == "to_pson"
+      PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
     else
-      render_method = Puppet::Network::FormatHandler.format(format).render_method
-      if render_method == "to_pson"
-        PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
-      else
-        result.send(render_method)
-      end
+      result.send(render_method)
     end
   end
 

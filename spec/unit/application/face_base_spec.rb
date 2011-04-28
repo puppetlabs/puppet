@@ -296,5 +296,13 @@ EOT
       app.action.render_as = :for_humans
       app.render("bi-polar?").should == "bi-winning!"
     end
+
+    it "should render JSON when asked for json" do
+      app.action.render_as = :json
+      json = app.render({ :one => 1, :two => 2 })
+      json.should =~ /"one":\s*1\b/
+      json.should =~ /"two":\s*2\b/
+      PSON.parse(json).should == { "one" => 1, "two" => 2 }
+    end
   end
 end
