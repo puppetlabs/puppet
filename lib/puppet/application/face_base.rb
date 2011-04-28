@@ -15,8 +15,14 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet::Util::Log.level = :info
   end
 
-  option("--render-as FORMAT") do |arg|
-    @render_as = arg.to_sym
+  option("--render-as FORMAT") do |_arg|
+    format = _arg.to_sym
+    unless @render_method = Puppet::Network::FormatHandler.format(format)
+      unless format == :for_humans or format == :json
+        raise ArgumentError, "I don't know how to render '#{format}'"
+      end
+    end
+    @render_as = format
   end
 
   option("--mode RUNMODE", "-r") do |arg|
@@ -38,13 +44,10 @@ class Puppet::Application::FaceBase < Puppet::Application
 
     if format == :for_humans then
       render_for_humans(result)
+    elsif format == :json or @render_method == "to_pson"
+      PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
     else
-      render_method = Puppet::Network::FormatHandler.format(format).render_method
-      if render_method == "to_pson"
-        PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
-      else
-        result.send(render_method)
-      end
+      result.send(@render_method)
     end
   end
 
