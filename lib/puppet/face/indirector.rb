@@ -25,11 +25,9 @@ that we should describe in this file somehow.
     Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
   end
 
-  def call_indirection_method(method, *args)
-    options = args.last
-
+  def call_indirection_method(method, key, options)
     begin
-      result = indirection.__send__(method, *args)
+      result = indirection.__send__(method, key, options)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
@@ -39,19 +37,19 @@ that we should describe in this file somehow.
   end
 
   action :destroy do
-    when_invoked { |*args| call_indirection_method(:destroy, *args) }
+    when_invoked { |key, options| call_indirection_method(:destroy, key, options) }
   end
 
   action :find do
-    when_invoked { |*args| call_indirection_method(:find, *args) }
+    when_invoked { |key, options| call_indirection_method(:find, key, options) }
   end
 
   action :save do
-    when_invoked { |*args| call_indirection_method(:save, *args) }
+    when_invoked { |key, options| call_indirection_method(:save, key, options) }
   end
 
   action :search do
-    when_invoked { |*args| call_indirection_method(:search, *args) }
+    when_invoked { |key, options| call_indirection_method(:search, key, options) }
   end
 
   # Print the configuration for the current terminus class

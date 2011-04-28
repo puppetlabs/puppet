@@ -206,11 +206,11 @@ describe Puppet::Application::FaceBase do
 
       app.render_as = :json
       app.face      = Puppet::Face[:basetest, '0.0.1']
-      app.arguments = []
+      app.arguments = [{}]      # we always have options in there...
     end
 
     it "should exit 0 when the action returns true" do
-      app.action = app.face.get_action :return_true
+      app.action    = app.face.get_action :return_true
       expect { app.main }.to exit_with 0
     end
 
@@ -309,13 +309,15 @@ EOT
       Puppet::Face[:help, :current].expects(:help).never
 
       expect {
-        expect { app.setup; app.run }.to exit_with 1
-      }.to print(/I don't know how to render 'interpretive-dance'/)
+        expect { app.run }.to exit_with 1
+      }.to have_printed(/I don't know how to render 'interpretive-dance'/)
     end
 
     it "should work if asked to render a NetworkHandler format" do
-      app.command_line.stubs(:args).returns %w{facts find dummy --render-as yaml}
-      expect { app.parse_options; app.setup; app.run }.to exit_with 0
+      app.command_line.stubs(:args).returns %w{dummy find dummy --render-as yaml}
+      expect {
+        expect { app.run }.to exit_with 0
+      }.to have_printed(/--- 3/)
     end
   end
 end

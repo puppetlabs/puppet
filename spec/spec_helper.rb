@@ -17,9 +17,10 @@ end
 require 'pathname'
 require 'tmpdir'
 
-require 'lib/puppet_spec/verbose'
-require 'lib/puppet_spec/files'
-require 'lib/puppet_spec/fixtures'
+require 'puppet_spec/verbose'
+require 'puppet_spec/files'
+require 'puppet_spec/fixtures'
+require 'puppet_spec/matchers'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
 require 'monkey_patches/disable_signal_trap'
@@ -74,43 +75,3 @@ RSpec.configure do |config|
     GC.enable
   end
 end
-
-RSpec::Matchers.define :have_matching_element do |expected|
-  match do |actual|
-    actual.any? { |item| item =~ expected }
-  end
-end
-
-RSpec::Matchers.define :exit_with do |expected|
-  actual = nil
-  match do |block|
-    begin
-      block.call
-    rescue SystemExit => e
-      actual = e.status
-    end
-    actual and actual == expected
-  end
-  failure_message_for_should do |block|
-    "expected exit with code #{expected} but " +
-      (actual.nil? ? " exit was not called" : "we exited with #{actual} instead")
-  end
-  failure_message_for_should_not do |block|
-    "expected that exit would not be called with #{expected}"
-  end
-  description do
-    "expect exit with #{expected}"
-  end
-end
-
-# Backward compatibility for Jenkins outdated environment.
-module RSpec
-  module Matchers
-    module BlockAliases
-      alias_method :to,     :should      unless method_defined? :to
-      alias_method :to_not, :should_not  unless method_defined? :to_not
-      alias_method :not_to, :should_not  unless method_defined? :not_to
-    end
-  end
-end
-

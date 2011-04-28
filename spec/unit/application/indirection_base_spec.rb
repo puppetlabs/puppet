@@ -28,10 +28,11 @@ describe Puppet::Application::IndirectionBase do
     Puppet::Indirector::Indirection.expects(:instance).
       with(:testindirection).returns(terminus)
 
-    subject.command_line.instance_variable_set('@args', %w{--terminus foo save})
+    subject.command_line.instance_variable_set('@args', %w{--terminus foo save bar})
 
     # Not a very nice thing. :(
     $stderr.stubs(:puts)
+    Puppet.stubs(:err)
 
     expect { subject.run }.to exit_with 0
   end
