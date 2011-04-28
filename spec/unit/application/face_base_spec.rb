@@ -304,5 +304,18 @@ EOT
       json.should =~ /"two":\s*2\b/
       PSON.parse(json).should == { "one" => 1, "two" => 2 }
     end
+
+    it "should fail early if asked to render an invalid format" do
+      app.command_line.stubs(:args).returns %w{--render-as interpretive-dance help help}
+      # We shouldn't get here, thanks to the exception, and our expectation on
+      # it, but this helps us fail if that slips up and all. --daniel 2011-04-27
+      Puppet::Face[:help, :current].expects(:help).never
+
+      # ...and this is just annoying.  Thanks, puppet/application.rb.
+      $stderr.expects(:puts).
+        with "Could not parse options: I don't know how to render 'interpretive-dance'"
+
+      expect { app.run }.to exit_with 1
+    end
   end
 end
