@@ -15,14 +15,8 @@ class Puppet::Application::FaceBase < Puppet::Application
     Puppet::Util::Log.level = :info
   end
 
-  option("--render-as FORMAT") do |_arg|
-    format = _arg.to_sym
-    unless @render_method = Puppet::Network::FormatHandler.format(format)
-      unless format == :for_humans or format == :json
-        raise ArgumentError, "I don't know how to render '#{format}'"
-      end
-    end
-    @render_as = format
+  option("--render-as FORMAT") do |format|
+    self.render_as = format.to_sym
   end
 
   option("--mode RUNMODE", "-r") do |arg|
@@ -34,20 +28,33 @@ class Puppet::Application::FaceBase < Puppet::Application
 
   attr_accessor :face, :action, :type, :arguments, :render_as
 
-  def render(result)
-    format = render_as || action.render_as || :for_humans
+  def render_as=(format)
+    if format == :for_humans or format == :json
+      @render_as = format
+    elsif network_format = Puppet::Network::FormatHandler.format(format)
+      method = network_format.render_method
+      if method == "to_pson" then
+        @render_as = :json
+      else
+        @render_as = method.to_sym
+      end
+    else
+      raise ArgumentError, "I don't know how to render '#{format}'"
+    end
+  end
 
+  def render(result)
     # Invoke the rendering hook supplied by the user, if appropriate.
-    if hook = action.when_rendering(format) then
+    if hook = action.when_rendering(render_as) then
       result = hook.call(result)
     end
 
-    if format == :for_humans then
+    if render_as == :for_humans then
       render_for_humans(result)
-    elsif format == :json or @render_method == "to_pson"
+    elsif render_as == :json
       PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
     else
-      result.send(@render_method)
+      result.send(render_as)
     end
   end
 
@@ -129,8 +136,13 @@ class Puppet::Application::FaceBase < Puppet::Application
     end
 
     if @action.nil?
-      @action = @face.get_default_action()
-      @is_default_action = true
+      if @action = @face.get_default_action() then
+        @is_default_action = true
+      else
+        Puppet.err "#{face.name} does not have a default action, and no action was given"
+        Puppet.err Puppet::Face[:help, :current].help(@face.name)
+        exit false
+      end
     end
 
     # Now we can interact with the default option code to build behaviour
@@ -138,7 +150,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     @action.options.each do |option|
       option = @action.get_option(option) # make it the object.
       self.class.option(*option.optparse) # ...and make the CLI parse it.
-    end if @action
+    end
 
     # ...and invoke our parent to parse all the command line options.
     super
@@ -190,6 +202,9 @@ class Puppet::Application::FaceBase < Puppet::Application
     # would invoke the action with options set as global state in the
     # interface object.  --daniel 2011-03-28
     @arguments << options
+
+    # If we don't have a rendering format, set one early.
+    self.render_as ||= (@action.render_as || :for_humans)
   end
 
 
@@ -207,13 +222,8 @@ class Puppet::Application::FaceBase < Puppet::Application
         Puppet.err detail.to_s
       end
     else
-      if arguments.first.is_a? Hash
-        puts "#{face} does not have a default action"
-      else
-        puts "#{face} does not respond to action #{arguments.first}"
-      end
-
-      puts Puppet::Face[:help, :current].help(@face.name, *arguments)
+      puts "#{face} does not respond to action #{arguments.first}"
+      puts Puppet::Face[:help, :current].help(@face.name)
     end
 
     exit status
