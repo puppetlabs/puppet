@@ -1,35 +1,74 @@
+# This isn't usable outside Puppet::Interface; don't load it alone.
 class Puppet::Interface
-  module TinyDocs
-    attr_accessor :summary
-    def summary(value = nil)
-      self.summary = value unless value.nil?
-      @summary
-    end
-    def summary=(value)
-      value = value.to_s
-      value =~ /\n/ and
-        raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
+  module DocGen
+    def self.strip_whitespace(text)
+      text.gsub!(/[ \t\f]+$/, '')
 
-      @summary = value
+      # We need to identify an indent: the minimum number of whitespace
+      # characters at the start of any line in the text.
+      indent = text.each_line.map {|x| x.index(/[^\s]/) }.compact.min
+
+      if indent > 0 then
+        text.gsub!(/^[ \t\f]{0,#{indent}}/, '')
+      end
+
+      return text
     end
 
-    attr_accessor :description
-    def description(value = nil)
-      self.description = value unless value.nil?
-      @description
+    # The documentation attributes all have some common behaviours; previously
+    # we open-coded them across the set of six things, but that seemed
+    # wasteful - especially given that they were literally the same, and had
+    # the same bug hidden in them.
+    #
+    # This feels a bit like overkill, but at least the common code is common
+    # now. --daniel 2011-04-29
+    def attr_doc(name, &validate)
+      # Now, which form of the setter do we want, validated or not?
+      get_arg = "value.to_s"
+      if validate
+        define_method(:"_validate_#{name}", validate)
+        get_arg = "_validate_#{name}(#{get_arg})"
+      end
+
+      # We use module_eval, which I don't like much, because we can't have an
+      # argument to a block with a default value in Ruby 1.8, and I don't like
+      # the side-effects (eg: no argument count validation) of using blocks
+      # without as metheds.  When we are 1.9 only (hah!) you can totally
+      # replace this with some up-and-up define_method. --daniel 2011-04-29
+      module_eval(<<-EOT, __FILE__, __LINE__ + 1)
+        def #{name}(value = nil)
+          self.#{name} = value unless value.nil?
+          @#{name}
+        end
+
+        def #{name}=(value)
+          @#{name} = Puppet::Interface::DocGen.strip_whitespace(#{get_arg})
+        end
+      EOT
     end
   end
 
-  module FullDocs
-    include TinyDocs
+  module TinyDocs
+    extend Puppet::Interface::DocGen
 
-    attr_accessor :examples
-    def examples(value = nil)
-      self.examples = value unless value.nil?
-      @examples
+    attr_doc :summary do |value|
+      value =~ /\n/ and
+        raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
+      value
     end
 
-    attr_accessor :short_description
+    attr_doc :description
+  end
+
+  module FullDocs
+    extend Puppet::Interface::DocGen
+    include TinyDocs
+
+    attr_doc :examples
+    attr_doc :notes
+    attr_doc :license
+
+    attr_doc :short_description
     def short_description(value = nil)
       self.short_description = value unless value.nil?
       if @short_description.nil? then
@@ -50,37 +89,20 @@ class Puppet::Interface
         if value =~ /\n/ then
           raise ArgumentError, 'author should be a single line; use multiple statements for multiple authors'
         end
-        @authors.push(value)
+        @authors.push(Puppet::Interface::DocGen.strip_whitespace(value))
       end
       @authors.empty? ? nil : @authors.join("\n")
+    end
+    def authors
+      @authors
     end
     def author=(value)
       if Array(value).any? {|x| x =~ /\n/ } then
         raise ArgumentError, 'author should be a single line; use multiple statements'
       end
-      @authors = Array(value)
+      @authors = Array(value).map{|x| Puppet::Interface::DocGen.strip_whitespace(x) }
     end
-    def authors
-      @authors
-    end
-    def authors=(value)
-      if Array(value).any? {|x| x =~ /\n/ } then
-        raise ArgumentError, 'author should be a single line; use multiple statements'
-      end
-      @authors = Array(value)
-    end
-
-    attr_accessor :notes
-    def notes(value = nil)
-      @notes = value unless value.nil?
-      @notes
-    end
-
-    attr_accessor :license
-    def license(value = nil)
-      @license = value unless value.nil?
-      @license
-    end
+    alias :authors= :author=
 
     def copyright(owner = nil, years = nil)
       if years.nil? and not owner.nil? then

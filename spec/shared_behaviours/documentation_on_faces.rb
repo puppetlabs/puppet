@@ -20,20 +20,59 @@ shared_examples_for "documentation on faces" do
     end
   end
 
-  # Should they accept multiple lines?
-  Attrs.each do |attr|
-    text = "with\nnewlines"
-
-    if SingleLineAttrs.include? attr then
-      it "should not accept multiline values for #{attr}" do
-        expect { subject.send("#{attr}=", text) }.
-          to raise_error ArgumentError, /#{attr} should be a single line/
-        subject.send(attr).should be_nil
+  Attrs.each do |getter|
+    setter = "#{getter}=".to_sym
+    context "#{getter}" do
+      it "should strip leading whitespace on a single line" do
+        subject.send(setter, "  death to whitespace")
+        subject.send(getter).should == "death to whitespace"
       end
-    else
-      it "should accept multiline values for #{attr}" do
-        expect { subject.send("#{attr}=", text) }.not_to raise_error
-        subject.send(attr).should == text
+
+      it "should strip trailing whitespace on a single line" do
+        subject.send(setter, "death to whitespace  ")
+        subject.send(getter).should == "death to whitespace"
+      end
+
+      it "should strip whitespace at both ends at once" do
+        subject.send(setter, "  death to whitespace  ")
+        subject.send(getter).should == "death to whitespace"
+      end
+
+      multiline_text = "with\nnewlines"
+      if SingleLineAttrs.include? getter then
+        it "should not accept multiline values" do
+          expect { subject.send(setter, multiline_text) }.
+            to raise_error ArgumentError, /#{getter} should be a single line/
+          subject.send(getter).should be_nil
+        end
+      else
+        it "should accept multiline values" do
+          expect { subject.send(setter, multiline_text) }.not_to raise_error
+          subject.send(getter).should == multiline_text
+        end
+
+        [1, 2, 4, 7, 25].each do |length|
+          context "#{length} chars indent" do
+            indent = ' ' * length
+
+            it "should strip leading whitespace on multiple lines" do
+              text = "this\nis\the\final\outcome"
+              subject.send(setter, text.gsub(/^/, indent))
+              subject.send(getter).should == text
+            end
+
+            it "should not remove formatting whitespace, only global indent" do
+              text = "this\n  is\n    the\n  ultimate\ntest\n"
+              subject.send(setter, text.gsub(/^/, indent))
+              subject.send(getter).should == text
+            end
+          end
+        end
+
+        it "should strip whitespace with a blank line" do
+          subject.send(setter, "  this\n\n  should outdent\n")
+          subject.send(getter).should == "this\n\nshould outdent\n"
+        end
       end
     end
   end
