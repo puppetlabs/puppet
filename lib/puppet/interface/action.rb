@@ -18,7 +18,10 @@ class Puppet::Interface::Action
 
     attrs.each do |k, v| send("#{k}=", v) end
 
-    @options        = {}
+    # @options collects the added options in the order they're declared.
+    # @options_hash collects the options keyed by alias for quick lookups.
+    @options        = []
+    @options_hash   = {}
     @when_rendering = {}
   end
 
@@ -232,22 +235,23 @@ WRAPPER
     end
 
     option.aliases.each do |name|
-      @options[name] = option
+      @options << name
+      @options_hash[name] = option
     end
 
     option
   end
 
   def option?(name)
-    @options.include? name.to_sym
+    @options_hash.include? name.to_sym
   end
 
   def options
-    (@options.keys + @face.options).sort
+    @face.options + @options
   end
 
   def get_option(name, with_inherited_options = true)
-    option = @options[name.to_sym]
+    option = @options_hash[name.to_sym]
     if option.nil? and with_inherited_options
       option = @face.get_option(name)
     end

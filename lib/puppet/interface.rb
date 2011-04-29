@@ -155,6 +155,8 @@ class Puppet::Interface
       action.get_option(name).__decoration_name(type)
     end
 
+    methods.reverse! if type == :after
+
     # Exceptions here should propagate up; this implements a hook we can use
     # reasonably for option validation.
     methods.each do |hook|
