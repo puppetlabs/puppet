@@ -445,4 +445,23 @@ describe Puppet::Interface::Action do
     it "should fail if a second block is given for the same type"
     it "should return the block if asked"
   end
+
+  context "#validate_args" do
+    subject do
+      Puppet::Interface.new(:validate_args, '1.0.0') do
+        script :test do true end
+      end
+    end
+
+    it "should fail if a required option is not passed" do
+      subject.option "--foo" do required end
+      expect { subject.test }.to raise_error ArgumentError, /options are required/
+    end
+
+    it "should fail if two aliases to one option are passed" do
+      subject.option "--foo", "-f"
+      expect { subject.test :foo => true, :f => true }.
+        to raise_error ArgumentError, /Multiple aliases for the same option/
+    end
+  end
 end

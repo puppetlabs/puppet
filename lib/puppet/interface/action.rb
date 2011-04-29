@@ -255,6 +255,20 @@ WRAPPER
   end
 
   def validate_args(args)
+    # Check for multiple aliases for the same option...
+    args.last.keys.each do |name|
+      # #7290: If this isn't actually an option, ignore it for now.  We should
+      # probably fail, but that wasn't our API, and I don't want to perturb
+      # behaviour this late in the RC cycle. --daniel 2011-04-29
+      if option = get_option(name) then
+        overlap = (option.aliases & args.last.keys)
+        unless overlap.length == 1 then
+          raise ArgumentError, "Multiple aliases for the same option passed: #{overlap.join(', ')}"
+        end
+      end
+    end
+
+    # Check for missing mandatory options.
     required = options.map do |name|
       get_option(name)
     end.select(&:required?).collect(&:name) - args.last.keys
