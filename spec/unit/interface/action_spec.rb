@@ -350,7 +350,7 @@ describe Puppet::Interface::Action do
             option("-q", "--action-quux") { after_action { |_,_,_| report :action_quux } }
             option("-a")                  { after_action { |_,_,_| report :a           } }
             option("--action-baz")        { after_action { |_,_,_| report :action_baz  } }
-            when_invoked { |options| warn options.inspect }
+            when_invoked { }
           end
           option("-u", "--face-quux") { after_action { |_,_,_| report :face_quux } }
           option("-f")                { after_action { |_,_,_| report :f         } }
