@@ -271,7 +271,7 @@ class Puppet::Resource
       end
     }
 
-    "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
+    "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes.join("\n")]
   end
 
   def to_ref
