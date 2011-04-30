@@ -69,5 +69,6 @@ class Puppet::Interface::ActionBuilder
     @face   = face
     @action = Puppet::Interface::Action.new(face, name)
     instance_eval(&block)
+    @action.when_invoked or raise ArgumentError, "actions need to know what to do when_invoked; please add the block"
   end
 end

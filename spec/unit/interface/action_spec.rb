@@ -150,6 +150,7 @@ describe Puppet::Interface::Action do
     it "should support options with an empty block" do
       face = Puppet::Interface.new(:action_level_options, '0.0.1') do
         action :foo do
+          when_invoked do true end
           option "--bar" do
             # this line left deliberately blank
           end
@@ -162,7 +163,10 @@ describe Puppet::Interface::Action do
 
     it "should return only action level options when there are no face options" do
       face = Puppet::Interface.new(:action_level_options, '0.0.1') do
-        action :foo do option "--bar" end
+        action :foo do
+          when_invoked do true end
+          option "--bar"
+        end
       end
 
       face.get_action(:foo).options.should =~ [:bar]
@@ -171,8 +175,8 @@ describe Puppet::Interface::Action do
     describe "with both face and action options" do
       let :face do
         Puppet::Interface.new(:action_level_options, '0.0.1') do
-          action :foo do option "--bar" end
-          action :baz do option "--bim" end
+          action :foo do when_invoked do true end ; option "--bar" end
+          action :baz do when_invoked do true end ; option "--bim" end
           option "--quux"
         end
       end
@@ -186,7 +190,10 @@ describe Puppet::Interface::Action do
         parent.option "--foo"
         child = parent.new(:inherited_options, '0.0.1') do
           option "--bar"
-          action :action do option "--baz" end
+          action :action do
+            when_invoked do true end
+            option "--baz"
+          end
         end
 
         action = child.get_action(:action)
@@ -215,7 +222,10 @@ describe Puppet::Interface::Action do
     it_should_behave_like "things that declare options" do
       def add_options_to(&block)
         face = Puppet::Interface.new(:with_options, '0.0.1') do
-          action(:foo, &block)
+          action(:foo) do
+            when_invoked do true end
+            self.instance_eval &block
+          end
         end
         face.get_action(:foo)
       end
@@ -498,7 +508,9 @@ describe Puppet::Interface::Action do
   it_should_behave_like "documentation on faces" do
     subject do
       face = Puppet::Interface.new(:action_documentation, '0.0.1') do
-        action :documentation do end
+        action :documentation do
+          when_invoked do true end
+        end
       end
       face.get_action(:documentation)
     end
