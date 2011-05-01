@@ -47,6 +47,24 @@ Puppet::Type.type(:mount).provide(
     end
   end
 
+  def self.instances
+    providers = super
+    mounts = mountinstances.dup
+
+    # Update fstab entries that are mounted
+    providers.each do |prov|
+      if mounts.delete({:name => prov.get(:name), :mounted => :yes}) then
+        prov.set(:ensure => :mounted)
+      end
+    end
+
+    # Add mounts that are not in fstab but mounted
+    mounts.each do |mount|
+      providers << new(:ensure => :ghost, :name => mount[:name])
+    end
+    providers
+  end
+
   def self.prefetch(resources = nil)
     # Get providers for all resources the user defined and that match
     # a record in /etc/fstab.
