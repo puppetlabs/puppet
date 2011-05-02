@@ -1,5 +1,5 @@
-require 'puppet/face/indirector'
-Puppet::Face::Indirector.define(:node, '0.0.1') do
+require 'puppet/indirector/face'
+Puppet::Indirector::Face.define(:node, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
