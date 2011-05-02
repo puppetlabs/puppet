@@ -16,11 +16,12 @@ describe Puppet::Interface::FaceCollection do
     @original_faces    = subject.instance_variable_get("@faces").dup
     @original_required = $".dup
     $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
-    subject.instance_variable_get("@faces").clear
+    subject.instance_variable_get(:@faces).clear
+    subject.instance_variable_set(:@loaded, false)
   end
 
   after :each do
-    subject.instance_variable_set("@faces", @original_faces)
+    subject.instance_variable_set(:@faces, @original_faces)
     $".clear ; @original_required.each do |item| $" << item end
   end
 
