@@ -76,8 +76,15 @@ class Puppet::Interface::Action
     unless type.is_a? Symbol
       raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
     end
-    return unless @when_rendering.has_key? type
-    return @when_rendering[type].bind(@face)
+    # Do we have a rendering hook for this name?
+    return @when_rendering[type].bind(@face) if @when_rendering.has_key? type
+
+    # How about by another name?
+    alt = type.to_s.sub(/^to_/, '').to_sym
+    return @when_rendering[alt].bind(@face) if @when_rendering.has_key? alt
+
+    # Guess not, nothing to run.
+    return nil
   end
   def set_rendering_method_for(type, proc)
     unless proc.is_a? Proc
