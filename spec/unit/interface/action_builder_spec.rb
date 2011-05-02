@@ -7,7 +7,8 @@ describe Puppet::Interface::ActionBuilder do
   let :face do Puppet::Interface.new(:puppet_interface_actionbuilder, '0.0.1') end
 
   it "should build an action" do
-    action = Puppet::Interface::ActionBuilder.build(nil, :foo) do
+    action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+      when_invoked do true end
     end
     action.should be_a(Puppet::Interface::Action)
     action.name.should == :foo
@@ -26,17 +27,25 @@ describe Puppet::Interface::ActionBuilder do
       should raise_error("Action :foo must specify a block")
   end
 
+  it "should require an invocation block" do
+    expect {
+      Puppet::Interface::ActionBuilder.build(face, :foo) {}
+    }.to raise_error(/actions need to know what to do when_invoked; please add the block/)
+  end
+
   describe "when handling options" do
     it "should have a #option DSL function" do
       method = nil
       Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         method = self.method(:option)
       end
-      method.should be
+      method.should be_an_instance_of Method
     end
 
     it "should define an option without a block" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         option "--bar"
       end
       action.should be_option :bar
@@ -44,6 +53,7 @@ describe Puppet::Interface::ActionBuilder do
 
     it "should accept an empty block" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         option "--bar" do
           # This space left deliberately blank.
         end
@@ -55,6 +65,7 @@ describe Puppet::Interface::ActionBuilder do
   context "inline documentation" do
     it "should set the summary" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         summary "this is some text"
       end
       action.summary.should == "this is some text"
@@ -64,13 +75,16 @@ describe Puppet::Interface::ActionBuilder do
   context "action defaulting" do
     it "should set the default to true" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         default
       end
       action.default.should be_true
     end
 
     it "should not be default by, er, default. *cough*" do
-      action = Puppet::Interface::ActionBuilder.build(face, :foo) do end
+      action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
+      end
       action.default.should be_false
     end
   end
@@ -79,6 +93,7 @@ describe Puppet::Interface::ActionBuilder do
     it "should fail if no rendering format is given" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           when_rendering do true end
         end
       }.to raise_error ArgumentError, /must give a rendering format to when_rendering/
@@ -87,6 +102,7 @@ describe Puppet::Interface::ActionBuilder do
     it "should fail if no block is given" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           when_rendering :json
         end
       }.to raise_error ArgumentError, /must give a block to when_rendering/
@@ -95,6 +111,7 @@ describe Puppet::Interface::ActionBuilder do
     it "should fail if the block takes no arguments" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           when_rendering :json do true end
         end
       }.to raise_error ArgumentError, /when_rendering methods take one argument, the result, not/
@@ -103,6 +120,7 @@ describe Puppet::Interface::ActionBuilder do
     it "should fail if the block takes more than one argument" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           when_rendering :json do |a, b, c| true end
         end
       }.to raise_error ArgumentError, /when_rendering methods take one argument, the result, not/
@@ -111,6 +129,7 @@ describe Puppet::Interface::ActionBuilder do
     it "should fail if the block takes a variable number of arguments" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           when_rendering :json do |*args| true end
         end
       }.to raise_error(ArgumentError,
@@ -119,6 +138,7 @@ describe Puppet::Interface::ActionBuilder do
 
     it "should stash a rendering block" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         when_rendering :json do |a| true end
       end
       action.when_rendering(:json).should be_an_instance_of Method
@@ -127,6 +147,7 @@ describe Puppet::Interface::ActionBuilder do
     it "should fail if you try to set the same rendering twice" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           when_rendering :json do |a| true end
           when_rendering :json do |a| true end
         end
@@ -135,6 +156,7 @@ describe Puppet::Interface::ActionBuilder do
 
     it "should work if you set two different renderings" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         when_rendering :json do |a| true end
         when_rendering :yaml do |a| true end
       end
@@ -144,6 +166,7 @@ describe Puppet::Interface::ActionBuilder do
 
     it "should be bound to the face when called" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         when_rendering :json do |a| self end
       end
       action.when_rendering(:json).call(true).should == face
@@ -152,13 +175,16 @@ describe Puppet::Interface::ActionBuilder do
 
   context "#render_as" do
     it "should default to nil (eg: based on context)" do
-      action = Puppet::Interface::ActionBuilder.build(face, :foo) do end
+      action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
+      end
       action.render_as.should be_nil
     end
 
     it "should fail if not rendering format is given" do
       expect {
         Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           render_as
         end
       }.to raise_error ArgumentError, /must give a rendering format to render_as/
@@ -167,6 +193,7 @@ describe Puppet::Interface::ActionBuilder do
     Puppet::Network::FormatHandler.formats.each do |name|
       it "should accept #{name.inspect} format" do
         action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+          when_invoked do true end
           render_as name
         end
         action.render_as.should == name
@@ -175,6 +202,7 @@ describe Puppet::Interface::ActionBuilder do
 
     it "should accept :for_humans format" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
+        when_invoked do true end
         render_as :for_humans
       end
       action.render_as.should == :for_humans
@@ -184,6 +212,7 @@ describe Puppet::Interface::ActionBuilder do
       it "should fail if given #{input.inspect}" do
         expect {
           Puppet::Interface::ActionBuilder.build(face, :foo) do
+            when_invoked do true end
             render_as input
           end
         }.to raise_error ArgumentError, /#{input.inspect} is not a valid rendering format/

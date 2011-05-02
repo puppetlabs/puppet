@@ -171,7 +171,8 @@ class Puppet::Interface::Action
   # this stuff work, because it would have been cleaner.  Which gives you an
   # idea how motivated we were to make this cleaner.  Sorry.
   # --daniel 2011-03-31
-  attr_reader :positional_arg_count
+  attr_reader   :positional_arg_count
+  attr_accessor :when_invoked
   def when_invoked=(block)
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
@@ -219,9 +220,11 @@ WRAPPER
     if @face.is_a?(Class)
       @face.class_eval do eval wrapper, nil, file, line end
       @face.define_method(internal_name, &block)
+      @when_invoked = @face.instance_method(name)
     else
       @face.instance_eval do eval wrapper, nil, file, line end
       @face.meta_def(internal_name, &block)
+      @when_invoked = @face.method(name).unbind
     end
   end
 
