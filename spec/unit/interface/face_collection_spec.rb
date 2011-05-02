@@ -16,12 +16,13 @@ describe Puppet::Interface::FaceCollection do
     @original_faces    = subject.instance_variable_get("@faces").dup
     @original_required = $".dup
     $".delete_if do |path| path =~ %r{/face/.*\.rb$} end
-    subject.instance_variable_get("@faces").clear
+    subject.instance_variable_get(:@faces).clear
+    subject.instance_variable_set(:@loaded, false)
   end
 
   after :each do
-    subject.instance_variable_set("@faces", @original_faces)
-    $".clear ; @original_required.each do |item| $" << item end
+    subject.instance_variable_set(:@faces, @original_faces)
+    @original_required.each {|f| $".push f unless $".include? f }
   end
 
   describe "::prefix_match?" do
@@ -157,6 +158,23 @@ describe Puppet::Interface::FaceCollection do
         expect { subject.underscorize(input) }.
           should raise_error ArgumentError, /not a valid face name/
       end
+    end
+  end
+
+  context "faulty faces" do
+    before :each do
+      $:.unshift "#{PuppetSpec::FIXTURE_DIR}/faulty_face"
+    end
+
+    after :each do
+      $:.delete_if {|x| x == "#{PuppetSpec::FIXTURE_DIR}/faulty_face"}
+    end
+
+    it "should not die if a face has a syntax error" do
+      subject.faces.should be_include :help
+      subject.faces.should_not be_include :syntax
+      @logs.should_not be_empty
+      @logs.first.message.should =~ /syntax error/
     end
   end
 end

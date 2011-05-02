@@ -1,14 +1,14 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/application/indirection_base'
-require 'puppet/face/indirector'
+require 'puppet/indirector/face'
 
 ########################################################################
 # Stub for testing; the names are critical, sadly. --daniel 2011-03-30
 class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBase
 end
 
-face = Puppet::Face::Indirector.define(:testindirection, '0.0.1') do
+face = Puppet::Indirector::Face.define(:testindirection, '0.0.1') do
   summary "fake summary"
 end
 # REVISIT: This horror is required because we don't allow anything to be

@@ -1,7 +1,7 @@
-require 'puppet/face/indirector'
+require 'puppet/indirector/face'
 require 'puppet/ssl/host'
 
-Puppet::Face::Indirector.define(:certificate, '0.0.1') do
+Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 

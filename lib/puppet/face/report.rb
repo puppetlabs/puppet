@@ -1,6 +1,6 @@
-require 'puppet/face/indirector'
+require 'puppet/indirector/face'
 
-Puppet::Face::Indirector.define(:report, '0.0.1') do
+Puppet::Indirector::Face.define(:report, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 

@@ -1,7 +1,6 @@
-require 'puppet'
 require 'puppet/face'
 
-class Puppet::Face::Indirector < Puppet::Face
+class Puppet::Indirector::Face < Puppet::Face
   option "--terminus TERMINUS" do
     description %q{
 REVISIT: You can select a terminus, which has some bigger effect
