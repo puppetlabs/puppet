@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-
+require 'puppet/face'
 require 'puppet/util/command_line'
 
 describe Puppet::Util::CommandLine do
@@ -98,11 +98,9 @@ describe Puppet::Util::CommandLine do
         Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
         commandline.expects(:system).never
 
-        text = Puppet::Face[:help, :current].help
-        commandline.expects(:puts).with { |x| x =~ /Unknown Puppet subcommand/ }
-        commandline.expects(:puts).with text
-
-        commandline.execute
+        expect {
+          commandline.execute
+        }.to have_printed(/Unknown Puppet subcommand 'whatever'/)
       end
     end
   end
