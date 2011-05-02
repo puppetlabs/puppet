@@ -11,8 +11,8 @@ describe Puppet::Application::Facts do
     subject.command_line.stubs(:args).returns %w{find}
     expect {
       expect { subject.run }.to exit_with 1
-    }.to have_printed /1 argument expected but 0 given/
-    @logs.first.to_s.should =~ /1 argument expected but 0 given/
+    }.to have_printed /err: puppet facts find takes 1 argument, but you gave 0/
+    @logs.first.to_s.should =~ /puppet facts find takes 1 argument, but you gave 0/
   end
 
   it "should return facts if a key is given to find" do

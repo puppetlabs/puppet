@@ -65,7 +65,7 @@ module Puppet
           # return to the caller.  How strange we are. --daniel 2011-04-11
         else
           unless subcommand_name.nil? then
-            puts "Error: Unknown Puppet subcommand #{subcommand_name}.\n"
+            puts "Error: Unknown Puppet subcommand '#{subcommand_name}'"
           end
 
           # Doing this at the top of the file is natural, but causes puppet.rb
