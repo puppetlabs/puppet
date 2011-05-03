@@ -3,6 +3,7 @@ require 'puppet/interface/documentation'
 require 'prettyprint'
 
 class Puppet::Interface::Action
+  extend Puppet::Interface::DocGen
   include Puppet::Interface::FullDocs
 
   def initialize(face, name, attrs = {})
@@ -44,6 +45,7 @@ class Puppet::Interface::Action
 
   ########################################################################
   # Documentation...
+  attr_doc :returns
   def synopsis
     output = PrettyPrint.format do |s|
       s.text("puppet #{@face.name}")

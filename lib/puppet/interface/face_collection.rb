@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require 'puppet/interface'
 
 module Puppet::Interface::FaceCollection
