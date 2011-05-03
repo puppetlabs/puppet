@@ -31,7 +31,7 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should use the first field of the URI as the environment" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].should == "env"
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].to_s.should == "env"
     end
 
     it "should fail if the environment is not alphanumeric" do
@@ -39,7 +39,11 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should use the environment from the URI even if one is specified in the parameters" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {:environment => "otherenv"})[3][:environment].should == "env"
+      @tester.uri2indirection("GET", "/env/foo/bar", {:environment => "otherenv"})[3][:environment].to_s.should == "env"
+    end
+
+    it "should return the environment as a Puppet::Node::Environment" do
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].should be_a Puppet::Node::Environment
     end
 
     it "should use the second field of the URI as the indirection name" do
