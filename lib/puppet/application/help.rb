@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require 'puppet/application/face_base'
 
 class Puppet::Application::Help < Puppet::Application::FaceBase
