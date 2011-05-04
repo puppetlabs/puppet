@@ -7,27 +7,27 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
   summary "Provide access to the CA for certificate management"
   description <<-EOT
-This face interacts with a local or remote Puppet certificate
-authority. Currently, its behavior is not a full superset of puppet
-cert; specifically, it is unable to mimic puppet cert's "clean" option,
-and its "generate" action submits a CSR rather than creating a
-signed certificate.
+    This face interacts with a local or remote Puppet certificate
+    authority. Currently, its behavior is not a full superset of puppet
+    cert; specifically, it is unable to mimic puppet cert's "clean" option,
+    and its "generate" action submits a CSR rather than creating a
+    signed certificate.
   EOT
   notes <<-EOT
-This is an indirector face, which exposes find, search, save, and
-destroy actions for an indirected subsystem of Puppet. Valid terminuses
-for this face include:
+    This is an indirector face, which exposes find, search, save, and
+    destroy actions for an indirected subsystem of Puppet. Valid terminuses
+    for this face include:
 
-* `ca`
-* `file`
-* `rest`
+    * `ca`
+    * `file`
+    * `rest`
   EOT
 
   option "--ca-location LOCATION" do
     summary "The certificate authority to query"
     description <<-EOT
-Whether to act on the local certificate authority or one provided by a
-remote puppet master. Allowed values are 'local' and 'remote.'
+      Whether to act on the local certificate authority or one provided by a
+      remote puppet master. Allowed values are 'local' and 'remote.'
     EOT
 
     before_action do |action, args, options|
@@ -38,13 +38,13 @@ remote puppet master. Allowed values are 'local' and 'remote.'
   action :generate do
     summary "Generate a new certificate signing request for HOST"
     description <<-EOT
-Generates and submits a certificate signing request (CSR) for the
-provided host identifier. This CSR will then have to be signed by a user
-with the proper authorization on the certificate authority.
+      Generates and submits a certificate signing request (CSR) for the
+      provided host identifier. This CSR will then have to be signed by a user
+      with the proper authorization on the certificate authority.
 
-Puppet agent handles CSR submission automatically. This action is
-primarily useful for requesting certificates for individual users and
-external applications.
+      Puppet agent handles CSR submission automatically. This action is
+      primarily useful for requesting certificates for individual users and
+      external applications.
     EOT
 
     when_invoked do |name, options|

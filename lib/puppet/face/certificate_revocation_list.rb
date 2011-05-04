@@ -6,24 +6,25 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
 
   summary "Manage the list of revoked certificates."
   description <<-EOT
-TK This is just for retrieving the CRL, right? Do the
-search/save/destroy methods do anything?
+    This face is primarily for retrieving the certificate revocation
+    list from the CA. Although it exposes search/save/destroy methods,
+    they shouldn't be used under normal circumstances.
   EOT
   notes <<-EOT
-Although the find action must be given an argument, this argument is
-never read, and can contain the descriptive text of your choice.
+    Although the find action must be given an argument, this argument is
+    never read, and can contain the descriptive text of your choice.
 
-This is an indirector face, which exposes find, search, save, and
-destroy actions for an indirected subsystem of Puppet. Valid terminuses
-for this face include:
+    This is an indirector face, which exposes find, search, save, and
+    destroy actions for an indirected subsystem of Puppet. Valid terminuses
+    for this face include:
 
-* `ca`
-* `file`
-* `rest`
+    * `ca`
+    * `file`
+    * `rest`
   EOT
   examples <<-EXAMPLES
-Retrieve the CRL:
+    Retrieve the CRL:
 
-    puppet certificate_revocation_list find crl
+        puppet certificate_revocation_list find crl
   EXAMPLES
 end

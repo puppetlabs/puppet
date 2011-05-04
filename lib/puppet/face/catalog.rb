@@ -6,45 +6,45 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
   summary "Compile, save, view, and convert catalogs."
   description <<-EOT
-This face primarily interacts with the compiling subsystem. By default,
-it compiles a catalog using the default manifest and the hostname from
-`certname`, but you can choose to retrieve a catalog from the server by
-specifying `--terminus rest`.  You can also choose to print any catalog
-in 'dot' format (for easy graph viewing with OmniGraffle or Graphviz)
-with '--render-as dot'.
+    This face primarily interacts with the compiling subsystem. By default,
+    it compiles a catalog using the default manifest and the hostname from
+    `certname`, but you can choose to retrieve a catalog from the server by
+    specifying `--terminus rest`.  You can also choose to print any catalog
+    in 'dot' format (for easy graph viewing with OmniGraffle or Graphviz)
+    with '--render-as dot'.
   EOT
   notes <<-EOT
-This is an indirector face, which exposes find, search, save, and
-destroy actions for an indirected subsystem of Puppet. Valid terminuses
-for this face include:
+    This is an indirector face, which exposes find, search, save, and
+    destroy actions for an indirected subsystem of Puppet. Valid terminuses
+    for this face include:
 
-* `active_record`
-* `compiler`
-* `queue`
-* `rest`
-* `yaml`
+    * `active_record`
+    * `compiler`
+    * `queue`
+    * `rest`
+    * `yaml`
   EOT
 
   action(:apply) do
     summary "Apply a Puppet::Resource::Catalog object"
     description <<-EOT
-Applies a catalog object retrieved with the `download` action. This
-action cannot consume a serialized catalog, and is not intended for
-command-line use."
+      Applies a catalog object retrieved with the `download` action. This
+      action cannot consume a serialized catalog, and is not intended for
+      command-line use."
     EOT
     notes <<-EOT
-This action returns a Puppet::Transaction::Report object.
+      This action returns a Puppet::Transaction::Report object.
     EOT
     examples <<-EOT
-From `secret_agent.rb`:
+      From `secret_agent.rb`:
 
-    Puppet::Face[:plugin, '0.0.1'].download
+          Puppet::Face[:plugin, '0.0.1'].download
 
-    facts   = Puppet::Face[:facts, '0.0.1'].find(certname)
-    catalog = Puppet::Face[:catalog, '0.0.1'].download(certname, facts)
-    report  = Puppet::Face[:catalog, '0.0.1'].apply(catalog)
+          facts   = Puppet::Face[:facts, '0.0.1'].find(certname)
+          catalog = Puppet::Face[:catalog, '0.0.1'].download(certname, facts)
+          report  = Puppet::Face[:catalog, '0.0.1'].apply(catalog)
 
-    Puppet::Face[:report, '0.0.1'].submit(report)
+          Puppet::Face[:report, '0.0.1'].submit(report)
     EOT
 
     when_invoked do |options|
@@ -73,21 +73,21 @@ From `secret_agent.rb`:
   action(:download) do
     summary "Download this node's catalog from the puppet master server"
     description <<-EOT
-Retrieves a catalog from the puppet master. Unlike the `find` action,
-`download` submits facts to the master as part of the request. This
-action is not intended for command-line use.
+      Retrieves a catalog from the puppet master. Unlike the `find` action,
+      `download` submits facts to the master as part of the request. This
+      action is not intended for command-line use.
     EOT
     notes "This action returns a Puppet::Resource::Catalog object."
     examples <<-EOT
-From `secret_agent.rb`:
+      From `secret_agent.rb`:
 
-    Puppet::Face[:plugin, '0.0.1'].download
+          Puppet::Face[:plugin, '0.0.1'].download
 
-    facts   = Puppet::Face[:facts, '0.0.1'].find(certname)
-    catalog = Puppet::Face[:catalog, '0.0.1'].download(certname, facts)
-    report  = Puppet::Face[:catalog, '0.0.1'].apply(catalog)
+          facts   = Puppet::Face[:facts, '0.0.1'].find(certname)
+          catalog = Puppet::Face[:catalog, '0.0.1'].download(certname, facts)
+          report  = Puppet::Face[:catalog, '0.0.1'].apply(catalog)
 
-    Puppet::Face[:report, '0.0.1'].submit(report)
+          Puppet::Face[:report, '0.0.1'].submit(report)
     EOT
     when_invoked do |options|
       Puppet::Resource::Catalog.indirection.terminus_class = :rest

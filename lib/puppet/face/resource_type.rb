@@ -7,11 +7,11 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
   summary "View resource types, classes, and nodes from all manifests"
   description "TK I have no idea what this does."
   notes <<-EOT
-This is an indirector face, which exposes find, search, save, and
-destroy actions for an indirected subsystem of Puppet. Valid terminuses
-for this face include:
+    This is an indirector face, which exposes find, search, save, and
+    destroy actions for an indirected subsystem of Puppet. Valid terminuses
+    for this face include:
 
-* `parser`
-* `rest`
+    * `parser`
+    * `rest`
   EOT
 end

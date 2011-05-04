@@ -9,12 +9,12 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
   # some good use cases for retrieving/storing them. I can't write either
   # of these yet.
   notes <<-EOT
-This is an indirector face, which exposes find, search, save, and
-destroy actions for an indirected subsystem of Puppet. Valid terminuses
-for this face include:
+    This is an indirector face, which exposes find, search, save, and
+    destroy actions for an indirected subsystem of Puppet. Valid terminuses
+    for this face include:
 
-* `file`
-* `rest`
+    * `file`
+    * `rest`
   EOT
 
   set_indirection_name :file_bucket_file

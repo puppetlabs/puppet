@@ -6,20 +6,20 @@ Puppet::Face.define(:secret_agent, '0.0.1') do
 
   summary "Provides agent-like behavior, with no plugin downloading or reporting"
   description <<-EOT
-This face currently functions as a proof of concept, demonstrating how
-Faces allows the separation of application logic from Puppet's internal
-systems; compare the code for puppet agent. It will eventually replace
-puppet agent entirely, and can provide a template for users who wish to
-implement agent-like functionality with drastically different
-application logic.
+    This face currently functions as a proof of concept, demonstrating how
+    Faces allows the separation of application logic from Puppet's internal
+    systems; compare the code for puppet agent. It will eventually replace
+    puppet agent entirely, and can provide a template for users who wish to
+    implement agent-like functionality with drastically different
+    application logic.
   EOT
 
   action(:synchronize) do
     summary "Retrieve and apply a catalog from the puppet master"
     description <<-EOT
-This action mimics the behavior of the puppet agent application. It does
-not currently daemonize, but can download plugins, submit facts,
-retrieve and apply a catalog, and submit a report to the puppet master.
+      This action mimics the behavior of the puppet agent application. It does
+      not currently daemonize, but can download plugins, submit facts,
+      retrieve and apply a catalog, and submit a report to the puppet master.
     EOT
 
     when_invoked do |options|

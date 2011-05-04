@@ -61,8 +61,8 @@ face's manpage for more details.
   action :save do
     summary "Create or modify an object"
     notes <<-EOT
-Save actions cannot currently be invoked from the command line, and are
-for API use only.
+      Save actions cannot currently be invoked from the command line, and are
+      for API use only.
     EOT
     when_invoked { |key, options| call_indirection_method(:save, key, options) }
   end
@@ -76,9 +76,9 @@ for API use only.
   action :info do
     summary "Print the default terminus class for this face"
     description <<-EOT
-TK So this is per-face, right? No way to tell what the default terminus
-is per-action, for subsystems that switch to REST for save but query
-locally for find?
+      TK So this is per-face, right? No way to tell what the default terminus
+      is per-action, for subsystems that switch to REST for save but query
+      locally for find?
     EOT
 
     when_invoked do |*args|

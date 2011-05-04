@@ -3,19 +3,19 @@ Puppet::Face.define(:catalog, '0.0.1') do
   action :select do
     summary "Select and show a list of resources of a given type"
     description <<-EOT
-Retrieves a catalog for the specified host and returns an array of
-resources of the given type. This action is not intended for
-command-line use.
+      Retrieves a catalog for the specified host and returns an array of
+      resources of the given type. This action is not intended for
+      command-line use.
     EOT
     notes <<-NOTES
-The type name for this action must be given in its capitalized form.
-That is, calling `catalog select mynode file` will return an empty
-array, whereas calling it with 'File' will return a list of the node's
-file resources.
+      The type name for this action must be given in its capitalized form.
+      That is, calling `catalog select mynode file` will return an empty
+      array, whereas calling it with 'File' will return a list of the node's
+      file resources.
 
-By default, this action will retrieve a catalog from Puppet's compiler
-subsystem; you must call the action with `--terminus rest` if you wish
-to retrieve a catalog from the puppet master.
+      By default, this action will retrieve a catalog from Puppet's compiler
+      subsystem; you must call the action with `--terminus rest` if you wish
+      to retrieve a catalog from the puppet master.
     NOTES
     when_invoked do |host, type, options|
       # REVISIT: Eventually, type should have a default value that triggers
