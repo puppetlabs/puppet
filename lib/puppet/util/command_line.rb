@@ -67,12 +67,7 @@ module Puppet
           unless subcommand_name.nil? then
             puts "Error: Unknown Puppet subcommand '#{subcommand_name}'"
           end
-
-          # Doing this at the top of the file is natural, but causes puppet.rb
-          # to load too early, which causes things to break.  This is a nasty
-          # thing, found in #7065. --daniel 2011-04-11
-          require 'puppet/face'
-          puts Puppet::Face[:help, :current].help
+          puts "See 'puppet help' for help on available puppet subcommands"
         end
       end
 
