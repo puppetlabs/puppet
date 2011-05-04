@@ -246,14 +246,14 @@ describe Puppet::Application::FaceBase do
       end
 
       [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
-        it "should render #{input.class} using the 'pp' library" do
-          app.render(input).should == input.pretty_inspect
+        it "should render #{input.class} using JSON" do
+          app.render(input).should == input.to_pson.chomp
         end
       end
 
-      it "should render a non-trivially-keyed Hash with the 'pp' library" do
+      it "should render a non-trivially-keyed Hash with using JSON" do
         hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-        app.render(hash).should == hash.pretty_inspect
+        app.render(hash).should == hash.to_pson.chomp
       end
 
       it "should render a {String,Numeric}-keyed Hash into a table" do
@@ -266,7 +266,7 @@ describe Puppet::Application::FaceBase do
         app.render(hash).should == <<EOT
 5      5
 6.0    6
-four   #{object.pretty_inspect.chomp}
+four   #{object.to_pson.chomp}
 one    1
 three  {}
 two    []
@@ -274,6 +274,7 @@ EOT
       end
 
       it "should render a hash nicely with a multi-line value" do
+        pending "Moving to PSON rather than PP makes this unsupportable."
         hash = {
           "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
           "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
@@ -289,7 +290,7 @@ EOT
       end
 
       it "should invoke the action rendering hook while rendering" do
-        app.action.set_rendering_method_for(:for_humans, proc { |value| "bi-winning!" })
+        app.action.set_rendering_method_for(:console, proc { |value| "bi-winning!" })
         app.render("bi-polar?").should == "bi-winning!"
       end
 
@@ -326,6 +327,17 @@ EOT
       expect {
         expect { app.run }.to exit_with 0
       }.to have_printed(/you invoked the 's' rendering hook/)
+    end
+  end
+
+  describe "#render_as=" do
+    # This is for compatibility with the format name in 2.7.0rc1, but isn't a
+    # long term desirable name.  We can't just randomly drop it since it was
+    # released, though, so it will live for a couple of major versions.
+    # --daniel 2011-05-04
+    it "should treat :for_humans as a synonym for :console" do
+      app.render_as = :for_humans
+      app.render_as.name.should == :console
     end
   end
 end
