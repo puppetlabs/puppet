@@ -15,7 +15,7 @@ Puppet::Face.define(:catalog, '0.0.1') do
       end
     end
 
-    when_rendering :for_humans do |value|
+    when_rendering :console do |value|
       if value.nil? then
         "no matching resources found"
       else
