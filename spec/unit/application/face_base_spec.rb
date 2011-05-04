@@ -319,5 +319,13 @@ EOT
         expect { app.run }.to exit_with 0
       }.to have_printed(/--- 3/)
     end
+
+    it "should invoke when_rendering hook 's' when asked to render-as 's'" do
+      app.command_line.stubs(:args).returns %w{with_s_rendering_hook --render-as s}
+      app.action = app.face.get_action(:with_s_rendering_hook)
+      expect {
+        expect { app.run }.to exit_with 0
+      }.to have_printed(/you invoked the 's' rendering hook/)
+    end
   end
 end

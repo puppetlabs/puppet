@@ -32,4 +32,10 @@ Puppet::Face.define(:basetest, '0.0.1') do
     summary "just raises an exception"
     when_invoked do |options| raise ArgumentError, "your failure" end
   end
+
+  action :with_s_rendering_hook do
+    summary "has a rendering hook for 's'"
+    when_invoked do |options| "this is not the hook you are looking for" end
+    when_rendering :s do |value| "you invoked the 's' rendering hook" end
+  end
 end
