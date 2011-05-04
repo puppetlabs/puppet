@@ -11,6 +11,17 @@ allow *
 step "Save original auth.conf file and create a temp auth.conf"
 on master, "cp #{config['puppetpath']}/auth.conf /tmp/auth.conf-7117; echo '#{add_2_authconf}' > #{config['puppetpath']}/auth.conf"
 
+# Kill running Puppet Master -- should not be running at this point
+step "Master: kill running Puppet Master"
+on master, "ps -U puppet | awk '/puppet/ { print \$1 }' | xargs kill || echo \"Puppet Master not running\""
+step "Master: Start Puppet Master"
+on master, puppet_master("--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop")
+
+
+# Run test on Agents
+step "Agent: agent --test"
+on agents, puppet_agent("--test")
+
 step "Fetch agent facts from Puppet Master"
 agents.each do |host|
   on(host, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/\`hostname -f\`") do
