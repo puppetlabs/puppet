@@ -200,6 +200,8 @@ describe Puppet::Interface::ActionBuilder do
       end
     end
 
+    # :for_humans is an alias for :console, and deprecated, but since we
+    # shipped it in 2.7.0rc1 we need to support it. --daniel 2011-05-04
     it "should accept :for_humans format" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
         when_invoked do true end

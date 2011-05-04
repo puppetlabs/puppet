@@ -29,56 +29,31 @@ class Puppet::Application::FaceBase < Puppet::Application
   attr_accessor :face, :action, :type, :arguments, :render_as
 
   def render_as=(format)
-    if format == :for_humans or format == :json
-      @render_as = format
-    elsif network_format = Puppet::Network::FormatHandler.format(format)
-      method = network_format.render_method
-      if method == "to_pson" then
-        @render_as = :json
-      else
-        @render_as = method.to_sym
-      end
-    else
-      raise ArgumentError, "I don't know how to render '#{format}'"
-    end
+    @render_as = case format.to_sym
+                 when :for_humans then
+                   # We have an old alias name for :console, which went out in
+                   # 2.7.0rc1, so we are going to carry it forward for a
+                   # while. --daniel 2011-05-04
+                   Puppet::Network::FormatHandler.format(:console)
+                 when :json then
+                   Puppet::Network::FormatHandler.format(:pson)
+                 else
+                   Puppet::Network::FormatHandler.format(format)
+                 end
+    @render_as or raise ArgumentError, "I don't know how to render '#{format}'"
   end
 
   def render(result)
     # Invoke the rendering hook supplied by the user, if appropriate.
-    if hook = action.when_rendering(render_as) then
+    if hook = action.when_rendering(render_as.name)
+      result = hook.call(result)
+    elsif render_as.name == :console and hook = action.when_rendering(:for_humans)
+      # We have an old alias name for :console, which went out in 2.7.0rc1, so
+      # we are going to carry it forward for a while. --daniel 2011-05-04
       result = hook.call(result)
     end
 
-    if render_as == :for_humans then
-      render_for_humans(result)
-    elsif render_as == :json
-      PSON::pretty_generate(result, :allow_nan => true, :max_nesting => false)
-    else
-      result.send(render_as)
-    end
-  end
-
-  def render_for_humans(result)
-    # String to String
-    return result if result.is_a? String
-    return result if result.is_a? Numeric
-
-    # Simple hash to table
-    if result.is_a? Hash and result.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
-      output = ''
-      column_a = result.map do |k,v| k.to_s.length end.max + 2
-      column_b = 79 - column_a
-      result.sort_by { |k,v| k.to_s } .each do |key, value|
-        output << key.to_s.ljust(column_a)
-        output << PP.pp(value, '', column_b).
-          chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
-        output << "\n"
-      end
-      return output
-    end
-
-    # ...or pretty-print the inspect outcome.
-    return result.pretty_inspect
+    render_as.render(result)
   end
 
   def preinit
@@ -204,7 +179,7 @@ class Puppet::Application::FaceBase < Puppet::Application
     @arguments << options
 
     # If we don't have a rendering format, set one early.
-    self.render_as ||= (@action.render_as || :for_humans)
+    self.render_as ||= (@action.render_as || :console)
   end
 
 

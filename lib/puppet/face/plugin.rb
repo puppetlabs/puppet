@@ -20,7 +20,7 @@ Puppet::Face.define(:plugin, '0.0.1') do
                                          Puppet[:pluginsignore]).evaluate
     end
 
-    when_rendering :for_humans do |value|
+    when_rendering :console do |value|
       if value.empty? then
         "No plugins downloaded."
       else
