@@ -38,6 +38,8 @@ class Puppet::Interface::ActionBuilder
   def render_as(value = nil)
     value.nil? and raise ArgumentError, "You must give a rendering format to render_as"
 
+    # :for_humans is a compatibility alias for :console, but since we shipped
+    # it in 2.7.0rc1 we need to support it ongoing. --daniel 2011-05-04
     formats = Puppet::Network::FormatHandler.formats << :for_humans
     unless formats.include? value
       raise ArgumentError, "#{value.inspect} is not a valid rendering format: #{formats.sort.join(", ")}"
