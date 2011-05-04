@@ -18,7 +18,10 @@ with '--format dot'.
   action(:apply) do
     summary "apply a Puppet::Resource::Catalog object"
 
-    when_invoked do |catalog, options|
+    when_invoked do |options|
+      catalog = Puppet::Face[:catalog, "0.0.1"].find(Puppet[:certname]) or raise "Could not find catalog for #{Puppet[:certname]}"
+      catalog = catalog.to_ral
+
       report = Puppet::Transaction::Report.new("apply")
       report.configuration_version = catalog.version
 
@@ -39,20 +42,22 @@ with '--format dot'.
   end
 
   action(:download) do
-    summary "download the catalog given the certname and facts"
+    summary "Download the catalog for the certname to the local filesystem."
 
-    when_invoked do |certname, facts, options|
+    when_invoked do |options|
       Puppet::Resource::Catalog.indirection.terminus_class = :rest
-      facts_to_upload = {:facts_format => :b64_zlib_yaml, :facts => CGI.escape(facts.render(:b64_zlib_yaml))}
+      Puppet::Resource::Catalog.indirection.cache_class = nil
       catalog = nil
       retrieval_duration = thinmark do
-        catalog = Puppet::Face[:catalog, '0.0.1'].find(certname, facts_to_upload)
+        catalog = Puppet::Face[:catalog, '0.0.1'].find(Puppet[:certname])
       end
-      catalog = catalog.to_ral
-      catalog.finalize
       catalog.retrieval_duration = retrieval_duration
       catalog.write_class_file
-      catalog
+
+      Puppet::Resource::Catalog.indirection.terminus_class = :yaml
+      Puppet::Face[:catalog, "0.0.1"].save(catalog)
+      Puppet.notice "Saved catalog for #{Puppet[:certname]} to yaml"
+      nil
     end
   end
 end
