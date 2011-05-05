@@ -24,29 +24,20 @@ Puppet::Face.define(:help, '0.0.1') do
       options = args.pop
       if options.nil? or args.length > 2 then
         if args.select { |x| x == 'help' }.length > 2 then
-          c = "\n !\"'),-./7:;<GIJLST\\_`abcdefhiklmnoprstuwx|}".split('')
+          c = "\n %'(),-./=ADEFHILORSTUXY\\_`gnv|".split('')
           i = <<-'EOT'.gsub(/\s*/, '').to_i(36)
-            2s7ytxy5vpj74kbab5xzf1ik2roinzlefaspjrzckiert5xbaxvwlku3a91w7y1rsd
-            nenp51gwpulmnrp54nwdil36fjgjarab801y0r5a9nh1hdfgi99arn5c5t3zhxbvzi
-            u6wx5r1tb7lun7pro69nrxunqqixsh6qmmv0ms0i0yycqw3pystyzmiita0lpxynqs
-            qkbjwadcx82n76wwpzbht8i8rgvqhqick8mk3cs3rvwdjookpgu0rxw4tcezned5sq
-            z5x8z9vntyyz0s4h6hjhtwtbytsmmu7ltvdftaixc7fkt276sqm48ab4yv0ot9y26n
-            z0xniy4pfl1x300lt6h9c8of49vf799ieuxwnoycsjlmtd4qntzit524j0tdn6n5aj
-            mq3z10apjuhkzprvmu53z1gnacymnoforrz5mbqto062kckgw5463pxwzg8liglub4
-            ubnr0dln1s6iy3ummxuhim7m5a7yedl3gyy6ow4qqtmsigv27lysooau24zpsccsvx
-            ddwygjprqpbwon7i9s1279m1fpinvva8mfh6bgmotrpxsh1c8rc83l3u0utf5i200y
-            l7ui0ngcbcjyr4erzdee2tqk3fpjvb82t8xhncruhgn7j5dh2m914qzhb0gkoom47k
-            6et7rp4tqjnrv0y2apk5qdl1x1hnbkkxup5ys6ip2ksmtpd3ipmrdtswxr5xwfiqtm
-            60uyjr1v79irhnkrbbt4fwhgqjby1qflgwt9c1wpayzzucep6npgbn3f1k6cn4pug3
-            1u02wel4tald4hij8m5p49xr8u4ero1ucs5uht42o8nhpmpe7c7xf9t85i85m9m5kk
-            tgoqkgbu52gy5aoteyp8jkm3vri9fnkmwa5h60zt8otja72joxjb40p2rz2vp8f8q9
-            nnggxt3x90pe5u4048ntyuha78q1oikhhpvw9j083yc3l00hz5ehv9c1au5gvctyap
-            zprub289qruve9qsyuh75j04wzkemqw3uhisrfs92u1ahv2qlqxmorgob16c1vbqkx
-            ttkoyp2agkt0v5l7lec25p0jqun9y39k41h67aeb5ihiqsftxc9azmg31hc73dk8ur
-            lj88vgbmgt8yln9rchw60whgxvnv9zn6cxbr482svctswc5a07atj
+            3he6737w1aghshs6nwrivl8mz5mu9nywg9tbtlt081uv6fq5kvxse1td3tj1wvccmte806nb
+            cy6de2ogw0fqjymbfwi6a304vd56vlq71atwmqsvz3gpu0hj42200otlycweufh0hylu79t3
+            gmrijm6pgn26ic575qkexyuoncbujv0vcscgzh5us2swklsp5cqnuanlrbnget7rt3956kam
+            j8adhdrzqqt9bor0cv2fqgkloref0ygk3dekiwfj1zxrt13moyhn217yy6w4shwyywik7w0l
+            xtuevmh0m7xp6eoswin70khm5nrggkui6z8vdjnrgdqeojq40fya5qexk97g4d8qgw0hvokr
+            pli1biaz503grqf2ycy0ppkhz1hwhl6ifbpet7xd6jjepq4oe0ofl575lxdzjeg25217zyl4
+            nokn6tj5pq7gcdsjre75rqylydh7iia7s3yrko4f5ud9v8hdtqhu60stcitirvfj6zphppmx
+            7wfm7i9641d00bhs44n6vh6qvx39pg3urifgr6ihx3e0j1ychzypunyou7iplevitkyg6gbg
+            wm08oy1rvogcjakkqc1f7y1awdfvlb4ego8wrtgu9vzw4vmj59utwifn2ejcs569dh1oaavi
+            sc581n7jjg1dugzdu094fdobtx6rsvk3sfctvqnr36xctold
           EOT
-          607.times{i,x=i.divmod(1035);a,b=x.divmod(23);print(c[a]*b)}
-          raise ArgumentError, "Such panic is really not required."
+          353.times{i,x=i.divmod(1184);a,b=x.divmod(37);print(c[a]*b)}
         end
         raise ArgumentError, "help only takes two (optional) arguments, a face name, and an action"
       end

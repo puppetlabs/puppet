@@ -29,27 +29,17 @@ class Puppet::Application::FaceBase < Puppet::Application
   attr_accessor :face, :action, :type, :arguments, :render_as
 
   def render_as=(format)
-    @render_as = case format.to_sym
-                 when :for_humans then
-                   # We have an old alias name for :console, which went out in
-                   # 2.7.0rc1, so we are going to carry it forward for a
-                   # while. --daniel 2011-05-04
-                   Puppet::Network::FormatHandler.format(:console)
-                 when :json then
-                   Puppet::Network::FormatHandler.format(:pson)
-                 else
-                   Puppet::Network::FormatHandler.format(format)
-                 end
+    if format == :json then
+      @render_as = Puppet::Network::FormatHandler.format(:pson)
+    else
+      @render_as = Puppet::Network::FormatHandler.format(format)
+    end
     @render_as or raise ArgumentError, "I don't know how to render '#{format}'"
   end
 
   def render(result)
     # Invoke the rendering hook supplied by the user, if appropriate.
     if hook = action.when_rendering(render_as.name)
-      result = hook.call(result)
-    elsif render_as.name == :console and hook = action.when_rendering(:for_humans)
-      # We have an old alias name for :console, which went out in 2.7.0rc1, so
-      # we are going to carry it forward for a while. --daniel 2011-05-04
       result = hook.call(result)
     end
 
