@@ -329,15 +329,4 @@ EOT
       }.to have_printed(/you invoked the 's' rendering hook/)
     end
   end
-
-  describe "#render_as=" do
-    # This is for compatibility with the format name in 2.7.0rc1, but isn't a
-    # long term desirable name.  We can't just randomly drop it since it was
-    # released, though, so it will live for a couple of major versions.
-    # --daniel 2011-05-04
-    it "should treat :for_humans as a synonym for :console" do
-      app.render_as = :for_humans
-      app.render_as.name.should == :console
-    end
-  end
 end
