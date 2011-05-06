@@ -20,7 +20,7 @@ class Puppet::Parser::TemplateWrapper
 
   def script_line
     # find which line in the template (if any) we were called from
-    caller.find { |l| l =~ /#{file}:/ }.first[/:(\d+):/,1]
+    (caller.find { |l| l =~ /#{file}:/ }||"")[/:(\d+):/,1]
   end
 
   # Should return true if a variable is defined, false if it is not

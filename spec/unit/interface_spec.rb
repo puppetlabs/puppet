@@ -76,7 +76,11 @@ describe Puppet::Interface do
 
     # Required documentation methods...
     { :summary     => "summary",
-      :description => "This is the description of the stuff\n\nWhee"
+      :description => "This is the description of the stuff\n\nWhee",
+      :examples    => "This is my example",
+      :short_description => "This is my custom short description",
+      :notes       => "These are my notes...",
+      :author      => "This is my authorship data",
     }.each do |attr, value|
       it "should support #{attr} in the builder" do
         face = subject.new(:builder, '1.0.0') do
@@ -142,6 +146,7 @@ describe Puppet::Interface do
         option "--foo"
         option "--bar"
         action :baz do
+          when_invoked { true }
           option "--quux"
         end
       end
@@ -151,7 +156,10 @@ describe Puppet::Interface do
     it "should fail when a face option duplicates an action option" do
       expect {
         subject.new(:action_level_options, '0.0.1') do
-          action :bar do option "--foo" end
+          action :bar do
+            when_invoked { true }
+            option "--foo"
+          end
           option "--foo"
         end
       }.should raise_error ArgumentError, /Option foo conflicts with existing option foo on/i
@@ -159,8 +167,8 @@ describe Puppet::Interface do
 
     it "should work when two actions have the same option" do
       face = subject.new(:with_options, '0.0.1') do
-        action :foo do option "--quux" end
-        action :bar do option "--quux" end
+        action :foo do when_invoked { true } ; option "--quux" end
+        action :bar do when_invoked { true } ; option "--quux" end
       end
 
       face.get_action(:foo).options.should =~ [:quux]
@@ -172,14 +180,14 @@ describe Puppet::Interface do
     let :parent do
       parent = Class.new(subject)
       parent.option("--inherited")
-      parent.action(:parent_action) do end
+      parent.action(:parent_action) do when_invoked { true } end
       parent
     end
 
     let :face do
       face = parent.new(:example, '0.2.1')
       face.option("--local")
-      face.action(:face_action) do end
+      face.action(:face_action) do when_invoked { true } end
       face
     end
 

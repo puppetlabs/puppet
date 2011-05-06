@@ -62,7 +62,18 @@ class Puppet::Transaction::EventManager
   end
 
   def queue_events_for_resource(source, target, callback, events)
-    source.info "Scheduling #{callback} of #{target}"
+    whit = Puppet::Type.type(:whit)
+
+    # The message that a resource is refreshing the completed-whit for its own class
+    # is extremely counter-intuitive. Basically everything else is easy to understand,
+    # if you suppress the whit-lookingness of the whit resources
+    refreshing_c_whit = target.is_a?(whit) && target.name =~ /^completed_/
+
+    if refreshing_c_whit
+      source.debug "The container #{target} will propagate my #{callback} event"
+    else
+      source.info "Scheduling #{callback} of #{target}"
+    end
 
     @event_queues[target] ||= {}
     @event_queues[target][callback] ||= []
@@ -82,7 +93,9 @@ class Puppet::Transaction::EventManager
     process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
     resource.send(callback)
 
-    resource.notice "Triggered '#{callback}' from #{events.length} events"
+    if not resource.is_a?(Puppet::Type.type(:whit))
+      resource.notice "Triggered '#{callback}' from #{events.length} events"
+    end
     return true
   rescue => detail
     resource.err "Failed to call #{callback}: #{detail}"

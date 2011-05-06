@@ -19,7 +19,7 @@ describe Puppet::Application::Inspect do
       Puppet[:configprint] = "all"
 
       Puppet.settings.expects(:print_configs).returns(true)
-      lambda { @inspect.setup }.should raise_error(SystemExit)
+      expect { @inspect.setup }.to exit_with 0
     end
 
     it "should fail if reporting is turned off" do

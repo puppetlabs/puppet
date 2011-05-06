@@ -41,3 +41,6 @@ agents.each { |agent|
   fail_test "Site.pp not detect at Master?" unless
     stdout.include? 'ticket_5477_notify'
 }
+
+step "Clean-up site.pp"
+on master, "rm /etc/puppet/manifests/site.pp"

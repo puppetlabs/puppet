@@ -9,13 +9,6 @@ class Puppet::Interface::ActionBuilder
     new(face, name, &block).action
   end
 
-  private
-  def initialize(face, name, &block)
-    @face   = face
-    @action = Puppet::Interface::Action.new(face, name)
-    instance_eval(&block)
-  end
-
   # Ideally the method we're defining here would be added to the action, and a
   # method on the face would defer to it, but we can't get scope correct, so
   # we stick with this. --daniel 2011-03-24
@@ -55,7 +48,7 @@ class Puppet::Interface::ActionBuilder
   def render_as(value = nil)
     value.nil? and raise ArgumentError, "You must give a rendering format to render_as"
 
-    formats = Puppet::Network::FormatHandler.formats << :for_humans
+    formats = Puppet::Network::FormatHandler.formats
     unless formats.include? value
       raise ArgumentError, "#{value.inspect} is not a valid rendering format: #{formats.sort.join(", ")}"
     end
@@ -66,18 +59,26 @@ class Puppet::Interface::ActionBuilder
   # Metaprogram the simple DSL from the target class.
   Puppet::Interface::Action.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/
-    dsl = setter.sub(/=$/, '')
+    property = setter.sub(/=$/, '')
 
-    unless private_instance_methods.include? dsl
+    unless public_instance_methods.include? property
       # Using eval because the argument handling semantics are less awful than
       # when we use the define_method/block version.  The later warns on older
       # Ruby versions if you pass the wrong number of arguments, but carries
       # on, which is totally not what we want. --daniel 2011-04-18
-      eval <<METHOD
-def #{dsl}(value)
-  @action.#{dsl} = value
-end
-METHOD
+      eval <<-METHOD
+        def #{property}(value)
+          @action.#{property} = value
+        end
+      METHOD
     end
+  end
+
+  private
+  def initialize(face, name, &block)
+    @face   = face
+    @action = Puppet::Interface::Action.new(face, name)
+    instance_eval(&block)
+    @action.when_invoked or raise ArgumentError, "actions need to know what to do when_invoked; please add the block"
   end
 end

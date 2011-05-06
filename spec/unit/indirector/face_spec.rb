@@ -1,10 +1,10 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-require 'puppet/face/indirector'
+require 'puppet/indirector/face'
 
-describe Puppet::Face::Indirector do
+describe Puppet::Indirector::Face do
   subject do
-    instance = Puppet::Face::Indirector.new(:test, '0.0.1')
+    instance = Puppet::Indirector::Face.new(:test, '0.0.1')
     indirection = stub('indirection',
                        :name => :stub_indirection,
                        :reset_terminus_class => nil)
@@ -13,33 +13,33 @@ describe Puppet::Face::Indirector do
   end
 
   it "should be able to return a list of indirections" do
-    Puppet::Face::Indirector.indirections.should be_include("catalog")
+    Puppet::Indirector::Face.indirections.should be_include("catalog")
   end
 
   it "should be able to return a list of terminuses for a given indirection" do
-    Puppet::Face::Indirector.terminus_classes(:catalog).should be_include("compiler")
+    Puppet::Indirector::Face.terminus_classes(:catalog).should be_include("compiler")
   end
 
   describe "as an instance" do
     it "should be able to determine its indirection" do
       # Loading actions here an get, um, complicated
       Puppet::Face.stubs(:load_actions)
-      Puppet::Face::Indirector.new(:catalog, '0.0.1').indirection.should equal(Puppet::Resource::Catalog.indirection)
+      Puppet::Indirector::Face.new(:catalog, '0.0.1').indirection.should equal(Puppet::Resource::Catalog.indirection)
     end
   end
 
   [:find, :search, :save, :destroy].each do |method|
     it "should define a '#{method}' action" do
-      Puppet::Face::Indirector.should be_action(method)
+      Puppet::Indirector::Face.should be_action(method)
     end
 
     it "should call the indirection method with options when the '#{method}' action is invoked" do
-      subject.indirection.expects(method).with(:test, "myargs", {})
-      subject.send(method, :test, "myargs")
+      subject.indirection.expects(method).with(:test, {})
+      subject.send(method, :test)
     end
     it "should forward passed options" do
-      subject.indirection.expects(method).with(:test, "action", {'one'=>'1'})
-      subject.send(method, :test, 'action', {'one'=>'1'})
+      subject.indirection.expects(method).with(:test, {'one'=>'1'})
+      subject.send(method, :test, {'one'=>'1'})
     end
   end
 
@@ -54,6 +54,6 @@ describe Puppet::Face::Indirector do
   end
 
   it "should define a class-level 'info' action" do
-    Puppet::Face::Indirector.should be_action(:info)
+    Puppet::Indirector::Face.should be_action(:info)
   end
 end
