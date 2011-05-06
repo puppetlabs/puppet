@@ -62,68 +62,6 @@ describe Puppet::Interface::ActionBuilder do
     end
   end
 
-  describe "#inherit_options_from" do
-    let :face do
-      Puppet::Interface.new(:face_with_some_options, '0.0.1') do
-        option '-w'
-
-        action(:foo) do
-          when_invoked do true end
-          option '-x', '--ex'
-          option '-y', '--why'
-        end
-
-        action(:bar) do
-          when_invoked do true end
-          option '-z', '--zee'
-        end
-
-        action(:baz) do
-          when_invoked do true end
-          option '-z', '--zed'
-        end
-      end
-    end
-
-    it 'should add the options from the specified action' do
-      foo = face.get_action(:foo)
-      action = Puppet::Interface::ActionBuilder.build(face, :inherit_options) do
-        when_invoked do true end
-        inherit_options_from foo
-      end
-      action.options.should == foo.options
-    end
-
-    it 'should add the options from multiple actions' do
-      foo = face.get_action(:foo)
-      bar = face.get_action(:bar)
-      action = Puppet::Interface::ActionBuilder.build(face, :inherit_options) do
-        when_invoked do true end
-        inherit_options_from foo
-        inherit_options_from bar
-      end
-      action.options.should == (foo.options + bar.options).uniq
-    end
-
-    it 'should permit symbolic names for actions in the same face' do
-      foo = face.get_action(:foo)
-      action = Puppet::Interface::ActionBuilder.build(face, :inherit_options) do
-        when_invoked do true end
-        inherit_options_from :foo
-      end
-      action.options.should == foo.options
-    end
-
-    it 'should raise a useful error if you supply a bad action name' do
-      expect do
-        Puppet::Interface::ActionBuilder.build(face, :inherit_options) do
-          when_invoked do true end
-          inherit_options_from :nowhere
-        end
-      end.to raise_error /nowhere/
-    end
-  end
-
   context "inline documentation" do
     it "should set the summary" do
       action = Puppet::Interface::ActionBuilder.build(face, :foo) do
