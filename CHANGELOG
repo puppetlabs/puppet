@@ -1,3 +1,166 @@
+2.7.0rc2
+===
+61edff9 (#7353) Remove :for_humans format entirely.
+d2b5ec6 Adding test for ticket 7139
+6f2a129 add clean-up step to test for ticket_5477 to prevent site.pp from leaking to other tests
+92905ff fixed test for ticket_7117
+5076c37 (#7179) Modify default ACL for /node/<name>.
+7b71745 (Maint) Adjust documentation whitespace
+358418c (#7303) Remove reference to not-yet-extant man action
+dce072a (#6962) Add self-documentation data to puppet faces
+855a0ec Maint: adjust faces.rb's help to match that of other applications
+75f164a (#7304) Remove full puppet help output when subcommand cannot be found
+8a8e198 adding test for ticket 7117
+dda3264 (#7353) Note the :for_humans compatibility issue.
+efd1181 (#7353) Use :console rendering format in our own code.
+5986e8a (#7353) Unify rendering in the face_bace application.
+a4e735e (#7353) Add 'console' format to FormatHandler
+94f0b09 add base test for ticket 7117
+dc0088f (#7277)Fixing all secret-agent functions, and the agent itself
+1f112cd (#7139) Accept '/' as a valid path in filesets
+18b3584 (#7329) Consistent naming for rendering formats and hooks.
+8f81f56 (#7326) Fix faces on Ruby 1.8.5
+5569fad (#7117) Return the environment as a Puppet::Node::Environment in uri2indirection
+5120a95 (#7276) Better reporting from the plugin download action.
+bb889bf (#7276) Create a plugin face application.
+5490f7a (#6962) Added 'returns' block to action documentation.
+0d6ac04 maint: remove emacs 'coding' cookie from files.
+48903f5 (#7278) Improve utility of the Catalog select action
+45adc1a (#7279) Adding some basic file actions
+a4a274b (#7315) Fix `to_pson` method to render correctly.
+1b42725 (#7314) Faces fail horribly when one has a syntax error.
+86c6ec2 maint: move the indirector face base out of puppet/face
+c63e9c2 maint: reset more global state in testing faces...
+b20e977 (#7304) Improve help from `puppet foo`
+3bb8bd3 (#7317) better error handling in CLI face facade.
+b23cc8a (#7282) action without `when_invoked` should fail...
+040e0fd (Maint.) Fix accidental debug output in tests.
+65b9a3c (#7221) Strip bad whitespace from face and action docs.
+97ae812 (#7248) Fail if two aliases of one option are passed...
+207deae (#7289) Specify order for option decorations.
+1707f27 Revert "maint: better error reporting for argument count mismatch."
+cd474b0 maint: better error reporting for argument count mismatch.
+69e4b1c (#7122) Enforce call arity on actions in the CLI wrapper.
+351b6fc maint: add a 'print' matcher to rspec, to inspect std{out,err}
+be4d7e6 (#7269) Fix error reporting for bad render formats...
+632a0a0 (#7269) Better error reporting for bad render formats.
+80adaea (#7160) Support 'json' as a rendering method for CLI faces.
+0256d67 (#6962) Add integration tests on Face documentation.
+e8eb290 (#6962) Finish documentation API on Face options.
+6e152ad (#6962) Give copyright and license for all faces.
+b8525c9 (#6962) Fill out documentation on Faces and Actions
+59e7ef1 (#6962) Move documentation support into a module.
+092ab09 (#6962) Extend documentation API for Faces.
+c627fad (#7251) Let exceptions raised in decorators rise.
+bbf777f (#7249) Publicize ActionBuilder DSL methods.
+95ed9aa add test for ticket 7101
+6064e8e (#7101) Fix template error messages in Ruby 1.8.5
+49c5152 (#7137) Get rid of spurious info messages in useradd
+349bd96 Fix test ticket_6928_puppet_master_parse_fails
+f25acf9 maint: add the 'to', 'not_to', and 'to_not' aliases to rspec...
+f77304b (#7157) Return a non-zero exit code on face failure.
+435c826 maint: use the exit_with helper everywhere...
+96195c1 maint: add an "exit was called" matcher for rspec.
+822d530 maint: clean up test headers on face spec files.
+5c24541 Fix #7084 Make the log messages produced by whits less confusing
+c7a0270 (#7121) Download plugins and upload reports in secret agent!
+2a2226c Revert "Fixing Facts pson methods more resilient"
+7591de7 maint: fix a race in catalog compilation versioning.
+aaf7e23 Revert "(7080) Adding json support to Indirector Request"
+17d176b Revert "Adding json support to Puppet::Node"
+27e0831 (#7181) Rename configurer face to secret_agent.
+de2199f (#6928) Don't blow up when the method is undefined...
+a0de328 (#6928) backport Symbol#to_proc for Ruby < 1.8.7
+f17f6bb (#7183) Implement "invisible glob" version matching for faces
+7414ee7 maint: better disabling of Signal#trap in our tests.
+03bd559 maint: more robust listing of valid faces.
+7db4793 maint: clean up testing code a fraction...
+eeb8236 maint: better error report for a missing version of a face.
+677752d maint: handle face clear/reset sanely in the interface spec.
+7b3744c maint: stop stubbing log level setting.
+220f308 Move tests from Puppet-acceptance repo
+379b46d (#7116) Handle application-level options in parse_options
+a1db585 maint: fix gratuitous whitespace in the code.
+601baf1 maint: remove redundant context from the test.
+5d7ef5c (#7062) better argument handling in the action wrapper methods
+33b5580 maint: move method comments outside the comment.
+c87d6c9 Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+557767b maint: Remove unused faces code
+311e3ec maint: mangle grammer in rspec to avoid Jenkins fail...
+0fed94f (#7013) Wire up rendering hooks on the CLI.
+12098f2 (#7013) Handle rendering modes out in the application layer.
+5938452 (#7013) Strip out old face-wide rendering defaults.
+5258e06 (#7013) Return bound methods for when_rendering hooks.
+86801b5 (#7013) Support 'when_rendering' and 'render_as' in actions.
+be23b84 (#7013) better default rendering support for faces
+e6caa24 maint: make sure we don't ever default to being default...
+36b100a maint: print 'false' in the default render method.
+2cf692c maint: delete README.strings, which is out of date.
+22355dc maint: test the 'help' face has the default action 'help'
+4efba71 maint: drop multi-version support from action loading.
+266f937 (#6962) Add 'description' to faces and action.
+32c667c (#7132) Reject 'summary' text with newlines embedded.
+1251311 (#7108) Update help/man text for puppet kick
+eeb1b60 (#7108) Modernize description of --listen in defaults.rb
+3ec9526 Maint: puppetmaster -> puppet master in defaults.rb
+5a10093 (Maint) Fix a leaking spec, patching intermittent failures.
+07b677c Merge remote-tracking branch 'community/feature/puppet-device' into 2.7.x
+13e64fe (#7131) Remove support for optional arguments to options
+977684e (Maint) Fixing an order-dependent failure.
+9d2ec21 (#7013) Add support for required options.
+eeb82f8 (Maint) Code cleanup.
+d85c2a8 maint: Fix the missed failure from the previous commit
+e946a17 maint: Fix a broken Puppet::Node::Facts spec
+d80500f maint: speed up testing output of the help face.
+9264526 (#7115) Enable default actions.
+ab541fa (#7059) Use option hooks for the indirector terminus option.
+f770325 (#6978) Enforce the calling convention of option hooks.
+c00e03d (#7059) Set the CA location using option hooks.
+dca1f07 (#6978) Add before and after decorators to actions from options.
+0c60aa2 maint: delete an empty describe block containing no tests.
+e424740 Adding json-specific matchers
+f37b2e1 Making watchr resilient to syntax errors in tests
+d3c94e6 Adding json support to Puppet::Node
+155b16d Fixing a failing test resulting from a fixed bug
+e0615cb (7080) Adding json support to Indirector Request
+07a7a68 Fixing Facts pson methods more resilient
+ff08ba2 (7118) Adding summaries for all faces
+a509821 Cleanup trailing whitespace
+5528911 (#7111) Clarify scoping deprecation warning
+ca9d68f (#6408) Update puppet cert help for new subcommand action syntax.
+174e87a (#4258) Fix pkgutil spec test to have the correct provider
+e119739 (#6928) Add a notice to Parser#validate action when using default
+9bc4bce (#7103) Fix HEAD requests in the HTTP handler
+cb552af (#4258) Remove superfluous command check that called pkgutil
+fd98341 (#4258) Fix fd leak opening pkgutil config files
+7726dc3 (#4258) Permit variations of -nv in both pkgutil.conf files
+f8c2f1a (#4258) Stop file and config checks from breaking spec
+ef86105 (#4258) Check wgetopts in pkgutil.conf
+557ed85 (#4258) Fix hash duplication affecting canonical provider instance
+7c99dd9 (#4258) Use pkgutil -a to reliably determine package common names/aliases
+ab5bc35 (#4258) Update pkgutil spec for recent impl changes
+e582709 (#4258) pkgutil: bug fix: if shortname is not equal to package name
+58ac7d3 (#4258) pkgutil provider: better handling of short package names
+15a53f0 (#4258) pkgutil provider: misc enhancements
+15e225b Add spec tests for pkgutil package provider
+8462acd * Fix exception on parse failure of pkgutil output * Fix exception when querying latest version for unknown package
+3eace85 Fixing indentation
+f8e9155 Removing blastwave references and unused PAGER
+485ac38 Changing indentation to 2-spaces as per 2.6+ style
+9d63171 Single package queries made more robust when dealing with pkgutil noise
+f50fac7 Fixing wget verbose regex
+3003719 These regular expressions will not match anything.  pkgutil doesn't output anything that can be matched.
+2725fb3 Add comments that explain what we are ignoring in the package and remove legacy output
+143fc74 Ignoring lines from use_gpg and catalog fetching
+69a3451 Adding patch from Rudy Gevaert to fix not installed detection
+d026bb7 pkgutil provider: Using the --single option which speeds up execution.
+ec2a03c pkgutil provider: The path to the admin file is /var/opt/csw/pkgutil/admin
+0fc2aa6 pkgutil provider: Correcting a typo in a message.
+e02ba01 Using --single in the pkgutil provider.
+fc18591 Adding pkgutil support.
+9f365b1 Fixed #4258 - Added pkgutil package provider
+
+
 2.7.0rc1
 ====
 5915814 Revert "(#6928) Removed --ignoreimport"
