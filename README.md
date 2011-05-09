@@ -13,7 +13,9 @@ Installation
 
 Generally, you need the following things installed:
 
-* Ruby >= 1.8.1 (earlier releases might work but probably not)
+* Ruby >= 1.8.x (earlier releases might work but probably not)
+
+* Ruby 1.9.x is not yet supported
 
 * The Ruby OpenSSL library.  For some reason, this often isn't included
   in the main ruby distributions.  You can test for it by running
