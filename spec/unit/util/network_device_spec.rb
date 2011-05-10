@@ -10,6 +10,10 @@ describe Puppet::Util::NetworkDevice do
     @device = OpenStruct.new(:name => "name", :provider => "test")
   end
 
+  after(:each) do
+    Puppet::Util::NetworkDevice.clear
+  end
+
   class Puppet::Util::NetworkDevice::Test
     class Device
       def initialize(device)

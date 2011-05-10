@@ -9,4 +9,9 @@ class Puppet::Util::NetworkDevice
   rescue => detail
     raise "Can't load #{device.provider} for #{device.name}: #{detail}"
   end
+
+  # for tests reset
+  def self.clear
+    @current = nil
+  end
 end
