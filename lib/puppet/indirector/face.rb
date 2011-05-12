@@ -1,10 +1,24 @@
-require 'puppet'
 require 'puppet/face'
 
-class Puppet::Face::Indirector < Puppet::Face
+class Puppet::Indirector::Face < Puppet::Face
   option "--terminus TERMINUS" do
-    desc "REVISIT: You can select a terminus, which has some bigger effect
-that we should describe in this file somehow."
+    summary "The indirector terminus to use for this action"
+    description <<-EOT
+Indirector faces expose indirected subsystems of Puppet. These
+subsystems are each able to retrieve and alter a specific type of data
+(with the familiar actions of `find`, `search`, `save`, and `destroy`)
+from an arbitrary number of pluggable backends. In Puppet parlance,
+these backends are called terminuses.
+
+Almost all indirected subsystems have a `rest` terminus that interacts
+with the puppet master's data. Most of them have additional terminuses
+for various local data models, which are in turn used by the indirected
+subsystem on the puppet master whenever it receives a remote request.
+
+The terminus for an action is often determined by context, but
+occasionally needs to be set explicitly. See the "Notes" section of this
+face's manpage for more details.
+    EOT
 
     before_action do |action, args, options|
       set_terminus(options[:terminus])
@@ -23,11 +37,9 @@ that we should describe in this file somehow."
     Puppet::Indirector::Terminus.terminus_classes(indirection.to_sym).collect { |t| t.to_s }.sort
   end
 
-  def call_indirection_method(method, *args)
-    options = args.last
-
+  def call_indirection_method(method, key, options)
     begin
-      result = indirection.__send__(method, *args)
+      result = indirection.__send__(method, key, options)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       raise "Could not call '#{method}' on '#{indirection_name}': #{detail}"
@@ -37,23 +49,38 @@ that we should describe in this file somehow."
   end
 
   action :destroy do
-    when_invoked { |*args| call_indirection_method(:destroy, *args) }
+    summary "Delete an object"
+    when_invoked { |key, options| call_indirection_method(:destroy, key, options) }
   end
 
   action :find do
-    when_invoked { |*args| call_indirection_method(:find, *args) }
+    summary "Retrieve an object by name"
+    when_invoked { |key, options| call_indirection_method(:find, key, options) }
   end
 
   action :save do
-    when_invoked { |*args| call_indirection_method(:save, *args) }
+    summary "Create or modify an object"
+    notes <<-EOT
+      Save actions cannot currently be invoked from the command line, and are
+      for API use only.
+    EOT
+    when_invoked { |key, options| call_indirection_method(:save, key, options) }
   end
 
   action :search do
-    when_invoked { |*args| call_indirection_method(:search, *args) }
+    summary "Search for an object"
+    when_invoked { |key, options| call_indirection_method(:search, key, options) }
   end
 
   # Print the configuration for the current terminus class
   action :info do
+    summary "Print the default terminus class for this face"
+    description <<-EOT
+      TK So this is per-face, right? No way to tell what the default terminus
+      is per-action, for subsystems that switch to REST for save but query
+      locally for find?
+    EOT
+
     when_invoked do |*args|
       if t = indirection.terminus_class
         puts "Run mode '#{Puppet.run_mode.name}': #{t}"

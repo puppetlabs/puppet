@@ -59,8 +59,7 @@ module Puppet
 
   # configuration parameter access and stuff
   def self.[](param)
-    case param
-    when :debug
+    if param == :debug
       return Puppet::Util::Log.level == :debug
     else
       return @@settings[param]

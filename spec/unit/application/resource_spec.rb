@@ -77,10 +77,8 @@ describe Puppet::Application::Resource do
       type2 = stub_everything 'type2', :name => :type2
       Puppet::Type.stubs(:loadall)
       Puppet::Type.stubs(:eachtype).multiple_yields(type1,type2)
-      @resource.stubs(:exit)
-
       @resource.expects(:puts).with(['type1','type2'])
-      @resource.handle_types(nil)
+      expect { @resource.handle_types(nil) }.to exit_with 0
     end
 
     it "should add param to extra_params list" do

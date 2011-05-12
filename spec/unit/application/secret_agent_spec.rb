@@ -1,11 +1,11 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-require 'puppet/application/configurer'
+require 'puppet/application/secret_agent'
 require 'puppet/indirector/catalog/rest'
 require 'puppet/indirector/report/rest'
 require 'tempfile'
 
-describe "Puppet::Application::Configurer" do
+describe "Puppet::Application::Secret_agent" do
   it "should retrieve and apply a catalog and submit a report" do
     pending "REVISIT: 2.7 changes broke this, and we want the merge published"
 
@@ -25,7 +25,7 @@ describe "Puppet::Application::Configurer" do
 
     Puppet::Util::Log.stubs(:newdestination)
 
-    Puppet::Application::Configurer.new.run
+    Puppet::Application::Secret_agent.new.run
 
     @report.status.should == "changed"
   end

@@ -28,6 +28,8 @@ shared_examples_for "things that declare options" do
     thing = add_options_to do
       option "--foo" do
         desc text
+        description text
+        summary text
       end
     end
 
@@ -37,9 +39,12 @@ shared_examples_for "things that declare options" do
   it "should list all the options" do
     thing = add_options_to do
       option "--foo"
-      option "--bar"
+      option "--bar", '-b'
+      option "-q", "--quux"
+      option "-f"
+      option "--baz"
     end
-    thing.options.should =~ [:foo, :bar]
+    thing.options.should == [:foo, :bar, :b, :q, :quux, :f, :baz]
   end
 
   it "should detect conflicts in long options" do

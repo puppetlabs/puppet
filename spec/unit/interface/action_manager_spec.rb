@@ -94,7 +94,7 @@ describe Puppet::Interface::ActionManager do
     end
 
     it "should be able to indicate when an action is defined" do
-      subject.action(:foo) { "something" }
+      subject.action(:foo) { when_invoked do true end }
       subject.should be_action(:foo)
     end
   end
@@ -218,25 +218,29 @@ describe Puppet::Interface::ActionManager do
 
   describe "#action" do
     it 'should add an action' do
-      subject.action(:foo) {  }
+      subject.action(:foo) { when_invoked do true end }
       subject.get_action(:foo).should be_a Puppet::Interface::Action
     end
 
     it 'should support default actions' do
-      subject.action(:foo) { default }
+      subject.action(:foo) { when_invoked do true end; default }
       subject.get_default_action.should == subject.get_action(:foo)
     end
 
     it 'should not support more than one default action' do
-      subject.action(:foo) { default }
-      expect { subject.action(:bar) { default } }.should raise_error
+      subject.action(:foo) { when_invoked do true end; default }
+      expect { subject.action(:bar) {
+          when_invoked do true end
+          default
+        }
+      }.should raise_error /cannot both be default/
     end
   end
 
   describe "#get_action" do
     let :parent_class do
       parent_class = Class.new(Puppet::Interface)
-      parent_class.action(:foo) {}
+      parent_class.action(:foo) { when_invoked do true end }
       parent_class
     end
 

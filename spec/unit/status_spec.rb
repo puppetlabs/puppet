@@ -15,6 +15,10 @@ describe Puppet::Status do
     Puppet::Status.new.status.to_pson.should == '{"is_alive":true}'
   end
 
+  it "should render to a pson hash" do
+    PSON::pretty_generate(Puppet::Status.new).should =~ /"is_alive":\s*true/
+  end
+
   it "should accept a hash from pson" do
     status = Puppet::Status.new( { "is_alive" => false } )
     status.status.should == { "is_alive" => false }

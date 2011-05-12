@@ -27,11 +27,11 @@ describe Puppet::Application do
     end
 
     it "should not find classes outside the namespace" do
-      lambda { @klass.find("String") }.should raise_error(SystemExit)
+      expect { @klass.find("String") }.to exit_with 1
     end
 
     it "should exit if it can't find a class" do
-      lambda { @klass.find("ThisShallNeverEverEverExistAsdf") }.should raise_error(SystemExit)
+      expect { @klass.find("ThisShallNeverEverEverExist") }.to exit_with 1
     end
   end
 
@@ -286,10 +286,8 @@ describe Puppet::Application do
     describe "when using --help" do
 
       it "should call exit" do
-        @app.expects(:exit)
         @app.stubs(:puts)
-
-        @app.handle_help(nil)
+        expect { @app.handle_help(nil) }.to exit_with 0
       end
 
     end
@@ -301,8 +299,7 @@ describe Puppet::Application do
 
       it "should exit after printing the version" do
         @app.stubs(:puts)
-
-        lambda { @app.handle_version(nil) }.should raise_error(SystemExit)
+        expect { @app.handle_version(nil) }.to exit_with 0
       end
     end
 
@@ -505,22 +502,19 @@ describe Puppet::Application do
 
     it "should warn and exit if no command can be called" do
       $stderr.expects(:puts)
-      @app.expects(:exit).with(1)
-      @app.run
+      expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns no command" do
       @app.stubs(:get_command).returns(nil)
       $stderr.expects(:puts)
-      @app.expects(:exit).with(1)
-      @app.run
+      expect { @app.run }.to exit_with 1
     end
 
     it "should raise an error if dispatch returns an invalid command" do
       @app.stubs(:get_command).returns(:this_function_doesnt_exist)
       $stderr.expects(:puts)
-      @app.expects(:exit).with(1)
-      @app.run
+      expect { @app.run }.to exit_with 1
     end
   end
 

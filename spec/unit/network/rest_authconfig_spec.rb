@@ -5,18 +5,7 @@ require 'puppet/network/rest_authconfig'
 
 describe Puppet::Network::RestAuthConfig do
 
-  DEFAULT_ACL = [
-    { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
-    # this one will allow all file access, and thus delegate
-    # to fileserver.conf
-    { :acl => "/file" },
-    { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-    { :acl => "/report", :method => :save, :authenticated => true },
-    { :acl => "/certificate/ca", :method => :find, :authenticated => false },
-    { :acl => "/certificate/", :method => :find, :authenticated => false },
-    { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
-    { :acl => "/status", :method => [:find], :authenticated => true },
-  ]
+  DEFAULT_ACL = Puppet::Network::RestAuthConfig::DEFAULT_ACL
 
   before :each do
     FileTest.stubs(:exists?).returns(true)

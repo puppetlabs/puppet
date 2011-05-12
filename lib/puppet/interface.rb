@@ -1,7 +1,11 @@
 require 'puppet'
 require 'puppet/util/autoload'
+require 'puppet/interface/documentation'
+require 'prettyprint'
 
 class Puppet::Interface
+  include FullDocs
+
   require 'puppet/interface/face_collection'
 
   require 'puppet/interface/action_manager'
@@ -65,27 +69,33 @@ class Puppet::Interface
     Puppet.warning("set_default_format is deprecated (and ineffective); use render_as on your actions instead.")
   end
 
+
   ########################################################################
   # Documentation.  We currently have to rewrite both getters because we share
   # the same instance between build-time and the runtime instance.  When that
   # splits out this should merge into a module that both the action and face
   # include. --daniel 2011-04-17
-  attr_accessor :summary, :description
-  def summary(value = nil)
-    self.summary = value unless value.nil?
-    @summary
-  end
-  def summary=(value)
-    value = value.to_s
-    value =~ /\n/ and
-      raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
+  def synopsis
+    output = PrettyPrint.format do |s|
+      s.text("puppet #{name} <action>")
+      s.breakable
 
-    @summary = value
-  end
+      options.each do |option|
+        option = get_option(option)
+        wrap = option.required? ? %w{ < > } : %w{ [ ] }
 
-  def description(value = nil)
-    self.description = value unless value.nil?
-    @description
+        s.group(0, *wrap) do
+          option.optparse.each do |item|
+            unless s.current_group.first?
+              s.breakable
+              s.text '|'
+              s.breakable
+            end
+            s.text item
+          end
+        end
+      end
+    end
   end
 
 
@@ -97,8 +107,14 @@ class Puppet::Interface
       raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
     end
 
-    @name = Puppet::Interface::FaceCollection.underscorize(name)
+    @name    = Puppet::Interface::FaceCollection.underscorize(name)
     @version = version
+
+    # The few bits of documentation we actually demand.  The default license
+    # is a favour to our end users; if you happen to get that in a core face
+    # report it as a bug, please. --daniel 2011-04-26
+    @authors  = []
+    @license  = 'All Rights Reserved'
 
     instance_eval(&block) if block_given?
   end
@@ -139,12 +155,12 @@ class Puppet::Interface
       action.get_option(name).__decoration_name(type)
     end
 
+    methods.reverse! if type == :after
+
+    # Exceptions here should propagate up; this implements a hook we can use
+    # reasonably for option validation.
     methods.each do |hook|
-      begin
-        respond_to? hook and self.__send__(hook, action, passed_args, passed_options)
-      rescue => e
-        Puppet.warning("invoking #{action} #{type} hook: #{e}")
-      end
+      respond_to? hook and self.__send__(hook, action, passed_args, passed_options)
     end
   end
 
