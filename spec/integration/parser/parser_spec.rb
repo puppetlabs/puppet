@@ -117,5 +117,36 @@ describe Puppet::Parser::Parser do
         $out = $hash['a']['b']['c']
       }.should parse_with { |v| v.value.is_a?(Puppet::Parser::AST::ASTHash) }
     end
+
+    it "should fail if asked to parse '$foo::::bar'" do
+      expect { @parser.parse("$foo::::bar") }.should raise_error(Puppet::ParseError, /Syntax error at ':'/)
+    end
+
+    describe "function calls" do
+      it "should be able to pass an array to a function" do
+        "my_function([1,2,3])".should parse_with { |fun|
+          fun.is_a?(Puppet::Parser::AST::Function) &&
+          fun.arguments.first.evaluate(stub 'scope') == ['1','2','3']
+        }
+      end
+
+      it "should be able to pass a hash to a function" do
+        "my_function({foo => bar})".should parse_with { |fun|
+          fun.is_a?(Puppet::Parser::AST::Function) &&
+          fun.arguments.first.evaluate(stub 'scope') == {'foo' => 'bar'}
+        }
+      end
+    end
+
+    describe "collections" do
+      it "should find resources according to an expression" do
+        %q{
+          File <| mode == 0700 + 0050 + 0050 |>
+        }.should parse_with { |coll|
+          coll.is_a?(Puppet::Parser::AST::Collection) &&
+            coll.query.evaluate(stub 'scope').first == "param_values.value = '528' and param_names.name = 'mode'"
+        }
+      end
+    end
   end
 end
