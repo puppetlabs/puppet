@@ -378,8 +378,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup_listen
-    unless FileTest.exists?(Puppet[:authconfig])
-      Puppet.err "Will not start without authorization file #{Puppet[:authconfig]}"
+    unless FileTest.exists?(Puppet[:rest_authconfig])
+      Puppet.err "Will not start without authorization file #{Puppet[:rest_authconfig]}"
       exit(14)
     end
 

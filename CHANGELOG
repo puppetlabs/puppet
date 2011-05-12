@@ -1,5 +1,5 @@
 2.7.0rc2
-===
+========
 61edff9 (#7353) Remove :for_humans format entirely.
 d2b5ec6 Adding test for ticket 7139
 6f2a129 add clean-up step to test for ticket_5477 to prevent site.pp from leaking to other tests
@@ -162,7 +162,7 @@ fc18591 Adding pkgutil support.
 
 
 2.7.0rc1
-====
+========
 5915814 Revert "(#6928) Removed --ignoreimport"
 24a277c (#6928) Removed --ignoreimport
 fc36e8d (#6928) Remove --parseonly
@@ -667,8 +667,11 @@ d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 3457b87 Added time module to tagmail report
 
 
-2.6.8rc1
-====
+2.6.8
+=====
+c1edcb2 add test for ticket 7101
+db26326 Move tests from puppet-acceptance repo
+bee1ef7 Updated CHANGELOG for 2.6.8rc1
 8b7444d (#2331) Remove darwinports pkg provider, replace with rewritten macports provider
 65c4e14 Fixed #7082 - Added system support for groups
 b7f4ff7 (#7018) Give more context on the service type's assumptions. Wording tweaks.
