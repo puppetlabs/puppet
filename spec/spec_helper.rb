@@ -17,9 +17,10 @@ end
 require 'pathname'
 require 'tmpdir'
 
-require 'lib/puppet_spec/verbose'
-require 'lib/puppet_spec/files'
-require 'lib/puppet_spec/fixtures'
+require 'puppet_spec/verbose'
+require 'puppet_spec/files'
+require 'puppet_spec/fixtures'
+require 'puppet_spec/matchers'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
 require 'monkey_patches/disable_signal_trap'
@@ -72,11 +73,5 @@ RSpec.configure do |config|
     Puppet::Util::Log.level = @log_level
 
     GC.enable
-  end
-end
-
-RSpec::Matchers.define :have_matching_element do |expected|
-  match do |actual|
-    actual.any? { |item| item =~ expected }
   end
 end

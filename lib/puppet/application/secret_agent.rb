@@ -1,7 +1,7 @@
 require 'puppet/application'
 require 'puppet/face'
 
-class Puppet::Application::Configurer < Puppet::Application
+class Puppet::Application::Secret_agent < Puppet::Application
   should_parse_config
   run_mode :agent
 
@@ -17,7 +17,7 @@ class Puppet::Application::Configurer < Puppet::Application
   end
 
   def run_command
-    report = Puppet::Face[:configurer, '0.0.1'].synchronize(Puppet[:certname])
+    report = Puppet::Face[:secret_agent, '0.0.1'].synchronize(Puppet[:certname])
     Puppet::Face[:report, '0.0.1'].submit(report)
   end
 end

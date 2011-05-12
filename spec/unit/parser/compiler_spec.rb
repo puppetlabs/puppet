@@ -48,6 +48,13 @@ describe Puppet::Parser::Compiler do
   end
 
   before :each do
+    # Push me faster, I wanna go back in time!  (Specifically, freeze time
+    # across the test since we have a bunch of version == timestamp code
+    # hidden away in the implementation and we keep losing the race.)
+    # --daniel 2011-04-21
+    now = Time.now
+    Time.stubs(:now).returns(now)
+
     @node = Puppet::Node.new "testnode"
     @known_resource_types = Puppet::Resource::TypeCollection.new "development"
     @compiler = Puppet::Parser::Compiler.new(@node)

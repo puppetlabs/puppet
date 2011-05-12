@@ -78,18 +78,14 @@ describe Puppet::Application::Filebucket do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @filebucket.stubs(:exit)
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @filebucket.setup
+      Puppet.settings.expects(:print_configs).returns(true)
+      expect { @filebucket.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @filebucket.setup }.should raise_error(SystemExit)
+      expect { @filebucket.setup }.to exit_with 1
     end
 
     describe "with local bucket" do

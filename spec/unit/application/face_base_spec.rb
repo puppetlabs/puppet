@@ -7,18 +7,6 @@ class Puppet::Application::FaceBase::Basetest < Puppet::Application::FaceBase
 end
 
 describe Puppet::Application::FaceBase do
-  before :all do
-    Puppet::Face.define(:basetest, '0.0.1') do
-      option("--[no-]boolean")
-      option("--mandatory MANDATORY")
-
-      action :foo do
-        option("--action")
-        when_invoked { |*args| args.length }
-      end
-    end
-  end
-
   let :app do
     app = Puppet::Application::FaceBase::Basetest.new
     app.command_line.stubs(:subcommand_name).returns('subcommand')
@@ -66,7 +54,7 @@ describe Puppet::Application::FaceBase do
 
     it "should use the default action if not given any arguments" do
       app.command_line.stubs(:args).returns []
-      action = stub(:options => [])
+      action = stub(:options => [], :render_as => nil)
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
       app.stubs(:main)
       app.run
@@ -76,7 +64,7 @@ describe Puppet::Application::FaceBase do
 
     it "should use the default action if not given a valid one" do
       app.command_line.stubs(:args).returns %w{bar}
-      action = stub(:options => [])
+      action = stub(:options => [], :render_as => nil)
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(action)
       app.stubs(:main)
       app.run
@@ -88,9 +76,8 @@ describe Puppet::Application::FaceBase do
       app.command_line.stubs(:args).returns %w{bar}
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
       app.stubs(:main)
-      app.run
-      app.action.should be_nil
-      app.arguments.should == [ 'bar', { } ]
+      expect { app.run }.to exit_with 1
+      @logs.first.message.should =~ /does not have a default action/
     end
 
     it "should report a sensible error when options with = fail" do
@@ -162,7 +149,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should handle application-level options" do
-      app.command_line.stubs(:args).returns %w{help --verbose help}
+      app.command_line.stubs(:args).returns %w{basetest --verbose return_true}
       app.preinit
       app.parse_options
       app.face.name.should == :basetest
@@ -189,7 +176,7 @@ describe Puppet::Application::FaceBase do
 
   describe "#main" do
     before :each do
-      app.expects(:exit).with(0)
+      app.stubs(:puts)          # don't dump text to screen.
 
       app.face      = Puppet::Face[:basetest, '0.0.1']
       app.action    = app.face.get_action(:foo)
@@ -198,69 +185,101 @@ describe Puppet::Application::FaceBase do
 
     it "should send the specified verb and name to the face" do
       app.face.expects(:foo).with(*app.arguments)
-      app.main
+      expect { app.main }.to exit_with 0
     end
 
     it "should lookup help when it cannot do anything else" do
       app.action = nil
-      Puppet::Face[:help, :current].expects(:help).with(:basetest, *app.arguments)
-      app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
-      app.main
+      Puppet::Face[:help, :current].expects(:help).with(:basetest)
+      expect { app.main }.to exit_with 1
     end
 
     it "should use its render method to render any result" do
       app.expects(:render).with(app.arguments.length + 1)
-      app.stubs(:puts)          # meh.  Don't print nil, thanks. --daniel 2011-04-12
-      app.main
+      expect { app.main }.to exit_with 0
+    end
+  end
+
+  describe "error reporting" do
+    before :each do
+      app.stubs(:puts)          # don't dump text to screen.
+
+      app.render_as = :json
+      app.face      = Puppet::Face[:basetest, '0.0.1']
+      app.arguments = [{}]      # we always have options in there...
+    end
+
+    it "should exit 0 when the action returns true" do
+      app.action    = app.face.get_action :return_true
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit 0 when the action returns false" do
+      app.action = app.face.get_action :return_false
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit 0 when the action returns nil" do
+      app.action = app.face.get_action :return_nil
+      expect { app.main }.to exit_with 0
+    end
+
+    it "should exit non-0 when the action raises" do
+      app.action = app.face.get_action :return_raise
+      expect { app.main }.not_to exit_with 0
     end
   end
 
   describe "#render" do
     before :each do
-      app.face   = Puppet::Face[:basetest, '0.0.1']
-      app.action = app.face.get_action(:foo)
+      app.face      = Puppet::Face[:basetest, '0.0.1']
+      app.action    = app.face.get_action(:foo)
     end
 
-    ["hello", 1, 1.0].each do |input|
-      it "should just return a #{input.class.name}" do
-        app.render(input).should == input
+    context "default rendering" do
+      before :each do app.setup end
+
+      ["hello", 1, 1.0].each do |input|
+        it "should just return a #{input.class.name}" do
+          app.render(input).should == input
+        end
       end
-    end
 
-    [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
-      it "should render #{input.class} using the 'pp' library" do
-        app.render(input).should == input.pretty_inspect
+      [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
+        it "should render #{input.class} using JSON" do
+          app.render(input).should == input.to_pson.chomp
+        end
       end
-    end
 
-    it "should render a non-trivially-keyed Hash with the 'pp' library" do
-      hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
-      app.render(hash).should == hash.pretty_inspect
-    end
+      it "should render a non-trivially-keyed Hash with using JSON" do
+        hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
+        app.render(hash).should == hash.to_pson.chomp
+      end
 
-    it "should render a {String,Numeric}-keyed Hash into a table" do
-      object = Object.new
-      hash = { "one" => 1, "two" => [], "three" => {}, "four" => object,
-        5 => 5, 6.0 => 6 }
+      it "should render a {String,Numeric}-keyed Hash into a table" do
+        object = Object.new
+        hash = { "one" => 1, "two" => [], "three" => {}, "four" => object,
+          5 => 5, 6.0 => 6 }
 
-      # Gotta love ASCII-betical sort order.  Hope your objects are better
-      # structured for display than my test one is. --daniel 2011-04-18
-      app.render(hash).should == <<EOT
+        # Gotta love ASCII-betical sort order.  Hope your objects are better
+        # structured for display than my test one is. --daniel 2011-04-18
+        app.render(hash).should == <<EOT
 5      5
 6.0    6
-four   #{object.pretty_inspect.chomp}
+four   #{object.to_pson.chomp}
 one    1
 three  {}
 two    []
 EOT
-    end
+      end
 
-    it "should render a hash nicely with a multi-line value" do
-      hash = {
-        "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
-        "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
-      }
-      app.render(hash).should == <<EOT
+      it "should render a hash nicely with a multi-line value" do
+        pending "Moving to PSON rather than PP makes this unsupportable."
+        hash = {
+          "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
+          "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
+        }
+        app.render(hash).should == <<EOT
 number  {"1"=>"1111111111111111111111111111111111111111",
          "2"=>"2222222222222222222222222222222222222222",
          "3"=>"3333333333333333333333333333333333333333"}
@@ -268,12 +287,46 @@ text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
          "b"=>"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
          "c"=>"cccccccccccccccccccccccccccccccccccccccc"}
 EOT
+      end
+
+      it "should invoke the action rendering hook while rendering" do
+        app.action.set_rendering_method_for(:console, proc { |value| "bi-winning!" })
+        app.render("bi-polar?").should == "bi-winning!"
+      end
+
+      it "should render JSON when asked for json" do
+        app.render_as = :json
+        json = app.render({ :one => 1, :two => 2 })
+        json.should =~ /"one":\s*1\b/
+        json.should =~ /"two":\s*2\b/
+        PSON.parse(json).should == { "one" => 1, "two" => 2 }
+      end
     end
 
-    it "should invoke the action rendering hook while rendering" do
-      app.action.set_rendering_method_for(:for_humans, proc { |value| "bi-winning!" })
-      app.action.render_as = :for_humans
-      app.render("bi-polar?").should == "bi-winning!"
+    it "should fail early if asked to render an invalid format" do
+      app.command_line.stubs(:args).returns %w{--render-as interpretive-dance help help}
+      # We shouldn't get here, thanks to the exception, and our expectation on
+      # it, but this helps us fail if that slips up and all. --daniel 2011-04-27
+      Puppet::Face[:help, :current].expects(:help).never
+
+      expect {
+        expect { app.run }.to exit_with 1
+      }.to have_printed(/I don't know how to render 'interpretive-dance'/)
+    end
+
+    it "should work if asked to render a NetworkHandler format" do
+      app.command_line.stubs(:args).returns %w{dummy find dummy --render-as yaml}
+      expect {
+        expect { app.run }.to exit_with 0
+      }.to have_printed(/--- 3/)
+    end
+
+    it "should invoke when_rendering hook 's' when asked to render-as 's'" do
+      app.command_line.stubs(:args).returns %w{with_s_rendering_hook --render-as s}
+      app.action = app.face.get_action(:with_s_rendering_hook)
+      expect {
+        expect { app.run }.to exit_with 0
+      }.to have_printed(/you invoked the 's' rendering hook/)
     end
   end
 end

@@ -8,6 +8,7 @@ module Puppet
 
     DEFAULT_ACL = [
       { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
       # this one will allow all file access, and thus delegate
       # to fileserver.conf
       { :acl => "/file" },

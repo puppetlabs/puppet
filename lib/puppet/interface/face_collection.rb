@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require 'puppet/interface'
 
 module Puppet::Interface::FaceCollection
@@ -10,21 +9,12 @@ module Puppet::Interface::FaceCollection
     unless @loaded
       @loaded = true
       $LOAD_PATH.each do |dir|
-        next unless FileTest.directory?(dir)
-        Dir.chdir(dir) do
-          Dir.glob("puppet/face/*.rb").collect { |f| f.sub(/\.rb/, '') }.each do |file|
-            iname = file.sub(/\.rb/, '')
-            begin
-              require iname
-            rescue Exception => detail
-              puts detail.backtrace if Puppet[:trace]
-              raise "Could not load #{iname} from #{dir}/#{file}: #{detail}"
-            end
-          end
-        end
+        Dir.glob("#{dir}/puppet/face/*.rb").
+          collect {|f| File.basename(f, '.rb') }.
+          each {|name| self[name, :current] }
       end
     end
-    return @faces.keys.select {|name| @faces[name].length > 0 }
+    @faces.keys.select {|name| @faces[name].length > 0 }
   end
 
   def self.validate_version(version)
@@ -124,6 +114,10 @@ module Puppet::Interface::FaceCollection
     rescue LoadError => e
       raise unless e.message =~ %r{-- puppet/face/#{name}$}
       # ...guess we didn't find the file; return a much better problem.
+    rescue SyntaxError => e
+      raise unless e.message =~ %r{puppet/face/#{name}\.rb:\d+: }
+      Puppet.err "Failed to load face #{name}:\n#{e}"
+      # ...but we just carry on after complaining.
     end
 
     return get_face(name, version)

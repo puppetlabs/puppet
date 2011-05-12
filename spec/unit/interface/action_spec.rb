@@ -74,25 +74,29 @@ describe Puppet::Interface::Action do
         option '-w'
 
         action(:foo) do
+          when_invoked do true end
           option '-x', '--ex'
           option '-y', '--why'
         end
 
         action(:bar) do
+          when_invoked do true end
           option '-z', '--zee'
         end
 
         action(:baz) do
+          when_invoked do true end
           option '-z', '--zed'
         end
 
         action(:noopts) do
           # no options declared
+          when_invoked do true end
         end
       end
     end
 
-    subject { action = face.action(:new_action) { } }
+    subject { action = face.action(:new_action) { when_invoked do true end } }
 
     it 'should add the options from the specified action' do
       subject.inherit_options_from(foo = face.get_action(:foo))
@@ -108,7 +112,7 @@ describe Puppet::Interface::Action do
     it 'should add the options from multiple actions' do
       subject.inherit_options_from(foo = face.get_action(:foo))
       subject.inherit_options_from(bar = face.get_action(:bar))
-      subject.options.should == (foo.options + bar.options).uniq.sort
+      subject.options.should == (foo.options + bar.options).uniq
     end
 
     it 'should not inherit face options' do
@@ -205,6 +209,7 @@ describe Puppet::Interface::Action do
     it "should support options with an empty block" do
       face = Puppet::Interface.new(:action_level_options, '0.0.1') do
         action :foo do
+          when_invoked do true end
           option "--bar" do
             # this line left deliberately blank
           end
@@ -217,7 +222,10 @@ describe Puppet::Interface::Action do
 
     it "should return only action level options when there are no face options" do
       face = Puppet::Interface.new(:action_level_options, '0.0.1') do
-        action :foo do option "--bar" end
+        action :foo do
+          when_invoked do true end
+          option "--bar"
+        end
       end
 
       face.get_action(:foo).options.should =~ [:bar]
@@ -226,8 +234,8 @@ describe Puppet::Interface::Action do
     describe "with both face and action options" do
       let :face do
         Puppet::Interface.new(:action_level_options, '0.0.1') do
-          action :foo do option "--bar" end
-          action :baz do option "--bim" end
+          action :foo do when_invoked do true end ; option "--bar" end
+          action :baz do when_invoked do true end ; option "--bim" end
           option "--quux"
         end
       end
@@ -241,7 +249,10 @@ describe Puppet::Interface::Action do
         parent.option "--foo"
         child = parent.new(:inherited_options, '0.0.1') do
           option "--bar"
-          action :action do option "--baz" end
+          action :action do
+            when_invoked do true end
+            option "--baz"
+          end
         end
 
         action = child.get_action(:action)
@@ -270,7 +281,10 @@ describe Puppet::Interface::Action do
     it_should_behave_like "things that declare options" do
       def add_options_to(&block)
         face = Puppet::Interface.new(:with_options, '0.0.1') do
-          action(:foo, &block)
+          action(:foo) do
+            when_invoked do true end
+            self.instance_eval &block
+          end
         end
         face.get_action(:foo)
       end
@@ -292,7 +306,7 @@ describe Puppet::Interface::Action do
           when_invoked { }
         end
       end
-      expect { face.bar }.to raise_error ArgumentError, /missing required options \(foo\)/
+      expect { face.bar }.to raise_error ArgumentError, /The following options are required: foo/
     end
 
     it "should fail when a required face option is not provided" do
@@ -300,184 +314,251 @@ describe Puppet::Interface::Action do
         option('--foo') { required }
         action(:bar) { when_invoked { } }
       end
-      expect { face.bar }.to raise_error ArgumentError, /missing required options \(foo\)/
+      expect { face.bar }.to raise_error ArgumentError, /The following options are required: foo/
     end
   end
 
-  context "with action decorators" do
-    context "local only" do
+  context "with decorators" do
+    context "declared locally" do
       let :face do
         Puppet::Interface.new(:action_decorators, '0.0.1') do
           action :bar do when_invoked do true end end
-          def report(arg) end
+          def reported; @reported; end
+          def report(arg)
+            (@reported ||= []) << arg
+          end
         end
       end
 
-      it "should call action before decorators" do
-        face.action(:baz) do
-          option "--baz" do
-            before_action do |action, args, options|
-              report(:action_option)
-            end
-          end
-          when_invoked do true end
+      it "should execute before advice on action options in declaration order" do
+        face.action(:boo) do
+          option("--foo")        { before_action { |_,_,_| report :foo  } }
+          option("--bar", '-b')  { before_action { |_,_,_| report :bar  } }
+          option("-q", "--quux") { before_action { |_,_,_| report :quux } }
+          option("-f")           { before_action { |_,_,_| report :f    } }
+          option("--baz")        { before_action { |_,_,_| report :baz  } }
+          when_invoked { }
         end
 
-        face.expects(:report).with(:action_option)
-        face.baz :baz => true
+        face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
+        face.reported.should == [ :foo, :bar, :quux, :f, :baz ]
       end
 
-      it "should call action after decorators" do
-        face.action(:baz) do
-          option "--baz" do
-            after_action do |action, args, options|
-              report(:action_option)
-            end
-          end
-          when_invoked do true end
+      it "should execute after advice on action options in declaration order" do
+        face.action(:boo) do
+          option("--foo")        { after_action { |_,_,_| report :foo  } }
+          option("--bar", '-b')  { after_action { |_,_,_| report :bar  } }
+          option("-q", "--quux") { after_action { |_,_,_| report :quux } }
+          option("-f")           { after_action { |_,_,_| report :f    } }
+          option("--baz")        { after_action { |_,_,_| report :baz  } }
+          when_invoked { }
         end
 
-        face.expects(:report).with(:action_option)
-        face.baz :baz => true
+        face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
+        face.reported.should == [ :foo, :bar, :quux, :f, :baz ].reverse
       end
 
-      it "should call local before decorators" do
-        face.option "--foo FOO" do
-          before_action do |action, args, options|
-            report(:before)
-          end
+      it "should execute before advice on face options in declaration order" do
+        face.instance_eval do
+          option("--foo")        { before_action { |_,_,_| report :foo  } }
+          option("--bar", '-b')  { before_action { |_,_,_| report :bar  } }
+          option("-q", "--quux") { before_action { |_,_,_| report :quux } }
+          option("-f")           { before_action { |_,_,_| report :f    } }
+          option("--baz")        { before_action { |_,_,_| report :baz  } }
         end
-        face.expects(:report).with(:before)
-        face.bar({:foo => 12})
+        face.script(:boo) { }
+
+        face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
+        face.reported.should == [ :foo, :bar, :quux, :f, :baz ]
       end
 
-      it "should call local after decorators" do
-        face.option "--foo FOO" do
-          after_action do |action, args, options| report(:after) end
+      it "should execute after advice on face options in declaration order" do
+        face.instance_eval do
+          option("--foo")        { after_action { |_,_,_| report :foo  } }
+          option("--bar", '-b')  { after_action { |_,_,_| report :bar  } }
+          option("-q", "--quux") { after_action { |_,_,_| report :quux } }
+          option("-f")           { after_action { |_,_,_| report :f    } }
+          option("--baz")        { after_action { |_,_,_| report :baz  } }
         end
-        face.expects(:report).with(:after)
-        face.bar({:foo => 12})
+        face.script(:boo) { }
+
+        face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
+        face.reported.should == [ :foo, :bar, :quux, :f, :baz ].reverse
       end
 
-      context "with inactive decorators" do
-        it "should not invoke a decorator if the options are empty" do
-          face.option "--foo FOO" do
-            before_action do |action, args, options|
-              report :before_action
-            end
+      it "should execute before advice on face options before action options" do
+        face.instance_eval do
+          option("--face-foo")        { before_action { |_,_,_| report :face_foo  } }
+          option("--face-bar", '-r')  { before_action { |_,_,_| report :face_bar  } }
+          action(:boo) do
+            option("--action-foo")        { before_action { |_,_,_| report :action_foo  } }
+            option("--action-bar", '-b')  { before_action { |_,_,_| report :action_bar  } }
+            option("-q", "--action-quux") { before_action { |_,_,_| report :action_quux } }
+            option("-a")                  { before_action { |_,_,_| report :a           } }
+            option("--action-baz")        { before_action { |_,_,_| report :action_baz  } }
+            when_invoked { }
           end
-          face.expects(:report).never # I am testing the negative.
-          face.bar
+          option("-u", "--face-quux") { before_action { |_,_,_| report :face_quux } }
+          option("-f")                { before_action { |_,_,_| report :f         } }
+          option("--face-baz")        { before_action { |_,_,_| report :face_baz  } }
         end
 
-        context "with some decorators only" do
-          before :each do
-            face.option "--foo" do
-              before_action do |action, args, options| report :foo end
-            end
-            face.option "--bar" do
-              before_action do |action, args, options| report :bar end
-            end
-          end
+        expected_calls = [ :face_foo, :face_bar, :face_quux, :f, :face_baz,
+                           :action_foo, :action_bar, :action_quux, :a, :action_baz ]
+        face.boo Hash[ *expected_calls.zip([]).flatten ]
+        face.reported.should == expected_calls
+      end
 
-          it "should work with the foo option" do
-            face.expects(:report).with(:foo)
-            face.bar(:foo => true)
+      it "should execute after advice on face options in declaration order" do
+        face.instance_eval do
+          option("--face-foo")        { after_action { |_,_,_| report :face_foo  } }
+          option("--face-bar", '-r')  { after_action { |_,_,_| report :face_bar  } }
+          action(:boo) do
+            option("--action-foo")        { after_action { |_,_,_| report :action_foo  } }
+            option("--action-bar", '-b')  { after_action { |_,_,_| report :action_bar  } }
+            option("-q", "--action-quux") { after_action { |_,_,_| report :action_quux } }
+            option("-a")                  { after_action { |_,_,_| report :a           } }
+            option("--action-baz")        { after_action { |_,_,_| report :action_baz  } }
+            when_invoked { }
           end
+          option("-u", "--face-quux") { after_action { |_,_,_| report :face_quux } }
+          option("-f")                { after_action { |_,_,_| report :f         } }
+          option("--face-baz")        { after_action { |_,_,_| report :face_baz  } }
+        end
 
-          it "should work with the bar option" do
-            face.expects(:report).with(:bar)
-            face.bar(:bar => true)
-          end
+        expected_calls = [ :face_foo, :face_bar, :face_quux, :f, :face_baz,
+                           :action_foo, :action_bar, :action_quux, :a, :action_baz ]
+        face.boo Hash[ *expected_calls.zip([]).flatten ]
+        face.reported.should == expected_calls.reverse
+      end
 
-          it "should work with both options" do
-            face.expects(:report).with(:foo)
-            face.expects(:report).with(:bar)
-            face.bar(:foo => true, :bar => true)
-          end
+      it "should not invoke a decorator if the options are empty" do
+        face.option("--foo FOO") { before_action { |_,_,_| report :before_action } }
+        face.expects(:report).never
+        face.bar
+      end
+
+      context "passing a subset of the options" do
+        before :each do
+          face.option("--foo") { before_action { |_,_,_| report :foo } }
+          face.option("--bar") { before_action { |_,_,_| report :bar } }
+        end
+
+        it "should invoke only foo's advice when passed only 'foo'" do
+          face.bar(:foo => true)
+          face.reported.should == [ :foo ]
+        end
+
+        it "should invoke only bar's advice when passed only 'bar'" do
+          face.bar(:bar => true)
+          face.reported.should == [ :bar ]
+        end
+
+        it "should invoke advice for all passed options" do
+          face.bar(:foo => true, :bar => true)
+          face.reported.should == [ :foo, :bar ]
         end
       end
     end
 
-    context "with inherited decorators" do
+    context "and inheritance" do
       let :parent do
-        parent = Class.new(Puppet::Interface)
-        parent.script :on_parent do :on_parent end
-        parent.define_method :report do |arg| arg end
-        parent
+        Class.new(Puppet::Interface) do
+          script(:on_parent) { :on_parent }
+
+          def reported; @reported; end
+          def report(arg)
+            (@reported ||= []) << arg
+          end
+        end
       end
 
       let :child do
-        child = parent.new(:inherited_decorators, '0.0.1') do
-          script :on_child do :on_child end
+        parent.new(:inherited_decorators, '0.0.1') do
+          script(:on_child) { :on_child }
         end
       end
 
-      context "with a child decorator" do
+      context "locally declared face options" do
         subject do
-          child.option "--foo FOO" do
-            before_action do |action, args, options|
-              report(:child_before)
-            end
-          end
-          child.expects(:report).with(:child_before)
+          child.option("--foo=") { before_action { |_,_,_| report :child_before } }
           child
         end
 
-        it "child actions should invoke the decorator" do
-          subject.on_child({:foo => true, :bar => true}).should == :on_child
+        it "should be invoked when calling a child action" do
+          subject.on_child(:foo => true, :bar => true).should == :on_child
+          subject.reported.should == [ :child_before ]
         end
 
-        it "parent actions should invoke the decorator" do
-          subject.on_parent({:foo => true, :bar => true}).should == :on_parent
+        it "should be invoked when calling a parent action" do
+          subject.on_parent(:foo => true, :bar => true).should == :on_parent
+          subject.reported.should == [ :child_before ]
         end
       end
 
-      context "with a parent decorator" do
+      context "inherited face option decorators" do
         subject do
-          parent.option "--foo FOO" do
-            before_action do |action, args, options|
-              report(:parent_before)
-            end
-          end
-          child.expects(:report).with(:parent_before)
+          parent.option("--foo=") { before_action { |_,_,_| report :parent_before } }
           child
         end
 
-        it "child actions should invoke the decorator" do
-          subject.on_child({:foo => true, :bar => true}).should == :on_child
+        it "should be invoked when calling a child action" do
+          subject.on_child(:foo => true, :bar => true).should == :on_child
+          subject.reported.should == [ :parent_before ]
         end
 
-        it "parent actions should invoke the decorator" do
-          subject.on_parent({:foo => true, :bar => true}).should == :on_parent
+        it "should be invoked when calling a parent action" do
+          subject.on_parent(:foo => true, :bar => true).should == :on_parent
+          subject.reported.should == [ :parent_before ]
         end
       end
 
-      context "with child and parent decorators" do
+      context "with both inherited and local face options" do
+        # Decorations should be invoked in declaration order, according to
+        # inheritance (e.g. parent class options should be handled before
+        # subclass options).
         subject do
-          parent.option "--foo FOO" do
-            before_action { |action, args, options| report(:parent_before) }
-            after_action  { |action, args, options| report(:parent_after)  }
-          end
-          child.option "--bar BAR" do
-            before_action { |action, args, options| report(:child_before) }
-            after_action  { |action, args, options| report(:child_after)  }
+          child.option "-c" do
+            before_action { |action, args, options| report :c_before }
+            after_action  { |action, args, options| report :c_after  }
           end
 
-          child.expects(:report).with(:child_before)
-          child.expects(:report).with(:parent_before)
-          child.expects(:report).with(:parent_after)
-          child.expects(:report).with(:child_after)
+          parent.option "-a" do
+            before_action { |action, args, options| report :a_before }
+            after_action  { |action, args, options| report :a_after  }
+          end
+
+          child.option "-d" do
+            before_action { |action, args, options| report :d_before }
+            after_action  { |action, args, options| report :d_after  }
+          end
+
+          parent.option "-b" do
+            before_action { |action, args, options| report :b_before }
+            after_action  { |action, args, options| report :b_after  }
+          end
+
+          child.script(:decorations) { report :invoked }
 
           child
         end
 
-        it "child actions should invoke all the decorator" do
-          subject.on_child({:foo => true, :bar => true}).should == :on_child
+        it "should invoke all decorations when calling a child action" do
+          subject.decorations(:a => 1, :b => 1, :c => 1, :d => 1)
+          subject.reported.should == [
+            :a_before, :b_before, :c_before, :d_before,
+            :invoked,
+            :d_after, :c_after, :b_after, :a_after
+          ]
         end
 
-        it "parent actions should invoke all the decorator" do
-          subject.on_parent({:foo => true, :bar => true}).should == :on_parent
+        it "should invoke all decorations when calling a parent action" do
+          subject.decorations(:a => 1, :b => 1, :c => 1, :d => 1)
+          subject.reported.should == [
+            :a_before, :b_before, :c_before, :d_before,
+            :invoked,
+            :d_after, :c_after, :b_after, :a_after
+          ]
         end
       end
     end
@@ -486,7 +567,9 @@ describe Puppet::Interface::Action do
   it_should_behave_like "documentation on faces" do
     subject do
       face = Puppet::Interface.new(:action_documentation, '0.0.1') do
-        action :documentation do end
+        action :documentation do
+          when_invoked do true end
+        end
       end
       face.get_action(:documentation)
     end
@@ -499,5 +582,24 @@ describe Puppet::Interface::Action do
     it "should fail if when_rendering gets a non-symbol identifier"
     it "should fail if a second block is given for the same type"
     it "should return the block if asked"
+  end
+
+  context "#validate_args" do
+    subject do
+      Puppet::Interface.new(:validate_args, '1.0.0') do
+        script :test do true end
+      end
+    end
+
+    it "should fail if a required option is not passed" do
+      subject.option "--foo" do required end
+      expect { subject.test }.to raise_error ArgumentError, /options are required/
+    end
+
+    it "should fail if two aliases to one option are passed" do
+      subject.option "--foo", "-f"
+      expect { subject.test :foo => true, :f => true }.
+        to raise_error ArgumentError, /Multiple aliases for the same option/
+    end
   end
 end

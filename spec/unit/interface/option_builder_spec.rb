@@ -16,13 +16,15 @@ describe Puppet::Interface::OptionBuilder do
     option.should be_an_instance_of Puppet::Interface::Option
   end
 
-  it "should support documentation declarations" do
-    text = "this is the description"
-    option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
-      desc text
+  [:description, :summary].each do |doc|
+    it "should support #{doc} declarations" do
+      text = "this is the #{doc}"
+      option = Puppet::Interface::OptionBuilder.build(face, "--foo") do
+        self.send doc, text
+      end
+      option.should be_an_instance_of Puppet::Interface::Option
+      option.send(doc).should == text
     end
-    option.should be_an_instance_of Puppet::Interface::Option
-    option.desc.should == text
   end
 
   context "before_action hook" do

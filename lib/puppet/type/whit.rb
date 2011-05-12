@@ -5,8 +5,14 @@ Puppet::Type.newtype(:whit) do
     desc "The name of the whit, because it must have one."
   end
 
+
+  # Hide the fact that we're a whit from logs
   def to_s
-    "(#{name})"
+    name.sub(/^completed_|^admissible_/, "")
+  end
+
+  def path
+    to_s
   end
 
   def refresh

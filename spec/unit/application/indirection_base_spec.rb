@@ -1,14 +1,15 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/application/indirection_base'
-require 'puppet/face/indirector'
+require 'puppet/indirector/face'
 
 ########################################################################
 # Stub for testing; the names are critical, sadly. --daniel 2011-03-30
 class Puppet::Application::TestIndirection < Puppet::Application::IndirectionBase
 end
 
-face = Puppet::Face::Indirector.define(:testindirection, '0.0.1') do
+face = Puppet::Indirector::Face.define(:testindirection, '0.0.1') do
+  summary "fake summary"
 end
 # REVISIT: This horror is required because we don't allow anything to be
 # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29
@@ -27,11 +28,12 @@ describe Puppet::Application::IndirectionBase do
     Puppet::Indirector::Indirection.expects(:instance).
       with(:testindirection).returns(terminus)
 
-    subject.command_line.instance_variable_set('@args', %w{--terminus foo save})
+    subject.command_line.instance_variable_set('@args', %w{--terminus foo save bar})
 
     # Not a very nice thing. :(
     $stderr.stubs(:puts)
+    Puppet.stubs(:err)
 
-    expect { subject.run }.should raise_error SystemExit
+    expect { subject.run }.to exit_with 0
   end
 end

@@ -1,4 +1,10 @@
+require 'puppet/interface'
+
 class Puppet::Interface::Option
+  include Puppet::Interface::TinyDocs
+  # For compatibility, deprecated, and should go fairly soon...
+  ['', '='].each { |x| alias :"desc#{x}" :"description#{x}" }
+
   def initialize(parent, *declaration, &block)
     @parent   = parent
     @optparse = []
@@ -78,7 +84,7 @@ class Puppet::Interface::Option
   end
 
   attr_reader   :parent, :name, :aliases, :optparse
-  attr_accessor :required, :desc
+  attr_accessor :required
 
   attr_accessor :before_action
   def before_action=(proc)

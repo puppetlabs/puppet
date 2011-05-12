@@ -86,18 +86,14 @@ describe Puppet::Application::Queue do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @queue.stubs(:exit)
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @queue.setup
+      Puppet.settings.expects(:print_configs).returns(true)
+      expect { @queue.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @queue.setup }.should raise_error(SystemExit)
+      expect { @queue.setup }.to exit_with 1
     end
 
     it "should call setup_logs" do

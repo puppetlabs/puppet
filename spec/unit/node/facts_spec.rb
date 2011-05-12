@@ -110,11 +110,7 @@ describe Puppet::Node::Facts, "when indirecting" do
       end
 
       it "should accept properly formatted pson" do
-        facts = Puppet::Node::Facts.new("foo")
-        facts.values = {"a" => "1", "b" => "2", "c" => "3"}
-        facts.expiration = Time.now
-        #pson = %Q({"document_type": "Puppet::Node::Facts", "data: {"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}}})
-        pson = %Q({"data": {"name":"foo", "expiration":"#{@expiration}", "timestamp": "#{@timestamp}", "values":{"a":"1","b":"2","c":"3"}}, "document_type":"Puppet::Node::Facts"})
+        pson = %Q({"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}})
         format = Puppet::Network::FormatHandler.format('pson')
         facts = format.intern(Puppet::Node::Facts,pson)
         facts.name.should == 'foo'
@@ -127,29 +123,10 @@ describe Puppet::Node::Facts, "when indirecting" do
         facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
         facts.expiration = @expiration
         result = PSON.parse(facts.to_pson)
-        result.name.should == facts.name
-        result.values.should == facts.values
-        result.timestamp.should == facts.timestamp
-        result.expiration.should == facts.expiration
-        result.type.should == Puppet::Node::Facts
-      end
-
-      it "should not include nil values" do
-        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
-
-        # XXX:LAK For some reason this is resurrection the full instance, instead
-        # of just returning the hash.  This code works, but I can't figure out what's
-        # going on.
-        newfacts = PSON.parse(facts.to_pson)
-        newfacts.expiration.should be_nil
-      end
-
-      it "should be able to handle nil values" do
-        pson = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
-        format = Puppet::Network::FormatHandler.format('pson')
-        facts = format.intern(Puppet::Node::Facts,pson)
-        facts.name.should == 'foo'
-        facts.expiration.should be_nil
+        result['name'].should == facts.name
+        result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
+        result['timestamp'].should == facts.timestamp.to_s
+        result['expiration'].should == facts.expiration.to_s
       end
     end
   end

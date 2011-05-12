@@ -1,15 +1,28 @@
-# -*- coding: utf-8 -*-
 require 'puppet/interface'
-require 'puppet/interface/option'
+require 'puppet/interface/documentation'
+require 'prettyprint'
 
 class Puppet::Interface::Action
+  extend Puppet::Interface::DocGen
+  include Puppet::Interface::FullDocs
+
   def initialize(face, name, attrs = {})
     raise "#{name.inspect} is an invalid action name" unless name.to_s =~ /^[a-z]\w*$/
     @face    = face
     @name    = name.to_sym
+
+    # The few bits of documentation we actually demand.  The default license
+    # is a favour to our end users; if you happen to get that in a core face
+    # report it as a bug, please. --daniel 2011-04-26
+    @authors = []
+    @license  = 'All Rights Reserved'
+
     attrs.each do |k, v| send("#{k}=", v) end
 
-    @options        = {}
+    # @options collects the added options in the order they're declared.
+    # @options_hash collects the options keyed by alias for quick lookups.
+    @options        = []
+    @options_hash   = {}
     @when_rendering = {}
   end
 
@@ -30,8 +43,32 @@ class Puppet::Interface::Action
     !!@default
   end
 
-  attr_accessor :summary
+  ########################################################################
+  # Documentation...
+  attr_doc :returns
+  def synopsis
+    output = PrettyPrint.format do |s|
+      s.text("puppet #{@face.name}")
+      s.text(" #{name}") unless default?
+      s.breakable
 
+      options.each do |option|
+        option = get_option(option)
+        wrap = option.required? ? %w{ < > } : %w{ [ ] }
+
+        s.group(0, *wrap) do
+          option.optparse.each do |item|
+            unless s.current_group.first?
+              s.breakable
+              s.text '|'
+              s.breakable
+            end
+            s.text item
+          end
+        end
+      end
+    end
+  end
 
   ########################################################################
   # Support for rendering formats and all.
@@ -39,8 +76,15 @@ class Puppet::Interface::Action
     unless type.is_a? Symbol
       raise ArgumentError, "The rendering format must be a symbol, not #{type.class.name}"
     end
-    return unless @when_rendering.has_key? type
-    return @when_rendering[type].bind(@face)
+    # Do we have a rendering hook for this name?
+    return @when_rendering[type].bind(@face) if @when_rendering.has_key? type
+
+    # How about by another name?
+    alt = type.to_s.sub(/^to_/, '').to_sym
+    return @when_rendering[alt].bind(@face) if @when_rendering.has_key? alt
+
+    # Guess not, nothing to run.
+    return nil
   end
   def set_rendering_method_for(type, proc)
     unless proc.is_a? Proc
@@ -79,18 +123,6 @@ class Puppet::Interface::Action
   attr_accessor :render_as
   def render_as=(value)
     @render_as = value.to_sym
-  end
-
-
-  ########################################################################
-  # Documentation stuff, whee!
-  attr_accessor :summary, :description
-  def summary=(value)
-    value = value.to_s
-    value =~ /\n/ and
-      raise ArgumentError, "Face summary should be a single line; put the long text in 'description' instead."
-
-    @summary = value
   end
 
 
@@ -148,11 +180,13 @@ class Puppet::Interface::Action
   # this stuff work, because it would have been cleaner.  Which gives you an
   # idea how motivated we were to make this cleaner.  Sorry.
   # --daniel 2011-03-31
+  attr_reader   :positional_arg_count
+  attr_accessor :when_invoked
   def when_invoked=(block)
 
     internal_name = "#{@name} implementation, required on Ruby 1.8".to_sym
 
-    arity = block.arity
+    arity = @positional_arg_count = block.arity
     if arity == 0 then
       # This will never fire on 1.8.7, which treats no arguments as "*args",
       # but will on 1.9.2, which treats it as "no arguments".  Which bites,
@@ -195,9 +229,11 @@ WRAPPER
     if @face.is_a?(Class)
       @face.class_eval do eval wrapper, nil, file, line end
       @face.define_method(internal_name, &block)
+      @when_invoked = @face.instance_method(name)
     else
       @face.instance_eval do eval wrapper, nil, file, line end
       @face.meta_def(internal_name, &block)
+      @when_invoked = @face.method(name).unbind
     end
   end
 
@@ -211,7 +247,8 @@ WRAPPER
     end
 
     option.aliases.each do |name|
-      @options[name] = option
+      @options << name
+      @options_hash[name] = option
     end
 
     option
@@ -223,15 +260,15 @@ WRAPPER
   end
 
   def option?(name)
-    @options.include? name.to_sym
+    @options_hash.include? name.to_sym
   end
 
   def options
-    (@options.keys + @face.options).sort
+    @face.options + @options
   end
 
   def get_option(name, with_inherited_options = true)
-    option = @options[name.to_sym]
+    option = @options_hash[name.to_sym]
     if option.nil? and with_inherited_options
       option = @face.get_option(name)
     end
@@ -239,12 +276,26 @@ WRAPPER
   end
 
   def validate_args(args)
+    # Check for multiple aliases for the same option...
+    args.last.keys.each do |name|
+      # #7290: If this isn't actually an option, ignore it for now.  We should
+      # probably fail, but that wasn't our API, and I don't want to perturb
+      # behaviour this late in the RC cycle. --daniel 2011-04-29
+      if option = get_option(name) then
+        overlap = (option.aliases & args.last.keys)
+        unless overlap.length == 1 then
+          raise ArgumentError, "Multiple aliases for the same option passed: #{overlap.join(', ')}"
+        end
+      end
+    end
+
+    # Check for missing mandatory options.
     required = options.map do |name|
       get_option(name)
     end.select(&:required?).collect(&:name) - args.last.keys
 
     return if required.empty?
-    raise ArgumentError, "missing required options (#{required.join(', ')})"
+    raise ArgumentError, "The following options are required: #{required.join(', ')}"
   end
 
   ########################################################################
