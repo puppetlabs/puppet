@@ -411,7 +411,7 @@ describe Puppet::Application::Agent do
 
     describe "when setting up listen" do
       before :each do
-        Puppet.stubs(:[]).with(:authconfig).returns('auth')
+        Puppet.stubs(:[]).with(:rest_authconfig).returns('auth')
         FileTest.stubs(:exists?).with('auth').returns(true)
         File.stubs(:exist?).returns(true)
         @puppetd.options.stubs(:[]).with(:serve).returns([])

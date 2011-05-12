@@ -21,6 +21,13 @@ describe Puppet::FileServing::Fileset, " when initializing" do
     fileset.path.should == path
   end
 
+  it "should not fail if the path is just the file separator" do
+    path = File::SEPARATOR
+    File.stubs(:lstat).with(path).returns stub('stat')
+    fileset = Puppet::FileServing::Fileset.new(path)
+    fileset.path.should == path
+  end
+
   it "should fail if its path does not exist" do
     File.expects(:lstat).with("/some/file").returns nil
     proc { Puppet::FileServing::Fileset.new("/some/file") }.should raise_error(ArgumentError)

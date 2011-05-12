@@ -62,13 +62,30 @@ class Puppet::Parser::Resource < Puppet::Resource
     scope.environment
   end
 
+  # Process the  stage metaparameter for a class.   A containment edge
+  # is drawn from  the class to the stage.   The stage for containment
+  # defaults to main, if none is specified.
+  def add_edge_to_stage
+    return unless self.type.to_s.downcase == "class"
+
+    unless stage = catalog.resource(:stage, self[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
+      raise ArgumentError, "Could not find stage #{self[:stage] || :main} specified by #{self}"
+    end
+
+    self[:stage] ||= stage.title unless stage.title == :main
+    catalog.add_edge(stage, self)
+  end
+
   # Retrieve the associated definition and evaluate it.
   def evaluate
     return if evaluated?
     @evaluated = true
     if klass = resource_type and ! builtin_type?
       finish
-      return klass.evaluate_code(self)
+      evaluated_code = klass.evaluate_code(self)
+      add_edge_to_stage
+
+      return evaluated_code
     elsif builtin?
       devfail "Cannot evaluate a builtin type (#{type})"
     else

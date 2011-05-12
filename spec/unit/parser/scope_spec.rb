@@ -123,7 +123,11 @@ describe Puppet::Parser::Scope do
 
       def create_class_scope(name)
         klass = newclass(name)
-        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
+
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new))
+
+        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 
         @scope.class_scope(klass)
       end
@@ -418,13 +422,15 @@ describe Puppet::Parser::Scope do
       before do
         @scopes = {}
         klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
-        Puppet::Parser::Resource.new("class", :main, :scope => @scope, :source => mock('source')).evaluate
+        @catalog = Puppet::Resource::Catalog.new
+        @catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => @scope))
+        Puppet::Parser::Resource.new("class", :main, :scope => @scope, :source => mock('source'), :catalog => @catalog).evaluate
         @scopes[""] = @scope.class_scope(klass)
         @scopes[""].setvar("test", "value")
 
         %w{one one::two one::two::three}.each do |name|
           klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, name))
-          Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
+          Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => @catalog).evaluate
           @scopes[name] = @scope.class_scope(klass)
           @scopes[name].setvar("test", "value-#{name.sub(/.+::/,'')}")
         end

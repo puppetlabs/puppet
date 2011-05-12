@@ -56,23 +56,20 @@ class Puppet::Parser::Compiler
     # Note that this will fail if the resource is not unique.
     @catalog.add_resource(resource)
 
+    if resource.type.to_s.downcase != "class" && resource[:stage]
+      raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
+    end
 
-    # Add our container edge.  If we're a class, then we get treated specially - we can
-    # control the stage that the class is applied in.  Otherwise, we just
-    # get added to our parent container.
+    # Stages should not be inside of classes.  They are always a
+    # top-level container, regardless of where they appear in the
+    # manifest.
     return if resource.type.to_s.downcase == "stage"
 
+    # This adds a resource to the class it lexically appears in in the
+    # manifest.
     if resource.type.to_s.downcase != "class"
-      raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage" if resource[:stage]
       return @catalog.add_edge(scope.resource, resource)
     end
-
-    unless stage = @catalog.resource(:stage, resource[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
-      raise ArgumentError, "Could not find stage #{resource[:stage] || :main} specified by #{resource}"
-    end
-
-    resource[:stage] ||= stage.title unless stage.title == :main
-    @catalog.add_edge(stage, resource)
   end
 
   # Do we use nodes found in the code, vs. the external node sources?
