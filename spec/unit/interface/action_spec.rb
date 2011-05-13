@@ -68,65 +68,6 @@ describe Puppet::Interface::Action do
     end
   end
 
-  describe "#inherit_options_from" do
-    let :face do
-      Puppet::Interface.new(:face_with_some_options, '0.0.1') do
-        option '-w'
-
-        action(:foo) do
-          when_invoked do true end
-          option '-x', '--ex'
-          option '-y', '--why'
-        end
-
-        action(:bar) do
-          when_invoked do true end
-          option '-z', '--zee'
-        end
-
-        action(:baz) do
-          when_invoked do true end
-          option '-z', '--zed'
-        end
-
-        action(:noopts) do
-          # no options declared
-          when_invoked do true end
-        end
-      end
-    end
-
-    subject { action = face.action(:new_action) { when_invoked do true end } }
-
-    it 'should add the options from the specified action' do
-      subject.inherit_options_from(foo = face.get_action(:foo))
-      subject.options.should == foo.options
-    end
-
-    it 'should not die when the specified action has no options' do
-      original_options = subject.options
-      subject.inherit_options_from(face.get_action(:noopts))
-      subject.options.should == original_options
-    end
-
-    it 'should add the options from multiple actions' do
-      subject.inherit_options_from(foo = face.get_action(:foo))
-      subject.inherit_options_from(bar = face.get_action(:bar))
-      subject.options.should == (foo.options + bar.options).uniq
-    end
-
-    it 'should not inherit face options' do
-      subject.expects(:add_option)
-      subject.expects(:add_option).with(face.get_option(:w)).never
-      subject.inherit_options_from(face.get_action(:bar))
-    end
-
-    it 'should raise an error if inheritance would duplicate options' do
-      subject.inherit_options_from(face.get_action(:bar))
-      expect { subject.inherit_options_from(face.get_action(:baz)) }.to raise_error
-    end
-  end
-
   describe "when invoking" do
     it "should be able to call other actions on the same object" do
       face = Puppet::Interface.new(:my_face, '0.0.1') do

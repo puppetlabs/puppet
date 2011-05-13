@@ -10,6 +10,8 @@ end
 
 face = Puppet::Indirector::Face.define(:testindirection, '0.0.1') do
   summary "fake summary"
+  copyright "Puppet Labs", 2011
+  license   "Apache 2 license; see COPYING"
 end
 # REVISIT: This horror is required because we don't allow anything to be
 # :current except for if it lives on, and is loaded from, disk. --daniel 2011-03-29

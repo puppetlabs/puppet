@@ -31,16 +31,6 @@ class Puppet::Interface::ActionBuilder
     @action.add_option(option)
   end
 
-  def inherit_options_from(action)
-    if action.is_a? Symbol
-      name = action
-      action = @face.get_action(name) or
-      raise ArgumentError, "This Face has no action named #{name}!"
-    end
-
-    @action.inherit_options_from(action)
-  end
-
   def default(value = true)
     @action.default = !!value
   end

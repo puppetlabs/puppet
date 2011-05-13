@@ -254,11 +254,6 @@ WRAPPER
     option
   end
 
-  def inherit_options_from(action)
-    options = action.options.map { |opt| action.get_option(opt, false) }
-    options.reject!(&:nil?).uniq.each { |option| add_option(option) }
-  end
-
   def option?(name)
     @options_hash.include? name.to_sym
   end
