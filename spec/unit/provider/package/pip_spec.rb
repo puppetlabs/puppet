@@ -6,16 +6,20 @@ provider_class = Puppet::Type.type(:package).provider(:pip)
 describe provider_class do
 
   before do
-    @resource = Puppet::Resource.new(:package, "sdsfdssdhdfyjymdgfcjdfjxdrssf")
+    @resource = Puppet::Resource.new(:package, "fake_package")
     @provider = provider_class.new(@resource)
+    client = stub_everything('client')
+    client.stubs(:call).with('package_releases', 'real_package').returns(["1.3", "1.2.5", "1.2.4"])
+    client.stubs(:call).with('package_releases', 'fake_package').returns([])
+    XMLRPC::Client.stubs(:new2).returns(client)
   end
 
   describe "parse" do
 
     it "should return a hash on valid input" do
-      provider_class.parse("Django==1.2.5").should == {
+      provider_class.parse("real_package==1.2.5").should == {
         :ensure   => "1.2.5",
-        :name     => "Django",
+        :name     => "real_package",
         :provider => :pip,
       }
     end
@@ -31,7 +35,7 @@ describe provider_class do
     it "should return an array when pip is present" do
       provider_class.expects(:which).with('pip').returns("/fake/bin/pip")
       p = stub("process")
-      p.expects(:collect).yields("Django==1.2.5")
+      p.expects(:collect).yields("real_package==1.2.5")
       provider_class.expects(:execpipe).with("/fake/bin/pip freeze").yields(p)
       provider_class.instances
     end
@@ -46,19 +50,19 @@ describe provider_class do
   describe "query" do
 
     before do
-      @resource[:name] = "Django"
+      @resource[:name] = "real_package"
     end
 
     it "should return a hash when pip and the package are present" do
       provider_class.expects(:instances).returns [provider_class.new({
         :ensure   => "1.2.5",
-        :name     => "Django",
+        :name     => "real_package",
         :provider => :pip,
       })]
 
       @provider.query.should == {
         :ensure   => "1.2.5",
-        :name     => "Django",
+        :name     => "real_package",
         :provider => :pip,
       }
     end
@@ -72,13 +76,13 @@ describe provider_class do
 
   describe "latest" do
 
-    it "should find a version number for Django" do
-      @resource[:name] = "Django"
+    it "should find a version number for real_package" do
+      @resource[:name] = "real_package"
       @provider.latest.should_not == nil
     end
 
-    it "should not find a version number for sdsfdssdhdfyjymdgfcjdfjxdrssf" do
-      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
+    it "should not find a version number for fake_package" do
+      @resource[:name] = "fake_package"
       @provider.latest.should == nil
     end
 
@@ -87,15 +91,15 @@ describe provider_class do
   describe "install" do
 
     before do
-      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
-      @url = "git+https://example.com/sdsfdssdhdfyjymdgfcjdfjxdrssf.git"
+      @resource[:name] = "fake_package"
+      @url = "git+https://example.com/fake_package.git"
     end
 
     it "should install" do
       @resource[:ensure] = :installed
       @resource[:source] = nil
       @provider.expects(:lazy_pip).
-        with("install", '-q', "sdsfdssdhdfyjymdgfcjdfjxdrssf")
+        with("install", '-q', "fake_package")
       @provider.install
     end
 
@@ -103,7 +107,7 @@ describe provider_class do
       @resource[:ensure] = :installed
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
-        with("install", '-q', '-e', "#{@url}#egg=sdsfdssdhdfyjymdgfcjdfjxdrssf")
+        with("install", '-q', '-e', "#{@url}#egg=fake_package")
       @provider.install
     end
 
@@ -111,14 +115,14 @@ describe provider_class do
       @resource[:ensure] = "0123456"
       @resource[:source] = @url
       @provider.expects(:lazy_pip).
-        with("install", "-q", "-e", "#{@url}@0123456#egg=sdsfdssdhdfyjymdgfcjdfjxdrssf")
+        with("install", "-q", "-e", "#{@url}@0123456#egg=fake_package")
       @provider.install
     end
 
     it "should install a particular version" do
       @resource[:ensure] = "0.0.0"
       @resource[:source] = nil
-      @provider.expects(:lazy_pip).with("install", "-q", "sdsfdssdhdfyjymdgfcjdfjxdrssf==0.0.0")
+      @provider.expects(:lazy_pip).with("install", "-q", "fake_package==0.0.0")
       @provider.install
     end
 
@@ -126,7 +130,7 @@ describe provider_class do
       @resource[:ensure] = :latest
       @resource[:source] = nil
       @provider.expects(:lazy_pip).
-        with("install", "-q", "--upgrade", "sdsfdssdhdfyjymdgfcjdfjxdrssf")
+        with("install", "-q", "--upgrade", "fake_package")
       @provider.install
     end
 
@@ -135,9 +139,9 @@ describe provider_class do
   describe "uninstall" do
 
     it "should uninstall" do
-      @resource[:name] = "sdsfdssdhdfyjymdgfcjdfjxdrssf"
+      @resource[:name] = "fake_package"
       @provider.expects(:lazy_pip).
-        with('uninstall', '-y', '-q', 'sdsfdssdhdfyjymdgfcjdfjxdrssf')
+        with('uninstall', '-y', '-q', 'fake_package')
       @provider.uninstall
     end
 

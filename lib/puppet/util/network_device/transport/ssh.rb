@@ -2,7 +2,6 @@
 require 'puppet/util/network_device'
 require 'puppet/util/network_device/transport'
 require 'puppet/util/network_device/transport/base'
-require 'net/ssh'
 
 # This is an adaptation/simplification of gem net-ssh-telnet, which aims to have
 # a sane interface to Net::SSH. Credits goes to net-ssh-telnet authors
@@ -12,6 +11,9 @@ class Puppet::Util::NetworkDevice::Transport::Ssh < Puppet::Util::NetworkDevice:
 
   def initialize
     super
+    unless Puppet.features.ssh?
+      raise 'Connecting with ssh to a network device requires the \'net/ssh\' ruby library'
+    end
   end
 
   def handles_login?
