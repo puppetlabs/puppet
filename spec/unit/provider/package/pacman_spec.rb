@@ -6,6 +6,7 @@ provider = Puppet::Type.type(:package).provider(:pacman)
 
 describe provider do
   before do
+    provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
     @resource = stub 'resource'
     @resource.stubs(:[]).returns("package")
     @resource.stubs(:name).returns("name")
