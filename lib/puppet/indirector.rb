@@ -18,7 +18,7 @@ module Puppet::Indirector
       terminus_name = termini["terminus"]
       cache_name    = termini["cache"]
 
-      Puppet::Indirector::Terminus.terminus_classes(indirection_name)
+      Puppet::Indirector::Terminus.terminus_class(indirection_name, terminus_name || cache_name)
 
       indirection = Puppet::Indirector::Indirection.instance(indirection_name)
       raise "Indirection #{indirection_name} does not exist" unless indirection
