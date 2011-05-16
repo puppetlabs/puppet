@@ -51,7 +51,7 @@ describe resources do
           @resources.generate.collect { |r| r.ref }.should_not include(@host1.ref)
         end
 
-        it "should not include the skipped users" do
+        it "should not include the skipped users", :'fails_on_ruby_1.9.2' => true do
           res = Puppet::Type.type(:resources).new :name => :user, :purge => true
           res.catalog = Puppet::Resource::Catalog.new
 

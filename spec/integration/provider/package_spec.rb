@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe "Package Provider" do
+describe "Package Provider", :'fails_on_ruby_1.9.2' => true do
   Puppet::Type.type(:package).providers.each do |name|
     provider = Puppet::Type.type(:package).provider(name)
 

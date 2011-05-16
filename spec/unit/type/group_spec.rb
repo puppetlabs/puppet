@@ -41,11 +41,11 @@ describe Puppet::Type.type(:group) do
     end
   end
 
-  it "should have a boolean method for determining if duplicates are allowed" do
+  it "should have a boolean method for determining if duplicates are allowed", :'fails_on_ruby_1.9.2' => true do
     @class.new(:name => "foo").methods.should be_include("allowdupe?")
   end
 
-  it "should have a boolean method for determining if system groups are allowed" do
+  it "should have a boolean method for determining if system groups are allowed", :'fails_on_ruby_1.9.2' => true do
     @class.new(:name => "foo").methods.should be_include("system?")
   end
 

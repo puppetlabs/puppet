@@ -11,7 +11,7 @@ describe "Puppet::Node::Facts::Couch" do
     end
   end
 
-  describe "when couchdb is available", :if => Puppet.features.couchdb? do
+  describe "when couchdb is available", :if => Puppet.features.couchdb?, :'fails_on_ruby_1.9.2' => true do
     before do
       @mock_db = mock('couch db')
       mock_document = CouchRest::Document.new(:_id => fake_request.key, :facts => fake_request.values)

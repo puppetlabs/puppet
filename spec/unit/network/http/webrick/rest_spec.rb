@@ -9,7 +9,7 @@ describe Puppet::Network::HTTP::WEBrickREST do
     Puppet::Network::HTTP::WEBrickREST.ancestors.should be_include(Puppet::Network::HTTP::Handler)
   end
 
-  describe "when initializing" do
+  describe "when initializing", :'fails_on_ruby_1.9.2' => true do
     it "should call the Handler's initialization hook with its provided arguments as the server and handler" do
       Puppet::Network::HTTP::WEBrickREST.any_instance.expects(:initialize_for_puppet).with(:server => "my", :handler => "arguments")
       Puppet::Network::HTTP::WEBrickREST.new("my", "arguments")

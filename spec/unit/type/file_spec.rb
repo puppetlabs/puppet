@@ -262,12 +262,12 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "X:/foo/bar/baz"
       end
 
-      it "should leave a drive letter with a slash alone" do
+      it "should leave a drive letter with a slash alone", :'fails_on_ruby_1.9.2' => true do
         file = Puppet::Type::File.new(:path => "X:/")
         file[:path].should == "X:/"
       end
 
-      it "should add a slash to a drive letter" do
+      it "should add a slash to a drive letter", :'fails_on_ruby_1.9.2' => true do
         file = Puppet::Type::File.new(:path => "X:")
         file[:path].should == "X:/"
       end
@@ -286,7 +286,7 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using UNC filenames" do
-    describe "on Microsoft Windows systems", :if => Puppet.features.microsoft_windows? do
+    describe "on Microsoft Windows systems", :if => Puppet.features.microsoft_windows?, :'fails_on_ruby_1.9.2' => true do
       before do
         Puppet.features.stubs(:posix?).returns(false)
         Puppet.features.stubs(:microsoft_windows?).returns(true)

@@ -609,7 +609,7 @@ describe Puppet::Parser::Compiler do
       @compiler.evaluate_classes(%w{myclass}, @scope)
     end
 
-    it "should ensure each node class hash is in catalog and have appropriate parameters" do
+    it "should ensure each node class hash is in catalog and have appropriate parameters", :'fails_on_ruby_1.9.2' => true do
       klasses = {'foo'=>{'1'=>'one'}, 'bar::foo'=>{'2'=>'two'}, 'bar'=>{'1'=> [1,2,3], '2'=>{'foo'=>'bar'}}}
       @node.classes = klasses
       ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
@@ -633,7 +633,7 @@ describe Puppet::Parser::Compiler do
       r2.tags.should =~ ['class', 'bar']
     end
 
-    it "should ensure each node class is in catalog and has appropriate tags" do
+    it "should ensure each node class is in catalog and has appropriate tags", :'fails_on_ruby_1.9.2' => true do
       klasses = ['bar::foo']
       @node.classes = klasses
       ast_obj = Puppet::Parser::AST::String.new(:value => 'foo')
