@@ -18,9 +18,9 @@ class Puppet::Interface::OptionBuilder
   # Metaprogram the simple DSL from the option class.
   Puppet::Interface::Option.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/
-    dsl = setter.sub(/=$/, '')
+    dsl = setter.to_s.chomp('=')
 
-    unless private_instance_methods.include? dsl
+    unless private_method_defined? dsl
       define_method(dsl) do |value| @option.send(setter, value) end
     end
   end

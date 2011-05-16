@@ -8,7 +8,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   summary "Provide access to the CA for certificate management"
   description <<-EOT
     This face interacts with a local or remote Puppet certificate
-    authority. Currently, its behavior is not a full superset of puppet
+    authority. Currently, its behavior is not a full superset of puppet
     cert; specifically, it is unable to mimic puppet cert's "clean" option,
     and its "generate" action submits a CSR rather than creating a
     signed certificate.
