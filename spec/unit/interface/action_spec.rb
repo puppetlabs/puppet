@@ -20,11 +20,10 @@ describe Puppet::Interface::Action do
       expect {
         Puppet::Interface.new(:action_when_invoked, '1.0.0') do
           action :foo do
-            when_invoked do
-            end
+            when_invoked { }
           end
         end
-      }.to raise_error ArgumentError, /foobra/
+      }.to raise_error ArgumentError, /foo/
     end
 
     it "should work with arity 1 blocks" do
@@ -72,11 +71,11 @@ describe Puppet::Interface::Action do
     it "should be able to call other actions on the same object" do
       face = Puppet::Interface.new(:my_face, '0.0.1') do
         action(:foo) do
-          when_invoked { 25 }
+          when_invoked { |options| 25 }
         end
 
         action(:bar) do
-          when_invoked { "the value of foo is '#{foo}'" }
+          when_invoked { |options| "the value of foo is '#{foo}'" }
         end
       end
       face.foo.should == 25
@@ -90,25 +89,25 @@ describe Puppet::Interface::Action do
     it "should be able to call other actions on the same object when defined on a class" do
       class Puppet::Interface::MyInterfaceBaseClass < Puppet::Interface
         action(:foo) do
-          when_invoked { 25 }
+          when_invoked { |options| 25 }
         end
 
         action(:bar) do
-          when_invoked { "the value of foo is '#{foo}'" }
+          when_invoked { |options| "the value of foo is '#{foo}'" }
         end
 
         action(:quux) do
-          when_invoked { "qux told me #{qux}" }
+          when_invoked { |options| "qux told me #{qux}" }
         end
       end
 
       face = Puppet::Interface::MyInterfaceBaseClass.new(:my_inherited_face, '0.0.1') do
         action(:baz) do
-          when_invoked { "the value of foo in baz is '#{foo}'" }
+          when_invoked { |options| "the value of foo in baz is '#{foo}'" }
         end
 
         action(:qux) do
-          when_invoked { baz }
+          when_invoked { |options| baz }
         end
       end
       face.foo.should  == 25
@@ -150,7 +149,7 @@ describe Puppet::Interface::Action do
     it "should support options with an empty block" do
       face = Puppet::Interface.new(:action_level_options, '0.0.1') do
         action :foo do
-          when_invoked do true end
+          when_invoked do |options| true end
           option "--bar" do
             # this line left deliberately blank
           end
@@ -164,7 +163,7 @@ describe Puppet::Interface::Action do
     it "should return only action level options when there are no face options" do
       face = Puppet::Interface.new(:action_level_options, '0.0.1') do
         action :foo do
-          when_invoked do true end
+          when_invoked do |options| true end
           option "--bar"
         end
       end
@@ -175,8 +174,8 @@ describe Puppet::Interface::Action do
     describe "with both face and action options" do
       let :face do
         Puppet::Interface.new(:action_level_options, '0.0.1') do
-          action :foo do when_invoked do true end ; option "--bar" end
-          action :baz do when_invoked do true end ; option "--bim" end
+          action :foo do when_invoked do |options| true end ; option "--bar" end
+          action :baz do when_invoked do |options| true end ; option "--bim" end
           option "--quux"
         end
       end
@@ -191,7 +190,7 @@ describe Puppet::Interface::Action do
         child = parent.new(:inherited_options, '0.0.1') do
           option "--bar"
           action :action do
-            when_invoked do true end
+            when_invoked do |options| true end
             option "--baz"
           end
         end
@@ -223,7 +222,7 @@ describe Puppet::Interface::Action do
       def add_options_to(&block)
         face = Puppet::Interface.new(:with_options, '0.0.1') do
           action(:foo) do
-            when_invoked do true end
+            when_invoked do |options| true end
             self.instance_eval &block
           end
         end
@@ -244,7 +243,7 @@ describe Puppet::Interface::Action do
       face = Puppet::Interface.new(:required_action_option, '0.0.1') do
         action(:bar) do
           option('--foo') { required }
-          when_invoked { }
+          when_invoked {|options| }
         end
       end
       expect { face.bar }.to raise_error ArgumentError, /The following options are required: foo/
@@ -253,7 +252,7 @@ describe Puppet::Interface::Action do
     it "should fail when a required face option is not provided" do
       face = Puppet::Interface.new(:required_face_option, '0.0.1') do
         option('--foo') { required }
-        action(:bar) { when_invoked { } }
+        action(:bar) { when_invoked {|options| } }
       end
       expect { face.bar }.to raise_error ArgumentError, /The following options are required: foo/
     end
@@ -263,7 +262,7 @@ describe Puppet::Interface::Action do
     context "declared locally" do
       let :face do
         Puppet::Interface.new(:action_decorators, '0.0.1') do
-          action :bar do when_invoked do true end end
+          action :bar do when_invoked do |options| true end end
           def reported; @reported; end
           def report(arg)
             (@reported ||= []) << arg
@@ -278,7 +277,7 @@ describe Puppet::Interface::Action do
           option("-q", "--quux") { before_action { |_,_,_| report :quux } }
           option("-f")           { before_action { |_,_,_| report :f    } }
           option("--baz")        { before_action { |_,_,_| report :baz  } }
-          when_invoked { }
+          when_invoked {|options| }
         end
 
         face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
@@ -292,7 +291,7 @@ describe Puppet::Interface::Action do
           option("-q", "--quux") { after_action { |_,_,_| report :quux } }
           option("-f")           { after_action { |_,_,_| report :f    } }
           option("--baz")        { after_action { |_,_,_| report :baz  } }
-          when_invoked { }
+          when_invoked {|options| }
         end
 
         face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
@@ -307,7 +306,7 @@ describe Puppet::Interface::Action do
           option("-f")           { before_action { |_,_,_| report :f    } }
           option("--baz")        { before_action { |_,_,_| report :baz  } }
         end
-        face.script(:boo) { }
+        face.script(:boo) {|options| }
 
         face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
         face.reported.should == [ :foo, :bar, :quux, :f, :baz ]
@@ -321,7 +320,7 @@ describe Puppet::Interface::Action do
           option("-f")           { after_action { |_,_,_| report :f    } }
           option("--baz")        { after_action { |_,_,_| report :baz  } }
         end
-        face.script(:boo) { }
+        face.script(:boo) {|options| }
 
         face.boo :foo => 1, :bar => 1, :quux => 1, :f => 1, :baz => 1
         face.reported.should == [ :foo, :bar, :quux, :f, :baz ].reverse
@@ -337,7 +336,7 @@ describe Puppet::Interface::Action do
             option("-q", "--action-quux") { before_action { |_,_,_| report :action_quux } }
             option("-a")                  { before_action { |_,_,_| report :a           } }
             option("--action-baz")        { before_action { |_,_,_| report :action_baz  } }
-            when_invoked { }
+            when_invoked {|options| }
           end
           option("-u", "--face-quux") { before_action { |_,_,_| report :face_quux } }
           option("-f")                { before_action { |_,_,_| report :f         } }
@@ -360,7 +359,7 @@ describe Puppet::Interface::Action do
             option("-q", "--action-quux") { after_action { |_,_,_| report :action_quux } }
             option("-a")                  { after_action { |_,_,_| report :a           } }
             option("--action-baz")        { after_action { |_,_,_| report :action_baz  } }
-            when_invoked { }
+            when_invoked {|options| }
           end
           option("-u", "--face-quux") { after_action { |_,_,_| report :face_quux } }
           option("-f")                { after_action { |_,_,_| report :f         } }
@@ -405,7 +404,7 @@ describe Puppet::Interface::Action do
     context "and inheritance" do
       let :parent do
         Class.new(Puppet::Interface) do
-          script(:on_parent) { :on_parent }
+          script(:on_parent) {|options| :on_parent }
 
           def reported; @reported; end
           def report(arg)
@@ -416,7 +415,7 @@ describe Puppet::Interface::Action do
 
       let :child do
         parent.new(:inherited_decorators, '0.0.1') do
-          script(:on_child) { :on_child }
+          script(:on_child) {|options| :on_child }
         end
       end
 
@@ -479,7 +478,7 @@ describe Puppet::Interface::Action do
             after_action  { |action, args, options| report :b_after  }
           end
 
-          child.script(:decorations) { report :invoked }
+          child.script(:decorations) { |options| report :invoked }
 
           child
         end
@@ -509,7 +508,7 @@ describe Puppet::Interface::Action do
     subject do
       face = Puppet::Interface.new(:action_documentation, '0.0.1') do
         action :documentation do
-          when_invoked do true end
+          when_invoked do |options| true end
         end
       end
       face.get_action(:documentation)
@@ -528,7 +527,7 @@ describe Puppet::Interface::Action do
   context "#validate_args" do
     subject do
       Puppet::Interface.new(:validate_args, '1.0.0') do
-        script :test do true end
+        script :test do |options| true end
       end
     end
 

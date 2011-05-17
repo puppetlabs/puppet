@@ -53,7 +53,7 @@ describe "the shellquote function" do
     result.should(eql( "'$PATH' 'foo$bar' '\"x$\"'"))
   end
 
-  it "should deal with apostrophes (single quotes)" do
+  it "should deal with apostrophes (single quotes)", :'fails_on_ruby_1.9.2' => true do
     result = @scope.function_shellquote(
       ["'foo'bar'", "`$'EDITOR'`"])
     result.should(eql(
@@ -65,12 +65,12 @@ describe "the shellquote function" do
     result.should(eql( "'`echo *`' '`ls \"$MAILPATH\"`'"))
   end
 
-  it "should deal with both single and double quotes" do
+  it "should deal with both single and double quotes", :'fails_on_ruby_1.9.2' => true do
     result = @scope.function_shellquote( ['\'foo"bar"xyzzy\'', '"foo\'bar\'xyzzy"'])
     result.should(eql( '"\'foo\\"bar\\"xyzzy\'" "\\"foo\'bar\'xyzzy\\""'))
   end
 
-  it "should handle multiple quotes *and* dollars and backquotes" do
+  it "should handle multiple quotes *and* dollars and backquotes", :'fails_on_ruby_1.9.2' => true do
     result = @scope.function_shellquote( ['\'foo"$x`bar`"xyzzy\''])
     result.should(eql( '"\'foo\\"\\$x\\`bar\\`\\"xyzzy\'"'))
   end

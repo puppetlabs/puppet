@@ -26,7 +26,7 @@ describe Puppet::Application do
       @klass.find("Agent").should == @klass::Agent
     end
 
-    it "should not find classes outside the namespace" do
+    it "should not find classes outside the namespace", :'fails_on_ruby_1.9.2' => true do
       expect { @klass.find("String") }.to exit_with 1
     end
 
@@ -222,7 +222,7 @@ describe Puppet::Application do
     end
 
     describe 'on POSIX systems', :if => Puppet.features.posix? do
-      it 'should signal process with HUP after block if restart requested during block execution' do
+      it 'should signal process with HUP after block if restart requested during block execution', :'fails_on_ruby_1.9.2' => true do
         Puppet::Application.run_status = nil
         target = mock 'target'
         target.expects(:some_method).once

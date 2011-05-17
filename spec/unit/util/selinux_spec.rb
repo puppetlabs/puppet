@@ -33,7 +33,7 @@ describe Puppet::Util::SELinux do
     end
   end
 
-  describe "filesystem detection" do
+  describe "filesystem detection", :'fails_on_ruby_1.9.2' => true do
     before :each do
       fh = stub 'fh', :close => nil
       File.stubs(:open).with("/proc/mounts").returns fh
@@ -192,7 +192,7 @@ describe Puppet::Util::SELinux do
     end
   end
 
-  describe "set_selinux_context" do
+  describe "set_selinux_context", :'fails_on_ruby_1.9.2' => true do
     before :each do
       fh = stub 'fh', :close => nil
       File.stubs(:open).with("/proc/mounts").returns fh

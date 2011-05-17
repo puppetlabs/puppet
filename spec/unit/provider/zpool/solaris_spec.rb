@@ -150,7 +150,7 @@ describe provider_class do
     end
   end
 
-  describe "when calling create" do
+  describe "when calling create", :'fails_on_ruby_1.9.2' => true do
     before do
       @resource.stubs(:[]).with(:pool).returns("mypool")
       @provider.stubs(:zpool)

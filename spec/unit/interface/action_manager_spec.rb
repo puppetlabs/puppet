@@ -15,57 +15,57 @@ describe Puppet::Interface::ActionManager do
   describe "when included in a class" do
     it "should be able to define an action" do
       subject.action(:foo) do
-        when_invoked { "something "}
+        when_invoked { |options| "something "}
       end
     end
 
     it "should be able to define a 'script' style action" do
-      subject.script :bar do
+      subject.script :bar do |options|
         "a bar is where beer is found"
       end
     end
 
     it "should be able to list defined actions" do
       subject.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       subject.action(:bar) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       subject.actions.should =~ [:foo, :bar]
     end
 
     it "should list 'script' actions" do
-      subject.script :foo do "foo" end
+      subject.script :foo do |options| "foo" end
       subject.actions.should =~ [:foo]
     end
 
     it "should list both script and normal actions" do
       subject.action :foo do
-        when_invoked do "foo" end
+        when_invoked do |options| "foo" end
       end
-      subject.script :bar do "a bar is where beer is found" end
+      subject.script :bar do |options| "a bar is where beer is found" end
 
       subject.actions.should =~ [:foo, :bar]
     end
 
     it "should be able to indicate when an action is defined" do
       subject.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       subject.should be_action(:foo)
     end
 
     it "should indicate an action is defined for script actions" do
-      subject.script :foo do "foo" end
+      subject.script :foo do |options| "foo" end
       subject.should be_action :foo
     end
 
     it "should correctly treat action names specified as strings" do
       subject.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       subject.should be_action("foo")
@@ -77,16 +77,16 @@ describe Puppet::Interface::ActionManager do
 
     it "should be able to define an action" do
       subject.action(:foo) do
-        when_invoked { "something "}
+        when_invoked { |options| "something "}
       end
     end
 
     it "should be able to list defined actions" do
       subject.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       subject.action(:bar) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       subject.actions.should include(:bar)
@@ -94,7 +94,7 @@ describe Puppet::Interface::ActionManager do
     end
 
     it "should be able to indicate when an action is defined" do
-      subject.action(:foo) { when_invoked do true end }
+      subject.action(:foo) { when_invoked do |options| true end }
       subject.should be_action(:foo)
     end
   end
@@ -112,36 +112,36 @@ describe Puppet::Interface::ActionManager do
 
     it "should be able to define an action at the class level" do
       @klass.action(:foo) do
-        when_invoked { "something "}
+        when_invoked { |options| "something "}
       end
     end
 
     it "should create an instance method when an action is defined at the class level" do
       @klass.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.foo.should == "something"
     end
 
     it "should be able to define an action at the instance level" do
       @instance.action(:foo) do
-        when_invoked { "something "}
+        when_invoked { |options| "something "}
       end
     end
 
     it "should create an instance method when an action is defined at the instance level" do
       @instance.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.foo.should == "something"
     end
 
     it "should be able to list actions defined at the class level" do
       @klass.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @klass.action(:bar) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       @klass.actions.should include(:bar)
@@ -150,10 +150,10 @@ describe Puppet::Interface::ActionManager do
 
     it "should be able to list actions defined at the instance level" do
       @instance.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.action(:bar) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       @instance.actions.should include(:bar)
@@ -162,10 +162,10 @@ describe Puppet::Interface::ActionManager do
 
     it "should be able to list actions defined at both instance and class level" do
       @klass.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.action(:bar) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
 
       @instance.actions.should include(:bar)
@@ -174,14 +174,14 @@ describe Puppet::Interface::ActionManager do
 
     it "should be able to indicate when an action is defined at the class level" do
       @klass.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.should be_action(:foo)
     end
 
     it "should be able to indicate when an action is defined at the instance level" do
       @klass.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.should be_action(:foo)
     end
@@ -191,13 +191,13 @@ describe Puppet::Interface::ActionManager do
       @instance = @subclass.new
 
       @klass.action(:parent) do
-        when_invoked { "a" }
+        when_invoked { |options| "a" }
       end
       @subclass.action(:sub) do
-        when_invoked { "a" }
+        when_invoked { |options| "a" }
       end
       @instance.action(:instance) do
-        when_invoked { "a" }
+        when_invoked { |options| "a" }
       end
 
       @instance.should be_action(:parent)
@@ -210,7 +210,7 @@ describe Puppet::Interface::ActionManager do
       @instance = @subclass.new
 
       @klass.action(:foo) do
-        when_invoked { "something" }
+        when_invoked { |options| "something" }
       end
       @instance.foo.should == "something"
     end
@@ -218,19 +218,19 @@ describe Puppet::Interface::ActionManager do
 
   describe "#action" do
     it 'should add an action' do
-      subject.action(:foo) { when_invoked do true end }
+      subject.action(:foo) { when_invoked do |options| true end }
       subject.get_action(:foo).should be_a Puppet::Interface::Action
     end
 
     it 'should support default actions' do
-      subject.action(:foo) { when_invoked do true end; default }
+      subject.action(:foo) { when_invoked do |options| true end; default }
       subject.get_default_action.should == subject.get_action(:foo)
     end
 
     it 'should not support more than one default action' do
-      subject.action(:foo) { when_invoked do true end; default }
+      subject.action(:foo) { when_invoked do |options| true end; default }
       expect { subject.action(:bar) {
-          when_invoked do true end
+          when_invoked do |options| true end
           default
         }
       }.should raise_error /cannot both be default/
@@ -240,7 +240,7 @@ describe Puppet::Interface::ActionManager do
   describe "#get_action" do
     let :parent_class do
       parent_class = Class.new(Puppet::Interface)
-      parent_class.action(:foo) { when_invoked do true end }
+      parent_class.action(:foo) { when_invoked do |options| true end }
       parent_class
     end
 

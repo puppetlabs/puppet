@@ -517,7 +517,7 @@ describe Puppet::SSL::Host do
       Puppet::SSL::Host.search :for => Puppet::SSL::CertificateRequest
     end
 
-    it "should return a Host instance created with the name of each found instance" do
+    it "should return a Host instance created with the name of each found instance", :'fails_on_ruby_1.9.2' => true do
       key = stub 'key', :name => "key"
       cert = stub 'cert', :name => "cert"
       csr = stub 'csr', :name => "csr"

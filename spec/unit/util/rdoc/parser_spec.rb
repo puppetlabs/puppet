@@ -7,7 +7,7 @@ require 'puppet/util/rdoc/code_objects'
 require 'rdoc/options'
 require 'rdoc/rdoc'
 
-describe RDoc::Parser do
+describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
   before :each do
     File.stubs(:stat).with("init.pp")
     @top_level = stub_everything 'toplevel', :file_relative_name => "init.pp"

@@ -16,8 +16,17 @@ describe Puppet::Indirector::Face do
     Puppet::Indirector::Face.indirections.should be_include("catalog")
   end
 
-  it "should be able to return a list of terminuses for a given indirection" do
-    Puppet::Indirector::Face.terminus_classes(:catalog).should be_include("compiler")
+  it "should return the sorted to_s list of terminus classes" do
+    Puppet::Indirector::Terminus.expects(:terminus_classes).returns([
+      :yaml,
+      :compiler,
+      :rest
+   ])
+    Puppet::Indirector::Face.terminus_classes(:catalog).should == [
+      'compiler',
+      'rest',
+      'yaml'
+    ]
   end
 
   describe "as an instance" do

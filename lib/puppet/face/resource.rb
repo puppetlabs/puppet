@@ -7,7 +7,7 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
   summary "Interact directly with resources via the RAL, like ralsh"
   description <<-EOT
     This face provides a Ruby API with functionality similar to the puppet
-    resource (née ralsh) command line application. It is not intended to be
+    resource (originally ralsh) command line application. It is not intended to be
     used from the command line.
   EOT
   notes <<-EOT

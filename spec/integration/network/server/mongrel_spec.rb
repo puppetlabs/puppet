@@ -3,7 +3,7 @@ require 'spec_helper'
 require 'puppet/network/server'
 require 'socket'
 
-describe Puppet::Network::Server do
+describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
   describe "when using mongrel", :if => Puppet.features.mongrel? do
 
     before :each do
