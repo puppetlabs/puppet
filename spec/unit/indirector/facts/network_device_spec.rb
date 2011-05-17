@@ -1,9 +1,5 @@
-#!/usr/bin/env ruby
-#
-#  Created by Luke Kanies on 2007-9-23.
-#  Copyright (c) 2007. All rights reserved.
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/indirector/facts/network_device'
 
