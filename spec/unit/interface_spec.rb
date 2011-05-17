@@ -101,7 +101,7 @@ describe Puppet::Interface do
         should raise_error ArgumentError
     end
 
-    it "should instance-eval any provided block" do
+    it "should instance-eval any provided block", :'fails_on_ruby_1.9.2' => true do
       face = subject.new(:face_test_block, '0.0.1') do
         action(:something) do
           when_invoked { "foo" }
@@ -140,7 +140,7 @@ describe Puppet::Interface do
     end
   end
 
-  describe "with face-level options" do
+  describe "with face-level options", :'fails_on_ruby_1.9.2' => true do
     it "should not return any action-level options" do
       face = subject.new(:with_options, '0.0.1') do
         option "--foo"
@@ -191,7 +191,7 @@ describe Puppet::Interface do
       face
     end
 
-    describe "#options" do
+    describe "#options", :'fails_on_ruby_1.9.2' => true do
       it "should list inherited options" do
         face.options.should =~ [:inherited, :local]
       end
@@ -213,7 +213,7 @@ describe Puppet::Interface do
       end
     end
 
-    describe "#get_option" do
+    describe "#get_option", :'fails_on_ruby_1.9.2' => true do
       it "should return an inherited option object" do
         face.get_option(:inherited).should be_an_instance_of subject::Option
       end

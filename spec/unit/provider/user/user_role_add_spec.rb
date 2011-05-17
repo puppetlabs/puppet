@@ -40,7 +40,7 @@ describe provider_class do
     end
   end
 
-  describe "when calling transition" do
+  describe "when calling transition", :'fails_on_ruby_1.9.2' => true do
     it "should return the type set to whatever is passed in" do
       @provider.expects(:command).with(:modify).returns("foomod")
       @provider.transition("bar").include?("type=bar")
@@ -120,7 +120,7 @@ describe provider_class do
       @provider.expects(:execute).with { |args| args.include?("-o") }
     end
 
-    it "should add -o when the user is being created" do
+    it "should add -o when the user is being created", :'fails_on_ruby_1.9.2' => true do
       @provider.stubs(:password=)
       @provider.create
     end

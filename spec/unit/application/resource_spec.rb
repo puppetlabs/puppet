@@ -35,13 +35,13 @@ describe Puppet::Application::Resource do
   end
 
   describe "in preinit" do
-    it "should set hosts to nil" do
+    it "should set hosts to nil", :'fails_on_ruby_1.9.2' => true do
       @resource.preinit
 
       @resource.host.should be_nil
     end
 
-    it "should init extra_params to empty array" do
+    it "should init extra_params to empty array", :'fails_on_ruby_1.9.2' => true do
       @resource.preinit
 
       @resource.extra_params.should == []

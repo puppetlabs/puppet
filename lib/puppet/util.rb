@@ -1,5 +1,6 @@
 # A module to collect utility functions.
 
+require 'English'
 require 'puppet/util/monkey_patches'
 require 'sync'
 require 'puppet/external/lock'

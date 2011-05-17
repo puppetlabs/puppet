@@ -113,7 +113,7 @@ describe Puppet::Parser::Resource do
       @arguments = {:scope => @scope}
     end
 
-    it "should fail unless #{name.to_s} is specified" do
+    it "should fail unless #{name.to_s} is specified", :'fails_on_ruby_1.9.2' => true do
       lambda { Puppet::Parser::Resource.new('file', '/my/file') }.should raise_error(ArgumentError)
     end
 

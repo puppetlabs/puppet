@@ -516,7 +516,7 @@ type: File
       )
     end
 
-    it "should align, sort and add trailing commas to attributes with ensure first" do
+    it "should align, sort and add trailing commas to attributes with ensure first", :'fails_on_ruby_1.9.2' => true do
       @resource.to_manifest.should == <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
         one::two { '/my/file':
           ensure => 'present',

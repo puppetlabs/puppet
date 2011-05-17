@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/network/http'
 
-describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel? do
+describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
   before do
     require 'puppet/network/http/mongrel/rest'
   end

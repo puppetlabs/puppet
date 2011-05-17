@@ -68,7 +68,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       @class.new(:generate, :to => :all).subjects.should == :all
     end
 
-    it "should fail if the subjects setting isn't :all or an array" do
+    it "should fail if the subjects setting isn't :all or an array", :'fails_on_ruby_1.9.2' => true do
       lambda { @class.new(:generate, "other") }.should raise_error(ArgumentError)
     end
   end

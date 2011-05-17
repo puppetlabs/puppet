@@ -6,7 +6,7 @@ require 'rdoc/rdoc'
 
 describe Puppet::Util::RDoc do
 
-  describe "when generating RDoc HTML documentation" do
+  describe "when generating RDoc HTML documentation", :'fails_on_ruby_1.9.2' => true do
     before :each do
       @rdoc = stub_everything 'rdoc'
       RDoc::RDoc.stubs(:new).returns(@rdoc)

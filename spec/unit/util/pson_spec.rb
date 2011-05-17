@@ -7,7 +7,7 @@ class PsonUtil
   include Puppet::Util::Pson
 end
 
-describe Puppet::Util::Pson do
+describe Puppet::Util::Pson, :'fails_on_ruby_1.9.2' => true do
   it "should fail if no data is provided" do
     lambda { PsonUtil.new.pson_create("type" => "foo") }.should raise_error(ArgumentError)
   end

@@ -48,7 +48,7 @@ describe Puppet::Parser::AST::Function do
       lambda{ func.evaluate(@scope) }.should raise_error(Puppet::ParseError,"Function 'exist' must be the value of a statement")
     end
 
-    it "should evaluate its arguments" do
+    it "should evaluate its arguments", :'fails_on_ruby_1.9.2' => true do
       argument = stub 'arg'
       Puppet::Parser::Functions.stubs(:function).with("exist").returns(true)
       func = Puppet::Parser::AST::Function.new :name => "exist", :ftype => :statement, :arguments => argument

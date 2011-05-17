@@ -42,12 +42,6 @@ require 'puppet/provider/parsedfile'
     0600
   end
 
-  def target
-      @resource.should(:target) || File.expand_path("~#{@resource.should(:user)}/.ssh/authorized_keys")
-  rescue
-      raise Puppet::Error, "Target not defined and/or specified user does not exist yet"
-  end
-
   def user
     uid = File.stat(target).uid
     Etc.getpwuid(uid).name

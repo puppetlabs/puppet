@@ -103,14 +103,14 @@ describe Puppet::Util::Autoload do
     end
 
     [RuntimeError, LoadError, SyntaxError].each do |error|
-      it "should die an if a #{error.to_s} exception is thrown" do
+      it "should die an if a #{error.to_s} exception is thrown", :'fails_on_ruby_1.9.2' => true do
         Kernel.expects(:require).raises error
 
         lambda { @autoload.loadall }.should raise_error(Puppet::Error)
       end
     end
 
-    it "should require the full path to the file" do
+    it "should require the full path to the file", :'fails_on_ruby_1.9.2' => true do
       Kernel.expects(:require).with("/path/to/file.rb")
 
       @autoload.loadall

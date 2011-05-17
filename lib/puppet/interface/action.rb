@@ -192,7 +192,7 @@ class Puppet::Interface::Action
       # but will on 1.9.2, which treats it as "no arguments".  Which bites,
       # because this just begs for us to wind up in the horrible situation
       # where a 1.8 vs 1.9 error bites our end users. --daniel 2011-04-19
-      raise ArgumentError, "action when_invoked requires at least one argument (options)"
+      raise ArgumentError, "when_invoked requires at least one argument (options) for action #{@name}"
     elsif arity > 0 then
       range = Range.new(1, arity - 1)
       decl = range.map { |x| "arg#{x}" } << "options = {}"

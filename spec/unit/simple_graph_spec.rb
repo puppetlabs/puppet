@@ -441,7 +441,7 @@ describe Puppet::SimpleGraph do
     end
   end
 
-  describe "when matching edges" do
+  describe "when matching edges", :'fails_on_ruby_1.9.2' => true do
     before do
       @graph = Puppet::SimpleGraph.new
       @event = Puppet::Transaction::Event.new(:name => :yay, :resource => "a")

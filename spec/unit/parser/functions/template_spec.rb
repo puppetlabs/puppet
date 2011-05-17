@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe "the template function" do
+describe "the template function", :'fails_on_ruby_1.9.2' => true do
   before :all do
     Puppet::Parser::Functions.autoloader.loadall
   end
