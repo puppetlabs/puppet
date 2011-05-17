@@ -269,7 +269,7 @@ class Puppet::Resource
       else
         "  %-#{attr_max}s => %s,\n" % [ k, "\'#{v}\'" ]
       end
-    }
+    }.join
 
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
   end
