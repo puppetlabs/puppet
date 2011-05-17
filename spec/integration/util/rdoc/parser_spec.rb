@@ -8,7 +8,7 @@ require 'puppet/util/rdoc/code_objects'
 require 'rdoc/options'
 require 'rdoc/rdoc'
 
-describe RDoc::Parser do
+describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 

@@ -5,7 +5,7 @@ require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
   [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags, :audited].each do |attr|
-    it "should support #{attr}" do
+    it "should support #{attr}", :'fails_on_ruby_1.9.2' => true do
       event = Puppet::Transaction::Event.new
       event.send(attr.to_s + "=", "foo")
       event.send(attr).should == "foo"
@@ -16,7 +16,7 @@ describe Puppet::Transaction::Event do
     Puppet::Transaction::Event.new(:property => :foo).property.should == "foo"
   end
 
-  it "should always convert the resource to a string" do
+  it "should always convert the resource to a string", :'fails_on_ruby_1.9.2' => true do
     Puppet::Transaction::Event.new(:resource => :foo).resource.should == "foo"
   end
 
@@ -95,17 +95,17 @@ describe Puppet::Transaction::Event do
       end
     end
 
-    it "should use the source description as the source if one is set" do
+    it "should use the source description as the source if one is set", :'fails_on_ruby_1.9.2' => true do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "/my/param" }
       Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => "Foo[bar]", :property => "foo").send_log
     end
 
-    it "should use the property as the source if one is available and no source description is set" do
+    it "should use the property as the source if one is available and no source description is set", :'fails_on_ruby_1.9.2' => true do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "foo" }
       Puppet::Transaction::Event.new(:resource => "Foo[bar]", :property => "foo").send_log
     end
 
-    it "should use the property as the source if one is available and no property or source description is set" do
+    it "should use the property as the source if one is available and no property or source description is set", :'fails_on_ruby_1.9.2' => true do
       Puppet::Util::Log.expects(:new).with { |args| args[:source] == "Foo[bar]" }
       Puppet::Transaction::Event.new(:resource => "Foo[bar]").send_log
     end

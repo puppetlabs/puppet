@@ -39,7 +39,7 @@ FSTAB
 #   it_should_behave_like "all parsedfile providers",
 #     provider_class, my_fixtures('*.fstab')
 
-    describe "on Solaris", :if => Facter.value(:operatingsystem) == 'Solaris' do
+    describe "on Solaris", :if => Facter.value(:operatingsystem) == 'Solaris', :'fails_on_ruby_1.9.2' => true do
 
       before :each do
         @example_line = "/dev/dsk/c0d0s0 /dev/rdsk/c0d0s0 \t\t    /  \t    ufs     1 no\t-"

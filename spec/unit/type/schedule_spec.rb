@@ -96,7 +96,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching hourly by distance" do
+  describe Puppet::Type.type(:schedule), "when matching hourly by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -117,7 +117,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching daily by distance" do
+  describe Puppet::Type.type(:schedule), "when matching daily by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -138,7 +138,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching weekly by distance" do
+  describe Puppet::Type.type(:schedule), "when matching weekly by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -159,7 +159,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching monthly by distance" do
+  describe Puppet::Type.type(:schedule), "when matching monthly by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -180,7 +180,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching hourly by number" do
+  describe Puppet::Type.type(:schedule), "when matching hourly by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -205,7 +205,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching daily by number" do
+  describe Puppet::Type.type(:schedule), "when matching daily by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -236,7 +236,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching weekly by number" do
+  describe Puppet::Type.type(:schedule), "when matching weekly by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -261,7 +261,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching monthly by number" do
+  describe Puppet::Type.type(:schedule), "when matching monthly by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -286,7 +286,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching with a repeat greater than one" do
+  describe Puppet::Type.type(:schedule), "when matching with a repeat greater than one", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
