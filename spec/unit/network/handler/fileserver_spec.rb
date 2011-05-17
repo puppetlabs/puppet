@@ -123,7 +123,7 @@ describe Puppet::Network::Handler::FileServer do
     list.sort.should == [ ["/aFile", "file"], ["/", "directory"] ].sort
   end
 
-  describe Puppet::Network::Handler::FileServer::PluginMount do
+  describe Puppet::Network::Handler::FileServer::PluginMount, :'fails_on_ruby_1.9.2' => true do
     PLUGINS = Puppet::Network::Handler::FileServer::PLUGINS
 
     # create a module plugin hierarchy

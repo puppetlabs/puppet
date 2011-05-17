@@ -49,9 +49,9 @@ class Puppet::Interface::ActionBuilder
   # Metaprogram the simple DSL from the target class.
   Puppet::Interface::Action.instance_methods.grep(/=$/).each do |setter|
     next if setter =~ /^=/
-    property = setter.sub(/=$/, '')
+    property = setter.to_s.chomp('=')
 
-    unless public_instance_methods.include? property
+    unless method_defined? property
       # Using eval because the argument handling semantics are less awful than
       # when we use the define_method/block version.  The later warns on older
       # Ruby versions if you pass the wrong number of arguments, but carries

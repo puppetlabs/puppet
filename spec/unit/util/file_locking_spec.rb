@@ -16,11 +16,11 @@ describe Puppet::Util::FileLocking do
     Puppet::Util::FileLocking.should respond_to(:writelock)
   end
 
-  it "should have an instance method for getting a read lock on files" do
+  it "should have an instance method for getting a read lock on files", :'fails_on_ruby_1.9.2' => true do
     FileLocker.new.private_methods.should be_include("readlock")
   end
 
-  it "should have an instance method for getting a write lock on files" do
+  it "should have an instance method for getting a write lock on files", :'fails_on_ruby_1.9.2' => true do
     FileLocker.new.private_methods.should be_include("writelock")
   end
 

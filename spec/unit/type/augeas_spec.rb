@@ -4,7 +4,7 @@ require 'spec_helper'
 augeas = Puppet::Type.type(:augeas)
 
 describe augeas do
-  describe "when augeas is present", :if => Puppet.features.augeas? do
+  describe "when augeas is present", :if => Puppet.features.augeas?, :'fails_on_ruby_1.9.2' => true do
     it "should have a default provider inheriting from Puppet::Provider" do
       augeas.defaultprovider.ancestors.should be_include(Puppet::Provider)
     end
