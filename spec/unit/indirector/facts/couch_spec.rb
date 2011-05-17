@@ -6,7 +6,7 @@ require 'puppet/indirector/facts/couch'
 
 describe "Puppet::Node::Facts::Couch" do
   describe "when couchdb is not available", :unless => Puppet.features.couchdb? do
-    it "should fail to initialize" do
+    it "should fail to initialize", :'fails_in_ruby_1.9.2' => true do
       lambda { Puppet::Node::Facts::Couch.new }.should raise_error
     end
   end

@@ -13,7 +13,7 @@ describe Puppet::Util::FileLocking do
     File.open(@file, "w") { |f| f.puts YAML.dump(@data) }
   end
 
-  it "should be able to keep file corruption from happening when there are multiple writers threads" do
+  it "should be able to keep file corruption from happening when there are multiple writers threads", :'fails_in_ruby_1.9.2' => true do
     threads = []
     sync = Sync.new
     9.times { |a|
