@@ -2,21 +2,28 @@
 Puppet::Face.define(:catalog, '0.0.1') do
   action :select do
     summary "Select and show a list of resources of a given type"
-    description <<-EOT
-      Retrieves a catalog for the specified host and returns an array of
-      resources of the given type. This action is not intended for
-      command-line use.
+    arguments "<host> <resource_type>"
+    returns <<-'EOT'
+      An array of resource objects excised from a catalog. When used at
+      the command line, returns a list of resource references (Type[title]).
     EOT
-    notes <<-NOTES
-      The type name for this action must be given in its capitalized form.
-      That is, calling `catalog select mynode file` will return an empty
-      array, whereas calling it with 'File' will return a list of the node's
-      file resources.
-
+    description <<-'EOT'
+      Retrieves a catalog for the specified host and returns an array of
+      resources of the given type.
+    EOT
+    notes <<-'NOTES'
       By default, this action will retrieve a catalog from Puppet's compiler
       subsystem; you must call the action with `--terminus rest` if you wish
       to retrieve a catalog from the puppet master.
+
+      FORMATTING ISSUES: This action cannot currently render useful yaml;
+      instead, it returns an entire catalog. Use json instead.
     NOTES
+    examples <<-'EOT'
+      Ask the puppet master for a list of managed file resources for a node:
+
+      $ puppet catalog select --terminus rest somenode.magpie.lan file
+    EOT
     when_invoked do |host, type, options|
       # REVISIT: Eventually, type should have a default value that triggers
       # the non-specific behaviour.  For now, though, this will do.

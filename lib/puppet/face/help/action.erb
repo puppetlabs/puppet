@@ -1,48 +1,22 @@
-puppet <%= face.name %><%= action.default? ? '' : " #{action.name}" %>(1) -- <%= action.summary || face.summary %>
-<%= '=' * (_erbout.length - 1) %>
+puppet <%= face.name %><%= action.default? ? '' : " #{action.name}" %> - <%= action.summary || face.summary %>
 
 % if action.synopsis
-SYNOPSIS
---------
-
-<%= action.synopsis %>
+usage: <%= action.synopsis %>
 
 % end
-% if action.description
-DESCRIPTION
------------
-<%= action.description %>
+% if action.description or action.short_description
+<%= action.short_description %>
 
 %end
 % unless action.options.empty?
-OPTIONS
--------
+OPTIONS:
 %   action.options.sort.each do |name|
 %     option = action.get_option name
-<%= "  " + option.optparse.join(" |" ) %>
-<%= option.summary %>
-<%= option.description %>
+<%= "  " + option.optparse.join(" |" ) %> - <%= option.summary %>
 
 %   end
 % end
 % if action.examples
-EXAMPLES
---------
+EXAMPLES:
 <%= action.examples %>
 % end
-% if action.notes
-NOTES
------
-<%= action.notes %>
-
-% end
-% unless action.authors.empty?
-AUTHOR
-------
-<%= action.authors.map {|x| " * " + x } .join("\n") %>
-
-%end
-COPYRIGHT AND LICENSE
----------------------
-<%= action.copyright %>
-<%= action.license   %>
