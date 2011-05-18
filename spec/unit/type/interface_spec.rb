@@ -1,6 +1,5 @@
 #!/usr/bin/env rspec
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 describe Puppet::Type.type(:interface) do
 

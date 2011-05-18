@@ -152,7 +152,6 @@ class Puppet::Parser::Lexer
       '>>' => :RSHIFT,
       '=~' => :MATCH,
       '!~' => :NOMATCH,
-      %r{([a-z][-\w]*)?(::[a-z][-\w]*)+} => :CLASSNAME, # Require '::' in the class name, else we'd compete with NAME
       %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
       "<string>" => :STRING,
       "<dqstring up to first interpolation>" => :DQPRE,
@@ -161,6 +160,7 @@ class Puppet::Parser::Lexer
       "<boolean>" => :BOOLEAN
       )
 
+  # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     [TOKENS[:NAME], value]
   end
@@ -170,7 +170,7 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
-  TOKENS.add_token :NAME, %r{[a-z0-9][-\w]*} do |lexer, value|
+  TOKENS.add_token :NAME, %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*} do |lexer, value|
     string_token = self
     # we're looking for keywords here
     if tmp = KEYWORDS.lookup(value)
@@ -240,11 +240,11 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
-  TOKENS.add_token :DOLLAR_VAR, %r{\$(\w*::)*\w+} do |lexer, value|
+  TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?([-\w]+::)*[-\w]+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
   end
 
-  TOKENS.add_token :VARIABLE, %r{(\w*::)*\w+}
+  TOKENS.add_token :VARIABLE, %r{(::)?([-\w]+::)*[-\w]+}
   #:stopdoc: # Issue #4161
   def (TOKENS[:VARIABLE]).acceptable?(context={})
     [:DQPRE,:DQMID].include? context[:after]
@@ -549,7 +549,7 @@ class Puppet::Parser::Lexer
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
     if terminator != '$' or @scanner.scan(/\{/)
       token_queue.shift
-    elsif var_name = @scanner.scan(%r{(\w*::)*\w+|[0-9]})
+    elsif var_name = @scanner.scan(TOKENS[:VARIABLE].regex)
       token_queue << [TOKENS[:VARIABLE],var_name]
       tokenize_interpolated_string(DQ_continuation_token_types)
     else

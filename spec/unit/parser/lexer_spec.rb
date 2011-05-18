@@ -230,22 +230,6 @@ describe Puppet::Parser::Lexer::TOKENS do
   end
 end
 
-describe Puppet::Parser::Lexer::TOKENS[:CLASSNAME] do
-  before { @token = Puppet::Parser::Lexer::TOKENS[:CLASSNAME] }
-
-  it "should match against lower-case alpha-numeric terms separated by double colons" do
-    @token.regex.should =~ "one::two"
-  end
-
-  it "should match against many lower-case alpha-numeric terms separated by double colons" do
-    @token.regex.should =~ "one::two::three::four::five"
-  end
-
-  it "should match against lower-case alpha-numeric terms prefixed by double colons" do
-    @token.regex.should =~ "::one"
-  end
-end
-
 describe Puppet::Parser::Lexer::TOKENS[:CLASSREF] do
   before { @token = Puppet::Parser::Lexer::TOKENS[:CLASSREF] }
 
@@ -294,6 +278,22 @@ describe Puppet::Parser::Lexer::TOKENS[:NAME] do
     keyword = stub 'keyword', :name => :FALSE
     Puppet::Parser::Lexer::KEYWORDS.expects(:lookup).returns(keyword)
     @token.convert(stub('lexer'), "false").should == [Puppet::Parser::Lexer::TOKENS[:BOOLEAN], false]
+  end
+
+  it "should match against lower-case alpha-numeric terms separated by double colons" do
+    @token.regex.should =~ "one::two"
+  end
+
+  it "should match against many lower-case alpha-numeric terms separated by double colons" do
+    @token.regex.should =~ "one::two::three::four::five"
+  end
+
+  it "should match against lower-case alpha-numeric terms prefixed by double colons" do
+    @token.regex.should =~ "::one"
+  end
+
+  it "should match against nested terms starting with numbers" do
+    @token.regex.should =~ "::1one::2two::3three"
   end
 end
 
@@ -445,6 +445,9 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q["foo$bar$"]                                                  => [[:DQPRE,"foo"],[:VARIABLE,"bar"],[:DQPOST,"$"]],
     %q["foo$$bar"]                                                  => [[:DQPRE,"foo$"],[:VARIABLE,"bar"],[:DQPOST,""]],
     %q[""]                                                          => [[:STRING,""]],
+    %q["123 456 789 0"]                                             => [[:STRING,"123 456 789 0"]],
+    %q["${123} 456 $0"]                                             => [[:DQPRE,""],[:VARIABLE,"123"],[:DQMID," 456 "],[:VARIABLE,"0"],[:DQPOST,""]],
+    %q["$foo::::bar"]                                               => [[:DQPRE,""],[:VARIABLE,"foo"],[:DQPOST,"::::bar"]]
   }.each { |src,expected_result|
     it "should handle #{src} correctly" do
       tokens_scanned_from(src).should be_like(*expected_result)
@@ -660,9 +663,16 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should correctly lex variables" do
-    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
+    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable", "$hyphenated-variable", "$-variable-with-leading-dash"].each do |string|
       tokens_scanned_from(string).should be_like([:VARIABLE,string.sub(/^\$/,'')])
     end
+  end
+
+  it "should not include whitespace in a variable" do
+    tokens_scanned_from("$foo bar").should_not be_like([:VARIABLE, "foo bar"])
+  end
+  it "should not include excess colons in a variable" do
+    tokens_scanned_from("$foo::::bar").should_not be_like([:VARIABLE, "foo::::bar"])
   end
 end
 

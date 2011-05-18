@@ -1,6 +1,5 @@
 #!/usr/bin/env rspec
-
-require File.dirname(__FILE__) + '/../../../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/util/network_device/transport/base'
 
