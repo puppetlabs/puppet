@@ -1,3 +1,23 @@
+2.7.0rc3
+===
+83c7563 (#7259) Remove ActiveRecord requirement from indirector face spec
+aad2fd7 (#7259) Do not try to load all Terminus classes when configuring the Indirector
+3378841 Adding a sleep state post starting master
+d972cea (#7507) Add more filters for Ruby 1.9 spec failures
+9da1454 (#7507) Add ability to filter Ruby 1.9 spec failures
+47e4ac9 (#7507) Fix when_invoked action specs in Ruby 1.9
+809b6fe (#7297) Fix Puppet::Resource#to_manifest in Ruby 1.9
+3197e21 (#7298) require 'English' to provide $CHILD_STATUS in Ruby 1.9
+48923af (#7291) Fix issues with instance_methods in Ruby 1.9
+68065ff (#7291) Fixed ascii problem with Ruby 1.9.2
+1abb7c0 (#7291) Fix Ruby 1.9 face failures
+6159466 (#7291) The 'script' version of actions needs options argument
+09f5d9c (#7469) Add license to test face so tests pass
+a44cbb1 (#7264) Docs: Clarify that subscribe/notify imply require/before
+9377507 (#7468) Stub spec that tries to connect to pypi.python.org
+5db214c Prevent spec failure caused by network device mock leak
+3722520 Fix #7299 - do not require net/ssh for running rake spec
+
 2.7.0rc2
 ===
 61edff9 (#7353) Remove :for_humans format entirely.
