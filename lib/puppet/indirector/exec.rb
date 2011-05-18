@@ -16,8 +16,8 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
   private
 
   # Proxy the execution, so it's easier to test.
-  def execute(command)
-    Puppet::Util.execute(command)
+  def execute(command, arguments)
+    Puppet::Util.execute(command,arguments)
   end
 
   # Call the external command and see if it returns our output.
@@ -33,7 +33,7 @@ class Puppet::Indirector::Exec < Puppet::Indirector::Terminus
     # Add our name to it.
     external_command << name
     begin
-      output = execute(external_command)
+      output = execute(external_command, :combine => false)
     rescue Puppet::ExecutionFailure => detail
       raise Puppet::Error, "Failed to find #{name} via exec: #{detail}"
     end
