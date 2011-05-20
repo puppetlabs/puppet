@@ -126,14 +126,14 @@ describe Puppet::Parser::Parser do
       it "should be able to pass an array to a function" do
         "my_function([1,2,3])".should parse_with { |fun|
           fun.is_a?(Puppet::Parser::AST::Function) &&
-          fun.arguments.first.evaluate(stub 'scope') == ['1','2','3']
+          fun.arguments[0].evaluate(stub 'scope') == ['1','2','3']
         }
       end
 
       it "should be able to pass a hash to a function" do
         "my_function({foo => bar})".should parse_with { |fun|
           fun.is_a?(Puppet::Parser::AST::Function) &&
-          fun.arguments.first.evaluate(stub 'scope') == {'foo' => 'bar'}
+          fun.arguments[0].evaluate(stub 'scope') == {'foo' => 'bar'}
         }
       end
     end

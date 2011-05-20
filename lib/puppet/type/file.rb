@@ -264,7 +264,7 @@ Puppet::Type.newtype(:file) do
       parents = []
       until basedir == parents.last
         parents << basedir
-        basedir = File.dirname(basedir)
+        basedir = ::File.dirname(basedir)
       end
       # The filename of the first ancestor found, or nil
       parents.find { |dir| catalog.resource(:file, dir) }
