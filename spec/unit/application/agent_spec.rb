@@ -411,7 +411,7 @@ describe Puppet::Application::Agent do
 
       it "should exit if no authorization file" do
         Puppet.stubs(:err)
-        FileTest.stubs(:exists?).with(Puppet[:authconfig]).returns(false)
+        FileTest.stubs(:exists?).with(Puppet[:rest_authconfig]).returns(false)
         expect { @puppetd.setup_listen }.to exit_with 14
       end
 

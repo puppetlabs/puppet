@@ -11,7 +11,7 @@ describe Puppet::Util::NetworkDevice do
   end
 
   after(:each) do
-    Puppet::Util::NetworkDevice.clear
+    Puppet::Util::NetworkDevice.teardown
   end
 
   class Puppet::Util::NetworkDevice::Test

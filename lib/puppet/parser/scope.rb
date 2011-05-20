@@ -101,7 +101,7 @@ class Puppet::Parser::Scope
 
   # Remove this when rebasing
   def environment
-    compiler.environment
+    compiler ? compiler.environment : nil
   end
 
   def find_hostclass(name)
@@ -443,6 +443,6 @@ class Puppet::Parser::Scope
 
   def extend_with_functions_module
     extend Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.root)
-    extend Puppet::Parser::Functions.environment_module(compiler ? environment : nil)
+    extend Puppet::Parser::Functions.environment_module(environment)
   end
 end

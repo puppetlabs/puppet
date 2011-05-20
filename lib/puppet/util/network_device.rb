@@ -10,8 +10,8 @@ class Puppet::Util::NetworkDevice
     raise "Can't load #{device.provider} for #{device.name}: #{detail}"
   end
 
-  # for tests reset
-  def self.clear
+  # Should only be used in tests
+  def self.teardown
     @current = nil
   end
 end

@@ -18,7 +18,7 @@ Puppet::Type.type(:mount).provide(
 
   commands :mountcmd => "mount", :umount => "umount"
 
-  case Facter["operatingsystem"]
+  case Facter.value(:operatingsystem)
   when "Solaris"
     @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot, :options]
   else
@@ -45,6 +45,24 @@ Puppet::Type.type(:mount).provide(
       record[:ensure] = :unmounted if record[:record_type] == :parsed
       record
     end
+  end
+
+  def self.instances
+    providers = super
+    mounts = mountinstances.dup
+
+    # Update fstab entries that are mounted
+    providers.each do |prov|
+      if mounts.delete({:name => prov.get(:name), :mounted => :yes}) then
+        prov.set(:ensure => :mounted)
+      end
+    end
+
+    # Add mounts that are not in fstab but mounted
+    mounts.each do |mount|
+      providers << new(:ensure => :ghost, :name => mount[:name])
+    end
+    providers
   end
 
   def self.prefetch(resources = nil)

@@ -30,7 +30,15 @@ class Puppet::Provider::Naginator < Puppet::Provider::ParsedFile
   end
 
   def self.to_file(records)
-    header + records.collect { |record| record.to_s }.join("\n").gsub("_naginator_name", NAME_STRING)
+    header + records.collect { |record|
+        # Remap the TYPE_name or _naginator_name params to the
+        # name if the record is a template (register == 0)
+        if record.to_s =~ /register\s+0/
+            record.to_s.sub("_naginator_name", "name").sub(record.type.to_s + "_name", "name")
+        else
+            record.to_s.sub("_naginator_name", NAME_STRING)
+        end
+    }.join("\n")
   end
 
   def self.skip_record?(record)

@@ -31,7 +31,7 @@ describe Puppet::Node::Exec do
       @result = {}
       # Use a local variable so the reference is usable in the execute definition.
       result = @result
-      @searcher.meta_def(:execute) do |command|
+      @searcher.meta_def(:execute) do |command, arguments|
         return YAML.dump(result)
       end
 

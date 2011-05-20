@@ -193,6 +193,47 @@ FSTAB
 
   my_fixtures('*.fstab').each do |fstab|
     platform = File.basename(fstab, '.fstab')
+
+    describe "when calling instances on #{platform}" do
+      before :each do
+        if Facter[:operatingsystem] == "Solaris" then
+          platform == 'solaris' or
+            pending "We need to stub the operatingsystem fact at load time, but can't"
+        else
+          platform != 'solaris' or
+            pending "We need to stub the operatingsystem fact at load time, but can't"
+        end
+
+        # Stub the mount output to our fixture.
+        begin
+          mount = my_fixture(platform + '.mount')
+          @provider.stubs(:mountcmd).returns File.read(mount)
+        rescue
+          pending "is #{platform}.mount missing at this point?"
+        end
+
+        # Note: we have to stub default_target before creating resources
+        # because it is used by Puppet::Type::Mount.new to populate the
+        # :target property.
+        @provider.stubs(:default_target).returns fstab
+        @retrieve = @provider.instances.collect { |prov| {:name => prov.get(:name), :ensure => prov.get(:ensure)}}
+      end
+
+      # Following mountpoint are present in all fstabs/mountoutputs
+      it "should include unmounted resources" do
+        @retrieve.should include(:name => '/', :ensure => :mounted)
+      end
+
+      it "should include mounted resources" do
+        @retrieve.should include(:name => '/boot', :ensure => :unmounted)
+      end
+
+      it "should include ghost resources" do
+        @retrieve.should include(:name => '/ghost', :ensure => :ghost)
+      end
+
+    end
+
     describe "when prefetching on #{platform}" do
       before :each do
         if Facter[:operatingsystem] == "Solaris" then

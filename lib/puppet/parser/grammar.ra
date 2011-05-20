@@ -9,7 +9,7 @@ token LBRACK  RBRACK LBRACE RBRACE SYMBOL FARROW COMMA TRUE
 token FALSE EQUALS APPENDS LESSEQUAL NOTEQUAL DOT COLON LLCOLLECT RRCOLLECT
 token QMARK LPAREN RPAREN ISEQUAL GREATEREQUAL GREATERTHAN LESSTHAN
 token IF ELSE IMPORT DEFINE ELSIF VARIABLE CLASS INHERITS NODE BOOLEAN
-token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSNAME CLASSREF
+token NAME SEMIC CASE DEFAULT AT LCOLLECT RCOLLECT CLASSREF
 token NOT OR AND UNDEF PARROW PLUS MINUS TIMES DIV LSHIFT RSHIFT UMINUS
 token MATCH NOMATCH REGEX IN_EDGE OUT_EDGE IN_EDGE_SUB OUT_EDGE_SUB
 token IN
@@ -80,14 +80,14 @@ relationship_side: resource | resourceref | collection
 
 edge: IN_EDGE | OUT_EDGE | IN_EDGE_SUB | OUT_EDGE_SUB
 
-fstatement:   NAME LPAREN funcvalues RPAREN {
+fstatement:   NAME LPAREN expressions RPAREN {
   result = ast AST::Function,
     :name => val[0][:value],
     :line => val[0][:line],
     :arguments => val[2],
     :ftype => :statement
 }
-| NAME LPAREN funcvalues COMMA RPAREN {
+| NAME LPAREN expressions COMMA RPAREN {
   result = ast AST::Function,
     :name => val[0][:value],
     :line => val[0][:line],
@@ -108,30 +108,27 @@ fstatement:   NAME LPAREN funcvalues RPAREN {
     :ftype => :statement
 }
 
-funcvalues: namestring { result = aryfy(val[0]) }
-  | resourceref        { result = aryfy(val[0]) }
-  | funcvalues COMMA namestring {
-    val[0].push(val[2])
-    result = val[0]
-}
-  | funcvalues COMMA resourceref {
+funcvalues: rvalue { result = aryfy(val[0]) }
+# This rvalue could be an expression
+  | funcvalues COMMA rvalue {
     val[0].push(val[2])
     result = val[0]
 }
 
-# This is *almost* an rvalue, but I couldn't get a full
-# rvalue to work without scads of shift/reduce conflicts.
-namestring:       name
-  | variable
+expressions: expression               { result = aryfy(val[0]) }
+       | expressions comma expression { result = val[0].push(val[2]) }
+
+rvalue:       quotedtext
+  | name
   | type
   | boolean
-  | funcrvalue
   | selector
-  | quotedtext
+  | variable
+  | array
   | hasharrayaccesses
-  | CLASSNAME {
-    result = ast AST::Name, :value => val[0][:value]
-      }
+  | resourceref
+  | funcrvalue
+  | undef
 
 resource:       classname LBRACE resourceinstances endsemi RBRACE {
   @lexer.commentpop
@@ -249,12 +246,12 @@ collstatement:            collexpr
 colljoin:                 AND { result=val[0][:value] }
   | OR  { result=val[0][:value] }
 
-collexpr:                 colllval ISEQUAL simplervalue {
+collexpr:                 colllval ISEQUAL expression {
   result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
   #result = ast AST::CollExpr
   #result.push *val
 }
-  | colllval NOTEQUAL simplervalue {
+  | colllval NOTEQUAL expression {
     result = ast AST::CollExpr, :test1 => val[0], :oper => val[1][:value], :test2 => val[2]
     #result = ast AST::CollExpr
     #result.push *val
@@ -321,11 +318,11 @@ params:   # nothing
     result = val[0]
 }
 
-param:        NAME FARROW rvalue {
+param:        NAME FARROW expression {
   result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2]
 }
 
-addparam:     NAME PARROW rvalue {
+addparam:     NAME PARROW expression {
   result = ast AST::ResourceParam, :param => val[0][:value], :line => val[0][:line], :value => val[2],
     :add => true
 }
@@ -343,31 +340,8 @@ anyparams:   # nothing
     result = val[0]
 }
 
-rvalues: rvalue               { result = aryfy(val[0]) }
-       | rvalues comma rvalue { result = val[0].push(val[2]) }
-
-simplervalue:       quotedtext
-  | name
-  | type
-  | boolean
-  | selector
-  | variable
-
-rvalue:       quotedtext
-  | name
-  | type
-  | boolean
-  | selector
-  | variable
-  | array
-  | hash
-  | hasharrayaccesses
-  | resourceref
-  | funcrvalue
-  | undef
-
 # We currently require arguments in these functions.
-funcrvalue:   NAME LPAREN funcvalues RPAREN {
+funcrvalue:   NAME LPAREN expressions RPAREN {
   result = ast AST::Function,
     :name => val[0][:value], :line => val[0][:line],
     :arguments => val[2],
@@ -391,10 +365,10 @@ boolean:    BOOLEAN {
   result = ast AST::Boolean, :value => val[0][:value], :line => val[0][:line]
 }
 
-resourceref: NAME LBRACK rvalues RBRACK {
+resourceref: NAME LBRACK expressions RBRACK {
   Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
   result = ast AST::ResourceReference, :type => val[0][:value], :line => val[0][:line], :title => val[2]
-}               | classref LBRACK rvalues RBRACK {
+}               | classref LBRACK expressions RBRACK {
   result = ast AST::ResourceReference, :type => val[0], :title => val[2]
 }
 
@@ -451,7 +425,8 @@ else:             # nothing
 # per operator :-(
 
 expression:   rvalue
-  | expression IN rvalue {
+  | hash
+  | expression IN expression {
     result = ast AST::InOperator, :lval => val[0], :rval => val[2]
 }
   | expression MATCH regex {
@@ -512,7 +487,7 @@ expression:   rvalue
     result = val[1]
 }
 
-casestatement:  CASE rvalue LBRACE caseopts RBRACE {
+casestatement:  CASE expression LBRACE caseopts RBRACE {
   @lexer.commentpop
   result = ast AST::CaseStatement, :test => val[1], :options => val[3]
 }
@@ -639,8 +614,7 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
 
 classref:       CLASSREF { result = val[0][:value] }
 
-classname:       NAME { result = val[0][:value] }
-  | CLASSNAME { result = val[0][:value] }
+classname:      NAME { result = val[0][:value] }
   | CLASS { result = "class" }
 
 # Multiple hostnames, as used for node names.  These are all literal
@@ -686,14 +660,14 @@ arguments:    argument
     result << val[2]
 }
 
-argument:     NAME EQUALS rvalue {
+argument:     NAME EQUALS expression {
   Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
   result = [val[0][:value], val[2]]
 }
   | NAME {
     Puppet.warning addcontext("Deprecation notice: must now include '$' in prototype")
     result = [val[0][:value]]
-}           | VARIABLE EQUALS rvalue {
+}           | VARIABLE EQUALS expression {
   result = [val[0][:value], val[2]]
 }           | VARIABLE {
   result = [val[0][:value]]
@@ -715,8 +689,8 @@ variable:     VARIABLE {
   result = ast AST::Variable, :value => val[0][:value], :line => val[0][:line]
 }
 
-array: LBRACK rvalues       RBRACK { result = val[1] }
-     | LBRACK rvalues COMMA RBRACK { result = val[1] }
+array: LBRACK expressions       RBRACK { result = val[1] }
+     | LBRACK expressions COMMA RBRACK { result = val[1] }
      | LBRACK               RBRACK { result = ast AST::ASTArray }
 
 comma:        FARROW
@@ -756,19 +730,19 @@ hashpairs:  hashpair
   end
 }
 
-hashpair:   key FARROW rvalue {
+hashpair:   key FARROW expression {
   result = ast AST::ASTHash, { :value => { val[0] => val[2] } }
 }
 
 key:      NAME { result = val[0][:value] }
   | quotedtext { result = val[0] }
 
-hasharrayaccess: VARIABLE LBRACK rvalue RBRACK {
+hasharrayaccess: VARIABLE LBRACK expression RBRACK {
   result = ast AST::HashOrArrayAccess, :variable => val[0][:value], :key => val[2]
 }
 
 hasharrayaccesses:    hasharrayaccess
-  | hasharrayaccesses LBRACK rvalue RBRACK {
+  | hasharrayaccesses LBRACK expression RBRACK {
     result = ast AST::HashOrArrayAccess, :variable => val[0], :key => val[2]
 }
 
