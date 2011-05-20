@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/util/file_locking'
 
-describe Puppet::Util::FileLocking do
+describe Puppet::Util::FileLocking, :'fails_on_ruby_1.9.2' => true do
   before :each do
     @file = Tempfile.new("puppetspec")
     filepath = @file.path
@@ -13,7 +13,7 @@ describe Puppet::Util::FileLocking do
     File.open(@file, "w") { |f| f.puts YAML.dump(@data) }
   end
 
-  it "should be able to keep file corruption from happening when there are multiple writers threads", :'fails_in_ruby_1.9.2' => true do
+  it "should be able to keep file corruption from happening when there are multiple writers threads" do
     threads = []
     sync = Sync.new
     9.times { |a|
