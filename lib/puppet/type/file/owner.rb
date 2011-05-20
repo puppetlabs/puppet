@@ -6,7 +6,7 @@ module Puppet
     @event = :file_changed
 
     def insync?(current)
-      provider.insync?(current, @should)
+      provider.is_owner_insync?(current, @should)
     end
 
     # We want to print names, not numbers

@@ -33,10 +33,16 @@ class Puppet::FileBucket::Dipper
     raise(ArgumentError, "File #{file} does not exist") unless ::File.exist?(file)
     contents = ::File.read(file)
     begin
-      file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path, :path => absolutize_path(file) )
-      dest_path = "#{@rest_path}#{file_bucket_file.name}"
+      file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
+      files_original_path = absolutize_path(file)
+      dest_path = "#{@rest_path}#{file_bucket_file.name}#{files_original_path}"
 
-      file_bucket_file.save(dest_path)
+      # Make a HEAD request for the file so that we don't waste time
+      # uploading it if it already exists in the bucket.
+      unless Puppet::FileBucket::File.indirection.head("#{@rest_path}#{file_bucket_file.checksum_type}/#{file_bucket_file.checksum_data}#{files_original_path}")
+        Puppet::FileBucket::File.indirection.save(file_bucket_file, dest_path)
+      end
+
       return file_bucket_file.checksum_data
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
@@ -47,7 +53,7 @@ class Puppet::FileBucket::Dipper
   # Retrieve a file by sum.
   def getfile(sum)
     source_path = "#{@rest_path}md5/#{sum}"
-    file_bucket_file = Puppet::FileBucket::File.find(source_path, :bucket_path => @local_path)
+    file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path)
 
     raise Puppet::Error, "File not found" unless file_bucket_file
     file_bucket_file.to_s

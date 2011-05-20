@@ -62,7 +62,7 @@ module Puppet
     end
 
     def retrieve
-      return :absent unless stat = resource.stat(false)
+      return :absent unless stat = resource.stat
 
       currentvalue = stat.gid
 

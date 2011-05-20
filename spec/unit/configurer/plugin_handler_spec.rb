@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/configurer'
 require 'puppet/configurer/plugin_handler'
 
@@ -11,6 +10,10 @@ end
 describe Puppet::Configurer::PluginHandler do
   before do
     @pluginhandler = PluginHandlerTester.new
+
+    # PluginHandler#load_plugin has an extra-strong rescue clause
+    # this mock is to make sure that we don't silently ignore errors
+    Puppet.expects(:err).never
   end
 
   it "should have a method for downloading plugins" do
@@ -80,7 +83,7 @@ describe Puppet::Configurer::PluginHandler do
   end
 
   it "should not try to load files that don't exist" do
-    FileTest.expects(:exist?).with("foo").returns true
+    FileTest.expects(:exist?).with("foo").returns false
     @pluginhandler.expects(:load).never
 
     @pluginhandler.load_plugin("foo")

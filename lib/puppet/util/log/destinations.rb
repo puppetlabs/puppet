@@ -50,6 +50,8 @@ Puppet::Util::Log.newdesttype :file do
     @file.flush if defined?(@file)
   end
 
+  attr_accessor :autoflush
+
   def initialize(path)
     @name = path
     # first make sure the directory exists
@@ -94,7 +96,7 @@ Puppet::Util::Log.newdesttype :console do
   HWHITE  = {:console => "[1;37m", :html => "FFFFFF"}
   RESET   = {:console => "[0m",    :html => ""      }
 
-  @@colormap = {
+  Colormap = {
     :debug => WHITE,
     :info => GREEN,
     :notice => CYAN,
@@ -115,11 +117,11 @@ Puppet::Util::Log.newdesttype :console do
   end
 
   def console_color(level, str)
-    @@colormap[level][:console] + str + RESET[:console]
+    Colormap[level][:console] + str + RESET[:console]
   end
 
   def html_color(level, str)
-    %{<span style="color: %s">%s</span>} % [@@colormap[level][:html], str]
+    %{<span style="color: %s">%s</span>} % [Colormap[level][:html], str]
   end
 
   def initialize
@@ -203,8 +205,20 @@ Puppet::Util::Log.newdesttype :report do
 end
 
 # Log to an array, just for testing.
+module Puppet::Test
+  class LogCollector
+    def initialize(logs)
+      @logs = logs
+    end
+
+    def <<(value)
+      @logs << value
+    end
+  end
+end
+
 Puppet::Util::Log.newdesttype :array do
-  match "Array"
+  match "Puppet::Test::LogCollector"
 
   def initialize(messages)
     @messages = messages

@@ -25,60 +25,26 @@ module Puppet
 
     @event = :file_changed
 
-    # Our modes are octal, so make sure they print correctly.  Other
-    # valid values are symbols, basically
-    def is_to_s(currentvalue)
-      case currentvalue
-      when Integer
-        return "%o" % currentvalue
-      when Symbol
-        return currentvalue
-      else
-        raise Puppet::DevError, "Invalid current value for mode: #{currentvalue.inspect}"
-      end
-    end
-
-    def should_to_s(newvalue = @should)
-      case newvalue
-      when Integer
-        return "%o" % newvalue
-      when Symbol
-        return newvalue
-      else
-        raise Puppet::DevError, "Invalid 'should' value for mode: #{newvalue.inspect}"
-      end
-    end
-
     munge do |should|
-      # this is pretty hackish, but i need to make sure the number is in
-      # octal, yet the number can only be specified as a string right now
-      value = should
-      if value.is_a?(String)
-        unless value =~ /^\d+$/
-          raise Puppet::Error, "File modes can only be numbers, not #{value.inspect}"
+      if should.is_a?(String)
+        unless should =~ /^[0-7]+$/
+          raise Puppet::Error, "File modes can only be octal numbers, not #{should.inspect}"
         end
-        # Make sure our number looks like octal.
-        unless value =~ /^0/
-          value = "0#{value}"
-        end
-        old = value
-        begin
-          value = Integer(value)
-        rescue ArgumentError => detail
-          raise Puppet::DevError, "Could not convert #{old.inspect} to integer"
-        end
+        should.to_i(8).to_s(8)
+      else
+        should.to_s(8)
       end
-
-      return value
     end
 
     # If we're a directory, we need to be executable for all cases
     # that are readable.  This should probably be selectable, but eh.
     def dirmask(value)
       if FileTest.directory?(@resource[:path])
+        value = value.to_i(8)
         value |= 0100 if value & 0400 != 0
         value |= 010 if value & 040 != 0
         value |= 01 if value & 04 != 0
+        value = value.to_s(8)
       end
 
       value
@@ -97,11 +63,11 @@ module Puppet
       # If we're not following links and we're a link, then we just turn
       # off mode management entirely.
 
-      if stat = @resource.stat(false)
+      if stat = @resource.stat
         unless defined?(@fixed)
           @should &&= @should.collect { |s| self.dirmask(s) }
         end
-        return stat.mode & 007777
+        return (stat.mode & 007777).to_s(8)
       else
         return :absent
       end
@@ -111,7 +77,7 @@ module Puppet
       mode = self.should
 
       begin
-        File.chmod(mode, @resource[:path])
+        File.chmod(mode.to_i(8), @resource[:path])
       rescue => detail
         error = Puppet::Error.new("failed to chmod #{@resource[:path]}: #{detail.message}")
         error.set_backtrace detail.backtrace

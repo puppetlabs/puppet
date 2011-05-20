@@ -1,14 +1,13 @@
 require 'puppet/application'
 
 class Puppet::Application::Doc < Puppet::Application
-
   should_not_parse_config
   run_mode :master
 
   attr_accessor :unknown_args, :manifest
 
   def preinit
-    {:references => [], :mode => :text, :format => :to_rest }.each do |name,value|
+    {:references => [], :mode => :text, :format => :to_markdown }.each do |name,value|
       options[name] = value
     end
     @unknown_args = []
@@ -50,6 +49,98 @@ class Puppet::Application::Doc < Puppet::Application
     options[:references] << arg.intern
   end
 
+  def help
+    <<-HELP
+
+puppet-doc(8) -- Generate Puppet documentation and references
+========
+
+SYNOPSIS
+--------
+Generates a reference for all Puppet types. Largely meant for internal
+Puppet Labs use.
+
+
+USAGE
+-----
+puppet doc [-a|--all] [-h|--help] [-o|--outputdir <rdoc-outputdir>]
+  [-m|--mode text|pdf|rdoc] [-r|--reference <reference-name>]
+  [--charset <charset>] [<manifest-file>]
+
+
+DESCRIPTION
+-----------
+If mode is not 'rdoc', then this command generates a Markdown document
+describing all installed Puppet types or all allowable arguments to
+puppet executables. It is largely meant for internal use and is used to
+generate the reference document available on the Puppet Labs web site.
+
+In 'rdoc' mode, this command generates an html RDoc hierarchy describing
+the manifests that are in 'manifestdir' and 'modulepath' configuration
+directives. The generated documentation directory is doc by default but
+can be changed with the 'outputdir' option.
+
+If the command is run with the name of a manifest file as an argument,
+puppet doc will output a single manifest's documentation on stdout.
+
+
+OPTIONS
+-------
+* --all:
+  Output the docs for all of the reference types. In 'rdoc'
+  modes, this also outputs documentation for all resources
+
+* --help:
+  Print this help message
+
+* --outputdir:
+  Specifies the directory where to output the rdoc
+  documentation in 'rdoc' mode.
+
+* --mode:
+  Determine the output mode. Valid modes are 'text', 'pdf' and
+  'rdoc'. The 'pdf' mode creates PDF formatted files in the
+  /tmp directory. The default mode is 'text'. In 'rdoc' mode
+  you must provide 'manifests-path'
+
+* --reference:
+  Build a particular reference. Get a list of references by
+  running 'puppet doc --list'.
+
+* --charset:
+  Used only in 'rdoc' mode. It sets the charset used in the
+  html files produced.
+
+
+EXAMPLE
+-------
+    $ puppet doc -r type > /tmp/type_reference.markdown
+
+or
+
+    $ puppet doc --outputdir /tmp/rdoc --mode rdoc /path/to/manifests
+
+or
+
+    $ puppet doc /etc/puppet/manifests/site.pp
+
+or
+
+    $ puppet doc -m pdf -r configuration
+
+
+AUTHOR
+------
+Luke Kanies
+
+
+COPYRIGHT
+---------
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
+
+HELP
+  end
+
   def handle_unknown( opt, arg )
     @unknown_args << {:opt => opt, :arg => arg }
     true
@@ -70,11 +161,6 @@ class Puppet::Application::Doc < Puppet::Application
     files += command_line.args
     Puppet.info "scanning: #{files.inspect}"
 
-          Puppet.settings.setdefaults(
-        "puppetdoc",
-
-      "document_all" => [false, "Document all resources"]
-    )
     Puppet.settings[:document_all] = options[:all] || false
     begin
       require 'puppet/util/rdoc'
@@ -112,9 +198,6 @@ class Puppet::Application::Doc < Puppet::Application
     end
 
     text += Puppet::Util::Reference.footer unless with_contents # We've only got one reference
-
-    # Replace the trac links, since they're invalid everywhere else
-    text.gsub!(/`\w+\s+([^`]+)`:trac:/) { |m| $1 }
 
     if options[:mode] == :pdf
       Puppet::Util::Reference.pdf(text)

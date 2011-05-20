@@ -1,13 +1,12 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Parser::AST::Selector do
   before :each do
     @scope = Puppet::Parser::Scope.new
   end
 
-  describe "when evaluating" do
+  describe "when evaluating", :'fails_on_ruby_1.9.2' => true do
 
     before :each do
       @param = stub 'param'

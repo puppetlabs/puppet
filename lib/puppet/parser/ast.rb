@@ -19,6 +19,10 @@ class Puppet::Parser::AST
 
   attr_accessor :parent, :scope
 
+  def inspect
+    "( #{self.class} #{self.to_s} #{@children.inspect} )"
+  end
+
   # don't fetch lexer comment by default
   def use_docs
     self.class.use_docs
@@ -107,28 +111,32 @@ end
 require 'puppet/parser/ast/arithmetic_operator'
 require 'puppet/parser/ast/astarray'
 require 'puppet/parser/ast/asthash'
-require 'puppet/parser/ast/branch'
 require 'puppet/parser/ast/boolean_operator'
+require 'puppet/parser/ast/branch'
 require 'puppet/parser/ast/caseopt'
 require 'puppet/parser/ast/casestatement'
 require 'puppet/parser/ast/collection'
 require 'puppet/parser/ast/collexpr'
 require 'puppet/parser/ast/comparison_operator'
+require 'puppet/parser/ast/definition'
 require 'puppet/parser/ast/else'
 require 'puppet/parser/ast/function'
+require 'puppet/parser/ast/hostclass'
 require 'puppet/parser/ast/ifstatement'
 require 'puppet/parser/ast/in_operator'
 require 'puppet/parser/ast/leaf'
 require 'puppet/parser/ast/match_operator'
 require 'puppet/parser/ast/minus'
+require 'puppet/parser/ast/node'
 require 'puppet/parser/ast/nop'
 require 'puppet/parser/ast/not'
+require 'puppet/parser/ast/relationship'
 require 'puppet/parser/ast/resource'
 require 'puppet/parser/ast/resource_defaults'
+require 'puppet/parser/ast/resource_instance'
 require 'puppet/parser/ast/resource_override'
 require 'puppet/parser/ast/resource_reference'
 require 'puppet/parser/ast/resourceparam'
 require 'puppet/parser/ast/selector'
 require 'puppet/parser/ast/tag'
 require 'puppet/parser/ast/vardef'
-require 'puppet/parser/ast/relationship'

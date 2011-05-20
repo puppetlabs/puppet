@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppettest'
 require 'mocha'

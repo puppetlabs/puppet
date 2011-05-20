@@ -1,10 +1,11 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Rick Bradley on 2007-10-03.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 require 'puppet/network/server'
+require 'puppet/network/handler'
 
 describe Puppet::Network::Server do
   before do
@@ -161,11 +162,7 @@ describe Puppet::Network::Server do
   describe "when creating its pidfile" do
     it "should use an exclusive mutex" do
       Puppet.settings.expects(:value).with(:name).returns "me"
-
-      sync = mock 'sync'
-      Puppet::Util.expects(:sync).with("me").returns sync
-
-      sync.expects(:synchronize).with(Sync::EX)
+      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @server.create_pidfile
     end
 
@@ -198,11 +195,7 @@ describe Puppet::Network::Server do
   describe "when removing its pidfile" do
     it "should use an exclusive mutex" do
       Puppet.settings.expects(:value).with(:name).returns "me"
-
-      sync = mock 'sync'
-      Puppet::Util.expects(:sync).with("me").returns sync
-
-      sync.expects(:synchronize).with(Sync::EX)
+      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @server.remove_pidfile
     end
 

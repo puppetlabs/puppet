@@ -1,17 +1,15 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'yaml'
-require 'tempfile'
-
 require 'puppet/util/storage'
 
 describe Puppet::Util::Storage do
+  include PuppetSpec::Files
 
   before(:all) do
     @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
-    Puppet[:statedir] = Dir.tmpdir
+    Puppet[:statedir] = tmpdir("statedir")
   end
 
   after(:all) do

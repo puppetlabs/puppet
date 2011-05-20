@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/provider/confine/exists'
 
@@ -39,25 +38,18 @@ describe Puppet::Provider::Confine::Exists do
 
   describe "and the confine is for binaries" do
     before { @confine.stubs(:for_binary).returns true }
-    it "should use its 'binary' method to look up the full path of the file" do
-      @confine.expects(:binary).returns nil
+    it "should use its 'which' method to look up the full path of the file" do
+      @confine.expects(:which).returns nil
       @confine.pass?("/my/file")
     end
 
-    it "should return false if no binary can be found" do
-      @confine.expects(:binary).with("/my/file").returns nil
+    it "should return false if no executable can be found" do
+      @confine.expects(:which).with("/my/file").returns nil
       @confine.pass?("/my/file").should be_false
     end
 
-    it "should return true if the binary can be found and the file exists" do
-      @confine.expects(:binary).with("/my/file").returns "/my/file"
-      FileTest.expects(:exist?).with("/my/file").returns true
-      @confine.pass?("/my/file").should be_true
-    end
-
-    it "should return false if the binary can be found but the file does not exist" do
-      @confine.expects(:binary).with("/my/file").returns "/my/file"
-      FileTest.expects(:exist?).with("/my/file").returns true
+    it "should return true if the executable can be found" do
+      @confine.expects(:which).with("/my/file").returns "/my/file"
       @confine.pass?("/my/file").should be_true
     end
   end

@@ -1,8 +1,8 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application/queue'
+require 'puppet/indirector/catalog/queue'
 
 describe Puppet::Application::Queue do
   before :each do
@@ -10,9 +10,8 @@ describe Puppet::Application::Queue do
     @queue.stubs(:puts)
     @daemon = stub_everything 'daemon', :daemonize => nil
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
 
-    Puppet::Resource::Catalog.stubs(:terminus_class=)
+    Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
   end
 
   it "should ask Puppet::Application to parse Puppet configuration file" do
@@ -28,12 +27,8 @@ describe Puppet::Application::Queue do
   end
 
   describe "in preinit" do
-    before :each do
-      @queue.stubs(:trap)
-    end
-
     it "should catch INT" do
-      @queue.expects(:trap).with { |arg,block| arg == :INT }
+      Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @queue.preinit
     end
@@ -79,7 +74,7 @@ describe Puppet::Application::Queue do
       @queue.daemon.stubs(:daemonize)
       Puppet.stubs(:info)
       Puppet.features.stubs(:stomp?).returns true
-      Puppet::Resource::Catalog.stubs(:terminus_class=)
+      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
       Puppet.stubs(:settraps)
       Puppet.settings.stubs(:print_config?)
       Puppet.settings.stubs(:print_config)
@@ -91,18 +86,14 @@ describe Puppet::Application::Queue do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @queue.stubs(:exit)
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @queue.setup
+      Puppet.settings.expects(:print_configs).returns(true)
+      expect { @queue.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @queue.setup }.should raise_error(SystemExit)
+      expect { @queue.setup }.to exit_with 1
     end
 
     it "should call setup_logs" do
@@ -117,18 +108,14 @@ describe Puppet::Application::Queue do
 
       it "should set log level to debug if --debug was passed" do
         @queue.options.stubs(:[]).with(:debug).returns(true)
-
-        Puppet::Util::Log.expects(:level=).with(:debug)
-
         @queue.setup_logs
+        Puppet::Util::Log.level.should == :debug
       end
 
       it "should set log level to info if --verbose was passed" do
         @queue.options.stubs(:[]).with(:verbose).returns(true)
-
-        Puppet::Util::Log.expects(:level=).with(:info)
-
         @queue.setup_logs
+        Puppet::Util::Log.level.should == :info
       end
 
       [:verbose, :debug].each do |level|
@@ -143,7 +130,7 @@ describe Puppet::Application::Queue do
     end
 
     it "should configure the Catalog class to use ActiveRecord" do
-      Puppet::Resource::Catalog.expects(:terminus_class=).with(:active_record)
+      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:active_record)
 
       @queue.setup
     end
@@ -170,8 +157,8 @@ describe Puppet::Application::Queue do
     end
 
     it "should log and save each catalog passed by the queue" do
-      catalog = mock 'catalog', :name => 'eh'
-      catalog.expects(:save)
+      catalog = Puppet::Resource::Catalog.new('eh')
+      Puppet::Resource::Catalog.indirection.expects(:save).with(catalog)
 
       Puppet::Resource::Catalog::Queue.expects(:subscribe).yields(catalog)
       Puppet.expects(:notice).times(2)

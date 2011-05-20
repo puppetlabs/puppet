@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 
 [:seluser, :selrole, :seltype, :selrange].each do |param|
@@ -66,6 +65,11 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
       @sel.default.must == expectedresult
     end
 
+    it "should return nil for defaults if selinux_ignore_defaults is true" do
+      @resource[:selinux_ignore_defaults] = :true
+      @sel.default.must be_nil
+    end
+
     it "should be able to set a new context" do
       stat = stub 'stat', :ftype => "foo"
       @sel.should = %w{newone}
@@ -73,10 +77,10 @@ Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f
       @sel.sync
     end
 
-    it "should do nothing for insync? if no SELinux support" do
+    it "should do nothing for safe_insync? if no SELinux support" do
       @sel.should = %{newcontext}
       @sel.expects(:selinux_support?).returns false
-      @sel.insync?("oldcontext").should == true
+      @sel.safe_insync?("oldcontext").should == true
     end
   end
 end

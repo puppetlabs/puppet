@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
   describe "find" do
@@ -19,7 +18,7 @@ describe "Puppet::Resource::Ral" do
       Puppet::Resource::Ral.new.find(@request).should == my_resource
     end
 
-    it "if there is no instance, it should create one" do
+    it "if there is no instance, it should create one", :'fails_on_ruby_1.9.2' => true do
       wrong_instance = stub "wrong user", :name => "bob"
 
       require 'puppet/type/user'

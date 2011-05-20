@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'mocha'
 require 'puppettest'
@@ -42,22 +42,22 @@ class TestScope < Test::Unit::TestCase
     # Set a variable in the top and make sure all three can get it
     topscope.setvar("first", "topval")
     scopes.each do |name, scope|
-      assert_equal("topval", scope.lookupvar("first", false), "Could not find var in #{name}")
+      assert_equal("topval", scope.lookupvar("first"), "Could not find var in #{name}")
     end
 
     # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
     midscope.setvar("second", "midval")
-    assert_equal(:undefined, scopes[:top].lookupvar("second", false), "Found child var in top scope")
+    assert_equal(:undefined, scopes[:top].lookupvar("second"), "Found child var in top scope")
     [:mid, :bot].each do |name|
-      assert_equal("midval", scopes[name].lookupvar("second", false), "Could not find var in #{name}")
+      assert_equal("midval", scopes[name].lookupvar("second"), "Could not find var in #{name}")
     end
 
     # And set something in the bottom, and make sure we only find it there.
     botscope.setvar("third", "botval")
     [:top, :mid].each do |name|
-      assert_equal(:undefined, scopes[name].lookupvar("third", false), "Found child var in top scope")
+      assert_equal(:undefined, scopes[name].lookupvar("third"), "Found child var in top scope")
     end
-    assert_equal("botval", scopes[:bot].lookupvar("third", false), "Could not find var in bottom scope")
+    assert_equal("botval", scopes[:bot].lookupvar("third"), "Could not find var in bottom scope")
 
 
     # Test that the scopes convert to hash structures correctly.
@@ -163,7 +163,7 @@ class TestScope < Test::Unit::TestCase
     config = mkcompiler
 
     # Create a default source
-    parser.newclass("")
+    parser.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "")
     config.topscope.source = parser.known_resource_types.hostclass("")
 
     # And a scope resource
@@ -175,12 +175,12 @@ class TestScope < Test::Unit::TestCase
     )
 
     # Create a top-level define
-    parser.newdefine "one", :arguments => [%w{arg}],
+    parser.known_resource_types.add Puppet::Resource::Type.new(:definition, "one", :arguments => [%w{arg}],
       :code => AST::ASTArray.new(
         :children => [
           resourcedef("file", "/tmp", {"owner" => varref("arg")})
         ]
-      )
+      ))
 
     # create a resource that calls our third define
     obj = resourcedef("one", "boo", {"arg" => "parentfoo"})
@@ -233,9 +233,9 @@ Host <<||>>"
     }
   ensure
     Puppet[:storeconfigs] = false
-    Puppet::Resource::Catalog.cache_class =  catalog_cache_class
-    Puppet::Node::Facts.cache_class = facts_cache_class
-    Puppet::Node.cache_class = node_cache_class
+    Puppet::Resource::Catalog.indirection.cache_class =  catalog_cache_class
+    Puppet::Node::Facts.indirection.cache_class = facts_cache_class
+    Puppet::Node.indirection.cache_class = node_cache_class
   end
   else
     $stderr.puts "No ActiveRecord -- skipping collection tests"
@@ -260,18 +260,7 @@ Host <<||>>"
     scope = mkscope
 
     scope.setvar("testing", :undef)
-
-
-      assert_equal(
-        :undef, scope.lookupvar("testing", false),
-
-      "undef was not returned as :undef when not string")
-
-
-        assert_equal(
-          "", scope.lookupvar("testing", true),
-
-      "undef was not returned as '' when string")
+    assert_equal(:undef, scope.lookupvar("testing"), "undef was not returned as :undef")
   end
 end
 

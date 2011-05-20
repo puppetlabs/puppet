@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/type'
 
@@ -55,12 +54,24 @@ describe Puppet::Resource::Type do
       double_convert.arguments.should == {"one" => nil, "two" => "foo"}
     end
 
-    it "should include any extra attributes" do
-      @type.file = "/my/file"
-      @type.line = 50
+    it "should not include arguments if none are present" do
+      @type.to_pson["arguments"].should be_nil
+    end
 
-      double_convert.file.should == "/my/file"
-      double_convert.line.should == 50
+    [:line, :doc, :file, :parent].each do |attr|
+      it "should include #{attr} when set" do
+        @type.send(attr.to_s + "=", "value")
+        double_convert.send(attr).should == "value"
+      end
+
+      it "should not include #{attr} when not set" do
+        @type.to_pson[attr.to_s].should be_nil
+      end
+    end
+
+    it "should not include docs if they are empty" do
+      @type.doc = ""
+      @type.to_pson["doc"].should be_nil
     end
   end
 
@@ -225,40 +236,33 @@ describe Puppet::Resource::Type do
     end
   end
 
-  describe "when creating a subscope" do
-    before do
-      @scope = stub 'scope', :newscope => nil
-      @resource = stub 'resource'
-      @type = Puppet::Resource::Type.new(:hostclass, "foo")
-    end
-
-    it "should return a new scope created with the provided scope as the parent" do
-      @scope.expects(:newscope).returns "foo"
-      @type.subscope(@scope, @resource).should == "foo"
-    end
-
-    it "should set the source as itself" do
-      @scope.expects(:newscope).with { |args| args[:source] == @type }
-      @type.subscope(@scope, @resource)
-    end
-
-    it "should set the scope's namespace to its namespace" do
-      @type.expects(:namespace).returns "yayness"
-      @scope.expects(:newscope).with { |args| args[:namespace] == "yayness" }
-      @type.subscope(@scope, @resource)
-    end
-
-    it "should set the scope's resource to the provided resource" do
-      @scope.expects(:newscope).with { |args| args[:resource] == @resource }
-      @type.subscope(@scope, @resource)
-    end
-  end
-
   describe "when setting its parameters in the scope" do
     before do
       @scope = Puppet::Parser::Scope.new(:compiler => stub("compiler", :environment => Puppet::Node::Environment.new), :source => stub("source"))
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
+    end
+
+    ['module_name', 'name', 'title'].each do |variable|
+      it "should allow #{variable} to be evaluated as param default" do
+        @type.instance_eval { @module_name = "bar" }
+        var = Puppet::Parser::AST::Variable.new({'value' => variable})
+        @type.set_arguments :foo => var
+        @type.set_resource_parameters(@resource, @scope)
+        @scope.lookupvar('foo').should == 'bar'
+      end
+    end
+
+    # this test is to clarify a crazy edge case
+    # if you specify these special names as params, the resource
+    # will override the special variables
+    it "resource should override defaults" do
+      @type.set_arguments :name => nil
+      @resource[:name] = 'foobar'
+      var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
+      @type.set_arguments :foo => var
+      @type.set_resource_parameters(@resource, @scope)
+      @scope.lookupvar('foo').should == 'foobar'
     end
 
     it "should set each of the resource's parameters as variables in the scope" do
@@ -322,7 +326,7 @@ describe Puppet::Resource::Type do
     end
 
     it "should set its module name in the scope if available" do
-      @type.module_name = "mymod"
+      @type.instance_eval { @module_name = "mymod" }
 
       @type.set_resource_parameters(@resource, @scope)
 
@@ -431,7 +435,7 @@ describe Puppet::Resource::Type do
 
     it "should set all of its parameters in a subscope" do
       subscope = stub 'subscope', :compiler => @compiler
-      @type.expects(:subscope).with(@scope, @resource).returns subscope
+      @scope.expects(:newscope).with(:source => @type, :dynamic => true, :namespace => 'foo', :resource => @resource).returns subscope
       @type.expects(:set_resource_parameters).with(@resource, subscope)
 
       @type.evaluate_code(@resource)
@@ -459,8 +463,9 @@ describe Puppet::Resource::Type do
     it "should evaluate the AST code if any is provided" do
       code = stub 'code'
       @type.stubs(:code).returns code
-      @type.stubs(:subscope).returns stub_everything("subscope", :compiler => @compiler)
-      code.expects(:safeevaluate).with @type.subscope
+      subscope = stub_everything("subscope", :compiler => @compiler)
+      @scope.stubs(:newscope).returns subscope
+      code.expects(:safeevaluate).with subscope
 
       @type.evaluate_code(@resource)
     end
@@ -496,7 +501,7 @@ describe Puppet::Resource::Type do
 
       it "should evaluate the parent's resource" do
         @type.parent_type(@scope)
-        
+
         @type.evaluate_code(@resource)
 
         @scope.class_scope(@parent_type).should_not be_nil
@@ -504,7 +509,7 @@ describe Puppet::Resource::Type do
 
       it "should not evaluate the parent's resource if it has already been evaluated" do
         @parent_resource.evaluate
-        
+
         @type.parent_type(@scope)
 
         @parent_resource.expects(:evaluate).never
@@ -531,8 +536,7 @@ describe Puppet::Resource::Type do
         @compiler.add_resource @scope, @parent_resource
 
         @type.resource_type_collection = @scope.known_resource_types
-        @type.resource_type_collection.stubs(:node).with("parent").returns(@parent_type)
-        @type.resource_type_collection.stubs(:node).with("Parent").returns(@parent_type)
+        @type.resource_type_collection.add(@parent_type)
       end
 
       it "should evaluate the parent's resource" do
@@ -545,7 +549,7 @@ describe Puppet::Resource::Type do
 
       it "should not evaluate the parent's resource if it has already been evaluated" do
         @parent_resource.evaluate
-        
+
         @type.parent_type(@scope)
 
         @parent_resource.expects(:evaluate).never
@@ -575,75 +579,99 @@ describe Puppet::Resource::Type do
       @code = Puppet::Resource::TypeCollection.new("env")
       @code.add @top
       @code.add @middle
-      
+
       @node.environment.stubs(:known_resource_types).returns(@code)
     end
 
     it "should create a resource instance" do
-      @top.mk_plain_resource(@scope).should be_instance_of(Puppet::Parser::Resource)
+      @top.ensure_in_catalog(@scope).should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should set its resource type to 'class' when it is a hostclass" do
-      Puppet::Resource::Type.new(:hostclass, "top").mk_plain_resource(@scope).type.should == "Class"
+      Puppet::Resource::Type.new(:hostclass, "top").ensure_in_catalog(@scope).type.should == "Class"
     end
 
     it "should set its resource type to 'node' when it is a node" do
-      Puppet::Resource::Type.new(:node, "top").mk_plain_resource(@scope).type.should == "Node"
+      Puppet::Resource::Type.new(:node, "top").ensure_in_catalog(@scope).type.should == "Node"
     end
 
     it "should fail when it is a definition" do
-      lambda { Puppet::Resource::Type.new(:definition, "top").mk_plain_resource(@scope) }.should raise_error(ArgumentError)
+      lambda { Puppet::Resource::Type.new(:definition, "top").ensure_in_catalog(@scope) }.should raise_error(ArgumentError)
     end
 
     it "should add the created resource to the scope's catalog" do
-      @top.mk_plain_resource(@scope)
+      @top.ensure_in_catalog(@scope)
+
+      @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should add specified parameters to the resource" do
+      @top.ensure_in_catalog(@scope, {'one'=>'1', 'two'=>'2'})
+      @compiler.catalog.resource(:class, "top")['one'].should == '1'
+      @compiler.catalog.resource(:class, "top")['two'].should == '2'
+    end
+
+    it "should not require params for a param class" do
+      @top.ensure_in_catalog(@scope, {})
+      @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should evaluate the parent class if one exists" do
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
     end
 
     it "should evaluate the parent class if one exists" do
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope, {})
 
       @compiler.catalog.resource(:class, "top").should be_instance_of(Puppet::Parser::Resource)
+    end
+
+    it "should fail if you try to create duplicate class resources" do
+      othertop = Puppet::Parser::Resource.new(:class, 'top',:source => @source, :scope => @scope )
+      # add the same class resource to the catalog
+      @compiler.catalog.add_resource(othertop)
+      lambda { @top.ensure_in_catalog(@scope, {}) }.should raise_error(Puppet::Resource::Catalog::DuplicateResourceError)
     end
 
     it "should fail to evaluate if a parent class is defined but cannot be found" do
       othertop = Puppet::Resource::Type.new :hostclass, "something", :parent => "yay"
       @code.add othertop
-      lambda { othertop.mk_plain_resource(@scope) }.should raise_error(Puppet::ParseError)
+      lambda { othertop.ensure_in_catalog(@scope) }.should raise_error(Puppet::ParseError)
     end
 
     it "should not create a new resource if one already exists" do
       @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
       @compiler.catalog.expects(:add_resource).never
-      @top.mk_plain_resource(@scope)
+      @top.ensure_in_catalog(@scope)
     end
 
     it "should return the existing resource when not creating a new one" do
       @compiler.catalog.expects(:resource).with(:class, "top").returns("something")
       @compiler.catalog.expects(:add_resource).never
-      @top.mk_plain_resource(@scope).should == "something"
+      @top.ensure_in_catalog(@scope).should == "something"
     end
 
     it "should not create a new parent resource if one already exists and it has a parent class" do
-      @top.mk_plain_resource(@scope)
+      @top.ensure_in_catalog(@scope)
 
       top_resource = @compiler.catalog.resource(:class, "top")
 
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.resource(:class, "top").should equal(top_resource)
     end
 
     # #795 - tag before evaluation.
     it "should tag the catalog with the resource tags when it is evaluated" do
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.should be_tagged("middle")
     end
 
     it "should tag the catalog with the parent class tags when it is evaluated" do
-      @middle.mk_plain_resource(@scope)
+      @middle.ensure_in_catalog(@scope)
 
       @compiler.catalog.should be_tagged("top")
     end

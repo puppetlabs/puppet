@@ -53,18 +53,6 @@ rescue LoadError
   $haverdoc = false
 end
 
-begin
-  if $haverdoc
-    rst2man = %x{which rst2man.py}
-    $haveman = true
-  else
-    $haveman = false
-  end
-rescue
-  puts "Missing rst2man; skipping man page creation"
-  $haveman = false
-end
-
 PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
 MIN_FACTER_VERSION = 1.5
 
@@ -79,15 +67,29 @@ def glob(list)
 end
 
 # Set these values to what you want installed.
+configs = glob(%w{conf/auth.conf})
 sbins = glob(%w{sbin/*})
 bins  = glob(%w{bin/*})
 rdoc  = glob(%w{bin/* sbin/* lib/**/*.rb README README-library CHANGELOG TODO Install}).reject { |e| e=~ /\.(bat|cmd)$/ }
 ri    = glob(%w{bin/*.rb sbin/* lib/**/*.rb}).reject { |e| e=~ /\.(bat|cmd)$/ }
 man   = glob(%w{man/man[0-9]/*})
-libs  = glob(%w{lib/**/*.rb lib/**/*.py lib/puppet/util/command_line/*})
+libs  = glob(%w{lib/**/*.rb lib/**/*.erb lib/**/*.py lib/puppet/util/command_line/*})
 tests = glob(%w{test/**/*.rb})
 
+def do_configs(configs, target, strip = 'conf/')
+  Dir.mkdir(target) unless File.directory? target
+  configs.each do |cf|
+    ocf = File.join(InstallOptions.config_dir, cf.gsub(/#{strip}/, ''))
+    if $haveftools
+      File.install(cf, ocf, 0644, true)
+    else
+      FileUtils.install(cf, ocf, {:mode => 0644, :verbose => true})
+    end
+   end
+end
+
 def do_bins(bins, target, strip = 's?bin/')
+  Dir.mkdir(target) unless File.directory? target
   bins.each do |bf|
     obf = bf.gsub(/#{strip}/, '')
     install_binfile(bf, obf, target)
@@ -154,35 +156,21 @@ end
 # Prepare the file installation.
 #
 def prepare_installation
+  $operatingsystem = Facter["operatingsystem"].value
+
+  InstallOptions.configs = true
+
   # Only try to do docs if we're sure they have rdoc
   if $haverdoc
     InstallOptions.rdoc  = true
-    InstallOptions.ri  = RUBY_PLATFORM != "i386-mswin32"
+    InstallOptions.ri  = $operatingsystem != "windows"
   else
     InstallOptions.rdoc  = false
     InstallOptions.ri  = false
   end
 
 
-  if $haveman
-    InstallOptions.man = true
-    if RUBY_PLATFORM == "i386-mswin32"
-      InstallOptions.man  = false
-    end
-  else
-    InstallOptions.man = false
-  end
-
   InstallOptions.tests = true
-
-  if $haveman
-    InstallOptions.man = true
-    if RUBY_PLATFORM == "i386-mswin32"
-      InstallOptions.man  = false
-    end
-  else
-    InstallOptions.man = false
-  end
 
   ARGV.options do |opts|
     opts.banner = "Usage: #{File.basename($0)} [options]"
@@ -193,14 +181,17 @@ def prepare_installation
     opts.on('--[no-]ri', 'Prevents the creation of RI output.', 'Default off on mswin32.') do |onri|
       InstallOptions.ri = onri
     end
-    opts.on('--[no-]man', 'Prevents the creation of man pages.', 'Default on.') do |onman|
-    InstallOptions.man = onman
-    end
     opts.on('--[no-]tests', 'Prevents the execution of unit tests.', 'Default on.') do |ontest|
       InstallOptions.tests = ontest
     end
+    opts.on('--[no-]configs', 'Prevents the installation of config files', 'Default off.') do |ontest|
+      InstallOptions.configs = ontest
+    end
     opts.on('--destdir[=OPTIONAL]', 'Installation prefix for all targets', 'Default essentially /') do |destdir|
       InstallOptions.destdir = destdir
+    end
+    opts.on('--configdir[=OPTIONAL]', 'Installation directory for config files', 'Default /etc/puppet') do |configdir|
+      InstallOptions.configdir = configdir
     end
     opts.on('--bindir[=OPTIONAL]', 'Installation directory for binaries', 'overrides Config::CONFIG["bindir"]') do |bindir|
       InstallOptions.bindir = bindir
@@ -215,15 +206,16 @@ def prepare_installation
       InstallOptions.mandir = mandir
     end
     opts.on('--quick', 'Performs a quick installation. Only the', 'installation is done.') do |quick|
-      InstallOptions.rdoc   = false
-      InstallOptions.ri     = false
-      InstallOptions.tests  = false
+      InstallOptions.rdoc    = false
+      InstallOptions.ri      = false
+      InstallOptions.tests   = false
+      InstallOptions.configs = true
     end
     opts.on('--full', 'Performs a full installation. All', 'optional installation steps are run.') do |full|
-      InstallOptions.rdoc   = true
-      InstallOptions.man    = true
-      InstallOptions.ri     = true
-      InstallOptions.tests  = true
+      InstallOptions.rdoc    = true
+      InstallOptions.ri      = true
+      InstallOptions.tests   = true
+      InstallOptions.configs = true
     end
     opts.separator("")
     opts.on_tail('--help', "Shows this help text.") do
@@ -247,6 +239,12 @@ def prepare_installation
   if RUBY_PLATFORM =~ /^universal-darwin[\d\.]+$/
     Config::CONFIG['bindir'] = "/usr/bin"
     Config::CONFIG['sbindir'] = "/usr/sbin"
+  end
+
+  if not InstallOptions.configdir.nil?
+    configdir = InstallOptions.configdir
+  else
+    configdir = "/etc/puppet"
   end
 
   if not InstallOptions.bindir.nil?
@@ -281,34 +279,34 @@ def prepare_installation
     mandir = Config::CONFIG['mandir']
   end
 
-  # To be deprecated once people move over to using --destdir option
-  if (destdir = ENV['DESTDIR'])
-    bindir = "#{destdir}#{bindir}"
-    sbindir = "#{destdir}#{sbindir}"
-    mandir = "#{destdir}#{mandir}"
-    sitelibdir = "#{destdir}#{sitelibdir}"
-
-    FileUtils.makedirs(bindir)
-    FileUtils.makedirs(sbindir)
-    FileUtils.makedirs(mandir)
-    FileUtils.makedirs(sitelibdir)
   # This is the new way forward
-  elsif (destdir = InstallOptions.destdir)
-    bindir = "#{destdir}#{bindir}"
-    sbindir = "#{destdir}#{sbindir}"
-    mandir = "#{destdir}#{mandir}"
-    sitelibdir = "#{destdir}#{sitelibdir}"
-
-    FileUtils.makedirs(bindir)
-    FileUtils.makedirs(sbindir)
-    FileUtils.makedirs(mandir)
-    FileUtils.makedirs(sitelibdir)
+  if not InstallOptions.destdir.nil?
+    destdir = InstallOptions.destdir
+  # To be deprecated once people move over to using --destdir option
+  elsif ENV['DESTDIR'] != nil?
+    destdir = ENV['DESTDIR']
+    warn "DESTDIR is deprecated. Use --destdir instead."
+  else
+    destdir = ''
   end
+
+  configdir = "#{destdir}#{configdir}"
+  bindir = "#{destdir}#{bindir}"
+  sbindir = "#{destdir}#{sbindir}"
+  mandir = "#{destdir}#{mandir}"
+  sitelibdir = "#{destdir}#{sitelibdir}"
+
+  FileUtils.makedirs(configdir) if InstallOptions.configs
+  FileUtils.makedirs(bindir)
+  FileUtils.makedirs(sbindir)
+  FileUtils.makedirs(mandir)
+  FileUtils.makedirs(sitelibdir)
 
   tmpdirs << bindir
 
   InstallOptions.tmp_dirs = tmpdirs.compact
   InstallOptions.site_dir = sitelibdir
+  InstallOptions.config_dir = configdir
   InstallOptions.bin_dir  = bindir
   InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
@@ -341,32 +339,6 @@ def build_ri(files)
   rescue Exception => e
     $stderr.puts "Couldn't build Ri documentation\n#{e.message}"
     $stderr.puts "Continuing with install..."
-  end
-end
-
-def build_man(bins, sbins)
-  return unless $haveman
-  begin
-    # Locate rst2man
-    rst2man = %x{which rst2man.py}
-    rst2man.chomp!
-    # Create puppet.conf.5 man page
-    %x{bin/puppetdoc --reference configuration > ./puppet.conf.rst}
-    %x{#{rst2man} ./puppet.conf.rst ./man/man5/puppet.conf.5}
-    File.unlink("./puppet.conf.rst")
-
-    # Create binary man pages
-    binary = bins + sbins
-    binary.each do |bin|
-      b = bin.gsub( /(bin|sbin)\//, "")
-      %x{#{bin} --help > ./#{b}.rst}
-      %x{#{rst2man} ./#{b}.rst ./man/man8/#{b}.8}
-      File.unlink("./#{b}.rst")
-    end
-
-rescue SystemCallError
-  $stderr.puts "Couldn't build man pages: " + $ERROR_INFO
-  $stderr.puts "Continuing with install..."
   end
 end
 
@@ -417,7 +389,7 @@ def install_binfile(from, op_file, target)
     end
   end
 
-  if Config::CONFIG["target_os"] =~ /win/io and Config::CONFIG["target_os"] !~ /darwin/io
+  if $operatingsystem == "windows"
     installed_wrapper = false
 
     if File.exists?("#{from}.bat")
@@ -463,8 +435,8 @@ prepare_installation
 #run_tests(tests) if InstallOptions.tests
 #build_rdoc(rdoc) if InstallOptions.rdoc
 #build_ri(ri) if InstallOptions.ri
-#build_man(bins, sbins) if InstallOptions.man
+do_configs(configs, InstallOptions.config_dir) if InstallOptions.configs
 do_bins(sbins, InstallOptions.sbin_dir)
 do_bins(bins, InstallOptions.bin_dir)
 do_libs(libs)
-do_man(man)
+do_man(man) unless $operatingsystem == "windows"

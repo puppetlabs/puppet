@@ -1,0 +1,190 @@
+--- !ruby/object:Puppet::Transaction::Report
+  external_times: 
+    !ruby/sym config_retrieval: 0.170313835144043
+  host: ubuntu1004desktop.localdomain
+  logs: 
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym debug
+      message: Using cached certificate for ca
+      source: Puppet
+      tags: 
+        - debug
+      time: 2010-09-23 15:44:06.244173 -07:00
+      version: &id001 2.6.1
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym debug
+      message: Using cached certificate for ubuntu1004desktop.localdomain
+      source: Puppet
+      tags: 
+        - debug
+      time: 2010-09-23 15:44:06.244764 -07:00
+      version: *id001
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym debug
+      message: Using cached certificate_revocation_list for ca
+      source: Puppet
+      tags: 
+        - debug
+      time: 2010-09-23 15:44:06.245677 -07:00
+      version: *id001
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym debug
+      message: "catalog supports formats: b64_zlib_yaml dot marshal pson raw yaml; using pson"
+      source: Puppet
+      tags: 
+        - debug
+      time: 2010-09-23 15:44:06.247069 -07:00
+      version: *id001
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym info
+      message: Caching catalog for ubuntu1004desktop.localdomain
+      source: Puppet
+      tags: 
+        - info
+      time: 2010-09-23 15:44:06.409109 -07:00
+      version: *id001
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym debug
+      message: Creating default schedules
+      source: Puppet
+      tags: 
+        - debug
+      time: 2010-09-23 15:44:06.418755 -07:00
+      version: *id001
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym debug
+      message: Loaded state in 0.00 seconds
+      source: Puppet
+      tags: 
+        - debug
+      time: 2010-09-23 15:44:06.427441 -07:00
+      version: *id001
+    - !ruby/object:Puppet::Util::Log
+      level: !ruby/sym info
+      message: Applying configuration version '1285281846'
+      source: Puppet
+      tags: 
+        - info
+      time: 2010-09-23 15:44:06.429532 -07:00
+      version: *id001
+  metrics: 
+    time: !ruby/object:Puppet::Util::Metric
+      label: Time
+      name: time
+      values: 
+        - - config_retrieval
+          - Config retrieval
+          - 0.170313835144043
+        - - schedule
+          - Schedule
+          - 0.00077
+        - - filebucket
+          - Filebucket
+          - 0.000166
+    resources: !ruby/object:Puppet::Util::Metric
+      label: Resources
+      name: resources
+      values: 
+        - - !ruby/sym total
+          - Total
+          - 7
+    events: !ruby/object:Puppet::Util::Metric
+      label: Events
+      name: events
+      values: 
+        - - !ruby/sym total
+          - Total
+          - 0
+    changes: !ruby/object:Puppet::Util::Metric
+      label: Changes
+      name: changes
+      values: 
+        - - !ruby/sym total
+          - Total
+          - 0
+  resource_statuses: 
+    "Schedule[monthly]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000121
+      events: []
+      file: 
+      line: 
+      resource: "Schedule[monthly]"
+      source_description: "/Schedule[monthly]"
+      tags: 
+        - schedule
+        - monthly
+      time: 2010-09-23 15:44:06.430577 -07:00
+      version: 1285281846
+    "Filebucket[puppet]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000166
+      events: []
+      file: 
+      line: 
+      resource: "Filebucket[puppet]"
+      source_description: "/Filebucket[puppet]"
+      tags: 
+        - filebucket
+        - puppet
+      time: 2010-09-23 15:44:06.430998 -07:00
+      version: 1285281846
+    "Schedule[never]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000119
+      events: []
+      file: 
+      line: 
+      resource: "Schedule[never]"
+      source_description: "/Schedule[never]"
+      tags: 
+        - schedule
+        - never
+      time: 2010-09-23 15:44:06.433034 -07:00
+      version: 1285281846
+    "Schedule[weekly]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000118
+      events: []
+      file: 
+      line: 
+      resource: "Schedule[weekly]"
+      source_description: "/Schedule[weekly]"
+      tags: 
+        - schedule
+        - weekly
+      time: 2010-09-23 15:44:06.431443 -07:00
+      version: 1285281846
+    "Schedule[puppet]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000129
+      events: []
+      file: 
+      line: 
+      resource: "Schedule[puppet]"
+      source_description: "/Schedule[puppet]"
+      tags: 
+        - schedule
+        - puppet
+      time: 2010-09-23 15:44:06.432626 -07:00
+      version: 1285281846
+    "Schedule[daily]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000154
+      events: []
+      file: 
+      line: 
+      resource: "Schedule[daily]"
+      source_description: "/Schedule[daily]"
+      tags: 
+        - schedule
+        - daily
+      time: 2010-09-23 15:44:06.430130 -07:00
+      version: 1285281846
+    "Schedule[hourly]": !ruby/object:Puppet::Resource::Status
+      evaluation_time: 0.000129
+      events: []
+      file: 
+      line: 
+      resource: "Schedule[hourly]"
+      source_description: "/Schedule[hourly]"
+      tags: 
+        - schedule
+        - hourly
+      time: 2010-09-23 15:44:06.432185 -07:00
+      version: 1285281846
+  time: 2010-09-23 15:44:05.894401 -07:00

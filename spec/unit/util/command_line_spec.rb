@@ -1,11 +1,11 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
+require 'spec_helper'
 
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
-
-
+require 'puppet/face'
 require 'puppet/util/command_line'
 
 describe Puppet::Util::CommandLine do
+  include PuppetSpec::Files
   before do
     @tty  = stub("tty",  :tty? => true )
     @pipe = stub("pipe", :tty? => false)
@@ -86,7 +86,7 @@ describe Puppet::Util::CommandLine do
   describe "when the subcommand is not implemented" do
     it "should find and invoke an executable with a hyphenated name" do
       commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
-      Puppet::Util.expects(:binary).with('puppet-whatever').returns('/dev/null/puppet-whatever')
+      Puppet::Util.expects(:which).with('puppet-whatever').returns('/dev/null/puppet-whatever')
       commandline.expects(:system).with('/dev/null/puppet-whatever', 'argument')
 
       commandline.execute
@@ -95,13 +95,45 @@ describe Puppet::Util::CommandLine do
     describe "and an external implementation cannot be found" do
       it "should abort and show the usage message" do
         commandline = Puppet::Util::CommandLine.new("puppet", ['whatever', 'argument'], @tty)
-        Puppet::Util.expects(:binary).with('puppet-whatever').returns(nil)
+        Puppet::Util.expects(:which).with('puppet-whatever').returns(nil)
         commandline.expects(:system).never
 
-        commandline.expects(:usage_message).returns("the usage message")
-        commandline.expects(:abort).with{|x| x =~ /the usage message/}.raises("stubbed abort")
-
-        lambda{ commandline.execute }.should raise_error('stubbed abort')
+        expect {
+          commandline.execute
+        }.to have_printed(/Unknown Puppet subcommand 'whatever'/)
+      end
+    end
+  end
+  describe 'when loading commands' do
+    before do
+      @core_apps = %w{describe filebucket kick queue resource agent cert apply doc master}
+      @command_line = Puppet::Util::CommandLine.new("foo", %w{ client --help whatever.pp }, @tty )
+    end
+    it "should expose available_subcommands as a class method" do
+      @core_apps.each do |command|
+        @command_line.available_subcommands.should include command
+      end
+    end
+    it 'should be able to find all existing commands' do
+      @core_apps.each do |command|
+        @command_line.available_subcommands.should include command
+      end
+    end
+    describe 'when multiple paths have applications' do
+      before do
+        @dir=tmpdir('command_line_plugin_test')
+        @appdir="#{@dir}/puppet/application"
+        FileUtils.mkdir_p(@appdir)
+        FileUtils.touch("#{@appdir}/foo.rb")
+        $LOAD_PATH.unshift(@dir) # WARNING: MUST MATCH THE AFTER ACTIONS!
+      end
+      it 'should be able to find commands from both paths' do
+        found = @command_line.available_subcommands
+        found.should include 'foo'
+        @core_apps.each { |cmd| found.should include cmd }
+      end
+      after do
+        $LOAD_PATH.shift        # WARNING: MUST MATCH THE BEFORE ACTIONS!
       end
     end
   end

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application/doc'
 require 'puppet/util/reference'
@@ -12,7 +11,6 @@ describe Puppet::Application::Doc do
     @doc.stubs(:puts)
     @doc.preinit
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   it "should ask Puppet::Application to not parse Puppet configuration file" do
@@ -48,10 +46,10 @@ describe Puppet::Application::Doc do
       @doc.options[:mode].should == :text
     end
 
-    it "should init format to to_rest" do
+    it "should init format to to_markdown" do
       @doc.preinit
 
-      @doc.options[:format].should == :to_rest
+      @doc.options[:format].should == :to_markdown
     end
   end
 
@@ -108,9 +106,8 @@ describe Puppet::Application::Doc do
 
       Puppet::Util::Reference.expects(:reference).with(reference).returns(ref)
       ref.expects(:doc)
-      @doc.expects(:exit)
 
-      @doc.handle_list(nil)
+      expect { @doc.handle_list(nil) }.to exit_with 0
     end
 
     it "should add reference to references list with --reference" do
@@ -187,7 +184,6 @@ describe Puppet::Application::Doc do
       before :each do
         @doc.options.stubs(:[]).returns(false)
         Puppet.stubs(:parse_config)
-        Puppet::Util::Log.stubs(:level=)
         Puppet::Util::Log.stubs(:newdestination)
       end
 
@@ -233,16 +229,14 @@ describe Puppet::Application::Doc do
 
       it "should set log level to debug if --debug" do
         @doc.options.stubs(:[]).with(:debug).returns(true)
-        Puppet::Util::Log.expects(:level=).with(:debug)
-
         @doc.setup_rdoc
+        Puppet::Util::Log.level.should == :debug
       end
 
       it "should set log level to info if --verbose" do
         @doc.options.stubs(:[]).with(:verbose).returns(true)
-        Puppet::Util::Log.expects(:level=).with(:info)
-
         @doc.setup_rdoc
+        Puppet::Util::Log.level.should == :info
       end
 
       it "should set log destination to console if --verbose" do
@@ -284,7 +278,6 @@ describe Puppet::Application::Doc do
         Puppet.settings.stubs(:[]=).with(:document_all, false)
         Puppet.settings.stubs(:setdefaults)
         Puppet::Util::RDoc.stubs(:rdoc)
-        @doc.stubs(:exit)
         File.stubs(:expand_path).with('modules').returns('modules')
         File.stubs(:expand_path).with('manifests').returns('manifests')
         @doc.command_line.stubs(:args).returns([])
@@ -294,30 +287,30 @@ describe Puppet::Application::Doc do
         @doc.options.expects(:[]).with(:all).returns(true)
         Puppet.settings.expects(:[]=).with(:document_all, true)
 
-        @doc.rdoc
+        expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should call Puppet::Util::RDoc.rdoc in full mode" do
         Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'], nil)
-        @doc.rdoc
+        expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should call Puppet::Util::RDoc.rdoc with a charset if --charset has been provided" do
         @doc.options.expects(:[]).with(:charset).returns("utf-8")
         Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'], "utf-8")
-        @doc.rdoc
+        expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should call Puppet::Util::RDoc.rdoc in full mode with outputdir set to doc if no --outputdir" do
         @doc.options.expects(:[]).with(:outputdir).returns(false)
         Puppet::Util::RDoc.expects(:rdoc).with('doc', ['modules','manifests'], nil)
-        @doc.rdoc
+        expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should call Puppet::Util::RDoc.manifestdoc in manifest mode" do
         @doc.manifest = true
         Puppet::Util::RDoc.expects(:manifestdoc)
-        @doc.rdoc
+        expect { @doc.rdoc }.to exit_with 0
       end
 
       it "should get modulepath and manifestdir values from the environment" do
@@ -326,7 +319,7 @@ describe Puppet::Application::Doc do
 
         Puppet::Util::RDoc.expects(:rdoc).with('doc', ['envmodules1','envmodules2','envmanifests'], nil)
 
-        @doc.rdoc
+        expect { @doc.rdoc }.to exit_with 0
       end
     end
 

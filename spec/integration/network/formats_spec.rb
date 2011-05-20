@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/formats'
 
@@ -45,9 +44,8 @@ describe Puppet::Network::FormatHandler.format(:s) do
   end
 end
 
-describe Puppet::Network::FormatHandler.format(:pson) do
-  describe "when pson is absent" do
-    confine "'pson' library is present" => (! Puppet.features.pson?)
+describe Puppet::Network::FormatHandler.format(:pson), :'fails_on_ruby_1.9.2' => true do
+  describe "when pson is absent", :if => (! Puppet.features.pson?) do
 
     before do
       @pson = Puppet::Network::FormatHandler.format(:pson)
@@ -58,9 +56,7 @@ describe Puppet::Network::FormatHandler.format(:pson) do
     end
   end
 
-  describe "when pson is available" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when pson is available", :if => Puppet.features.pson? do
     before do
       @pson = Puppet::Network::FormatHandler.format(:pson)
     end

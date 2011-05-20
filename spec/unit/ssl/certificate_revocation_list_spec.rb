@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/ssl/certificate_revocation_list'
 
@@ -119,7 +118,7 @@ describe Puppet::SSL::CertificateRevocationList do
       @crl.generate(@cert, @key)
       @crl.content.stubs(:sign)
 
-      @crl.stubs :save
+      Puppet::SSL::CertificateRevocationList.indirection.stubs :save
 
       @key = mock 'key'
     end
@@ -161,7 +160,7 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should save the CRL" do
-      @crl.expects :save
+      Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(@crl, nil)
       @crl.revoke(1, @key)
     end
   end

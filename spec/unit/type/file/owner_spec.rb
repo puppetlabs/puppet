@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 property = Puppet::Type.type(:file).attrclass(:owner)
 
@@ -68,7 +67,7 @@ describe property do
         @provider.expects(:warnonce)
 
         @owner.should = [10]
-        @owner.must be_insync(20)
+        @owner.must be_safe_insync(20)
       end
     end
 
@@ -77,24 +76,24 @@ describe property do
     end
 
     it "should be in sync if 'should' is not provided" do
-      @owner.must be_insync(10)
+      @owner.must be_safe_insync(10)
     end
 
     it "should directly compare the owner values if the desired owner is an integer" do
       @owner.should = [10]
-      @owner.must be_insync(10)
+      @owner.must be_safe_insync(10)
     end
 
     it "should treat numeric strings as integers" do
       @owner.should = ["10"]
-      @owner.must be_insync(10)
+      @owner.must be_safe_insync(10)
     end
 
     it "should convert the owner name to an integer if the desired owner is a string" do
       @provider.expects(:uid).with("foo").returns 10
       @owner.should = %w{foo}
 
-      @owner.must be_insync(10)
+      @owner.must be_safe_insync(10)
     end
 
     it "should not validate that users exist when a user is specified as an integer" do
@@ -106,12 +105,12 @@ describe property do
       @provider.expects(:uid).with("foo").returns nil
       @owner.should = %w{foo}
 
-      lambda { @owner.insync?(10) }.should raise_error(Puppet::Error)
+      lambda { @owner.safe_insync?(10) }.should raise_error(Puppet::Error)
     end
 
     it "should return false if the owners are not equal" do
       @owner.should = [10]
-      @owner.should_not be_insync(20)
+      @owner.should_not be_safe_insync(20)
     end
   end
 

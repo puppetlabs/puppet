@@ -13,8 +13,8 @@ class Puppet::Resource::Type
 
   RESOURCE_SUPERTYPES = [:hostclass, :node, :definition]
 
-  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection, :module_name
-  attr_reader :type, :namespace, :arguments, :behaves_like
+  attr_accessor :file, :line, :doc, :code, :ruby_code, :parent, :resource_type_collection
+  attr_reader :type, :namespace, :arguments, :behaves_like, :module_name
 
   RESOURCE_SUPERTYPES.each do |t|
     define_method("#{t}?") { self.type == t }
@@ -34,13 +34,13 @@ class Puppet::Resource::Type
   end
 
   def to_pson_data_hash
-    data = [:code, :doc, :line, :file, :parent].inject({}) do |hash, param|
-      next hash unless value = self.send(param)
+    data = [:doc, :line, :file, :parent].inject({}) do |hash, param|
+      next hash unless (value = self.send(param)) and (value != "")
       hash[param.to_s] = value
       hash
     end
 
-    data['arguments'] = arguments.dup
+    data['arguments'] = arguments.dup unless arguments.empty?
 
     data['name'] = name
     data['type'] = type
@@ -62,13 +62,11 @@ class Puppet::Resource::Type
 
   # Now evaluate the code associated with this class or definition.
   def evaluate_code(resource)
-    scope = resource.scope
 
-    if tmp = evaluate_parent_type(resource)
-      scope = tmp
-    end
+    static_parent = evaluate_parent_type(resource)
+    scope = static_parent || resource.scope
 
-    scope = subscope(scope, resource) unless resource.title == :main
+    scope = scope.newscope(:namespace => namespace, :source => self, :resource => resource, :dynamic => !static_parent) unless resource.title == :main
     scope.compiler.add_class(name) unless definition?
 
     set_resource_parameters(resource, scope)
@@ -92,6 +90,8 @@ class Puppet::Resource::Type
     end
 
     set_arguments(options[:arguments])
+
+    @module_name = options[:module_name]
   end
 
   # This is only used for node names, and really only when the node name
@@ -138,32 +138,45 @@ class Puppet::Resource::Type
     end
   end
 
-  # Make an instance of our resource type.  This is only possible
-  # for those classes and nodes that don't have any arguments, and is
-  # only useful for things like the 'include' function.
-  def mk_plain_resource(scope)
+  # Make an instance of the resource type, and place it in the catalog
+  # if it isn't in the catalog already.  This is only possible for
+  # classes and nodes.  No parameters are be supplied--if this is a
+  # parameterized class, then all parameters take on their default
+  # values.
+  def ensure_in_catalog(scope, parameters=nil)
     type == :definition and raise ArgumentError, "Cannot create resources for defined resource types"
     resource_type = type == :hostclass ? :class : :node
-
-    # Make sure our parent class has been evaluated, if we have one.
-    if parent
-      parent_resource = scope.catalog.resource(resource_type, parent)
-      unless parent_resource
-        parent_type(scope).mk_plain_resource(scope)
-      end
-    end
 
     # Do nothing if the resource already exists; this makes sure we don't
     # get multiple copies of the class resource, which helps provide the
     # singleton nature of classes.
-    if resource = scope.catalog.resource(resource_type, name)
+    # we should not do this for classes with parameters
+    # if parameters are passed, we should still try to create the resource
+    # even if it exists so that we can fail
+    # this prevents us from being able to combine param classes with include
+    if resource = scope.catalog.resource(resource_type, name) and !parameters
       return resource
     end
-
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
+    if parameters
+      parameters.each do |k,v|
+        resource.set_parameter(k,v)
+      end
+    end
+    instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
-    scope.catalog.tag(*resource.tags)
     resource
+  end
+
+  def instantiate_resource(scope, resource)
+    # Make sure our parent class has been evaluated, if we have one.
+    if parent && !scope.catalog.resource(resource.type, parent)
+      parent_type(scope).ensure_in_catalog(scope)
+    end
+
+    if ['Class', 'Node'].include? resource.type
+      scope.catalog.tag(*resource.tags)
+    end
   end
 
   def name
@@ -217,6 +230,19 @@ class Puppet::Resource::Type
       set[param] = true
     end
 
+    if @type == :hostclass
+      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
+      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+    else
+      scope.setvar("title", resource.title              ) unless set.include? :title
+      scope.setvar("name",  resource.name               ) unless set.include? :name
+    end
+    scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
+
+    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
+      scope.setvar("caller_module_name", caller_name)
+    end
+    scope.class_set(self.name,scope) if hostclass? or node?
     # Verify that all required arguments are either present or
     # have been provided with defaults.
     arguments.each do |param, default|
@@ -233,19 +259,6 @@ class Puppet::Resource::Type
       resource[param] = value
     end
 
-    scope.setvar("title", resource.title) unless set.include? :title
-    scope.setvar("name", resource.name) unless set.include? :name
-    scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
-
-    if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope.setvar("caller_module_name", caller_name)
-    end
-    scope.class_set(self.name,scope) if hostclass? or node?
-  end
-
-  # Create a new subscope in which to evaluate our code.
-  def subscope(scope, resource)
-    scope.newscope :resource => resource, :namespace => self.namespace, :source => self
   end
 
   # Check whether a given argument is valid.

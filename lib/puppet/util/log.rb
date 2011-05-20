@@ -17,11 +17,12 @@ class Puppet::Util::Log
   # Create a new destination type.
   def self.newdesttype(name, options = {}, &block)
 
-          dest = genclass(
-        name, :parent => Puppet::Util::Log::Destination, :prefix => "Dest",
-      :block => block,
-      :hash => @desttypes,
-        
+    dest = genclass(
+      name,
+      :parent     => Puppet::Util::Log::Destination,
+      :prefix     => "Dest",
+      :block      => block,
+      :hash       => @desttypes,
       :attributes => options
     )
     dest.match(dest.name)
@@ -57,6 +58,7 @@ class Puppet::Util::Log
     destinations.keys.each { |dest|
       close(dest)
     }
+    raise Puppet::DevError.new("Log.close_all failed to close #{@destinations.keys.inspect}") if !@destinations.empty?
   end
 
   # Flush any log destinations that support such operations.
@@ -64,6 +66,12 @@ class Puppet::Util::Log
     @destinations.each { |type, dest|
       dest.flush if dest.respond_to?(:flush)
     }
+  end
+
+  def Log.autoflush=(v)
+    @destinations.each do |type, dest|
+      dest.autoflush = v if dest.respond_to?(:autoflush=)
+    end
   end
 
   # Create a new log message.  The primary role of this method is to
@@ -188,7 +196,7 @@ class Puppet::Util::Log
     @levels.include?(level)
   end
 
-  attr_accessor :time, :remote, :file, :line, :version, :source
+  attr_accessor :time, :remote, :file, :line, :source
   attr_reader :level, :message
 
   def initialize(args)
@@ -202,7 +210,7 @@ class Puppet::Util::Log
       tags.each { |t| self.tag(t) }
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       next unless value = args[attr]
       send(attr.to_s + "=", value)
     end
@@ -233,7 +241,7 @@ class Puppet::Util::Log
 
       descriptors[:tags].each { |t| tag(t) }
 
-      [:file, :line, :version].each do |param|
+      [:file, :line].each do |param|
         next unless descriptors[param]
         send(param.to_s + "=", descriptors[param])
       end

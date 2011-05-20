@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/parser/collector'
 
@@ -17,7 +16,7 @@ describe Puppet::Parser::Collector do
   def query(text)
     code = "File <| #{text} |>"
     parser = Puppet::Parser::Parser.new(@scope.compiler)
-    parser.parse(code).hostclass("").code[0].query
+    return parser.parse(code).code[0].query
   end
 
   {true => [%{title == "/tmp/testing"}, %{(title == "/tmp/testing")}, %{group == bin},

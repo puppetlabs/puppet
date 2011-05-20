@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2008-4-8.
 #  Copyright (c) 2008. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 describe Puppet::Transaction::Report do
   describe "when using the indirector" do
@@ -19,11 +19,11 @@ describe Puppet::Transaction::Report do
 
       Facter.stubs(:value).returns "host.domain.com"
 
-      report = Puppet::Transaction::Report.new
+      report = Puppet::Transaction::Report.new("apply")
 
       terminus.expects(:process).with(report)
 
-      report.save
+      Puppet::Transaction::Report.indirection.save(report)
     end
   end
 end

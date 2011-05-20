@@ -36,7 +36,7 @@ class Puppet::SSL::Inventory
       f.print "# Inventory of signed certificates\n# SERIAL NOT_BEFORE NOT_AFTER SUBJECT\n"
     end
 
-    Puppet::SSL::Certificate.search("*").each { |cert| add(cert) }
+    Puppet::SSL::Certificate.indirection.search("*").each { |cert| add(cert) }
   end
 
   # Find the serial number for a given certificate.

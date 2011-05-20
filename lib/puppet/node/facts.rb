@@ -1,5 +1,9 @@
+require 'time'
+
 require 'puppet/node'
 require 'puppet/indirector'
+
+require 'puppet/util/pson'
 
 # Manage a given node's facts.  This either accepts facts and stores them, or
 # returns facts for a given node.
@@ -7,11 +11,12 @@ class Puppet::Node::Facts
   # Set up indirection, so that nodes can be looked for in
   # the node sources.
   extend Puppet::Indirector
+  extend Puppet::Util::Pson
 
   # We want to expire any cached nodes if the facts are saved.
   module NodeExpirer
-    def save(key, instance)
-      Puppet::Node.expire(instance.name)
+    def save(instance, key = nil)
+      Puppet::Node.indirection.expire(instance.name)
       super
     end
   end
@@ -30,7 +35,7 @@ class Puppet::Node::Facts
     @name = name
     @values = values
 
-    add_internal
+    add_timestamp
   end
 
   def downcase_if_necessary
@@ -54,12 +59,36 @@ class Puppet::Node::Facts
     strip_internal == other.send(:strip_internal)
   end
 
-  private
+  def self.from_pson(data)
+    result = new(data['name'], data['values'])
+    result.timestamp = Time.parse(data['timestamp'])
+    result.expiration = Time.parse(data['expiration'])
+    result
+  end
+
+  def to_pson(*args)
+    {
+      'expiration' => expiration,
+      'name' => name,
+      'timestamp' => timestamp,
+      'values' => strip_internal,
+    }.to_pson(*args)
+  end
 
   # Add internal data to the facts for storage.
-  def add_internal
-    self.values[:_timestamp] = Time.now
+  def add_timestamp
+    self.timestamp = Time.now
   end
+
+  def timestamp=(time)
+    self.values[:_timestamp] = time
+  end
+
+  def timestamp
+    self.values[:_timestamp]
+  end
+
+  private
 
   # Strip out that internal data.
   def strip_internal

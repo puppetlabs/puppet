@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/util/metric'
 
@@ -59,7 +58,7 @@ describe Puppet::Util::Metric do
   end
 
   it "should support a label for values" do
-    @metric.newvalue(:foo, 10, "label")
+    @metric.newvalue("foo", 10, "label")
     @metric.values[0][1].should == "label"
   end
 
@@ -69,19 +68,19 @@ describe Puppet::Util::Metric do
   end
 
   it "should return its values sorted by label" do
-    @metric.newvalue(:foo, 10, "b")
-    @metric.newvalue(:bar, 10, "a")
+    @metric.newvalue("foo", 10, "b")
+    @metric.newvalue("bar", 10, "a")
 
-    @metric.values.should == [[:bar, "a", 10], [:foo, "b", 10]]
+    @metric.values.should == [["bar", "a", 10], ["foo", "b", 10]]
   end
 
   it "should use an array indexer method to retrieve individual values" do
-    @metric.newvalue(:foo, 10)
-    @metric[:foo].should == 10
+    @metric.newvalue("foo", 10)
+    @metric["foo"].should == 10
   end
 
   it "should return nil if the named value cannot be found" do
-    @metric[:foo].should == 0
+    @metric["foo"].should == 0
   end
 
   # LAK: I'm not taking the time to develop these tests right now.

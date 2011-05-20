@@ -26,15 +26,20 @@ module Puppet
     include Puppet::Util::SELinux
 
     def retrieve
-      return :absent unless @resource.stat(false)
+      return :absent unless @resource.stat
       context = self.get_selinux_current_context(@resource[:path])
       parse_selinux_context(name, context)
     end
 
     def retrieve_default_context(property)
+      if @resource[:selinux_ignore_defaults] == :true
+        return nil
+      end
+
       unless context = self.get_selinux_default_context(@resource[:path])
         return nil
       end
+
       property_default = self.parse_selinux_context(property, context)
       self.debug "Found #{property} default '#{property_default}' for #{@resource[:path]}" if not property_default.nil?
       property_default
@@ -52,6 +57,17 @@ module Puppet
       self.set_selinux_context(@resource[:path], @should, name)
       :file_changed
     end
+  end
+
+  Puppet::Type.type(:file).newparam(:selinux_ignore_defaults) do
+    desc "If this is set then Puppet will not ask SELinux (via matchpathcon) to
+      supply defaults for the SELinux attributes (seluser, selrole,
+      seltype, and selrange). In general, you should leave this set at its
+      default and only set it to true when you need Puppet to not try to fix
+      SELinux labels automatically."
+    newvalues(:true, :false)
+
+    defaultto :false
   end
 
   Puppet::Type.type(:file).newproperty(:seluser, :parent => Puppet::SELFileContext) do

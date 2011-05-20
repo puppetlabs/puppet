@@ -1,5 +1,6 @@
 Puppet::Type.newtype(:tidy) do
   require 'puppet/file_serving/fileset'
+  require 'puppet/file_bucket/dipper'
 
   @doc = "Remove unwanted files based on specific criteria.  Multiple
     criteria are OR'd together, so a file that is too large but is not
@@ -140,15 +141,17 @@ Puppet::Type.newtype(:tidy) do
   newparam(:size) do
     desc "Tidy files whose size is equal to or greater than
       the specified size.  Unqualified values are in kilobytes, but
-      *b*, *k*, and *m* can be appended to specify *bytes*, *kilobytes*,
-      and *megabytes*, respectively.  Only the first character is
-      significant, so the full word can also be used."
+      *b*, *k*, *m*, *g*, and *t* can be appended to specify *bytes*,
+      *kilobytes*, *megabytes*, *gigabytes*, and *terabytes*, respectively.
+      Only the first character is significant, so the full word can also 
+      be used."
 
     @@sizeconvertors = {
       :b => 0,
       :k => 1,
       :m => 2,
-      :g => 3
+      :g => 3,
+      :t => 4
     }
 
     def convert(unit, multi)
@@ -206,7 +209,9 @@ Puppet::Type.newtype(:tidy) do
     []
   end
 
-  @depthfirst = true
+  def depthfirst?
+    true
+  end
 
   def initialize(hash)
     super
@@ -235,10 +240,6 @@ Puppet::Type.newtype(:tidy) do
     []
   end
 
-  def eval_generate
-    []
-  end
-
   def generate
     return [] unless stat(self[:path])
 
@@ -251,7 +252,7 @@ Puppet::Type.newtype(:tidy) do
 
     if parameter
       files = Puppet::FileServing::Fileset.new(self[:path], parameter).files.collect do |f|
-        f == "." ? self[:path] : File.join(self[:path], f)
+        f == "." ? self[:path] : ::File.join(self[:path], f)
       end
     else
       files = [self[:path]]
@@ -267,7 +268,7 @@ Puppet::Type.newtype(:tidy) do
     files_by_name = result.inject({}) { |hash, file| hash[file[:path]] = file; hash }
 
     files_by_name.keys.sort { |a,b| b <=> b }.each do |path|
-      dir = File.dirname(path)
+      dir = ::File.dirname(path)
       next unless resource = files_by_name[dir]
       if resource[:require]
         resource[:require] << Puppet::Resource.new(:file, path)
@@ -318,7 +319,7 @@ Puppet::Type.newtype(:tidy) do
 
   def stat(path)
     begin
-      File.lstat(path)
+      ::File.lstat(path)
     rescue Errno::ENOENT => error
       info "File does not exist"
       return nil

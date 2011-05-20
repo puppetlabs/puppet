@@ -1,8 +1,11 @@
 # A module to collect utility functions.
 
+require 'English'
 require 'puppet/util/monkey_patches'
 require 'sync'
 require 'puppet/external/lock'
+require 'monitor'
+require 'puppet/util/execution_stub'
 
 module Puppet
   # A command failed to execute.
@@ -17,13 +20,29 @@ module Util
   require 'puppet/util/posix'
   extend Puppet::Util::POSIX
 
-  # Create a hash to store the different sync objects.
-  @@syncresources = {}
+  @@sync_objects = {}.extend MonitorMixin
 
-  # Return the sync object associated with a given resource.
-  def self.sync(resource)
-    @@syncresources[resource] ||= Sync.new
-    @@syncresources[resource]
+  def self.activerecord_version
+    if (defined?(::ActiveRecord) and defined?(::ActiveRecord::VERSION) and defined?(::ActiveRecord::VERSION::MAJOR) and defined?(::ActiveRecord::VERSION::MINOR))
+      ([::ActiveRecord::VERSION::MAJOR, ::ActiveRecord::VERSION::MINOR].join('.').to_f)
+    else
+      0
+    end
+  end
+
+  
+  def self.synchronize_on(x,type)
+    sync_object,users = 0,1
+    begin
+      @@sync_objects.synchronize { 
+        (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
+      }
+      @@sync_objects[x][sync_object].synchronize(type) { yield }
+    ensure
+      @@sync_objects.synchronize { 
+        @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
+      }
+    end
   end
 
   # Change the process to a different user
@@ -181,7 +200,7 @@ module Util
     end
   end
 
-  def binary(bin)
+  def which(bin)
     if bin =~ /^\//
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
@@ -192,7 +211,7 @@ module Util
     end
     nil
   end
-  module_function :binary
+  module_function :which
 
   # Execute the provided command in a pipe, yielding the pipe object.
   def execpipe(command, failonfail = true)
@@ -246,6 +265,10 @@ module Util
 
     arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid]) if arguments[:uid]
     arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid]) if arguments[:gid]
+
+    if execution_stub = Puppet::Util::ExecutionStub.current_value
+      return execution_stub.call(command, arguments)
+    end
 
     @@os ||= Facter.value(:operatingsystem)
     output = nil
@@ -351,9 +374,7 @@ module Util
 
   # Create an exclusive lock.
   def threadlock(resource, type = Sync::EX)
-    Puppet::Util.sync(resource).synchronize(type) do
-      yield
-    end
+    Puppet::Util.synchronize_on(resource,type) { yield }
   end
 
   # Because some modules provide their own version of this method.
@@ -363,15 +384,10 @@ module Util
 
   def memory
     unless defined?(@pmap)
-      pmap = %x{which pmap 2>/dev/null}.chomp
-      if $CHILD_STATUS != 0 or pmap =~ /^no/
-        @pmap = nil
-      else
-        @pmap = pmap
-      end
+      @pmap = which('pmap')
     end
     if @pmap
-      return %x{pmap #{Process.pid}| grep total}.chomp.sub(/^\s*total\s+/, '').sub(/K$/, '').to_i
+      %x{#{@pmap} #{Process.pid}| grep total}.chomp.sub(/^\s*total\s+/, '').sub(/K$/, '').to_i
     else
       0
     end

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Type.type(:group) do
   before do
@@ -14,6 +13,10 @@ describe Puppet::Type.type(:group) do
 
   it "should have a default provider inheriting from Puppet::Provider" do
     @class.defaultprovider.ancestors.should be_include(Puppet::Provider)
+  end
+
+  it "should have a system_groups feature" do
+    @class.provider_feature(:system_groups).should_not be_nil
   end
 
   describe "when validating attributes" do
@@ -38,9 +41,12 @@ describe Puppet::Type.type(:group) do
     end
   end
 
-  # #1407 - we need to declare the allowdupe param as boolean.
-  it "should have a boolean method for determining if duplicates are allowed" do
+  it "should have a boolean method for determining if duplicates are allowed", :'fails_on_ruby_1.9.2' => true do
     @class.new(:name => "foo").methods.should be_include("allowdupe?")
+  end
+
+  it "should have a boolean method for determining if system groups are allowed", :'fails_on_ruby_1.9.2' => true do
+    @class.new(:name => "foo").methods.should be_include("system?")
   end
 
   it "should call 'create' to create the group" do

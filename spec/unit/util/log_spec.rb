@@ -1,13 +1,12 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/util/log'
 
 describe Puppet::Util::Log do
   it "should write a given message to the specified destination" do
     arraydest = []
-    Puppet::Util::Log.newdestination(arraydest)
+    Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(arraydest))
     Puppet::Util::Log.new(:level => :notice, :message => "foo")
     message = arraydest.last.message
     message.should == "foo"
@@ -87,14 +86,14 @@ describe Puppet::Util::Log do
     it "should flush the log queue when the first destination is specified" do
       Puppet::Util::Log.close_all
       Puppet::Util::Log.expects(:flushqueue)
-      Puppet::Util::Log.newdestination([])
+      Puppet::Util::Log.newdestination(:console)
     end
 
     it "should convert the level to a symbol if it's passed in as a string" do
       Puppet::Util::Log.new(:level => "notice", :message => :foo).level.should == :notice
     end
 
-    it "should fail if the level is not a symbol or string" do
+    it "should fail if the level is not a symbol or string", :'fails_on_ruby_1.9.2' => true do
       lambda { Puppet::Util::Log.new(:level => 50, :message => :foo) }.should raise_error(ArgumentError)
     end
 
@@ -120,7 +119,7 @@ describe Puppet::Util::Log do
       Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => "foo")
     end
 
-    [:file, :line, :version].each do |attr|
+    [:file, :line].each do |attr|
       it "should use #{attr} if provided" do
         Puppet::Util::Log.any_instance.expects(attr.to_s + "=").with "foo"
         Puppet::Util::Log.new(:level => "notice", :message => :foo, attr => "foo")
@@ -134,6 +133,11 @@ describe Puppet::Util::Log do
     it "should register itself with Log" do
       Puppet::Util::Log.expects(:newmessage)
       Puppet::Util::Log.new(:level => "notice", :message => :foo)
+    end
+
+    it "should update Log autoflush when Puppet[:autoflush] is set" do
+      Puppet::Util::Log.expects(:autoflush=).once.with(true)
+      Puppet[:autoflush] = true
     end
 
     it "should have a method for determining if a tag is present" do
@@ -177,21 +181,10 @@ describe Puppet::Util::Log do
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo)
         log.expects(:tag).with("tag")
         log.expects(:tag).with("tag2")
-        log.expects(:version=).with(100)
 
         log.source = source
 
         log.source.should == "path"
-      end
-
-      it "should copy over any version information" do
-        catalog = Puppet::Resource::Catalog.new
-        catalog.version = 25
-        source = Puppet::Type.type(:file).new :path => "/foo/bar"
-        catalog.add_resource source
-
-        log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
-        log.version.should == 25
       end
 
       it "should copy over any file and line information" do
@@ -210,6 +203,24 @@ describe Puppet::Util::Log do
         source.expects(:file).never
         log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :source => source)
       end
+    end
+  end
+
+  describe "to_yaml", :'fails_on_ruby_1.9.2' => true do
+    it "should not include the @version attribute" do
+      log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
+      log.to_yaml_properties.should_not include('@version')
+    end
+
+    it "should include attributes @level, @message, @source, @tags, and @time" do
+      log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :version => 100)
+      log.to_yaml_properties.should == %w{@level @message @source @tags @time}
+    end
+
+    it "should include attributes @file and @line if specified" do
+      log = Puppet::Util::Log.new(:level => "notice", :message => :foo, :file => "foo", :line => 35)
+      log.to_yaml_properties.should include('@file')
+      log.to_yaml_properties.should include('@line')
     end
   end
 end

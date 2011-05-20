@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppettest'
@@ -80,20 +80,11 @@ class TestSUIDManager < Test::Unit::TestCase
       warn "Cannot run this test on ruby < 1.8.4"
     else
       set_exit_status!
-
-
-        Puppet::Util.expects(:execute).with(
-          'yay',
-            { :failonfail => false,
-              :uid => @user.uid,
-
-              :gid => @user.gid }
-                ).returns('output')
-
-
-      output = Puppet::Util::SUIDManager.run_and_capture 'yay',
-        @user.uid,
-        @user.gid
+      Puppet::Util.
+        expects(:execute).
+        with('yay',:combine => true, :failonfail => false, :uid => @user.uid, :gid => @user.gid).
+        returns('output')
+      output = Puppet::Util::SUIDManager.run_and_capture 'yay', @user.uid, @user.gid
 
       assert_equal 'output', output.first
       assert_kind_of Process::Status, output.last

@@ -94,16 +94,15 @@ module PuppetTest::ParserTesting
 
   def resourcedef(type, title, params)
     title = stringobj(title) unless title.is_a?(AST)
+    instance = AST::ResourceInstance.new(:title => title, :parameters => resourceparams(params))
     assert_nothing_raised("Could not create #{type} #{title}") {
 
       return AST::Resource.new(
 
         :file => __FILE__,
         :line => __LINE__,
-        :title => title,
         :type => type,
-
-        :parameters => resourceinst(params)
+        :instances => AST::ASTArray.new(:children => [instance])
       )
     }
   end
@@ -122,9 +121,7 @@ module PuppetTest::ParserTesting
         :file => __FILE__,
         :line => __LINE__,
         :object => resourceref(type, title),
-
-        :type => type,
-        :parameters => resourceinst(params)
+        :parameters => resourceparams(params)
       )
     }
   end
@@ -197,13 +194,13 @@ module PuppetTest::ParserTesting
     }
   end
 
-  def resourceinst(hash)
+  def resourceparams(hash)
     assert_nothing_raised("Could not create resource instance") {
       params = hash.collect { |param, value|
       resourceparam(param, value)
     }
 
-      return AST::ResourceInstance.new(
+      return AST::ASTArray.new(
 
         :file => tempfile,
 

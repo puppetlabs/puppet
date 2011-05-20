@@ -91,7 +91,7 @@ class Puppet::Util::Settings
       varname = $2 || $1
       if varname == "environment" and environment
         environment
-      elsif pval = self.value(varname)
+      elsif pval = self.value(varname, environment)
         pval
       else
         raise Puppet::DevError, "Could not find value for #{value}"
@@ -593,7 +593,7 @@ if @config.include?(:run_mode)
     end
     eachsection do |section|
       persection(section) do |obj|
-        str += obj.to_config + "\n" unless ReadOnly.include? obj.name
+        str += obj.to_config + "\n" unless ReadOnly.include? obj.name or obj.name == :genconfig
       end
     end
 

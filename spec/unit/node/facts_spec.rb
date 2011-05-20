@@ -1,7 +1,6 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
-
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'matchers/json'
 require 'puppet/node/facts'
 
 describe Puppet::Node::Facts, "when indirecting" do
@@ -76,16 +75,10 @@ describe Puppet::Node::Facts, "when indirecting" do
       @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
-    it "should redirect to the specified fact store for retrieval" do
-      Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Node::Facts.find(:my_facts)
-    end
-
     it "should redirect to the specified fact store for storage" do
       Puppet::Node::Facts.stubs(:indirection).returns(@indirection)
       @indirection.expects(:save)
-      @facts.save
+      Puppet::Node::Facts.indirection.save(@facts)
     end
 
     describe "when the Puppet application is 'master'" do
@@ -108,6 +101,33 @@ describe Puppet::Node::Facts, "when indirecting" do
     it "should add metadata to the facts" do
       facts = Puppet::Node::Facts.new("me", "one" => "two", "three" => "four")
       facts.values[:_timestamp].should be_instance_of(Time)
+    end
+
+    describe "using pson" do
+      before :each do
+        @timestamp = Time.parse("Thu Oct 28 11:16:31 -0700 2010")
+        @expiration = Time.parse("Thu Oct 28 11:21:31 -0700 2010")
+      end
+
+      it "should accept properly formatted pson" do
+        pson = %Q({"name": "foo", "expiration": "#{@expiration}", "timestamp": "#{@timestamp}", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('pson')
+        facts = format.intern(Puppet::Node::Facts,pson)
+        facts.name.should == 'foo'
+        facts.expiration.should == @expiration
+        facts.values.should == {'a' => '1', 'b' => '2', 'c' => '3', :_timestamp => @timestamp}
+      end
+
+      it "should generate properly formatted pson" do
+        Time.stubs(:now).returns(@timestamp)
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+        facts.expiration = @expiration
+        result = PSON.parse(facts.to_pson)
+        result['name'].should == facts.name
+        result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
+        result['timestamp'].should == facts.timestamp.to_s
+        result['expiration'].should == facts.expiration.to_s
+      end
     end
   end
 end

@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'puppet/parser/templatewrapper'
 
 describe Puppet::Parser::TemplateWrapper do
   before(:each) do
@@ -14,6 +14,12 @@ describe Puppet::Parser::TemplateWrapper do
     FileTest.stubs(:exists?).returns("true")
     File.stubs(:read).with("/tmp/fake_template").returns("template content")
     @tw = Puppet::Parser::TemplateWrapper.new(@scope)
+  end
+
+  def mock_template(source=nil)
+    template_mock = mock("template", :result => "woot!")
+    ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+    template_mock.expects(:filename=).with(source)
   end
 
   it "should create a new object TemplateWrapper from a scope" do
@@ -53,41 +59,38 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should return the processed template contents with a call to result" do
-    template_mock = mock("template", :result => "woot!")
+    mock_template("/tmp/fake_template")
     File.expects(:read).with("/tmp/fake_template").returns("template contents")
-    ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
 
     @tw.file = @file
     @tw.result.should eql("woot!")
   end
 
   it "should return the processed template contents with a call to result and a string" do
-    template_mock = mock("template", :result => "woot!")
-    ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
-
+    mock_template
     @tw.result("template contents").should eql("woot!")
   end
 
   it "should return the contents of a variable if called via method_missing" do
-    @scope.expects(:lookupvar).with("chicken", false).returns("is good")
+    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns("is good")
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.chicken.should eql("is good")
   end
 
   it "should throw an exception if a variable is called via method_missing and it does not exist" do
-    @scope.expects(:lookupvar).with("chicken", false).returns(:undefined)
+    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns(:undefined)
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     lambda { tw.chicken }.should raise_error(Puppet::ParseError)
   end
 
   it "should allow you to check whether a variable is defined with has_variable?" do
-    @scope.expects(:lookupvar).with("chicken", false).returns("is good")
+    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns("is good")
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.has_variable?("chicken").should eql(true)
   end
 
   it "should allow you to check whether a variable is not defined with has_variable?" do
-    @scope.expects(:lookupvar).with("chicken", false).returns(:undefined)
+    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns(:undefined)
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.has_variable?("chicken").should eql(false)
   end
@@ -113,9 +116,7 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should set all of the scope's variables as instance variables" do
-    template_mock = mock("template", :result => "woot!")
-    ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
-
+    mock_template
     @scope.expects(:to_hash).returns("one" => "foo")
     @tw.result("template contents")
 
@@ -123,8 +124,7 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should not error out if one of the variables is a symbol" do
-    template_mock = mock("template", :result => "woot!")
-    ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+    mock_template
 
     @scope.expects(:to_hash).returns(:_timestamp => "1234")
     @tw.result("template contents")
@@ -132,13 +132,11 @@ describe Puppet::Parser::TemplateWrapper do
 
   %w{! . ; :}.each do |badchar|
     it "should translate #{badchar} to _ when setting the instance variables" do
-    template_mock = mock("template", :result => "woot!")
-    ERB.expects(:new).with("template contents", 0, "-").returns(template_mock)
+      mock_template
+      @scope.expects(:to_hash).returns("one#{badchar}" => "foo")
+      @tw.result("template contents")
 
-    @scope.expects(:to_hash).returns("one#{badchar}" => "foo")
-    @tw.result("template contents")
-
-    @tw.instance_variable_get("@one_").should == "foo"
-  end
+      @tw.instance_variable_get("@one_").should == "foo"
+    end
   end
 end

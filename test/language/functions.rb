@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/parser/parser'
@@ -382,17 +382,15 @@ class TestLangFunctions < Test::Unit::TestCase
     }.each do |string, value|
       scope = mkscope
       scope.setvar("yayness", string)
-      assert_equal(string, scope.lookupvar("yayness", false))
+      assert_equal(string, scope.lookupvar("yayness"))
 
       assert_nothing_raised("An empty string was not a valid variable value") do
         ast.evaluate(scope)
       end
 
-
-        assert_equal(
-          "template #{value}\n", scope.lookupvar("output"),
-
-            "#{string.inspect} did not get evaluated correctly")
+      assert_equal(
+        "template #{value}\n", scope.lookupvar("output"),
+        "#{string.inspect} did not get evaluated correctly")
     end
   end
 
@@ -447,11 +445,11 @@ class TestLangFunctions < Test::Unit::TestCase
 
     include = Puppet::Parser::Functions.function(:include)
 
-    assert_raise(Puppet::ParseError, "did not throw error on missing class") do
+    assert_raise(Puppet::Error, "did not throw error on missing class") do
       scope.function_include("nosuchclass")
     end
 
-    parser.newclass("myclass")
+    scope.known_resource_types.add Puppet::Resource::Type.new(:hostclass, "myclass", {})
 
     scope.compiler.expects(:evaluate_classes).with(%w{myclass otherclass}, scope, false).returns(%w{myclass otherclass})
 

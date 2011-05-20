@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'matchers/json'
 
 describe Puppet::Node do
   describe "when managing its environment" do
@@ -84,11 +84,11 @@ end
 describe Puppet::Node, "when merging facts" do
   before do
     @node = Puppet::Node.new("testnode")
-    Puppet::Node::Facts.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
+    Puppet::Node::Facts.indirection.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
   end
 
   it "should fail intelligently if it cannot find facts" do
-    Puppet::Node::Facts.expects(:find).with(@node.name).raises "foo"
+    Puppet::Node::Facts.indirection.expects(:find).with(@node.name).raises "foo"
     lambda { @node.fact_merge }.should raise_error(Puppet::Error)
   end
 
@@ -128,13 +128,6 @@ describe Puppet::Node, "when merging facts" do
 end
 
 describe Puppet::Node, "when indirecting" do
-  it "should redirect to the indirection" do
-    @indirection = stub 'indirection', :name => :node
-    Puppet::Node.stubs(:indirection).returns(@indirection)
-    @indirection.expects(:find)
-    Puppet::Node.find(:my_node.to_s)
-  end
-
   it "should default to the 'plain' node terminus" do
     Puppet::Node.indirection.terminus_class.should == :plain
   end

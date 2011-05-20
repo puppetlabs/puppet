@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/parser/parser'
@@ -37,6 +37,9 @@ class TestSnippets < Test::Unit::TestCase
   end
 
   def assert_mode_equal(mode, path)
+    if mode.is_a? Integer
+      mode = mode.to_s(8)
+    end
     unless file = @catalog.resource(:file, path)
       raise "Could not find file #{path}"
     end
@@ -501,7 +504,7 @@ class TestSnippets < Test::Unit::TestCase
 
         catalog = nil
         assert_nothing_raised("Could not compile catalog") {
-          catalog = Puppet::Resource::Catalog.find(node)
+          catalog = Puppet::Resource::Catalog.indirection.find(node)
         }
 
         assert_nothing_raised("Could not convert catalog") {

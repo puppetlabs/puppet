@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'mocha'
 require 'puppet'
@@ -114,39 +114,6 @@ class TestTransactions < Test::Unit::TestCase
     assert_equal({inst.title => inst}, $prefetched, "evaluate did not call prefetch")
   end
 
-  # We need to generate resources before we prefetch them, else generated
-  # resources that require prefetching don't work.
-  def test_generate_before_prefetch
-    config = mk_catalog
-    trans = Puppet::Transaction.new(config)
-
-    generate = nil
-    prefetch = nil
-    trans.expects(:generate).with { |*args| generate = Time.now; true }
-    trans.expects(:prefetch).with { |*args| ! generate.nil? }
-    trans.prepare
-    return
-
-    resource = Puppet::Type.type(:file).new :ensure => :present, :path => tempfile
-    other_resource = mock 'generated'
-    def resource.generate
-      [other_resource]
-    end
-
-
-    config = mk_catalog(yay, rah)
-    trans = Puppet::Transaction.new(config)
-
-    assert_nothing_raised do
-      trans.generate
-    end
-
-    %w{ya ra y r}.each do |name|
-      assert(trans.catalog.vertex?(Puppet::Type.type(:generator)[name]), "Generated #{name} was not a vertex")
-      assert($finished.include?(name), "#{name} was not finished")
-    end
-  end
-
   def test_ignore_tags?
     config = Puppet::Resource::Catalog.new
     config.host_config = true
@@ -235,7 +202,7 @@ class TestTransactions < Test::Unit::TestCase
     config = mk_catalog(one, two)
     trans = Puppet::Transaction.new(config)
     assert_raise(Puppet::Error) do
-      trans.prepare
+      trans.evaluate
     end
   end
 

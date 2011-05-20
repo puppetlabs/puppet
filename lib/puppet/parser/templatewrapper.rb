@@ -1,6 +1,7 @@
 # A simple wrapper for templates, so they don't have full access to
 # the scope objects.
 require 'puppet/parser/files'
+require 'erb'
 
 class Puppet::Parser::TemplateWrapper
   attr_writer :scope
@@ -17,13 +18,14 @@ class Puppet::Parser::TemplateWrapper
     @__scope__
   end
 
+  def script_line
+    # find which line in the template (if any) we were called from
+    (caller.find { |l| l =~ /#{file}:/ }||"")[/:(\d+):/,1]
+  end
+
   # Should return true if a variable is defined, false if it is not
   def has_variable?(name)
-    if scope.lookupvar(name.to_s, false) != :undefined
-      true
-    else
-      false
-    end
+    scope.lookupvar(name.to_s, :file => file, :line => script_line) != :undefined
   end
 
   # Allow templates to access the defined classes
@@ -54,15 +56,13 @@ class Puppet::Parser::TemplateWrapper
   # the missing_method definition here until we declare the syntax finally
   # dead.
   def method_missing(name, *args)
-    # We have to tell lookupvar to return :undefined to us when
-    # appropriate; otherwise it converts to "".
-    value = scope.lookupvar(name.to_s, false)
+    value = scope.lookupvar(name.to_s,:file => file,:line => script_line)
     if value != :undefined
       return value
     else
       # Just throw an error immediately, instead of searching for
       # other missingmethod things or whatever.
-      raise Puppet::ParseError, "Could not find value for '#{name}'"
+      raise Puppet::ParseError.new("Could not find value for '#{name}'",@file,script_line)
     end
   end
 
@@ -102,6 +102,7 @@ class Puppet::Parser::TemplateWrapper
     result = nil
     benchmark(:debug, "Interpolated template #{template_source}") do
       template = ERB.new(self.string, 0, "-")
+      template.filename = file
       result = template.result(binding)
     end
 

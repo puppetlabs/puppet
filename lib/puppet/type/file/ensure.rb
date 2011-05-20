@@ -7,29 +7,23 @@ module Puppet
       if the file is missing will create an empty file. Specifying
       `absent` will delete the file (and directory if recurse => true).
 
-      Anything other than those values will be considered to be a symlink.
-      For instance, the following text creates a link:
+      Anything other than those values will create a symlink. In the interest of readability and clarity, you should use `ensure => link` and explicitly specify a
+      target; however, if a `target` attribute isn't provided, the value of the `ensure`
+      attribute will be used as the symlink target:
 
-          # Useful on solaris
+          # (Useful on Solaris)
+          # Less maintainable: 
           file { \"/etc/inetd.conf\":
-            ensure => \"/etc/inet/inetd.conf\"
+            ensure => \"/etc/inet/inetd.conf\",
           }
 
-      You can make relative links:
-
-          # Useful on solaris
+          # More maintainable:
           file { \"/etc/inetd.conf\":
-            ensure => \"inet/inetd.conf\"
+            ensure => link,
+            target => \"/etc/inet/inetd.conf\",
           }
-
-      If you need to make a relative link to a file named the same
-      as one of the valid values, you must prefix it with `./` or
-      something similar.
-
-      You can also make recursive symlinks, which will create a
-      directory structure that maps to the target directory,
-      with directories corresponding to each directory
-      and links corresponding to each file."
+      
+      These two declarations are equivalent."
 
     # Most 'ensure' properties have a default, but with files we, um, don't.
     nodefault
@@ -66,7 +60,7 @@ module Puppet
       end
       if mode
         Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path],mode)
+          Dir.mkdir(@resource[:path], mode.to_i(8))
         end
       else
         Dir.mkdir(@resource[:path])
@@ -144,7 +138,7 @@ module Puppet
     end
 
     def retrieve
-      if stat = @resource.stat(false)
+      if stat = @resource.stat
         return stat.ftype.intern
       else
         if self.should == :false

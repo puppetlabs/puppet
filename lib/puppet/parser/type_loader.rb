@@ -3,25 +3,56 @@ require 'puppet/node/environment'
 class Puppet::Parser::TypeLoader
   include Puppet::Node::Environment::Helper
 
-  class Helper < Hash
+  # Helper class that makes sure we don't try to import the same file
+  # more than once from either the same thread or different threads.
+  class Helper
     include MonitorMixin
-    def done_with(item)
-      synchronize do
-        delete(item)[:busy].signal if self.has_key?(item) and self[item][:loader] == Thread.current
-      end
+    def initialize
+      super
+      # These hashes are indexed by filename
+      @state = {} # :doing or :done
+      @thread = {} # if :doing, thread that's doing the parsing
+      @cond_var = {} # if :doing, condition var that will be signaled when done.
     end
-    def owner_of(item)
-      synchronize do
-        if !self.has_key? item
-          self[item] = { :loader => Thread.current, :busy => self.new_cond}
-          :nobody
-        elsif self[item][:loader] == Thread.current
-          :this_thread
+
+    # Execute the supplied block exactly once per file, no matter how
+    # many threads have asked for it to run.  If another thread is
+    # already executing it, wait for it to finish.  If this thread is
+    # already executing it, return immediately without executing the
+    # block.
+    #
+    # Note: the reason for returning immediately if this thread is
+    # already executing the block is to handle the case of a circular
+    # import--when this happens, we attempt to recursively re-parse a
+    # file that we are already in the process of parsing.  To prevent
+    # an infinite regress we need to simply do nothing when the
+    # recursive import is attempted.
+    def do_once(file)
+      need_to_execute = synchronize do
+        case @state[file]
+        when :doing
+          if @thread[file] != Thread.current
+            @cond_var[file].wait
+          end
+          false
+        when :done
+          false
         else
-          flag = self[item][:busy]
-          flag.wait
-          flag.signal
-          :another_thread
+          @state[file] = :doing
+          @thread[file] = Thread.current
+          @cond_var[file] = new_cond
+          true
+        end
+      end
+      if need_to_execute
+        begin
+          yield
+        ensure
+          synchronize do
+            @state[file] = :done
+            @thread.delete(file)
+            @cond_var.delete(file).broadcast
+          end
         end
       end
     end
@@ -47,21 +78,46 @@ class Puppet::Parser::TypeLoader
       raise Puppet::ImportError.new("No file(s) found for import of '#{pat}'")
     end
 
+    loaded_asts = []
     files.each do |file|
       unless file =~ /^#{File::SEPARATOR}/
         file = File.join(dir, file)
       end
-      unless imported? file
-        @imported[file] = true
-        parse_file(file)
+      @loading_helper.do_once(file) do
+        loaded_asts << parse_file(file)
+      end
+    end
+    loaded_asts.inject([]) do |loaded_types, ast|
+      loaded_types + known_resource_types.import_ast(ast, modname)
+    end
+  end
+
+  def import_all
+    require 'find'
+
+    module_names = []
+    # Collect the list of all known modules
+    environment.modulepath.each do |path|
+      Dir.chdir(path) do
+        Dir.glob("*").each do |dir|
+          next unless FileTest.directory?(dir)
+          module_names << dir
+        end
       end
     end
 
-    modname
-  end
-
-  def imported?(file)
-    @imported.has_key?(file)
+    module_names.uniq!
+    # And then load all files from each module, but (relying on system
+    # behavior) only load files from the first module of a given name.  E.g.,
+    # given first/foo and second/foo, only files from first/foo will be loaded.
+    module_names.each do |name|
+      mod = Puppet::Module.new(name, environment)
+      Find.find(File.join(mod.path, "manifests")) do |path|
+        if path =~ /\.pp$/ or path =~ /\.rb$/
+          import(path)
+        end
+      end
+    end
   end
 
   def known_resource_types
@@ -70,77 +126,48 @@ class Puppet::Parser::TypeLoader
 
   def initialize(env)
     self.environment = env
-    @loaded = {}
-    @loading = Helper.new
-
-    @imported = {}
+    @loading_helper = Helper.new
   end
 
-  def load_until(namespaces, name)
-    return nil if name == "" # special-case main.
-    name2files(namespaces, name).each do |filename|
-      modname = begin
-        import_if_possible(filename)
+  # Try to load the object with the given fully qualified name.
+  def try_load_fqname(type, fqname)
+    return nil if fqname == "" # special-case main.
+    name2files(fqname).each do |filename|
+      begin
+        imported_types = import(filename)
+        if result = imported_types.find { |t| t.type == type and t.name == fqname }
+          Puppet.debug "Automatically imported #{fqname} from #{filename} into #{environment}"
+          return result
+        end
       rescue Puppet::ImportError => detail
         # We couldn't load the item
         # I'm not convienced we should just drop these errors, but this
         # preserves existing behaviours.
-        nil
-      end
-      if result = yield(filename)
-        Puppet.debug "Automatically imported #{name} from #{filename} into #{environment}"
-        result.module_name = modname if modname and result.respond_to?(:module_name=)
-        return result
       end
     end
-    nil
-  end
-
-  def loaded?(name)
-    @loaded.include?(name)
-  end
-
-  def name2files(namespaces, name)
-    return [name.sub(/^::/, '').gsub("::", File::SEPARATOR)] if name =~ /^::/
-
-    result = namespaces.inject([]) do |names_to_try, namespace|
-      fullname = (namespace + "::#{name}").sub(/^::/, '')
-
-      # Try to load the module init file if we're a qualified name
-      names_to_try << fullname.split("::")[0] if fullname.include?("::")
-
-      # Then the fully qualified name
-      names_to_try << fullname
-    end
-
-    # Otherwise try to load the bare name on its own.  This
-    # is appropriate if the class we're looking for is in a
-    # module that's different from our namespace.
-    result << name
-    result.uniq.collect { |f| f.gsub("::", File::SEPARATOR) }
+    # Nothing found.
+    return nil
   end
 
   def parse_file(file)
     Puppet.debug("importing '#{file}' in environment #{environment}")
     parser = Puppet::Parser::Parser.new(environment)
     parser.file = file
-    parser.parse
+    return parser.parse
   end
 
-  # Utility method factored out of load for handling thread-safety.
-  # This isn't tested in the specs, because that's basically impossible.
-  def import_if_possible(file, current_file = nil)
-    @loaded[file] || begin
-      case @loading.owner_of(file)
-      when :this_thread
-        nil
-      when :another_thread
-        import_if_possible(file,current_file)
-      when :nobody
-        @loaded[file] = import(file,current_file)
-      end
-    ensure
-      @loading.done_with(file)
+  private
+
+  # Return a list of all file basenames that should be tried in order
+  # to load the object with the given fully qualified name.
+  def name2files(fqname)
+    result = []
+    ary = fqname.split("::")
+    while ary.length > 0
+      result << ary.join(File::SEPARATOR)
+      ary.pop
     end
+    return result
   end
+
 end

@@ -1,8 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'puppet_spec/files'
 
 describe Puppet::Module do
+  include PuppetSpec::Files
+
   before do
     # This is necessary because of the extra checks we have for the deprecated
     # 'plugins' directory
@@ -267,17 +269,39 @@ describe Puppet::Module do
   end
 
   it "should return the path to the first found instance in its environment's module paths as its path" do
+    dir = tmpdir("deep_path")
+    first = File.join(dir, "first")
+    second = File.join(dir, "second")
+
+    FileUtils.mkdir_p(first)
+    FileUtils.mkdir_p(second)
+    Puppet[:modulepath] = "#{first}:#{second}"
+
+    modpath = File.join(first, "foo")
+    FileUtils.mkdir_p(modpath)
+
+    # Make a second one, which we shouldn't find
+    FileUtils.mkdir_p(File.join(second, "foo"))
+
     mod = Puppet::Module.new("foo")
-    env = mock 'environment'
-    mod.stubs(:environment).returns env
+    mod.path.should == modpath
+  end
 
-    env.expects(:modulepath).returns %w{/a /b /c}
+  it "should be able to find itself in a directory other than the first directory in the module path" do
+    dir = tmpdir("deep_path")
+    first = File.join(dir, "first")
+    second = File.join(dir, "second")
 
-    FileTest.expects(:exist?).with("/a/foo").returns false
-    FileTest.expects(:exist?).with("/b/foo").returns true
-    FileTest.expects(:exist?).with("/c/foo").never
+    FileUtils.mkdir_p(first)
+    FileUtils.mkdir_p(second)
+    Puppet[:modulepath] = "#{first}:#{second}"
 
-    mod.path.should == "/b/foo"
+    modpath = File.join(second, "foo")
+    FileUtils.mkdir_p(modpath)
+
+    mod = Puppet::Module.new("foo")
+    mod.should be_exist
+    mod.path.should == modpath
   end
 
   it "should be considered existent if it exists in at least one module path" do
@@ -367,9 +391,9 @@ describe Puppet::Module do
     mod.stubs(:path).returns "/a/foo"
     FileTest.expects(:exist?).with("/a/foo/plugins").returns true
 
-    mod.expects(:warning)
-
     mod.plugin_directory.should == "/a/foo/plugins"
+    @logs.first.message.should == "using the deprecated 'plugins' directory for ruby extensions; please move to 'lib'"
+    @logs.first.level.should == :warning
   end
 
   it "should default to 'lib' for the plugins directory" do
@@ -504,9 +528,7 @@ describe Puppet::Module do
     Puppet::Module.new("yay")
   end
 
-  describe "when loading the medatada file" do
-    confine "Cannot test module metadata without json" => Puppet.features.json?
-
+  describe "when loading the medatada file", :if => Puppet.features.json? do
     before do
       @data = {
         :license => "GPL2",

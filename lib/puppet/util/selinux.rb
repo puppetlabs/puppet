@@ -1,4 +1,4 @@
-# Provides utility functions to help interfaces Puppet to SELinux.
+# Provides utility functions to help interface Puppet to SELinux.
 #
 # This requires the very new SELinux Ruby bindings.  These bindings closely
 # mirror the SELinux C library interface.
@@ -140,7 +140,7 @@ module Puppet::Util::SELinux
   def read_mounts
     mounts = ""
     begin
-      if File.instance_methods.include? "read_nonblock"
+      if File.method_defined? "read_nonblock"
         # If possible we use read_nonblock in a loop rather than read to work-
         # a linux kernel bug.  See ticket #1963 for details.
         mountfh = File.open("/proc/mounts")

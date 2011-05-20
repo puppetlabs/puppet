@@ -22,7 +22,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     else
       facts = Puppet::Node::Facts.convert_from(format, text_facts)
     end
-    facts.save
+    facts.add_timestamp
+    Puppet::Node::Facts.indirection.save(facts)
   end
 
   # Compile a node's catalog.
@@ -87,7 +88,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Turn our host name into a node object.
   def find_node(name)
     begin
-      return nil unless node = Puppet::Node.find(name)
+      return nil unless node = Puppet::Node.indirection.find(name)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       raise Puppet::Error, "Failed when searching for node #{name}: #{detail}"
@@ -107,10 +108,14 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       return node
     end
 
-    # If the request is authenticated, then the 'node' info will
-    # be available; if not, then we use the passed-in key.  We rely
-    # on our authorization system to determine whether this is allowed.
-    name = request.node || request.key
+    # We rely on our authorization system to determine whether the connected
+    # node is allowed to compile the catalog's node referenced by key.
+    # By default the REST authorization system makes sure only the connected node
+    # can compile his catalog.
+    # This allows for instance monitoring systems or puppet-load to check several
+    # node's catalog with only one certificate and a modification to auth.conf 
+    # If no key is provided we can only compile the currently connected node.
+    name = request.key || request.node
     if node = find_node(name)
       return node
     end

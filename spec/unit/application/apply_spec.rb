@@ -1,15 +1,14 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application/apply'
 require 'puppet/file_bucket/dipper'
+require 'puppet/configurer'
 
 describe Puppet::Application::Apply do
   before :each do
     @apply = Puppet::Application[:apply]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
@@ -51,11 +50,10 @@ describe Puppet::Application::Apply do
 
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet.stubs(:trap)
-      Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
+      Puppet::Transaction::Report.indirection.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
     end
@@ -77,53 +75,42 @@ describe Puppet::Application::Apply do
     end
 
     it "should set INT trap" do
-      @apply.expects(:trap).with(:INT)
+      Signal.expects(:trap).with(:INT)
 
       @apply.setup
     end
 
     it "should set log level to debug if --debug was passed" do
       @apply.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @apply.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @apply.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @apply.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @apply.stubs(:exit)
-      Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @apply.setup
+      Puppet.settings.stubs(:print_configs?).returns  true
+      Puppet.settings.expects(:print_configs).returns true
+      expect { @apply.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @apply.setup }.should raise_error(SystemExit)
+      expect { @apply.setup }.to exit_with 1
     end
 
+    it "should tell the report handler to cache locally as yaml" do
+      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
+
+      @apply.setup
+    end
   end
 
   describe "when executing" do
-
-    it "should dispatch to parseonly if parseonly is set" do
-      @apply.stubs(:options).returns({})
-      Puppet.stubs(:[]).with(:parseonly).returns(true)
-
-      @apply.expects(:parseonly)
-      @apply.run_command
-    end
 
     it "should dispatch to 'apply' if it was called with 'apply'" do
       @apply.options[:catalog] = "foo"
@@ -132,40 +119,11 @@ describe Puppet::Application::Apply do
       @apply.run_command
     end
 
-    it "should dispatch to main if parseonly is not set" do
+    it "should dispatch to main otherwise" do
       @apply.stubs(:options).returns({})
-      Puppet.stubs(:[]).with(:parseonly).returns(false)
 
       @apply.expects(:main)
       @apply.run_command
-    end
-
-    describe "the parseonly command" do
-      before :each do
-        Puppet.stubs(:[]).with(:environment)
-        Puppet.stubs(:[]).with(:manifest).returns("site.pp")
-        Puppet.stubs(:err)
-        @apply.stubs(:exit)
-        @apply.options.stubs(:[]).with(:code).returns "some code"
-        @collection = stub_everything
-        Puppet::Resource::TypeCollection.stubs(:new).returns(@collection)
-      end
-
-      it "should use a Puppet Resource Type Collection to parse the file" do
-        @collection.expects(:perform_initial_import)
-        @apply.parseonly
-      end
-
-      it "should exit with exit code 0 if no error" do
-        @apply.expects(:exit).with(0)
-        @apply.parseonly
-      end
-
-      it "should exit with exit code 1 if error" do
-        @collection.stubs(:perform_initial_import).raises(Puppet::ParseError)
-        @apply.expects(:exit).with(1)
-        @apply.parseonly
-      end
     end
 
     describe "the main command" do
@@ -179,28 +137,29 @@ describe Puppet::Application::Apply do
         @apply.options.stubs(:[])
 
         @facts = stub_everything 'facts'
-        Puppet::Node::Facts.stubs(:find).returns(@facts)
+        Puppet::Node::Facts.indirection.stubs(:find).returns(@facts)
 
         @node = stub_everything 'node'
-        Puppet::Node.stubs(:find).returns(@node)
+        Puppet::Node.indirection.stubs(:find).returns(@node)
 
         @catalog = stub_everything 'catalog'
         @catalog.stubs(:to_ral).returns(@catalog)
-        Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
 
         STDIN.stubs(:read)
 
         @transaction = stub_everything 'transaction'
         @catalog.stubs(:apply).returns(@transaction)
 
-        @apply.stubs(:exit)
+        Puppet::Util::Storage.stubs(:load)
+        Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
       end
 
       it "should set the code to run from --code" do
         @apply.options.stubs(:[]).with(:code).returns("code to run")
         Puppet.expects(:[]=).with(:code,"code to run")
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should set the code to run from STDIN if no arguments" do
@@ -209,7 +168,7 @@ describe Puppet::Application::Apply do
 
         Puppet.expects(:[]=).with(:code,"code to run")
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should set the manifest if a file is passed on command line and the file exists" do
@@ -218,7 +177,7 @@ describe Puppet::Application::Apply do
 
         Puppet.expects(:[]=).with(:manifest,"site.pp")
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if a file is passed on command line and the file does not exist" do
@@ -235,29 +194,29 @@ describe Puppet::Application::Apply do
         Puppet.expects(:[]=).with(:manifest,"starwarsIV")
         Puppet.expects(:warning).with('Only one file can be applied per run.  Skipping starwarsI, starwarsII')
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should collect the node facts" do
-        Puppet::Node::Facts.expects(:find).returns(@facts)
+        Puppet::Node::Facts.indirection.expects(:find).returns(@facts)
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if we can't find the node" do
-        Puppet::Node::Facts.expects(:find).returns(nil)
+        Puppet::Node::Facts.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
       end
 
       it "should look for the node" do
-        Puppet::Node.expects(:find).returns(@node)
+        Puppet::Node.indirection.expects(:find).returns(@node)
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should raise an error if we can't find the node" do
-        Puppet::Node.expects(:find).returns(nil)
+        Puppet::Node.indirection.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
       end
@@ -267,7 +226,7 @@ describe Puppet::Application::Apply do
 
         @node.expects(:merge).with("values")
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should load custom classes if loadclasses" do
@@ -279,53 +238,65 @@ describe Puppet::Application::Apply do
 
         @node.expects(:classes=)
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should compile the catalog" do
-        Puppet::Resource::Catalog.expects(:find).returns(@catalog)
+        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should transform the catalog to ral" do
 
         @catalog.expects(:to_ral).returns(@catalog)
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should finalize the catalog" do
         @catalog.expects(:finalize)
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        configurer = stub 'configurer'
+        Puppet::Configurer.any_instance.expects(:execute_prerun_command)
+        Puppet::Configurer.any_instance.expects(:execute_postrun_command)
 
-        Puppet::Configurer.expects(:new).returns configurer
-        configurer.expects(:execute_prerun_command)
-        configurer.expects(:execute_postrun_command)
-
-        @apply.main
+        expect { @apply.main }.to exit_with 0
       end
 
       it "should apply the catalog" do
-        @catalog.expects(:apply)
+        @catalog.expects(:apply).returns(stub_everything('transaction'))
 
-        @apply.main
+        expect { @apply.main }.to exit_with 0
+      end
+
+      it "should save the last run summary" do
+        Puppet.stubs(:[]).with(:noop).returns(false)
+        report = Puppet::Transaction::Report.new("apply")
+        Puppet::Transaction::Report.stubs(:new).returns(report)
+
+        Puppet::Configurer.any_instance.expects(:save_last_run_summary).with(report)
+        expect { @apply.main }.to exit_with 0
       end
 
       describe "with detailed_exitcodes" do
         it "should exit with report's computed exit status" do
           Puppet.stubs(:[]).with(:noop).returns(false)
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
-          report = stub 'report', :exit_status => 666
-          @transaction.stubs(:report).returns(report)
-          @apply.expects(:exit).with(666)
+          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
 
-          @apply.main
+          expect { @apply.main }.to exit_with 666
+        end
+
+        it "should exit with report's computed exit status, even if --noop is set" do
+          Puppet.stubs(:[]).with(:noop).returns(true)
+          @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
+          Puppet::Transaction::Report.any_instance.stubs(:exit_status).returns(666)
+
+          expect { @apply.main }.to exit_with 666
         end
 
         it "should always exit with 0 if option is disabled" do
@@ -333,9 +304,8 @@ describe Puppet::Application::Apply do
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(false)
           report = stub 'report', :exit_status => 666
           @transaction.stubs(:report).returns(report)
-          @apply.expects(:exit).with(0)
 
-          @apply.main
+          expect { @apply.main }.to exit_with 0
         end
 
         it "should always exit with 0 if --noop" do
@@ -343,9 +313,8 @@ describe Puppet::Application::Apply do
           @apply.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
           report = stub 'report', :exit_status => 666
           @transaction.stubs(:report).returns(report)
-          @apply.expects(:exit).with(0)
 
-          @apply.main
+          expect { @apply.main }.to exit_with 0
         end
       end
     end

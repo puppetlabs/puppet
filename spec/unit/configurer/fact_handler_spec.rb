@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/configurer'
 require 'puppet/configurer/fact_handler'
 
@@ -66,7 +65,7 @@ describe Puppet::Configurer::FactHandler do
 
   it "should use the Facts class with the :certname to find the facts" do
     Puppet.settings.expects(:value).with(:certname).returns "foo"
-    Puppet::Node::Facts.expects(:find).with("foo").returns "myfacts"
+    Puppet::Node::Facts.indirection.expects(:find).with("foo").returns "myfacts"
     @facthandler.stubs(:reload_facter)
     @facthandler.find_facts.should == "myfacts"
   end
@@ -75,7 +74,7 @@ describe Puppet::Configurer::FactHandler do
     @facthandler.expects(:reload_facter)
 
     Puppet.settings.expects(:value).with(:certname).returns "myhost"
-    Puppet::Node::Facts.expects(:find).with("myhost")
+    Puppet::Node::Facts.indirection.expects(:find).with("myhost")
 
     @facthandler.find_facts
   end
@@ -85,7 +84,7 @@ describe Puppet::Configurer::FactHandler do
 
     Puppet.settings.stubs(:value).with(:trace).returns false
     Puppet.settings.stubs(:value).with(:certname).returns "myhost"
-    Puppet::Node::Facts.expects(:find).raises RuntimeError
+    Puppet::Node::Facts.indirection.expects(:find).raises RuntimeError
 
     lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
   end

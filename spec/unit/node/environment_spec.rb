@@ -1,11 +1,11 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/node/environment'
 require 'puppet/util/execution'
 
 describe Puppet::Node::Environment do
+  include PuppetSpec::Files
   after do
     Puppet::Node::Environment.clear
   end
@@ -52,7 +52,7 @@ describe Puppet::Node::Environment do
     before do
       @env = Puppet::Node::Environment.new("dev")
       @collection = Puppet::Resource::TypeCollection.new(@env)
-      @collection.stubs(:perform_initial_import)
+      @env.stubs(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
       Thread.current[:known_resource_types] = nil
     end
 
@@ -66,9 +66,8 @@ describe Puppet::Node::Environment do
     end
 
     it "should perform the initial import when creating a new collection" do
-      @collection.expects(:perform_initial_import)
-      Puppet::Resource::TypeCollection.expects(:new).returns @collection
-
+      @env = Puppet::Node::Environment.new("dev")
+      @env.expects(:perform_initial_import).returns(Puppet::Parser::AST::Hostclass.new(''))
       @env.known_resource_types
     end
 
@@ -85,28 +84,29 @@ describe Puppet::Node::Environment do
       @env.known_resource_types.should equal(@collection)
     end
 
-    it "should give to all threads the same collection if it didn't change" do
-      Puppet::Resource::TypeCollection.expects(:new).with(@env).returns @collection
-      @env.known_resource_types
+    it "should give to all threads using the same environment the same collection if the collection isn't stale" do
+      original_thread_type_collection = Puppet::Resource::TypeCollection.new(@env)
+      Puppet::Resource::TypeCollection.expects(:new).with(@env).returns original_thread_type_collection
+      @env.known_resource_types.should equal(original_thread_type_collection)
+
+      original_thread_type_collection.expects(:require_reparse?).returns(false)
+      Puppet::Resource::TypeCollection.stubs(:new).with(@env).returns @collection
 
       t = Thread.new {
-        @env.known_resource_types.should equal(@collection)
+        @env.known_resource_types.should equal(original_thread_type_collection)
       }
       t.join
     end
 
-    it "should give to new threads a new collection if it isn't stale" do
-      Puppet::Resource::TypeCollection.expects(:new).with(@env).returns @collection
-      @env.known_resource_types.expects(:stale?).returns(true)
+    it "should generate a new TypeCollection if the current one requires reparsing" do
+      old_type_collection = @env.known_resource_types
+      old_type_collection.stubs(:require_reparse?).returns true
+      Thread.current[:known_resource_types] = nil
+      new_type_collection = @env.known_resource_types
 
-      Puppet::Resource::TypeCollection.expects(:new).returns @collection
-
-      t = Thread.new {
-        @env.known_resource_types.should equal(@collection)
-      }
-      t.join
+      new_type_collection.should be_a Puppet::Resource::TypeCollection
+      new_type_collection.should_not equal(old_type_collection)
     end
-
   end
 
   [:modulepath, :manifestdir].each do |setting|
@@ -272,6 +272,63 @@ describe Puppet::Node::Environment do
       env = Puppet::Node::Environment.new "foo"
       @helper.environment = env
       @helper.environment.name.should == :foo
+    end
+  end
+
+  describe "when performing initial import" do
+    before do
+      @parser = Puppet::Parser::Parser.new("test")
+      Puppet::Parser::Parser.stubs(:new).returns @parser
+      @env = Puppet::Node::Environment.new("env")
+    end
+
+    it "should set the parser's string to the 'code' setting and parse if code is available" do
+      Puppet.settings[:code] = "my code"
+      @parser.expects(:string=).with "my code"
+      @parser.expects(:parse)
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
+      filename = tmpfile('myfile')
+      File.open(filename, 'w'){|f| }
+      Puppet.settings[:manifest] = filename
+      @parser.expects(:file=).with filename
+      @parser.expects(:parse)
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should pass the manifest file to the parser even if it does not exist on disk" do
+      filename = tmpfile('myfile')
+      Puppet.settings[:code] = ""
+      Puppet.settings[:manifest] = filename
+      @parser.expects(:file=).with(filename).once
+      @parser.expects(:parse).once
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should fail helpfully if there is an error importing" do
+      File.stubs(:exist?).returns true
+      @env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(@env)
+      @parser.expects(:file=).once
+      @parser.expects(:parse).raises ArgumentError
+      lambda { @env.instance_eval { perform_initial_import } }.should raise_error(Puppet::Error)
+    end
+
+    it "should not do anything if the ignore_import settings is set" do
+      Puppet.settings[:ignoreimport] = true
+      @parser.expects(:string=).never
+      @parser.expects(:file=).never
+      @parser.expects(:parse).never
+      @env.instance_eval { perform_initial_import }
+    end
+
+    it "should mark the type collection as needing a reparse when there is an error parsing" do
+      @parser.expects(:parse).raises Puppet::ParseError.new("Syntax error at ...")
+      @env.stubs(:known_resource_types).returns Puppet::Resource::TypeCollection.new(@env)
+
+      lambda { @env.instance_eval { perform_initial_import } }.should raise_error(Puppet::Error, /Syntax error at .../)
+      @env.known_resource_types.require_reparse?.should be_true
     end
   end
 end

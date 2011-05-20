@@ -1,4 +1,5 @@
 require 'optparse'
+require 'puppet/util/plugins'
 
 # This class handles all the aspects of a Puppet application/executable
 # * setting up options
@@ -212,10 +213,17 @@ class Application
     end
 
     def find(name)
-        self.const_get(name.to_s.capitalize)
-    rescue
+      klass = name.to_s.capitalize
+
+      # const_defined? is used before const_get since const_defined? will only
+      # check within our namespace, whereas const_get will check ancestor
+      # trees as well, resulting in unexpected behaviour.
+      if !self.const_defined?(klass)
         puts "Unable to find application '#{name.to_s}'."
         Kernel::exit(1)
+      end
+
+      self.const_get(klass)
     end
 
     def [](name)
@@ -243,7 +251,8 @@ class Application
 
   # Every app responds to --help
   option("--help", "-h") do |v|
-    help
+    puts help
+    exit
   end
 
   def should_parse_config?
@@ -254,25 +263,24 @@ class Application
   def preinit
   end
 
-  def option_parser
-    return @option_parser if defined?(@option_parser)
-
-    @option_parser = OptionParser.new(self.class.banner)
-
-    self.class.option_parser_commands.each do |options, fname|
-      @option_parser.on(*options) do |value|
-        self.send(fname, value)
-      end
-    end
-    @option_parser
-  end
-
   def initialize(command_line = nil)
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
-    @run_mode = self.class.run_mode
+    set_run_mode self.class.run_mode
     @options = {}
 
+    require 'puppet'
+  end
+
+  # WARNING: This is a totally scary, frightening, and nasty internal API.  We
+  # strongly advise that you do not use this, and if you insist, we will
+  # politely allow you to keep both pieces of your broken code.
+  #
+  # We plan to provide a supported, long-term API to deliver this in a way
+  # that you can use.  Please make sure that you let us know if you do require
+  # this, and this message is still present in the code. --daniel 2011-02-03
+  def set_run_mode(mode)
+    @run_mode = mode
     $puppet_application_mode = @run_mode
     $puppet_application_name = name
 
@@ -287,17 +295,16 @@ class Application
       Puppet.settings.set_value(:rundir, Puppet.run_mode.run_dir, :mutable_defaults)
       Puppet.settings.set_value(:run_mode, Puppet.run_mode.name.to_s, :mutable_defaults)
     end
-
-    require 'puppet'
   end
 
   # This is the main application entry point
   def run
-    exit_on_fail("initialize") { preinit }
-    exit_on_fail("parse options") { parse_options }
-    exit_on_fail("parse configuration file") { Puppet.settings.parse } if should_parse_config?
-    exit_on_fail("prepare for execution") { setup }
-    exit_on_fail("run") { run_command }
+    exit_on_fail("initialize")                                   { hook('preinit')       { preinit } }
+    exit_on_fail("parse options")                                { hook('parse_options') { parse_options } }
+    exit_on_fail("parse configuration file")                     { Puppet.settings.parse } if should_parse_config?
+    exit_on_fail("prepare for execution")                        { hook('setup')         { setup } }
+    exit_on_fail("configure routes from #{Puppet[:route_file]}") { configure_indirector_routes }
+    exit_on_fail("run")                                          { hook('run_command')   { run_command } }
   end
 
   def main
@@ -322,26 +329,40 @@ class Application
     Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
   end
 
-  def parse_options
-    # get all puppet options
-    optparse_opt = []
-    optparse_opt = Puppet.settings.optparse_addargs(optparse_opt)
+  def configure_indirector_routes
+    route_file = Puppet[:route_file]
+    if ::File.exists?(route_file)
+      routes = YAML.load_file(route_file)
+      application_routes = routes[name.to_s]
+      Puppet::Indirector.configure_routes(application_routes) if application_routes
+    end
+  end
 
-    # convert them to OptionParser format
-    optparse_opt.each do |option|
-      self.option_parser.on(*option) do |arg|
+  def parse_options
+    # Create an option parser
+    option_parser = OptionParser.new(self.class.banner)
+
+    # Add all global options to it.
+    Puppet.settings.optparse_addargs([]).each do |option|
+      option_parser.on(*option) do |arg|
         handlearg(option[0], arg)
       end
     end
 
-    # scan command line argument
-    begin
-      self.option_parser.parse!(self.command_line.args)
-    rescue OptionParser::ParseError => detail
-      $stderr.puts detail
-      $stderr.puts "Try 'puppet #{command_line.subcommand_name} --help'"
-      exit(1)
+    # Add options that are local to this application, which were
+    # created using the "option()" metaprogramming method.  If there
+    # are any conflicts, this application's options will be favored.
+    self.class.option_parser_commands.each do |options, fname|
+      option_parser.on(*options) do |value|
+        # Call the method that "option()" created.
+        self.send(fname, value)
+      end
     end
+
+    # Scan command line.  We just hand any exceptions to our upper levels,
+    # rather than printing help and exiting, so that we can meaningfully
+    # respond with context-sensitive help if we want to. --daniel 2011-04-12
+    option_parser.parse!(self.command_line.args)
   end
 
   def handlearg(opt, arg)
@@ -372,33 +393,24 @@ class Application
   end
 
   def help
-    if Puppet.features.usage?
-      # RH:FIXME: My goodness, this is ugly.
-      ::RDoc.const_set("PuppetSourceFile", name)
-      #:stopdoc: # Issue #4161
-      def (::RDoc).caller
-        docfile = `grep -l 'Puppet::Application\\[:#{::RDoc::PuppetSourceFile}\\]' #{DOCPATTERN}`.chomp
-        super << "#{docfile}:0"
-      end
-      #:startdoc:
-      ::RDoc::usage && exit
-    else
-      puts "No help available unless you have RDoc::usage installed"
-      exit
-    end
-  rescue Errno::ENOENT
-    puts "No help available for puppet #{name}"
-    exit
+    "No help available for puppet #{name}"
   end
 
   private
 
   def exit_on_fail(message, code = 1)
-      yield
-  rescue RuntimeError, NotImplementedError => detail
-      puts detail.backtrace if Puppet[:trace]
-      $stderr.puts "Could not #{message}: #{detail}"
-      exit(code)
+    yield
+  rescue ArgumentError, RuntimeError, NotImplementedError => detail
+    puts detail.backtrace if Puppet[:trace]
+    $stderr.puts "Could not #{message}: #{detail}"
+    exit(code)
+  end
+
+  def hook(step,&block)
+    Puppet::Plugins.send("before_application_#{step}",:application_object => self)
+    x = yield
+    Puppet::Plugins.send("after_application_#{step}",:application_object => self, :return_value => x)
+    x
   end
 end
 end

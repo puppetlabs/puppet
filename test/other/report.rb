@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/reports'
@@ -35,10 +35,7 @@ class TestReports < Test::Unit::TestCase
     config.retrieval_duration = 0.001
     trans = config.apply
 
-    report = Puppet::Transaction::Report.new
-    trans.add_metrics_to_report(report)
-
-    report
+    trans.generate_report
   end
 
   # Make sure we can use reports as log destinations.
@@ -71,7 +68,7 @@ class TestReports < Test::Unit::TestCase
 
   def test_store_report
     # Create a bunch of log messages in an array.
-    report = Puppet::Transaction::Report.new
+    report = Puppet::Transaction::Report.new("apply")
 
     # We have to reuse reporting here because of something going on in the
     # server/report.rb file
@@ -95,7 +92,7 @@ class TestReports < Test::Unit::TestCase
     assert_equal(yaml, File.read(file), "File did not get written")
   end
 
-  if Puppet.features.rrd?
+  if Puppet.features.rrd? || Puppet.features.rrd_legacy?
   def test_rrdgraph_report
     Puppet.settings.use(:main, :metrics)
     report = mkreport

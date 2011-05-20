@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
 tidy = Puppet::Type.type(:tidy)
@@ -110,7 +109,8 @@ describe tidy do
       :b => 0,
       :kb => 1,
       :mb => 2,
-      :gb => 3
+      :gb => 3,
+      :tb => 4
     }
 
     convertors.each do |unit, multiple|

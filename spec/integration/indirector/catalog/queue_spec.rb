@@ -1,13 +1,9 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/catalog'
 
-
-describe "Puppet::Resource::Catalog::Queue" do
-  confine "Missing pson support; cannot test queue" => Puppet.features.pson?
-
+describe "Puppet::Resource::Catalog::Queue", :if => Puppet.features.pson? do
   before do
     Puppet::Resource::Catalog.indirection.terminus(:queue)
     @catalog = Puppet::Resource::Catalog.new
@@ -23,13 +19,13 @@ describe "Puppet::Resource::Catalog::Queue" do
 
   after { Puppet.settings.clear }
 
-  it "should render catalogs to pson and send them via the queue client when catalogs are saved" do
+  it "should render catalogs to pson and publish them via the queue client when catalogs are saved" do
     terminus = Puppet::Resource::Catalog.indirection.terminus(:queue)
 
     client = mock 'client'
     terminus.stubs(:client).returns client
 
-    client.expects(:send_message).with(:catalog, @catalog.to_pson)
+    client.expects(:publish_message).with(:catalog, @catalog.to_pson)
 
     request = Puppet::Indirector::Request.new(:catalog, :save, "foo", :instance => @catalog)
 

@@ -1,6 +1,12 @@
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
+  class FakeChecksum
+    def <<(*args)
+      self
+    end
+  end
+
   # Is the provided string a checksum?
   def checksum?(string)
     string =~ /^\{(\w{3,5})\}\S+/
@@ -55,11 +61,16 @@ module Puppet::Util::Checksums
   end
 
   # by definition this doesn't exist
+  # but we still need to execute the block given
   def mtime_stream
+    noop_digest = FakeChecksum.new
+    yield noop_digest
     nil
   end
 
-  alias :ctime_stream :mtime_stream
+  def mtime(content)
+    ""
+  end
 
   # Calculate a checksum using Digest::SHA1.
   def sha1(content)
@@ -99,12 +110,24 @@ module Puppet::Util::Checksums
     File.stat(filename).send(:ctime)
   end
 
+  alias :ctime_stream :mtime_stream
+
+  def ctime(content)
+    ""
+  end
+
   # Return a "no checksum"
   def none_file(filename)
     ""
   end
 
   def none_stream
+    noop_digest = FakeChecksum.new
+    yield noop_digest
+    ""
+  end
+
+  def none(content)
     ""
   end
 

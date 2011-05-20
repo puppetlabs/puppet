@@ -1,7 +1,11 @@
 module Puppet
   newtype(:ssh_authorized_key) do
     @doc = "Manages SSH authorized keys. Currently only type 2 keys are
-    supported."
+    supported.
+    
+    **Autorequires:** If Puppet is managing the user account in which this 
+    SSH key should be installed, the `ssh_authorized_key` resource will autorequire
+    that user."
 
     ensurable
 
@@ -10,6 +14,10 @@ module Puppet
       system-wide primary key and therefore has to be unique."
 
       isnamevar
+
+      validate do |value|
+        raise Puppet::Error, "Resourcename must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:type) do
@@ -24,6 +32,10 @@ module Puppet
 
     newproperty(:key) do
       desc "The key itself; generally a long string of hex digits."
+
+      validate do |value|
+        raise Puppet::Error, "Key must not contain whitespace: #{value}" if value =~ /\s/
+      end
     end
 
     newproperty(:user) do
@@ -77,6 +89,10 @@ module Puppet
         else
           value.join(",")
         end
+      end
+
+      validate do |value|
+        raise Puppet::Error, "Options must be provided as an array, not a comma separated list" if value != :absent and value.include?(',')
       end
     end
 

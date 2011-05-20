@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
@@ -96,6 +95,14 @@ describe Puppet::Resource do
 
   it "should fail if the title is nil and the type is not a valid resource reference string" do
     lambda { Puppet::Resource.new("foo") }.should raise_error(ArgumentError)
+  end
+
+  it 'should fail if strict is set and type does not exist' do
+    lambda { Puppet::Resource.new('foo', 'title', {:strict=>true}) }.should raise_error(ArgumentError, 'Invalid resource type foo')
+  end
+
+  it 'should fail if strict is set and class does not exist' do
+    lambda { Puppet::Resource.new('Class', 'foo', {:strict=>true}) }.should raise_error(ArgumentError, 'Could not find declared class foo')
   end
 
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
@@ -455,6 +462,28 @@ describe Puppet::Resource do
     end
   end
 
+  describe "when loading 0.25.x storedconfigs YAML" do
+    before :each do
+      @old_storedconfig_yaml = %q{--- !ruby/object:Puppet::Resource::Reference
+builtin_type:
+title: /tmp/bar
+type: File
+}
+    end
+
+    it "should deserialize a Puppet::Resource::Reference without exceptions" do
+      lambda { YAML.load(@old_storedconfig_yaml) }.should_not raise_error
+    end
+
+    it "should deserialize as a Puppet::Resource::Reference as a Puppet::Resource" do
+      YAML.load(@old_storedconfig_yaml).class.should == Puppet::Resource
+    end
+
+    it "should to_hash properly" do
+      YAML.load(@old_storedconfig_yaml).to_hash.should == { :path => "/tmp/bar" }
+    end
+  end
+
   describe "when converting to a RAL resource" do
     it "should use the resource type's :new method to create the resource if the resource is of a builtin type" do
       resource = Puppet::Resource.new("file", @basepath+"/my/file")
@@ -478,19 +507,23 @@ describe Puppet::Resource do
 
   describe "when converting to puppet code" do
     before do
-      @resource = Puppet::Resource.new("one::two", "/my/file", :parameters => {:noop => true, :foo => %w{one two}})
+      @resource = Puppet::Resource.new("one::two", "/my/file",
+        :parameters => {
+          :noop => true,
+          :foo => %w{one two},
+          :ensure => 'present',
+        }
+      )
     end
 
-    it "should print the type and title" do
-      @resource.to_manifest.should be_include("one::two { '/my/file':\n")
-    end
-
-    it "should print each parameter, with the value single-quoted" do
-      @resource.to_manifest.should be_include("    noop => 'true'")
-    end
-
-    it "should print array values appropriately" do
-      @resource.to_manifest.should be_include("    foo => ['one','two']")
+    it "should align, sort and add trailing commas to attributes with ensure first", :'fails_on_ruby_1.9.2' => true do
+      @resource.to_manifest.should == <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
+        one::two { '/my/file':
+          ensure => 'present',
+          foo    => ['one', 'two'],
+          noop   => 'true',
+        }
+      HEREDOC
     end
   end
 
@@ -585,9 +618,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when converting to pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when converting to pson", :if => Puppet.features.pson? do
     def pson_output_should
       @resource.class.expects(:pson_create).with { |hash| yield hash }
     end
@@ -666,9 +697,7 @@ describe Puppet::Resource do
     end
   end
 
-  describe "when converting from pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "when converting from pson", :if => Puppet.features.pson? do
     def pson_result_should
       Puppet::Resource.expects(:new).with { |hash| yield hash }
     end

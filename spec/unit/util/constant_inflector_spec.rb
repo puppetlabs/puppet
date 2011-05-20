@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2008-02-12.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/util/constant_inflector'
 

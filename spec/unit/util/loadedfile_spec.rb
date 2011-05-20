@@ -1,11 +1,11 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'tempfile'
 require 'puppet/util/loadedfile'
 
 describe Puppet::Util::LoadedFile do
+  include PuppetSpec::Files
   before(:each) do
     @f = Tempfile.new('loadedfile_test')
     @f.puts "yayness"
@@ -16,6 +16,12 @@ describe Puppet::Util::LoadedFile do
     fake_ctime = Time.now - (2 * Puppet[:filetimeout])
     @stat = stub('stat', :ctime => fake_ctime)
     @fake_now = Time.now + (2 * Puppet[:filetimeout])
+  end
+
+  it "should accept files that don't exist" do
+    nofile = tmpfile('testfile')
+    File.exists?(nofile).should == false
+    lambda{ Puppet::Util::LoadedFile.new(nofile) }.should_not raise_error
   end
 
   it "should recognize when the file has not changed" do

@@ -4,23 +4,20 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 2.6.0
+Version: 2.6.1
 Release: 1%{?dist}
-License: GPL
+License: Apache 2.0
 Group:    Productivity/Networking/System
 
 URL: http://puppetlabs.com/projects/puppet/
 Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
-Source1: client.init
-Source2: server.init
-Patch0: ruby-env.patch
 
 PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.2
 Requires: facter >= 1.5
 Requires: cron
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: ruby >= 1.8.7
+BuildRequires: ruby >= 1.8.2
 
 %description
 Puppet lets you centrally manage every important aspect of your system using a 
@@ -39,11 +36,10 @@ The server can also function as a certificate authority and file server.
 
 %prep
 %setup -q
-%patch0 -p0
 
 %build
-for f in bin/* ; do
- sed -i -e '1c#!/usr/bin/ruby' $f
+for f in bin/* sbin/*; do
+ sed -i -e '1s,^#!.*ruby$,#!/usr/bin/ruby,' $f
 done
 
 %install
@@ -63,16 +59,16 @@ done
 find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__cp} -a %{pbuild}/conf/redhat/client.sysconfig %{buildroot}%{_confdir}/client.sysconfig
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/client.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppet
-%{__install} -Dp -m0755 %SOURCE1 %{buildroot}%{_initrddir}/puppet
 %{__cp} -a %{pbuild}/conf/redhat/server.sysconfig %{buildroot}%{_confdir}/server.sysconfig
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/server.sysconfig %{buildroot}/var/adm/fillup-templates/sysconfig.puppetmaster
-%{__install} -Dp -m0755 %SOURCE2 %{buildroot}%{_initrddir}/puppetmaster
 %{__cp} -a %{pbuild}/conf/redhat/fileserver.conf %{buildroot}%{_confdir}/fileserver.conf
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 %{__cp} -a %{pbuild}/conf/redhat/puppet.conf %{buildroot}%{_confdir}/puppet.conf
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
 %{__cp} -a %{pbuild}/conf/redhat/logrotate %{buildroot}%{_confdir}/logrotate
 %{__install} -Dp -m0644 %{buildroot}%{_confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
+%{__install} -Dp -m0755 %{confdir}/client.init %{buildroot}%{_initrddir}/puppet
+%{__install} -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 %{__ln_s}  %{_initrddir}/puppet %{buildroot}%{_sbindir}/rcpuppet
 %{__ln_s}  %{_initrddir}/puppetmaster %{buildroot}%{_sbindir}/rcpuppetmaster
 
@@ -140,6 +136,13 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Tue Sep 14 2010 Ben Kevan <ben.kevan@gmail.com> - 2.6.1
+- New version to 2.6.1
+- Add client.init and server.init from source since it's now included in the packages
+- Change BuildRequires Ruby version to match Requires Ruby version
+- Removed ruby-env patch, replaced with sed in prep
+- Update urls to puppetlabs.com
+
 * Wed Jul 21 2010 Ben Kevan <ben.kevan@gmail.com> - 2.6.0
 - New version and ruby version bump
 - Add puppetdoc to %_bindir (unknown why original suse package, excluded or forgot to add)

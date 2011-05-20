@@ -1,10 +1,8 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'puppet/rails'
 
-require File.dirname(__FILE__) + '/../../spec_helper'
-
-describe "Puppet::Rails::ParamValue" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe "Puppet::Rails::ParamValue", :if => Puppet.features.rails? do
   def column(name, type)
     ActiveRecord::ConnectionAdapters::Column.new(name, nil, type, false)
   end

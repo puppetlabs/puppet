@@ -1,24 +1,20 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Rick Bradley on 2007-10-15.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'spec_helper'
 require 'puppet/network/http'
 
-describe "Puppet::Network::HTTP::Mongrel", "after initializing" do
-  confine "Mongrel is not available" => Puppet.features.mongrel?
-
-  it "should not be listening" do
+describe "Puppet::Network::HTTP::Mongrel", "after initializing", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
+  it "should not be listening", :'fails_on_ruby_1.9.2' => true do
     require 'puppet/network/http/mongrel'
 
     Puppet::Network::HTTP::Mongrel.new.should_not be_listening
   end
 end
 
-describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
-  confine "Mongrel is not available" => Puppet.features.mongrel?
-
+describe "Puppet::Network::HTTP::Mongrel", "when turning on listening", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
   before do
     require 'puppet/network/http/mongrel'
 
@@ -100,9 +96,7 @@ describe "Puppet::Network::HTTP::Mongrel", "when turning on listening" do
   end
 end
 
-describe "Puppet::Network::HTTP::Mongrel", "when turning off listening" do
-  confine "Mongrel is not available" => Puppet.features.mongrel?
-
+describe "Puppet::Network::HTTP::Mongrel", "when turning off listening", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
   before do
     @mock_mongrel = mock('mongrel httpserver')
     @mock_mongrel.stubs(:run)

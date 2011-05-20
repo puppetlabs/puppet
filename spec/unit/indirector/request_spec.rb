@@ -1,6 +1,6 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
+require 'matchers/json'
 require 'puppet/indirector/request'
 
 describe Puppet::Indirector::Request do

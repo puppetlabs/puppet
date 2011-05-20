@@ -40,7 +40,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
     # Then perform all of our configuration steps.  It's annoying
     # that we need this much internal info on the resource.
     @resource.send(:properties).each do |property|
-      str += property.configtext + "\n" if property.is_a? ZoneConfigProperty and ! property.insync?(properties[property.name])
+      str += property.configtext + "\n" if property.is_a? ZoneConfigProperty and ! property.safe_insync?(properties[property.name])
     end
 
     str += "commit\n"
@@ -220,6 +220,9 @@ Puppet::Type.type(:zone).provide(:solaris) do
     result[:shares] = config[:shares]
     if dir = config["inherit-pkg-dir"]
       result[:inherit] = dir.collect { |dirs| dirs[:dir] }
+    end
+    if datasets = config["dataset"]
+      result[:dataset] = datasets.collect { |dataset| dataset[:name] }
     end
     result[:iptype] = config[:"ip-type"]
     if net = config["net"]

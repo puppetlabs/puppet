@@ -1,19 +1,15 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application/kick'
 
-describe Puppet::Application::Kick do
-
-  confine "Kick's eventloops can only start on POSIX" => Puppet.features.posix?
+describe Puppet::Application::Kick, :if => Puppet.features.posix? do
 
   before :each do
     require 'puppet/util/ldap/connection'
     Puppet::Util::Ldap::Connection.stubs(:new).returns(stub_everything)
     @kick = Puppet::Application[:kick]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   describe ".new" do
@@ -123,7 +119,6 @@ describe Puppet::Application::Kick do
       @kick.classes = []
       @kick.tags = []
       @kick.hosts = []
-      Puppet::Log.stubs(:level=)
       @kick.stubs(:trap)
       @kick.stubs(:puts)
       Puppet.stubs(:parse_config)
@@ -133,18 +128,14 @@ describe Puppet::Application::Kick do
 
     it "should set log level to debug if --debug was passed" do
       @kick.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @kick.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @kick.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @kick.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should Parse puppet config" do
@@ -163,7 +154,7 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => :something).returns([])
 
         @kick.setup
       end
@@ -172,7 +163,7 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.expects(:search).with("whatever",:fqdn => nil).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -182,7 +173,7 @@ describe Puppet::Application::Kick do
         @kick.stubs(:puts)
         @kick.classes = ['class']
 
-        Puppet::Node.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
+        Puppet::Node.indirection.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -193,9 +184,7 @@ describe Puppet::Application::Kick do
         $stderr.stubs(:puts)
         @kick.classes = ['class']
 
-        @kick.expects(:exit).with(24)
-
-        @kick.setup
+        expect { @kick.setup }.to exit_with 24
       end
     end
   end
@@ -221,9 +210,7 @@ describe Puppet::Application::Kick do
 
     describe "the test command" do
       it "should exit with exit code 0 " do
-        @kick.expects(:exit).with(0)
-
-        @kick.test
+        expect { @kick.test }.to exit_with 0
       end
     end
 
@@ -235,7 +222,6 @@ describe Puppet::Application::Kick do
         @kick.options.stubs(:[]).with(:foreground).returns(false)
         @kick.options.stubs(:[]).with(:debug).returns(false)
         @kick.stubs(:print)
-        @kick.stubs(:exit)
         @kick.preinit
         @kick.stubs(:parse_options)
         @kick.setup
@@ -245,17 +231,15 @@ describe Puppet::Application::Kick do
       it "should create as much childs as --parallel" do
         @kick.options.stubs(:[]).with(:parallel).returns(3)
         @kick.hosts = ['host1', 'host2', 'host3']
-        @kick.stubs(:exit).raises(SystemExit)
         Process.stubs(:wait).returns(1).then.returns(2).then.returns(3).then.raises(Errno::ECHILD)
 
         @kick.expects(:fork).times(3).returns(1).then.returns(2).then.returns(3)
 
-        lambda { @kick.main }.should raise_error
+        expect { @kick.main }.to raise_error SystemExit
       end
 
       it "should delegate to run_for_host per host" do
         @kick.hosts = ['host1', 'host2']
-        @kick.stubs(:exit).raises(SystemExit)
         @kick.stubs(:fork).returns(1).yields
         Process.stubs(:wait).returns(1).then.raises(Errno::ECHILD)
 
@@ -279,33 +263,24 @@ describe Puppet::Application::Kick do
         end
 
         it "should call run on a Puppet::Run for the given host" do
-          @agent_run.expects(:save).with('https://host:8139/production/run/host').returns(@agent_run)
+          Puppet::Run.indirection.expects(:save).with(@agent_run, 'https://host:8139/production/run/host').returns(@agent_run)
 
-          @kick.run_for_host('host')
+          expect { @kick.run_for_host('host') }.to exit_with 0
         end
 
         it "should exit the child with 0 on success" do
           @agent_run.stubs(:status).returns("success")
-
-          @kick.expects(:exit).with(0)
-
-          @kick.run_for_host('host')
+          expect { @kick.run_for_host('host') }.to exit_with 0
         end
 
         it "should exit the child with 3 on running" do
           @agent_run.stubs(:status).returns("running")
-
-          @kick.expects(:exit).with(3)
-
-          @kick.run_for_host('host')
+          expect { @kick.run_for_host('host') }.to exit_with 3
         end
 
         it "should exit the child with 12 on unknown answer" do
           @agent_run.stubs(:status).returns("whatever")
-
-          @kick.expects(:exit).with(12)
-
-          @kick.run_for_host('host')
+          expect { @kick.run_for_host('host') }.to exit_with 12
         end
       end
     end

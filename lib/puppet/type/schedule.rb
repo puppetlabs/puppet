@@ -16,13 +16,13 @@ module Puppet
       Thus, it behooves you to use wider scheduling (e.g., over a couple of
       hours) combined with periods and repetitions.  For instance, if you
       wanted to restrict certain resources to only running once, between
-      the hours of two and 4 AM, then you would use this schedule::
+      the hours of two and 4 AM, then you would use this schedule:
 
-        schedule { maint:
-          range => \"2 - 4\",
-          period => daily,
-          repeat => 1
-        }
+          schedule { maint:
+            range => \"2 - 4\",
+            period => daily,
+            repeat => 1
+          }
 
       With this schedule, the first time that Puppet runs between 2 and 4 AM,
       all resources with this schedule will get applied, but they won't
@@ -33,28 +33,30 @@ module Puppet
       Puppet automatically creates a schedule for each valid period with the
       same name as that period (e.g., hourly and daily).  Additionally,
       a schedule named *puppet* is created and used as the default,
-      with the following attributes::
+      with the following attributes:
 
-        schedule { puppet:
-          period => hourly,
-          repeat => 2
-        }
+          schedule { puppet:
+            period => hourly,
+            repeat => 2
+          }
 
       This will cause resources to be applied every 30 minutes by default.
       "
 
+    apply_to_all
+
     newparam(:name) do
       desc "The name of the schedule.  This name is used to retrieve the
-        schedule when assigning it to an object::
+        schedule when assigning it to an object:
 
-          schedule { daily:
-            period => daily,
-            range => [2, 4]
-          }
-
-          exec { \"/usr/bin/apt-get update\":
-            schedule => daily
-          }
+            schedule { daily:
+              period => daily,
+              range => \"2 - 4\",
+            }
+  
+            exec { \"/usr/bin/apt-get update\":
+              schedule => daily
+            }
 
         "
       isnamevar
@@ -65,11 +67,11 @@ module Puppet
         is always a range within a 24 hour period, and hours must be
         specified in numbers between 0 and 23, inclusive.  Minutes and
         seconds can be provided, using the normal colon as a separator.
-        For instance::
+        For instance:
 
-          schedule { maintenance:
-            range => \"1:30 - 4:30\"
-          }
+            schedule { maintenance:
+              range => \"1:30 - 4:30\"
+            }
 
         This is mostly useful for restricting certain resources to being
         applied in maintenance windows or during off-peak hours."

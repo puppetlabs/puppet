@@ -1,0 +1,122 @@
+require 'spec_helper'
+
+provider_class = Puppet::Type.type(:package).provider(:macports)
+
+describe provider_class do
+  let :resource_name do
+    "foo"
+  end
+
+  let :resource do
+    Puppet::Type.type(:package).new(:name => resource_name, :provider => :macports)
+  end
+
+  let :provider do
+    prov = resource.provider
+    prov.expects(:execute).never
+    prov
+  end
+
+  let :current_hash do
+    {:name => resource_name, :ensure => "1.2.3", :revision => "1", :provider => :macports}
+  end
+
+  describe "provider features" do
+    subject { provider }
+
+    it { should be_installable }
+    it { should be_uninstallable }
+    it { should be_upgradeable }
+    it { should be_versionable }
+  end
+
+  describe "when listing all instances", :'fails_on_ruby_1.9.2' => true do
+    it "should call port -q installed" do
+      provider_class.expects(:port).with("-q", :installed).returns("")
+      provider_class.instances
+    end
+
+    it "should create instances from active ports" do
+      provider_class.expects(:port).returns("foo @1.234.5_2 (active)")
+      provider_class.instances.size.should == 1
+    end
+
+    it "should ignore ports that aren't activated" do
+      provider_class.expects(:port).returns("foo @1.234.5_2")
+      provider_class.instances.size.should == 0
+    end
+  end
+
+  describe "when installing" do
+   it "should not specify a version when ensure is set to latest" do
+     resource[:ensure] = :latest
+     provider.expects(:port).with { |flag, method, name, version|
+       version.should be_nil
+     }
+     provider.install
+   end
+
+   it "should not specify a version when ensure is set to present" do
+     resource[:ensure] = :present
+     provider.expects(:port).with { |flag, method, name, version|
+       version.should be_nil
+     }
+     provider.install
+   end
+
+   it "should specify a version when ensure is set to a version" do
+     resource[:ensure] = "1.2.3"
+     provider.expects(:port).with { |flag, method, name, version|
+       version.should be
+     }
+     provider.install
+   end
+  end
+
+  describe "when querying for the latest version" do
+    let :new_info_line do
+      "1.2.3 2"
+    end
+    let :infoargs do
+      ["-q", :info, "--line", "--version", "--revision",  resource_name]
+    end
+
+    it "should return nil when the package cannot be found" do
+      resource[:name] = resource_name
+      provider.expects(:port).returns("")
+      provider.latest.should == nil
+    end
+
+    it "should return the current version if the installed port has the same revision" do
+      current_hash[:revision] = "2"
+      provider.expects(:port).with(*infoargs).returns(new_info_line)
+      provider.expects(:query).returns(current_hash)
+      provider.latest.should == current_hash[:ensure]
+    end
+
+    it "should return the new version_revision if the installed port has a lower revision" do
+      current_hash[:revision] = "1"
+      provider.expects(:port).with(*infoargs).returns(new_info_line)
+      provider.expects(:query).returns(current_hash)
+      provider.latest.should == "1.2.3_2"
+    end
+  end
+
+  describe "when updating a port" do
+    it "should execute port upgrade if the port is installed" do
+      resource[:name] = resource_name
+      resource[:ensure] = :present
+      provider.expects(:query).returns(current_hash)
+      provider.expects(:port).with("-q", :upgrade, resource_name)
+      provider.update
+    end
+
+    it "should execute port install if the port is not installed", :'fails_on_ruby_1.9.2' => true do
+      resource[:name] = resource_name
+      resource[:ensure] = :present
+      provider.expects(:query).returns("")
+      provider.expects(:port).with("-q", :install, resource_name)
+      provider.update
+    end
+  end
+end

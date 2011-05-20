@@ -12,7 +12,7 @@ class Puppet::Provider
   Puppet::Util.logmethods(self, true)
 
   class << self
-    # Include the util module so we have access to things like 'binary'
+    # Include the util module so we have access to things like 'which'
     include Puppet::Util, Puppet::Util::Docs
     include Puppet::Util::Logging
     attr_accessor :name
@@ -43,7 +43,7 @@ class Puppet::Provider
       raise Puppet::DevError, "No command #{name} defined for provider #{self.name}"
     end
 
-    binary(command)
+    which(command)
   end
 
   # Define commands that are not optional.

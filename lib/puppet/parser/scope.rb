@@ -18,10 +18,10 @@ class Puppet::Parser::Scope
 
   include Enumerable
   include Puppet::Util::Errors
-  attr_accessor :level, :source, :resource
+  attr_accessor :source, :resource
   attr_accessor :base, :keyword
   attr_accessor :top, :translated, :compiler
-  attr_accessor :parent
+  attr_accessor :parent, :dynamic
   attr_reader :namespaces
 
   # thin wrapper around an ephemeral
@@ -101,12 +101,7 @@ class Puppet::Parser::Scope
 
   # Remove this when rebasing
   def environment
-    compiler.environment
-  end
-
-  # Are we the top scope?
-  def topscope?
-    @level == 1
+    compiler ? compiler.environment : nil
   end
 
   def find_hostclass(name)
@@ -215,45 +210,41 @@ class Puppet::Parser::Scope
     find_definition(name) || find_hostclass(name)
   end
 
-  def lookup_qualified_var(name, usestring)
-    parts = name.split(/::/)
-    shortname = parts.pop
-    klassname = parts.join("::")
-    klass = find_hostclass(klassname)
-    unless klass
-      warning "Could not look up qualified variable '#{name}'; class #{klassname} could not be found"
-      return usestring ? "" : :undefined
-    end
-    unless kscope = class_scope(klass)
-      warning "Could not look up qualified variable '#{name}'; class #{klassname} has not been evaluated"
-      return usestring ? "" : :undefined
-    end
-    kscope.lookupvar(shortname, usestring)
+  def undef_as(x,v)
+    (v == :undefined) ? x : (v == :undef) ? x : v
   end
 
-  private :lookup_qualified_var
+  def qualified_scope(classname)
+    raise "class #{classname} could not be found"     unless klass = find_hostclass(classname)
+    raise "class #{classname} has not been evaluated" unless kscope = class_scope(klass)
+    kscope
+  end
 
-  # Look up a variable.  The simplest value search we do.  Default to returning
-  # an empty string for missing values, but support returning a constant.
-  def lookupvar(name, usestring = true)
+  private :qualified_scope
+
+  # Look up a variable.  The simplest value search we do.
+  def lookupvar(name, options = {})
     table = ephemeral?(name) ? @ephemeral.last : @symtable
     # If the variable is qualified, then find the specified scope and look the variable up there instead.
-    if name =~ /::/
-      return lookup_qualified_var(name, usestring)
-    end
-    # We can't use "if table[name]" here because the value might be false
-    if ephemeral_include?(name) or table.include?(name)
-      if usestring and table[name] == :undef
-        return ""
-      else
-        return table[name]
+    if name =~ /^(.*)::(.+)$/
+      begin
+        qualified_scope($1).lookupvar($2,options)
+      rescue RuntimeError => e
+        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
+        :undefined
       end
-    elsif self.parent
-      return parent.lookupvar(name, usestring)
-    elsif usestring
-      return ""
+    elsif ephemeral_include?(name) or table.include?(name)
+      # We can't use "if table[name]" here because the value might be false
+      if options[:dynamic] and self != compiler.topscope
+        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
+      end
+      table[name]
+    elsif parent
+      parent.lookupvar(name,options.merge(:dynamic => (dynamic || options[:dynamic])))
     else
-      return :undefined
+      :undefined
     end
   end
 
@@ -323,8 +314,6 @@ class Puppet::Parser::Scope
   # to be reassigned.
   def setvar(name,value, options = {})
     table = options[:ephemeral] ? @ephemeral.last : @symtable
-    #Puppet.debug "Setting %s to '%s' at level %s mode append %s" %
-    #    [name.inspect,value,self.level, append]
     if table.include?(name)
       unless options[:append]
         error = Puppet::ParseError.new("Cannot reassign variable #{name}")
@@ -340,7 +329,7 @@ class Puppet::Parser::Scope
       table[name] = value
     else # append case
       # lookup the value in the scope if it exists and insert the var
-      table[name] = lookupvar(name)
+      table[name] = undef_as('',lookupvar(name))
       # concatenate if string, append if array, nothing for other types
       case value
       when Array
@@ -352,65 +341,6 @@ class Puppet::Parser::Scope
         table[name] << value
       end
     end
-  end
-
-  # Return an interpolated string.
-  def strinterp(string, file = nil, line = nil)
-    # Most strings won't have variables in them.
-    ss = StringScanner.new(string)
-    out = ""
-    while not ss.eos?
-      if ss.scan(/^\$\{((\w*::)*\w+|[0-9]+)\}|^\$([0-9])|^\$((\w*::)*\w+)/)
-        # If it matches the backslash, then just retun the dollar sign.
-        if ss.matched == '\\$'
-          out << '$'
-        else # look the variable up
-          # make sure $0-$9 are lookupable only if ephemeral
-          var = ss[1] || ss[3] || ss[4]
-          if var and var =~ /^[0-9]+$/ and not ephemeral_include?(var)
-            next
-          end
-          out << lookupvar(var).to_s || ""
-        end
-      elsif ss.scan(/^\\(.)/)
-        # Puppet.debug("Got escape: pos:%d; m:%s" % [ss.pos, ss.matched])
-        case ss[1]
-        when 'n'
-          out << "\n"
-        when 't'
-          out << "\t"
-        when 's'
-          out << " "
-        when '\\'
-          out << '\\'
-        when '$'
-          out << '$'
-        else
-          str = "Unrecognised escape sequence '#{ss.matched}'"
-          str += " in file #{file}" if file
-          str += " at line #{line}" if line
-          Puppet.warning str
-          out << ss.matched
-        end
-      elsif ss.scan(/^\$/)
-        out << '$'
-      elsif ss.scan(/^\\\n/) # an escaped carriage return
-        next
-      else
-        tmp = ss.scan(/[^\\$]+/)
-        # Puppet.debug("Got other: pos:%d; m:%s" % [ss.pos, tmp])
-        unless tmp
-          error = Puppet::ParseError.new("Could not parse string #{string.inspect}")
-          {:file= => file, :line= => line}.each do |m,v|
-            error.send(m, v) if v
-          end
-          raise error
-        end
-        out << tmp
-      end
-    end
-
-    out
   end
 
   # Return the tags associated with this scope.  It's basically
@@ -513,6 +443,6 @@ class Puppet::Parser::Scope
 
   def extend_with_functions_module
     extend Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.root)
-    extend Puppet::Parser::Functions.environment_module(compiler ? environment : nil)
+    extend Puppet::Parser::Functions.environment_module(environment)
   end
 end

@@ -1,10 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 # Unit testing for the Daemontools service Provider
 #
 # author Brice Figureau
 #
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:daemontools)
 

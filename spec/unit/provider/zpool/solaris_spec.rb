@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:zpool).provider(:solaris)
 
@@ -76,9 +75,23 @@ describe provider_class do
       end
     end
 
+    describe "when the vdev is a single mirror on solaris 10u9 or later" do
+      it "should call create_multi_array with mirror" do
+        @zpool_data = ["mirrorpool", "mirror-0", "disk1", "disk2"]
+        @provider.process_zpool_data(@zpool_data)[:mirror].should == ["disk1 disk2"]
+      end
+    end
+
     describe "when the vdev is a double mirror" do
       it "should call create_multi_array with mirror" do
         @zpool_data = ["mirrorpool", "mirror", "disk1", "disk2", "mirror", "disk3", "disk4"]
+        @provider.process_zpool_data(@zpool_data)[:mirror].should == ["disk1 disk2", "disk3 disk4"]
+      end
+    end
+
+    describe "when the vdev is a double mirror on solaris 10u9 or later" do
+      it "should call create_multi_array with mirror" do
+        @zpool_data = ["mirrorpool", "mirror-0", "disk1", "disk2", "mirror-1", "disk3", "disk4"]
         @provider.process_zpool_data(@zpool_data)[:mirror].should == ["disk1 disk2", "disk3 disk4"]
       end
     end
@@ -90,9 +103,25 @@ describe provider_class do
       end
     end
 
+    describe "when the vdev is a raidz1 on solaris 10u9 or later" do
+      it "should call create_multi_array with raidz1" do
+        @zpool_data = ["mirrorpool", "raidz1-0", "disk1", "disk2"]
+        @provider.process_zpool_data(@zpool_data)[:raidz].should == ["disk1 disk2"]
+      end
+    end
+
     describe "when the vdev is a raidz2" do
       it "should call create_multi_array with raidz2 and set the raid_parity" do
         @zpool_data = ["mirrorpool", "raidz2", "disk1", "disk2"]
+        pool = @provider.process_zpool_data(@zpool_data)
+        pool[:raidz].should == ["disk1 disk2"]
+        pool[:raid_parity].should == "raidz2"
+      end
+    end
+
+    describe "when the vdev is a raidz2 on solaris 10u9 or later" do
+      it "should call create_multi_array with raidz2 and set the raid_parity" do
+        @zpool_data = ["mirrorpool", "raidz2-0", "disk1", "disk2"]
         pool = @provider.process_zpool_data(@zpool_data)
         pool[:raidz].should == ["disk1 disk2"]
         pool[:raid_parity].should == "raidz2"
@@ -121,7 +150,7 @@ describe provider_class do
     end
   end
 
-  describe "when calling create" do
+  describe "when calling create", :'fails_on_ruby_1.9.2' => true do
     before do
       @resource.stubs(:[]).with(:pool).returns("mypool")
       @provider.stubs(:zpool)

@@ -76,12 +76,12 @@ class Puppet::Node::Environment
     # per environment semantics with an efficient most common cases; we almost
     # always just return our thread's known-resource types.  Only at the start
     # of a compilation (after our thread var has been set to nil) or when the
-    # environment has changed do we delve deeper. 
+    # environment has changed do we delve deeper.
     Thread.current[:known_resource_types] = nil if (krt = Thread.current[:known_resource_types]) && krt.environment != self
     Thread.current[:known_resource_types] ||= synchronize {
-      if @known_resource_types.nil? or @known_resource_types.stale?
+      if @known_resource_types.nil? or @known_resource_types.require_reparse?
         @known_resource_types = Puppet::Resource::TypeCollection.new(self)
-        @known_resource_types.perform_initial_import
+        @known_resource_types.import_ast(perform_initial_import, '')
       end
       @known_resource_types
     }
@@ -124,7 +124,11 @@ class Puppet::Node::Environment
     name.to_s
   end
 
-  # The only thing we care about when serializing an environment is its 
+  def to_sym
+    to_s.to_sym
+  end
+
+  # The only thing we care about when serializing an environment is its
   # identity; everything else is ephemeral and should not be stored or
   # transmitted.
   def to_zaml(z)
@@ -141,6 +145,33 @@ class Puppet::Node::Environment
     end.find_all do |p|
       p =~ /^#{File::SEPARATOR}/ && FileTest.directory?(p)
     end
+  end
+
+  private
+
+  def perform_initial_import
+    return empty_parse_result if Puppet.settings[:ignoreimport]
+    parser = Puppet::Parser::Parser.new(self)
+    if code = Puppet.settings.uninterpolated_value(:code, name.to_s) and code != ""
+      parser.string = code
+    else
+      file = Puppet.settings.value(:manifest, name.to_s)
+      parser.file = file
+    end
+    parser.parse
+  rescue => detail
+    known_resource_types.parse_failed = true
+
+    msg = "Could not parse for environment #{self}: #{detail}"
+    error = Puppet::Error.new(msg)
+    error.set_backtrace(detail.backtrace)
+    raise error
+  end
+
+  def empty_parse_result
+    # Return an empty toplevel hostclass to use as the result of
+    # perform_initial_import when no file was actually loaded.
+    return Puppet::Parser::AST::Hostclass.new('')
   end
 
   @root = new(:'*root*')

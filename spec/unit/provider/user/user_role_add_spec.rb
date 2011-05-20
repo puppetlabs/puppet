@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:user).provider(:user_role_add)
 
@@ -41,7 +40,7 @@ describe provider_class do
     end
   end
 
-  describe "when calling transition" do
+  describe "when calling transition", :'fails_on_ruby_1.9.2' => true do
     it "should return the type set to whatever is passed in" do
       @provider.expects(:command).with(:modify).returns("foomod")
       @provider.transition("bar").include?("type=bar")
@@ -56,7 +55,7 @@ describe provider_class do
     it "should use the add command when the user is not a role" do
       @provider.stubs(:is_role?).returns(false)
       @provider.expects(:addcmd).returns("useradd")
-      @provider.expects(:run)
+      @provider.expects(:run).at_least_once
       @provider.create
     end
 
@@ -64,6 +63,15 @@ describe provider_class do
       @provider.stubs(:is_role?).returns(true)
       @provider.expects(:transition).with("normal")
       @provider.expects(:run)
+      @provider.create
+    end
+
+    it "should set password age rules" do
+      @resource = Puppet::Type.type(:user).new :name => "myuser", :password_min_age => 5, :password_max_age => 10, :provider => :user_role_add
+      @provider = provider_class.new(@resource)
+      @provider.stubs(:user_attributes)
+      @provider.stubs(:execute)
+      @provider.expects(:execute).with { |cmd, *args| args == ["-n", 5, "-x", 10, "myuser"] }
       @provider.create
     end
   end
@@ -106,11 +114,13 @@ describe provider_class do
   describe "when allow duplicate is enabled" do
     before do
       @resource.expects(:allowdupe?).returns true
+      @resource.stubs(:system?)
       @provider.stubs(:is_role?).returns(false)
+      @provider.stubs(:execute)
       @provider.expects(:execute).with { |args| args.include?("-o") }
     end
 
-    it "should add -o when the user is being created" do
+    it "should add -o when the user is being created", :'fails_on_ruby_1.9.2' => true do
       @provider.stubs(:password=)
       @provider.create
     end
@@ -244,6 +254,13 @@ describe provider_class do
       File.stubs(:open).with("/etc/shadow", "r")
       File.expects(:rename).with("/etc/shadow_tmp", "/etc/shadow")
       @provider.password=("hashedpassword")
+    end
+  end
+
+  describe "#shadow_entry" do
+    it "should return the line for the right user" do
+      File.stubs(:readlines).returns(["someuser:!:10:5:20:7:1::\n", "fakeval:*:20:10:30:7:2::\n", "testuser:*:30:15:40:7:3::\n"])
+      @provider.shadow_entry.should == ["fakeval", "*", "20", "10", "30", "7", "2"]
     end
   end
 end

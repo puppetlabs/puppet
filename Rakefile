@@ -5,8 +5,8 @@ $LOAD_PATH << File.join(File.dirname(__FILE__), 'tasks')
 require 'rake'
 require 'rake/packagetask'
 require 'rake/gempackagetask'
-require 'spec'
-require 'spec/rake/spectask'
+require 'rspec'
+require "rspec/core/rake_task"
 
 module Puppet
     PUPPETVERSION = File.read('lib/puppet.rb')[/PUPPETVERSION *= *'(.*)'/,1] or fail "Couldn't find PUPPETVERSION"
@@ -42,13 +42,12 @@ end
 desc "Create the tarball and the gem - use when releasing"
 task :puppetpackages => [:create_gem, :package]
 
-Spec::Rake::SpecTask.new do |t|
-    t.spec_opts = ['--format','s', '--loadby','mtime','--color']
+RSpec::Core::RakeTask.new do |t|
     t.pattern ='spec/{unit,integration}/**/*.rb'
-    t.fail_on_error = false
+    t.fail_on_error = true
 end
 
 desc "Run the unit tests"
 task :unit do
-    sh "cd test; rake"
+  Dir.chdir("test") { sh "rake" }
 end

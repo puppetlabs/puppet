@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/http/api/v1'
 
@@ -32,7 +31,7 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should use the first field of the URI as the environment" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {}).environment.should == Puppet::Node::Environment.new("env")
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].to_s.should == "env"
     end
 
     it "should fail if the environment is not alphanumeric" do
@@ -40,11 +39,15 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should use the environment from the URI even if one is specified in the parameters" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {:environment => "otherenv"}).environment.should == Puppet::Node::Environment.new("env")
+      @tester.uri2indirection("GET", "/env/foo/bar", {:environment => "otherenv"})[3][:environment].to_s.should == "env"
+    end
+
+    it "should return the environment as a Puppet::Node::Environment" do
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[3][:environment].should be_a Puppet::Node::Environment
     end
 
     it "should use the second field of the URI as the indirection name" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {}).indirection_name.should == :foo
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[0].should == "foo"
     end
 
     it "should fail if the indirection name is not alphanumeric" do
@@ -52,11 +55,11 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should use the remainder of the URI as the indirection key" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {}).key.should == "bar"
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[2].should == "bar"
     end
 
     it "should support the indirection key being a /-separated file path" do
-      @tester.uri2indirection("GET", "/env/foo/bee/baz/bomb", {}).key.should == "bee/baz/bomb"
+      @tester.uri2indirection("GET", "/env/foo/bee/baz/bomb", {})[2].should == "bee/baz/bomb"
     end
 
     it "should fail if no indirection key is specified" do
@@ -65,19 +68,67 @@ describe Puppet::Network::HTTP::API::V1 do
     end
 
     it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is singular" do
-      @tester.uri2indirection("GET", "/env/foo/bar", {}).method.should == :find
+      @tester.uri2indirection("GET", "/env/foo/bar", {})[1].should == :find
+    end
+
+    it "should choose 'find' as the indirection method if the http method is a POST and the indirection name is singular" do
+      @tester.uri2indirection("POST", "/env/foo/bar", {})[1].should == :find
+    end
+
+    it "should choose 'head' as the indirection method if the http method is a HEAD and the indirection name is singular" do
+      @tester.uri2indirection("HEAD", "/env/foo/bar", {})[1].should == :head
     end
 
     it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is plural" do
-      @tester.uri2indirection("GET", "/env/foos/bar", {}).method.should == :search
+      @tester.uri2indirection("GET", "/env/foos/bar", {})[1].should == :search
+    end
+
+    it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is facts" do
+      @tester.uri2indirection("GET", "/env/facts/bar", {})[1].should == :find
+    end
+
+    it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is facts" do
+      @tester.uri2indirection("PUT", "/env/facts/bar", {})[1].should == :save
+    end
+
+    it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is inventory" do
+      @tester.uri2indirection("GET", "/env/inventory/search", {})[1].should == :search
+    end
+
+    it "should choose 'find' as the indirection method if the http method is a GET and the indirection name is facts" do
+      @tester.uri2indirection("GET", "/env/facts/bar", {})[1].should == :find
+    end
+
+    it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is facts" do
+      @tester.uri2indirection("PUT", "/env/facts/bar", {})[1].should == :save
+    end
+
+    it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is inventory" do
+      @tester.uri2indirection("GET", "/env/inventory/search", {})[1].should == :search
+    end
+
+    it "should choose 'search' as the indirection method if the http method is a GET and the indirection name is facts_search" do
+      @tester.uri2indirection("GET", "/env/facts_search/bar", {})[1].should == :search
+    end
+
+    it "should change indirection name to 'facts' if the http method is a GET and the indirection name is facts_search" do
+      @tester.uri2indirection("GET", "/env/facts_search/bar", {})[0].should == 'facts'
+    end
+
+    it "should not change indirection name from 'facts' if the http method is a GET and the indirection name is facts" do
+      @tester.uri2indirection("GET", "/env/facts/bar", {})[0].should == 'facts'
+    end
+
+    it "should change indirection name to 'status' if the http method is a GET and the indirection name is statuses" do
+      @tester.uri2indirection("GET", "/env/statuses/bar", {})[0].should == 'status'
     end
 
     it "should choose 'delete' as the indirection method if the http method is a DELETE and the indirection name is singular" do
-      @tester.uri2indirection("DELETE", "/env/foo/bar", {}).method.should == :destroy
+      @tester.uri2indirection("DELETE", "/env/foo/bar", {})[1].should == :destroy
     end
 
     it "should choose 'save' as the indirection method if the http method is a PUT and the indirection name is singular" do
-      @tester.uri2indirection("PUT", "/env/foo/bar", {}).method.should == :save
+      @tester.uri2indirection("PUT", "/env/foo/bar", {})[1].should == :save
     end
 
     it "should fail if an indirection method cannot be picked" do
@@ -86,7 +137,8 @@ describe Puppet::Network::HTTP::API::V1 do
 
     it "should URI unescape the indirection key" do
       escaped = URI.escape("foo bar")
-      @tester.uri2indirection("GET", "/env/foo/#{escaped}", {}).key.should == "foo bar"
+      indirection_name, method, key, params = @tester.uri2indirection("GET", "/env/foo/#{escaped}", {})
+      key.should == "foo bar"
     end
   end
 
@@ -119,4 +171,26 @@ describe Puppet::Network::HTTP::API::V1 do
     end
   end
 
+  describe "when converting a request into a URI with body" do
+    before :each do
+      @request = Puppet::Indirector::Request.new(:foo, :find, "with spaces", :foo => :bar, :environment => "myenv")
+    end
+
+    it "should use the environment as the first field of the URI" do
+      @tester.request_to_uri_and_body(@request).first.split("/")[1].should == "myenv"
+    end
+
+    it "should use the indirection as the second field of the URI" do
+      @tester.request_to_uri_and_body(@request).first.split("/")[2].should == "foo"
+    end
+
+    it "should use the escaped key as the remainder of the URI" do
+      escaped = URI.escape("with spaces")
+      @tester.request_to_uri_and_body(@request).first.split("/")[3].sub(/\?.+/, '').should == escaped
+    end
+
+    it "should return the URI and body separately" do
+      @tester.request_to_uri_and_body(@request).should == ["/myenv/foo/with%20spaces", "foo=bar"]
+    end
+  end
 end

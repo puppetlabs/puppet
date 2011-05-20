@@ -1,13 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 augeas = Puppet::Type.type(:augeas)
 
 describe augeas do
-  describe "when augeas is present" do
-    confine "Augeas is unavailable" => Puppet.features.augeas?
-
+  describe "when augeas is present", :if => Puppet.features.augeas?, :'fails_on_ruby_1.9.2' => true do
     it "should have a default provider inheriting from Puppet::Provider" do
       augeas.defaultprovider.ancestors.should be_include(Puppet::Provider)
     end

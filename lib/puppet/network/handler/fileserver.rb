@@ -4,9 +4,13 @@ require 'webrick/httpstatus'
 require 'cgi'
 require 'delegate'
 require 'sync'
+require 'xmlrpc/server'
 
+require 'puppet/network/handler'
+require 'puppet/network/xmlrpc/server'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
+require 'puppet/network/handler'
 
 class Puppet::Network::Handler
   AuthStoreError = Puppet::AuthStoreError
@@ -232,7 +236,7 @@ class Puppet::Network::Handler
       unless hostname = (client || Facter.value("hostname"))
         raise ArgumentError, "Could not find hostname"
       end
-      env = (node = Puppet::Node.find(hostname)) ? node.environment : nil
+      env = (node = Puppet::Node.indirection.find(hostname)) ? node.environment : nil
 
       # And use the environment to look up the module.
       (mod = Puppet::Node::Environment.new(env).module(module_name) and mod.files?) ? @mounts[MODULES].copy(mod.name, mod.file_directory) : nil

@@ -1,10 +1,9 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Parser do
 
-  ast = Puppet::Parser::AST
+  Puppet::Parser::AST
 
   before :each do
     @known_resource_types = Puppet::Resource::TypeCollection.new("development")
@@ -52,15 +51,6 @@ describe Puppet::Parser do
       @parser.file = "/my/file.rb"
       @parser.parse
     end
-
-    describe "in ruby" do
-      it "should use the ruby interpreter to load the file" do
-        @parser.file = "/my/file.rb"
-        @parser.expects(:require).with "/my/file.rb"
-
-        @parser.parse_ruby_file
-      end
-    end
   end
 
   describe "when parsing append operator" do
@@ -73,35 +63,43 @@ describe Puppet::Parser do
       lambda { @parser.parse("$var += ") }.should raise_error
     end
 
-    it "should call ast::VarDef with append=true" do
-      ast::VarDef.expects(:new).with { |h| h[:append] == true }
-      @parser.parse("$var += 2")
+    it "should create ast::VarDef with append=true" do
+      vardef = @parser.parse("$var += 2").code[0]
+      vardef.should be_a(Puppet::Parser::AST::VarDef)
+      vardef.append.should == true
     end
 
     it "should work with arrays too" do
-      ast::VarDef.expects(:new).with { |h| h[:append] == true }
-      @parser.parse("$var += ['test']")
+      vardef = @parser.parse("$var += ['test']").code[0]
+      vardef.should be_a(Puppet::Parser::AST::VarDef)
+      vardef.append.should == true
     end
 
   end
 
+  describe "when parsing selector" do
+    it "should support hash access on the left hand side" do
+      lambda { @parser.parse("$h = { 'a' => 'b' } $a = $h['a'] ? { 'b' => 'd', default => undef }") }.should_not raise_error
+    end
+  end
+
   describe "when parsing 'if'" do
     it "not, it should create the correct ast objects" do
-      ast::Not.expects(:new).with { |h| h[:value].is_a?(ast::Boolean) }
+      Puppet::Parser::AST::Not.expects(:new).with { |h| h[:value].is_a?(Puppet::Parser::AST::Boolean) }
       @parser.parse("if ! true { $var = 1 }")
     end
 
     it "boolean operation, it should create the correct ast objects" do
-      ast::BooleanOperator.expects(:new).with {
-        |h| h[:rval].is_a?(ast::Boolean) and h[:lval].is_a?(ast::Boolean) and h[:operator]=="or"
+      Puppet::Parser::AST::BooleanOperator.expects(:new).with {
+        |h| h[:rval].is_a?(Puppet::Parser::AST::Boolean) and h[:lval].is_a?(Puppet::Parser::AST::Boolean) and h[:operator]=="or"
       }
       @parser.parse("if true or true { $var = 1 }")
 
     end
 
     it "comparison operation, it should create the correct ast objects" do
-      ast::ComparisonOperator.expects(:new).with {
-        |h| h[:lval].is_a?(ast::Name) and h[:rval].is_a?(ast::Name) and h[:operator]=="<"
+      Puppet::Parser::AST::ComparisonOperator.expects(:new).with {
+        |h| h[:lval].is_a?(Puppet::Parser::AST::Name) and h[:rval].is_a?(Puppet::Parser::AST::Name) and h[:operator]=="<"
       }
       @parser.parse("if 1 < 2 { $var = 1 }")
 
@@ -112,13 +110,13 @@ describe Puppet::Parser do
   describe "when parsing if complex expressions" do
     it "should create a correct ast tree" do
       aststub = stub_everything 'ast'
-      ast::ComparisonOperator.expects(:new).with {
-        |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]==">"
+      Puppet::Parser::AST::ComparisonOperator.expects(:new).with {
+        |h| h[:rval].is_a?(Puppet::Parser::AST::Name) and h[:lval].is_a?(Puppet::Parser::AST::Name) and h[:operator]==">"
       }.returns(aststub)
-      ast::ComparisonOperator.expects(:new).with {
-        |h| h[:rval].is_a?(ast::Name) and h[:lval].is_a?(ast::Name) and h[:operator]=="=="
+      Puppet::Parser::AST::ComparisonOperator.expects(:new).with {
+        |h| h[:rval].is_a?(Puppet::Parser::AST::Name) and h[:lval].is_a?(Puppet::Parser::AST::Name) and h[:operator]=="=="
       }.returns(aststub)
-      ast::BooleanOperator.expects(:new).with {
+      Puppet::Parser::AST::BooleanOperator.expects(:new).with {
         |h| h[:rval]==aststub and h[:lval]==aststub and h[:operator]=="and"
       }
       @parser.parse("if (1 > 2) and (1 == 2) { $var = 1 }")
@@ -141,9 +139,8 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceReference" do
-      ast::Resource.stubs(:new)
-      ast::ResourceReference.expects(:new).with { |arg|
-        arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(ast::ASTArray)
+      Puppet::Parser::AST::ResourceReference.expects(:new).with { |arg|
+        arg[:line]==1 and arg[:type]=="File" and arg[:title].is_a?(Puppet::Parser::AST::ASTArray)
       }
       @parser.parse('exec { test: command => File["a","b"] }')
     end
@@ -160,10 +157,14 @@ describe Puppet::Parser do
     end
 
     it "should create an ast::ResourceOverride" do
-      ast::ResourceOverride.expects(:new).with { |arg|
-        arg[:line]==1 and arg[:object].is_a?(ast::ResourceReference) and arg[:parameters].is_a?(ast::ResourceParam)
-      }
-      @parser.parse('Resource["title1","title2"] { param => value }')
+      #Puppet::Parser::AST::ResourceOverride.expects(:new).with { |arg|
+      #  arg[:line]==1 and arg[:object].is_a?(Puppet::Parser::AST::ResourceReference) and arg[:parameters].is_a?(Puppet::Parser::AST::ResourceParam)
+      #}
+      ro = @parser.parse('Resource["title1","title2"] { param => value }').code[0]
+      ro.should be_a(Puppet::Parser::AST::ResourceOverride)
+      ro.line.should == 1
+      ro.object.should be_a(Puppet::Parser::AST::ResourceReference)
+      ro.parameters[0].should be_a(Puppet::Parser::AST::ResourceParam)
     end
 
   end
@@ -183,17 +184,17 @@ describe Puppet::Parser do
     end
 
     it "should create a nop node for empty branch" do
-      ast::Nop.expects(:new)
+      Puppet::Parser::AST::Nop.expects(:new)
       @parser.parse("if true { }")
     end
 
     it "should create a nop node for empty else branch" do
-      ast::Nop.expects(:new)
+      Puppet::Parser::AST::Nop.expects(:new)
       @parser.parse("if true { notice('test') } else { }")
     end
 
     it "should build a chain of 'ifs' if there's an 'elsif'" do
-      ast = @parser.parse(<<-PP)
+      lambda { @parser.parse(<<-PP) }.should_not raise_error
         if true { notice('test') } elsif true {} else { }
       PP
     end
@@ -262,7 +263,7 @@ describe Puppet::Parser do
     before do
       @lexer = stub 'lexer', :line => 50, :file => "/foo/bar", :getcomment => "whev"
       @parser.stubs(:lexer).returns @lexer
-      @class = stub 'class', :use_docs => false
+      @class = Puppet::Resource::Type.new(:hostclass, "myclass", :use_docs => false)
     end
 
     it "should return a new instance of the provided class created with the provided options" do
@@ -278,33 +279,22 @@ describe Puppet::Parser do
 
     it "should prefer provided options over AST context" do
       @class.expects(:new).with { |opts| opts[:file] == "/bar" }
-      @parser.expects(:ast_context).returns :file => "/foo"
+      @lexer.expects(:file).returns "/foo"
       @parser.ast(@class, :file => "/bar")
     end
 
     it "should include docs when the AST class uses them" do
       @class.expects(:use_docs).returns true
       @class.stubs(:new)
-      @parser.expects(:ast_context).with(true).returns({})
+      @parser.expects(:ast_context).with{ |docs, line| docs == true }.returns({})
       @parser.ast(@class, :file => "/bar")
     end
-  end
 
-  describe "when creating a node" do
-    before :each do
-      @lexer = stub 'lexer'
-      @lexer.stubs(:getcomment)
-      @parser.stubs(:lexer).returns(@lexer)
-      @node = stub_everything 'node'
-      @parser.stubs(:ast_context).returns({})
-      @parser.stubs(:node).returns(nil)
-
-      @nodename = stub 'nodename', :is_a? => false, :value => "foo"
-      @nodename.stubs(:is_a?).with(Puppet::Parser::AST::HostName).returns(true)
-    end
-
-    it "should return an array of nodes" do
-      @parser.newnode(@nodename).should be_instance_of(Array)
+    it "should get docs from lexer using the correct AST line number" do
+      @class.expects(:use_docs).returns true
+      @class.stubs(:new).with{ |a| a[:doc] == "doc" }
+      @lexer.expects(:getcomment).with(12).returns "doc"
+      @parser.ast(@class, :file => "/bar", :line => 12)
     end
   end
 
@@ -360,30 +350,28 @@ describe Puppet::Parser do
       @parser.stubs(:known_resource_types).returns @krt
     end
 
-    it "should create new classes" do
-      @parser.parse("class foobar {}")
-      @krt.hostclass("foobar").should be_instance_of(Puppet::Resource::Type)
+    it "should not create new classes" do
+      @parser.parse("class foobar {}").code[0].should be_a(Puppet::Parser::AST::Hostclass)
+      @krt.hostclass("foobar").should be_nil
     end
 
     it "should correctly set the parent class when one is provided" do
-      @parser.parse("class foobar inherits yayness {}")
-      @krt.hostclass("foobar").parent.should == "yayness"
+      @parser.parse("class foobar inherits yayness {}").code[0].instantiate('')[0].parent.should == "yayness"
     end
 
     it "should correctly set the parent class for multiple classes at a time" do
-      @parser.parse("class foobar inherits yayness {}\nclass boo inherits bar {}")
-      @krt.hostclass("foobar").parent.should == "yayness"
-      @krt.hostclass("boo").parent.should == "bar"
+      statements = @parser.parse("class foobar inherits yayness {}\nclass boo inherits bar {}").code
+      statements[0].instantiate('')[0].parent.should == "yayness"
+      statements[1].instantiate('')[0].parent.should == "bar"
     end
 
     it "should define the code when some is provided" do
-      @parser.parse("class foobar { $var = val }")
-      @krt.hostclass("foobar").code.should_not be_nil
+      @parser.parse("class foobar { $var = val }").code[0].code.should_not be_nil
     end
 
     it "should define parameters when provided" do
-      @parser.parse("class foobar($biz,$baz) {}")
-      @krt.hostclass("foobar").arguments.should == {"biz" => nil, "baz" => nil}
+      foobar = @parser.parse("class foobar($biz,$baz) {}").code[0].instantiate('')[0]
+      foobar.arguments.should == {"biz" => nil, "baz" => nil}
     end
   end
 
@@ -400,13 +388,37 @@ describe Puppet::Parser do
     end
 
     it "should correctly mark exported resources as exported" do
-      @parser.parse("@@file { '/file': }")
-      @krt.hostclass("").code[0].exported.should be_true
+      @parser.parse("@@file { '/file': }").code[0].exported.should be_true
     end
 
     it "should correctly mark virtual resources as virtual" do
-      @parser.parse("@file { '/file': }")
-      @krt.hostclass("").code[0].virtual.should be_true
+      @parser.parse("@file { '/file': }").code[0].virtual.should be_true
+    end
+  end
+
+  describe "when parsing nodes" do
+    it "should be able to parse a node with a single name" do
+      node = @parser.parse("node foo { }").code[0]
+      node.should be_a Puppet::Parser::AST::Node
+      node.names.length.should == 1
+      node.names[0].value.should == "foo"
+    end
+
+    it "should be able to parse a node with two names" do
+      node = @parser.parse("node foo, bar { }").code[0]
+      node.should be_a Puppet::Parser::AST::Node
+      node.names.length.should == 2
+      node.names[0].value.should == "foo"
+      node.names[1].value.should == "bar"
+    end
+
+    it "should be able to parse a node with three names" do
+      node = @parser.parse("node foo, bar, baz { }").code[0]
+      node.should be_a Puppet::Parser::AST::Node
+      node.names.length.should == 3
+      node.names[0].value.should == "foo"
+      node.names[1].value.should == "bar"
+      node.names[2].value.should == "baz"
     end
   end
 end

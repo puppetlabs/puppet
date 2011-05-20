@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2008-4-17.
 #  Copyright (c) 2008. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/ssl/certificate_request'
 require 'tempfile'
@@ -43,20 +43,20 @@ describe Puppet::SSL::CertificateRequest do
   end
 
   it "should be able to save CSRs" do
-    @csr.save
+    Puppet::SSL::CertificateRequest.indirection.save(@csr)
   end
 
   it "should be able to find saved certificate requests via the Indirector" do
     @csr.generate(@key)
-    @csr.save
+    Puppet::SSL::CertificateRequest.indirection.save(@csr)
 
-    Puppet::SSL::CertificateRequest.find("luke.madstop.com").should be_instance_of(Puppet::SSL::CertificateRequest)
+    Puppet::SSL::CertificateRequest.indirection.find("luke.madstop.com").should be_instance_of(Puppet::SSL::CertificateRequest)
   end
 
   it "should save the completely CSR when saving" do
     @csr.generate(@key)
-    @csr.save
+    Puppet::SSL::CertificateRequest.indirection.save(@csr)
 
-    Puppet::SSL::CertificateRequest.find("luke.madstop.com").content.to_s.should == @csr.content.to_s
+    Puppet::SSL::CertificateRequest.indirection.find("luke.madstop.com").content.to_s.should == @csr.content.to_s
   end
 end

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/provider'
@@ -70,24 +70,13 @@ class TestImpl < Test::Unit::TestCase
       child = @type.provide("child", :parent => parent.name) {}
     }
 
-    assert_nothing_raised {
-      child.commands :which => "which"
-    }
-
-    assert(child.command(:which), "Did not find 'which' command")
-
-    assert(child.command(:which) =~ /^\//,
-        "Command did not become fully qualified")
-    assert(FileTest.exists?(child.command(:which)),
-                "Did not find actual 'which' binary")
-
     assert_raise(Puppet::DevError) do
       child.command(:nosuchcommand)
     end
 
     # Now create a parent command
     assert_nothing_raised {
-      parent.commands :sh => Puppet::Util.binary('sh')
+      parent.commands :sh => Puppet::Util.which('sh')
     }
 
     assert(parent.command(:sh), "Did not find 'sh' command")

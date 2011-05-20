@@ -1,3 +1,4 @@
+require 'puppet/indirector'
 require 'puppet/ssl'
 require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
@@ -15,10 +16,16 @@ class Puppet::SSL::Host
   CertificateRequest = Puppet::SSL::CertificateRequest
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
 
+  extend Puppet::Indirector
+  indirects :certificate_status, :terminus_class => :file
+
   attr_reader :name
   attr_accessor :ca
 
   attr_writer :key, :certificate, :certificate_request
+
+  # This accessor is used in instances for indirector requests to hold desired state
+  attr_accessor :desired_state
 
   class << self
     include Puppet::Util::Cacher
@@ -43,31 +50,38 @@ class Puppet::SSL::Host
 
   # Configure how our various classes interact with their various terminuses.
   def self.configure_indirection(terminus, cache = nil)
-    Certificate.terminus_class = terminus
-    CertificateRequest.terminus_class = terminus
-    CertificateRevocationList.terminus_class = terminus
+    Certificate.indirection.terminus_class = terminus
+    CertificateRequest.indirection.terminus_class = terminus
+    CertificateRevocationList.indirection.terminus_class = terminus
+
+    host_map = {:ca => :file, :file => nil, :rest => :rest}
+    if term = host_map[terminus]
+      self.indirection.terminus_class = term
+    else
+      self.indirection.reset_terminus_class
+    end
 
     if cache
       # This is weird; we don't actually cache our keys, we
       # use what would otherwise be the cache as our normal
       # terminus.
-      Key.terminus_class = cache
+      Key.indirection.terminus_class = cache
     else
-      Key.terminus_class = terminus
+      Key.indirection.terminus_class = terminus
     end
 
     if cache
-      Certificate.cache_class = cache
-      CertificateRequest.cache_class = cache
-      CertificateRevocationList.cache_class = cache
+      Certificate.indirection.cache_class = cache
+      CertificateRequest.indirection.cache_class = cache
+      CertificateRevocationList.indirection.cache_class = cache
     else
       # Make sure we have no cache configured.  puppet master
       # switches the configurations around a bit, so it's important
       # that we specify the configs for absolutely everything, every
       # time.
-      Certificate.cache_class = nil
-      CertificateRequest.cache_class = nil
-      CertificateRevocationList.cache_class = nil
+      Certificate.indirection.cache_class = nil
+      CertificateRequest.indirection.cache_class = nil
+      CertificateRevocationList.indirection.cache_class = nil
     end
   end
 
@@ -85,30 +99,34 @@ class Puppet::SSL::Host
 
   # Specify how we expect to interact with our certificate authority.
   def self.ca_location=(mode)
-    raise ArgumentError, "CA Mode can only be #{CA_MODES.collect { |m| m.to_s }.join(", ")}" unless CA_MODES.include?(mode)
+    modes = CA_MODES.collect { |m, vals| m.to_s }.join(", ")
+    raise ArgumentError, "CA Mode can only be one of: #{modes}" unless CA_MODES.include?(mode)
 
     @ca_location = mode
 
     configure_indirection(*CA_MODES[@ca_location])
   end
 
-  # Remove all traces of a given host
+  # Puppet::SSL::Host is actually indirected now so the original implementation
+  # has been moved into the certificate_status indirector.  This method is in-use
+  # in `puppet cert -c <certname>`.
   def self.destroy(name)
-    [Key, Certificate, CertificateRequest].collect { |part| part.destroy(name) }.any? { |x| x }
+    indirection.destroy(name)
   end
 
-  # Search for more than one host, optionally only specifying
-  # an interest in hosts with a given file type.
-  # This just allows our non-indirected class to have one of
-  # indirection methods.
-  def self.search(options = {})
-    classlist = [options[:for] || [Key, CertificateRequest, Certificate]].flatten
-
-    # Collect the results from each class, flatten them, collect all of the names, make the name list unique,
-    # then create a Host instance for each one.
-    classlist.collect { |klass| klass.search }.flatten.collect { |r| r.name }.uniq.collect do |name|
-      new(name)
+  def self.from_pson(pson)
+    instance = new(pson["name"])
+    if pson["desired_state"]
+      instance.desired_state = pson["desired_state"]
     end
+    instance
+  end
+
+  # Puppet::SSL::Host is actually indirected now so the original implementation
+  # has been moved into the certificate_status indirector.  This method does not
+  # appear to be in use in `puppet cert -l`.
+  def self.search(options = {})
+    indirection.search("*", options)
   end
 
   # Is this a ca host, meaning that all of its files go in the CA location?
@@ -117,7 +135,7 @@ class Puppet::SSL::Host
   end
 
   def key
-    @key ||= Key.find(name)
+    @key ||= Key.indirection.find(name)
   end
 
   # This is the private key; we can create it from scratch
@@ -126,7 +144,7 @@ class Puppet::SSL::Host
     @key = Key.new(name)
     @key.generate
     begin
-      @key.save
+      Key.indirection.save(@key)
     rescue
       @key = nil
       raise
@@ -135,7 +153,7 @@ class Puppet::SSL::Host
   end
 
   def certificate_request
-    @certificate_request ||= CertificateRequest.find(name)
+    @certificate_request ||= CertificateRequest.indirection.find(name)
   end
 
   # Our certificate request requires the key but that's all.
@@ -144,7 +162,7 @@ class Puppet::SSL::Host
     @certificate_request = CertificateRequest.new(name)
     @certificate_request.generate(key.content)
     begin
-      @certificate_request.save
+      CertificateRequest.indirection.save(@certificate_request)
     rescue
       @certificate_request = nil
       raise
@@ -159,8 +177,8 @@ class Puppet::SSL::Host
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use.
-      return nil unless Certificate.find("ca") unless ca?
-      return nil unless @certificate = Certificate.find(name)
+      return nil unless Certificate.indirection.find("ca") unless ca?
+      return nil unless @certificate = Certificate.indirection.find(name)
 
       unless certificate_matches_key?
         raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
@@ -212,13 +230,31 @@ class Puppet::SSL::Host
       @ssl_store.add_file(Puppet[:localcacert])
 
       # If there's a CRL, add it to our store.
-      if crl = Puppet::SSL::CertificateRevocationList.find(CA_NAME)
+      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
         @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
         @ssl_store.add_crl(crl.content)
       end
       return @ssl_store
     end
     @ssl_store
+  end
+
+  def to_pson(*args)
+    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    pson_hash = { :name  => name }
+
+    my_state = state
+
+    pson_hash[:state] = my_state
+    pson_hash[:desired_state] = desired_state if desired_state
+
+    if my_state == 'requested'
+      pson_hash[:fingerprint] = certificate_request.fingerprint
+    else
+      pson_hash[:fingerprint] = my_cert.fingerprint
+    end
+
+    pson_hash.to_pson(*args)
   end
 
   # Attempt to retrieve a cert, if we don't already have one.
@@ -255,6 +291,20 @@ class Puppet::SSL::Host
         puts detail.backtrace if Puppet[:trace]
         Puppet.err "Could not request certificate: #{detail}"
       end
+    end
+  end
+
+  def state
+    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    if certificate_request
+      return 'requested'
+    end
+
+    begin
+      Puppet::SSL::CertificateAuthority.new.verify(my_cert)
+      return 'signed'
+    rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError
+      return 'revoked'
     end
   end
 end

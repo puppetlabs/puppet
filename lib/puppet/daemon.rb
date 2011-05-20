@@ -43,7 +43,7 @@ class Puppet::Daemon
   # Create a pidfile for our daemon, so we can be stopped and others
   # don't try to start.
   def create_pidfile
-    Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
       raise "Could not create PID file: #{pidfile}" unless Puppet::Util::Pidlock.new(pidfile).lock
     end
   end
@@ -73,7 +73,7 @@ class Puppet::Daemon
 
   # Remove the pid file for our daemon.
   def remove_pidfile
-    Puppet::Util.sync(Puppet[:name]).synchronize(Sync::EX) do
+    Puppet::Util.synchronize_on(Puppet[:name],Sync::EX) do
       locker = Puppet::Util::Pidlock.new(pidfile)
       locker.unlock or Puppet.err "Could not remove PID file #{pidfile}" if locker.locked?
     end
@@ -95,7 +95,7 @@ class Puppet::Daemon
     # extended signals not supported under windows
     signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs }) unless Puppet.features.microsoft_windows?
     signals.each do |signal, method|
-      trap(signal) do
+      Signal.trap(signal) do
         Puppet.notice "Caught #{signal}; calling #{method}"
         send(method)
       end

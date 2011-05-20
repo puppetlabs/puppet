@@ -54,11 +54,7 @@ Puppet::Type.newtype(:cron) do
     # We have to override the parent method, because we consume the entire
     # "should" array
     def insync?(is)
-      if @should
-        self.is_to_s(is) == self.should_to_s
-      else
-        true
-      end
+      self.is_to_s(is) == self.should_to_s
     end
 
     # A method used to do parameter input handling.  Converts integers
@@ -230,7 +226,9 @@ Puppet::Type.newtype(:cron) do
   end
 
   newproperty(:special) do
-    desc "Special schedules only supported on FreeBSD."
+    desc "A special value such as 'reboot' or 'annually'.
+       Only available on supported systems such as Vixie Cron.
+       Overrides more specific time of day/week settings."
 
     def specials
       %w{reboot yearly annually monthly weekly daily midnight hourly}
@@ -397,7 +395,7 @@ Puppet::Type.newtype(:cron) do
     unless ret
       case name
       when :command
-        devfail "No command, somehow"
+        devfail "No command, somehow" unless @parameters[:ensure].value == :absent
       when :special
         # nothing
       else

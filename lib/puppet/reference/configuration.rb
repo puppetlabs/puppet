@@ -42,11 +42,10 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
 end
 
 config.header = "
-Specifying Configuration Parameters
------------------------------------
+## Specifying Configuration Parameters
 
-On The Command-Line
-+++++++++++++++++++
+### On The Command-Line
+
 Every Puppet executable (with the exception of `puppetdoc`) accepts all of
 the parameters below, but not all of the arguments make sense for every executable.
 
@@ -69,8 +68,7 @@ syntax on the command line:
 The invocations above will enable and disable, respectively, the storage of
 the client configuration.
 
-Configuration Files
-+++++++++++++++++++
+### Configuration Files
 
 As mentioned above, the configuration parameters can also be stored in a
 configuration file, located in the configuration directory.  As root, the
@@ -84,8 +82,7 @@ executables look for `puppet.conf` in their configuration directory
 All executables will set any parameters set within the `[main]` section,
 and each executable will also use one of the `[master]`, `[agent]`.
 
-File Format
-'''''''''''
+#### File Format
 
 The file follows INI-style formatting.  Here is an example of a very simple
 `puppet.conf` file:
@@ -97,11 +94,11 @@ The file follows INI-style formatting.  Here is an example of a very simple
 Note that boolean parameters must be explicitly specified as `true` or
 `false` as seen above.
 
-If you need to change file parameters (e.g., reset the mode or owner), do
+If you need to change file or directory parameters (e.g., reset the mode or owner), do
 so within curly braces on the same line:
 
     [main]
-      myfile = /tmp/whatever {owner = root, mode = 644}
+      vardir = /new/vardir {owner = root, mode = 644}
 
 If you're starting out with a fresh configuration, you may wish to let
 the executable generate a template configuration file for you by invoking
@@ -125,10 +122,9 @@ likewise be redirected to a file:
 Puppet can also create user and group accounts for itself (one `puppet` group
 and one `puppet` user) if it is invoked as `root` with the `--mkusers` argument:
 
-    $ puppet agent --mkusers
+    $ puppet master --mkusers
 
-Signals
--------
+## Signals
 
 The `puppet agent` and `puppet master` executables catch some signals for special
 handling.  Both daemons catch (`SIGHUP`), which forces the server to restart
@@ -139,8 +135,7 @@ Sending the `SIGUSR1` signal to an instance of `puppet agent` will cause it to
 immediately begin a new configuration transaction with the server.  This
 signal has no effect on `puppet master`.
 
-Configuration Parameter Reference
----------------------------------
+## Configuration Parameter Reference
 
 Below is a list of all documented parameters.  Not all of them are valid with all
 Puppet executables, but the executables will ignore any inappropriate values.

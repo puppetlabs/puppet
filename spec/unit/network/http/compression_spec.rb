@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe "http compression" do
 
@@ -37,9 +36,7 @@ describe "http compression" do
     end
   end
 
-  describe "when zlib is available" do
-    confine "Zlib is missing" => Puppet.features.zlib?
-
+  describe "when zlib is available", :if => Puppet.features.zlib? do
     before(:each) do
       Puppet.features.stubs(:zlib?).returns true
 
@@ -180,7 +177,7 @@ describe "http compression" do
       end
 
       it "should raise the error the second time" do
-        @inflater.expects(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
+        @inflater.stubs(:inflate).raises(Zlib::DataError.new("not a zlib stream"))
         Zlib::Inflate.expects(:new).with.returns(@inflater)
         lambda { @adapter.uncompress("chunk") }.should raise_error
       end

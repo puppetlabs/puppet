@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/parameter'
 
@@ -52,8 +51,7 @@ describe Puppet::Parameter do
     @resource.expects(:line).returns 10
     @resource.expects(:file).returns "file"
     @resource.expects(:tags).returns %w{one two}
-    @resource.expects(:version).returns 50
-    @parameter.source_descriptors.should == {:tags=>["one", "two", "foo"], :path=>"//foo", :version=>50, :file => "file", :line => 10}
+    @parameter.source_descriptors.should == {:tags=>["one", "two", "foo"], :path=>"//foo", :file => "file", :line => 10}
   end
 
   describe "when returning the value" do

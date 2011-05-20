@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/defaults'
 require 'puppet/indirector'
 require 'puppet/indirector/file'
 
-describe Puppet::Indirector::Terminus do
+describe Puppet::Indirector::Terminus, :'fails_on_ruby_1.9.2' => true do
   before :each do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @indirection = stub 'indirection', :name => :my_stuff, :register_terminus_type => nil
@@ -136,7 +135,7 @@ describe Puppet::Indirector::Terminus, " when managing terminus classes" do
     Puppet::Indirector::Terminus.terminus_class(:test1, :yay)
   end
 
-  it "should fail when no indirection can be found" do
+  it "should fail when no indirection can be found", :'fails_on_ruby_1.9.2' => true do
     Puppet::Indirector::Indirection.expects(:instance).with(:my_indirection).returns(nil)
 
     @abstract_terminus = Class.new(Puppet::Indirector::Terminus) do
@@ -153,7 +152,7 @@ describe Puppet::Indirector::Terminus, " when managing terminus classes" do
     }.should raise_error(ArgumentError)
   end
 
-  it "should register the terminus class with the terminus base class" do
+  it "should register the terminus class with the terminus base class", :'fails_on_ruby_1.9.2' => true do
     Puppet::Indirector::Terminus.expects(:register_terminus_class).with do |type|
       type.indirection_name == :my_indirection and type.name == :test_terminus
     end
@@ -220,7 +219,7 @@ describe Puppet::Indirector::Terminus, " when parsing class constants for indire
   end
 end
 
-describe Puppet::Indirector::Terminus, " when creating terminus class types" do
+describe Puppet::Indirector::Terminus, " when creating terminus class types", :'fails_on_ruby_1.9.2' => true do
   before do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @subclass = Class.new(Puppet::Indirector::Terminus) do

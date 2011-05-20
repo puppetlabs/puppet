@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/catalog'
 
@@ -10,11 +9,8 @@ describe Puppet::Resource::Catalog::Compiler do
   before do
     Facter.stubs(:value).returns "something"
     @catalog = Puppet::Resource::Catalog.new
-
-    @one = Puppet::Resource.new(:file, "/one")
-
-    @two = Puppet::Resource.new(:file, "/two")
-    @catalog.add_resource(@one, @two)
+    @catalog.add_resource(@one = Puppet::Resource.new(:file, "/one"))
+    @catalog.add_resource(@two = Puppet::Resource.new(:file, "/two"))
   end
 
   after { Puppet.settings.clear }
@@ -42,7 +38,7 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet::Resource::Catalog.indirection.terminus.stubs(:node_from_request)
     Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
 
-    Puppet::Resource::Catalog.find(request).resource_refs.should == [ @two.ref ]
+    Puppet::Resource::Catalog.indirection.find(request).resource_refs.should == [ @two.ref ]
   end
 
   it "should not filter out exported resources when finding a catalog" do
@@ -52,7 +48,7 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet::Resource::Catalog.indirection.terminus.stubs(:node_from_request)
     Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
 
-    Puppet::Resource::Catalog.find(request).resource_refs.sort.should == [ @one.ref, @two.ref ]
+    Puppet::Resource::Catalog.indirection.find(request).resource_refs.sort.should == [ @one.ref, @two.ref ]
   end
 
   it "should filter out virtual exported resources when finding a catalog" do
@@ -63,6 +59,6 @@ describe Puppet::Resource::Catalog::Compiler do
     Puppet::Resource::Catalog.indirection.terminus.stubs(:node_from_request)
     Puppet::Resource::Catalog.indirection.terminus.stubs(:compile).returns(@catalog)
 
-    Puppet::Resource::Catalog.find(request).resource_refs.should == [ @two.ref ]
+    Puppet::Resource::Catalog.indirection.find(request).resource_refs.should == [ @two.ref ]
   end
 end

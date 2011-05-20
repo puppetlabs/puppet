@@ -36,7 +36,7 @@ class Puppet::Indirector::Queue < Puppet::Indirector::Terminus
   def save(request)
       result = nil
       benchmark :info, "Queued #{indirection.name} for #{request.key}" do
-        result = client.send_message(queue, request.instance.render(:pson))
+        result = client.publish_message(queue, request.instance.render(:pson))
       end
       result
   rescue => detail

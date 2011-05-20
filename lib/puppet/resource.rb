@@ -5,6 +5,11 @@ require 'puppet/util/pson'
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
 class Puppet::Resource
+  # This stub class is only needed for serialization compatibility with 0.25.x.
+  # Specifically, it exists to provide a compatibility API when using YAML
+  # serialized objects loaded from StoreConfigs.
+  Reference = Puppet::Resource
+
   include Puppet::Util::Tagging
 
   require 'puppet/resource/type_collection_helper'
@@ -46,6 +51,10 @@ class Puppet::Resource
     resource
   end
 
+  def inspect
+    "#{@type}[#{@title}]#{to_hash.inspect}"
+  end
+
   def to_pson_data_hash
     data = ([:type, :title, :tags] + ATTRIBUTES).inject({}) do |hash, param|
       next hash unless value = self.send(param)
@@ -80,6 +89,18 @@ class Puppet::Resource
     end
   end
 
+  def yaml_property_munge(x)
+    case x
+    when Hash
+      x.inject({}) { |h,kv|
+        k,v = kv
+        h[k] = self.class.value_to_pson_data(v)
+        h
+      }
+    else self.class.value_to_pson_data(x)
+    end
+  end
+
   def to_pson(*args)
     to_pson_data_hash.to_pson(*args)
   end
@@ -88,7 +109,7 @@ class Puppet::Resource
   # be overridden at some point, but this works for now.
   %w{has_key? keys length delete empty? <<}.each do |method|
     define_method(method) do |*args|
-      @parameters.send(method, *args)
+      parameters.send(method, *args)
     end
   end
 
@@ -96,13 +117,13 @@ class Puppet::Resource
   # to lower-case symbols.
   def []=(param, value)
     validate_parameter(param) if validate_parameters
-    @parameters[parameter_name(param)] = value
+    parameters[parameter_name(param)] = value
   end
 
   # Return a given parameter's value.  Converts all passed names
   # to lower-case symbols.
   def [](param)
-    @parameters[parameter_name(param)]
+    parameters[parameter_name(param)]
   end
 
   def ==(other)
@@ -124,11 +145,11 @@ class Puppet::Resource
 
   # Iterate over each param/value pair, as required for Enumerable.
   def each
-    @parameters.each { |p,v| yield p, v }
+    parameters.each { |p,v| yield p, v }
   end
 
   def include?(parameter)
-    super || @parameters.keys.include?( parameter_name(parameter) )
+    super || parameters.keys.include?( parameter_name(parameter) )
   end
 
   # These two methods are extracted into a Helper
@@ -180,7 +201,14 @@ class Puppet::Resource
     tag(self.type)
     tag(self.title) if valid_tag?(self.title)
 
-    raise ArgumentError, "Invalid resource type #{type}" if strict? and ! resource_type
+    @reference = self # for serialization compatibility with 0.25.x
+    if strict? and ! resource_type
+      if @type == 'Class'
+        raise ArgumentError, "Could not find declared class #{title}"
+      else
+        raise ArgumentError, "Invalid resource type #{type}"
+      end
+    end
   end
 
   def ref
@@ -193,7 +221,7 @@ class Puppet::Resource
   end
 
   def resource_type
-    @resource_type ||= case type
+    case type
     when "Class"; known_resource_types.hostclass(title == :main ? "" : title)
     when "Node"; known_resource_types.node(title)
     else
@@ -203,7 +231,7 @@ class Puppet::Resource
 
   # Produce a simple hash of our parameters.
   def to_hash
-    parse_title.merge @parameters
+    parse_title.merge parameters
   end
 
   def to_s
@@ -224,15 +252,26 @@ class Puppet::Resource
 
   # Convert our resource to Puppet code.
   def to_manifest
-    "%s { '%s':\n%s\n}" % [self.type.to_s.downcase, self.title,
-      @parameters.collect { |p, v|
-        if v.is_a? Array
-          "    #{p} => [\'#{v.join("','")}\']"
-        else
-          "    #{p} => \'#{v}\'"
-        end
-      }.join(",\n")
-      ]
+    # Collect list of attributes to align => and move ensure first
+    attr = parameters.keys
+    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+
+    attr.sort!
+    if attr.first != :ensure  && attr.include?(:ensure)
+      attr.delete(:ensure)
+      attr.unshift(:ensure)
+    end
+
+    attributes = attr.collect { |k|
+      v = parameters[k]
+      if v.is_a? Array
+        "  %-#{attr_max}s => %s,\n" % [ k, "[\'#{v.join("', '")}\']" ]
+      else
+        "  %-#{attr_max}s => %s,\n" % [ k, "\'#{v}\'" ]
+      end
+    }.join
+
+    "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
   end
 
   def to_ref
@@ -390,5 +429,11 @@ class Puppet::Resource
     else
       return { :name => title.to_s }
     end
+  end
+
+  def parameters
+    # @parameters could have been loaded from YAML, causing it to be nil (by
+    # bypassing initialize).
+    @parameters ||= {}
   end
 end

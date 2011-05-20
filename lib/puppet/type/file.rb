@@ -22,7 +22,9 @@ Puppet::Type.newtype(:file) do
     If you find that you are often copying files in from a central
     location, rather than using native resources, please contact
     Puppet Labs and we can hopefully work with you to develop a
-    native resource to support what you are doing."
+    native resource to support what you are doing.
+    
+    **Autorequires:** If Puppet is managing the user or group that owns a file, the file resource will autorequire them. If Puppet is managing any parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path, lambda{|x| x} ] ] ] ]
@@ -34,7 +36,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and (value =~ /^\/$/ or value =~ /^\/[^\/]/)) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
+      unless (Puppet.features.posix? and value =~ /^\//) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -42,7 +44,7 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      path, name = File.split(value.gsub(/\/+/,'/'))
+      path, name = ::File.split(value.gsub(/\/+/,'/'))
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
 
@@ -53,7 +55,7 @@ Puppet::Type.newtype(:file) do
       if value[:name] == '/'
         basedir
       else
-        File.join( basedir, value[:name] )
+        ::File.join( basedir, value[:name] )
       end
     end
   end
@@ -120,7 +122,18 @@ Puppet::Type.newtype(:file) do
 
   newparam(:recurse) do
     desc "Whether and how deeply to do recursive
-      management."
+      management. Options are:
+
+      * `inf,true` --- Regular style recursion on both remote and local
+        directory structure.
+      * `remote` --- Descends recursively into the remote directory
+        but not the local directory. Allows copying of
+        a few files into a directory containing many
+        unmanaged files without scanning all the local files.
+      * `false` --- Default of no recursion.
+      * `[0-9]+` --- Same as true, but limit recursion. Warning: this syntax
+        has been deprecated in favor of the `recurselimit` attribute.
+    "
 
     newvalues(:true, :false, :inf, :remote, /^[0-9]+$/)
 
@@ -244,11 +257,17 @@ Puppet::Type.newtype(:file) do
     newvalues(:first, :all)
   end
 
-  # Autorequire any parent directories.
+  # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
-    basedir = File.dirname(self[:path])
+    basedir = ::File.dirname(self[:path])
     if basedir != self[:path]
-      basedir
+      parents = []
+      until basedir == parents.last
+        parents << basedir
+        basedir = File.dirname(basedir)
+      end
+      # The filename of the first ancestor found, or nil
+      parents.find { |dir| catalog.resource(:file, dir) }
     else
       nil
     end
@@ -271,16 +290,23 @@ Puppet::Type.newtype(:file) do
   end
 
   CREATORS = [:content, :source, :target]
+  SOURCE_ONLY_CHECKSUMS = [:none, :ctime, :mtime]
 
   validate do
-    count = 0
+    creator_count = 0
     CREATORS.each do |param|
-      count += 1 if self.should(param)
+      creator_count += 1 if self.should(param)
     end
-    count += 1 if @parameters.include?(:source)
-    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if count > 1
+    creator_count += 1 if @parameters.include?(:source)
+    self.fail "You cannot specify more than one of #{CREATORS.collect { |p| p.to_s}.join(", ")}" if creator_count > 1
 
     self.fail "You cannot specify a remote recursion without a source" if !self[:source] and self[:recurse] == :remote
+
+    self.fail "You cannot specify source when using checksum 'none'" if self[:checksum] == :none && !self[:source].nil?
+
+    SOURCE_ONLY_CHECKSUMS.each do |checksum_type|
+      self.fail "You cannot specify content when using checksum '#{checksum_type}'" if self[:checksum] == checksum_type && !self[:content].nil?
+    end
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
   end
@@ -290,34 +316,15 @@ Puppet::Type.newtype(:file) do
     super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
-  # List files, but only one level deep.
-  def self.instances(base = "/")
-    return [] unless FileTest.directory?(base)
-
-    files = []
-    Dir.entries(base).reject { |e|
-      e == "." or e == ".."
-    }.each do |name|
-      path = File.join(base, name)
-      if obj = self[path]
-        obj[:audit] = :all
-        files << obj
-      else
-        files << self.new(
-          :name => path, :audit => :all
-        )
-      end
-    end
-    files
+  def self.instances(base = '/')
+    return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
   end
-
-  @depthfirst = false
 
   # Determine the user to write files as.
   def asuser
     if self.should(:owner) and ! self.should(:owner).is_a?(Symbol)
       writeable = Puppet::Util::SUIDManager.asuser(self.should(:owner)) {
-        FileTest.writable?(File.dirname(self[:path]))
+        FileTest.writable?(::File.dirname(self[:path]))
       }
 
       # If the parent directory is writeable, then we execute
@@ -420,7 +427,7 @@ Puppet::Type.newtype(:file) do
   # Create a new file or directory object as a child to the current
   # object.
   def newchild(path)
-    full_path = File.join(self[:path], path)
+    full_path = ::File.join(self[:path], path)
 
     # Add some new values to our original arguments -- these are the ones
     # set at initialization.  We specifically want to exclude any param
@@ -472,8 +479,7 @@ Puppet::Type.newtype(:file) do
   # be used to copy remote files, manage local files, and/or make links
   # to map to another directory.
   def recurse
-    children = {}
-    children = recurse_local if self[:recurse] != :remote
+    children = (self[:recurse] == :remote) ? {} : recurse_local
 
     if self[:target]
       recurse_link(children)
@@ -494,27 +500,23 @@ Puppet::Type.newtype(:file) do
   # not likely to have many actual conflicts, which is good, because
   # this is a pretty inefficient implementation.
   def remove_less_specific_files(files)
-    mypath = self[:path].split(File::Separator)
+    mypath = self[:path].split(::File::Separator)
     other_paths = catalog.vertices.
       select  { |r| r.is_a?(self.class) and r[:path] != self[:path] }.
-      collect { |r| r[:path].split(File::Separator) }.
+      collect { |r| r[:path].split(::File::Separator) }.
       select  { |p| p[0,mypath.length]  == mypath }
 
     return files if other_paths.empty?
 
     files.reject { |file|
-      path = file[:path].split(File::Separator)
+      path = file[:path].split(::File::Separator)
       other_paths.any? { |p| path[0,p.length] == p }
       }
   end
 
   # A simple method for determining whether we should be recursing.
   def recurse?
-    return false unless @parameters.include?(:recurse)
-
-    val = @parameters[:recurse].value
-
-    !!(val and (val == true or val == :remote))
+    self[:recurse] == true or self[:recurse] == :remote
   end
 
   # Recurse the target of the link.
@@ -586,13 +588,10 @@ Puppet::Type.newtype(:file) do
   end
 
   def perform_recursion(path)
-
-    Puppet::FileServing::Metadata.search(
-
+    Puppet::FileServing::Metadata.indirection.search(
       path,
       :links => self[:links],
       :recurse => (self[:recurse] == :remote ? true : self[:recurse]),
-
       :recurselimit => self[:recurselimit],
       :ignore => self[:ignore],
       :checksum_type => (self[:source] || self[:content]) ? self[:checksum] : :none
@@ -620,7 +619,7 @@ Puppet::Type.newtype(:file) do
       end
     when "link", "file"
       debug "Removing existing #{s.ftype} for replacement with #{should}"
-      File.unlink(self[:path])
+      ::File.unlink(self[:path])
     else
       self.fail "Could not back up files of type #{s.ftype}"
     end
@@ -685,7 +684,7 @@ Puppet::Type.newtype(:file) do
     path = self[:path]
 
     begin
-      File.send(method, self[:path])
+      ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
       return nil
     rescue Errno::EACCES => error
@@ -711,26 +710,27 @@ Puppet::Type.newtype(:file) do
     use_temporary_file = write_temporary_file?
     if use_temporary_file
       path = "#{self[:path]}.puppettmp_#{rand(10000)}"
-      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while File.exists?(path) or File.symlink?(path)
+      path = "#{self[:path]}.puppettmp_#{rand(10000)}" while ::File.exists?(path) or ::File.symlink?(path)
     else
       path = self[:path]
     end
 
     mode = self.should(:mode) # might be nil
     umask = mode ? 000 : 022
+    mode_int = mode ? mode.to_i(8) : nil
 
-    content_checksum = Puppet::Util.withumask(umask) { File.open(path, 'w', mode) { |f| write_content(f) } }
+    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'w', mode_int ) { |f| write_content(f) } }
 
     # And put our new file in place
     if use_temporary_file # This is only not true when our file is empty.
       begin
         fail_if_checksum_is_wrong(path, content_checksum) if validate_checksum?
-        File.rename(path, self[:path])
+        ::File.rename(path, self[:path])
       rescue => detail
         fail "Could not rename temporary file #{path} to #{self[:path]}: #{detail}"
       ensure
         # Make sure the created file gets removed
-        File.unlink(path) if FileTest.exists?(path)
+        ::File.unlink(path) if FileTest.exists?(path)
       end
     end
 
@@ -778,7 +778,7 @@ Puppet::Type.newtype(:file) do
       # Make sure we get a new stat objct
       expire
       currentvalue = thing.retrieve
-      thing.sync unless thing.insync?(currentvalue)
+      thing.sync unless thing.safe_insync?(currentvalue)
     end
   end
 end
@@ -796,3 +796,5 @@ require 'puppet/type/file/group'
 require 'puppet/type/file/mode'
 require 'puppet/type/file/type'
 require 'puppet/type/file/selcontext'  # SELinux file context
+require 'puppet/type/file/ctime'
+require 'puppet/type/file/mtime'

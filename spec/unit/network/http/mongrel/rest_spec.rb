@@ -1,11 +1,9 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/http'
 
-describe "Puppet::Network::HTTP::MongrelREST" do
-  confine "Mongrel is not available" => Puppet.features.mongrel?
+describe "Puppet::Network::HTTP::MongrelREST", :if => Puppet.features.mongrel?, :'fails_on_ruby_1.9.2' => true do
   before do
     require 'puppet/network/http/mongrel/rest'
   end

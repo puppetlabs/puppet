@@ -10,7 +10,8 @@ class Puppet::Transaction::Report
 
   indirects :report, :terminus_class => :processor
 
-  attr_reader :resource_statuses, :logs, :metrics, :host, :time
+  attr_accessor :configuration_version
+  attr_reader :resource_statuses, :logs, :metrics, :host, :time, :kind, :status
 
   # This is necessary since Marshall doesn't know how to
   # dump hash with default proc (see below @records)
@@ -42,48 +43,90 @@ class Puppet::Transaction::Report
     @resource_statuses[status.resource] = status
   end
 
-  def calculate_metrics
-    calculate_resource_metrics
-    calculate_time_metrics
-    calculate_change_metrics
-    calculate_event_metrics
+  def compute_status(resource_metrics, change_metric)
+    if (resource_metrics["failed"] || 0) > 0
+      'failed'
+    elsif change_metric > 0
+      'changed'
+    else
+      'unchanged'
+    end
   end
 
-  def initialize
+  def prune_internal_data
+    resource_statuses.delete_if {|name,res| res.resource_type == 'Whit'}
+  end
+
+  def finalize_report
+    prune_internal_data
+
+    resource_metrics = add_metric(:resources, calculate_resource_metrics)
+    add_metric(:time, calculate_time_metrics)
+    change_metric = calculate_change_metric
+    add_metric(:changes, {"total" => change_metric})
+    add_metric(:events, calculate_event_metrics)
+    @status = compute_status(resource_metrics, change_metric)
+  end
+
+  def initialize(kind, configuration_version=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
     @external_times ||= {}
     @host = Puppet[:certname]
     @time = Time.now
+    @kind = kind
+    @report_format = 2
+    @puppet_version = Puppet.version
+    @configuration_version = configuration_version
+    @status = 'failed' # assume failed until the report is finalized
   end
 
   def name
     host
   end
 
-  # Provide a summary of this report.
+  # Provide a human readable textual summary of this report.
   def summary
-    ret = ""
+    report = raw_summary
 
-    @metrics.sort { |a,b| a[1].label <=> b[1].label }.each do |name, metric|
-      ret += "#{metric.label}:\n"
-      metric.values.sort { |a,b|
+    ret = ""
+    report.keys.sort { |a,b| a.to_s <=> b.to_s }.each do |key|
+      ret += "#{Puppet::Util::Metric.labelize(key)}:\n"
+
+      report[key].keys.sort { |a,b|
         # sort by label
-        if a[0] == :total
+        if a == :total
           1
-        elsif b[0] == :total
+        elsif b == :total
           -1
         else
-          a[1] <=> b[1]
+          report[key][a].to_s <=> report[key][b].to_s
         end
-      }.each do |name, label, value|
+      }.each do |label|
+        value = report[key][label]
         next if value == 0
         value = "%0.2f" % value if value.is_a?(Float)
-        ret += "   %15s %s\n" % [label + ":", value]
+        ret += "   %15s %s\n" % [Puppet::Util::Metric.labelize(label) + ":", value]
       end
     end
     ret
+  end
+
+  # Provide a raw hash summary of this report.
+  def raw_summary
+    report = {}
+
+    @metrics.each do |name, metric|
+      key = metric.name.to_s
+      report[key] = {}
+      metric.values.each do |name, label, value|
+        report[key][name.to_s] = value
+      end
+      report[key]["total"] = 0 unless key == "time" or report[key].include?("total")
+    end
+    (report["time"] ||= {})["last_run"] = Time.now.tv_sec
+    report
   end
 
   # Based on the contents of this report's metrics, compute a single number
@@ -91,46 +134,45 @@ class Puppet::Transaction::Report
   # individual bits represent the presence of different metrics.
   def exit_status
     status = 0
-    status |= 2 if @metrics["changes"][:total] > 0
-    status |= 4 if @metrics["resources"][:failed] > 0
+    status |= 2 if @metrics["changes"]["total"] > 0
+    status |= 4 if @metrics["resources"]["failed"] > 0
     status
+  end
+
+  def to_yaml_properties
+    (instance_variables - ["@external_times"]).sort
   end
 
   private
 
-  def calculate_change_metrics
-    metrics = Hash.new(0)
-    resource_statuses.each do |name, status|
-      metrics[:total] += status.change_count if status.change_count
-    end
-
-    add_metric(:changes, metrics)
+  def calculate_change_metric
+    resource_statuses.map { |name, status| status.change_count || 0 }.inject(0) { |a,b| a+b }
   end
 
   def calculate_event_metrics
     metrics = Hash.new(0)
+    metrics["total"] = 0
     resource_statuses.each do |name, status|
-      metrics[:total] += status.events.length
+      metrics["total"] += status.events.length
       status.events.each do |event|
         metrics[event.status] += 1
       end
     end
 
-    add_metric(:events, metrics)
+    metrics
   end
 
   def calculate_resource_metrics
     metrics = Hash.new(0)
-    metrics[:total] = resource_statuses.length
+    metrics["total"] = resource_statuses.length
 
     resource_statuses.each do |name, status|
-
       Puppet::Resource::Status::STATES.each do |state|
-        metrics[state] += 1 if status.send(state)
+        metrics[state.to_s] += 1 if status.send(state)
       end
     end
 
-    add_metric(:resources, metrics)
+    metrics
   end
 
   def calculate_time_metrics
@@ -144,6 +186,8 @@ class Puppet::Transaction::Report
       metrics[name.to_s.downcase] = value
     end
 
-    add_metric(:time, metrics)
+    metrics["total"] = metrics.values.inject(0) { |a,b| a+b }
+
+    metrics
   end
 end

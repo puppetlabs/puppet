@@ -1,3 +1,4 @@
+require 'puppet/node/environment'
 require 'puppet/rails'
 require 'puppet/rails/resource'
 require 'puppet/rails/fact_name'
@@ -16,16 +17,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
   belongs_to :source_file
   has_many :resources, :dependent => :destroy, :class_name => "Puppet::Rails::Resource"
 
-  # If the host already exists, get rid of its objects
-  def self.clean(host)
-    if obj = self.find_by_name(host)
-      obj.rails_objects.clear
-      return obj
-    else
-      return nil
-    end
-  end
-
   def self.from_puppet(node)
     host = find_by_name(node.name) || new(:name => node.name)
 
@@ -38,61 +29,10 @@ class Puppet::Rails::Host < ActiveRecord::Base
     host
   end
 
-  # Store our host in the database.
-  def self.store(node, resources)
-    args = {}
-
-    host = nil
-    railsmark "Stored node" do
-      transaction do
-        #unless host = find_by_name(name)
-
-        debug_benchmark("Searched for host")do
-          unless host = find_by_name(node.name)
-            host = new(:name => node.name)
-          end
-        end
-        if ip = node.parameters["ipaddress"]
-          host.ip = ip
-        end
-
-        if env = node.environment
-          host.environment = env
-        end
-
-        # Store the facts into the database.
-        host.merge_facts(node.parameters)
-
-        debug_benchmark("Handled resources") {
-          host.merge_resources(resources)
-        }
-
-        host.last_compile = Time.now
-
-        debug_benchmark("Saved host") {
-          host.save
-        }
-      end
-
-    end
-
-    # This only runs if time debugging is enabled.
-    write_benchmarks
-
-    host
-  end
-
-  # Return the value of a fact.
-  def fact(name)
-
-    if fv = self.fact_values.find(
-      :all, :include => :fact_name,
-
-        :conditions => "fact_names.name = '#{name}'")
-      return fv
-    else
-      return nil
-    end
+  # Override the setter for environment to force it to be a string, lest it
+  # be YAML encoded.  See #4487.
+  def environment=(value)
+    super value.to_s
   end
 
   # returns a hash of fact_names.name => [ fact_values ] for this host.
@@ -303,11 +243,6 @@ class Puppet::Rails::Host < ActiveRecord::Base
     tags.each do |tag|
       resources[tag['resource_id']].add_tag_to_list(tag) if resources.include?(tag['resource_id'])
     end
-  end
-
-  def update_connect_time
-    self.last_connect = Time.now
-    save
   end
 
   def to_puppet

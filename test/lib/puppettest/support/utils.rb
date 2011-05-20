@@ -1,10 +1,32 @@
-require 'puppettest'
-
 module PuppetTest::Support
 end
 module PuppetTest::Support::Utils
   def gcdebug(type)
     Puppet.warning "#{type}: #{ObjectSpace.each_object(type) { |o| }}"
+  end
+
+  def basedir(*list)
+    unless defined? @@basedir
+      Dir.chdir(File.dirname(__FILE__)) do
+        @@basedir = File.dirname(File.dirname(File.dirname(File.dirname(Dir.getwd))))
+      end
+    end
+    if list.empty?
+      @@basedir
+    else
+      File.join(@@basedir, *list)
+    end
+  end
+
+  def fakedata(dir,pat='*')
+    glob = "#{basedir}/test/#{dir}/#{pat}"
+    files = Dir.glob(glob,File::FNM_PATHNAME)
+    raise Puppet::DevError, "No fakedata matching #{glob}" if files.empty?
+    files
+  end
+
+  def datadir(*list)
+    File.join(basedir, "test", "data", *list)
   end
 
   #
@@ -38,10 +60,6 @@ module PuppetTest::Support::Utils
     config
   end
 
-  # stop any services that might be hanging around
-  def stopservices
-  end
-
   # TODO: rewrite this to use the 'etc' module.
 
   # Define a variable that contains the name of my user.
@@ -64,27 +82,8 @@ module PuppetTest::Support::Utils
     @mygroup = group
   end
 
-  def run_events(type, trans, events, msg)
-    case type
-    when :evaluate, :rollback # things are hunky-dory
-    else
-      raise Puppet::DevError, "Incorrect run_events type"
-    end
-
-    method = type
-
-    trans.send(method)
-    newevents = trans.events.reject { |e| e.status == 'failure' }.collect { |e|
-      e.name
-    }
-
-    assert_equal(events, newevents, "Incorrect #{type} #{msg} events")
-
-    trans
-  end
-
   def fakefile(name)
-    ary = [PuppetTest.basedir, "test"]
+    ary = [basedir, "test"]
     ary += name.split("/")
     file = File.join(ary)
     raise Puppet::DevError, "No fakedata file #{file}" unless FileTest.exists?(file)
@@ -139,17 +138,4 @@ module PuppetTest::Support::Utils
 
     config
   end
-end
-
-module PuppetTest
-  include PuppetTest::Support::Utils
-
-  def fakedata(dir,pat='*')
-    glob = "#{basedir}/test/#{dir}/#{pat}"
-    files = Dir.glob(glob,File::FNM_PATHNAME)
-    raise Puppet::DevError, "No fakedata matching #{glob}" if files.empty?
-    files
-  end
-  module_function :fakedata
-
 end

@@ -3,7 +3,7 @@
 # Script to clean up stored configs for (a) given host(s)
 #
 # Credits:
-# Script was taken from http://reductivelabs.com/trac/puppet/attachment/wiki/UsingStoredConfiguration/kill_node_in_storedconfigs_db.rb
+# Script was taken from http://reductivelabs.com/trac/puppet/attachment/wiki/UsingStoredConfiguration/kill_node_in_storedconfigs_db.rb (link no longer valid),
 # which haven been initially posted by James Turnbull
 # duritong adapted and improved the script a bit.
 
@@ -70,8 +70,6 @@ case adapter
     args[:port]     = pm_conf[:dbport] unless pm_conf[:dbport].to_s.empty?
     socket          = pm_conf[:dbsocket]
     args[:socket]   = socket unless socket.to_s.empty?
-    connections     = pm_conf[:dbconnections].to_i
-    args[:pool]     = connections if connections > 0
   else
     raise ArgumentError, "Invalid db adapter #{adapter}"
 end

@@ -3,7 +3,7 @@
 #  Created by Luke A. Kanies on 2007-01-28.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../../../lib/puppettest')
 
 require 'puppettest'
 

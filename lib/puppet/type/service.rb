@@ -8,19 +8,24 @@ module Puppet
 
   newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
-      widely by platform -- some platforms have very little if any
+      widely by platform --- some platforms have very little if any
       concept of a running service, and some have a very codified and
       powerful concept.  Puppet's service support will generally be able
-      to make up for any inherent shortcomings (e.g., if there is no
+      to do the right thing regardless (e.g., if there is no
       'status' command, then Puppet will look in the process table for a
       command matching the service name), but the more information you
-      can provide the better behaviour you will get.  Or, you can just
-      use a platform that has very good service support.
+      can provide, the better behaviour you will get. In particular, any
+      virtual services that don't have a predictable entry in the process table
+      (for example, `network` on Red Hat/CentOS systems) will manifest odd
+      behavior on restarts if you don't specify `hasstatus` or a `status`
+      command.
 
       Note that if a `service` receives an event from another resource,
       the service will get restarted. The actual command to restart the
-      service depends on the platform. You can provide a special command
-      for restarting with the `restart` attribute."
+      service depends on the platform. You can provide an explicit command
+      for restarting with the `restart` attribute, or use the init script's
+      restart command with the `hasrestart` attribute; if you do neither,
+      the service's stop and start commands will be used."
 
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
@@ -73,7 +78,7 @@ module Puppet
 
         if property = @resource.property(:enable)
           val = property.retrieve
-          property.sync unless property.insync?(val)
+          property.sync unless property.safe_insync?(val)
         end
 
         event
@@ -93,13 +98,18 @@ module Puppet
         that a large number of init scripts on different platforms do
         not support any kind of status command; thus, you must specify
         manually whether the service you are running has such a
-        command (or you can specify a specific command using the
-        `status` parameter).
+        command. Alternately, you can provide a specific command using the
+        `status` attribute.
 
-        If you do not specify anything, then the service name will be
-        looked for in the process table."
+        If you specify neither of these, then Puppet will look for the
+        service name in the process table. Be aware that 'virtual' init
+        scripts such as networking will respond poorly to refresh events
+        (via notify and subscribe relationships) if you don't override
+        this default behavior."
 
       newvalues(:true, :false)
+
+      defaultto :true
     end
     newparam(:name) do
       desc "The name of the service to run.  This name is used to find
@@ -144,10 +154,16 @@ module Puppet
         specified."
     end
     newparam(:status) do
-      desc "Specify a *status* command manually.  If left
-        unspecified, the status method will be determined
-        automatically, usually by looking for the service in the
-        process table."
+      desc "Specify a *status* command manually.  This command must
+        return 0 if the service is running and a nonzero value otherwise.
+        Ideally, these return codes should conform to
+        [the LSB's specification for init script status actions](http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html),
+        but puppet only considers the difference between 0 and nonzero
+        to be relevant.
+
+        If left unspecified, the status method will be determined
+        automatically, usually by looking for the service in the process
+        table."
     end
 
     newparam(:stop) do

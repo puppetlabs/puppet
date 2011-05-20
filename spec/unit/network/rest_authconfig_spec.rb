@@ -1,38 +1,22 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/rest_authconfig'
 
 describe Puppet::Network::RestAuthConfig do
 
-  DEFAULT_ACL = [
-    { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
-    # this one will allow all file access, and thus delegate
-    # to fileserver.conf
-    { :acl => "/file" },
-    { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
-    { :acl => "/report", :method => :save, :authenticated => true },
-    { :acl => "/certificate/ca", :method => :find, :authenticated => false },
-    { :acl => "/certificate/", :method => :find, :authenticated => false },
-    { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
-    { :acl => "/status", :method => [:find], :authenticated => true },
-    { :acl => "/resource", :method => [:find, :save, :search], :authenticated => true },
-  ]
+  DEFAULT_ACL = Puppet::Network::RestAuthConfig::DEFAULT_ACL
 
   before :each do
     FileTest.stubs(:exists?).returns(true)
     File.stubs(:stat).returns(stub('stat', :ctime => :now))
-    Time.stubs(:now).returns :now
+    Time.stubs(:now).returns Time.now
 
     @authconfig = Puppet::Network::RestAuthConfig.new("dummy", false)
     @authconfig.stubs(:read)
 
     @acl = stub_everything 'rights'
     @authconfig.rights = @acl
-
-    @request = stub 'request', :indirection_name => "path", :key => "to/resource", :ip => "127.0.0.1",
-      :node => "me", :method => :save, :environment => :env, :authenticated => true
   end
 
   it "should use the puppet default rest authorization file" do
@@ -41,16 +25,11 @@ describe Puppet::Network::RestAuthConfig do
     Puppet::Network::RestAuthConfig.new(nil, false)
   end
 
-  it "should read the config file when needed" do
-    @authconfig.expects(:read)
-
-    @authconfig.allowed?(@request)
-  end
-
   it "should ask for authorization to the ACL subsystem" do
-    @acl.expects(:fail_on_deny).with("/path/to/resource", :node => "me", :ip => "127.0.0.1", :method => :save, :environment => :env, :authenticated => true)
+    params = {:ip => "127.0.0.1", :node => "me", :environment => :env, :authenticated => true}
+    @acl.expects(:is_request_forbidden_and_why?).with("path", :save, "to/resource", params).returns(nil)
 
-    @authconfig.allowed?(@request)
+    @authconfig.allowed?("path", :save, "to/resource", params)
   end
 
   describe "when defining an acl with mk_acl" do

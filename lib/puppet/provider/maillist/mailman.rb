@@ -14,11 +14,9 @@ Puppet::Type.type(:maillist).provide(:mailman) do
 
   # Return a list of existing mailman instances.
   def self.instances
-    list_lists.split("\n").reject { |line| line.include?("matching mailing lists") }.collect do |line|
-      name, description = line.sub(/^\s+/, '').sub(/\s+$/, '').split(/\s+-\s+/)
-      description = :absent if description.include?("no description available")
-      new(:ensure => :present, :name => name, :description => description)
-    end
+    list_lists('--bare').
+      split("\n").
+      collect { |line| new(:ensure => :present, :name => line.strip) }
   end
 
   # Prefetch our list list, yo.

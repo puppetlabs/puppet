@@ -1,0 +1,8 @@
+# Device                Mountpoint      FStype  Options         Dump    Pass#
+/dev/ad0s1b             none            swap    sw              0       0
+/dev/ad0s1a             /               ufs     rw              1       1
+/dev/ad0s1e             /tmp            ufs     rw              2       2
+/dev/ad0s1f             /usr            ufs     rw              2       2
+/dev/ad0s1d             /var            ufs     rw              2       2
+/dev/ad0s1g             /boot           ufs     rw              2       2
+/dev/acd0               /cdrom          cd9660  ro,noauto       0       0

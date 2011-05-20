@@ -19,10 +19,10 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
 
   or this can be overriden in the service resource parameters::
 
-    service {
-      \"myservice\":
-      provider => \"daemontools\", path => \"/path/to/daemons\";
-    }
+      service { \"myservice\":
+        provider => \"daemontools\",
+        path => \"/path/to/daemons\",
+      }
 
   This provider supports out of the box:
 
@@ -31,10 +31,10 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
   * restart
   * status
 
-  If a service has ensure => \"running\", it will link /path/to/daemon to
+  If a service has `ensure => \"running\"`, it will link /path/to/daemon to
   /path/to/service, which will automatically enable the service.
 
-  If a service has ensure => \"stopped\", it will only down the service, not
+  If a service has `ensure => \"stopped\"`, it will only down the service, not
   remove the /path/to/service link.
 
   "
@@ -67,7 +67,7 @@ Puppet::Type.type(:service).provide :daemontools, :parent => :base do
     path = self.defpath
     unless FileTest.directory?(path)
       Puppet.notice "Service path #{path} does not exist"
-      next
+      return
     end
 
     # reject entries that aren't either a directory

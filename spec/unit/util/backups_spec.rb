@@ -1,9 +1,7 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/util/backups'
-include PuppetTest
 
 describe Puppet::Util::Backups do
   before do

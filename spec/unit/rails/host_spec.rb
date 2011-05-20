@@ -1,10 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
+require 'spec_helper'
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'puppet/node/environment'
 
-describe "Puppet::Rails::Host" do
-  confine "Cannot test without ActiveRecord" => Puppet.features.rails?
-
+describe "Puppet::Rails::Host", :if => Puppet.features.rails? do
   def column(name, type)
     ActiveRecord::ConnectionAdapters::Column.new(name, nil, type, false)
   end
@@ -43,6 +42,12 @@ describe "Puppet::Rails::Host" do
       @host.expects(:environment=).with {|x| x.name.to_s == 'production' }
 
       Puppet::Rails::Host.from_puppet(@node)
+    end
+
+    it "should stringify the environment" do
+      host = Puppet::Rails::Host.new
+      host.environment = Puppet::Node::Environment.new("production")
+      host.environment.class.should == String
     end
 
     it "should copy the ipaddress from the Puppet instance" do

@@ -1,10 +1,9 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
 
-describe "a normal interface method", :shared => true do
+shared_examples_for "a normal interface method" do
   it "should call the method on the CA for each host specified if an array was provided" do
     @ca.expects(@method).with("host1")
     @ca.expects(@method).with("host2")
@@ -69,7 +68,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       @class.new(:generate, :to => :all).subjects.should == :all
     end
 
-    it "should fail if the subjects setting isn't :all or an array" do
+    it "should fail if the subjects setting isn't :all or an array", :'fails_on_ruby_1.9.2' => true do
       lambda { @class.new(:generate, "other") }.should raise_error(ArgumentError)
     end
   end

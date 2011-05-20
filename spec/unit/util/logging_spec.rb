@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/util/logging'
 
@@ -81,7 +80,7 @@ describe Puppet::Util::Logging do
       @logger.notice ["foo", "bar", "baz"]
     end
 
-    [:file, :line, :version, :tags].each do |attr|
+    [:file, :line, :tags].each do |attr|
       it "should include #{attr} if available" do
         @logger.singleton_class.send(:attr_accessor, attr)
 
@@ -90,6 +89,31 @@ describe Puppet::Util::Logging do
         Puppet::Util::Log.expects(:create).with { |args| args[attr] == "myval" }
         @logger.notice "foo"
       end
+    end
+  end
+
+  describe "when sending a deprecation warning" do
+    before do
+      @logger.clear_deprecation_warnings
+    end
+
+    it "should the message with warn" do
+      @logger.expects(:warning).with('foo')
+      @logger.deprecation_warning 'foo'
+    end
+
+    it "should only log each unique message once" do
+      @logger.expects(:warning).with('foo').once
+      5.times { @logger.deprecation_warning 'foo' }
+    end
+
+    it "should only log the first 100 messages" do
+      (1..100).each { |i|
+          @logger.expects(:warning).with(i).once
+          @logger.deprecation_warning i
+      }
+      @logger.expects(:warning).with(101).never
+      @logger.deprecation_warning 101
     end
   end
 end

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-Dir.chdir(File.dirname(__FILE__)) { (s = lambda { |f| File.exist?(f) ? require(f) : Dir.chdir("..") { s.call(f) } }).call("spec/spec_helper.rb") }
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/type_collection'
 require 'puppet/util/rdoc/parser'
@@ -9,7 +8,7 @@ require 'puppet/util/rdoc/code_objects'
 require 'rdoc/options'
 require 'rdoc/rdoc'
 
-describe RDoc::Parser do
+describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 

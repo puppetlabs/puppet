@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 module ScheduleTesting
 
@@ -11,14 +10,6 @@ module ScheduleTesting
   def diff(unit, incr, method, count)
     diff = Time.now.to_i.send(method, incr * count)
     Time.at(diff)
-  end
-
-  def month(method, count)
-    diff(:hour, 3600 * 24 * 30, method, count)
-  end
-
-  def week(method, count)
-    diff(:hour, 3600 * 24 * 7, method, count)
   end
 
   def day(method, count)
@@ -33,10 +24,6 @@ module ScheduleTesting
     diff(:min, 60, method, count)
   end
 
-  def sec(method, count)
-    diff(:sec, 1, method, count)
-  end
-
 end
 
 describe Puppet::Type.type(:schedule) do
@@ -48,6 +35,14 @@ describe Puppet::Type.type(:schedule) do
 
   describe Puppet::Type.type(:schedule) do
     include ScheduleTesting
+
+    it "should apply to device" do
+      @schedule.should be_appliable_to_device
+    end
+
+    it "should apply to host" do
+      @schedule.should be_appliable_to_host
+    end
 
     it "should default to :distance for period-matching" do
       @schedule[:periodmatch].should == :distance
@@ -101,7 +96,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching hourly by distance" do
+  describe Puppet::Type.type(:schedule), "when matching hourly by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -122,7 +117,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching daily by distance" do
+  describe Puppet::Type.type(:schedule), "when matching daily by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -143,7 +138,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching weekly by distance" do
+  describe Puppet::Type.type(:schedule), "when matching weekly by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -164,7 +159,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching monthly by distance" do
+  describe Puppet::Type.type(:schedule), "when matching monthly by distance", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -185,7 +180,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching hourly by number" do
+  describe Puppet::Type.type(:schedule), "when matching hourly by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -194,31 +189,23 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match if the times are one minute apart and the current minute is 0" do
-      current = Time.now
+      current = Time.utc(2008, 1, 1, 0, 0, 0)
+      previous = Time.utc(2007, 12, 31, 23, 59, 0)
 
-      # Subtract an hour, reset the minute to zero, then add 59 minutes, so we're the previous hour plus 59 minutes.
-      previous = (current - 3600 - (current.min * 60) + (59 * 60))
-
-      # Now set the "current" time to the zero minute of the current hour.
-      now = (current - (current.min * 60))
-      Time.stubs(:now).returns(now)
+      Time.stubs(:now).returns(current)
       @schedule.match?(previous).should be_true
     end
 
-    it "should not match if the times are 58 minutes apart and the current minute is 59" do
-      current = Time.now
+    it "should not match if the times are 59 minutes apart and the current minute is 59" do
+      current = Time.utc(2009, 2, 1, 12, 59, 0)
+      previous = Time.utc(2009, 2, 1, 12, 0, 0)
 
-      # reset the minute to zero
-      previous = current - (current.min * 60)
-
-      # Now set the "current" time to the 59th minute of the current hour.
-      now = (current - (current.min * 60) + (59 * 60))
-      Time.stubs(:now).returns(now)
+      Time.stubs(:now).returns(current)
       @schedule.match?(previous).should be_false
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching daily by number" do
+  describe Puppet::Type.type(:schedule), "when matching daily by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -227,10 +214,7 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match if the times are one minute apart and the current minute and hour are 0" do
-      zero = Time.now
-
-      # Reset the current time to X:00:00
-      current = zero - (zero.hour * 3600) - (zero.min * 60) - zero.sec
+      current = Time.utc(2010, "nov", 7, 0, 0, 0)
 
       # Now set the previous time to one minute before that
       previous = current - 60
@@ -240,10 +224,9 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should not match if the times are 23 hours and 58 minutes apart and the current hour is 23 and the current minute is 59" do
-      zero = Time.now
 
       # Reset the previous time to 00:00:00
-      previous = zero - (zero.hour * 3600) - (zero.min * 60) - zero.sec
+      previous = Time.utc(2010, "nov", 7, 0, 0, 0)
 
       # Set the current time to 23:59
       now = previous + (23 * 3600) + (59 * 60)
@@ -253,7 +236,7 @@ describe Puppet::Type.type(:schedule) do
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching weekly by number" do
+  describe Puppet::Type.type(:schedule), "when matching weekly by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -262,25 +245,23 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match if the previous time is prior to the most recent Sunday" do
-      now = Time.now
-
-      # Subtract the number days we've progressed into the week, plus one because we're zero-indexed.
-      previous = now - (3600 * 24 * (now.wday + 1))
+      now = Time.utc(2010, "nov", 11, 0, 0, 0) # Thursday
+      Time.stubs(:now).returns(now)
+      previous = Time.utc(2010, "nov", 6, 23, 59, 59) # Sat
 
       @schedule.match?(previous).should be_true
     end
 
     it "should not match if the previous time is after the most recent Saturday" do
-      now = Time.now
-
-      # Subtract the number days we've progressed into the week
-      previous = now - (3600 * 24 * now.wday)
+      now = Time.utc(2010, "nov", 11, 0, 0, 0) # Thursday
+      Time.stubs(:now).returns(now)
+      previous = Time.utc(2010, "nov", 7, 0, 0, 0) # Sunday
 
       @schedule.match?(previous).should be_false
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching monthly by number" do
+  describe Puppet::Type.type(:schedule), "when matching monthly by number", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do
@@ -289,25 +270,23 @@ describe Puppet::Type.type(:schedule) do
     end
 
     it "should match when the previous time is prior to the first day of this month" do
-      now = Time.now
-
-      # Subtract the number days we've progressed into the month
-      previous = now - (3600 * 24 * now.day)
+      now = Time.utc(2010, "nov", 8, 00, 59, 59)
+      Time.stubs(:now).returns(now)
+      previous = Time.utc(2010, "oct", 31, 23, 59, 59)
 
       @schedule.match?(previous).should be_true
     end
 
     it "should not match when the previous time is after the last day of last month" do
-      now = Time.now
-
-      # Subtract the number days we've progressed into the month, minus one
-      previous = now - (3600 * 24 * (now.day - 1))
+      now = Time.utc(2010, "nov", 8, 00, 59, 59)
+      Time.stubs(:now).returns(now)
+      previous = Time.utc(2010, "nov", 1, 0, 0, 0)
 
       @schedule.match?(previous).should be_false
     end
   end
 
-  describe Puppet::Type.type(:schedule), "when matching with a repeat greater than one" do
+  describe Puppet::Type.type(:schedule), "when matching with a repeat greater than one", :'fails_on_ruby_1.9.2' => true do
     include ScheduleTesting
 
     before do

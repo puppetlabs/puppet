@@ -1,20 +1,15 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/util/queue'
 
-describe Puppet::Util::Queue do
-  confine "Missing Stomp" => Puppet.features.stomp?
-
+describe Puppet::Util::Queue, :if => Puppet.features.stomp?, :'fails_on_ruby_1.9.2' => true do
   it 'should load :stomp client appropriately' do
     Puppet.settings.stubs(:value).returns 'faux_queue_source'
     Puppet::Util::Queue.queue_type_to_class(:stomp).name.should == 'Puppet::Util::Queue::Stomp'
   end
 end
 
-describe 'Puppet::Util::Queue::Stomp' do
-  confine "Missing Stomp" => Puppet.features.stomp?
-
+describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp?, :'fails_on_ruby_1.9.2' => true do
   before do
     # So we make sure we never create a real client instance.
     # Otherwise we'll try to connect, and that's bad.
@@ -68,26 +63,26 @@ describe 'Puppet::Util::Queue::Stomp' do
     end
   end
 
-  describe "when sending a message" do
+  describe "when publishing a message" do
     before do
       @client = stub 'client'
       Stomp::Client.stubs(:new).returns @client
       @queue = Puppet::Util::Queue::Stomp.new
     end
 
-    it "should send it to the queue client instance" do
-      @client.expects(:send).with { |queue, msg, options| msg == "Smite!" }
-      @queue.send_message('fooqueue', 'Smite!')
+    it "should publish it to the queue client instance" do
+      @client.expects(:publish).with { |queue, msg, options| msg == "Smite!" }
+      @queue.publish_message('fooqueue', 'Smite!')
     end
 
-    it "should send it to the transformed queue name" do
-      @client.expects(:send).with { |queue, msg, options| queue == "/queue/fooqueue" }
-      @queue.send_message('fooqueue', 'Smite!')
+    it "should publish it to the transformed queue name" do
+      @client.expects(:publish).with { |queue, msg, options| queue == "/queue/fooqueue" }
+      @queue.publish_message('fooqueue', 'Smite!')
     end
 
-    it "should send it as a persistent message" do
-      @client.expects(:send).with { |queue, msg, options| options[:persistent] == true }
-      @queue.send_message('fooqueue', 'Smite!')
+    it "should publish it as a persistent message" do
+      @client.expects(:publish).with { |queue, msg, options| options[:persistent] == true }
+      @queue.publish_message('fooqueue', 'Smite!')
     end
   end
 

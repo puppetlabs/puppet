@@ -11,13 +11,7 @@ tab = case Facter.value(:operatingsystem)
 
 
 
-      Puppet::Type.type(:cron).provide(
-        :crontab,
-  :parent => Puppet::Provider::ParsedFile,
-  :default_target => ENV["USER"] || "root",
-        
-  :filetype => tab
-) do
+Puppet::Type.type(:cron).provide(:crontab, :parent => Puppet::Provider::ParsedFile, :default_target => ENV["USER"] || "root", :filetype => tab) do
   commands :crontab => "crontab"
 
   text_line :comment, :match => %r{^#}, :post_parse => proc { |record|

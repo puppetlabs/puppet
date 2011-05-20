@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/indirector/plain'
 
 describe Puppet::Indirector::Plain do
@@ -10,10 +9,9 @@ describe Puppet::Indirector::Plain do
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @plain_class = Class.new(Puppet::Indirector::Plain) do
-      def self.to_s
-        "Mystuff::Testing"
-      end
+    module Testing; end
+    @plain_class = class Testing::MyPlain < Puppet::Indirector::Plain
+      self
     end
 
     @searcher = @plain_class.new

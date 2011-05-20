@@ -1,15 +1,11 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/node'
-require 'spec/lib/puppet_spec/files.rb'
 
-describe "Puppet::Node::ActiveRecord" do
+describe "Puppet::Node::ActiveRecord", :if => Puppet.features.rails? && Puppet.features.sqlite? do
   include PuppetSpec::Files
 
-  confine "Missing Rails" => Puppet.features.rails?
-  confine "Missing sqlite" => Puppet.features.sqlite?
   before do
     require 'puppet/indirector/node/active_record'
   end

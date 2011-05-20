@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby"
-
-require File.dirname(__FILE__) + '/../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/daemon'
 
 def without_warnings
@@ -29,13 +28,9 @@ describe Puppet::Daemon do
   end
 
   describe "when setting signal traps" do
-    before do
-      @daemon.stubs(:trap)
-    end
-
     {:INT => :stop, :TERM => :stop, :HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}.each do |signal, method|
       it "should log and call #{method} when it receives #{signal}" do
-        @daemon.expects(:trap).with(signal).yields
+        Signal.expects(:trap).with(signal).yields
 
         Puppet.expects(:notice)
 
@@ -91,7 +86,6 @@ describe Puppet::Daemon do
   describe "when stopping" do
     before do
       @daemon.stubs(:remove_pidfile)
-      @daemon.stubs(:exit)
       Puppet::Util::Log.stubs(:close_all)
       # to make the global safe to mock, set it to a subclass of itself,
       # then restore it in an after pass
@@ -107,34 +101,29 @@ describe Puppet::Daemon do
       server = mock 'server'
       server.expects(:stop)
       @daemon.stubs(:server).returns server
-
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it 'should request a stop from Puppet::Application' do
       Puppet::Application.expects(:stop!)
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should remove its pidfile" do
       @daemon.expects(:remove_pidfile)
-
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should close all logs" do
       Puppet::Util::Log.expects(:close_all)
-
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should exit unless called with ':exit => false'" do
-      @daemon.expects(:exit)
-      @daemon.stop
+      expect { @daemon.stop }.to exit_with 0
     end
 
     it "should not exit if called with ':exit => false'" do
-      @daemon.expects(:exit).never
       @daemon.stop :exit => false
     end
   end
@@ -142,11 +131,7 @@ describe Puppet::Daemon do
   describe "when creating its pidfile" do
     it "should use an exclusive mutex" do
       Puppet.settings.expects(:value).with(:name).returns "me"
-
-      sync = mock 'sync'
-      Puppet::Util.expects(:sync).with("me").returns sync
-
-      sync.expects(:synchronize).with(Sync::EX)
+      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
       @daemon.create_pidfile
     end
 
@@ -180,10 +165,8 @@ describe Puppet::Daemon do
     it "should use an exclusive mutex" do
       Puppet.settings.expects(:value).with(:name).returns "me"
 
-      sync = mock 'sync'
-      Puppet::Util.expects(:sync).with("me").returns sync
+      Puppet::Util.expects(:synchronize_on).with("me",Sync::EX)
 
-      sync.expects(:synchronize).with(Sync::EX)
       @daemon.remove_pidfile
     end
 

@@ -1,27 +1,28 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2007-10-19.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/indirector/file_server'
 require 'puppet/file_serving/configuration'
 
 describe Puppet::Indirector::FileServer do
 
-  before :each do
+  before :all do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @file_server_class = Class.new(Puppet::Indirector::FileServer) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @file_server_class = class Testing::MyFileServer < Puppet::Indirector::FileServer
+      self
     end
+  end
 
+  before :each do
     @file_server = @file_server_class.new
 
     @uri = "puppet://host/my/local/file"
@@ -229,6 +230,12 @@ describe Puppet::Indirector::FileServer do
   describe "when checking authorization" do
     before do
       @request.method = :find
+
+      @mount = stub 'mount'
+      @configuration.stubs(:split_path).with(@request).returns([@mount, "rel/path"])
+      @request.stubs(:node).returns("mynode")
+      @request.stubs(:ip).returns("myip")
+      @mount.stubs(:allowed?).with("mynode", "myip").returns "something"
     end
 
     it "should return false when destroying" do
@@ -254,13 +261,6 @@ describe Puppet::Indirector::FileServer do
     end
 
     it "should return the results of asking the mount whether the node and IP are authorized" do
-      @mount = stub 'mount'
-      @configuration.expects(:split_path).with(@request).returns([@mount, "rel/path"])
-
-      @request.stubs(:node).returns("mynode")
-      @request.stubs(:ip).returns("myip")
-      @mount.expects(:allowed?).with("mynode", "myip").returns "something"
-
       @file_server.authorized?(@request).should == "something"
     end
   end

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Parser::AST::CaseStatement do
   before :each do
@@ -13,11 +12,14 @@ describe Puppet::Parser::AST::CaseStatement do
       @test = stub 'test'
       @test.stubs(:safeevaluate).with(@scope).returns("value")
 
-      @option1 = stub 'option1', :eachopt => nil, :default? => false
-      @option2 = stub 'option2', :eachopt => nil, :default? => false
+      @option1 = Puppet::Parser::AST::CaseOpt.new({})
+      @option1.stubs(:eachopt)
+      @option1.stubs(:default?).returns false
+      @option2 = Puppet::Parser::AST::CaseOpt.new({})
+      @option2.stubs(:eachopt)
+      @option2.stubs(:default?).returns false
 
-      @options = stub 'options'
-      @options.stubs(:each).multiple_yields(@option1, @option2)
+      @options = Puppet::Parser::AST::ASTArray.new(:children => [@option1, @option2])
 
       @casestmt = Puppet::Parser::AST::CaseStatement.new :test => @test, :options => @options
     end
@@ -29,8 +31,6 @@ describe Puppet::Parser::AST::CaseStatement do
     end
 
     it "should scan each option" do
-      @options.expects(:each).multiple_yields(@option1, @option2)
-
       @casestmt.evaluate(@scope)
     end
 
@@ -137,12 +137,15 @@ describe Puppet::Parser::AST::CaseStatement do
     options = tests.collect do |result, values|
       values = values.collect { |v| AST::Leaf.new :value => v }
 
-            AST::CaseOpt.new(
-        :value => AST::ASTArray.new(:children => values),
-        
-        :statements => AST::Leaf.new(:value => result))
+      AST::CaseOpt.new(
+        :value      => AST::ASTArray.new(:children => values),
+        :statements => AST::Leaf.new(:value => result)
+      )
     end
-    options << AST::CaseOpt.new(:value => AST::Default.new(:value => "default"), :statements => AST::Leaf.new(:value => "default"))
+    options << AST::CaseOpt.new(
+      :value      => AST::Default.new(:value => "default"), 
+      :statements => AST::Leaf.new(:value => "default")
+    )
 
     ast = nil
     param = AST::Variable.new(:value => "testparam")

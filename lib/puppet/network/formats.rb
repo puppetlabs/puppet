@@ -160,3 +160,39 @@ end
 
 # This is really only ever going to be used for Catalogs.
 Puppet::Network::FormatHandler.create_serialized_formats(:dot, :required_methods => [:render_method])
+
+
+Puppet::Network::FormatHandler.create(:console,
+                                      :mime   => 'text/x-console-text',
+                                      :weight => 0) do
+  def json
+    @json ||= Puppet::Network::FormatHandler.format(:pson)
+  end
+
+  def render(datum)
+    # String to String
+    return datum if datum.is_a? String
+    return datum if datum.is_a? Numeric
+
+    # Simple hash to table
+    if datum.is_a? Hash and datum.keys.all? { |x| x.is_a? String or x.is_a? Numeric }
+      output = ''
+      column_a = datum.map do |k,v| k.to_s.length end.max + 2
+      column_b = 79 - column_a
+      datum.sort_by { |k,v| k.to_s } .each do |key, value|
+        output << key.to_s.ljust(column_a)
+        output << json.render(value).
+          chomp.gsub(/\n */) { |x| x + (' ' * column_a) }
+        output << "\n"
+      end
+      return output
+    end
+
+    # ...or pretty-print the inspect outcome.
+    return json.render(datum)
+  end
+
+  def render_multiple(data)
+    data.collect(&:render).join("\n")
+  end
+end

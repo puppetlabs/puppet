@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Parser::AST::ArithmeticOperator do
 
@@ -58,16 +57,6 @@ describe Puppet::Parser::AST::ArithmeticOperator do
     one = stub 'one', :safeevaluate => 1.80
     operator = ast::ArithmeticOperator.new :lval => two, :operator => "+", :rval => one
     operator.evaluate(@scope).should == 4.33
-  end
-
-  it "should work for variables too" do
-    @scope.expects(:lookupvar).with("one", false).returns(1)
-    @scope.expects(:lookupvar).with("two", false).returns(2)
-    one = ast::Variable.new( :value => "one" )
-    two = ast::Variable.new( :value => "two" )
-
-    operator = ast::ArithmeticOperator.new :lval => one, :operator => "+", :rval => two
-    operator.evaluate(@scope).should == 3
   end
 
 end

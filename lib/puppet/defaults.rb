@@ -2,8 +2,8 @@
 module Puppet
   setdefaults(:main,
     :confdir => [Puppet.run_mode.conf_dir, "The main Puppet configuration directory.  The default for this parameter is calculated based on the user.  If the process
-    is running as root or the user that `puppet master` is supposed to run as, it defaults to a system directory, but if it's running as any other user,
-    it defaults to being in `~`."],
+    is running as root or the user that Puppet is supposed to run as, it defaults to a system directory, but if it's running as any other user,
+    it defaults to being in the user's home directory."],
     :vardir => [Puppet.run_mode.var_dir, "Where Puppet stores dynamic and growing data.  The default for this parameter is calculated specially, like `confdir`_."],
     :name => [Puppet.application_name.to_s, "The name of the application, if we are running as one.  The
       default is essentially $0 without the path or `.rb`."],
@@ -14,7 +14,11 @@ module Puppet
 
   setdefaults(:main,
     :trace => [false, "Whether to print stack traces on some errors"],
-    :autoflush => [false, "Whether log files should always flush to disk."],
+    :autoflush => {
+      :default => false,
+      :desc    => "Whether log files should always flush to disk.",
+      :hook    => proc { |value| Log.autoflush = value }
+    },
     :syslogfacility => ["daemon", "What syslog facility to use when logging to
       syslog.  Syslog has a fixed list of valid facilities, and you must
       choose one of those; you cannot just make one up."],
@@ -112,10 +116,21 @@ module Puppet
       but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
       huge numbers that can then not be fed back into the system.  This is a hackish way to fail in a
       slightly more useful way when that happens."],
+    :route_file => ["$confdir/routes.yaml", "The YAML file containing indirector route configuration."],
     :node_terminus => ["plain", "Where to find information about nodes."],
     :catalog_terminus => ["compiler", "Where to get node catalogs.  This is useful to change if, for instance,
       you'd like to pre-compile catalogs and store them in memcached or some other easily-accessed store."],
-    :facts_terminus => [Puppet.application_name.to_s == "master" ? 'yaml' : 'facter', "The node facts terminus."],
+    :facts_terminus => {
+      :default => Puppet.application_name.to_s == "master" ? 'yaml' : 'facter',
+      :desc => "The node facts terminus.",
+      :hook => proc do |value|
+        require 'puppet/node/facts'
+        if value.to_s == "rest"
+          Puppet::Node::Facts.indirection.cache_class = :yaml
+        end
+      end
+    },
+    :inventory_terminus => [ "$facts_terminus", "Should usually be the same as the facts terminus" ],
     :httplog => { :default => "$logdir/http.log",
       :owner => "root",
       :mode => 0640,
@@ -142,7 +157,7 @@ module Puppet
           Puppet.settings[:storeconfigs] = true
 
           # But then we modify the configuration
-          Puppet::Resource::Catalog.cache_class = :queue
+          Puppet::Resource::Catalog.indirection.cache_class = :queue
         else
           raise "Cannot disable asynchronous storeconfigs in a running process"
         end
@@ -268,7 +283,7 @@ module Puppet
 
     setdefaults(
     :ca,
-    :ca_name => ["$certname", "The name to use the Certificate Authority certificate."],
+    :ca_name => ["Puppet CA: $certname", "The name to use the Certificate Authority certificate."],
     :cadir => {  :default => "$ssldir/ca",
       :owner => "service",
       :group => "service",
@@ -339,6 +354,8 @@ module Puppet
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
         uses that configuration file to determine which keys to sign."},
+    :allow_duplicate_certs => [false, "Whether to allow a new certificate
+      request to overwrite an existing certificate."],
     :ca_days => ["", "How long a certificate should be valid.
       This parameter is deprecated, use ca_ttl instead"],
     :ca_ttl => ["5y", "The default TTL for new certificates; valid values
@@ -401,8 +418,7 @@ module Puppet
       :desc => "Where the puppet master web server logs."
     },
     :masterport => [8140, "Which port puppet master listens on."],
-    :parseonly => [false, "Just check the syntax of the manifests."],
-    :node_name => ["cert", "How the puppetmaster determines the client's identity
+    :node_name => ["cert", "How the puppet master determines the client's identity
       and sets the 'hostname', 'fqdn' and 'domain' facts for use in the manifest,
       in particular for determining which 'node' statement applies to the client.
       Possible values are 'cert' (use the subject's CN in the client's
@@ -453,7 +469,14 @@ module Puppet
     :reporturl => ["http://localhost:3000/reports",
       "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
+    :strict_hostname_checking => [false, "Whether to only search for the complete
+      hostname as it is in the certificate when searching for node information
+      in the catalogs."]
+  )
+
+  setdefaults(:metrics,
     :rrddir => {:default => "$vardir/rrd",
+      :mode => 0750,
       :owner => "service",
       :group => "service",
       :desc => "The directory where RRD database files are stored.
@@ -461,10 +484,12 @@ module Puppet
         this directory."
     },
     :rrdinterval => ["$runinterval", "How often RRD should expect data.
-      This should match how often the hosts report back to the server."],
-    :strict_hostname_checking => [false, "Whether to only search for the complete
-      hostname as it is in the certificate when searching for node information
-      in the catalogs."]
+      This should match how often the hosts report back to the server."]
+  )
+
+  setdefaults(:device,
+    :devicedir =>  {:default => "$vardir/devices", :mode => "750", :desc => "The root directory of devices' $vardir"},
+    :deviceconfig => ["$confdir/device.conf","Path to the device config file for puppet device"]
   )
 
   setdefaults(:agent,
@@ -503,10 +528,10 @@ module Puppet
     :runinterval => [1800, # 30 minutes
       "How often puppet agent applies the client configuration; in seconds."],
     :listen => [false, "Whether puppet agent should listen for
-      connections.  If this is true, then by default only the
-      `runner` server is started, which allows remote authorized
-      and authenticated nodes to connect and trigger `puppet agent`
-      runs."],
+      connections.  If this is true, then puppet agent will accept incoming
+      REST API requests, subject to the default ACLs and the ACLs set in 
+      the `rest_authconfig` file. Puppet agent can respond usefully to
+      requests on the `run`, `facts`, `certificate`, and `resource` endpoints."],
     :ca_server => ["$server", "The server to use for certificate
       authority requests.  It's a separate server because it cannot
       and does not need to horizontally scale."],
@@ -575,24 +600,43 @@ module Puppet
       end
     },
     :report_server => ["$server",
-      "The server to which to send transaction reports."
+      "The server to send transaction reports to."
     ],
     :report_port => ["$masterport",
       "The port to communicate with the report_server."
     ],
-    :report => [false,
+    :inventory_server => ["$server",
+      "The server to send facts to."
+    ],
+    :inventory_port => ["$masterport",
+      "The port to communicate with the inventory_server."
+    ],
+    :report => [true,
       "Whether to send reports after every transaction."
     ],
+    :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report summary in yaml format."
+    },
+    :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
+      :mode => 0660,
+      :desc => "Where puppet agent stores the last run report in yaml format."
+    },
     :graph => [false, "Whether to create dot graph files for the different
       configuration graphs.  These dot files can be interpreted by tools
       like OmniGraffle or dot (which is part of ImageMagick)."],
     :graphdir => ["$statedir/graphs", "Where to store dot-outputted graphs."],
     :http_compression => [false, "Allow http compression in REST communication with the master.
       This setting might improve performance for agent -> master communications over slow WANs.
-      Your puppetmaster needs to support compression (usually by activating some settings in a reverse-proxy
-      in front of the puppetmaster, which rules out webrick).
+      Your puppet master needs to support compression (usually by activating some settings in a reverse-proxy
+      in front of the puppet master, which rules out webrick).
       It is harmless to activate this settings if your master doesn't support
       compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
+  )
+
+  setdefaults(:inspect,
+      :archive_files => [false, "During an inspect run, whether to archive files whose contents are audited to a file bucket."],
+      :archive_file_server => ["$server", "During an inspect run, the file bucket server to archive files to if archive_files is set."]
   )
 
   # Plugin information.
@@ -637,7 +681,7 @@ module Puppet
     setdefaults(
     :tagmail,
     :tagmap => ["$confdir/tagmail.conf", "The mapping between reporting tags and email addresses."],
-    :sendmail => [%x{which sendmail 2>/dev/null}.chomp, "Where to find the sendmail binary with which to send email."],
+    :sendmail => [which('sendmail') || '', "Where to find the sendmail binary with which to send email."],
 
     :reportfrom => ["report@" + [Facter["hostname"].value, Facter["domain"].value].join("."), "The 'from' email address for the reports."],
     :smtpserver => ["none", "The server through which to send email reports."]
@@ -663,11 +707,10 @@ module Puppet
       used when networked databases are used."],
     :dbpassword => [ "puppet", "The database password for caching. Only
       used when networked databases are used."],
+    :dbconnections => [ '', "The number of database connections for networked
+      databases.  Will be ignored unless the value is a positive integer."],
     :dbsocket => [ "", "The database socket location. Only used when networked
       databases are used.  Will be ignored if the value is an empty string."],
-    :dbconnections => [ 0, "The number of database connections. Only used when
-      networked databases are used.  Will be ignored if the value is an empty
-      string or is less than 1."],
     :railslog => {:default => "$logdir/rails.log",
       :mode => 0600,
       :owner => "service",
@@ -768,9 +811,9 @@ module Puppet
         if value
           require 'puppet/rails'
           raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
-          Puppet::Resource::Catalog.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
-          Puppet::Node::Facts.cache_class = :active_record
-          Puppet::Node.cache_class = :active_record
+          Puppet::Resource::Catalog.indirection.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
+          Puppet::Node::Facts.indirection.cache_class = :active_record
+          Puppet::Node.indirection.cache_class = :active_record
         end
       end
     }
@@ -786,5 +829,9 @@ module Puppet
       "Where Puppet looks for template files.  Can be a list of colon-seperated
       directories."
     ]
+  )
+  setdefaults(
+    :puppetdoc,
+    :document_all => [false, "Document all resources"]
   )
 end

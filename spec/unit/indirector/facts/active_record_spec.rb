@@ -1,12 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
+require 'spec_helper'
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
-
+require 'puppet/rails'
 require 'puppet/node/facts'
 
-describe "Puppet::Node::Facts::ActiveRecord" do
-  confine "Missing Rails" => Puppet.features.rails?
-
+describe "Puppet::Node::Facts::ActiveRecord", :if => Puppet.features.rails? do
   before do
     require 'puppet/indirector/facts/active_record'
     Puppet.features.stubs(:rails?).returns true

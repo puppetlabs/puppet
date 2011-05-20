@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Type do
   it "should include the Cacher module" do
@@ -116,7 +115,7 @@ describe Puppet::Type do
     catalog.version = 50
     catalog.add_resource resource
 
-    resource.source_descriptors.should == {:version=>50, :tags=>["mount", "foo"], :path=>"/Mount[foo]"}
+    resource.source_descriptors.should == {:tags=>["mount", "foo"], :path=>"/Mount[foo]"}
   end
 
   it "should consider its type to be the name of its class" do
@@ -153,7 +152,7 @@ describe Puppet::Type do
       @resource.event.default_log_level.should == :warning
     end
 
-    {:file => "/my/file", :line => 50, :tags => %{foo bar}, :version => 50}.each do |attr, value|
+    {:file => "/my/file", :line => 50, :tags => %{foo bar}}.each do |attr, value|
       it "should set the #{attr}" do
         @resource.stubs(attr).returns value
         @resource.event.send(attr).should == value
@@ -434,7 +433,7 @@ describe Puppet::Type do
         patterns.length.should == 1
         patterns[0].length.should == 2
       end
-      
+
       it "should have a regexp that captures the entire string" do
         patterns = @type_class.title_patterns
         string = "abc\n\tdef"
@@ -545,6 +544,13 @@ describe Puppet::Type.metaparamclass(:audit) do
     @resource[:audit].should == list
   end
 
+  it "should accept the string 'all' to specify auditing all possible properties" do
+    @resource[:audit] = 'all'
+
+    list = @resource.class.properties.collect { |p| p.name }
+    @resource[:audit].should == list
+  end
+
   it "should fail if asked to audit an invalid property" do
     lambda { @resource[:audit] = :foobar }.should raise_error(Puppet::Error)
   end
@@ -562,5 +568,16 @@ describe Puppet::Type.metaparamclass(:audit) do
   it "should not create attribute instances for parameters, only properties" do
     @resource[:audit] = :noop
     @resource.parameter(:noop).should be_nil
+  end
+
+  describe "when generating the uniqueness key" do
+    it "should include all of the key_attributes in alphabetical order by attribute name" do
+      Puppet::Type.type(:file).stubs(:key_attributes).returns [:path, :mode, :owner]
+      Puppet::Type.type(:file).stubs(:title_patterns).returns(
+        [ [ /(.*)/, [ [:path, lambda{|x| x} ] ] ] ]
+      )
+      res = Puppet::Type.type(:file).new( :title => '/my/file', :path => '/my/file', :owner => 'root', :content => 'hello' )
+      res.uniqueness_key.should == [ nil, 'root', '/my/file']
+    end
   end
 end

@@ -3,6 +3,7 @@ require 'puppet/indirector'
 # A class for managing nodes, including their facts and environment.
 class Puppet::Node
   require 'puppet/node/facts'
+  require 'puppet/node/inventory'
   require 'puppet/node/environment'
 
   # Set up indirection, so that nodes can be looked for in
@@ -56,7 +57,7 @@ class Puppet::Node
 
   # Merge the node facts with parameters from the node source.
   def fact_merge
-      if facts = Puppet::Node::Facts.find(name)
+      if facts = Puppet::Node::Facts.indirection.find(name)
         merge(facts.values)
       end
   rescue => detail

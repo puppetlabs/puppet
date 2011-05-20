@@ -66,8 +66,6 @@ module Puppet
       end
 
       def insync?(is)
-        return true unless @should
-
         return true unless is
 
         (prepare_is_for_comparison(is) == self.should)

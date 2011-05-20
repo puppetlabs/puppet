@@ -20,7 +20,7 @@ class Puppet::Parser::Compiler
     puts detail.backtrace if Puppet[:trace]
     raise Puppet::Error, "#{detail} on node #{node.name}"
   ensure
-    # We get these from the environment and only cache them in a thread 
+    # We get these from the environment and only cache them in a thread
     # variable for the duration of the compilation.
     Thread.current[:known_resource_types] = nil
     Thread.current[:env_module_directories] = nil
@@ -56,23 +56,20 @@ class Puppet::Parser::Compiler
     # Note that this will fail if the resource is not unique.
     @catalog.add_resource(resource)
 
+    if resource.type.to_s.downcase != "class" && resource[:stage]
+      raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage"
+    end
 
-    # Add our container edge.  If we're a class, then we get treated specially - we can
-    # control the stage that the class is applied in.  Otherwise, we just
-    # get added to our parent container.
+    # Stages should not be inside of classes.  They are always a
+    # top-level container, regardless of where they appear in the
+    # manifest.
     return if resource.type.to_s.downcase == "stage"
 
+    # This adds a resource to the class it lexically appears in in the
+    # manifest.
     if resource.type.to_s.downcase != "class"
-      raise ArgumentError, "Only classes can set 'stage'; normal resources like #{resource} cannot change run stage" if resource[:stage]
       return @catalog.add_edge(scope.resource, resource)
     end
-
-    unless stage = @catalog.resource(:stage, resource[:stage] || (scope && scope.resource && scope.resource[:stage]) || :main)
-      raise ArgumentError, "Could not find stage #{resource[:stage] || :main} specified by #{resource}"
-    end
-
-    resource[:stage] ||= stage.title
-    @catalog.add_edge(stage, resource)
   end
 
   # Do we use nodes found in the code, vs. the external node sources?
@@ -133,29 +130,36 @@ class Puppet::Parser::Compiler
   end
 
   # Evaluate each specified class in turn.  If there are any classes we can't
-  # find, just tag the catalog and move on.  This method really just
-  # creates resource objects that point back to the classes, and then the
-  # resources are themselves evaluated later in the process.
+  # find, raise an error.  This method really just creates resource objects
+  # that point back to the classes, and then the resources are themselves
+  # evaluated later in the process.
   def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
-    found = []
+    param_classes = nil
+    # if we are a param class, save the classes hash
+    # and transform classes to be the keys
+    if classes.class == Hash
+      param_classes = classes
+      classes = classes.keys
+    end
     classes.each do |name|
       # If we can find the class, then make a resource that will evaluate it.
       if klass = scope.find_hostclass(name)
-        found << name and next if scope.class_scope(klass)
 
-        resource = klass.mk_plain_resource(scope)
+        if param_classes
+          resource = klass.ensure_in_catalog(scope, param_classes[name] || {})
+        else
+          next if scope.class_scope(klass)
+          resource = klass.ensure_in_catalog(scope)
+        end
 
         # If they've disabled lazy evaluation (which the :include function does),
         # then evaluate our resource immediately.
         resource.evaluate unless lazy_evaluate
-        found << name
       else
-        Puppet.info "Could not find class #{name} for #{node.name}"
-        @catalog.tag(name)
+        raise Puppet::Error, "Could not find class #{name} for #{node.name}"
       end
     end
-    found
   end
 
   def evaluate_relationships
@@ -220,7 +224,7 @@ class Puppet::Parser::Compiler
 
     # Create a resource to model this node, and then add it to the list
     # of resources.
-    resource = astnode.mk_plain_resource(topscope)
+    resource = astnode.ensure_in_catalog(topscope)
 
     resource.evaluate
 
@@ -432,7 +436,11 @@ class Puppet::Parser::Compiler
     @resources = []
 
     # Make sure any external node classes are in our class list
-    @catalog.add_class(*@node.classes)
+    if @node.classes.class == Hash
+      @catalog.add_class(*@node.classes.keys)
+    else
+      @catalog.add_class(*@node.classes)
+    end
   end
 
   # Set the node's parameters into the top-scope as variables.

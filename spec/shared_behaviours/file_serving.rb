@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2007-10-18.
 #  Copyright (c) 2007. All rights reserved.
 
-describe "Puppet::FileServing::Files", :shared => true do
+shared_examples_for "Puppet::FileServing::Files" do
   it "should use the rest terminus when the 'puppet' URI scheme is used and a host name is present" do
     uri = "puppet://myhost/fakemod/my/file"
 
@@ -12,7 +12,7 @@ describe "Puppet::FileServing::Files", :shared => true do
     term = @indirection.terminus(:rest)
     @indirection.stubs(:terminus).with(:rest).returns term
     term.expects(:find)
-    @test_class.find(uri)
+    @indirection.find(uri)
   end
 
   it "should use the rest terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is not 'puppet' or 'apply'" do
@@ -21,7 +21,7 @@ describe "Puppet::FileServing::Files", :shared => true do
     Puppet.settings.stubs(:value).with(:name).returns("puppetd")
     Puppet.settings.stubs(:value).with(:modulepath).returns("")
     @indirection.terminus(:rest).expects(:find)
-    @test_class.find(uri)
+    @indirection.find(uri)
   end
 
   it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'puppet'" do
@@ -32,7 +32,7 @@ describe "Puppet::FileServing::Files", :shared => true do
     Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
     @indirection.terminus(:file_server).expects(:find)
     @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
-    @test_class.find(uri)
+    @indirection.find(uri)
   end
 
   it "should use the file_server terminus when the 'puppet' URI scheme is used, no host name is present, and the process name is 'apply'" do
@@ -43,19 +43,19 @@ describe "Puppet::FileServing::Files", :shared => true do
     Puppet.settings.stubs(:value).with(:fileserverconfig).returns("/whatever")
     @indirection.terminus(:file_server).expects(:find)
     @indirection.terminus(:file_server).stubs(:authorized?).returns(true)
-    @test_class.find(uri)
+    @indirection.find(uri)
   end
 
   it "should use the file terminus when the 'file' URI scheme is used" do
     uri = "file:///fakemod/my/file"
     @indirection.terminus(:file).expects(:find)
-    @test_class.find(uri)
+    @indirection.find(uri)
   end
 
   it "should use the file terminus when a fully qualified path is provided" do
     uri = "/fakemod/my/file"
     @indirection.terminus(:file).expects(:find)
-    @test_class.find(uri)
+    @indirection.find(uri)
   end
 
   it "should use the configuration to test whether the request is allowed" do
@@ -66,6 +66,6 @@ describe "Puppet::FileServing::Files", :shared => true do
 
     @indirection.terminus(:file_server).expects(:find)
     mount.expects(:allowed?).returns(true)
-    @test_class.find(uri, :node => "foo", :ip => "bar")
+    @indirection.find(uri, :node => "foo", :ip => "bar")
   end
 end

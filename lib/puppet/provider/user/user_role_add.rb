@@ -6,13 +6,15 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
 
   defaultfor :operatingsystem => :solaris
 
-  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :role_add => "roleadd", :role_delete => "roledel", :role_modify => "rolemod"
+  commands :add => "useradd", :delete => "userdel", :modify => "usermod", :password => "passwd", :role_add => "roleadd", :role_delete => "roledel", :role_modify => "rolemod"
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
   options :roles, :flag => "-R"
   options :auths, :flag => "-A"
   options :profiles, :flag => "-P"
+  options :password_min_age, :flag => "-n"
+  options :password_max_age, :flag => "-x"
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -22,14 +24,14 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     value !~ /\s/
   end
 
-  has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords
+  has_features :manages_homedir, :allows_duplicates, :manages_solaris_rbac, :manages_passwords, :manages_password_age
 
   #must override this to hand the keyvalue pairs
   def add_properties
     cmd = []
     Puppet::Type.type(:user).validproperties.each do |property|
       #skip the password because we can't create it with the solaris useradd
-      next if [:ensure, :password].include?(property)
+      next if [:ensure, :password, :password_min_age, :password_max_age].include?(property)
       # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
@@ -79,6 +81,9 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
       run(transition("normal"), "transition role to")
     else
       run(addcmd, "create")
+      if cmd = passcmd
+        run(cmd, "change password policy for")
+      end
     end
     # added to handle case when password is specified
     self.password = @resource[:password] if @resource[:password]
@@ -140,14 +145,23 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
     run([command(:modify)] + build_keys_cmd(keys_hash) << @resource[:name], "modify attribute key pairs")
   end
 
-  #Read in /etc/shadow, find the line for this user (skipping comments, because who knows) and return the hashed pw (the second entry)
+  #Read in /etc/shadow, find the line for this user (skipping comments, because who knows) and return it
   #No abstraction, all esoteric knowledge of file formats, yay
+  def shadow_entry
+    return @shadow_entry if defined? @shadow_entry
+    @shadow_entry = File.readlines("/etc/shadow").reject { |r| r =~ /^[^\w]/ }.collect { |l| l.chomp.split(':') }.find { |user, _| user == @resource[:name] }
+  end
+
   def password
-    #got perl?
-    if ary = File.readlines("/etc/shadow").reject { |r| r =~ /^[^\w]/}.collect { |l| l.split(':')[0..1] }.find { |user, passwd| user == @resource[:name] }
-      pass = ary[1]
-    end
-    pass
+    shadow_entry[1] if shadow_entry
+  end
+
+  def password_min_age
+    shadow_entry ? shadow_entry[3] : :absent
+  end
+
+  def password_max_age
+    shadow_entry ? shadow_entry[4] : :absent
   end
 
   #Read in /etc/shadow, find the line for our used and rewrite it with the new pw

@@ -1,12 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/handler/fileserver'
 
-
 describe Puppet::Network::Handler::FileServer do
-  require 'tmpdir'
+  include PuppetSpec::Files
 
   def create_file(filename)
     File.open(filename, "w") { |f| f.puts filename}
@@ -20,8 +18,7 @@ describe Puppet::Network::Handler::FileServer do
   end
 
   before do
-    @basedir = File.join(Dir.tmpdir, "test_network_handler")
-    Dir.mkdir(@basedir)
+    @basedir = tmpdir("test_network_handler")
     @file = File.join(@basedir, "aFile")
     @link = File.join(@basedir, "aLink")
     create_file(@file)
@@ -126,7 +123,7 @@ describe Puppet::Network::Handler::FileServer do
     list.sort.should == [ ["/aFile", "file"], ["/", "directory"] ].sort
   end
 
-  describe Puppet::Network::Handler::FileServer::PluginMount do
+  describe Puppet::Network::Handler::FileServer::PluginMount, :'fails_on_ruby_1.9.2' => true do
     PLUGINS = Puppet::Network::Handler::FileServer::PLUGINS
 
     # create a module plugin hierarchy
@@ -160,7 +157,7 @@ describe Puppet::Network::Handler::FileServer do
     end
 
     it "should not fail for inexistant plugins type" do
-      lambda { @mount.list("puppet/parser",true,false) }.should_not raise_error
+      @mount.list("puppet/parser",true,false)
     end
 
   end

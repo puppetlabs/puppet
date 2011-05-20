@@ -116,6 +116,26 @@ class Type
     ens
   end
 
+  def self.apply_to_device
+    @apply_to = :device
+  end
+
+  def self.apply_to_host
+    @apply_to = :host
+  end
+
+  def self.apply_to_all
+    @apply_to = :both
+  end
+
+  def self.apply_to
+    @apply_to ||= :host
+  end
+
+  def self.can_apply_to(target)
+    [ target == :device ? :device : :host, :both ].include?(apply_to)
+  end
+
   # Deal with any options passed into parameters.
   def self.handle_param_options(name, options)
     # If it's a boolean parameter, create a method to test the value easily
@@ -200,7 +220,7 @@ class Type
   end
 
   def uniqueness_key
-    to_resource.uniqueness_key
+    self.class.key_attributes.sort_by { |attribute_name| attribute_name.to_s }.map{ |attribute_name| self[attribute_name] }
   end
 
   # Create a new parameter.  Requires a block and a name, stores it in the
@@ -382,8 +402,8 @@ class Type
 
     fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
 
-    if name == :name
-      name = name_var
+    if name == :name && nv = name_var
+      name = nv
     end
 
     if obj = @parameters[name]
@@ -403,20 +423,22 @@ class Type
 
     fail("Invalid parameter #{name}") unless self.class.validattr?(name)
 
-    if name == :name
-      name = name_var
+    if name == :name && nv = name_var
+      name = nv
     end
     raise Puppet::Error.new("Got nil value for #{name}") if value.nil?
 
     property = self.newattr(name)
 
-    begin
-      # make sure the parameter doesn't have any errors
-      property.value = value
-    rescue => detail
-      error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
-      error.set_backtrace(detail.backtrace)
-      raise error
+    if property
+      begin
+        # make sure the parameter doesn't have any errors
+        property.value = value
+      rescue => detail
+        error = Puppet::Error.new("Parameter #{name} failed: #{detail}")
+        error.set_backtrace(detail.backtrace)
+        raise error
+      end
     end
 
     nil
@@ -444,7 +466,7 @@ class Type
   # Create a transaction event.  Called by Transaction or by
   # a property.
   def event(options = {})
-    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags, :version => version}.merge(options))
+    Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
   end
 
   # Let the catalog determine whether a given cached value is
@@ -470,6 +492,12 @@ class Type
 
     unless klass = self.class.attrclass(name)
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
+    end
+
+    if provider and ! provider.class.supports_parameter?(klass)
+      missing = klass.required_features.find_all { |f| ! provider.class.feature?(f) }
+      info "Provider %s does not support features %s; not managing attribute %s" % [provider.class.name, missing.join(", "), name]
+      return nil
     end
 
     return @parameters[name] if @parameters.include?(name)
@@ -590,14 +618,8 @@ class Type
   ###############################
   # Code related to the container behaviour.
 
-  # this is a retarded hack method to get around the difference between
-  # component children and file children
-  def self.depthfirst?
-    @depthfirst
-  end
-
   def depthfirst?
-    self.class.depthfirst?
+    false
   end
 
   # Remove an object.  The argument determines whether the object's
@@ -640,7 +662,7 @@ class Type
           "The is value is not in the is array for '#{property.name}'"
       end
       ensureis = is[property]
-      if property.insync?(ensureis) and property.should == :absent
+      if property.safe_insync?(ensureis) and property.should == :absent
         return true
       end
     end
@@ -652,7 +674,7 @@ class Type
       end
 
       propis = is[property]
-      unless property.insync?(propis)
+      unless property.safe_insync?(propis)
         property.debug("Not in sync: #{propis.inspect} vs #{property.should.inspect}")
         insync = false
       #else
@@ -935,13 +957,13 @@ class Type
       schedule object, and then reference the name of that object to use
       that for your schedule:
 
-          schedule { daily:
+          schedule { 'daily':
             period => daily,
-            range => \"2-4\"
+            range  => \"2-4\"
           }
 
           exec { \"/usr/bin/apt-get update\":
-            schedule => daily
+            schedule => 'daily'
           }
 
       The creation of the schedule object does not need to appear in the
@@ -949,15 +971,28 @@ class Type
   end
 
   newmetaparam(:audit) do
-    desc "Audit specified attributes of resources over time, and report if any have changed.
-      This attribute can be used to track changes to any resource over time, and can
-      provide an audit trail of every change that happens on any given machine.
+    desc "Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
+      attribute name or a list of attribute names.
 
-      Note that you cannot both audit and manage an attribute - managing it guarantees
-      the value, and any changes already get logged."
+      Auditing a resource attribute has two effects: First, whenever a catalog
+      is applied with puppet apply or puppet agent, Puppet will check whether
+      that attribute of the resource has been modified, comparing its current
+      value to the previous run; any change will be logged alongside any actions
+      performed by Puppet while applying the catalog.
+
+      Secondly, marking a resource attribute for auditing will include that
+      attribute in inspection reports generated by puppet inspect; see the
+      puppet inspect documentation for more details.
+
+      Managed attributes for a resource can also be audited, but note that
+      changes made by Puppet will be logged as additional modifications. (I.e.
+      if a user manually edits a file whose contents are audited and managed,
+      puppet agent's next two runs will both log an audit notice: the first run
+      will log the user's edit and then revert the file to the desired state,
+      and the second run will log the edit made by Puppet.)"
 
     validate do |list|
-      list = Array(list)
+      list = Array(list).collect {|p| p.to_sym}
       unless list == [:all]
         list.each do |param|
           next if @resource.class.validattr?(param)
@@ -982,8 +1017,8 @@ class Type
     end
 
     def properties_to_audit(list)
-      if list == :all
-        list = all_properties if list == :all
+      if !list.kind_of?(Array) && list.to_sym == :all
+        list = all_properties
       else
         list = Array(list).collect { |p| p.to_sym }
       end
@@ -1020,9 +1055,9 @@ class Type
 
   newmetaparam(:alias) do
     desc "Creates an alias for the object.  Puppet uses this internally when you
-      provide a symbolic name:
+      provide a symbolic title:
 
-          file { sshdconfig:
+          file { 'sshdconfig':
             path => $operatingsystem ? {
               solaris => \"/usr/local/etc/ssh/sshd_config\",
               default => \"/etc/ssh/sshd_config\"
@@ -1030,30 +1065,30 @@ class Type
             source => \"...\"
           }
 
-          service { sshd:
-            subscribe => file[sshdconfig]
+          service { 'sshd':
+            subscribe => File['sshdconfig']
           }
 
-      When you use this feature, the parser sets `sshdconfig` as the name,
+      When you use this feature, the parser sets `sshdconfig` as the title,
       and the library sets that as an alias for the file so the dependency
-      lookup for `sshd` works.  You can use this parameter yourself,
+      lookup in `Service['sshd']` works.  You can use this metaparameter yourself,
       but note that only the library can use these aliases; for instance,
       the following code will not work:
 
           file { \"/etc/ssh/sshd_config\":
             owner => root,
             group => root,
-            alias => sshdconfig
+            alias => 'sshdconfig'
           }
 
-          file { sshdconfig:
+          file { 'sshdconfig':
             mode => 644
           }
 
       There's no way here for the Puppet parser to know that these two stanzas
       should be affecting the same file.
 
-      See the [Language Tutorial](http://docs.puppetlabs.com/guides/language_tutorial.html) for more information.
+      See the [Language Guide](http://docs.puppetlabs.com/guides/language_guide.html) for more information.
 
       "
 
@@ -1187,7 +1222,7 @@ class Type
   # solution, but it works.
 
   newmetaparam(:require, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :NONE}) do
-    desc "One or more objects that this object depends on.
+    desc "References to one or more objects that this object depends on.
       This is used purely for guaranteeing that changes to required objects
       happen before the dependent object.  For instance:
 
@@ -1197,8 +1232,8 @@ class Type
           }
 
           file { \"/usr/local/scripts/myscript\":
-            source => \"puppet://server/module/myscript\",
-            mode => 755,
+            source  => \"puppet://server/module/myscript\",
+            mode    => 755,
             require => File[\"/usr/local/scripts\"]
           }
 
@@ -1212,7 +1247,7 @@ class Type
       ways to autorequire objects, so if you think Puppet could be
       smarter here, let us know.
 
-      In fact, the above code was redundant -- Puppet will autorequire
+      In fact, the above code was redundant --- Puppet will autorequire
       any parent directories that are being managed; it will
       automatically realize that the parent directory should be created
       before the script is pulled down.
@@ -1228,40 +1263,41 @@ class Type
   end
 
   newmetaparam(:subscribe, :parent => RelationshipMetaparam, :attributes => {:direction => :in, :events => :ALL_EVENTS, :callback => :refresh}) do
-    desc "One or more objects that this object depends on.  Changes in the
-      subscribed to objects result in the dependent objects being
-      refreshed (e.g., a service will get restarted).  For instance:
+    desc "References to one or more objects that this object depends on. This
+      metaparameter creates a dependency relationship like **require,**
+      and also causes the dependent object to be refreshed when the
+      subscribed object is changed. For instance:
 
           class nagios {
-            file { \"/etc/nagios/nagios.conf\":
+            file { 'nagconf':
+              path   => \"/etc/nagios/nagios.conf\"
               source => \"puppet://server/module/nagios.conf\",
-              alias => nagconf # just to make things easier for me
             }
-            service { nagios:
-              ensure => running,
-              subscribe => File[nagconf]
+            service { 'nagios':
+              ensure    => running,
+              subscribe => File['nagconf']
             }
           }
 
-      Currently the `exec`, `mount` and `service` type support
+      Currently the `exec`, `mount` and `service` types support
       refreshing.
       "
   end
 
   newmetaparam(:before, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :NONE}) do
-    desc %{This parameter is the opposite of **require** -- it guarantees
-      that the specified object is applied later than the specifying
-      object:
+    desc %{References to one or more objects that depend on this object. This
+      parameter is the opposite of **require** --- it guarantees that
+      the specified object is applied later than the specifying object:
 
           file { "/var/nagios/configuration":
             source  => "...",
             recurse => true,
-            before => Exec["nagios-rebuid"]
+            before  => Exec["nagios-rebuid"]
           }
 
           exec { "nagios-rebuild":
             command => "/usr/bin/make",
-            cwd => "/var/nagios/configuration"
+            cwd     => "/var/nagios/configuration"
           }
 
       This will make sure all of the files are up to date before the
@@ -1269,15 +1305,18 @@ class Type
   end
 
   newmetaparam(:notify, :parent => RelationshipMetaparam, :attributes => {:direction => :out, :events => :ALL_EVENTS, :callback => :refresh}) do
-    desc %{This parameter is the opposite of **subscribe** -- it sends events
-      to the specified object:
+    desc %{References to one or more objects that depend on this object. This
+    parameter is the opposite of **subscribe** --- it creates a
+    dependency relationship like **before,** and also causes the
+    dependent object(s) to be refreshed when this object is changed. For
+    instance:
 
           file { "/etc/sshd_config":
             source => "....",
-            notify => Service[sshd]
+            notify => Service['sshd']
           }
 
-          service { sshd:
+          service { 'sshd':
             ensure => running
           }
 
@@ -1293,24 +1332,24 @@ class Type
       By default, all classes get directly added to the
       'main' stage.  You can create new stages as resources:
 
-          stage { [pre, post]: }
+          stage { ['pre', 'post']: }
 
       To order stages, use standard relationships:
 
-          stage { pre: before => Stage[main] }
+          stage { 'pre': before => Stage['main'] }
 
       Or use the new relationship syntax:
 
-          Stage[pre] -> Stage[main] -> Stage[post]
+          Stage['pre'] -> Stage['main'] -> Stage['post']
 
       Then use the new class parameters to specify a stage:
 
-          class { foo: stage => pre }
+          class { 'foo': stage => 'pre' }
 
       Stages can only be set on classes, not individual resources.  This will
       fail:
 
-          file { '/foo': stage => pre, ensure => file }
+          file { '/foo': stage => 'pre', ensure => file }
     }
   end
 
@@ -1443,7 +1482,7 @@ class Type
 
     newparam(:provider) do
       desc "The specific backend for #{self.name.to_s} to use. You will
-        seldom need to specify this -- Puppet will usually discover the
+        seldom need to specify this --- Puppet will usually discover the
         appropriate provider for your platform."
 
       # This is so we can refer back to the type to get a list of
@@ -1880,10 +1919,18 @@ class Type
 
   def virtual?;  !!@virtual;  end
   def exported?; !!@exported; end
+
+  def appliable_to_device?
+    self.class.can_apply_to(:device)
+  end
+
+  def appliable_to_host?
+    self.class.can_apply_to(:host)
+  end
 end
 end
 
 require 'puppet/provider'
 
 # Always load these types.
-require 'puppet/type/component'
+Puppet::Type.type(:component)

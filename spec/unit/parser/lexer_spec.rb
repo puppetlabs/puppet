@@ -1,11 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/parser/lexer'
 
 # This is a special matcher to match easily lexer output
-Spec::Matchers.define :be_like do |*expected|
+RSpec::Matchers.define :be_like do |*expected|
   match do |actual|
     expected.zip(actual).all? { |e,a| !e or a[0] == e or (e.is_a? Array and a[0] == e[0] and (a[1] == e[1] or (a[1].is_a?(Hash) and a[1][:value] == e[1]))) }
   end
@@ -29,6 +28,14 @@ describe Puppet::Parser::Lexer do
       @lexer.slurpstring("'")
 
       @lexer.line.should == 10
+    end
+
+    it "should not think the terminator is escaped, when preceeded by an even number of backslashes" do
+      @lexer.line = 10
+      @lexer.string = "here\nis\nthe\nstring\\\\'with\nextra\njunk"
+      @lexer.slurpstring("'")
+
+      @lexer.line.should == 13
     end
   end
 end
@@ -223,22 +230,6 @@ describe Puppet::Parser::Lexer::TOKENS do
   end
 end
 
-describe Puppet::Parser::Lexer::TOKENS[:CLASSNAME] do
-  before { @token = Puppet::Parser::Lexer::TOKENS[:CLASSNAME] }
-
-  it "should match against lower-case alpha-numeric terms separated by double colons" do
-    @token.regex.should =~ "one::two"
-  end
-
-  it "should match against many lower-case alpha-numeric terms separated by double colons" do
-    @token.regex.should =~ "one::two::three::four::five"
-  end
-
-  it "should match against lower-case alpha-numeric terms prefixed by double colons" do
-    @token.regex.should =~ "::one"
-  end
-end
-
 describe Puppet::Parser::Lexer::TOKENS[:CLASSREF] do
   before { @token = Puppet::Parser::Lexer::TOKENS[:CLASSREF] }
 
@@ -287,6 +278,22 @@ describe Puppet::Parser::Lexer::TOKENS[:NAME] do
     keyword = stub 'keyword', :name => :FALSE
     Puppet::Parser::Lexer::KEYWORDS.expects(:lookup).returns(keyword)
     @token.convert(stub('lexer'), "false").should == [Puppet::Parser::Lexer::TOKENS[:BOOLEAN], false]
+  end
+
+  it "should match against lower-case alpha-numeric terms separated by double colons" do
+    @token.regex.should =~ "one::two"
+  end
+
+  it "should match against many lower-case alpha-numeric terms separated by double colons" do
+    @token.regex.should =~ "one::two::three::four::five"
+  end
+
+  it "should match against lower-case alpha-numeric terms prefixed by double colons" do
+    @token.regex.should =~ "::one"
+  end
+
+  it "should match against nested terms starting with numbers" do
+    @token.regex.should =~ "::1one::2two::3three"
   end
 end
 
@@ -416,6 +423,7 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q{'single quoted string with an escaped "\\\\"'}               => [[:STRING,'single quoted string with an escaped "\\\\"']],
     %q{"string with an escaped '\\"'"}                              => [[:STRING,"string with an escaped '\"'"]],
     %q{"string with an escaped '\\$'"}                              => [[:STRING,"string with an escaped '$'"]],
+    %Q{"string with a line ending with a backslash: \\\nfoo"}       => [[:STRING,"string with a line ending with a backslash: foo"]],
     %q{"string with $v (but no braces)"}                            => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' (but no braces)']],
     %q["string with ${v} in braces"]                                => [[:DQPRE,"string with "],[:VARIABLE,'v'],[:DQPOST,' in braces']],
     %q["string with ${qualified::var} in braces"]                   => [[:DQPRE,"string with "],[:VARIABLE,'qualified::var'],[:DQPOST,' in braces']],
@@ -437,6 +445,9 @@ describe Puppet::Parser::Lexer,"when lexing strings" do
     %q["foo$bar$"]                                                  => [[:DQPRE,"foo"],[:VARIABLE,"bar"],[:DQPOST,"$"]],
     %q["foo$$bar"]                                                  => [[:DQPRE,"foo$"],[:VARIABLE,"bar"],[:DQPOST,""]],
     %q[""]                                                          => [[:STRING,""]],
+    %q["123 456 789 0"]                                             => [[:STRING,"123 456 789 0"]],
+    %q["${123} 456 $0"]                                             => [[:DQPRE,""],[:VARIABLE,"123"],[:DQMID," 456 "],[:VARIABLE,"0"],[:DQPOST,""]],
+    %q["$foo::::bar"]                                               => [[:DQPRE,""],[:VARIABLE,"foo"],[:DQPOST,"::::bar"]]
   }.each { |src,expected_result|
     it "should handle #{src} correctly" do
       tokens_scanned_from(src).should be_like(*expected_result)
@@ -516,6 +527,22 @@ describe Puppet::Parser::Lexer, "when lexing comments" do
     @lexer.string = "{"
 
     @lexer.expects(:commentpush)
+
+    @lexer.fullscan
+  end
+
+  it "should add a new comment stack level on LPAREN" do
+    @lexer.string = "("
+
+    @lexer.expects(:commentpush)
+
+    @lexer.fullscan
+  end
+
+  it "should pop the current comment on RPAREN" do
+    @lexer.string = ")"
+
+    @lexer.expects(:commentpop)
 
     @lexer.fullscan
   end
@@ -636,21 +663,37 @@ describe "Puppet::Parser::Lexer in the old tests" do
   end
 
   it "should correctly lex variables" do
-    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable"].each do |string|
+    ["$variable", "$::variable", "$qualified::variable", "$further::qualified::variable", "$hyphenated-variable", "$-variable-with-leading-dash"].each do |string|
       tokens_scanned_from(string).should be_like([:VARIABLE,string.sub(/^\$/,'')])
     end
   end
+
+  it "should not include whitespace in a variable" do
+    tokens_scanned_from("$foo bar").should_not be_like([:VARIABLE, "foo bar"])
+  end
+  it "should not include excess colons in a variable" do
+    tokens_scanned_from("$foo::::bar").should_not be_like([:VARIABLE, "foo::::bar"])
+  end
 end
 
-require 'puppettest/support/utils'
 describe "Puppet::Parser::Lexer in the old tests when lexing example files" do
-  extend PuppetTest
-  extend PuppetTest::Support::Utils
-  textfiles do |file|
+  my_fixtures('*.pp') do |file|
     it "should correctly lex #{file}" do
       lexer = Puppet::Parser::Lexer.new
       lexer.file = file
       lambda { lexer.fullscan }.should_not raise_error
     end
+  end
+end
+
+describe "when trying to lex an non-existent file" do
+  include PuppetSpec::Files
+
+  it "should return an empty list of tokens" do
+    lexer = Puppet::Parser::Lexer.new
+    lexer.file = nofile = tmpfile('lexer')
+    File.exists?(nofile).should == false
+
+    lexer.fullscan.should == [[false,false]]
   end
 end

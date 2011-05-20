@@ -8,6 +8,7 @@ module Puppet
 
     DEFAULT_ACL = [
       { :acl => "~ ^\/catalog\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
+      { :acl => "~ ^\/node\/([^\/]+)$", :method => :find, :allow => '$1', :authenticated => true },
       # this one will allow all file access, and thus delegate
       # to fileserver.conf
       { :acl => "/file" },
@@ -17,7 +18,6 @@ module Puppet
       { :acl => "/certificate/", :method => :find, :authenticated => false },
       { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
       { :acl => "/status", :method => [:find], :authenticated => true },
-      { :acl => "/resource", :method => [:find, :save, :search], :authenticated => true },
     ]
 
     def self.main
@@ -32,21 +32,17 @@ module Puppet
     # check wether this request is allowed in our ACL
     # raise an Puppet::Network::AuthorizedError if the request
     # is denied.
-    def allowed?(request)
+    def allowed?(indirection, method, key, params)
       read
 
       # we're splitting the request in part because
       # fail_on_deny could as well be called in the XMLRPC context
       # with a ClientRequest.
 
-            @rights.fail_on_deny(
-        build_uri(request),
-        
-                  :node => request.node,
-                  :ip => request.ip,
-                  :method => request.method,
-                  :environment => request.environment,
-                  :authenticated => request.authenticated)
+      if authorization_failure_exception = @rights.is_request_forbidden_and_why?(indirection, method, key, params)
+        Puppet.warning("Denying access: #{authorization_failure_exception}")
+        raise authorization_failure_exception
+      end
     end
 
     def initialize(file = nil, parsenow = true)
@@ -66,7 +62,7 @@ module Puppet
     def insert_default_acl
       DEFAULT_ACL.each do |acl|
         unless rights[acl[:acl]]
-          Puppet.info "Inserting default '#{acl[:acl]}'(#{acl[:authenticated] ? "auth" : "non-auth"}) acl because #{( !exists? ? "#{Puppet[:rest_authconfig]} doesn't exist" : "none where found in '#{@file}'")}"
+          Puppet.info "Inserting default '#{acl[:acl]}'(#{acl[:authenticated] ? "auth" : "non-auth"}) ACL because #{( !exists? ? "#{Puppet[:rest_authconfig]} doesn't exist" : "none were found in '#{@file}'")}"
           mk_acl(acl)
         end
       end
@@ -88,10 +84,6 @@ module Puppet
         method.each { |m| @rights.restrict_method(acl[:acl], m) }
       end
       @rights.restrict_authenticated(acl[:acl], acl[:authenticated]) unless acl[:authenticated].nil?
-    end
-
-    def build_uri(request)
-      "/#{request.indirection_name}/#{request.key}"
     end
   end
 end

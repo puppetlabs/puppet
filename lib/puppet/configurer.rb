@@ -72,17 +72,13 @@ class Puppet::Configurer
     @splayed = false
   end
 
-  def initialize_report
-    Puppet::Transaction::Report.new
-  end
-
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
-  def prepare
+  def prepare(options)
     dostorage
 
-    download_plugins
+    download_plugins unless options[:skip_plugin_download]
 
-    download_fact_plugins
+    download_fact_plugins unless options[:skip_plugin_download]
 
     execute_prerun_command
   end
@@ -126,7 +122,7 @@ class Puppet::Configurer
   # which accepts :tags and :ignoreschedules.
   def run(options = {})
     begin
-      prepare
+      prepare(options)
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail
@@ -134,7 +130,7 @@ class Puppet::Configurer
       Puppet.err "Failed to prepare catalog: #{detail}"
     end
 
-    options[:report] ||= initialize_report
+    options[:report] ||= Puppet::Transaction::Report.new("apply")
     report = options[:report]
     Puppet::Util::Log.newdestination(report)
 
@@ -144,6 +140,8 @@ class Puppet::Configurer
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
+
+    report.configuration_version = catalog.version
 
     transaction = nil
 
@@ -168,17 +166,26 @@ class Puppet::Configurer
     execute_postrun_command
 
     Puppet::Util::Log.close(report)
-
     send_report(report, transaction)
   end
 
-  def send_report(report, trans = nil)
-    trans.generate_report if trans
+  def send_report(report, trans)
+    report.finalize_report if trans
     puts report.summary if Puppet[:summarize]
-    report.save if Puppet[:report]
+    save_last_run_summary(report)
+    Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err "Could not send report: #{detail}"
+  end
+
+  def save_last_run_summary(report)
+    Puppet::Util::FileLocking.writelock(Puppet[:lastrunfile], 0660) do |file|
+      file.print YAML.dump(report.raw_summary)
+    end
+  rescue => detail
+    puts detail.backtrace if Puppet[:trace]
+    Puppet.err "Could not save last run local report: #{detail}"
   end
 
   private
@@ -213,7 +220,7 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.find(Puppet[:certname], fact_options.merge(:ignore_terminus => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:certname], fact_options.merge(:ignore_terminus => true))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -226,7 +233,7 @@ class Puppet::Configurer
   def retrieve_new_catalog(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.find(Puppet[:certname], fact_options.merge(:ignore_cache => true))
+      result = Puppet::Resource::Catalog.indirection.find(Puppet[:certname], fact_options.merge(:ignore_cache => true))
     end
     result
   rescue SystemExit,NoMemoryError

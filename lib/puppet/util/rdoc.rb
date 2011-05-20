@@ -10,26 +10,28 @@ module Puppet::Util::RDoc
 
       # then rdoc
       require 'rdoc/rdoc'
+      require 'rdoc/options'
 
       # load our parser
       require 'puppet/util/rdoc/parser'
 
       r = RDoc::RDoc.new
 
-        RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
+      RDoc::RDoc::GENERATORS["puppet"] = RDoc::RDoc::Generator.new(
           "puppet/util/rdoc/generators/puppet_generator.rb",
-            "PuppetGenerator".intern,
+          "PuppetGenerator".intern,
+          "puppet")
 
-            "puppet")
       # specify our own format & where to output
       options = [ "--fmt", "puppet",
         "--quiet",
-        "--force-update",
         "--exclude", "/modules/[^/]*/files/.*\.pp$",
         "--op", outputdir ]
 
+      options << "--force-update" if Options::OptionList.options.any? { |o| o[0] == "--force-update" }
       options += [ "--charset", charset] if charset
       options += files
+      #TODO dedup file paths (not strict duplication sense, parents, children, etc
 
       # launch the documentation process
       r.document(options)
@@ -52,17 +54,10 @@ module Puppet::Util::RDoc
   # of a manifest
   def output(file, ast)
     astobj = []
-    ast.nodes.each do |name, k|
-      astobj << k if k.file == file
+    ast.instantiate('').each do |resource_type|
+      astobj << resource_type if resource_type.file == file
     end
 
-    ast.hostclasses.each do |name,k|
-      astobj << k if k.file == file
-    end
-
-    ast.definitions.each do |name, k|
-      astobj << k if k.file == file
-    end
     astobj.sort! {|a,b| a.line <=> b.line }.each do |k|
       output_astnode_doc(k)
     end

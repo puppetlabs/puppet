@@ -4,12 +4,11 @@ module Puppet
     class VDev < Property
 
       def flatten_and_sort(array)
+        array = [array] unless array.is_a? Array
         array.collect { |a| a.split(' ') }.flatten.sort
       end
 
       def insync?(is)
-        return true unless self.should
-
         return @should == [:absent] if is == :absent
 
         flatten_and_sort(is) == flatten_and_sort(@should)
@@ -18,8 +17,6 @@ module Puppet
 
     class MultiVDev < VDev
       def insync?(is)
-        return true unless self.should
-
         return @should == [:absent] if is == :absent
 
         return false unless is.length == @should.length
@@ -44,9 +41,10 @@ module Puppet
     end
 
     newproperty(:mirror, :array_matching => :all, :parent => Puppet::Property::MultiVDev) do
-      desc "List of all the devices to mirror for this pool. Each mirror should be a space separated string:
+      desc "List of all the devices to mirror for this pool. Each mirror should be a
+      space separated string:
 
-    mirror => [\"disk1 disk2\", \"disk3 disk4\"]
+          mirror => [\"disk1 disk2\", \"disk3 disk4\"],
 
       "
 
@@ -56,9 +54,10 @@ module Puppet
     end
 
     newproperty(:raidz, :array_matching => :all, :parent => Puppet::Property::MultiVDev) do
-      desc "List of all the devices to raid for this pool. Should be an array of space separated strings:
-      
-          raidz => [\"disk1 disk2\", \"disk3 disk4\"]
+      desc "List of all the devices to raid for this pool. Should be an array of
+      space separated strings:
+
+          raidz => [\"disk1 disk2\", \"disk3 disk4\"],
 
       "
 

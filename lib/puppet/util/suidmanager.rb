@@ -88,7 +88,7 @@ module Puppet::Util::SUIDManager
   module_function :initgroups
 
   def run_and_capture(command, new_uid=nil, new_gid=nil)
-    output = Puppet::Util.execute(command, :failonfail => false, :uid => new_uid, :gid => new_gid)
+    output = Puppet::Util.execute(command, :failonfail => false, :combine => true, :uid => new_uid, :gid => new_gid)
     [output, $CHILD_STATUS.dup]
   end
   module_function :run_and_capture

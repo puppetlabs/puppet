@@ -1,7 +1,7 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
+require 'spec_helper'
 
-require File.dirname(__FILE__) + '/../../spec_helper'
-
+require 'puppet/rails'
 require 'puppet/parser/collector'
 
 describe Puppet::Parser::Collector, "when initializing" do
@@ -262,9 +262,7 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
   end
 end
 
-describe Puppet::Parser::Collector, "when collecting exported resources" do
-  confine "Cannot test Rails integration without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Parser::Collector, "when collecting exported resources", :if => Puppet.features.rails? do
   before do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
     @scope = Puppet::Parser::Scope.new :compiler => @compiler
@@ -468,9 +466,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources" do
   end
 end
 
-describe Puppet::Parser::Collector, "when building its ActiveRecord query for collecting exported resources" do
-  confine "Cannot test Rails integration without ActiveRecord" => Puppet.features.rails?
-
+describe Puppet::Parser::Collector, "when building its ActiveRecord query for collecting exported resources", :if => Puppet.features.rails? do
   before do
     @scope = stub 'scope', :host => "myhost", :debug => nil
     @compiler = mock 'compile'

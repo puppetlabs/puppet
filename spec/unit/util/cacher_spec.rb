@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/util/cacher'
 
@@ -43,7 +42,7 @@ describe Puppet::Util::Cacher do
     Puppet::Util::Cacher.singleton_class.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
   end
 
-  it "should support defining cached attributes" do
+  it "should support defining cached attributes", :'fails_on_ruby_1.9.2' => true do
     CacheTest.methods.should be_include("cached_attr")
   end
 

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/ssl/inventory'
 
@@ -40,7 +39,7 @@ describe Puppet::SSL::Inventory do
         Puppet.settings.stubs(:write)
         FileTest.stubs(:exist?).with("/inven/tory").returns false
 
-        Puppet::SSL::Certificate.stubs(:search).returns []
+        Puppet::SSL::Certificate.indirection.stubs(:search).returns []
       end
 
       it "should log that it is building a new inventory file" do
@@ -67,7 +66,7 @@ describe Puppet::SSL::Inventory do
         cert1 = mock 'cert1'
         cert2 = mock 'cert2'
 
-        Puppet::SSL::Certificate.expects(:search).with("*").returns [cert1, cert2]
+        Puppet::SSL::Certificate.indirection.expects(:search).with("*").returns [cert1, cert2]
 
         @class.any_instance.expects(:add).with(cert1)
         @class.any_instance.expects(:add).with(cert2)

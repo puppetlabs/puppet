@@ -1,10 +1,11 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/configurer/downloader'
 
 describe Puppet::Configurer::Downloader do
+  require 'puppet_spec/files'
+  include PuppetSpec::Files
   it "should require a name" do
     lambda { Puppet::Configurer::Downloader.new }.should raise_error(ArgumentError)
   end
@@ -96,25 +97,35 @@ describe Puppet::Configurer::Downloader do
 
   describe "when creating the catalog to do the downloading" do
     before do
-      @dler = Puppet::Configurer::Downloader.new("foo", "path", "source")
+      @dler = Puppet::Configurer::Downloader.new("foo", "/download/path", "source")
     end
 
     it "should create a catalog and add the file to it" do
-      file = mock 'file'
-      catalog = mock 'catalog'
-
-      @dler.expects(:file).returns file
-
-      Puppet::Resource::Catalog.expects(:new).returns catalog
-      catalog.expects(:add_resource).with(file)
-
-      @dler.catalog.should equal(catalog)
+      catalog = @dler.catalog
+      catalog.resources.size.should == 1
+      catalog.resources.first.class.should == Puppet::Type::File
+      catalog.resources.first.name.should == "/download/path"
     end
+
+    it "should specify that it is not managing a host catalog" do
+      @dler.catalog.host_config.should == false
+    end
+
   end
 
   describe "when downloading" do
     before do
-      @dler = Puppet::Configurer::Downloader.new("foo", "path", "source")
+      @dl_name = tmpfile("downloadpath")
+      source_name = tmpfile("source")
+      File.open(source_name, 'w') {|f| f.write('hola mundo') }
+      @dler = Puppet::Configurer::Downloader.new("foo", @dl_name, source_name)
+    end
+
+    it "should not skip downloaded resources when filtering on tags" do
+      Puppet[:tags] = 'maytag'
+      @dler.evaluate
+
+      File.exists?(@dl_name).should be_true
     end
 
     it "should log that it is downloading" do

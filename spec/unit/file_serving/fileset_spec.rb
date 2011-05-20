@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/file_serving/fileset'
 
@@ -11,6 +10,21 @@ describe Puppet::FileServing::Fileset, " when initializing" do
 
   it "should fail if its path is not fully qualified" do
     proc { Puppet::FileServing::Fileset.new("some/file") }.should raise_error(ArgumentError)
+  end
+
+  it "should not fail if the path is fully qualified, with a trailing separator" do
+    path = "/some/path/with/trailing/separator"
+    path_with_separator = "#{path}#{File::SEPARATOR}"
+    File.stubs(:lstat).with(path).returns stub('stat')
+    fileset = Puppet::FileServing::Fileset.new(path_with_separator)
+    fileset.path.should == path
+  end
+
+  it "should not fail if the path is just the file separator" do
+    path = File::SEPARATOR
+    File.stubs(:lstat).with(path).returns stub('stat')
+    fileset = Puppet::FileServing::Fileset.new(path)
+    fileset.path.should == path
   end
 
   it "should fail if its path does not exist" do
@@ -306,6 +320,7 @@ end
 describe Puppet::FileServing::Fileset, "when merging other filesets" do
   before do
     @paths = %w{/first/path /second/path /third/path}
+    File.stubs(:lstat).returns stub("stat", :directory? => false)
 
     @filesets = @paths.collect do |path|
       File.stubs(:lstat).with(path).returns stub("stat", :directory? => true)

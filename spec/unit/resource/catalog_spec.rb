@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
 
@@ -374,7 +373,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @original.add_edge(@r1,@r2)
       @original.filter do |r|
         r == @r1
-      end.edge(@r1,@r2).should be_empty
+      end.edge?(@r1,@r2).should_not be
     end
   end
 
@@ -396,12 +395,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       relgraph = @catalog.relationship_graph
       @catalog.add_resource @one
       relgraph.should be_vertex(@one)
-    end
-
-    it "should yield added resources if a block is provided" do
-      yielded = []
-      @catalog.add_resource(@one, @two) { |r| yielded << r }
-      yielded.length.should == 2
     end
 
     it "should set itself as the resource's catalog if it is not a relationship graph" do
@@ -599,6 +592,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
       @transaction.stubs(:add_times)
+      @transaction.stubs(:for_network_device=)
 
       Puppet.settings.stubs(:use)
     end
@@ -740,7 +734,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     it "should copy component relationships to all contained resources" do
-      @relationships.edge?(@one, @two).should be_true
+      @relationships.path_between(@one, @two).should be
     end
 
     it "should add automatic relationships to the relationship graph" do
@@ -818,12 +812,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Util::Cacher.expire
     end
 
-    it "should redirect to the indirection for retrieval" do
-      Puppet::Resource::Catalog.stubs(:indirection).returns(@indirection)
-      @indirection.expects(:find)
-      Puppet::Resource::Catalog.find(:myconfig)
-    end
-
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
       # Puppet only checks the terminus setting the first time you ask
       # so this returns the object to the clean state
@@ -880,9 +868,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting to pson" do
-  confine "Missing 'pson' library" => Puppet.features.pson?
-
+describe Puppet::Resource::Catalog, "when converting to pson", :if => Puppet.features.pson? do
   before do
     @catalog = Puppet::Resource::Catalog.new("myhost")
   end
@@ -933,16 +919,14 @@ describe Puppet::Resource::Catalog, "when converting to pson" do
     @catalog.add_edge(one, two)
     @catalog.add_edge(two, three)
 
-    @catalog.edge(one, two  ).expects(:to_pson_data_hash).returns "one_two_pson"
-    @catalog.edge(two, three).expects(:to_pson_data_hash).returns "two_three_pson"
+    @catalog.edges_between(one, two  )[0].expects(:to_pson_data_hash).returns "one_two_pson"
+    @catalog.edges_between(two, three)[0].expects(:to_pson_data_hash).returns "two_three_pson"
 
     PSON.parse(@catalog.to_pson,:create_additions => false)['data']['edges'].sort.should == %w{one_two_pson two_three_pson}.sort
   end
 end
 
-describe Puppet::Resource::Catalog, "when converting from pson" do
-  confine "Missing 'pson' library" => Puppet.features.pson?
-
+describe Puppet::Resource::Catalog, "when converting from pson", :if => Puppet.features.pson? do
   def pson_result_should
     Puppet::Resource::Catalog.expects(:new).with { |hash| yield hash }
   end

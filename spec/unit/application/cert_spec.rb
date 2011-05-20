@@ -1,18 +1,15 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
-
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/application/cert'
 
-describe Puppet::Application::Cert do
+describe Puppet::Application::Cert, :'fails_on_ruby_1.9.2' => true do
   before :each do
     @cert_app = Puppet::Application[:cert]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
   end
 
   it "should operate in master run_mode" do
-    @cert_app.class.run_mode.name.should equal :master
+    @cert_app.class.run_mode.name.should equal(:master)
   end
 
   it "should ask Puppet::Application to parse Puppet configuration file" do
@@ -30,28 +27,23 @@ describe Puppet::Application::Cert do
   end
 
   it "should set log level to info with the --verbose option" do
-
-    Puppet::Log.expects(:level=).with(:info)
-
     @cert_app.handle_verbose(0)
+    Puppet::Log.level.should == :info
   end
 
   it "should set log level to debug with the --debug option" do
-
-    Puppet::Log.expects(:level=).with(:debug)
-
     @cert_app.handle_debug(0)
+    Puppet::Log.level.should == :debug
   end
 
   it "should set the fingerprint digest with the --digest option" do
     @cert_app.handle_digest(:digest)
-
     @cert_app.digest.should == :digest
   end
 
   it "should set cert_mode to :destroy for --clean" do
     @cert_app.handle_clean(0)
-    @cert_app.cert_mode.should == :destroy
+    @cert_app.subcommand.should == :destroy
   end
 
   it "should set all to true for --all" do
@@ -68,7 +60,7 @@ describe Puppet::Application::Cert do
     it "should set cert_mode to #{method} with option --#{method}" do
       @cert_app.send("handle_#{method}".to_sym, nil)
 
-      @cert_app.cert_mode.should == method
+      @cert_app.subcommand.should == method
     end
   end
 
@@ -87,18 +79,14 @@ describe Puppet::Application::Cert do
     end
 
     it "should print puppet config if asked to in Puppet config" do
-      @cert_app.stubs(:exit)
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      Puppet.settings.expects(:print_configs)
-
-      @cert_app.setup
+      Puppet.settings.expects(:print_configs).returns true
+      expect { @cert_app.setup }.to exit_with 0
     end
 
     it "should exit after printing puppet config if asked to in Puppet config" do
       Puppet.settings.stubs(:print_configs?).returns(true)
-
-      lambda { @cert_app.setup }.should raise_error(SystemExit)
+      expect { @cert_app.setup }.to exit_with 1
     end
 
     it "should set the CA location to 'only'" do
@@ -114,19 +102,19 @@ describe Puppet::Application::Cert do
     end
 
     it "should set the ca_location to :local if the cert_mode is generate" do
-      @cert_app.find_mode('--generate')
+      @cert_app.subcommand = 'generate'
       Puppet::SSL::Host.expects(:ca_location=).with(:local)
       @cert_app.setup
     end
 
     it "should set the ca_location to :local if the cert_mode is destroy" do
-      @cert_app.find_mode('--destroy')
+      @cert_app.subcommand = 'destroy'
       Puppet::SSL::Host.expects(:ca_location=).with(:local)
       @cert_app.setup
     end
 
     it "should set the ca_location to :only if the cert_mode is print" do
-      @cert_app.find_mode('--print')
+      @cert_app.subcommand = 'print'
       Puppet::SSL::Host.expects(:ca_location=).with(:only)
       @cert_app.setup
     end
@@ -171,17 +159,8 @@ describe Puppet::Application::Cert do
       @cert_app.main
     end
 
-    it "should delegate to ca.apply with current set cert_mode" do
-      @cert_app.cert_mode = "currentmode"
-      @cert_app.command_line.stubs(:args).returns(["host"])
-
-      @ca.expects(:apply).with { |cert_mode,to| cert_mode == "currentmode" }
-
-      @cert_app.main
-    end
-
     it "should revoke cert if cert_mode is clean" do
-      @cert_app.cert_mode = :destroy
+      @cert_app.subcommand = :destroy
       @cert_app.command_line.stubs(:args).returns(["host"])
 
       @ca.expects(:apply).with { |cert_mode,to| cert_mode == :revoke }
@@ -189,6 +168,45 @@ describe Puppet::Application::Cert do
 
       @cert_app.main
     end
+  end
 
+  describe "when identifying subcommands" do
+    before :each do
+      @cert_app.all = false
+      @ca = stub_everything 'ca'
+      @cert_app.ca = @ca
+    end
+
+    %w{list revoke generate sign print verify fingerprint}.each do |cmd|
+      short = cmd[0,1]
+      [cmd, "--#{cmd}", "-#{short}"].each do |option|
+        # In our command line '-v' was eaten by 'verbose', so we can't consume
+        # it here; this is a special case from our otherwise standard
+        # processing. --daniel 2011-02-22
+        next if option == "-v"
+
+        it "should recognise '#{option}'" do
+          args = [option, "fun.example.com"]
+
+          @cert_app.command_line.stubs(:args).returns(args)
+          @cert_app.parse_options
+          @cert_app.subcommand.should == cmd.to_sym
+
+          args.should == ["fun.example.com"]
+        end
+      end
+    end
+
+    %w{clean --clean -c}.each do |ugly|
+      it "should recognise the '#{ugly}' option as destroy" do
+        args = [ugly, "fun.example.com"]
+
+        @cert_app.command_line.stubs(:args).returns(args)
+        @cert_app.parse_options
+        @cert_app.subcommand.should == :destroy
+
+        args.should == ["fun.example.com"]
+      end
+    end
   end
 end

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/authconfig'
 
@@ -12,7 +11,7 @@ describe Puppet::Network::AuthConfig do
 
     FileTest.stubs(:exists?).returns(true)
     File.stubs(:stat).returns(stub('stat', :ctime => :now))
-    Time.stubs(:now).returns :now
+    Time.stubs(:now).returns Time.now
 
     @authconfig = Puppet::Network::AuthConfig.new("dummy", false)
   end

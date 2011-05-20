@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:augeas).provider(:augeas)
 
@@ -316,6 +315,30 @@ describe provider_class do
       provider.stubs(:get_augeas_version).returns("0.3.5")
       provider.need_to_run?.should == false
     end
+
+    #Ticket 5211 testing
+    it "should return true when a size != the provided value" do
+      resource = stub("resource")
+      resource.stubs(:[]).returns(false).then.returns("match path size != 17").then.returns("")
+      provider = provider_class.new(resource)
+      augeas_stub = stub("augeas", :match => ["set", "of", "values"])
+      augeas_stub.stubs("close")
+      provider.aug= augeas_stub
+      provider.stubs(:get_augeas_version).returns("0.3.5")
+      provider.need_to_run?.should == true
+    end
+
+    #Ticket 5211 testing
+    it "should return false when a size doeas equal the provided value" do
+      resource = stub("resource")
+      resource.stubs(:[]).returns(false).then.returns("match path size != 3").then.returns("")
+      provider = provider_class.new(resource)
+      augeas_stub = stub("augeas", :match => ["set", "of", "values"])
+      augeas_stub.stubs("close")
+      provider.aug= augeas_stub
+      provider.stubs(:get_augeas_version).returns("0.3.5")
+      provider.need_to_run?.should == false
+    end
   end
 
   describe "augeas execution integration" do
@@ -405,6 +428,60 @@ describe provider_class do
       @resource.expects(:[]).times(2).returns(command).then.returns(context)
       @augeas.expects(:insert).with("/Jar/Jar", "Binks", false)
       @augeas.expects(:clear).with("/foo/Jar/Jar").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
+    it "should handle defvar commands" do
+      command = "defvar myjar Jar/Jar"
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
+    it "should pass through augeas variables without context" do
+      command = ["defvar myjar Jar/Jar","set $myjar/Binks 1"]
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:defvar).with("myjar", "/foo/Jar/Jar").returns(true)
+      # this is the important bit, shouldn't be /foo/$myjar/Binks
+      @augeas.expects(:set).with("$myjar/Binks", "1").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
+    it "should handle defnode commands" do
+      command = "defnode newjar Jar/Jar[last()+1] Binks"
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:defnode).with("newjar", "/foo/Jar/Jar[last()+1]", "Binks").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
+    it "should handle mv commands" do
+      command = "mv Jar/Jar Binks"
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:mv).with("/foo/Jar/Jar", "/foo/Binks").returns(true)
+      @augeas.expects(:save).returns(true)
+      @augeas.expects(:close)
+      @provider.execute_changes.should == :executed
+    end
+
+    it "should handle setm commands" do
+      command = ["set test[1]/Jar/Jar Foo","set test[2]/Jar/Jar Bar","setm test Jar/Jar Binks"]
+      context = "/foo/"
+      @resource.expects(:[]).times(2).returns(command).then.returns(context)
+      @augeas.expects(:set).with("/foo/test[1]/Jar/Jar", "Foo").returns(true)
+      @augeas.expects(:set).with("/foo/test[2]/Jar/Jar", "Bar").returns(true)
+      @augeas.expects(:setm).with("/foo/test", "Jar/Jar", "Binks").returns(true)
       @augeas.expects(:save).returns(true)
       @augeas.expects(:close)
       @provider.execute_changes.should == :executed

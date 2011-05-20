@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/indirector/ldap'
 
@@ -8,10 +7,9 @@ describe Puppet::Indirector::Ldap do
   before do
     @indirection = stub 'indirection', :name => :testing
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
-    @ldap_class = Class.new(Puppet::Indirector::Ldap) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @ldap_class = class Testing::MyLdap < Puppet::Indirector::Ldap
+      self
     end
 
     @connection = mock 'ldap'
@@ -110,9 +108,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when connecting to ldap" do
-    confine "LDAP is not available" => Puppet.features.ldap?
-
+  describe "when connecting to ldap", :if => Puppet.features.ldap?, :'fails_on_ruby_1.9.2' => true do
     it "should create and start a Util::Ldap::Connection instance" do
       conn = mock 'connection', :connection => "myconn", :start => nil
       Puppet::Util::Ldap::Connection.expects(:instance).returns conn
@@ -135,9 +131,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when reconnecting to ldap" do
-    confine "Not running on culain as root" => (Puppet.features.root? and Facter.value("hostname") == "culain")
-
+  describe "when reconnecting to ldap", :if => (Puppet.features.root? and Facter.value("hostname") == "culain") do
     it "should reconnect to ldap when connections are lost"
   end
 end

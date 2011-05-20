@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Parser::Scope do
   before :each do
@@ -29,8 +28,7 @@ describe Puppet::Parser::Scope do
   end
 
   it "should be able to retrieve its parent module name from the source of its parent type" do
-    @topscope.source = Puppet::Resource::Type.new(:hostclass, :foo)
-    @topscope.source.module_name = "foo"
+    @topscope.source = Puppet::Resource::Type.new(:hostclass, :foo, :module_name => "foo")
 
     @scope.parent_module_name.should == "foo"
   end
@@ -74,19 +72,19 @@ describe Puppet::Parser::Scope do
 
       Puppet::Parser::Scope.new.singleton_class.ancestors.should be_include(mod)
     end
+
+    it "should remember if it is dynamic" do
+      (!!Puppet::Parser::Scope.new(:dynamic => true).dynamic).should == true
+    end
+
+    it "should assume it is not dynamic" do
+      (!Puppet::Parser::Scope.new.dynamic).should == true
+    end
   end
 
   describe "when looking up a variable" do
-    it "should default to an empty string" do
-      @scope.lookupvar("var").should == ""
-    end
-
-    it "should return an string when asked for a string" do
-      @scope.lookupvar("var", true).should == ""
-    end
-
-    it "should return ':undefined' for unset variables when asked not to return a string" do
-      @scope.lookupvar("var", false).should == :undefined
+    it "should return ':undefined' for unset variables" do
+      @scope.lookupvar("var").should == :undefined
     end
 
     it "should be able to look up values" do
@@ -123,7 +121,11 @@ describe Puppet::Parser::Scope do
 
       def create_class_scope(name)
         klass = newclass(name)
-        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
+
+        catalog = Puppet::Resource::Catalog.new
+        catalog.add_resource(Puppet::Parser::Resource.new("stage", :main, :scope => Puppet::Parser::Scope.new))
+
+        Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source'), :catalog => catalog).evaluate
 
         @scope.class_scope(klass)
       end
@@ -152,32 +154,32 @@ describe Puppet::Parser::Scope do
         @scope.lookupvar("other::deep::klass::var").should == "otherval"
       end
 
-      it "should return an empty string for qualified variables that cannot be found in other classes" do
+      it "should return ':undefined' for qualified variables that cannot be found in other classes" do
         other_scope = create_class_scope("other::deep::klass")
 
-        @scope.lookupvar("other::deep::klass::var").should == ""
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
-      it "should warn and return an empty string for qualified variables whose classes have not been evaluated" do
+      it "should warn and return ':undefined' for qualified variables whose classes have not been evaluated" do
         klass = newclass("other::deep::klass")
         @scope.expects(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == ""
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
-      it "should warn and return an empty string for qualified variables whose classes do not exist" do
+      it "should warn and return ':undefined' for qualified variables whose classes do not exist" do
         @scope.expects(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == ""
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that does not exist" do
         @scope.stubs(:warning)
-        @scope.lookupvar("other::deep::klass::var", false).should == :undefined
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that has not been evaluated" do
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
-        @scope.lookupvar("other::deep::klass::var", false).should == :undefined
+        @scope.lookupvar("other::deep::klass::var").should == :undefined
       end
     end
   end
@@ -292,7 +294,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var
 
-      @scope.lookupvar("1", false).should == :undefined
+      @scope.lookupvar("1").should == :undefined
     end
 
     it "should not remove classic variables when unset_ephemeral_var is called" do
@@ -302,7 +304,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var
 
-      @scope.lookupvar("myvar", false).should == :value1
+      @scope.lookupvar("myvar").should == :value1
     end
 
     it "should raise an error when setting it again" do
@@ -323,7 +325,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("0", :earliest, :ephemeral => true)
         @scope.new_ephemeral
         @scope.setvar("0", :latest, :ephemeral => true)
-        @scope.lookupvar("0", false).should == :latest
+        @scope.lookupvar("0").should == :latest
       end
 
       it "should be able to report the current level" do
@@ -354,7 +356,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("1", :value1, :ephemeral => true)
         @scope.new_ephemeral
         @scope.setvar("0", :value2, :ephemeral => true)
-        @scope.lookupvar("1", false).should == :value1
+        @scope.lookupvar("1").should == :value1
       end
 
       describe "when calling unset_ephemeral_var without a level" do
@@ -365,7 +367,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var
 
-          @scope.lookupvar("1", false).should == :undefined
+          @scope.lookupvar("1").should == :undefined
         end
       end
 
@@ -379,152 +381,9 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var(2)
 
-          @scope.lookupvar("1", false).should == :value2
+          @scope.lookupvar("1").should == :value2
         end
       end
-    end
-  end
-
-  describe "when interpolating string" do
-    (0..9).each do |n|
-      it "should allow $#{n} to match" do
-        @scope.setvar(n.to_s, "value", :ephemeral => true)
-
-        @scope.strinterp("$#{n}").should == "value"
-      end
-    end
-
-    (0..9).each do |n|
-      it "should not allow $#{n} to match if not ephemeral" do
-        @scope.setvar(n.to_s, "value", :ephemeral => false)
-
-        @scope.strinterp("$#{n}").should_not == "value"
-      end
-    end
-
-    it "should not allow $10 to match" do
-      @scope.setvar("10", "value", :ephemeral => true)
-
-      @scope.strinterp('==$10==').should_not == "==value=="
-    end
-
-    it "should not allow ${10} to match" do
-      @scope.setvar("10", "value", :ephemeral => true)
-
-      @scope.strinterp('==${10}==').should == "==value=="
-    end
-
-    describe "with qualified variables" do
-      before do
-        @scopes = {}
-        klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, ""))
-        Puppet::Parser::Resource.new("class", :main, :scope => @scope, :source => mock('source')).evaluate
-        @scopes[""] = @scope.class_scope(klass)
-        @scopes[""].setvar("test", "value")
-
-        %w{one one::two one::two::three}.each do |name|
-          klass = @scope.known_resource_types.add(Puppet::Resource::Type.new(:hostclass, name))
-          Puppet::Parser::Resource.new("class", name, :scope => @scope, :source => mock('source')).evaluate
-          @scopes[name] = @scope.class_scope(klass)
-          @scopes[name].setvar("test", "value-#{name.sub(/.+::/,'')}")
-        end
-      end
-      {
-        "===${one::two::three::test}===" => "===value-three===",
-        "===$one::two::three::test===" => "===value-three===",
-        "===${one::two::test}===" => "===value-two===",
-        "===$one::two::test===" => "===value-two===",
-        "===${one::test}===" => "===value-one===",
-        "===$one::test===" => "===value-one===",
-        "===${::test}===" => "===value===",
-        "===$::test===" => "===value==="
-      }.each do |input, output|
-        it "should parse '#{input}' correctly" do
-          @scope.strinterp(input).should == output
-        end
-      end
-    end
-
-    tests = {
-      "===${test}===" => "===value===",
-      "===${test} ${test} ${test}===" => "===value value value===",
-      "===$test ${test} $test===" => "===value value value===",
-      "===\\$test===" => "===$test===",
-      '===\\$test string===' => "===$test string===",
-      '===$test string===' => "===value string===",
-      '===a testing $===' => "===a testing $===",
-      '===a testing \$===' => "===a testing $===",
-      "===an escaped \\\n carriage return===" => "===an escaped  carriage return===",
-      '\$' => "$",
-      '\s' => "\s",
-      '\t' => "\t",
-      '\n' => "\n"
-    }
-
-    tests.each do |input, output|
-      it "should parse '#{input}' correctly" do
-        @scope.setvar("test", "value")
-        @scope.strinterp(input).should == output
-      end
-    end
-
-    # #523
-    %w{d f h l w z}.each do |l|
-      it "should parse '#{l}' when escaped" do
-        string = "\\#{l}"
-        @scope.strinterp(string).should == string
-      end
-    end
-  end
-
-  def test_strinterp
-    # Make and evaluate our classes so the qualified lookups work
-    parser = mkparser
-    klass = parser.newclass("")
-    scope = mkscope(:parser => parser)
-    Puppet::Parser::Resource.new(:type => "class", :title => :main, :scope => scope, :source => mock('source')).evaluate
-
-    assert_nothing_raised {
-      scope.setvar("test","value")
-    }
-
-    scopes = {"" => scope}
-
-    %w{one one::two one::two::three}.each do |name|
-      klass = parser.newclass(name)
-      Puppet::Parser::Resource.new(:type => "class", :title => name, :scope => scope, :source => mock('source')).evaluate
-      scopes[name] = scope.class_scope(klass)
-      scopes[name].setvar("test", "value-#{name.sub(/.+::/,'')}")
-    end
-
-    assert_equal("value", scope.lookupvar("::test"), "did not look up qualified value correctly")
-    tests.each do |input, output|
-      assert_nothing_raised("Failed to scan #{input.inspect}") do
-        assert_equal(output, scope.strinterp(input), 'did not parserret %s correctly' % input.inspect)
-      end
-    end
-
-    logs = []
-    Puppet::Util::Log.close
-    Puppet::Util::Log.newdestination(logs)
-
-    # #523
-    %w{d f h l w z}.each do |l|
-      string = "\\#{l}"
-      assert_nothing_raised do
-
-              assert_equal(
-        string, scope.strinterp(string),
-        
-          'did not parserret %s correctly' % string)
-      end
-
-
-            assert(
-        logs.detect { |m| m.message =~ /Unrecognised escape/ },
-        
-        "Did not get warning about escape sequence with #{string}")
-      logs.clear
     end
   end
 
@@ -564,13 +423,13 @@ describe Puppet::Parser::Scope do
     it "should be able to unset normal variables" do
       @scope.setvar("foo", "bar")
       @scope.unsetvar("foo")
-      @scope.lookupvar("foo").should == ""
+      @scope.lookupvar("foo").should == :undefined
     end
 
     it "should be able to unset ephemeral variables" do
       @scope.setvar("0", "bar", :ephemeral => true)
       @scope.unsetvar("0")
-      @scope.lookupvar("0").should == ""
+      @scope.lookupvar("0").should == :undefined
     end
 
     it "should not unset ephemeral variables in previous ephemeral scope" do

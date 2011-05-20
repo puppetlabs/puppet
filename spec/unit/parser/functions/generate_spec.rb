@@ -1,8 +1,10 @@
-#! /usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe "the generate function" do
+  before :all do
+    Puppet::Parser::Functions.autoloader.loadall
+  end
 
   before :each do
     @scope = Puppet::Parser::Scope.new

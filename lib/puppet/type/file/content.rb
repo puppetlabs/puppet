@@ -17,22 +17,21 @@ module Puppet
 
     desc "Specify the contents of a file as a string.  Newlines, tabs, and
       spaces can be specified using the escaped syntax (e.g., \\n for a newline).  The primary purpose of this parameter is to provide a
-      kind of limited templating::
+      kind of limited templating:
 
-        define resolve(nameserver1, nameserver2, domain, search) {
-          $str = \"search $search
-        domain $domain
-        nameserver $nameserver1
-        nameserver $nameserver2
-        \"
+          define resolve(nameserver1, nameserver2, domain, search) {
+              $str = \"search $search
+                  domain $domain
+                  nameserver $nameserver1
+                  nameserver $nameserver2
+                  \"
 
-          file { \"/etc/resolv.conf\":
-            content => $str
+              file { \"/etc/resolv.conf\":
+                content => $str
+              }
           }
-        }
 
-      This attribute is especially useful when used with
-      `PuppetTemplating templating`:trac:."
+      This attribute is especially useful when used with templating."
 
     # Store a checksum as the value, rather than the actual content.
     # Simplifies everything.
@@ -96,7 +95,6 @@ module Puppet
       end
 
       return true if ! @resource.replace?
-      return true unless self.should
 
       result = super
 
@@ -161,11 +159,21 @@ module Puppet
       }
     end
 
+    def self.standalone?
+      Puppet.settings[:name] == "apply"
+    end
+
+    # the content is munged so if it's a checksum source_or_content is nil
+    # unless the checksum indirectly comes from source
     def each_chunk_from(source_or_content)
       if source_or_content.is_a?(String)
         yield source_or_content
-      elsif source_or_content.nil?
+      elsif content_is_really_a_checksum? && source_or_content.nil?
         yield read_file_from_filebucket
+      elsif source_or_content.nil?
+        yield ''
+      elsif self.class.standalone?
+        yield source_or_content.content
       elsif source_or_content.local?
         chunk_file_from_disk(source_or_content) { |chunk| yield chunk }
       else
@@ -174,6 +182,10 @@ module Puppet
     end
 
     private
+
+    def content_is_really_a_checksum?
+      checksum?(should)
+    end
 
     def chunk_file_from_disk(source_or_content)
       File.open(source_or_content.full_path, "r") do |src|
@@ -188,7 +200,6 @@ module Puppet
       connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
       connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
         case response.code
-        when "404"; nil
         when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
         else
           # Raise the http error if we didn't get a 'success' of some kind.

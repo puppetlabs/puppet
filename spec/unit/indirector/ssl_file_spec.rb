@@ -1,29 +1,30 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2008-3-10.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/indirector/ssl_file'
 
 describe Puppet::Indirector::SslFile do
-  before do
-    @model = mock 'model'
+  before :all do
     @indirection = stub 'indirection', :name => :testing, :model => @model
     Puppet::Indirector::Indirection.expects(:instance).with(:testing).returns(@indirection)
-    @file_class = Class.new(Puppet::Indirector::SslFile) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @file_class = class Testing::MyType < Puppet::Indirector::SslFile
+      self
     end
+  end
+  before :each do
+    @model = mock 'model'
 
-    @setting = :mydir
+    @setting = :certdir
     @file_class.store_in @setting
-    @path = "/my/directory"
-    Puppet.settings.stubs(:value).with(:noop).returns(false)
-    Puppet.settings.stubs(:value).with(@setting).returns(@path)
-    Puppet.settings.stubs(:value).with(:trace).returns(false)
+    @path = "/tmp/my_directory"
+    Puppet[:noop] = false
+    Puppet[@setting] = @path
+    Puppet[:trace] = false
   end
 
   it "should use :main and :ssl upon initialization" do

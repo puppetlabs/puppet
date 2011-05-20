@@ -1,3 +1,4 @@
+require 'puppet/util/package'
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   desc "Support via `yum`."
 
@@ -52,6 +53,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     should = @resource.should(:ensure)
     self.debug "Ensuring => #{should}"
     wanted = @resource[:name]
+    operation = :install
 
     # XXX: We don't actually deal with epochs here.
     case should
@@ -61,9 +63,14 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     else
       # Add the package version
       wanted += "-#{should}"
+      is = self.query
+      if is && Puppet::Util::Package.versioncmp(should, is[:ensure]) < 0
+        self.debug "Downgrading package #{@resource[:name]} from version #{is[:ensure]} to #{should}"
+        operation = :downgrade
+      end
     end
 
-    output = yum "-d", "0", "-e", "0", "-y", :install, wanted
+    output = yum "-d", "0", "-e", "0", "-y", operation, wanted
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is

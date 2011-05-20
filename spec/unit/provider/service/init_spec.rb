@@ -1,9 +1,9 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 # Unit testing for the Init service Provider
 #
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'spec_helper'
 
 provider_class = Puppet::Type.type(:service).provider(:init)
 
@@ -46,7 +46,7 @@ describe provider_class do
       results = (@services-exclude).collect {|x| "#{x}_instance"}
       @class.get_services(@class.defpath, exclude).should == results
     end
-    it "should omit a single service from the exclude list" do
+    it "should omit a single service from the exclude list", :'fails_on_ruby_1.9.2' => true do
       exclude = 'two'
       (@services-exclude.to_a).each do |inst|
         @class.expects(:new).with{|hash| hash[:name] == inst}.returns("#{inst}_instance")
@@ -84,10 +84,12 @@ describe provider_class do
     end
 
     it "should be able to find the init script in the service path" do
+      File.stubs(:stat).raises(Errno::ENOENT.new('No such file or directory'))
       File.expects(:stat).with("/service/path/myservice").returns true
       @provider.initscript.should == "/service/path/myservice"
     end
     it "should be able to find the init script in the service path" do
+      File.stubs(:stat).raises(Errno::ENOENT.new('No such file or directory'))
       File.expects(:stat).with("/alt/service/path/myservice").returns true
       @provider.initscript.should == "/alt/service/path/myservice"
     end

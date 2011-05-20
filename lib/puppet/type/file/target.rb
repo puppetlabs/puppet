@@ -1,7 +1,20 @@
 module Puppet
   Puppet::Type.type(:file).newproperty(:target) do
     desc "The target for creating a link.  Currently, symlinks are the
-      only type supported."
+      only type supported.
+      
+      You can make relative links:
+
+          # (Useful on Solaris)
+          file { \"/etc/inetd.conf\":
+            ensure => link,
+            target => \"inet/inetd.conf\",
+          }
+    
+      You can also make recursive symlinks, which will create a
+      directory structure that maps to the target directory,
+      with directories corresponding to each directory
+      and links corresponding to each file."
 
     newvalue(:notlink) do
       # We do nothing if the value is absent
@@ -14,7 +27,7 @@ module Puppet
 
       # Only call mklink if ensure didn't call us in the first place.
       currentensure  = @resource.property(:ensure).retrieve
-      mklink if @resource.property(:ensure).insync?(currentensure)
+      mklink if @resource.property(:ensure).safe_insync?(currentensure)
     end
 
     # Create our link.

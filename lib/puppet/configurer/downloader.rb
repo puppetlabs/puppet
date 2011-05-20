@@ -50,6 +50,7 @@ class Puppet::Configurer::Downloader
 
   def catalog
     catalog = Puppet::Resource::Catalog.new
+    catalog.host_config = false
     catalog.add_resource(file)
     catalog
   end

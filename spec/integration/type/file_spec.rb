@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet_spec/files'
 
@@ -28,7 +27,8 @@ describe Puppet::Type.type(:file) do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource file, bucket
+      catalog.add_resource file
+      catalog.add_resource bucket
 
       File.open(file[:path], "w") { |f| f.puts "bar" }
 
@@ -80,7 +80,8 @@ describe Puppet::Type.type(:file) do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => link, :target => dest2, :ensure => :link, :backup => "mybucket"
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource file, bucket
+      catalog.add_resource file
+      catalog.add_resource bucket
 
       File.open(dest1, "w") { |f| f.puts "whatever" }
       File.symlink(dest1, link)
@@ -113,7 +114,8 @@ describe Puppet::Type.type(:file) do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
       catalog = Puppet::Resource::Catalog.new
-      catalog.add_resource file, bucket
+      catalog.add_resource file
+      catalog.add_resource bucket
 
       Dir.mkdir(file[:path])
       foofile = File.join(file[:path], "foo")
@@ -173,7 +175,12 @@ describe Puppet::Type.type(:file) do
     it "should be able to recurse over a nonexistent file" do
       @path = tmpfile("file_integration_tests")
 
-      @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true, :backup => false)
+      @file = Puppet::Type::File.new(
+        :name    => @path,
+        :mode    => 0644,
+        :recurse => true,
+        :backup  => false
+      )
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @file
@@ -186,7 +193,12 @@ describe Puppet::Type.type(:file) do
 
       build_path(@path)
 
-      @file = Puppet::Type::File.new(:name => @path, :mode => 0644, :recurse => true, :backup => false)
+      @file = Puppet::Type::File.new(
+        :name    => @path,
+        :mode    => 0644,
+        :recurse => true,
+        :backup  => false
+      )
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @file
@@ -327,10 +339,10 @@ describe Puppet::Type.type(:file) do
     it "should have an edge to each resource in the relationship graph" do
       @catalog.apply do |trans|
         one = @catalog.resource(:file, File.join(@dest, "one"))
-        @catalog.relationship_graph.should be_edge(@file, one)
+        @catalog.relationship_graph.edge?(@file, one).should be
 
         two = @catalog.resource(:file, File.join(@dest, "two"))
-        @catalog.relationship_graph.should be_edge(@file, two)
+        @catalog.relationship_graph.edge?(@file, two).should be
       end
     end
   end
@@ -393,10 +405,8 @@ describe Puppet::Type.type(:file) do
     dest = tmpfile("files_with_content")
 
 
-          file = Puppet::Type.type(:file).new(
-                
-      :name => dest,
-        
+    file = Puppet::Type.type(:file).new(
+      :name    => dest,
       :content => "this is some content, yo"
     )
 
@@ -411,11 +421,9 @@ describe Puppet::Type.type(:file) do
     dest = tmpfile("files_with_content")
 
 
-          file = Puppet::Type.type(:file).new(
-                
-      :name => dest,
-      :ensure => "file",
-        
+    file = Puppet::Type.type(:file).new(
+      :name    => dest,
+      :ensure  => "file",
       :content => "this is some content, yo"
     )
 
@@ -433,12 +441,10 @@ describe Puppet::Type.type(:file) do
     File.open(dest, "w") { |f| f.puts "boo" }
 
 
-          file = Puppet::Type.type(:file).new(
-                
-      :name => dest,
+    file = Puppet::Type.type(:file).new(
+      :name   => dest,
       :ensure => :absent,
       :source => source,
-        
       :backup => false
     )
 
@@ -465,24 +471,23 @@ describe Puppet::Type.type(:file) do
       File.open(@purgee, "w") { |f| f.puts "footest" }
 
 
-            @lfobj = Puppet::Type.newfile(
-                
-        :title => "localfile",
-        :path => @localfile,
+      @lfobj = Puppet::Type.newfile(
+        :title   => "localfile",
+        :path    => @localfile,
         :content => "rahtest\n",
-        :ensure => :file,
-        
-        :backup => false
+        :ensure  => :file,
+        :backup  => false
       )
 
 
-            @destobj = Puppet::Type.newfile(
-        :title => "destdir", :path => @destdir,
-                    :source => @sourcedir,
-                    :backup => false,
-                    :purge => true,
-        
-                    :recurse => true)
+      @destobj = Puppet::Type.newfile(
+        :title   => "destdir",
+        :path    => @destdir,
+        :source  => @sourcedir,
+        :backup  => false,
+        :purge   => true,
+        :recurse => true
+      )
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.add_resource @lfobj, @destobj

@@ -130,7 +130,7 @@ class TypeDoc
       a[0].to_s <=> b[0].to_s
     }.each { |name, doc|
       print "\n- **#{name}**"
-      if type.namevar == name and name != :name
+      if type.key_attributes.include?(name) and name != :name
         puts " (*namevar*)"
       else
         puts ""
@@ -179,6 +179,59 @@ class Puppet::Application::Describe < Puppet::Application
   option("--providers","-p")
   option("--list", "-l")
   option("--meta","-m")
+
+  def help
+    <<-HELP
+
+puppet-describe(8) -- Display help about resource types
+========
+
+SYNOPSIS
+--------
+Prints help about Puppet resource types, providers, and metaparameters.
+
+
+USAGE
+-----
+puppet describe [-h|--help] [-s|--short] [-p|--providers] [-l|--list] [-m|--meta]
+
+
+OPTIONS
+-------
+* --help:
+  Print this help text
+
+* --providers:
+  Describe providers in detail for each type
+
+* --list:
+  List all types
+
+* --meta:
+  List all metaparameters
+
+* --short:
+  List only parameters without detail
+
+
+EXAMPLE
+-------
+    $ puppet describe --list
+    $ puppet describe file --providers
+    $ puppet describe user -s -m
+
+
+AUTHOR
+------
+David Lutterkort
+
+
+COPYRIGHT
+---------
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
+
+    HELP
+  end
 
   def preinit
     options[:parameters] = true

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/indirector/node/ldap'
 
@@ -311,7 +310,7 @@ describe Puppet::Node::Ldap do
       @options = {}
       @request = stub 'request', :key => "foo", :options => @options
 
-      Puppet::Node::Facts.stubs(:terminus_class).returns :yaml
+      Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
     end
 
     it "should find all nodes if no arguments are provided" do

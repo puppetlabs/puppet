@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/authconfig'
 
@@ -86,7 +85,7 @@ describe Puppet::Network::AuthStore::Declaration do
   [
     "02001:0000:1234:0000:0000:C1C0:ABCD:0876",
     "2001:0000:1234:0000:00001:C1C0:ABCD:0876",
-    " 2001:0000:1234:0000:0000:C1C0:ABCD:0876  0",
+    " 2001:0000:1234:0000:0000:C1C0:ABCD:0876  0",
     "2001:0000:1234: 0000:0000:C1C0:ABCD:0876",
     "3ffe:0b00:0000:0001:0000:0000:000a",
     "FF02:0000:0000:0000:0000:0000:0000:0000:0001",

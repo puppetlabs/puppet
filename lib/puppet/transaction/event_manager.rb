@@ -31,7 +31,7 @@ class Puppet::Transaction::EventManager
   # Queue events for other resources to respond to.  All of these events have
   # to be from the same resource.
   def queue_events(resource, events)
-    @events += events
+    #@events += events
 
     # Do some basic normalization so we're not doing so many
     # graph queries for large sets of events.
@@ -47,19 +47,33 @@ class Puppet::Transaction::EventManager
       # Collect the targets of any subscriptions to those events.  We pass
       # the parent resource in so it will override the source in the events,
       # since eval_generated children can't have direct relationships.
+      received = (event.name != :restarted)
       relationship_graph.matching_edges(event, resource).each do |edge|
+        received ||= true unless edge.target.is_a?(Puppet::Type.type(:whit))
         next unless method = edge.callback
         next unless edge.target.respond_to?(method)
 
         queue_events_for_resource(resource, edge.target, method, list)
       end
+      @events << event if received
 
       queue_events_for_resource(resource, resource, :refresh, [event]) if resource.self_refresh? and ! resource.deleting?
     end
   end
 
   def queue_events_for_resource(source, target, callback, events)
-    source.info "Scheduling #{callback} of #{target}"
+    whit = Puppet::Type.type(:whit)
+
+    # The message that a resource is refreshing the completed-whit for its own class
+    # is extremely counter-intuitive. Basically everything else is easy to understand,
+    # if you suppress the whit-lookingness of the whit resources
+    refreshing_c_whit = target.is_a?(whit) && target.name =~ /^completed_/
+
+    if refreshing_c_whit
+      source.debug "The container #{target} will propagate my #{callback} event"
+    else
+      source.info "Scheduling #{callback} of #{target}"
+    end
 
     @event_queues[target] ||= {}
     @event_queues[target][callback] ||= []
@@ -79,7 +93,9 @@ class Puppet::Transaction::EventManager
     process_noop_events(resource, callback, events) and return false unless events.detect { |e| e.status != "noop" }
     resource.send(callback)
 
-    resource.notice "Triggered '#{callback}' from #{events.length} events"
+    if not resource.is_a?(Puppet::Type.type(:whit))
+      resource.notice "Triggered '#{callback}' from #{events.length} events"
+    end
     return true
   rescue => detail
     resource.err "Failed to call #{callback}: #{detail}"

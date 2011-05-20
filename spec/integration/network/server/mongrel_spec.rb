@@ -1,12 +1,10 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/network/server'
 require 'socket'
 
-describe Puppet::Network::Server do
-  describe "when using mongrel" do
-    confine "Mongrel is not available" => Puppet.features.mongrel?
+describe Puppet::Network::Server, :'fails_on_ruby_1.9.2' => true do
+  describe "when using mongrel", :if => Puppet.features.mongrel? do
 
     before :each do
       Puppet[:servertype] = 'mongrel'

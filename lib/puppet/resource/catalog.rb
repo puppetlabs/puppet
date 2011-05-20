@@ -61,36 +61,32 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     [$1, $2]
   end
 
-  # Add one or more resources to our graph and to our resource table.
+  # Add a resource to our graph and to our resource table.
   # This is actually a relatively complicated method, because it handles multiple
   # aspects of Catalog behaviour:
   # * Add the resource to the resource table
   # * Add the resource to the resource graph
   # * Add the resource to the relationship graph
   # * Add any aliases that make sense for the resource (e.g., name != title)
-  def add_resource(*resources)
-    resources.each do |resource|
-      raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
-    end.each { |resource| fail_on_duplicate_type_and_title(resource) }.each do |resource|
-      title_key = title_key_for_ref(resource.ref)
+  def add_resource(*resource)
+    add_resource(*resource[0..-2]) if resource.length > 1
+    resource = resource.pop
+    raise ArgumentError, "Can only add objects that respond to :ref, not instances of #{resource.class}" unless resource.respond_to?(:ref)
+    fail_on_duplicate_type_and_title(resource)
+    title_key = title_key_for_ref(resource.ref)
 
-      @transient_resources << resource if applying?
-      @resource_table[title_key] = resource
+    @transient_resources << resource if applying?
+    @resource_table[title_key] = resource
 
-      # If the name and title differ, set up an alias
+    # If the name and title differ, set up an alias
 
-      if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
-        self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
-      end
-
-      resource.catalog = self if resource.respond_to?(:catalog=)
-
-      add_vertex(resource)
-
-      @relationship_graph.add_vertex(resource) if @relationship_graph
-
-      yield(resource) if block_given?
+    if resource.respond_to?(:name) and resource.respond_to?(:title) and resource.respond_to?(:isomorphic?) and resource.name != resource.title
+      self.alias(resource, resource.uniqueness_key) if resource.isomorphic?
     end
+
+    resource.catalog = self if resource.respond_to?(:catalog=)
+    add_vertex(resource)
+    @relationship_graph.add_vertex(resource) if @relationship_graph
   end
 
   # Create an alias for a resource.
@@ -137,6 +133,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     transaction.report = options[:report] if options[:report]
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
+    transaction.for_network_device = options[:network_device]
 
     transaction.add_times :config_retrieval => self.retrieval_duration || 0
 
@@ -335,11 +332,73 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       @relationship_graph.write_graph(:relationships) if host_config?
 
       # Then splice in the container information
-      @relationship_graph.splice!(self, Puppet::Type::Component)
+      splice!(@relationship_graph)
 
       @relationship_graph.write_graph(:expanded_relationships) if host_config?
     end
     @relationship_graph
+  end
+
+  # Impose our container information on another graph by using it
+  # to replace any container vertices X with a pair of verticies
+  # { admissible_X and completed_X } such that that
+  #
+  #    0) completed_X depends on admissible_X
+  #    1) contents of X each depend on admissible_X
+  #    2) completed_X depends on each on the contents of X
+  #    3) everything which depended on X depens on completed_X
+  #    4) admissible_X depends on everything X depended on
+  #    5) the containers and their edges must be removed
+  #
+  # Note that this requires attention to the possible case of containers
+  # which contain or depend on other containers, but has the advantage
+  # that the number of new edges created scales linearly with the number
+  # of contained verticies regardless of how containers are related;
+  # alternatives such as replacing container-edges with content-edges
+  # scale as the product of the number of external dependences, which is
+  # to say geometrically in the case of nested / chained containers.
+  #
+  Default_label = { :callback => :refresh, :event => :ALL_EVENTS }
+  def splice!(other)
+    stage_class      = Puppet::Type.type(:stage)
+    whit_class       = Puppet::Type.type(:whit)
+    component_class  = Puppet::Type.type(:component)
+    containers = vertices.find_all { |v| (v.is_a?(component_class) or v.is_a?(stage_class)) and vertex?(v) }
+    #
+    # These two hashes comprise the aforementioned attention to the possible
+    #   case of containers that contain / depend on other containers; they map
+    #   containers to their sentinals but pass other verticies through.  Thus we
+    #   can "do the right thing" for references to other verticies that may or
+    #   may not be containers.
+    #
+    admissible = Hash.new { |h,k| k }
+    completed  = Hash.new { |h,k| k }
+    containers.each { |x|
+      admissible[x] = whit_class.new(:name => "admissible_#{x.ref}", :catalog => self)
+      completed[x]  = whit_class.new(:name => "completed_#{x.ref}",  :catalog => self)
+    }
+    #
+    # Implement the six requierments listed above
+    #
+    containers.each { |x|
+      contents = adjacent(x, :direction => :out)
+      other.add_edge(admissible[x],completed[x]) if contents.empty? # (0)
+      contents.each { |v|
+        other.add_edge(admissible[x],admissible[v],Default_label) # (1)
+        other.add_edge(completed[v], completed[x], Default_label) # (2)
+      }
+      # (3) & (5)
+      other.adjacent(x,:direction => :in,:type => :edges).each { |e|
+        other.add_edge(completed[e.source],admissible[x],e.label)
+        other.remove_edge! e
+      }
+      # (4) & (5)
+      other.adjacent(x,:direction => :out,:type => :edges).each { |e|
+        other.add_edge(completed[x],admissible[e.target],e.label)
+        other.remove_edge! e
+      }
+    }
+    containers.each { |x| other.remove_vertex! x } # (5)
   end
 
   # Remove the resource from our catalog.  Notice that we also call

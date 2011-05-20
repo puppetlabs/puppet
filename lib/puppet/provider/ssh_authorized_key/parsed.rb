@@ -42,12 +42,6 @@ require 'puppet/provider/parsedfile'
     0600
   end
 
-  def target
-      @resource.should(:target) || File.expand_path("~#{@resource.should(:user)}/.ssh/authorized_keys")
-  rescue
-      raise Puppet::Error, "Target not defined and/or specified user does not exist yet"
-  end
-
   def user
     uid = File.stat(target).uid
     Etc.getpwuid(uid).name
@@ -61,6 +55,13 @@ require 'puppet/provider/parsedfile'
       Dir.mkdir(dir, dir_perm)
       File.chown(uid, nil, dir)
     end
+
+    # ParsedFile usually calls backup_target much later in the flush process,
+    # but our SUID makes that fail to open filebucket files for writing.
+    # Fortunately, there's already logic to make sure it only ever happens once,
+    # so calling it here supresses the later attempt by our superclass's flush method.
+    self.class.backup_target(target)
+
     Puppet::Util::SUIDManager.asuser(@resource.should(:user)) { super }
     File.chown(uid, nil, target)
     File.chmod(file_perm, target)

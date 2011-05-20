@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/application/resource'
 
@@ -8,7 +7,6 @@ describe Puppet::Application::Resource do
   before :each do
     @resource = Puppet::Application[:resource]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Util::Log.stubs(:level=)
     Puppet::Resource.indirection.stubs(:terminus_class=)
   end
 
@@ -37,13 +35,13 @@ describe Puppet::Application::Resource do
   end
 
   describe "in preinit" do
-    it "should set hosts to nil" do
+    it "should set hosts to nil", :'fails_on_ruby_1.9.2' => true do
       @resource.preinit
 
       @resource.host.should be_nil
     end
 
-    it "should init extra_params to empty array" do
+    it "should init extra_params to empty array", :'fails_on_ruby_1.9.2' => true do
       @resource.preinit
 
       @resource.extra_params.should == []
@@ -79,10 +77,8 @@ describe Puppet::Application::Resource do
       type2 = stub_everything 'type2', :name => :type2
       Puppet::Type.stubs(:loadall)
       Puppet::Type.stubs(:eachtype).multiple_yields(type1,type2)
-      @resource.stubs(:exit)
-
       @resource.expects(:puts).with(['type1','type2'])
-      @resource.handle_types(nil)
+      expect { @resource.handle_types(nil) }.to exit_with 0
     end
 
     it "should add param to extra_params list" do
@@ -96,7 +92,6 @@ describe Puppet::Application::Resource do
   describe "during setup" do
     before :each do
       Puppet::Log.stubs(:newdestination)
-      Puppet::Log.stubs(:level=)
       Puppet.stubs(:parse_config)
     end
 
@@ -109,19 +104,15 @@ describe Puppet::Application::Resource do
 
     it "should set log level to debug if --debug was passed" do
       @resource.options.stubs(:[]).with(:debug).returns(true)
-
-      Puppet::Log.expects(:level=).with(:debug)
-
       @resource.setup
+      Puppet::Log.level.should == :debug
     end
 
     it "should set log level to info if --verbose was passed" do
       @resource.options.stubs(:[]).with(:debug).returns(false)
       @resource.options.stubs(:[]).with(:verbose).returns(true)
-
-      Puppet::Log.expects(:level=).with(:info)
-
       @resource.setup
+      Puppet::Log.level.should == :info
     end
 
     it "should Parse puppet config" do
@@ -162,21 +153,21 @@ describe Puppet::Application::Resource do
         @resource.stubs(:puts)
         @resource.host = 'host'
 
-        Puppet::Resource.stubs(:find  ).never
-        Puppet::Resource.stubs(:search).never
-        Puppet::Resource.stubs(:save  ).never
+        Puppet::Resource.indirection.stubs(:find  ).never
+        Puppet::Resource.indirection.stubs(:search).never
+        Puppet::Resource.indirection.stubs(:save  ).never
       end
 
       it "should search for resources" do
         @resource.command_line.stubs(:args).returns(['type'])
-        Puppet::Resource.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
+        Puppet::Resource.indirection.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
         @resource.main
       end
 
       it "should describe the given resource" do
         @resource.command_line.stubs(:args).returns(['type', 'name'])
         x = stub_everything 'resource'
-        Puppet::Resource.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
+        Puppet::Resource.indirection.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
         @resource.main
       end
 
@@ -184,7 +175,7 @@ describe Puppet::Application::Resource do
         @resource.command_line.stubs(:args).returns(['type','name','param=temp'])
 
         res = stub "resource"
-        res.expects(:save).with('https://host:8139/production/resources/type/name').returns(res)
+        Puppet::Resource.indirection.expects(:save).with(res, 'https://host:8139/production/resources/type/name').returns(res)
         res.expects(:collect)
         res.expects(:to_manifest)
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)
@@ -199,20 +190,20 @@ describe Puppet::Application::Resource do
         @resource.stubs(:puts)
         @resource.host = nil
 
-        Puppet::Resource.stubs(:find  ).never
-        Puppet::Resource.stubs(:search).never
-        Puppet::Resource.stubs(:save  ).never
+        Puppet::Resource.indirection.stubs(:find  ).never
+        Puppet::Resource.indirection.stubs(:search).never
+        Puppet::Resource.indirection.stubs(:save  ).never
       end
 
       it "should search for resources" do
-        Puppet::Resource.expects(:search).with('type/', {}).returns([])
+        Puppet::Resource.indirection.expects(:search).with('type/', {}).returns([])
         @resource.main
       end
 
       it "should describe the given resource" do
         @resource.command_line.stubs(:args).returns(['type','name'])
         x = stub_everything 'resource'
-        Puppet::Resource.expects(:find).with('type/name').returns(x)
+        Puppet::Resource.indirection.expects(:find).with('type/name').returns(x)
         @resource.main
       end
 
@@ -220,7 +211,7 @@ describe Puppet::Application::Resource do
         @resource.command_line.stubs(:args).returns(['type','name','param=temp'])
 
         res = stub "resource"
-        res.expects(:save).with('type/name').returns(res)
+        Puppet::Resource.indirection.expects(:save).with(res, 'type/name').returns(res)
         res.expects(:collect)
         res.expects(:to_manifest)
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)

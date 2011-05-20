@@ -8,24 +8,6 @@ Puppet::Reports.register_report(:store) do
     to perform some maintenance on them if you use this report (it's the only
     default report)."
 
-  def mkclientdir(client, dir)
-    config = Puppet::Util::Settings.new
-
-          config.setdefaults(
-        "reportclient-#{client}".to_sym,
-      "client-#{client}-dir" => { :default => dir,
-        :mode => 0750,
-        :desc => "Client dir for #{client}",
-        :owner => 'service',
-        :group => 'service'
-      },
-
-      :noop => [false, "Used by settings internally."]
-    )
-
-    config.use("reportclient-#{client}".to_sym)
-  end
-
   def process
     # We don't want any tracking back in the fs.  Unlikely, but there
     # you go.
@@ -33,7 +15,10 @@ Puppet::Reports.register_report(:store) do
 
     dir = File.join(Puppet[:reportdir], client)
 
-    mkclientdir(client, dir) unless FileTest.exists?(dir)
+    if ! FileTest.exists?(dir)
+      FileUtils.mkdir_p(dir)
+      FileUtils.chmod_R(0750, dir)
+    end
 
     # Now store the report.
     now = Time.now.gmtime

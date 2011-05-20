@@ -1,9 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Rick Bradley on 2007-10-15.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
+require 'spec_helper'
+require 'puppet/network/handler'
 require 'puppet/network/http'
 require 'puppet/network/http/webrick'
 
@@ -281,7 +282,7 @@ describe Puppet::Network::HTTP::WEBrick do
       @cert = stub 'cert', :content => "mycert"
       @host = stub 'host', :key => @key, :certificate => @cert, :name => "yay", :ssl_store => "mystore"
 
-      Puppet::SSL::Certificate.stubs(:find).with('ca').returns @cert
+      Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns @cert
 
       Puppet::SSL::Host.stubs(:localhost).returns @host
     end
@@ -298,7 +299,7 @@ describe Puppet::Network::HTTP::WEBrick do
     end
 
     it "should fail if no CA certificate can be found" do
-      Puppet::SSL::Certificate.stubs(:find).with('ca').returns nil
+      Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns nil
 
       lambda { @server.setup_ssl }.should raise_error(Puppet::Error)
     end

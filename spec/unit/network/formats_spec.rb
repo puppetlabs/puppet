@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/network/formats'
 
@@ -69,9 +68,8 @@ describe "Puppet Network Format" do
     end
   end
 
-  describe "base64 compressed yaml" do
+  describe "base64 compressed yaml", :if => Puppet.features.zlib? do
     yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
-    confine "We must have zlib" => Puppet.features.zlib?
 
     before do
       @yaml = Puppet::Network::FormatHandler.format(:b64_zlib_yaml)
@@ -265,9 +263,7 @@ describe "Puppet Network Format" do
     Puppet::Network::FormatHandler.format(:pson).should_not be_nil
   end
 
-  describe "pson" do
-    confine "Missing 'pson' library" => Puppet.features.pson?
-
+  describe "pson", :if => Puppet.features.pson? do
     before do
       @pson = Puppet::Network::FormatHandler.format(:pson)
     end
@@ -332,6 +328,68 @@ describe "Puppet Network Format" do
         PsonTest.expects(:from_pson).with("baz").returns "BAZ"
         @pson.intern_multiple(PsonTest, text).should == %w{BAR BAZ}
       end
+    end
+  end
+
+  describe ":console format" do
+    subject { Puppet::Network::FormatHandler.format(:console) }
+    it { should be_an_instance_of Puppet::Network::Format }
+    let :json do Puppet::Network::FormatHandler.format(:pson) end
+
+    [:intern, :intern_multiple].each do |method|
+      it "should not implement #{method}" do
+        expect { subject.send(method, String, 'blah') }.to raise_error NotImplementedError
+      end
+    end
+
+    ["hello", 1, 1.0].each do |input|
+      it "should just return a #{input.inspect}" do
+        subject.render(input).should == input
+      end
+    end
+
+    [[1, 2], ["one"], [{ 1 => 1 }]].each do |input|
+      it "should render #{input.inspect} as JSON" do
+        subject.render(input).should == json.render(input).chomp
+      end
+    end
+
+    it "should render a non-trivially-keyed Hash as JSON" do
+      hash = { [1,2] => 3, [2,3] => 5, [3,4] => 7 }
+      subject.render(hash).should == json.render(hash).chomp
+    end
+
+    it "should render a {String,Numeric}-keyed Hash into a table" do
+      object = Object.new
+      hash = { "one" => 1, "two" => [], "three" => {}, "four" => object,
+        5 => 5, 6.0 => 6 }
+
+      # Gotta love ASCII-betical sort order.  Hope your objects are better
+      # structured for display than my test one is. --daniel 2011-04-18
+      subject.render(hash).should == <<EOT
+5      5
+6.0    6
+four   #{json.render(object).chomp}
+one    1
+three  {}
+two    []
+EOT
+    end
+
+    it "should render a hash nicely with a multi-line value" do
+      pending "Moving to PSON rather than PP makes this unsupportable."
+      hash = {
+        "number" => { "1" => '1' * 40, "2" => '2' * 40, '3' => '3' * 40 },
+        "text"   => { "a" => 'a' * 40, 'b' => 'b' * 40, 'c' => 'c' * 40 }
+      }
+      subject.render(hash).should == <<EOT
+number  {"1"=>"1111111111111111111111111111111111111111",
+         "2"=>"2222222222222222222222222222222222222222",
+         "3"=>"3333333333333333333333333333333333333333"}
+text    {"a"=>"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+         "b"=>"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+         "c"=>"cccccccccccccccccccccccccccccccccccccccc"}
+EOT
     end
   end
 end

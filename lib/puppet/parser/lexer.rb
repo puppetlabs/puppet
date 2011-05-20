@@ -152,7 +152,6 @@ class Puppet::Parser::Lexer
       '>>' => :RSHIFT,
       '=~' => :MATCH,
       '!~' => :NOMATCH,
-      %r{([a-z][-\w]*)?(::[a-z][-\w]*)+} => :CLASSNAME, # Require '::' in the class name, else we'd compete with NAME
       %r{((::){0,1}[A-Z][-\w]*)+} => :CLASSREF,
       "<string>" => :STRING,
       "<dqstring up to first interpolation>" => :DQPRE,
@@ -161,6 +160,7 @@ class Puppet::Parser::Lexer
       "<boolean>" => :BOOLEAN
       )
 
+  # Numbers are treated separately from names, so that they may contain dots.
   TOKENS.add_token :NUMBER, %r{\b(?:0[xX][0-9A-Fa-f]+|0?\d+(?:\.\d+)?(?:[eE]-?\d+)?)\b} do |lexer, value|
     [TOKENS[:NAME], value]
   end
@@ -170,7 +170,7 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
-  TOKENS.add_token :NAME, %r{[a-z0-9][-\w]*} do |lexer, value|
+  TOKENS.add_token :NAME, %r{((::)?[a-z0-9][-\w]*)(::[a-z0-9][-\w]*)*} do |lexer, value|
     string_token = self
     # we're looking for keywords here
     if tmp = KEYWORDS.lookup(value)
@@ -240,11 +240,11 @@ class Puppet::Parser::Lexer
   end
   #:startdoc:
 
-  TOKENS.add_token :DOLLAR_VAR, %r{\$(\w*::)*\w+} do |lexer, value|
+  TOKENS.add_token :DOLLAR_VAR, %r{\$(::)?([-\w]+::)*[-\w]+} do |lexer, value|
     [TOKENS[:VARIABLE],value[1..-1]]
   end
 
-  TOKENS.add_token :VARIABLE, %r{(\w*::)*\w+}
+  TOKENS.add_token :VARIABLE, %r{(::)?([-\w]+::)*[-\w]+}
   #:stopdoc: # Issue #4161
   def (TOKENS[:VARIABLE]).acceptable?(context={})
     [:DQPRE,:DQMID].include? context[:after]
@@ -312,7 +312,8 @@ class Puppet::Parser::Lexer
   def file=(file)
     @file = file
     @line = 1
-    @scanner = StringScanner.new(File.read(file))
+    contents = File.exists?(file) ? File.read(file) : ""
+    @scanner = StringScanner.new(contents)
   end
 
   def shift_token
@@ -476,8 +477,11 @@ class Puppet::Parser::Lexer
         @expected.pop
       end
 
-      if final_token.name == :LBRACE
+      if final_token.name == :LBRACE or final_token.name == :LPAREN
         commentpush
+      end
+      if final_token.name == :RPAREN
+        commentpop
       end
 
       yield [final_token.name, token_value]
@@ -520,15 +524,16 @@ class Puppet::Parser::Lexer
   def slurpstring(terminators,escapes=%w{ \\  $ ' " n t s }+["\n"],ignore_invalid_escapes=false)
     # we search for the next quote that isn't preceded by a
     # backslash; the caret is there to match empty strings
-    str = @scanner.scan_until(/([^\\]|^)[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
+    str = @scanner.scan_until(/([^\\]|^|[^\\])([\\]{2})*[#{terminators}]/) or lex_error "Unclosed quote after '#{last}' in '#{rest}'"
     @line += str.count("\n") # literal carriage returns add to the line count.
-    str.gsub!(/\\(.)/) {
+    str.gsub!(/\\(.)/m) {
       ch = $1
       if escapes.include? ch
         case ch
         when 'n'; "\n"
         when 't'; "\t"
         when 's'; " "
+        when "\n"; ''
         else      ch
         end
       else
@@ -543,8 +548,8 @@ class Puppet::Parser::Lexer
     value,terminator = slurpstring('"$')
     token_queue << [TOKENS[token_type[terminator]],preamble+value]
     if terminator != '$' or @scanner.scan(/\{/)
-      token_queue.shift 
-    elsif var_name = @scanner.scan(%r{(\w*::)*\w+|[0-9]})
+      token_queue.shift
+    elsif var_name = @scanner.scan(TOKENS[:VARIABLE].regex)
       token_queue << [TOKENS[:VARIABLE],var_name]
       tokenize_interpolated_string(DQ_continuation_token_types)
     else

@@ -1,6 +1,5 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 describe Puppet::Type.type(:package) do
   before do
@@ -121,7 +120,7 @@ describe Puppet::Type.type(:package) do
       before { @package[:ensure] = :purged }
 
       it "should do nothing if it is :purged" do
-        @provider.expects(:properties).returns(:ensure => :purged)
+        @provider.expects(:properties).returns(:ensure => :purged).at_least_once
         @catalog.apply
       end
 
@@ -141,7 +140,7 @@ describe Puppet::Type.type(:package) do
 
       [:purged, :absent].each do |state|
         it "should do nothing if it is #{state.to_s}" do
-          @provider.expects(:properties).returns(:ensure => state)
+          @provider.expects(:properties).returns(:ensure => state).at_least_once
           @catalog.apply
         end
       end
@@ -162,7 +161,7 @@ describe Puppet::Type.type(:package) do
 
       [:present, :latest, "1.0"].each do |state|
         it "should do nothing if it is #{state.to_s}" do
-          @provider.expects(:properties).returns(:ensure => state)
+          @provider.expects(:properties).returns(:ensure => state).at_least_once
           @catalog.apply
         end
       end

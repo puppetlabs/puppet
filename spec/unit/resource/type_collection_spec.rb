@@ -1,11 +1,12 @@
-#!/usr/bin/env ruby
-
-require File.dirname(__FILE__) + '/../../spec_helper'
+#!/usr/bin/env rspec
+require 'spec_helper'
 
 require 'puppet/resource/type_collection'
 require 'puppet/resource/type'
 
 describe Puppet::Resource::TypeCollection do
+  include PuppetSpec::Files
+
   before do
     @instance = Puppet::Resource::Type.new(:hostclass, "foo")
     @code = Puppet::Resource::TypeCollection.new("env")
@@ -82,11 +83,42 @@ describe Puppet::Resource::TypeCollection do
     loader.add Puppet::Resource::Type.new(:hostclass, "class")
     loader.add Puppet::Resource::Type.new(:definition, "define")
     loader.add Puppet::Resource::Type.new(:node, "node")
+    watched_file = tmpfile('watched_file')
+    loader.watch_file(watched_file)
 
     loader.clear
     loader.hostclass("class").should be_nil
     loader.definition("define").should be_nil
     loader.node("node").should be_nil
+    loader.should_not be_watching_file(watched_file)
+  end
+
+  describe "when resolving namespaces" do
+    [ ['',               '::foo', ['foo']],
+      ['a',              '::foo', ['foo']],
+      ['a::b',           '::foo', ['foo']],
+      [['a::b'],         '::foo', ['foo']],
+      [['a::b', 'c'],    '::foo', ['foo']],
+      [['A::B', 'C'],    '::Foo', ['foo']],
+      ['',               '',      ['']],
+      ['a',              '',      ['']],
+      ['a::b',           '',      ['']],
+      [['a::b'],         '',      ['']],
+      [['a::b', 'c'],    '',      ['']],
+      [['A::B', 'C'],    '',      ['']],
+      ['',               'foo',   ['foo']],
+      ['a',              'foo',   ['a::foo', 'foo']],
+      ['a::b',           'foo',   ['a::b::foo', 'a::foo', 'foo']],
+      ['A::B',           'Foo',   ['a::b::foo', 'a::foo', 'foo']],
+      [['a::b'],         'foo',   ['a::b::foo', 'a::foo', 'foo']],
+      [['a', 'b'],       'foo',   ['a::foo', 'foo', 'b::foo']],
+      [['a::b', 'c::d'], 'foo',   ['a::b::foo', 'a::foo', 'foo', 'c::d::foo', 'c::foo']],
+      [['a::b', 'a::c'], 'foo',   ['a::b::foo', 'a::foo', 'foo', 'a::c::foo']],
+    ].each do |namespaces, name, expected_result|
+      it "should resolve #{name.inspect} in namespaces #{namespaces.inspect} correctly" do
+        @code.instance_eval { resolve_namespaces(namespaces, name) }.should == expected_result
+      end
+    end
   end
 
   describe "when looking up names" do
@@ -107,29 +139,32 @@ describe Puppet::Resource::TypeCollection do
 
     describe "that need to be loaded" do
       it "should use the loader to load the files" do
-        @code.loader.expects(:load_until).with(["ns"], "klass")
-        @code.find_or_load(["ns"], "klass", :hostclass)
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
+        @code.find_hostclass(["ns"], "klass")
       end
 
       it "should downcase the name and downcase and array-fy the namespaces before passing to the loader" do
-        @code.loader.expects(:load_until).with(["ns"], "klass")
-        @code.find_or_load("Ns", "Klass", :hostclass)
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "ns::klass")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "klass")
+        @code.find_hostclass("Ns", "Klass")
       end
 
-      it "should attempt to find the type when the loader yields" do
-        @code.loader.expects(:load_until).yields
-        @code.expects(:find).with(["ns"], "klass", :hostclass).times(2).returns(false).then.returns(true)
-        @code.find_or_load("ns", "klass", :hostclass)
-      end
-
-      it "should return the result of 'load_until'" do
-        @code.loader.expects(:load_until).returns "foo"
-        @code.find_or_load("Ns", "Klass", :hostclass).should == "foo"
+      it "should use the class returned by the loader" do
+        @code.loader.expects(:try_load_fqname).returns(:klass)
+        @code.expects(:hostclass).with("ns::klass").returns(false)
+        @code.find_hostclass("ns", "klass").should == :klass
       end
 
       it "should return nil if the name isn't found" do
-        @code.stubs(:load_until).returns(nil)
-        @code.find_or_load("Ns", "Klass", :hostclass).should be_nil
+        @code.stubs(:try_load_fqname).returns(nil)
+        @code.find_hostclass("Ns", "Klass").should be_nil
+      end
+
+      it "already-loaded names at broader scopes should not shadow autoloaded names" do
+        @code.add Puppet::Resource::Type.new(:hostclass, "bar")
+        @code.loader.expects(:try_load_fqname).with(:hostclass, "foo::bar").returns(:foobar)
+        @code.find_hostclass("foo", "bar").should == :foobar
       end
     end
   end
@@ -195,68 +230,68 @@ describe Puppet::Resource::TypeCollection do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find("namespace", "::foo::bar", :hostclass).should equal(instance)
+      loader.find_hostclass("namespace", "::foo::bar").should equal(instance)
     end
 
     it "should return nil if the instance name is fully qualified and no such instance exists" do
       loader = Puppet::Resource::TypeCollection.new("env")
-      loader.find("namespace", "::foo::bar", :hostclass).should be_nil
+      loader.find_hostclass("namespace", "::foo::bar").should be_nil
     end
 
     it "should be able to find classes in the base namespace" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo")
       loader.add instance
-      loader.find("", "foo", :hostclass).should equal(instance)
+      loader.find_hostclass("", "foo").should equal(instance)
     end
 
     it "should return the partially qualified object if it exists in a provided namespace" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find("foo", "bar::baz", :hostclass).should equal(instance)
+      loader.find_hostclass("foo", "bar::baz").should equal(instance)
     end
 
     it "should be able to find partially qualified objects in any of the provided namespaces" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find(["nons", "foo", "otherns"], "bar::baz", :hostclass).should equal(instance)
+      loader.find_hostclass(["nons", "foo", "otherns"], "bar::baz").should equal(instance)
     end
 
     it "should return the unqualified object if it exists in a provided namespace" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find("foo", "bar", :hostclass).should equal(instance)
+      loader.find_hostclass("foo", "bar").should equal(instance)
     end
 
     it "should return the unqualified object if it exists in the parent namespace" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar")
       loader.add instance
-      loader.find("foo::bar::baz", "bar", :hostclass).should equal(instance)
+      loader.find_hostclass("foo::bar::baz", "bar").should equal(instance)
     end
 
     it "should should return the partially qualified object if it exists in the parent namespace" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find("foo::bar", "bar::baz", :hostclass).should equal(instance)
+      loader.find_hostclass("foo::bar", "bar::baz").should equal(instance)
     end
 
     it "should return the qualified object if it exists in the root namespace" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find("foo::bar", "foo::bar::baz", :hostclass).should equal(instance)
+      loader.find_hostclass("foo::bar", "foo::bar::baz").should equal(instance)
     end
 
     it "should return nil if the object cannot be found" do
       loader = Puppet::Resource::TypeCollection.new("env")
       instance = Puppet::Resource::Type.new(:hostclass, "foo::bar::baz")
       loader.add instance
-      loader.find("foo::bar", "eh", :hostclass).should be_nil
+      loader.find_hostclass("foo::bar", "eh").should be_nil
     end
 
     describe "when topscope has a class that has the same name as a local class" do
@@ -268,11 +303,11 @@ describe Puppet::Resource::TypeCollection do
       end
 
       it "should favor the local class, if the name is unqualified" do
-        @loader.find("foo", "bar",   :hostclass).name.should == 'foo::bar'
+        @loader.find_hostclass("foo", "bar").name.should == 'foo::bar'
       end
 
       it "should only look in the topclass, if the name is qualified" do
-        @loader.find("foo", "::bar", :hostclass).name.should == 'bar'
+        @loader.find_hostclass("foo", "::bar").name.should == 'bar'
       end
 
     end
@@ -281,15 +316,16 @@ describe Puppet::Resource::TypeCollection do
         @loader = Puppet::Resource::TypeCollection.new("env")
         @loader.add Puppet::Resource::Type.new(:hostclass, "foo::bar")
 
-        @loader.find("foo", "::bar", :hostclass).should == nil
+        @loader.find_hostclass("foo", "::bar").should == nil
     end
 
   end
 
-  it "should use the generic 'find' method with an empty namespace to find nodes" do
+  it "should be able to find nodes" do
+    node = Puppet::Resource::Type.new(:node, "bar")
     loader = Puppet::Resource::TypeCollection.new("env")
-    loader.expects(:find).with("", "bar", :node)
-    loader.find_node(stub("ignored"), "bar")
+    loader.add(node)
+    loader.find_node(stub("ignored"), "bar").should == node
   end
 
   it "should use the 'find_or_load' method to find hostclasses" do
@@ -381,58 +417,6 @@ describe Puppet::Resource::TypeCollection do
       @loader.watch_file("/other/bar")
 
       @loader.should_not be_stale
-    end
-  end
-
-  describe "when performing initial import" do
-    before do
-      @parser = stub 'parser', :file= => nil, :string => nil, :parse => nil
-      Puppet::Parser::Parser.stubs(:new).returns @parser
-      @code = Puppet::Resource::TypeCollection.new("env")
-    end
-
-    it "should create a new parser instance" do
-      Puppet::Parser::Parser.expects(:new).returns @parser
-      @code.perform_initial_import
-    end
-
-    it "should set the parser's string to the 'code' setting and parse if code is available" do
-      Puppet.settings[:code] = "my code"
-      @parser.expects(:string=).with "my code"
-      @parser.expects(:parse)
-      @code.perform_initial_import
-    end
-
-    it "should set the parser's file to the 'manifest' setting and parse if no code is available and the manifest is available" do
-      File.stubs(:expand_path).with("/my/file").returns "/my/file"
-      File.expects(:exist?).with("/my/file").returns true
-      Puppet.settings[:manifest] = "/my/file"
-      @parser.expects(:file=).with "/my/file"
-      @parser.expects(:parse)
-      @code.perform_initial_import
-    end
-
-    it "should not attempt to load a manifest if none is present" do
-      File.stubs(:expand_path).with("/my/file").returns "/my/file"
-      File.expects(:exist?).with("/my/file").returns false
-      Puppet.settings[:manifest] = "/my/file"
-      @parser.expects(:file=).never
-      @parser.expects(:parse).never
-      @code.perform_initial_import
-    end
-
-    it "should fail helpfully if there is an error importing" do
-      File.stubs(:exist?).returns true
-      @parser.expects(:parse).raises ArgumentError
-      lambda { @code.perform_initial_import }.should raise_error(Puppet::Error)
-    end
-
-    it "should not do anything if the ignore_import settings is set" do
-      Puppet.settings[:ignoreimport] = true
-      @parser.expects(:string=).never
-      @parser.expects(:file=).never
-      @parser.expects(:parse).never
-      @code.perform_initial_import
     end
   end
 

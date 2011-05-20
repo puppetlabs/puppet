@@ -29,7 +29,8 @@ class ZAML
     @result = []
     @indent = nil
     @structured_key_prefix = nil
-    Label.counter_reset
+    @previously_emitted_object = {}
+    @next_free_label_number = 0
     emit('--- ')
   end
   def nested(tail='  ')
@@ -55,31 +56,30 @@ class ZAML
     #    which we will encounter a reference to the object as we serialize
     #    it can be handled).
     #
-    def self.counter_reset
-      @@previously_emitted_object = {}
-      @@next_free_label_number = 0
-    end
+    attr_accessor :this_label_number
     def initialize(obj,indent)
       @indent = indent
       @this_label_number = nil
-      @@previously_emitted_object[obj.object_id] = self
+      @obj = obj # prevent garbage collection so that object id isn't reused
     end
     def to_s
       @this_label_number ? ('&id%03d%s' % [@this_label_number, @indent]) : ''
     end
     def reference
-      @this_label_number ||= (@@next_free_label_number += 1)
       @reference         ||= '*id%03d' % @this_label_number
     end
-    def self.for(obj)
-      @@previously_emitted_object[obj.object_id]
-    end
+  end
+  def label_for(obj)
+    @previously_emitted_object[obj.object_id]
   end
   def new_label_for(obj)
-    Label.new(obj,(Hash === obj || Array === obj) ? "#{@indent || "\n"}  " : ' ')
+    label = Label.new(obj,(Hash === obj || Array === obj) ? "#{@indent || "\n"}  " : ' ')
+    @previously_emitted_object[obj.object_id] = label
+    label
   end
   def first_time_only(obj)
-    if label = Label.for(obj)
+    if label = label_for(obj)
+      label.this_label_number ||= (@next_free_label_number += 1)
       emit(label.reference)
     else
       if @structured_key_prefix and not obj.is_a? String
@@ -120,6 +120,9 @@ class Object
   def to_yaml_properties
     instance_variables.sort        # Default YAML behavior
   end
+  def yaml_property_munge(x)
+    x
+  end
   def zamlized_class_name(root)
     cls = self.class
     "!ruby/#{root.name.downcase}#{cls == root ? '' : ":#{cls.respond_to?(:name) ? cls.name : cls}"}"
@@ -136,7 +139,7 @@ class Object
             z.nl
             v[1..-1].to_zaml(z)       # Remove leading '@'
             z.emit(': ')
-            instance_variable_get(v).to_zaml(z)
+            yaml_property_munge(instance_variable_get(v)).to_zaml(z)
           }
         end
       }
@@ -243,7 +246,6 @@ class String
         when self =~ /\n/
           if self[-1..-1] == "\n" then z.emit('|+') else z.emit('|-') end
           z.nested { split("\n",-1).each { |line| z.nl; z.emit(line.chomp("\n")) } }
-          z.nl
         else
           z.emit(self)
       end

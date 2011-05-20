@@ -1,23 +1,22 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
 #
 #  Created by Luke Kanies on 2007-10-24.
 #  Copyright (c) 2007. All rights reserved.
 
-require File.dirname(__FILE__) + '/../../spec_helper'
+require 'spec_helper'
 
 require 'puppet/indirector/direct_file_server'
 
 describe Puppet::Indirector::DirectFileServer do
-  before :each do
+  before :all do
     Puppet::Indirector::Terminus.stubs(:register_terminus_class)
     @model = mock 'model'
     @indirection = stub 'indirection', :name => :mystuff, :register_terminus_type => nil, :model => @model
     Puppet::Indirector::Indirection.stubs(:instance).returns(@indirection)
 
-    @direct_file_class = Class.new(Puppet::Indirector::DirectFileServer) do
-      def self.to_s
-        "Testing::Mytype"
-      end
+    module Testing; end
+    @direct_file_class = class Testing::Mytype < Puppet::Indirector::DirectFileServer
+      self
     end
 
     @server = @direct_file_class.new

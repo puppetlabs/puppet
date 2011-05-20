@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../../lib/puppettest'
+require File.expand_path(File.dirname(__FILE__) + '/../../lib/puppettest')
 
 require 'puppettest'
 require 'facter'
@@ -9,7 +9,7 @@ class TestProvider < Test::Unit::TestCase
   include PuppetTest
 
   def echo
-    echo = Puppet::Util.binary("echo")
+    echo = Puppet::Util.which("echo")
 
     raise "Could not find 'echo' binary; cannot complete test" unless echo
 
@@ -95,7 +95,7 @@ class TestProvider < Test::Unit::TestCase
 
     provider.commands :testing => "/no/such/path"
 
-    provider.stubs(:binary).returns "/no/such/path"
+    provider.stubs(:which).returns "/no/such/path"
 
     provider.command(:testing)
     assert_equal("/no/such/path", provider.command(:testing), "Did not return correct binary path")
@@ -187,7 +187,7 @@ class TestProvider < Test::Unit::TestCase
 
     dir = tstdir
     file = File.join(dir, "mycmd")
-    sh = Puppet::Util.binary("sh")
+    sh = Puppet::Util.which("sh")
     File.open(file, "w") { |f|
       f.puts %{#!#{sh}
       echo A Failure >&2

@@ -1,8 +1,10 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env rspec
+require 'spec_helper'
 
-require File.dirname(__FILE__) + '/../../../spec_helper'
-
-describe "the inline_template function" do
+describe "the inline_template function", :'fails_on_ruby_1.9.2' => true do
+  before :all do
+    Puppet::Parser::Functions.autoloader.loadall
+  end
 
   before :each do
     @scope = Puppet::Parser::Scope.new
