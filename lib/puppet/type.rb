@@ -886,7 +886,7 @@ class Type
         end
         provider_instances[instance.name] = instance
 
-        new(:name => instance.name, :provider => instance, :audit => :all)
+        new(:name => instance.name, :provider => instance)
       end
     end.flatten.compact
   end
