@@ -78,7 +78,7 @@ class Puppet::Interface
         return nil if @description.nil?
         lines = @description.split("\n")
         grab  = [5, lines.index('') || 5].min
-        @short_description = lines[0, grab].join("\n")
+        @short_description = lines[0, grab].join("\n") + ' [...]'
       end
       @short_description
     end
