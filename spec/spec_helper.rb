@@ -23,7 +23,6 @@ require 'puppet_spec/fixtures'
 require 'puppet_spec/matchers'
 require 'monkey_patches/alias_should_to_must'
 require 'monkey_patches/publicize_methods'
-require 'monkey_patches/disable_signal_trap'
 
 Pathname.glob("#{dir}/shared_behaviours/**/*.rb") do |behaviour|
   require behaviour.relative_path_from(Pathname.new(dir))

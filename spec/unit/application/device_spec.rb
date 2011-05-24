@@ -39,7 +39,7 @@ describe Puppet::Application::Device do
     end
 
     it "should catch INT" do
-      @device.expects(:trap).with { |arg,block| arg == :INT }
+      Signal.expects(:trap).with { |arg,block| arg == :INT }
 
       @device.preinit
     end
