@@ -10,19 +10,6 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
     environment, node parameters (exposed in the parser as top-scope
     variables), and classes.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `active_record`
-    * `exec`
-    * `ldap`
-    * `memory`
-    * `plain`
-    * `rest`
-    * `yaml`
-  EOT
 
   get_action(:destroy).summary "Invalid for this face."
   get_action(:search).summary "Invalid for this face."

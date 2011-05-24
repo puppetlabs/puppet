@@ -11,15 +11,6 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
     `find` with a node certificate name to retrieve a specific request, and
     invoke `save` to submit a CSR.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `ca`
-    * `file`
-    * `rest`
-  EOT
 
   # Per-action doc overrides
   get_action(:destroy).summary "Invalid for this face."

@@ -12,14 +12,6 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
 
     It will eventually be extended to examine native resource types.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `parser`
-    * `rest`
-  EOT
 
   # Action documentation overrides:
   get_action(:save).summary = "Invalid for this face."

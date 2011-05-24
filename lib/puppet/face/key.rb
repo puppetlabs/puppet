@@ -11,13 +11,5 @@ Puppet::Indirector::Face.define(:key, '0.0.1') do
     certificate generate', and it should not be necessary to use this action
     directly.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `ca`
-    * `file`
-  EOT
 
 end

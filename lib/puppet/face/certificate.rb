@@ -13,15 +13,6 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     and its "generate" action submits a CSR rather than creating a
     signed certificate.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `ca`
-    * `file`
-    * `rest`
-  EOT
 
   option "--ca-location LOCATION" do
     summary "The certificate authority to query"
