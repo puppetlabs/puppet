@@ -11,13 +11,6 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
     examples for the relevant syntax.
   EOT
   notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `file`
-    * `rest`
-
     To retrieve the unmunged contents of a file, you must call find with
     --render-as s. Rendering as yaml will return a hash of metadata
     about the file, including its contents.

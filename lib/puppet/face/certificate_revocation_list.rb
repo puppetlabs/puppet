@@ -10,15 +10,6 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
     list from the CA. Although it exposes search/save/destroy methods,
     they shouldn't be used under normal circumstances.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `ca`
-    * `file`
-    * `rest`
-  EOT
 
   get_action(:find).summary "Retrieve the certificate revocation list."
   get_action(:find).arguments "<dummy_key>"

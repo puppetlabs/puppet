@@ -16,20 +16,6 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     front-end to the inventory service REST API. See the inventory
     service documentation for more detail.
   EOT
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `active_record`
-    * `couch`
-    * `facter`
-    * `inventory_active_record`
-    * `memory`
-    * `network_device`
-    * `rest`
-    * `yaml`
-  EOT
 
   find = get_action(:find)
   find.summary "Retrieve a host's facts."

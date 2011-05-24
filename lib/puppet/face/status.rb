@@ -5,14 +5,6 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
   license   "Apache 2 license; see COPYING"
 
   summary "View puppet server status."
-  notes <<-'EOT'
-    This is an indirector face, which exposes `find`, `search`, `save`, and
-    `destroy` actions for an indirected subsystem of Puppet. Valid termini
-    for this face include:
-
-    * `local`
-    * `rest`
-  EOT
 
   get_action(:destroy).summary "Invalid for this face."
   get_action(:save).summary "Invalid for this face."
