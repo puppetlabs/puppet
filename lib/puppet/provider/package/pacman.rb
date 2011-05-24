@@ -33,7 +33,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
         fields = [:name, :ensure]
         hash = {}
 
-        process.each { |line|
+        process.each_line { |line|
           if match = regex.match(line)
             fields.zip(match.captures) { |field,value|
               hash[field] = value
