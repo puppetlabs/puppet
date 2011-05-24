@@ -17,7 +17,17 @@ on master, "ps -U puppet | awk '/puppet/ { print \$1 }' | xargs kill || echo \"P
 step "Master: Start Puppet Master"
 on master, puppet_master("--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop")
 # allow Master to start and initialize environment
-sleep 1
+
+step "Verify Puppet Master is ready to accept connections"
+host=agents.first
+time1 = Time.new
+until
+  on(host, "curl -k https://#{master}:8140") do
+    sleep 1
+  end
+time2 = Time.new
+elapsed = time2 - time1
+Log.notify "Slept for #{elapsed} seconds waiting for Puppet Master to become ready"
 
 
 
