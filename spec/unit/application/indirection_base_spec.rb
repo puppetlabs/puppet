@@ -19,7 +19,6 @@ face.instance_variable_set('@version', :current)
 Puppet::Face.register(face)
 ########################################################################
 
-
 describe Puppet::Application::IndirectionBase do
   subject { Puppet::Application::TestIndirection.new }
 
@@ -27,6 +26,8 @@ describe Puppet::Application::IndirectionBase do
     # It would be nice not to have to stub this, but whatever... writing an
     # entire indirection stack would cause us more grief. --daniel 2011-03-31
     terminus = stub_everything("test indirection terminus")
+    terminus.stubs(:name).returns(:testindirection)
+
     Puppet::Indirector::Indirection.expects(:instance).
       with(:testindirection).returns(terminus)
 
