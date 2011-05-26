@@ -105,26 +105,28 @@ class Puppet::Util::Autoload
   # so that already-loaded files don't get reloaded unnecessarily.
   def loadall
     # Load every instance of everything we can find.
-    searchpath.each do |dir|
-      Dir.glob("#{dir}/*.rb").each do |file|
-        name = File.basename(file).sub(".rb", '').intern
-        next if loaded?(name)
-        begin
-          Kernel.require file
-          loaded(name, file)
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => detail
-          puts detail.backtrace if Puppet[:trace]
-          raise Puppet::Error, "Could not autoload #{file}: #{detail}"
-        end
+    files_to_load.each do |file|
+      name = File.basename(file).chomp(".rb").intern
+      next if loaded?(name)
+      begin
+        Kernel.require file
+        loaded(name, file)
+      rescue SystemExit,NoMemoryError
+        raise
+      rescue Exception => detail
+        puts detail.backtrace if Puppet[:trace]
+        raise Puppet::Error, "Could not autoload #{file}: #{detail}"
       end
     end
   end
 
+  def files_to_load
+    searchpath.map { |dir| Dir.glob("#{dir}/*.rb") }.flatten
+  end
+
   # The list of directories to search through for loadable plugins.
   def searchpath(env=nil)
-    search_directories(env).collect { |d| File.join(d, @path) }.find_all { |d| FileTest.directory?(d) }
+    search_directories(env).uniq.collect { |d| File.join(d, @path) }.find_all { |d| FileTest.directory?(d) }
   end
 
   def module_directories(env=nil)

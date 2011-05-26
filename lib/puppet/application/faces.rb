@@ -66,7 +66,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       str = "#{name}:\n"
       if arguments.include?("terminuses")
         begin
-          terms = terminus_classes(name.to_sym)
+          terms = Puppet::Indirector::Face.terminus_classes(name.to_sym)
           str << "\tTerminuses: #{terms.join(", ")}\n"
         rescue => detail
           puts detail.backtrace if Puppet[:trace]
@@ -105,10 +105,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def faces
     Puppet::Face.faces
-  end
-
-  def terminus_classes(indirection)
-    Puppet::Indirector::Terminus.terminus_classes(indirection).collect { |t| t.to_s }.sort
   end
 
   def actions(indirection)
