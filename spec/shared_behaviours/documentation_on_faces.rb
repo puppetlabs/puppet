@@ -109,11 +109,18 @@ shared_examples_for "documentation on faces" do
       subject.short_description.should == "hello\ngoodbye"
     end
 
-    it "should trim a very, very long first paragraph" do
+    it "should trim a very, very long first paragraph and add ellipsis" do
       line = "this is a very, very, very long long line full of text\n"
       subject.description = line * 20 + "\n\nwhatever, dude."
 
-      subject.short_description.should == (line * 5).chomp
+      subject.short_description.should == (line * 5).chomp + ' [...]'
+    end
+    
+    it "should trim a very very long only paragraph even if it is followed by a new paragraph" do
+      line = "this is a very, very, very long long line full of text\n"
+      subject.description = line * 20
+      
+      subject.short_description.should == (line * 5).chomp + ' [...]'
     end
   end
 
