@@ -5,17 +5,43 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
   license   "Apache 2 license; see COPYING"
 
   summary "Retrieve and store files in a filebucket"
-  # TK this needs a description of how to find files in a filebucket, and
-  # some good use cases for retrieving/storing them. I can't write either
-  # of these yet.
-  notes <<-EOT
-    This is an indirector face, which exposes find, search, save, and
-    destroy actions for an indirected subsystem of Puppet. Valid terminuses
-    for this face include:
-
-    * `file`
-    * `rest`
+  description <<-'EOT'
+    This face interacts with objects stored in a local or remote
+    filebucket. File objects are accessed by their MD5 sum; see the
+    examples for the relevant syntax.
   EOT
+  notes <<-'EOT'
+    To retrieve the unmunged contents of a file, you must call find with
+    --render-as s. Rendering as yaml will return a hash of metadata
+    about the file, including its contents.
+
+    This face does not interact with the `clientbucketdir` (the default
+    local filebucket for puppet agent); it interacts with the primary
+    "master"-type filebucket located in the `bucketdir`. If you wish to
+    interact with puppet agent's default filebucket, you'll need to set
+    the <--bucketdir> option appropriately when invoking actions.
+  EOT
+
+  file = get_action(:find)
+  file.summary "Retrieve a file from the filebucket."
+  file.arguments "md5/<md5sum>"
+  file.returns <<-'EOT'
+    The file object with the specified checksum.
+
+    RENDERING ISSUES: Rendering as a string returns the contents of the
+    file object; rendering as yaml returns a hash of metadata about said
+    file, including but not limited to its contents. Rendering as json
+    is currently broken, and returns a hash containing only the contents
+    of the file.
+  EOT
+  file.examples <<-'EOT'
+    Retrieve the contents of a file:
+
+    $ puppet file find md5/9aedba7f413c97dc65895b1cd9421f2c --render-as s
+  EOT
+
+  get_action(:search).summary "Invalid for this face."
+  get_action(:destroy).summary "Invalid for this face."
 
   set_indirection_name :file_bucket_file
 end
