@@ -102,6 +102,16 @@ EXAMPLE
 -------
   puppet master
 
+DIAGNOSTICS
+-----------
+
+When running as a standalone daemon, puppet master accepts the
+following signals:
+
+* SIGHUP:
+  Restart the puppet master server.
+* SIGINT and SIGTERM:
+  Shut down the puppet master server.
 
 AUTHOR
 ------
