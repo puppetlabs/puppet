@@ -263,6 +263,20 @@ module Puppet
       newvalues(:keep, :replace)
     end
 
+    newparam(:enablerepo) do
+      desc "This describes whether to enable a repo or multiple. Only
+        yum providers currently support this, but if selected allows
+        installation of packages from otherwise disabled repos."
+
+      defaultto []
+
+      validate do |value|
+        if value.include?(",")
+          raise ArgumentError, "Repository names to enable must be provided as an array, not a comma-separated list"
+        end
+      end
+    end
+
     newparam(:category) do
       desc "A read-only parameter set by the package."
     end

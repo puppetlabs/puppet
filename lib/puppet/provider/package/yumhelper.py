@@ -28,6 +28,24 @@ OVERRIDE_OPTS = {
     'logfile': '/dev/null'
 }
 
+enable = []
+disable = []
+args = list(sys.argv)
+
+while len(args) > 0:
+    a = args.pop(0)
+
+    if a == "-d":
+        if len(args) < 1:
+            raise ValueError, a
+        next = args.pop(0)
+        disable.extend([ next ])
+    if a == "-e":
+        if len(args) < 1:
+            raise ValueError, a
+        next = args.pop(0)
+        enable.extend([ next ])
+
 def pkg_lists(my):
     my.doConfigSetup()
 
@@ -52,7 +70,12 @@ def pkg_lists(my):
 
 def shell_out():
     try:
-        p = popen("/usr/bin/env yum check-update 2>&1")
+        repostring = ""
+        for repo in disable:
+            repostring += " '--disablerepo=%s'" % repo
+        for repo in enable:
+            repostring += " '--enablerepo=%s'" % repo
+        p = popen("/usr/bin/env yum%s check-update 2>&1" % repostring)
         output = p.readlines()
         rc = p.close()
 
@@ -112,6 +135,13 @@ if useyumlib:
     try:
         try:
             my = yum.YumBase()
+
+            for repo in disable:
+                my.repos.disableRepo(repo)
+
+            for repo in enable:
+                my.repos.enableRepo(repo)
+
             ypl = pkg_lists(my)
             for pkg in ypl.updates:
                 print "_pkg %s %s %s %s %s" % (pkg.name, pkg.epoch, pkg.version, pkg.release, pkg.arch)
