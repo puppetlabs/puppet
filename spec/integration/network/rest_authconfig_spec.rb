@@ -125,7 +125,6 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should support inlined comments" do
-    pending('bug #6026')
     add_rule('allow host.domain.com # will it work?')
 
     @auth.should allow(request)

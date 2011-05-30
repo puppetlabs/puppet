@@ -102,7 +102,7 @@ module Puppet
               name = $3 if $2 == "path"
               name.chomp!
               right = newrights.newright(name, count, @file)
-            when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+)$/
+            when /^\s*(allow|deny|method|environment|auth(?:enticated)?)\s+(.+?)(\s*#.*)?$/
               parse_right_directive(right, $1, $2, count)
             else
               raise ConfigurationError, "Invalid line #{count}: #{line}"
