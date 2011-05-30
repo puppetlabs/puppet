@@ -119,7 +119,6 @@ describe Puppet::Network::RestAuthConfig do
   end
 
   it "should support trailing whitespace" do
-    pending('bug #5010')
     add_rule('allow host.domain.com    ')
 
     @auth.should allow(request)

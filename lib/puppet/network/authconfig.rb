@@ -130,6 +130,7 @@ module Puppet
     end
 
     def parse_right_directive(right, var, value, count)
+      value.strip!
       case var
       when "allow"
         modify_right(right, :allow, value, "allowing %s access", count)
@@ -159,6 +160,7 @@ module Puppet
     def modify_right(right, method, value, msg, count)
       value.split(/\s*,\s*/).each do |val|
         begin
+          val.strip!
           right.info msg % val
           right.send(method, val)
         rescue AuthStoreError => detail
