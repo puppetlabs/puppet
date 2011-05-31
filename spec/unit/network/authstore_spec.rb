@@ -6,6 +6,7 @@ require 'puppet/network/authconfig'
 describe Puppet::Network::AuthStore do
   before :each do
     @authstore = Puppet::Network::AuthStore.new
+    @authstore.reset_interpolation
   end
 
   describe "when checking if the acl has some entries" do
