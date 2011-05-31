@@ -6,7 +6,7 @@ RSpec::Matchers.define :allow do |params|
 
   match do |auth|
     begin
-      auth.allowed?(params[0], params[1], params[2], params[3])
+      auth.check_authorization(params[0], params[1], params[2], params[3])
       true
     rescue Puppet::Network::AuthorizationError
       false
