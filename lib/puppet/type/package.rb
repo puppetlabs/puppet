@@ -276,6 +276,19 @@ module Puppet
         end
       end
     end
+  
+    newparam(:disablerepo) do
+      desc "This describes whether to disable some repo(s). Only
+        yum providers currently support this."
+
+      defaultto []
+
+      validate do |value|
+        if value.include?(",")
+          raise ArgumentError, "Repository names to disable must be provided as an array, not a comma-separated list"
+        end
+      end
+    end
 
     newparam(:category) do
       desc "A read-only parameter set by the package."

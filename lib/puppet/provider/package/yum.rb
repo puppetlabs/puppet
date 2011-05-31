@@ -87,6 +87,7 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     wanted = @resource[:name]
     operation = :install
     enablerepo = @resource[:enablerepo]
+    disablerepo= @resource[:disablerepo]
 
     # XXX: We don't actually deal with epochs here.
     case should
@@ -108,7 +109,12 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
       fullenablerepo += [ "--enablerepo=" + value ]
     end
 
-    output = yum "-d", "0", "-e", "0", "-y", fullenablerepo, operation, wanted
+    fulldisablerepo = []
+    disablerepo.each do |value|
+      disablerepo += [ "--disablerepo=" + value ]
+    end
+
+    output = yum "-d", "0", "-e", "0", "-y", fulldisablerepo, fullenablerepo, operation, wanted
 
     is = self.query
     raise Puppet::Error, "Could not find package #{self.name}" unless is
