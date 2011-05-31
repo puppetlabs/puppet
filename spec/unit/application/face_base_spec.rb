@@ -97,6 +97,17 @@ describe Puppet::Application::FaceBase do
       end
     end
 
+    [%w{something_I_cannot_do --unknown-option},
+     %w{something_I_cannot_do argument --unknown-option}].each do |input|
+      it "should report unknown actions even if there are unknown options" do
+        app.command_line.stubs(:args).returns input
+        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
+        app.stubs(:main)
+        expect { app.run }.to exit_with 1
+        @logs.first.message.should =~ /has no 'something_I_cannot_do' action/
+      end
+    end
+
     it "should report a sensible error when options with = fail" do
       app.command_line.stubs(:args).returns %w{--action=bar foo}
       expect { app.preinit; app.parse_options }.
