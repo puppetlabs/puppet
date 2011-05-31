@@ -52,6 +52,12 @@ describe Puppet::Application::FaceBase do
       end
     end
 
+    it "should stop if the first thing found is not an action" do
+      app.command_line.stubs(:args).returns %w{banana count_args}
+      expect { app.run }.to exit_with 1
+      @logs.first.message.should =~ /has no 'banana' action/
+    end
+
     it "should use the default action if not given any arguments" do
       app.command_line.stubs(:args).returns []
       action = stub(:options => [], :render_as => nil)
@@ -77,7 +83,18 @@ describe Puppet::Application::FaceBase do
       Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
       app.stubs(:main)
       expect { app.run }.to exit_with 1
-      @logs.first.message.should =~ /does not have a default action/
+      @logs.first.message.should =~ /has no 'bar' action./
+    end
+
+    [%w{something_I_cannot_do},
+     %w{something_I_cannot_do argument}].each do |input|
+      it "should report unknown actions nicely" do
+        app.command_line.stubs(:args).returns input
+        Puppet::Face[:basetest, '0.0.1'].expects(:get_default_action).returns(nil)
+        app.stubs(:main)
+        expect { app.run }.to exit_with 1
+        @logs.first.message.should =~ /has no 'something_I_cannot_do' action/
+      end
     end
 
     it "should report a sensible error when options with = fail" do
@@ -149,7 +166,7 @@ describe Puppet::Application::FaceBase do
     end
 
     it "should handle application-level options", :'fails_on_ruby_1.9.2' => true do
-      app.command_line.stubs(:args).returns %w{basetest --verbose return_true}
+      app.command_line.stubs(:args).returns %w{--verbose return_true}
       app.preinit
       app.parse_options
       app.face.name.should == :basetest
@@ -304,7 +321,7 @@ EOT
     end
 
     it "should fail early if asked to render an invalid format" do
-      app.command_line.stubs(:args).returns %w{--render-as interpretive-dance help help}
+      app.command_line.stubs(:args).returns %w{--render-as interpretive-dance return_true}
       # We shouldn't get here, thanks to the exception, and our expectation on
       # it, but this helps us fail if that slips up and all. --daniel 2011-04-27
       Puppet::Face[:help, :current].expects(:help).never
@@ -315,7 +332,7 @@ EOT
     end
 
     it "should work if asked to render a NetworkHandler format" do
-      app.command_line.stubs(:args).returns %w{dummy find dummy --render-as yaml}
+      app.command_line.stubs(:args).returns %w{count_args a b c --render-as yaml}
       expect {
         expect { app.run }.to exit_with 0
       }.to have_printed(/--- 3/)
