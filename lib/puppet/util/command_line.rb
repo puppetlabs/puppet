@@ -93,13 +93,19 @@ module Puppet
 
         if zero == 'puppet'
           case argv.first
-          when nil;              [ stdin.tty? ? nil : "apply", argv] # ttys get usage info
-          when "--help", "-h";         [nil,     argv] # help should give you usage, not the help for `puppet apply`
-          when /^-|\.pp$|\.rb$/; ["apply", argv]
-          else [ argv.first, argv[1..-1] ]
+          when nil then
+            # ttys get usage info
+            [stdin.tty? ? nil : "apply", argv]
+          when "--help", "-h" then
+            # help should give you usage, not the help for `puppet apply`
+            [nil, argv]
+          when /^-|\.pp$|\.rb$/ then
+            ["apply", argv]
+          else
+            [argv.first, argv[1..-1]]
           end
         else
-          [ zero, argv ]
+          [zero, argv]
         end
       end
 
