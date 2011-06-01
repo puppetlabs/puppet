@@ -94,12 +94,27 @@ module Puppet
         if zero == 'puppet'
           case argv.first
           when nil then
-            # ttys get usage info
-            [stdin.tty? ? nil : "apply", argv]
+            if stdin.tty? then
+              [nil, argv]       # ttys get usage info
+            else
+              # Killed for 2.7.0 --daniel 2011-06-01
+              Puppet.deprecation_warning <<EOM
+Implicit invocation of 'puppet apply' by redirection into 'puppet' is deprecated,
+and will be removed in the 2.8 series. Please invoke 'puppet apply' directly
+in the future.
+EOM
+              ["apply", argv]
+            end
           when "--help", "-h" then
             # help should give you usage, not the help for `puppet apply`
             [nil, argv]
           when /^-|\.pp$|\.rb$/ then
+            # Killed for 2.7.0 --daniel 2011-06-01
+            Puppet.deprecation_warning <<EOM
+Implicit invocation of 'puppet apply' by passing files (or flags) directly
+to 'puppet' is deprecated, and will be removed in the 2.8 series.  Please
+invoke 'puppet apply' directly in the future.
+EOM
             ["apply", argv]
           else
             [argv.first, argv[1..-1]]
@@ -112,3 +127,10 @@ module Puppet
     end
   end
 end
+
+# REVISIT: Without this, we can't use the full Puppet suite inside the code,
+# but we can't include it before we get this far through defining things as
+# this code is the product of incestuous union with the global code; global
+# code at load scope depends on methods we define, while we only depend on
+# them at runtime scope.  --daniel 2011-06-01
+require 'puppet'
