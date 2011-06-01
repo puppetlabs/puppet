@@ -5,7 +5,7 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.6.0
+Version:        2.7.0
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        Apache 2.0
@@ -130,7 +130,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 
 %files
 %defattr(-, root, root, 0755)
-%doc CHANGELOG COPYING LICENSE README README.queueing examples
+%doc CHANGELOG LICENSE README.md examples
 %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
@@ -163,6 +163,17 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %{_mandir}/man8/puppetd.8.gz
 %{_mandir}/man8/ralsh.8.gz
 %{_mandir}/man8/puppetdoc.8.gz
+%{_mandir}/man8/puppet-agent.8.gz
+%{_mandir}/man8/puppet-apply.8.gz
+%{_mandir}/man8/puppet-cert.8.gz
+%{_mandir}/man8/puppet-describe.8.gz
+%{_mandir}/man8/puppet-doc.8.gz
+%{_mandir}/man8/puppet-filebucket.8.gz
+%{_mandir}/man8/puppet-inspect.8.gz
+%{_mandir}/man8/puppet-kick.8.gz
+%{_mandir}/man8/puppet-master.8.gz
+%{_mandir}/man8/puppet-queue.8.gz
+%{_mandir}/man8/puppet-resource.8.gz
 
 %files server
 %defattr(-, root, root, 0755)
@@ -223,6 +234,11 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Jun 01 2011 David Baumgold - <dbaumgold@tripadvisor.com> - 2.7.0-1
+- Update to 2.7.0
+- Added new puppet-* man pages
+- Updated %doc files
+
 * Tue Jul 20 2010 Todd Zullinger <tmz@pobox.com> - 2.6.0-1
 - Update to 2.6.0
 - Create and own /usr/share/puppet/modules (#615432)
