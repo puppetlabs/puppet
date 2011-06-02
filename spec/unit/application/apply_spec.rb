@@ -258,10 +258,25 @@ describe Puppet::Application::Apply do
         @apply.main
       end
 
-      it "should collect the node facts" do
-        Puppet::Node::Facts.expects(:find).returns(@facts)
+      it "should set the facts name based on the node_name_fact" do
+        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
+        @facts.save
+        Puppet::Node.new('other_node_name').save
+        Puppet[:node_name_fact] = 'my_name_fact'
 
         @apply.main
+
+        @facts.name.should == 'other_node_name'
+      end
+
+      it "should set the node_name_value based on the node_name_fact" do
+        Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
+        Puppet::Node.new('other_node_name').save
+        Puppet[:node_name_fact] = 'my_name_fact'
+
+        @apply.main
+
+        Puppet[:node_name_value].should == 'other_node_name'
       end
 
       it "should raise an error if we can't find the facts" do

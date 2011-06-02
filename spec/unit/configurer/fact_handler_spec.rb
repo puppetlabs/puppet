@@ -61,6 +61,22 @@ describe Puppet::Configurer::FactHandler do
       @facthandler.find_facts.should == bar_facts
     end
 
+    it "should set the facts name based on the node_name_fact" do
+      Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
+      Puppet[:node_name_fact] = 'my_name_fact'
+
+      @facthandler.find_facts.name.should == 'other_node_name'
+    end
+
+    it "should set the node_name_value based on the node_name_fact" do
+      Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
+      Puppet[:node_name_fact] = 'my_name_fact'
+
+      @facthandler.find_facts
+
+      Puppet[:node_name_value].should == 'other_node_name'
+    end
+
     it "should reload Facter before finding facts" do
       @facthandler.expects(:reload_facter)
 

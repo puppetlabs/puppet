@@ -103,6 +103,13 @@ describe Puppet::Configurer do
       @agent.run
     end
 
+    it "should respect node_name_fact when setting the host on a report" do
+      Puppet[:node_name_fact] = 'my_name_fact'
+      @facts.values = {'my_name_fact' => 'node_name_from_fact'}
+
+      @agent.run.host.should == 'node_name_from_fact'
+    end
+
     it "should pass the new report to the catalog" do
       report = Puppet::Transaction::Report.new("apply")
       Puppet::Transaction::Report.stubs(:new).returns report

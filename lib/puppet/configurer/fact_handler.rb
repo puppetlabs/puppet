@@ -16,7 +16,12 @@ module Puppet::Configurer::FactHandler
     # compile them and then "cache" them on the server.
     begin
       reload_facter
-      Puppet::Node::Facts.find(Puppet[:node_name_value])
+      facts = Puppet::Node::Facts.find(Puppet[:node_name_value])
+      unless Puppet[:node_name_fact].empty?
+        Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
+        facts.name = Puppet[:node_name_value]
+      end
+      facts
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail

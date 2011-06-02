@@ -30,6 +30,21 @@ describe "Puppet defaults" do
     end
   end
 
+  describe "when setting the :node_name_fact" do
+    it "should fail when also setting :node_name_value" do
+      lambda do
+        Puppet.settings[:node_name_value] = "some value"
+        Puppet.settings[:node_name_fact] = "some_fact"
+      end.should raise_error("Cannot specify both the node_name_value and node_name_fact settings")
+    end
+
+    it "should not fail when using the default for :node_name_value" do
+      lambda do
+        Puppet.settings[:node_name_fact] = "some_fact"
+      end.should_not raise_error
+    end
+  end
+
   describe "when configuring the :crl" do
     it "should warn if :cacrl is set to false" do
       Puppet.expects(:warning)
