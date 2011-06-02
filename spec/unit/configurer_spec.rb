@@ -77,7 +77,7 @@ describe Puppet::Configurer do
       Puppet.settings.stubs(:use).returns(true)
       @agent.stubs(:prepare)
       Puppet::Node::Facts.terminus_class = :memory
-      @facts = Puppet::Node::Facts.new(Puppet[:certname])
+      @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       @facts.save
 
       @catalog = Puppet::Resource::Catalog.new
@@ -392,9 +392,9 @@ describe Puppet::Configurer do
       @agent.retrieve_catalog
     end
 
-    it "should use its certname to retrieve the catalog" do
+    it "should use its node_name_value to retrieve the catalog" do
       Facter.stubs(:value).returns "eh"
-      Puppet.settings[:certname] = "myhost.domain.com"
+      Puppet.settings[:node_name_value] = "myhost.domain.com"
       Puppet::Resource::Catalog.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
 
       @agent.retrieve_catalog

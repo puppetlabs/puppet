@@ -486,6 +486,7 @@ module Puppet
   )
 
   setdefaults(:agent,
+    :node_name_value => ["$certname", "The name of the node."],
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",
       :mode => 0660,

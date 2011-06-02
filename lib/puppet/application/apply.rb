@@ -85,13 +85,13 @@ class Puppet::Application::Apply < Puppet::Application
     end
 
     # Collect our facts.
-    unless facts = Puppet::Node::Facts.find(Puppet[:certname])
-      raise "Could not find facts for #{Puppet[:certname]}"
+    unless facts = Puppet::Node::Facts.find(Puppet[:node_name_value])
+      raise "Could not find facts for #{Puppet[:node_name_value]}"
     end
 
     # Find our Node
-    unless node = Puppet::Node.find(Puppet[:certname])
-      raise "Could not find node #{Puppet[:certname]}"
+    unless node = Puppet::Node.find(Puppet[:node_name_value])
+      raise "Could not find node #{Puppet[:node_name_value]}"
     end
 
     # Merge in the facts.

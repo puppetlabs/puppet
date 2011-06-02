@@ -16,7 +16,7 @@ module Puppet::Configurer::FactHandler
     # compile them and then "cache" them on the server.
     begin
       reload_facter
-      Puppet::Node::Facts.find(Puppet[:certname])
+      Puppet::Node::Facts.find(Puppet[:node_name_value])
     rescue SystemExit,NoMemoryError
       raise
     rescue Exception => detail

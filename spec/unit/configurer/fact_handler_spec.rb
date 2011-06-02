@@ -50,6 +50,17 @@ describe Puppet::Configurer::FactHandler do
       Puppet::Node::Facts.terminus_class = :memory
     end
 
+    it "should use the node name value to retrieve the facts" do
+      foo_facts = Puppet::Node::Facts.new('foo')
+      bar_facts = Puppet::Node::Facts.new('bar')
+      foo_facts.save
+      bar_facts.save
+      Puppet[:certname] = 'foo'
+      Puppet[:node_name_value] = 'bar'
+
+      @facthandler.find_facts.should == bar_facts
+    end
+
     it "should reload Facter before finding facts" do
       @facthandler.expects(:reload_facter)
 

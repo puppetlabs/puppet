@@ -192,10 +192,10 @@ describe Puppet::Application::Apply do
         Puppet::Node::Facts.terminus_class = :memory
         Puppet::Node.terminus_class = :memory
 
-        @facts = Puppet::Node::Facts.new(Puppet[:certname])
+        @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
         @facts.save
 
-        @node = Puppet::Node.new(Puppet[:certname])
+        @node = Puppet::Node.new(Puppet[:node_name_value])
         @node.save
 
         @catalog = Puppet::Resource::Catalog.new

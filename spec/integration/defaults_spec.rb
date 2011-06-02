@@ -23,6 +23,13 @@ describe "Puppet defaults" do
     end
   end
 
+  describe "when setting :node_name_value" do
+    it "should default to the value of :certname" do
+      Puppet.settings[:certname] = 'blargle'
+      Puppet.settings[:node_name_value].should == 'blargle'
+    end
+  end
+
   describe "when configuring the :crl" do
     it "should warn if :cacrl is set to false" do
       Puppet.expects(:warning)
