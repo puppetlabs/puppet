@@ -136,6 +136,7 @@ describe Puppet::Node, "when indirecting" do
   end
 
   it "should default to the 'plain' node terminus" do
+    Puppet::Node.indirection.reset_terminus_class
     Puppet::Node.indirection.terminus_class.should == :plain
   end
 
