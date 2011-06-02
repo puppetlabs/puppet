@@ -7,13 +7,20 @@ Puppet::Face.define(:help, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Displays help about puppet subcommands"
+  summary "Display Puppet help."
 
   action(:help) do
     summary "Display help about faces and their actions."
+    arguments "[<face>] [<action>]"
+    returns "Short help text for the specified face or action."
+    examples <<-'EOT'
+      Get help for an action:
+
+      $ puppet help
+    EOT
 
     option "--version VERSION" do
-      summary "which version of the interface to show help for"
+      summary "The version of the face for which to show help."
     end
 
     default
@@ -88,7 +95,7 @@ Puppet::Face.define(:help, '0.0.1') do
 
   def erb(name)
     template = (Pathname(__FILE__).dirname + "help" + name)
-    erb = ERB.new(template.read, nil, '%')
+    erb = ERB.new(template.read, nil, '-')
     erb.filename = template.to_s
     return erb
   end

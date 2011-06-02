@@ -66,9 +66,9 @@ class Puppet::Application::FaceBase < Puppet::Application
     # Now, walk the command line and identify the action.  We skip over
     # arguments based on introspecting the action and all, and find the first
     # non-option word to use as the action.
-    action = nil
-    index  = -1
-    until @action or (index += 1) >= command_line.args.length do
+    action_name = nil
+    index       = -1
+    until action_name or (index += 1) >= command_line.args.length do
       item = command_line.args[index]
       if item =~ /^-/ then
         option = @face.options.find do |name|
@@ -91,12 +91,16 @@ class Puppet::Application::FaceBase < Puppet::Application
             index += 1          # ...so skip the argument.
           end
         elsif option = find_application_argument(item) then
-          index += 1 if (option[:argument] and option[:optional])
+          index += 1 if (option[:argument] and not option[:optional])
         else
           raise OptionParser::InvalidOption.new(item.sub(/=.*$/, ''))
         end
       else
-        @action = @face.get_action(item.to_sym)
+        # Stash away the requested action name for later, and try to fetch the
+        # action object it represents; if this is an invalid action name that
+        # will be nil, and handled later.
+        action_name = item.to_sym
+        @action = @face.get_action(action_name)
       end
     end
 
@@ -104,8 +108,18 @@ class Puppet::Application::FaceBase < Puppet::Application
       if @action = @face.get_default_action() then
         @is_default_action = true
       else
-        Puppet.err "#{face.name} does not have a default action, and no action was given"
-        Puppet.err Puppet::Face[:help, :current].help(@face.name)
+        # REVISIT: ...and this horror thanks to our log setup, which doesn't
+        # initialize destinations until the setup method, which we will never
+        # reach.  We could also just print here, but that is actually a little
+        # uglier and nastier in the long term, in which we should do log setup
+        # earlier if at all possible. --daniel 2011-05-31
+        Puppet::Util::Log.newdestination(:console)
+
+        face   = @face.name
+        action = action_name.nil? ? 'default' : "'#{action_name}'"
+        msg = "'#{face}' has no #{action} action.  See `puppet help #{face}`."
+        Puppet.err(msg)
+
         exit false
       end
     end

@@ -1,48 +1,57 @@
-puppet <%= face.name %><%= action.default? ? '' : " #{action.name}" %>(1) -- <%= action.summary || face.summary %>
-<%= '=' * (_erbout.length - 1) %>
+<%= action.summary || face.summary || "unknown face..." %>
 
-% if action.synopsis
-SYNOPSIS
---------
+<% if action.synopsis -%>
+USAGE: <%= action.synopsis %>
 
-<%= action.synopsis %>
+<% end -%>
+<% if action.short_description -%>
+<%= action.short_description.strip %>
 
-% end
-% if action.description
-DESCRIPTION
------------
-<%= action.description %>
+<% end -%>
+<% if action.returns -%>
+RETURNS: <%= action.returns.strip %>
 
-%end
-% unless action.options.empty?
-OPTIONS
--------
-%   action.options.sort.each do |name|
-%     option = action.get_option name
-<%= "  " + option.optparse.join(" |" ) %>
+<% end -%>
+OPTIONS:
+<%# Remove these options once we can introspect them normally. -%>
+  --mode MODE                    - The run mode to use (`user`, `agent`, or
+                                   `master`).
+  --render-as FORMAT             - The rendering format to use.
+  --verbose                      - Whether to log verbosely.
+  --debug                        - Whether to log debug information.
+<% unless action.options.empty?
+     optionroom = 30
+     summaryroom = 80 - 5 - optionroom
+      action.options.sort.each do |name|
+        option = action.get_option name -%>
+<%= "  " + option.optparse.join(" | ")[0,(optionroom - 1)].ljust(optionroom) + ' - ' -%>
+<%     if !(option.summary) -%>
+unknown option...
+<%     elsif option.summary.length <= summaryroom -%>
 <%= option.summary %>
-<%= option.description %>
+<%
+        else
+          words = option.summary.split
+          wrapped = ['']
+          i = 0
+          words.each do |word|
+            if wrapped[i].length + word.length <= summaryroom
+              wrapped[i] << word + ' '
+            else
+              i += 1
+              wrapped[i] = word + ' '
+            end
+          end
+-%>
+<%= wrapped.shift.strip %>
+<%       wrapped.each do |line| -%>
+<%= (' ' * (optionroom + 5) ) + line.strip %>
+<%       end
+        end
+      end -%>
+<% end -%>
 
-%   end
-% end
-% if action.examples
-EXAMPLES
---------
+<% if action.examples -%>
+EXAMPLES:
 <%= action.examples %>
-% end
-% if action.notes
-NOTES
------
-<%= action.notes %>
-
-% end
-% unless action.authors.empty?
-AUTHOR
-------
-<%= action.authors.map {|x| " * " + x } .join("\n") %>
-
-%end
-COPYRIGHT AND LICENSE
----------------------
-<%= action.copyright %>
-<%= action.license   %>
+<% end -%>

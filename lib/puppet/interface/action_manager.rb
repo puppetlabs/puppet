@@ -34,7 +34,10 @@ module Puppet::Interface::ActionManager
     elsif self.class.respond_to?(:actions)
       result += self.class.actions
     end
-    result.sort
+    # We need to uniq the result, because we duplicate actions when they are
+    # fetched to ensure that they have the correct bindings; they shadow the
+    # parent, and uniq implements that. --daniel 2011-06-01
+    result.uniq.sort
   end
 
   def get_action(name)

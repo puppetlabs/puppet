@@ -5,11 +5,13 @@ Puppet::Face.define(:parser, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Interact directly with the parser"
+  summary "Interact directly with the parser."
 
   action :validate do
-    summary "Validate the syntax of one or more Puppet manifests"
-    description <<-EOT
+    summary "Validate the syntax of one or more Puppet manifests."
+    arguments "[<manifest>] [<manifest> ...]"
+    returns "Nothing, or the first syntax error encountered."
+    description <<-'EOT'
       This action validates Puppet DSL syntax without compiling a catalog or
       syncing any resources. If no manifest files are provided, it will
       validate the default site manifest.

@@ -38,4 +38,9 @@ Puppet::Face.define(:basetest, '0.0.1') do
     when_invoked do |options| "this is not the hook you are looking for" end
     when_rendering :s do |value| "you invoked the 's' rendering hook" end
   end
+
+  action :count_args do
+    summary "return the count of arguments given"
+    when_invoked do |*args| args.length - 1 end
+  end
 end

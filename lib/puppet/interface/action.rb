@@ -46,6 +46,7 @@ class Puppet::Interface::Action
   ########################################################################
   # Documentation...
   attr_doc :returns
+  attr_doc :arguments
   def synopsis
     output = PrettyPrint.format do |s|
       s.text("puppet #{@face.name}")
@@ -67,6 +68,7 @@ class Puppet::Interface::Action
           end
         end
       end
+      s.text(" #{arguments}") if arguments
     end
   end
 

@@ -182,9 +182,11 @@ module Puppet
       # we'll return a pattern of puppet.reductivelabs.com
       def interpolate(match)
         clone = dup
-        clone.pattern = clone.pattern.reverse.collect do |p|
-          p.gsub(/\$(\d)/) { |m| match[$1.to_i] }
-        end.join(".")
+        if @name == :dynamic
+          clone.pattern = clone.pattern.reverse.collect do |p|
+            p.gsub(/\$(\d)/) { |m| match[$1.to_i] }
+          end.join(".")
+        end
         clone
       end
 
@@ -199,8 +201,13 @@ module Puppet
 
       # Does the name match our pattern?
       def matchname?(name)
-        name = munge_name(name)
-        (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
+        case @name
+          when :domain, :dynamic, :opaque
+            name = munge_name(name)
+            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
+          when :regex
+            Regexp.new(pattern.slice(1..-2)).match(name)
+        end
       end
 
       # Convert the name to a common pattern.
@@ -240,6 +247,8 @@ module Puppet
           [:dynamic,:exact,nil,munge_name(value)]
         when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
           [:opaque,:exact,nil,[value]]
+        when /^\/.*\/$/                                           # a regular expression
+          [:regex,:inexact,nil,value]
         else
           raise AuthStoreError, "Invalid pattern #{value}"
         end

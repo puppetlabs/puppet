@@ -281,6 +281,18 @@ EXAMPLE
     $ puppet agent --server puppet.domain.com
 
 
+DIAGNOSTICS
+-----------
+
+Puppet agent accepts the following signals:
+
+* SIGHUP:
+  Restart the puppet agent daemon.
+* SIGINT and SIGTERM:
+  Shut down the puppet agent daemon.
+* SIGUSR1: 
+  Immediately retrieve and apply configurations from the puppet master.
+
 AUTHOR
 ------
 Luke Kanies

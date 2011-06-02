@@ -186,23 +186,49 @@ describe Puppet::Interface::ActionManager do
       @instance.should be_action(:foo)
     end
 
-    it "should list actions defined in superclasses" do
-      @subclass = Class.new(@klass)
-      @instance = @subclass.new
+    context "with actions defined in superclass" do
+      before :each do
+        @subclass = Class.new(@klass)
+        @instance = @subclass.new
 
-      @klass.action(:parent) do
-        when_invoked { |options| "a" }
-      end
-      @subclass.action(:sub) do
-        when_invoked { |options| "a" }
-      end
-      @instance.action(:instance) do
-        when_invoked { |options| "a" }
+        @klass.action(:parent) do
+          when_invoked { |options| "a" }
+        end
+        @subclass.action(:sub) do
+          when_invoked { |options| "a" }
+        end
+        @instance.action(:instance) do
+          when_invoked { |options| "a" }
+        end
       end
 
-      @instance.should be_action(:parent)
-      @instance.should be_action(:sub)
-      @instance.should be_action(:instance)
+      it "should list actions defined in superclasses" do
+        @instance.should be_action(:parent)
+        @instance.should be_action(:sub)
+        @instance.should be_action(:instance)
+      end
+
+      it "should list inherited actions" do
+        @instance.actions.should =~ [:instance, :parent, :sub]
+      end
+
+      it "should not duplicate instance actions after fetching them (#7699)" do
+        @instance.actions.should =~ [:instance, :parent, :sub]
+        @instance.get_action(:instance)
+        @instance.actions.should =~ [:instance, :parent, :sub]
+      end
+
+      it "should not duplicate subclass actions after fetching them (#7699)" do
+        @instance.actions.should =~ [:instance, :parent, :sub]
+        @instance.get_action(:sub)
+        @instance.actions.should =~ [:instance, :parent, :sub]
+      end
+
+      it "should not duplicate superclass actions after fetching them (#7699)" do
+        @instance.actions.should =~ [:instance, :parent, :sub]
+        @instance.get_action(:parent)
+        @instance.actions.should =~ [:instance, :parent, :sub]
+      end
     end
 
     it "should create an instance method when an action is defined in a superclass" do

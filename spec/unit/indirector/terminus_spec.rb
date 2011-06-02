@@ -242,3 +242,9 @@ describe Puppet::Indirector::Terminus, " when creating terminus class types", :'
   end
 end
 
+describe Puppet::Indirector::Terminus, " when listing terminus classes" do
+  it "should list the terminus files available to load" do
+    Puppet::Util::Autoload.any_instance.stubs(:files_to_load).returns ["/foo/bar/baz", "/max/runs/marathon"]
+    Puppet::Indirector::Terminus.terminus_classes('my_stuff').should == [:baz, :marathon]
+  end
+end
