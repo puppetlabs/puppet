@@ -2,7 +2,7 @@ require 'puppet/face'
 
 class Puppet::Indirector::Face < Puppet::Face
   option "--terminus TERMINUS" do
-    summary "The indirector terminus to use for this action."
+    summary "The indirector terminus to use."
     description <<-EOT
       Indirector faces expose indirected subsystems of Puppet. These
       subsystems are each able to retrieve and alter a specific type of data
