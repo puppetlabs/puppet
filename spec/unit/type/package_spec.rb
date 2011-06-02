@@ -32,7 +32,7 @@ describe Puppet::Type.type(:package) do
   end
 
   describe "when validating attributes" do
-    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom].each do |param|
+    [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom, :enablerepo, :disablerepo].each do |param|
       it "should have a #{param} parameter" do
         Puppet::Type.type(:package).attrtype(param).should == :param
       end
