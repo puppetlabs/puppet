@@ -29,7 +29,16 @@ time2 = Time.new
 elapsed = time2 - time1
 Log.notify "Slept for #{elapsed} seconds waiting for Puppet Master to become ready"
 
-
+step "Verify Puppet Master is ready to accept connections"
+host=agents.first
+time1 = Time.new
+until
+  on(host, "curl -k https://#{master}:8140") do
+    sleep 1
+  end
+time2 = Time.new
+elapsed = time2 - time1
+Log.notify "Slept for #{elapsed} seconds waiting for Puppet Master to become ready"
 
 # Run test on Agents
 step "Agent: agent --test"
