@@ -15,9 +15,12 @@
 
 require 'augeas' if Puppet.features.augeas?
 require 'strscan'
+require 'puppet/util'
+require 'puppet/util/diff'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util
+  include Puppet::Util::Diff
 
   confine :true => Puppet.features.augeas?
 
@@ -25,6 +28,8 @@ Puppet::Type.type(:augeas).provide(:augeas) do
 
   SAVE_NOOP = "noop"
   SAVE_OVERWRITE = "overwrite"
+  SAVE_NEWFILE = "newfile"
+  SAVE_BACKUP = "backup"
 
   COMMANDS = {
     "set" => [ :path, :string ],
@@ -254,11 +259,6 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     @aug.set("/augeas/save", mode)
   end
 
-  def files_changed?
-    saved_files = @aug.match("/augeas/events/saved")
-    saved_files.size > 0
-  end
-
   # Determines if augeas acutally needs to run.
   def need_to_run?
     force = resource[:force]
@@ -287,20 +287,33 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         # actually do the save.
         if return_value and get_augeas_version >= "0.3.6"
           debug("Will attempt to save and only run if files changed")
-          set_augeas_save_mode(SAVE_NOOP)
+          set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
           save_result = @aug.save
           saved_files = @aug.match("/augeas/events/saved")
-          if save_result and not files_changed?
-            debug("Skipping because no files were changed")
-            return_value = false
-          else
+          if save_result and saved_files.size > 0
+            root = resource[:root].sub(/^\/$/, "")
+            saved_files.each do |key|
+              saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
+              if Puppet[:show_diff]
+                print diff(saved_file, saved_file + ".augnew")
+              end
+              if resource.noop?
+                File.delete(saved_file + ".augnew")
+              end
+            end
             debug("Files changed, should execute")
+            return_value = true
+          else
+            debug("Skipping because no files were changed or save failed")
+            return_value = false
           end
         end
       end
     ensure
-      close_augeas
+      if not return_value or resource.noop?
+        close_augeas
+      end
     end
     return_value
   end
@@ -309,12 +322,24 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     # Re-connect to augeas, and re-execute the changes
     begin
       open_augeas
-      set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
-
-      do_execute_changes
-
-      success = @aug.save
-      fail("Save failed with return code #{success}") if success != true
+      saved_files = @aug.match("/augeas/events/saved")
+      if saved_files
+        saved_files.each do |key|
+          root = resource[:root].sub(/^\/$/, "")
+          saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
+          if File.exists?(saved_file + ".augnew")
+            success = File.rename(saved_file + ".augnew", saved_file)
+            debug(saved_file + ".augnew moved to " + saved_file)
+            fail("Rename failed with return code #{success}") if success != 0
+          end
+        end
+      else
+        debug("No saved files, re-executing augeas")
+        set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
+        do_execute_changes
+        success = @aug.save
+        fail("Save failed with return code #{success}") if success != true
+      end
     ensure
       close_augeas
     end
