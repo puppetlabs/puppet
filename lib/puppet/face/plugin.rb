@@ -5,13 +5,13 @@ Puppet::Face.define(:plugin, '0.0.1') do
 
   summary "Interact with the Puppet plugin system."
   description <<-'EOT'
-    This face provides network access to the puppet master's store of
+    This subcommand provides network access to the puppet master's store of
     plugins.
-  EOT
-  notes <<-'EOT'
-    The puppet master can serve Ruby code collected from the lib directories
+
+    The puppet master serves Ruby code collected from the `lib` directories
     of its modules. These plugins can be used on agent nodes to extend
-    Facter and implement custom types and providers.
+    Facter and implement custom types and providers. Plugins are normally
+    downloaded by puppet agent during the course of a run.
   EOT
 
   action :download do
@@ -19,12 +19,13 @@ Puppet::Face.define(:plugin, '0.0.1') do
     description <<-'EOT'
       Downloads plugins from the configured puppet master. Any plugins
       downloaded in this way will be used in all subsequent Puppet activity.
+      This action modifies files on disk.
     EOT
     returns <<-'EOT'
-      A display-formatted list of the files downloaded. If all plugin
-      files were in sync, this list will be empty.
+      A list of the files downloaded, or a confirmation that no files were
+      downloaded. When used from the Ruby API, this action returns an array of
+      the files downloaded, which will be empty if none were retrieved.
     EOT
-    notes "This action modifies files on disk."
     examples <<-'EOT'
       Retrieve plugins from the puppet master:
 

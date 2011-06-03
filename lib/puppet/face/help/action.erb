@@ -2,7 +2,7 @@
 USAGE: <%= action.synopsis %>
 
 <% end -%>
-<%= action.short_description || action.summary || face.summary || "undocumented face" %>
+<%= action.short_description || action.summary || face.summary || "undocumented subcommand" %>
 
 <% if action.returns -%>
 RETURNS: <%= action.returns.strip %>

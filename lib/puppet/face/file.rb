@@ -6,7 +6,7 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
 
   summary "Retrieve and store files in a filebucket"
   description <<-'EOT'
-    This face interacts with objects stored in a local or remote
+    This subcommand interacts with objects stored in a local or remote
     filebucket. File objects are accessed by their MD5 sum; see the
     examples for the relevant syntax.
   EOT
@@ -15,7 +15,7 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
     --render-as s. Rendering as yaml will return a hash of metadata
     about the file, including its contents.
 
-    This face does not interact with the `clientbucketdir` (the default
+    This subcommand does not interact with the `clientbucketdir` (the default
     local filebucket for puppet agent); it interacts with the primary
     "master"-type filebucket located in the `bucketdir`. If you wish to
     interact with puppet agent's default filebucket, you'll need to set
@@ -40,8 +40,8 @@ Puppet::Indirector::Face.define(:file, '0.0.1') do
     $ puppet file find md5/9aedba7f413c97dc65895b1cd9421f2c --render-as s
   EOT
 
-  get_action(:search).summary "Invalid for this face."
-  get_action(:destroy).summary "Invalid for this face."
+  get_action(:search).summary "Invalid for this subcommand."
+  get_action(:destroy).summary "Invalid for this subcommand."
 
   set_indirection_name :file_bucket_file
 end

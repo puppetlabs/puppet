@@ -6,16 +6,18 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
 
   summary "Manage the list of revoked certificates."
   description <<-'EOT'
-    This face is primarily for retrieving the certificate revocation
-    list from the CA. Although it exposes search/save/destroy methods,
-    they shouldn't be used under normal circumstances.
+    This subcommand is primarily for retrieving the certificate revocation
+    list from the CA.
   EOT
 
   get_action(:find).summary "Retrieve the certificate revocation list."
   get_action(:find).arguments "<dummy_key>"
   get_action(:find).returns <<-'EOT'
-    A certificate revocation list. You will usually want to render this
-    as a string ('--render-as s').
+    A certificate revocation list. When used from the Ruby API: returns an
+    OpenSSL::X509::CRL object.
+
+    RENDERING ISSUES: this should usually be rendered as a string
+    ('--render-as s').
   EOT
   get_action(:find).examples <<-'EXAMPLES'
     Retrieve a copy of the puppet master's CRL:
@@ -27,13 +29,11 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
   get_action(:destroy).arguments "<dummy_key>"
   get_action(:destroy).returns "Nothing."
   get_action(:destroy).description <<-'EOT'
-    Deletes the certificate revocation list. This cannot be done over
-    REST, but it is possible to both delete the locally cached copy of
-    the CA's CRL and delete the CA's own copy (if running on the CA
-    machine and invoked with '--terminus ca'). Needless to say, don't do
-    this unless you know what you're up to.
+    Deletes the certificate revocation list. This cannot be done over REST, but
+    it is possible to delete the locally cached copy or (if run from the CA) the
+    CA's own copy of the CRL.
   EOT
 
-  get_action(:search).summary "Invalid for this face."
-  get_action(:save).summary "Invalid for this face."
+  get_action(:search).summary "Invalid for this subcommand."
+  get_action(:save).summary "Invalid for this subcommand."
 end
