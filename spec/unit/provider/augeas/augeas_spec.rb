@@ -344,7 +344,7 @@ describe provider_class do
     end
 
     # Ticket 2728 (diff files)
-    describe "and Puppet[:show_diff] is set" do
+    describe "and Puppet[:show_diff] is set", :if => Puppet.features.augeas? do
       before do
         Puppet[:show_diff] = true
 
