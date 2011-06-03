@@ -98,7 +98,7 @@ class Puppet::Application::Agent < Puppet::Application
     unless fingerprint = cert.fingerprint(options[:digest])
       raise ArgumentError, "Could not get fingerprint for digest '#{options[:digest]}'"
     end
-    Puppet.notice fingerprint
+    puts fingerprint
   end
 
   def onetime

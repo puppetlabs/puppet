@@ -570,7 +570,7 @@ describe Puppet::Application::Agent do
         @host.stubs(:certificate).returns(@cert)
         @cert.stubs(:fingerprint).with(:MD5).returns("DIGEST")
 
-        Puppet.expects(:notice).with("DIGEST")
+        @puppetd.expects(:puts).with "DIGEST"
 
         @puppetd.fingerprint
       end
