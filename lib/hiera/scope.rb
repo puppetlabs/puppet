@@ -1,15 +1,21 @@
 class Hiera
     class Scope
-        def initialize(input)
-            @input = input
+        attr_reader :real
+
+        def initialize(real)
+            @real = real
         end
 
         def [](key)
-            @input.lookupvar(key)
+            ans = @real.lookupvar(key)
+
+            # damn you puppet visual basic style variables.
+            return nil if ans == ""
+            return ans
         end
 
         def include?(key)
-            @input.lookupvar(key) == ""
+            @real.lookupvar(key) == ""
         end
     end
 end
