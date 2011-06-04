@@ -23,13 +23,15 @@ module Puppet::Parser::Functions
         raise(Puppet::ParseError, "You need rubygems to use Hiera") unless Puppet.features.rubygems?
 
         require 'hiera'
+        require 'hiera/scope'
 
         config = YAML.load_file(configfile)
         config[:logger] = "puppet"
 
         hiera = Hiera.new(:config => config)
+        hiera_scope = Hiera::Scope.new(self)
 
-        answer = hiera.lookup(key, default, self, override, :priority)
+        answer = hiera.lookup(key, default, hiera_scope, override, :priority)
 
         raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") unless answer
 
