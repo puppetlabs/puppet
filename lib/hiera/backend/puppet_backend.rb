@@ -48,6 +48,7 @@ class Hiera
                             begin
                                 scope.real.function_include(klass)
                                 answer = scope[varname]
+                                Hiera.debug("Found data in class #{klass}")
                             rescue
                             end
                         else
