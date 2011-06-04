@@ -15,7 +15,7 @@ class Hiera
         end
 
         def include?(key)
-            @real.lookupvar(key) == ""
+            @real.lookupvar(key) != ""
         end
     end
 end
