@@ -5,7 +5,7 @@ class Hiera
                 Hiera.debug("Hiera Puppet backend starting")
             end
 
-            def hierarchy(scope)
+            def hierarchy(scope, override)
                 begin
                     data_class = Config[:puppet][:datasource] || "data"
                 rescue
@@ -17,7 +17,7 @@ class Hiera
 
                 hierarchy = Config[:hierarchy] || [calling_class, calling_module]
 
-                hierarchy = hierarchy.map do |klass|
+                hierarchy = [hierarchy].flatten.map do |klass|
                     klass = Backend.parse_string(klass, scope, {"calling_class" => calling_class, "calling_module" => calling_module})
 
                     [data_class, klass].join("::")
@@ -26,7 +26,7 @@ class Hiera
                 hierarchy << [calling_class, data_class].join("::")
                 hierarchy << [calling_module, data_class].join("::") unless calling_module == calling_class
 
-                hierarchy.insert(0, [data_class, @override].join("::")) if @override
+                hierarchy.insert(0, [data_class, override].join("::")) if override
 
                 hierarchy
             end
@@ -39,7 +39,7 @@ class Hiera
                 include_class = Puppet::Parser::Functions.function(:include)
                 loaded_classes = scope.real.catalog.classes
 
-                hierarchy(scope).each do |klass|
+                hierarchy(scope, order_override).each do |klass|
                     unless answer
                         Hiera.debug("Looking for data in #{klass}")
 
