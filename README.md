@@ -112,12 +112,18 @@ To achieve this setup the module user needs to configure Hiera in _/etc/puppet/h
             - common
 :json:
         :datadir: /var/lib/hiera
+
+:puppet:
+	:datasource: data
 </pre>
 
 Installation?
 =============
 
 It's not 100% ready for prime time, shortly a simple _gem install hiera-puppet_ on your master will do it.
+
+For the moment the Gem install will place the Puppet Parser Function where Puppet cannot find it, you should
+copy it out and distribute it to your master using Pluginsync or something similar
 
 Who?
 ====
