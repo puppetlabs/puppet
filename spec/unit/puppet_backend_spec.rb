@@ -32,6 +32,16 @@ class Hiera
                     @backend.hierarchy(@scope, nil).should == ["rspec::ntp::config", "rspec::ntp", "ntp::config::rspec", "ntp::rspec"]
                 end
 
+                it "should not include empty class names" do
+                    Config.expects("[]").with(:puppet).returns({:datasource => "rspec"})
+                    Config.expects("[]").with(:hierarchy).returns(["%{foo}", "common"])
+
+                    Backend.expects(:parse_string).with("common", @scope, {"calling_module" => "ntp", "calling_class" => "ntp::config"}).returns("common")
+                    Backend.expects(:parse_string).with("%{foo}", @scope, {"calling_module" => "ntp", "calling_class" => "ntp::config"}).returns("")
+
+                    @backend.hierarchy(@scope, nil).should == ["rspec::common", "ntp::config::rspec", "ntp::rspec"]
+                end
+
                 it "should allow for an override data source" do
                     Config.expects("[]").with(:puppet).returns({:datasource => "rspec"})
                     Config.expects("[]").with(:hierarchy)

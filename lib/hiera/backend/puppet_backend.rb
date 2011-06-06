@@ -20,8 +20,10 @@ class Hiera
                 hierarchy = [hierarchy].flatten.map do |klass|
                     klass = Backend.parse_string(klass, scope, {"calling_class" => calling_class, "calling_module" => calling_module})
 
+                    next if klass == ""
+
                     [data_class, klass].join("::")
-                end
+                end.compact
 
                 hierarchy << [calling_class, data_class].join("::")
                 hierarchy << [calling_module, data_class].join("::") unless calling_module == calling_class

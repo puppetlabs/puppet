@@ -13,7 +13,7 @@ spec = Gem::Specification.new do |s|
   s.description = "Store and query Hiera data from Puppet"
   s.files = FileList["{bin,lib}/**/*"].to_a
   s.require_path = "lib"
-  s.test_files = FileList["{test}/**/*test.rb"].to_a
+  s.test_files = FileList["{spec}/**/*test.rb"].to_a
   s.has_rdoc = true
   s.add_dependency 'hiera'
 end
