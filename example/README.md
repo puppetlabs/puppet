@@ -55,19 +55,24 @@ server ntp1.dc1.example.com
 server ntp2.dc1.example.com
 </pre>
 
-Now simulate a machine in _dc2_:
+Now simulate a machine in _dc2_, because there is no data for dc2 it uses the site wide defaults
 
 <pre>
 $ FACTER_location=dc2 puppet --config etc/puppet.conf --libdir ../lib site.pp
 warning: Could not find class data::dc2 for nephilim.ml.org
 notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{md5}074d0e2ac727f6cb9afe3345d574b578' to '{md5}8f9039fe1989a278a0a8e1836acb8d23'
+$ cat /tmp/ntp.conf
+server ntp1.example.com
+server ntp2.example.com
 </pre>
 
-You could create override data in the following places for a machine in _location=dc1_, they will be searched in this order and the first one with data will match:
+You could create override data in the following places for a machine in _location=dc2_, they will be searched in this order and the first one with data will match.
 
- * file etc/hieradb/dc1.yaml
+ * file etc/hieradb/dc2.yaml
  * file etc/hieradb/common.yaml
- * class data::dc1
+ * class data::dc2
  * class data::common
  * class ntp::config::data
  * class ntp::data
+
+In this example due to the presence of _common.yaml_ that declares _ntpservers_ the classes will never be searched, it will have precedence.

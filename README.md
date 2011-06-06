@@ -117,6 +117,15 @@ To achieve this setup the module user needs to configure Hiera in _/etc/puppet/h
 	:datasource: data
 </pre>
 
+Converting from extlookup?
+==========================
+
+A simple converter is included called _extlookup2hiera_ and it can convert from CSV to JSON or YAML:
+
+<pre>
+$ extlookup2hiera --in common.csv --out common.json --json
+</pre>
+
 Installation?
 =============
 
