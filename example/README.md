@@ -15,7 +15,7 @@ hiera-puppet cloned from github and running these commands in _hiera-puppet/exam
 Module from forge with module defaults
 --------------------------------------
 
- * Move the _modules/data directory to _modules/data.bak_
+ * Move the _modules/data directory to _modules/data.bak_ to avoid overrides used further in the example
  * Run puppet, creates _/etc/ntp.conf_ with ntp.org addresses
 
 <pre>
@@ -39,7 +39,7 @@ notice: /Stage[main]/Ntp::Config/File[/tmp/ntp.conf]/content: content changed '{
 $ cat /tmp/ntp.conf
 server ntp1.example.com
 server ntp2.example.com
-</pre.
+</pre>
 
 Fact driven overrides for location=dc1
 --------------------------------------
