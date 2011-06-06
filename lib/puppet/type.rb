@@ -876,6 +876,12 @@ class Type
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
     providers_by_source.collect do |provider|
+      all_properties = self.properties.find_all do |property|
+        provider.supports_parameter?(property)
+      end.collect do |property|
+        property.name
+      end
+
       provider.instances.collect do |instance|
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
@@ -886,7 +892,9 @@ class Type
         end
         provider_instances[instance.name] = instance
 
-        new(:name => instance.name, :provider => instance)
+        result = new(:name => instance.name, :provider => instance)
+        properties.each { |name| result.newattr(name) }
+        result
       end
     end.flatten.compact
   end
