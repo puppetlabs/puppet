@@ -13,14 +13,6 @@ describe Puppet::Configurer::FactHandler do
     @facthandler = FactHandlerTester.new
   end
 
-  it "should have a method for downloading fact plugins" do
-    @facthandler.should respond_to(:download_fact_plugins)
-  end
-
-  it "should have a boolean method for determining whether fact plugins should be downloaded" do
-    @facthandler.should respond_to(:download_fact_plugins?)
-  end
-
   it "should download fact plugins when :factsync is true" do
     Puppet.settings.expects(:value).with(:factsync).returns true
     @facthandler.should be_download_fact_plugins
@@ -52,46 +44,60 @@ describe Puppet::Configurer::FactHandler do
     @facthandler.download_fact_plugins
   end
 
+  describe "when finding facts" do
+    before :each do
+      @facthandler.stubs(:reload_facter)
+      Puppet::Node::Facts.terminus_class = :memory
+    end
+
+    it "should use the node name value to retrieve the facts" do
+      foo_facts = Puppet::Node::Facts.new('foo')
+      bar_facts = Puppet::Node::Facts.new('bar')
+      foo_facts.save
+      bar_facts.save
+      Puppet[:certname] = 'foo'
+      Puppet[:node_name_value] = 'bar'
+
+      @facthandler.find_facts.should == bar_facts
+    end
+
+    it "should set the facts name based on the node_name_fact" do
+      Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
+      Puppet[:node_name_fact] = 'my_name_fact'
+
+      @facthandler.find_facts.name.should == 'other_node_name'
+    end
+
+    it "should set the node_name_value based on the node_name_fact" do
+      Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
+      Puppet[:node_name_fact] = 'my_name_fact'
+
+      @facthandler.find_facts
+
+      Puppet[:node_name_value].should == 'other_node_name'
+    end
+
+    it "should reload Facter before finding facts" do
+      @facthandler.expects(:reload_facter)
+
+      @facthandler.find_facts
+    end
+
+    it "should fail if finding facts fails" do
+      Puppet[:trace] = false
+      Puppet[:certname] = "myhost"
+      Puppet::Node::Facts.expects(:find).raises RuntimeError
+
+      lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
+    end
+  end
+
   it "should warn about factsync deprecation when factsync is enabled" do
     Puppet::Configurer::Downloader.stubs(:new).returns mock("downloader", :evaluate => nil)
 
     @facthandler.expects(:download_fact_plugins?).returns true
     Puppet.expects(:warning)
     @facthandler.download_fact_plugins
-  end
-
-  it "should have a method for retrieving facts" do
-    @facthandler.should respond_to(:find_facts)
-  end
-
-  it "should use the Facts class with the :certname to find the facts" do
-    Puppet.settings.expects(:value).with(:certname).returns "foo"
-    Puppet::Node::Facts.expects(:find).with("foo").returns "myfacts"
-    @facthandler.stubs(:reload_facter)
-    @facthandler.find_facts.should == "myfacts"
-  end
-
-  it "should reload Facter and find local facts when asked to find facts" do
-    @facthandler.expects(:reload_facter)
-
-    Puppet.settings.expects(:value).with(:certname).returns "myhost"
-    Puppet::Node::Facts.expects(:find).with("myhost")
-
-    @facthandler.find_facts
-  end
-
-  it "should fail if finding facts fails" do
-    @facthandler.stubs(:reload_facter)
-
-    Puppet.settings.stubs(:value).with(:trace).returns false
-    Puppet.settings.stubs(:value).with(:certname).returns "myhost"
-    Puppet::Node::Facts.expects(:find).raises RuntimeError
-
-    lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
-  end
-
-  it "should have a method to prepare the facts for uploading" do
-    @facthandler.should respond_to(:facts_for_uploading)
   end
 
   # I couldn't get marshal to work for this, only yaml, so we hard-code yaml.

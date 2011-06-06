@@ -486,6 +486,15 @@ module Puppet
   )
 
   setdefaults(:agent,
+    :node_name_value => ["$certname", "The name of the node."],
+    :node_name_fact => { :default => "",
+        :desc => "The fact to use as the node name.",
+        :hook => proc do |value|
+          if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
+            raise "Cannot specify both the node_name_value and node_name_fact settings"
+          end
+        end
+      },
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",
       :mode => 0660,

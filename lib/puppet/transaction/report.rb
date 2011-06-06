@@ -67,7 +67,7 @@ class Puppet::Transaction::Report
     @logs = []
     @resource_statuses = {}
     @external_times ||= {}
-    @host = Puppet[:certname]
+    @host = Puppet[:node_name_value]
     @time = Time.now
     @kind = kind
     @report_format = 2
