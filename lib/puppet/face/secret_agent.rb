@@ -15,6 +15,7 @@ Puppet::Face.define(:secret_agent, '0.0.1') do
   EOT
 
   action(:synchronize) do
+    default
     summary "Run secret_agent once."
     arguments "[-v | --verbose] [-d | --debug]" # Remove this once options are introspectible
     description <<-'EOT'
