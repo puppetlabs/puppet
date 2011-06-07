@@ -76,26 +76,7 @@ class Puppet::Interface
   # splits out this should merge into a module that both the action and face
   # include. --daniel 2011-04-17
   def synopsis
-    output = PrettyPrint.format do |s|
-      s.text("puppet #{name} <action>")
-      s.breakable
-
-      options.each do |option|
-        option = get_option(option)
-        wrap = option.required? ? %w{ < > } : %w{ [ ] }
-
-        s.group(0, *wrap) do
-          option.optparse.each do |item|
-            unless s.current_group.first?
-              s.breakable
-              s.text '|'
-              s.breakable
-            end
-            s.text item
-          end
-        end
-      end
-    end
+    build_synopsis self.name, '<action>'
   end
 
 
