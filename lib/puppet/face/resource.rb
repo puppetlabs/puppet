@@ -4,19 +4,18 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Interact directly with resources via the RAL, like ralsh"
+  summary "API only: interact directly with resources via the RAL."
   description <<-'EOT'
-    This face provides a Ruby API with functionality similar to the puppet
-    resource (originally ralsh) command line application. It is not intended to be
-    used from the command line.
+    API only: this face provides a Ruby API with functionality similar to the
+    puppet resource (or ralsh) subcommand.
   EOT
 
-  get_action(:destroy).summary "Invalid for this face."
+  get_action(:destroy).summary "Invalid for this subcommand."
 
   search = get_action(:search)
-  search.summary "Get all resources of a single type."
+  search.summary "API only: get all resources of a single type."
   search.arguments "<resource_type>"
-  search.returns "An array of resource objects."
+  search.returns "An array of Puppet::Resource objects."
   search.examples <<-'EOT'
     Get a list of all user resources (API example):
 
@@ -24,9 +23,9 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
   EOT
 
   find = get_action(:find)
-  find.summary "Get a single resource."
+  find.summary "API only: get a single resource."
   find.arguments "<type>/<title>"
-  find.returns "A resource object."
+  find.returns "A Puppet::Resource object."
   find.examples <<-'EOT'
     Print information about a user on this system (API example):
 
@@ -34,9 +33,12 @@ Puppet::Indirector::Face.define(:resource, '0.0.1') do
   EOT
 
   save = get_action(:save)
-  save.summary "Create a new resource."
+  save.summary "API only: create a new resource."
+  save.description <<-EOT
+    API only: creates a new resource.
+  EOT
   save.arguments "<resource_object>"
-  save.returns "The same resource object passed."
+  save.returns "The same resource object passed as an argument."
   save.examples <<-'EOT'
     Create a new file resource (API example):
 

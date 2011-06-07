@@ -2,12 +2,12 @@
 Puppet::Face.define(:file, '0.0.1') do
   action :download do |*args|
     summary "Download a file into the local filebucket."
-    arguments "( {md5}<checksum> | puppet:///... )"
-    returns "Nothing"
+    arguments "( {md5}<checksum> | <puppet_url> )"
+    returns "Nothing."
     description <<-EOT
-      Downloads a file from the puppet master's filebucket and
-      duplicates it in the local filebucket. This action's checksum
-      syntax differs from `find`'s, and it can accept a <puppet:///> URL.
+      Downloads a file from the puppet master's filebucket and duplicates it in
+      the local filebucket. This action's checksum syntax differs from `find`'s,
+      and it can accept a <puppet:///> URL.
     EOT
     examples <<-'EOT'
       Download a file by URL:

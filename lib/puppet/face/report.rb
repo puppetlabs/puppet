@@ -4,13 +4,13 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Create, display, and submit reports"
+  summary "Create, display, and submit reports."
 
   get_action(:find).summary "Invalid for this face."
   get_action(:search).summary "Invalid for this face."
   get_action(:destroy).summary "Invalid for this face."
   save = get_action(:save)
-  save.summary "Submit a report."
+  save.summary "API only: submit a report."
   save.arguments "<report>"
   save.returns "Nothing."
   save.examples <<-'EOT'
@@ -27,15 +27,15 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
   EOT
 
   action(:submit) do
-    summary "Submit a report object to the puppet master"
+    summary "API only: submit a report with error handling."
     description <<-'EOT'
-      This action is essentially a shortcut and wrapper for the `save` action
-      with the `rest` terminus, which provides additional details in the
-      event of a report submission failure. It is not intended for use from
-      a command line.
+      API only: Submits a report to the puppet master. This action is
+      essentially a shortcut and wrapper for the `save` action with the `rest`
+      terminus, and provides additional details in the event of a failure.
     EOT
+    arguments "<report>"
     examples <<-'EOT'
-      From secret_agent.rb:
+      From secret_agent.rb (API example):
 
           # ...
           report  = Puppet::Face[:catalog, '0.0.1'].apply

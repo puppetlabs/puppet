@@ -7,22 +7,28 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
 
   summary "Retrieve and store facts."
   description <<-'EOT'
-    This face manages facts, the collections of normalized system
-    information used by Puppet. It can read facts directly from the
-    local system (using the default `facter` terminus), look up facts
-    reported by other systems, and submit facts to the puppet master.
+    This subcommand manages facts, which are collections of normalized system
+    information used by Puppet. It can read facts directly from the local system
+    (with the default `facter` terminus), look up facts reported by other
+    systems, and submit facts to the puppet master.
 
-    When used with the `rest` terminus, this face is essentially a
-    front-end to the inventory service REST API. See the inventory
-    service documentation for more detail.
+    When used with the `rest` terminus, this subcommand is essentially a front-end
+    to the inventory service REST API. See the inventory service documentation at
+    <http://docs.puppetlabs.com/guides/inventory_service.html> for more detail.
   EOT
 
   find = get_action(:find)
-  find.summary "Retrieve a host's facts."
-  find.arguments "<host>"
-  find.returns "A Puppet::Node::Facts object."
+  find.summary "Retrieve a node's facts."
+  find.arguments "<node_certname>"
+  find.returns <<-'EOT'
+    A hash containing some metadata and (under the "values" key) the set
+    of facts for the requested node. When used from the Ruby API: A
+    Puppet::Node::Facts object.
+
+    RENDERING ISSUES: Facts cannot currently be rendered as a string.
+  EOT
   find.notes <<-'EOT'
-    When using the `facter` terminus, the host argument is essentially ignored.
+    When using the `facter` terminus, the host argument is ignored.
   EOT
   find.examples <<-'EOT'
     Get facts from the local system:
@@ -38,13 +44,13 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     $ puppet facts find somenode.puppetlabs.lan --terminus inventory_active_record --mode master
   EOT
 
-  get_action(:destroy).summary "Invalid for this face."
-  get_action(:search).summary "Query format unknown; potentially invalid for this face."
+  get_action(:destroy).summary "Invalid for this subcommand."
+  get_action(:search).summary "Invalid for this subcommand."
 
   action(:upload) do
     summary "Upload local facts to the puppet master."
     description <<-'EOT'
-      Reads facts from the local system using the facter terminus, then
+      Reads facts from the local system using the `facter` terminus, then
       saves the returned facts using the rest terminus.
     EOT
     returns "Nothing."
