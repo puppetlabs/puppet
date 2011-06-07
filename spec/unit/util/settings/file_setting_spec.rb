@@ -249,6 +249,10 @@ describe Puppet::Util::Settings::FileSetting do
     it "should tag the resource with 'settings'" do
       @file.to_resource.should be_tagged("settings")
     end
+
+    it "should set links to 'follow'" do
+      @file.to_resource[:links].should == :follow
+    end
   end
 end
 
