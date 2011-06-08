@@ -83,7 +83,7 @@ Puppet::Type.type(:selmodule).provide(:semodule) do
     filename = selmod_name_to_filename
     mod = File.new(filename, "r")
 
-    (hdr, ver, numsec) = mod.read(12).unpack('LLL')
+    (hdr, ver, numsec) = mod.read(12).unpack('VVV')
 
     raise Puppet::Error, "Found #{hdr} instead of magic #{magic} in #{filename}" if hdr != magic
 
