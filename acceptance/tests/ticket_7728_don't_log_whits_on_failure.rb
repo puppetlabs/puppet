@@ -2,7 +2,7 @@ test_name "#7728: Don't log whits on resource failure"
 
 manifest = %Q{
   class foo {
-    exec { "test": command => "/usr/bin/false" }
+    exec { "test": command => "false", path => ['/bin', '/usr/bin'] }
 
     notify { "before": before  => Exec["test"] }
     notify { "after":  require => Exec["test"] }
