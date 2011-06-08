@@ -13,6 +13,7 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
   get_action(:destroy).summary "Invalid for this subcommand."
   get_action(:search).summary "Invalid for this subcommand."
   get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 
   find = get_action(:find)
   find.summary "Retrieve a node object."

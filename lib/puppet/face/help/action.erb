@@ -46,4 +46,8 @@ undocumented option
       end -%>
 <% end -%>
 
+<% if face.respond_to? :indirection -%>
+TERMINI: <%= face.class.terminus_classes(face.indirection.name).join(", ") %>
+
+<% end -%>
 See 'puppet man <%= face.name %>' or 'man puppet-<%= face.name %>' for full help.

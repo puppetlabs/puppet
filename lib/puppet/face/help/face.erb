@@ -75,10 +75,5 @@ end -%>
 <% if face.respond_to? :indirection -%>
 TERMINI: <%= face.class.terminus_classes(face.indirection.name).join(", ") %>
 
-<% end
-   unless face.authors.empty? -%>
-AUTHOR
-<%= face.authors.join("\n").gsub(/^/, ' * ') %>
-
 <% end -%>
 See 'puppet man <%= face.name %>' or 'man puppet-<%= face.name %>' for full help.

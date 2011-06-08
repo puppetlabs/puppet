@@ -30,6 +30,7 @@ Puppet::Indirector::Face.define(:resource_type, '0.0.1') do
 
   # Action documentation overrides:
   get_action(:save).summary = "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
   get_action(:destroy).summary = "Invalid for this subcommand."
 
   find = get_action(:find)
