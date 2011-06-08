@@ -10,30 +10,51 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
     list from the CA.
   EOT
 
-  get_action(:find).summary "Retrieve the certificate revocation list."
-  get_action(:find).arguments "<dummy_key>"
-  get_action(:find).returns <<-'EOT'
-    A certificate revocation list. When used from the Ruby API: returns an
+  find = get_action(:find)
+  find.summary "Retrieve the certificate revocation list."
+  find.arguments "<dummy_text>"
+  find.returns <<-'EOT'
+    The certificate revocation list. When used from the Ruby API: returns an
     OpenSSL::X509::CRL object.
 
     RENDERING ISSUES: this should usually be rendered as a string
     ('--render-as s').
   EOT
-  get_action(:find).examples <<-'EXAMPLES'
+  find.short_description <<-EOT
+    Retrieves the certificate revocation list. Due to a known bug, this action
+    requires a dummy argument, the content of which is irrelevant.
+  EOT
+  find.notes <<-EOT
+    Although this action always returns the CRL from the specified terminus, it
+    requires a dummy argument; this is a known bug.
+  EOT
+  find.examples <<-'EXAMPLES'
     Retrieve a copy of the puppet master's CRL:
 
     $ puppet certificate_revocation_list find crl --terminus rest
   EXAMPLES
 
-  get_action(:destroy).summary "Delete the certificate revocation list."
-  get_action(:destroy).arguments "<dummy_key>"
-  get_action(:destroy).returns "Nothing."
-  get_action(:destroy).description <<-'EOT'
+  destroy = get_action(:destroy)
+  destroy.summary "Delete the certificate revocation list."
+  destroy.arguments "<dummy_text>"
+  destroy.returns "Nothing."
+  destroy.description <<-'EOT'
     Deletes the certificate revocation list. This cannot be done over REST, but
-    it is possible to delete the locally cached copy or (if run from the CA) the
-    CA's own copy of the CRL.
+    it is possible to delete the locally cached copy or the local CA's copy of
+    the CRL.
+  EOT
+  destroy.short_description <<-EOT
+    Deletes the certificate revocation list. This cannot be done over REST, but
+    it is possible to delete the locally cached copy or the local CA's copy of
+    the CRL. Due to a known bug, this action requires a dummy argument, the
+    content of which is irrelevant.
+  EOT
+  destroy.notes <<-EOT
+    Although this action always deletes the CRL from the specified terminus, it
+    requires a dummy argument; this is a known bug.
   EOT
 
   get_action(:search).summary "Invalid for this subcommand."
   get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 end

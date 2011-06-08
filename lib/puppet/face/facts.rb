@@ -25,7 +25,8 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     of facts for the requested node. When used from the Ruby API: A
     Puppet::Node::Facts object.
 
-    RENDERING ISSUES: Facts cannot currently be rendered as a string.
+    RENDERING ISSUES: Facts cannot currently be rendered as a string; use yaml
+    or json.
   EOT
   find.notes <<-'EOT'
     When using the `facter` terminus, the host argument is ignored.

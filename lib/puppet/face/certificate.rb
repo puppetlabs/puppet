@@ -15,7 +15,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   EOT
 
   option "--ca-location LOCATION" do
-    summary "The certificate authority to query (local or remote)."
+    summary "Which certificate authority to use (local or remote)."
     description <<-'EOT'
       Whether to act on the local certificate authority or one provided by a
       remote puppet master. Allowed values are 'local' and 'remote.'
@@ -111,4 +111,5 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
   get_action(:search).summary "Invalid for this subcommand."
   get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 end

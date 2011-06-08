@@ -38,8 +38,8 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
       the source of the catalog can be managed with the `--terminus` option.
     EOT
     returns <<-'EOT'
-      Nothing. When used from the Ruby API, returns a Puppet::Transaction::Report
-      object.
+      Nothing. When used from the Ruby API, returns a
+      Puppet::Transaction::Report object.
     EOT
     examples <<-'EOT'
       Apply the locally cached catalog:
