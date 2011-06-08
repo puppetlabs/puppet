@@ -225,22 +225,22 @@ class Puppet::Resource::Type
       param = param.to_sym
       fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)
 
-      exceptwrap { scope.setvar(param.to_s, value) }
+      exceptwrap { scope[param.to_s] = value }
 
       set[param] = true
     end
 
     if @type == :hostclass
-      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
-      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+      scope["title"] = resource.title.to_s.downcase unless set.include? :title
+      scope["name"] =  resource.name.to_s.downcase  unless set.include? :name
     else
-      scope.setvar("title", resource.title              ) unless set.include? :title
-      scope.setvar("name",  resource.name               ) unless set.include? :name
+      scope["title"] = resource.title               unless set.include? :title
+      scope["name"] =  resource.name                unless set.include? :name
     end
-    scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
+    scope["module_name"] = module_name if module_name and ! set.include? :module_name
 
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope.setvar("caller_module_name", caller_name)
+      scope["caller_module_name"] = caller_name
     end
     scope.class_set(self.name,scope) if hostclass? or node?
     # Verify that all required arguments are either present or
@@ -253,7 +253,7 @@ class Puppet::Resource::Type
       fail Puppet::ParseError, "Must pass #{param} to #{resource.ref}" unless default
 
       value = default.safeevaluate(scope)
-      scope.setvar(param.to_s, value)
+      scope[param.to_s] = value
 
       # Set it in the resource, too, so the value makes it to the client.
       resource[param] = value

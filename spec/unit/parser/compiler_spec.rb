@@ -177,8 +177,8 @@ describe Puppet::Parser::Compiler do
       @node.stubs(:parameters).returns(params)
       compile_stub(:set_node_parameters)
       @compiler.compile
-      @compiler.topscope.lookupvar("a").should == "b"
-      @compiler.topscope.lookupvar("c").should == "d"
+      @compiler.topscope['a'].should == "b"
+      @compiler.topscope['c'].should == "d"
     end
 
     it "should set the client and server versions on the catalog" do

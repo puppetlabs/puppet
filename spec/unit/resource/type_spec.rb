@@ -249,7 +249,7 @@ describe Puppet::Resource::Type do
         var = Puppet::Parser::AST::Variable.new({'value' => variable})
         @type.set_arguments :foo => var
         @type.set_resource_parameters(@resource, @scope)
-        @scope.lookupvar('foo').should == 'bar'
+        @scope['foo'].should == 'bar'
       end
     end
 
@@ -262,7 +262,7 @@ describe Puppet::Resource::Type do
       var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
       @type.set_arguments :foo => var
       @type.set_resource_parameters(@resource, @scope)
-      @scope.lookupvar('foo').should == 'foobar'
+      @scope['foo'].should == 'foobar'
     end
 
     it "should set each of the resource's parameters as variables in the scope" do
@@ -272,8 +272,8 @@ describe Puppet::Resource::Type do
 
       @type.set_resource_parameters(@resource, @scope)
 
-      @scope.lookupvar("foo").should == "bar"
-      @scope.lookupvar("boo").should == "baz"
+      @scope['foo'].should == "bar"
+      @scope['boo'].should == "baz"
     end
 
     it "should set the variables as strings" do
@@ -282,7 +282,7 @@ describe Puppet::Resource::Type do
 
       @type.set_resource_parameters(@resource, @scope)
 
-      @scope.lookupvar("foo").should == "bar"
+      @scope['foo'].should == "bar"
     end
 
     it "should fail if any of the resource's parameters are not valid attributes" do
@@ -295,7 +295,7 @@ describe Puppet::Resource::Type do
     it "should evaluate and set its default values as variables for parameters not provided by the resource" do
       @type.set_arguments :foo => stub("value", :safeevaluate => "something")
       @type.set_resource_parameters(@resource, @scope)
-      @scope.lookupvar("foo").should == "something"
+      @scope['foo'].should == "something"
     end
 
     it "should set all default values as parameters in the resource" do
@@ -316,13 +316,13 @@ describe Puppet::Resource::Type do
     it "should set the resource's title as a variable if not otherwise provided" do
       @type.set_resource_parameters(@resource, @scope)
 
-      @scope.lookupvar("title").should == "bar"
+      @scope['title'].should == "bar"
     end
 
     it "should set the resource's name as a variable if not otherwise provided" do
       @type.set_resource_parameters(@resource, @scope)
 
-      @scope.lookupvar("name").should == "bar"
+      @scope['name'].should == "bar"
     end
 
     it "should set its module name in the scope if available" do
@@ -330,7 +330,7 @@ describe Puppet::Resource::Type do
 
       @type.set_resource_parameters(@resource, @scope)
 
-      @scope.lookupvar("module_name").should == "mymod"
+      @scope["module_name"].should == "mymod"
     end
 
     it "should set its caller module name in the scope if available" do
@@ -338,7 +338,7 @@ describe Puppet::Resource::Type do
 
       @type.set_resource_parameters(@resource, @scope)
 
-      @scope.lookupvar("caller_module_name").should == "mycaller"
+      @scope["caller_module_name"].should == "mycaller"
     end
   end
 

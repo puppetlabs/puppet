@@ -48,6 +48,35 @@ class Puppet::Parser::Scope
     end
   end
 
+  def [](name, options = {})
+    table = ephemeral?(name) ? @ephemeral.last : @symtable
+    # If the variable is qualified, then find the specified scope and look the variable up there instead.
+    if name =~ /^(.*)::(.+)$/
+      begin
+        qualified_scope($1)[$2,options]
+      rescue RuntimeError => e
+        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
+        :undefined
+      end
+    elsif ephemeral_include?(name) or table.include?(name)
+      # We can't use "if table[name]" here because the value might be false
+      if options[:dynamic] and self != compiler.topscope
+        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
+        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
+      end
+      table[name]
+    elsif parent
+      parent[name,options.merge(:dynamic => (dynamic || options[:dynamic]))]
+    else
+      :undefined
+    end
+  end
+
+  def []=(var, value)
+    setvar(var, value)
+  end
+
   # A demeterific shortcut to the catalog.
   def catalog
     compiler.catalog
@@ -223,29 +252,9 @@ class Puppet::Parser::Scope
   private :qualified_scope
 
   # Look up a variable.  The simplest value search we do.
+  # This method is effectively deprecated - use self[] instead.
   def lookupvar(name, options = {})
-    table = ephemeral?(name) ? @ephemeral.last : @symtable
-    # If the variable is qualified, then find the specified scope and look the variable up there instead.
-    if name =~ /^(.*)::(.+)$/
-      begin
-        qualified_scope($1).lookupvar($2,options)
-      rescue RuntimeError => e
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        :undefined
-      end
-    elsif ephemeral_include?(name) or table.include?(name)
-      # We can't use "if table[name]" here because the value might be false
-      if options[:dynamic] and self != compiler.topscope
-        location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
-        Puppet.deprecation_warning "Dynamic lookup of $#{name}#{location} is deprecated.  Support will be removed in Puppet 2.8.  Use a fully-qualified variable name (e.g., $classname::variable) or parameterized classes."
-      end
-      table[name]
-    elsif parent
-      parent.lookupvar(name,options.merge(:dynamic => (dynamic || options[:dynamic])))
-    else
-      :undefined
-    end
+    self[name, options]
   end
 
   # Return a hash containing our variables and their values, optionally (and
@@ -312,6 +321,8 @@ class Puppet::Parser::Scope
   # Set a variable in the current scope.  This will override settings
   # in scopes above, but will not allow variables in the current scope
   # to be reassigned.
+  #   It's preferred that you use self[]= instead of this; only use this
+  # when you need to set options.
   def setvar(name,value, options = {})
     table = options[:ephemeral] ? @ephemeral.last : @symtable
     if table.include?(name)
@@ -329,7 +340,7 @@ class Puppet::Parser::Scope
       table[name] = value
     else # append case
       # lookup the value in the scope if it exists and insert the var
-      table[name] = undef_as('',lookupvar(name))
+      table[name] = undef_as('',self[name])
       # concatenate if string, append if array, nothing for other types
       case value
       when Array

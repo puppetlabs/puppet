@@ -83,29 +83,34 @@ describe Puppet::Parser::Scope do
   end
 
   describe "when looking up a variable" do
-    it "should return ':undefined' for unset variables" do
-      @scope.lookupvar("var").should == :undefined
-    end
-
-    it "should be able to look up values" do
+    it "should support :lookupvar and :setvar for backward compatibility" do
       @scope.setvar("var", "yep")
       @scope.lookupvar("var").should == "yep"
     end
 
+    it "should return ':undefined' for unset variables" do
+      @scope["var"].should == :undefined
+    end
+
+    it "should be able to look up values" do
+      @scope["var"] = "yep"
+      @scope["var"].should == "yep"
+    end
+
     it "should be able to look up hashes" do
-      @scope.setvar("var", {"a" => "b"})
-      @scope.lookupvar("var").should == {"a" => "b"}
+      @scope["var"] = {"a" => "b"}
+      @scope["var"].should == {"a" => "b"}
     end
 
     it "should be able to look up variables in parent scopes" do
-      @topscope.setvar("var", "parentval")
-      @scope.lookupvar("var").should == "parentval"
+      @topscope["var"] = "parentval"
+      @scope["var"].should == "parentval"
     end
 
     it "should prefer its own values to parent values" do
-      @topscope.setvar("var", "parentval")
-      @scope.setvar("var", "childval")
-      @scope.lookupvar("var").should == "childval"
+      @topscope["var"] = "parentval"
+      @scope["var"] = "childval"
+      @scope["var"].should == "childval"
     end
 
     describe "and the variable is qualified" do
@@ -133,84 +138,84 @@ describe Puppet::Parser::Scope do
       it "should be able to look up explicitly fully qualified variables from main" do
         other_scope = create_class_scope("")
 
-        other_scope.setvar("othervar", "otherval")
+        other_scope["othervar"] = "otherval"
 
-        @scope.lookupvar("::othervar").should == "otherval"
+        @scope["::othervar"].should == "otherval"
       end
 
       it "should be able to look up explicitly fully qualified variables from other scopes" do
         other_scope = create_class_scope("other")
 
-        other_scope.setvar("var", "otherval")
+        other_scope["var"] = "otherval"
 
-        @scope.lookupvar("::other::var").should == "otherval"
+        @scope["::other::var"].should == "otherval"
       end
 
       it "should be able to look up deeply qualified variables" do
         other_scope = create_class_scope("other::deep::klass")
 
-        other_scope.setvar("var", "otherval")
+        other_scope["var"] = "otherval"
 
-        @scope.lookupvar("other::deep::klass::var").should == "otherval"
+        @scope["other::deep::klass::var"].should == "otherval"
       end
 
       it "should return ':undefined' for qualified variables that cannot be found in other classes" do
         other_scope = create_class_scope("other::deep::klass")
 
-        @scope.lookupvar("other::deep::klass::var").should == :undefined
+        @scope["other::deep::klass::var"].should == :undefined
       end
 
       it "should warn and return ':undefined' for qualified variables whose classes have not been evaluated" do
         klass = newclass("other::deep::klass")
         @scope.expects(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == :undefined
+        @scope["other::deep::klass::var"].should == :undefined
       end
 
       it "should warn and return ':undefined' for qualified variables whose classes do not exist" do
         @scope.expects(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == :undefined
+        @scope["other::deep::klass::var"].should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that does not exist" do
         @scope.stubs(:warning)
-        @scope.lookupvar("other::deep::klass::var").should == :undefined
+        @scope["other::deep::klass::var"].should == :undefined
       end
 
       it "should return ':undefined' when asked for a non-string qualified variable from a class that has not been evaluated" do
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
-        @scope.lookupvar("other::deep::klass::var").should == :undefined
+        @scope["other::deep::klass::var"].should == :undefined
       end
     end
   end
 
-  describe "when setvar is called with append=true" do
-    it "should raise error if the variable is already defined in this scope" do
+  describe "when variables are set with append=true" do
+    it "should raise an error if the variable is already defined in this scope" do
       @scope.setvar("var","1", :append => false)
       lambda { @scope.setvar("var","1", :append => true) }.should raise_error(Puppet::ParseError)
     end
 
     it "should lookup current variable value" do
-      @scope.expects(:lookupvar).with("var").returns("2")
+      @scope.expects(:[]).with("var").returns("2")
       @scope.setvar("var","1", :append => true)
     end
 
     it "should store the concatenated string '42'" do
       @topscope.setvar("var","4", :append => false)
       @scope.setvar("var","2", :append => true)
-      @scope.lookupvar("var").should == "42"
+      @scope["var"].should == "42"
     end
 
     it "should store the concatenated array [4,2]" do
       @topscope.setvar("var",[4], :append => false)
       @scope.setvar("var",[2], :append => true)
-      @scope.lookupvar("var").should == [4,2]
+      @scope["var"].should == [4,2]
     end
 
     it "should store the merged hash {a => b, c => d}" do
       @topscope.setvar("var",{"a" => "b"}, :append => false)
       @scope.setvar("var",{"c" => "d"}, :append => true)
-      @scope.lookupvar("var").should == {"a" => "b", "c" => "d"}
+      @scope["var"].should == {"a" => "b", "c" => "d"}
     end
 
     it "should raise an error when appending a hash with something other than another hash" do
@@ -285,7 +290,7 @@ describe Puppet::Parser::Scope do
     it "should store the variable value" do
       @scope.setvar("1", :value, :ephemeral => true)
 
-      @scope.lookupvar("1").should == :value
+      @scope["1"].should == :value
     end
 
     it "should remove the variable value when unset_ephemeral_var is called" do
@@ -294,17 +299,17 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var
 
-      @scope.lookupvar("1").should == :undefined
+      @scope["1"].should == :undefined
     end
 
     it "should not remove classic variables when unset_ephemeral_var is called" do
-      @scope.setvar("myvar", :value1)
+      @scope['myvar'] = :value1
       @scope.setvar("1", :value2, :ephemeral => true)
       @scope.stubs(:parent).returns(nil)
 
       @scope.unset_ephemeral_var
 
-      @scope.lookupvar("myvar").should == :value1
+      @scope["myvar"].should == :value1
     end
 
     it "should raise an error when setting it again" do
@@ -325,7 +330,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("0", :earliest, :ephemeral => true)
         @scope.new_ephemeral
         @scope.setvar("0", :latest, :ephemeral => true)
-        @scope.lookupvar("0").should == :latest
+        @scope["0"].should == :latest
       end
 
       it "should be able to report the current level" do
@@ -356,7 +361,7 @@ describe Puppet::Parser::Scope do
         @scope.setvar("1", :value1, :ephemeral => true)
         @scope.new_ephemeral
         @scope.setvar("0", :value2, :ephemeral => true)
-        @scope.lookupvar("1").should == :value1
+        @scope["1"].should == :value1
       end
 
       describe "when calling unset_ephemeral_var without a level" do
@@ -367,7 +372,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var
 
-          @scope.lookupvar("1").should == :undefined
+          @scope["1"].should == :undefined
         end
       end
 
@@ -381,7 +386,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var(2)
 
-          @scope.lookupvar("1").should == :value2
+          @scope["1"].should == :value2
         end
       end
     end
@@ -421,22 +426,22 @@ describe Puppet::Parser::Scope do
 
   describe "when unsetting variables" do
     it "should be able to unset normal variables" do
-      @scope.setvar("foo", "bar")
+      @scope["foo"] = "bar"
       @scope.unsetvar("foo")
-      @scope.lookupvar("foo").should == :undefined
+      @scope["foo"].should == :undefined
     end
 
     it "should be able to unset ephemeral variables" do
       @scope.setvar("0", "bar", :ephemeral => true)
       @scope.unsetvar("0")
-      @scope.lookupvar("0").should == :undefined
+      @scope["0"].should == :undefined
     end
 
     it "should not unset ephemeral variables in previous ephemeral scope" do
       @scope.setvar("0", "bar", :ephemeral => true)
       @scope.new_ephemeral
       @scope.unsetvar("0")
-      @scope.lookupvar("0").should == "bar"
+      @scope["0"].should == "bar"
     end
   end
 
