@@ -8,10 +8,10 @@ auth any
 allow *
 }
 
-step "Save original auth.conf file and create a temp auth.conf"
-on master, "cp #{config['puppetpath']}/auth.conf /tmp/auth.conf-7117; echo '#{add_2_authconf}' > #{config['puppetpath']}/auth.conf"
+step "Create a temp auth.conf"
+create_remote_file master, "/tmp/auth.conf-7117", add_2_authconf
 
-with_master_running_on(master, "--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop") do
+with_master_running_on(master, "--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --noop") do
   # Run test on Agents
   step "Run agent to upload facts"
   on agents, puppet_agent("--test --server #{master}")
@@ -23,6 +23,3 @@ with_master_running_on(master, "--certdnsnames=\"puppet:$(hostname -s):$(hostnam
     end
   end
 end
-
-step "Restore original auth.conf file"
-on master, "cp -f /tmp/auth.conf-7117 #{config['puppetpath']}/auth.conf"
