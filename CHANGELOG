@@ -1,3 +1,52 @@
+2.7.0rc4
+===
+dbe2310 Maint: Update static man pages for 2.7.0
+50d188c Maint: Update static man page generator for Faces.
+f370d5a (#7833) Several help text/template edits
+90d2cf0 maint: more work on regexp matching in Test::Unit assertions.
+8c71df2 maint: acceptance tests need to search for bin/false
+0ae4732 (#7828) Fix whitespace in synopsis generator.
+b4e9791 maint: handle incoherent Test::Unit assertions.
+48aafa3 (#6873) Add Static Compiler terminus to 2.7.0
+9017fea (#7728) Acceptance test for whit notifications.
+973e752 (#7728) Suppress notifications from container whits.
+1772363 (#7764, 7775, 7778) Revisions to Faces help text
+5a9998e (#7773, 7776, 7764) Several help template tweaks
+5587b94 maint: remove an unhelpful pending test.
+bbf0a02 maint: fix misnamed acceptance test for #7139
+d4e6c26 (#7624) Manually fetch all properties in instances.
+c8df027 (#7193) Fix path issues with acceptance tests that call old shell tests
+31bf55c (#7632) Make secret_agent application compatible with secret_agent face
+c5448b7 (#7624) Auditing should not be enabled by default for purged resources.
+b70f32a (#7746) Fix bootstrap issues from #7717 fix.
+be233c3 (#7683) Use ronn, when available, to render the output.
+2389bdf (#7683) Add a 'man' face and subcommand to Puppet.
+e647f70 maint: remove obsolete work-around code from help face.
+796900b (#7699) Don't duplicate inherited action names on faces.
+a23cfd8 (#7177) Deprecate implicit 'puppet apply' for 2.7.0
+3f47b0c (#7717) Layout cleanup for subcommand extraction.
+8072b4b #7211: Test unknown options don't shadow unknown actions.
+dd8108c #7211: nasty logic error with global Face options taking arguments.
+618495c #7211: more helpful error messages in various cases.
+7df1fa4 (#7708) Delete extended documentation from configuration reference
+2935feb (#7707) Document signals in puppet agent and puppet master help
+3facc33 add puppet master polling step for ticket 7117
+68c106e (#5318) Always notice changes to manifests when compiling.
+a5a78a5 (#7557) Remove Faces Application
+ea7908b maint: Fix order dependent spec failure for face indirection
+2aa9f2f (#7690) Don't blow up when listing terminuses available for faces
+9447cb9 maint: Dedup the loadpath so we don't have to walk it multiple times
+149a12f Maint: Fix ellipses for short descriptions
+7688706 (#7563) DRY: Remove indirector boilerplate from individual faces
+4662f4d (#7564) Finish templates
+331d812 (#7561) Complete help text for all faces and actions
+069a6b8 Maint: Add ellipsis to generated short_descriptions.
+ebc642b (#6962) Add "arguments" method to help API
+163ff6b (#7681) Add an acceptance test for resource refs with array variables
+9f6dec2 (#7681) Allow array variables as resource references
+76ad2bb (#7507) Add exclude filter for ruby 1.9 spec failures
+3682025 maint: move trap call to Signal so we can stub it for specs
+
 2.7.0rc3
 ===
 83c7563 (#7259) Remove ActiveRecord requirement from indirector face spec
