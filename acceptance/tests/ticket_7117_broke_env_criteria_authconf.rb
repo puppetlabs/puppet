@@ -11,7 +11,9 @@ allow *
 step "Create a temp auth.conf"
 create_remote_file master, "/tmp/auth.conf-7117", add_2_authconf
 
-with_master_running_on(master, "--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --noop") do
+on master, "chmod 644 /tmp/auth.conf-7117"
+
+with_master_running_on(master, "--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --autosign true") do
   # Run test on Agents
   step "Run agent to upload facts"
   on agents, puppet_agent("--test --server #{master}")
