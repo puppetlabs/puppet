@@ -1,7 +1,7 @@
 .\" generated with Ronn/v0.7.3
 .\" http://github.com/rtomayko/ronn/tree/0.7.3
 .
-.TH "PUPPET\-KICK" "8" "February 2011" "Puppet Labs, LLC" "Puppet manual"
+.TH "PUPPET\-KICK" "8" "June 2011" "Puppet Labs, LLC" "Puppet manual"
 .
 .SH "NAME"
 \fBpuppet\-kick\fR \- Remotely control puppet agent
@@ -25,30 +25,10 @@ You will most likely have to run \'puppet kick\' as root to get access to the SS
 \'puppet kick\' reads \'puppet master\'\'s configuration file, so that it can copy things like LDAP settings\.
 .
 .SH "USAGE NOTES"
-\'puppet kick\' is useless unless \'puppet agent\' is listening\. See its documentation for more information, but the gist is that you must enable \'listen\' on the \'puppet agent\' daemon, either using \'\-\-listen\' on the command line or adding \'listen = true\' in its config file\. In addition, you need to set the daemons up to specifically allow connections by creating the \'namespaceauth\' file, normally at \'/etc/puppet/namespaceauth\.conf\'\. This file specifies who has access to each namespace; if you create the file you must add every namespace you want any Puppet daemon to allow \-\- it is currently global to all Puppet daemons\.
+Puppet kick is useless unless puppet agent is listening for incoming connections and allowing access to the \fBrun\fR endpoint\. This entails starting the agent with \fBlisten = true\fR in its puppet\.conf file, and allowing access to the \fB/run\fR path in its auth\.conf file; see \fBhttp://docs\.puppetlabs\.com/guides/rest_auth_conf\.html\fR for more details\.
 .
 .P
-An example file looks like this:
-.
-.IP "" 4
-.
-.nf
-
-[fileserver]
-    allow *\.madstop\.com
-
-[puppetmaster]
-    allow *\.madstop\.com
-
-[puppetrunner]
-    allow culain\.madstop\.com
-.
-.fi
-.
-.IP "" 0
-.
-.P
-This is what you would install on your Puppet master; non\-master hosts could leave off the \'fileserver\' and \'puppetmaster\' namespaces\.
+Additionally, due to a known bug, you must make sure a namespaceauth\.conf file exists in puppet agent\'s $confdir\. This file will not be consulted, and may be left empty\.
 .
 .SH "OPTIONS"
 Note that any configuration parameter that\'s valid in the configuration file is also a valid long argument\. For example, \'ssldir\' is a valid configuration parameter, so you can specify \'\-\-ssldir \fIdirectory\fR\' as an argument\.
@@ -112,4 +92,4 @@ $ sudo puppet kick \-p 10 \-t remotefile \-t webserver host1 host2
 Luke Kanies
 .
 .SH "COPYRIGHT"
-Copyright (c) 2005 Puppet Labs, LLC Licensed under the GNU Public License
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2\.0 License

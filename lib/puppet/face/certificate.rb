@@ -5,9 +5,9 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Provide access to the CA for certificate management"
+  summary "Provide access to the CA for certificate management."
   description <<-'EOT'
-    This face interacts with a local or remote Puppet certificate
+    This subcommand interacts with a local or remote Puppet certificate
     authority. Currently, its behavior is not a full superset of `puppet
     cert`; specifically, it is unable to mimic puppet cert's "clean" option,
     and its "generate" action submits a CSR rather than creating a
@@ -15,10 +15,12 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   EOT
 
   option "--ca-location LOCATION" do
-    summary "The certificate authority to query"
+    summary "Which certificate authority to use (local or remote)."
     description <<-'EOT'
       Whether to act on the local certificate authority or one provided by a
       remote puppet master. Allowed values are 'local' and 'remote.'
+
+      This option is required.
     EOT
 
     before_action do |action, args, options|
@@ -27,7 +29,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   end
 
   action :generate do
-    summary "Generate a new certificate signing request for HOST."
+    summary "Generate a new certificate signing request."
     arguments "<host>"
     returns "Nothing."
     description <<-'EOT'
@@ -55,8 +57,10 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   action :list do
     summary "List all certificate signing requests."
     returns <<-'EOT'
-      An array of CSR object #inspect strings. This output is currently messy,
-      but does contain the names of nodes requesting certificates.
+      An array of #inspect output from CSR objects. This output is
+      currently messy, but does contain the names of nodes requesting
+      certificates. This action returns #inspect strings even when used
+      from the Ruby API.
     EOT
 
     when_invoked do |options|
@@ -70,8 +74,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     summary "Sign a certificate signing request for HOST."
     arguments "<host>"
     returns <<-'EOT'
-      A string that appears to be an x509 certificate, but is actually
-      not. Retrieve certificates using the `find` action.
+      A string that appears to be (but isn't) an x509 certificate.
     EOT
     examples <<-'EOT'
       Sign somenode.puppetlabs.lan's certificate:
@@ -88,24 +91,25 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
   # Indirector action doc overrides
   find = get_action(:find)
-  find.summary "Retrieve a certificate"
+  find.summary "Retrieve a certificate."
   find.arguments "<host>"
   find.returns <<-'EOT'
     An x509 SSL certificate. You will usually want to render this as a
-    string ('--render-as s').
+    string (--render-as s).
 
     Note that this action has a side effect of caching a copy of the
     certificate in Puppet's `ssldir`.
   EOT
 
   destroy = get_action(:destroy)
-  destroy.summary "Delete a local certificate."
+  destroy.summary "Delete a certificate."
   destroy.arguments "<host>"
   destroy.returns "Nothing."
   destroy.description <<-'EOT'
-    Deletes a certificate. This action currently only works with a local CA.
+    Deletes a certificate. This action currently only works on the local CA.
   EOT
 
-  get_action(:search).summary "Invalid for this face."
-  get_action(:save).summary "Invalid for this face."
+  get_action(:search).summary "Invalid for this subcommand."
+  get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 end

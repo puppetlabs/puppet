@@ -16,6 +16,15 @@ Puppet::Face.define(:parser, '0.0.1') do
       syncing any resources. If no manifest files are provided, it will
       validate the default site manifest.
     EOT
+    examples <<-'EOT'
+      Validate the default site manifest at /etc/puppet/manifests/site.pp:
+
+      $ puppet parser validate
+
+      Validate two arbitrary manifest files:
+
+      $ puppet parser validate init.pp vhost.pp
+    EOT
     when_invoked do |*args|
       args.pop
       files = args

@@ -7,34 +7,32 @@ Puppet::Face.define(:man, '0.0.1') do
   copyright "Puppet Labs", 2011
   license   "Apache 2 license; see COPYING"
 
-  summary "Display Puppet subcommand manual pages."
+  summary "Display Puppet manual pages."
 
   description <<-EOT
-    The man face, when invoked from the command line, tries very hard to
-    behave nicely for interactive use.  If possible, it delegates to the
-    ronn(1) command to format the output as a real manual page.
-
-    If ronn(1) is not available, it will use the first of `$MANPAGER`,
-    `$PAGER`, `less`, `most`, or `more` to paginate the (human-readable)
-    input text for the manual page.
-
-    We do try hard to ensure that this behaves correctly when used as
-    part of a pipeline.  (Well, we delegate to tools that do the right
-    thing, which is more or less the same.)
+    This subcommand displays manual pages for all Puppet subcommands. If the
+    `ronn` gem (<https://github.com/rtomayko/ronn/>) is installed on your
+    system, puppet man will display fully-formated man pages. If `ronn` is not
+    available, puppet man will display the raw (but human-readable) source text
+    in a pager.
   EOT
 
   notes <<-EOT
-    We strongly encourage you to install the `ronn` gem on your system,
-    or otherwise make it available, so that we can display well structured
-    output from this face.
+    The pager used for display will be the first found of `$MANPAGER`, `$PAGER`,
+    `less`, `most`, or `more`.
   EOT
 
   action(:man) do
-    summary "Display the manual page for a face."
-    arguments "<face>"
-    returns "The man data, in markdown format, suitable for consumption by Ronn."
+    summary "Display the manual page for a Puppet subcommand."
+    arguments "<subcommand>"
+    returns <<-'EOT'
+      The man data, in Markdown format, suitable for consumption by Ronn.
+
+      RENDERING ISSUES: To skip fancy formatting and output the raw Markdown
+      text (e.g. for use in a pipeline), call this action with '--render-as s'.
+    EOT
     examples <<-'EOT'
-      Get the manual page for a face:
+      View the manual page for a subcommand:
 
       $ puppet man facts
     EOT

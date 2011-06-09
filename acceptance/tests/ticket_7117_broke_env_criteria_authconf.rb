@@ -31,7 +31,7 @@ Log.notify "Slept for #{elapsed} seconds waiting for Puppet Master to become rea
 
 # Run test on Agents
 step "Agent: agent --test"
-on agents, puppet_agent("--test")
+on agents, puppet_agent("--test --server #{master}")
 
 step "Fetch agent facts from Puppet Master"
 agents.each do |host|

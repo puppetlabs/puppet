@@ -7,13 +7,11 @@ Puppet::Face.define(:config, '0.0.1') do
   summary "Interact with Puppet's configuration options."
 
   action(:print) do
-    summary "Examine Puppet's current configuration options."
-    arguments "(all | <option> [<option> ...]"
+    summary "Examine Puppet's current configuration settings."
+    arguments "(all | <setting> [<setting> ...]"
     returns <<-'EOT'
-      When called with one option: a single value.
-
-      When called with "all" or multiple options: a list of options and
-      their values.
+      A single value when called with one config setting, and a list of
+      settings and values when called with multiple options or "all."
     EOT
     description <<-'EOT'
       Prints the value of a single configuration option or a list of

@@ -6,34 +6,55 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
 
   summary "Manage the list of revoked certificates."
   description <<-'EOT'
-    This face is primarily for retrieving the certificate revocation
-    list from the CA. Although it exposes search/save/destroy methods,
-    they shouldn't be used under normal circumstances.
+    This subcommand is primarily for retrieving the certificate revocation
+    list from the CA.
   EOT
 
-  get_action(:find).summary "Retrieve the certificate revocation list."
-  get_action(:find).arguments "<dummy_key>"
-  get_action(:find).returns <<-'EOT'
-    A certificate revocation list. You will usually want to render this
-    as a string ('--render-as s').
+  find = get_action(:find)
+  find.summary "Retrieve the certificate revocation list."
+  find.arguments "<dummy_text>"
+  find.returns <<-'EOT'
+    The certificate revocation list. When used from the Ruby API: returns an
+    OpenSSL::X509::CRL object.
+
+    RENDERING ISSUES: this should usually be rendered as a string
+    ('--render-as s').
   EOT
-  get_action(:find).examples <<-'EXAMPLES'
+  find.short_description <<-EOT
+    Retrieves the certificate revocation list. Due to a known bug, this action
+    requires a dummy argument, the content of which is irrelevant.
+  EOT
+  find.notes <<-EOT
+    Although this action always returns the CRL from the specified terminus, it
+    requires a dummy argument; this is a known bug.
+  EOT
+  find.examples <<-'EXAMPLES'
     Retrieve a copy of the puppet master's CRL:
 
     $ puppet certificate_revocation_list find crl --terminus rest
   EXAMPLES
 
-  get_action(:destroy).summary "Delete the certificate revocation list."
-  get_action(:destroy).arguments "<dummy_key>"
-  get_action(:destroy).returns "Nothing."
-  get_action(:destroy).description <<-'EOT'
-    Deletes the certificate revocation list. This cannot be done over
-    REST, but it is possible to both delete the locally cached copy of
-    the CA's CRL and delete the CA's own copy (if running on the CA
-    machine and invoked with '--terminus ca'). Needless to say, don't do
-    this unless you know what you're up to.
+  destroy = get_action(:destroy)
+  destroy.summary "Delete the certificate revocation list."
+  destroy.arguments "<dummy_text>"
+  destroy.returns "Nothing."
+  destroy.description <<-'EOT'
+    Deletes the certificate revocation list. This cannot be done over REST, but
+    it is possible to delete the locally cached copy or the local CA's copy of
+    the CRL.
+  EOT
+  destroy.short_description <<-EOT
+    Deletes the certificate revocation list. This cannot be done over REST, but
+    it is possible to delete the locally cached copy or the local CA's copy of
+    the CRL. Due to a known bug, this action requires a dummy argument, the
+    content of which is irrelevant.
+  EOT
+  destroy.notes <<-EOT
+    Although this action always deletes the CRL from the specified terminus, it
+    requires a dummy argument; this is a known bug.
   EOT
 
-  get_action(:search).summary "Invalid for this face."
-  get_action(:save).summary "Invalid for this face."
+  get_action(:search).summary "Invalid for this subcommand."
+  get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 end

@@ -2,7 +2,7 @@ require 'puppet/face'
 
 class Puppet::Indirector::Face < Puppet::Face
   option "--terminus TERMINUS" do
-    summary "The indirector terminus to use for this action."
+    summary "The indirector terminus to use."
     description <<-EOT
       Indirector faces expose indirected subsystems of Puppet. These
       subsystems are each able to retrieve and alter a specific type of data
@@ -61,11 +61,12 @@ class Puppet::Indirector::Face < Puppet::Face
   end
 
   action :save do
-    summary "Create or overwrite an object."
+    summary "API only: create or overwrite an object."
     arguments "<object>"
     description <<-EOT
-      Create or overwrite an object. Save actions cannot currently be
-      invoked from the command line, and are for API use only.
+      API only: create or overwrite an object. As the Faces framework does not
+      currently accept data from STDIN, save actions cannot currently be invoked
+      from the command line.
     EOT
     when_invoked { |key, options| call_indirection_method(:save, key, options) }
   end
@@ -80,8 +81,9 @@ class Puppet::Indirector::Face < Puppet::Face
   action :info do
     summary "Print the default terminus class for this face."
     description <<-EOT
-      Prints the default terminus class for this face. Note that
-      different run modes may have different default terminuses.
+      Prints the default terminus class for this subcommand. Note that different
+      run modes may have different default termini; when in doubt, specify the
+      run mode with the '--mode' option.
     EOT
 
     when_invoked do |*args|

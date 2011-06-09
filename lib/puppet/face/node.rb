@@ -5,33 +5,39 @@ Puppet::Indirector::Face.define(:node, '0.0.1') do
 
   summary "View and manage node definitions."
   description <<-'EOT'
-    This face interacts with node objects, which are used by Puppet to
-    build a catalog. A node object consists of the node's facts,
-    environment, node parameters (exposed in the parser as top-scope
-    variables), and classes.
+    This subcommand interacts with node objects, which are used by Puppet to
+    build a catalog. A node object consists of the node's facts, environment,
+    node parameters (exposed in the parser as top-scope variables), and classes.
   EOT
 
-  get_action(:destroy).summary "Invalid for this face."
-  get_action(:search).summary "Invalid for this face."
-  get_action(:save).summary "Invalid for this face."
+  get_action(:destroy).summary "Invalid for this subcommand."
+  get_action(:search).summary "Invalid for this subcommand."
+  get_action(:save).summary "Invalid for this subcommand."
+  get_action(:save).description "Invalid for this subcommand."
 
   find = get_action(:find)
   find.summary "Retrieve a node object."
   find.arguments "<host>"
   find.returns <<-'EOT'
-    A Puppet::Node object.
+    A hash containing the node's `classes`, `environment`, `expiration`, `name`,
+    `parameters` (its facts, combined with any ENC-set parameters), and `time`.
+    When used from the Ruby API: a Puppet::Node object.
 
     RENDERING ISSUES: Rendering as string and json are currently broken;
     node objects can only be rendered as yaml.
   EOT
   find.examples <<-'EOT'
-    Retrieve an "empty" (no classes, fact and bulit-in parameters only,
-    and an environment of "production") node:
+    Retrieve an "empty" (no classes, no ENC-imposed parameters, and an
+    environment of "production") node:
 
     $ puppet node find somenode.puppetlabs.lan --terminus plain --render-as yaml
 
     Retrieve a node using the puppet master's configured ENC:
 
     $ puppet node find somenode.puppetlabs.lan --terminus exec --mode master --render-as yaml
+
+    Retrieve the same node from the puppet master:
+
+    $ puppet node find somenode.puppetlabs.lan --terminus rest --render-as yaml
   EOT
 end

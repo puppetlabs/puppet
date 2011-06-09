@@ -1,21 +1,16 @@
-<%= action.summary || face.summary || "unknown face..." %>
-
 <% if action.synopsis -%>
 USAGE: <%= action.synopsis %>
 
 <% end -%>
-<% if action.short_description -%>
-<%= action.short_description.strip %>
+<%= action.short_description || action.summary || face.summary || "undocumented subcommand" %>
 
-<% end -%>
 <% if action.returns -%>
 RETURNS: <%= action.returns.strip %>
 
 <% end -%>
 OPTIONS:
 <%# Remove these options once we can introspect them normally. -%>
-  --mode MODE                    - The run mode to use (`user`, `agent`, or
-                                   `master`).
+  --mode MODE                    - The run mode to use (user, agent, or master).
   --render-as FORMAT             - The rendering format to use.
   --verbose                      - Whether to log verbosely.
   --debug                        - Whether to log debug information.
@@ -26,7 +21,7 @@ OPTIONS:
         option = action.get_option name -%>
 <%= "  " + option.optparse.join(" | ")[0,(optionroom - 1)].ljust(optionroom) + ' - ' -%>
 <%     if !(option.summary) -%>
-unknown option...
+undocumented option
 <%     elsif option.summary.length <= summaryroom -%>
 <%= option.summary %>
 <%
@@ -51,7 +46,8 @@ unknown option...
       end -%>
 <% end -%>
 
-<% if action.examples -%>
-EXAMPLES:
-<%= action.examples %>
+<% if face.respond_to? :indirection -%>
+TERMINI: <%= face.class.terminus_classes(face.indirection.name).join(", ") %>
+
 <% end -%>
+See 'puppet man <%= face.name %>' or 'man puppet-<%= face.name %>' for full help.

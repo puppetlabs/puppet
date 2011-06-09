@@ -131,10 +131,22 @@ class Puppet::Transaction
     # enough to check the immediate dependencies, which is why we use
     # a tree from the reversed graph.
     found_failed = false
+
+
+    # When we introduced the :whit into the graph, to reduce the combinatorial
+    # explosion of edges, we also ended up reporting failures for containers
+    # like class and stage.  This is undesirable; while just skipping the
+    # output isn't perfect, it is RC-safe. --daniel 2011-06-07
+    suppress_report = (resource.class == Puppet::Type.type(:whit))
+
     relationship_graph.dependencies(resource).each do |dep|
       next unless failed?(dep)
-      resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
       found_failed = true
+
+      # See above. --daniel 2011-06-06
+      unless suppress_report then
+        resource.notice "Dependency #{dep} has failures: #{resource_status(dep).failed}"
+      end
     end
 
     found_failed
@@ -336,7 +348,13 @@ class Puppet::Transaction
     elsif ! scheduled?(resource)
       resource.debug "Not scheduled"
     elsif failed_dependencies?(resource)
-      resource.warning "Skipping because of failed dependencies"
+      # When we introduced the :whit into the graph, to reduce the combinatorial
+      # explosion of edges, we also ended up reporting failures for containers
+      # like class and stage.  This is undesirable; while just skipping the
+      # output isn't perfect, it is RC-safe. --daniel 2011-06-07
+      unless resource.class == Puppet::Type.type(:whit) then
+        resource.warning "Skipping because of failed dependencies"
+      end
     elsif resource.virtual?
       resource.debug "Skipping because virtual"
     elsif resource.appliable_to_device? ^ for_network_device
