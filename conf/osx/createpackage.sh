@@ -130,8 +130,14 @@ function cleanup_and_exit() {
   exit $1
 }
 
+function ensure_running_as_root(){
+  if [ ${UID} != 0 ] ; then exec sudo $0 $*; fi
+}
+
 # Program entry point
 function main() {
+
+  ensure_running_as_root
 
   if [ $(whoami) != "root" ]; then
     echo "This script needs to be run as root via su or sudo."
