@@ -94,8 +94,6 @@ describe Puppet::Transaction do
     @transaction.report.should == report
   end
 
-  it "should consider a resource to have failed dependencies if any of its dependencies are failed"
-
   describe "when initializing" do
     it "should create an event manager" do
       @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)

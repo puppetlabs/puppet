@@ -6,40 +6,50 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
 
   summary "Manage certificate requests."
   description <<-'EOT'
-    Retrieves and submits certificate signing requests (CSRs). Invoke
-    `search` with a dummy key to retrieve all outstanding CSRs, invoke
-    `find` with a node certificate name to retrieve a specific request, and
-    invoke `save` to submit a CSR.
+    This subcommand retrieves and submits certificate signing requests (CSRs).
   EOT
 
   # Per-action doc overrides
-  get_action(:destroy).summary "Invalid for this face."
+  get_action(:destroy).summary "Invalid for this subcommand."
 
-  get_action(:find).summary "Retrieve a single CSR."
-  get_action(:find).arguments "<host>"
-  get_action(:find).returns <<-'EOT'
-    A single certificate request. In most cases, you will want to render
-    this as a string ('--render-as s').
+  find = get_action(:find)
+  find.summary "Retrieve a single CSR."
+  find.arguments "<host>"
+  find.returns <<-'EOT'
+    A single certificate request. When used from the Ruby API, returns a
+    Puppet::SSL::CertificateRequest object.
+
+    RENDERING ISSUES: In most cases, you will want to render this as a string
+    ('--render-as s').
   EOT
-  get_action(:find).examples <<-'EOT'
+  find.examples <<-'EOT'
     Retrieve a single CSR from the puppet master's CA:
 
     $ puppet certificate_request find somenode.puppetlabs.lan --terminus rest
   EOT
 
-  get_action(:search).summary "Retrieve all outstanding CSRs."
-  get_action(:search).arguments "<dummy_key>"
-  get_action(:search).returns <<-'EOT'
-    An array of certificate request objects. In most cases, you will
-    want to render this as a string ('--render-as s').
+  search = get_action(:search)
+  search.summary "Retrieve all outstanding CSRs."
+  search.arguments "<dummy_text>"
+  search.returns <<-'EOT'
+    A list of certificate requests; be sure to to render this as a string
+    ('--render-as s'). When used from the Ruby API, returns an array of
+    Puppet::SSL::CertificateRequest objects.
   EOT
-  get_action(:search).notes "This action always returns all CSRs, but requires a dummy search key."
-  get_action(:search).examples <<-'EOT'
-    Retrieve all CSRs from the local CA:
+  search.short_description <<-EOT
+    Retrieves all outstanding certificate signing requests. Due to a known bug,
+    this action requires a dummy search key, the content of which is irrelevant.
+  EOT
+  search.notes <<-EOT
+    Although this action always returns all CSRs, it requires a dummy search
+    key; this is a known bug.
+  EOT
+  search.examples <<-'EOT'
+    Retrieve all CSRs from the local CA (similar to 'puppet cert list'):
 
     $ puppet certificate_request search x --terminus ca
   EOT
 
-  get_action(:save).summary "Submit a certificate signing request."
+  get_action(:save).summary "API only: submit a certificate signing request."
   get_action(:save).arguments "<x509_CSR>"
 end

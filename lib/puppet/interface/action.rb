@@ -48,28 +48,7 @@ class Puppet::Interface::Action
   attr_doc :returns
   attr_doc :arguments
   def synopsis
-    output = PrettyPrint.format do |s|
-      s.text("puppet #{@face.name}")
-      s.text(" #{name}") unless default?
-      s.breakable
-
-      options.each do |option|
-        option = get_option(option)
-        wrap = option.required? ? %w{ < > } : %w{ [ ] }
-
-        s.group(0, *wrap) do
-          option.optparse.each do |item|
-            unless s.current_group.first?
-              s.breakable
-              s.text '|'
-              s.breakable
-            end
-            s.text item
-          end
-        end
-      end
-      s.text(" #{arguments}") if arguments
-    end
+    build_synopsis(@face.name, default? ? nil : name, arguments)
   end
 
   ########################################################################

@@ -6,25 +6,40 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
   summary "Compile, save, view, and convert catalogs."
   description <<-'EOT'
-    This face primarily interacts with the compiling subsystem. By default,
-    it compiles a catalog using the default manifest and the hostname from
-    `certname`, but you can choose to retrieve a catalog from the server by
-    specifying '--terminus rest'.  You can also choose to print any catalog
-    in 'dot' format (for easy graph viewing with OmniGraffle or Graphviz)
-    with '--render-as dot'.
+    This subcommand deals with catalogs, which are compiled per-node artifacts
+    generated from a set of Puppet manifests. By default, it interacts with the
+    compiling subsystem and compiles a catalog using the default manifest and
+    `certname`, but you can change the source of the catalog with the
+    `--terminus` option. You can also choose to print any catalog in 'dot'
+    format (for easy graph viewing with OmniGraffle or Graphviz) with
+    '--render-as dot'.
+  EOT
+  short_description <<-'EOT'
+    This subcommand deals with catalogs, which are compiled per-node artifacts
+    generated from a set of Puppet manifests. By default, it interacts with the
+    compiling subsystem and compiles a catalog using the default manifest and
+    `certname`; use the `--terminus` option to change the source of the catalog.
   EOT
 
-  get_action(:destroy).summary "Invalid for this face."
-  get_action(:search).summary "Query format unknown; potentially invalid for this face."
+  get_action(:destroy).summary "Invalid for this subcommand."
+  get_action(:search).summary "Invalid for this subcommand."
+  find = get_action(:find)
+  find.summary "Retrieve the catalog for a node."
+  find.arguments "<certname>"
+  find.returns <<-'EOT'
+    A serialized catalog. When used from the Ruby API, returns a
+    Puppet::Resource::Catalog object.
+  EOT
 
   action(:apply) do
-    summary "Apply a Puppet::Resource::Catalog object."
+    summary "Find and apply a catalog."
     description <<-'EOT'
       Finds and applies a catalog. This action takes no arguments, but
-      the source of the catalog can be managed with the --terminus option.
+      the source of the catalog can be managed with the `--terminus` option.
     EOT
     returns <<-'EOT'
-      A Puppet::Transaction::Report object.
+      Nothing. When used from the Ruby API, returns a
+      Puppet::Transaction::Report object.
     EOT
     examples <<-'EOT'
       Apply the locally cached catalog:
@@ -71,18 +86,17 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
   action(:download) do
     summary "Download this node's catalog from the puppet master server."
     description <<-'EOT'
-      Retrieves a catalog from the puppet master and saves it to the
-      local yaml cache. The saved catalog can be used in subsequent
-      catalog actions by specifying '--terminus rest'.
-
-      This action always contacts the puppet master and will ignore
+      Retrieves a catalog from the puppet master and saves it to the local yaml
+      cache. This action always contacts the puppet master and will ignore
       alternate termini.
+
+      The saved catalog can be used in any subsequent catalog action by specifying
+      '--terminus yaml' for that action.
     EOT
     returns "Nothing."
     notes <<-'EOT'
-      As termini are singletons, this action has a side effect of
-      exporting Puppet::Resource::Catalog.indirection.terminus_class =
-      yaml to the calling context when used with the Ruby Faces API. The
+      When used from the Ruby API, this action has a side effect of leaving
+      Puppet::Resource::Catalog.indirection.terminus_class set to yaml. The
       terminus must be explicitly re-set for subsequent catalog actions.
     EOT
     examples <<-'EOT'
