@@ -1,0 +1,86 @@
+.\" generated with Ronn/v0.7.3
+.\" http://github.com/rtomayko/ronn/tree/0.7.3
+.
+.TH "PUPPET\-DEVICE" "8" "June 2011" "Puppet Labs, LLC" "Puppet manual"
+.
+.SH "NAME"
+\fBpuppet\-device\fR \- Manage remote network devices
+.
+.SH "SYNOPSIS"
+Retrieves all configurations from the puppet master and apply them to the remote devices configured in /etc/puppet/device\.conf\.
+.
+.P
+Currently must be run out periodically, using cron or something similar\.
+.
+.SH "USAGE"
+puppet device [\-d|\-\-debug] [\-\-detailed\-exitcodes] [\-V|\-\-version]
+.
+.IP "" 4
+.
+.nf
+
+            [\-h|\-\-help] [\-l|\-\-logdest syslog|<file>|console]
+            [\-v|\-\-verbose] [\-w|\-\-waitforcert <seconds>]
+.
+.fi
+.
+.IP "" 0
+.
+.SH "DESCRIPTION"
+Once the client has a signed certificate for a given remote device, it will retrieve its configuration and apply it\.
+.
+.SH "USAGE NOTES"
+One need a /etc/puppet/device\.conf file with the following content:
+.
+.P
+[remote\.device\.fqdn] type \fItype\fR url \fIurl\fR
+.
+.P
+where: * type: the current device type (the only value at this time is cisco) * url: an url allowing to connect to the device
+.
+.P
+Supported url must conforms to: scheme://user:password@hostname/?query
+.
+.P
+with: * scheme: either ssh or telnet * user: username, can be omitted depending on the switch/router configuration * password: the connection password * query: this is device specific\. Cisco devices supports an enable parameter whose value would be the enable password\.
+.
+.SH "OPTIONS"
+Note that any configuration parameter that\'s valid in the configuration file is also a valid long argument\. For example, \'server\' is a valid configuration parameter, so you can specify \'\-\-server \fIservername\fR\' as an argument\.
+.
+.TP
+\-\-debug
+Enable full debugging\.
+.
+.TP
+\-\-detailed\-exitcodes
+Provide transaction information via exit codes\. If this is enabled, an exit code of \'2\' means there were changes, and an exit code of \'4\' means that there were failures during the transaction\. This option only makes sense in conjunction with \-\-onetime\.
+.
+.TP
+\-\-help
+Print this help message
+.
+.TP
+\-\-logdest
+Where to send messages\. Choose between syslog, the console, and a log file\. Defaults to sending messages to syslog, or the console if debugging or verbosity is enabled\.
+.
+.TP
+\-\-verbose
+Turn on verbose reporting\.
+.
+.TP
+\-\-waitforcert
+This option only matters for daemons that do not yet have certificates and it is enabled by default, with a value of 120 (seconds)\. This causes +puppet agent+ to connect to the server every 2 minutes and ask it to sign a certificate request\. This is useful for the initial setup of a puppet client\. You can turn off waiting for certificates by specifying a time of 0\.
+.
+.SH "EXAMPLE"
+.
+.nf
+
+  $ puppet device \-\-server puppet\.domain\.com
+.
+.fi
+.
+.SH "AUTHOR"
+Brice Figureau
+.
+.SH "COPYRIGHT"
+Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2\.0 License
