@@ -47,6 +47,10 @@ describe Puppet::Parser::Scope do
     scope = Puppet::Parser::Scope.new :compiler => compiler
     scope.environment.should equal(env)
   end
+  
+  it "should use the default environment if none is available" do
+    Puppet::Parser::Scope.new.environment.should equal(Puppet::Node::Environment.new)
+  end
 
   it "should use the resource type collection helper to find its known resource types" do
     Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
@@ -55,22 +59,18 @@ describe Puppet::Parser::Scope do
   describe "when initializing" do
     it "should extend itself with its environment's Functions module as well as the default" do
       env = Puppet::Node::Environment.new("myenv")
+      root = Puppet::Node::Environment.root
       compiler = stub 'compiler', :environment => env
-      mod      = Module.new
-      root_mod = Module.new
-      Puppet::Parser::Functions.expects(:environment_module).with(Puppet::Node::Environment.root).returns root_mod
-      Puppet::Parser::Functions.expects(:environment_module).with(env).returns mod
 
-      Puppet::Parser::Scope.new(:compiler => compiler).singleton_class.ancestors.should be_include(mod)
+      scope = Puppet::Parser::Scope.new(:compiler => compiler)
+      scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(env))
+      scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
 
-    it "should extend itself with the default Functions module if it has no environment" do
-      mod = Module.new
-      Puppet::Parser::Functions.expects(:environment_module).with(Puppet::Node::Environment.root).returns(mod)
-
-      Puppet::Parser::Functions.expects(:environment_module).with(nil).returns mod
-
-      Puppet::Parser::Scope.new.singleton_class.ancestors.should be_include(mod)
+    it "should extend itself with the default Functions module if its environment is the default" do
+      root = Puppet::Node::Environment.root
+      scope = Puppet::Parser::Scope.new
+      scope.singleton_class.ancestors.should be_include(Puppet::Parser::Functions.environment_module(root))
     end
 
     it "should remember if it is dynamic" do

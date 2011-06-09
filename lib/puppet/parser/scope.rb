@@ -82,10 +82,6 @@ class Puppet::Parser::Scope
     compiler.catalog
   end
 
-  def environment
-    compiler.environment
-  end
-
   # Proxy accessors
   def host
     @compiler.node.name
@@ -130,7 +126,7 @@ class Puppet::Parser::Scope
 
   # Remove this when rebasing
   def environment
-    compiler ? compiler.environment : nil
+    compiler ? compiler.environment : Puppet::Node::Environment.new
   end
 
   def find_hostclass(name)
@@ -454,6 +450,6 @@ class Puppet::Parser::Scope
 
   def extend_with_functions_module
     extend Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.root)
-    extend Puppet::Parser::Functions.environment_module(environment)
+    extend Puppet::Parser::Functions.environment_module(environment) if environment != Puppet::Node::Environment.root
   end
 end
