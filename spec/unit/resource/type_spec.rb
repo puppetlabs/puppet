@@ -238,9 +238,10 @@ describe Puppet::Resource::Type do
 
   describe "when setting its parameters in the scope" do
     before do
-      @scope = Puppet::Parser::Scope.new(:compiler => stub("compiler", :environment => Puppet::Node::Environment.new), :source => stub("source"))
+      @scope = Puppet::Parser::Scope.new
       @resource = Puppet::Parser::Resource.new(:foo, "bar", :scope => @scope)
-      @type = Puppet::Resource::Type.new(:hostclass, "foo")
+      @type = Puppet::Resource::Type.new(:definition, "foo")
+      @resource.environment.known_resource_types.add @type
     end
 
     ['module_name', 'name', 'title'].each do |variable|
@@ -256,7 +257,7 @@ describe Puppet::Resource::Type do
     # this test is to clarify a crazy edge case
     # if you specify these special names as params, the resource
     # will override the special variables
-    it "resource should override defaults" do
+    it "should allow the resource to override defaults" do
       @type.set_arguments :name => nil
       @resource[:name] = 'foobar'
       var = Puppet::Parser::AST::Variable.new({'value' => 'name'})
@@ -293,13 +294,13 @@ describe Puppet::Resource::Type do
     end
 
     it "should evaluate and set its default values as variables for parameters not provided by the resource" do
-      @type.set_arguments :foo => stub("value", :safeevaluate => "something")
+      @type.set_arguments :foo => Puppet::Parser::AST::String.new(:value => "something")
       @type.set_resource_parameters(@resource, @scope)
       @scope['foo'].should == "something"
     end
 
     it "should set all default values as parameters in the resource" do
-      @type.set_arguments :foo => stub("value", :safeevaluate => "something")
+      @type.set_arguments :foo => Puppet::Parser::AST::String.new(:value => "something")
 
       @type.set_resource_parameters(@resource, @scope)
 
@@ -308,7 +309,6 @@ describe Puppet::Resource::Type do
 
     it "should fail if the resource does not provide a value for a required argument" do
       @type.set_arguments :foo => nil
-      @resource.expects(:to_hash).returns({})
 
       lambda { @type.set_resource_parameters(@resource, @scope) }.should raise_error(Puppet::ParseError)
     end
@@ -344,15 +344,14 @@ describe Puppet::Resource::Type do
 
   describe "when describing and managing parent classes" do
     before do
-      @code = Puppet::Resource::TypeCollection.new("env")
+      @krt = Puppet::Node::Environment.new.known_resource_types
       @parent = Puppet::Resource::Type.new(:hostclass, "bar")
-      @code.add @parent
+      @krt.add @parent
 
       @child = Puppet::Resource::Type.new(:hostclass, "foo", :parent => "bar")
-      @code.add @child
+      @krt.add @child
 
-      @env   = stub "environment", :known_resource_types => @code
-      @scope = stub "scope", :environment => @env, :namespaces => [""]
+      @scope = Puppet::Parser::Scope.new
     end
 
     it "should be able to define a parent" do
@@ -365,16 +364,16 @@ describe Puppet::Resource::Type do
 
     it "should be able to find parent nodes" do
       parent = Puppet::Resource::Type.new(:node, "bar")
-      @code.add parent
+      @krt.add parent
       child = Puppet::Resource::Type.new(:node, "foo", :parent => "bar")
-      @code.add child
+      @krt.add child
 
       child.parent_type(@scope).should equal(parent)
     end
 
     it "should cache a reference to the parent type" do
-      @code.stubs(:hostclass).with("foo::bar").returns nil
-      @code.expects(:hostclass).with("bar").once.returns @parent
+      @krt.stubs(:hostclass).with("foo::bar").returns nil
+      @krt.expects(:hostclass).with("bar").once.returns @parent
       @child.parent_type(@scope)
       @child.parent_type
     end
@@ -386,7 +385,7 @@ describe Puppet::Resource::Type do
 
     it "should be considered the child of a parent's parent" do
       @grandchild = Puppet::Resource::Type.new(:hostclass, "baz", :parent => "foo")
-      @code.add @grandchild
+      @krt.add @grandchild
 
       @child.parent_type(@scope)
       @grandchild.parent_type(@scope)
@@ -396,7 +395,7 @@ describe Puppet::Resource::Type do
 
     it "should correctly state when it is not another type's child" do
       @notchild = Puppet::Resource::Type.new(:hostclass, "baz")
-      @code.add @notchild
+      @krt.add @notchild
 
       @notchild.should_not be_child_of(@parent)
     end
@@ -406,14 +405,13 @@ describe Puppet::Resource::Type do
     before do
       @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
       @scope = Puppet::Parser::Scope.new :compiler => @compiler
-      @resource = Puppet::Parser::Resource.new(:foo, "yay", :scope => @scope)
+      @resource = Puppet::Parser::Resource.new(:class, "foo", :scope => @scope)
 
       # This is so the internal resource lookup works, yo.
       @compiler.catalog.add_resource @resource
 
-      @known_resource_types = stub 'known_resource_types'
-      @resource.stubs(:known_resource_types).returns @known_resource_types
       @type = Puppet::Resource::Type.new(:hostclass, "foo")
+      @resource.environment.known_resource_types.add @type
     end
 
     it "should add hostclass names to the classes list" do

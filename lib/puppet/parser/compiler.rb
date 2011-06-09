@@ -139,19 +139,21 @@ class Puppet::Parser::Compiler
   # evaluated later in the process.
   def evaluate_classes(classes, scope, lazy_evaluate = true)
     raise Puppet::DevError, "No source for scope passed to evaluate_classes" unless scope.source
-    param_classes = nil
+    class_parameters = nil
     # if we are a param class, save the classes hash
     # and transform classes to be the keys
     if classes.class == Hash
-      param_classes = classes
+      class_parameters = classes
       classes = classes.keys
     end
     classes.each do |name|
       # If we can find the class, then make a resource that will evaluate it.
       if klass = scope.find_hostclass(name)
 
-        if param_classes
-          resource = klass.ensure_in_catalog(scope, param_classes[name] || {})
+        # If parameters are passed, then attempt to create a duplicate resource
+        # so the appropriate error is thrown.
+        if class_parameters
+          resource = klass.ensure_in_catalog(scope, class_parameters[name] || {})
         else
           next if scope.class_scope(klass)
           resource = klass.ensure_in_catalog(scope)
