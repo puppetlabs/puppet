@@ -168,13 +168,18 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     # Collect our facts.
-    unless facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
-      raise "Could not find facts for #{Puppet[:certname]}"
+    unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
+      raise "Could not find facts for #{Puppet[:node_name_value]}"
+    end
+
+    unless Puppet[:node_name_fact].empty?
+      Puppet[:node_name_value] = facts.values[Puppet[:node_name_fact]]
+      facts.name = Puppet[:node_name_value]
     end
 
     # Find our Node
-    unless node = Puppet::Node.indirection.find(Puppet[:certname])
-      raise "Could not find node #{Puppet[:certname]}"
+    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+      raise "Could not find node #{Puppet[:node_name_value]}"
     end
 
     # Merge in the facts.

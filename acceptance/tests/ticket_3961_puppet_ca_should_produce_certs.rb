@@ -3,7 +3,7 @@ test_name "#3961: puppet ca should produce certs spec"
 scratch = "/tmp/puppet-ssl-3961"
 target  = "working3961.example.org"
 
-options = { :confdir => scratch, :vardir => scratch, :ssldir => scratch }
+options = { :confdir => scratch, :vardir => scratch }
 
 expect = ['notice: Signed certificate request for ca',
           'notice: Rebuilding inventory file',
@@ -23,7 +23,7 @@ on(agents,puppet_cert('--trace', '--generate', target, options)) do
 end
 
 step "verify the certificate for #{target} exists"
-on agents, "test -f #{scratch}/certs/#{target}.pem"
+on agents, "test -f #{scratch}/ssl/certs/#{target}.pem"
 
 step "verify the private key for #{target} exists"
-on agents, "grep -q 'BEGIN RSA PRIVATE KEY' #{scratch}/private_keys/#{target}.pem"
+on agents, "grep -q 'BEGIN RSA PRIVATE KEY' #{scratch}/ssl/private_keys/#{target}.pem"

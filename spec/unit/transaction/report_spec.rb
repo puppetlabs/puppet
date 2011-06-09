@@ -9,9 +9,9 @@ describe Puppet::Transaction::Report do
     Puppet::Util::Storage.stubs(:store)
   end
 
-  it "should set its host name to the certname" do
-    Puppet.settings.expects(:value).with(:certname).returns "myhost"
-    Puppet::Transaction::Report.new("apply").host.should == "myhost"
+  it "should set its host name to the node_name_value" do
+    Puppet[:node_name_value] = 'mynode'
+    Puppet::Transaction::Report.new("apply").host.should == "mynode"
   end
 
   it "should return its host name as its name" do

@@ -101,6 +101,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
 
     resource[:ensure] = type
     resource[:loglevel] = :debug
+    resource[:links] = :follow
     resource[:backup] = false
 
     resource.tag(self.section, self.name, "settings")

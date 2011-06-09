@@ -493,6 +493,25 @@ module Puppet
   )
 
   setdefaults(:agent,
+    :node_name_value => { :default => "$certname",
+      :desc => "The explicit value used for the node name for all requests the agent
+        makes to the master. WARNING: This setting is mutually exclusive with
+        node_name_fact.  Changing this setting also requires changes to the default
+        auth.conf configuration on the Puppet Master.  Please see
+        http://links.puppetlabs.com/node_name_value for more information."
+    },
+    :node_name_fact => { :default => "",
+      :desc => "The fact name used to determine the node name used for all requests the agent
+        makes to the master. WARNING: This setting is mutually exclusive with
+        node_name_value.  Changing this setting also requires changes to the default
+        auth.conf configuration on the Puppet Master.  Please see
+        http://links.puppetlabs.com/node_name_fact for more information.",
+      :hook => proc do |value|
+        if !value.empty? and Puppet[:node_name_value] != Puppet[:certname]
+          raise "Cannot specify both the node_name_value and node_name_fact settings"
+        end
+      end
+    },
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",
       :mode => 0660,
