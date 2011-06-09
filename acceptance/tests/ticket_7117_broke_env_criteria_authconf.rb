@@ -8,48 +8,18 @@ auth any
 allow *
 }
 
-step "Save original auth.conf file and create a temp auth.conf"
-on master, "cp #{config['puppetpath']}/auth.conf /tmp/auth.conf-7117; echo '#{add_2_authconf}' > #{config['puppetpath']}/auth.conf"
+step "Create a temp auth.conf"
+create_remote_file master, "/tmp/auth.conf-7117", add_2_authconf
 
-# Kill running Puppet Master -- should not be running at this point
-step "Master: kill running Puppet Master"
-on master, "ps -U puppet | awk '/puppet/ { print \$1 }' | xargs kill || echo \"Puppet Master not running\""
-step "Master: Start Puppet Master"
-on master, puppet_master("--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop")
-# allow Master to start and initialize environment
+with_master_running_on(master, "--certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --rest_authconfig /tmp/auth.conf-7117 --verbose --noop") do
+  # Run test on Agents
+  step "Run agent to upload facts"
+  on agents, puppet_agent("--test --server #{master}")
 
-step "Verify Puppet Master is ready to accept connections"
-host=agents.first
-time1 = Time.new
-until
-  on(host, "curl -k https://#{master}:8140") do
-    sleep 1
-  end
-time2 = Time.new
-elapsed = time2 - time1
-Log.notify "Slept for #{elapsed} seconds waiting for Puppet Master to become ready"
-
-step "Verify Puppet Master is ready to accept connections"
-host=agents.first
-time1 = Time.new
-until
-  on(host, "curl -k https://#{master}:8140") do
-    sleep 1
-  end
-time2 = Time.new
-elapsed = time2 - time1
-Log.notify "Slept for #{elapsed} seconds waiting for Puppet Master to become ready"
-
-# Run test on Agents
-step "Agent: agent --test"
-on agents, puppet_agent("--test --server #{master}")
-
-step "Fetch agent facts from Puppet Master"
-agents.each do |host|
-  on(host, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/\`hostname -f\`") do
-    assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{host}") 
+  step "Fetch agent facts from Puppet Master"
+  agents.each do |host|
+    on(host, "curl -k -H \"Accept: yaml\" https://#{master}:8140/override/facts/\`hostname -f\`") do
+      assert_match(/--- !ruby\/object:Puppet::Node::Facts/, stdout, "Agent Facts not returned for #{host}")
+    end
   end
 end
-
-step "Restore original auth.conf file"
-on master, "cp -f /tmp/auth.conf-7117 #{config['puppetpath']}/auth.conf"
