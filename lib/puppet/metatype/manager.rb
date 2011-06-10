@@ -90,6 +90,7 @@ module Manager
 
     # We have to load everything so that we can figure out the default provider.
     klass.providerloader.loadall
+    klass.providify unless klass.providers.empty?
 
     klass
   end
