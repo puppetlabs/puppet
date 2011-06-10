@@ -1416,9 +1416,8 @@ class Type
   def self.provide(name, options = {}, &block)
     name = Puppet::Util.symbolize(name)
 
-    if obj = provider_hash[name]
+    if unprovide(name)
       Puppet.debug "Reloading #{name} #{self.name} provider"
-      unprovide(name)
     end
 
     parent = if pname = options[:parent]
@@ -1440,7 +1439,6 @@ class Type
     options[:resource_type] ||= self
 
     self.providify
-
 
     provider = genclass(
       name,
@@ -1509,18 +1507,11 @@ class Type
   end
 
   def self.unprovide(name)
-    if provider_hash.has_key? name
-
-      rmclass(
-        name,
-        :hash => provider_hash,
-
-        :prefix => "Provider"
-      )
-      if @defaultprovider and @defaultprovider.name == name
-        @defaultprovider = nil
-      end
+    if @defaultprovider and @defaultprovider.name == name
+      @defaultprovider = nil
     end
+
+    rmclass(name, :hash => provider_hash, :prefix => "Provider")
   end
 
   # Return an array of all of the suitable providers.
