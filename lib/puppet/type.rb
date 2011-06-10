@@ -1416,9 +1416,8 @@ class Type
   def self.provide(name, options = {}, &block)
     name = Puppet::Util.symbolize(name)
 
-    if obj = provider_hash[name]
+    if unprovide(name)
       Puppet.debug "Reloading #{name} #{self.name} provider"
-      unprovide(name)
     end
 
     parent = if pname = options[:parent]
@@ -1441,16 +1440,14 @@ class Type
 
     self.providify
 
-
-      provider = genclass(
-        name,
-      :parent => parent,
-      :hash => provider_hash,
-      :prefix => "Provider",
-      :block => block,
-      :include => feature_module,
-      :extend => feature_module,
-
+    provider = genclass(
+      name,
+      :parent     => parent,
+      :hash       => provider_hash,
+      :prefix     => "Provider",
+      :block      => block,
+      :include    => feature_module,
+      :extend     => feature_module,
       :attributes => options
     )
 
@@ -1510,18 +1507,11 @@ class Type
   end
 
   def self.unprovide(name)
-    if provider_hash.has_key? name
-
-      rmclass(
-        name,
-        :hash => provider_hash,
-
-        :prefix => "Provider"
-      )
-      if @defaultprovider and @defaultprovider.name == name
-        @defaultprovider = nil
-      end
+    if @defaultprovider and @defaultprovider.name == name
+      @defaultprovider = nil
     end
+
+    rmclass(name, :hash => provider_hash, :prefix => "Provider")
   end
 
   # Return an array of all of the suitable providers.
@@ -1581,7 +1571,6 @@ class Type
 
       # Collect the current prereqs
       list.each { |dep|
-        obj = nil
         # Support them passing objects directly, to save some effort.
         unless dep.is_a? Puppet::Type
           # Skip autorequires that we aren't managing
