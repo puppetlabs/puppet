@@ -15,7 +15,7 @@ class Puppet::Transaction
   attr_accessor :sorted_resources, :configurator
 
   # The report, once generated.
-  attr_accessor :report
+  attr_reader :report
 
   # Routes and stores any events and subscriptions.
   attr_reader :event_manager
@@ -228,13 +228,10 @@ class Puppet::Transaction
 
   # this should only be called by a Puppet::Type::Component resource now
   # and it should only receive an array
-  def initialize(catalog)
+  def initialize(catalog, report = nil)
     @catalog = catalog
-
-    @report = Report.new("apply", catalog.version)
-
+    @report = report || Report.new("apply", catalog.version)
     @event_manager = Puppet::Transaction::EventManager.new(self)
-
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
   end
 
