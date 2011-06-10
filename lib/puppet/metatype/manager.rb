@@ -61,10 +61,9 @@ module Manager
 
     # Then create the class.
 
-          klass = genclass(
-        name,
+    klass = genclass(
+      name,
       :parent => (parent || Puppet::Type),
-        
       :overwrite => true,
       :hash => @types,
       :attributes => options,
@@ -87,13 +86,9 @@ module Manager
 
     # Now set up autoload any providers that might exist for this type.
 
-          klass.providerloader = Puppet::Util::Autoload.new(
-        klass,
-        
-      "puppet/provider/#{klass.name.to_s}"
-    )
+    klass.providerloader = Puppet::Util::Autoload.new(klass, "puppet/provider/#{klass.name.to_s}")
 
-    # We have to load everything so that we can figure out the default type.
+    # We have to load everything so that we can figure out the default provider.
     klass.providerloader.loadall
 
     klass
@@ -103,11 +98,7 @@ module Manager
   def rmtype(name)
     # Then create the class.
 
-          klass = rmclass(
-        name,
-        
-      :hash => @types
-    )
+    klass = rmclass(name, :hash => @types)
 
     singleton_class.send(:remove_method, "new#{name}") if respond_to?("new#{name}")
   end
@@ -132,12 +123,7 @@ module Manager
   # Create a loader for Puppet types.
   def typeloader
     unless defined?(@typeloader)
-
-            @typeloader = Puppet::Util::Autoload.new(
-        self,
-        
-        "puppet/type", :wrap => false
-      )
+      @typeloader = Puppet::Util::Autoload.new(self, "puppet/type", :wrap => false)
     end
 
     @typeloader

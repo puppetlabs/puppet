@@ -1442,15 +1442,14 @@ class Type
     self.providify
 
 
-      provider = genclass(
-        name,
-      :parent => parent,
-      :hash => provider_hash,
-      :prefix => "Provider",
-      :block => block,
-      :include => feature_module,
-      :extend => feature_module,
-
+    provider = genclass(
+      name,
+      :parent     => parent,
+      :hash       => provider_hash,
+      :prefix     => "Provider",
+      :block      => block,
+      :include    => feature_module,
+      :extend     => feature_module,
       :attributes => options
     )
 
@@ -1581,7 +1580,6 @@ class Type
 
       # Collect the current prereqs
       list.each { |dep|
-        obj = nil
         # Support them passing objects directly, to save some effort.
         unless dep.is_a? Puppet::Type
           # Skip autorequires that we aren't managing
