@@ -123,31 +123,23 @@ class Puppet::Transaction
   # collects all of the changes, executes them, and responds to any
   # necessary events.
   def evaluate
-    # Start logging.
-    Puppet::Util::Log.newdestination(@report)
-
     prepare
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
-    begin
-      @sorted_resources.each do |resource|
-        next if stop_processing?
-        if resource.is_a?(Puppet::Type::Component)
-          Puppet.warning "Somehow left a component in the relationship graph"
-          next
-        end
-        ret = nil
-        seconds = thinmark do
-          ret = eval_resource(resource)
-        end
-
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
-        ret
+    @sorted_resources.each do |resource|
+      next if stop_processing?
+      if resource.is_a?(Puppet::Type::Component)
+        Puppet.warning "Somehow left a component in the relationship graph"
+        next
       end
-    ensure
-      # And then close the transaction log.
-      Puppet::Util::Log.close(@report)
+      ret = nil
+      seconds = thinmark do
+        ret = eval_resource(resource)
+      end
+
+      resource.info "valuated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+      ret
     end
 
     Puppet.debug "Finishing transaction #{object_id}"
