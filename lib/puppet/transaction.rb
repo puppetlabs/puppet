@@ -15,7 +15,7 @@ class Puppet::Transaction
   attr_accessor :sorted_resources, :configurator
 
   # The report, once generated.
-  attr_accessor :report
+  attr_reader :report
 
   # Routes and stores any events and subscriptions.
   attr_reader :event_manager
@@ -123,31 +123,23 @@ class Puppet::Transaction
   # collects all of the changes, executes them, and responds to any
   # necessary events.
   def evaluate
-    # Start logging.
-    Puppet::Util::Log.newdestination(@report)
-
     prepare
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
-    begin
-      @sorted_resources.each do |resource|
-        next if stop_processing?
-        if resource.is_a?(Puppet::Type::Component)
-          Puppet.warning "Somehow left a component in the relationship graph"
-          next
-        end
-        ret = nil
-        seconds = thinmark do
-          ret = eval_resource(resource)
-        end
-
-        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
-        ret
+    @sorted_resources.each do |resource|
+      next if stop_processing?
+      if resource.is_a?(Puppet::Type::Component)
+        Puppet.warning "Somehow left a component in the relationship graph"
+        next
       end
-    ensure
-      # And then close the transaction log.
-      Puppet::Util::Log.close(@report)
+      ret = nil
+      seconds = thinmark do
+        ret = eval_resource(resource)
+      end
+
+      resource.info "valuated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
+      ret
     end
 
     Puppet.debug "Finishing transaction #{object_id}"
@@ -228,13 +220,10 @@ class Puppet::Transaction
 
   # this should only be called by a Puppet::Type::Component resource now
   # and it should only receive an array
-  def initialize(catalog)
+  def initialize(catalog, report = nil)
     @catalog = catalog
-
-    @report = Report.new("apply", catalog.version)
-
+    @report = report || Report.new("apply", catalog.version)
     @event_manager = Puppet::Transaction::EventManager.new(self)
-
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
   end
 

@@ -88,11 +88,17 @@ describe Puppet::Transaction do
     @transaction.should_not be_any_failed
   end
 
-  it "should be possible to replace the report object" do
+  it "should use the provided report object" do
     report = Puppet::Transaction::Report.new("apply")
-    @transaction.report = report
+    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new, report)
 
     @transaction.report.should == report
+  end
+
+  it "should create a report if none is provided" do
+    @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
+
+    @transaction.report.should be_kind_of Puppet::Transaction::Report
   end
 
   it "should consider a resource to have failed dependencies if any of its dependencies are failed"

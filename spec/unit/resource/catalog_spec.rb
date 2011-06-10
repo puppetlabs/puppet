@@ -595,7 +595,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
     before :each do
       @catalog = Puppet::Resource::Catalog.new("host")
 
-      @transaction = mock 'transaction'
+      @transaction = Puppet::Transaction.new(@catalog)
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
       @transaction.stubs(:add_times)

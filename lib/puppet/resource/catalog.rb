@@ -132,16 +132,22 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     expire
 
     Puppet::Util::Storage.load if host_config?
-    transaction = Puppet::Transaction.new(self)
 
-    transaction.report = options[:report] if options[:report]
+    transaction = Puppet::Transaction.new(self, options[:report])
+    register_report = options[:report].nil?
+
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
 
     transaction.add_times :config_retrieval => self.retrieval_duration || 0
 
     begin
-      transaction.evaluate
+      Puppet::Util::Log.newdestination(transaction.report) if register_report
+      begin
+        transaction.evaluate
+      ensure
+        Puppet::Util::Log.close(transaction.report) if register_report
+      end
     rescue Puppet::Error => detail
       puts detail.backtrace if Puppet[:trace]
       Puppet.err "Could not apply complete catalog: #{detail}"
