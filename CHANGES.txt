@@ -1,2 +1,4 @@
+2011/06/11 - add hiera_array function
+2011/06/11 - add hiera_include function
 2011/06/11 - add array search support
 2011/06/06 - include Apache 2 license
