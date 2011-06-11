@@ -12,7 +12,7 @@ class Hiera
                     data_class = "data"
                 end
 
-                calling_class = scope.real.resource.name.to_s.downcase
+                calling_class = scope.resource.name.to_s.downcase
                 calling_module = calling_class.split("::").first
 
                 hierarchy = Config[:hierarchy] || [calling_class, calling_module]
@@ -34,30 +34,49 @@ class Hiera
             end
 
             def lookup(key, scope, order_override, resolution_type)
-                answer = nil
+                answer = Backend.empty_answer(resolution_type)
 
                 Hiera.debug("Looking up #{key} in Puppet backend")
 
                 include_class = Puppet::Parser::Functions.function(:include)
-                loaded_classes = scope.real.catalog.classes
+                loaded_classes = scope.catalog.classes
 
                 hierarchy(scope, order_override).each do |klass|
-                    unless answer
-                        Hiera.debug("Looking for data in #{klass}")
+                    Hiera.debug("Looking for data in #{klass}")
 
-                        varname = [klass, key].join("::")
-                        unless loaded_classes.include?(klass)
-                            begin
-                                scope.real.function_include(klass)
-                                answer = scope[varname]
-                                Hiera.debug("Found data in class #{klass}")
-                            rescue
-                            end
+                    varname = [klass, key].join("::")
+                    temp_answer = nil
+
+                    unless loaded_classes.include?(klass)
+                        begin
+                            scope.function_include(klass)
+                            temp_answer = scope[varname]
+                            Hiera.debug("Found data in class #{klass}")
+                        rescue
+                        end
+                    else
+                        temp_answer = scope[varname]
+                    end
+
+                    next if temp_answer == :undefined
+
+                    if temp_answer
+                        # for array resolution we just append to the array whatever
+                        # we find, we then goes onto the next file and keep adding to
+                        # the array
+                        #
+                        # for priority searches we break after the first found data item
+                        case resolution_type
+                        when :array
+                            answer << Backend.parse_answer(temp_answer, scope)
                         else
-                            answer = scope[varname]
+                            answer = Backend.parse_answer(temp_answer, scope)
+                            break
                         end
                     end
                 end
+
+                answer = nil if answer == :undefined
 
                 answer
             end

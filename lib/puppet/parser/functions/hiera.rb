@@ -29,7 +29,12 @@ module Puppet::Parser::Functions
         config[:logger] = "puppet"
 
         hiera = Hiera.new(:config => config)
-        hiera_scope = Hiera::Scope.new(self)
+
+        if self.respond_to?([])
+            hiera_scope = self
+        else
+            hiera_scope = Hiera::Scope.new(self)
+        end
 
         answer = hiera.lookup(key, default, hiera_scope, override, :priority)
 

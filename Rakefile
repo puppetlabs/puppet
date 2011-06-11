@@ -4,7 +4,7 @@ require 'rspec/core/rake_task'
 
 spec = Gem::Specification.new do |s|
   s.name = "hiera-puppet"
-  s.version = "0.1.0"
+  s.version = "0.2.0"
   s.author = "R.I.Pienaar"
   s.email = "rip@devco.net"
   s.homepage = "https://github.com/ripienaar/hiera-puppet"
@@ -15,7 +15,7 @@ spec = Gem::Specification.new do |s|
   s.require_path = "lib"
   s.test_files = FileList["spec/**/*test.rb"].to_a
   s.has_rdoc = true
-  s.add_dependency 'hiera'
+  s.add_dependency 'hiera', '~>0.2.0'
   s.executables = "extlookup2hiera"
 end
 

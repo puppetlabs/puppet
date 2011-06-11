@@ -17,5 +17,13 @@ class Hiera
         def include?(key)
             @real.lookupvar(key) != ""
         end
+
+        def catalog
+            @real.catalog
+        end
+
+        def resource
+            @real.resource
+        end
     end
 end
