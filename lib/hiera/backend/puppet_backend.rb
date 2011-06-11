@@ -49,7 +49,12 @@ class Hiera
 
                     unless loaded_classes.include?(klass)
                         begin
-                            scope.function_include(klass)
+                            if scope.respond_to?(:function_include)
+                                scope.function_include(klass)
+                            else
+                                scope.real.function_include(klass)
+                            end
+
                             temp_answer = scope[varname]
                             Hiera.debug("Found data in class #{klass}")
                         rescue

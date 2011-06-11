@@ -1,14 +1,5 @@
 module Puppet::Parser::Functions
-    newfunction(:hiera, :type => :rvalue) do |*args|
-        # Functions called from puppet manifests that look like this:
-        #   lookup("foo", "bar")
-        # internally in puppet are invoked:  func(["foo", "bar"])
-        #
-        # where as calling from templates should work like this:
-        #   scope.function_lookup("foo", "bar")
-        #
-        #  Therefore, declare this function with args '*args' to accept any number
-        #  of arguments and deal with puppet's special calling mechanism now:
+    newfunction(:hiera_include) do |args|
         if args[0].is_a?(Array)
             args = args[0]
         end
@@ -36,10 +27,11 @@ module Puppet::Parser::Functions
             hiera_scope = Hiera::Scope.new(self)
         end
 
-        answer = hiera.lookup(key, default, hiera_scope, override, :priority)
+        answer = hiera.lookup(key, default, hiera_scope, override, :array)
 
-        raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") unless answer
+        raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") if answer.empty?
 
-        return answer
+        method = Puppet::Parser::Functions.function(:include)
+        send(method, answer)
     end
 end

@@ -1,3 +1,4 @@
 ---
 ntpservers: - ntp1.dc1.example.com
             - ntp2.dc1.example.com
+classes: - users::dc1

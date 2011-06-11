@@ -25,5 +25,9 @@ class Hiera
         def resource
             @real.resource
         end
+
+        def compiler
+            @real.compiler
+        end
     end
 end

@@ -1,3 +1,3 @@
 node default {
-    include ntp::config
+    hiera_include("classes")
 }
