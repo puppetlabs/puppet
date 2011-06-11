@@ -1,5 +1,5 @@
 module Puppet::Parser::Functions
-    newfunction(:hiera_include) do |*args|
+    newfunction(:hiera_array, :type => :rvalue) do |*args|
         if args[0].is_a?(Array)
             args = args[0]
         end
@@ -31,7 +31,6 @@ module Puppet::Parser::Functions
 
         raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") if answer.empty?
 
-        method = Puppet::Parser::Functions.function(:include)
-        send(method, answer)
+        answer
     end
 end
