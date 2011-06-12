@@ -1,3 +1,4 @@
+2011/06/12 - Release 0.2.0
 2011/06/11 - add hiera_array function
 2011/06/11 - add hiera_include function
 2011/06/11 - add array search support
