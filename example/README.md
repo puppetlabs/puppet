@@ -17,9 +17,10 @@ hiera-puppet cloned from github and running these commands in _hiera-puppet/exam
 Module from forge with module defaults
 --------------------------------------
 
- * Move the _modules/data directory to _modules/data.bak_ to avoid overrides used further in the example
+ * Move the _modules/data_ directory to _modules/data.bak_ to avoid overrides
+   used further in the example
  * Run puppet, creates _/etc/ntp.conf_ with ntp.org addresses
- * The _hiera_include()_ function includes just _users::common_
+ * The _hiera\_include()_ function includes just _users::common_
 
 <pre>
 $ mv modules/data modules/data.bak
