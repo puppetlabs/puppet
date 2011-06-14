@@ -90,6 +90,38 @@ describe Puppet::SSL::Certificate do
       @certificate.should respond_to(:content)
     end
 
+    describe "#alternate_names" do
+      it "should list all alternate names when the extension is present" do
+        Puppet[:certdnsnames] = 'foo:bar:baz'
+        key = Puppet::SSL::Key.new('quux')
+        key.generate
+
+        csr = Puppet::SSL::CertificateRequest.new('quux')
+        csr.generate(key)
+
+        raw_csr = csr.content
+
+        cert = Puppet::SSL::CertificateFactory.build('server', csr, raw_csr, 14)
+        certificate = @class.from_s(cert.to_pem)
+        certificate.alternate_names.should =~ ['foo', 'bar', 'baz', 'quux']
+      end
+
+      it "should return an empty list of names if the extension is absent" do
+        Puppet[:certdnsnames] = ''
+        key = Puppet::SSL::Key.new('quux')
+        key.generate
+
+        csr = Puppet::SSL::CertificateRequest.new('quux')
+        csr.generate(key)
+
+        raw_csr = csr.content
+
+        cert = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
+        certificate = @class.from_s(cert.to_pem)
+        certificate.alternate_names.should == []
+      end
+    end
+
     it "should return a nil expiration if there is no actual certificate" do
       @certificate.stubs(:content).returns nil
 
