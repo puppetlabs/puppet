@@ -90,6 +90,43 @@ describe Puppet::Indirector::REST do
     @rest_class.port.should == 543
   end
 
+	describe "when making http requests" do
+		it "should provide a helpful error message when hostname was not match with server certificate" do
+			Puppet[:certdnsnames] = 'foo:bar:baz'
+			csr            = OpenSSL::X509::Request.new
+			csr.subject    = OpenSSL::X509::Name.new([['CN', 'not_my_server']])
+			csr.public_key = OpenSSL::PKey::RSA.generate(Puppet[:keylength]).public_key
+			cert = Puppet::SSL::CertificateFactory.new('server', csr, csr, 14).result
+
+			connection = Net::HTTP.new('my_server', 8140)
+			@searcher.stubs(:network).returns(connection)
+			ssl_context = OpenSSL::SSL::SSLContext.new
+			ssl_context.stubs(:current_cert).returns(cert)
+			connection.stubs(:get).with do
+				connection.verify_callback.call(true, ssl_context)
+			end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
+
+			msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
+			expect { @searcher.http_request(:get, stub('request')) }.to(
+				raise_error(Puppet::Error, msg) do |error|
+					error.message =~ msg
+					$1.split(', ').should =~ ['foo', 'bar', 'baz', 'not_my_server']
+				end
+			)
+		end
+
+		it "should pass along the error message otherwise" do
+			connection = Net::HTTP.new('my_server', 8140)
+			@searcher.stubs(:network).returns(connection)
+
+			connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('certificate verify failed'))
+
+			expect do
+				@searcher.http_request(:get, stub('request'))
+			end.to raise_error(/certificate verify failed/)
+		end
+	end
+
   describe "when deserializing responses" do
     it "should return nil if the response code is 404" do
       response = mock 'response'
@@ -219,7 +256,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a find" do
     before :each do
-      @connection = stub('mock http connection', :get => @response)
+      @connection = stub('mock http connection', :get => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       # Use a key with spaces, so we can test escaping
@@ -313,7 +350,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a head" do
     before :each do
-      @connection = stub('mock http connection', :head => @response)
+      @connection = stub('mock http connection', :head => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)
 
       # Use a key with spaces, so we can test escaping
@@ -349,7 +386,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a search" do
     before :each do
-      @connection = stub('mock http connection', :get => @response)
+      @connection = stub('mock http connection', :get => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @model.stubs(:convert_from_multiple)
@@ -397,7 +434,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a destroy" do
     before :each do
-      @connection = stub('mock http connection', :delete => @response)
+      @connection = stub('mock http connection', :delete => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @request = Puppet::Indirector::Request.new(:foo, :destroy, "foo bar")
@@ -453,7 +490,7 @@ describe Puppet::Indirector::REST do
 
   describe "when doing a save" do
     before :each do
-      @connection = stub('mock http connection', :put => @response)
+      @connection = stub('mock http connection', :put => @response, :verify_callback= => nil)
       @searcher.stubs(:network).returns(@connection)    # neuter the network connection
 
       @instance = stub 'instance', :render => "mydata", :mime => "mime"
