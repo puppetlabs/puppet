@@ -71,16 +71,49 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet::Network::HttpPool.http_instance(request.server || self.class.server, request.port || self.class.port)
   end
 
+  [:get, :post, :head, :delete, :put].each do |method|
+    define_method "http_#{method}" do |request, *args|
+      http_request(method, request, *args)
+    end
+  end
+
+  def http_request(method, request, *args)
+    http_connection = network(request)
+    peer_certs = []
+
+    # We add the callback to collect the certificates for use in constructing
+    # the error message if the verification failed.  This is necessary since we
+    # don't have direct access to the cert that we expected the connection to
+    # use otherwise.
+    #
+    http_connection.verify_callback = proc do |preverify_ok, ssl_context|
+      peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
+      preverify_ok
+    end
+
+    http_connection.send(method, *args)
+  rescue OpenSSL::SSL::SSLError => error
+    if error.message.include? "hostname was not match"
+      raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
+
+      valid_certnames = [cert.name, *cert.alternate_names].uniq
+      msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
+
+      raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"
+    else
+      raise
+    end
+  end
+
   def find(request)
     uri, body = request_to_uri_and_body(request)
     uri_with_query_string = "#{uri}?#{body}"
-    http_connection = network(request)
     # WEBrick in Ruby 1.9.1 only supports up to 1024 character lines in an HTTP request
     # http://redmine.ruby-lang.org/issues/show/3991
     response = if "GET #{uri_with_query_string} HTTP/1.1\r\n".length > 1024
-      http_connection.post(uri, body, headers)
+      http_post(request, uri, body, headers)
     else
-      http_connection.get(uri_with_query_string, headers)
+      http_get(request, uri_with_query_string, headers)
     end
     result = deserialize response
     result.name = request.key if result.respond_to?(:name=)
@@ -88,7 +121,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def head(request)
-    response = network(request).head(indirection2uri(request), headers)
+    response = http_head(request, indirection2uri(request), headers)
     case response.code
     when "404"
       return false
@@ -101,7 +134,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   end
 
   def search(request)
-    unless result = deserialize(network(request).get(indirection2uri(request), headers), true)
+    unless result = deserialize(http_get(request, indirection2uri(request), headers), true)
       return []
     end
     result
@@ -109,12 +142,12 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
 
   def destroy(request)
     raise ArgumentError, "DELETE does not accept options" unless request.options.empty?
-    deserialize network(request).delete(indirection2uri(request), headers)
+    deserialize http_delete(request, indirection2uri(request), headers)
   end
 
   def save(request)
     raise ArgumentError, "PUT does not accept options" unless request.options.empty?
-    deserialize network(request).put(indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
+    deserialize http_put(request, indirection2uri(request), request.instance.render, headers.merge({ "Content-Type" => request.instance.mime }))
   end
 
   private
