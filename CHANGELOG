@@ -1,3 +1,72 @@
+2.6.9rc1
+====
+c6909a6 Merge branch '2.6.x' into 2.6rc
+fc530ac Merge branch 'ticket/2.6.x/7506' into 2.6.x
+db1a392 (#7506) Organize READMEs; specify supported Ruby versions in README.md
+4fb7cfe Merge branch 'ticket/2.6.x/6418' into 2.6.x
+381fa40 (#6418) Make test 64118 more portable
+f8c1132 Merge branch 'ticket/2.6.x/7127-prerun-command-failures-dont-stop-puppet' into 2.6.x
+98ba407 (#7127) Stop puppet if a prerun command fails
+6996e0b Do not needlessly create multiple reports when creating a transaction
+01c1142 Merge branch 'ticket/2.6.x/4416' into 2.6.x
+caca469 (#4416) Ensure types are providified after reloading
+413b136 (#4416) Always remove old provider before recreating it
+d866ce1 Cleanup indentation, comment, and unused code
+b1a506c Merge branch 'ticket/2.6.x/2128_docstrings' into 2.6.x
+98f58ce (#2128) Add WARNING for node_name_{fact,value} descriptions
+1cd848c (#2128) Whitespace only reflow commit
+d9b5c1a (#2128) In-line docs for node_name_{fact,value}
+e62734c Merge branch 'ticket/2.6.x/650' into 2.6.x
+3f0dbb5 (#650) Allow symlinks for configuration directories
+c260cf1 Fix acceptance tests not managing their masters
+3d09ca8 Merge branch 'ticket/2.6.x/2128' into 2.6.x
+1c70f0c (#2128) Add support for setting node name based on a fact
+c629958 (#2128) Get facts before retrieving catalog
+cd4fe14 (#2128) Add the ability to specify a node name
+8ebec1e (#7193) Fix path issues with acceptance tests that call old shell tests
+9660f5e Merge branch 'ticket/2.6.x/6885-puppet-agent-fingerprint-requires---verbose-to-return-a-value' into 2.6.x
+16b2311 (#6885) puppet agent fingerprint requires --verbose to return a value.
+a00fd25 maint: Refactor specs in preparation for making node name more flexible
+805b287 Merge branch 'bug/2.6.x/5318-minimal-fix' into 2.6.x
+75e2764 (#5318) Always notice changes to manifests when compiling.
+6a00289 Merge branch 'ticket/2.6.x/7681' into 2.6.x
+4a5e99d (#7681) Add an acceptance test for resource refs with array variables
+d7ce922 Merge branch 'test/2.6.x/4123' into 2.6.x
+646919e (4123) Fix test for 4123/4 on old egrep in cent4
+cbc123c Merge branch '2.6.next' into 2.6.x
+25eab1a Merge branch 'ticket/2.6.next/3836' into 2.6.next
+8b76be3 (#3836) External nodes should only capture stdout
+1f438da Merge branch '2.6.next' into 2.6.x
+1f438da Merge branch '2.6.next' into 2.6.x
+8f907f2 adding test for ticket 7139
+97e8ef3 Merge branch 'ticket/2.6.next/7139' into 2.6.next
+90eb937 (#7139) Accept '/' as a valid path in filesets
+37c86dd Merge remote-tracking branch 'toddz/feature/2.6.next/vim-indenting' into 2.6.next
+2892068 Merge branch 'ticket/2.6.next/6844' into 2.6.next
+1b2a7d9 case seems needless here as there is only two opts, also the rest of the file seems to use if so this should make thin
+c4a2647 Merge branch 'ticket/2.6.x/6845' into 2.6.next
+729336e (#6845) Mount writes incorrect vfstab entries
+6ab2243 Merge branch 'ticket/2.6.next/6442-agent_doesnt_need_namespaceauth' into 2.6.next
+16cf1ac (#6442) Be able to start agents --listen without namespaceauth.conf
+361d6a3 Merge branch 'tickets/2.6.next/3420' into 2.6.next
+0352402 (#3420) Nagios "name" attribute does not output correctly
+ddc4e14 Merge branch 'tickets/2.6.next/4487' into 2.6.next
+f656818 (#4487) When setting environment on a host, ensure it is a string.
+2cce326 add test for ticket 7101
+1ee6f94 Merge branch 'tickets/2.6.x/6487-help-directoryservice-provider-work-on-future-OSX-versions' into 2.6.next
+c306db2 (#6487) Add some testing for OS X version support in DirectoryService provider
+0008b63 (#6487) Directoryservice provider will fail in future OS releases
+0b9c7ad Merge branch 'maint/2.6.next/defined_type_has_two_parents' into 2.6.next
+34f9f41 Maint: Fix a #4655 introduced log inconsistency
+6b18f8f Move acceptance tests from puppet-acceptance repo
+f6afa87 Merge branch 'ticket/2.6.next/7166' into 2.6.next
+9a5bf6e Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+72cd6fb Merge branch 'tickets/2.6.x/4655-parameterized-classes-default-stages' into 2.6.next
+656eff8 (#4655) Allow stage to be set using a default class parameter
+16d1f78 Merge remote branch 'james/tickets/2.6.x/6681' into 2.6.next
+7f658e6 vim: Initial ftplugin and indent support
+ccbe9f3 Fixed #6681 - Remove --force-yes option from aptitude is used
+
 2.6.8
 =====
 c1edcb2 add test for ticket 7101
