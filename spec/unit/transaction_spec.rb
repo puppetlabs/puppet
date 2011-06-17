@@ -519,7 +519,7 @@ describe Puppet::Transaction do
   describe "when generating resources before traversal" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:transaction) { Puppet::Transaction.new(catalog) }
-    let(:generator) { Puppet::Type.type(:notify).create :title => "generator" }
+    let(:generator) { Puppet::Type.type(:notify).new :title => "generator" }
     let(:generated) do
       %w[a b c].map { |name| Puppet::Type.type(:notify).new(:name => name) }
     end
@@ -667,14 +667,13 @@ describe Puppet::Transaction do
   describe "when prefetching" do
     let(:catalog) { Puppet::Resource::Catalog.new }
     let(:transaction) { Puppet::Transaction.new(catalog) }
-    let(:resource) { Puppet::Type.type(:sshkey).create :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
-    let(:resource2) { Puppet::Type.type(:package).create :title => "blah", :provider => "apt" }
+    let(:resource) { Puppet::Type.type(:sshkey).new :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
+    let(:resource2) { Puppet::Type.type(:package).new :title => "blah", :provider => "apt" }
 
     before :each do
       catalog.add_resource resource
       catalog.add_resource resource2
     end
-
 
     describe "#resources_by_provider" do
       it "should fetch resources by their type and provider" do
@@ -722,7 +721,7 @@ describe Puppet::Transaction do
     end
 
     it "should prefetch resources without a provider if prefetching the default provider" do
-      other = Puppet::Type.type(:sshkey).create :name => "other"
+      other = Puppet::Type.type(:sshkey).new :name => "other"
 
       other.instance_variable_set(:@provider, nil)
 

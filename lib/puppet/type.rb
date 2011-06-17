@@ -5,7 +5,6 @@ require 'puppet/property'
 require 'puppet/parameter'
 require 'puppet/util'
 require 'puppet/util/autoload'
-require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
@@ -20,6 +19,143 @@ class Type
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
   include Puppet::Util::Tagging
+
+  ###
+  # This was all in metatype/manager.rb, for no real reason.
+  include Puppet::Util::ClassGen
+
+  # remove all type instances; this is mostly only useful for testing
+  def self.allclear
+    @types.each { |name, type|
+      type.clear
+    }
+  end
+
+  # iterate across all of the subclasses of Type
+  def self.eachtype
+    @types.each do |name, type|
+      yield type
+    end
+  end
+
+  # Load all types.  Only currently used for documentation.
+  def self.loadall
+    typeloader.loadall
+  end
+
+  # Define a new type.
+  def self.newtype(name, options = {}, &block)
+    # Handle backward compatibility
+    unless options.is_a?(Hash)
+      Puppet.warning "Puppet::Type.newtype(#{name}) now expects a hash as the second argument, not #{options.inspect}"
+      options = {:parent => options}
+    end
+
+    # First make sure we don't have a method sitting around
+    name = name.intern
+    newmethod = "new#{name.to_s}"
+
+    # Used for method manipulation.
+    selfobj = singleton_class
+
+    @types ||= {}
+
+    if @types.include?(name)
+      if self.respond_to?(newmethod)
+        # Remove the old newmethod
+        selfobj.send(:remove_method,newmethod)
+      end
+    end
+
+    options = symbolize_options(options)
+
+    if parent = options[:parent]
+      options.delete(:parent)
+    end
+
+    # Then create the class.
+
+    klass = genclass(
+      name,
+      :parent => (parent || Puppet::Type),
+      :overwrite => true,
+      :hash => @types,
+      :attributes => options,
+      &block
+    )
+
+    # Now define a "new<type>" method for convenience.
+    if self.respond_to? newmethod
+      # Refuse to overwrite existing methods like 'newparam' or 'newtype'.
+      Puppet.warning "'new#{name.to_s}' method already exists; skipping"
+    else
+      selfobj.send(:define_method, newmethod) do |*args|
+        klass.new(*args)
+      end
+    end
+
+    # If they've got all the necessary methods defined and they haven't
+    # already added the property, then do so now.
+    klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
+
+    # Now set up autoload any providers that might exist for this type.
+
+    klass.providerloader = Puppet::Util::Autoload.new(
+      klass,
+      "puppet/provider/#{klass.name.to_s}"
+    )
+
+    # This can only happen when the type is reloaded in memory and the providers
+    # are still there
+    unless klass.provider_hash.empty?
+      klass.providify
+    end
+
+    # We have to load everything so that we can figure out the default type.
+    klass.providerloader.loadall
+
+    klass
+  end
+
+  # Remove an existing defined type.  Largely used for testing.
+  def self.rmtype(name)
+
+    klass = rmclass(
+      name,
+      :hash => @types
+    )
+
+    singleton_class.send(:remove_method, "new#{name}") if respond_to?("new#{name}")
+  end
+
+  # Return a Type instance by name.
+  def self.type(name)
+    @types ||= {}
+
+    name = name.to_s.downcase.to_sym
+
+    if t = @types[name]
+      return t
+    else
+      if typeloader.load(name)
+        Puppet.warning "Loaded puppet/type/#{name} but no class was created" unless @types.include? name
+      end
+
+      return @types[name]
+    end
+  end
+
+  # Create a loader for Puppet types.
+  def self.typeloader
+    unless defined?(@typeloader)
+      @typeloader = Puppet::Util::Autoload.new(
+        self,
+        "puppet/type", :wrap => false
+      )
+    end
+
+    @typeloader
+  end
 
   ###############################
   # Comparing type instances.
@@ -38,11 +174,6 @@ class Type
     include Puppet::Util::ClassGen
     include Puppet::Util::Warnings
     attr_reader :properties
-  end
-
-  def self.states
-    Puppet.deprecation_warning "The states method is deprecated; use properties"
-    properties
   end
 
   # All parameters, in the appropriate order.  The key_attributes come first, then
@@ -247,11 +378,6 @@ class Type
     param
   end
 
-  def self.newstate(name, options = {}, &block)
-    Puppet.warning "newstate() has been deprecrated; use newproperty(#{name})"
-    newproperty(name, options, &block)
-  end
-
   # Create a new property. The first parameter must be the name of the property;
   # this is how users will refer to the property when creating new instances.
   # The second parameter is a hash of options; the options are:
@@ -360,16 +486,6 @@ class Type
   # Are we deleting this resource?
   def deleting?
     obj = @parameters[:ensure] and obj.should == :absent
-  end
-
-  # Create a new property if it is valid but doesn't exist
-  # Returns: true if a new parameter was added, false otherwise
-  def add_property_parameter(prop_name)
-    if self.class.validproperty?(prop_name) && !@parameters[prop_name]
-      self.newattr(prop_name)
-      return true
-    end
-    false
   end
 
   #
@@ -744,111 +860,6 @@ class Type
 
   def noop
     noop?
-  end
-
-  # retrieve a named instance of the current type
-  def self.[](name)
-    raise "Global resource access is deprecated"
-    @objects[name] || @aliases[name]
-  end
-
-  # add an instance by name to the class list of instances
-  def self.[]=(name,object)
-    raise "Global resource storage is deprecated"
-    newobj = nil
-    if object.is_a?(Puppet::Type)
-      newobj = object
-    else
-      raise Puppet::DevError, "must pass a Puppet::Type object"
-    end
-
-    if exobj = @objects[name] and self.isomorphic?
-      msg = "Object '#{newobj.class.name}[#{name}]' already exists"
-
-      msg += ("in file #{object.file} at line #{object.line}") if exobj.file and exobj.line
-      msg += ("and cannot be redefined in file #{object.file} at line #{object.line}") if object.file and object.line
-      error = Puppet::Error.new(msg)
-      raise error
-    else
-      #Puppet.info("adding %s of type %s to class list" %
-      #    [name,object.class])
-      @objects[name] = newobj
-    end
-  end
-
-  # Create an alias.  We keep these in a separate hash so that we don't encounter
-  # the objects multiple times when iterating over them.
-  def self.alias(name, obj)
-    raise "Global resource aliasing is deprecated"
-    if @objects.include?(name)
-      unless @objects[name] == obj
-        raise Puppet::Error.new(
-          "Cannot create alias #{name}: object already exists"
-        )
-      end
-    end
-
-    if @aliases.include?(name)
-      unless @aliases[name] == obj
-        raise Puppet::Error.new(
-          "Object #{@aliases[name].name} already has alias #{name}"
-        )
-      end
-    end
-
-    @aliases[name] = obj
-  end
-
-  # remove all of the instances of a single type
-  def self.clear
-    raise "Global resource removal is deprecated"
-    if defined?(@objects)
-      @objects.each do |name, obj|
-        obj.remove(true)
-      end
-      @objects.clear
-    end
-    @aliases.clear if defined?(@aliases)
-  end
-
-  # Force users to call this, so that we can merge objects if
-  # necessary.
-  def self.create(args)
-    # LAK:DEP Deprecation notice added 12/17/2008
-    Puppet.deprecation_warning "Puppet::Type.create is deprecated; use Puppet::Type.new"
-    new(args)
-  end
-
-  # remove a specified object
-  def self.delete(resource)
-    raise "Global resource removal is deprecated"
-    return unless defined?(@objects)
-    @objects.delete(resource.title) if @objects.include?(resource.title)
-    @aliases.delete(resource.title) if @aliases.include?(resource.title)
-    if @aliases.has_value?(resource)
-      names = []
-      @aliases.each do |name, otherres|
-        if otherres == resource
-          names << name
-        end
-      end
-      names.each { |name| @aliases.delete(name) }
-    end
-  end
-
-  # iterate across each of the type's instances
-  def self.each
-    raise "Global resource iteration is deprecated"
-    return unless defined?(@objects)
-    @objects.each { |name,instance|
-      yield instance
-    }
-  end
-
-  # does the type have an object with the given name?
-  def self.has_key?(name)
-    raise "Global resource access is deprecated"
-    @objects.has_key?(name)
   end
 
   # Retrieve all known instances.  Either requires providers or must be overridden.
@@ -1663,7 +1674,6 @@ class Type
     attr_reader :name
     attr_accessor :self_refresh
     include Enumerable, Puppet::Util::ClassGen
-    include Puppet::MetaType::Manager
 
     include Puppet::Util
     include Puppet::Util::Logging

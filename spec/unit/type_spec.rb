@@ -931,4 +931,36 @@ describe Puppet::Type.metaparamclass(:audit) do
       end
     end
   end
+
+  describe "when being reloaded" do
+    it "should not lose its provider list when it is reloaded" do
+      type = Puppet::Type.newtype(:reload_with_providers) do
+        newparam(:name) {}
+      end
+
+      provider = type.provide(:myprovider) {}
+
+      # reload it
+      type = Puppet::Type.newtype(:reload_with_providers) do
+        newparam(:name) {}
+      end
+
+      type.provider(:myprovider).should equal(provider)
+    end
+
+    it "should not lose its provider parameter when it is reloaded" do
+      type = Puppet::Type.newtype(:reload_test_type) do
+        newparam(:name) {}
+      end
+
+      provider = type.provide(:test_provider)
+
+      # reload it
+      type = Puppet::Type.newtype(:reload_test_type) do
+        newparam(:name) {}
+      end
+
+      type.parameters.should include(:provider)
+    end
+  end
 end
