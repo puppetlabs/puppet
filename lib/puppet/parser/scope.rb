@@ -82,6 +82,10 @@ class Puppet::Parser::Scope
     compiler.catalog
   end
 
+  def each
+    to_hash.each { |name, value| yield(name, value) }
+  end
+
   # Proxy accessors
   def host
     @compiler.node.name

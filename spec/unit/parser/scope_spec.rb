@@ -122,6 +122,18 @@ describe Puppet::Parser::Scope do
       @scope.should_not be_include("var")
     end
 
+    it "should support iteration over its variables" do
+      @scope["one"] = "two"
+      @scope["three"] = "four"
+      hash = {}
+      @scope.each { |name, value| hash[name] = value }
+      hash.should == {"one" => "two", "three" => "four" }
+    end
+
+    it "should include Enumerable" do
+      @scope.singleton_class.ancestors.should be_include(Enumerable)
+    end
+
     describe "and the variable is qualified" do
       before do
         @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode"))
