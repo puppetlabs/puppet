@@ -113,6 +113,15 @@ describe Puppet::Parser::Scope do
       @scope["var"].should == "childval"
     end
 
+    it "should be able to detect when variables are set" do
+      @scope["var"] = "childval"
+      @scope.should be_include("var")
+    end
+
+    it "should be able to detect when variables are not set" do
+      @scope.should_not be_include("var")
+    end
+
     describe "and the variable is qualified" do
       before do
         @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("foonode"))

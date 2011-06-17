@@ -87,6 +87,10 @@ class Puppet::Parser::Scope
     @compiler.node.name
   end
 
+  def include?(name)
+    self[name] != :undefined
+  end
+
   # Is the value true?  This allows us to control the definition of truth
   # in one place.
   def self.true?(value)
