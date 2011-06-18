@@ -31,7 +31,9 @@ eos
 "Switch uptime is 1 year, 12 weeks, 6 days, 22 hours, 32 minutes" => { :hostname => "Switch", :uptime => "1 year, 12 weeks, 6 days, 22 hours, 32 minutes", :uptime_seconds => 39393120, :uptime_days => 455 },
 "c2950 uptime is 3 weeks, 1 day, 23 hours, 36 minutes" => { :hostname => "c2950", :uptime => "3 weeks, 1 day, 23 hours, 36 minutes", :uptime_days => 22, :uptime_seconds =>  1985760},
 "router uptime is 5 weeks, 1 day, 3 hours, 30 minutes" => { :hostname => "router", :uptime => "5 weeks, 1 day, 3 hours, 30 minutes", :uptime_days => 36, :uptime_seconds => 3123000 },
-"c2950 uptime is 1 minute" => { :hostname => "c2950", :uptime => "1 minute", :uptime_days => 0, :uptime_seconds => 60 }
+"c2950 uptime is 1 minute" => { :hostname => "c2950", :uptime => "1 minute", :uptime_days => 0, :uptime_seconds => 60 },
+"c2950 uptime is 20 weeks, 6 minutes" => { :hostname => "c2950", :uptime=>"20 weeks, 6 minutes", :uptime_seconds=>12096360, :uptime_days=>140 },
+"c2950 uptime is 2 years, 20 weeks, 6 minutes" => { :hostname => "c2950", :uptime=>"2 years, 20 weeks, 6 minutes", :uptime_seconds=>75168360, :uptime_days=>870 }
   }.each do |ver, expected|
     it "should parse show ver output for device uptime facts" do
       @transport.stubs(:command).with("sh ver").returns(<<eos)
