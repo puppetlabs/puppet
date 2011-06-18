@@ -70,7 +70,8 @@ class Puppet::Util::NetworkDevice::Cisco::Device < Puppet::Util::NetworkDevice::
 
   IF={
     :FastEthernet => %w{FastEthernet FastEth Fast FE Fa F},
-    :GigEthernet => %w{GigabitEthernet GigEthernet GigEth GE Gi G},
+    :GigabitEthernet => %w{GigabitEthernet GigEthernet GigEth GE Gi G},
+    :TenGigabitEthernet => %w{TenGigabitEthernet TE Te},
     :Ethernet => %w{Ethernet Eth E},
     :Serial => %w{Serial Se S},
     :PortChannel => %w{PortChannel Port-Channel Po},
