@@ -134,6 +134,10 @@ describe ssh_authorized_key do
         proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => 'command="command"')}.should_not raise_error
       end
 
+      it "should support key-value pairs where value consist of multiple items" do
+        proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => 'from="*.domain1,host1.domain2"')}.should_not raise_error
+      end
+
       it "should support environments as options" do
         proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => 'environment="NAME=value"')}.should_not raise_error
       end
@@ -142,7 +146,7 @@ describe ssh_authorized_key do
         proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ['cert-authority','environment="NAME=value"'])}.should_not raise_error
       end
 
-      it "should not support a comma separated lists" do
+      it "should not support a comma separated list" do
         proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => 'cert-authority,no-port-forwarding')}.should raise_error(Puppet::Error, /must be provided as an array/)
       end
 
@@ -155,7 +159,7 @@ describe ssh_authorized_key do
         resource.property(:options).is_to_s(["a","b","c"]).should == "a,b,c"
       end
 
-      it "property should return well formed string of arrays from is_to_s" do
+      it "property should return well formed string of arrays from should_to_s" do
         resource = @class.new(:name => "whev", :type => :rsa, :user => "nobody", :options => ["a","b","c"])
         resource.property(:options).should_to_s(["a","b","c"]).should == "a,b,c"
       end
