@@ -92,7 +92,9 @@ module Puppet
       end
 
       validate do |value|
-        raise Puppet::Error, "Options must be provided as an array, not a comma separated list" if value != :absent and value.include?(',')
+        unless value == :absent or value =~ /^[-a-z0-9A-Z_]+(?:=\".*?\")?$/
+          raise Puppet::Error, "Option #{value} is not valid. A single option must either be of the form 'option' or 'option=\"value\". Multiple options must be provided as an array"
+        end
       end
     end
 
