@@ -38,11 +38,37 @@ describe provider do
       @provider.expects(:pkguti).with('-y', '-i', 'TESTpkg')
       @provider.install
     end
+
+    it "should support a single temp repo URL" do
+      @resource[:ensure] = :latest
+      @resource[:source] = "http://example.net/repo"
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-y', '-i', 'TESTpkg')
+      @provider.install
+    end
+
+    it "should support multiple temp repo URLs" do
+      @resource[:ensure] = :latest
+      @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-i', 'TESTpkg')
+      @provider.install
+    end
   end
 
   describe "when updating" do
     it "should use a command without versioned package" do
       @provider.expects(:pkguti).with('-y', '-u', 'TESTpkg')
+      @provider.update
+    end
+
+    it "should support a single temp repo URL" do
+      @resource[:source] = "http://example.net/repo"
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-y', '-u', 'TESTpkg')
+      @provider.update
+    end
+
+    it "should support multiple temp repo URLs" do
+      @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-u', 'TESTpkg')
       @provider.update
     end
   end
@@ -52,6 +78,18 @@ describe provider do
       @provider.expects(:pkguti).with('-y', '-r', 'TESTpkg')
       @provider.uninstall
     end
+
+    it "should support a single temp repo URL" do
+      @resource[:source] = "http://example.net/repo"
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-y', '-r', 'TESTpkg')
+      @provider.uninstall
+    end
+
+    it "should support multiple temp repo URLs" do
+      @resource[:source] = [ 'http://example.net/repo', 'http://example.net/foo' ]
+      @provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-t', 'http://example.net/foo', '-y', '-r', 'TESTpkg')
+      @provider.uninstall
+    end
   end
 
   describe "when getting latest version" do
@@ -59,7 +97,16 @@ describe provider do
       fake_data = "
 noisy output here
 TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
+      @provider.latest.should == "1.4.5,REV=2007.11.20"
+    end
+
+    it "should support a temp repo URL" do
+      @resource[:source] = "http://example.net/repo"
+      fake_data = "
+noisy output here
+TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-c', '--single', 'TESTpkg').returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.20"
     end
 
@@ -67,19 +114,19 @@ TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       fake_data = "
 noisy output here
 TESTpkg                   1.4.5,REV=2007.11.18      SAME"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.18"
     end
 
     it "should handle a non-existent package" do
       fake_data = "noisy output here
 Not in catalog"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.latest.should == nil
     end
 
     it "should warn on unknown pkgutil noise" do
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns("testingnoise")
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns("testingnoise")
       @provider.latest.should == nil
     end
 
@@ -93,7 +140,7 @@ gpg: Good signature from \"Distribution Manager <dm@blastwave.org>\"
 ==> 2770 packages loaded from /var/opt/csw/pkgutil/catalog.mirror.opencsw.org_opencsw_unstable_i386_5.11
 package                   installed                 catalog
 TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.latest.should == "1.4.5,REV=2007.11.20"
     end
 
@@ -101,7 +148,7 @@ TESTpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
       fake_data = "
 noisy output here
 REALpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.query[:name].should == "TESTpkg"
     end
   end
@@ -109,21 +156,28 @@ REALpkg                   1.4.5,REV=2007.11.18      1.4.5,REV=2007.11.20"
   describe "when querying current version" do
     it "should return TESTpkg's version string" do
       fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.query[:ensure].should == "1.4.5,REV=2007.11.18"
     end
 
     it "should handle a package that isn't installed" do
       fake_data = "TESTpkg  notinst  1.4.5,REV=2007.11.20"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.query[:ensure].should == :absent
     end
 
     it "should handle a non-existent package" do
       fake_data = "noisy output here
 Not in catalog"
-      provider.expects(:pkguti).with(['-c', '--single', 'TESTpkg']).returns fake_data
+      provider.expects(:pkguti).with('-c', '--single', 'TESTpkg').returns fake_data
       @provider.query[:ensure].should == :absent
+    end
+
+    it "should support a temp repo URL" do
+      @resource[:source] = "http://example.net/repo"
+      fake_data = "TESTpkg  1.4.5,REV=2007.11.18  1.4.5,REV=2007.11.20"
+      provider.expects(:pkguti).with('-t', 'http://example.net/repo', '-c', '--single', 'TESTpkg').returns fake_data
+      @provider.query[:ensure].should == "1.4.5,REV=2007.11.18"
     end
   end
 
