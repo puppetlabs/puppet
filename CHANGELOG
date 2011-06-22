@@ -1,5 +1,11 @@
-2.7.0rc4
+2.7.1
 ===
+a49d5b8 (#8048) Gem install puppet no longer fails if rdoc enabled.
+
+2.7.0
+===
+1a33bf8 (#7506) Specify supported Ruby versions in README.md
+d4c499d Updated CHANGELOG for 2.7.0rc4
 dbe2310 Maint: Update static man pages for 2.7.0
 50d188c Maint: Update static man page generator for Faces.
 f370d5a (#7833) Several help text/template edits
@@ -46,9 +52,7 @@ ebc642b (#6962) Add "arguments" method to help API
 9f6dec2 (#7681) Allow array variables as resource references
 76ad2bb (#7507) Add exclude filter for ruby 1.9 spec failures
 3682025 maint: move trap call to Signal so we can stub it for specs
-
-2.7.0rc3
-===
+fc0add1 Updated CHANGELOG for 2.7.0rc3
 83c7563 (#7259) Remove ActiveRecord requirement from indirector face spec
 aad2fd7 (#7259) Do not try to load all Terminus classes when configuring the Indirector
 3378841 Adding a sleep state post starting master
@@ -66,9 +70,7 @@ a44cbb1 (#7264) Docs: Clarify that subscribe/notify imply require/before
 9377507 (#7468) Stub spec that tries to connect to pypi.python.org
 5db214c Prevent spec failure caused by network device mock leak
 3722520 Fix #7299 - do not require net/ssh for running rake spec
-
-2.7.0rc2
-========
+b983386 Updated CHANGELOG for 2.7.0rc2
 61edff9 (#7353) Remove :for_humans format entirely.
 d2b5ec6 Adding test for ticket 7139
 6f2a129 add clean-up step to test for ticket_5477 to prevent site.pp from leaking to other tests
@@ -200,38 +202,7 @@ ca9d68f (#6408) Update puppet cert help for new subcommand action syntax.
 174e87a (#4258) Fix pkgutil spec test to have the correct provider
 e119739 (#6928) Add a notice to Parser#validate action when using default
 9bc4bce (#7103) Fix HEAD requests in the HTTP handler
-cb552af (#4258) Remove superfluous command check that called pkgutil
-fd98341 (#4258) Fix fd leak opening pkgutil config files
-7726dc3 (#4258) Permit variations of -nv in both pkgutil.conf files
-f8c2f1a (#4258) Stop file and config checks from breaking spec
-ef86105 (#4258) Check wgetopts in pkgutil.conf
-557ed85 (#4258) Fix hash duplication affecting canonical provider instance
-7c99dd9 (#4258) Use pkgutil -a to reliably determine package common names/aliases
-ab5bc35 (#4258) Update pkgutil spec for recent impl changes
-e582709 (#4258) pkgutil: bug fix: if shortname is not equal to package name
-58ac7d3 (#4258) pkgutil provider: better handling of short package names
-15a53f0 (#4258) pkgutil provider: misc enhancements
-15e225b Add spec tests for pkgutil package provider
-8462acd * Fix exception on parse failure of pkgutil output * Fix exception when querying latest version for unknown package
-3eace85 Fixing indentation
-f8e9155 Removing blastwave references and unused PAGER
-485ac38 Changing indentation to 2-spaces as per 2.6+ style
-9d63171 Single package queries made more robust when dealing with pkgutil noise
-f50fac7 Fixing wget verbose regex
-3003719 These regular expressions will not match anything.  pkgutil doesn't output anything that can be matched.
-2725fb3 Add comments that explain what we are ignoring in the package and remove legacy output
-143fc74 Ignoring lines from use_gpg and catalog fetching
-69a3451 Adding patch from Rudy Gevaert to fix not installed detection
-d026bb7 pkgutil provider: Using the --single option which speeds up execution.
-ec2a03c pkgutil provider: The path to the admin file is /var/opt/csw/pkgutil/admin
-0fc2aa6 pkgutil provider: Correcting a typo in a message.
-e02ba01 Using --single in the pkgutil provider.
-fc18591 Adding pkgutil support.
-9f365b1 Fixed #4258 - Added pkgutil package provider
-
-
-2.7.0rc1
-========
+97e9e5f Updated CHANGELOG & version for 2.7.0rc1
 5915814 Revert "(#6928) Removed --ignoreimport"
 24a277c (#6928) Removed --ignoreimport
 fc36e8d (#6928) Remove --parseonly
@@ -242,6 +213,11 @@ a688461 (#6928) Add a Parser face with Validate action
 78e181e (#7059) handle inherited action binding scope
 cc0f414 maint: ensure we handle '-foo=' options correctly in faces.
 f78ab09 (#2150) Fix File const lookup when configuring routes
+cb552af (#4258) Remove superfluous command check that called pkgutil
+fd98341 (#4258) Fix fd leak opening pkgutil config files
+7726dc3 (#4258) Permit variations of -nv in both pkgutil.conf files
+f8c2f1a (#4258) Stop file and config checks from breaking spec
+ef86105 (#4258) Check wgetopts in pkgutil.conf
 e852580 maint: install erb templates under lib/
 db11770 maint: clean up the spec test headers in bulk.
 4dd6a77 (#7056) Use 'face' rather than 'faces' in the production code.
@@ -416,6 +392,7 @@ a1ce253 Adding Certficate#generate
 af79d3c maint: Fix order-dependent spec failures
 847ac20 maint: Implement an InterfaceCollection class to manage interfaces
 6180397 (#6527) Fix pip tests
+557ed85 (#4258) Fix hash duplication affecting canonical provider instance
 0170ceb (#6527) Fix uninstall problem and refactor
 af42367 (#6527) Added pip package provider.
 ee66f36 (#6814) Add missing require for specs
@@ -439,11 +416,14 @@ ba67cc8 (#6785) Internal consistency for `--terminus`.
 a7173dc (#6786) Fixing a number of failing tests.
 9c85d70 (#6785) Rename the --from option to --terminus.
 b187e07 (#6786) Removing the #interface method.
+7c99dd9 (#4258) Use pkgutil -a to reliably determine package common names/aliases
+ab5bc35 (#4258) Update pkgutil spec for recent impl changes
 cf873c6 maint: Silence test output in the spec run
 f4401d3 (#6722) load all functions before testing...
 4905956 (5909) Function to dyncamically generate resources.
 1a55c7a (#5479) Test that we auto-require the zone dataset.
 0a2a58c (#5479) Autorequire zfs filesystem when zone dataset is configured
+e582709 (#4258) pkgutil: bug fix: if shortname is not equal to package name
 682686f (#6441) Add mount fixture for AIX's /etc/filesystems
 349f6f2 (#6641) Make it easier to add future platforms to the suite.
 6a96584 (#6441) Mark solaris tests pending, because we can't stub it.
@@ -451,6 +431,7 @@ b4f1b98 (#6641) fix mount provider tests broken in the 2.6 merge.
 3b89f32 maint: use chdir rather than depend on bash for win32
 2a91572 (#4798) Make rdoc work if moduledir & manifestdir overlap
 28ce355 maint: Fix rdoc when documenting manifest files
+58ac7d3 (#4258) pkgutil provider: better handling of short package names
 9a1c3b5 maint: spec/integration/configurer has races in time checking.
 75af582 maint: Move puppetdoc settings to defaults so we can use them in tests
 124ff3c maint: Fix a randomization test failure
@@ -492,9 +473,12 @@ c2715c0 Splitting the Application base class
 0cbdbce Renaming 'data_baseclass' to 'interface_base'
 ef289e5 Fixing indentation
 cf79349 Updating readme to reflect requirements
+15a53f0 (#4258) pkgutil provider: misc enhancements
 cde1baa Fixing Interface listing
 eff4eec (#3) Base application should catch SYSINT
 a54ee1e (#2) Should not assume interfaces have indirectors
+15e225b Add spec tests for pkgutil package provider
+8462acd * Fix exception on parse failure of pkgutil output * Fix exception when querying latest version for unknown package
 7639d5f Fix non-existent method called in SMF manifest import exception message, updated spec
 f5e21f0 (#6324) Use real service resource object instead of a stub
 ef9e929 (#6324) Add spec for SMF service provider
@@ -575,6 +559,11 @@ beb85d6 Maint: Moved auto-signing logic into an indirector extension
 8766efe Maint: Make http handler code call the indirector through ".indirection"
 71ecad9 Maint: Refactor code to use <class>.indirection.<method>
 14f8160 Maint: Refactor tests to use <class>.indirection.<method>
+3eace85 Fixing indentation
+f8e9155 Removing blastwave references and unused PAGER
+485ac38 Changing indentation to 2-spaces as per 2.6+ style
+9d63171 Single package queries made more robust when dealing with pkgutil noise
+f50fac7 Fixing wget verbose regex
 0f00bf4 Maint: Removed unused monkey patch that connected OpenSSL::PKey::RSA to indirector
 c5a1ca0 (#5391) Include additional zfs properties
 3a815e1 (#5375) Rework puppet apply to use configurer.run
@@ -596,8 +585,12 @@ cd8126f maint: Fix intermittent parser spec failures
 ee7d2f9 (#5274) New comment property for the hosttype
 8efdc76 (#5274) Tests for hostprovider removes comments
 28e5772 (#5304) Use internal_name rather than real_name for maillist provider
+3003719 These regular expressions will not match anything.  pkgutil doesn't output anything that can be matched.
 6c7290b (#5079) Refactor and cleanup mcxcontent provider
 c643e98 (#5079) Move methods around to make it clearer whether they're public or private
+2725fb3 Add comments that explain what we are ignoring in the package and remove legacy output
+143fc74 Ignoring lines from use_gpg and catalog fetching
+69a3451 Adding patch from Rudy Gevaert to fix not installed detection
 b753d83 Fixed #5288 - Changed report default to true
 ccc944f Fix #4339 - Locally save the last report to $lastrunreport
 8ab1aba Fix #4339 - Allow puppet apply to save last run summary
@@ -643,6 +636,12 @@ df088c9 [4638] Cleanup of plurals and inheritance relationships in AST
 caca187 Moved perform_initial_import from Puppet::Resource::TypeCollection to Puppet::Node::Environment.
 6b1dd81 [#4472]+[#4483] Moved type-name resolution out of Puppet::Parser::TypeLoader.
 6dbd477 [#4397]+[#4344] Move type-name resolution out of Puppet::Resource into the AST resources.
+d026bb7 pkgutil provider: Using the --single option which speeds up execution.
+ec2a03c pkgutil provider: The path to the admin file is /var/opt/csw/pkgutil/admin
+0fc2aa6 pkgutil provider: Correcting a typo in a message.
+e02ba01 Using --single in the pkgutil provider.
+fc18591 Adding pkgutil support.
+9f365b1 Fixed #4258 - Added pkgutil package provider
 83d9874 Use the name in the search path for looking for metadata
 70c293a Fix for environments in startup script. - Dropped the forced --manifest switch in the   suse startup script to allow for environments   to re-define this. Otherwise, environments will   not work as puppet override configuration with   command line arguments.
 62bc09e Redmine: 2474 - Fix for mount fstype documentation
@@ -735,12 +734,8 @@ d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
 
-
-2.6.8
-=====
-c1edcb2 add test for ticket 7101
-db26326 Move tests from puppet-acceptance repo
-bee1ef7 Updated CHANGELOG for 2.6.8rc1
+2.6.8rc1
+====
 8b7444d (#2331) Remove darwinports pkg provider, replace with rewritten macports provider
 65c4e14 Fixed #7082 - Added system support for groups
 b7f4ff7 (#7018) Give more context on the service type's assumptions. Wording tweaks.
