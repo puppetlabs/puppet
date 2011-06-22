@@ -2,8 +2,6 @@ require 'puppet/interface'
 
 class Puppet::Interface::Option
   include Puppet::Interface::TinyDocs
-  # For compatibility, deprecated, and should go fairly soon...
-  ['', '='].each { |x| alias :"desc#{x}" :"description#{x}" }
 
   def initialize(parent, *declaration, &block)
     @parent   = parent
