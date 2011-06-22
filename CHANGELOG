@@ -1,3 +1,7 @@
+2.7.1
+===
+a49d5b8 (#8048) Gem install puppet no longer fails if rdoc enabled.
+
 2.7.0
 ===
 1a33bf8 (#7506) Specify supported Ruby versions in README.md
