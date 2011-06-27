@@ -1,3 +1,4 @@
+2011/06/26 - add hiera_hash function
 2011/06/12 - Release 0.2.0
 2011/06/11 - add hiera_array function
 2011/06/11 - add hiera_include function
