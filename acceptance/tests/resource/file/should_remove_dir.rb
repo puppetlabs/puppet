@@ -3,7 +3,7 @@ test_name "should remove directory, but force required"
 target = "/tmp/test-#{Time.new.to_i}"
 
 step "clean up the system before we begin"
-on agents, "test -e #{target} && rm -vrf #{target} ; mkdir -p #{target}"
+on agents, "rm -rf #{target} ; mkdir -p #{target}"
 
 step "verify we can't remove a directory without 'force'"
 on(agents, puppet_resource("file", target, 'ensure=absent')) do

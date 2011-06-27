@@ -1,6 +1,6 @@
 test_name "test that we can query and find a user that exists."
 
-name = "test-user-#{Time.new.to_i}"
+name = "pl#{rand(999999).to_i}"
 
 step "ensure that our test user exists"
 on(agents, puppet_resource('user', name, 'ensure=present'))

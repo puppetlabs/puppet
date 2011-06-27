@@ -1,6 +1,6 @@
 test_name "ensure that puppet does not report removing a user that does not exist"
 
-name = "test-user-#{Time.new.to_i}"
+name = "pl#{rand(999999).to_i}"
 
 step "verify that user #{name} does not exist"
 on agents, "getent passwd #{name}", :acceptable_exit_codes => [2]
