@@ -16,16 +16,12 @@ agents.each do |host|
     step "apply the resource on the host using puppet resource"
     on(host, puppet_resource("cron", "crontest", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=absent")) do
-        # REVISIT: This is ported from the original test, which seems to me a
-        # weak test, but I don't want to improve it now.  --daniel 2010-12-23
-        fail_test "didn't see the output we expected..." unless
-            stdout.include? 'removed'
+      assert_match(/crontest\D+ensure:\s+removed/, stdout, "Didn't remove crobtab entry for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"
     run_cron_on(host, :list, tmpuser) do
-      fail_test "didn't found the command we tried to remove" if
-        stdout.include? "/bin/true"
+      assert_match(/\/bin\/true/, stdout, "Error: Found entry for #{tmpuser} on #{host}")
     end
 
     step "remove the crontab file for that user"

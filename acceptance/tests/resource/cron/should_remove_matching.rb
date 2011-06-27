@@ -15,11 +15,10 @@ agents.each do |host|
     step "create the existing job by hand..."
     run_cron_on(host,:add,tmpuser,"* * * * * /bin/true")
 
-    step "apply the resource change on the host"
+    step "Remove cron resource"
     on(host, puppet_resource("cron", "bogus", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=absent")) do
-        fail_test "didn't see the output we expected..." unless
-            stdout.include? 'removed'
+      assert_match(/bogus\D+ensure: removed/, stdout, "Removing cron entry failed for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"

@@ -13,14 +13,12 @@ agents.each do |host|
     step "apply the resource on the host using puppet resource"
     on(host, puppet_resource("cron", "crontest", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=present")) do
-        fail_test "didn't notice creation of the cron stuff" unless
-            stdout.include? 'created'
+      assert_match(/created/, stdout, "Did not create crontab for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"
     run_cron_on(host, :list, tmpuser) do
-        fail_test "didn't find the command as expected" unless
-            stdout.include? "* * * * * /bin/true"
+      assert_match(/\* \* \* \* \* \/bin\/true/, stdout, "Incorrect crontab for #{tmpuser} on #{host}")
     end
 
     step "remove the crontab file for that user"
