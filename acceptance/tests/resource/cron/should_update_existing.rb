@@ -15,21 +15,18 @@ agents.each do |host|
 
     step "verify that crontab -l contains what you expected"
     run_cron_on(host,:list,tmpuser) do
-        fail_test "didn't find the content in the crontab" unless
-            stdout.include? '* * * * * /bin/true'
+      assert_match(/\* \* \* \* \* \/bin\/true/, stdout, "Didn't find correct crobtab entry for #{tmpuser} on #{host}")
     end
 
     step "apply the resource change on the host"
     on(host, puppet_resource("cron", "crontest", "user=#{tmpuser}",
-                  "command=/bin/true", "ensure=present", "hour='0-6'")) do
-        fail_test "didn't update the time as expected" unless
-            stdout.include? "hour => ['0-6']"
+      "command=/bin/true", "ensure=present", "hour='0-6'")) do
+        assert_match(/hour\s+=>\s+\['0-6'\]/, stdout, "Modifying cron entry failed for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"
     run_cron_on(host,:list,tmpuser) do
-        fail_test "didn't find the content in the crontab" unless
-            stdout.include? '* 0-6 * * * /bin/true'
+      assert_match(/\* 0-6 \* \* \* \/bin\/true/, stdout, "Didn't find correctly modified time entry in crobtab entry for #{tmpuser} on #{host}")
     end
 
     step "remove the crontab file for that user"
