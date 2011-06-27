@@ -3,7 +3,7 @@ test_name "should remove file"
 target = "/tmp/test-#{Time.new.to_i}"
 
 step "clean up the system before we begin"
-on agents, "rm -vrf #{target} && touch #{target}"
+on agents, "rm -rf #{target} && touch #{target}"
 
 step "verify we can remove a file"
 on(agents, puppet_resource("file", target, 'ensure=absent'))

@@ -4,35 +4,41 @@ step "Ensure the test environment is clean"
 on agents, 'rm -f /tmp/source_file_test.txt'
 
 # TODO: Add tests for puppet:// URIs with master/agent setups.
-step "when using a puppet:/// URI with a master/agent setup"
-step "when using a puppet://$server/ URI with a master/agent setup"
+# step "when using a puppet:/// URI with a master/agent setup"
+# step "when using a puppet://$server/ URI with a master/agent setup"
 
-step "when using a local file path"
-
+step "Using a local file path"
 on agents, "echo 'Yay, this is the local file.' > /tmp/local_source_file_test.txt"
-
 manifest = "file { '/tmp/source_file_test.txt': source => '/tmp/local_source_file_test.txt', ensure => present }"
 
 apply_manifest_on agents, manifest
-
-on agents, 'test "$(cat /tmp/source_file_test.txt)" = "Yay, this is the local file."'
+agents.each do |host|
+  on host, "cat /tmp/source_file_test.txt" do
+    assert_match(/Yay, this is the local file./, stdout, "FIRST: File contents not matched on #{host}")
+  end
+end
 
 step "Ensure the test environment is clean"
 on agents, 'rm -f /tmp/source_file_test.txt'
 
-step "when using a puppet:/// URI with puppet apply"
+step "Using a puppet:/// URI with puppet apply"
 
-on agents, 'puppet agent --configprint modulepath' do
+on agents, puppet_agent("--configprint modulepath") do
   modulepath = stdout.split(':')[0]
   modulepath = modulepath.chomp
   on agents, "mkdir -p #{modulepath}/test_module/files"
-  on agents, "echo 'Yay, this is the puppet:/// file.' > #{modulepath}/test_module/files/test_file.txt"
+  #on agents, "echo 'Yay, this is the puppet:/// file.' > #{modulepath}/test_module/files/test_file.txt"
+  on agents, "echo 'Yay, this is the puppetfile.' > #{modulepath}/test_module/files/test_file.txt"
 end
 
 on agents, %q{echo "file { '/tmp/source_file_test.txt': source => 'puppet:///modules/test_module/test_file.txt', ensure => present }" > /tmp/source_test_manifest.pp}
-on agents, "puppet apply /tmp/source_test_manifest.pp"
+on agents, puppet_apply("/tmp/source_test_manifest.pp") 
 
-on agents, 'test "$(cat /tmp/source_file_test.txt)" = "Yay, this is the puppet:/// file."'
+agents.each do |host|
+  on host, "cat /tmp/source_file_test.txt" do
+    assert_match(/Yay, this is the puppetfile./, stdout, "SECOND: File contents not matched on #{host}")
+  end
+end
 
 # Oops. We (Jesse & Jacob) ended up writing this before realizing that you
 # can't actually specify "source => 'http://...'".  However, we're leaving it

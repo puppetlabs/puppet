@@ -3,7 +3,7 @@ test_name "host should create aliases"
 target  = "/tmp/host-#{Time.new.to_i}"
 
 step "clean up the system for testing"
-on agents, "rm -vf #{target}"
+on agents, "rm -f #{target}"
 
 step "create the record"
 on(agents, puppet_resource('host', 'test', "ensure=present",
