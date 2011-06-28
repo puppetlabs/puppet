@@ -6,7 +6,7 @@
 
 Name:           puppet
 Version:        2.6.9
-Release:        0.1.rc1%{?dist}
+Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2
 URL:            http://puppetlabs.com
@@ -253,6 +253,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Tue Jun 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.9-1
+- Release of 2.6.9 
+
 * Wed Jun 15 2011 Todd Zullinger <tmz@pobox.com> - 2.6.9-0.1.rc1
 - Update rc versioning to ensure 2.6.9 final is newer to rpm
 - sync changes with Fedora/EPEL
