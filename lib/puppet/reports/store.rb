@@ -1,4 +1,6 @@
 require 'puppet'
+require 'fileutils'
+require 'tempfile'
 
 Puppet::Reports.register_report(:store) do
   desc "Store the yaml report on disk.  Each host sends its report as a YAML dump
@@ -29,10 +31,12 @@ Puppet::Reports.register_report(:store) do
 
     file = File.join(dir, name)
 
+    f = Tempfile.new(name, dir)
     begin
-      File.open(file, "w", 0640) do |f|
-        f.print to_yaml
-      end
+      f.print to_yaml
+      f.chmod(0640)
+      f.close
+      FileUtils.mv(f.path, file)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       Puppet.warning "Could not write report for #{client} at #{file}: #{detail}"
