@@ -734,8 +734,52 @@ d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
 
-2.6.8rc1
+2.6.9
 ====
+db1a392 (#7506) Organize READMEs; specify supported Ruby versions in README.md
+381fa40 (#6418) Make test 64118 more portable
+98ba407 (#7127) Stop puppet if a prerun command fails
+6996e0b Do not needlessly create multiple reports when creating a transaction
+caca469 (#4416) Ensure types are providified after reloading
+413b136 (#4416) Always remove old provider before recreating it
+d866ce1 Cleanup indentation, comment, and unused code
+98f58ce (#2128) Add WARNING for node_name_{fact,value} descriptions
+1cd848c (#2128) Whitespace only reflow commit
+d9b5c1a (#2128) In-line docs for node_name_{fact,value}
+3f0dbb5 (#650) Allow symlinks for configuration directories
+c260cf1 Fix acceptance tests not managing their masters
+1c70f0c (#2128) Add support for setting node name based on a fact
+c629958 (#2128) Get facts before retrieving catalog
+cd4fe14 (#2128) Add the ability to specify a node name
+8ebec1e (#7193) Fix path issues with acceptance tests that call old shell tests
+16b2311 (#6885) puppet agent fingerprint requires --verbose to return a value.
+a00fd25 maint: Refactor specs in preparation for making node name more flexible
+75e2764 (#5318) Always notice changes to manifests when compiling.
+4a5e99d (#7681) Add an acceptance test for resource refs with array variables
+646919e (4123) Fix test for 4123/4 on old egrep in cent4
+8b76be3 (#3836) External nodes should only capture stdout
+8f907f2 adding test for ticket 7139
+90eb937 (#7139) Accept '/' as a valid path in filesets
+1b2a7d9 case seems needless here as there is only two opts, also the rest of the file seems to use if so this should make thin
+729336e (#6845) Mount writes incorrect vfstab entries
+16cf1ac (#6442) Be able to start agents --listen without namespaceauth.conf
+0352402 (#3420) Nagios "name" attribute does not output correctly
+f656818 (#4487) When setting environment on a host, ensure it is a string.
+2cce326 add test for ticket 7101
+c306db2 (#6487) Add some testing for OS X version support in DirectoryService provider
+0008b63 (#6487) Directoryservice provider will fail in future OS releases
+34f9f41 Maint: Fix a #4655 introduced log inconsistency
+6b18f8f Move acceptance tests from puppet-acceptance repo
+9a5bf6e Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+656eff8 (#4655) Allow stage to be set using a default class parameter
+7f658e6 vim: Initial ftplugin and indent support
+ccbe9f3 Fixed #6681 - Remove --force-yes option from aptitude is used
+
+2.6.8
+=====
+c1edcb2 add test for ticket 7101
+db26326 Move tests from puppet-acceptance repo
+bee1ef7 Updated CHANGELOG for 2.6.8rc1
 8b7444d (#2331) Remove darwinports pkg provider, replace with rewritten macports provider
 65c4e14 Fixed #7082 - Added system support for groups
 b7f4ff7 (#7018) Give more context on the service type's assumptions. Wording tweaks.

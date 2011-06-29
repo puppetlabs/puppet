@@ -23,4 +23,4 @@ on(agents, puppet_resource('host')) do
 end
 
 step "clean up the system afterwards"
-on agents, "mv -vf #{backup} /etc/hosts"
+on agents, "mv -f #{backup} /etc/hosts"

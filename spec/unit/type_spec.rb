@@ -164,6 +164,72 @@ describe Puppet::Type do
     end
   end
 
+  describe "when creating a provider" do
+    before :each do
+      @type = Puppet::Type.newtype(:provider_test_type)
+    end
+
+    after :each do
+      @type.provider_hash.clear
+    end
+
+    it "should create a subclass of Puppet::Provider for the provider" do
+      provider = @type.provide(:test_provider)
+
+      provider.ancestors.should include(Puppet::Provider)
+    end
+
+    it "should use a parent class if specified" do
+      parent_provider = @type.provide(:parent_provider)
+      child_provider  = @type.provide(:child_provider, :parent => parent_provider)
+
+      child_provider.ancestors.should include(parent_provider)
+    end
+
+    it "should use a parent class if specified by name" do
+      parent_provider = @type.provide(:parent_provider)
+      child_provider  = @type.provide(:child_provider, :parent => :parent_provider)
+
+      child_provider.ancestors.should include(parent_provider)
+    end
+
+    it "should raise an error when the parent class can't be found" do
+      expect {
+        @type.provide(:child_provider, :parent => :parent_provider)
+      }.to raise_error(Puppet::DevError, /Could not find parent provider.+parent_provider/)
+    end
+
+    it "should ensure its type has a 'provider' parameter" do
+      @type.provide(:test_provider)
+
+      @type.parameters.should include(:provider)
+    end
+
+    it "should remove a previously registered provider with the same name" do
+      old_provider = @type.provide(:test_provider)
+      new_provider = @type.provide(:test_provider)
+
+      old_provider.should_not equal(new_provider)
+    end
+
+    it "should register itself as a provider for the type" do
+      provider = @type.provide(:test_provider)
+
+      provider.should == @type.provider(:test_provider)
+    end
+
+    it "should create a provider when a provider with the same name previously failed" do
+      @type.provide(:test_provider) do
+        raise "failed to create this provider"
+      end rescue nil
+
+      provider = @type.provide(:test_provider)
+
+      provider.ancestors.should include(Puppet::Provider)
+      provider.should == @type.provider(:test_provider)
+    end
+  end
+
   describe "when choosing a default provider" do
     it "should choose the provider with the highest specificity" do
       # Make a fake type

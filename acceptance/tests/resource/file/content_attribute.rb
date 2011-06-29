@@ -1,25 +1,33 @@
-test_name "The content attribute"
-pass_test "Pass forced pending test failure investigation"
+test_name "Content Attribute"
 
 step "Ensure the test environment is clean"
 on agents, 'rm -f /tmp/content_file_test.txt'
 
-step "When using raw content"
+step "Content Attribute: using raw content"
 
 manifest = "file { '/tmp/content_file_test.txt': content => 'This is the test file content', ensure => present }"
 apply_manifest_on agents, manifest
 
-on agents, 'test "$(cat /tmp/content_file_test.txt)" = "This is the test file content"'
+agents.each do |host|
+  on host, "cat /tmp/content_file_test.txt" do
+    assert_match(/This is the test file content/, stdout, "File content not matched on #{host}")
+  end
+end
 
 step "Ensure the test environment is clean"
 on agents, 'rm -f /tmp/content_file_test.txt'
 
-step "When using a filebucket checksum from filebucket"
-
+step "Content Attribute: using a checksum from filebucket"
 on agents, "echo 'This is the checksum file contents' > /tmp/checksum_test_file.txt"
-on agents, "puppet filebucket backup --local /tmp/checksum_test_file.txt"
+step "Backup file into the filebucket"
+on agents, puppet_filebucket("backup --local /tmp/checksum_test_file.txt")
 
-get_remote_option(agents, 'filebucket', 'bucketdir') do |bucketdir|
+agents.each do |agent|
+  bucketdir="not set"
+  on agent, puppet_filebucket("--configprint bucketdir") do 
+    bucketdir = stdout.chomp
+  end
+
   manifest = %Q|
     filebucket { 'local':
       path => '#{bucketdir}',
@@ -31,7 +39,14 @@ get_remote_option(agents, 'filebucket', 'bucketdir') do |bucketdir|
       backup => local,
     }
   |
-  apply_manifest_on agents, manifest
+
+  step "Applying Manifest on Agents"
+  apply_manifest_on agent, manifest
 end
 
-on agents, 'test "$(cat /tmp/content_file_test.txt)" = "This is the checksum file contents"'
+step "Validate filebucket checksum file contents"
+agents.each do |host|
+  on host, "cat /tmp/content_file_test.txt" do
+    assert_match(/This is the checksum file content/, stdout, "File content not matched on #{host}")
+  end
+end

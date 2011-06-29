@@ -277,8 +277,8 @@ describe Puppet::Application::Apply do
       end
 
       it "should call the prerun and postrun commands on a Configurer instance" do
-        Puppet::Configurer.any_instance.expects(:execute_prerun_command)
-        Puppet::Configurer.any_instance.expects(:execute_postrun_command)
+        Puppet::Configurer.any_instance.expects(:execute_prerun_command).returns(true)
+        Puppet::Configurer.any_instance.expects(:execute_postrun_command).returns(true)
 
         expect { @apply.main }.to exit_with 0
       end
