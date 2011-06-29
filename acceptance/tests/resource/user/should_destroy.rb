@@ -1,6 +1,6 @@
 test_name "verify that puppet resource correctly destroys users"
 
-user  = "test-user-#{Time.new.to_i}"
+user = "pl#{rand(999999).to_i}"
 group = user
 
 step "ensure that the user and associated group exist"

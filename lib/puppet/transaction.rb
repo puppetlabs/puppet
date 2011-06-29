@@ -16,7 +16,7 @@ class Puppet::Transaction
   attr_accessor :configurator
 
   # The report, once generated.
-  attr_accessor :report
+  attr_reader :report
 
   # Routes and stores any events and subscriptions.
   attr_reader :event_manager
@@ -92,25 +92,17 @@ class Puppet::Transaction
   # collects all of the changes, executes them, and responds to any
   # necessary events.
   def evaluate
-    # Start logging.
-    Puppet::Util::Log.newdestination(@report)
-
     prepare
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
-    begin
-      relationship_graph.traverse do |resource|
-        if resource.is_a?(Puppet::Type::Component)
-          Puppet.warning "Somehow left a component in the relationship graph"
-        else
-          seconds = thinmark { eval_resource(resource) }
-          resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
-        end
+    relationship_graph.traverse do |resource|
+      if resource.is_a?(Puppet::Type::Component)
+        Puppet.warning "Somehow left a component in the relationship graph"
+      else
+        seconds = thinmark { eval_resource(resource) }
+        resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
       end
-    ensure
-      # And then close the transaction log.
-      Puppet::Util::Log.close(@report)
     end
 
     Puppet.debug "Finishing transaction #{object_id}"
@@ -221,10 +213,10 @@ class Puppet::Transaction
 
   # this should only be called by a Puppet::Type::Component resource now
   # and it should only receive an array
-  def initialize(catalog)
+  def initialize(catalog, report = nil)
     @catalog = catalog
 
-    @report = Puppet::Transaction::Report.new("apply")
+    @report = report || Puppet::Transaction::Report.new("apply", catalog.version)
 
     @event_manager = Puppet::Transaction::EventManager.new(self)
 

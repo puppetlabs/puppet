@@ -213,7 +213,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       configurer = Puppet::Configurer.new
       report = configurer.run(:skip_plugin_download => true, :catalog => catalog)
 
-      exit( options[:detailed_exitcodes] ? report.exit_status : 0 )
+      if not report
+        exit(1)
+      elsif options[:detailed_exitcodes] then
+        exit(report.exit_status)
+      else
+        exit(0)
+      end
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       $stderr.puts detail.message

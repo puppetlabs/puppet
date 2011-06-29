@@ -27,13 +27,12 @@ shared_examples_for "things that declare options" do
 
     thing = add_options_to do
       option "--foo" do
-        desc text
         description text
         summary text
       end
     end
 
-    thing.get_option(:foo).desc.should == text
+    thing.get_option(:foo).description.should == text
   end
 
   it "should list all the options" do

@@ -5,8 +5,6 @@ require 'puppet/network/http_pool'
 require 'puppet/util'
 
 class Puppet::Configurer
-  class CommandHookError < RuntimeError; end
-
   require 'puppet/configurer/fact_handler'
   require 'puppet/configurer/plugin_handler'
 
@@ -79,8 +77,6 @@ class Puppet::Configurer
     download_plugins unless options[:skip_plugin_download]
 
     download_fact_plugins unless options[:skip_plugin_download]
-
-    execute_prerun_command
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.
@@ -109,67 +105,73 @@ class Puppet::Configurer
     catalog
   end
 
-  # The code that actually runs the catalog.
-  # This just passes any options on to the catalog,
-  # which accepts :tags and :ignoreschedules.
-  def run(options = {})
-    begin
-      prepare(options)
-    rescue SystemExit,NoMemoryError
-      raise
-    rescue Exception => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Failed to prepare catalog: #{detail}"
-    end
-
-    if Puppet::Resource::Catalog.indirection.terminus_class == :rest
-      # This is a bit complicated.  We need the serialized and escaped facts,
-      # and we need to know which format they're encoded in.  Thus, we
-      # get a hash with both of these pieces of information.
-      fact_options = facts_for_uploading
-    end
-
-    options[:report] ||= Puppet::Transaction::Report.new("apply")
-    report = options[:report]
-    Puppet::Util::Log.newdestination(report)
-
-    if catalog = options[:catalog]
-      options.delete(:catalog)
-    elsif ! catalog = retrieve_catalog(fact_options)
+  # Retrieve (optionally) and apply a catalog. If a catalog is passed in
+  # the options, then apply that one, otherwise retrieve it.
+  def retrieve_and_apply_catalog(options, fact_options)
+    unless catalog = (options.delete(:catalog) || retrieve_catalog(fact_options))
       Puppet.err "Could not retrieve catalog; skipping run"
       return
     end
 
+    report = options[:report]
     report.configuration_version = catalog.version
 
-    transaction = nil
-
-    begin
-      benchmark(:notice, "Finished catalog run") do
-        transaction = catalog.apply(options)
-      end
-      report
-    rescue => detail
-      puts detail.backtrace if Puppet[:trace]
-      Puppet.err "Failed to apply catalog: #{detail}"
-      return
+    benchmark(:notice, "Finished catalog run") do
+      catalog.apply(options)
     end
-  ensure
-    # Make sure we forget the retained module_directories of any autoload
-    # we might have used.
-    Thread.current[:env_module_directories] = nil
 
-    # Now close all of our existing http connections, since there's no
-    # reason to leave them lying open.
-    Puppet::Network::HttpPool.clear_http_instances
-    execute_postrun_command
-
-    Puppet::Util::Log.close(report)
-    send_report(report, transaction)
+    report.finalize_report
+    report
   end
 
-  def send_report(report, trans)
-    report.finalize_report if trans
+  # The code that actually runs the catalog.
+  # This just passes any options on to the catalog,
+  # which accepts :tags and :ignoreschedules.
+  def run(options = {})
+    options[:report] ||= Puppet::Transaction::Report.new("apply")
+    report = options[:report]
+
+    Puppet::Util::Log.newdestination(report)
+    begin
+      prepare(options)
+
+      if Puppet::Resource::Catalog.indirection.terminus_class == :rest
+        # This is a bit complicated.  We need the serialized and escaped facts,
+        # and we need to know which format they're encoded in.  Thus, we
+        # get a hash with both of these pieces of information.
+        fact_options = facts_for_uploading
+      end
+
+      # set report host name now that we have the fact
+      report.host = Puppet[:node_name_value]
+
+      begin
+        execute_prerun_command or return nil
+        retrieve_and_apply_catalog(options, fact_options)
+      rescue SystemExit,NoMemoryError
+        raise
+      rescue => detail
+        puts detail.backtrace if Puppet[:trace]
+        Puppet.err "Failed to apply catalog: #{detail}"
+        return nil
+      ensure
+        execute_postrun_command or return nil
+      end
+    ensure
+      # Make sure we forget the retained module_directories of any autoload
+      # we might have used.
+      Thread.current[:env_module_directories] = nil
+
+      # Now close all of our existing http connections, since there's no
+      # reason to leave them lying open.
+      Puppet::Network::HttpPool.clear_http_instances
+    end
+  ensure
+    Puppet::Util::Log.close(report)
+    send_report(report)
+  end
+
+  def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
     Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
@@ -207,12 +209,15 @@ class Puppet::Configurer
   end
 
   def execute_from_setting(setting)
-    return if (command = Puppet[setting]) == ""
+    return true if (command = Puppet[setting]) == ""
 
     begin
       Puppet::Util.execute([command])
+      true
     rescue => detail
-      raise CommandHookError, "Could not run command from #{setting}: #{detail}"
+      puts detail.backtrace if Puppet[:trace]
+      Puppet.err "Could not run command from #{setting}: #{detail}"
+      false
     end
   end
 

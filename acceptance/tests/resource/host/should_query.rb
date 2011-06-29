@@ -12,4 +12,4 @@ on(agents, puppet_resource('host', 'localhost', "target=#{file}")) do
 end
 
 step "clean up the system"
-on agents, "rm -vf #{file}"
+on agents, "rm -f #{file}"
