@@ -354,6 +354,10 @@ module Puppet
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
         uses that configuration file to determine which keys to sign."},
+    :allow_csr_attributes => [false, "Whether to allow CSR attributes."],
+    :csr_attributes_file => { :default => "$confdir/csrattributes.yaml",
+      :mode => 0644,
+      :desc => "YAML File to hold any attributes that should be added to the CSR."},
     :allow_duplicate_certs => [false, "Whether to allow a new certificate
       request to overwrite an existing certificate."],
     :ca_days => ["", "How long a certificate should be valid.

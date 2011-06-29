@@ -126,6 +126,8 @@ describe Puppet::SSL::CertificateRequest do
     it "should set the CN to the :ca_name setting when the CSR is for a CA" do
       subject = mock 'subject'
       Puppet.settings.expects(:value).with(:ca_name).returns "mycertname"
+      Puppet.settings.expects(:value).with(:allow_csr_attributes).returns false
+      Puppet.settings.expects(:value).with(:certdnsnames).returns "othercertname"
       OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == "mycertname" }.returns(subject)
       @request.expects(:subject=).with(subject)
       Puppet::SSL::CertificateRequest.new(Puppet::SSL::CA_NAME).generate(@key)

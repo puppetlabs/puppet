@@ -51,6 +51,42 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
     csr.public_key = key.public_key
+
+    dnsnames = Puppet[:certdnsnames]
+    subject_alt_name = []
+    if dnsnames != ""
+      dnsnames.split(':').each { |d| subject_alt_name << 'DNS:' + d }
+    end
+    subject_alt_name << 'DNS:' + Facter["fqdn"].value
+
+    ef = OpenSSL::X509::ExtensionFactory.new
+
+    names = subject_alt_name.collect{|e| ef.create_extension("subjectAltName", e, "false") }
+    names = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence(names)])
+
+    attrs = [
+      OpenSSL::X509::Attribute.new("extReq", names),
+      OpenSSL::X509::Attribute.new("msExtReq", names),
+    ]
+
+    attrs.each{|attr| csr.add_attribute(attr) }
+
+    if Puppet[:allow_csr_attributes]
+      @csrattributes = Puppet[:csr_attributes_file]
+      unless FileTest.exists?(@csrattributes)
+        fail "CSR attributes are enabled but #{@csrattributes} is missing"
+      else
+        extensions = YAML.load_file(@csrattributes).to_a
+      end
+      attributes = []
+      extensions.each { |e|
+          oid = e[0]
+          value = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence(e[1])])
+          attributes << OpenSSL::X509::Attribute.new(oid, value)
+      }
+      attributes.each{ |attr| csr.add_attribute(attr) }
+    end
+
     csr.sign(key, OpenSSL::Digest::MD5.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
