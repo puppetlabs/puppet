@@ -466,7 +466,7 @@ module Puppet
       :desc => "The directory in which to store reports
         received from the client.  Each client gets a separate
         subdirectory."},
-    :reporturl => ["http://localhost:3000/reports",
+    :reporturl => ["http://localhost:3000/reports/upload",
       "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
     :strict_hostname_checking => [false, "Whether to only search for the complete
