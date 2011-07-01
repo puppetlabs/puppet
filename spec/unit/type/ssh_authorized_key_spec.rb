@@ -70,21 +70,10 @@ describe ssh_authorized_key do
 
     describe "for type" do
 
-
-      it "should support ssh-dss" do
-        proc { @class.new(:name => "whev", :type => "ssh-dss", :user => "nobody") }.should_not raise_error
-      end
-
-      it "should support ssh-rsa" do
-        proc { @class.new(:name => "whev", :type => "ssh-rsa", :user => "nobody") }.should_not raise_error
-      end
-
-      it "should support :dsa" do
-        proc { @class.new(:name => "whev", :type => :dsa, :user => "nobody") }.should_not raise_error
-      end
-
-      it "should support :rsa" do
-        proc { @class.new(:name => "whev", :type => :rsa, :user => "nobody") }.should_not raise_error
+      [:'ssh-dss', :'ssh-rsa', :rsa, :dsa, :'ecdsa-sha2-nistp256', :'ecdsa-sha2-nistp384', :'ecdsa-sha2-nistp521'].each do |keytype|
+        it "should support #{keytype}" do
+          proc { @class.new(:name => "whev", :type => keytype, :user => "nobody") }.should_not raise_error
+        end
       end
 
       it "should alias :rsa to :ssh-rsa" do
