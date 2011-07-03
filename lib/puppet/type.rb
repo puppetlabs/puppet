@@ -1680,12 +1680,6 @@ class Type
 
   # all of the variables that must be initialized for each subclass
   def self.initvars
-    # all of the instances of this class
-    @objects = Hash.new
-    @aliases = Hash.new
-
-    @defaults = {}
-
     @parameters ||= []
 
     @validproperties = {}
@@ -1693,17 +1687,7 @@ class Type
     @parameters = []
     @paramhash = {}
 
-    @paramdoc = Hash.new { |hash,key|
-      key = key.intern if key.is_a?(String)
-      if hash.include?(key)
-        hash[key]
-      else
-        "Param Documentation for #{key} not found"
-      end
-    }
-
     @doc ||= ""
-
   end
 
   def self.to_s
