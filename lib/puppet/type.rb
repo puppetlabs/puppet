@@ -660,7 +660,6 @@ class Type
   # Return a specific value for an attribute.
   def value(name)
     name = name.intern
-
     (obj = @parameters[name] and obj.respond_to?(:value)) ? obj.value : nil
   end
 
