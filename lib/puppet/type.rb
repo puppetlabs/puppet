@@ -286,11 +286,6 @@ class Type
     metaparameters
   end
 
-  # Find a parameter, property, or metaparameter class by name
-  def self.parameter_class(name)
-    parameter(name)
-  end
-
   def self.properties
     parameters.find_all { |p| p.property? }
   end
