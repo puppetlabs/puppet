@@ -12,7 +12,7 @@ describe Puppet::Type.type(:interface) do
   end
 
   it "should have an ensure property" do
-    Puppet::Type.type(:interface).attrtype(:ensure).should == :property
+    Puppet::Type.type(:interface).parameter_type(:ensure).should == :property
   end
 
   it "should be applied on device" do
@@ -21,7 +21,7 @@ describe Puppet::Type.type(:interface) do
 
   [:description, :speed, :duplex, :native_vlan, :encapsulation, :mode, :allowed_trunk_vlans, :etherchannel, :ipaddress].each do |p|
     it "should have a #{p} property" do
-      Puppet::Type.type(:interface).attrtype(p).should == :property
+      Puppet::Type.type(:interface).parameter_type(p).should == :property
     end
   end
 

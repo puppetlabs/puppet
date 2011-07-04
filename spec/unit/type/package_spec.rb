@@ -34,12 +34,12 @@ describe Puppet::Type.type(:package) do
   describe "when validating attributes" do
     [:name, :source, :instance, :status, :adminfile, :responsefile, :configfiles, :category, :platform, :root, :vendor, :description, :allowcdrom].each do |param|
       it "should have a #{param} parameter" do
-        Puppet::Type.type(:package).attrtype(param).should == :param
+        Puppet::Type.type(:package).parameter_type(param).should == :parameter
       end
     end
 
     it "should have an ensure property" do
-      Puppet::Type.type(:package).attrtype(:ensure).should == :property
+      Puppet::Type.type(:package).parameter_type(:ensure).should == :property
     end
   end
 

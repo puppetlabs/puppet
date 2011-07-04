@@ -19,13 +19,13 @@ end
 describe Puppet::Type.type(:mount), "when validating attributes" do
   [:name, :remounts, :provider].each do |param|
     it "should have a #{param} parameter" do
-      Puppet::Type.type(:mount).attrtype(param).should == :param
+      Puppet::Type.type(:mount).parameter_type(param).should == :parameter
     end
   end
 
   [:ensure, :device, :blockdevice, :fstype, :options, :pass, :dump, :atboot, :target].each do |param|
     it "should have a #{param} property" do
-      Puppet::Type.type(:mount).attrtype(param).should == :property
+      Puppet::Type.type(:mount).parameter_type(param).should == :property
     end
   end
 end

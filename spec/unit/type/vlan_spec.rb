@@ -16,11 +16,11 @@ describe Puppet::Type.type(:vlan) do
   end
 
   it "should have an ensure property" do
-    Puppet::Type.type(:vlan).attrtype(:ensure).should == :property
+    Puppet::Type.type(:vlan).parameter_type(:ensure).should == :property
   end
 
   it "should have a description property" do
-    Puppet::Type.type(:vlan).attrtype(:description).should == :property
+    Puppet::Type.type(:vlan).parameter_type(:description).should == :property
   end
 
   describe "when validating attribute values" do

@@ -477,7 +477,7 @@ autorequire that directory."
     prophash = {}
     hash.each do |param, value|
       next if param == :name
-      case self.class.attrtype(param)
+      case self.class.parameter_type(param)
       when :property
         # Only try to provide values for the properties we're managing
         if prop = self.property(param)

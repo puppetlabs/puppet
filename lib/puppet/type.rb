@@ -290,12 +290,6 @@ class Type
     parameters.find_all { |p| p.property? }
   end
 
-  # What type of parameter are we dealing with? Cache the results, because
-  # this method gets called so many times.
-  def self.attrtype(attr)
-    parameter_type(attr)
-  end
-
   def self.eachmetaparam
     parameters.each { |p| yield p.name }
   end

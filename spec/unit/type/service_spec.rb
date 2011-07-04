@@ -14,13 +14,13 @@ end
 describe Puppet::Type.type(:service), "when validating attributes" do
   [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control].each do |param|
     it "should have a #{param} parameter" do
-      Puppet::Type.type(:service).attrtype(param).should == :param
+      Puppet::Type.type(:service).parameter_type(param).should == :parameter
     end
   end
 
   [:ensure, :enable].each do |param|
     it "should have an #{param} property" do
-      Puppet::Type.type(:service).attrtype(param).should == :property
+      Puppet::Type.type(:service).parameter_type(param).should == :property
     end
   end
 end

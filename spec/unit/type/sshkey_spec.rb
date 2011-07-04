@@ -15,13 +15,13 @@ describe sshkey do
   describe "when validating attributes" do
     [:name, :provider].each do |param|
       it "should have a #{param} parameter" do
-        @class.attrtype(param).should == :param
+        @class.parameter_type(param).should == :parameter
       end
     end
 
     [:host_aliases, :ensure, :key, :type].each do |property|
       it "should have a #{property} property" do
-        @class.attrtype(property).should == :property
+        @class.parameter_type(property).should == :property
       end
     end
   end

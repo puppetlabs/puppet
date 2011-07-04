@@ -26,13 +26,13 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
 
     [:name, :provider].each do |param|
       it "should have a #{param} parameter" do
-        @class.attrtype(param).should == :param
+        @class.parameter_type(param).should == :parameter
       end
     end
 
     [:type, :key, :user, :target, :options, :ensure].each do |property|
       it "should have a #{property} property" do
-        @class.attrtype(property).should == :property
+        @class.parameter_type(property).should == :property
       end
     end
 
@@ -223,7 +223,7 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
   describe "when user is specified" do
 
     it "should determine target" do
-      resource = @class.create(
+      resource = @class.new(
         :name   => "Test",
         :user   => "root"
       )
@@ -243,7 +243,7 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
   describe "when calling validate" do
 
     it "should not crash on a non-existant user" do
-      resource = @class.create(
+      resource = @class.new(
         :name   => "Test",
         :user   => "ihopesuchuserdoesnotexist"
       )

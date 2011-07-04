@@ -188,14 +188,6 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "#[]" do
-    it "should raise an exception" do
-      expect do
-        described_class['anything']
-      end.to raise_error("Global resource access is deprecated")
-    end
-  end
-
   describe ".instances" do
     it "should return an empty array" do
       described_class.instances.should == []
@@ -385,6 +377,20 @@ describe Puppet::Type.type(:file) do
       ancestors.should_not be_empty
       ancestors.reverse.each_with_index do |path,i|
         path.should == File.join(*pieces[0..i])
+      end
+    end
+  end
+
+  describe "when validating attributes" do
+    %w{path checksum backup recurse recurselimit source replace force ignore links purge sourceselect}.each do |attr|
+      it "should have a '#{attr}' parameter" do
+        Puppet::Type.type(:file).parameter_type(attr.intern).should == :parameter
+      end
+    end
+
+    %w{content target ensure owner group mode type}.each do |attr|
+      it "should have a '#{attr}' property" do
+        Puppet::Type.type(:file).parameter_type(attr.intern).should == :property
       end
     end
   end

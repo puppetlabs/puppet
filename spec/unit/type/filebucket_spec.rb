@@ -7,7 +7,7 @@ describe Puppet::Type.type(:filebucket) do
   describe "when validating attributes" do
     %w{name server port path}.each do |attr|
       it "should have a '#{attr}' parameter" do
-        Puppet::Type.type(:filebucket).attrtype(attr.intern).should == :param
+        Puppet::Type.type(:filebucket).parameter_type(attr.intern).should == :parameter
       end
     end
 

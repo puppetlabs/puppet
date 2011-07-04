@@ -13,13 +13,13 @@ describe Puppet::Type.type(:group) do
   describe "when validating attributes" do
     [:name, :allowdupe].each do |param|
       it "should have a #{param} parameter" do
-        @class.attrtype(param).should == :param
+        @class.parameter_type(param).should == :parameter
       end
     end
 
     [:ensure, :gid].each do |param|
       it "should have a #{param} property" do
-        @class.attrtype(param).should == :property
+        @class.parameter_type(param).should == :property
       end
     end
 
