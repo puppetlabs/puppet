@@ -307,11 +307,6 @@ class Type
   def self.validproperties
     parameters.find_all { |p| p.property? }.collect { |p| p.name }
   end
-
-  # does the name reflect a valid parameter?
-  def self.validparameter?(name)
-    valid_aparameter?(name)
-  end
   # end of code likely to be removed
   ##############################
 
@@ -1887,7 +1882,7 @@ class Type
   # then use the object's name.
   def title
     unless @title
-      if self.class.validparameter?(name_var)
+      if self.class.valid_parameter?(name_var)
         @title = self[:name]
       elsif self.class.validproperty?(name_var)
         @title = self.should(name_var)
