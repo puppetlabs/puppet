@@ -294,11 +294,6 @@ class Type
     parameters.each { |p| yield p.name }
   end
 
-  # Return the property class associated with a name
-  def self.propertybyname(name)
-    parameter(name)
-  end
-
   def self.validattr?(name)
     valid_parameter?(name)
   end

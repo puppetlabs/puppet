@@ -73,10 +73,10 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
     type.validproperties.sort { |a,b|
       a.to_s <=> b.to_s
     }.reject { |sname|
-      property = type.propertybyname(sname)
+      property = type.parameter(sname)
       property.nodoc
     }.each { |sname|
-      property = type.propertybyname(sname)
+      property = type.parameter(sname)
 
       raise "Could not retrieve property #{sname} on type #{type.name}" unless property
 
