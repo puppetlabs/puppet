@@ -294,11 +294,6 @@ class Type
     parameters.each { |p| yield p.name }
   end
 
-  # Find the parameter class associated with a given parameter name.
-  def self.paramclass(name)
-    parameter(name)
-  end
-
   # Return the property class associated with a name
   def self.propertybyname(name)
     parameter(name)
