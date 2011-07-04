@@ -282,10 +282,6 @@ class Type
   # All parameters, in the appropriate order.  The key_attributes come first, then
   # the provider, then the properties, and finally the params and metaparams
   # in the order they were specified in the files.
-  def self.metaparams
-    metaparameters
-  end
-
   def self.properties
     parameters.find_all { |p| p.property? }
   end
