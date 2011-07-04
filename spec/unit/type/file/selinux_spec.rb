@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 [:seluser, :selrole, :seltype, :selrange].each do |param|
-  property = Puppet::Type.type(:file).attrclass(param)
+  property = Puppet::Type.type(:file).parameter(param)
   describe property do
     include PuppetSpec::Files
 

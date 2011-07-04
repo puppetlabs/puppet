@@ -15,7 +15,7 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
         
             :ip_address => "1.2.3.4")
     @properties = {}
-    @ensure = Puppet::Type::Computer.attrclass(:ensure).new(:resource => @resource)
+    @ensure = Puppet::Type::Computer.parameter(:ensure).new(:resource => @resource)
   end
 
   it "should be able to create a instance" do
@@ -29,15 +29,15 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      computer.attrclass(property).ancestors.should be_include(Puppet::Property)
+      computer.parameter(property).ancestors.should be_include(Puppet::Property)
     end
 
     it "should have documentation for its #{property} property" do
-      computer.attrclass(property).doc.should be_instance_of(String)
+      computer.parameter(property).doc.should be_instance_of(String)
     end
 
     it "should accept :absent as a value" do
-      prop = computer.attrclass(property).new(:resource => @resource)
+      prop = computer.parameter(property).new(:resource => @resource)
       prop.should = :absent
       prop.should.must == :absent
     end
@@ -45,11 +45,11 @@ describe Puppet::Type.type(:computer), " when checking computer objects" do
 
   params.each do |param|
     it "should have a #{param} parameter" do
-      computer.attrclass(param).ancestors.should be_include(Puppet::Parameter)
+      computer.parameter(param).ancestors.should be_include(Puppet::Parameter)
     end
 
     it "should have documentation for its #{param} parameter" do
-      computer.attrclass(param).doc.should be_instance_of(String)
+      computer.parameter(param).doc.should be_instance_of(String)
     end
   end
 

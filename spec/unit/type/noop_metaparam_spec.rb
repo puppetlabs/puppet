@@ -3,9 +3,8 @@ require 'spec_helper'
 
 require 'puppet/type'
 
-describe Puppet::Type.type(:file).attrclass(:noop) do
+describe Puppet::Type.type(:file).parameter(:noop) do
   include PuppetSpec::Files
-
   before do
     Puppet.settings.stubs(:use)
     @file = Puppet::Type.newfile :path => make_absolute("/what/ever")

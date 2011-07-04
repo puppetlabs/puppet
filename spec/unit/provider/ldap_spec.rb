@@ -126,7 +126,7 @@ describe Puppet::Provider::Ldap do
         @class.stubs(:resource_type).returns @resource_class
 
         @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-        @resource_class.stubs(:attrclass).with(:one).returns(@property_class)
+        @resource_class.stubs(:parameter).with(:one).returns(@property_class)
         @resource_class.stubs(:valid_parameter?).returns true
       end
 
@@ -149,7 +149,7 @@ describe Puppet::Provider::Ldap do
 
       it "should only use the first value for attributes that are not properties" do
         # Yay.  hackish, but easier than mocking everything.
-        @resource_class.expects(:attrclass).with(:a).returns Puppet::Type.type(:user).attrclass(:name)
+        @resource_class.expects(:parameter).with(:a).returns Puppet::Type.type(:user).parameter(:name)
         @property_class.stubs(:array_matching).returns :all
 
         instance = @class.new(:one => %w{two three}, :a => %w{b c})
@@ -173,7 +173,7 @@ describe Puppet::Provider::Ldap do
       @instance = @class.new
 
       @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-      @resource_class = stub 'resource_class', :attrclass => @property_class, :valid_parameter? => true, :validproperties => [:one, :two]
+      @resource_class = stub 'resource_class', :parameter => @property_class, :valid_parameter? => true, :validproperties => [:one, :two]
       @class.stubs(:resource_type).returns @resource_class
     end
 

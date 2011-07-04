@@ -2,10 +2,9 @@
 require 'spec_helper'
 require 'uri'
 
-source = Puppet::Type.type(:file).attrclass(:source)
-describe Puppet::Type.type(:file).attrclass(:source) do
+source = Puppet::Type.type(:file).parameter(:source)
+describe Puppet::Type.type(:file).parameter(:source) do
   include PuppetSpec::Files
-
   before do
     # Wow that's a messy interface to the resource.
     @environment = "myenv"

@@ -38,21 +38,21 @@ describe augeas do
 
     properties.each do |property|
       it "should have a #{property} property" do
-        augeas.attrclass(property).ancestors.should be_include(Puppet::Property)
+        augeas.parameter(property).ancestors.should be_include(Puppet::Property)
       end
 
       it "should have documentation for its #{property} property" do
-        augeas.attrclass(property).doc.should be_instance_of(String)
+        augeas.parameter(property).doc.should be_instance_of(String)
       end
     end
 
     params.each do |param|
       it "should have a #{param} parameter" do
-        augeas.attrclass(param).ancestors.should be_include(Puppet::Parameter)
+        augeas.parameter(param).ancestors.should be_include(Puppet::Parameter)
       end
 
       it "should have documentation for its #{param} parameter" do
-        augeas.attrclass(param).doc.should be_instance_of(String)
+        augeas.parameter(param).doc.should be_instance_of(String)
       end
     end
   end
@@ -89,14 +89,14 @@ describe augeas do
     it "should return 0 if it does not need to run" do
       provider = stub("provider", :need_to_run? => false)
       resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
-      changes = augeas.attrclass(:returns).new(:resource => resource)
+      changes = augeas.parameter(:returns).new(:resource => resource)
       changes.retrieve.should == 0
     end
 
     it "should return :need_to_run if it needs to run" do
       provider = stub("provider", :need_to_run? => true)
       resource = stub('resource', :resource => nil, :provider => provider, :line => nil, :file => nil)
-      changes = augeas.attrclass(:returns).new(:resource => resource)
+      changes = augeas.parameter(:returns).new(:resource => resource)
       changes.retrieve.should == :need_to_run
     end
   end

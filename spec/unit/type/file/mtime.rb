@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-describe Puppet::Type.type(:file).attrclass(:mtime) do
+describe Puppet::Type.type(:file).parameter(:mtime) do
   require 'puppet_spec/files'
   include PuppetSpec::Files
 

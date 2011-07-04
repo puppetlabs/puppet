@@ -27,7 +27,7 @@ describe "Nagios resource types" do
       end
 
       it "should have documentation for its #{nagios_type.namevar} parameter" do
-        puppet_type.attrclass(nagios_type.namevar).instance_variable_get("@doc").should_not be_nil
+        puppet_type.parameter(nagios_type.namevar).instance_variable_get("@doc").should_not be_nil
       end
 
       it "should have an ensure property" do
@@ -39,7 +39,7 @@ describe "Nagios resource types" do
       end
 
       it "should have documentation for its target property" do
-        puppet_type.attrclass(:target).instance_variable_get("@doc").should_not be_nil
+        puppet_type.parameter(:target).instance_variable_get("@doc").should_not be_nil
       end
 
       nagios_type.parameters.reject { |param| param == nagios_type.namevar or param.to_s =~ /^[0-9]/ }.each do |param|
@@ -48,7 +48,7 @@ describe "Nagios resource types" do
         end
 
         it "should have documentation for its #{param} property" do
-          puppet_type.attrclass(param).instance_variable_get("@doc").should_not be_nil
+          puppet_type.parameter(param).instance_variable_get("@doc").should_not be_nil
         end
       end
 

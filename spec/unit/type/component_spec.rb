@@ -5,7 +5,7 @@ component = Puppet::Type.type(:component)
 
 describe component do
   it "should have a :name attribute" do
-    component.attrclass(:name).should_not be_nil
+    component.parameter(:name).should_not be_nil
   end
 
   it "should use Class as its type when a normal string is provided as the title" do
@@ -43,7 +43,7 @@ describe component do
 
   it "should correctly support metaparameters" do
     comp = component.new(:name => "Foo[bar]", :require => "Foo[bar]")
-    comp.parameter(:require).should be_instance_of(component.attrclass(:require))
+    comp.parameter(:require).should be_instance_of(component.parameter(:require))
   end
 
   describe "when building up the path" do

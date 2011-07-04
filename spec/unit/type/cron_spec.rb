@@ -16,19 +16,19 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
   describe "when validating attributes" do
     [:name, :provider].each do |param|
       it "should have a #{param} parameter" do
-        described_class.attrtype(param).should == :param
+        described_class.parameter_type(param).should == :parameter
       end
     end
 
     [:command, :special, :minute, :hour, :weekday, :month, :monthday, :environment, :user, :target].each do |property|
       it "should have a #{property} property" do
-        described_class.attrtype(property).should == :property
+        described_class.parameter_type(property).should == :property
       end
     end
 
     [:command, :minute, :hour, :weekday, :month, :monthday].each do |cronparam|
       it "should have #{cronparam} of type CronParam" do
-        described_class.attrclass(cronparam).ancestors.should include CronParam
+        described_class.parameter(cronparam).ancestors.should include CronParam
       end
     end
   end

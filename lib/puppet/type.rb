@@ -256,7 +256,7 @@ class Type
   # This method is used in both Puppet::Type and Puppet::Resource.
   def self.valid_parameter?(name)
     name = name.to_sym
-    return true if name == :name
+    return true if name == :name and self != Puppet::Type
     return true if parameter(name)
     return false
   end
@@ -288,11 +288,6 @@ class Type
 
   def self.properties
     parameters.find_all { |p| p.property? }
-  end
-
-  # Find the class associated with any given attribute.
-  def self.attrclass(name)
-    parameter(name)
   end
 
   # What type of parameter are we dealing with? Cache the results, because

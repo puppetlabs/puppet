@@ -16,7 +16,7 @@ describe zone do
 
   parameters.each do |parameter|
     it "should have a #{parameter} parameter" do
-      zone.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
+      zone.parameter(parameter).ancestors.should be_include(Puppet::Parameter)
     end
   end
 
@@ -24,7 +24,7 @@ describe zone do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      zone.attrclass(property).ancestors.should be_include(Puppet::Property)
+      zone.parameter(property).ancestors.should be_include(Puppet::Property)
     end
   end
 

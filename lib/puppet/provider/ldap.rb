@@ -80,7 +80,7 @@ class Puppet::Provider::Ldap < Puppet::Provider
       # Skip any attributes we don't manage.
       next result unless self.class.resource_type.valid_parameter?(param)
 
-      paramclass = self.class.resource_type.attrclass(param)
+      paramclass = self.class.resource_type.parameter(param)
 
       unless values.is_a?(Array)
         result[param] = values

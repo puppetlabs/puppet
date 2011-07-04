@@ -25,11 +25,11 @@ describe tidy do
 
   [:age, :size, :path, :matches, :type, :recurse, :rmdirs].each do |param|
     it "should have a #{param} parameter" do
-      Puppet::Type.type(:tidy).attrclass(param).ancestors.should be_include(Puppet::Parameter)
+      Puppet::Type.type(:tidy).parameter(param).ancestors.should be_include(Puppet::Parameter)
     end
 
     it "should have documentation for its #{param} param" do
-      Puppet::Type.type(:tidy).attrclass(param).doc.should be_instance_of(String)
+      Puppet::Type.type(:tidy).parameter(param).doc.should be_instance_of(String)
     end
   end
 

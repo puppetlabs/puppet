@@ -73,7 +73,7 @@ describe provider_class do
         provider_class.stubs(:resource_type).returns @resource_class
 
         @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-        @resource_class.stubs(:attrclass).with(:one).returns(@property_class)
+        @resource_class.stubs(:parameter).with(:one).returns(@property_class)
         @resource_class.stubs(:valid_parameter?).returns true
       end
 
@@ -89,7 +89,7 @@ describe provider_class do
       @instance = provider_class.new(:device)
 
       @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-      @resource_class = stub 'resource_class', :attrclass => @property_class, :valid_parameter? => true, :validproperties => [:description]
+      @resource_class = stub 'resource_class', :parameter => @property_class, :valid_parameter? => true, :validproperties => [:description]
       provider_class.stubs(:resource_type).returns @resource_class
     end
 

@@ -295,7 +295,7 @@ class Puppet::Provider
     if param.is_a?(Class)
       klass = param
     else
-      unless klass = resource_type.attrclass(param)
+      unless klass = resource_type.parameter(param)
         raise Puppet::DevError, "'#{param}' is not a valid parameter for #{resource_type.name}"
       end
     end

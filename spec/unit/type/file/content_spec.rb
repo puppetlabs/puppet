@@ -4,7 +4,7 @@ require 'puppet/network/http_pool'
 
 require 'puppet/network/resolver'
 
-content = Puppet::Type.type(:file).attrclass(:content)
+content = Puppet::Type.type(:file).parameter(:content)
 describe content do
   include PuppetSpec::Files
   before do
@@ -385,7 +385,7 @@ describe content do
       #   recurse => true,
       # }
       it "when content checksum comes from source" do
-        source_param = Puppet::Type.type(:file).attrclass(:source)
+        source_param = Puppet::Type.type(:file).parameter(:source)
         source = source_param.new(:resource => @resource)
         @content.should = "{md5}123abcd"
 

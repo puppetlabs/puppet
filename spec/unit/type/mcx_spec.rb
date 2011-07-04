@@ -12,19 +12,19 @@ describe mcx_type, "when validating attributes" do
 
   parameters.each do |p|
     it "should have a #{p} parameter" do
-      mcx_type.attrclass(p).ancestors.should be_include(Puppet::Parameter)
+      mcx_type.parameter(p).ancestors.should be_include(Puppet::Parameter)
     end
     it "should have documentation for its #{p} parameter" do
-      mcx_type.attrclass(p).doc.should be_instance_of(String)
+      mcx_type.parameter(p).doc.should be_instance_of(String)
     end
   end
 
   properties.each do |p|
     it "should have a #{p} property" do
-      mcx_type.attrclass(p).ancestors.should be_include(Puppet::Property)
+      mcx_type.parameter(p).ancestors.should be_include(Puppet::Property)
     end
     it "should have documentation for its #{p} property" do
-      mcx_type.attrclass(p).doc.should be_instance_of(String)
+      mcx_type.parameter(p).doc.should be_instance_of(String)
     end
   end
 

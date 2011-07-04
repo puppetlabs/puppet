@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-property = Puppet::Type.type(:file).attrclass(:ensure)
+property = Puppet::Type.type(:file).parameter(:ensure)
 
 describe property do
   before do

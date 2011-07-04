@@ -1,7 +1,7 @@
 #! /usr/bin/env ruby -S rspec
 require 'spec_helper'
 
-checksum = Puppet::Type.type(:file).attrclass(:checksum)
+checksum = Puppet::Type.type(:file).parameter(:checksum)
 describe checksum do
   before do
     @path = Puppet.features.microsoft_windows? ? "c:/foo/bar" : "/foo/bar"

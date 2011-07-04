@@ -13,7 +13,7 @@ describe zpool do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      zpool.attrclass(property).ancestors.should be_include(Puppet::Property)
+      zpool.parameter(property).ancestors.should be_include(Puppet::Property)
     end
   end
 
@@ -21,7 +21,7 @@ describe zpool do
 
   parameters.each do |parameter|
     it "should have a #{parameter} parameter" do
-      zpool.attrclass(parameter).ancestors.should be_include(Puppet::Parameter)
+      zpool.parameter(parameter).ancestors.should be_include(Puppet::Parameter)
     end
   end
 end

@@ -62,11 +62,11 @@ describe Puppet::Type.type(:user) do
 
   properties.each do |property|
     it "should have a #{property} property" do
-      described_class.attrclass(property).ancestors.should be_include(Puppet::Property)
+      described_class.parameter(property).ancestors.should be_include(Puppet::Property)
     end
 
     it "should have documentation for its #{property} property" do
-      described_class.attrclass(property).doc.should be_instance_of(String)
+      described_class.parameter(property).doc.should be_instance_of(String)
     end
   end
 
@@ -74,16 +74,16 @@ describe Puppet::Type.type(:user) do
 
   list_properties.each do |property|
     it "should have a list '#{property}'" do
-      described_class.attrclass(property).ancestors.should be_include(Puppet::Property::List)
+      described_class.parameter(property).ancestors.should be_include(Puppet::Property::List)
     end
   end
 
   it "should have an ordered list 'profiles'" do
-    described_class.attrclass(:profiles).ancestors.should be_include(Puppet::Property::OrderedList)
+    described_class.parameter(:profiles).ancestors.should be_include(Puppet::Property::OrderedList)
   end
 
   it "should have key values 'keys'" do
-    described_class.attrclass(:keys).ancestors.should be_include(Puppet::Property::KeyValue)
+    described_class.parameter(:keys).ancestors.should be_include(Puppet::Property::KeyValue)
   end
 
   describe "when retrieving all current values" do
