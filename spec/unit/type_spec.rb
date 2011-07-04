@@ -730,7 +730,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
   end
 
   it "should have a 'stage' metaparam" do
-    Puppet::Type.metaparamclass(:stage).should be_instance_of(Class)
+    Puppet::Type.metaparameter(:stage).should be_instance_of(Class)
   end
 
   describe "#suitable?" do
@@ -877,7 +877,7 @@ describe Puppet::Type::RelationshipMetaparam do
     before do
       @path = File.expand_path('/foo')
       @resource = Puppet::Type.type(:file).new :name => @path
-      @metaparam = Puppet::Type.metaparamclass(:require).new :resource => @resource
+      @metaparam = Puppet::Type.metaparameter(:require).new :resource => @resource
     end
 
     it "should accept Puppet::Resource instances" do
@@ -891,14 +891,14 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 
   it "should be able to validate relationships" do
-    Puppet::Type.metaparamclass(:require).new(:resource => mock("resource")).should respond_to(:validate_relationship)
+    Puppet::Type.metaparameter(:require).new(:resource => mock("resource")).should respond_to(:validate_relationship)
   end
 
   it "should fail if any specified resource is not found in the catalog" do
     catalog = mock 'catalog'
     resource = stub 'resource', :catalog => catalog, :ref => "resource"
 
-    param = Puppet::Type.metaparamclass(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]})
+    param = Puppet::Type.metaparameter(:require).new(:resource => resource, :value => %w{Foo[bar] Class[test]})
 
     catalog.expects(:resource).with("Foo[bar]").returns "something"
     catalog.expects(:resource).with("Class[Test]").returns nil
@@ -909,9 +909,8 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 end
 
-describe Puppet::Type.metaparamclass(:check) do
+describe Puppet::Type.metaparameter(:check) do
   include PuppetSpec::Files
-
   it "should warn and create an instance of ':audit'" do
     file = Puppet::Type.type(:file).new :path => make_absolute('/foo')
     file.expects(:warning)
@@ -920,9 +919,8 @@ describe Puppet::Type.metaparamclass(:check) do
   end
 end
 
-describe Puppet::Type.metaparamclass(:audit) do
+describe Puppet::Type.metaparameter(:audit) do
   include PuppetSpec::Files
-
   before do
     @resource = Puppet::Type.type(:file).new :path => make_absolute('/foo')
   end

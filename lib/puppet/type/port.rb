@@ -90,7 +90,7 @@
 #                unless value == "absent" or value == :absent
 #                    # Add the :alias metaparam in addition to the property
 #                    @resource.newmetaparam(
-#                        @resource.class.metaparamclass(:alias), value
+#                        @resource.class.metaparameter(:alias), value
 #                    )
 #                end
 #                value

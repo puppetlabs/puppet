@@ -266,6 +266,10 @@ class Type
     Puppet::Type.valid_parameter?(param)
   end
 
+  def self.metaparameter(name)
+    Puppet::Type.parameter(name)
+  end
+
   def self.metaparameters
     Puppet::Type.parameters
   end
@@ -280,11 +284,6 @@ class Type
   # in the order they were specified in the files.
   def self.metaparams
     metaparameters
-  end
-
-  # Find the metaparameter class associated with a given metaparameter name.
-  def self.metaparamclass(name)
-    Puppet::Type.parameter(name)
   end
 
   # Find a parameter, property, or metaparameter class by name

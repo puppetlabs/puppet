@@ -392,7 +392,7 @@ class Puppet::Resource::Type
   end
 
   def warn_if_metaparam(param, default)
-    return unless Puppet::Type.metaparamclass(param)
+    return unless Puppet::Type.metaparameter(param)
 
     if default
       warnonce "#{param} is a metaparam; this value will inherit to all contained resources in the #{self.name} definition"

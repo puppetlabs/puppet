@@ -136,32 +136,6 @@ describe Puppet::Property do
     end
   end
 
-  describe "when shadowing metaparameters" do
-    let :shadow_class do
-      shadow_class = Class.new(Puppet::Property) do
-        @name = :alias
-      end
-      shadow_class.initvars
-      shadow_class
-    end
-
-    it "should create an instance of the metaparameter at initialization" do
-      Puppet::Type.metaparamclass(:alias).expects(:new).with(:resource => resource)
-
-      shadow_class.new :resource => resource
-    end
-
-    it "should munge values using the shadow's munge method" do
-      shadow = mock 'shadow'
-      Puppet::Type.metaparamclass(:alias).expects(:new).returns shadow
-
-      shadow.expects(:munge).with "foo"
-
-      property = shadow_class.new :resource => resource
-      property.munge("foo")
-    end
-  end
-
   describe "when defining new values" do
     it "should define a method for each value created with a block that's not a regex" do
       subclass.newvalue(:foo) { }
