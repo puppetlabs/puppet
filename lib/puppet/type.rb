@@ -290,10 +290,6 @@ class Type
     parameters.find_all { |p| p.property? }
   end
 
-  def self.validattr?(name)
-    valid_parameter?(name)
-  end
-
   # does the name reflect a valid property?
   def self.validproperty?(name)
     p = parameter(name) and p.property?
@@ -513,7 +509,7 @@ class Type
   # 'object.should(:property)'.
   def [](name)
     name = name.intern
-    fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.validattr?(name)
+    fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.valid_parameter??(name)
 
     if name == :name && nv = name_var
       name = nv
@@ -534,7 +530,7 @@ class Type
   def []=(name,value)
     name = name.intern
 
-    fail("Invalid parameter #{name}") unless self.class.validattr?(name)
+    fail("Invalid parameter #{name}") unless self.class.valid_parameter??(name)
 
     if name == :name && nv = name_var
       name = nv
@@ -807,7 +803,7 @@ class Type
     # Provide the name, so we know we'll always refer to a real thing
     result[:name] = self[:name] unless self[:name] == title
 
-    if ensure_prop = property(:ensure) or (self.class.validattr?(:ensure) and ensure_prop = newattr(:ensure))
+    if ensure_prop = property(:ensure) or (self.class.valid_parameter?(:ensure) and ensure_prop = newattr(:ensure))
       result[:ensure] = ensure_state = ensure_prop.retrieve
     else
       ensure_state = nil
@@ -1007,7 +1003,7 @@ class Type
       list = Array(list).collect {|p| p.to_sym}
       unless list == [:all]
         list.each do |param|
-          next if @resource.class.validattr?(param)
+          next if @resource.class.valid_parameter?(param)
           fail "Cannot audit #{param}: not a valid attribute for #{resource}"
         end
       end
