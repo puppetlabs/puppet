@@ -278,10 +278,6 @@ class Type
   # All parameters, in the appropriate order.  The key_attributes come first, then
   # the provider, then the properties, and finally the params and metaparams
   # in the order they were specified in the files.
-  def self.allattrs
-    parameter_names
-  end
-
   def self.metaparams
     metaparameters
   end
@@ -1829,7 +1825,7 @@ class Type
     # extra attributes from the resource so we get failures
     # on invalid attributes.
     no_values = []
-    order = (self.class.allattrs + hash.keys).uniq
+    order = (self.class.parameter_names + hash.keys).uniq
     order.uniq.each do |attr|
       begin
         # Set any defaults immediately.  This is mostly done so

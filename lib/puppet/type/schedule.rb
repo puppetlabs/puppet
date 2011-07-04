@@ -451,7 +451,7 @@ module Puppet
       now ||= Time.now
 
       # Pull them in order
-      self.class.allattrs.each { |param|
+      self.class.parameter_names.each { |param|
         if @parameters.include?(param) and
           @parameters[param].respond_to?(:match?)
           return false unless @parameters[param].match?(previous, now)

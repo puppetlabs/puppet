@@ -506,8 +506,8 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       expect { Puppet::Type.type(:file).new(:atboot => true) }.to raise_error(Puppet::Error)
     end
 
-    it "should set the attributes in the order returned by the class's :allattrs method" do
-      Puppet::Type.type(:mount).stubs(:allattrs).returns([:name, :atboot, :noop])
+    it "should set the attributes in the order returned by the class's :parameter_names method" do
+      Puppet::Type.type(:mount).stubs(:parameter_names).returns([:name, :atboot, :noop])
       resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => "myboot", :noop => "whatever"})
 
       set = []
@@ -524,7 +524,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should always set the name and then default provider before anything else" do
-      Puppet::Type.type(:mount).stubs(:allattrs).returns([:provider, :name, :atboot])
+      Puppet::Type.type(:mount).stubs(:parameter_names).returns([:provider, :name, :atboot])
       resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "myname", :atboot => "myboot"})
 
       set = []
