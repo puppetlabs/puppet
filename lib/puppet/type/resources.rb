@@ -92,7 +92,7 @@ Puppet::Type.newtype(:resources) do
       select { |r| able_to_ensure_absent?(r) }.
       each { |resource|
         @parameters.each do |name, param|
-          resource[name] = param.value if param.metaparam?
+          resource[name] = param.value if param.metaparameter?
         end
 
         # Mark that we're purging, so transactions can handle relationships

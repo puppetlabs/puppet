@@ -292,7 +292,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     end
 
     it "should not consider :name to be a valid metaparameter" do
-      Puppet::Type.should_not be_metaparam(:name)
+      Puppet::Type.should_not be_metaparameter(:name)
     end
   end
 

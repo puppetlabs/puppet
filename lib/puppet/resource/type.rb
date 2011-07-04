@@ -328,7 +328,7 @@ class Puppet::Resource::Type
     param = param.to_s
 
     return true if param == "name"
-    return true if Puppet::Type.metaparam?(param)
+    return true if Puppet::Type.metaparameter?(param)
     return false unless defined?(@arguments)
     return(arguments.include?(param) ? true : false)
   end

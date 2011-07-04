@@ -22,13 +22,13 @@ describe Puppet::Parameter do
   end
 
   it "should default to being a 'parameter'" do
-    @class = Class.new(Puppet::Parameter)
+    @class = Class.new(Puppet::Parameter) { @name = :foo }
     @class.should be_parameter
     @class.parameter_type.should == :parameter
   end
 
   it "should be a property when it is a subclass of Property" do
-    @class = Class.new(Puppet::Property)
+    @class = Class.new(Puppet::Property) { @name = :foo }
     @class.should be_property
     @class.parameter_type.should == :property
   end
@@ -37,7 +37,7 @@ describe Puppet::Parameter do
     @class = Class.new(Puppet::Parameter) do
       @name = :foo
     end
-    Puppet::Type.stubs(:metaparam?).with(:foo).returns true
+    Puppet::Type.stubs(:metaparameter?).with(:foo).returns true
     @class.should be_metaparameter
     @class.parameter_type.should == :metaparameter
   end

@@ -262,7 +262,7 @@ class Type
   end
 
   # Is the parameter in question a meta-parameter?
-  def self.metaparam?(param)
+  def self.metaparameter?(param)
     Puppet::Type.valid_parameter?(param)
   end
 
