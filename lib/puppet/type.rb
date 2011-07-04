@@ -290,10 +290,6 @@ class Type
     parameters.find_all { |p| p.property? }
   end
 
-  def self.eachmetaparam
-    parameters.each { |p| yield p.name }
-  end
-
   def self.validattr?(name)
     valid_parameter?(name)
   end

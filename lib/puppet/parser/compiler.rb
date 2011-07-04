@@ -356,9 +356,9 @@ class Puppet::Parser::Compiler
     end
 
     names = []
-    Puppet::Type.eachmetaparam do |name|
-      next if Puppet::Parser::Resource.relationship_parameter?(name)
-      names << name
+    Puppet::Type.metaparameters.each do |param|
+      next if Puppet::Parser::Resource.relationship_parameter?(param.name)
+      names << param.name
     end
 
     data = {}
