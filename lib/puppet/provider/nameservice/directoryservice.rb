@@ -65,7 +65,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # JJM Class method that provides an array of instance objects of this
     #     type.
     # JJM: Properties are dependent on the Puppet::Type we're managine.
-    type_property_array = [:name] + @resource_type.validproperties
+    type_property_array = [:name] + @resource_type.property_names
 
     # Create a new instance of this Puppet::Type for each object present
     #    on the system.
@@ -153,7 +153,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # stored in the user record. It is stored at a path that involves the
     # UUID of the user record for non-Mobile local acccounts.
     # Mobile Accounts are out of scope for this provider for now
-    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.validproperties.include?(:password) and Puppet.features.root?
+    attribute_hash[:password] = self.get_password(attribute_hash[:guid], attribute_hash[:name]) if @resource_type.property_names.include?(:password) and Puppet.features.root?
     attribute_hash
   end
 
@@ -393,7 +393,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     # managing and call the method which sets that property value
     # dscl can't create everything at once unfortunately.
     if ensure_value == :present
-      @resource.class.validproperties.each do |name|
+      @resource.class.property_names.each do |name|
         next if name == :ensure
         # LAK: We use property.sync here rather than directly calling
         # the settor method because the properties might do some kind
@@ -486,7 +486,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
     end
 
     # Now we create all the standard properties
-    Puppet::Type.type(@resource.class.name).validproperties.each do |property|
+    Puppet::Type.type(@resource.class.name).property_names.each do |property|
       next if property == :ensure
       value = @resource.should(property)
       if property == :gid and value.nil?
@@ -573,7 +573,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       # self.class.resource_type is a reference to the Puppet::Type class,
       # probably Puppet::Type::User or Puppet::Type::Group, etc...
       #
-      # self.class.resource_type.validproperties is a class method,
+      # self.class.resource_type.property_names is a class method,
       # returning an Array of the valid properties of that specific
       # Puppet::Type.
       #
@@ -582,7 +582,7 @@ class Puppet::Provider::NameService::DirectoryService < Puppet::Provider::NameSe
       #
       # Ultimately, we add :name to the list, delete :ensure from the
       # list, then report on the remaining list. Pretty whacky, ehh?
-      type_properties = [:name] + self.class.resource_type.validproperties
+      type_properties = [:name] + self.class.resource_type.property_names
       type_properties.delete(:ensure) if type_properties.include? :ensure
       type_properties << :guid  # append GeneratedUID so we just get the report here
       @property_value_cache_hash = self.class.single_report(@resource[:name], *type_properties)

@@ -70,7 +70,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
     end
 
     docs = {}
-    type.validproperties.sort { |a,b|
+    type.property_names.sort { |a,b|
       a.to_s <=> b.to_s
     }.reject { |sname|
       property = type.parameter(sname)

@@ -89,7 +89,7 @@ describe provider_class do
       @instance = provider_class.new(:device)
 
       @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-      @resource_class = stub 'resource_class', :parameter => @property_class, :valid_parameter? => true, :validproperties => [:description]
+      @resource_class = stub 'resource_class', :parameter => @property_class, :valid_parameter? => true, :property_names => [:description]
       provider_class.stubs(:resource_type).returns @resource_class
     end
 
@@ -122,7 +122,7 @@ describe provider_class do
     describe "is being created" do
       before do
         @rclass = mock 'resource_class'
-        @rclass.stubs(:validproperties).returns([:description])
+        @rclass.stubs(:property_names).returns([:description])
         @resource = stub_everything 'resource'
         @resource.stubs(:class).returns @rclass
         @resource.stubs(:should).returns nil

@@ -30,7 +30,7 @@ Puppet::Type.type(:user).provide :user_role_add, :parent => :useradd, :source =>
   #must override this to hand the keyvalue pairs
   def add_properties
     cmd = []
-    Puppet::Type.type(:user).validproperties.each do |property|
+    Puppet::Type.type(:user).property_names.each do |property|
       #skip the password because we can't create it with the solaris useradd
       next if [:ensure, :password, :password_min_age, :password_max_age].include?(property)
       # 1680 Now you can set the hashed passwords on solaris:lib/puppet/provider/user/user_role_add.rb

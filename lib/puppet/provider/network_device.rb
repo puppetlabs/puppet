@@ -40,7 +40,7 @@ class Puppet::Provider::NetworkDevice < Puppet::Provider
 
   def create
     @property_hash[:ensure] = :present
-    self.class.resource_type.validproperties.each do |property|
+    self.class.resource_type.property_names.each do |property|
       if val = resource.should(property)
         @property_hash[property] = val
       end

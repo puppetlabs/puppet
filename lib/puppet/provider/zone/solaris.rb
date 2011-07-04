@@ -77,7 +77,7 @@ Puppet::Type.type(:zone).provide(:solaris) do
       if @property_hash.empty?
         @property_hash[:ensure] = :absent
       else
-        @resource.class.validproperties.each do |name|
+        @resource.class.property_names.each do |name|
           @property_hash[name] ||= :absent
         end
       end

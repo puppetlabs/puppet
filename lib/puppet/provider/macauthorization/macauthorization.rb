@@ -86,7 +86,7 @@ Puppet::Type.type(:macauthorization).provide :macauthorization, :parent => Puppe
     # we just fill the @property_hash in here and let the flush method
     # deal with it rather than repeating code.
     new_values = {}
-    validprops = Puppet::Type.type(resource.class.name).validproperties
+    validprops = Puppet::Type.type(resource.class.name).property_names
     validprops.each do |prop|
       next if prop == :ensure
       if value = resource.should(prop) and value != ""

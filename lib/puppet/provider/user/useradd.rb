@@ -54,7 +54,7 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
 
   def add_properties
     cmd = []
-    Puppet::Type.type(:user).validproperties.each do |property|
+    Puppet::Type.type(:user).property_names.each do |property|
       next if property == :ensure
       next if property.to_s =~ /password_.+_age/
       # the value needs to be quoted, mostly because -c might

@@ -212,7 +212,7 @@ describe Puppet::Provider::Ldap do
     describe "is being created" do
       before do
         @rclass = mock 'resource_class'
-        @rclass.stubs(:validproperties).returns([:one, :two])
+        @rclass.stubs(:property_names).returns([:one, :two])
         @resource = mock 'resource'
         @resource.stubs(:class).returns @rclass
         @resource.stubs(:[]).returns nil

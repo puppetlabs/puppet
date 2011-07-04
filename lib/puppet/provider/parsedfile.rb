@@ -305,7 +305,7 @@ class Puppet::Provider::ParsedFile < Puppet::Provider
   end
 
   def create
-    @resource.class.validproperties.each do |property|
+    @resource.class.property_names.each do |property|
       if value = @resource.should(property)
         @property_hash[property] = value
       end

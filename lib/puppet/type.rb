@@ -257,6 +257,10 @@ class Type
     parameters.find_all { |p| p.property? }
   end
 
+  def self.property_names
+    properties.collect { |p| p.name }
+  end
+
   # Is the provided name a valid parameter?
   # This method is used in both Puppet::Type and Puppet::Resource.
   def self.valid_parameter?(name)
@@ -281,19 +285,6 @@ class Type
 
   # All new code in this block
   #############################
-
-  #############################
-  # This code should probably all be removed
-  # All parameters, in the appropriate order.  The key_attributes come first, then
-  # the provider, then the properties, and finally the params and metaparams
-  # in the order they were specified in the files.
-  # does the name reflect a valid property?
-  # Return the list of validproperties
-  def self.validproperties
-    parameters.find_all { |p| p.property? }.collect { |p| p.name }
-  end
-  # end of code likely to be removed
-  ##############################
 
   # Create the 'ensure' class.  This is a separate method so other types
   # can easily call it and create their own 'ensure' values.
@@ -502,7 +493,7 @@ class Type
   # 'object.should(:property)'.
   def [](name)
     name = name.intern
-    fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.valid_parameter??(name)
+    fail("Invalid parameter #{name}(#{name.inspect})") unless self.class.valid_parameter?(name)
 
     if name == :name && nv = name_var
       name = nv
@@ -523,7 +514,7 @@ class Type
   def []=(name,value)
     name = name.intern
 
-    fail("Invalid parameter #{name}") unless self.class.valid_parameter??(name)
+    fail("Invalid parameter #{name}") unless self.class.valid_parameter?(name)
 
     if name == :name && nv = name_var
       name = nv

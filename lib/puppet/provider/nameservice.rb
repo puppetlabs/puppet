@@ -66,7 +66,7 @@ class Puppet::Provider::NameService < Puppet::Provider
 
     def resource_type=(resource_type)
       super
-      @resource_type.validproperties.each do |prop|
+      @resource_type.property_names.each do |prop|
         next if prop == :ensure
         define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
         define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")
@@ -248,7 +248,7 @@ class Puppet::Provider::NameService < Puppet::Provider
   # Convert the Etc struct into a hash.
   def info2hash(info)
     hash = {}
-    self.class.resource_type.validproperties.each do |param|
+    self.class.resource_type.property_names.each do |param|
       method = posixmethod(param)
       hash[param] = info.send(posixmethod(param)) if info.respond_to? method
     end

@@ -6,7 +6,7 @@ Puppet::Type.type(:zfs).provide(:solaris) do
 
   def add_properties
     properties = []
-    Puppet::Type.type(:zfs).validproperties.each do |property|
+    Puppet::Type.type(:zfs).property_names.each do |property|
       next if property == :ensure
       if value = @resource[property] and value != ""
         properties << "-o" << "#{property}=#{value}"
