@@ -94,10 +94,9 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
 
     str << markdown_header("Parameters", 4) + "\n"
     type.parameters.sort { |a,b|
-      a.to_s <=> b.to_s
-    }.each { |name,param|
-      #docs[name] = indent(scrub(type.paramdoc(name)), $tab)
-      docs[name] = scrub(type.paramdoc(name))
+      a.name.to_s <=> b.name.to_s
+    }.each { |param|
+      docs[param.name] = scrub(param.doc)
     }
 
     additional_key_attributes = type.key_attributes - [:name]

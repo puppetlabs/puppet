@@ -147,6 +147,143 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     resource.should_not be_noop
   end
 
+  describe "when defining parameters" do
+    before do
+      @type = Puppet::Type.newtype(:parameter_tester)
+    end
+
+    after do
+      Puppet::Type.rmtype(:parameter_tester)
+    end
+
+    it "should support defining and retrieving parameters" do
+      @type.newparam(:foo)
+      @type.parameter(:foo).should be_instance_of(Class)
+    end
+
+    it "should support retrieving parameters specified with a string" do
+      @type.newparam(:foo)
+      @type.parameter("foo").should be_instance_of(Class)
+    end
+
+    it "should support returning all parameters" do
+      foo = @type.newparam(:foo)
+      @type.parameters.should be_include(foo)
+    end
+
+    it "should always return parameters in the order specified" do
+      foo = @type.newparam(:foo)
+      bar = @type.newparam(:bar)
+      baz = @type.newparam(:baz)
+      params = @type.parameters
+      params.index(foo).should < params.index(bar)
+      params.index(bar).should < params.index(baz)
+    end
+
+    it "should always put the namevar first" do
+      foo = @type.newparam(:foo)
+      name = @type.newparam(:name) { isnamevar }
+      params = @type.parameters
+      params.index(name).should < params.index(foo)
+    end
+
+    it "should always put the namevar first even if the parameter isn't declared the namevar but is named 'name'" do
+      foo = @type.newparam(:foo)
+      name = @type.newparam(:name)
+      params = @type.parameters
+      params.index(name).should < params.index(foo)
+    end
+
+    it "should always put 'provider' as the first-non-namevar parameter" do
+      foo = @type.newparam(:foo)
+      provider = @type.newparam(:provider)
+      name = @type.newparam(:name)
+      params = @type.parameters
+      params.index(name).should < params.index(provider)
+      params.index(provider).should < params.index(foo)
+    end
+
+    it "should always put 'provider' as the first-non-namevar parameter even when it's added later" do
+      name = @type.newparam(:name)
+      provider = @type.newparam(:provider)
+      foo = @type.newparam(:foo)
+      params = @type.parameters
+      params.index(name).should < params.index(provider)
+      params.index(provider).should < params.index(foo)
+    end
+
+    it "should always put 'ensure' before any other properties but after the namevar" do
+      foo = @type.newproperty(:foo)
+      ens = @type.newproperty(:ensure)
+      name = @type.newparam(:name) { isnamevar }
+      params = @type.parameters
+      params.index(name).should < params.index(ens)
+      params.index(ens).should < params.index(foo)
+    end
+
+    it "should include metaparameters when asked for all parameters" do
+      noop = @type.parameter(:noop)
+      @type.parameters.should be_include(noop)
+    end
+
+    it "should be able to return a list of parameter names" do
+      @type.newparam(:foo)
+      @type.parameter_names.should be_include(:foo)
+    end
+
+    it "should include metaparameters when asked for all parameter names" do
+      @type.parameter(:noop)
+      @type.parameter_names.should be_include(:noop)
+    end
+
+    it "should support defining and retrieving properties" do
+      @type.newproperty(:foo)
+      @type.parameter(:foo).should be_instance_of(Class)
+    end
+
+    it "should be able to retrieve a metaparameter class by name" do
+      @type.parameter(:noop).should be_instance_of(Class)
+    end
+
+    it "should consider subclasses of Property to be properties" do
+      @type.newproperty(:foo)
+      @type.parameter_type(:foo).should == :property
+    end
+
+    it "should be able to determine parameter type of parameters passed as a string" do
+      @type.newproperty(:foo)
+      @type.parameter_type("foo").should == :property
+    end
+
+    it "should be able to detect metaparameters" do
+      @type.parameter_type(:noop).should == :metaparameter
+    end
+
+    it "should consider any non-metaparam subclass of Parameter to be a parameter" do
+      @type.newparam(:foo)
+      @type.parameter_type(:foo).should == :parameter
+    end
+
+    it "should consider a defined parameter to be valid" do
+      @type.newparam(:foo)
+      @type.should be_valid_parameter(:foo)
+    end
+
+    it "should consider a defined property to be valid" do
+      @type.newproperty(:foo)
+      @type.should be_valid_parameter(:foo)
+    end
+
+    it "should consider metaparameters to be valid" do
+      @type.should be_valid_parameter(:noop)
+    end
+
+    it "should accept parameters specified as a string" do
+      @type.newparam(:foo)
+      @type.should be_valid_parameter("foo")
+    end
+  end
+
   describe "when creating an event" do
     before do
       @resource = Puppet::Type.type(:mount).new :name => "foo"
@@ -202,7 +339,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
 
     it "should have documentation for the 'provider' parameter if there are providers" do
       @type.provide(:test_provider)
-      @type.paramdoc(:provider).should =~ /`provider_test_type`[\s\r]+resource/
+      @type.parameter(:provider).doc.should =~ /`provider_test_type`[\s\r]+resource/
     end
 
     it "should not have documentation for the 'provider' parameter if there are no providers" do
@@ -238,7 +375,7 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     it "should ensure its type has a 'provider' parameter" do
       @type.provide(:test_provider)
 
-      @type.parameters.should include(:provider)
+      @type.parameter_names.should include(:provider)
     end
 
     it "should remove a previously registered provider with the same name" do
@@ -884,15 +1021,15 @@ describe Puppet::Type.metaparamclass(:audit) do
 
       instance[:one] = "boo"
       one = instance.property(:one)
-      instance.properties.must == [one]
+      instance.properties.collect { |p| p.name }.must == [:one]
 
       instance[:three] = "rah"
       three = instance.property(:three)
-      instance.properties.must == [one, three]
+      instance.properties.collect { |p| p.name }.must == [:one, :three]
 
       instance[:two] = "whee"
       two = instance.property(:two)
-      instance.properties.must == [one, two, three]
+      instance.properties.collect { |p| p.name }.must == [:one, :two, :three]
     end
 
     it "newattr should handle required features correctly" do
@@ -960,7 +1097,7 @@ describe Puppet::Type.metaparamclass(:audit) do
         newparam(:name) {}
       end
 
-      type.parameters.should include(:provider)
+      type.parameter_names.should include(:provider)
     end
   end
 end

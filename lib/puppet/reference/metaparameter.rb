@@ -22,15 +22,11 @@ in your manifest, including defined components.
 }
   begin
     params = []
-    Puppet::Type.eachmetaparam { |param|
-      params << param
-    }
-
-    params.sort { |a,b|
-      a.to_s <=> b.to_s
+    Puppet::Type.metaparameters.sort { |a,b|
+      a.name.to_s <=> b.name.to_s
     }.each { |param|
       str << markdown_header(param.to_s, 3)
-      str << scrub(Puppet::Type.metaparamdoc(param))
+      str << scrub(param.doc)
       str << "\n\n"
     }
   rescue => detail

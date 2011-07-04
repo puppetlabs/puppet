@@ -173,50 +173,178 @@ class Type
   class << self
     include Puppet::Util::ClassGen
     include Puppet::Util::Warnings
-    attr_reader :properties
   end
 
+  ###############################
+  # New paramcode to define the new interface
+
+  # A method for adding a new parameter to the list of known parameters.
+  # These variables should never be accessed directly anywhere other than the
+  # gate methods defined here.
+  def self.add_parameter_class(klass)
+    @parameters ||= []
+
+    @parameters_fully_ordered ||= []
+    @parameters_fully_ordered << klass
+
+    @parameters << klass
+    @parameters.sort! { |a,b|
+      case
+      when a.isnamevar? || (a.name == :name)
+        -1
+      when b.isnamevar? || (b.name == :name)
+        1
+      when a.name == :provider
+        -1
+      when b.name == :provider
+        1
+      when a.name == :ensure
+        -1
+      when b.name == :ensure
+        1
+      when a.parameter? && b.property?
+        -1
+      when a.property? && b.parameter?
+        1
+      else
+        @parameters_fully_ordered.index(a) <=> @parameters_fully_ordered.index(b)
+      end
+    }
+    @parameters_by_name ||= {}
+    @parameters_by_name[klass.name] = klass
+  end
+
+  # Return the list of all parameter classes supported by this class.
+  # Always includes metaparameters.
+  def self.parameters
+    @parameters ||= []
+
+    # We're doing something slightly magical here - if a parameter
+    # are defined in Puppet::Type (rather than a subclass), then it's
+    # a metaparam.  Thus, we have to behave a bit differently if we're
+    # the base class.
+    if self == Puppet::Type
+      @parameters.dup
+    else
+      @parameters + metaparameters
+    end
+  end
+
+  def self.parameter_names
+    parameters.collect { |p| p.name }
+  end
+
+  # This returns the class for a given parameter, or nil.
+  def self.parameter(name)
+    name = name.to_sym
+    @parameters_by_name ||= {}
+    if self == Puppet::Type
+      @parameters_by_name[name]
+    else
+      @parameters_by_name[name] || Puppet::Type.parameter(name)
+    end
+  end
+
+  # What kind of parameter do we have - property, parameter, or metaparameter?
+  def self.parameter_type(name)
+    name = name.to_sym
+    return nil unless klass = parameter(name)
+    klass.parameter_type
+  end
+
+  # Is the provided name a valid parameter?
+  # This method is used in both Puppet::Type and Puppet::Resource.
+  def self.valid_parameter?(name)
+    name = name.to_sym
+    return true if name == :name
+    return true if parameter(name)
+    return false
+  end
+
+  # Is the parameter in question a meta-parameter?
+  def self.metaparam?(param)
+    Puppet::Type.valid_parameter?(param)
+  end
+
+  def self.metaparameters
+    Puppet::Type.parameters
+  end
+
+  # All new code in this block
+  #############################
+
+  #############################
+  # This code should probably all be removed
   # All parameters, in the appropriate order.  The key_attributes come first, then
   # the provider, then the properties, and finally the params and metaparams
   # in the order they were specified in the files.
   def self.allattrs
-    key_attributes | (parameters & [:provider]) | properties.collect { |property| property.name } | parameters | metaparams
+    parameter_names
+  end
+
+  def self.metaparams
+    metaparameters
+  end
+
+  # Find the metaparameter class associated with a given metaparameter name.
+  def self.metaparamclass(name)
+    Puppet::Type.parameter(name)
+  end
+
+  # Find a parameter, property, or metaparameter class by name
+  def self.parameter_class(name)
+    parameter(name)
+  end
+
+  def self.properties
+    parameters.find_all { |p| p.property? }
   end
 
   # Find the class associated with any given attribute.
   def self.attrclass(name)
-    @attrclasses ||= {}
-
-    # We cache the value, since this method gets called such a huge number
-    # of times (as in, hundreds of thousands in a given run).
-    unless @attrclasses.include?(name)
-      @attrclasses[name] = case self.attrtype(name)
-      when :property; @validproperties[name]
-      when :meta; @@metaparamhash[name]
-      when :param; @paramhash[name]
-      end
-    end
-    @attrclasses[name]
+    parameter(name)
   end
 
   # What type of parameter are we dealing with? Cache the results, because
   # this method gets called so many times.
   def self.attrtype(attr)
-    @attrtypes ||= {}
-    unless @attrtypes.include?(attr)
-      @attrtypes[attr] = case
-        when @validproperties.include?(attr); :property
-        when @paramhash.include?(attr); :param
-        when @@metaparamhash.include?(attr); :meta
-        end
-    end
-
-    @attrtypes[attr]
+    parameter_type(attr)
   end
 
   def self.eachmetaparam
-    @@metaparams.each { |p| yield p.name }
+    parameters.each { |p| yield p.name }
   end
+
+  # Find the parameter class associated with a given parameter name.
+  def self.paramclass(name)
+    parameter(name)
+  end
+
+  # Return the property class associated with a name
+  def self.propertybyname(name)
+    parameter(name)
+  end
+
+  def self.validattr?(name)
+    valid_parameter?(name)
+  end
+
+  # does the name reflect a valid property?
+  def self.validproperty?(name)
+    p = parameter(name) and p.property?
+  end
+
+  # Return the list of validproperties
+  def self.validproperties
+    parameters.find_all { |p| p.property? }.collect { |p| p.name }
+  end
+
+  # does the name reflect a valid parameter?
+  def self.validparameter?(name)
+    valid_aparameter?(name)
+  end
+  # end of code likely to be removed
+  ##############################
 
   # Create the 'ensure' class.  This is a separate method so other types
   # can easily call it and create their own 'ensure' values.
@@ -279,39 +407,17 @@ class Type
     end
   end
 
-  # Is the parameter in question a meta-parameter?
-  def self.metaparam?(param)
-    @@metaparamhash.include?(param.intern)
-  end
-
-  # Find the metaparameter class associated with a given metaparameter name.
-  # Must accept a `nil` name, and return nil.
-  def self.metaparamclass(name)
-    return nil if name.nil?
-    @@metaparamhash[name.intern]
-  end
-
-  def self.metaparams
-    @@metaparams.collect { |param| param.name }
-  end
-
-  def self.metaparamdoc(metaparam)
-    @@metaparamhash[metaparam].doc
-  end
-
   # Create a new metaparam.  Requires a block and a name, stores it in the
-  # @parameters array, and does some basic checking on it.
+  # @metaparams array, and does some basic checking on it.
   def self.newmetaparam(name, options = {}, &block)
-    @@metaparams ||= []
-    @@metaparamhash ||= {}
+    raise "Only Puppet::Type can add metaparams" unless self == Puppet::Type
+
     name = name.intern
 
     param = genclass(
       name,
       :parent => options[:parent] || Puppet::Parameter,
       :prefix => "MetaParam",
-      :hash => @@metaparamhash,
-      :array => @@metaparams,
       :attributes => options[:attributes],
       &block
     )
@@ -323,12 +429,15 @@ class Type
 
     param.metaparam = true
 
+    # Parameters stored by Puppet::Type are metaparams, by definition.
+    add_parameter_class(param)
+
     param
   end
 
   def self.key_attribute_parameters
     @key_attribute_parameters ||= (
-      params = @parameters.find_all { |param|
+      params = parameters.find_all { |param|
         param.isnamevar? or param.name == :name
       }
     )
@@ -354,7 +463,7 @@ class Type
   end
 
   # Create a new parameter.  Requires a block and a name, stores it in the
-  # @parameters array, and does some basic checking on it.
+  # parameter list, and does some basic checking on it.
   def self.newparam(name, options = {}, &block)
     options[:attributes] ||= {}
 
@@ -362,10 +471,8 @@ class Type
       name,
       :parent     => options[:parent] || Puppet::Parameter,
       :attributes => options[:attributes],
-      :block      => block,
-      :prefix     => "Parameter",
-      :array      => @parameters,
-      :hash       => @paramhash
+      :block => block,
+      :prefix => "Parameter"
     )
 
     handle_param_options(name, options)
@@ -374,6 +481,8 @@ class Type
     param.required_features = options[:required_features] if options[:required_features]
 
     param.isnamevar if options[:namevar]
+
+    add_parameter_class(param)
 
     param
   end
@@ -394,7 +503,7 @@ class Type
         "Options must be a hash, not #{options.inspect}"
     end
 
-    raise Puppet::DevError, "Class #{self.name} already has a property named #{name}" if @validproperties.include?(name)
+    raise Puppet::DevError, "Class #{self.name} already has a parameter named #{name}" if parameter(name)
 
     if parent = options[:parent]
       options.delete(:parent)
@@ -405,7 +514,7 @@ class Type
     # We have to create our own, new block here because we want to define
     # an initial :retrieve method, if told to, and then eval the passed
     # block if available.
-    prop = genclass(name, :parent => parent, :hash => @validproperties, :attributes => options) do
+    prop = genclass(name, :parent => parent, :attributes => options) do
       # If they've passed a retrieve method, then override the retrieve
       # method on the class.
       if options[:retrieve]
@@ -418,69 +527,9 @@ class Type
     end
 
     # If it's the 'ensure' property, always put it first.
-    if name == :ensure
-      @properties.unshift prop
-    else
-      @properties << prop
-    end
+    add_parameter_class(prop)
 
     prop
-  end
-
-  def self.paramdoc(param)
-    @paramhash[param].doc
-  end
-
-  # Return the parameter names
-  def self.parameters
-    return [] unless defined?(@parameters)
-    @parameters.collect { |klass| klass.name }
-  end
-
-  # Find the parameter class associated with a given parameter name.
-  def self.paramclass(name)
-    @paramhash[name]
-  end
-
-  # Return the property class associated with a name
-  def self.propertybyname(name)
-    @validproperties[name]
-  end
-
-  def self.validattr?(name)
-    name = name.intern
-    return true if name == :name
-    @validattrs ||= {}
-
-    unless @validattrs.include?(name)
-      @validattrs[name] = !!(self.validproperty?(name) or self.validparameter?(name) or self.metaparam?(name))
-    end
-
-    @validattrs[name]
-  end
-
-  # does the name reflect a valid property?
-  def self.validproperty?(name)
-    name = name.intern
-    @validproperties.include?(name) && @validproperties[name]
-  end
-
-  # Return the list of validproperties
-  def self.validproperties
-    return {} unless defined?(@parameters)
-
-    @validproperties.keys
-  end
-
-  # does the name reflect a valid parameter?
-  def self.validparameter?(name)
-    raise Puppet::DevError, "Class #{self} has not defined parameters" unless defined?(@parameters)
-    !!(@paramhash.include?(name) or @@metaparamhash.include?(name))
-  end
-
-  # This is a forward-compatibility method - it's the validity interface we'll use in Puppet::Resource.
-  def self.valid_parameter?(name)
-    validattr?(name)
   end
 
   # Are we deleting this resource?
@@ -588,7 +637,7 @@ class Type
       name = klass.name
     end
 
-    unless klass = self.class.attrclass(name)
+    unless klass = self.class.parameter(name)
       raise Puppet::Error, "Resource type #{self.class.name} does not support parameter #{name}"
     end
 
@@ -628,8 +677,10 @@ class Type
   # For any parameters or properties that have defaults and have not yet been
   # set, set them now.  This method can be handed a list of attributes,
   # and if so it will only set defaults for those attributes.
-  def set_default(attr)
-    return unless klass = self.class.attrclass(attr)
+  def set_default(klass)
+    unless klass.is_a?(Class)
+      return unless klass = self.class.parameter(klass)
+    end
     return unless klass.method_defined?(:default)
     return if @parameters.include?(klass.name)
 
@@ -1478,7 +1529,7 @@ class Type
   # Make sure we have a :provider parameter defined.  Only gets called if there
   # are providers.
   def self.providify
-    return if @paramhash.has_key? :provider
+    return if parameter(:provider)
 
     newparam(:provider) do
       # We're using a hacky way to get the name of our type, since there doesn't
@@ -1680,13 +1731,6 @@ class Type
 
   # all of the variables that must be initialized for each subclass
   def self.initvars
-    @parameters ||= []
-
-    @validproperties = {}
-    @properties = []
-    @parameters = []
-    @paramhash = {}
-
     @doc ||= ""
   end
 
@@ -1785,7 +1829,8 @@ class Type
     # extra attributes from the resource so we get failures
     # on invalid attributes.
     no_values = []
-    (self.class.allattrs + hash.keys).uniq.each do |attr|
+    order = (self.class.allattrs + hash.keys).uniq
+    order.uniq.each do |attr|
       begin
         # Set any defaults immediately.  This is mostly done so
         # that the default provider is available for any other

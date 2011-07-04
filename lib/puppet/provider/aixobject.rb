@@ -341,7 +341,7 @@ class Puppet::Provider::AixObject < Puppet::Provider
   # It creates getter/setter methods for each property our resource type supports.
   # If setter or getter already defined it will not be overwritten
   def self.mk_resource_methods
-    [resource_type.validproperties, resource_type.parameters].flatten.each do |prop|
+    resource_type.parameter_names.each do |prop|
       next if prop == :ensure
       define_method(prop) { get(prop) || :absent} unless public_method_defined?(prop)
       define_method(prop.to_s + "=") { |*vals| set(prop, *vals) } unless public_method_defined?(prop.to_s + "=")

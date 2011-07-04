@@ -257,7 +257,7 @@ class Puppet::Provider
   # They all get stored in @property_hash.  This method is useful
   # for those providers that use prefetch and flush.
   def self.mk_resource_methods
-    [resource_type.validproperties, resource_type.parameters].flatten.each do |attr|
+    resource_type.parameter_names.each do |attr|
       attr = attr.intern
       next if attr == :name
       define_method(attr) do

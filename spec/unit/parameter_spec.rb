@@ -21,6 +21,27 @@ describe Puppet::Parameter do
     @class.value_collection.should be_instance_of(Puppet::Parameter::ValueCollection)
   end
 
+  it "should default to being a 'parameter'" do
+    @class = Class.new(Puppet::Parameter)
+    @class.should be_parameter
+    @class.parameter_type.should == :parameter
+  end
+
+  it "should be a property when it is a subclass of Property" do
+    @class = Class.new(Puppet::Property)
+    @class.should be_property
+    @class.parameter_type.should == :property
+  end
+
+  it "should be a metaparameter when Puppet::Type thinks it is" do
+    @class = Class.new(Puppet::Parameter) do
+      @name = :foo
+    end
+    Puppet::Type.stubs(:metaparam?).with(:foo).returns true
+    @class.should be_metaparameter
+    @class.parameter_type.should == :metaparameter
+  end
+
   it "should return its name as a string when converted to a string" do
     @parameter.to_s.should == @parameter.name.to_s
   end

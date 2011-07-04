@@ -121,6 +121,24 @@ class Puppet::Parameter
     end
   end
 
+  def self.property?
+    ancestors.include?(Puppet::Property)
+  end
+
+  def self.metaparameter?
+    Puppet::Type.metaparam?(name)
+  end
+
+  def self.parameter?
+    ! property? and ! metaparameter?
+  end
+
+  def self.parameter_type
+    property? and return :property
+    metaparameter? and return :metaparameter
+    return :parameter
+  end
+
   # Just a simple method to proxy instance methods to class methods
   def self.proxymethods(*values)
     values.each { |val|
