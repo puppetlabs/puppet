@@ -44,9 +44,9 @@ class Puppet::Provider::Ldap < Puppet::Provider
 
   def create
     @property_hash[:ensure] = :present
-    self.class.resource_type.validproperties.each do |property|
-      if val = resource.should(property)
-        @property_hash[property] = val
+    self.class.resource_type.properties.each do |property|
+      if val = resource[property.name]
+        @property_hash[property.name] = val
       end
     end
   end

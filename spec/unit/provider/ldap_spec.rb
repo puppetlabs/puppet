@@ -173,7 +173,7 @@ describe Puppet::Provider::Ldap do
       @instance = @class.new
 
       @property_class = stub 'property_class', :array_matching => :all, :superclass => Puppet::Property
-      @resource_class = stub 'resource_class', :parameter => @property_class, :valid_parameter? => true, :validproperties => [:one, :two]
+      @resource_class = stub 'resource_class', :parameter => @property_class, :valid_parameter? => true, :properties => [stub(:name => :one), stub(:name => :two)]
       @class.stubs(:resource_type).returns @resource_class
     end
 
@@ -215,7 +215,7 @@ describe Puppet::Provider::Ldap do
         @rclass.stubs(:validproperties).returns([:one, :two])
         @resource = mock 'resource'
         @resource.stubs(:class).returns @rclass
-        @resource.stubs(:should).returns nil
+        @resource.stubs(:[]).returns nil
         @instance.stubs(:resource).returns @resource
       end
 
@@ -225,8 +225,8 @@ describe Puppet::Provider::Ldap do
       end
 
       it "should set all of the other attributes from the resource" do
-        @resource.expects(:should).with(:one).returns "oneval"
-        @resource.expects(:should).with(:two).returns "twoval"
+        @resource.expects(:[]).with(:one).returns "oneval"
+        @resource.expects(:[]).with(:two).returns "twoval"
 
         @instance.create
         @instance.properties[:one].should == "oneval"

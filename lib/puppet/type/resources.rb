@@ -29,7 +29,7 @@ Puppet::Type.newtype(:resources) do
         unless @resource.resource_type.respond_to?(:instances)
           raise ArgumentError, "Purging resources of type #{@resource[:name]} is not supported, since they cannot be queried from the system"
         end
-        raise ArgumentError, "Purging is only supported on types that accept 'ensure'" unless @resource.resource_type.validproperty?(:ensure)
+        raise ArgumentError, "Purging is only supported on types that accept 'ensure'" unless @resource.resource_type.valid_parameter?(:ensure)
       end
     end
   end
@@ -88,7 +88,7 @@ Puppet::Type.newtype(:resources) do
     resource_type.instances.
       reject { |r| catalog.resource_refs.include? r.ref }.
       select { |r| check(r) }.
-      select { |r| r.class.validproperty?(:ensure) }.
+      select { |r| r.class.valid_parameter?(:ensure) }.
       select { |r| able_to_ensure_absent?(r) }.
       each { |resource|
         @parameters.each do |name, param|

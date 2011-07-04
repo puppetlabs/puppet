@@ -31,11 +31,11 @@ describe "Nagios resource types" do
       end
 
       it "should have an ensure property" do
-        puppet_type.should be_validproperty(:ensure)
+        puppet_type.should be_valid_parameter(:ensure)
       end
 
       it "should have a target property" do
-        puppet_type.should be_validproperty(:target)
+        puppet_type.should be_valid_parameter(:target)
       end
 
       it "should have documentation for its target property" do
@@ -44,7 +44,7 @@ describe "Nagios resource types" do
 
       nagios_type.parameters.reject { |param| param == nagios_type.namevar or param.to_s =~ /^[0-9]/ }.each do |param|
         it "should have a #{param} property" do
-          puppet_type.should be_validproperty(param)
+          puppet_type.should be_valid_parameter(param)
         end
 
         it "should have documentation for its #{param} property" do
@@ -54,7 +54,7 @@ describe "Nagios resource types" do
 
       nagios_type.parameters.find_all { |param| param.to_s =~ /^[0-9]/ }.each do |param|
         it "should have not have a #{param} property" do
-          puppet_type.should_not be_validproperty(:param)
+          puppet_type.should_not be_valid_parameter(:param)
         end
       end
     end

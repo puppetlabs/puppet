@@ -408,7 +408,6 @@ Puppet::Type.newtype(:cron) do
       when :special
         # nothing
       else
-        #ret = (self.class.validproperty?(name).default || "*").to_s
         ret = "*"
       end
     end

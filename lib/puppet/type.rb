@@ -96,7 +96,7 @@ class Type
 
     # If they've got all the necessary methods defined and they haven't
     # already added the property, then do so now.
-    klass.ensurable if klass.ensurable? and ! klass.validproperty?(:ensure)
+    klass.ensurable if klass.ensurable? and ! klass.valid_parameter?(:ensure)
 
     # Now set up autoload any providers that might exist for this type.
 
@@ -252,6 +252,11 @@ class Type
     klass.parameter_type
   end
 
+  # Return all of the properties this resource type supports.
+  def self.properties
+    parameters.find_all { |p| p.property? }
+  end
+
   # Is the provided name a valid parameter?
   # This method is used in both Puppet::Type and Puppet::Resource.
   def self.valid_parameter?(name)
@@ -282,15 +287,7 @@ class Type
   # All parameters, in the appropriate order.  The key_attributes come first, then
   # the provider, then the properties, and finally the params and metaparams
   # in the order they were specified in the files.
-  def self.properties
-    parameters.find_all { |p| p.property? }
-  end
-
   # does the name reflect a valid property?
-  def self.validproperty?(name)
-    p = parameter(name) and p.property?
-  end
-
   # Return the list of validproperties
   def self.validproperties
     parameters.find_all { |p| p.property? }.collect { |p| p.name }
@@ -1007,7 +1004,6 @@ class Type
 
     munge do |args|
       properties_to_audit(args).each do |param|
-        next unless resource.class.validproperty?(param)
         resource.newattr(param)
       end
     end
@@ -1021,10 +1017,13 @@ class Type
     end
 
     def properties_to_audit(list)
+      all = all_properties
       if !list.kind_of?(Array) && list.to_sym == :all
-        list = all_properties
+        all
       else
-        list = Array(list).collect { |p| p.to_sym }
+        # Any parameters that are specified and also fall into the
+        # 'all properties' list.
+        (Array(list).collect { |p| p.to_sym } & all)
       end
     end
   end
@@ -1871,9 +1870,7 @@ class Type
   def title
     unless @title
       if self.class.valid_parameter?(name_var)
-        @title = self[:name]
-      elsif self.class.validproperty?(name_var)
-        @title = self.should(name_var)
+        @title = self[name_var]
       else
         self.devfail "Could not find namevar #{name_var} for #{self.class.name}"
       end
