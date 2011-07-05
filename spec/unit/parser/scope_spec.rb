@@ -42,7 +42,7 @@ describe Puppet::Parser::Scope do
   end
 
   it "should get its environment from its compiler" do
-    env = stub 'environment'
+    env = Puppet::Node::Environment.new
     compiler = stub 'compiler', :environment => env
     scope = Puppet::Parser::Scope.new :compiler => compiler
     scope.environment.should equal(env)
