@@ -45,11 +45,10 @@ describe provider_class do
         high = {:name=>["testing"], :gid=>["640"]}
         provider_class.manager.expects(:search).returns([low, high])
 
-        resource = stub 'resource', :should => %w{whatever}
-        resource.stubs(:should).with(:gid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
+        resource = Puppet::Type.type(:group).new(:name => "foo")
+        resource[:ensure] = :present
         instance = provider_class.new(:name => "luke", :ensure => :absent)
-        instance.stubs(:resource).returns resource
+        instance.resource = resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["641"] }
 
@@ -60,11 +59,10 @@ describe provider_class do
       it "should pick '501' as its GID if no groups are found" do
         provider_class.manager.expects(:search).returns nil
 
-        resource = stub 'resource', :should => %w{whatever}
-        resource.stubs(:should).with(:gid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
+        resource = Puppet::Type.type(:group).new(:name => "foo")
+        resource[:ensure] = :present
         instance = provider_class.new(:name => "luke", :ensure => :absent)
-        instance.stubs(:resource).returns resource
+        instance.resource = resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["gidNumber"] == ["501"] }
 

@@ -57,7 +57,7 @@ describe Puppet::Provider::Ldap do
       @manager = mock 'manager'
       @class.stubs(:manager).returns @manager
 
-      @resource = mock 'resource'
+      @resource = Puppet::Type.type(:user).new :name => "foo"
 
       @resources = {"one" => @resource}
     end

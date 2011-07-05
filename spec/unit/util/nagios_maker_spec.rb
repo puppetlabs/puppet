@@ -7,11 +7,16 @@ describe Puppet::Util::NagiosMaker do
   before do
     @module = Puppet::Util::NagiosMaker
 
-    @nagtype = stub 'nagios type', :parameters => [], :namevar => :name
-    Nagios::Base.stubs(:type).with(:test).returns(@nagtype)
+    @nagtype = stub 'nagios type', :parameters => [], :namevar => :name, :name => "nagtype"
+    @nagtype.stubs(:attr_accessor)
+    Nagios::Base.stubs(:type).returns(@nagtype)
 
     @provider = stub 'provider', :nagios_type => nil
-    @type = stub 'type', :newparam => nil, :newproperty => nil, :provide => @provider, :desc => nil, :ensurable => nil
+    @type = Puppet::Type.newtype(:test_nag_type)
+  end
+
+  after do
+    Puppet::Type.rmtype(:test_nag_type)
   end
 
   it "should be able to create a new nagios type" do
@@ -30,10 +35,10 @@ describe Puppet::Util::NagiosMaker do
   end
 
   it "should mark the created type as ensurable" do
-    @type.expects(:ensurable)
-
     Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
     @module.create_nagios_type(:test)
+
+    @type.property_names.should be_include(:ensure)
   end
 
   it "should create a namevar parameter for the nagios type's name parameter" do
@@ -46,39 +51,34 @@ describe Puppet::Util::NagiosMaker do
   it "should create a property for all non-namevar parameters" do
     @nagtype.stubs(:parameters).returns([:one, :two])
 
-    @type.expects(:newproperty).with(:one)
-    @type.expects(:newproperty).with(:two)
-    @type.expects(:newproperty).with(:target)
-
     Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
     @module.create_nagios_type(:test)
+
+    @type.property_names.should be_include(:one)
+    @type.property_names.should be_include(:two)
   end
 
   it "should skip parameters that start with integers" do
-    @nagtype.stubs(:parameters).returns(["2dcoords".to_sym, :other])
-
-    @type.expects(:newproperty).with(:other)
-    @type.expects(:newproperty).with(:target)
+    @nagtype.stubs(:parameters).returns([:"2dcoords", :other])
 
     Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
     @module.create_nagios_type(:test)
+
+    @type.property_names.should_not be_include(:"2dcoords")
   end
 
   it "should deduplicate the parameter list" do
     @nagtype.stubs(:parameters).returns([:one, :one])
 
-    @type.expects(:newproperty).with(:one)
-    @type.expects(:newproperty).with(:target)
-
     Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
-    @module.create_nagios_type(:test)
+    lambda { @module.create_nagios_type(:test) }.should_not raise_error
   end
 
   it "should create a target property" do
-    @type.expects(:newproperty).with(:target)
-
     Puppet::Type.expects(:newtype).with(:nagios_test).returns(@type)
     @module.create_nagios_type(:test)
+
+    @type.property_names.should be_include(:target)
   end
 end
 
