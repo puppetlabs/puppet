@@ -27,6 +27,14 @@ module Puppet::Util::NagiosMaker
       # supported.
       next if param.to_s =~ /^[0-9]/
 
+      # As of summer 2011, this consistently happens with the 'alias'
+      # parameter, and this change means you can't manage 'alias' on Nagios
+      # resources.
+      if type.parameter(param)
+        Puppet.info "Not defining #{param} on Nagios type #{type.name} - duplicate parameter name"
+        next
+      end
+
       type.newproperty(param) do
         desc "Nagios configuration file parameter."
       end
