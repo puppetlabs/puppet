@@ -173,7 +173,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         :name => param, :value => value, :source => self.source
       )
     elsif ! param.is_a?(Puppet::Parser::Resource::Param)
-      raise ArgumentError, "Must pass a parameter or all necessary values"
+      raise ArgumentError, "Received incomplete information - no value provided for parameter #{param}"
     end
 
     tag(*param.value) if param.name == :tag
