@@ -47,7 +47,7 @@ class TestScope < Test::Unit::TestCase
 
     # Now set a var in the midscope and make sure the mid and bottom can see it but not the top
     midscope['second'] = "midval"
-    assert_equal(:undefined, scopes[:top]['second'], "Found child var in top scope")
+    assert_nil(scopes[:top]['second'], "Found child var in top scope")
     [:mid, :bot].each do |name|
       assert_equal("midval", scopes[name]['second'], "Could not find var in #{name}")
     end
@@ -55,7 +55,7 @@ class TestScope < Test::Unit::TestCase
     # And set something in the bottom, and make sure we only find it there.
     botscope['third'] = "botval"
     [:top, :mid].each do |name|
-      assert_equal(:undefined, scopes[name]['third'], "Found child var in top scope")
+      assert_nil(scopes[name]['third'], "Found child var in top scope")
     end
     assert_equal("botval", scopes[:bot]['third'], "Could not find var in bottom scope")
 

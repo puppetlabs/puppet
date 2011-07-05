@@ -88,8 +88,8 @@ describe Puppet::Parser::Scope do
       @scope.lookupvar("var").should == "yep"
     end
 
-    it "should return ':undefined' for unset variables" do
-      @scope["var"].should == :undefined
+    it "should return nil for unset variables" do
+      @scope["var"].should be_nil
     end
 
     it "should be able to look up values" do
@@ -180,32 +180,32 @@ describe Puppet::Parser::Scope do
         @scope["other::deep::klass::var"].should == "otherval"
       end
 
-      it "should return ':undefined' for qualified variables that cannot be found in other classes" do
+      it "should return nil for qualified variables that cannot be found in other classes" do
         other_scope = create_class_scope("other::deep::klass")
 
-        @scope["other::deep::klass::var"].should == :undefined
+        @scope["other::deep::klass::var"].should be_nil
       end
 
-      it "should warn and return ':undefined' for qualified variables whose classes have not been evaluated" do
+      it "should warn and return nil for qualified variables whose classes have not been evaluated" do
         klass = newclass("other::deep::klass")
         @scope.expects(:warning)
-        @scope["other::deep::klass::var"].should == :undefined
+        @scope["other::deep::klass::var"].should be_nil
       end
 
-      it "should warn and return ':undefined' for qualified variables whose classes do not exist" do
+      it "should warn and return nil for qualified variables whose classes do not exist" do
         @scope.expects(:warning)
-        @scope["other::deep::klass::var"].should == :undefined
+        @scope["other::deep::klass::var"].should be_nil
       end
 
-      it "should return ':undefined' when asked for a non-string qualified variable from a class that does not exist" do
+      it "should return nil when asked for a non-string qualified variable from a class that does not exist" do
         @scope.stubs(:warning)
-        @scope["other::deep::klass::var"].should == :undefined
+        @scope["other::deep::klass::var"].should be_nil
       end
 
-      it "should return ':undefined' when asked for a non-string qualified variable from a class that has not been evaluated" do
+      it "should return nil when asked for a non-string qualified variable from a class that has not been evaluated" do
         @scope.stubs(:warning)
         klass = newclass("other::deep::klass")
-        @scope["other::deep::klass::var"].should == :undefined
+        @scope["other::deep::klass::var"].should be_nil
       end
     end
   end
@@ -320,7 +320,7 @@ describe Puppet::Parser::Scope do
 
       @scope.unset_ephemeral_var
 
-      @scope["1"].should == :undefined
+      @scope["1"].should be_nil
     end
 
     it "should not remove classic variables when unset_ephemeral_var is called" do
@@ -393,7 +393,7 @@ describe Puppet::Parser::Scope do
 
           @scope.unset_ephemeral_var
 
-          @scope["1"].should == :undefined
+          @scope["1"].should be_nil
         end
       end
 
@@ -449,13 +449,13 @@ describe Puppet::Parser::Scope do
     it "should be able to unset normal variables" do
       @scope["foo"] = "bar"
       @scope.unsetvar("foo")
-      @scope["foo"].should == :undefined
+      @scope["foo"].should be_nil
     end
 
     it "should be able to unset ephemeral variables" do
       @scope.setvar("0", "bar", :ephemeral => true)
       @scope.unsetvar("0")
-      @scope["0"].should == :undefined
+      @scope["0"].should be_nil
     end
 
     it "should not unset ephemeral variables in previous ephemeral scope" do

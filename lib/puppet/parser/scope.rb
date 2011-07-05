@@ -57,7 +57,7 @@ class Puppet::Parser::Scope
       rescue RuntimeError => e
         location = (options[:file] && options[:line]) ? " at #{options[:file]}:#{options[:line]}" : ''
         warning "Could not look up qualified variable '#{name}'; #{e.message}#{location}"
-        :undefined
+        nil
       end
     elsif ephemeral_include?(name) or table.include?(name)
       # We can't use "if table[name]" here because the value might be false
@@ -69,7 +69,7 @@ class Puppet::Parser::Scope
     elsif parent
       parent[name,options.merge(:dynamic => (dynamic || options[:dynamic]))]
     else
-      :undefined
+      nil
     end
   end
 
@@ -92,7 +92,7 @@ class Puppet::Parser::Scope
   end
 
   def include?(name)
-    self[name] != :undefined
+    ! self[name].nil?
   end
 
   # Is the value true?  This allows us to control the definition of truth
@@ -244,7 +244,11 @@ class Puppet::Parser::Scope
   end
 
   def undef_as(x,v)
-    (v == :undefined) ? x : (v == :undef) ? x : v
+    if v.nil? or v == :undef
+      x
+    else
+      v
+    end
   end
 
   def qualified_scope(classname)
