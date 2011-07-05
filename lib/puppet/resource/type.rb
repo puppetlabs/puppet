@@ -187,8 +187,12 @@ class Puppet::Resource::Type
   def assign_parameter_values(parameters, resource)
     return unless parameters
     scope = resource.scope || {}
-    arguments.merge(parameters).each do |name, default|
-      resource.set_parameter name, default
+
+    # It'd be nice to assign default parameter values here,
+    # but we can't because they often rely on local variables
+    # created during set_resource_parameters.
+    parameters.each do |name, value|
+      resource.set_parameter name, value
     end
   end
 
