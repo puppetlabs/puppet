@@ -236,6 +236,7 @@ class Type
 
   # This returns the class for a given parameter, or nil.
   def self.parameter(name)
+    return nil unless name
     name = name.to_sym
     @parameters_by_name ||= {}
     if self == Puppet::Type
@@ -247,6 +248,7 @@ class Type
 
   # What kind of parameter do we have - property, parameter, or metaparameter?
   def self.parameter_type(name)
+    return nil unless name
     name = name.to_sym
     return nil unless klass = parameter(name)
     klass.parameter_type
@@ -264,6 +266,7 @@ class Type
   # Is the provided name a valid parameter?
   # This method is used in both Puppet::Type and Puppet::Resource.
   def self.valid_parameter?(name)
+    return false unless name
     name = name.to_sym
     return true if name == :name and self != Puppet::Type
     return true if parameter(name)
@@ -513,7 +516,6 @@ class Type
   # value on properties, and otherwise just sets the appropriate parameter.
   def []=(name,value)
     name = name.intern
-
     fail("Invalid parameter #{name}") unless self.class.valid_parameter?(name)
 
     if name == :name && nv = name_var

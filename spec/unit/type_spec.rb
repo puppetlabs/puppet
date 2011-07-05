@@ -165,6 +165,10 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @type.parameter(:foo).should be_instance_of(Class)
     end
 
+    it "should return nil when provided a nil parameter name" do
+      @type.parameter(nil).should be_nil
+    end
+
     it "should support retrieving parameters specified with a string" do
       @type.newparam(:foo)
       @type.parameter("foo").should be_instance_of(Class)
@@ -249,6 +253,10 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
       @type.parameter(:noop).should be_instance_of(Class)
     end
 
+    it "should return nil when asked for the parameter type of a nil parameter name" do
+      @type.parameter_type(nil).should be_nil
+    end
+
     it "should consider subclasses of Property to be properties" do
       @type.newproperty(:foo)
       @type.parameter_type(:foo).should == :property
@@ -266,6 +274,10 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     it "should consider any non-metaparam subclass of Parameter to be a parameter" do
       @type.newparam(:foo)
       @type.parameter_type(:foo).should == :parameter
+    end
+
+    it "should consider a nil parameter to be invalid" do
+      @type.should_not be_valid_parameter(nil)
     end
 
     it "should consider a defined parameter to be valid" do
