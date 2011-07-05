@@ -47,7 +47,7 @@ describe Puppet::Parser::Scope do
     scope = Puppet::Parser::Scope.new :compiler => compiler
     scope.environment.should equal(env)
   end
-  
+
   it "should use the default environment if none is available" do
     Puppet::Parser::Scope.new.environment.should equal(Puppet::Node::Environment.new)
   end
