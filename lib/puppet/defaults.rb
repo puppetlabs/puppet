@@ -450,9 +450,15 @@ module Puppet
       See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
     # To make sure this directory is created before we try to use it on the server, we need
     # it to be in the server section (#1138).
-    :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
-      :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
-    :server_datadir => {:default => "$vardir/server_data", :owner => "service", :group => "service", :mode => "750",
+    :yamldir => {:default => "$vardir/yaml", 
+         :owner => "service", 
+         :group => "service", 
+         :mode  => 0750,
+         :desc  => "The directory in which YAML data is stored, usually in a subdirectory."},
+    :server_datadir => {:default => "$vardir/server_data", 
+         :owner => "service", 
+         :group => "service", 
+         :mode  => 0750,
       :desc => "The directory in which serialized data is stored, usually in a subdirectory."},
     :reports => ["store",
       "The list of reports to generate.  All reports are looked for
@@ -488,7 +494,9 @@ module Puppet
   )
 
   setdefaults(:device,
-    :devicedir =>  {:default => "$vardir/devices", :mode => "750", :desc => "The root directory of devices' $vardir"},
+    :devicedir =>  {:default => "$vardir/devices", 
+         :mode => 0750, 
+         :desc => "The root directory of devices' $vardir"},
     :deviceconfig => ["$confdir/device.conf","Path to the device config file for puppet device"]
   )
 
@@ -524,8 +532,12 @@ module Puppet
         this file reflects the state discovered through interacting
         with clients."
       },
-    :clientyamldir => {:default => "$vardir/client_yaml", :mode => "750", :desc => "The directory in which client-side YAML data is stored."},
-    :client_datadir => {:default => "$vardir/client_data", :mode => "750", :desc => "The directory in which serialized data is stored on the client."},
+    :clientyamldir => {:default => "$vardir/client_yaml", 
+      :mode => 0750, 
+      :desc => "The directory in which client-side YAML data is stored."},
+    :client_datadir => {:default => "$vardir/client_data", 
+      :mode => 0750, 
+      :desc => "The directory in which serialized data is stored on the client."},
     :classfile => { :default => "$statedir/classes.txt",
       :owner => "root",
       :mode => 0644,
