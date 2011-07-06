@@ -29,7 +29,6 @@ module Util
     end
   end
 
-  
   def self.synchronize_on(x,type)
     sync_object,users = 0,1
     begin
