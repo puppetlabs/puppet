@@ -1,3 +1,123 @@
+2.7.2rc1
+===
+902c414 Update configurer_spec.rb to work with Ruby 1.8.5
+7ad1b04 Clean up indentation, whitespace, and commented out code
+014d952 Remove order dependency from functions integration spec
+243aaa9 (#7956) Porting cron tests
+3e3fc69 (#7956) Port resource acceptance tests
+534ccfe (#8048) Gem install puppet no longer fails if rdoc enabled.
+bbde5b5 Readying for release of 2.6.9
+5160822 Clean up indentation, whitespace, and commented out code
+92a8f4a Remove order dependency from functions integration spec
+31554c0 (#6854) Update Red Hat spec file
+cba645c Bumping release in lib/puppet.rb and updating CHANGELOG.
+43027de Bumping RPM spec file to 2.6.9rc1.
+99330fa (#7224) Reword 'hostname was not match' error message
+1d867b0 (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+db1a392 (#7506) Organize READMEs; specify supported Ruby versions in README.md
+de06469 (#5641) Help text: document that puppet doc takes modulepath, manifestdir, and environment options
+381fa40 (#6418) Make test 64118 more portable
+98ba407 (#7127) Stop puppet if a prerun command fails
+6996e0b Do not needlessly create multiple reports when creating a transaction
+caca469 (#4416) Ensure types are providified after reloading
+413b136 (#4416) Always remove old provider before recreating it
+d866ce1 Cleanup indentation, comment, and unused code
+d1c965a Make temporary auth.conf in acceptance test readable by Puppet
+4af9784 (#7117) Use a different auth.conf instead of overwriting the default
+ecde134 (#3360) Delete SSL directory in acceptance test before running
+b502423 Update acceptance tests to use with_master_running_on
+053e613 Remove pending copy of an active acceptance test
+98f58ce (#2128) Add WARNING for node_name_{fact,value} descriptions
+1cd848c (#2128) Whitespace only reflow commit
+d9b5c1a (#2128) In-line docs for node_name_{fact,value}
+3f0dbb5 (#650) Allow symlinks for configuration directories
+c260cf1 Fix acceptance tests not managing their masters
+1c70f0c (#2128) Add support for setting node name based on a fact
+c629958 (#2128) Get facts before retrieving catalog
+cd4fe14 (#2128) Add the ability to specify a node name
+8ebec1e (#7193) Fix path issues with acceptance tests that call old shell tests
+16b2311 (#6885) puppet agent fingerprint requires --verbose to return a value.
+77a5987 maint: Confine augeas specs to require the augeas feature
+8eb0e16 (#2728) Add diff output for changes made by Augeas provider
+a00fd25 maint: Refactor specs in preparation for making node name more flexible
+2f8bc26 maint: Fix order dependent test failure
+c02126d (#5966) Add support for hostname regular expressions in auth.conf
+75e2764 (#5318) Always notice changes to manifests when compiling.
+bc71266 maint: Fix order dependent spec failure for face indirection
+6547835 (#7690) Don't blow up when listing terminuses available for faces
+0bcbca5 maint: Dedup the loadpath so we don't have to walk it multiple times
+4a5e99d (#7681) Add an acceptance test for resource refs with array variables
+996dc07 Maint: Fix ellipses for short descriptions
+53af6f3 (#7563) DRY: Remove indirector boilerplate from individual faces
+74aff59 (#7564) Finish templates
+3026333 (#7561) Complete help text for all faces and actions
+13e473e Maint: Add ellipsis to generated short_descriptions.
+89d447b (#6962) Add "arguments" method to help API
+646919e (4123) Fix test for 4123/4 on old egrep in cent4
+b101804 add puppet master polling step for ticket 7117
+9145569 maint: Remove reliance on system clock from schedule spec tests
+107b38a maint: Fix pacman provider to work with Ruby 1.9
+8eea3f5 Added the vcsrepo type and providers to the core
+8f0cecf Added the vcsrepo type and providers to the core
+4645c99 add puppet master polling step for ticket 7117
+17e7223 (#7507) Add exclude filter for ruby 1.9 spec failures
+181098b (#7502) Fixed parser spec for ruby 1.8.5
+9c3bedd (#7507) Add more 1.9 filters
+f037662 (#6395) Add extpuppet help, eval, and interfaces
+4d4d587 Adding a sleep state post starting master
+c81f5c6 Adding a sleep state post starting master
+d1cc24f maint: fix spec_helper inclusions again.
+3ac7aed (#7523) Refactor the grammar to reduce duplication
+d22b130 (#7114) Fix specs for ssh authorized key parsed provider
+551cb3e (#7114) Target returns correct value
+15c6fc7 (#7114) Add integration tests for authorized_key
+a5ac82a (#7114) Improve unit tests for ssh_authorized_key
+1c7f0c3 (#7114) Improve value validation for authorized_key
+0b8ebac (#7300) Fix instances method of mount provider
+1dc662a (#1853) Pacman package provider
+6bb2a85 (#1853) Pacman package provider
+c8775f9 (#7259) Remove ActiveRecord requirement from indirector face spec
+1ad8158 (#7259) Do not try to load all Terminus classes when configuring the Indirector
+8b76be3 (#3836) External nodes should only capture stdout
+d63fc34 Revert "(#7220) Add the ability to "inherit" options."
+c21539f maint: sync 'authconfig' to 'rest_authconfig' setting
+81d566f Fixed #7481 - Added MIT license to Thomas Bellman's function code
+1695dac (#7264) Docs: Clarify that subscribe/notify imply require/before
+8f907f2 adding test for ticket 7139
+90eb937 (#7139) Accept '/' as a valid path in filesets
+1f3b8e7 (#7300) Add specs for the mount provider
+1b2a7d9 case seems needless here as there is only two opts, also the rest of the file seems to use if so this should make things more consistant
+729336e (#6845) Mount writes incorrect vfstab entries
+16cf1ac (#6442) Be able to start agents --listen without namespaceauth.conf
+e059539 Update CHANGELOG for 2.6.8
+ac0581f (#7101) Fix template error messages in Ruby 1.8.5
+9d2500e (#7101) Fix template error messages in Ruby 1.8.5
+0352402 (#3420) Nagios "name" attribute does not output correctly
+f656818 (#4487) When setting environment on a host, ensure it is a string.
+89e9a21 add test for ticket 7101
+74498af add test for ticket 7101
+2cce326 add test for ticket 7101
+c1edcb2 add test for ticket 7101
+9329a1f (#7220) Add the ability to "inherit" options.
+c306db2 (#6487) Add some testing for OS X version support in DirectoryService provider
+0008b63 (#6487) Directoryservice provider will fail in future OS releases
+f21162b (#6368) Make the File type autorequire its nearest ancestor directory
+c3a76a9 (#7021) Fix order dependent spec failures
+7bd6a2f maint: Remove unused code
+34f9f41 Maint: Fix a #4655 introduced log inconsistency
+6981ee5 Maint: Fix a #4655 introduced log inconsistency
+cb43cfc Moving tests from Puppet-acceptance repo
+ac428b9 Move tests from Puppet-acceptance repo
+db26326 Move tests from puppet-acceptance repo
+6b18f8f Move acceptance tests from puppet-acceptance repo
+9a5bf6e Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+a18ac78 maint: Fix PSON order dependency in test
+656eff8 (#4655) Allow stage to be set using a default class parameter
+b3ab0d9 (#4655) Allow stage to be set using a default class parameter
+7d3c303 Fixed #7166 - Replaced deprecated stomp "send" method with "publish"
+7f658e6 vim: Initial ftplugin and indent support
+ccbe9f3 Fixed #6681 - Remove --force-yes option from aptitude is used
+
 2.7.1
 ===
 a49d5b8 (#8048) Gem install puppet no longer fails if rdoc enabled.
