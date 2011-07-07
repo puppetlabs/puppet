@@ -43,30 +43,30 @@ describe Puppet::Node do
     end
 
     it "should provide its name" do
-      PSON.parse(@node.to_pson)['data']['name'].should == "mynode"
+      @node.should set_json_attribute('name').to("mynode")
     end
 
     it "should include the classes if set" do
       @node.classes = %w{a b c}
-      PSON.parse(@node.to_pson)['data']['classes'].should == %w{a b c}
+      @node.should set_json_attribute("classes").to(%w{a b c})
     end
 
     it "should not include the classes if there are none" do
-      PSON.parse(@node.to_pson)['data'].should_not be_include('classes')
+      @node.should_not set_json_attribute('classes')
     end
 
     it "should include parameters if set" do
       @node.parameters = {"a" => "b", "c" => "d"}
-      PSON.parse(@node.to_pson)['data']['parameters'].should == {"a" => "b", "c" => "d"}
+      @node.should set_json_attribute('parameters').to({"a" => "b", "c" => "d"})
     end
 
     it "should not include the parameters if there are none" do
-      PSON.parse(@node.to_pson)['data'].should_not be_include('parameters')
+      @node.should_not set_json_attribute('parameters')
     end
 
     it "should include the environment" do
       @node.environment = "production"
-      PSON.parse(@node.to_pson)['data']['environment'].should == "production"
+      @node.should set_json_attribute('environment').to('production')
     end
   end
 
@@ -81,22 +81,22 @@ describe Puppet::Node do
     end
 
     it "should set its name" do
-      from_json(@node.to_pson).name.should == "mynode"
+      Puppet::Node.should read_json_attribute('name').from(@node.to_pson).as("mynode")
     end
 
     it "should include the classes if set" do
       @node.classes = %w{a b c}
-      from_json(@node.to_pson).classes.should == %w{a b c}
+      Puppet::Node.should read_json_attribute('classes').from(@node.to_pson).as(%w{a b c})
     end
 
     it "should include parameters if set" do
       @node.parameters = {"a" => "b", "c" => "d"}
-      from_json(@node.to_pson).parameters.should == {"a" => "b", "c" => "d"}
+      Puppet::Node.should read_json_attribute('parameters').from(@node.to_pson).as({"a" => "b", "c" => "d"})
     end
 
     it "should include the environment" do
       @node.environment = "production"
-      from_json(@node.to_pson).environment.name.should == :production
+      Puppet::Node.should read_json_attribute('environment').from(@node.to_pson).as(Puppet::Node::Environment.new(:production))
     end
   end
 end
