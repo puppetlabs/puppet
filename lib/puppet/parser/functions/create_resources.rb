@@ -27,15 +27,16 @@ Takes two parameters:
   args[1].each do |title, params|
     raise ArgumentError, 'params should not contain title' if(params['title'])
     case type_of_resource
-    when :type
-      res = resource.hash2resource(params.merge(:title => title))
-      catalog.add_resource(res)
-    when :define
+    # JJM The only difference between a type and a define is the call to instantiate_resource
+    # for a defined type.
+    when :type, :define
       p_resource = Puppet::Parser::Resource.new(type_name, title, :scope => self, :source => resource)
       params.merge(:name => title).each do |k,v|
         p_resource.set_parameter(k,v)
       end
-      resource.instantiate_resource(self, p_resource)
+      if type_of_resource == :define then
+        resource.instantiate_resource(self, p_resource)
+      end
       compiler.add_resource(self, p_resource)
     when :class
       klass = find_hostclass(title)
