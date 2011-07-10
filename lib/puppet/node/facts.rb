@@ -25,6 +25,14 @@ class Puppet::Node::Facts
 
   attr_accessor :name, :values
 
+  def [](name)
+    @values[name]
+  end
+
+  def []=(name, value)
+    @values[name] = value
+  end
+
   def add_local_facts
     values["clientcert"] = Puppet.settings[:certname]
     values["clientversion"] = Puppet.version.to_s

@@ -8,6 +8,12 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts = Puppet::Node::Facts.new("me")
   end
 
+  it "should use array indexer methods for interacting with values" do
+    @facts["foobar"] = "yayness"
+    @facts["foobar"].should == "yayness"
+    @facts.values["foobar"].should == "yayness"
+  end
+
   it "should be able to convert all fact values to strings" do
     @facts.values["one"] = 1
     @facts.stringify
