@@ -9,7 +9,6 @@ class Puppet::Application::Resource < Puppet::Application
   def preinit
     @extra_params = []
     @host = nil
-    Facter.loadfacts
   end
 
   option("--debug","-d")

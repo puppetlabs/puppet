@@ -4,6 +4,16 @@ require 'spec_helper'
 require 'puppet/indirector/facts/facter'
 
 describe Puppet::Node::Facts::Facter do
+  before :each do
+    ::Facter.stubs(:clear) # For speed reasons
+    ::Facter.stubs(:loadfacts) # For speed reasons
+
+    @facter = Puppet::Node::Facts::Facter.new
+    Facter.stubs(:to_hash).returns({})
+    @name = "me"
+    @request = stub 'request', :key => @name
+  end
+
   it "should be a subclass of the Code terminus" do
     Puppet::Node::Facts::Facter.superclass.should equal(Puppet::Indirector::Code)
   end
@@ -22,20 +32,11 @@ describe Puppet::Node::Facts::Facter do
   end
 
   it "should load facts on initialization" do
-    Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
+    Puppet::Node::Facts::Facter.any_instance.expects(:load)
     Puppet::Node::Facts::Facter.new
   end
-end
 
-describe Puppet::Node::Facts::Facter do
-  before :each do
-    @facter = Puppet::Node::Facts::Facter.new
-    Facter.stubs(:to_hash).returns({})
-    @name = "me"
-    @request = stub 'request', :key => @name
-  end
-
-  describe Puppet::Node::Facts::Facter, " when finding facts" do
+  describe "when finding facts" do
     it "should return a Facts instance" do
       @facter.find(@request).should be_instance_of(Puppet::Node::Facts)
     end
@@ -75,65 +76,78 @@ describe Puppet::Node::Facts::Facter do
     end
   end
 
-  describe Puppet::Node::Facts::Facter, " when saving facts" do
-
+  describe "when saving facts" do
     it "should fail" do
       proc { @facter.save(@facts) }.should raise_error(Puppet::DevError)
     end
   end
 
-  describe Puppet::Node::Facts::Facter, " when destroying facts" do
+  describe "when destroying facts" do
 
     it "should fail" do
       proc { @facter.destroy(@facts) }.should raise_error(Puppet::DevError)
     end
   end
 
-  it "should skip files when asked to load a directory" do
-    FileTest.expects(:directory?).with("myfile").returns false
-
-    Puppet::Node::Facts::Facter.load_facts_in_dir("myfile")
-  end
-
-  it "should load each ruby file when asked to load a directory" do
-    FileTest.expects(:directory?).with("mydir").returns true
-    Dir.expects(:chdir).with("mydir").yields
-
-    Dir.expects(:glob).with("*.rb").returns %w{a.rb b.rb}
-
-    Puppet::Node::Facts::Facter.expects(:load).with("a.rb")
-    Puppet::Node::Facts::Facter.expects(:load).with("b.rb")
-
-    Puppet::Node::Facts::Facter.load_facts_in_dir("mydir")
-  end
-
-  describe Puppet::Node::Facts::Facter, "when loading fact plugins from disk" do
-    it "should load each directory in the Fact path" do
-      Puppet.settings.stubs(:value).returns "foo"
-      Puppet.settings.expects(:value).with(:factpath).returns("one#{File::PATH_SEPARATOR}two")
-
-      Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("one")
-      Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("two")
-
-      Puppet::Node::Facts::Facter.load_fact_plugins
+  describe "when loading facts from disk" do
+    before do
+      @facter = Puppet::Node::Facts::Facter.new
+      ::Facter.stubs(:clear) # For speed reasons
+      ::Facter.stubs(:loadfacts) # For speed reasons
     end
 
-    it "should load all facts from the modules" do
-      Puppet.settings.stubs(:value).returns "foo"
-      Puppet::Node::Facts::Facter.stubs(:load_facts_in_dir)
+    it "should clear existing facts then call top-level loading in Facter" do
+      ::Facter.expects(:clear)
+      ::Facter.expects(:loadfacts)
+      @facter.load
+    end
 
-      Puppet.settings.expects(:value).with(:modulepath).returns("one#{File::PATH_SEPARATOR}two")
+    it "should skip files when asked to load a directory" do
+      FileTest.expects(:directory?).with("myfile").returns false
 
-      Dir.stubs(:glob).returns []
-      Dir.expects(:glob).with("one/*/lib/facter").returns %w{oneA oneB}
-      Dir.expects(:glob).with("two/*/lib/facter").returns %w{twoA twoB}
+      @facter.load_facts_in_dir("myfile")
+    end
 
-      Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("oneA")
-      Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("oneB")
-      Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoA")
-      Puppet::Node::Facts::Facter.expects(:load_facts_in_dir).with("twoB")
+    it "should load each ruby file when asked to load a directory" do
+      FileTest.expects(:directory?).with("mydir").returns true
+      Dir.expects(:chdir).with("mydir").yields
 
-      Puppet::Node::Facts::Facter.load_fact_plugins
+      Dir.expects(:glob).with("*.rb").returns %w{a.rb b.rb}
+
+      Kernel.expects(:load).with("a.rb")
+      Kernel.expects(:load).with("b.rb")
+
+      @facter.load_facts_in_dir("mydir")
+    end
+
+    describe "when loading fact plugins from disk" do
+      it "should load each directory in the Fact path" do
+        Puppet.settings.stubs(:value).returns "foo"
+        Puppet.settings.expects(:value).with(:factpath).returns("one#{File::PATH_SEPARATOR}two")
+
+        @facter.expects(:load_facts_in_dir).with("one")
+        @facter.expects(:load_facts_in_dir).with("two")
+
+        @facter.load
+      end
+
+      it "should load all facts from the modules" do
+        Puppet.settings.stubs(:value).returns "foo"
+        @facter.stubs(:load_facts_in_dir)
+
+        Puppet.settings.expects(:value).with(:modulepath).returns("one#{File::PATH_SEPARATOR}two")
+
+        Dir.stubs(:glob).returns []
+        Dir.expects(:glob).with("one/*/lib/facter").returns %w{oneA oneB}
+        Dir.expects(:glob).with("two/*/lib/facter").returns %w{twoA twoB}
+
+        @facter.expects(:load_facts_in_dir).with("oneA")
+        @facter.expects(:load_facts_in_dir).with("oneB")
+        @facter.expects(:load_facts_in_dir).with("twoA")
+        @facter.expects(:load_facts_in_dir).with("twoB")
+
+        @facter.load
+      end
     end
   end
 end

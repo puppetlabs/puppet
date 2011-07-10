@@ -147,24 +147,8 @@ describe Puppet::Configurer::FactHandler do
   end
 
   describe "when reloading Facter" do
-    before do
-      Facter.stubs(:clear)
-      Facter.stubs(:load)
-      Facter.stubs(:loadfacts)
-    end
-
-    it "should clear Facter" do
-      Facter.expects(:clear)
-      @facthandler.reload_facter
-    end
-
-    it "should load all Facter facts" do
-      Facter.expects(:loadfacts)
-      @facthandler.reload_facter
-    end
-
-    it "should use the Facter terminus load all Puppet Fact plugins" do
-      Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
+    it "should use Facts to load all plugins" do
+      Puppet::Node::Facts.expects(:load)
       @facthandler.reload_facter
     end
   end

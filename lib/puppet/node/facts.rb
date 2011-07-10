@@ -29,6 +29,13 @@ class Puppet::Node::Facts
     facts[name]
   end
 
+  # Load any plugins in our terminus (usually Facter)
+  def self.load
+    return unless terminus = indirection.terminus
+    return unless terminus.respond_to?(:load)
+    terminus.load
+  end
+
   indirects :facts, :terminus_setting => :facts_terminus, :extend => NodeExpirer
 
   attr_accessor :name, :values

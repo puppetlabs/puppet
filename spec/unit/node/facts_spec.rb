@@ -32,6 +32,26 @@ describe Puppet::Node::Facts, "when indirecting" do
     end
   end
 
+  describe "when asked to load" do
+    it "should do nothing if there is no terminus configured" do
+      Puppet::Node::Facts.indirection.expects(:terminus).returns nil
+      lambda { Puppet::Node::Facts.load }.should_not raise_error
+    end
+
+    it "should do nothing if its terminus does not support loading" do
+      terminus = "non_loading_plugin"
+      Puppet::Node::Facts.indirection.expects(:terminus).returns terminus
+      lambda { Puppet::Node::Facts.load }.should_not raise_error
+    end
+
+    it "should call 'load' on its terminus if one is available and supports the 'load' method" do
+      terminus = Puppet::Node::Facts::Facter.new
+      terminus.expects(:load)
+      Puppet::Node::Facts.indirection.expects(:terminus).returns terminus
+      Puppet::Node::Facts.load
+    end
+  end
+
   it "should be able to convert all fact values to strings" do
     @facts.values["one"] = 1
     @facts.stringify
