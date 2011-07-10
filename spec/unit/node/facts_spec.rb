@@ -14,6 +14,24 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts.values["foobar"].should == "yayness"
   end
 
+  describe "when using the class-level indexer methods" do
+    it "should use a Facts instance found via the certname" do
+      Puppet[:certname] = "fooness"
+      Puppet::Node::Facts.indirection.expects(:find).with("fooness").returns({})
+      Puppet::Node::Facts["hostname"]
+    end
+
+    it "should return the asked for value from any found facts" do
+      facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
+      Puppet::Node::Facts["hostname"].should == facts["hostname"]
+    end
+
+    it "should return nil when facts cannot be found" do
+      Puppet::Node::Facts.indirection.expects(:find).returns(nil)
+      Puppet::Node::Facts["hostname"].should be_nil
+    end
+  end
+
   it "should be able to convert all fact values to strings" do
     @facts.values["one"] = 1
     @facts.stringify

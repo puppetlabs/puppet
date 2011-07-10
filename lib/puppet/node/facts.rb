@@ -21,6 +21,14 @@ class Puppet::Node::Facts
     end
   end
 
+  # XXX:LAK This is pretty damn slow - does a full query for every attribute.
+  # I'm leaving it for now, figuring anything else would be a premature optimization,
+  # but it's definitely something to look out for.
+  def self.[](name)
+    return nil unless facts = indirection.find(Puppet[:certname])
+    facts[name]
+  end
+
   indirects :facts, :terminus_setting => :facts_terminus, :extend => NodeExpirer
 
   attr_accessor :name, :values
