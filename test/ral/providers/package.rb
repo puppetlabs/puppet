@@ -43,7 +43,7 @@ class TestPackageProvider < Test::Unit::TestCase
       providers[provider.name] = provider
     end
     facts = {}
-    Facter.to_hash.each do |fact, value|
+    Puppet::Node::Facts.indirection.find("localhost").values.each do |fact, value|
       facts[fact.to_s.downcase.intern] = value.to_s.downcase.intern
     end
     list.find_all { |hash| # First find the matching providers

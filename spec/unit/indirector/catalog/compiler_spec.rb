@@ -8,7 +8,6 @@ describe Puppet::Resource::Catalog::Compiler do
   before do
     require 'puppet/rails'
     Puppet::Rails.stubs(:init)
-    Facter.stubs(:to_hash).returns({})
     Puppet::Node::Facts.stubs(:[]).returns("something")
   end
 

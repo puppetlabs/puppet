@@ -200,11 +200,6 @@ module PuppetTest
     #end
 
     Puppet[:ignoreschedules] = true
-
-    #@start = Time.now
-
-    #Puppet::Node::Facts.stubs(:[]).returns "stubbed_value"
-    #Facter.stubs(:to_hash).returns({})
   end
 
   def tempfile(suffix = '')

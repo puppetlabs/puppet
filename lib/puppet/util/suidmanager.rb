@@ -1,8 +1,7 @@
-require 'puppet/util/warnings'
-require 'puppet/node/facts'
-require 'forwardable'
-
 module Puppet::Util::SUIDManager
+  require 'puppet/util/warnings'
+  require 'puppet/node/facts'
+  require 'forwardable'
   include Puppet::Util::Warnings
   extend Forwardable
 
