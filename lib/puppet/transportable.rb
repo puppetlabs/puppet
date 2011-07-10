@@ -178,7 +178,7 @@ module Puppet
 
     # Create a resource graph from our structure.
     def to_catalog(clear_on_failure = true)
-      catalog = Puppet::Resource::Catalog.new(Facter.value("hostname"))
+      catalog = Puppet::Resource::Catalog.new(Puppet::Node::Facts["hostname"])
 
       # This should really use the 'delve' method, but this
       # whole class is going away relatively soon, hopefully,

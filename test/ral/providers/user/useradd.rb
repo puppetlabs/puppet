@@ -58,7 +58,7 @@ class UserAddProviderTest < PuppetTest::TestCase
       assert_equal(@provider.command(:add), command,
         "Got incorrect command")
 
-      if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
+      if %w{Fedora RedHat}.include?(Puppet::Node::Facts["operatingsystem"])
         assert(params.include?("-M"), "Did not disable homedir creation on red hat")
         params.delete("-M")
       end
@@ -116,7 +116,7 @@ class UserAddProviderTest < PuppetTest::TestCase
 
     @user.provider.expects(:execute).with do |params|
       assert_equal(params[0], @provider.command(:add), "useradd was not called")
-      assert(params.include?("-M"), "Did not add -M on Red Hat") if %w{Fedora RedHat}.include?(Facter.value(:operatingsystem))
+      assert(params.include?("-M"), "Did not add -M on Red Hat") if %w{Fedora RedHat}.include?(Puppet::Node::Facts["operatingsystem"])
       assert(! params.include?("-m"), "Added -m when managehome was disabled")
 
       true

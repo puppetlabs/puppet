@@ -14,7 +14,7 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     attr_accessor :defpath
   end
 
-  case Facter["operatingsystem"].value
+  case Puppet::Node::Facts["operatingsystem"]
   when "FreeBSD"
     @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
   when "HP-UX"

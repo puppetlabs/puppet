@@ -9,14 +9,14 @@ describe Puppet::Resource::Catalog::Compiler do
     require 'puppet/rails'
     Puppet::Rails.stubs(:init)
     Facter.stubs(:to_hash).returns({})
-    Facter.stubs(:value).returns(Facter::Util::Fact.new("something"))
+    Puppet::Node::Facts.stubs(:[]).returns("something")
   end
 
   describe "when initializing" do
     before do
       Puppet.expects(:version).returns(1)
-      Facter.expects(:value).with('fqdn').returns("my.server.com")
-      Facter.expects(:value).with('ipaddress').returns("my.ip.address")
+      Puppet::Node::Facts.expects(:[]).with('fqdn').returns("my.server.com")
+      Puppet::Node::Facts.expects(:[]).with('ipaddress').returns("my.ip.address")
     end
 
     it "should gather data about itself" do
@@ -43,7 +43,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when finding catalogs" do
     before do
-      Facter.stubs(:value).returns("whatever")
+      Puppet::Node::Facts.stubs(:[]).returns("whatever")
 
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
@@ -131,7 +131,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when extracting facts from the request" do
     before do
-      Facter.stubs(:value).returns "something"
+      Puppet::Node::Facts.stubs(:[]).returns "something"
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @request = stub 'request', :options => {}
 
@@ -180,7 +180,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when finding nodes" do
     before do
-      Facter.stubs(:value).returns("whatever")
+      Puppet::Node::Facts.stubs(:[]).returns("whatever")
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
@@ -198,8 +198,8 @@ describe Puppet::Resource::Catalog::Compiler do
   describe "after finding nodes" do
     before do
       Puppet.expects(:version).returns(1)
-      Facter.expects(:value).with('fqdn').returns("my.server.com")
-      Facter.expects(:value).with('ipaddress').returns("my.ip.address")
+      Puppet::Node::Facts.expects(:[]).with('fqdn').returns("my.server.com")
+      Puppet::Node::Facts.expects(:[]).with('ipaddress').returns("my.ip.address")
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @name = "me"
       @node = mock 'node'
@@ -226,7 +226,7 @@ describe Puppet::Resource::Catalog::Compiler do
 
   describe "when filtering resources" do
     before :each do
-      Facter.stubs(:value)
+      Puppet::Node::Facts.stubs(:[])
       @compiler = Puppet::Resource::Catalog::Compiler.new
       @catalog = stub_everything 'catalog'
       @catalog.stubs(:respond_to?).with(:filter).returns(true)

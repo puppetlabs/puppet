@@ -203,7 +203,7 @@ module PuppetTest
 
     #@start = Time.now
 
-    #Facter.stubs(:value).returns "stubbed_value"
+    #Puppet::Node::Facts.stubs(:[]).returns "stubbed_value"
     #Facter.stubs(:to_hash).returns({})
   end
 
@@ -231,8 +231,9 @@ module PuppetTest
   end
 
   def tmpdir
+    $operatingsystem ||= Puppet::Node::Facts["operatingsystem"]
     unless @tmpdir
-      @tmpdir = case Facter["operatingsystem"].value
+      @tmpdir = case $operatingsystem
         when "Darwin"; "/private/tmp"
         when "SunOS"; "/var/tmp"
         else

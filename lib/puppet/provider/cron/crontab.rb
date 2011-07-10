@@ -1,6 +1,6 @@
 require 'puppet/provider/parsedfile'
 
-tab = case Facter.value(:operatingsystem)
+tab = case Puppet::Node::Facts["operatingsystem"]
   when "Solaris"
     :suntab
   when "AIX"

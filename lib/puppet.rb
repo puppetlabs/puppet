@@ -12,7 +12,6 @@ require 'puppet/util'
 require 'puppet/util/autoload'
 require 'puppet/util/settings'
 require 'puppet/util/feature'
-require 'puppet/util/suidmanager'
 require 'puppet/util/run_mode'
 
 #------------------------------------------------------------
@@ -157,3 +156,4 @@ require 'puppet/module'
 require 'puppet/util/storage'
 require 'puppet/status'
 require 'puppet/file_bucket/file'
+require 'puppet/util/suidmanager'

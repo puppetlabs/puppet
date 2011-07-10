@@ -476,7 +476,7 @@ describe Puppet::Configurer do
     end
 
     it "should use its node_name_value to retrieve the catalog" do
-      Facter.stubs(:value).returns "eh"
+      Puppet::Node::Facts.stubs(:[]).returns "eh"
       Puppet.settings[:node_name_value] = "myhost.domain.com"
       Puppet::Resource::Catalog.indirection.expects(:find).with { |name, options| name == "myhost.domain.com" }.returns @catalog
 

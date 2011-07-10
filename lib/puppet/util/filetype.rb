@@ -170,7 +170,7 @@ class Puppet::Util::FileType
 
     # Remove a specific @path's cron tab.
     def remove
-      if %w{Darwin FreeBSD}.include?(Facter.value("operatingsystem"))
+      if %w{Darwin FreeBSD}.include?(Puppet::Node::Facts["operatingsystem"])
         %x{/bin/echo yes | #{cmdbase} -r 2>/dev/null}
       else
         %x{#{cmdbase} -r 2>/dev/null}
@@ -191,7 +191,7 @@ class Puppet::Util::FileType
     # does not think I should be allowed to set the @path to my own user name
     def cmdbase
       cmd = nil
-      if @uid == Puppet::Util::SUIDManager.uid || Facter.value(:operatingsystem) == "HP-UX"
+      if @uid == Puppet::Util::SUIDManager.uid || Puppet::Node::Facts["operatingsystem"] == "HP-UX"
         return "crontab"
       else
         return "crontab -u #{@path}"

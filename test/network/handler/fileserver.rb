@@ -8,6 +8,14 @@ require 'puppet/network/handler/fileserver'
 class TestFileServer < Test::Unit::TestCase
   include PuppetTest
 
+  def setup
+    super
+    Puppet::Node::Facts.stubs(:[]).with("hostname").returns("myhost")
+    Puppet::Node::Facts.stubs(:[]).with("domain").returns("mydomain.com")
+    Puppet::Node::Facts.stubs(:[]).with("ipaddress").returns("127.0.0.1")
+    Puppet::Node::Facts.stubs(:[]).with("kernel").returns("fake_kernel")
+  end
+
   def mkmount(path = nil)
     mount = nil
     name = "yaytest"
@@ -998,20 +1006,11 @@ allow *
       result = check.call(client, pat, repl)
     end
 
-    # Now, check that they use Facter info
+    # Now, check that they use fact info
     client = nil
-    Facter.stubs(:value).with { |v| v.to_s == "hostname" }.returns("myhost")
-    Facter.stubs(:value).with { |v| v.to_s == "domain" }.returns("mydomain.com")
-
-
-      Facter.stubs(:to_hash).returns(
-        {
-          :ipaddress => "127.0.0.1",
-          :hostname => "myhost",
-          :domain   => "mydomain.com",
-
-    })
-
+    Puppet::Node::Facts.stubs(:[]).with("hostname").returns("myhost")
+    Puppet::Node::Facts.stubs(:[]).with("domain").returns("mydomain.com")
+    Puppet::Node::Facts.stubs(:[]).with("ipaddress").returns("127.0.0.1")
 
     {"%h" => "myhost", # Short name
     "%H" => "myhost.mydomain.com", # Full name
@@ -1039,20 +1038,7 @@ allow *
 
     dir = tempfile
 
-    # When mocks attack, part 2
-    kernel_fact = Facter.value(:kernel)
-
     ip = '127.0.0.1'
-
-
-      Facter.stubs(:to_hash).returns(
-        {
-          :kernel => kernel_fact,
-          :ipaddress => "127.0.0.1",
-          :hostname => "myhost",
-          :domain   => "mydomain.com",
-
-    })
 
     Dir.mkdir(dir)
     host = "myhost.mydomain.com"

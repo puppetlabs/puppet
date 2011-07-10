@@ -64,7 +64,7 @@ class Puppet::Provider
     return false if @defaults.empty?
     if @defaults.find do |fact, values|
         values = [values] unless values.is_a? Array
-        if fval = Facter.value(fact).to_s and fval != ""
+        if fval = Puppet::Node::Facts[fact.to_s].to_s and fval != ""
           fval = fval.to_s.downcase.intern
         else
           return false

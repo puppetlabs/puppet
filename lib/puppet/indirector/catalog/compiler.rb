@@ -134,7 +134,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     {"servername" => "fqdn",
       "serverip" => "ipaddress"
     }.each do |var, fact|
-      if value = Facter.value(fact)
+      if value = Puppet::Node::Facts[fact]
         @server_facts[var] = value
       else
         Puppet.warning "Could not retrieve fact #{fact}"
@@ -142,8 +142,8 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
     end
 
     if @server_facts["servername"].nil?
-      host = Facter.value(:hostname)
-      if domain = Facter.value(:domain)
+      host = Puppet::Node::Facts["hostname"]
+      if domain = Puppet::Node::Facts["domain"]
         @server_facts["servername"] = [host, domain].join(".")
       else
         @server_facts["servername"] = host

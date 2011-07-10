@@ -31,7 +31,6 @@ class TestFile < Test::Unit::TestCase
     @file = Puppet::Type.type(:file)
     $method = @method_name
     Puppet[:filetimeout] = -1
-    Facter.stubs(:to_hash).returns({})
   end
 
   def teardown
@@ -278,7 +277,7 @@ class TestFile < Test::Unit::TestCase
       }
     end
 
-    if Facter.value(:operatingsystem) == "Darwin"
+    if Puppet::Node::Facts["operatingsystem"] == "Darwin"
       def test_sillyowner
         file = tempfile
         File.open(file, "w") { |f| f.puts "" }

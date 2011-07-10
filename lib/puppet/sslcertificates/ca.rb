@@ -148,8 +148,8 @@ class Puppet::SSLCertificates::CA
   # Create the root certificate.
   def mkrootcert
     # Make the root cert's name "Puppet CA: " plus the FQDN of the host running the CA.
-    name = "Puppet CA: #{Facter["hostname"].value}"
-    if domain = Facter["domain"].value
+    name = "Puppet CA: #{Puppet::Node::Facts["hostname"]}"
+    if domain = Puppet::Node::Facts["domain"]
       name += ".#{domain}"
     end
 

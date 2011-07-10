@@ -90,13 +90,13 @@ describe provider_class, :fails_on_windows => true do
     end
 
     it "should return an array with -M if home is not managed and on Redhat" do
-      Facter.stubs(:value).with("operatingsystem").returns("RedHat")
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns("RedHat")
       @resource.stubs(:managehome?).returns false
       @provider.check_manage_home.must == ["-M"]
     end
 
     it "should return an empty array if home is not managed and not on Redhat" do
-      Facter.stubs(:value).with("operatingsystem").returns("some OS")
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns("some OS")
       @resource.stubs(:managehome?).returns false
       @provider.check_manage_home.must == []
     end

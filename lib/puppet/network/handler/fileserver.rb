@@ -233,7 +233,7 @@ class Puppet::Network::Handler
     # the modules.
     def modules_mount(module_name, client)
       # Find our environment, if we have one.
-      unless hostname = (client || Facter.value("hostname"))
+      unless hostname = (client || Puppet::Node::Facts["hostname"])
         raise ArgumentError, "Could not find hostname"
       end
       env = (node = Puppet::Node.indirection.find(hostname)) ? node.environment : nil
@@ -525,10 +525,10 @@ class Puppet::Network::Handler
       def localmap
         unless defined?(@@localmap)
           @@localmap = {
-            "h" =>  Facter.value("hostname"),
-            "H" => [Facter.value("hostname"),
-              Facter.value("domain")].join("."),
-            "d" =>  Facter.value("domain")
+            "h" =>  Puppet::Node::Facts["hostname"],
+            "H" => [Puppet::Node::Facts["hostname"],
+              Puppet::Node::Facts["domain"]].join("."),
+            "d" =>  Puppet::Node::Facts["domain"]
           }
         end
         @@localmap

@@ -47,7 +47,7 @@ class TestProvider < Test::Unit::TestCase
       {:true => false} => false,
       {:false => false} => true,
       {:false => true} => false,
-      {:operatingsystem => Facter.value(:operatingsystem)} => true,
+      {:operatingsystem => Puppet::Node::Facts["operatingsystem"]} => true,
       {:operatingsystem => :yayness} => false,
       {:nothing => :yayness} => false,
       {:exists => echo} => true,
@@ -158,7 +158,7 @@ class TestProvider < Test::Unit::TestCase
     assert(! provider.default?, "Was considered default with no settings")
 
     assert_nothing_raised do
-      provider.defaultfor :operatingsystem => Facter.value(:operatingsystem)
+      provider.defaultfor :operatingsystem => Puppet::Node::Facts["operatingsystem"]
     end
 
     assert(provider.default?, "Was not considered default")
@@ -167,7 +167,7 @@ class TestProvider < Test::Unit::TestCase
     assert_nothing_raised do
       provider.defaultfor :operatingsystem => [
         :yayness, :rahness,
-        Facter.value(:operatingsystem)
+        Puppet::Node::Facts["operatingsystem"]
       ]
     end
 

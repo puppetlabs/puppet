@@ -60,7 +60,7 @@ module Puppet::SSLCertificates
       if dnsnames != ""
         dnsnames.split(':').each { |d| subject_alt_name << 'DNS:' + d }
         subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
-      elsif name == Facter.value(:fqdn) # we're a CA server, and thus probably the server
+      elsif name == Puppet::Node::Facts["fqdn"] # we're a CA server, and thus probably the server
         subject_alt_name << 'DNS:' + "puppet" # Add 'puppet' as an alias
         subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
         subject_alt_name << 'DNS:' + name.sub(/^[^.]+./, "puppet.") # add puppet.domain as an alias

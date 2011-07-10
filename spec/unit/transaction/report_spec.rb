@@ -86,7 +86,7 @@ describe Puppet::Transaction::Report do
 
   describe "when using the indirector" do
     it "should redirect :save to the indirection" do
-      Facter.stubs(:value).returns("eh")
+      Puppet::Node::Facts.stubs(:[]).returns("eh")
       @indirection = stub 'indirection', :name => :report
       Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
       report = Puppet::Transaction::Report.new("apply")

@@ -26,7 +26,7 @@ class TestTypeInstances < Test::Unit::TestCase
 
     # The default
     @type.provide(:default) do
-      defaultfor :operatingsystem => Facter.value(:operatingsystem)
+      defaultfor :operatingsystem => Puppet::Node::Facts["operatingsystem"]
       mk_resource_methods
       class << self
         attr_accessor :names

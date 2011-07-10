@@ -79,7 +79,7 @@ module PuppetTest::ExeTest
   end
 
   def stopmasterd(running = true)
-    ps = Facter["ps"].value || "ps -ef"
+    ps = Puppet::Node::Facts["ps"] || "ps -ef"
 
     pidfile = File.join(Puppet[:vardir], "run", "puppetmasterd.pid")
 

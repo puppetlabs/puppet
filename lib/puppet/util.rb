@@ -302,7 +302,6 @@ module Util
     stdout = arguments[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
     stderr = arguments[:combine] ? stdout : File.open(null_file, 'w')
 
-
     exec_args = [command, arguments, stdin, stdout, stderr]
 
     if execution_stub = Puppet::Util::ExecutionStub.current_value

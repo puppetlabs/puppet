@@ -32,9 +32,9 @@ describe Puppet::Provider::Confine::Variable do
       @confine.valid?
     end
 
-    it "should use Facter if the variable name is not a valid setting" do
+    it "should use Facts if the variable name is not a valid setting" do
       Puppet.settings.expects(:valid?).with(:myvar).returns false
-      Facter.expects(:value).with(:myvar).returns "foo"
+      Puppet::Node::Facts.expects(:[]).with("myvar").returns "foo"
       @confine.valid?
     end
 

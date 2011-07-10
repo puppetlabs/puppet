@@ -392,7 +392,7 @@ class TestSettings < Test::Unit::TestCase
     if Puppet.features.root?
       assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
-      case Facter["operatingsystem"].value
+      case Puppet::Node::Facts["operatingsystem"]
       when /BSD/, "Darwin" # nothing
       else
         assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
@@ -431,7 +431,7 @@ class TestSettings < Test::Unit::TestCase
     if Puppet.features.root?
       assert_equal(user.uid, File.stat(path).uid, "UIDS are not equal")
 
-      case Facter["operatingsystem"].value
+      case Puppet::Node::Facts["operatingsystem"]
       when /BSD/, "Darwin" # nothing
       else
         assert_equal(group.gid, File.stat(path).gid, "GIDS are not equal")
