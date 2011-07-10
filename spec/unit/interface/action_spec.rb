@@ -171,6 +171,15 @@ describe Puppet::Interface::Action do
       face.get_action(:foo).options.should =~ [:bar]
     end
 
+    it "should only list options and not aliases" do
+      face = Puppet::Interface.new(:action_level_options, '0.0.1') do
+        action :foo do
+          option "--bar", "-b", "--foo-bar"
+        end
+      end
+      face.get_action(:foo).options.should =~ [:bar]
+    end
+
     describe "with both face and action options" do
       let :face do
         Puppet::Interface.new(:action_level_options, '0.0.1') do
