@@ -174,14 +174,6 @@ describe Puppet::Interface do
       face.get_action(:foo).options.should =~ [:quux]
       face.get_action(:bar).options.should =~ [:quux]
     end
-
-    it "should only list options and not aliases" do
-      face = subject.new(:face_options, '0.0.1') do
-        option "--bar", "-b", "--foo-bar"
-      end
-      face.options.should =~ [:bar]
-    end
-
   end
 
   describe "with inherited options" do
