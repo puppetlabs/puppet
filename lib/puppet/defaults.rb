@@ -47,7 +47,7 @@ module Puppet
       exits.  Comma-separate multiple values.  For a list of all values,
       specify 'all'.  This feature is only available in Puppet versions
       higher than 0.18.4."],
-    :color => ["ansi", "Whether to use colors when logging to the console.
+    :color => [(Puppet.features.microsoft_windows? ? "false" : "ansi"), "Whether to use colors when logging to the console.
       Valid values are `ansi` (equivalent to `true`), `html` (mostly
       used during testing with TextMate), and `false`, which produces
       no color."],
