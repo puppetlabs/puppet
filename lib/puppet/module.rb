@@ -42,7 +42,10 @@ class Puppet::Module
   def has_metadata?
     return false unless metadata_file
 
-    FileTest.exist?(metadata_file)
+    return false unless FileTest.exist?(metadata_file)
+
+    metadata = PSON.parse File.read(metadata_file)
+    return metadata.is_a?(Hash) && !metadata.keys.empty?
   end
 
   def initialize(name, environment = nil)
