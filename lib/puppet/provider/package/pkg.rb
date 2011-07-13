@@ -12,22 +12,17 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   def self.instances
     packages = []
 
-    cmd = "#{command(:pkg)} list -H"
-    execpipe(cmd) do |process|
-      hash = {}
-
+    pkg(:list, '-H').each_line do |line|
       # now turn each returned line into a package object
-      process.each_line { |line|
-        if hash = parse_line(line)
-          packages << new(hash)
-        end
-      }
+      if hash = parse_line(line.chomp)
+        packages << new(hash)
+      end
     end
 
     packages
   end
 
-  self::REGEX = %r{^(\S+)\s+(\S+)\s+(\S+)\s+}
+  self::REGEX = /^(\S+)(?:\s+\(.*?\))?\s+(\S+)\s+(\S+)\s+\S+$/
   self::FIELDS = [:name, :version, :status]
 
   def self.parse_line(line)
@@ -57,8 +52,8 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
   # TODO deal with multiple publishers
   def latest
     version = nil
-    pkg(:list, "-Ha", @resource[:name]).split("\n").each do |line|
-      v = line.split[2]
+    pkg(:list, "-Ha", @resource[:name]).each_line do |line|
+      v = parse_line(line.chomp)[:status]
       case v
       when "known"
         return v
@@ -95,7 +90,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       return {:ensure => :absent, :name => @resource[:name]}
     end
 
-    hash = self.class.parse_line(output) || {:ensure => :absent, :name => @resource[:name]}
+    hash = self.class.parse_line(output.chomp) || {:ensure => :absent, :name => @resource[:name]}
     hash
   end
 end
