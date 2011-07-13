@@ -4,7 +4,7 @@ step "Validate disabled services agreement ralsh vs. OS service count"
 # ticket_4124_should_list_all_disabled.sh
 
 hosts.each do |host|
-  unless host['platform'].include? 'centos' or host['platform'].include? 'redhat'
+  unless host['platform'].include? 'centos' or host['platform'].include? 'rhel'
     skip_test "Test not supported on this plaform"
    else
     run_script_on(host,'acceptance-tests/tests/resource/service/ticket_4124_should_list_all_disabled.sh')
