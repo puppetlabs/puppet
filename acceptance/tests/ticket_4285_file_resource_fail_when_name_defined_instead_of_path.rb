@@ -12,6 +12,8 @@ manifest = %q{
   }
 }
 
-apply_manifest_on(agents, manifest) do
-    fail_test "found the bug report output" if stdout =~ /Cannot alias/
+agents.each do |host|
+  apply_manifest_on(host, manifest) do
+    assert_no_match(/Cannot alias/, stdout, "#{host}: found the bug report output")
+  end
 end

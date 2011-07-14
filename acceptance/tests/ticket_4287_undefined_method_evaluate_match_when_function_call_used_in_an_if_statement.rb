@@ -7,7 +7,8 @@ manifest = %q{
   }
 }
 
-apply_manifest_on(agents, manifest) do
-    fail_test "didn't get the expected notice" unless
-        stdout.include? 'notice: No issue here...'
+agents.each do |host|
+  apply_manifest_on(host, manifest) do
+    assert_match(/notice: No issue here.../, stdout, "didn't get the expected notice on #{host}")
+  end
 end

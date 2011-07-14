@@ -721,7 +721,7 @@ if @config.include?(:run_mode)
     end
 
     Puppet::Util::SUIDManager.asuser(*chown) do
-      mode = obj.mode || 0640
+      mode = obj.mode ? obj.mode.to_i : 0640
       args << "w" if args.empty?
 
       args << mode
