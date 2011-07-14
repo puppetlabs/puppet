@@ -24,7 +24,9 @@ with_master_running_on(master, "--manifest #{manifest_file} --certdnsnames=\"pup
   sleep 3
 
   step "Agent: puppet agent --test"
-  on agents, puppet_agent("--test"), :acceptable_exit_codes => [2] do
-    fail_test "Site.pp not detect at Master?" unless stdout.include? 'ticket_5477_notify'
+  agents.each do |host|
+    on(host, puppet_agent("--test"), :acceptable_exit_codes => [2]) do
+      assert_match(/ticket_5477_notify/, stdout, "#{host}: Site.pp not detected on Puppet Master")
+    end
   end
 end
