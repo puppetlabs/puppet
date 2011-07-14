@@ -39,7 +39,6 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       }
 
       hash[:provider] = self.name
-      hash[:error] = "ok"
 
       if hash[:status] == "installed"
         hash[:ensure] = :present
@@ -93,15 +92,10 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       output = pkg(:list, "-H", @resource[:name])
     rescue Puppet::ExecutionFailure
       # pkg returns 1 if the package is not found.
-      return {:ensure => :absent, :status => 'missing',
-        :name => @resource[:name], :error => 'ok'}
+      return {:ensure => :absent, :name => @resource[:name]}
     end
 
-    hash = self.class.parse_line(output) ||
-      {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}
-
-    raise Puppet::Error.new( "Package #{hash[:name]}, version #{hash[:version]} is in error state: #{hash[:error]}") if hash[:error] != "ok"
-
+    hash = self.class.parse_line(output) || {:ensure => :absent, :name => @resource[:name]}
     hash
   end
 end
