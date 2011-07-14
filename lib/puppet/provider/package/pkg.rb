@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
         hash[:ensure] = :absent
       end
     else
-      Puppet.warning "Failed to match 'pkg list' line #{line.inspect}"
+      warning "Failed to match 'pkg list' line #{line.inspect}"
       return nil
     end
 
