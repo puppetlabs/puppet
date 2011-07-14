@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.dirname(__FILE__) + '/../../spec_helper'
+require 'ostruct'
 
 describe Puppet::Util::Settings do
   describe "when specifying defaults" do
@@ -1104,5 +1105,15 @@ describe Puppet::Util::Settings do
     end
 
     it "should cache the result"
+  end
+
+  describe "#writesub" do
+    it "should only pass valid arguments to File.open" do
+      settings = Puppet::Util::Settings.new
+      settings.stubs(:get_config_file_default).with(:privatekeydir).returns(OpenStruct.new(:mode => "750"))
+
+      File.expects(:open).with("/path/to/keydir", "w", 750).returns true
+      settings.writesub(:privatekeydir, "/path/to/keydir")
+    end
   end
 end
