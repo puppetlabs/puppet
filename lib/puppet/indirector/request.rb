@@ -1,6 +1,7 @@
 require 'cgi'
 require 'uri'
 require 'puppet/indirector'
+require 'puppet/util/pson'
 
 # This class encapsulates all of the information you need to make an
 # Indirection call, and as a a result also handles REST calls.  It's somewhat
@@ -13,6 +14,9 @@ class Puppet::Indirector::Request
   attr_reader :indirection_name
 
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
+
+  # Load json before trying to register.
+  Puppet.features.pson? and ::PSON.register_document_type('IndirectorRequest',self)
 
   def self.from_pson(json)
     raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
@@ -35,7 +39,7 @@ class Puppet::Indirector::Request
 
   def to_pson(*args)
     result = {
-      'document_type' => 'Puppet::Indirector::Request',
+      'document_type' => 'IndirectorRequest',
       'data' => {
         'type' => indirection_name,
         'method' => method,

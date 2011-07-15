@@ -3,6 +3,10 @@ require 'spec_helper'
 require 'matchers/json'
 
 describe Puppet::Node do
+  it "should register its document type as Node" do
+    PSON.registered_document_types["Node"].should equal(Puppet::Node)
+  end
+
   describe "when managing its environment" do
     it "should use any set environment" do
       Puppet::Node.new("foo", :environment => "bar").environment.name.should == :bar
@@ -44,6 +48,10 @@ describe Puppet::Node do
 
     it "should provide its name" do
       @node.should set_json_attribute('name').to("mynode")
+    end
+
+    it "should produce a hash with the document_type set to 'Node'" do
+      @node.should set_json_document_type_to("Node")
     end
 
     it "should include the classes if set" do

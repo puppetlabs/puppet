@@ -2,8 +2,16 @@
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/indirector/request'
+require 'puppet/util/pson'
 
 describe Puppet::Indirector::Request do
+
+  describe "when registering the document type" do
+    it "should register its document type with JSON" do
+      PSON.registered_document_types["IndirectorRequest"].should equal(Puppet::Indirector::Request)
+    end
+  end
+
   describe "when initializing" do
     it "should require an indirection name, a key, and a method" do
       lambda { Puppet::Indirector::Request.new }.should raise_error(ArgumentError)
@@ -308,7 +316,7 @@ describe Puppet::Indirector::Request do
     end
 
     it "should produce a hash with the document_type set to 'request'" do
-      @request.should set_json_document_type_to("Puppet::Indirector::Request")
+      @request.should set_json_document_type_to("IndirectorRequest")
     end
     
     it "should set the 'key'" do
