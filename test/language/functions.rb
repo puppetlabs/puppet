@@ -148,17 +148,17 @@ class TestLangFunctions < Test::Unit::TestCase
 
     # Test that our use of an undefined instance variable does not throw
     # an exception, but only safely continues.
-    scope.setvar("one", "One")
+    scope['one'] = "One"
     assert_nothing_raised do
       ast.evaluate(scope)
     end
 
     # Ensure that we got the output we expected from that evaluation.
-    assert_equal("template One\ntemplate \n", scope.lookupvar("output"), "Undefined template variables do not raise exceptions")
+    assert_equal("template One\ntemplate \n", scope['output'], "Undefined template variables do not raise exceptions")
 
     # Now, fill in the last variable and make sure the whole thing
     # evaluates correctly.
-    scope.setvar("two", "Two")
+    scope['two'] = "Two"
     scope.unsetvar("output")
     assert_nothing_raised do
       ast.evaluate(scope)
@@ -166,7 +166,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
 
       assert_equal(
-        "template One\ntemplate Two\n", scope.lookupvar("output"),
+        "template One\ntemplate Two\n", scope['output'],
 
       "Templates were not handled correctly")
   end
@@ -199,7 +199,7 @@ class TestLangFunctions < Test::Unit::TestCase
       ast.evaluate(scope)
     end
 
-    scope.setvar("yay", "this is yay")
+    scope['yay'] = "this is yay"
 
     assert_nothing_raised do
       ast.evaluate(scope)
@@ -207,7 +207,7 @@ class TestLangFunctions < Test::Unit::TestCase
 
 
       assert_equal(
-        "template this is yay\n", scope.lookupvar("output"),
+        "template this is yay\n", scope['output'],
 
       "Templates were not handled correctly")
 
@@ -243,14 +243,14 @@ class TestLangFunctions < Test::Unit::TestCase
     end
 
     # Verify that we evaluate and return their value correctly.
-    scope.setvar("deprecated", "deprecated value")
+    scope["deprecated"] = "deprecated value"
     assert_nothing_raised do
       ast.evaluate(scope)
     end
 
 
       assert_equal(
-        "template deprecated value\n", scope.lookupvar("output"),
+        "template deprecated value\n", scope['output'],
 
           "Deprecated template variables were not handled correctly")
   end
@@ -305,7 +305,7 @@ class TestLangFunctions < Test::Unit::TestCase
     ast = varobj("output", func)
 
     scope = mkscope
-    scope.setvar("myvar", "this is yayness")
+    scope['myvar'] = "this is yayness"
     assert_raise(Puppet::ParseError) do
       ast.evaluate(scope)
     end
@@ -381,15 +381,15 @@ class TestLangFunctions < Test::Unit::TestCase
       false => "false",
     }.each do |string, value|
       scope = mkscope
-      scope.setvar("yayness", string)
-      assert_equal(string, scope.lookupvar("yayness"))
+      scope['yayness'] = string
+      assert_equal(scope['yayness'], string, "did not correctly evaluate '#{string}'")
 
       assert_nothing_raised("An empty string was not a valid variable value") do
         ast.evaluate(scope)
       end
 
       assert_equal(
-        "template #{value}\n", scope.lookupvar("output"),
+        "template #{value}\n", scope['output'],
         "#{string.inspect} did not get evaluated correctly")
     end
   end

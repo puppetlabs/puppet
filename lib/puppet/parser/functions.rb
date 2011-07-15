@@ -29,8 +29,11 @@ module Puppet::Parser::Functions
   Environment = Puppet::Node::Environment
 
   def self.environment_module(env = nil)
+    if env and ! env.is_a?(Puppet::Node::Environment)
+      env = Puppet::Node::Environment.new(env)
+    end
     @modules.synchronize {
-      @modules[ env || Environment.current || Environment.root ] ||= Module.new
+      @modules[ (env || Environment.current || Environment.root).name ] ||= Module.new
     }
   end
 

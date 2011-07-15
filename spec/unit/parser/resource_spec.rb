@@ -271,7 +271,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should not copy relationship metaparams when not in metaparam compatibility mode" do
-      @scope.setvar("require", "bar")
+      @scope['require'] = "bar"
 
       @resource.stubs(:metaparam_compatibility_mode?).returns false
       @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
@@ -280,7 +280,7 @@ describe Puppet::Parser::Resource do
     end
 
     it "should copy relationship metaparams when in metaparam compatibility mode" do
-      @scope.setvar("require", "bar")
+      @scope['require'] = "bar"
 
       @resource.stubs(:metaparam_compatibility_mode?).returns true
       @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }
@@ -290,7 +290,7 @@ describe Puppet::Parser::Resource do
 
     it "should stack relationship metaparams when in metaparam compatibility mode" do
       @resource.set_parameter("require", "foo")
-      @scope.setvar("require", "bar")
+      @scope['require'] = "bar"
 
       @resource.stubs(:metaparam_compatibility_mode?).returns true
       @resource.class.publicize_methods(:add_metaparams)  { @resource.add_metaparams }

@@ -343,12 +343,45 @@ class Puppet::Resource
     [ type, title ].join('/')
   end
 
+  def set_default_parameters(scope)
+    return [] unless resource_type and resource_type.respond_to?(:arguments)
+
+    result = []
+
+    resource_type.arguments.each do |param, default|
+      param = param.to_sym
+      next if parameters.include?(param)
+      unless is_a?(Puppet::Parser::Resource)
+        fail Puppet::DevError, "Cannot evaluate default parameters for #{self} - not a parser resource"
+      end
+
+      next if default.nil?
+
+      self[param] = default.safeevaluate(scope)
+      result << param
+    end
+    result
+  end
+
   def to_resource
     self
   end
 
   def valid_parameter?(name)
     resource_type.valid_parameter?(name)
+  end
+
+  # Verify that all required arguments are either present or
+  # have been provided with defaults.
+  # Must be called after 'set_default_parameters'.  We can't join the methods
+  # because Type#set_parameters needs specifically ordered behavior.
+  def validate_complete
+    return unless resource_type and resource_type.respond_to?(:arguments)
+
+    resource_type.arguments.each do |param, default|
+      param = param.to_sym
+      fail Puppet::ParseError, "Must pass #{param} to #{self}" unless parameters.include?(param)
+    end
   end
 
   def validate_parameter(name)

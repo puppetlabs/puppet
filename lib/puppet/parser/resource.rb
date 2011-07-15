@@ -173,7 +173,7 @@ class Puppet::Parser::Resource < Puppet::Resource
         :name => param, :value => value, :source => self.source
       )
     elsif ! param.is_a?(Puppet::Parser::Resource::Param)
-      raise ArgumentError, "Must pass a parameter or all necessary values"
+      raise ArgumentError, "Received incomplete information - no value provided for parameter #{param}"
     end
 
     tag(*param.value) if param.name == :tag
@@ -258,7 +258,8 @@ class Puppet::Parser::Resource < Puppet::Resource
 
   def add_backward_compatible_relationship_param(name)
     # Skip metaparams for which we get no value.
-    return unless val = scope.lookupvar(name.to_s) and val != :undefined
+    return unless scope.include?(name.to_s)
+    val = scope[name.to_s]
 
     # The default case: just set the value
     set_parameter(name, val) and return unless @parameters[name]
