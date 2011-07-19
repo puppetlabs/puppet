@@ -136,14 +136,15 @@ class Puppet::Node::Environment
   end
 
   def validate_dirs(dirs)
+    dir_regex = Puppet.features.microsoft_windows? ? /^[A-Za-z]:#{File::SEPARATOR}/ : /^#{File::SEPARATOR}/
     dirs.collect do |dir|
-      if dir !~ /^#{File::SEPARATOR}/
+      if dir !~ dir_regex
         File.join(Dir.getwd, dir)
       else
         dir
       end
     end.find_all do |p|
-      p =~ /^#{File::SEPARATOR}/ && FileTest.directory?(p)
+      p =~ dir_regex && FileTest.directory?(p)
     end
   end
 
