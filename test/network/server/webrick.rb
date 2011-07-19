@@ -16,7 +16,6 @@ class TestWebrickServer < Test::Unit::TestCase
 
   def teardown
     super
-    Puppet::Network::HttpPool.clear_http_instances
   end
 
   # Make sure we can create a server, and that it knows how to create its
