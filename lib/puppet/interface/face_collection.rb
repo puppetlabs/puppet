@@ -1,8 +1,6 @@
 require 'puppet/interface'
 
 module Puppet::Interface::FaceCollection
-  SEMVER_VERSION = /^(\d+)\.(\d+)\.(\d+)([A-Za-z][0-9A-Za-z-]*|)$/
-
   @faces = Hash.new { |hash, key| hash[key] = {} }
 
   def self.faces
@@ -17,55 +15,18 @@ module Puppet::Interface::FaceCollection
     @faces.keys.select {|name| @faces[name].length > 0 }
   end
 
-  def self.validate_version(version)
-    !!(SEMVER_VERSION =~ version.to_s)
-  end
-
-  def self.semver_to_array(v)
-    parts = SEMVER_VERSION.match(v).to_a[1..4]
-    parts[0..2] = parts[0..2].map { |e| e.to_i }
-    parts
-  end
-
-  def self.cmp_semver(a, b)
-    a, b = [a, b].map do |x| semver_to_array(x) end
-
-    cmp = a[0..2] <=> b[0..2]
-    if cmp == 0
-      cmp = a[3] <=> b[3]
-      cmp = +1 if a[3].empty? && !b[3].empty?
-      cmp = -1 if b[3].empty? && !a[3].empty?
-    end
-    cmp
-  end
-
-  def self.prefix_match?(desired, target)
-    # Can't meaningfully do a prefix match with current on either side.
-    return false if desired == :current
-    return false if target  == :current
-
-    # REVISIT: Should probably fail if the matcher is not valid.
-    prefix = desired.split('.').map {|x| x =~ /^\d+$/ and x.to_i }
-    have   = semver_to_array(target)
-
-    while want = prefix.shift do
-      return false unless want == have.shift
-    end
-    return true
-  end
-
   def self.[](name, version)
     name = underscorize(name)
     get_face(name, version) or load_face(name, version)
   end
 
   # get face from memory, without loading.
-  def self.get_face(name, desired_version)
+  def self.get_face(name, pattern)
     return nil unless @faces.has_key? name
+    return @faces[name][:current] if pattern == :current
 
-    return @faces[name][:current] if desired_version == :current
-
-    found = @faces[name].keys.select {|v| prefix_match?(desired_version, v) }.sort.last
+    versions = @faces[name].keys - [ :current ]
+    found    = SemVer.find_matching(pattern, versions)
     return @faces[name][found]
   end
 
@@ -108,7 +69,7 @@ module Puppet::Interface::FaceCollection
         # versions here and return the last item in that set.
         #
         # --daniel 2011-04-06
-        latest_ver = @faces[name].keys.sort {|a, b| cmp_semver(a, b) }.last
+        latest_ver = @faces[name].keys.sort.last
         @faces[name][:current] = @faces[name][latest_ver]
       end
     rescue LoadError => e

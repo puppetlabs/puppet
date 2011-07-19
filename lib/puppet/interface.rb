@@ -2,6 +2,7 @@ require 'puppet'
 require 'puppet/util/autoload'
 require 'puppet/interface/documentation'
 require 'prettyprint'
+require 'semver'
 
 class Puppet::Interface
   include FullDocs
@@ -84,12 +85,12 @@ class Puppet::Interface
   attr_reader :name, :version
 
   def initialize(name, version, &block)
-    unless Puppet::Interface::FaceCollection.validate_version(version)
+    unless SemVer.valid?(version)
       raise ArgumentError, "Cannot create face #{name.inspect} with invalid version number '#{version}'!"
     end
 
     @name    = Puppet::Interface::FaceCollection.underscorize(name)
-    @version = version
+    @version = SemVer.new(version)
 
     # The few bits of documentation we actually demand.  The default license
     # is a favour to our end users; if you happen to get that in a core face
