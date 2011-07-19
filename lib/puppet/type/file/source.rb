@@ -154,7 +154,7 @@ module Puppet
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
-      fail "Could not retrieve information from source(s) #{value.join(", ")}" unless result
+      fail "Could not retrieve information from environment #{Puppet[:environment]} source(s) #{value.join(", ")}" unless result
       result
     end
 
