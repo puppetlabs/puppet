@@ -441,9 +441,11 @@ module Puppet
       authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
-    :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
-      :desc => "The search path for modules as a colon-separated list of
-      directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
+    :modulepath => {
+      :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :desc => "The search path for modules as a list of directories separated by the '#{File::PATH_SEPARATOR}' character.",
+      :type => :setting # We don't want this to be considered a file, since it's multiple files.
+    },
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
       client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
       to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).

@@ -102,7 +102,7 @@ describe Puppet::Parser::TypeLoader do
       @modulebase2 = File.join(@base, "second")
       FileUtils.mkdir_p(@modulebase2)
 
-      Puppet[:modulepath] = "#{@modulebase1}:#{@modulebase2}"
+      Puppet[:modulepath] = "#{@modulebase1}#{File::PATH_SEPARATOR}#{@modulebase2}"
     end
 
     def mk_module(basedir, name)
