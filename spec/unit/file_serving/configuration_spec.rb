@@ -24,9 +24,10 @@ describe Puppet::FileServing::Configuration do
 end
 
 describe Puppet::FileServing::Configuration do
+  include PuppetSpec::Files
 
   before :each do
-    @path = "/path/to/configuration/file.conf"
+    @path = make_absolute("/path/to/configuration/file.conf")
     Puppet.settings.stubs(:value).with(:trace).returns(false)
     Puppet.settings.stubs(:value).with(:fileserverconfig).returns(@path)
   end

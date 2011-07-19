@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'puppet/transaction/event'
 
 describe Puppet::Transaction::Event do
+  include PuppetSpec::Files
+
   [:previous_value, :desired_value, :property, :resource, :name, :message, :file, :line, :tags, :audited].each do |attr|
     it "should support #{attr}", :'fails_on_ruby_1.9.2' => true do
       event = Puppet::Transaction::Event.new
@@ -113,7 +115,7 @@ describe Puppet::Transaction::Event do
 
   describe "When converting to YAML" do
     it "should include only documented attributes" do
-      resource = Puppet::Type.type(:file).new(:title => "/tmp/foo")
+      resource = Puppet::Type.type(:file).new(:title => make_absolute("/tmp/foo"))
       event = Puppet::Transaction::Event.new(:source_description => "/my/param", :resource => resource,
                                              :file => "/foo.rb", :line => 27, :tags => %w{one two},
                                              :desired_value => 7, :historical_value => 'Brazil',

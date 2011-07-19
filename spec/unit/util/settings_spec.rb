@@ -2,6 +2,8 @@
 require 'spec_helper'
 
 describe Puppet::Util::Settings do
+  include PuppetSpec::Files
+
   describe "when specifying defaults" do
     before do
       @settings = Puppet::Util::Settings.new
@@ -377,7 +379,7 @@ describe Puppet::Util::Settings do
     end
 
     it "should use its current ':config' value for the file to parse" do
-      myfile = Puppet.features.posix? ? "/my/file" : "C:/myfile" # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
+      myfile = make_absolute("/my/file") # do not stub expand_path here, as this leads to a stack overflow, when mocha tries to use it
       @settings[:config] = myfile
 
       File.expects(:read).with(myfile).returns "[main]"
@@ -444,25 +446,27 @@ describe Puppet::Util::Settings do
     it "should support specifying all metadata (owner, group, mode) in the configuration file" do
       @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
+      otherfile = make_absolute("/other/file")
       text = "[main]
-      myfile = /other/file {owner = service, group = service, mode = 644}
+      myfile = #{otherfile} {owner = service, group = service, mode = 644}
       "
       @settings.expects(:read_file).returns(text)
       @settings.parse
-      @settings[:myfile].should == "/other/file"
+      @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser", :group => "sgroup", :mode => "644"}
     end
 
     it "should support specifying a single piece of metadata (owner, group, or mode) in the configuration file" do
       @settings.setdefaults :section, :myfile => ["/myfile", "a"]
 
+      otherfile = make_absolute("/other/file")
       text = "[main]
-      myfile = /other/file {owner = service}
+      myfile = #{otherfile} {owner = service}
       "
       file = "/some/file"
       @settings.expects(:read_file).returns(text)
       @settings.parse
-      @settings[:myfile].should == "/other/file"
+      @settings[:myfile].should == otherfile
       @settings.metadata(:myfile).should == {:owner => "suser"}
     end
 

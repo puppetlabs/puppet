@@ -2,9 +2,10 @@
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
     # stub this to not try to create state.yaml
     Puppet::Util::Storage.stubs(:store)
   end
