@@ -12,7 +12,7 @@ describe Puppet::Type.type(:file) do
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
-    file = Puppet::Type.type(:file).new :path => "/my/file", :mode => "755"
+    file = Puppet::Type.type(:file).new :path => make_absolute("/my/file"), :mode => "755"
     catalog = Puppet::Resource::Catalog.new
     catalog.add_resource file
 
@@ -442,7 +442,7 @@ describe Puppet::Type.type(:file) do
 
 
     file = Puppet::Type.type(:file).new(
-      :name   => dest,
+      :name   => make_absolute(dest),
       :ensure => :absent,
       :source => source,
       :backup => false

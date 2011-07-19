@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'puppet/transaction/event_manager'
 
 describe Puppet::Transaction::EventManager do
+  include PuppetSpec::Files
+
   describe "at initialization" do
     it "should require a transaction" do
       Puppet::Transaction::EventManager.new("trans").transaction.should == "trans"
@@ -23,7 +25,7 @@ describe Puppet::Transaction::EventManager do
     before do
       @manager = Puppet::Transaction::EventManager.new(@transaction)
 
-      @resource = Puppet::Type.type(:file).new :path => "/my/file"
+      @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
 
       @graph = stub 'graph', :matching_edges => [], :resource => @resource
       @manager.stubs(:relationship_graph).returns @graph
@@ -139,7 +141,7 @@ describe Puppet::Transaction::EventManager do
       @manager = Puppet::Transaction::EventManager.new(@transaction)
       @manager.stubs(:queue_events)
 
-      @resource = Puppet::Type.type(:file).new :path => "/my/file"
+      @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
       @event = Puppet::Transaction::Event.new(:name => :event, :resource => @resource)
     end
 

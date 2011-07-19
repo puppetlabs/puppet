@@ -31,6 +31,16 @@ module PuppetSpec::Files
     end
   end
 
+  def make_absolute(path)
+    return path unless Puppet.features.microsoft_windows?
+    # REMIND UNC
+    return path if path =~ /^[A-Za-z]:/
+
+    pwd = Dir.getwd
+    return "#{pwd[0,2]}#{path}" if pwd.length > 2 and pwd =~ /^[A-Za-z]:/
+    return "C:#{path}"
+  end
+
   def tmpfile(name)
     # Generate a temporary file, just for the name...
     source = Tempfile.new(name)

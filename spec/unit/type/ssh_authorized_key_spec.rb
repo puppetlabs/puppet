@@ -4,6 +4,8 @@ require 'spec_helper'
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
 
 describe ssh_authorized_key do
+  include PuppetSpec::Files
+
   before do
     @class = Puppet::Type.type(:ssh_authorized_key)
 
@@ -11,7 +13,7 @@ describe ssh_authorized_key do
     @class.stubs(:defaultprovider).returns(@provider_class)
     @class.stubs(:provider).returns(@provider_class)
 
-    @provider = stub 'provider', :class => @provider_class, :file_path => "/tmp/whatever", :clear => nil
+    @provider = stub 'provider', :class => @provider_class, :file_path => make_absolute("/tmp/whatever"), :clear => nil
     @provider_class.stubs(:new).returns(@provider)
     @catalog = Puppet::Resource::Catalog.new
   end
@@ -180,7 +182,7 @@ describe ssh_authorized_key do
         proc { @class.new(:name => "whev", :type => :rsa, :target => "/tmp/here") }.should_not raise_error
       end
 
-      it "should use the user's path if not explicitly specified" do
+      it "should use the user's path if not explicitly specified", :fails_on_windows => true do
         @class.new(:name => "whev", :user => 'root').should(:target).should == File.expand_path("~root/.ssh/authorized_keys")
       end
 
@@ -226,7 +228,7 @@ describe ssh_authorized_key do
   end
 
 
-  describe "when user is specified" do
+  describe "when user is specified", :fails_on_windows => true do
 
     it "should determine target" do
       resource = @class.create(

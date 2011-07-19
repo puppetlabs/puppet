@@ -4,9 +4,10 @@ require 'spec_helper'
 require 'puppet/parser/files'
 
 describe Puppet::Parser::Files do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
   end
 
   it "should have a method for finding a template" do
@@ -77,8 +78,9 @@ describe Puppet::Parser::Files do
     it "should accept relative templatedirs" do
       FileTest.stubs(:exist?).returns true
       Puppet[:templatedir] = "my/templates"
-      File.expects(:directory?).with(File.join(Dir.getwd,"my/templates")).returns(true)
-      Puppet::Parser::Files.find_template("mytemplate").should == File.join(Dir.getwd,"my/templates/mytemplate")
+      # We expand_path to normalize backslashes and slashes on Windows
+      File.expects(:directory?).with(File.expand_path(File.join(Dir.getwd,"my/templates"))).returns(true)
+      Puppet::Parser::Files.find_template("mytemplate").should == File.expand_path(File.join(Dir.getwd,"my/templates/mytemplate"))
     end
 
     it "should use the environment templatedir if no module is found and an environment is specified" do
@@ -158,7 +160,8 @@ describe Puppet::Parser::Files do
     end
 
     it "should look for files relative to the current directory" do
-      cwd = Dir.getwd
+      # We expand_path to normalize backslashes and slashes on Windows
+      cwd = File.expand_path(Dir.getwd)
       Dir.expects(:glob).with("#{cwd}/foobar/init.pp").returns(["#{cwd}/foobar/init.pp"])
       Puppet::Parser::Files.find_manifests("foobar/init.pp")[1].should == ["#{cwd}/foobar/init.pp"]
     end

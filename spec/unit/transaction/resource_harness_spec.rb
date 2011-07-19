@@ -9,7 +9,7 @@ describe Puppet::Transaction::ResourceHarness do
   before do
     @mode_750 = Puppet.features.microsoft_windows? ? '644' : '750'
     @mode_755 = Puppet.features.microsoft_windows? ? '644' : '755'
-    path = Puppet.features.microsoft_windows? ? "c:/my/file" : "/my/file"
+    path = make_absolute("/my/file")
 
     @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
     @resource = Puppet::Type.type(:file).new :path => path

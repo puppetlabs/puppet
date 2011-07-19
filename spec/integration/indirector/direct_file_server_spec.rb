@@ -3,12 +3,14 @@ require 'spec_helper'
 
 require 'puppet/indirector/file_content/file'
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model" do
+describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model", :fails_on_windows => true do
+  include PuppetSpec::Files
+
   before do
     # We just test a subclass, since it's close enough.
     @terminus = Puppet::Indirector::FileContent::File.new
 
-    @filepath = "/path/to/my/file"
+    @filepath = make_absolute("/path/to/my/file")
   end
 
   it "should return an instance of the model" do

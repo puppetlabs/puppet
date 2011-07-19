@@ -4,9 +4,11 @@ require 'spec_helper'
 require 'puppet/type'
 
 describe Puppet::Type.type(:file).attrclass(:noop) do
+  include PuppetSpec::Files
+
   before do
     Puppet.settings.stubs(:use)
-    @file = Puppet::Type.newfile :path => "/what/ever"
+    @file = Puppet::Type.newfile :path => make_absolute("/what/ever")
   end
 
   it "should accept true as a value" do

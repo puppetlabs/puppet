@@ -154,7 +154,7 @@ describe Puppet::Transaction::Report do
 
     def add_statuses(count, type = :file)
       count.times do |i|
-        status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => "/my/path#{i}"))
+        status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => make_absolute("/my/path#{i}")))
         yield status if block_given?
         @report.add_resource_status status
       end
