@@ -169,7 +169,7 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  describe "when setting user" do
+  describe "when setting user", :fails_on_windows => true do
     it "should fail if we are not root" do
       Puppet.features.stubs(:root?).returns(false)
       expect { Puppet::Type.type(:exec).new(:name => @command, :user => 'input') }.
@@ -188,7 +188,7 @@ describe Puppet::Type.type(:exec) do
   describe "when setting group" do
     shared_examples_for "exec[:group]" do
       ['one', 2, 'wheel', 4294967295, 4294967296].each do |value|
-        it "should accept '#{value}' without error or judgement" do
+        it "should accept '#{value}' without error or judgement", :fails_on_windows => true do
           type = Puppet::Type.type(:exec).new(:name => @command, :group => value)
           type[:group].should == value
         end

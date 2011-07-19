@@ -118,7 +118,7 @@ describe Puppet::SSL::Inventory do
       end
     end
 
-    describe "and formatting a certificate" do
+    describe "and formatting a certificate", :fails_on_windows => true do
       before do
         @cert = stub 'cert', :not_before => Time.now, :not_after => Time.now, :subject => "mycert", :serial => 15
       end

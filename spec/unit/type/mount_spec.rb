@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Type.type(:mount) do
+describe Puppet::Type.type(:mount), :fails_on_windows => true do
   it "should have a :refreshable feature that requires the :remount method" do
     Puppet::Type.type(:mount).provider_feature(:refreshable).methods.should == [:remount]
   end
@@ -16,7 +16,7 @@ describe Puppet::Type.type(:mount) do
   end
 end
 
-describe Puppet::Type.type(:mount), "when validating attributes" do
+describe Puppet::Type.type(:mount), "when validating attributes", :fails_on_windows => true do
   [:name, :remounts, :provider].each do |param|
     it "should have a #{param} parameter" do
       Puppet::Type.type(:mount).attrtype(param).should == :param
@@ -30,7 +30,7 @@ describe Puppet::Type.type(:mount), "when validating attributes" do
   end
 end
 
-describe Puppet::Type.type(:mount)::Ensure, "when validating values" do
+describe Puppet::Type.type(:mount)::Ensure, "when validating values", :fails_on_windows => true do
   before do
     @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil
     Puppet::Type.type(:mount).defaultprovider.expects(:new).returns(@provider)
@@ -62,7 +62,7 @@ describe Puppet::Type.type(:mount)::Ensure, "when validating values" do
   end
 end
 
-describe Puppet::Type.type(:mount)::Ensure do
+describe Puppet::Type.type(:mount)::Ensure, :fails_on_windows => true do
   before :each do
     provider_properties = {}
     @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :property_hash => provider_properties
@@ -279,7 +279,7 @@ describe Puppet::Type.type(:mount)::Ensure do
   end
 end
 
-describe Puppet::Type.type(:mount), "when modifying an existing mount entry" do
+describe Puppet::Type.type(:mount), "when modifying an existing mount entry", :fails_on_windows => true do
   before do
     @provider = stub 'provider', :class => Puppet::Type.type(:mount).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock, :remount => nil
     Puppet::Type.type(:mount).defaultprovider.stubs(:new).returns(@provider)

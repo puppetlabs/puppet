@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Type.type(:group) do
+describe Puppet::Type.type(:group), :fails_on_windows => true do
   before do
     ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @class = Puppet::Type.type(:group)

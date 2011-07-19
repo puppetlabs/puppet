@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_revocation_list'
 require 'tempfile'
 
-describe Puppet::SSL::CertificateRevocationList do
+describe Puppet::SSL::CertificateRevocationList, :fails_on_windows => true do
   before do
     # Get a safe temporary file
     file = Tempfile.new("ca_integration_testing")

@@ -298,7 +298,7 @@ describe content do
       end
     end
 
-    describe "from local source" do
+    describe "from local source", :fails_on_windows => true do
       before(:each) do
         @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
         @sourcename = tmpfile('source')

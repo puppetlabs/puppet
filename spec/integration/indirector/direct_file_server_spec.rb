@@ -30,7 +30,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   end
 end
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model" do
+describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model", :fails_on_windows => true do
   before do
     @terminus = Puppet::Indirector::FileContent::File.new
 

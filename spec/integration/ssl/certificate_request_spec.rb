@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_request'
 require 'tempfile'
 
-describe Puppet::SSL::CertificateRequest do
+describe Puppet::SSL::CertificateRequest, :fails_on_windows => true do
   before do
     # Get a safe temporary file
     file = Tempfile.new("csr_integration_testing")

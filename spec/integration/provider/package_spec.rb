@@ -12,7 +12,7 @@ describe "Package Provider", :'fails_on_ruby_1.9.2' => true do
         lambda { pkg.provider.install }.should raise_error
       end
 
-      it "should be able to get a list of existing packages" do
+      it "should be able to get a list of existing packages", :fails_on_windows => true do
         provider.instances.each do |package|
           package.should be_instance_of(provider)
           package.properties[:provider].should == provider.name
