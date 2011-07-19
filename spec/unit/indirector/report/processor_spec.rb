@@ -25,9 +25,11 @@ describe Puppet::Transaction::Report::Processor, " when saving a report" do
 
   it "should not process the report if reports are set to 'none'" do
     Puppet::Reports.expects(:report).never
-    Puppet.settings.expects(:value).with(:reports).returns("none")
+    Puppet[:reports] = 'none'
 
-    request = stub 'request', :instance => mock("report")
+    request = Puppet::Indirector::Request.new(:indirection_name, :head, "key")
+    report = Puppet::Transaction::Report.new('apply')
+    request.instance = report
 
     @reporter.save(request)
   end
@@ -40,14 +42,14 @@ end
 
 describe Puppet::Transaction::Report::Processor, " when processing a report" do
   before do
-    Puppet.settings.stubs(:value).with(:reports).returns("one")
+    Puppet[:reports] = "one"
     Puppet.settings.stubs(:use)
     @reporter = Puppet::Transaction::Report::Processor.new
 
     @report_type = mock 'one'
     @dup_report = mock 'dupe report'
     @dup_report.stubs(:process)
-    @report = mock 'report'
+    @report = Puppet::Transaction::Report.new('apply')
     @report.expects(:dup).returns(@dup_report)
 
     @request = stub 'request', :instance => @report
@@ -74,7 +76,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
   end
 
   it "should not raise exceptions" do
-    Puppet.settings.stubs(:value).with(:trace).returns(false)
+    Puppet[:trace] = false
     @dup_report.expects(:process).raises(ArgumentError)
     proc { @reporter.save(@request) }.should_not raise_error
   end
