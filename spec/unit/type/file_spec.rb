@@ -305,7 +305,7 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "X:/"
       end
 
-      it "should add a slash to a drive letter", :'fails_on_ruby_1.9.2' => true do
+      it "should add a slash to a drive letter", :'fails_on_windows' => true, :'fails_on_ruby_1.9.2' => true do
         file = Puppet::Type::File.new(:path => "X:")
         file[:path].should == "X:/"
       end

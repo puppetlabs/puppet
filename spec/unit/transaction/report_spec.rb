@@ -208,7 +208,7 @@ describe Puppet::Transaction::Report do
     end
 
     describe "for times" do
-      it "should provide the total amount of time for each resource type" do
+      it "should provide the total amount of time for each resource type", :fails_on_windows => true do
         add_statuses(3, :file) do |status|
           status.evaluation_time = 1
         end

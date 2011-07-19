@@ -8,7 +8,7 @@ require 'spec_helper'
 require 'puppet/ssl/host'
 require 'tempfile'
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::Host, :fails_on_windows => true do
   before do
     # Get a safe temporary file
     file = Tempfile.new("host_integration_testing")

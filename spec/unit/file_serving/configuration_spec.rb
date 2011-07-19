@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/file_serving/configuration'
 
-describe Puppet::FileServing::Configuration do
+describe Puppet::FileServing::Configuration, :fails_on_windows => true do
   it "should make :new a private method" do
     proc { Puppet::FileServing::Configuration.new }.should raise_error
   end

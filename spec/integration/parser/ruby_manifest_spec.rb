@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'tempfile'
 require 'puppet_spec/files'
 
-describe "Pure ruby manifests" do
+describe "Pure ruby manifests", :fails_on_windows => true do
   include PuppetSpec::Files
 
   before do

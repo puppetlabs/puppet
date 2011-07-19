@@ -34,7 +34,7 @@ describe Puppet::FileBucket::Dipper do
     lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
   end
 
-  it "should backup files to a local bucket" do
+  it "should backup files to a local bucket", :fails_on_windows => true do
     Puppet[:bucketdir] = "/non/existent/directory"
     file_bucket = tmpdir("bucket")
 

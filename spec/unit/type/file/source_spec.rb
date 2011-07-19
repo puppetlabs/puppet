@@ -39,7 +39,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     source.new(:resource => @resource).must respond_to(:metadata=)
   end
 
-  describe "when returning the metadata" do
+  describe "when returning the metadata", :fails_on_windows => true do
     before do
       @metadata = stub 'metadata', :source= => nil
     end

@@ -94,7 +94,7 @@ describe Puppet::Util::Autoload do
     }
   end
 
-  it "should be able to load files directly from modules" do
+  it "should be able to load files directly from modules", :fails_on_windows => true do
     modulepath = tmpfile("autoload_module_testing")
     libdir = File.join(modulepath, "mymod", "lib", "foo")
     FileUtils.mkdir_p(libdir)

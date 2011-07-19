@@ -122,7 +122,7 @@ describe Puppet::Configurer::Downloader do
       @dler = Puppet::Configurer::Downloader.new("foo", @dl_name, source_name)
     end
 
-    it "should not skip downloaded resources when filtering on tags" do
+    it "should not skip downloaded resources when filtering on tags", :fails_on_windows => true do
       Puppet[:tags] = 'maytag'
       @dler.evaluate
 

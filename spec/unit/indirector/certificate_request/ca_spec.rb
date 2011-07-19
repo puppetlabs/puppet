@@ -10,7 +10,7 @@ require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
 require 'puppet/indirector/certificate_request/ca'
 
-describe Puppet::SSL::CertificateRequest::Ca do
+describe Puppet::SSL::CertificateRequest::Ca, :fails_on_windows => true do
   include PuppetSpec::Files
 
   before :each do

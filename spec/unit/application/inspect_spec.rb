@@ -142,7 +142,7 @@ describe Puppet::Application::Inspect do
           @inspect.run_command
         end
 
-        it "should not send unreadable files" do
+        it "should not send unreadable files", :fails_on_windows => true do
           File.open(@file, 'w') { |f| f.write('stuff') }
           File.chmod(0, @file)
           Puppet::FileBucketFile::Rest.any_instance.expects(:head).never

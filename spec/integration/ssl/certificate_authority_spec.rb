@@ -8,7 +8,7 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_authority'
 require 'tempfile'
 
-describe Puppet::SSL::CertificateAuthority do
+describe Puppet::SSL::CertificateAuthority, :fails_on_windows => true do
   before do
     # Get a safe temporary file
     file = Tempfile.new("ca_integration_testing")

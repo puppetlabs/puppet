@@ -83,7 +83,7 @@ describe Puppet::Network::HttpPool do
         Puppet::Network::HttpPool.http_instance("me", 54321, true)
       end
 
-      it "should have a mechanism for clearing the http cache" do
+      it "should have a mechanism for clearing the http cache", :fails_on_windows => true do
         stub_settings :http_proxy_host => "myhost", :http_proxy_port => 432, :configtimeout => 120
         old = Puppet::Network::HttpPool.http_instance("me", 54321)
         Puppet::Network::HttpPool.http_instance("me", 54321).should equal(old)

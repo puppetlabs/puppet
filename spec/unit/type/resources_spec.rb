@@ -21,7 +21,7 @@ describe resources do
     end
   end
 
-  describe "#generate" do
+  describe "#generate", :fails_on_windows => true do
     before do
       @host1 = Puppet::Type.type(:host).new(:name => 'localhost', :ip => '127.0.0.1')
       @catalog = Puppet::Resource::Catalog.new
