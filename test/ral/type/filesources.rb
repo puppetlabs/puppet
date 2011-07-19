@@ -26,7 +26,6 @@ class TestFileSources < Test::Unit::TestCase
 
   def teardown
     super
-    Puppet::Network::HttpPool.clear_http_instances
   end
 
   def use_storage
