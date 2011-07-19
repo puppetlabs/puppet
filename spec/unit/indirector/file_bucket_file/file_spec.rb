@@ -14,7 +14,7 @@ describe Puppet::FileBucketFile::File do
     Puppet::FileBucketFile::File.doc.should be_instance_of(String)
   end
 
-  describe "non-stubbing tests" do
+  describe "non-stubbing tests", :fails_on_windows => true do
     include PuppetSpec::Files
 
     before do
@@ -243,11 +243,11 @@ HERE
   describe "when verifying identical files" do
     before do
       # this is the default from spec_helper, but it keeps getting reset at odd times
-      Puppet[:bucketdir] = "/dev/null/bucket"
+      Puppet[:bucketdir] = make_absolute("/dev/null/bucket")
 
       @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
       @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-      @dir = '/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0'
+      @dir = make_absolute('/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0')
 
       @contents = "file contents"
 

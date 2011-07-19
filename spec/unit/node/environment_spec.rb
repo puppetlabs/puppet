@@ -144,13 +144,18 @@ describe Puppet::Node::Environment do
   end
 
   describe "when validating modulepath or manifestdir directories" do
+    before :each do
+      @path_one = make_absolute('/one')
+      @path_two = make_absolute('/two')
+    end
+
     it "should not return non-directories" do
       env = Puppet::Node::Environment.new("testing")
 
-      FileTest.expects(:directory?).with("/one").returns true
-      FileTest.expects(:directory?).with("/two").returns false
+      FileTest.expects(:directory?).with(@path_one).returns true
+      FileTest.expects(:directory?).with(@path_two).returns false
 
-      env.validate_dirs(%w{/one /two}).should == %w{/one}
+      env.validate_dirs([@path_one, @path_two]).should == [@path_one]
     end
 
     it "should use the current working directory to fully-qualify unqualified paths" do
@@ -158,7 +163,7 @@ describe Puppet::Node::Environment do
       env = Puppet::Node::Environment.new("testing")
 
       two = File.join(Dir.getwd, "two")
-      env.validate_dirs(%w{/one two}).should == ["/one", two]
+      env.validate_dirs([@path_one, 'two']).should == [@path_one, two]
     end
   end
 

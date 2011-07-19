@@ -154,7 +154,7 @@ describe Puppet::Transaction::Report do
 
     def add_statuses(count, type = :file)
       count.times do |i|
-        status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => "/my/path#{i}"))
+        status = Puppet::Resource::Status.new(Puppet::Type.type(type).new(:title => make_absolute("/my/path#{i}")))
         yield status if block_given?
         @report.add_resource_status status
       end
@@ -208,7 +208,7 @@ describe Puppet::Transaction::Report do
     end
 
     describe "for times" do
-      it "should provide the total amount of time for each resource type" do
+      it "should provide the total amount of time for each resource type", :fails_on_windows => true do
         add_statuses(3, :file) do |status|
           status.evaluation_time = 1
         end

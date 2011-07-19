@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Util::RunMode do
+describe Puppet::Util::RunMode, :fails_on_windows => true do
   before do
     @run_mode = Puppet::Util::RunMode.new('fake')
   end

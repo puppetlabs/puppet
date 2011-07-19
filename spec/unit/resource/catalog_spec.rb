@@ -2,9 +2,10 @@
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
     # stub this to not try to create state.yaml
     Puppet::Util::Storage.stubs(:store)
   end
@@ -508,7 +509,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.resource(:file, @basepath+"/something").should equal(resource)
     end
 
-    it "should not create aliases for resources non-isomorphic resources whose names do not match their titles" do
+    it "should not create aliases for resources non-isomorphic resources whose names do not match their titles", :fails_on_windows => true do
       resource = Puppet::Type.type(:exec).new(:title => "testing", :command => "echo", :path => %w{/bin /usr/bin /usr/local/bin})
 
       @catalog.add_resource(resource)

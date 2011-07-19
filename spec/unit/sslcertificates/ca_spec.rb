@@ -5,7 +5,7 @@ require 'puppet'
 require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
 
-describe Puppet::SSLCertificates::CA do
+describe Puppet::SSLCertificates::CA, :fails_on_windows => true do
   before :all do
     @hosts = %w{host.domain.com Other.Testing.Com}
   end

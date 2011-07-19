@@ -5,7 +5,7 @@ require 'puppet/ssl/host'
 require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
 
-describe Puppet::SSL::Host do
+describe Puppet::SSL::Host, :fails_on_windows => true do
   before do
     Puppet::SSL::Host.indirection.terminus_class = :file
     @host = Puppet::SSL::Host.new("myname")

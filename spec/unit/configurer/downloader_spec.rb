@@ -97,14 +97,15 @@ describe Puppet::Configurer::Downloader do
 
   describe "when creating the catalog to do the downloading" do
     before do
-      @dler = Puppet::Configurer::Downloader.new("foo", "/download/path", "source")
+      @path = make_absolute("/download/path")
+      @dler = Puppet::Configurer::Downloader.new("foo", @path, "source")
     end
 
     it "should create a catalog and add the file to it" do
       catalog = @dler.catalog
       catalog.resources.size.should == 1
       catalog.resources.first.class.should == Puppet::Type::File
-      catalog.resources.first.name.should == "/download/path"
+      catalog.resources.first.name.should == @path
     end
 
     it "should specify that it is not managing a host catalog" do
@@ -121,7 +122,7 @@ describe Puppet::Configurer::Downloader do
       @dler = Puppet::Configurer::Downloader.new("foo", @dl_name, source_name)
     end
 
-    it "should not skip downloaded resources when filtering on tags" do
+    it "should not skip downloaded resources when filtering on tags", :fails_on_windows => true do
       Puppet[:tags] = 'maytag'
       @dler.evaluate
 

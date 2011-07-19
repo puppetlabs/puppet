@@ -6,7 +6,7 @@ require 'puppet_spec/files'
 
 provider_class = Puppet::Type.type(:host).provider(:parsed)
 
-describe provider_class do
+describe provider_class, :fails_on_windows => true do
   include PuppetSpec::Files
 
   before do

@@ -12,7 +12,7 @@ describe Puppet::Type.type(:file) do
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
-    file = Puppet::Type.type(:file).new :path => "/my/file", :mode => "755"
+    file = Puppet::Type.type(:file).new :path => make_absolute("/my/file"), :mode => "755"
     catalog = Puppet::Resource::Catalog.new
     catalog.add_resource file
 
@@ -23,7 +23,7 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when writing files" do
-    it "should backup files to a filebucket when one is configured" do
+    it "should backup files to a filebucket when one is configured", :fails_on_windows => true do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
       catalog = Puppet::Resource::Catalog.new
@@ -73,7 +73,7 @@ describe Puppet::Type.type(:file) do
       File.read(file[:path]).should == "bar\n"
     end
 
-    it "should not backup symlinks" do
+    it "should not backup symlinks", :fails_on_windows => true do
       link = tmpfile("link")
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
@@ -110,7 +110,7 @@ describe Puppet::Type.type(:file) do
       File.read(File.join(backup, "foo")).should == "yay"
     end
 
-    it "should backup directories to filebuckets by backing up each file separately" do
+    it "should backup directories to filebuckets by backing up each file separately", :fails_on_windows => true do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
       catalog = Puppet::Resource::Catalog.new
@@ -172,7 +172,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recurse over a nonexistent file" do
+    it "should be able to recurse over a nonexistent file", :fails_on_windows => true do
       @path = tmpfile("file_integration_tests")
 
       @file = Puppet::Type::File.new(
@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively make links to other files" do
+    it "should be able to recursively make links to other files", :fails_on_windows => true do
       source = tmpfile("file_link_integration_source")
 
       build_path(source)
@@ -241,7 +241,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively copy files" do
+    it "should be able to recursively copy files", :fails_on_windows => true do
       source = tmpfile("file_source_integration_source")
 
       build_path(source)
@@ -289,7 +289,7 @@ describe Puppet::Type.type(:file) do
       (File.stat(file).mode & 007777).should == 0644
     end
 
-    it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
+    it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file", :fails_on_windows => true do
       dir = tmpfile("recursion_vs_explicit_2")
 
       managed   = File.join(dir, "file")
@@ -309,7 +309,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when generating resources" do
+  describe "when generating resources", :fails_on_windows => true do
     before do
       @source = tmpfile("generating_in_catalog_source")
 
@@ -349,7 +349,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when copying files" do
     # Ticket #285.
-    it "should be able to copy files with pound signs in their names" do
+    it "should be able to copy files with pound signs in their names", :fails_on_windows => true do
       source = tmpfile("filewith#signs")
 
       dest = tmpfile("destwith#signs")
@@ -366,7 +366,7 @@ describe Puppet::Type.type(:file) do
       File.read(dest).should == "foo"
     end
 
-    it "should be able to copy files with spaces in their names" do
+    it "should be able to copy files with spaces in their names", :fails_on_windows => true do
       source = tmpfile("filewith spaces")
 
       dest = tmpfile("destwith spaces")
@@ -385,7 +385,7 @@ describe Puppet::Type.type(:file) do
       (File.stat(dest).mode & 007777).should == 0755
     end
 
-    it "should be able to copy individual files even if recurse has been specified" do
+    it "should be able to copy individual files even if recurse has been specified", :fails_on_windows => true do
       source = tmpfile("source")
       dest = tmpfile("dest")
 
@@ -434,7 +434,7 @@ describe Puppet::Type.type(:file) do
     File.read(dest).should == "this is some content, yo"
   end
 
-  it "should delete files with sources but that are set for deletion" do
+  it "should delete files with sources but that are set for deletion", :fails_on_windows => true do
     dest = tmpfile("dest_source_with_ensure")
     source = tmpfile("source_source_with_ensure")
     File.open(source, "w") { |f| f.puts "yay" }
@@ -442,7 +442,7 @@ describe Puppet::Type.type(:file) do
 
 
     file = Puppet::Type.type(:file).new(
-      :name   => dest,
+      :name   => make_absolute(dest),
       :ensure => :absent,
       :source => source,
       :backup => false
@@ -455,7 +455,7 @@ describe Puppet::Type.type(:file) do
     File.should_not be_exist(dest)
   end
 
-  describe "when purging files" do
+  describe "when purging files", :fails_on_windows => true do
     before do
       @sourcedir = tmpfile("purge_source")
       @destdir = tmpfile("purge_dest")

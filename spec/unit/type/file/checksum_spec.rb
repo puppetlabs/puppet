@@ -4,7 +4,8 @@ require 'spec_helper'
 checksum = Puppet::Type.type(:file).attrclass(:checksum)
 describe checksum do
   before do
-    @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+    @path = Puppet.features.microsoft_windows? ? "c:/foo/bar" : "/foo/bar"
+    @resource = Puppet::Type.type(:file).new :path => @path
     @checksum = @resource.parameter(:checksum)
   end
 
@@ -35,25 +36,25 @@ describe checksum do
 
   it "should use its current value when asked to sum a file's content" do
     @checksum.value = :md5lite
-    @checksum.expects(:md5lite_file).with("/foo/bar").returns "yay"
-    @checksum.sum_file("/foo/bar")
+    @checksum.expects(:md5lite_file).with(@path).returns "yay"
+    @checksum.sum_file(@path)
   end
 
   it "should use :md5 to sum a file when no value is set" do
-    @checksum.expects(:md5_file).with("/foo/bar").returns "yay"
-    @checksum.sum_file("/foo/bar")
+    @checksum.expects(:md5_file).with(@path).returns "yay"
+    @checksum.sum_file(@path)
   end
 
   it "should convert all sums to strings when summing files" do
     @checksum.value = :mtime
-    @checksum.expects(:mtime_file).with("/foo/bar").returns Time.now
-    lambda { @checksum.sum_file("/foo/bar") }.should_not raise_error
+    @checksum.expects(:mtime_file).with(@path).returns Time.now
+    lambda { @checksum.sum_file(@path) }.should_not raise_error
   end
 
   it "should return the summed contents of a file with a checksum label" do
     @resource[:checksum] = :md5
     @checksum.expects(:md5_file).returns "mysum"
-    @checksum.sum_file("/foo/bar").should == "{md5}mysum"
+    @checksum.sum_file(@path).should == "{md5}mysum"
   end
 
   it "should return the summed contents of a stream with a checksum label" do

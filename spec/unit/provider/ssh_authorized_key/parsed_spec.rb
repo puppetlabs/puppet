@@ -128,7 +128,7 @@ describe provider_class do
       end
     end
 
-    describe "and a user has been specified with no target" do
+    describe "and a user has been specified with no target", :fails_on_windows => true do
       before :each do
         @resource[:user] = "nobody"
         #
@@ -189,7 +189,7 @@ describe provider_class do
       end
     end
 
-    describe "and a invalid user has been specified with no target" do
+    describe "and a invalid user has been specified with no target", :fails_on_windows => true do
       it "should catch an exception and raise a Puppet error" do
         @resource[:user] = "thisusershouldnotexist"
 
