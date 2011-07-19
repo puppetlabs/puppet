@@ -1,6 +1,4 @@
-require 'puppet'
 require 'puppet/application'
-require 'puppet/file_bucket/dipper'
 
 class Puppet::Application::Inspect < Puppet::Application
 
@@ -95,6 +93,11 @@ Licensed under the GNU General Public License version 2
 
     Puppet::Transaction::Report.terminus_class = :rest
     Puppet::Resource::Catalog.terminus_class = :yaml
+  end
+
+  def preinit
+    require 'puppet'
+    require 'puppet/file_bucket/dipper'
   end
 
   def run_command
