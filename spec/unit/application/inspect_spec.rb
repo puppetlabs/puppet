@@ -98,6 +98,7 @@ describe Puppet::Application::Inspect do
       catalog = Puppet::Resource::Catalog.new
       file = Tempfile.new("foo")
       resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
+      file.close
       file.delete
       catalog.add_resource(resource)
       Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)

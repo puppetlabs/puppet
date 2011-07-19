@@ -254,6 +254,7 @@ describe content do
       @content.should = "{md5}foo"
       @content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
       @content.write(@fh)
+      @fh.close
     end
 
     describe "from actual content" do

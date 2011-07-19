@@ -30,7 +30,8 @@ describe "the sprintf function" do
 
   it "should format large floats" do
     result = @scope.function_sprintf(["%+.2e", "27182818284590451"])
-    result.should(eql("+2.72e+16"))
+    str = Puppet.features.microsoft_windows? ? "+2.72e+016" : "+2.72e+16"
+    result.should(eql(str))
   end
 
   it "should perform more complex formatting" do
