@@ -597,4 +597,22 @@ describe Puppet::Interface::Action do
       end
     end
   end
+
+  context "runtime manipulations" do
+    subject do
+      Puppet::Interface.new(:runtime_manipulations, '1.0.0') do
+        action :foo do
+          when_invoked do |options| options end
+        end
+      end
+    end
+
+    let :action do subject.get_action :foo end
+
+    it "should be the face default action if default is set true" do
+      subject.get_default_action.should be_nil
+      action.default = true
+      subject.get_default_action.should == action
+    end
+  end
 end
