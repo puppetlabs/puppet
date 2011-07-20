@@ -171,7 +171,7 @@ describe Puppet::Face[:ca, '0.1.0'] do
       subject.sign('random-host').should be_an_instance_of Puppet::SSL::Certificate
 
       list = subject.list(:signed => true)
-      list.count.should == 1
+      list.length.should == 1
       list.first.name.should == 'random-host'
     end
   end
@@ -185,7 +185,7 @@ describe Puppet::Face[:ca, '0.1.0'] do
       subject.generate('random-host')
 
       list = subject.list(:signed => true)
-      list.count.should == 1
+      list.length.should == 1
       list.first.name.should == 'random-host'
     end
 
