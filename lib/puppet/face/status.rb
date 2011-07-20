@@ -12,6 +12,7 @@ Puppet::Indirector::Face.define(:status, '0.0.1') do
   get_action(:search).summary "Invalid for this subcommand."
 
   find = get_action(:find)
+  find.default = true
   find.summary "Check status of puppet master server."
   find.arguments "<dummy_text>"
   find.returns <<-'EOT'
