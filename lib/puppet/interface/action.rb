@@ -199,6 +199,7 @@ def #{@name}(#{decl.join(", ")})
   options = args.last
 
   action = get_action(#{name.inspect})
+  action.add_default_args(args)
   action.validate_args(args)
   __invoke_decorations(:before, action, args, options)
   rval = self.__send__(#{internal_name.inspect}, *args)
@@ -250,6 +251,14 @@ WRAPPER
       option = @face.get_option(name)
     end
     option
+  end
+
+  def add_default_args(args)
+    options.map {|x| get_option(x) }.each do |option|
+      if option.has_default? and not option.aliases.any? {|x| args.last.has_key? x}
+        args.last[option.name] = option.default
+      end
+    end
   end
 
   def validate_args(args)

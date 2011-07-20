@@ -97,4 +97,48 @@ describe Puppet::Interface::Option do
       end
     end
   end
+
+  context "defaults" do
+    subject { Puppet::Interface::Option.new(face, "--foo") }
+
+    it "should work sanely if member variables are used for state" do
+      subject.default = proc { @foo ||= 0; @foo += 1 }
+      subject.default.should == 1
+      subject.default.should == 2
+      subject.default.should == 3
+    end
+
+    context "with no default" do
+      it { should_not be_has_default }
+      its :default do should be_nil end
+
+      it "should set a proc as default" do
+        expect { subject.default = proc { 12 } }.should_not raise_error
+      end
+
+      [1, {}, [], Object.new, "foo"].each do |input|
+        it "should reject anything but a proc (#{input.class})" do
+          expect { subject.default = input }.to raise_error ArgumentError, /not a proc/
+        end
+      end
+    end
+
+    context "with a default" do
+      before :each do subject.default = proc { [:foo] } end
+
+      it { should be_has_default }
+      its :default do should == [:foo] end
+
+      it "should invoke the block every time" do
+        subject.default.object_id.should_not == subject.default.object_id
+        subject.default.should == subject.default
+      end
+
+      it "should allow replacing the default proc" do
+        subject.default.should == [:foo]
+        subject.default = proc { :bar }
+        subject.default.should == :bar
+      end
+    end
+  end
 end
