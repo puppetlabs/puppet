@@ -113,10 +113,10 @@ parameter, so you can specify '--server <servername>' as an argument.
   Enable full debugging.
 
 * --detailed-exitcodes:
-  Provide transaction information via exit codes.  If this is enabled, an
-  exit code of '2' means there were changes, and an exit code of '4' means
-  that there were failures during the transaction. This option only makes
-  sense in conjunction with --onetime.
+  Provide transaction information via exit codes. If this is enabled, an exit
+  code of '2' means there were changes, an exit code of '4' means there were
+  failures during the transaction, and an exit code of '6' means there were both
+  changes and failures.
 
 * --help:
   Print this help message

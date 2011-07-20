@@ -275,7 +275,7 @@ describe "Puppet defaults" do
 
   describe "reporturl" do
     subject { Puppet.settings[:reporturl] }
-    it { should == "http://localhost:3000/reports" }
+    it { should == "http://localhost:3000/reports/upload" }
   end
 
   describe "when configuring color" do

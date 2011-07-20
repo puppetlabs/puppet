@@ -25,39 +25,9 @@ describe Puppet::Interface::FaceCollection do
     @original_required.each {|f| $".push f unless $".include? f }
   end
 
-  describe "::prefix_match?" do
-    #   want     have
-    { ['1.0.0', '1.0.0'] => true,
-      ['1.0',   '1.0.0'] => true,
-      ['1',     '1.0.0'] => true,
-      ['1.0.0', '1.1.0'] => false,
-      ['1.0',   '1.1.0'] => false,
-      ['1',     '1.1.0'] => true,
-      ['1.0.1', '1.0.0'] => false,
-    }.each do |data, result|
-      it "should return #{result.inspect} for prefix_match?(#{data.join(', ')})" do
-        subject.prefix_match?(*data).should == result
-      end
-    end
-  end
-
-  describe "::validate_version" do
-    { '10.10.10'     => true,
-      '1.2.3.4'      => false,
-      '10.10.10beta' => true,
-      '10.10'        => false,
-      '123'          => false,
-      'v1.1.1'       => false,
-    }.each do |input, result|
-      it "should#{result ? '' : ' not'} permit #{input.inspect}" do
-        subject.validate_version(input).should(result ? be_true : be_false)
-      end
-    end
-  end
-
   describe "::[]" do
     before :each do
-      subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
+      subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
     end
 
     it "should return the face with the given name" do
@@ -75,13 +45,13 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should return true if the face specified is registered" do
-      subject.instance_variable_get("@faces")[:foo]['0.0.1'] = 10
+      subject.instance_variable_get("@faces")[:foo][SemVer.new('0.0.1')] = 10
       subject["foo", '0.0.1'].should == 10
     end
 
     it "should attempt to require the face if it is not registered" do
       subject.expects(:require).with do |file|
-        subject.instance_variable_get("@faces")[:bar]['0.0.1'] = true
+        subject.instance_variable_get("@faces")[:bar][SemVer.new('0.0.1')] = true
         file == 'puppet/face/bar'
       end
       subject["bar", '0.0.1'].should be_true
@@ -131,7 +101,9 @@ describe Puppet::Interface::FaceCollection do
     it "should store the face by name" do
       face = Puppet::Face.new(:my_face, '0.0.1')
       subject.register(face)
-      subject.instance_variable_get("@faces").should == {:my_face => {'0.0.1' => face}}
+      subject.instance_variable_get("@faces").should == {
+        :my_face => { face.version => face }
+      }
     end
   end
 

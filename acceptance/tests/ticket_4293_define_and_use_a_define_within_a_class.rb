@@ -16,7 +16,8 @@ class foo {
 include foo
 PP
 
-apply_manifest_on(agents, manifest) do
-  stdout =~ /notice.*?Foo::Do_notify.*?a_message_for_you/ or
-    fail_test("the notification didn't show up in stdout")
+agents.each do |host|
+  apply_manifest_on(host, manifest) do
+    assert_match(/notice.*?Foo::Do_notify.*?a_message_for_you/, stdout, "the notification didn't show up in stdout on #{host}")
+  end
 end

@@ -43,7 +43,7 @@ shared_examples_for "things that declare options" do
       option "-f"
       option "--baz"
     end
-    thing.options.should == [:foo, :bar, :b, :q, :quux, :f, :baz]
+    thing.options.should == [:foo, :bar, :quux, :f, :baz]
   end
 
   it "should detect conflicts in long options" do

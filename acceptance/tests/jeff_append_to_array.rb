@@ -12,8 +12,9 @@ manifest = %q{
     include parent::child
 }
 
-apply_manifest_on(agents, manifest) do
-  stdout =~ /notice: parent array element/ or fail_test("parent missing")
-  stdout =~ /notice: child array element/  or fail_test("child missing")
+agents.each do |host|
+  apply_manifest_on(host, manifest) do
+    assert_match(/notice: parent array element/, stdout, "#{host}: parent missing")
+    assert_match(/notice: child array element/, stdout, "#{host}: child missing")
+  end
 end
-

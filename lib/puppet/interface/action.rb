@@ -227,8 +227,9 @@ WRAPPER
       end
     end
 
+    @options << option.name
+
     option.aliases.each do |name|
-      @options << name
       @options_hash[name] = option
     end
 
