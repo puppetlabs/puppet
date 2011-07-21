@@ -25,16 +25,6 @@ describe Puppet::Parameter do
     @parameter.to_s.should == @parameter.name.to_s
   end
 
-  it "should be able to use cached attributes" do
-    Puppet::Parameter.ancestors.should be_include(Puppet::Util::Cacher)
-  end
-
-  it "should use the resource catalog for expiration" do
-    catalog = mock 'catalog'
-    @resource.stubs(:catalog).returns catalog
-    @parameter.expirer.should equal(catalog)
-  end
-
   [:line, :file, :version].each do |data|
     it "should return its resource's #{data} as its #{data}" do
       @resource.expects(data).returns "foo"

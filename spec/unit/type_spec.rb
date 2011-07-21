@@ -4,10 +4,6 @@ require 'spec_helper'
 describe Puppet::Type, :'fails_on_windows' => true do
   include PuppetSpec::Files
 
-  it "should include the Cacher module" do
-    Puppet::Type.ancestors.should be_include(Puppet::Util::Cacher)
-  end
-
   it "should consider a parameter to be valid if it is a valid parameter" do
     Puppet::Type.type(:mount).should be_valid_parameter(:path)
   end
@@ -18,18 +14,6 @@ describe Puppet::Type, :'fails_on_windows' => true do
 
   it "should consider a parameter to be valid if it is a valid metaparam" do
     Puppet::Type.type(:mount).should be_valid_parameter(:noop)
-  end
-
-  it "should use its catalog as its expirer" do
-    catalog = Puppet::Resource::Catalog.new
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-    resource.catalog = catalog
-    resource.expirer.should equal(catalog)
-  end
-
-  it "should do nothing when asked to expire when it has no catalog" do
-    resource = Puppet::Type.type(:mount).new(:name => "foo", :fstype => "bar", :pass => 1, :ensure => :present)
-    lambda { resource.expire }.should_not raise_error
   end
 
   it "should be able to retrieve a property by name" do

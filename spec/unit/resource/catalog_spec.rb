@@ -10,23 +10,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet::Util::Storage.stubs(:store)
   end
 
-  it "should be an Expirer" do
-    Puppet::Resource::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
-  end
-
-  it "should always be expired if it's not applying" do
-    @catalog = Puppet::Resource::Catalog.new("host")
-    @catalog.expects(:applying?).returns false
-    @catalog.should be_dependent_data_expired(Time.now)
-  end
-
-  it "should not be expired if it's applying and the timestamp is late enough" do
-    @catalog = Puppet::Resource::Catalog.new("host")
-    @catalog.expire
-    @catalog.expects(:applying?).returns true
-    @catalog.should_not be_dependent_data_expired(Time.now)
-  end
-
   it "should be able to write its list of classes to the class file" do
     @catalog = Puppet::Resource::Catalog.new("host")
 
@@ -691,11 +674,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.apply(:ignoreschedules => true)
     end
 
-    it "should expire cached data in the resources both before and after the transaction" do
-      @catalog.expects(:expire).times(2)
-      @catalog.apply
-    end
-
     describe "host catalogs" do
 
       # super() doesn't work in the setup method for some reason
@@ -856,8 +834,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @real_indirection = Puppet::Resource::Catalog.indirection
 
       @indirection = stub 'indirection', :name => :catalog
-
-      Puppet::Util::Cacher.expire
     end
 
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
@@ -876,7 +852,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     after do
-      Puppet::Util::Cacher.expire
       @real_indirection.reset_terminus_class
     end
   end
