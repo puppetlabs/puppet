@@ -68,10 +68,6 @@ describe Puppet::Node::Facts, "when indirecting" do
     before do
       @indirection = stub 'indirection', :request => mock('request'), :name => :facts
 
-      # We have to clear the cache so that the facts ask for our indirection stub,
-      # instead of anything that might be cached.
-      Puppet::Util::Cacher.expire
-
       @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 

@@ -103,10 +103,6 @@ describe Puppet::Transaction::Report do
       report.expects(:host).returns "me"
       report.name.should == "me"
     end
-
-    after do
-      Puppet::Util::Cacher.expire
-    end
   end
 
   describe "when computing exit status" do

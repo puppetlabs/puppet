@@ -207,10 +207,6 @@ describe Puppet::Node, "when indirecting" do
   it "should not have a cache class defined" do
     Puppet::Node.indirection.cache_class.should be_nil
   end
-
-  after do
-    Puppet::Util::Cacher.expire
-  end
 end
 
 describe Puppet::Node, "when generating the list of names to search through" do
