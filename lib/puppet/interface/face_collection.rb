@@ -20,6 +20,17 @@ module Puppet::Interface::FaceCollection
     get_face(name, version) or load_face(name, version)
   end
 
+  def self.get_action_for_face(face_name, action_name, version)
+    # If the version they request specifically doesn't exist, don't search
+    # elsewhere.  Usually this will start from :current and all...
+    return nil unless face = self[face_name, version]
+    unless action = face.get_action(action_name)
+      # ...we need to search for it bound to an o{lder,ther} version.
+    end
+
+    return action
+  end
+
   # get face from memory, without loading.
   def self.get_face(name, pattern)
     return nil unless @faces.has_key? name
