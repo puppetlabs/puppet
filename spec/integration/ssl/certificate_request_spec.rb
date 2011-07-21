@@ -28,14 +28,14 @@ describe Puppet::SSL::CertificateRequest, :fails_on_windows => true do
     @csr = Puppet::SSL::CertificateRequest.new("luke.madstop.com")
 
     @key = OpenSSL::PKey::RSA.new(512)
+
+    # This is necessary so the terminus instances don't lie around.
+    Puppet::SSL::CertificateRequest.indirection.termini.clear
   end
 
   after do
     system("rm -rf #{@dir}")
     Puppet.settings.clear
-
-    # This is necessary so the terminus instances don't lie around.
-    Puppet::Util::Cacher.expire
   end
 
   it "should be able to generate CSRs" do
