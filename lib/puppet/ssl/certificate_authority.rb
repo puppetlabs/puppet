@@ -1,6 +1,6 @@
+require 'monitor'
 require 'puppet/ssl/host'
 require 'puppet/ssl/certificate_request'
-require 'puppet/util/cacher'
 
 # The class that knows how to sign certificates.  It creates
 # a 'special' SSL::Host whose name is 'ca', thus indicating
@@ -17,6 +17,8 @@ class Puppet::SSL::CertificateAuthority
   require 'puppet/ssl/certificate_authority/interface'
   require 'puppet/network/authstore'
 
+  extend MonitorMixin
+
   class CertificateVerificationError < RuntimeError
     attr_accessor :error_code
 
@@ -25,10 +27,10 @@ class Puppet::SSL::CertificateAuthority
     end
   end
 
-  class << self
-    include Puppet::Util::Cacher
-
-    cached_attr(:singleton_instance) { new }
+  def self.singleton_instance
+    synchronize do
+      @singleton_instance ||= new
+    end
   end
 
   def self.ca?
