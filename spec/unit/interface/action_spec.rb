@@ -552,4 +552,67 @@ describe Puppet::Interface::Action do
         to raise_error ArgumentError, /Multiple aliases for the same option/
     end
   end
+
+  context "default option values" do
+    subject do
+      Puppet::Interface.new(:default_option_values, '1.0.0') do
+        action :foo do
+          option "--foo" do end
+          option "--bar" do end
+          when_invoked do |options| options end
+        end
+      end
+    end
+
+    let :action do subject.get_action :foo end
+    let :option do action.get_option :foo end
+
+    it "should not add options without defaults" do
+      subject.foo.should == {}
+    end
+
+    it "should not add options without defaults, if options are given" do
+      subject.foo(:bar => 1).should == { :bar => 1 }
+    end
+
+    it "should add the option default value when set" do
+      option.default = proc { 12 }
+      subject.foo.should == { :foo => 12 }
+    end
+
+    it "should add the option default value when set, if other options are given" do
+      option.default = proc { 12 }
+      subject.foo(:bar => 1).should == { :foo => 12, :bar => 1 }
+    end
+
+    it "should invoke the same default proc every time called" do
+      option.default = proc { @foo ||= {} }
+      subject.foo[:foo].object_id.should == subject.foo[:foo].object_id
+    end
+
+    [nil, 0, 1, true, false, {}, []].each do |input|
+      it "should not override a passed option (#{input.inspect})" do
+        option.default = proc { :fail }
+        subject.foo(:foo => input).should == { :foo => input }
+      end
+    end
+  end
+
+  context "runtime manipulations" do
+    subject do
+      Puppet::Interface.new(:runtime_manipulations, '1.0.0') do
+        action :foo do
+          when_invoked do |options| options end
+        end
+      end
+    end
+
+    let :action do subject.get_action :foo end
+
+    it "should be the face default action if default is set true" do
+      subject.get_default_action.should be_nil
+      action.default = true
+      subject.get_default_action.should == action
+    end
+  end
 end

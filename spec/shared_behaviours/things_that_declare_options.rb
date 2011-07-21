@@ -146,4 +146,117 @@ shared_examples_for "things that declare options" do
       end
     end
   end
+
+  describe "#default_to" do
+    it "should not have a default value by default" do
+      option = add_options_to do option "--foo" end.get_option(:foo)
+      option.should_not be_has_default
+    end
+
+    it "should accept a block for the default value" do
+      option = add_options_to do
+        option "--foo" do
+          default_to do
+            12
+          end
+        end
+      end.get_option(:foo)
+
+      option.should be_has_default
+    end
+
+    it "should invoke the block when asked for the default value" do
+      invoked = false
+      option = add_options_to do
+        option "--foo" do
+          default_to do
+            invoked = true
+          end
+        end
+      end.get_option(:foo)
+
+      option.should be_has_default
+      option.default.should be_true
+      invoked.should be_true
+    end
+
+    it "should return the value of the block when asked for the default" do
+      option = add_options_to do
+        option "--foo" do
+          default_to do
+            12
+          end
+        end
+      end.get_option(:foo)
+
+      option.should be_has_default
+      option.default.should == 12
+    end
+
+    it "should invoke the block every time the default is requested" do
+      option = add_options_to do
+        option "--foo" do
+          default_to do
+            {}
+          end
+        end
+      end.get_option(:foo)
+
+      first  = option.default.object_id
+      second = option.default.object_id
+      third  = option.default.object_id
+
+      first.should_not == second
+      first.should_not == third
+      second.should_not == third
+    end
+
+    it "should fail if the option has a default and is required" do
+      expect {
+        add_options_to do
+          option "--foo" do
+            required
+            default_to do 12 end
+          end
+        end
+      }.to raise_error ArgumentError, /can't be optional and have a default value/
+
+      expect {
+        add_options_to do
+          option "--foo" do
+            default_to do 12 end
+            required
+          end
+        end
+      }.to raise_error ArgumentError, /can't be optional and have a default value/
+    end
+
+    it "should fail if default_to has no block" do
+      expect { add_options_to do option "--foo" do default_to end end }.
+        to raise_error ArgumentError, /default_to requires a block/
+    end
+
+    it "should fail if default_to is invoked twice" do
+      expect {
+        add_options_to do
+          option "--foo" do
+            default_to do 12 end
+            default_to do "fun" end
+          end
+        end
+      }.to raise_error ArgumentError, /already has a default value/
+    end
+
+    [ "one", "one, two", "one, *two" ].each do |input|
+      it "should fail if the block has the wrong arity (#{input})" do
+        expect {
+          add_options_to do
+            option "--foo" do
+              eval "default_to do |#{input}| 12 end"
+            end
+          end
+        }.to raise_error ArgumentError, /should not take any arguments/
+      end
+    end
+  end
 end
