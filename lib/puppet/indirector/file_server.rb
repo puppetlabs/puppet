@@ -64,6 +64,6 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
   # Our fileserver configuration, if needed.
   def configuration
-    Puppet::FileServing::Configuration.create
+    Puppet::FileServing::Configuration.configuration
   end
 end
