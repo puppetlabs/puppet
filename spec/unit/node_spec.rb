@@ -132,8 +132,6 @@ describe Puppet::Node, "when indirecting" do
     Puppet::Node.indirection.reset_terminus_class
 
     Puppet::Node.indirection.terminus_class.should == :plain
-
-    Puppet::Util::Cacher.expire
   end
 end
 
