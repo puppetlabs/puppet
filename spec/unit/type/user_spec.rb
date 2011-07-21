@@ -290,6 +290,14 @@ describe user do
       @password.change_to_s("other", "mypass").should_not be_include("mypass")
     end
 
+    it "should redact the password when displaying the old value" do
+      @password.is_to_s("currentpassword").should =~ /^\[old password hash redacted\]$/
+    end
+
+    it "should redact the password when displaying the new value" do
+      @password.should_to_s("newpassword").should =~ /^\[new password hash redacted\]$/
+    end
+
     it "should fail if a ':' is included in the password" do
       lambda { @password.should = "some:thing" }.should raise_error(Puppet::Error)
     end
