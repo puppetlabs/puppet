@@ -16,11 +16,6 @@ class TestMaster < Test::Unit::TestCase
     Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
   end
 
-  def teardown
-    super
-    Puppet::Util::Cacher.expire
-  end
-
   def test_freshness_is_always_now
     now1 = mock 'now1'
     Time.stubs(:now).returns(now1)
