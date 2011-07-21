@@ -35,7 +35,8 @@ describe Puppet::Interface::FaceCollection do
     end
 
     it "should attempt to load the face if it isn't found" do
-      subject.expects(:require).with('puppet/face/bar')
+      subject.expects(:require).once.with('puppet/face/bar')
+      subject.expects(:require).once.with('puppet/face/0.0.1/bar')
       subject["bar", '0.0.1']
     end
 
@@ -64,7 +65,8 @@ describe Puppet::Interface::FaceCollection do
 
     it "should return false if the face file itself is missing" do
       subject.stubs(:require).
-        raises(LoadError, 'no such file to load -- puppet/face/bar')
+        raises(LoadError, 'no such file to load -- puppet/face/bar').then.
+        raises(LoadError, 'no such file to load -- puppet/face/0.0.1/bar')
       subject["bar", '0.0.1'].should be_false
     end
 
@@ -109,6 +111,27 @@ describe Puppet::Interface::FaceCollection do
 
       action.should be_an_instance_of Puppet::Interface::Action
       action.face.version.should == SemVer.new('1.0.0')
+    end
+
+    it "should load the full older version of a face" do
+      action = Puppet::Face::FaceCollection.
+        get_action_for_face(:huzzah, :obsolete, :current)
+
+      action.face.version.should == SemVer.new('1.0.0')
+      action.face.should be_action :obsolete_in_core
+    end
+
+    it "should not add obsolete actions to the current version" do
+      action = Puppet::Face::FaceCollection.
+        get_action_for_face(:huzzah, :obsolete, :current)
+
+      action.face.version.should == SemVer.new('1.0.0')
+      action.face.should be_action :obsolete_in_core
+
+      current = Puppet::Face[:huzzah, :current]
+      current.version.should == SemVer.new('2.0.1')
+      current.should_not be_action :obsolete_in_core
+      current.should_not be_action :obsolete
     end
   end
 
