@@ -1,18 +1,15 @@
-require 'puppet/util/cacher'
-
 require 'puppet/file_serving/mount'
 
 class Puppet::FileServing::Mount::File < Puppet::FileServing::Mount
-  class << self
-    include Puppet::Util::Cacher
-
-    cached_attr(:localmap) do
-      {   "h" =>  Facter.value("hostname"),
-        "H" => [Facter.value("hostname"),
-            Facter.value("domain")].join("."),
-        "d" =>  Facter.value("domain")
-      }
-    end
+  def self.localmap
+    @localmap ||= {
+      "h" => Facter.value("hostname"),
+      "H" => [
+               Facter.value("hostname"),
+               Facter.value("domain")
+             ].join("."),
+      "d" => Facter.value("domain")
+    }
   end
 
   def complete_path(relative_path, node)

@@ -1,6 +1,5 @@
 require 'puppet/network/authstore'
 require 'puppet/util/logging'
-require 'puppet/util/cacher'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/content'
