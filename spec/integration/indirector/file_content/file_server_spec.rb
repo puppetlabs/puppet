@@ -13,6 +13,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files", :fa
   before do
     @terminus = Puppet::Indirector::FileContent::FileServer.new
     @test_class = Puppet::FileServing::Content
+    Puppet::FileServing::Configuration.instance_variable_set(:@configuration, nil)
   end
 
   it "should find plugin file content in the environment specified in the request" do
@@ -58,7 +59,6 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files", :fa
   end
 
   it "should find file content in files when node name expansions are used" do
-    Puppet::Util::Cacher.expire
     FileTest.stubs(:exists?).returns true
     FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
 
