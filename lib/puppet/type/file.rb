@@ -396,7 +396,7 @@ Puppet::Type.newtype(:file) do
     @parameters.each do |name, param|
       param.flush if param.respond_to?(:flush)
     end
-    @stat = nil
+    @stat = :needs_stat
   end
 
   def initialize(hash)
@@ -415,7 +415,7 @@ Puppet::Type.newtype(:file) do
       end
     end
 
-    @stat = nil
+    @stat = :needs_stat
   end
 
   # Configure discovered resources to be purged.
@@ -625,7 +625,7 @@ Puppet::Type.newtype(:file) do
     else
       self.fail "Could not back up files of type #{s.ftype}"
     end
-    expire
+    @stat = :needs_stat
   end
 
   def retrieve
@@ -676,22 +676,27 @@ Puppet::Type.newtype(:file) do
   # use either 'stat' or 'lstat', and we expect the properties to use the
   # resulting stat object accordingly (mostly by testing the 'ftype'
   # value).
-  cached_attr(:stat) do
+  #
+  # We use the initial value :needs_stat to ensure we only stat the file once,
+  # but can also keep track of a failed stat (@stat == nil). This also allows
+  # us to re-stat on demand by setting @stat = :needs_stat.
+  def stat
+    return @stat unless @stat == :needs_stat
+
     method = :stat
 
     # Files are the only types that support links
     if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
       method = :lstat
     end
-    path = self[:path]
 
-    begin
+    @stat = begin
       ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
-      return nil
+      nil
     rescue Errno::EACCES => error
       warning "Could not stat; permission denied"
-      return nil
+      nil
     end
   end
 
@@ -778,7 +783,7 @@ Puppet::Type.newtype(:file) do
       next unless [:mode, :owner, :group, :seluser, :selrole, :seltype, :selrange].include?(thing.name)
 
       # Make sure we get a new stat objct
-      expire
+      @stat = :needs_stat
       currentvalue = thing.retrieve
       thing.sync unless thing.safe_insync?(currentvalue)
     end
