@@ -97,6 +97,21 @@ describe Puppet::Interface::FaceCollection do
     end
   end
 
+  describe "::get_action_for_face" do
+    it "should return an action on the current face" do
+      Puppet::Face::FaceCollection.get_action_for_face(:huzzah, :bar, :current).
+        should be_an_instance_of Puppet::Interface::Action
+    end
+
+    it "should return an action on an older version of a face" do
+      action = Puppet::Face::FaceCollection.
+        get_action_for_face(:huzzah, :obsolete, :current)
+
+      action.should be_an_instance_of Puppet::Interface::Action
+      action.face.version.should == SemVer.new('1.0.0')
+    end
+  end
+
   describe "::register" do
     it "should store the face by name" do
       face = Puppet::Face.new(:my_face, '0.0.1')

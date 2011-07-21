@@ -20,12 +20,19 @@ module Puppet::Interface::FaceCollection
     get_face(name, version) or load_face(name, version)
   end
 
-  def self.get_action_for_face(face_name, action_name, version)
+  def self.get_action_for_face(name, action_name, version)
+    name = underscorize(name)
+
     # If the version they request specifically doesn't exist, don't search
     # elsewhere.  Usually this will start from :current and all...
-    return nil unless face = self[face_name, version]
+    return nil unless face = self[name, version]
     unless action = face.get_action(action_name)
-      # ...we need to search for it bound to an o{lder,ther} version.
+      # ...we need to search for it bound to an o{lder,ther} version.  Since
+      # we load all actions when the face is first references, this will be in
+      # memory in the known set of versions of the face.
+      (@faces[name].keys - [ :current ]).sort.reverse.each do |version|
+        break if action = @faces[name][version].get_action(action_name)
+      end
     end
 
     return action
