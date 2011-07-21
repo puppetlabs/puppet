@@ -11,10 +11,7 @@ class TestWebrickServer < Test::Unit::TestCase
 
   def setup
     Puppet::Util::SUIDManager.stubs(:asuser).yields
-    super
-  end
-
-  def teardown
+    Puppet::SSL::Host.instance_variable_set(:@localhost, nil)
     super
   end
 
@@ -23,11 +20,8 @@ class TestWebrickServer < Test::Unit::TestCase
   def test_basics
     server = nil
     assert_raise(Puppet::Error, "server succeeded with no cert") do
-
-            server = Puppet::Network::HTTPServer::WEBrick.new(
-                
+      server = Puppet::Network::HTTPServer::WEBrick.new(
         :Port => @@port,
-        
         :Handlers => {
           :Status => nil
         }
@@ -35,11 +29,8 @@ class TestWebrickServer < Test::Unit::TestCase
     end
 
     assert_nothing_raised("Could not create simple server") do
-
-            server = Puppet::Network::HTTPServer::WEBrick.new(
-                
+      server = Puppet::Network::HTTPServer::WEBrick.new(
         :Port => @@port,
-        
         :Handlers => {
           :CA => {}, # so that certs autogenerate
           :Status => nil
@@ -75,11 +66,8 @@ class TestWebrickServer < Test::Unit::TestCase
     client = nil
 
     assert_nothing_raised {
-
-            client = Puppet::Network::Client.status.new(
-                
+      client = Puppet::Network::Client.status.new(
         :Server => "localhost",
-        
         :Port => @@port
       )
     }
@@ -90,17 +78,13 @@ class TestWebrickServer < Test::Unit::TestCase
     server = nil
     Puppet[:certdnsnames] = "localhost"
     assert_nothing_raised {
-
-            server = Puppet::Network::HTTPServer::WEBrick.new(
-                
+      server = Puppet::Network::HTTPServer::WEBrick.new(
         :Port => @@port,
-        
         :Handlers => {
           :CA => {}, # so that certs autogenerate
           :Status => nil
         }
       )
-
     }
 
     pid = fork {
