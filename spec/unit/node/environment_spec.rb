@@ -144,7 +144,7 @@ describe Puppet::Node::Environment do
       FileTest.stubs(:directory?).returns true
       env = Puppet::Node::Environment.new("testing")
 
-      two = File.join(Dir.getwd, "two")
+      two = File.expand_path(File.join(Dir.getwd, "two"))
       env.validate_dirs([@path_one, 'two']).should == [@path_one, two]
     end
   end

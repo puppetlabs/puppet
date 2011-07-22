@@ -149,6 +149,10 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
       File.stubs(:identical?).returns(false)
       @parser.split_module("/path/to/manifests/init.pp").should == RDoc::Parser::SITE
     end
+
+    it "should handle windows paths with drive letters", :if => Puppet.features.microsoft_windows? do
+      @parser.split_module("C:/temp/init.pp").should == RDoc::Parser::SITE
+    end
   end
 
   describe "when parsing AST elements" do
