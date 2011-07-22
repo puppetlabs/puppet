@@ -104,7 +104,7 @@ describe Puppet::Node::Environment do
   end
 
   it "should validate the modulepath directories" do
-    real_file = Dir.mktmpdir
+    real_file = tmpdir('moduledir')
     path = %W[/one /two #{real_file}].join(File::PATH_SEPARATOR)
 
     Puppet[:modulepath] = path
