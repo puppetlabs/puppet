@@ -121,6 +121,7 @@ describe Puppet::Interface::Action do
       let :face do
         Puppet::Interface.new(:ruby_api, '1.0.0') do
           action :bar do
+            option "--bar"
             when_invoked do |*args|
               args.last
             end
@@ -139,7 +140,7 @@ describe Puppet::Interface::Action do
       end
 
       it "should call #validate_and_clean on the action when invoked" do
-        face.get_action(:bar).expects(:validate_and_clean).with([1, :two, 'three', {}])
+        face.get_action(:bar).expects(:validate_and_clean).with({}).returns({})
         face.bar 1, :two, 'three'
       end
     end
@@ -450,12 +451,12 @@ describe Puppet::Interface::Action do
         end
 
         it "should be invoked when calling a child action" do
-          subject.on_child(:foo => true, :bar => true).should == :on_child
+          subject.on_child(:foo => true).should == :on_child
           subject.reported.should == [ :child_before ]
         end
 
         it "should be invoked when calling a parent action" do
-          subject.on_parent(:foo => true, :bar => true).should == :on_parent
+          subject.on_parent(:foo => true).should == :on_parent
           subject.reported.should == [ :child_before ]
         end
       end
@@ -467,12 +468,12 @@ describe Puppet::Interface::Action do
         end
 
         it "should be invoked when calling a child action" do
-          subject.on_child(:foo => true, :bar => true).should == :on_child
+          subject.on_child(:foo => true).should == :on_child
           subject.reported.should == [ :parent_before ]
         end
 
         it "should be invoked when calling a parent action" do
-          subject.on_parent(:foo => true, :bar => true).should == :on_parent
+          subject.on_parent(:foo => true).should == :on_parent
           subject.reported.should == [ :parent_before ]
         end
       end
