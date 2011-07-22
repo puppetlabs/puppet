@@ -565,6 +565,16 @@ describe Puppet::Interface::Action do
       expect { subject.test :foo => true, :f => true }.
         to raise_error ArgumentError, /Multiple aliases for the same option/
     end
+
+    it "should fail if an unknown option is passed" do
+      expect { subject.test :unknown => true }.
+        to raise_error ArgumentError, /Unknown options passed: unknown/
+    end
+
+    it "should report all the unknown options passed" do
+      expect { subject.test :unknown => true, :unseen => false }.
+        to raise_error ArgumentError, /Unknown options passed: unknown, unseen/
+    end
   end
 
   context "default option values" do
