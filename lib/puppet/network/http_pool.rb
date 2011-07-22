@@ -1,6 +1,5 @@
 require 'puppet/ssl/host'
 require 'net/https'
-require 'puppet/util/cacher'
 
 module Puppet::Network; end
 

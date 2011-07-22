@@ -606,16 +606,6 @@ describe Puppet::Util::Settings do
       @settings.reparse
     end
 
-    it "should use a cached LoadedFile instance" do
-      first = mock 'first'
-      second = mock 'second'
-      Puppet::Util::LoadedFile.expects(:new).times(2).with("/test/file").returns(first).then.returns(second)
-
-      @settings.file.should equal(first)
-      Puppet::Util::Cacher.expire
-      @settings.file.should equal(second)
-    end
-
     it "should replace in-memory values with on-file values" do
       # Init the value
       text = "[main]\none = disk-init\n"

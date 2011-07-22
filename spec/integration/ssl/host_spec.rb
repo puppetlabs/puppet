@@ -30,7 +30,6 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
 
     system("rm -rf #{@dir}")
     Puppet.settings.clear
-    Puppet::Util::Cacher.expire
   }
 
   it "should be considered a CA host if its name is equal to 'ca'" do

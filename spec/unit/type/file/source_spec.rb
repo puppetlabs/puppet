@@ -31,14 +31,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
   end
 
-  it "should have a method for retrieving its metadata" do
-    source.new(:resource => @resource).must respond_to(:metadata)
-  end
-
-  it "should have a method for setting its metadata" do
-    source.new(:resource => @resource).must respond_to(:metadata=)
-  end
-
   describe "when returning the metadata", :fails_on_windows => true do
     before do
       @metadata = stub 'metadata', :source= => nil
@@ -93,20 +85,6 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @source.expects(:fail).raises RuntimeError
 
       lambda { @source.metadata }.should raise_error(RuntimeError)
-    end
-
-    it "should expire the metadata appropriately" do
-      expirer = stub 'expired', :dependent_data_expired? => true
-
-      metadata = stub 'metadata', :source= => nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz).returns metadata
-
-      @source = source.new(:resource => @resource, :value => [@feebooz])
-      @source.metadata = "foo"
-
-      @source.stubs(:expirer).returns expirer
-
-      @source.metadata.should_not == "foo"
     end
   end
 

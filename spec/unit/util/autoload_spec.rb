@@ -12,10 +12,6 @@ describe Puppet::Util::Autoload do
     @autoload.stubs(:eachdir).yields "/my/dir"
   end
 
-  it "should use the Cacher module" do
-    Puppet::Util::Autoload.ancestors.should be_include(Puppet::Util::Cacher)
-  end
-
   describe "when building the search path" do
     before :each do
       @dira = make_absolute('/a')

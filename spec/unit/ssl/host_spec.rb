@@ -13,7 +13,7 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
 
   after do
     # Cleaned out any cached localhost instance.
-    Puppet::Util::Cacher.expire
+    Puppet::SSL::Host.instance_variable_set(:@localhost, nil)
     Puppet::SSL::Host.ca_location = :none
   end
 
@@ -80,16 +80,6 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
     Puppet::SSL::Host.expects(:new).once.returns host
 
     Puppet::SSL::Host.localhost.should == Puppet::SSL::Host.localhost
-  end
-
-  it "should be able to expire the cached instance" do
-    one = stub 'host1', :certificate => "eh", :key => 'foo'
-    two = stub 'host2', :certificate => "eh", :key => 'foo'
-    Puppet::SSL::Host.expects(:new).times(2).returns(one).then.returns(two)
-
-    Puppet::SSL::Host.localhost.should equal(one)
-    Puppet::Util::Cacher.expire
-    Puppet::SSL::Host.localhost.should equal(two)
   end
 
   it "should be able to verify its certificate matches its key" do

@@ -3,7 +3,6 @@ require 'puppet/indirector'
 require 'puppet/simple_graph'
 require 'puppet/transaction'
 
-require 'puppet/util/cacher'
 require 'puppet/util/pson'
 
 require 'puppet/util/tagging'
@@ -20,7 +19,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
   include Puppet::Util::Tagging
   extend Puppet::Util::Pson
-  include Puppet::Util::Cacher::Expirer
 
   # The host name this is a catalog for.
   attr_accessor :name
@@ -123,10 +121,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   def apply(options = {})
     @applying = true
 
-    # Expire all of the resource data -- this ensures that all
-    # data we're operating against is entirely current.
-    expire
-
     Puppet::Util::Storage.load if host_config?
 
     transaction = Puppet::Transaction.new(self, options[:report])
@@ -162,7 +156,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     return transaction
   ensure
     @applying = false
-    cleanup
   end
 
   # Are we in the middle of applying the catalog?
@@ -195,14 +188,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     add_resource(resource)
     resource
-  end
-
-  def dependent_data_expired?(ts)
-    if applying?
-      return super
-    else
-      return true
-    end
   end
 
   # Turn our catalog graph into an old-style tree of TransObjects and TransBuckets.
@@ -563,11 +548,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   private
-
-  def cleanup
-    # Expire any cached data the resources are keeping.
-    expire
-  end
 
   # Verify that the given resource isn't defined elsewhere.
   def fail_on_duplicate_type_and_title(resource)
