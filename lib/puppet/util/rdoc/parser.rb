@@ -113,7 +113,9 @@ class Parser
       Puppet::Module.modulepath.each do |mp|
         # check that fullpath is a descendant of mp
         dirname = fullpath
-        while (dirname = File.dirname(dirname)) != '/'
+        previous = dirname
+        while (dirname = File.dirname(previous)) != previous
+          previous = dirname
           return nil if File.identical?(dirname,mp)
         end
       end
