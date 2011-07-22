@@ -138,8 +138,8 @@ describe Puppet::Interface::Action do
         options.should == { :bar => "beer" }
       end
 
-      it "should call #validate_args on the action when invoked" do
-        face.get_action(:bar).expects(:validate_args).with([1, :two, 'three', {}])
+      it "should call #validate_and_clean on the action when invoked" do
+        face.get_action(:bar).expects(:validate_and_clean).with([1, :two, 'three', {}])
         face.bar 1, :two, 'three'
       end
     end
@@ -548,7 +548,7 @@ describe Puppet::Interface::Action do
     it "should return the block if asked"
   end
 
-  context "#validate_args" do
+  context "#validate_and_clean" do
     subject do
       Puppet::Interface.new(:validate_args, '1.0.0') do
         script :test do |options| true end

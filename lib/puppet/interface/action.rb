@@ -200,8 +200,7 @@ def #{@name}(#{decl.join(", ")})
   options = args.last
 
   action = get_action(#{name.inspect})
-  action.add_default_args(args)
-  action.validate_args(args)
+  args   = action.validate_and_clean(args)
   __invoke_decorations(:before, action, args, options)
   rval = self.__send__(#{internal_name.inspect}, *args)
   __invoke_decorations(:after, action, args, options)
@@ -254,15 +253,19 @@ WRAPPER
     option
   end
 
-  def add_default_args(args)
+  def validate_and_clean(original_args)
+    # Make a shallow copy, so as not to surprise callers.  We only modify the
+    # top level keys and all, so this should be sufficient without being too
+    # costly overall.
+    args = original_args.dup
+
+    # Inject default arguments.
     options.map {|x| get_option(x) }.each do |option|
       if option.has_default? and not option.aliases.any? {|x| args.last.has_key? x}
         args.last[option.name] = option.default
       end
     end
-  end
 
-  def validate_args(args)
     # Check for multiple aliases for the same option...
     args.last.keys.each do |name|
       # #7290: If this isn't actually an option, ignore it for now.  We should
@@ -281,8 +284,12 @@ WRAPPER
       get_option(name)
     end.select(&:required?).collect(&:name) - args.last.keys
 
-    return if required.empty?
-    raise ArgumentError, "The following options are required: #{required.join(', ')}"
+    unless required.empty?
+      raise ArgumentError, "The following options are required: #{required.join(', ')}"
+    end
+
+    # All done.
+    return args
   end
 
   ########################################################################
