@@ -86,11 +86,11 @@ class Puppet::Indirector::Face < Puppet::Face
       run mode with the '--mode' option.
     EOT
 
-    when_invoked do |*args|
+    when_invoked do |options|
       if t = indirection.terminus_class
-        puts "Run mode '#{Puppet.run_mode.name}': #{t}"
+        "Run mode '#{Puppet.run_mode.name}': #{t}"
       else
-        $stderr.puts "No default terminus class for run mode '#{Puppet.run_mode.name}'"
+        "No default terminus class for run mode '#{Puppet.run_mode.name}'"
       end
     end
   end
