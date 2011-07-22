@@ -3,7 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/inventory'
 
-describe Puppet::SSL::Inventory do
+describe Puppet::SSL::Inventory, :unless => Puppet.features.microsoft_windows? do
   before do
     @class = Puppet::SSL::Inventory
   end

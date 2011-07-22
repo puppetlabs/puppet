@@ -598,11 +598,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
       end
 
       it "should conflict when its uniqueness key matches another resource's title" do
-        @resource = Puppet::Type.type(:file).new(:title => "/tmp/foo")
-        @other    = Puppet::Type.type(:file).new(:title => "another file", :path => "/tmp/foo")
+        path = make_absolute("/tmp/foo")
+        @resource = Puppet::Type.type(:file).new(:title => path)
+        @other    = Puppet::Type.type(:file).new(:title => "another file", :path => path)
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["\/tmp\/foo"\].*resource \["File", "\/tmp\/foo"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["#{Regexp.escape(path)}"\].*resource \["File", "#{Regexp.escape(path)}"\] already defined/)
       end
 
       it "should conflict when its uniqueness key matches the uniqueness key derived from another resource's title" do
