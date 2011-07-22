@@ -405,8 +405,10 @@ def install_binfile(from, op_file, target)
     if not installed_wrapper
       tmp_file2 = File.join(tmp_dir, '_tmp_wrapper')
       cwn = File.join(Config::CONFIG['bindir'], op_file)
-      cwv = CMD_WRAPPER.gsub('<ruby>', ruby.gsub(%r{/}) { "\\" }).gsub!('<command>', cwn.gsub(%r{/}) { "\\" } )
+      regex_safe_ruby = Regexp.escape(ruby.gsub(%r{/}) { "\\" })
+      regex_safe_cwn = Regexp.escape(cwn.gsub(%r{/}) { "\\" })
 
+      cwv = CMD_WRAPPER.gsub('<ruby>', regex_safe_ruby).gsub('<command>', regex_safe_cwn)
       File.open(tmp_file2, "wb") { |cw| cw.puts cwv }
       FileUtils.install(tmp_file2, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
 
