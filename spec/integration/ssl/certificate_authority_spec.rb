@@ -6,17 +6,16 @@
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_authority'
-require 'tempfile'
 
-describe Puppet::SSL::CertificateAuthority, :fails_on_windows => true do
+describe Puppet::SSL::CertificateAuthority, :unless => Puppet.features.microsoft_windows? do
+  include PuppetSpec::Files
+
   before do
     # Get a safe temporary file
-    file = Tempfile.new("ca_integration_testing")
-    @dir = file.path
-    file.delete
+    dir = tmpdir("ca_integration_testing")
 
-    Puppet.settings[:confdir] = @dir
-    Puppet.settings[:vardir] = @dir
+    Puppet.settings[:confdir] = dir
+    Puppet.settings[:vardir] = dir
     Puppet.settings[:group] = Process.gid
 
     Puppet::SSL::Host.ca_location = :local
@@ -26,7 +25,6 @@ describe Puppet::SSL::CertificateAuthority, :fails_on_windows => true do
   after {
     Puppet::SSL::Host.ca_location = :none
 
-    system("rm -rf #{@dir}")
     Puppet.settings.clear
 
     Puppet::SSL::CertificateAuthority.instance_variable_set("@instance", nil)

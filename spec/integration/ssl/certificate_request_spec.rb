@@ -6,21 +6,19 @@
 require 'spec_helper'
 
 require 'puppet/ssl/certificate_request'
-require 'tempfile'
 
+# REMIND: Fails on windows because there is no user provider yet
 describe Puppet::SSL::CertificateRequest, :fails_on_windows => true do
+  include PuppetSpec::Files
+
   before do
     # Get a safe temporary file
-    file = Tempfile.new("csr_integration_testing")
-    @dir = file.path
-    file.delete
-
-    Dir.mkdir(@dir)
+    dir = tmpdir("csr_integration_testing")
 
     Puppet.settings.clear
 
-    Puppet.settings[:confdir] = @dir
-    Puppet.settings[:vardir] = @dir
+    Puppet.settings[:confdir] = dir
+    Puppet.settings[:vardir] = dir
     Puppet.settings[:group] = Process.gid
 
     Puppet::SSL::Host.ca_location = :none
@@ -34,7 +32,6 @@ describe Puppet::SSL::CertificateRequest, :fails_on_windows => true do
   end
 
   after do
-    system("rm -rf #{@dir}")
     Puppet.settings.clear
   end
 
