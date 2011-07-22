@@ -48,16 +48,26 @@ class Puppet::Indirector::Face < Puppet::Face
     return result
   end
 
+  option "--extra HASH" do
+    summary "Extra arguments to pass to the indirection request"
+    description <<-end
+      A terminus can take additional arguments to refine the operation, which
+      are passed as an arbitrary hash to the back-end.  Anything passed as
+      the extra value is just send direct to the back-end.
+    end
+    default_to do Hash.new end
+  end
+
   action :destroy do
     summary "Delete an object."
     arguments "<key>"
-    when_invoked { |key, options| call_indirection_method(:destroy, key, options) }
+    when_invoked {|key, options| call_indirection_method :destroy, key, options[:extra] }
   end
 
   action :find do
     summary "Retrieve an object by name."
     arguments "<key>"
-    when_invoked { |key, options| call_indirection_method(:find, key, options) }
+    when_invoked {|key, options| call_indirection_method :find, key, options[:extra] }
   end
 
   action :save do
@@ -68,13 +78,13 @@ class Puppet::Indirector::Face < Puppet::Face
       currently accept data from STDIN, save actions cannot currently be invoked
       from the command line.
     EOT
-    when_invoked { |key, options| call_indirection_method(:save, key, options) }
+    when_invoked {|key, options| call_indirection_method :save, key, options[:extra] }
   end
 
   action :search do
     summary "Search for an object or retrieve multiple objects."
     arguments "<query>"
-    when_invoked { |key, options| call_indirection_method(:search, key, options) }
+    when_invoked {|key, options| call_indirection_method :search, key, options[:extra] }
   end
 
   # Print the configuration for the current terminus class
