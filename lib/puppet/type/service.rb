@@ -47,8 +47,18 @@ module Puppet
         provider.disable
       end
 
+      newvalue(:manual, :event => :service_manual_start) do
+        provider.manual_start
+      end
+
       def retrieve
         provider.enabled?
+      end
+
+      validate do |value|
+        if value == :manual and !Puppet.features.microsoft_windows?
+          raise Puppet::Error.new("Setting enable to manual is only supported on Microsoft Windows.")
+        end
       end
     end
 

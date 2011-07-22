@@ -45,8 +45,9 @@ Puppet.features.add(:microsoft_windows) do
     require 'sys/admin'
     require 'win32/process'
     require 'win32/dir'
+    require 'win32/service'
   rescue LoadError => err
-    warn "Cannot run on Microsoft Windows without the sys-admin, win32-process & win32-dir gems: #{err}" unless Puppet.features.posix?
+    warn "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir & win32-service gems: #{err}" unless Puppet.features.posix?
   end
 end
 
