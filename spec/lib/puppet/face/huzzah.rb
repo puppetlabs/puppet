@@ -4,4 +4,6 @@ Puppet::Face.define(:huzzah, '2.0.1') do
   license   "Apache 2 license; see COPYING"
   summary "life is a thing for celebration"
   script :bar do |options| "is where beer comes from" end
+
+  script :call_older do method_on_older end
 end

@@ -64,6 +64,10 @@ class Puppet::Interface
       end
       face
     end
+
+    def find_action(name, action, version = :current)
+      Puppet::Interface::FaceCollection.get_action_for_face(name, action, version)
+    end
   end
 
   def set_default_format(format)

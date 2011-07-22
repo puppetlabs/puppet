@@ -38,6 +38,7 @@ class Puppet::Interface::Action
   def to_s() "#{@face}##{@name}" end
 
   attr_reader   :name
+  attr_reader   :face
   attr_accessor :default
   def default?
     !!@default
