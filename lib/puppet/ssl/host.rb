@@ -27,10 +27,11 @@ class Puppet::SSL::Host
   attr_accessor :desired_state
 
   def self.localhost
-    @localhost ||= new.tap do |l|
-      l.generate unless l.certificate
-      l.key # Make sure it's read in
-    end
+    return @localhost if @localhost
+    @localhost = new
+    @localhost.generate unless @localhost.certificate
+    @localhost.key
+    @localhost
   end
 
   # This is the constant that people will use to mark that a given host is
