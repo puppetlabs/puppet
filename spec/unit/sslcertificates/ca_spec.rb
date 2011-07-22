@@ -5,25 +5,21 @@ require 'puppet'
 require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
 
-describe Puppet::SSLCertificates::CA, :fails_on_windows => true do
+describe Puppet::SSLCertificates::CA, :unless => Puppet.features.microsoft_windows? do
+  include PuppetSpec::Files
+
   before :all do
     @hosts = %w{host.domain.com Other.Testing.Com}
   end
 
   before :each do
     Puppet::Util::SUIDManager.stubs(:asuser).yields
-    file = Tempfile.new("ca_testing")
-    @dir = file.path
-    file.delete
+    dir = tmpdir("ca_testing")
 
-    Puppet.settings[:confdir] = @dir
-    Puppet.settings[:vardir]  = @dir
+    Puppet.settings[:confdir] = dir
+    Puppet.settings[:vardir]  = dir
 
     @ca = Puppet::SSLCertificates::CA.new
-  end
-
-  after :each do
-    system("rm -rf #{@dir}")
   end
 
   describe 'when cleaning' do

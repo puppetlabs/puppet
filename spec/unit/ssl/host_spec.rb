@@ -5,9 +5,18 @@ require 'puppet/ssl/host'
 require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
 
+# REMIND: Fails on windows because there is no user provider yet
 describe Puppet::SSL::Host, :fails_on_windows => true do
+  include PuppetSpec::Files
+
   before do
     Puppet::SSL::Host.indirection.terminus_class = :file
+
+    # Get a safe temporary file
+    dir = tmpdir("ssl_host_testing")
+    Puppet.settings[:confdir] = dir
+    Puppet.settings[:vardir] = dir
+
     @host = Puppet::SSL::Host.new("myname")
   end
 
@@ -701,7 +710,7 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
     end
   end
 
-  describe "when handling PSON" do
+  describe "when handling PSON", :unless => Puppet.features.microsoft_windows? do
     include PuppetSpec::Files
 
     before do
