@@ -5,7 +5,7 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
   license   "Apache 2 license; see COPYING"
 
   summary "Manage certificate requests."
-  description <<-'EOT'
+  description <<-EOT
     This subcommand retrieves and submits certificate signing requests (CSRs).
   EOT
 
@@ -15,14 +15,14 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
   find = get_action(:find)
   find.summary "Retrieve a single CSR."
   find.arguments "<host>"
-  find.returns <<-'EOT'
+  find.returns <<-EOT
     A single certificate request. When used from the Ruby API, returns a
     Puppet::SSL::CertificateRequest object.
 
     RENDERING ISSUES: In most cases, you will want to render this as a string
     ('--render-as s').
   EOT
-  find.examples <<-'EOT'
+  find.examples <<-EOT
     Retrieve a single CSR from the puppet master's CA:
 
     $ puppet certificate_request find somenode.puppetlabs.lan --terminus rest
@@ -31,10 +31,10 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
   search = get_action(:search)
   search.summary "Retrieve all outstanding CSRs."
   search.arguments "<dummy_text>"
-  search.returns <<-'EOT'
     A list of certificate requests; be sure to to render this as a string
     ('--render-as s'). When used from the Ruby API, returns an array of
     Puppet::SSL::CertificateRequest objects.
+  search.returns <<-EOT
   EOT
   search.short_description <<-EOT
     Retrieves all outstanding certificate signing requests. Due to a known bug,
@@ -44,7 +44,7 @@ Puppet::Indirector::Face.define(:certificate_request, '0.0.1') do
     Although this action always returns all CSRs, it requires a dummy search
     key; this is a known bug.
   EOT
-  search.examples <<-'EOT'
+  search.examples <<-EOT
     Retrieve all CSRs from the local CA (similar to 'puppet cert list'):
 
     $ puppet certificate_request search x --terminus ca
