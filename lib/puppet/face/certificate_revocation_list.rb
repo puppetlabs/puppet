@@ -13,12 +13,10 @@ Puppet::Indirector::Face.define(:certificate_revocation_list, '0.0.1') do
   find = get_action(:find)
   find.summary "Retrieve the certificate revocation list."
   find.arguments "<dummy_text>"
+  find.render_as = :s
   find.returns <<-EOT
     The certificate revocation list. When used from the Ruby API: returns an
     OpenSSL::X509::CRL object.
-
-    RENDERING ISSUES: this should usually be rendered as a string
-    ('--render-as s').
   EOT
   find.short_description <<-EOT
     Retrieves the certificate revocation list. Due to a known bug, this action
