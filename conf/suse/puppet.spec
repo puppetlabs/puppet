@@ -4,8 +4,8 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 2.6.1
-Release: 1%{?dist}
+Version: 2.7.2
+Release: 0.1rc1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System
 
@@ -136,6 +136,9 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed Jul 06 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.2-0.1rc1
+- Updating to 2.7.2rc1
+
 * Tue Sep 14 2010 Ben Kevan <ben.kevan@gmail.com> - 2.6.1
 - New version to 2.6.1
 - Add client.init and server.init from source since it's now included in the packages

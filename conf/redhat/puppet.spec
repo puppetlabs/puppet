@@ -5,13 +5,13 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.6.9
-Release:        1%{?dist}
+Version:        2.7.2
+Release:        0.2.rc1%{?dist}
 Summary:        A network tool for managing many disparate systems
-License:        Apache 2.0
+License:        ASL 2.0
 URL:            http://puppetlabs.com
 Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -110,7 +110,7 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
 touch %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
 touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 
-# Install the ext/ directory to %{_datadir}/%{name}
+# Install the ext/ directory to %%{_datadir}/%%{name}
 install -d %{buildroot}%{_datadir}/%{name}
 cp -a ext/ %{buildroot}%{_datadir}/%{name}
 # emacs and vim bits are installed elsewhere
@@ -136,7 +136,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 
 %files
 %defattr(-, root, root, 0755)
-%doc CHANGELOG COPYING LICENSE README.md README.queueing examples
+%doc CHANGELOG LICENSE README.md examples
 %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
@@ -172,6 +172,34 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{_mandir}/man8/puppetd.8.gz
 %{_mandir}/man8/ralsh.8.gz
 %{_mandir}/man8/puppetdoc.8.gz
+%{_mandir}/man8/puppet-agent.8.gz
+%{_mandir}/man8/puppet-apply.8.gz
+%{_mandir}/man8/puppet-catalog.8.gz
+%{_mandir}/man8/puppet-describe.8.gz
+%{_mandir}/man8/puppet-cert.8.gz
+%{_mandir}/man8/puppet-certificate.8.gz
+%{_mandir}/man8/puppet-certificate_request.8.gz
+%{_mandir}/man8/puppet-certificate_revocation_list.8.gz
+%{_mandir}/man8/puppet-config.8.gz
+%{_mandir}/man8/puppet-device.8.gz
+%{_mandir}/man8/puppet-doc.8.gz
+%{_mandir}/man8/puppet-facts.8.gz
+%{_mandir}/man8/puppet-file.8.gz
+%{_mandir}/man8/puppet-filebucket.8.gz
+%{_mandir}/man8/puppet-help.8.gz
+%{_mandir}/man8/puppet-inspect.8.gz
+%{_mandir}/man8/puppet-key.8.gz
+%{_mandir}/man8/puppet-kick.8.gz
+%{_mandir}/man8/puppet-man.8.gz
+%{_mandir}/man8/puppet-node.8.gz
+%{_mandir}/man8/puppet-parser.8.gz
+%{_mandir}/man8/puppet-plugin.8.gz
+%{_mandir}/man8/puppet-queue.8.gz
+%{_mandir}/man8/puppet-report.8.gz
+%{_mandir}/man8/puppet-resource.8.gz
+%{_mandir}/man8/puppet-resource_type.8.gz
+%{_mandir}/man8/puppet-secret_agent.8.gz
+%{_mandir}/man8/puppet-status.8.gz
 
 %files server
 %defattr(-, root, root, 0755)
@@ -187,6 +215,7 @@ echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
 %{_mandir}/man8/puppetmasterd.8.gz
 %{_mandir}/man8/puppetrun.8.gz
 %{_mandir}/man8/puppetqd.8.gz
+%{_mandir}/man8/puppet-master.8.gz
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
@@ -253,6 +282,13 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Wed Jul 06 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.2-0.2.rc1
+- Clean up rpmlint errors
+- Put man pages in correct package
+
+* Wed Jul 06 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.2-0.1.rc1
+- Update to 2.7.2rc1
+
 * Tue Jun 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.9-1
 - Release of 2.6.9 
 
@@ -323,7 +359,7 @@ rm -rf %{buildroot}
 - Update to 0.25.0
 - Fix permissions on /var/log/puppet (#495096)
 - Install emacs mode and vim syntax files (#491437)
-- Install ext/ directory in %%{_datadir}/%{name} (/usr/share/puppet)
+- Install ext/ directory in %%{_datadir}/%%{name} (/usr/share/puppet)
 
 * Mon May 04 2009 Todd Zullinger <tmz@pobox.com> - 0.25.0-0.1.beta1
 - Update to 0.25.0beta1
