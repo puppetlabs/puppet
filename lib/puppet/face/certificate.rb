@@ -97,9 +97,9 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   find = get_action(:find)
   find.summary "Retrieve a certificate."
   find.arguments "<host>"
+  find.render_as = :s
   find.returns <<-EOT
-    An x509 SSL certificate. You will usually want to render this as a
-    string (--render-as s).
+    An x509 SSL certificate.
 
     Note that this action has a side effect of caching a copy of the
     certificate in Puppet's `ssldir`.
