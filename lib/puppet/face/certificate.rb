@@ -6,7 +6,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   license   "Apache 2 license; see COPYING"
 
   summary "Provide access to the CA for certificate management."
-  description <<-'EOT'
+  description <<-EOT
     This subcommand interacts with a local or remote Puppet certificate
     authority. Currently, its behavior is not a full superset of `puppet
     cert`; specifically, it is unable to mimic puppet cert's "clean" option,
@@ -15,8 +15,9 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   EOT
 
   option "--ca-location LOCATION" do
+    required
     summary "Which certificate authority to use (local or remote)."
-    description <<-'EOT'
+    description <<-EOT
       Whether to act on the local certificate authority or one provided by a
       remote puppet master. Allowed values are 'local' and 'remote.'
 
@@ -24,6 +25,9 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     EOT
 
     before_action do |action, args, options|
+      unless [:remote, :local, :only].include? options[:ca_location].to_sym
+        raise ArgumentError, "Valid values for ca-location are 'remote', 'local', 'only'."
+      end
       Puppet::SSL::Host.ca_location = options[:ca_location].to_sym
     end
   end
@@ -32,7 +36,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     summary "Generate a new certificate signing request."
     arguments "<host>"
     returns "Nothing."
-    description <<-'EOT'
+    description <<-EOT
       Generates and submits a certificate signing request (CSR) for the
       specified host. This CSR will then have to be signed by a user
       with the proper authorization on the certificate authority.
@@ -41,7 +45,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       primarily useful for requesting certificates for individual users and
       external applications.
     EOT
-    examples <<-'EOT'
+    examples <<-EOT
       Request a certificate for "somenode" from the site's CA:
 
       $ puppet certificate generate somenode.puppetlabs.lan --ca-location remote
@@ -56,7 +60,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
 
   action :list do
     summary "List all certificate signing requests."
-    returns <<-'EOT'
+    returns <<-EOT
       An array of #inspect output from CSR objects. This output is
       currently messy, but does contain the names of nodes requesting
       certificates. This action returns #inspect strings even when used
@@ -73,10 +77,10 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   action :sign do
     summary "Sign a certificate signing request for HOST."
     arguments "<host>"
-    returns <<-'EOT'
+    returns <<-EOT
       A string that appears to be (but isn't) an x509 certificate.
     EOT
-    examples <<-'EOT'
+    examples <<-EOT
       Sign somenode.puppetlabs.lan's certificate:
 
       $ puppet certificate sign somenode.puppetlabs.lan --ca-location remote
@@ -93,7 +97,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   find = get_action(:find)
   find.summary "Retrieve a certificate."
   find.arguments "<host>"
-  find.returns <<-'EOT'
+  find.returns <<-EOT
     An x509 SSL certificate. You will usually want to render this as a
     string (--render-as s).
 
@@ -105,7 +109,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
   destroy.summary "Delete a certificate."
   destroy.arguments "<host>"
   destroy.returns "Nothing."
-  destroy.description <<-'EOT'
+  destroy.description <<-EOT
     Deletes a certificate. This action currently only works on the local CA.
   EOT
 
