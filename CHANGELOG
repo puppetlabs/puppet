@@ -1,3 +1,8 @@
+2.7.2rc2
+===
+8ec0804 (#8301) Red Hat spec file for 2.7.2rc1 won't work
+2263be6 (#5108) Update service type docs for new hasstatus default
+
 2.7.2rc1
 ===
 902c414 Update configurer_spec.rb to work with Ruby 1.8.5
