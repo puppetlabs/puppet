@@ -29,7 +29,7 @@ describe Puppet::Network::RestAuthConfig do
     params = {:ip => "127.0.0.1", :node => "me", :environment => :env, :authenticated => true}
     @acl.expects(:is_request_forbidden_and_why?).with("path", :save, "to/resource", params).returns(nil)
 
-    @authconfig.allowed?("path", :save, "to/resource", params)
+    @authconfig.check_authorization("path", :save, "to/resource", params)
   end
 
   describe "when defining an acl with mk_acl" do
