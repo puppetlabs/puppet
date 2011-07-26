@@ -50,6 +50,33 @@ describe Puppet::Type.type(:service).provider(:windows), :if => Puppet.features.
         /Cannot start snmptrap, error was: The service cannot be started, either/
       )
     end
+
+    describe "when the service is disabled" do
+      before :each do
+        @config.start_type = Win32::Service.get_start_type(Win32::Service::SERVICE_DISABLED)
+        Win32::Service.stubs(:start).with(@resource[:name])
+      end
+
+      it "should refuse to start if not managing enable" do
+        expect { @resource.provider.start }.to raise_error(Puppet::Error, /Will not start disabled service/)
+      end
+
+      it "should enable if managing enable and enable is true" do
+        @resource[:enable] = :true
+
+        Win32::Service.expects(:configure).with('service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_AUTO_START).returns(Win32::Service)
+
+        @resource.provider.start
+      end
+
+      it "should manual start if managing enable and enable is false" do
+        @resource[:enable] = :false
+
+        Win32::Service.expects(:configure).with('service_name' => @resource[:name], 'start_type' => Win32::Service::SERVICE_DEMAND_START).returns(Win32::Service)
+
+        @resource.provider.start
+      end
+    end
   end
 
   describe "#stop" do
