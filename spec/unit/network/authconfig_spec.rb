@@ -184,6 +184,29 @@ describe Puppet::Network::AuthConfig do
       @authconfig.read
     end
 
+    it "should strip whitespace around ACE" do
+      acl = stub 'acl', :info
+
+      @fd.stubs(:each).multiple_yields('[puppetca]', ' allow 127.0.0.1 , 172.16.10.0  ')
+      @rights.stubs(:newright).with("[puppetca]", 1, 'dummy').returns(acl)
+
+      acl.expects(:allow).with('127.0.0.1')
+      acl.expects(:allow).with('172.16.10.0')
+
+      @authconfig.read
+    end
+
+    it "should allow ACE inline comments" do
+      acl = stub 'acl', :info
+
+      @fd.stubs(:each).multiple_yields('[puppetca]', ' allow 127.0.0.1 # will it work?')
+      @rights.stubs(:newright).with("[puppetca]", 1, 'dummy').returns(acl)
+
+      acl.expects(:allow).with('127.0.0.1')
+
+      @authconfig.read
+    end
+
     it "should create an allow ACE on each subsequent allow" do
       acl = stub 'acl', :info
 
