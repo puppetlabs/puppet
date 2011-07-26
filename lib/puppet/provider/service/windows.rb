@@ -46,11 +46,11 @@ Puppet::Type.type(:service).provide :windows do
       when Win32::Service.get_start_type(Win32::Service::SERVICE_AUTO_START),
            Win32::Service.get_start_type(Win32::Service::SERVICE_BOOT_START),
            Win32::Service.get_start_type(Win32::Service::SERVICE_SYSTEM_START)
-        true
+        :true
       when Win32::Service.get_start_type(Win32::Service::SERVICE_DEMAND_START)
         :manual
       when Win32::Service.get_start_type(Win32::Service::SERVICE_DISABLED)
-        false
+        :false
       else
         raise Puppet::Error.new("Unknown start type: #{w32ss.start_type}")
     end
