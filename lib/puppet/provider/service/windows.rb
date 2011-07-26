@@ -41,7 +41,7 @@ Puppet::Type.type(:service).provide :windows do
   def enabled?
     w32ss = Win32::Service.config_info( @resource[:name] )
     raise Puppet::Error.new("Win32 service query of #{@resource[:name]} failed" ) unless( !w32ss.nil? && w32ss.instance_of?( Struct::ServiceConfigInfo ) )
-    Puppet.debug("Service #{@resource[:name]} start type is #{w32ss.start_type}")
+    debug("Service #{@resource[:name]} start type is #{w32ss.start_type}")
     case w32ss.start_type
       when Win32::Service.get_start_type(Win32::Service::SERVICE_AUTO_START),
            Win32::Service.get_start_type(Win32::Service::SERVICE_BOOT_START),
@@ -84,7 +84,7 @@ Puppet::Type.type(:service).provide :windows do
       else
         raise Puppet::Error.new("Unknown service state '#{w32ss.current_state}' for service '#{@resource[:name]}'")
     end
-    Puppet.debug("Service #{@resource[:name]} is #{w32ss.current_state}")
+    debug("Service #{@resource[:name]} is #{w32ss.current_state}")
     return state
   rescue Win32::Service::Error => detail
     raise Puppet::Error.new("Cannot get status of #{@resource[:name]}, error was: #{detail}" )
@@ -92,10 +92,6 @@ Puppet::Type.type(:service).provide :windows do
 
   # returns all providers for all existing services and startup state
   def self.instances
-    srvcs = []
-    Win32::Service.services.collect{ |s|
-      srvcs << new(:name => s.service_name)
-    }
-    srvcs
+    Win32::Service.services.collect { |s| new(:name => s.service_name) }
   end
 end
