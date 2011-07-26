@@ -59,6 +59,19 @@ Puppet::Type.type(:service).provide :windows do
   end
 
   def start
+    if enabled? == :false
+      # If disabled and not managing enable, respect disabled and fail.
+      if @resource[:enable].nil?
+        raise Puppet::Error, "Will not start disabled service #{@resource[:name]} without managing enable. Specify 'enable => false' to override."
+      # Otherwise start. If enable => false, we will later sync enable and
+      # disable the service again.
+      elsif @resource[:enable] == :true
+        enable
+      else
+        manual_start
+      end
+    end
+
     Win32::Service.start( @resource[:name] )
   rescue Win32::Service::Error => detail
     raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
