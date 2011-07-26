@@ -105,7 +105,7 @@ describe provider_class, :if => Puppet.features.microsoft_windows? do
         )
       )
       resource = Puppet::Type.type(:service).new(:name => 'snmptrap')
-      resource.provider.enabled?.should == false
+      resource.provider.enabled?.should == :false
     end
 
     # We need to guard this section explicitly since rspec will always
@@ -122,7 +122,7 @@ describe provider_class, :if => Puppet.features.microsoft_windows? do
             )
           )
           resource = Puppet::Type.type(:service).new(:name => 'snmptrap')
-          resource.provider.enabled?.should == true
+          resource.provider.enabled?.should == :true
         end
       end
     end
