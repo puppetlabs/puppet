@@ -126,13 +126,10 @@ describe Puppet::Interface do
   end
 
   it "should try to require faces that are not known" do
-    pending "mocking require causes random stack overflow"
-    subject::FaceCollection.expects(:require).with "puppet/face/foo"
-    subject[:foo, '0.0.1']
+    subject::FaceCollection.expects(:load_face).with(:foo, :current)
+    subject::FaceCollection.expects(:load_face).with(:foo, '0.0.1')
+    expect { subject[:foo, '0.0.1'] }.to raise_error Puppet::Error
   end
-
-  it "should be able to load all actions in all search paths"
-
 
   it_should_behave_like "things that declare options" do
     def add_options_to(&block)

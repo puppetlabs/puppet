@@ -20,6 +20,24 @@ module Puppet::Interface::FaceCollection
     get_face(name, version) or load_face(name, version)
   end
 
+  def self.get_action_for_face(name, action_name, version)
+    name = underscorize(name)
+
+    # If the version they request specifically doesn't exist, don't search
+    # elsewhere.  Usually this will start from :current and all...
+    return nil unless face = self[name, version]
+    unless action = face.get_action(action_name)
+      # ...we need to search for it bound to an o{lder,ther} version.  Since
+      # we load all actions when the face is first references, this will be in
+      # memory in the known set of versions of the face.
+      (@faces[name].keys - [ :current ]).sort.reverse.each do |version|
+        break if action = @faces[name][version].get_action(action_name)
+      end
+    end
+
+    return action
+  end
+
   # get face from memory, without loading.
   def self.get_face(name, pattern)
     return nil unless @faces.has_key? name
@@ -38,9 +56,7 @@ module Puppet::Interface::FaceCollection
     #
     # We use require to avoid executing the code multiple times, like any
     # other Ruby library that we might want to use.  --daniel 2011-04-06
-    begin
-      require "puppet/face/#{name}"
-
+    if safely_require name then
       # If we wanted :current, we need to index to find that; direct version
       # requests just work™ as they go. --daniel 2011-04-06
       if version == :current then
@@ -72,16 +88,30 @@ module Puppet::Interface::FaceCollection
         latest_ver = @faces[name].keys.sort.last
         @faces[name][:current] = @faces[name][latest_ver]
       end
-    rescue LoadError => e
-      raise unless e.message =~ %r{-- puppet/face/#{name}$}
-      # ...guess we didn't find the file; return a much better problem.
-    rescue SyntaxError => e
-      raise unless e.message =~ %r{puppet/face/#{name}\.rb:\d+: }
-      Puppet.err "Failed to load face #{name}:\n#{e}"
-      # ...but we just carry on after complaining.
+    end
+
+    unless version == :current or get_face(name, version)
+      # Try an obsolete version of the face, if needed, to see if that helps?
+      safely_require name, version
     end
 
     return get_face(name, version)
+  end
+
+  def self.safely_require(name, version = nil)
+    path = File.join 'puppet' ,'face', version.to_s, name.to_s
+    require path
+    true
+
+  rescue LoadError => e
+    raise unless e.message =~ %r{-- #{path}$}
+    # ...guess we didn't find the file; return a much better problem.
+    nil
+  rescue SyntaxError => e
+    raise unless e.message =~ %r{#{path}\.rb:\d+: }
+    Puppet.err "Failed to load face #{name}:\n#{e}"
+    # ...but we just carry on after complaining.
+    nil
   end
 
   def self.register(face)

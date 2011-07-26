@@ -146,7 +146,6 @@ module Puppet
     def metadata
       return @metadata if @metadata
       return nil unless value
-      result = nil
       value.each do |source|
         begin
           if data = Puppet::FileServing::Metadata.indirection.find(source)
@@ -158,7 +157,7 @@ module Puppet
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
-      fail "Could not retrieve information from source(s) #{value.join(", ")}" unless @metadata
+      fail "Could not retrieve information from environment #{Puppet[:environment]} source(s) #{value.join(", ")}" unless @metadata
       @metadata
     end
 

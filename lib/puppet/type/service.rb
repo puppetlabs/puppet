@@ -8,17 +8,15 @@ module Puppet
 
   newtype(:service) do
     @doc = "Manage running services.  Service support unfortunately varies
-      widely by platform --- some platforms have very little if any
-      concept of a running service, and some have a very codified and
-      powerful concept.  Puppet's service support will generally be able
-      to do the right thing regardless (e.g., if there is no
-      'status' command, then Puppet will look in the process table for a
-      command matching the service name), but the more information you
-      can provide, the better behaviour you will get. In particular, any
-      virtual services that don't have a predictable entry in the process table
-      (for example, `network` on Red Hat/CentOS systems) will manifest odd
-      behavior on restarts if you don't specify `hasstatus` or a `status`
-      command.
+      widely by platform --- some platforms have very little if any concept of a
+      running service, and some have a very codified and powerful concept.
+      Puppet's service support is usually capable of doing the right thing, but
+      the more information you can provide, the better behaviour you will get.
+
+      Puppet 2.7 and newer expect init scripts to have a working status command.
+      If this isn't the case for any of your services' init scripts, you will
+      need to set `hasstatus` to false and possibly specify a custom status
+      command in the `status` attribute.
 
       Note that if a `service` receives an event from another resource,
       the service will get restarted. The actual command to restart the
@@ -103,19 +101,17 @@ module Puppet
     end
 
     newparam(:hasstatus) do
-      desc "Declare the the service's init script has a
-        functional status command.  Based on testing, it was found
-        that a large number of init scripts on different platforms do
-        not support any kind of status command; thus, you must specify
-        manually whether the service you are running has such a
-        command. Alternately, you can provide a specific command using the
-        `status` attribute.
+      desc "Declare whether the service's init script has a functional status
+        command; defaults to `true`. This attribute's default value changed in
+        Puppet 2.7.0.
 
-        If you specify neither of these, then Puppet will look for the
-        service name in the process table. Be aware that 'virtual' init
-        scripts such as networking will respond poorly to refresh events
-        (via notify and subscribe relationships) if you don't override
-        this default behavior."
+        If a service's init script does not support any kind of status command,
+        you should set `hasstatus` to false and either provide a specific
+        command using the `status` attribute or expect that Puppet will look for
+        the service name in the process table. Be aware that 'virtual' init
+        scripts (like 'network' under Red Hat systems) will respond poorly to
+        refresh events from other resources if you override the default behavior
+        without providing a status command."
 
       newvalues(:true, :false)
 

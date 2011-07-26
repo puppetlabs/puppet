@@ -12,6 +12,11 @@ describe Puppet::Application::Inspect do
 
   before :each do
     @inspect = Puppet::Application[:inspect]
+    @inspect.preinit
+  end
+
+  it "should operate in agent run_mode" do
+    @inspect.class.run_mode.name.should == :agent
   end
 
   describe "during setup" do

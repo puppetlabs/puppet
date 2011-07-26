@@ -100,7 +100,8 @@ class Puppet::Application::FaceBase < Puppet::Application
         # action object it represents; if this is an invalid action name that
         # will be nil, and handled later.
         action_name = item.to_sym
-        @action = @face.get_action(action_name)
+        @action = Puppet::Face.find_action(@face.name, action_name)
+        @face   = @action.face if @action
       end
     end
 
