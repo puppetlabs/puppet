@@ -218,7 +218,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       if sub = self.command_line.args.shift then
         self.subcommand = sub
       else
-        help
+        puts help
+        exit
       end
     end
     result
