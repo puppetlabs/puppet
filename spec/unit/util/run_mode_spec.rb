@@ -1,14 +1,16 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Util::RunMode, :fails_on_windows => true do
+describe Puppet::Util::RunMode do
   before do
     @run_mode = Puppet::Util::RunMode.new('fake')
   end
 
   it "should have confdir /etc/puppet when run as root" do
     Puppet.features.stubs(:root?).returns(true)
-    @run_mode.conf_dir.should == '/etc/puppet'
+    etcdir = Puppet.features.microsoft_windows? ? File.join(Dir::WINDOWS, "puppet", "etc") : '/etc/puppet'
+    # REMIND: issue with windows backslashes
+    @run_mode.conf_dir.should == File.expand_path(etcdir)
   end
 
   it "should have confdir ~/.puppet when run as non-root" do
@@ -19,7 +21,9 @@ describe Puppet::Util::RunMode, :fails_on_windows => true do
 
   it "should have vardir /var/lib/puppet when run as root" do
     Puppet.features.stubs(:root?).returns(true)
-    @run_mode.var_dir.should == '/var/lib/puppet'
+    vardir = Puppet.features.microsoft_windows? ? File.join(Dir::WINDOWS, "puppet", "var") : '/var/lib/puppet'
+    # REMIND: issue with windows backslashes
+    @run_mode.var_dir.should == File.expand_path(vardir)
   end
 
   it "should have vardir ~/.puppet/var when run as non-root" do

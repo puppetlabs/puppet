@@ -228,7 +228,7 @@ describe ssh_authorized_key do
   end
 
 
-  describe "when user is specified", :fails_on_windows => true do
+  describe "when user is specified", :unless => Puppet.features.microsoft_windows? do
 
     it "should determine target" do
       resource = @class.create(
