@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/application/queue'
 require 'puppet/indirector/catalog/queue'
 
-describe Puppet::Application::Queue do
+describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_windows? do
   before :each do
     @queue = Puppet::Application[:queue]
     @queue.stubs(:puts)
