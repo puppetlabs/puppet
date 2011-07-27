@@ -6,21 +6,21 @@ Puppet::Face.define(:ca, '0.1.0') do
 
   summary "Local Puppet Certificate Authority management."
 
-  description <<TEXT
-This provides local management of the Puppet Certificate Authority.
+  description <<-TEXT
+    This provides local management of the Puppet Certificate Authority.
 
-You can use this subcommand to sign outstanding certificate requests, list
-and manage local certificates, and inspect the state of the CA.
-TEXT
+    You can use this subcommand to sign outstanding certificate requests, list
+    and manage local certificates, and inspect the state of the CA.
+  TEXT
 
   action :list do
     summary "List certificates and/or certificate requests."
 
-    description <<-end
-This will list the current certificates and certificate signing requests
-in the Puppet CA.  You will also get the fingerprint, and any certificate
-verification failure reported.
-    end
+    description <<-TEXT
+      This will list the current certificates and certificate signing requests
+      in the Puppet CA.  You will also get the fingerprint, and any certificate
+      verification failure reported.
+    TEXT
 
     option "--[no-]all" do
       summary "Include all certificates and requests."
@@ -37,12 +37,12 @@ verification failure reported.
     option "--subject PATTERN" do
       summary "Only list if the subject matches PATTERN."
 
-      description <<TEXT
-Only include certificates or requests where subject matches PATTERN.
+      description <<-TEXT
+        Only include certificates or requests where subject matches PATTERN.
 
-PATTERN is interpreted as a regular expression, allowing complex
-filtering of the content.
-TEXT
+        PATTERN is interpreted as a regular expression, allowing complex
+        filtering of the content.
+      TEXT
     end
 
     when_invoked do |options|

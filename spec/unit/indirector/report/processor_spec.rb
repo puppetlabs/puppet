@@ -26,7 +26,7 @@ describe Puppet::Transaction::Report::Processor, " when processing a report" do
   before do
     Puppet.settings.stubs(:use)
     @reporter = Puppet::Transaction::Report::Processor.new
-    @request = stub 'request', :instance => mock("report"), :key => 'node'
+    @request = stub 'request', :instance => stub("report", :host => 'hostname'), :key => 'node'
   end
 
   it "should not save the report if reports are set to 'none'" do
