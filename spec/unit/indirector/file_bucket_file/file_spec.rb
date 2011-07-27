@@ -14,7 +14,7 @@ describe Puppet::FileBucketFile::File do
     Puppet::FileBucketFile::File.doc.should be_instance_of(String)
   end
 
-  describe "non-stubbing tests", :fails_on_windows => true do
+  describe "non-stubbing tests" do
     include PuppetSpec::Files
 
     before do

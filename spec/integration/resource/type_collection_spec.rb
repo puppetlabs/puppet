@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet_spec/files'
 require 'puppet/resource/type_collection'
 
-describe Puppet::Resource::TypeCollection, :fails_on_windows => true do
+describe Puppet::Resource::TypeCollection do
   describe "when autoloading from modules" do
     include PuppetSpec::Files
 
