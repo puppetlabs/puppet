@@ -305,9 +305,8 @@ describe Puppet::Type.type(:file) do
         file[:path].should == "X:/"
       end
 
-      it "should add a slash to a drive letter", :'fails_on_windows' => true, :'fails_on_ruby_1.9.2' => true do
-        file = Puppet::Type::File.new(:path => "X:")
-        file[:path].should == "X:/"
+      it "should not accept a drive letter without a slash", :'fails_on_ruby_1.9.2' => true do
+        lambda { Puppet::Type::File.new(:path => "X:") }.should raise_error(/File paths must be fully qualified/)
       end
     end
 
