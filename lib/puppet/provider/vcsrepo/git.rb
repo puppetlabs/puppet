@@ -6,7 +6,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
   ##TODO modify the commands below so that the su - is included
   commands :git => 'git'
   defaultfor :git => :exists
-  has_features :bare_repositories, :reference_tracking
+  has_features :bare_repositories, :reference_tracking, :ssh_identity
 
   def create
     if !@resource.value(:source)
@@ -50,11 +50,11 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
 
   def revision
     update_references
-    current = at_path { git('rev-parse', 'HEAD').chomp }
+    current = at_path { git_with_identity('rev-parse', 'HEAD').chomp }
     if tag_revision?(@resource.value(:revision))
-      canonical = at_path { git('show', @resource.value(:revision)).scan(/commit (.*)/).to_s }
+      canonical = at_path { git_with_identity('show', @resource.value(:revision)).scan(/commit (.*)/).to_s }
     else
-      canonical = at_path { git('rev-parse', @resource.value(:revision)).chomp }
+      canonical = at_path { git_with_identity('rev-parse', @resource.value(:revision)).chomp }
     end
 
     if current == canonical
@@ -71,7 +71,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
       # authoritative.
       # might be worthwhile to have an allow_local_changes param to decide
       # whether to reset or pull when we're ensuring latest.
-      at_path { git('reset', '--hard', "origin/#{desired}") }
+      at_path { git_with_identity('reset', '--hard', "origin/#{desired}") }
     end
     if @resource.value(:ensure) != :bare
       update_submodules
@@ -93,7 +93,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
 
   def update_references
     at_path do
-      git('fetch', '--tags', 'origin')
+      git_with_identity('fetch', '--tags', 'origin')
     end
   end
 
@@ -111,7 +111,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
     end
     if !File.exist?(File.join(@resource.value(:path), '.git'))
       args.push(source, path)
-      git(*args)
+      git_with_identity(*args)
     else
       notice "Repo has already been cloned"
     end
@@ -142,7 +142,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
         args << '--bare'
       end
       at_path do
-        git(*args)
+        git_with_identity(*args)
       end
     end
   end
@@ -173,7 +173,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
     FileUtils.mv(tempdir, File.join(@resource.value(:path), '.git'))
     if commits_in?(File.join(@resource.value(:path), '.git'))
       reset('HEAD')
-      git('checkout', '-f')
+      git_with_identity('checkout', '-f')
       update_owner_and_excludes
     end
   end
@@ -189,24 +189,24 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
     if local_branch_revision?
       reset(revision)
     elsif tag_revision?
-      at_path { git('checkout', revision) }
+      at_path { git_with_identity('checkout', revision) }
     elsif remote_branch_revision?
-      at_path { git('checkout', '-b', revision, '--track', "origin/#{revision}") }
+      at_path { git_with_identity('checkout', '-b', revision, '--track', "origin/#{revision}") }
     end
   end
 
   def reset(desired)
     at_path do
-      git('reset', '--hard', desired)
+      git_with_identity('reset', '--hard', desired)
     end
   end
 
   def update_submodules
     at_path do
-      git('submodule', 'init')
-      git('submodule', 'update')
-      git('submodule', 'foreach', 'git', 'submodule', 'init')
-      git('submodule', 'foreach', 'git', 'submodule', 'update')
+      git_with_identity('submodule', 'init')
+      git_with_identity('submodule', 'update')
+      git_with_identity('submodule', 'foreach', 'git', 'submodule', 'init')
+      git_with_identity('submodule', 'foreach', 'git', 'submodule', 'update')
     end
   end
 
@@ -228,15 +228,15 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
   end
 
   def branches
-    at_path { git('branch', '-a') }.gsub('*', ' ').split(/\n/).map { |line| line.strip }
+    at_path { git_with_identity('branch', '-a') }.gsub('*', ' ').split(/\n/).map { |line| line.strip }
   end
 
   def on_branch?
-    at_path { git('branch', '-a') }.split(/\n/).grep(/\*/).to_s.gsub('*', '').strip
+    at_path { git_with_identity('branch', '-a') }.split(/\n/).grep(/\*/).to_s.gsub('*', '').strip
   end
 
   def tags
-    at_path { git('tag', '-l') }.split(/\n/).map { |line| line.strip }
+    at_path { git_with_identity('tag', '-l') }.split(/\n/).map { |line| line.strip }
   end
 
   def set_excludes
@@ -248,15 +248,15 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
       create
     end
     at_path do
-      git('fetch', 'origin')
-      git('fetch', '--tags', 'origin')
+      git_with_identity('fetch', 'origin')
+      git_with_identity('fetch', '--tags', 'origin')
     end
-    current = at_path { git('rev-parse', rev).strip }
+    current = at_path { git_with_identity('rev-parse', rev).strip }
     if @resource.value(:revision)
       if local_branch_revision?
-        canonical = at_path { git('rev-parse', @resource.value(:revision)).strip }
+        canonical = at_path { git_with_identity('rev-parse', @resource.value(:revision)).strip }
       elsif remote_branch_revision?
-        canonical = at_path { git('rev-parse', 'origin/' + @resource.value(:revision)).strip }
+        canonical = at_path { git_with_identity('rev-parse', 'origin/' + @resource.value(:revision)).strip }
       end
         current = @resource.value(:revision) if current == canonical
     end
@@ -269,6 +269,28 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
     end
     if @resource.value(:excludes)
       set_excludes
+    end
+  end
+
+  def git_with_identity(*args)
+    if @resource.value(:identity)
+      Tempfile.open('git-helper') do |f|
+        f.puts '#!/bin/sh'
+        f.puts "exec ssh -i #{@resource.value(:identity)} $*"
+        f.close
+
+        FileUtils.chmod(0755, f.path)
+        env_save = ENV['GIT_SSH']
+        ENV['GIT_SSH'] = f.path
+
+        ret = git(*args)
+
+        ENV['GIT_SSH'] = env_save
+
+        return ret
+      end
+    else
+      git(*args)
     end
   end
 end

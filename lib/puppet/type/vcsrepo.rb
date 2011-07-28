@@ -18,6 +18,9 @@ Puppet::Type.newtype(:vcsrepo) do
           "The provider supports tracking revision references that can change
            over time (eg, some VCS tags and branch names)"
 
+  feature :ssh_identity,
+          "The provider supports a configurable SSH identity file"
+
   ensurable do
     attr_accessor :latest
 
@@ -135,4 +138,7 @@ Puppet::Type.newtype(:vcsrepo) do
     end
   end
 
+  newparam :identity, :required_features => [:ssh_identity] do
+    desc "SSH identity file"
+  end
 end
