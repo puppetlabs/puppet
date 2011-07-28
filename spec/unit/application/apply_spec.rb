@@ -134,7 +134,9 @@ describe Puppet::Application::Apply do
         Puppet[:postrun_command] = ''
 
         Puppet::Node::Facts.indirection.terminus_class = :memory
+        Puppet::Node::Facts.indirection.cache_class = :memory
         Puppet::Node.indirection.terminus_class = :memory
+        Puppet::Node.indirection.cache_class = :memory
 
         @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
         Puppet::Node::Facts.indirection.save(@facts)
