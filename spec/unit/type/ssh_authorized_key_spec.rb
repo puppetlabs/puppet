@@ -3,7 +3,7 @@ require 'spec_helper'
 
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
 
-describe ssh_authorized_key do
+describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before do
@@ -182,7 +182,7 @@ describe ssh_authorized_key do
         proc { @class.new(:name => "whev", :type => :rsa, :target => "/tmp/here") }.should_not raise_error
       end
 
-      it "should use the user's path if not explicitly specified", :fails_on_windows => true do
+      it "should use the user's path if not explicitly specified" do
         @class.new(:name => "whev", :user => 'root').should(:target).should == File.expand_path("~root/.ssh/authorized_keys")
       end
 
@@ -228,7 +228,7 @@ describe ssh_authorized_key do
   end
 
 
-  describe "when user is specified", :unless => Puppet.features.microsoft_windows? do
+  describe "when user is specified" do
 
     it "should determine target" do
       resource = @class.create(

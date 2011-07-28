@@ -3,7 +3,7 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:exec).provider(:shell)
 
-describe provider_class, :fails_on_windows => true do
+describe provider_class, :unless => Puppet.features.microsoft_windows? do
   before :each do
     @resource = Puppet::Resource.new(:exec, 'foo')
     @provider = provider_class.new(@resource)

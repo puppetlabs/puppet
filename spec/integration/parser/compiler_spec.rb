@@ -13,7 +13,7 @@ describe Puppet::Parser::Compiler do
     Puppet.settings.clear
   end
 
-  it "should be able to determine the configuration version from a local version control repository", :fails_on_windows => true do
+  it "should be able to determine the configuration version from a local version control repository" do
     # This should always work, because we should always be
     # in the puppet repo when we run this.
     version = %x{git rev-parse HEAD}.chomp
