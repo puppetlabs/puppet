@@ -234,7 +234,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
   end
 
   def on_branch?
-    at_path { git_with_identity('branch', '-a') }.split(/\n/).grep(/\*/).to_s.gsub('*', '').strip
+    at_path { git_with_identity('branch', '-a') }.split(/\n/).grep(/\*/).first.to_s.gsub('*', '').strip
   end
 
   def tags
@@ -260,7 +260,7 @@ Puppet::Type.type(:vcsrepo).provide(:git, :parent => Puppet::Provider::Vcsrepo) 
       elsif remote_branch_revision?
         canonical = at_path { git_with_identity('rev-parse', 'origin/' + @resource.value(:revision)).strip }
       end
-        current = @resource.value(:revision) if current == canonical
+      current = @resource.value(:revision) if current == canonical
     end
     return current
   end
