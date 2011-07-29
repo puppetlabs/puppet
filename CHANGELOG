@@ -1,3 +1,7 @@
+2.7.2rc3
+===
+Fix cross branch confusion on 2.7.2rc2
+
 2.7.2rc2
 ===
 8ec0804 (#8301) Red Hat spec file for 2.7.2rc1 won't work
