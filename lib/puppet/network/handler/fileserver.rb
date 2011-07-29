@@ -269,6 +269,7 @@ class Puppet::Network::Handler
               value = $2
               case var
               when "path"
+                raise FileServerError.new("No mount specified for argument #{var} #{value}") unless mount
                 if mount.name == MODULES
                   Puppet.warning "The '#{mount.name}' module can not have a path. Ignoring attempt to set it"
                 else
@@ -280,6 +281,7 @@ class Puppet::Network::Handler
                   end
                 end
               when "allow"
+                raise FileServerError.new("No mount specified for argument #{var} #{value}") unless mount
                 value.split(/\s*,\s*/).each { |val|
                   begin
                     mount.info "allowing #{val} access"
@@ -294,6 +296,7 @@ class Puppet::Network::Handler
                   end
                 }
               when "deny"
+                raise FileServerError.new("No mount specified for argument #{var} #{value}") unless mount
                 value.split(/\s*,\s*/).each { |val|
                   begin
                     mount.info "denying #{val} access"
