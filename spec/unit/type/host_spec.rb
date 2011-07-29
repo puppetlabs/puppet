@@ -34,7 +34,7 @@ describe host do
 
   end
 
-  describe "when validating values", :fails_on_windows => true do
+  describe "when validating values" do
     it "should support present as a value for ensure" do
       proc { @class.new(:name => "foo", :ensure => :present) }.should_not raise_error
     end
