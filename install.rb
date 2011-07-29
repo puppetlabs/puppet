@@ -243,6 +243,9 @@ def prepare_installation
 
   if not InstallOptions.configdir.nil?
     configdir = InstallOptions.configdir
+  elsif $operatingsystem == "windows"
+    require 'win32/dir'
+    configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
     configdir = "/etc/puppet"
   end
