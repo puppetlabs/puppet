@@ -8,7 +8,7 @@ describe Puppet::Util::RunMode do
 
   it "should have confdir /etc/puppet when run as root" do
     Puppet.features.stubs(:root?).returns(true)
-    etcdir = Puppet.features.microsoft_windows? ? File.join(Dir::WINDOWS, "puppet", "etc") : '/etc/puppet'
+    etcdir = Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : '/etc/puppet'
     # REMIND: issue with windows backslashes
     @run_mode.conf_dir.should == File.expand_path(etcdir)
   end
@@ -21,7 +21,7 @@ describe Puppet::Util::RunMode do
 
   it "should have vardir /var/lib/puppet when run as root" do
     Puppet.features.stubs(:root?).returns(true)
-    vardir = Puppet.features.microsoft_windows? ? File.join(Dir::WINDOWS, "puppet", "var") : '/var/lib/puppet'
+    vardir = Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : '/var/lib/puppet'
     # REMIND: issue with windows backslashes
     @run_mode.var_dir.should == File.expand_path(vardir)
   end
