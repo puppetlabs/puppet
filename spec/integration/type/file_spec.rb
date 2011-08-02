@@ -289,23 +289,24 @@ describe Puppet::Type.type(:file) do
       (File.stat(file).mode & 007777).should == 0644
     end
 
-    it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file", :fails_on_windows => true do
+    it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
       dir = tmpfile("recursion_vs_explicit_2")
 
-      managed   = File.join(dir, "file")
-      generated = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+      managed      = File.join(dir, "file")
+      generated    = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+      managed_mode = Puppet.features.microsoft_windows? ? 0444 : 0700
 
       FileUtils.mkdir_p(dir)
       File.open(managed,   "w") { |f| f.puts "" }
       File.open(generated, "w") { |f| f.puts "" }
 
       @catalog = Puppet::Resource::Catalog.new
-      @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => "755")
+      @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => managed_mode)
       @catalog.add_resource Puppet::Type::File.new(:name => managed, :recurse => true, :backup => false, :mode => "644")
 
       @catalog.apply
 
-      (File.stat(generated).mode & 007777).should == 0755
+      (File.stat(generated).mode & 007777).should == managed_mode
     end
   end
 
@@ -381,8 +382,9 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
+      expected_mode = Puppet.features.microsoft_windows? ? 0644 : 0755
       File.read(dest).should == "foo"
-      (File.stat(dest).mode & 007777).should == 0755
+      (File.stat(dest).mode & 007777).should == expected_mode
     end
 
     it "should be able to copy individual files even if recurse has been specified" do
