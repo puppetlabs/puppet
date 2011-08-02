@@ -111,7 +111,7 @@ describe Puppet::FileBucketFile::File do
       end
     end
 
-    describe "when diffing files" do
+    describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
       it "should generate an empty string if there is no diff" do
         checksum = save_bucket_file("I'm the contents of a file")
         Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => checksum).should == ''
