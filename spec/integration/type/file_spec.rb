@@ -73,7 +73,7 @@ describe Puppet::Type.type(:file) do
       File.read(file[:path]).should == "bar\n"
     end
 
-    it "should not backup symlinks", :fails_on_windows => true do
+    it "should not backup symlinks", :unless => Puppet.features.microsoft_windows? do
       link = tmpfile("link")
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively make links to other files", :fails_on_windows => true do
+    it "should be able to recursively make links to other files", :unless => Puppet.features.microsoft_windows? do
       source = tmpfile("file_link_integration_source")
 
       build_path(source)
