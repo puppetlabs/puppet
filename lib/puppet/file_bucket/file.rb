@@ -15,11 +15,11 @@ class Puppet::FileBucket::File
   attr :bucket_path
 
   def initialize( contents, options = {} )
-    raise ArgumentError if !contents.is_a?(String)
-    @contents  = contents
+    raise ArgumentError.new("contents must be a String, got a #{contents.class}") unless contents.is_a?(String)
+    @contents = contents
 
     @bucket_path = options.delete(:bucket_path)
-    raise ArgumentError if options != {}
+    raise ArgumentError.new("Unknown option(s): #{options.keys.join(', ')}") unless options.empty?
   end
 
   def checksum_type
