@@ -72,7 +72,7 @@ module Puppet
           self.fail "Could not understand source #{source}: #{detail}"
         end
 
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
+        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme) or (Puppet.features.microsoft_windows? and uri.scheme =~ /^[a-z]$/i)
       end
     end
 
@@ -180,6 +180,8 @@ module Puppet
     private
 
     def uri
+      return nil if metadata.source =~ /^[a-z]:[\/\\]/i # Abspath for Windows
+
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
   end

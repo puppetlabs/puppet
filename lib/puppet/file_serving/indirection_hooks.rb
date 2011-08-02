@@ -17,6 +17,7 @@ module Puppet::FileServing::IndirectionHooks
 
     # Short-circuit to :file if it's a fully-qualified path or specifies a 'file' protocol.
     return PROTOCOL_MAP["file"] if request.key =~ /^#{::File::SEPARATOR}/
+    return PROTOCOL_MAP["file"] if request.key =~ /^[a-z]:[\/\\]/i
     return PROTOCOL_MAP["file"] if request.protocol == "file"
 
     # We're heading over the wire the protocol is 'puppet' and we've got a server name or we're not named 'apply' or 'puppet'
