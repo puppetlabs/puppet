@@ -349,7 +349,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when copying files" do
     # Ticket #285.
-    it "should be able to copy files with pound signs in their names", :fails_on_windows => true do
+    it "should be able to copy files with pound signs in their names" do
       source = tmpfile("filewith#signs")
 
       dest = tmpfile("destwith#signs")
@@ -366,7 +366,7 @@ describe Puppet::Type.type(:file) do
       File.read(dest).should == "foo"
     end
 
-    it "should be able to copy files with spaces in their names", :fails_on_windows => true do
+    it "should be able to copy files with spaces in their names" do
       source = tmpfile("filewith spaces")
 
       dest = tmpfile("destwith spaces")
@@ -385,7 +385,7 @@ describe Puppet::Type.type(:file) do
       (File.stat(dest).mode & 007777).should == 0755
     end
 
-    it "should be able to copy individual files even if recurse has been specified", :fails_on_windows => true do
+    it "should be able to copy individual files even if recurse has been specified" do
       source = tmpfile("source")
       dest = tmpfile("dest")
 
@@ -434,7 +434,7 @@ describe Puppet::Type.type(:file) do
     File.read(dest).should == "this is some content, yo"
   end
 
-  it "should delete files with sources but that are set for deletion", :fails_on_windows => true do
+  it "should delete files with sources but that are set for deletion" do
     dest = tmpfile("dest_source_with_ensure")
     source = tmpfile("source_source_with_ensure")
     File.open(source, "w") { |f| f.puts "yay" }
@@ -455,7 +455,7 @@ describe Puppet::Type.type(:file) do
     File.should_not be_exist(dest)
   end
 
-  describe "when purging files", :fails_on_windows => true do
+  describe "when purging files" do
     before do
       @sourcedir = tmpfile("purge_source")
       @destdir = tmpfile("purge_dest")
@@ -470,7 +470,6 @@ describe Puppet::Type.type(:file) do
       # this file should get removed
       File.open(@purgee, "w") { |f| f.puts "footest" }
 
-
       @lfobj = Puppet::Type.newfile(
         :title   => "localfile",
         :path    => @localfile,
@@ -478,7 +477,6 @@ describe Puppet::Type.type(:file) do
         :ensure  => :file,
         :backup  => false
       )
-
 
       @destobj = Puppet::Type.newfile(
         :title   => "destdir",
