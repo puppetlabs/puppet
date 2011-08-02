@@ -23,7 +23,7 @@ Puppet::Type.newtype(:file) do
     location, rather than using native resources, please contact
     Puppet Labs and we can hopefully work with you to develop a
     native resource to support what you are doing.
-    
+
     **Autorequires:** If Puppet is managing the user or group that owns a file, the file resource will autorequire them. If Puppet is managing any parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
@@ -36,7 +36,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and value =~ /^\//) or (Puppet.features.microsoft_windows? and (value =~ /^[A-Za-z]:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
+      unless (Puppet.features.posix? and value =~ /^\//) or (value =~ /^[A-Za-z]:\// or value =~ /^\/\/[^\/]+\/[^\/]+/)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -44,7 +44,21 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      path, name = ::File.split(value.gsub(/\/+/,'/'))
+      # We need to save off, and remove the volume designator in the
+      # path if it is there, since File.split does not handle paths
+      # with volume designators properly, except when run on Windows.
+      # Since we are potentially compiling a catalog for a Windows
+      # machine on a non-Windows master, we need to handle this
+      # ourselves.
+      optional_volume_designator = value.match(/^([a-z]:)[\/\\].*/i)
+      value_without_designator   = value.sub(/^(?:[a-z]:)?(.*)/i, '\1')
+
+      path, name = ::File.split(value_without_designator.gsub(/\/+/,'/'))
+
+      if optional_volume_designator
+        path = optional_volume_designator[1] + path
+      end
+
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
 
