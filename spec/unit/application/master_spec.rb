@@ -5,7 +5,7 @@ require 'puppet/application/master'
 require 'puppet/daemon'
 require 'puppet/network/server'
 
-describe Puppet::Application::Master do
+describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windows? do
   before :each do
     @master = Puppet::Application[:master]
     @daemon = stub_everything 'daemon'
@@ -106,7 +106,6 @@ describe Puppet::Application::Master do
   end
 
   describe "during setup" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:settraps)
@@ -115,6 +114,12 @@ describe Puppet::Application::Master do
       Puppet.settings.stubs(:use)
 
       @master.options.stubs(:[]).with(any_parameters)
+    end
+
+    it "should abort stating that the master is not supported on Windows" do
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+
+      expect { @master.setup }.to raise_error(Puppet::Error, /Puppet master is not supported on Microsoft Windows/)
     end
 
     it "should set log level to debug if --debug was passed" do

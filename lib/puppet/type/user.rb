@@ -168,6 +168,14 @@ module Puppet
           return "changed password"
         end
       end
+
+      def is_to_s( currentvalue )
+        return '[old password hash redacted]'
+      end
+      def should_to_s( newvalue )
+        return '[new password hash redacted]'
+      end
+
     end
 
     newproperty(:password_min_age, :required_features => :manages_password_age) do

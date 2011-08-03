@@ -3,7 +3,9 @@ require 'spec_helper'
 
 ssh_authorized_key = Puppet::Type.type(:ssh_authorized_key)
 
-describe ssh_authorized_key do
+describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
+  include PuppetSpec::Files
+
   before do
     @class = Puppet::Type.type(:ssh_authorized_key)
 
@@ -11,7 +13,7 @@ describe ssh_authorized_key do
     @class.stubs(:defaultprovider).returns(@provider_class)
     @class.stubs(:provider).returns(@provider_class)
 
-    @provider = stub 'provider', :class => @provider_class, :file_path => "/tmp/whatever", :clear => nil
+    @provider = stub 'provider', :class => @provider_class, :file_path => make_absolute("/tmp/whatever"), :clear => nil
     @provider_class.stubs(:new).returns(@provider)
     @catalog = Puppet::Resource::Catalog.new
   end

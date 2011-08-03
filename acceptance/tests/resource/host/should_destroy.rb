@@ -16,4 +16,4 @@ on(agents, "cat #{file}; rm -f #{file}") do
 end
 
 step "clean up after the test"
-on agents, "rm -vf #{file}"
+on agents, "rm -f #{file}"

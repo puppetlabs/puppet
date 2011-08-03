@@ -1,6 +1,6 @@
 test_name "should create cron"
 
-tmpuser = "cron-test-#{Time.new.to_i}"
+tmpuser = "pl#{rand(999999).to_i}"
 tmpfile = "/tmp/cron-test-#{Time.new.to_i}"
 
 create_user = "user { '#{tmpuser}': ensure => present, managehome => false }"
@@ -13,18 +13,16 @@ agents.each do |host|
     step "apply the resource on the host using puppet resource"
     on(host, puppet_resource("cron", "crontest", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=present")) do
-        fail_test "didn't notice creation of the cron stuff" unless
-            stdout.include? 'created'
+      assert_match(/created/, stdout, "Did not create crontab for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"
-    on host, "crontab -l -u #{tmpuser}" do
-        fail_test "didn't find the command as expected" unless
-            stdout.include? "* * * * * /bin/true"
+    run_cron_on(host, :list, tmpuser) do
+      assert_match(/\* \* \* \* \* \/bin\/true/, stdout, "Incorrect crontab for #{tmpuser} on #{host}")
     end
 
     step "remove the crontab file for that user"
-    on host, "crontab -r -u #{tmpuser}"
+    run_cron_on(host, :remove, tmpuser)
 
     step "remove the user from the system"
     apply_manifest_on host, delete_user

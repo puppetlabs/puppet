@@ -13,5 +13,5 @@ on(agents, puppet_resource('host', 'test', "target=#{file}",
 end
 
 step "clean up after we created things"
-on agents, "rm -vf #{file}"
+on agents, "rm -f #{file}"
 

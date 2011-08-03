@@ -47,10 +47,14 @@ module Puppet
       exits.  Comma-separate multiple values.  For a list of all values,
       specify 'all'.  This feature is only available in Puppet versions
       higher than 0.18.4."],
-    :color => ["ansi", "Whether to use colors when logging to the console.
+    :color => {
+      :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
+      :type    => :setting,
+      :desc    => "Whether to use colors when logging to the console.
       Valid values are `ansi` (equivalent to `true`), `html` (mostly
       used during testing with TextMate), and `false`, which produces
-      no color."],
+      no color.",
+    },
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
       run as."],
@@ -437,9 +441,11 @@ module Puppet
       authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
-    :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
-      :desc => "The search path for modules as a colon-separated list of
-      directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
+    :modulepath => {
+      :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :desc => "The search path for modules as a list of directories separated by the '#{File::PATH_SEPARATOR}' character.",
+      :type => :setting # We don't want this to be considered a file, since it's multiple files.
+    },
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
       client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
       to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).
@@ -466,7 +472,7 @@ module Puppet
       :desc => "The directory in which to store reports
         received from the client.  Each client gets a separate
         subdirectory."},
-    :reporturl => ["http://localhost:3000/reports",
+    :reporturl => ["http://localhost:3000/reports/upload",
       "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
     :strict_hostname_checking => [false, "Whether to only search for the complete

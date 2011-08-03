@@ -16,7 +16,7 @@ describe Puppet::Util::ExecutionStub do
     Puppet::Util::ExecutionStub.current_value.should == nil
   end
 
-  it "should restore normal execution after 'reset' is called" do
+  it "should restore normal execution after 'reset' is called", :fails_on_windows => true do
     true_command = Puppet::Util.which('true') # Note: "true" exists at different paths in different OSes
     stub_call_count = 0
     Puppet::Util::ExecutionStub.set do |command, options|

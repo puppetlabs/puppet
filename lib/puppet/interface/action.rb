@@ -38,6 +38,7 @@ class Puppet::Interface::Action
   def to_s() "#{@face}##{@name}" end
 
   attr_reader   :name
+  attr_reader   :face
   attr_accessor :default
   def default?
     !!@default
@@ -195,14 +196,12 @@ class Puppet::Interface::Action
     wrapper = <<WRAPPER
 def #{@name}(#{decl.join(", ")})
   #{optn}
-  args = #{args}
-  options = args.last
-
-  action = get_action(#{name.inspect})
-  action.validate_args(args)
-  __invoke_decorations(:before, action, args, options)
+  args    = #{args}
+  action  = get_action(#{name.inspect})
+  args   << action.validate_and_clean(args.pop)
+  __invoke_decorations(:before, action, args, args.last)
   rval = self.__send__(#{internal_name.inspect}, *args)
-  __invoke_decorations(:after, action, args, options)
+  __invoke_decorations(:after, action, args, args.last)
   return rval
 end
 WRAPPER
@@ -227,8 +226,9 @@ WRAPPER
       end
     end
 
+    @options << option.name
+
     option.aliases.each do |name|
-      @options << name
       @options_hash[name] = option
     end
 
@@ -251,27 +251,59 @@ WRAPPER
     option
   end
 
-  def validate_args(args)
-    # Check for multiple aliases for the same option...
-    args.last.keys.each do |name|
-      # #7290: If this isn't actually an option, ignore it for now.  We should
-      # probably fail, but that wasn't our API, and I don't want to perturb
-      # behaviour this late in the RC cycle. --daniel 2011-04-29
+  def validate_and_clean(original)
+    # The final set of arguments; effectively a hand-rolled shallow copy of
+    # the original, which protects the caller from the surprises they might
+    # get if they passed us a hash and we mutated it...
+    result = {}
+
+    # Check for multiple aliases for the same option, and canonicalize the
+    # name of the argument while we are about it.
+    overlap = Hash.new do |h, k| h[k] = [] end
+    unknown = []
+    original.keys.each do |name|
       if option = get_option(name) then
-        overlap = (option.aliases & args.last.keys)
-        unless overlap.length == 1 then
-          raise ArgumentError, "Multiple aliases for the same option passed: #{overlap.join(', ')}"
+        canonical = option.name
+        if result.has_key? canonical
+          overlap[canonical] << name
+        else
+          result[canonical] = original[name]
         end
+      else
+        unknown << name
       end
     end
 
-    # Check for missing mandatory options.
-    required = options.map do |name|
-      get_option(name)
-    end.select(&:required?).collect(&:name) - args.last.keys
+    unless overlap.empty?
+      msg = overlap.map {|k, v| "(#{k}, #{v.sort.join(', ')})" }.join(", ")
+      raise ArgumentError, "Multiple aliases for the same option passed: #{msg}"
+    end
 
-    return if required.empty?
-    raise ArgumentError, "The following options are required: #{required.join(', ')}"
+    unless unknown.empty?
+      msg = unknown.sort.join(", ")
+      raise ArgumentError, "Unknown options passed: #{msg}"
+    end
+
+    # Inject default arguments and check for missing mandating options.
+    missing = []
+    options.map {|x| get_option(x) }.each do |option|
+      name = option.name
+      next if result.has_key? name
+
+      if option.has_default?
+        result[name] = option.default
+      elsif option.required?
+        missing << name
+      end
+    end
+
+    unless missing.empty?
+      msg = missing.sort.join(', ')
+      raise ArgumentError, "The following options are required: #{msg}"
+    end
+
+    # All done.
+    return result
   end
 
   ########################################################################

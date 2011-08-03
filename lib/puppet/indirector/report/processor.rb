@@ -20,9 +20,11 @@ class Puppet::Transaction::Report::Processor < Puppet::Indirector::Code
   # LAK:NOTE This isn't necessarily the best design, but it's backward
   # compatible and that's good enough for now.
   def process(report)
+    Puppet.debug "Recieved report to process from #{report.host}"
     return if Puppet[:reports] == "none"
 
     reports.each do |name|
+      Puppet.debug "Processing report from #{report.host} with processor #{name}"
       if mod = Puppet::Reports.report(name)
         # We have to use a dup because we're including a module in the
         # report.

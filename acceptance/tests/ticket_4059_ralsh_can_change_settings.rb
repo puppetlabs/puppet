@@ -11,9 +11,10 @@ on(agents, puppet_resource(content)) do
   stdout.index('Host[example.com]/ensure: created') or
     fail_test("missing notice about host record creation")
 end
-on(agents, "cat #{target}") do
-  stdout =~ /^127\.0\.0\.1\s+example\.com/ or
-    fail_test("missing host record in #{target}")
+agents.each do |host|
+  on(host, "cat #{target}") do
+    assert_match(/^127\.0\.0\.1\s+example\.com/, stdout, "missing host record in #{target} on #{host}")
+  end
 end
 
 step "cleanup at the end of the test"

@@ -3,9 +3,10 @@ require 'spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
   end
 
   [:catalog, :file, :line].each do |attr|
@@ -270,6 +271,67 @@ describe Puppet::Resource do
 
   it "should not be considered equivalent to another resource if their titles do not match" do
     Puppet::Resource.new("file", "/foo").should_not == Puppet::Resource.new("file", "/f")
+  end
+
+  describe "when setting default parameters" do
+    before do
+      @scope = Puppet::Parser::Scope.new
+    end
+
+    it "should fail when asked to set default values and it is not a parser resource" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "default")})
+      )
+      resource = Puppet::Resource.new("default_param", "name")
+      lambda { resource.set_default_parameters(@scope) }.should raise_error(Puppet::DevError)
+    end
+
+    it "should evaluate and set any default values when no value is provided" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+      )
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new)
+      resource.set_default_parameters(@scope)
+      resource["a"].should == "a_default_value"
+    end
+
+    it "should skip attributes with no default value" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "no_default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+      )
+      resource = Puppet::Parser::Resource.new("no_default_param", "name", :scope => Puppet::Parser::Scope.new)
+      lambda { resource.set_default_parameters(@scope) }.should_not raise_error
+    end
+
+    it "should return the list of default parameters set" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "default_param", :arguments => {"a" => Puppet::Parser::AST::String.new(:value => "a_default_value")})
+      )
+      resource = Puppet::Parser::Resource.new("default_param", "name", :scope => Puppet::Parser::Scope.new)
+      resource.set_default_parameters(@scope).should == [:a]
+    end
+  end
+
+  describe "when validating all required parameters are present" do
+    it "should be able to validate that all required parameters are present" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "required_param", :arguments => {"a" => nil})
+      )
+      lambda { Puppet::Resource.new("required_param", "name").validate_complete }.should raise_error(Puppet::ParseError)
+    end
+
+    it "should not fail when all required parameters are present" do
+      Puppet::Node::Environment.new.known_resource_types.add(
+        Puppet::Resource::Type.new(:definition, "no_required_param")
+      )
+      resource = Puppet::Resource.new("no_required_param", "name")
+      resource["a"] = "meh"
+      lambda { resource.validate_complete }.should_not raise_error
+    end
+
+    it "should not validate against builtin types" do
+      lambda { Puppet::Resource.new("file", "/bar").validate_complete }.should_not raise_error
+    end
   end
 
   describe "when referring to a resource with name canonicalization" do

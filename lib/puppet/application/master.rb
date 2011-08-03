@@ -206,6 +206,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup
+    raise Puppet::Error.new("Puppet master is not supported on Microsoft Windows") if Puppet.features.microsoft_windows?
+
     # Handle the logging settings.
     if options[:debug] or options[:verbose]
       if options[:debug]

@@ -36,7 +36,7 @@ describe Puppet::Parser::AST::ResourceReference do
   end
 
   it "should return an array of resources if given a variable containing an array of titles" do
-    @scope.setvar("my_files", ["foo", "bar"])
+    @scope["my_files"] = ["foo", "bar"]
     titles = Puppet::Parser::AST::Variable.new(:value => "my_files")
     ref = newref('File', titles)
     ref.evaluate(@scope).should == [

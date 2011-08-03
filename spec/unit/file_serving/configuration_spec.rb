@@ -4,42 +4,31 @@ require 'spec_helper'
 require 'puppet/file_serving/configuration'
 
 describe Puppet::FileServing::Configuration do
-  it "should make :new a private method" do
-    proc { Puppet::FileServing::Configuration.new }.should raise_error
-  end
-
-  it "should return the same configuration each time :create is called" do
-    Puppet::FileServing::Configuration.create.should equal(Puppet::FileServing::Configuration.create)
-  end
-
-  it "should have a method for removing the current configuration instance" do
-    old = Puppet::FileServing::Configuration.create
-    Puppet::Util::Cacher.expire
-    Puppet::FileServing::Configuration.create.should_not equal(old)
-  end
-
-  after do
-    Puppet::Util::Cacher.expire
-  end
-end
-
-describe Puppet::FileServing::Configuration do
+  include PuppetSpec::Files
 
   before :each do
-    @path = "/path/to/configuration/file.conf"
+    @path = make_absolute("/path/to/configuration/file.conf")
     Puppet.settings.stubs(:value).with(:trace).returns(false)
     Puppet.settings.stubs(:value).with(:fileserverconfig).returns(@path)
   end
 
   after :each do
-    Puppet::Util::Cacher.expire
+    Puppet::FileServing::Configuration.instance_variable_set(:@configuration, nil)
+  end
+
+  it "should make :new a private method" do
+    proc { Puppet::FileServing::Configuration.new }.should raise_error
+  end
+
+  it "should return the same configuration each time 'configuration' is called" do
+    Puppet::FileServing::Configuration.configuration.should equal(Puppet::FileServing::Configuration.configuration)
   end
 
   describe "when initializing" do
 
     it "should work without a configuration file" do
       FileTest.stubs(:exists?).with(@path).returns(false)
-      proc { Puppet::FileServing::Configuration.create }.should_not raise_error
+      proc { Puppet::FileServing::Configuration.configuration }.should_not raise_error
     end
 
     it "should parse the configuration file if present" do
@@ -47,11 +36,11 @@ describe Puppet::FileServing::Configuration do
       @parser = mock 'parser'
       @parser.expects(:parse).returns({})
       Puppet::FileServing::Configuration::Parser.stubs(:new).returns(@parser)
-      Puppet::FileServing::Configuration.create
+      Puppet::FileServing::Configuration.configuration
     end
 
     it "should determine the path to the configuration file from the Puppet settings" do
-      Puppet::FileServing::Configuration.create
+      Puppet::FileServing::Configuration.configuration
     end
   end
 
@@ -65,18 +54,18 @@ describe Puppet::FileServing::Configuration do
 
     it "should set the mount list to the results of parsing" do
       @parser.expects(:parse).returns("one" => mock("mount"))
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
       config.mounted?("one").should be_true
     end
 
     it "should not raise exceptions" do
       @parser.expects(:parse).raises(ArgumentError)
-      proc { Puppet::FileServing::Configuration.create }.should_not raise_error
+      proc { Puppet::FileServing::Configuration.configuration }.should_not raise_error
     end
 
     it "should replace the existing mount list with the results of reparsing" do
       @parser.expects(:parse).returns("one" => mock("mount"))
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
       config.mounted?("one").should be_true
       # Now parse again
       @parser.expects(:parse).returns("two" => mock('other'))
@@ -88,7 +77,7 @@ describe Puppet::FileServing::Configuration do
     it "should not replace the mount list until the file is entirely parsed successfully" do
       @parser.expects(:parse).returns("one" => mock("mount"))
       @parser.expects(:parse).raises(ArgumentError)
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
       # Now parse again, so the exception gets thrown
       config.send(:readconfig, false)
       config.mounted?("one").should be_true
@@ -96,7 +85,7 @@ describe Puppet::FileServing::Configuration do
 
     it "should add modules and plugins mounts even if the file does not exist" do
       FileTest.expects(:exists?).returns false # the file doesn't exist
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
       config.mounted?("modules").should be_true
       config.mounted?("plugins").should be_true
     end
@@ -111,7 +100,7 @@ describe Puppet::FileServing::Configuration do
       Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
       plugins.expects(:allow).with('*')
 
-      Puppet::FileServing::Configuration.create
+      Puppet::FileServing::Configuration.configuration
     end
 
     it "should not allow access from all to modules and plugins if the fileserver.conf provided some rules" do
@@ -125,13 +114,13 @@ describe Puppet::FileServing::Configuration do
       Puppet::FileServing::Mount::Plugins.stubs(:new).returns(plugins)
       plugins.expects(:allow).with('*').never
 
-      Puppet::FileServing::Configuration.create
+      Puppet::FileServing::Configuration.configuration
     end
 
     it "should add modules and plugins mounts even if they are not returned by the parser" do
       @parser.expects(:parse).returns("one" => mock("mount"))
       FileTest.expects(:exists?).returns true # the file doesn't exist
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
       config.mounted?("modules").should be_true
       config.mounted?("plugins").should be_true
     end
@@ -139,13 +128,13 @@ describe Puppet::FileServing::Configuration do
 
   describe "when finding the specified mount" do
     it "should choose the named mount if one exists" do
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
       config.expects(:mounts).returns("one" => "foo")
       config.find_mount("one", mock('env')).should == "foo"
     end
 
     it "should use the provided environment to find a matching module if the named module cannot be found" do
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
 
       mod = mock 'module'
       env = mock 'environment'
@@ -158,7 +147,7 @@ describe Puppet::FileServing::Configuration do
     end
 
     it "should return nil if there is no such named mount and no module with the same name exists" do
-      config = Puppet::FileServing::Configuration.create
+      config = Puppet::FileServing::Configuration.configuration
 
       env = mock 'environment'
       env.expects(:module).with("foo").returns nil
@@ -171,7 +160,7 @@ describe Puppet::FileServing::Configuration do
 
   describe "when finding the mount name and relative path in a request key" do
     before do
-      @config = Puppet::FileServing::Configuration.create
+      @config = Puppet::FileServing::Configuration.configuration
       @config.stubs(:find_mount)
 
       @request = stub 'request', :key => "foo/bar/baz", :options => {}, :node => nil, :environment => mock("env")

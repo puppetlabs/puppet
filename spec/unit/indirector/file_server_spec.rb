@@ -27,7 +27,7 @@ describe Puppet::Indirector::FileServer do
 
     @uri = "puppet://host/my/local/file"
     @configuration = mock 'configuration'
-    Puppet::FileServing::Configuration.stubs(:create).returns(@configuration)
+    Puppet::FileServing::Configuration.stubs(:configuration).returns(@configuration)
 
     @request = Puppet::Indirector::Request.new(:myind, :mymethod, @uri, :environment => "myenv")
   end

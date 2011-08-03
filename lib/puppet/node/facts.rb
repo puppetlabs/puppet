@@ -61,18 +61,21 @@ class Puppet::Node::Facts
 
   def self.from_pson(data)
     result = new(data['name'], data['values'])
-    result.timestamp = Time.parse(data['timestamp'])
-    result.expiration = Time.parse(data['expiration'])
+    result.timestamp = Time.parse(data['timestamp']) if data['timestamp']
+    result.expiration = Time.parse(data['expiration']) if data['expiration']
     result
   end
 
   def to_pson(*args)
-    {
-      'expiration' => expiration,
+    result = {
       'name' => name,
-      'timestamp' => timestamp,
       'values' => strip_internal,
-    }.to_pson(*args)
+    }
+
+    result['timestamp'] = timestamp if timestamp
+    result['expiration'] = expiration if expiration
+
+    result.to_pson(*args)
   end
 
   # Add internal data to the facts for storage.

@@ -4,14 +4,16 @@ require 'spec_helper'
 require 'puppet/resource/status'
 
 describe Puppet::Resource::Status do
+  include PuppetSpec::Files
+
   before do
-    @resource = Puppet::Type.type(:file).new :path => "/my/file"
+    @resource = Puppet::Type.type(:file).new :path => make_absolute("/my/file")
     @status = Puppet::Resource::Status.new(@resource)
   end
 
   it "should compute type and title correctly" do
     @status.resource_type.should == "File"
-    @status.title.should == "/my/file"
+    @status.title.should == make_absolute("/my/file")
   end
 
   [:node, :file, :line, :current_values, :status, :evaluation_time].each do |attr|

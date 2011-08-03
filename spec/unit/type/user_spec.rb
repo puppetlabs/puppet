@@ -3,7 +3,7 @@ require 'spec_helper'
 
 user = Puppet::Type.type(:user)
 
-describe user do
+describe user, :fails_on_windows => true do
   before do
     ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @provider = stub 'provider'
@@ -287,6 +287,14 @@ describe user do
 
     it "should not include the password in the change log when changing the password" do
       @password.change_to_s("other", "mypass").should_not be_include("mypass")
+    end
+
+    it "should redact the password when displaying the old value" do
+      @password.is_to_s("currentpassword").should =~ /^\[old password hash redacted\]$/
+    end
+
+    it "should redact the password when displaying the new value" do
+      @password.should_to_s("newpassword").should =~ /^\[new password hash redacted\]$/
     end
 
     it "should fail if a ':' is included in the password" do

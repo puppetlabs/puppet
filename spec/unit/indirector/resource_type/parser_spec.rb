@@ -25,7 +25,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       @terminus.find(@request).should == type
     end
 
-    it "should attempt to load the type if none is found in memory" do
+    it "should attempt to load the type if none is found in memory", :fails_on_windows => true do
       dir = tmpdir("find_a_type")
       FileUtils.mkdir_p(dir)
       Puppet[:modulepath] = dir
@@ -122,13 +122,13 @@ describe Puppet::Indirector::ResourceType::Parser do
       @terminus.search(@request).should be_nil
     end
 
-    it "should load all resource types from all search paths" do
+    it "should load all resource types from all search paths", :fails_on_windows => true do
       dir = tmpdir("searching_in_all")
       first = File.join(dir, "first")
       second = File.join(dir, "second")
       FileUtils.mkdir_p(first)
       FileUtils.mkdir_p(second)
-      Puppet[:modulepath] = "#{first}:#{second}"
+      Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
 
       # Make a new request, since we've reset the env
       @request = Puppet::Indirector::Request.new(:resource_type, :search, "*")

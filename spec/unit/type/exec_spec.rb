@@ -2,6 +2,8 @@
 require 'spec_helper'
 
 describe Puppet::Type.type(:exec) do
+  include PuppetSpec::Files
+
   def exec_tester(command, exitstatus = 0, rest = {})
     @user_name  = 'some_user_name'
     @group_name = 'some_group_name'
@@ -30,12 +32,13 @@ describe Puppet::Type.type(:exec) do
   end
 
   before do
-    @command = Puppet.features.posix? ? '/bin/true whatever' : '"C:/Program Files/something.exe" whatever'
+    @command = make_absolute('/bin/true whatever')
+    @executable = make_absolute('/bin/true')
+    @bogus_cmd = make_absolute('/bogus/cmd')
   end
 
-  describe "when not stubbing the provider" do
+  describe "when not stubbing the provider", :fails_on_windows => true do
     before do
-      @executable = Puppet.features.posix? ? '/bin/true' : 'C:/Program Files/something.exe'
       File.stubs(:exists?).returns false
       File.stubs(:exists?).with(@executable).returns true
       File.stubs(:exists?).with('/bin/false').returns true
@@ -139,17 +142,18 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  it "should be able to autorequire files mentioned in the command" do
+  it "should be able to autorequire files mentioned in the command", :fails_on_windows => true do
+    foo = make_absolute('/bin/foo')
     catalog = Puppet::Resource::Catalog.new
-    tmp = Puppet::Type.type(:file).new(:name => "/bin/foo")
+    tmp = Puppet::Type.type(:file).new(:name => foo)
     catalog.add_resource tmp
-    execer = Puppet::Type.type(:exec).new(:name => "/bin/foo")
+    execer = Puppet::Type.type(:exec).new(:name => foo)
     catalog.add_resource execer
 
     catalog.relationship_graph.dependencies(execer).should == [tmp]
   end
 
-  describe "when handling the path parameter" do
+  describe "when handling the path parameter", :fails_on_windows => true do
     expect = %w{one two three four}
     { "an array"                        => expect,
       "a colon separated list"          => "one:two:three:four",
@@ -165,7 +169,7 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  describe "when setting user" do
+  describe "when setting user", :fails_on_windows => true do
     it "should fail if we are not root" do
       Puppet.features.stubs(:root?).returns(false)
       expect { Puppet::Type.type(:exec).new(:name => @command, :user => 'input') }.
@@ -184,7 +188,7 @@ describe Puppet::Type.type(:exec) do
   describe "when setting group" do
     shared_examples_for "exec[:group]" do
       ['one', 2, 'wheel', 4294967295, 4294967296].each do |value|
-        it "should accept '#{value}' without error or judgement" do
+        it "should accept '#{value}' without error or judgement", :fails_on_windows => true do
           type = Puppet::Type.type(:exec).new(:name => @command, :group => value)
           type[:group].should == value
         end
@@ -205,7 +209,7 @@ describe Puppet::Type.type(:exec) do
   describe "when setting cwd" do
     it_should_behave_like "all path parameters", :cwd, :array => false do
       def instance(path)
-        Puppet::Type.type(:exec).new(:name => '/bin/true', :cwd => path)
+        Puppet::Type.type(:exec).new(:name => @executable, :cwd => path)
       end
     end
   end
@@ -221,7 +225,7 @@ describe Puppet::Type.type(:exec) do
           if @param == :name then
             instance = Puppet::Type.type(:exec).new()
           else
-            instance = Puppet::Type.type(:exec).new(:name => "/bin/true")
+            instance = Puppet::Type.type(:exec).new(:name => @executable)
           end
           if valid then
             instance.provider.expects(:validatecmd).returns(true)
@@ -246,7 +250,7 @@ describe Puppet::Type.type(:exec) do
   shared_examples_for "all exec command parameters that take arrays" do |param|
     describe "when given an array of inputs" do
       before :each do
-        @test = Puppet::Type.type(:exec).new(:name => "/bin/true")
+        @test = Puppet::Type.type(:exec).new(:name => @executable)
       end
 
       it "should accept the array when all commands return valid" do
@@ -281,7 +285,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "for simple parameters" do
     before :each do
-      @exec = Puppet::Type.type(:exec).new(:name => '/bin/true')
+      @exec = Puppet::Type.type(:exec).new(:name => @executable)
     end
 
     describe "when setting environment" do
@@ -338,13 +342,15 @@ describe Puppet::Type.type(:exec) do
       end
 
       it "should convert timeout to a float" do
-        resource = Puppet::Type.type(:exec).new :command => "/bin/false", :timeout => "12"
+        command = make_absolute('/bin/false')
+        resource = Puppet::Type.type(:exec).new :command => command, :timeout => "12"
         resource[:timeout].should be_a(Float)
         resource[:timeout].should == 12.0
       end
 
       it "should munge negative timeouts to 0.0" do
-        resource = Puppet::Type.type(:exec).new :command => "/bin/false", :timeout => "-12.0"
+        command = make_absolute('/bin/false')
+        resource = Puppet::Type.type(:exec).new :command => command, :timeout => "-12.0"
         resource.parameter(:timeout).value.should be_a(Float)
         resource.parameter(:timeout).value.should == 0.0
       end
@@ -442,7 +448,7 @@ describe Puppet::Type.type(:exec) do
     describe "when setting creates" do
       it_should_behave_like "all path parameters", :creates, :array => true do
         def instance(path)
-          Puppet::Type.type(:exec).new(:name => '/bin/true', :creates => path)
+          Puppet::Type.type(:exec).new(:name => @executable, :creates => path)
         end
       end
     end
@@ -460,7 +466,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "#check" do
     before :each do
-      @test = Puppet::Type.type(:exec).new(:name => "/bin/true")
+      @test = Puppet::Type.type(:exec).new(:name => @executable)
     end
 
     describe ":refreshonly" do
@@ -525,8 +531,8 @@ describe Puppet::Type.type(:exec) do
     }.each do |param, sense|
       describe ":#{param}" do
         before :each do
-          @pass = "/magic/pass"
-          @fail = "/magic/fail"
+          @pass = make_absolute("/magic/pass")
+          @fail = make_absolute("/magic/fail")
 
           @pass_status = stub('status', :exitstatus => sense[:pass] ? 0 : 1)
           @fail_status = stub('status', :exitstatus => sense[:fail] ? 0 : 1)
@@ -584,9 +590,9 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  describe "#retrieve" do
+  describe "#retrieve", :fails_on_windows => true do
     before :each do
-      @exec_resource = Puppet::Type.type(:exec).new(:name => "/bogus/cmd")
+      @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end
 
     it "should return :notrun when check_all_attributes returns true" do
@@ -608,7 +614,7 @@ describe Puppet::Type.type(:exec) do
 
   describe "#output" do
     before :each do
-      @exec_resource = Puppet::Type.type(:exec).new(:name => "/bogus/cmd")
+      @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end
 
     it "should return the provider's run output" do
@@ -625,14 +631,15 @@ describe Puppet::Type.type(:exec) do
 
   describe "#refresh" do
     before :each do
-      @exec_resource = Puppet::Type.type(:exec).new(:name => "/bogus/cmd")
+      @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end
 
     it "should call provider run with the refresh parameter if it is set" do
+      myother_bogus_cmd = make_absolute('/myother/bogus/cmd')
       provider = stub 'provider'
       @exec_resource.stubs(:provider).returns(provider)
-      @exec_resource.stubs(:[]).with(:refresh).returns('/myother/bogus/cmd')
-      provider.expects(:run).with('/myother/bogus/cmd')
+      @exec_resource.stubs(:[]).with(:refresh).returns(myother_bogus_cmd)
+      provider.expects(:run).with(myother_bogus_cmd)
 
       @exec_resource.refresh
     end
@@ -641,7 +648,7 @@ describe Puppet::Type.type(:exec) do
       provider = stub 'provider'
       status = stubs "process_status"
       status.stubs(:exitstatus).returns("0")
-      provider.expects(:run).with('/bogus/cmd').returns(["silly output", status])
+      provider.expects(:run).with(@bogus_cmd).returns(["silly output", status])
       @exec_resource.stubs(:provider).returns(provider)
 
       @exec_resource.refresh

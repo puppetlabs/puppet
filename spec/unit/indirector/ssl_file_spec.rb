@@ -8,6 +8,8 @@ require 'spec_helper'
 require 'puppet/indirector/ssl_file'
 
 describe Puppet::Indirector::SslFile do
+  include PuppetSpec::Files
+
   before :all do
     @indirection = stub 'indirection', :name => :testing, :model => @model
     Puppet::Indirector::Indirection.expects(:instance).with(:testing).returns(@indirection)
@@ -21,7 +23,7 @@ describe Puppet::Indirector::SslFile do
 
     @setting = :certdir
     @file_class.store_in @setting
-    @path = "/tmp/my_directory"
+    @path = make_absolute("/tmp/my_directory")
     Puppet[:noop] = false
     Puppet[@setting] = @path
     Puppet[:trace] = false

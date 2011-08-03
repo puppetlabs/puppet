@@ -121,6 +121,7 @@ describe Puppet::Interface::Action do
       let :face do
         Puppet::Interface.new(:ruby_api, '1.0.0') do
           action :bar do
+            option "--bar"
             when_invoked do |*args|
               args.last
             end
@@ -138,8 +139,8 @@ describe Puppet::Interface::Action do
         options.should == { :bar => "beer" }
       end
 
-      it "should call #validate_args on the action when invoked" do
-        face.get_action(:bar).expects(:validate_args).with([1, :two, 'three', {}])
+      it "should call #validate_and_clean on the action when invoked" do
+        face.get_action(:bar).expects(:validate_and_clean).with({}).returns({})
         face.bar 1, :two, 'three'
       end
     end
@@ -169,6 +170,30 @@ describe Puppet::Interface::Action do
       end
 
       face.get_action(:foo).options.should =~ [:bar]
+    end
+
+    describe "option aliases" do
+      let :option do action.get_option :bar end
+      let :action do face.get_action :foo end
+      let :face do
+        Puppet::Interface.new(:action_level_options, '0.0.1') do
+          action :foo do
+            when_invoked do |options| options end
+            option "--bar", "--foo", "-b"
+          end
+        end
+      end
+
+      it "should only list options and not aliases" do
+        action.options.should =~ [:bar]
+      end
+
+      it "should use the canonical option name when passed aliases" do
+        name = option.name
+        option.aliases.each do |input|
+          face.foo(input => 1).should == { name => 1 }
+        end
+      end
     end
 
     describe "with both face and action options" do
@@ -426,12 +451,12 @@ describe Puppet::Interface::Action do
         end
 
         it "should be invoked when calling a child action" do
-          subject.on_child(:foo => true, :bar => true).should == :on_child
+          subject.on_child(:foo => true).should == :on_child
           subject.reported.should == [ :child_before ]
         end
 
         it "should be invoked when calling a parent action" do
-          subject.on_parent(:foo => true, :bar => true).should == :on_parent
+          subject.on_parent(:foo => true).should == :on_parent
           subject.reported.should == [ :child_before ]
         end
       end
@@ -443,12 +468,12 @@ describe Puppet::Interface::Action do
         end
 
         it "should be invoked when calling a child action" do
-          subject.on_child(:foo => true, :bar => true).should == :on_child
+          subject.on_child(:foo => true).should == :on_child
           subject.reported.should == [ :parent_before ]
         end
 
         it "should be invoked when calling a parent action" do
-          subject.on_parent(:foo => true, :bar => true).should == :on_parent
+          subject.on_parent(:foo => true).should == :on_parent
           subject.reported.should == [ :parent_before ]
         end
       end
@@ -524,7 +549,7 @@ describe Puppet::Interface::Action do
     it "should return the block if asked"
   end
 
-  context "#validate_args" do
+  context "#validate_and_clean" do
     subject do
       Puppet::Interface.new(:validate_args, '1.0.0') do
         script :test do |options| true end
@@ -540,6 +565,79 @@ describe Puppet::Interface::Action do
       subject.option "--foo", "-f"
       expect { subject.test :foo => true, :f => true }.
         to raise_error ArgumentError, /Multiple aliases for the same option/
+    end
+
+    it "should fail if an unknown option is passed" do
+      expect { subject.test :unknown => true }.
+        to raise_error ArgumentError, /Unknown options passed: unknown/
+    end
+
+    it "should report all the unknown options passed" do
+      expect { subject.test :unknown => true, :unseen => false }.
+        to raise_error ArgumentError, /Unknown options passed: unknown, unseen/
+    end
+  end
+
+  context "default option values" do
+    subject do
+      Puppet::Interface.new(:default_option_values, '1.0.0') do
+        action :foo do
+          option "--foo" do end
+          option "--bar" do end
+          when_invoked do |options| options end
+        end
+      end
+    end
+
+    let :action do subject.get_action :foo end
+    let :option do action.get_option :foo end
+
+    it "should not add options without defaults" do
+      subject.foo.should == {}
+    end
+
+    it "should not add options without defaults, if options are given" do
+      subject.foo(:bar => 1).should == { :bar => 1 }
+    end
+
+    it "should add the option default value when set" do
+      option.default = proc { 12 }
+      subject.foo.should == { :foo => 12 }
+    end
+
+    it "should add the option default value when set, if other options are given" do
+      option.default = proc { 12 }
+      subject.foo(:bar => 1).should == { :foo => 12, :bar => 1 }
+    end
+
+    it "should invoke the same default proc every time called" do
+      option.default = proc { @foo ||= {} }
+      subject.foo[:foo].object_id.should == subject.foo[:foo].object_id
+    end
+
+    [nil, 0, 1, true, false, {}, []].each do |input|
+      it "should not override a passed option (#{input.inspect})" do
+        option.default = proc { :fail }
+        subject.foo(:foo => input).should == { :foo => input }
+      end
+    end
+  end
+
+  context "runtime manipulations" do
+    subject do
+      Puppet::Interface.new(:runtime_manipulations, '1.0.0') do
+        action :foo do
+          when_invoked do |options| options end
+        end
+      end
+    end
+
+    let :action do subject.get_action :foo end
+
+    it "should be the face default action if default is set true" do
+      subject.get_default_action.should be_nil
+      action.default = true
+      subject.get_default_action.should == action
     end
   end
 end

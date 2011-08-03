@@ -72,25 +72,23 @@ describe Puppet::Parser::TemplateWrapper do
   end
 
   it "should return the contents of a variable if called via method_missing" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns("is good")
+    @scope["chicken"] = "is good"
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.chicken.should eql("is good")
   end
 
   it "should throw an exception if a variable is called via method_missing and it does not exist" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns(:undefined)
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     lambda { tw.chicken }.should raise_error(Puppet::ParseError)
   end
 
   it "should allow you to check whether a variable is defined with has_variable?" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns("is good")
+    @scope["chicken"] = "is good"
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.has_variable?("chicken").should eql(true)
   end
 
   it "should allow you to check whether a variable is not defined with has_variable?" do
-    @scope.expects(:lookupvar).with { |name,options| name == "chicken"}.returns(:undefined)
     tw = Puppet::Parser::TemplateWrapper.new(@scope)
     tw.has_variable?("chicken").should eql(false)
   end

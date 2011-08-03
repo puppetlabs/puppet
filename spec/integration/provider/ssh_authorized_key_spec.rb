@@ -3,7 +3,7 @@
 require 'spec_helper'
 require 'puppet/file_bucket/dipper'
 
-describe "ssh_authorized_key provider (integration)" do
+describe "ssh_authorized_key provider (integration)", :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   before :each do

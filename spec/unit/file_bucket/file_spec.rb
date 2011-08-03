@@ -26,11 +26,17 @@ describe Puppet::FileBucket::File do
 
   it "should raise an error if changing content" do
     x = Puppet::FileBucket::File.new("first")
-    proc { x.contents = "new" }.should raise_error
+    expect { x.contents = "new" }.to raise_error(NoMethodError, /undefined method .contents=/)
   end
 
   it "should require contents to be a string" do
-    proc { Puppet::FileBucket::File.new(5) }.should raise_error(ArgumentError)
+    expect { Puppet::FileBucket::File.new(5) }.to raise_error(ArgumentError, /contents must be a String, got a Fixnum$/)
+  end
+
+  it "should complain about options other than :bucket_path" do
+    expect {
+      Puppet::FileBucket::File.new('5', :crazy_option => 'should not be passed')
+    }.to raise_error(ArgumentError, /Unknown option\(s\): crazy_option/)
   end
 
   it "should set the contents appropriately" do
@@ -61,7 +67,7 @@ describe Puppet::FileBucket::File do
 
   it "should reject a url-ish name with an invalid checksum" do
     bucket = Puppet::FileBucket::File.new(@contents)
-    lambda { bucket.name = "sha1/4a8ec4fa5f01b4ab1a0ab8cbccb709f0/new/path" }.should raise_error
+    expect { bucket.name = "sha1/4a8ec4fa5f01b4ab1a0ab8cbccb709f0/new/path" }.to raise_error(NoMethodError, /undefined method .name=/)
   end
 
   it "should convert the contents to PSON" do

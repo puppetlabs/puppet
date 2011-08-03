@@ -68,10 +68,6 @@ describe Puppet::Node::Facts, "when indirecting" do
     before do
       @indirection = stub 'indirection', :request => mock('request'), :name => :facts
 
-      # We have to clear the cache so that the facts ask for our indirection stub,
-      # instead of anything that might be cached.
-      Puppet::Util::Cacher.expire
-
       @facts = Puppet::Node::Facts.new("me", "one" => "two")
     end
 
@@ -127,6 +123,20 @@ describe Puppet::Node::Facts, "when indirecting" do
         result['values'].should == facts.values.reject { |key, value| key.to_s =~ /_/ }
         result['timestamp'].should == facts.timestamp.to_s
         result['expiration'].should == facts.expiration.to_s
+      end
+
+      it "should not include nil values" do
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+        pson = PSON.parse(facts.to_pson)
+        pson.should_not be_include("expiration")
+      end
+
+      it "should be able to handle nil values" do
+        pson = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('pson')
+        facts = format.intern(Puppet::Node::Facts,pson)
+        facts.name.should == 'foo'
+        facts.expiration.should be_nil
       end
     end
   end
