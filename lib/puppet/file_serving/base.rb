@@ -53,7 +53,10 @@ class Puppet::FileServing::Base
   # Set our base path.
   attr_reader :path
   def path=(path)
-    raise ArgumentError.new("Paths must be fully qualified") unless path =~ /^#{::File::SEPARATOR}/
+    unless path =~ /^#{::File::SEPARATOR}/ or path =~ /^[a-z]:[\/\\]/i
+      raise ArgumentError.new("Paths must be fully qualified")
+    end
+
     @path = path
   end
 

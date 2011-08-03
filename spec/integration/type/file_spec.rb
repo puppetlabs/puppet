@@ -73,7 +73,7 @@ describe Puppet::Type.type(:file) do
       File.read(file[:path]).should == "bar\n"
     end
 
-    it "should not backup symlinks", :fails_on_windows => true do
+    it "should not backup symlinks", :unless => Puppet.features.microsoft_windows? do
       link = tmpfile("link")
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively make links to other files", :fails_on_windows => true do
+    it "should be able to recursively make links to other files", :unless => Puppet.features.microsoft_windows? do
       source = tmpfile("file_link_integration_source")
 
       build_path(source)
@@ -289,23 +289,24 @@ describe Puppet::Type.type(:file) do
       (File.stat(file).mode & 007777).should == 0644
     end
 
-    it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file", :fails_on_windows => true do
+    it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
       dir = tmpfile("recursion_vs_explicit_2")
 
-      managed   = File.join(dir, "file")
-      generated = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+      managed      = File.join(dir, "file")
+      generated    = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+      managed_mode = Puppet.features.microsoft_windows? ? 0444 : 0700
 
       FileUtils.mkdir_p(dir)
       File.open(managed,   "w") { |f| f.puts "" }
       File.open(generated, "w") { |f| f.puts "" }
 
       @catalog = Puppet::Resource::Catalog.new
-      @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => "755")
+      @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => managed_mode)
       @catalog.add_resource Puppet::Type::File.new(:name => managed, :recurse => true, :backup => false, :mode => "644")
 
       @catalog.apply
 
-      (File.stat(generated).mode & 007777).should == 0755
+      (File.stat(generated).mode & 007777).should == managed_mode
     end
   end
 
@@ -349,7 +350,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when copying files" do
     # Ticket #285.
-    it "should be able to copy files with pound signs in their names", :fails_on_windows => true do
+    it "should be able to copy files with pound signs in their names" do
       source = tmpfile("filewith#signs")
 
       dest = tmpfile("destwith#signs")
@@ -366,7 +367,7 @@ describe Puppet::Type.type(:file) do
       File.read(dest).should == "foo"
     end
 
-    it "should be able to copy files with spaces in their names", :fails_on_windows => true do
+    it "should be able to copy files with spaces in their names" do
       source = tmpfile("filewith spaces")
 
       dest = tmpfile("destwith spaces")
@@ -381,11 +382,12 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
+      expected_mode = Puppet.features.microsoft_windows? ? 0644 : 0755
       File.read(dest).should == "foo"
-      (File.stat(dest).mode & 007777).should == 0755
+      (File.stat(dest).mode & 007777).should == expected_mode
     end
 
-    it "should be able to copy individual files even if recurse has been specified", :fails_on_windows => true do
+    it "should be able to copy individual files even if recurse has been specified" do
       source = tmpfile("source")
       dest = tmpfile("dest")
 
@@ -434,7 +436,7 @@ describe Puppet::Type.type(:file) do
     File.read(dest).should == "this is some content, yo"
   end
 
-  it "should delete files with sources but that are set for deletion", :fails_on_windows => true do
+  it "should delete files with sources but that are set for deletion" do
     dest = tmpfile("dest_source_with_ensure")
     source = tmpfile("source_source_with_ensure")
     File.open(source, "w") { |f| f.puts "yay" }
@@ -455,7 +457,7 @@ describe Puppet::Type.type(:file) do
     File.should_not be_exist(dest)
   end
 
-  describe "when purging files", :fails_on_windows => true do
+  describe "when purging files" do
     before do
       @sourcedir = tmpfile("purge_source")
       @destdir = tmpfile("purge_dest")
@@ -470,7 +472,6 @@ describe Puppet::Type.type(:file) do
       # this file should get removed
       File.open(@purgee, "w") { |f| f.puts "footest" }
 
-
       @lfobj = Puppet::Type.newfile(
         :title   => "localfile",
         :path    => @localfile,
@@ -478,7 +479,6 @@ describe Puppet::Type.type(:file) do
         :ensure  => :file,
         :backup  => false
       )
-
 
       @destobj = Puppet::Type.newfile(
         :title   => "destdir",
