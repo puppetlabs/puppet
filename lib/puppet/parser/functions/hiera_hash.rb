@@ -4,9 +4,9 @@ module Puppet::Parser::Functions
             args = args[0]
         end
 
-        key = args[0] || nil
-        default = args[1] || nil
-        override = args[2] || nil
+        key = args[0]
+        default = args[1]
+        override = args[2]
 
         configfile = File.join([File.dirname(Puppet.settings[:config]), "hiera.yaml"])
 
