@@ -13,9 +13,9 @@ module Puppet::Parser::Functions
             args = args[0]
         end
 
-        key = args[0] || nil
-        default = args[1] || nil
-        override = args[2] || nil
+        key = args[0]
+        default = args[1]
+        override = args[2]
 
         configfile = File.join([File.dirname(Puppet.settings[:config]), "hiera.yaml"])
 
@@ -38,7 +38,7 @@ module Puppet::Parser::Functions
 
         answer = hiera.lookup(key, default, hiera_scope, override, :priority)
 
-        raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") unless answer
+        raise(Puppet::ParseError, "Could not find data item #{key} in any Hiera data file and no default supplied") if answer.nil?
 
         return answer
     end
