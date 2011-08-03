@@ -85,6 +85,14 @@ module Puppet
       end
       :file_changed
     end
+
+    def should_to_s(should_value)
+      should_value.to_s.rjust(4,"0")
+    end
+
+    def is_to_s(currentvalue)
+      currentvalue.to_s.rjust(4,"0")
+    end
   end
 end
 
