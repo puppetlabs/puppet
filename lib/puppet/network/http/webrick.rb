@@ -40,7 +40,7 @@ class Puppet::Network::HTTP::WEBrick
       @listening = true
       @thread = Thread.new {
         @server.start { |sock|
-          raise "Client disconnected before connection could be established" unless IO.select([sock],nil,nil,0.1)
+          raise "Client disconnected before connection could be established" unless IO.select([sock],nil,nil,6.2)
           sock.accept
           @server.run(sock)
         }
