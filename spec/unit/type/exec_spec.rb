@@ -334,7 +334,8 @@ describe Puppet::Type.type(:exec) do
         end
       end
 
-      it "should fail if timeout is exceeded" do
+      # REMIND: the exec provider is not supported on windows yet
+      it "should fail if timeout is exceeded", :fails_on_windows => true do
         File.stubs(:exists?).with('/bin/sleep').returns(true)
         File.stubs(:exists?).with('sleep').returns(false)
         sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
