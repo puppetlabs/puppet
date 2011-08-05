@@ -16,6 +16,6 @@ agents.each do |host|
   if stdout =~ /oel/i then
     step "test operatingsystemrelease fact on OEL host #{host}"
     on host, facter("operatingsystemrelease")
-    stdout =~ /^\d\.\d$/ or fail_test "operatingsystemrelease not as expected"
+    assert_match(/^\d\.\d$/, stdout, "operatingsystemrelease not as expected on #{host}")
   end
 end

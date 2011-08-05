@@ -42,7 +42,7 @@ module Puppet
       on the local host, whereas `agent` will connect to the
       puppet server that it received the manifest from.
 
-      See the [fileserver configuration documentation](http://projects.puppetlabs.com/projects/puppet/wiki/File_Serving_Configuration) for information on how to configure
+      See the [fileserver configuration documentation](http://docs.puppetlabs.com/guides/file_serving.html) for information on how to configure
       and use file services within Puppet.
 
       If you specify multiple file sources for a file, then the first
@@ -154,7 +154,7 @@ module Puppet
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
-      fail "Could not retrieve information from source(s) #{value.join(", ")}" unless result
+      fail "Could not retrieve information from environment #{Puppet[:environment]} source(s) #{value.join(", ")}" unless result
       result
     end
 

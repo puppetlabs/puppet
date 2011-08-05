@@ -90,42 +90,53 @@ describe Puppet::Indirector::REST do
     @rest_class.port.should == 543
   end
 
-	describe "when making http requests" do
-		it "should provide a helpful error message when hostname was not match with server certificate" do
-			Puppet[:certdnsnames] = 'foo:bar:baz'
-			csr            = OpenSSL::X509::Request.new
-			csr.subject    = OpenSSL::X509::Name.new([['CN', 'not_my_server']])
-			csr.public_key = OpenSSL::PKey::RSA.generate(Puppet[:keylength]).public_key
-			cert = Puppet::SSL::CertificateFactory.new('server', csr, csr, 14).result
+  describe "when making http requests" do
+    it "should provide a suggestive error message when certificate verify failed" do
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
 
-			connection = Net::HTTP.new('my_server', 8140)
-			@searcher.stubs(:network).returns(connection)
-			ssl_context = OpenSSL::SSL::SSLContext.new
-			ssl_context.stubs(:current_cert).returns(cert)
-			connection.stubs(:get).with do
-				connection.verify_callback.call(true, ssl_context)
-			end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
+      connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('certificate verify failed'))
 
-			msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
-			expect { @searcher.http_request(:get, stub('request')) }.to(
-				raise_error(Puppet::Error, msg) do |error|
-					error.message =~ msg
-					$1.split(', ').should =~ ['foo', 'bar', 'baz', 'not_my_server']
-				end
-			)
-		end
+      expect do
+        @searcher.http_request(:get, stub('request'))
+      end.to raise_error(/This is often because the time is out of sync on the server or client/)
+    end
 
-		it "should pass along the error message otherwise" do
-			connection = Net::HTTP.new('my_server', 8140)
-			@searcher.stubs(:network).returns(connection)
+    it "should provide a helpful error message when hostname was not match with server certificate" do
+      Puppet[:certdnsnames] = 'foo:bar:baz'
+      csr            = OpenSSL::X509::Request.new
+      csr.subject    = OpenSSL::X509::Name.new([['CN', 'not_my_server']])
+      csr.public_key = OpenSSL::PKey::RSA.generate(Puppet[:keylength]).public_key
+      cert = Puppet::SSL::CertificateFactory.new('server', csr, csr, 14).result
 
-			connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('certificate verify failed'))
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
+      ssl_context = OpenSSL::SSL::SSLContext.new
+      ssl_context.stubs(:current_cert).returns(cert)
+      connection.stubs(:get).with do
+        connection.verify_callback.call(true, ssl_context)
+      end.raises(OpenSSL::SSL::SSLError.new('hostname was not match with server certificate'))
 
-			expect do
-				@searcher.http_request(:get, stub('request'))
-			end.to raise_error(/certificate verify failed/)
-		end
-	end
+      msg = /Server hostname 'my_server' did not match server certificate; expected one of (.+)/
+      expect { @searcher.http_request(:get, stub('request')) }.to(
+        raise_error(Puppet::Error, msg) do |error|
+          error.message =~ msg
+          $1.split(', ').should =~ ['foo', 'bar', 'baz', 'not_my_server']
+        end
+      )
+    end
+
+    it "should pass along the error message otherwise" do
+      connection = Net::HTTP.new('my_server', 8140)
+      @searcher.stubs(:network).returns(connection)
+
+      connection.stubs(:get).raises(OpenSSL::SSL::SSLError.new('some other message'))
+
+      expect do
+        @searcher.http_request(:get, stub('request'))
+      end.to raise_error(/some other message/)
+    end
+  end
 
   describe "when deserializing responses" do
     it "should return nil if the response code is 404" do

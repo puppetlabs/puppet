@@ -94,7 +94,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     resource.ref =~ /^(.+)\[/
     class_name = $1 || resource.class.name
 
-    newref = [class_name, key]
+    newref = [class_name, key].flatten
 
     if key.is_a? String
       ref_string = "#{class_name}[#{key}]"
@@ -107,7 +107,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      raise(ArgumentError, "Cannot alias #{resource.ref} to #{key.inspect}; resource #{newref.inspect} already exists")
+      resource_definition = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
+      existing_definition = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
+      msg = "Cannot alias #{resource.ref} to #{key.inspect}#{resource_definition}; resource #{newref.inspect} already defined#{existing_definition}"
+      raise ArgumentError, msg
     end
     @resource_table[newref] = resource
     @aliases[resource.ref] ||= []
@@ -436,7 +439,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       res = Puppet::Resource.new(nil, type)
     end
     title_key      = [res.type, res.title.to_s]
-    uniqueness_key = [res.type, res.uniqueness_key]
+    uniqueness_key = [res.type, res.uniqueness_key].flatten
     @resource_table[title_key] || @resource_table[uniqueness_key]
   end
 

@@ -500,7 +500,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       lambda { @catalog.alias(@one, "other") }.should_not raise_error
     end
 
-    it "should create aliases for resources isomorphic resources whose names do not match their titles" do
+    it "should create aliases for isomorphic resources whose names do not match their titles" do
       resource = Puppet::Type::File.new(:title => "testing", :path => @basepath+"/something")
 
       @catalog.add_resource(resource)
@@ -508,7 +508,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.resource(:file, @basepath+"/something").should equal(resource)
     end
 
-    it "should not create aliases for resources non-isomorphic resources whose names do not match their titles" do
+    it "should not create aliases for non-isomorphic resources whose names do not match their titles" do
       resource = Puppet::Type.type(:exec).new(:title => "testing", :command => "echo", :path => %w{/bin /usr/bin /usr/local/bin})
 
       @catalog.add_resource(resource)
@@ -522,11 +522,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
       @catalog.resource("notify", "other").should equal(@one)
-    end
-
-    it "should ignore conflicting aliases that point to the aliased resource" do
-      @catalog.alias(@one, "other")
-      lambda { @catalog.alias(@one, "other") }.should_not raise_error
     end
 
     it "should fail to add an alias if the aliased name already exists" do
@@ -581,6 +576,58 @@ describe Puppet::Resource::Catalog, "when compiling" do
       Puppet::Type.type(:file).expects(:new).with(args).returns(resource)
       @catalog.create_resource :file, args
       @catalog.resource("File[/yay]").should equal(resource)
+    end
+
+    describe "when adding resources with multiple namevars" do
+      before :each do
+        Puppet::Type.newtype(:multiple) do
+          newparam(:color, :namevar => true)
+          newparam(:designation, :namevar => true)
+
+          def self.title_patterns
+            [ [
+                /^(\w+) (\w+)$/,
+                [
+                  [:color,  lambda{|x| x}],
+                  [:designation, lambda{|x| x}]
+                ]
+            ] ]
+          end
+        end
+      end
+
+      it "should add an alias using the uniqueness key" do
+        @resource = Puppet::Type.type(:multiple).new(:title => "some resource", :color => "red", :designation => "5")
+
+        @catalog.add_resource(@resource)
+        @catalog.resource(:multiple, "some resource").must == @resource
+        @catalog.resource("Multiple[some resource]").must == @resource
+        @catalog.resource("Multiple[red 5]").must == @resource
+      end
+
+      it "should conflict with a resource with the same uniqueness key" do
+        @resource = Puppet::Type.type(:multiple).new(:title => "some resource", :color => "red", :designation => "5")
+        @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "5")
+
+        @catalog.add_resource(@resource)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "5"\].*resource \["Multiple", "red", "5"\] already defined/)
+      end
+
+      it "should conflict when its uniqueness key matches another resource's title" do
+        @resource = Puppet::Type.type(:file).new(:title => "/tmp/foo")
+        @other    = Puppet::Type.type(:file).new(:title => "another file", :path => "/tmp/foo")
+
+        @catalog.add_resource(@resource)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["\/tmp\/foo"\].*resource \["File", "\/tmp\/foo"\] already defined/)
+      end
+
+      it "should conflict when its uniqueness key matches the uniqueness key derived from another resource's title" do
+        @resource = Puppet::Type.type(:multiple).new(:title => "red leader")
+        @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "leader")
+
+        @catalog.add_resource(@resource)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "leader"\].*resource \["Multiple", "red", "leader"\] already defined/)
+      end
     end
   end
 

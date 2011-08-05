@@ -41,5 +41,20 @@ Puppet::Reports.register_report(:store) do
     # Only testing cares about the return value
     file
   end
+
+  # removes all reports for a given host
+  def self.destroy(host)
+    client = host.gsub("..",".")
+    dir = File.join(Puppet[:reportdir], client)
+
+    if File.exists?(dir)
+      Dir.entries(dir).each do |file|
+        next if ['.','..'].include?(file)
+        file = File.join(dir, file)
+        File.unlink(file) if File.file?(file)
+      end
+      Dir.rmdir(dir)
+    end
+  end
 end
 
