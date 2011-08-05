@@ -1,14 +1,68 @@
-2.7.2rc3
+2.7.3rc1
+===
+7113448 (#4762) Ensure that clients on the moon can successfully connect.
+c8835ad Add document outlining preferred contribution methods
+b85f57c Add document outlining preferred contribution methods
+ea0f2bf Revert "Merge branch 'vcsrepo'"
+a5716e4 Revert "Merge branch 'vcsrepo'"
+94f0b93 (#8704) Give better errors for invalid fileserver.conf
+38801dd (Maint.) Disable cleaning of storeconfigs.
+023d959 (#8690) Accept 'global' options in Puppet Faces
+bff817c (Maint.) Fix spec failures related to leaking state.
+ccd622a (#1886) Clean up `node clean` for merge.
+c315da0 Fix #1886 - Add node cleanup capability
+7e6fc0d Deprecate RestAuthConfig#allowed? in favor of #check_authorization
+6401dfe Fix #6026 - security file should support inline comments
+0c385f1 Fix #5010 - Allow leading whitespace in auth.conf
+8da0486 Fix #5777 - rule interpolation broke auth.conf CIDR rules
+1d4acb5 maint: Suggest where to start troubleshooting SSL error message
+fb2ffd6 (#8596) Detect resource alias conflicts when titles do not match
+778127d maint: Fix cert app to print help and exit if no subcommand
+0366b18 (#7293) Set default format for SSL-related faces.
+cc2c3ed (Maint.) Unquoting HEREDOCs.
+89c021c (#8418) Fix inspect app to have the correct run_mode
+3165364 maint: Adding logging to include environment when source fails
+f484851 maint: Add debug logging when the master receives a report
+10e05ad (#7266) Move Certificate option validation into face.
+d522b0b maint: Fix Face testing bug 1.9.2 revealed.
+ae36003 (#7290) Update indirected Faces to avoid unknown options.
+88e9cd2 maint: don't print inside action implementations.
+82e5fa9 (#8561, #7290) Implement the option contract fully.
+77441be (#8561) Unify validation and modification of action arguments.
+69b4e70 (#7290) Fail on unknown options.
+6bec2df (#8561) Use canonical names for options to actions.
+532c4f3 (#7184) Load the core of obsolete versions of Faces.
+2cd3bc4 (#7184) Find actions bound to other versions of Faces.
+1e0655e (#7184) Centralize "find action for face" into Puppet::Face
+0396611 maint: better error reporting when test fails
+e639868 Confine password disclosure acceptance test to hosts with required libraries
+395c174 (#7123) Make `find` the default action...
+fd6a653 (#7123) Support runtime setting of 'default' on actions.
+b75b1c1 (#6787) Add `default_to` for options.
+8820a78 Replace calls to Array#count with #length
+bdd6a17 Fix order-dependent test failure in certificate_status/file spec
+c830ab0 (#6789) Port SSL::CertificateAuthority::Interface to a Face
+cc311ad maint: SSL::Inventory.serial should report missing names.
+72abe6c (#7204) Consolidate Semantic Versioning code.
+d02000b (#8401) Document that --detailed-exitcodes is a bitmask
+a109c90 (maint) Cleanup and strengthen acceptance tests
+c4848d2 maint: Fix documentation link for fileserver configuration
+b268fb3 (#7144) Update Settings#writesub to convert mode to Fixnum
+b82f29c (#7699) Help command should only list options once
+4a2f22c (maint) Fix platform dection for RHEL
+45b3908 (#4142) Fix module check not to fail when empty metadata.json
+1feccc3 Revert "Merge branch 'ticket/2.7.x/7699_fix_help_listing_options_twice' into 2.7.x"
+ae3ef42 (#7699) - Help should only show options once
+5826f73 (#8032) Add containment to create_resources
+98cd89b (#8147) Update test for default reporturl
+f6882d6 (#8147) Change default reporturl to match newer Dashboard versions
+111a4b5 (#6857) Password disclosure when changing a user's password
+
+2.7.2rc series (never released)
 ===
 Fix cross branch confusion on 2.7.2rc2
-
-2.7.2rc2
-===
 8ec0804 (#8301) Red Hat spec file for 2.7.2rc1 won't work
 2263be6 (#5108) Update service type docs for new hasstatus default
-
-2.7.2rc1
-===
 902c414 Update configurer_spec.rb to work with Ruby 1.8.5
 7ad1b04 Clean up indentation, whitespace, and commented out code
 014d952 Remove order dependency from functions integration spec
