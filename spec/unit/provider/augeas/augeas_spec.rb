@@ -606,4 +606,22 @@ describe provider_class do
       @provider.execute_changes.should == :executed
     end
   end
+
+  describe "save failure reporting" do
+    before do
+      @resource = stub("resource")
+      @augeas = stub("augeas")
+      @provider = provider_class.new(@resource)
+      @provider.aug = @augeas
+    end
+
+    it "should find errors and output to debug" do
+      @augeas.expects(:match).with("/augeas//error[. = 'put_failed']").returns(["/augeas/files/foo/error"])
+      @augeas.expects(:match).with("/augeas/files/foo/error/*").returns(["/augeas/files/foo/error/path", "/augeas/files/foo/error/message"])
+      @augeas.expects(:get).with("/augeas/files/foo/error/path").returns("/foo")
+      @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
+      @provider.expects(:debug).times(3)
+      @provider.print_put_errors
+    end
+  end
 end

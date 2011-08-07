@@ -259,6 +259,18 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     @aug.set("/augeas/save", mode)
   end
 
+  def print_put_errors
+    errors = @aug.match("/augeas//error[. = 'put_failed']")
+    debug("Put failed on one or more files, output from /augeas//error:") unless errors.empty?
+    errors.each do |errnode|
+      @aug.match("#{errnode}/*").each do |subnode|
+        sublabel = subnode.split("/")[-1]
+        subvalue = @aug.get(subnode)
+        debug("#{sublabel} = #{subvalue}")
+      end
+    end
+  end
+
   # Determines if augeas acutally needs to run.
   def need_to_run?
     force = resource[:force]
@@ -290,7 +302,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
           save_result = @aug.save
-          fail("Save failed with return code #{save_result}") unless save_result
+          unless save_result
+            print_put_errors
+            fail("Save failed with return code #{save_result}, see debug")
+          end
 
           saved_files = @aug.match("/augeas/events/saved")
           if saved_files.size > 0
@@ -339,8 +354,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         debug("No saved files, re-executing augeas")
         set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
         do_execute_changes
-        success = @aug.save
-        fail("Save failed with return code #{success}") if success != true
+        unless @aug.save
+          print_put_errors
+          fail("Save failed with return code #{success}, see debug")
+        end
       end
     ensure
       close_augeas
