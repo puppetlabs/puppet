@@ -216,7 +216,7 @@ class Application
       klass = name.to_s.capitalize
 
       begin
-        require File.join('puppet', 'application', name.to_s)
+        require File.join('puppet', 'application', name.to_s.downcase)
       rescue LoadError => e
         puts "Unable to find application '#{name}'.  #{e}"
         Kernel::exit(1)
