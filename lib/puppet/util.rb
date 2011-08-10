@@ -46,35 +46,24 @@ module Util
   # Change the process to a different user
   def self.chuser
     if group = Puppet[:group]
-      group = self.gid(group)
-      raise Puppet::Error, "No such group #{Puppet[:group]}" unless group
-      unless Puppet::Util::SUIDManager.gid == group
-        begin
-          Puppet::Util::SUIDManager.egid = group
-          Puppet::Util::SUIDManager.gid = group
-        rescue => detail
-          Puppet.warning "could not change to group #{group.inspect}: #{detail}"
-          $stderr.puts "could not change to group #{group.inspect}"
+      begin
+        Puppet::Util::SUIDManager.change_group(group, true)
+      rescue => detail
+        Puppet.warning "could not change to group #{group.inspect}: #{detail}"
+        $stderr.puts "could not change to group #{group.inspect}"
 
-          # Don't exit on failed group changes, since it's
-          # not fatal
-          #exit(74)
-        end
+        # Don't exit on failed group changes, since it's
+        # not fatal
+        #exit(74)
       end
     end
 
     if user = Puppet[:user]
-      user = self.uid(user)
-      raise Puppet::Error, "No such user #{Puppet[:user]}" unless user
-      unless Puppet::Util::SUIDManager.uid == user
-        begin
-          Puppet::Util::SUIDManager.initgroups(user)
-          Puppet::Util::SUIDManager.uid = user
-          Puppet::Util::SUIDManager.euid = user
-        rescue => detail
-          $stderr.puts "Could not change to user #{user}: #{detail}"
-          exit(74)
-        end
+      begin
+        Puppet::Util::SUIDManager.change_user(user, true)
+      rescue => detail
+        $stderr.puts "Could not change to user #{user}: #{detail}"
+        exit(74)
       end
     end
   end
@@ -89,18 +78,14 @@ module Util
         if useself
 
           Puppet::Util::Log.create(
-
             :level => level,
             :source => self,
-
             :message => args
           )
         else
 
           Puppet::Util::Log.create(
-
             :level => level,
-
             :message => args
           )
         end
@@ -261,9 +246,6 @@ module Util
       Puppet.debug "Executing '#{str}'"
     end
 
-    arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid]) if arguments[:uid]
-    arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid]) if arguments[:gid]
-
     if execution_stub = Puppet::Util::ExecutionStub.current_value
       return execution_stub.call(command, arguments)
     end
@@ -305,14 +287,8 @@ module Util
           $stderr.reopen(error_file)
 
           3.upto(256){|fd| IO::new(fd).close rescue nil}
-          if arguments[:gid]
-            Process.egid = arguments[:gid]
-            Process.gid = arguments[:gid] unless @@os == "Darwin"
-          end
-          if arguments[:uid]
-            Process.euid = arguments[:uid]
-            Process.uid = arguments[:uid] unless @@os == "Darwin"
-          end
+          Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
+          Puppet::Util::SUIDManager.change_user(arguments[:uid], true) if arguments[:uid]
           ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
           if command.is_a?(Array)
             Kernel.exec(*command)
