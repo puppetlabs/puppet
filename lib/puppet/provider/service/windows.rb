@@ -80,7 +80,7 @@ Puppet::Type.type(:service).provide :windows do
   def stop
     Win32::Service.stop( @resource[:name] )
   rescue Win32::Service::Error => detail
-    raise Puppet::Error.new("Cannot start #{@resource[:name]}, error was: #{detail}" )
+    raise Puppet::Error.new("Cannot stop #{@resource[:name]}, error was: #{detail}" )
   end
 
   def restart
