@@ -4,9 +4,12 @@ Puppet::Type.type(:exec).provide :posix do
   confine :feature => :posix
   defaultfor :feature => :posix
 
-  desc "Execute external binaries directly, on POSIX systems.
-This does not pass through a shell, or perform any interpolation, but
-only directly calls the command with the arguments given."
+  desc <<-EOT
+    Executes external binaries directly, without passing through a shell or
+    performing any interpolation. This is a safer and more predictable way
+    to execute most commands, but prevents the use of globbing and shell
+    built-ins (including control logic like "for" and "if" statements).
+  EOT
 
   def run(command, check = false)
     output = nil
