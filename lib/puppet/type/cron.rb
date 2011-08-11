@@ -3,11 +3,12 @@ require 'facter'
 require 'puppet/util/filetype'
 
 Puppet::Type.newtype(:cron) do
-  @doc = "Installs and manages cron jobs.  All fields except the command
-    and the user are optional, although specifying no periodic
-    fields would result in the command being executed every
-    minute.  While the name of the cron job is not part of the actual
-    job, it is used by Puppet to store and retrieve it.
+  @doc = <<-EOT
+    Installs and manages cron jobs.  Every cron resource requires a command
+    and user attribute, as well as at least one periodic attribute (hour,
+    minute, month, monthday, weekday, or special).  While the name of the cron
+    job is not part of the actual job, it is used by Puppet to store and
+    retrieve it.
 
     If you specify a cron job that matches an existing job in every way
     except name, then the jobs will be considered equivalent and the
@@ -18,30 +19,30 @@ Puppet::Type.newtype(:cron) do
     Example:
 
         cron { logrotate:
-          command => \"/usr/sbin/logrotate\",
+          command => "/usr/sbin/logrotate",
           user => root,
           hour => 2,
           minute => 0
         }
 
-    Note that all cron values can be specified as an array of values:
+    Note that all periodic attributes can be specified as an array of values:
 
         cron { logrotate:
-          command => \"/usr/sbin/logrotate\",
+          command => "/usr/sbin/logrotate",
           user => root,
           hour => [2, 4]
         }
 
-    Or using ranges, or the step syntax `*/2` (although there's no guarantee that
-    your `cron` daemon supports it):
+    ...or using ranges or the step syntax `*/2` (although there's no guarantee
+    that your `cron` daemon supports these):
 
         cron { logrotate:
-          command => \"/usr/sbin/logrotate\",
+          command => "/usr/sbin/logrotate",
           user => root,
           hour => ['2-4'],
           minute => '*/10'
         }
-    "
+  EOT
   ensurable
 
   # A base class for all of the Cron parameters, since they all have
