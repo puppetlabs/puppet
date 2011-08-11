@@ -81,6 +81,9 @@ class Puppet::Application::Resource < Puppet::Application
         [ Puppet::Resource.new( type, name, :parameters => params ).save( key ) ]
       end
     else
+      if type == "file"
+        raise "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
+      end
       Puppet::Resource.search( key, {} )
     end.map(&format).join("\n")
 
