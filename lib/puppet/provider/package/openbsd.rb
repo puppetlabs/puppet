@@ -60,9 +60,9 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         "You must specify a package source for BSD packages"
     end
 
-    if @resource[:source][-1,1] == ::File::PATH_SEPARATOR
-      e_vars = { :PKG_PATH => @resource[:source] }
-      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-')
+    if @resource[:source][-1,1] == ::File::SEPARATOR
+      e_vars = { 'PKG_PATH' => @resource[:source] }
+      full_name = [ @resource[:name], get_version || @resource[:ensure], @resource[:flavor] ].join('-').chomp('-').chomp('-')
     else
       e_vars = {}
       full_name = @resource[:source]
@@ -77,6 +77,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
         fields = [ :name, :version, :flavor ]
         master_version = 0
+        version = -1
 
         process.each do |line|
           if match = regex.match(line.split[0])
@@ -89,6 +90,7 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
         end
 
         return master_version unless master_version == 0
+        return '' if version == -1
         raise Puppet::Error, "#{version} is not available for this package"
       end
   rescue Puppet::ExecutionFailure
