@@ -82,13 +82,21 @@ module Puppet::Util::SUIDManager
       begin
         Process::UID.change_privilege(uid)
       rescue NotImplementedError
+        # If changing uid, we must be root. So initgroups first here.
         initgroups(uid)
         Process.euid = uid
         Process.uid  = uid
       end
     else
-      initgroups(uid)
-      Process.euid = uid
+      # If we're already root, initgroups before changing euid. If we're not,
+      # change euid (to root) first.
+      if Process.euid == 0
+        initgroups(uid)
+        Process.euid = uid
+      else
+        Process.euid = uid
+        initgroups(uid)
+      end
     end
   end
   module_function :change_user
