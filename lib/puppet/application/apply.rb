@@ -202,6 +202,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       # Compile our catalog
       starttime = Time.now
       catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
+      catalog.write_class_file
 
       # Translate it to a RAL catalog
       catalog = catalog.to_ral
