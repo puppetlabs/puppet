@@ -1190,4 +1190,10 @@ describe Puppet::Type.type(:file) do
       @file[:checksum].should be :md5lite
     end
   end
+
+  describe ".instances" do
+    it 'should return an empty array' do
+      Puppet::Type::File.instances.should == []
+    end
+  end
 end
