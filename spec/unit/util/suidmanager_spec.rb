@@ -134,6 +134,28 @@ describe Puppet::Util::SUIDManager do
         xids[:euid].should == 42
         xids[:uid].should == 0
       end
+
+      it "should set euid before groups if changing to root" do
+        Process.stubs(:euid).returns 50
+
+        when_not_root = sequence 'when_not_root'
+
+        Process.expects(:euid=).in_sequence(when_not_root)
+        Puppet::Util::SUIDManager.expects(:initgroups).in_sequence(when_not_root)
+
+        Puppet::Util::SUIDManager.change_user(0, false)
+      end
+
+      it "should set groups before euid if changing from root" do
+        Process.stubs(:euid).returns 0
+
+        when_root = sequence 'when_root'
+
+        Puppet::Util::SUIDManager.expects(:initgroups).in_sequence(when_root)
+        Process.expects(:euid=).in_sequence(when_root)
+
+        Puppet::Util::SUIDManager.change_user(50, false)
+      end
     end
   end
 
