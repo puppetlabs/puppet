@@ -442,6 +442,20 @@ describe provider_class do
         @provider.expects(:diff).with("#{file}", "#{file}.augnew").returns("")
         @provider.should be_need_to_run
       end
+
+      it "should fail with an error if saving fails" do
+        file = "/etc/hosts"
+
+        @resource[:context] = "/files"
+        @resource[:changes] = ["set #{file}/foo bar"]
+
+        @augeas_stub.stubs(:save).returns(false)
+        @augeas_stub.stubs(:match).with("/augeas/events/saved").returns([])
+        @augeas_stub.expects(:close)
+
+        @provider.expects(:diff).never()
+        lambda { @provider.need_to_run? }.should raise_error
+      end
     end
   end
 
