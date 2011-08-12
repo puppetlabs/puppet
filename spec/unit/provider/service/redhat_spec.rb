@@ -57,7 +57,7 @@ describe provider_class do
     @provider.should respond_to(:disable)
   end
 
-  [:start, :stop, :status, :restart].each do |method|
+  [:start, :stop, :status, :restart, :reload, :graceful ].each do |method|
     it "should have a #{method} method" do
       @provider.should respond_to(method)
     end
@@ -111,7 +111,7 @@ describe provider_class do
     end
   end
 
-  describe "when restarting and hasrestart is not :true" do
+  describe "when restarting and hasreload, hasgraceful and hasrestart is not :true" do
     it "should stop and restart the process with the server script" do
       @provider.expects(:texecute).with(:stop,  ['/sbin/service', 'myservice', 'stop'],  true)
       @provider.expects(:texecute).with(:start, ['/sbin/service', 'myservice', 'start'], true)

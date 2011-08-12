@@ -103,7 +103,7 @@ describe provider_class do
       File.stubs(:stat).with("/service/path/myservice").returns true
     end
 
-    [:start, :stop, :status, :restart].each do |method|
+    [:start, :stop, :status, :restart, :reload, :graceful ].each do |method|
       it "should have a #{method} method" do
         @provider.should respond_to(method)
       end
@@ -157,7 +157,7 @@ describe provider_class do
       end
     end
 
-    describe "when restarting and hasrestart is not :true" do
+    describe "when restarting and hasgraceful, hasreload, and hasrestart is not :true" do
       it "should stop and restart the process" do
         @provider.expects(:texecute).with(:stop, ['/service/path/myservice', :stop ], true).returns("")
         @provider.expects(:texecute).with(:start,['/service/path/myservice', :start], true).returns("")

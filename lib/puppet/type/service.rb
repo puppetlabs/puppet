@@ -21,12 +21,20 @@ module Puppet
       Note that if a `service` receives an event from another resource,
       the service will get restarted. The actual command to restart the
       service depends on the platform. You can provide an explicit command
-      for restarting with the `restart` attribute, or use the init script's
-      restart command with the `hasrestart` attribute; if you do neither,
+      for restarting with the `restart` attribute, for reloading with the
+      `reload` attribute or gracefully retarting with the `graceful` attribute
+      or use the init script's restart, reload or graceful commands with the
+      `hasrestart`, `hasreload`, or `hasgraceful` attributes; if you do neither,
       the service's stop and start commands will be used."
 
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
+
+    feature :reloadable, "The provider can reload the service.",
+      :methods => [:reload]
+
+    feature :graceful, "The provider can gracefully reload the service.",
+      :methods => [:graceful]
 
     feature :enableable, "The provider can enable and disable the service",
       :methods => [:disable, :enable, :enabled?]
@@ -117,6 +125,7 @@ module Puppet
 
       defaultto :true
     end
+
     newparam(:name) do
       desc "The name of the service to run.  This name is used to find
         the service in whatever service subsystem it is in."
@@ -136,6 +145,7 @@ module Puppet
 
       defaultto { provider.class.defpath if provider.class.respond_to?(:defpath) }
     end
+
     newparam(:pattern) do
       desc "The pattern to search for in the process table.
         This is used for stopping services on platforms that do not
@@ -150,15 +160,28 @@ module Puppet
 
       defaultto { @resource[:binary] || @resource[:name] }
     end
+
+    newparam(:graceful) do
+      desc "Specify a *graceful* command manually.  If left
+        unspecified, the service will be stopped and then started."
+    end
+
+    newparam(:reload) do
+      desc "Specify a *reload* command manually.  If left
+        unspecified, the service will be stopped and then started."
+    end
+
     newparam(:restart) do
       desc "Specify a *restart* command manually.  If left
         unspecified, the service will be stopped and then started."
     end
+
     newparam(:start) do
       desc "Specify a *start* command manually.  Most service subsystems
         support a `start` command, so this will not need to be
         specified."
     end
+
     newparam(:status) do
       desc "Specify a *status* command manually.  This command must
         return 0 if the service is running and a nonzero value otherwise.
@@ -181,6 +204,18 @@ module Puppet
         Defaults to the upcased service name plus `START` replacing dots with
         underscores, for those providers that support the `controllable` feature."
       defaultto { resource.name.gsub(".","_").upcase + "_START" if resource.provider.controllable? }
+    end
+
+    newparam :hasgraceful do
+      desc "Specify that an init script has a `graceful` option.  Otherwise,
+        the init script's `stop` and `start` methods are used."
+      newvalues(:true, :false)
+    end
+
+    newparam :hasreload do
+      desc "Specify that an init script has a `reload` option.  Otherwise,
+        the init script's `stop` and `start` methods are used."
+      newvalues(:true, :false)
     end
 
     newparam :hasrestart do

@@ -9,10 +9,18 @@ describe Puppet::Type.type(:service) do
   it "should have a :refreshable feature that requires the :restart method" do
     Puppet::Type.type(:service).provider_feature(:refreshable).methods.should == [:restart]
   end
+
+  it "should have a :reloadable feature that requires the :reload method" do
+    Puppet::Type.type(:service).provider_feature(:reloadable).methods.should == [:reload]
+  end
+
+  it "should have a :graceful feature that requires the :graceful method" do
+    Puppet::Type.type(:service).provider_feature(:graceful).methods.should == [:graceful]
+  end
 end
 
 describe Puppet::Type.type(:service), "when validating attributes" do
-  [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :stop, :status, :hasrestart, :control].each do |param|
+  [:name, :binary, :hasstatus, :path, :pattern, :start, :restart, :reload, :graceful, :stop, :status, :hasrestart, :hasreload, :hasgraceful, :control].each do |param|
     it "should have a #{param} parameter" do
       Puppet::Type.type(:service).attrtype(param).should == :param
     end
@@ -82,6 +90,22 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
 
   it "should specify :true as the default value of hasstatus" do
     Puppet::Type.type(:service).new(:name => "yay")[:hasstatus].should == :true
+  end
+
+  it "should support :true as a value to :hasgraceful" do
+    Puppet::Type.type(:service).new(:name => "yay", :hasgraceful => :true)
+  end 
+
+  it "should support :false as a value to :hasgraceful" do
+    Puppet::Type.type(:service).new(:name => "yay", :hasgraceful => :false)
+  end 
+
+  it "should support :true as a value to :hasreload" do
+    Puppet::Type.type(:service).new(:name => "yay", :hasreload => :true)
+  end 
+
+  it "should support :false as a value to :hasreload" do
+    Puppet::Type.type(:service).new(:name => "yay", :hasreload => :false)
   end
 
   it "should support :true as a value to :hasrestart" do

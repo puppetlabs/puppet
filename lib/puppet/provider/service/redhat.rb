@@ -60,6 +60,14 @@ Puppet::Type.type(:service).provide :redhat, :parent => :init, :source => :init 
     ((@resource.provider.get(:hasstatus) == true) || (@resource[:hasstatus] == :true)) && [command(:service), @resource[:name], "status"]
   end
 
+  def gracefulcmd
+    (@resource[:hasgraceful] == :true) && [command(:service), @resource[:name], "graceful"]
+  end
+
+  def reloadcmd
+    (@resource[:hasreload] == :true) && [command(:service), @resource[:name], "reload"]
+  end
+
   def restartcmd
     (@resource[:hasrestart] == :true) && [command(:service), @resource[:name], "restart"]
   end
