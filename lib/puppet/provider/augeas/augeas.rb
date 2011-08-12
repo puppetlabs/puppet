@@ -290,8 +290,10 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
           save_result = @aug.save
+          fail("Save failed with return code #{save_result}") unless save_result
+
           saved_files = @aug.match("/augeas/events/saved")
-          if save_result and saved_files.size > 0
+          if saved_files.size > 0
             root = resource[:root].sub(/^\/$/, "")
             saved_files.each do |key|
               saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
@@ -305,13 +307,13 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             debug("Files changed, should execute")
             return_value = true
           else
-            debug("Skipping because no files were changed or save failed")
+            debug("Skipping because no files were changed")
             return_value = false
           end
         end
       end
     ensure
-      if not return_value or resource.noop?
+      if not return_value or resource.noop? or not save_result
         close_augeas
       end
     end
