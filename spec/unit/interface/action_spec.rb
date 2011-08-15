@@ -552,7 +552,7 @@ describe Puppet::Interface::Action do
   context "#validate_and_clean" do
     subject do
       Puppet::Interface.new(:validate_args, '1.0.0') do
-        script :test do |options| true end
+        script :test do |options| options end
       end
     end
 
@@ -575,6 +575,12 @@ describe Puppet::Interface::Action do
     it "should report all the unknown options passed" do
       expect { subject.test :unknown => true, :unseen => false }.
         to raise_error ArgumentError, /Unknown options passed: unknown, unseen/
+    end
+
+    it "should accept 'global' options from settings" do
+      expect {
+        subject.test(:certname => "true").should == { :certname => "true" }
+      }.not_to raise_error
     end
   end
 

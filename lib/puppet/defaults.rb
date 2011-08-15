@@ -551,7 +551,10 @@ module Puppet
     :puppetport => [8139, "Which port puppet agent listens on."],
     :noop => [false, "Whether puppet agent should be run in noop mode."],
     :runinterval => [1800, # 30 minutes
-      "How often puppet agent applies the client configuration; in seconds."],
+      "How often puppet agent applies the client configuration; in seconds.
+      Note that a runinterval of 0 means \"run continuously\" rather than
+      \"never run.\" If you want puppet agent to never run, you should start
+      it with the `--no-client` option."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then puppet agent will accept incoming
       REST API requests, subject to the default ACLs and the ACLs set in 

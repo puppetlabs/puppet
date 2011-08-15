@@ -47,6 +47,11 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
     File.join(base, self.class.indirection_name.to_s, name.to_s + ext)
   end
 
+  def destroy(request)
+    file_path = path(request.key)
+    File.unlink(file_path) if File.exists?(file_path)
+  end
+
   def search(request)
     Dir.glob(path(request.key,'')).collect do |file|
       YAML.load_file(file)

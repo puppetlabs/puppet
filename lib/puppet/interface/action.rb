@@ -269,6 +269,8 @@ WRAPPER
         else
           result[canonical] = original[name]
         end
+      elsif Puppet.settings.include? name
+        result[name] = original[name]
       else
         unknown << name
       end

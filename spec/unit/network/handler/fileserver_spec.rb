@@ -25,6 +25,38 @@ describe Puppet::Network::Handler::FileServer do
     @mount = Puppet::Network::Handler::FileServer::Mount.new("some_path", @basedir)
   end
 
+  describe "when parsing the fileserver.conf" do
+    it "should create a valid mount when a valid conf is read" do
+      config_file = tmpfile('fileserver.conf')
+      mountdir = tmpdir('mountdir')
+
+      conf_text = <<-HEREDOC
+        [mymount]
+          path #{mountdir}
+          allow anyone.com
+          deny nobody.com
+      HEREDOC
+      File.open(config_file, 'w') { |f| f.write conf_text }
+
+      fs = Puppet::Network::Handler::FileServer.new(:Config => config_file) 
+      mounts = fs.instance_variable_get(:@mounts)
+      mount = mounts["mymount"]
+      mount.path == mountdir
+      mount.instance_variable_get(:@declarations).map {|d| d.pattern}.should =~ [["com", "nobody"], ["com", "anyone"]]
+    end
+
+    ['path', 'allow', 'deny'].each do |arg|
+      it "should error if config file doesn't specify a mount for #{arg} argument" do
+        config_file = tmpfile('fileserver.conf')
+        File.open(config_file, 'w') { |f| f.puts "#{arg} 127.0.0.1/24" }
+
+        expect { 
+          Puppet::Network::Handler::FileServer.new(:Config => config_file) 
+        }.should raise_error(Puppet::Network::Handler::FileServerError, "No mount specified for argument #{arg} 127.0.0.1/24")
+      end
+    end
+  end
+
   it "should list a single directory" do
     @mount.list("/", false, false).should == [["/", "directory"]]
   end

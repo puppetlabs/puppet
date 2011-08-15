@@ -972,7 +972,7 @@ class Type
 
   newmetaparam(:audit) do
     desc "Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
-      attribute name or a list of attribute names.
+      attribute name, an array of attribute names, or `all`.
 
       Auditing a resource attribute has two effects: First, whenever a catalog
       is applied with puppet apply or puppet agent, Puppet will check whether
