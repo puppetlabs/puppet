@@ -158,6 +158,11 @@ describe Puppet::Application::Apply do
         Puppet::Configurer.any_instance.stubs(:save_last_run_summary) # to prevent it from trying to write files
       end
 
+      after :each do
+        Puppet::Node::Facts.indirection.reset_terminus_class
+        Puppet::Node::Facts.indirection.cache_class = nil
+      end
+
       it "should set the code to run from --code" do
         @apply.options[:code] = "code to run"
         Puppet.expects(:[]=).with(:code,"code to run")
