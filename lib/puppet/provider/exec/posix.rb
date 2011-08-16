@@ -76,26 +76,26 @@ Puppet::Type.type(:exec).provide :posix do
   def checkexe(command)
     exe = extractexe(command)
 
+    if File.expand_path(exe) == exe
+      if !File.exists?(exe)
+        raise ArgumentError, "Could not find command '#{exe}'"
+      elsif !File.file?(exe)
+        raise ArgumentError, "'#{exe}' is a #{File.ftype(exe)}, not a file"
+      elsif !File.executable?(exe)
+        raise ArgumentError, "'#{exe}' is not executable"
+      end
+      return
+    end
+
     if resource[:path]
-      if Puppet.features.posix? and !File.exists?(exe)
-        withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
-          exe = which(exe) || raise(ArgumentError,"Could not find command '#{exe}'")
-        end
-      elsif Puppet.features.microsoft_windows? and !File.exists?(exe)
-        resource[:path].each do |path|
-          [".exe", ".ps1", ".bat", ".com", ""].each do |extension|
-            file = File.join(path, exe+extension)
-            return if File.exists?(file)
-          end
-        end
+      withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
+        return if which(exe)
       end
     end
 
-    raise ArgumentError, "Could not find command '#{exe}'" unless File.exists?(exe)
-    unless File.executable?(exe)
-      raise ArgumentError,
-      "'#{exe}' is not executable"
-    end
+    # 'which' will only return the command if it's executable, so we can't
+    # distinguish not found from not executable
+    raise ArgumentError, "Could not find command '#{exe}'"
   end
 
   def extractexe(command)
