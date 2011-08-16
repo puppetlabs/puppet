@@ -11,7 +11,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
     command
   end
 
-  let(:resource) { Puppet::Type.type(:exec).new(:title => '/foo') }
+  let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo')) }
   let(:provider) { described_class.new(resource) }
 
   before :each do
@@ -34,7 +34,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
 
     it "should pass if command is fully qualifed" do
       provider.resource[:path] = ['/bogus/bin']
-      provider.validatecmd("/bin/blah/foo")
+      provider.validatecmd(File.expand_path("/bin/blah/foo"))
     end
   end
 
@@ -55,6 +55,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
 
       it "should fail if the command isn't executable" do
         FileUtils.touch(command)
+        File.stubs(:executable?).with(command).returns(false)
 
         expect { provider.run(command) }.to raise_error(ArgumentError, "'#{command}' is not executable")
       end
@@ -80,6 +81,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       it "should fail if the command is in the path but not executable" do
         command = tmpfile('foo')
         FileUtils.touch(command)
+        FileTest.stubs(:executable?).with(command).returns(false)
         resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
@@ -102,7 +104,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
 
     it "should fail if quoted command doesn't exist" do
       provider.resource[:path] = ['/bogus/bin']
-      command = "/foo bar --sillyarg=true --blah"
+      command = "#{File.expand_path('/foo')} bar --sillyarg=true --blah"
 
       expect { provider.run(%Q["#{command}"]) }.to raise_error(ArgumentError, "Could not find command '#{command}'")
     end
