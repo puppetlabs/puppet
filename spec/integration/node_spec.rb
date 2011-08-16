@@ -10,6 +10,9 @@ require 'puppet/node'
 describe Puppet::Node do
   describe "when delegating indirection calls" do
     before do
+      Puppet::Node.indirection.reset_terminus_class
+      Puppet::Node.indirection.cache_class = nil
+
       @name = "me"
       @node = Puppet::Node.new(@name)
     end

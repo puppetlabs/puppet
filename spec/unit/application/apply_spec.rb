@@ -12,6 +12,14 @@ describe Puppet::Application::Apply do
     Puppet::Util::Log.stubs(:newdestination)
   end
 
+  after :each do
+    Puppet::Node::Facts.indirection.reset_terminus_class
+    Puppet::Node::Facts.indirection.cache_class = nil
+
+    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.indirection.cache_class = nil
+  end
+
   [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
@@ -48,7 +56,6 @@ describe Puppet::Application::Apply do
   end
 
   describe "during setup" do
-
     before :each do
       Puppet::Log.stubs(:newdestination)
       Puppet.stubs(:parse_config)
@@ -111,7 +118,6 @@ describe Puppet::Application::Apply do
   end
 
   describe "when executing" do
-
     it "should dispatch to 'apply' if it was called with 'apply'" do
       @apply.options[:catalog] = "foo"
 

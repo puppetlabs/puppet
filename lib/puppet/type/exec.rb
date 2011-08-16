@@ -311,17 +311,20 @@ module Puppet
     end
 
     newcheck(:creates, :parent => Puppet::Parameter::Path) do
-      desc "A file that this command creates.  If this
+      desc <<-EOT
+        A file that this command creates.  If this
         parameter is provided, then the command will only be run
-        if the specified file does not exist:
+        if the specified file does not exist.
 
-            exec { \"tar xf /my/tar/file.tar\":
-              cwd => \"/var/tmp\",
-              creates => \"/var/tmp/myfile\",
-              path => [\"/usr/bin\", \"/usr/sbin\"]
+            exec { "tar -xf /Volumes/nfs02/important.tar":
+              cwd => "/var/tmp",
+              creates => "/var/tmp/myfile",
+              path => ["/usr/bin", "/usr/sbin"]
             }
 
-        "
+        In this example, if `/var/tmp/myfile` is ever deleted, the exec
+        will bring it back by re-extracting the tarball.
+      EOT
 
       accept_arrays
 
