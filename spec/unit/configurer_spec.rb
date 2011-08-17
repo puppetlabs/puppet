@@ -93,6 +93,11 @@ describe Puppet::Configurer do
       Puppet::Util::Log.stubs(:close_all)
     end
 
+    after :all do
+      Puppet::Node::Facts.indirection.reset_terminus_class
+      Puppet::Resource::Catalog.indirection.reset_terminus_class
+    end
+
     it "should prepare for the run" do
       @agent.expects(:prepare)
 
