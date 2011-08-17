@@ -96,13 +96,18 @@ Puppet::Type.newtype(:augeas) do
     Commands supported are:
 
         set [PATH] [VALUE]            Sets the value VALUE at loction PATH
+        setm [PATH] [SUB] [VALUE]     Sets multiple nodes matching SUB relative to PATH, to VALUE
         rm [PATH]                     Removes the node at location PATH
         remove [PATH]                 Synonym for rm
-        clear [PATH]                  Keeps the node at PATH, but removes the value.
+        clear [PATH]                  Sets the node at PATH to NULL, creating it if needed
         ins [LABEL] [WHERE] [PATH]    Inserts an empty node LABEL either [WHERE={before|after}] PATH.
         insert [LABEL] [WHERE] [PATH] Synonym for ins
+        mv [PATH] [PATH]              Moves a node at PATH to the new location PATH
+        move [PATH] [PATH]            Synonym for mv
+        defvar [NAME] [PATH]          Sets Augeas variable $NAME to PATH
+        defnode [NAME] [PATH] [VALUE] Sets Augeas variable $NAME to PATH, creating it with VALUE if needed
 
-    If the parameter 'context' is set that value is prepended to PATH"
+    If the parameter 'context' is set that value is prepended to a relative PATH"
   end
 
 
