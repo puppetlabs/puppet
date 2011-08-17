@@ -330,8 +330,8 @@ Puppet::Type.newtype(:file) do
     super(path.gsub(/\/+/, '/').sub(/\/$/, ''))
   end
 
-  def self.instances(base = '/')
-    return self.new(:name => base, :recurse => true, :recurselimit => 1, :audit => :all).recurse_local.values
+  def self.instances
+    return []
   end
 
   # Determine the user to write files as.

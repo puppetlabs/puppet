@@ -20,7 +20,8 @@ Puppet::Type.newtype(:augeas) do
   feature :need_to_run?, "If the command should run"
   feature :execute_changes, "Actually make the changes"
 
-  @doc = "Apply the changes (single or array of changes) to the filesystem
+  @doc = <<-EOT
+    Apply the changes (single or array of changes) to the filesystem
     via the augeas tool.
 
     Requires:
@@ -30,24 +31,24 @@ Puppet::Type.newtype(:augeas) do
 
     Sample usage with a string:
 
-        augeas{\"test1\" :
-          context => \"/files/etc/sysconfig/firstboot\",
-          changes => \"set RUN_FIRSTBOOT YES\",
-          onlyif  => \"match other_value size > 0\",
+        augeas{"test1" :
+          context => "/files/etc/sysconfig/firstboot",
+          changes => "set RUN_FIRSTBOOT YES",
+          onlyif  => "match other_value size > 0",
         }
 
     Sample usage with an array and custom lenses:
 
-        augeas{\"jboss_conf\":
-          context => \"/files\",
+        augeas{"jboss_conf":
+          context => "/files",
           changes => [
-            \"set /etc/jbossas/jbossas.conf/JBOSS_IP $ipaddress\",
-            \"set /etc/jbossas/jbossas.conf/JAVA_HOME /usr\"
+            "set etc/jbossas/jbossas.conf/JBOSS_IP $ipaddress",
+            "set etc/jbossas/jbossas.conf/JAVA_HOME /usr",
           ],
-          load_path => \"$/usr/share/jbossas/lenses\",
+          load_path => "$/usr/share/jbossas/lenses",
         }
 
-    "
+  EOT
 
   newparam (:name) do
     desc "The name of this task. Used for uniqueness"
@@ -95,13 +96,18 @@ Puppet::Type.newtype(:augeas) do
     Commands supported are:
 
         set [PATH] [VALUE]            Sets the value VALUE at loction PATH
+        setm [PATH] [SUB] [VALUE]     Sets multiple nodes matching SUB relative to PATH, to VALUE
         rm [PATH]                     Removes the node at location PATH
         remove [PATH]                 Synonym for rm
-        clear [PATH]                  Keeps the node at PATH, but removes the value.
+        clear [PATH]                  Sets the node at PATH to NULL, creating it if needed
         ins [LABEL] [WHERE] [PATH]    Inserts an empty node LABEL either [WHERE={before|after}] PATH.
         insert [LABEL] [WHERE] [PATH] Synonym for ins
+        mv [PATH] [PATH]              Moves a node at PATH to the new location PATH
+        move [PATH] [PATH]            Synonym for mv
+        defvar [NAME] [PATH]          Sets Augeas variable $NAME to PATH
+        defnode [NAME] [PATH] [VALUE] Sets Augeas variable $NAME to PATH, creating it with VALUE if needed
 
-    If the parameter 'context' is set that value is prepended to PATH"
+    If the parameter 'context' is set that value is prepended to a relative PATH"
   end
 
 
