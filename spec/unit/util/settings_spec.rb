@@ -1128,4 +1128,49 @@ describe Puppet::Util::Settings do
       settings.writesub(:privatekeydir, "/path/to/keydir")
     end
   end
+  
+  describe "when setting custom parameters" do
+    before do
+      @settings = Puppet::Util::Settings.new
+      @settings.setdefaults :section, :config => ["/test/file", "a"]
+      @custom_section_text = <<-EOT
+        [custom_section]
+          custom_parameter = custom_value
+      EOT
+      @nested_custom_section_text = <<-EOT
+        [custom_section]
+          custom_parameter = custom_value
+        
+          [nested_custom_section]
+            nested_custom_parameter = nested_custom_value
+      EOT
+      FileTest.stubs(:exist?).returns true
+    end
+    
+    it "should allow setting custom parameters from ruby code" do
+      @settings.add_config(:custom_parameter, "custom_value", :custom_section)
+      @settings.valid?(:custom_parameter).should be_true
+      @settings[:custom_parameter].should == "custom_value"
+    end
+    
+    it "should add custom parameters to the right section" do
+      @settings.add_config(:custom_parameter1, "custom_value1", :custom_section1)
+      @settings.add_config(:custom_parameter2, "custom_value2", :custom_section1)
+      @settings.add_config(:custom_parameter3, "custom_value3", :custom_section2)
+      @settings.params(:custom_section1).should == [:custom_parameter1, :custom_parameter2]
+      @settings.params(:custom_section2).should == [:custom_parameter3]
+    end
+    
+    it "should allow setting custom parameters in the configuration file" do
+      @settings.expects(:read_file).returns(@custom_section_text)
+      @settings.parse
+      @settings[:custom_parameter].should == "custom_value"
+    end
+    
+    it "should allow setting nested custom parameters in the configuration file" do
+      @settings.expects(:read_file).returns(@nested_custom_section_text)
+      @settings.parse
+      @settings[:nested_custom_parameter].should == "nested_custom_value"
+    end
+  end
 end

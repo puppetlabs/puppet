@@ -478,7 +478,8 @@ class Puppet::Util::Settings
     param = param.to_sym
     unless setting = @config[param]
       if options[:ignore_bad_settings]
-        return
+        add_config(param, value, type)
+        setting = @config[param]
       else
         raise ArgumentError,
           "Attempt to assign a value to unknown configuration parameter #{param.inspect}"
@@ -506,6 +507,12 @@ class Puppet::Util::Settings
     end
 
     value
+  end
+
+  # Update @config with custom configuration parameters. This allows faces to
+  # access custom configuration parameters set in puppet.conf.
+  def add_config(param, value, type)
+    setdefaults(type, param => [value, "Custom configuration parameter."])
   end
 
   # Set a bunch of defaults in a given section.  The sections are actually pretty
