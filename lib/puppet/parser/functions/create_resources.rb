@@ -1,7 +1,8 @@
 Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC') do |args|
     Converts a hash into a set of resources and adds them to the catalog.
 
-    This function takes two arguments: a resource type, and a hash describing a set of resources. The hash should be in the form `{title => {parameters} }`:
+    This function takes two arguments: a resource type, and a hash describing
+    a set of resources. The hash should be in the form `{title => {parameters} }`:
 
         # A hash of user resources:
         $myusers = {
@@ -15,7 +16,8 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
 
         create_resource(user, $myusers)
 
-    This function can be used to create defined resources and classes, as well as native resources.
+    This function can be used to create defined resources and classes, as well
+    as native resources.
   ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
   #raise ArgumentError, 'requires resource type and param hash' if args.size < 2
