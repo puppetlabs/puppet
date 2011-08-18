@@ -33,6 +33,7 @@ describe Puppet::Util::SUIDManager do
   describe "#asuser" do
     it "should set euid/egid when root" do
       Process.stubs(:uid).returns(0)
+      Puppet.features.stubs(:microsoft_windows?).returns(false)
 
       Process.stubs(:egid).returns(51)
       Process.stubs(:euid).returns(50)
@@ -168,6 +169,8 @@ describe Puppet::Util::SUIDManager do
     describe "with #system" do
       it "should set euid/egid when root" do
         Process.stubs(:uid).returns(0)
+        Puppet.features.stubs(:microsoft_windows?).returns(false)
+
         Process.stubs(:egid).returns(51)
         Process.stubs(:euid).returns(50)
 
