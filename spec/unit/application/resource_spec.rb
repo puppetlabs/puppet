@@ -235,12 +235,13 @@ describe Puppet::Application::Resource do
     end
 
     it "should output a file resource when given a file path" do
-      res = Puppet::Type.type(:file).new(:path => "/etc").to_resource
+      path = File.expand_path('/etc')
+      res = Puppet::Type.type(:file).new(:path => path).to_resource
       Puppet::Resource.indirection.expects(:find).returns(res)
 
-      @resource.command_line.stubs(:args).returns(['file', '/etc'])
+      @resource.command_line.stubs(:args).returns(['file', path])
       @resource.expects(:puts).with do |args|
-        args.should =~ /file \{ '\/etc'/m
+        args.should =~ /file \{ '#{Regexp.escape(path)}'/m
       end
 
       @resource.main
