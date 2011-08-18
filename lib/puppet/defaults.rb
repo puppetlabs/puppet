@@ -830,20 +830,34 @@ module Puppet
   )
 
   setdefaults(:master,
-    :storeconfigs => {:default => false, :desc => "Whether to store each client's configuration.  This
-      requires ActiveRecord from Ruby on Rails.",
-      :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
+    :storeconfigs => {
+      :default => false,
+      :desc => "Whether to store each client's configuration, including catalogs, facts,
+and related data.  This also enables the import and export of resources in
+the Puppet language - a mechanism for exchange resources between nodes.
+
+By default this uses ActiveRecord and an SQL database to store and query
+the data; this, in turn, will depend on Rails being available.
+
+You can adjust the backend using the storeconfigs_backend setting.",
+      # Call our hook with the default value, so we always get the libdir set.
+      :call_on_define => true,
       :hook => proc do |value|
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          require 'puppet/rails'
-          raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
-          Puppet::Resource::Catalog.indirection.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
-          Puppet::Node::Facts.indirection.cache_class = :active_record
-          Puppet::Node.indirection.cache_class = :active_record
+          Puppet.settings[:async_storeconfigs] or
+            Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+          Puppet::Node::Facts.indirection.cache_class = :store_configs
+          Puppet::Node.indirection.cache_class = :store_configs
         end
       end
+    },
+    :storeconfigs_backend => {
+      :default => "active_record",
+      :desc => "Configure the backend terminus used for StoreConfigs.
+By default, this uses the ActiveRecord store, which directly talks to the
+database from within the Puppet Master process."
     }
   )
 
