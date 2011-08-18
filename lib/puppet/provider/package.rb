@@ -1,6 +1,3 @@
-#  Created by Luke A. Kanies on 2007-06-05.
-#  Copyright (c) 2007. All rights reserved.
-
 class Puppet::Provider::Package < Puppet::Provider
   # Prefetch our package list, yo.
   def self.prefetch(packages)

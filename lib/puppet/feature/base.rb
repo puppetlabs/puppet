@@ -1,6 +1,3 @@
-#  Created by Luke Kanies on 2006-04-30.
-#  Copyright (c) 2006. All rights reserved.
-
 require 'puppet/util/feature'
 
 # Add the simple features, all in one file.

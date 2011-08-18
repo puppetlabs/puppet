@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2008-3-24.
-#  Copyright (c) 2008. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/network/client'
