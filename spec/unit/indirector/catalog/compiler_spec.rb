@@ -39,24 +39,6 @@ describe Puppet::Resource::Catalog::Compiler do
       compiler = Puppet::Resource::Catalog::Compiler.new
       compiler.should respond_to(:networked?)
     end
-
-    describe "and storeconfigs is enabled" do
-      before do
-        Puppet.settings.expects(:value).with(:storeconfigs).returns true
-      end
-
-      it "should initialize Rails if it is available" do
-        Puppet.features.expects(:rails?).returns true
-        Puppet::Rails.expects(:init)
-        Puppet::Resource::Catalog::Compiler.new
-      end
-
-      it "should fail if Rails is unavailable" do
-        Puppet.features.expects(:rails?).returns false
-        Puppet::Rails.expects(:init).never
-        lambda { Puppet::Resource::Catalog::Compiler.new }.should raise_error(Puppet::Error)
-      end
-    end
   end
 
   describe "when finding catalogs" do

@@ -49,7 +49,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
 
   def initialize
     set_server_facts
-    setup_database_backend if Puppet[:storeconfigs]
   end
 
   # Is our compiler part of a network, or are we just local?
@@ -150,11 +149,6 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
         @server_facts["servername"] = host
       end
     end
-  end
-
-  def setup_database_backend
-    raise Puppet::Error, "Rails is missing; cannot store configurations" unless Puppet.features.rails?
-    Puppet::Rails.init
   end
 
   # Mark that the node has checked in. LAK:FIXME this needs to be moved into
