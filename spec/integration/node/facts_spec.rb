@@ -3,8 +3,6 @@ require 'spec_helper'
 
 describe Puppet::Node::Facts do
   describe "when using the indirector" do
-    after(:each) { Puppet::Util::Cacher.expire }
-
     it "should expire any cached node instances when it is saved" do
       Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
 

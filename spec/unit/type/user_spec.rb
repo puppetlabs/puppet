@@ -3,7 +3,7 @@ require 'spec_helper'
 
 user = Puppet::Type.type(:user)
 
-describe user do
+describe user, :fails_on_windows => true do
   before do
     ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @provider = stub 'provider'

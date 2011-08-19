@@ -73,12 +73,12 @@ describe Puppet::Network::Handler::FileServer do
     @mount.list("/no_such_file", false, false).should be(nil)
   end
 
-  it "should list a symbolic link as a file when given the link path" do
+  it "should list a symbolic link as a file when given the link path", :unless => Puppet.features.microsoft_windows? do
     File.symlink(@file, @link)
     @mount.list("/aLink", false, false).should == [["/", "file"]]
   end
 
-  it "should return nil for a dangling symbolic link when given the link path" do
+  it "should return nil for a dangling symbolic link when given the link path", :unless => Puppet.features.microsoft_windows? do
     File.symlink("/some/where", @link)
     @mount.list("/aLink", false, false).should be(nil)
   end
@@ -138,18 +138,18 @@ describe Puppet::Network::Handler::FileServer do
     list.sort.should == [   ["/aFile", "file"], ["/", "directory"] , ["/nested_dir", "directory"], ["/nested_dir/nested_dir_file", "file"]].sort
   end
 
-  it "should list a valid symbolic link as a file when recursing base dir" do
+  it "should list a valid symbolic link as a file when recursing base dir", :unless => Puppet.features.microsoft_windows? do
     File.symlink(@file, @link)
     list = @mount.list("/", true, false)
     list.sort.should == [ ["/", "directory"], ["/aFile", "file"], ["/aLink", "file"] ].sort
   end
 
-  it "should not error when a dangling symlink is present" do
+  it "should not error when a dangling symlink is present", :unless => Puppet.features.microsoft_windows? do
     File.symlink("/some/where", @link)
     lambda { @mount.list("/", true, false) }.should_not raise_error
   end
 
-  it "should return the directory contents of valid entries when a dangling symlink is present" do
+  it "should return the directory contents of valid entries when a dangling symlink is present", :unless => Puppet.features.microsoft_windows? do
     File.symlink("/some/where", @link)
     list = @mount.list("/", true, false)
     list.sort.should == [ ["/aFile", "file"], ["/", "directory"] ].sort

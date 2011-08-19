@@ -23,7 +23,7 @@ Puppet::Type.newtype(:file) do
     location, rather than using native resources, please contact
     Puppet Labs and we can hopefully work with you to develop a
     native resource to support what you are doing.
-    
+
     **Autorequires:** If Puppet is managing the user or group that owns a file, the file resource will autorequire them. If Puppet is managing any parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
@@ -36,7 +36,7 @@ Puppet::Type.newtype(:file) do
 
     validate do |value|
       # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and value =~ /^\//) or (Puppet.features.microsoft_windows? and (value =~ /^.:\// or value =~ /^\/\/[^\/]+\/[^\/]+/))
+      unless (Puppet.features.posix? and value =~ /^\//) or (value =~ /^[A-Za-z]:\// or value =~ /^\/\/[^\/]+\/[^\/]+/)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -44,7 +44,21 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      path, name = ::File.split(value.gsub(/\/+/,'/'))
+      # We need to save off, and remove the volume designator in the
+      # path if it is there, since File.split does not handle paths
+      # with volume designators properly, except when run on Windows.
+      # Since we are potentially compiling a catalog for a Windows
+      # machine on a non-Windows master, we need to handle this
+      # ourselves.
+      optional_volume_designator = value.match(/^([a-z]:)[\/\\].*/i)
+      value_without_designator   = value.sub(/^(?:[a-z]:)?(.*)/i, '\1')
+
+      path, name = ::File.split(value_without_designator.gsub(/\/+/,'/'))
+
+      if optional_volume_designator
+        path = optional_volume_designator[1] + path
+      end
+
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
 
@@ -396,7 +410,7 @@ Puppet::Type.newtype(:file) do
     @parameters.each do |name, param|
       param.flush if param.respond_to?(:flush)
     end
-    @stat = nil
+    @stat = :needs_stat
   end
 
   def initialize(hash)
@@ -415,7 +429,7 @@ Puppet::Type.newtype(:file) do
       end
     end
 
-    @stat = nil
+    @stat = :needs_stat
   end
 
   # Configure discovered resources to be purged.
@@ -625,7 +639,7 @@ Puppet::Type.newtype(:file) do
     else
       self.fail "Could not back up files of type #{s.ftype}"
     end
-    expire
+    @stat = :needs_stat
   end
 
   def retrieve
@@ -676,22 +690,27 @@ Puppet::Type.newtype(:file) do
   # use either 'stat' or 'lstat', and we expect the properties to use the
   # resulting stat object accordingly (mostly by testing the 'ftype'
   # value).
-  cached_attr(:stat) do
+  #
+  # We use the initial value :needs_stat to ensure we only stat the file once,
+  # but can also keep track of a failed stat (@stat == nil). This also allows
+  # us to re-stat on demand by setting @stat = :needs_stat.
+  def stat
+    return @stat unless @stat == :needs_stat
+
     method = :stat
 
     # Files are the only types that support links
     if (self.class.name == :file and self[:links] != :follow) or self.class.name == :tidy
       method = :lstat
     end
-    path = self[:path]
 
-    begin
+    @stat = begin
       ::File.send(method, self[:path])
     rescue Errno::ENOENT => error
-      return nil
+      nil
     rescue Errno::EACCES => error
       warning "Could not stat; permission denied"
-      return nil
+      nil
     end
   end
 
@@ -778,7 +797,7 @@ Puppet::Type.newtype(:file) do
       next unless [:mode, :owner, :group, :seluser, :selrole, :seltype, :selrange].include?(thing.name)
 
       # Make sure we get a new stat objct
-      expire
+      @stat = :needs_stat
       currentvalue = thing.retrieve
       thing.sync unless thing.safe_insync?(currentvalue)
     end

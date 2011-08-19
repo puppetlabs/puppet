@@ -5,7 +5,7 @@ require 'puppet/ssl/certificate_authority'
 
 describe Puppet::SSL::CertificateAuthority do
   after do
-    Puppet::Util::Cacher.expire
+    Puppet::SSL::CertificateAuthority.instance_variable_set(:@singleton_instance, nil)
     Puppet.settings.clearused
   end
 
@@ -25,7 +25,7 @@ describe Puppet::SSL::CertificateAuthority do
   describe "when finding an existing instance" do
     describe "and the host is a CA host and the run_mode is master" do
       before do
-        Puppet.settings.stubs(:value).with(:ca).returns true
+        Puppet[:ca] = true
         Puppet.run_mode.stubs(:master?).returns true
 
         @ca = mock('ca')

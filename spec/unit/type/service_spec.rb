@@ -57,6 +57,21 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     Puppet::Type.type(:service).new(:name => "yay", :enable => :false)
   end
 
+  it "should support :manual as a value to :enable on Windows" do
+    Puppet.features.stubs(:microsoft_windows?).returns true
+
+    Puppet::Type.type(:service).new(:name => "yay", :enable => :manual)
+  end
+
+  it "should not support :manual as a value to :enable when not on Windows" do
+    Puppet.features.stubs(:microsoft_windows?).returns false
+
+    expect { Puppet::Type.type(:service).new(:name => "yay", :enable => :manual) }.to raise_error(
+      Puppet::Error,
+      /Setting enable to manual is only supported on Microsoft Windows\./
+    )
+  end
+
   it "should support :true as a value to :hasstatus" do
     Puppet::Type.type(:service).new(:name => "yay", :hasstatus => :true)
   end

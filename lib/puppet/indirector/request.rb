@@ -76,7 +76,9 @@ class Puppet::Indirector::Request
       # because it rewrites the key.  We could otherwise strip server/port/etc
       # info out in the REST class, but it seemed bad design for the REST
       # class to rewrite the key.
-      if key.to_s =~ /^\w+:\/\// # it's a URI
+      if key.to_s =~ /^[a-z]:[\/\\]/i # It's an absolute path for Windows.
+        @key = key
+      elsif key.to_s =~ /^\w+:\/\// # it's a URI
         set_uri_key(key)
       else
         @key = key

@@ -275,7 +275,7 @@ describe Puppet::Module do
 
     FileUtils.mkdir_p(first)
     FileUtils.mkdir_p(second)
-    Puppet[:modulepath] = "#{first}:#{second}"
+    Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
 
     modpath = File.join(first, "foo")
     FileUtils.mkdir_p(modpath)
@@ -294,7 +294,7 @@ describe Puppet::Module do
 
     FileUtils.mkdir_p(first)
     FileUtils.mkdir_p(second)
-    Puppet[:modulepath] = "#{first}:#{second}"
+    Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
 
     modpath = File.join(second, "foo")
     FileUtils.mkdir_p(modpath)

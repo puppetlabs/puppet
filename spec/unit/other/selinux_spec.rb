@@ -5,11 +5,13 @@ require 'puppet/type/selboolean'
 require 'puppet/type/selmodule'
 
 describe Puppet::Type.type(:file), " when manipulating file contexts" do
+  include PuppetSpec::Files
+
   before :each do
 
           @file = Puppet::Type::File.new(
                 
-      :name => "/tmp/foo",
+      :name => make_absolute("/tmp/foo"),
       :ensure => "file",
       :seluser => "user_u",
       :selrole => "role_r",

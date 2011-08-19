@@ -11,6 +11,4 @@ describe Puppet::FileServing::Content, " when finding files" do
     @test_class = Puppet::FileServing::Content
     @indirection = Puppet::FileServing::Content.indirection
   end
-
-  after { Puppet::Util::Cacher.expire }
 end

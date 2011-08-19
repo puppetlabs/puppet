@@ -9,7 +9,6 @@ describe Puppet::Resource::Catalog do
   end
 
   describe "when using the indirector" do
-    after { Puppet::Util::Cacher.expire }
     before do
       # This is so the tests work w/out networking.
       Facter.stubs(:to_hash).returns({"hostname" => "foo.domain.com"})

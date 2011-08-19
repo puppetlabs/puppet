@@ -3,9 +3,10 @@ require 'spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
   end
 
   [:catalog, :file, :line].each do |attr|

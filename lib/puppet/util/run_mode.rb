@@ -27,14 +27,14 @@ module Puppet
 
       def conf_dir
         which_dir(
-          (Puppet.features.microsoft_windows? ? File.join(Dir::WINDOWS, "puppet", "etc") : "/etc/puppet"),
+          (Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc") : "/etc/puppet"),
           "~/.puppet"
         )
       end
 
       def var_dir
         which_dir(
-          (Puppet.features.microsoft_windows? ? File.join(Dir::WINDOWS, "puppet", "var") : "/var/lib/puppet"),
+          (Puppet.features.microsoft_windows? ? File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "var") : "/var/lib/puppet"),
           "~/.puppet/var"
         )
       end

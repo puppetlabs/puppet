@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/util/cacher'
 require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
@@ -21,7 +20,6 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::Util::Cacher
   include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
 
@@ -467,12 +465,6 @@ class Type
   # a property.
   def event(options = {})
     Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
-  end
-
-  # Let the catalog determine whether a given cached value is
-  # still valid or has expired.
-  def expirer
-    catalog
   end
 
   # retrieve the 'should' value for a specified property

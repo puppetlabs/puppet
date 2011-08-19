@@ -40,7 +40,19 @@ Puppet.features.add(:posix) do
 end
 
 # We can use Microsoft Windows functions
-Puppet.features.add(:microsoft_windows, :libs => ["sys/admin", "win32/process", "win32/dir"])
+Puppet.features.add(:microsoft_windows) do
+  begin
+    require 'sys/admin'
+    require 'win32/process'
+    require 'win32/dir'
+    require 'win32/service'
+    require 'win32ole'
+    require 'win32/api'
+    true
+  rescue LoadError => err
+    warn "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir & win32-service gems: #{err}" unless Puppet.features.posix?
+  end
+end
 
 raise Puppet::Error,"Cannot determine basic system flavour" unless Puppet.features.posix? or Puppet.features.microsoft_windows?
 

@@ -109,7 +109,7 @@ describe Puppet::Property do
     end
   end
 
-  describe "when creating an event" do
+  describe "when creating an event", :fails_on_windows => true do
     before do
       @event = Puppet::Transaction::Event.new
 

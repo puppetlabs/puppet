@@ -254,6 +254,7 @@ describe content do
       @content.should = "{md5}foo"
       @content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
       @content.write(@fh)
+      @fh.close
     end
 
     describe "from actual content" do
@@ -298,7 +299,7 @@ describe content do
       end
     end
 
-    describe "from local source" do
+    describe "from local source", :fails_on_windows => true do
       before(:each) do
         @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
         @sourcename = tmpfile('source')
