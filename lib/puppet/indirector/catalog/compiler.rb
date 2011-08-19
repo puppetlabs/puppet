@@ -150,16 +150,4 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       end
     end
   end
-
-  # Mark that the node has checked in. LAK:FIXME this needs to be moved into
-  # the Node class, or somewhere that's got abstract backends.
-  def update_node_check(node)
-    if Puppet.features.rails? and Puppet[:storeconfigs]
-      Puppet::Rails.connect
-
-      host = Puppet::Rails::Host.find_or_create_by_name(node.name)
-      host.last_freshcheck = Time.now
-      host.save
-    end
-  end
 end
