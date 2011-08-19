@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2008-4-8.
-#  Copyright (c) 2008. All rights reserved.
-
 shared_examples_for "A Memory Terminus" do
   it "should find no instances by default" do
     @searcher.find(@request).should be_nil
