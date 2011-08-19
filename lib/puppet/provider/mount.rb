@@ -1,6 +1,3 @@
-#  Created by Luke Kanies on 2006-11-12.
-#  Copyright (c) 2006. All rights reserved.
-
 require 'puppet'
 
 # A module just to store the mount/unmount methods.  Individual providers

@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2008-3-19.
-#  Copyright (c) 2006. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/util/ldap/manager'

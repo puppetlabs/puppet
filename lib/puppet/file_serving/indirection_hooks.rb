@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'uri'
 require 'puppet/file_serving'
 

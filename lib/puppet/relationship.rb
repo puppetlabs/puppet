@@ -1,7 +1,4 @@
 #!/usr/bin/env ruby
-#
-#  Created by Luke A. Kanies on 2006-11-24.
-#  Copyright (c) 2006. All rights reserved.
 
 # subscriptions are permanent associations determining how different
 # objects react to an event
