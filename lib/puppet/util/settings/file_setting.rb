@@ -86,7 +86,7 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     path = File.expand_path(path)
 
     return nil unless type == :directory or create_files? or File.exist?(path)
-    return nil if path =~ /^\/dev/
+    return nil if path =~ /^\/dev/ or path =~ /^[A-Z]:\/dev/i
 
     resource = Puppet::Resource.new(:file, path)
 

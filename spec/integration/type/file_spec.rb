@@ -12,7 +12,7 @@ describe Puppet::Type.type(:file) do
   end
 
   it "should not attempt to manage files that do not exist if no means of creating the file is specified" do
-    file = Puppet::Type.type(:file).new :path => "/my/file", :mode => "755"
+    file = Puppet::Type.type(:file).new :path => make_absolute("/my/file"), :mode => "755"
     catalog = Puppet::Resource::Catalog.new
     catalog.add_resource file
 
@@ -23,7 +23,7 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when writing files" do
-    it "should backup files to a filebucket when one is configured" do
+    it "should backup files to a filebucket when one is configured", :fails_on_windows => true do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo"
       catalog = Puppet::Resource::Catalog.new
@@ -73,7 +73,7 @@ describe Puppet::Type.type(:file) do
       File.read(file[:path]).should == "bar\n"
     end
 
-    it "should not backup symlinks" do
+    it "should not backup symlinks", :unless => Puppet.features.microsoft_windows? do
       link = tmpfile("link")
       dest1 = tmpfile("dest1")
       dest2 = tmpfile("dest2")
@@ -110,7 +110,7 @@ describe Puppet::Type.type(:file) do
       File.read(File.join(backup, "foo")).should == "yay"
     end
 
-    it "should backup directories to filebuckets by backing up each file separately" do
+    it "should backup directories to filebuckets by backing up each file separately", :fails_on_windows => true do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = Puppet::Type.type(:file).new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
       catalog = Puppet::Resource::Catalog.new
@@ -172,7 +172,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recurse over a nonexistent file" do
+    it "should be able to recurse over a nonexistent file", :fails_on_windows => true do
       @path = tmpfile("file_integration_tests")
 
       @file = Puppet::Type::File.new(
@@ -214,7 +214,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively make links to other files" do
+    it "should be able to recursively make links to other files", :unless => Puppet.features.microsoft_windows? do
       source = tmpfile("file_link_integration_source")
 
       build_path(source)
@@ -241,7 +241,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively copy files" do
+    it "should be able to recursively copy files", :fails_on_windows => true do
       source = tmpfile("file_source_integration_source")
 
       build_path(source)
@@ -292,24 +292,25 @@ describe Puppet::Type.type(:file) do
     it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
       dir = tmpfile("recursion_vs_explicit_2")
 
-      managed   = File.join(dir, "file")
-      generated = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+      managed      = File.join(dir, "file")
+      generated    = File.join(dir, "file_with_a_name_starting_with_the_word_file")
+      managed_mode = Puppet.features.microsoft_windows? ? 0444 : 0700
 
       FileUtils.mkdir_p(dir)
       File.open(managed,   "w") { |f| f.puts "" }
       File.open(generated, "w") { |f| f.puts "" }
 
       @catalog = Puppet::Resource::Catalog.new
-      @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => "755")
+      @catalog.add_resource Puppet::Type::File.new(:name => dir,     :recurse => true, :backup => false, :mode => managed_mode)
       @catalog.add_resource Puppet::Type::File.new(:name => managed, :recurse => true, :backup => false, :mode => "644")
 
       @catalog.apply
 
-      (File.stat(generated).mode & 007777).should == 0755
+      (File.stat(generated).mode & 007777).should == managed_mode
     end
   end
 
-  describe "when generating resources" do
+  describe "when generating resources", :fails_on_windows => true do
     before do
       @source = tmpfile("generating_in_catalog_source")
 
@@ -381,8 +382,9 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
+      expected_mode = Puppet.features.microsoft_windows? ? 0644 : 0755
       File.read(dest).should == "foo"
-      (File.stat(dest).mode & 007777).should == 0755
+      (File.stat(dest).mode & 007777).should == expected_mode
     end
 
     it "should be able to copy individual files even if recurse has been specified" do
@@ -442,7 +444,7 @@ describe Puppet::Type.type(:file) do
 
 
     file = Puppet::Type.type(:file).new(
-      :name   => dest,
+      :name   => make_absolute(dest),
       :ensure => :absent,
       :source => source,
       :backup => false
@@ -470,7 +472,6 @@ describe Puppet::Type.type(:file) do
       # this file should get removed
       File.open(@purgee, "w") { |f| f.puts "footest" }
 
-
       @lfobj = Puppet::Type.newfile(
         :title   => "localfile",
         :path    => @localfile,
@@ -478,7 +479,6 @@ describe Puppet::Type.type(:file) do
         :ensure  => :file,
         :backup  => false
       )
-
 
       @destobj = Puppet::Type.newfile(
         :title   => "destdir",

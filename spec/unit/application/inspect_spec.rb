@@ -103,6 +103,7 @@ describe Puppet::Application::Inspect do
       catalog = Puppet::Resource::Catalog.new
       file = Tempfile.new("foo")
       resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})
+      file.close
       file.delete
       catalog.add_resource(resource)
       Puppet::Resource::Catalog::Yaml.any_instance.stubs(:find).returns(catalog)
@@ -147,7 +148,7 @@ describe Puppet::Application::Inspect do
           @inspect.run_command
         end
 
-        it "should not send unreadable files" do
+        it "should not send unreadable files", :unless => Puppet.features.microsoft_windows? do
           File.open(@file, 'w') { |f| f.write('stuff') }
           File.chmod(0, @file)
           Puppet::FileBucketFile::Rest.any_instance.expects(:head).never

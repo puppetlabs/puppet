@@ -43,6 +43,8 @@ class CompilerTestResource
 end
 
 describe Puppet::Parser::Compiler do
+  include PuppetSpec::Files
+
   def resource(type, title)
     Puppet::Parser::Resource.new(type, title, :scope => @scope)
   end
@@ -413,7 +415,7 @@ describe Puppet::Parser::Compiler do
     end
 
     it "should fail to add resources that conflict with existing resources" do
-      path = Puppet.features.posix? ? "/foo" : "C:/foo"
+      path = make_absolute("/foo")
       file1 = Puppet::Type.type(:file).new :path => path
       file2 = Puppet::Type.type(:file).new :path => path
 

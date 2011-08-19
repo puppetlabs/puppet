@@ -51,7 +51,7 @@ describe resources do
           @resources.generate.collect { |r| r.ref }.should_not include(@host1.ref)
         end
 
-        it "should not include the skipped users", :'fails_on_ruby_1.9.2' => true do
+        it "should not include the skipped users", :'fails_on_ruby_1.9.2' => true, :fails_on_windows => true do
           res = Puppet::Type.type(:resources).new :name => :user, :purge => true
           res.catalog = Puppet::Resource::Catalog.new
 
@@ -72,7 +72,7 @@ describe resources do
           end
         end
 
-        describe "when the instance's do not have an ensure property" do
+        describe "when the instance's do not have an ensure property", :fails_on_windows => true do
           it "should not be included in the generated resources" do
             @no_ensure_resource = Puppet::Type.type(:exec).new(:name => '/usr/bin/env echo')
             Puppet::Type.type(:host).stubs(:instances).returns [@no_ensure_resource]

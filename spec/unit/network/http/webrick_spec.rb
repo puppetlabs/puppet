@@ -4,13 +4,13 @@ require 'puppet/network/handler'
 require 'puppet/network/http'
 require 'puppet/network/http/webrick'
 
-describe Puppet::Network::HTTP::WEBrick, "after initializing" do
+describe Puppet::Network::HTTP::WEBrick, "after initializing", :unless => Puppet.features.microsoft_windows? do
   it "should not be listening" do
     Puppet::Network::HTTP::WEBrick.new.should_not be_listening
   end
 end
 
-describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
+describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless => Puppet.features.microsoft_windows? do
   before do
     @mock_webrick = stub('webrick', :[] => {}, :listeners => [], :status => :Running)
     [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
@@ -139,7 +139,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening" do
 end
 
 
-describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol" do
+describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol", :unless => Puppet.features.microsoft_windows? do
   it "should require a protocol" do
     lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol }.should raise_error(ArgumentError)
   end
@@ -157,7 +157,7 @@ describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a 
   end
 end
 
-describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
+describe Puppet::Network::HTTP::WEBrick, "when turning off listening", :unless => Puppet.features.microsoft_windows? do
   before do
     @mock_webrick = stub('webrick', :[] => {}, :listeners => [], :status => :Running)
     [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}
@@ -184,7 +184,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning off listening" do
   end
 end
 
-describe Puppet::Network::HTTP::WEBrick do
+describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_windows? do
   before do
     @mock_webrick = stub('webrick', :[] => {})
     [:mount, :start, :shutdown].each {|meth| @mock_webrick.stubs(meth)}

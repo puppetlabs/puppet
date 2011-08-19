@@ -11,8 +11,10 @@ def without_warnings
 end
 
 describe Puppet::Transaction do
+  include PuppetSpec::Files
+
   before do
-    @basepath = Puppet.features.posix? ? "/what/ever" : "C:/tmp"
+    @basepath = make_absolute("/what/ever")
     @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
   end
 

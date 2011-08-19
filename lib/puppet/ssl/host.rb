@@ -4,7 +4,6 @@ require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
-require 'puppet/util/cacher'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -27,14 +26,10 @@ class Puppet::SSL::Host
   # This accessor is used in instances for indirector requests to hold desired state
   attr_accessor :desired_state
 
-  class << self
-    include Puppet::Util::Cacher
-
-    cached_attr(:localhost) do
-      result = new
-      result.generate unless result.certificate
-      result.key # Make sure it's read in
-      result
+  def self.localhost
+    @localhost ||= new.tap do |l|
+      l.generate unless l.certificate
+      l.key # Make sure it's read in
     end
   end
 

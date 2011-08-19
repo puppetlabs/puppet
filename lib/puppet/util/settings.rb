@@ -2,13 +2,11 @@ require 'puppet'
 require 'sync'
 require 'getoptlong'
 require 'puppet/external/event-loop'
-require 'puppet/util/cacher'
 require 'puppet/util/loadedfile'
 
 # The class for handling configuration files.
 class Puppet::Util::Settings
   include Enumerable
-  include Puppet::Util::Cacher
 
   require 'puppet/util/settings/setting'
   require 'puppet/util/settings/file_setting'
@@ -401,11 +399,10 @@ class Puppet::Util::Settings
     }
   end
 
-  # Cache this in an easily clearable way, since we were
-  # having trouble cleaning it up after tests.
-  cached_attr(:file) do
+  def file
+    return @file if @file
     if path = self[:config] and FileTest.exist?(path)
-      Puppet::Util::LoadedFile.new(path)
+      @file = Puppet::Util::LoadedFile.new(path)
     end
   end
 

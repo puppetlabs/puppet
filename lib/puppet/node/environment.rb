@@ -95,7 +95,7 @@ class Puppet::Node::Environment
 
   # Cache the modulepath, so that we aren't searching through
   # all known directories all the time.
-  cached_attr(:modulepath, :ttl => Puppet[:filetimeout]) do
+  cached_attr(:modulepath, Puppet[:filetimeout]) do
     dirs = self[:modulepath].split(File::PATH_SEPARATOR)
     dirs = ENV["PUPPETLIB"].split(File::PATH_SEPARATOR) + dirs if ENV["PUPPETLIB"]
     validate_dirs(dirs)
@@ -103,7 +103,7 @@ class Puppet::Node::Environment
 
   # Return all modules from this environment.
   # Cache the list, because it can be expensive to create.
-  cached_attr(:modules, :ttl => Puppet[:filetimeout]) do
+  cached_attr(:modules, Puppet[:filetimeout]) do
     module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
     module_names.collect do |path|
       begin
@@ -112,12 +112,6 @@ class Puppet::Node::Environment
         nil
       end
     end.compact
-  end
-
-  # Cache the manifestdir, so that we aren't searching through
-  # all known directories all the time.
-  cached_attr(:manifestdir, :ttl => Puppet[:filetimeout]) do
-    validate_dirs(self[:manifestdir].split(File::PATH_SEPARATOR))
   end
 
   def to_s
@@ -136,14 +130,18 @@ class Puppet::Node::Environment
   end
 
   def validate_dirs(dirs)
+    dir_regex = Puppet.features.microsoft_windows? ? /^[A-Za-z]:#{File::SEPARATOR}/ : /^#{File::SEPARATOR}/
+    # REMIND: Dir.getwd on windows returns a path containing backslashes, which when joined with
+    # dir containing forward slashes, breaks our regex matching. In general, path validation needs
+    # to be refactored which will be handled in a future commit.
     dirs.collect do |dir|
-      if dir !~ /^#{File::SEPARATOR}/
-        File.join(Dir.getwd, dir)
+      if dir !~ dir_regex
+        File.expand_path(File.join(Dir.getwd, dir))
       else
         dir
       end
     end.find_all do |p|
-      p =~ /^#{File::SEPARATOR}/ && FileTest.directory?(p)
+      p =~ dir_regex && FileTest.directory?(p)
     end
   end
 

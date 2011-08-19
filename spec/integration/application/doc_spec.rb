@@ -5,7 +5,7 @@ require 'puppet_spec/files'
 describe Puppet::Application::Doc do
   include PuppetSpec::Files
 
-  it "should not generate an error when module dir overlaps parent of site.pp (#4798)", :'fails_on_ruby_1.9.2' => true do
+  it "should not generate an error when module dir overlaps parent of site.pp (#4798)", :'fails_on_ruby_1.9.2' => true, :unless => Puppet.features.microsoft_windows? do
     begin
       # Note: the directory structure below is more complex than it
       # needs to be, but it's representative of the directory structure

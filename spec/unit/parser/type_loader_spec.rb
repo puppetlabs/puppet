@@ -56,8 +56,8 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should use the directory of the current file if one is set" do
-      Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| opts[:cwd] == "/current" }.returns ["modname", %w{one}]
-      @loader.import("myfile", "/current/file")
+      Puppet::Parser::Files.expects(:find_manifests).with { |pat, opts| opts[:cwd] == make_absolute("/current") }.returns ["modname", %w{one}]
+      @loader.import("myfile", make_absolute("/current/file"))
     end
 
     it "should pass the environment when looking for files" do
@@ -71,15 +71,15 @@ describe Puppet::Parser::TypeLoader do
     end
 
     it "should parse each found file" do
-      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{/one}]
-      @loader.expects(:parse_file).with("/one").returns(Puppet::Parser::AST::Hostclass.new(''))
+      Puppet::Parser::Files.expects(:find_manifests).returns ["modname", [make_absolute("/one")]]
+      @loader.expects(:parse_file).with(make_absolute("/one")).returns(Puppet::Parser::AST::Hostclass.new(''))
       @loader.import("myfile")
     end
 
     it "should make each file qualified before attempting to parse it" do
       Puppet::Parser::Files.expects(:find_manifests).returns ["modname", %w{one}]
-      @loader.expects(:parse_file).with("/current/one").returns(Puppet::Parser::AST::Hostclass.new(''))
-      @loader.import("myfile", "/current/file")
+      @loader.expects(:parse_file).with(make_absolute("/current/one")).returns(Puppet::Parser::AST::Hostclass.new(''))
+      @loader.import("myfile", make_absolute("/current/file"))
     end
 
     it "should not attempt to import files that have already been imported" do
@@ -102,7 +102,7 @@ describe Puppet::Parser::TypeLoader do
       @modulebase2 = File.join(@base, "second")
       FileUtils.mkdir_p(@modulebase2)
 
-      Puppet[:modulepath] = "#{@modulebase1}:#{@modulebase2}"
+      Puppet[:modulepath] = "#{@modulebase1}#{File::PATH_SEPARATOR}#{@modulebase2}"
     end
 
     def mk_module(basedir, name)

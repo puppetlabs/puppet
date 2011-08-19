@@ -277,4 +277,14 @@ describe "Puppet defaults" do
     subject { Puppet.settings[:reporturl] }
     it { should == "http://localhost:3000/reports/upload" }
   end
+
+  describe "when configuring color" do
+    it "should default to ansi", :unless => Puppet.features.microsoft_windows? do
+      Puppet.settings[:color].should == 'ansi'
+    end
+
+    it "should default to false", :if => Puppet.features.microsoft_windows? do
+      Puppet.settings[:color].should == 'false'
+    end
+  end
 end

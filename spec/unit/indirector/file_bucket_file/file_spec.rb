@@ -111,7 +111,7 @@ describe Puppet::FileBucketFile::File do
       end
     end
 
-    describe "when diffing files" do
+    describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
       it "should generate an empty string if there is no diff" do
         checksum = save_bucket_file("I'm the contents of a file")
         Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => checksum).should == ''
@@ -243,11 +243,11 @@ HERE
   describe "when verifying identical files" do
     before do
       # this is the default from spec_helper, but it keeps getting reset at odd times
-      Puppet[:bucketdir] = "/dev/null/bucket"
+      Puppet[:bucketdir] = make_absolute("/dev/null/bucket")
 
       @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
       @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-      @dir = '/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0'
+      @dir = make_absolute('/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0')
 
       @contents = "file contents"
 

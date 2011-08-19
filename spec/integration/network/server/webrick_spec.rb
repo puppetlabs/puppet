@@ -4,7 +4,9 @@ require 'puppet/network/server'
 require 'puppet/ssl/certificate_authority'
 require 'socket'
 
-describe Puppet::Network::Server do
+describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? do
+  include PuppetSpec::Files
+
   describe "when using webrick" do
     before :each do
       Puppet[:servertype] = 'webrick'
@@ -12,11 +14,10 @@ describe Puppet::Network::Server do
       @params = { :port => 34343, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
 
       # Get a safe temporary file
-      @tmpfile = Tempfile.new("webrick_integration_testing")
-      @dir = @tmpfile.path + "_dir"
+      dir = tmpdir("webrick_integration_testing")
 
-      Puppet.settings[:confdir] = @dir
-      Puppet.settings[:vardir] = @dir
+      Puppet.settings[:confdir] = dir
+      Puppet.settings[:vardir] = dir
       Puppet.settings[:group] = Process.gid
 
       Puppet::SSL::Host.ca_location = :local
@@ -26,13 +27,9 @@ describe Puppet::Network::Server do
     end
 
     after do
-      @tmpfile.delete
       Puppet.settings.clear
 
-      system("rm -rf #{@dir}")
-
       Puppet::SSL::Host.ca_location = :none
-      Puppet::Util::Cacher.expire
     end
 
     describe "before listening" do
