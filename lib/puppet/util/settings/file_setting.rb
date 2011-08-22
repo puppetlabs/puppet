@@ -93,7 +93,8 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     if Puppet[:manage_internal_file_permissions]
       resource[:mode] = self.mode if self.mode
 
-      if Puppet.features.root?
+      # REMIND fails on Windows because chown/chgrp functionality not supported yet
+      if Puppet.features.root? and !Puppet.features.microsoft_windows?
         resource[:owner] = self.owner if self.owner
         resource[:group] = self.group if self.group
       end

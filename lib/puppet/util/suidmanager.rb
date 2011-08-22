@@ -37,7 +37,20 @@ module Puppet::Util::SUIDManager
   module_function :groups=
 
   def self.root?
-    Process.uid == 0
+    return Process.uid == 0 unless Puppet.features.microsoft_windows?
+
+    require 'sys/admin'
+    require 'win32/security'
+
+    # if Vista or later, check for unrestricted process token
+    begin
+      return Win32::Security.elevated_security?
+    rescue Win32::Security::Error => e
+      raise e unless e.to_s =~ /Incorrect function/i
+    end
+
+    group = Sys::Admin.get_group("Administrators", :sid => Win32::Security::SID::BuiltinAdministrators)
+    group and group.members.index(Sys::Admin.get_login) != nil
   end
 
   # Runs block setting uid and gid if provided then restoring original ids

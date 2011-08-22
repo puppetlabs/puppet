@@ -66,6 +66,14 @@ describe Puppet::Util::SUIDManager do
 
       xids.should be_empty
     end
+
+    it "should not get or set euid/egid on Windows" do
+      Puppet.features.stubs(:microsoft_windows?).returns true
+
+      Puppet::Util::SUIDManager.asuser(user[:uid], user[:gid]) {}
+
+      xids.should be_empty
+    end
   end
 
   describe "#change_group" do
@@ -195,6 +203,15 @@ describe Puppet::Util::SUIDManager do
 
         xids.should be_empty
       end
+
+      it "should not get or set euid/egid on Windows" do
+        Puppet.features.stubs(:microsoft_windows?).returns true
+        Kernel.expects(:system).with('blah')
+
+        Puppet::Util::SUIDManager.system('blah', user[:uid], user[:gid])
+
+        xids.should be_empty
+      end
     end
 
     describe "with #run_and_capture" do
@@ -207,6 +224,78 @@ describe Puppet::Util::SUIDManager do
 
         output.first.should == 'output'
         output.last.should be_a(Process::Status)
+      end
+    end
+  end
+
+  describe "#root?" do
+    describe "on POSIX systems" do
+      before :each do
+        Puppet.features.stubs(:posix?).returns(true)
+        Puppet.features.stubs(:microsoft_windows?).returns(false)
+      end
+
+      it "should be root if uid is 0" do
+        Process.stubs(:uid).returns(0)
+
+        Puppet::Util::SUIDManager.should be_root
+      end
+
+      it "should not be root if uid is not 0" do
+        Process.stubs(:uid).returns(1)
+
+        Puppet::Util::SUIDManager.should_not be_root
+      end
+    end
+
+    describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
+      describe "2003 without UAC" do
+        it "should be root if user is a member of the Administrators group" do
+          Win32::Security.stubs(:elevated_security?).raises(Win32::Security::Error, "Incorrect function.")
+          Sys::Admin.stubs(:get_login).returns("Administrator")
+          Sys::Group.stubs(:members).returns(%w[Administrator])
+
+          Puppet::Util::SUIDManager.should be_root
+        end
+
+        it "should not be root if the process is running as Guest" do
+          Win32::Security.stubs(:elevated_security?).raises(Win32::Security::Error, "Incorrect function.")
+          Sys::Admin.stubs(:get_login).returns("Guest")
+          Sys::Group.stubs(:members).returns([])
+
+          Puppet::Util::SUIDManager.should_not be_root
+        end
+
+        it "should raise an exception if the process fails to open the process token" do
+          Win32::Security.stubs(:elevated_security?).raises(Win32::Security::Error, "Access denied.")
+          Sys::Admin.stubs(:get_login).returns("Administrator")
+          Sys::Group.expects(:members).never
+
+          lambda { Puppet::Util::SUIDManager.should raise_error(Win32::Security::Error, /Access denied./) }
+        end
+      end
+
+      describe "2008 with UAC" do
+        it "should be root if user is running with elevated privileges" do
+          Win32::Security.stubs(:elevated_security?).returns(true)
+          Sys::Admin.expects(:get_login).never
+
+          Puppet::Util::SUIDManager.should be_root
+        end
+
+        it "should not be root if user is not running with elevated privileges" do
+          Win32::Security.stubs(:elevated_security?).returns(false)
+          Sys::Admin.expects(:get_login).never
+
+          Puppet::Util::SUIDManager.should_not be_root
+        end
+
+        it "should raise an exception if the process fails to open the process token" do
+          Win32::Security.stubs(:elevated_security?).raises(Win32::Security::Error, "Access denied.")
+          Sys::Admin.expects(:get_login).never
+
+          lambda { Puppet::Util::SUIDManager.should raise_error(Win32::Security::Error, /Access denied./) }
+        end
       end
     end
   end
