@@ -189,6 +189,8 @@ describe Puppet::Util::Settings::FileSetting do
 
     it "should set the owner if running as root and the owner is provided" do
       Puppet.features.expects(:root?).returns true
+      Puppet.features.stubs(:microsoft_windows?).returns false
+
       @file.stubs(:owner).returns "foo"
       @file.to_resource[:owner].should == "foo"
     end
@@ -203,6 +205,8 @@ describe Puppet::Util::Settings::FileSetting do
 
     it "should set the group if running as root and the group is provided" do
       Puppet.features.expects(:root?).returns true
+      Puppet.features.stubs(:microsoft_windows?).returns false
+
       @file.stubs(:group).returns "foo"
       @file.to_resource[:group].should == "foo"
     end
@@ -218,14 +222,32 @@ describe Puppet::Util::Settings::FileSetting do
 
     it "should not set owner if not running as root" do
       Puppet.features.expects(:root?).returns false
+      Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:owner).returns "foo"
       @file.to_resource[:owner].should be_nil
     end
 
     it "should not set group if not running as root" do
       Puppet.features.expects(:root?).returns false
+      Puppet.features.stubs(:microsoft_windows?).returns false
       @file.stubs(:group).returns "foo"
       @file.to_resource[:group].should be_nil
+    end
+
+    describe "on Microsoft Windows systems" do
+      before :each do
+        Puppet.features.stubs(:microsoft_windows?).returns true
+      end
+
+      it "should not set owner" do
+        @file.stubs(:owner).returns "foo"
+        @file.to_resource[:owner].should be_nil
+      end
+
+      it "should not set group" do
+        @file.stubs(:group).returns "foo"
+        @file.to_resource[:group].should be_nil
+      end
     end
 
     it "should set :ensure to the file type" do
