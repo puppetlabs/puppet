@@ -89,63 +89,36 @@ class Puppet::Parser::Collector
 
   private
 
-  # Create our active record query.
-  def build_active_record_query
-    Puppet::Rails.init unless ActiveRecord::Base.connected?
-
-    raise Puppet::DevError, "Cannot collect resources for a nil host" unless @scope.host
-    host = Puppet::Rails::Host.find_by_name(@scope.host)
-
-    search = "(exported=? AND restype=?)"
-    values = [true, @type]
-
-    search += " AND (#{@equery})" if @equery
-
-    # note: we're not eagerly including any relations here because it can
-    # creates so much objects we'll throw out later.  We used to eagerly
-    # include param_names/values but the way the search filter is built ruined
-    # those efforts and we were eagerly loading only the searched parameter
-    # and not the other ones.
-    query = {}
-    case search
-    when /puppet_tags/
-      query = {:joins => {:resource_tags => :puppet_tag}}
-    when /param_name/
-      query = {:joins => {:param_values => :param_name}}
-    end
-
-    # We're going to collect objects from rails, but we don't want any
-    # objects from this host.
-    search = ("host_id != ? AND #{search}") and values.unshift(host.id) if host
-
-    query[:conditions] = [search, *values]
-
-    query
-  end
-
   # Collect exported objects.
   def collect_exported
-    # First get everything from the export table.  Just reuse our
-    # collect_virtual method but tell it to use 'exported? for the test.
-    resources = collect_virtual(true).reject { |r| ! r.virtual? }
+    resources = []
 
-    count = resources.length
-
-    query = build_active_record_query
-
-    # Now look them up in the rails db.  When we support attribute comparison
-    # and such, we'll need to vary the conditions, but this works with no
-    # attributes, anyway.
     time = Puppet::Util.thinmark do
-      Puppet::Rails::Resource.find(:all, query).each do |obj|
-        if resource = exported_resource(obj)
-          count += 1
-          resources << resource
+      # First get everything from the export table.  Just reuse our
+      # collect_virtual method but tell it to use 'exported? for the test.
+      resources = collect_virtual(true).reject { |r| ! r.virtual? }
+
+      # key is '#{type}/#{name}', and host and filter.
+      found = Puppet::Resource.indirection.
+        search(@type, :host => @scope.host, :filter => @equery)
+
+      found.map {|x| x.to_resource(@scope) }.each do |item|
+        if existing = @scope.findresource(item.type, item.title)
+          unless existing.collector_id == item.collector_id
+            # unless this is the one we've already collected
+            raise Puppet::ParseError,
+              "Exported resource #{item.ref} cannot override local resource"
+          end
+        else
+          item.exported = false
+          @scope.compiler.add_resource(@scope, item)
+          resources << item
         end
       end
     end
 
-    scope.debug("Collected %s %s resource%s in %.2f seconds" % [count, @type, count == 1 ? "" : "s", time])
+    scope.debug("Collected %s %s resource%s in %.2f seconds" %
+                [resources.length, @type, resources.length == 1 ? "" : "s", time])
 
     resources
   end
@@ -185,25 +158,6 @@ class Puppet::Parser::Collector
     scope.compiler.resources.find_all do |resource|
       resource.type == @type and (exported ? resource.exported? : true) and match?(resource)
     end
-  end
-
-  # Seek a specific exported resource.
-  def exported_resource(obj)
-    if existing = @scope.findresource(obj.restype, obj.title)
-      # Next see if we've already collected this resource
-      return nil if existing.collector_id == obj.id
-
-      # This is the one we've already collected
-      raise Puppet::ParseError, "Exported resource #{obj.ref} cannot override local resource"
-    end
-
-    resource = obj.to_resource(self.scope)
-
-    resource.exported = false
-
-    scope.compiler.add_resource(scope, resource)
-
-    resource
   end
 
   # Does the resource match our tests?  We don't yet support tests,
