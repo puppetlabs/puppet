@@ -263,206 +263,167 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
 end
 
 describe Puppet::Parser::Collector, "when collecting exported resources", :if => Puppet.features.rails? do
+  include PuppetSpec::Files
+
   before do
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
     @scope = Puppet::Parser::Scope.new :compiler => @compiler
-    @resource_type = "Mytype"
-    @equery = "test = true"
+    @resource_type = "notify"
+    @equery = "1 = 1"
     @vquery = proc { |r| true }
 
-    res = stub("resource 1")
-    res.stubs(:type).returns @resource_type
-    Puppet::Resource.stubs(:new).returns res
-
-    Puppet.settings.stubs(:value).with(:storeconfigs).returns true
-    Puppet.settings.stubs(:value).with(:environment).returns "production"
+    dir = Pathname(tmpdir('puppet-var'))
+    Puppet[:vardir]       = dir.to_s
+    Puppet[:dbadapter]    = 'sqlite3'
+    Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
+    Puppet[:storeconfigs] = true
+    Puppet[:environment]  = "production"
+    Puppet::Rails.init
 
     @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @equery, @vquery, :exported)
   end
 
-  # Stub most of our interface to Rails.
-  def stub_rails(everything = false)
-    ActiveRecord::Base.stubs(:connected?).returns(false)
-    Puppet::Rails.stubs(:init)
-    if everything
-      Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
-      Puppet::Rails::Resource.stubs(:find).returns([])
-    end
+  after :each do
+    ActiveRecord::Base.remove_connection
   end
 
   it "should just return false if :storeconfigs is not enabled" do
-    Puppet.settings.expects(:value).with(:storeconfigs).returns false
+    Puppet[:storeconfigs] = false
     @collector.evaluate.should be_false
   end
 
-  it "should use initialize the Rails support if ActiveRecord is not connected" do
-    @compiler.stubs(:resources).returns([])
-    ActiveRecord::Base.expects(:connected?).returns(false)
-    Puppet::Rails.expects(:init)
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
-    Puppet::Rails::Resource.stubs(:find).returns([])
-
-    @collector.evaluate
-  end
-
   it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
-    stub_rails(true)
+    one = Puppet::Parser::Resource.new('notify', 'one',
+                                       :virtual  => true,
+                                       :exported => true,
+                                       :scope    => @scope)
+    two = Puppet::Parser::Resource.new('notify', 'two',
+                                       :virtual  => true,
+                                       :exported => true,
+                                       :scope    => @scope)
 
-    one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :ref => "one"
-    two = stub 'two', :type => "Mytype", :virtual? => true, :exported? => true, :ref => "two"
-
-    one.stubs(:exported=)
-    one.stubs(:virtual=)
-    two.stubs(:exported=)
-    two.stubs(:virtual=)
-
-    @compiler.expects(:resources).returns([one, two])
+    @compiler.resources << one
+    @compiler.resources << two
 
     @collector.evaluate.should == [one, two]
+    one.should_not be_virtual
+    two.should_not be_virtual
+
+    # REVISIT: Apparently we never actually marked local resources as
+    # non-exported.  So, this is what the previous test asserted, and checking
+    # what it claims to do causes test failures. --daniel 2011-08-23
   end
 
   it "should mark all returned resources as not virtual" do
-    stub_rails(true)
+    one = Puppet::Parser::Resource.new('notify', 'one',
+                                       :virtual  => true,
+                                       :exported => true,
+                                       :scope    => @scope)
 
-    one = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :ref => "one"
-
-    one.stubs(:exported=)
-    one.expects(:virtual=).with(false)
-
-    @compiler.expects(:resources).returns([one])
+    @compiler.resources << one
 
     @collector.evaluate.should == [one]
+    one.should_not be_virtual
   end
 
   it "should convert all found resources into parser resources" do
-    stub_rails
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+    host = Puppet::Rails::Host.create!(:name => 'one.local')
+    Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'whammo',
+              :exported => true)
 
-    one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :ref => "one"
-    Puppet::Rails::Resource.stubs(:find).returns([one])
-
-    resource = mock 'resource'
-    one.expects(:to_resource).with(@scope).returns(resource)
-    resource.stubs(:exported=)
-    resource.stubs(:virtual=)
-    resource.stubs(:ref)
-
-    @compiler.stubs(:resources).returns([])
-    @scope.stubs(:findresource).returns(nil)
-
-    @compiler.stubs(:add_resource)
-
-    @collector.evaluate.should == [resource]
+    result = @collector.evaluate
+    result.length.should == 1
+    result.first.should be_an_instance_of Puppet::Parser::Resource
+    result.first.type.should == 'Notify'
+    result.first.title.should == 'whammo'
   end
 
   it "should override all exported collected resources if collector has an override" do
-    stub_rails
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+    host = Puppet::Rails::Host.create!(:name => 'one.local')
+    Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'whammo',
+              :exported => true)
 
-    one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :ref => "one"
-    Puppet::Rails::Resource.stubs(:find).returns([one])
+    param = Puppet::Parser::Resource::Param.
+      new(:name => 'message', :value => 'howdy')
+    @collector.add_override(:parameters => [param], :scope => @scope)
 
-    resource = mock 'resource', :type => "Mytype"
-    one.expects(:to_resource).with(@scope).returns(resource)
-    resource.stubs(:exported=)
-    resource.stubs(:virtual=)
-    resource.stubs(:ref)
-    resource.stubs(:title)
-
-    @compiler.stubs(:resources).returns([])
-    @scope.stubs(:findresource).returns(nil)
-
-    param = stub 'param'
-    @compiler.stubs(:add_override)
-    @compiler.stubs(:add_resource)
-
-    @collector.add_override(:parameters => param )
-    Puppet::Parser::Resource.expects(:new).once.with { |type, title, h|
-      h[:parameters] == param
-    }
-
-    @collector.evaluate
+    got = @collector.evaluate
+    got.first[:message].should == param.value
   end
 
   it "should store converted resources in the compile's resource list" do
-    stub_rails
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+    host = Puppet::Rails::Host.create!(:name => 'one.local')
+    Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'whammo',
+              :exported => true)
 
-    one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :ref => "one"
-    Puppet::Rails::Resource.stubs(:find).returns([one])
+    @compiler.expects(:add_resource).with do |scope, resource|
+      scope.should be_an_instance_of Puppet::Parser::Scope
+      resource.type.should  == 'Notify'
+      resource.title.should == 'whammo'
+      true
+    end
 
-    resource = mock 'resource'
-    one.expects(:to_resource).with(@scope).returns(resource)
-    resource.stubs(:exported=)
-    resource.stubs(:virtual=)
-    resource.stubs(:ref)
-
-    @compiler.stubs(:resources).returns([])
-    @scope.stubs(:findresource).returns(nil)
-
-    @compiler.expects(:add_resource).with(@scope, resource)
-
-    @collector.evaluate.should == [resource]
+    @collector.evaluate
   end
 
   # This way one host doesn't store another host's resources as exported.
   it "should mark resources collected from the database as not exported" do
-    stub_rails
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+    host = Puppet::Rails::Host.create!(:name => 'one.local')
+    Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'whammo',
+              :exported => true)
 
-    one = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :ref => "one"
-    Puppet::Rails::Resource.stubs(:find).returns([one])
-
-    resource = mock 'resource'
-    one.expects(:to_resource).with(@scope).returns(resource)
-    resource.expects(:exported=).with(false)
-    resource.stubs(:virtual=)
-    resource.stubs(:ref)
-
-    @compiler.stubs(:resources).returns([])
-    @scope.stubs(:findresource).returns(nil)
-
-    @compiler.stubs(:add_resource)
-
-    @collector.evaluate
+    got = @collector.evaluate
+    got.length.should == 1
+    got.first.type.should == "Notify"
+    got.first.title.should == "whammo"
+    got.first.should_not be_exported
   end
 
   it "should fail if an equivalent resource already exists in the compile" do
-    stub_rails
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+    host = Puppet::Rails::Host.create!(:name => 'one.local')
+    Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'whammo',
+              :exported => true)
 
-    rails = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
-    inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :collector_id => 2
+    local = Puppet::Parser::Resource.new('notify', 'whammo', :scope => @scope)
+    @compiler.add_resource(@scope, local)
 
-    Puppet::Rails::Resource.stubs(:find).returns([rails])
-
-    resource = mock 'resource'
-
-    @compiler.stubs(:resources).returns([])
-    @scope.stubs(:findresource).returns(inmemory)
-
-    @compiler.stubs(:add_resource)
-
-    proc { @collector.evaluate }.should raise_error(Puppet::ParseError)
+    expect { @collector.evaluate }.
+      to raise_error Puppet::ParseError, /cannot override local resource/
   end
 
   it "should ignore exported resources that match already-collected resources" do
-    stub_rails
-    Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
+    host = Puppet::Rails::Host.create!(:name => 'one.local')
+    # One that we already collected...
+    db = Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'whammo',
+              :exported => true)
+    # ...and one we didn't.
+    Puppet::Rails::Resource.
+      create!(:host     => host,
+              :restype  => 'notify', :title => 'boingy-boingy',
+              :exported => true)
 
-    rails = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
-    inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :collector_id => 1
+    local = Puppet::Parser::Resource.new('notify', 'whammo',
+                                         :scope        => @scope,
+                                         :collector_id => db.id)
+    @compiler.add_resource(@scope, local)
 
-    Puppet::Rails::Resource.stubs(:find).returns([rails])
-
-    resource = mock 'resource'
-
-    @compiler.stubs(:resources).returns([])
-    @scope.stubs(:findresource).returns(inmemory)
-
-    @compiler.stubs(:add_resource)
-
-    proc { @collector.evaluate }.should_not raise_error(Puppet::ParseError)
+    got = nil
+    expect { got = @collector.evaluate }.not_to raise_error(Puppet::ParseError)
+    got.length.should == 1
+    got.first.type.should == "Notify"
+    got.first.title.should == "boingy-boingy"
   end
 end
 

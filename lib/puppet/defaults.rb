@@ -850,6 +850,8 @@ You can adjust the backend using the storeconfigs_backend setting.",
             Puppet::Resource::Catalog.indirection.cache_class = :store_configs
           Puppet::Node::Facts.indirection.cache_class = :store_configs
           Puppet::Node.indirection.cache_class = :store_configs
+
+          Puppet::Resource.indirection.terminus_class = :store_configs
         end
       end
     },
