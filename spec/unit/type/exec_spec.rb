@@ -26,7 +26,7 @@ describe Puppet::Type.type(:exec) do
 
     status = stub "process", :exitstatus => exitstatus
     Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
-      with([command], @user_name, @group_name).returns([output, status])
+      with(command, @user_name, @group_name).returns([output, status])
 
     return exec
   end
@@ -209,7 +209,8 @@ describe Puppet::Type.type(:exec) do
   describe "when setting cwd" do
     it_should_behave_like "all path parameters", :cwd, :array => false do
       def instance(path)
-        Puppet::Type.type(:exec).new(:name => @executable, :cwd => path)
+        # Specify shell provider so we don't have to care about command validation
+        Puppet::Type.type(:exec).new(:name => @executable, :cwd => path, :provider => :shell)
       end
     end
   end
@@ -449,7 +450,8 @@ describe Puppet::Type.type(:exec) do
     describe "when setting creates" do
       it_should_behave_like "all path parameters", :creates, :array => true do
         def instance(path)
-          Puppet::Type.type(:exec).new(:name => @executable, :creates => path)
+          # Specify shell provider so we don't have to care about command validation
+          Puppet::Type.type(:exec).new(:name => @executable, :creates => path, :provider => :shell)
         end
       end
     end
