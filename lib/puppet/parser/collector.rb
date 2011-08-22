@@ -3,10 +3,11 @@
 class Puppet::Parser::Collector
   attr_accessor :type, :scope, :vquery, :equery, :form, :resources, :overrides, :collected
 
-  # Call the collection method, mark all of the returned objects as non-virtual,
-  # optionally applying parameter overrides. The collector can also delete himself
-  # from the compiler if there is no more resources to collect (valid only for resource fixed-set collector
-  # which get their resources from +collect_resources+ and not from the catalog)
+  # Call the collection method, mark all of the returned objects as
+  # non-virtual, optionally applying parameter overrides. The collector can
+  # also delete himself from the compiler if there is no more resources to
+  # collect (valid only for resource fixed-set collector which get their
+  # resources from +collect_resources+ and not from the catalog)
   def evaluate
     # Shortcut if we're not using storeconfigs and they're trying to collect
     # exported resources.
@@ -29,7 +30,6 @@ class Puppet::Parser::Collector
 
     # we have an override for the collected resources
     if @overrides and !objects.empty?
-
       # force the resource to be always child of any other resource
       overrides[:source].meta_def(:child_of?) do
         true
@@ -39,23 +39,20 @@ class Puppet::Parser::Collector
       # overrided those resources
       objects.each do |res|
         unless @collected.include?(res.ref)
-
-                newres = Puppet::Parser::Resource.new(
-        res.type, res.title,
-            :parameters => overrides[:parameters],
-            :file => overrides[:file],
-            :line => overrides[:line],
-            :source => overrides[:source],
-        
-            :scope => overrides[:scope]
-          )
+          newres = Puppet::Parser::Resource.
+            new(res.type, res.title,
+                :parameters => overrides[:parameters],
+                :file       => overrides[:file],
+                :line       => overrides[:line],
+                :source     => overrides[:source],
+                :scope      => overrides[:scope])
 
           scope.compiler.add_override(newres)
         end
       end
     end
 
-    # filter out object that already have been collected by ourself
+    # filter out object that this collector has previously found.
     objects.reject! { |o| @collected.include?(o.ref) }
 
     return false if objects.empty?
@@ -104,13 +101,11 @@ class Puppet::Parser::Collector
 
     search += " AND (#{@equery})" if @equery
 
-    # note:
-    # we're not eagerly including any relations here because
-    # it can creates so much objects we'll throw out later.
-    # We used to eagerly include param_names/values but the way
-    # the search filter is built ruined those efforts and we
-    # were eagerly loading only the searched parameter and not
-    # the other ones.
+    # note: we're not eagerly including any relations here because it can
+    # creates so much objects we'll throw out later.  We used to eagerly
+    # include param_names/values but the way the search filter is built ruined
+    # those efforts and we were eagerly loading only the searched parameter
+    # and not the other ones.
     query = {}
     case search
     when /puppet_tags/
