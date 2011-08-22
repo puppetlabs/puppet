@@ -33,12 +33,12 @@ module Util
   def self.synchronize_on(x,type)
     sync_object,users = 0,1
     begin
-      @@sync_objects.synchronize { 
+      @@sync_objects.synchronize {
         (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
       }
       @@sync_objects[x][sync_object].synchronize(type) { yield }
     ensure
-      @@sync_objects.synchronize { 
+      @@sync_objects.synchronize {
         @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
       }
     end
