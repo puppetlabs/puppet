@@ -185,7 +185,7 @@ module Util
   end
 
   def which(bin)
-    if bin =~ /^\//
+    if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
@@ -196,6 +196,22 @@ module Util
     nil
   end
   module_function :which
+
+  # Determine in a platform-specific way whether a path is absolute. This
+  # defaults to the local platform if none is specified.
+  def absolute_path?(path, platform=nil)
+    # Escape once for the string literal, and once for the regex.
+    slash = '[\\\\/]'
+    name = '[^\\\\/]+'
+    regexes = {
+      :windows => %r!^([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name})!i,
+      :posix   => %r!^/!,
+    }
+    platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
+
+    !! (path =~ regexes[platform])
+  end
+  module_function :absolute_path?
 
   # Execute the provided command in a pipe, yielding the pipe object.
   def execpipe(command, failonfail = true)
