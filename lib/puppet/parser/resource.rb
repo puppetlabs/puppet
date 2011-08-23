@@ -20,7 +20,7 @@ class Puppet::Parser::Resource < Puppet::Resource
   include Puppet::Util::Tagging
   include Puppet::Parser::YamlTrimmer
 
-  attr_accessor :source, :scope, :rails_id
+  attr_accessor :source, :scope, :collector_id
   attr_accessor :virtual, :override, :translated, :catalog, :evaluated
 
   attr_reader :exported, :parameters

@@ -432,7 +432,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
     Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
 
     rails = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
-    inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :rails_id => 2
+    inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :collector_id => 2
 
     Puppet::Rails::Resource.stubs(:find).returns([rails])
 
@@ -451,7 +451,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
     Puppet::Rails::Host.stubs(:find_by_name).returns(nil)
 
     rails = stub 'one', :restype => "Mytype", :title => "one", :virtual? => true, :exported? => true, :id => 1, :ref => "yay"
-    inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :rails_id => 1
+    inmemory = stub 'one', :type => "Mytype", :virtual? => true, :exported? => true, :collector_id => 1
 
     Puppet::Rails::Resource.stubs(:find).returns([rails])
 
