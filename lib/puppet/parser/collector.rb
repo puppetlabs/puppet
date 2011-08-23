@@ -191,7 +191,7 @@ class Puppet::Parser::Collector
   def exported_resource(obj)
     if existing = @scope.findresource(obj.restype, obj.title)
       # Next see if we've already collected this resource
-      return nil if existing.rails_id == obj.id
+      return nil if existing.collector_id == obj.id
 
       # This is the one we've already collected
       raise Puppet::ParseError, "Exported resource #{obj.ref} cannot override local resource"
