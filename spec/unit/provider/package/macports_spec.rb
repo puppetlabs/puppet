@@ -45,6 +45,12 @@ describe provider_class do
       provider_class.expects(:port).returns("foo @1.234.5_2")
       provider_class.instances.size.should == 0
     end
+
+    it "should ignore variants" do
+      provider_class.parse_installed_query_line("bar @1.0beta2_38_1+x11+java (active)").
+        should == {:provider=>:macports, :revision=>"1", :name=>"bar", :ensure=>"1.0beta2_38"}
+    end
+
   end
 
   describe "when installing" do

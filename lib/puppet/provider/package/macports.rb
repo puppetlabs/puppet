@@ -21,7 +21,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
 
   def self.parse_installed_query_line(line)
-    regex = /(\S+)\s+@(\S+)_(\S+)\s+\(active\)/
+    regex = /(\S+)\s+@(\S+)_(\d+).*\(active\)/
     fields = [:name, :ensure, :revision]
     hash_from_line(line, regex, fields)
   end
