@@ -75,4 +75,50 @@ describe "Puppet::Resource::ActiveRecord", :if => Puppet.features.rails? do
       end
     end
   end
+
+  describe "#build_active_record_query" do
+    before :each do
+      Puppet::Rails.init
+    end
+
+    let :type do
+      Puppet::Type.type('notify').name
+    end
+
+    def query(type, host, filter = nil)
+      subject.send :build_active_record_query, type, host, filter
+    end
+
+    it "should exclude all database resources from the host" do
+      host = Puppet::Rails::Host.create! :name => 'one.local'
+      got = query(type, host.name)
+      got.keys.should =~ [:conditions]
+      got[:conditions][0] =~ /\(host_id != \?\)/
+      got[:conditions].last.should == host.id
+    end
+
+    it "should join appropriately when filtering on parameters" do
+      filter = "param_names.name = title"
+      got = query(type, 'whatever', filter)
+      got.keys.should =~ [:conditions, :joins]
+      got[:joins].should == { :param_values => :param_name }
+      got[:conditions].first.should =~ Regexp.new(Regexp.escape(filter))
+    end
+
+    it "should join appropriately when filtering on tags" do
+      filter = "puppet_tags.name = test"
+      got = query(type, 'whatever', filter)
+      got.keys.should =~ [:conditions, :joins]
+      got[:joins].should == {:resource_tags => :puppet_tag}
+      got[:conditions].first.should =~ Regexp.new(Regexp.escape(filter))
+    end
+
+    it "should only search for exported resources with the matching type" do
+      got = query(type, 'whatever')
+      got.keys.should =~ [:conditions]
+      got[:conditions][0].should be_include "(exported=? AND restype=?)"
+      got[:conditions][1].should == true
+      got[:conditions][2].should == type
+    end
+  end
 end
