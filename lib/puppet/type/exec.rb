@@ -165,6 +165,7 @@ module Puppet
       # Most validation is handled by the SUIDManager class.
       validate do |user|
         self.fail "Only root can execute commands as other users" unless Puppet.features.root?
+        self.fail "Unable to execute commands as other users on Windows" if Puppet.features.microsoft_windows?
       end
     end
 
@@ -428,7 +429,9 @@ module Puppet
       # Stick the cwd in there if we have it
       reqs << self[:cwd] if self[:cwd]
 
-      self[:command].scan(/^(#{File::SEPARATOR}\S+)/) { |str|
+      file_regex = Puppet.features.microsoft_windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
+
+      self[:command].scan(file_regex) { |str|
         reqs << str
       }
 
@@ -447,7 +450,7 @@ module Puppet
           # fully qualified.  It might not be a bad idea to add
           # unqualified files, but, well, that's a bit more annoying
           # to do.
-          reqs += line.scan(%r{(#{File::SEPARATOR}\S+)})
+          reqs += line.scan(file_regex)
         end
       }
 
