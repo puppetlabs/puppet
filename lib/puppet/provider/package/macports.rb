@@ -21,7 +21,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
 
   def self.parse_installed_query_line(line)
-    regex = /(\S+)\s+@(\S+)_(\d+).*\(active\)/
+    regex = /(\S+)\s+@(\S+)_(\S+)\s+\(active\)/
     fields = [:name, :ensure, :revision]
     hash_from_line(line, regex, fields)
   end
@@ -66,20 +66,14 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def query
-    result = self.class.parse_installed_query_line(self.class.stripWarnings port("-q", :installed, @resource[:name]))
-    return {} if result.nil?
-    return result
-  end
-
-  def self.stripWarnings(output)
-       return output.gsub(/^Warning:.*$/, "").strip
+    return self.class.parse_installed_query_line(port("-q", :installed, @resource[:name]))
   end
 
   def latest
     # We need both the version and the revision to be confident
     # we've got the latest revision of a specific version
     # Note we're still not doing anything with variants here.
-    info_line = self.class.stripWarnings port("-q", :info, "--line", "--version", "--revision", @resource[:name])
+    info_line = port("-q", :info, "--line", "--version", "--revision", @resource[:name])
     return nil if info_line == ""
 
     if newest = self.class.parse_info_query_line(info_line)
