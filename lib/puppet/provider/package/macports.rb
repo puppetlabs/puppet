@@ -66,7 +66,9 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def query
-    return self.class.parse_installed_query_line(port("-q", :installed, @resource[:name]))
+    result = self.class.parse_installed_query_line(port("-q", :installed, @resource[:name]))
+    return {} if result.nil?
+    return result
   end
 
   def latest
