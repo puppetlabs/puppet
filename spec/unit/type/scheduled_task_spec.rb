@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:scheduled_task) do 
+describe Puppet::Type.type(:scheduled_task) do
   before do
     @class = Puppet::Type.type(:scheduled_task)
 
@@ -62,14 +62,8 @@ describe Puppet::Type.type(:scheduled_task) do
         proc { @class.new(:name => 'foo', :minute => 'absent') }.should_not raise_error
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should NOT support *" do
-          proc { @class.new(:name => 'foo', :minute => '*') }.should raise_error
-        end
-      else
-        it "should support *" do
-          proc { @class.new(:name => 'foo', :minute => '*') }.should_not raise_error
-        end
+      it "should NOT support *" do
+        proc { @class.new(:name => 'foo', :minute => '*') }.should raise_error
       end
 
       it "should translate absent to :absent" do
@@ -435,7 +429,7 @@ describe Puppet::Type.type(:scheduled_task) do
 
 
   it "should specify a repeat cycle withing the supported periods" do
-    ['hourly', 'daily', 'weekly', 'monthly', 'once'].each{ |r|
+    ['hourly', 'daily', 'weekly', 'monthly'].each{ |r|
       proc { @class.new(:name => 'foo', :repeat => r) }.should_not raise_error
     }
   end
