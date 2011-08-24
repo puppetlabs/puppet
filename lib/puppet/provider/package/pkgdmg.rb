@@ -60,7 +60,12 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     require 'open-uri'
     cached_source = source
     if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
-      cached_source = "/tmp/#{name}"
+      if source =~ /\.dmg$/i
+        ext = ".dmg"
+      else
+        ext = ".pkg"
+      end 
+      cached_source = "/tmp/#{name}#{ext}"
       begin
         curl "-o", cached_source, "-C", "-", "-k", "-s", "--url", source
         Puppet.debug "Success: curl transfered [#{name}]"
