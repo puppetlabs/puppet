@@ -106,6 +106,13 @@ describe provider_class do
       provider.expects(:query).returns(current_hash)
       provider.latest.should == "1.2.3_2"
     end
+
+    it "should return the newest version if the port is not installed" do
+      resource[:name] = resource_name
+      provider.expects(:port).with(*infoargs).returns(new_info_line)
+      provider.expects(:port).with("-q", :installed, resource[:name]).returns("")
+      provider.latest.should == "1.2.3_2"
+    end
   end
 
   describe "when updating a port" do
