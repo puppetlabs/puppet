@@ -9,6 +9,8 @@ provider_class = Puppet::Type.type(:service).provider(:redhat)
 describe provider_class do
 
   before :each do
+    Puppet.features.stubs(:posix?).returns(true)
+    Puppet.features.stubs(:microsoft_windows?).returns(false)
     @class = Puppet::Type.type(:service).provider(:redhat)
     @resource = stub 'resource'
     @resource.stubs(:[]).returns(nil)

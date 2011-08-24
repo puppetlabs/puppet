@@ -20,23 +20,26 @@
 
 shared_examples_for "all pathname parameters with arrays" do |win32|
   path_types = {
-    "unix absolute"  => "/foo/bar",
-    "unix relative"  => "foo/bar",
-    "win32 absolute" => %q{\foo\bar},
-    "win32 relative" => %q{foo\bar},
-    "drive absolute" => %q{c:\foo\bar},
-    "drive relative" => %q{c:foo\bar}
+    "unix absolute"            => %q{/foo/bar},
+    "unix relative"            => %q{foo/bar},
+    "win32 non-drive absolute" => %q{\foo\bar},
+    "win32 non-drive relative" => %q{foo\bar},
+    "win32 drive absolute"     => %q{c:\foo\bar},
+    "win32 drive relative"     => %q{c:foo\bar}
   }
 
   describe "when given an array of paths" do
     (1..path_types.length).each do |n|
       path_types.keys.combination(n) do |set|
         data = path_types.collect { |k, v| set.member?(k) ? v : nil } .compact
-        reject = true
-        only_absolute = set.find { |k| k =~ /relative/ } .nil?
-        only_unix     = set.reject { |k| k =~ /unix/ } .length == 0
 
-        if only_absolute and (only_unix or win32) then
+        has_relative = set.find { |k| k =~ /relative/ or k =~ /non-drive/ }
+        has_windows = set.find { |k| k =~ /win32/ }
+        has_unix = set.find { |k| k =~ /unix/ }
+
+        if has_relative or (has_windows and !win32) or (has_unix and win32)
+          reject = true
+        else
           reject = false
         end
 
@@ -144,10 +147,9 @@ shared_examples_for "all path parameters" do |param, options|
       it_should_behave_like "all pathname parameters with arrays", true
     end
 
-    it "should accept a fully qualified path" do
-      path = File.join('', 'foo')
-      instance = instance(path)
-      instance[@param].should == path
+    it "should reject a fully qualified unix path" do
+      path = '/foo'
+      expect { instance(path) }.to raise_error(Puppet::Error, /fully qualified/)
     end
 
     it "should give a useful error when the path is not absolute" do
@@ -157,7 +159,7 @@ shared_examples_for "all path parameters" do |param, options|
     end
 
     it "also accepts Unix style path separators" do
-      path = '/Program Files'
+      path = 'C:/Program Files'
       instance = instance(path)
       instance[@param].should == path
     end
@@ -172,9 +174,9 @@ shared_examples_for "all path parameters" do |param, options|
       end
     end
 
-    { "UNC paths"            => %q{\\foo\bar},
-      "unparsed local paths" => %q{\\?\c:\foo},
-      "unparsed UNC paths"   => %q{\\?\foo\bar}
+    { "UNC paths"            => %q{\\\\foo\bar},
+      "unparsed local paths" => %q{\\\\?\c:\foo},
+      "unparsed UNC paths"   => %q{\\\\?\foo\bar}
     }.each do |name, path|
       it "should accept #{name} as absolute" do
         instance = instance(path)
