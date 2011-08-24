@@ -780,6 +780,7 @@ if @config.include?(:run_mode)
   # Create the transportable objects for users and groups.
   def add_user_resources(catalog, sections)
     return unless Puppet.features.root?
+    return if Puppet.features.microsoft_windows?
     return unless self[:mkusers]
 
     @config.each do |name, setting|

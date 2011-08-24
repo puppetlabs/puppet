@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-22.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'find'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'

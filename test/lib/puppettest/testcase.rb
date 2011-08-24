@@ -1,8 +1,4 @@
 #!/usr/bin/env ruby
-#
-#  Created by Luke A. Kanies on 2007-03-05.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppettest'
 require 'puppettest/runnable_test'
 require 'test/unit'

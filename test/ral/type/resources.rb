@@ -1,8 +1,4 @@
 #!/usr/bin/env ruby
-#
-#  Created by Luke Kanies on 2006-12-12.
-#  Copyright (c) 2006. All rights reserved.
-
 require File.expand_path(File.dirname(__FILE__) + '/../../lib/puppettest')
 
 require 'puppettest'

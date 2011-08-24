@@ -89,16 +89,18 @@ Puppet::Type.newtype(:file) do
 
       Puppet automatically creates a local filebucket named `puppet` and
       defaults to backing up there.  To use a server-based filebucket,
-      you must specify one in your configuration
+      you must specify one in your configuration.
 
             filebucket { main:
-              server => puppet
+              server => puppet,
+              path   => false,
+              # The path => false line works around a known issue with the filebucket type.
             }
 
       The `puppet master` daemon creates a filebucket by default,
       so you can usually back up to your main server with this
       configuration.  Once you've described the bucket in your
-      configuration, you can use it in any file
+      configuration, you can use it in any file's backup attribute:
 
             file { \"/my/file\":
               source => \"/path/in/nfs/or/something\",
@@ -107,12 +109,12 @@ Puppet::Type.newtype(:file) do
 
       This will back the file up to the central server.
 
-      At this point, the benefits of using a filebucket are that you do not
-      have backup files lying around on each of your machines, a given
-      version of a file is only backed up once, and you can restore
-      any given file manually, no matter how old.  Eventually,
-      transactional support will be able to automatically restore
-      filebucketed files.
+      At this point, the benefits of using a central filebucket are that you
+      do not have backup files lying around on each of your machines, a given
+      version of a file is only backed up once, you can restore any given file
+      manually (no matter how old), and you can use Puppet Dashboard to view
+      file contents.  Eventually, transactional support will be able to
+      automatically restore filebucketed files.
       "
 
     defaultto "puppet"

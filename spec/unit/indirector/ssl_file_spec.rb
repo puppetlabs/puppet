@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2008-3-10.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/indirector/ssl_file'
@@ -23,7 +19,7 @@ describe Puppet::Indirector::SslFile do
 
     @setting = :certdir
     @file_class.store_in @setting
-    @path = make_absolute("/tmp/my_directory")
+    @path = make_absolute("/thisdoesntexist/my_directory")
     Puppet[:noop] = false
     Puppet[@setting] = @path
     Puppet[:trace] = false
@@ -47,7 +43,9 @@ describe Puppet::Indirector::SslFile do
   it "should fail if no store directory or file location has been set" do
     @file_class.store_in nil
     @file_class.store_at nil
-    lambda { @file_class.new }.should raise_error(Puppet::DevError)
+    FileTest.expects(:exists?).with(File.dirname(@path)).at_least(0).returns(true)
+    Dir.stubs(:mkdir).with(@path)
+    lambda { @file_class.new }.should raise_error(Puppet::DevError, /No file or directory setting provided/)
   end
 
   describe "when managing ssl files" do

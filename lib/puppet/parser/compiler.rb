@@ -1,6 +1,3 @@
-#  Created by Luke A. Kanies on 2007-08-13.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/node'
 require 'puppet/resource/catalog'
 require 'puppet/util/errors'

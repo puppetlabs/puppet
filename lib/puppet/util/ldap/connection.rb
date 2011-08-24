@@ -1,6 +1,3 @@
-#
-#  Created by Luke Kanies on 2008-3-23.
-#  Copyright (c) 2008. All rights reserved.
 require 'puppet/util/ldap'
 
 class Puppet::Util::Ldap::Connection

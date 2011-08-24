@@ -1,12 +1,24 @@
-Puppet::Parser::Functions::newfunction(:create_resources, :doc => '
-Converts a hash into a set of resources and adds them to the catalog.
-Takes two parameters:
-  create_resource($type, $resources)
-    Creates resources of type $type from the $resources hash. Assumes that
-    hash is in the following form:
-     {title=>{parameters}}
-  This is currently tested for defined resources, classes, as well as native types
-') do |args|
+Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC') do |args|
+    Converts a hash into a set of resources and adds them to the catalog.
+
+    This function takes two arguments: a resource type, and a hash describing
+    a set of resources. The hash should be in the form `{title => {parameters} }`:
+
+        # A hash of user resources:
+        $myusers = {
+          'nick' => { uid    => '1330',
+                      group  => allstaff,
+                      groups => ['developers', 'operations', 'release'], }
+          'dan'  => { uid    => '1308',
+                      group  => allstaff,
+                      groups => ['developers', 'prosvc', 'release'], }
+        }
+
+        create_resource(user, $myusers)
+
+    This function can be used to create defined resources and classes, as well
+    as native resources.
+  ENDHEREDOC
   raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
   #raise ArgumentError, 'requires resource type and param hash' if args.size < 2
   # figure out what kind of resource we are
@@ -19,7 +31,7 @@ Takes two parameters:
       type_of_resource = :type
     elsif resource = find_definition(type_name.downcase)
       type_of_resource = :define
-    else 
+    else
       raise ArgumentError, "could not create resource of unknown type #{type_name}"
     end
   end
