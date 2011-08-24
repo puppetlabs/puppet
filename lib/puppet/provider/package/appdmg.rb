@@ -56,7 +56,7 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     require 'facter/util/plist'
     cached_source = source
     if %r{\A[A-Za-z][A-Za-z0-9+\-\.]*://} =~ cached_source
-      cached_source = "/tmp/#{name}"
+      cached_source = "/tmp/#{name}.dmg"
       begin
         curl "-o", cached_source, "-C", "-", "-k", "-s", "--url", source
         Puppet.debug "Success: curl transfered [#{name}]"
