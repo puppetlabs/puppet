@@ -2,7 +2,7 @@ require 'puppet/indirector/active_record'
 
 class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
   def search(request)
-    type   = request_to_type(request)
+    type   = request_to_type_name(request)
     host   = request.options[:host]
     filter = request.options[:filter]
 
@@ -11,16 +11,17 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
   end
 
   private
-  def request_to_type(request)
+  def request_to_type_name(request)
     name = request.key.split('/', 2)[0]
-    Puppet::Type.type(name) or raise Puppet::Error, "Could not find type #{name}"
+    type = Puppet::Type.type(name) or raise Puppet::Error, "Could not find type #{name}"
+    type.name
   end
 
   def build_active_record_query(type, host, filter)
     raise Puppet::DevError, "Cannot collect resources for a nil host" unless host
 
     search = "(exported=? AND restype=?)"
-    arguments = [true, type.name]
+    arguments = [true, type]
 
     # REVISIT: This cannot stand.  We need to abstract the search language
     # away here, so that we can unbind our ActiveRecord schema and our parser
