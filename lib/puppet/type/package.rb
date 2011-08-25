@@ -44,6 +44,8 @@ module Puppet
         a user or another package. Held is considered a superset of
         installed.",
       :methods => [:hold]
+    feature :install_options, "The provider accepts options to be
+      passed to the installer command."
 
     ensurable do
       desc "What state the package should be in.
@@ -221,9 +223,11 @@ module Puppet
         (or on a network file system) or a URL that your specific
         packaging type understands; Puppet will not retrieve files for you."
     end
+
     newparam(:instance) do
       desc "A read-only parameter set by the package."
     end
+
     newparam(:status) do
       desc "A read-only parameter set by the package."
     end
@@ -289,6 +293,11 @@ module Puppet
     newparam(:flavor) do
       desc "Newer versions of OpenBSD support 'flavors', which are
         further specifications for which type of package you want."
+    end
+
+    newparam(:install_options, :required_features => :install_options) do
+      desc "A hash of options to be handled by the provider when
+        installing a package."
     end
 
     validate do

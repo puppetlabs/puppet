@@ -27,7 +27,7 @@ describe Puppet::Type.type(:package) do
   end
 
   it "should default to being installed" do
-    pkg = Puppet::Type.type(:package).new(:name => "yay")
+    pkg = Puppet::Type.type(:package).new(:name => "yay", :provider => :apt)
     pkg.should(:ensure).should == :present
   end
 
