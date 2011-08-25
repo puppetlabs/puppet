@@ -33,7 +33,7 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
   end
 
   def create
-    # create the basic work itme
+    # create the basic work item
     task.new_work_item( taskname, trigger )
 
     # Forward slash PATH seperators are OK: will be corrected by the gem
@@ -47,34 +47,14 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
     task.application_name = bin_ary[0] unless bin_ary.empty?
     task.parameters = bin_ary.slice(1..-1).join(' ') unless bin_ary.nil? || ( 2 > bin_ary.size )
 
-    # FIXME: Assume working dir is command's. Should add a property
+    # Assume working dir is command's. Could add a property
     task.working_directory = File.dirname( task.application_name )
 
-    # FIXME: Add a priority property
+    # TODO: Add a priority property
     task.priority = Win32::TaskScheduler::NORMAL
-
-=begin
-    # FIXME: validate
-    flags = 0
-    @resource[ :task_modifiers ].each{ |value|
-      case value.to_sym
-        when :userloggedin
-          flags |= Win32::TaskScheduler::RUN_ONLY_IF_LOGGED_ON
-        when :interactive
-          flags |= Win32::TaskScheduler::INTERACTIVE
-        when :deletewhendone
-          flags |= Win32::TaskScheduler::TASK_FLAG_DELETE_WHEN_DONE
-      end
-    } unless @resource[ :task_modifiers ].nil?
-    task.flags = flags
-=end
 
     # set all tasks to run as the local system account: no password is required
     task.set_account_information( 'system', nil )
-
-    # FIXME: cannot use resource[:user] without a password
-    # task.set_account_information( @resource[ :user ], ( property? :password ? @resource[ :password ] : nil ) ) if property? :user
-    # Puppet.warning "The 'user' property is not currently supported. Defaulting to the local 'SYSTEM' account." if property? :user
 
     commit
 
@@ -126,73 +106,46 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
     raise Puppet::Error.new("Cannot update task #{@resource[:name]} command, error was: #{detail}" )
   end
 
-  def user
-    user = @resource[:user]
-    user = task.account_information unless task.nil?
-    user = :absent if user.empty? || user.nil?
-    user
-    # FIXME: Only SYSTEM user is currently supported. Return identity
-    # so Puppet doesn't always want to re-apply
-    @resource[:user]
-  end
-
-  def user= user
-    unless task.nil?
-      # Again, can't modify the instance task, so...
-      t = Win32::TaskScheduler.new
-      t.activate taskname
-      # FIXME: Until passwords are supported as a property, only the localhost
-      # SYSTEM account is supported
-      t.set_account_information 'system',nil  # user,nil
-      t.save
-      task.activate taskname  # refresh the instance var
-    end
-    @resource[:user] = user
-  rescue Win32::TaskScheduler::Error => detail
-    raise Puppet::Error.new("Cannot update task #{@resource[:name]} user, error was: #{detail}" )
-  end
-
   def minute
     min = @resource[:minute]
-    min = [ task.trigger(0)['start_minute'].to_s ] unless task.trigger_count < 1
+    min = [ task.trigger(0)['start_minute'].to_s ] unless minute == :absent
     min
   end
 
-  def minute= m
-    update_trigger 'start_minute', m[ 0 ].to_i
-    @resource[:minute] = m
+  def minute=( min )
+    update_trigger 'start_minute', min[ 0 ].to_i unless minute == :absent
+    @resource[:minute] = min
   end
 
   def hour
     hour = @resource[:hour]
-    hour = [ task.trigger(0)['start_hour'].to_s ] unless task.trigger_count < 1 || hour == :absent
+    hour = [ task.trigger(0)['start_hour'].to_s  ] unless hour == :absent
     hour
   end
 
-  def hour= h
-    update_trigger 'start_hour', h[ 0 ].to_i unless h == :absent
-    @resource[:hour] = h
+  def hour=( hour )
+    update_trigger 'start_hour', hour[ 0 ].to_i unless hour == :absent
+    @resource[:hour] = hour
   end
 
   def month
     mon = @resource[:month]
-    mon = [ task.trigger(0)['start_month'].to_s ] unless task.trigger_count < 1 ||  mon == :absent
+    mon = [ task.trigger(0)['start_month'].to_s ] unless mon == :absent
     mon
   end
 
-  def month= m
-    update_trigger 'start_month', m[ 0 ].to_i unless m == :absent
-    @resource[:month] = m
+  def month=( mon )
+    update_trigger 'start_month', mon[ 0 ].to_i unless mon == :absent
+    @resource[:month] = mon
   end
 
   def weekday
     wd = @resource[:weekday]
-    unless task.trigger_count < 1 || wd == :absent
+    unless wd == :absent
       tr = task.trigger 0
       daysofweek = tr[ 'type' ][ 'days_of_week' ] unless tr.nil? || tr['type'].nil?
       unless daysofweek.nil?
         wd = []
-        # FIXME: refactor
         tsdays= [
           Win32::TaskScheduler::TASK_SUNDAY,
           Win32::TaskScheduler::TASK_MONDAY,
@@ -208,11 +161,11 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
     wd
   end
 
-  def weekday= wd
+  def weekday=( wd )
     days = 0
     wd.each{ |d| days |=  Win32::TaskScheduler::SUNDAY << d.to_i } unless wd == :absent
     unless days == 0
-      update_trigger 'trigger_type', Win32::TaskScheduler::WEEKLY   # probably unneccesary
+      update_trigger 'trigger_type', Win32::TaskScheduler::WEEKLY
       update_trigger 'type', { 'weeks_interval' => 1, 'days_of_week' => days }
     end
     @resource[:weekday] = wd
@@ -220,11 +173,11 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
 
   def monthday
     md = @resource[:monthday]
-    md = [ task.trigger(0)['start_day'].to_s ] unless task.trigger_count < 1 || md == :absent
+    md = [ task.trigger(0)['start_day'].to_s ] unless  md == :absent
     md
   end
 
-  def monthday= md
+  def monthday=( md )
     update_trigger 'start_day', md[ 0 ].to_i unless md == :absent
     @resource[:monthday] = md
   end
@@ -251,34 +204,14 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
     r
   end
 
-  def repeat= value
-    # cruel, but fair
+  def repeat=( value )
     tr = repeat_triggers
     tr.each_pair{|k,v| update_trigger k, v } unless tr.nil?
     @resource[:repeat] = value
   end
 
-  # FIXME
-  def start_flags
-    @resource[:start_flags]
-  end
-
-  # FIXME
-  def start_flags= value
-    @resource[:start_flags] = value
-  end
-
-  # FIXME
-  def task_modifiers
-    @resource[:task_modifiers]
-  end
-
-  # FIXME
-  def task_modifiers= value
-    @resource[:task_modifiers] = value
-  end
-
   def purge
+    #TODO: Include task expiration as a purge condition
     task.enum.each{ |t| task.delete( t.name ) unless ( 0 == ( t.flags & Win32::TaskScheduler::TASK_FLAG_DISABLED ) ) }
   end
 
@@ -288,7 +221,7 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
 
   private
 
-  # The taskname will be either the resource name orthe basename of the command
+  # The taskname will be either the resource name or the basename of the command
   def taskname
     @resource[ :name ] || File.basename( @resource[ :command ] )
   end
@@ -303,7 +236,7 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
     @jobname
   end
 
-  # helper bool to return true if property exists AND isn't ansent
+  # helper bool to return true if property exists AND isn't absent
   def property? sym
     !( @resource[sym].nil? || @resource[sym] == :absent )
   end
@@ -372,21 +305,6 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
       @trigger[ 'start_minute' ]= @resource[ :minute ][0].to_i if property? :minute
 
       @trigger.merge! repeat_triggers
-
-=begin
-      # FIXME: start_flags property.
-      @resource[ :start_flags ].each{ |value|
-        case value.to_sym
-        when :onidle
-          @trigger[ 'trigger_type' ] = Win32::TaskScheduler::ON_IDLE
-          @trigger[ 'type' ] = {}
-        when :onlogin
-          @trigger[ 'trigger_type' ] = Win32::TaskScheduler::AT_LOGON
-        when :onsysstart
-          @trigger[ 'trigger_type' ] = Win32::TaskScheduler::AT_SYSTEMSTART
-        end
-      }
-=end
    end
 
     # TODO: Return an array of triggers for repetitive schedules
@@ -411,6 +329,7 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
 
   # Refresh the task's default [0] trigger
   def update_trigger key, value
+    tr = nil
     unless task.trigger_count < 1
       tr = task.trigger( 0 )
       tr[ key ] = value
@@ -426,18 +345,6 @@ Puppet::Type.type(:scheduled_task).provide(:windows) do
     tr
   rescue Win32::TaskScheduler::Error => detail
     raise Puppet::Error.new("Cannot update task #{@resource[:name]} trigger, error was: #{detail}" )
-  end
-
-  # Return the time (if any) this task expires
-  def expires
-    texp = Time.at(0)
-    if exists?
-      @task.activate( taskname )
-      raise Puppet::Error.new("Task #{@resource[:name]} contains no triggers. Can't expire" ) if @task.trigger_count < 1
-      trigger = @task.trigger(0)
-      texp = Time.new( trigger['end_year'], trigger['end_month'], trigger['end_day'], trigger['end_hour'] )
-    end
-    texp.gmtime
   end
 
 end

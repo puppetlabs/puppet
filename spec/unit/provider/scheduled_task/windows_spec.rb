@@ -12,7 +12,6 @@ describe provider_class, :if => Puppet.features.microsoft_windows?  do
       :name => 'facter-daily',
       :provider => :windows,
       :command => 'facter --debug',
-      :user => 'system',
       :hour => 2,
       :minute => 0,
       :repeat => 'daily'
@@ -147,23 +146,13 @@ describe provider_class, :if => Puppet.features.microsoft_windows?  do
 
     describe "scheduled task runtime user" do
 
-      before :each do
-        provider.stubs( :exists? ).returns( true )
-        provider.stubs( :user ).returns( 'system' )
-        task.expects( :save )
+      it "should only run as SYSTEM" do
+        task.stubs( :account_information ).returns( 'system' )
+        task.account_information.should == 'system'
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should only allow the task to run as the SYSTEM user" do
-          task.expects( :set_account_information )
-          provider.user= 'newuser'
-          provider.task.account_information.should == 'system'
-        end
-
-      else
-        it 'should specify the runtime user'
-        it 'should reassign the runtime user'
-      end
+      it 'should specify the runtime user'
+      it 'should reassign the runtime user'
 
     end
 

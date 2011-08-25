@@ -30,7 +30,7 @@ describe Puppet::Type.type(:scheduled_task) do
       end
     end
 
-    [:command, :minute, :hour, :weekday, :month, :monthday, :user].each do |property|
+    [:command, :minute, :hour, :weekday, :month, :monthday].each do |property|
       it "should have a #{property} property" do
         @class.attrtype(property).should == :property
       end
@@ -39,14 +39,6 @@ describe Puppet::Type.type(:scheduled_task) do
     [:command, :minute, :hour, :weekday, :month, :monthday].each do |param|
       it "should have #{param} of type ScheduledTaskParam" do
         @class.attrclass(param).ancestors.should include ScheduledTaskParam
-      end
-    end
-
-    if Puppet.features.microsoft_windows?
-      [:start_flags, :task_modifiers].each do |modifier|
-        it "should have a optional #{modifier} task modifier" do
-           @class.attrtype(modifier).should == :property
-        end
       end
     end
 
@@ -120,16 +112,9 @@ describe Puppet::Type.type(:scheduled_task) do
         proc { @class.new(:name => 'foo', :minute => ['-1','61','62'] ) }.should raise_error(Puppet::Error)
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should NOT support valid step syntax" do
-          proc { @class.new(:name => 'foo', :minute => '*/2' ) }.should raise_error
-          proc { @class.new(:name => 'foo', :minute => '10-16/2' ) }.should raise_error
-        end
-      else
-        it "should support valid step syntax" do
-          proc { @class.new(:name => 'foo', :minute => '*/2' ) }.should_not raise_error
-          proc { @class.new(:name => 'foo', :minute => '10-16/2' ) }.should_not raise_error
-        end
+      it "should NOT support valid step syntax" do
+        proc { @class.new(:name => 'foo', :minute => '*/2' ) }.should raise_error
+        proc { @class.new(:name => 'foo', :minute => '10-16/2' ) }.should raise_error
       end
 
       it "should NOT support invalid steps" do
@@ -194,16 +179,9 @@ describe Puppet::Type.type(:scheduled_task) do
         proc { @class.new(:name => 'foo', :hour => ['-1','24','120'] ) }.should raise_error(Puppet::Error)
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should NOT support valid step syntax" do
-          proc { @class.new(:name => 'foo', :hour => '*/2' ) }.should raise_error
-          proc { @class.new(:name => 'foo', :hour => '10-18/4' ) }.should raise_error
-        end
-      else
-        it "should support valid step syntax" do
-          proc { @class.new(:name => 'foo', :hour => '*/2' ) }.should_not raise_error
-          proc { @class.new(:name => 'foo', :hour => '10-18/4' ) }.should_not raise_error
-        end
+      it "should NOT support valid step syntax" do
+        proc { @class.new(:name => 'foo', :hour => '*/2' ) }.should raise_error
+        proc { @class.new(:name => 'foo', :hour => '10-18/4' ) }.should raise_error
       end
 
       it "should NOT support invalid steps" do
@@ -283,16 +261,9 @@ describe Puppet::Type.type(:scheduled_task) do
         proc { @class.new(:name => 'foo', :weekday => ['-1','8','11'] ) }.should raise_error(Puppet::Error)
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should NOT support valid step syntax" do
-          proc { @class.new(:name => 'foo', :weekday => '*/2' ) }.should raise_error(Puppet::Error)
-          proc { @class.new(:name => 'foo', :weekday => '0-4/2' ) }.should raise_error(Puppet::Error)
-        end
-      else
-        it "should support valid step syntax" do
-          proc { @class.new(:name => 'foo', :weekday => '*/2' ) }.should_not raise_error(Puppet::Error)
-          proc { @class.new(:name => 'foo', :weekday => '0-4/2' ) }.should_not raise_error(Puppet::Error)
-        end
+      it "should NOT support valid step syntax" do
+        proc { @class.new(:name => 'foo', :weekday => '*/2' ) }.should raise_error(Puppet::Error)
+        proc { @class.new(:name => 'foo', :weekday => '0-4/2' ) }.should raise_error(Puppet::Error)
       end
     end
 
@@ -384,16 +355,9 @@ describe Puppet::Type.type(:scheduled_task) do
         proc { @class.new(:name => 'foo', :month => ['Jax','Fex','Aux'] ) }.should raise_error(Puppet::Error)
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should NOT support valid step syntax" do
-          proc { @class.new(:name => 'foo', :month => '*/2' ) }.should raise_error(Puppet::Error)
-          proc { @class.new(:name => 'foo', :month => '*/2A' ) }.should raise_error(Puppet::Error)
-        end
-      else
-        it "should support valid step syntax" do
-          proc { @class.new(:name => 'foo', :month => '*/2' ) }.should_not raise_error(Puppet::Error)
-          proc { @class.new(:name => 'foo', :month => '*/2A' ) }.should raise_error(Puppet::Error)
-        end
+      it "should NOT support valid step syntax" do
+        proc { @class.new(:name => 'foo', :month => '*/2' ) }.should raise_error(Puppet::Error)
+        proc { @class.new(:name => 'foo', :month => '*/2A' ) }.should raise_error(Puppet::Error)
       end
 
     end
@@ -451,51 +415,9 @@ describe Puppet::Type.type(:scheduled_task) do
         proc { @class.new(:name => 'foo', :monthday => ['-1','0','32'] ) }.should raise_error(Puppet::Error)
       end
 
-      if Puppet.features.microsoft_windows?
-        it "should NOT support valid step syntax" do
-          proc { @class.new(:name => 'foo', :monthday => '*/2' ) }.should raise_error(Puppet::Error)
-          proc { @class.new(:name => 'foo', :monthday => '10-16/2A' ) }.should raise_error(Puppet::Error)
-        end
-      else
-        it "should support valid step syntax" do
-          proc { @class.new(:name => 'foo', :monthday => '*/2' ) }.should_not raise_error(Puppet::Error)
-          proc { @class.new(:name => 'foo', :monthday => '10-16/2A' ) }.should raise_error(Puppet::Error)
-        end
-      end
-    end
-
-    describe "environment" do
-
-      if Puppet.features.microsoft_windows?
-        it "Windows should not accept an :environment property" do
-          lambda do
-            @task[:environment] = 'PATH=/bin:/usr/bin:/usr/sbin'
-          end.should raise_error
-        end
-      else
-        it "it should accept an :environment that looks like a path" do
-          lambda do
-            @task[:environment] = 'PATH=/bin:/usr/bin:/usr/sbin'
-          end.should_not raise_error
-        end
-
-        it "should NOT accept environment variables that do not contain '='" do
-          lambda do
-            @task[:environment] = "INVALID"
-          end.should raise_error(Puppet::Error)
-        end
-
-        it "should accept empty environment variables that do not contain '='" do
-          lambda do
-            @task[:environment] = "MAILTO="
-          end.should_not raise_error(Puppet::Error)
-        end
-
-        it "should accept 'absent'" do
-          lambda do
-            @task[:environment] = 'absent'
-          end.should_not raise_error(Puppet::Error)
-        end
+      it "should NOT support valid step syntax" do
+        proc { @class.new(:name => 'foo', :monthday => '*/2' ) }.should raise_error(Puppet::Error)
+        proc { @class.new(:name => 'foo', :monthday => '10-16/2A' ) }.should raise_error(Puppet::Error)
       end
     end
 
@@ -513,17 +435,9 @@ describe Puppet::Type.type(:scheduled_task) do
 
 
   it "should specify a repeat cycle withing the supported periods" do
-    ['hourly', 'daily', 'weekly', 'monthly'].each{ |r|
+    ['hourly', 'daily', 'weekly', 'monthly', 'once'].each{ |r|
       proc { @class.new(:name => 'foo', :repeat => r) }.should_not raise_error
     }
-  end
-
-  if Puppet.features.microsoft_windows?
-    it "should also specify a repeat cycle withing the supported Windows periods" do
-      ['once' ].each{ |r|
-        proc { @class.new(:name => 'foo', :repeat => r) }.should_not raise_error
-      }
-    end
   end
 
 end
