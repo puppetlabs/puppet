@@ -18,14 +18,14 @@ describe Puppet::Parser::AST::CollExpr do
     end
 
     it "should evaluate both" do
-      collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==")
+      collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "==")
       collexpr.evaluate(@scope)
     end
 
-    it "should produce a textual representation and code of the expression" do
-      collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==")
+    it "should produce a data and code representation of the expression" do
+      collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper => "==")
       result = collexpr.evaluate(@scope)
-      result[0].should == "param_values.value = 'test2' and param_names.name = 'test1'"
+      result[0].should == ["test1", "==", "test2"]
       result[1].should be_an_instance_of(Proc)
     end
 
@@ -82,10 +82,10 @@ describe Puppet::Parser::AST::CollExpr do
       @resource.stubs(:tagged?).with("value").returns(true)
     end
 
-    it "should produce a textual representation of the expression" do
+    it "should produce a data representation of the expression" do
       collexpr = ast::CollExpr.new(:test1 => @tag, :test2 => @value, :oper=>"==")
       result = collexpr.evaluate(@scope)
-      result[0].should == "puppet_tags.name = 'value'"
+      result[0].should == ["tag", "==", "value"]
     end
 
     it "should inspect resource tags if the query term is on tags" do

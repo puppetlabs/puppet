@@ -140,11 +140,9 @@ describe Puppet::Parser::Parser do
 
     describe "collections" do
       it "should find resources according to an expression" do
-        %q{
-          File <| mode == 0700 + 0050 + 0050 |>
-        }.should parse_with { |coll|
+        %q{ File <| mode == 0700 + 0050 + 0050 |> }.should parse_with { |coll|
           coll.is_a?(Puppet::Parser::AST::Collection) &&
-            coll.query.evaluate(stub 'scope').first == "param_values.value = '528' and param_names.name = 'mode'"
+            coll.query.evaluate(stub 'scope').first == ["mode", "==", 0700 + 0050 + 0050]
         }
       end
     end

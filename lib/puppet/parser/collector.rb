@@ -65,17 +65,19 @@ class Puppet::Parser::Collector
   end
 
   def initialize(scope, type, equery, vquery, form)
-    @scope = scope
+    @scope  = scope
+    @vquery = vquery
+    @equery = equery
 
     # initialisation
     @collected = {}
 
     # Canonize the type
     @type = Puppet::Resource.new(type, "whatever").type
-    @equery = equery
-    @vquery = vquery
 
-    raise(ArgumentError, "Invalid query form #{form}") unless [:exported, :virtual].include?(form)
+    unless [:exported, :virtual].include?(form)
+      raise ArgumentError, "Invalid query form #{form}"
+    end
     @form = form
   end
 
