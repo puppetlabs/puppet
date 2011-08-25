@@ -98,19 +98,24 @@ describe "Puppet::Resource::ActiveRecord", :if => Puppet.features.rails? do
     end
 
     it "should join appropriately when filtering on parameters" do
-      filter = "param_names.name = title"
+      filter = %w{propname == propval}
       got = query(type, 'whatever', filter)
       got.keys.should =~ [:conditions, :joins]
       got[:joins].should == { :param_values => :param_name }
-      got[:conditions].first.should =~ Regexp.new(Regexp.escape(filter))
+      got[:conditions][0].should =~ /param_names\.name = \?/
+      got[:conditions][0].should =~ /param_values\.value = \?/
+      got[:conditions].should be_include filter.first
+      got[:conditions].should be_include filter.last
     end
 
     it "should join appropriately when filtering on tags" do
-      filter = "puppet_tags.name = test"
+      filter = %w{tag == test}
       got = query(type, 'whatever', filter)
       got.keys.should =~ [:conditions, :joins]
       got[:joins].should == {:resource_tags => :puppet_tag}
-      got[:conditions].first.should =~ Regexp.new(Regexp.escape(filter))
+      got[:conditions].first.should =~ /puppet_tags/
+      got[:conditions].should_not be_include filter.first
+      got[:conditions].should be_include filter.last
     end
 
     it "should only search for exported resources with the matching type" do
@@ -119,6 +124,55 @@ describe "Puppet::Resource::ActiveRecord", :if => Puppet.features.rails? do
       got[:conditions][0].should be_include "(exported=? AND restype=?)"
       got[:conditions][1].should == true
       got[:conditions][2].should == type
+    end
+  end
+
+  describe "#filter_to_active_record" do
+    def filter_to_active_record(input)
+      subject.send :filter_to_active_record, input
+    end
+
+    [nil, '', 'whatever', 12].each do |input|
+      it "should fail if filter is not an array (with #{input.inspect})" do
+        expect { filter_to_active_record(input) }.
+          to raise_error ArgumentError, /must be arrays/
+      end
+    end
+
+    # Not exhaustive, just indicative.
+    ['=', '<>', '=~', '+', '-', '!'].each do |input|
+      it "should fail with unexpected comparison operators (with #{input.inspect})" do
+        expect { filter_to_active_record(["one", input, "two"]) }.
+          to raise_error ArgumentError, /unknown operator/
+      end
+    end
+
+    {
+      ["title", "==", "whatever"] => ["title = ?", ["whatever"]],
+      ["title", "!=", "whatever"] => ["title != ?", ["whatever"]],
+
+      # Technically, these are not supported by Puppet yet, but as we pay
+      # approximately zero cost other than a few minutes writing the tests,
+      # and it would be *harder* to fail on them, nested queries.
+      [["title", "==", "foo"], "or", ["title", "==", "bar"]] =>
+        ["(title = ?) OR (title = ?)", ["foo", "bar"]],
+
+      [["title", "==", "foo"], "or", ["tag", "==", "bar"]] =>
+        ["(title = ?) OR (puppet_tags.name = ?)", ["foo", "bar"]],
+
+      [["title", "==", "foo"], "or", ["param", "==", "bar"]] =>
+        ["(title = ?) OR (param_names.name = ? AND param_values.value = ?)",
+         ["foo", "param", "bar"]],
+
+      [[["title","==","foo"],"or",["tag", "==", "bar"]],"and",["param","!=","baz"]] =>
+      ["((title = ?) OR (puppet_tags.name = ?)) AND "+
+       "(param_names.name = ? AND param_values.value != ?)",
+       ["foo", "bar", "param", "baz"]]
+
+    }.each do |input, expect|
+      it "should map #{input.inspect} to #{expect.inspect}" do
+        filter_to_active_record(input).should == expect
+      end
     end
   end
 end

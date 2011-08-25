@@ -17,16 +17,51 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
     type.name
   end
 
+  def filter_to_active_record(filter)
+    # Don't call me if you don't have a filter, please.
+    filter.is_a?(Array) or raise ArgumentError, "active record filters must be arrays"
+    a, op, b = filter
+
+    case op
+    when /^(and|or)$/i then
+      extra = []
+      first, args = filter_to_active_record a
+      extra += args
+
+      second, args = filter_to_active_record b
+      extra += args
+
+      return "(#{first}) #{op.upcase} (#{second})", extra
+
+    when "==", "!=" then
+      op = '=' if op == '=='    # SQL, yayz!
+      case a
+      when "title" then
+        return "title #{op} ?", [b]
+
+      when "tag" then
+        return "puppet_tags.name #{op} ?", [b]
+
+      else
+        return "param_names.name = ? AND param_values.value #{op} ?", [a, b]
+      end
+
+    else
+      raise ArgumentError, "unknown operator #{op.inspect} in #{filter.inspect}"
+    end
+  end
+
   def build_active_record_query(type, host, filter)
     raise Puppet::DevError, "Cannot collect resources for a nil host" unless host
 
     search = "(exported=? AND restype=?)"
     arguments = [true, type]
 
-    # REVISIT: This cannot stand.  We need to abstract the search language
-    # away here, so that we can unbind our ActiveRecord schema and our parser
-    # of search inputs from each other. --daniel 2011-08-23
-    search += " AND (#{filter})" if filter
+    if filter then
+      sql, values = filter_to_active_record(filter)
+      search    += " AND #{sql}"
+      arguments += values
+    end
 
     # note: we're not eagerly including any relations here because it can
     # create large numbers of objects that we will just throw out later.  We

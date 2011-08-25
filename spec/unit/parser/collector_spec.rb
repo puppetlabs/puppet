@@ -269,7 +269,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
     @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new("mynode"))
     @scope = Puppet::Parser::Scope.new :compiler => @compiler
     @resource_type = "notify"
-    @equery = "1 = 1"
+    @equery = ["title", "!=", ""]
     @vquery = proc { |r| true }
 
     dir = Pathname(tmpdir('puppet-var'))
