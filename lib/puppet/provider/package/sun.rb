@@ -152,4 +152,3 @@ Puppet::Type.type(:package).provide :sun, :parent => Puppet::Provider::Package d
     self.install
   end
 end
-
