@@ -297,12 +297,12 @@ describe Puppet::Util do
 
       it "should delete the file used for output if squelch is false" do
         stdout = Tempfile.new('test')
+        path = stdout.path
         Tempfile.stubs(:new).returns(stdout)
 
         Puppet::Util.execute('test command')
 
-        # Tempfile#path returns nil if the file has been unlinked
-        stdout.path.should == nil
+        File.should_not be_exist(path)
       end
 
       it "should raise an error if failonfail is true and the child failed" do
