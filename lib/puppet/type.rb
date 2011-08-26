@@ -226,15 +226,14 @@ class Type
   def self.newparam(name, options = {}, &block)
     options[:attributes] ||= {}
 
-      param = genclass(
-        name,
-      :parent => options[:parent] || Puppet::Parameter,
+    param = genclass(
+      name,
+      :parent     => options[:parent] || Puppet::Parameter,
       :attributes => options[:attributes],
-      :block => block,
-      :prefix => "Parameter",
-      :array => @parameters,
-
-      :hash => @paramhash
+      :block      => block,
+      :prefix     => "Parameter",
+      :array      => @parameters,
+      :hash       => @paramhash
     )
 
     handle_param_options(name, options)
