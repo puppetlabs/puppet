@@ -5,7 +5,7 @@ provider = Puppet::Type.type(:service).provider(:init)
 
 describe provider, :'fails_on_ruby_1.9.2' => true do
   describe "when running on FreeBSD", :if => (Facter.value(:operatingsystem) == "FreeBSD") do
-    it "should set its default path to include /etc/init.d and /usr/local/etc/init.d" do
+    it "should set its default path to include /etc/rc.d and /usr/local/etc/rc.d" do
       provider.defpath.should == ["/etc/rc.d", "/usr/local/etc/rc.d"]
     end
   end
