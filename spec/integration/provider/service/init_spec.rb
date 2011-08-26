@@ -16,7 +16,13 @@ describe provider, :'fails_on_ruby_1.9.2' => true do
     end
   end
 
-  describe "when not running on FreeBSD or HP-UX", :if => (! %w{HP-UX FreeBSD}.include?(Facter.value(:operatingsystem))) do
+  describe "when running on Archlinux", :if => (Facter.value(:operatingsystem) == "Archlinux") do
+    it "should set its default path to include /etc/rc.d" do
+      provider.defpath.should == "/etc/rc.d"
+    end
+  end
+
+  describe "when not running on FreeBSD, HP-UX or Archlinux", :if => (! %w{HP-UX FreeBSD Archlinux}.include?(Facter.value(:operatingsystem))) do
     it "should set its default path to include /etc/init.d" do
       provider.defpath.should == "/etc/init.d"
     end
