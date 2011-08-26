@@ -291,6 +291,10 @@ module Puppet
         further specifications for which type of package you want."
     end
 
+    validate do
+      provider.validate_source(self[:source])
+    end
+
     autorequire(:file) do
       autos = []
       [:responsefile, :adminfile].each { |param|

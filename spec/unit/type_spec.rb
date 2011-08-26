@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-describe Puppet::Type, :'fails_on_windows' => true do
+describe Puppet::Type, :fails_on_windows => true do
   include PuppetSpec::Files
 
   it "should consider a parameter to be valid if it is a valid parameter" do
@@ -360,11 +360,11 @@ describe Puppet::Type, :'fails_on_windows' => true do
     end
 
     # This one is really hard to test :/
-    it "should each default immediately if no value is provided" do
+    it "should set each default immediately if no value is provided" do
       defaults = []
-      Puppet::Type.type(:package).any_instance.stubs(:set_default).with { |value| defaults << value; true }
+      Puppet::Type.type(:service).any_instance.stubs(:set_default).with { |value| defaults << value; true }
 
-      Puppet::Type.type(:package).new :name => "whatever"
+      Puppet::Type.type(:service).new :name => "whatever"
 
       defaults[0].should == :provider
     end
