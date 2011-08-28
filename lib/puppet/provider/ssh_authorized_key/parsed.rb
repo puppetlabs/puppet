@@ -1,11 +1,9 @@
 require 'puppet/provider/parsedfile'
 
-
-      Puppet::Type.type(:ssh_authorized_key).provide(
-        :parsed,
+Puppet::Type.type(:ssh_authorized_key).provide(
+  :parsed,
   :parent => Puppet::Provider::ParsedFile,
-  :filetype => :flat,
-        
+  :filetype => :flat,      
   :default_target => ''
 ) do
   desc "Parse and generate authorized_keys files for SSH."
@@ -62,7 +60,7 @@ require 'puppet/provider/parsedfile'
     # so calling it here supresses the later attempt by our superclass's flush method.
     self.class.backup_target(target)
 
-    Puppet::Util::SUIDManager.asuser(@resource.should(:user)) { super }
+    super
     File.chown(uid, nil, target)
     File.chmod(file_perm, target)
   end
