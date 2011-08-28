@@ -38,7 +38,7 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     # Keep CRL valid for 5 years
     @content.next_update = Time.now + 5 * 365*24*60*60
 
-    @content.sign(cakey, OpenSSL::Digest::SHA1.new)
+    @content.sign(cakey, OpenSSL::Digest::SHA256.new)
 
     @content
   end
@@ -77,7 +77,7 @@ class Puppet::SSL::CertificateRevocationList < Puppet::SSL::Base
     # Keep CRL valid for 5 years
     @content.next_update = time + 5 * 365*24*60*60
 
-    @content.sign(cakey, OpenSSL::Digest::SHA1.new)
+    @content.sign(cakey, OpenSSL::Digest::SHA256.new)
 
     Puppet::SSL::CertificateRevocationList.indirection.save(self)
   end

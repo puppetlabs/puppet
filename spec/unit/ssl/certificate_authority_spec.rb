@@ -380,7 +380,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should sign the resulting certificate using its real key and a digest" do
         digest = mock 'digest'
-        OpenSSL::Digest::SHA1.expects(:new).returns digest
+        OpenSSL::Digest::SHA256.expects(:new).returns digest
 
         key = stub 'key', :content => "real_key"
         @ca.host.stubs(:key).returns key

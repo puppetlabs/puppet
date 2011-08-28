@@ -57,9 +57,6 @@ class Puppet::SSLCertificates::CA
 
     if Puppet[:capass]
       if FileTest.exists?(Puppet[:capass])
-        #puts "Reading #{Puppet[:capass]}"
-        #system "ls -al #{Puppet[:capass]}"
-        #File.read Puppet[:capass]
         @config[:password] = self.getpass
       else
         # Don't create a password if the cert already exists
@@ -350,7 +347,7 @@ class Puppet::SSLCertificates::CA
     end
   end
 
-  def sign_with_key(signable, digest = OpenSSL::Digest::SHA1.new)
+  def sign_with_key(signable, digest = OpenSSL::Digest::SHA256.new)
     cakey = nil
     if @config[:password]
       begin

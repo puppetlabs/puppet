@@ -72,7 +72,7 @@ module Puppet::SSLCertificates::Support
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", Puppet[:certname]]])
     csr.public_key = key.public_key
-    csr.sign(key, OpenSSL::Digest::MD5.new)
+    csr.sign(key, OpenSSL::Digest::SHA256.new)
 
     return csr
   end
@@ -101,8 +101,6 @@ module Puppet::SSLCertificates::Support
     end
     Puppet.settings.write(:hostcert) do |f| f.print cert end
     Puppet.settings.write(:localcacert) do |f| f.print cacert end
-    #File.open(@certfile, "w", 0644) { |f| f.print cert }
-    #File.open(@cacertfile, "w", 0644) { |f| f.print cacert }
     begin
       @cert = OpenSSL::X509::Certificate.new(cert)
       @cacert = OpenSSL::X509::Certificate.new(cacert)

@@ -368,9 +368,9 @@ module Puppet
       's' (seconds). The unit defaults to seconds. If this parameter
       is set, ca_days is ignored. Examples are '3600' (one hour)
       and '1825d', which is the same as '5y' (5 years) "],
-    :ca_md => ["md5", "The type of hash used in certificates."],
+    :ca_md => ["sha256", "The type of hash used in certificates."],
     :req_bits => [2048, "The bit length of the certificates."],
-    :keylength => [1024, "The bit length of keys."],
+    :keylength => [2048, "The bit length of keys."],
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
       :mode => 0644,
