@@ -72,27 +72,27 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
   end
 
   def get_version
-      execpipe([command(:pkginfo), " -I ", @resource[:name]]) do |process|
-        # our regex for matching pkg_info output
-        regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
-        fields = [ :name, :version, :flavor ]
-        master_version = 0
+    execpipe([command(:pkginfo), " -I ", @resource[:name]]) do |process|
+      # our regex for matching pkg_info output
+      regex = /^(.*)-(\d[^-]*)[-]?(\D*)(.*)$/
+      fields = [ :name, :version, :flavor ]
+      master_version = 0
 
-        process.each do |line|
-          if match = regex.match(line.split[0])
-            # now we return the first version, unless ensure is latest
-            version = match.captures[1]
-            return version unless @resource[:ensure] == "latest"
+      process.each do |line|
+        if match = regex.match(line.split[0])
+          # now we return the first version, unless ensure is latest
+          version = match.captures[1]
+          return version unless @resource[:ensure] == "latest"
 
-            master_version = version unless master_version > version
-          end
+          master_version = version unless master_version > version
         end
-
-        return master_version unless master_version == 0
-        raise Puppet::Error, "#{version} is not available for this package"
       end
+
+      return master_version unless master_version == 0
+      raise Puppet::Error, "#{version} is not available for this package"
+    end
   rescue Puppet::ExecutionFailure
-      return nil
+    return nil
   end
 
   def query
@@ -113,4 +113,3 @@ Puppet::Type.type(:package).provide :openbsd, :parent => Puppet::Provider::Packa
     pkgdelete @resource[:name]
   end
 end
-

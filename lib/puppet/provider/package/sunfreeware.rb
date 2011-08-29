@@ -6,6 +6,4 @@ Puppet::Type.type(:package).provide :sunfreeware, :parent => :blastwave, :source
   commands :pkgget => "pkg-get"
 
   confine :operatingsystem => :solaris
-
 end
-

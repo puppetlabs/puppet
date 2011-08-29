@@ -47,4 +47,3 @@ Puppet::Type.type(:package).provide :freebsd, :parent => :openbsd do
     pkgdelete "#{@resource[:name]}-#{@resource.should(:ensure)}"
   end
 end
-

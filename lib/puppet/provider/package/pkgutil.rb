@@ -172,4 +172,3 @@ Puppet::Type.type(:package).provide :pkgutil, :parent => :sun, :source => :sun d
     pkguti "-y", "-r", @resource[:name]
   end
 end
-
