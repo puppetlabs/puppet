@@ -62,16 +62,18 @@ Puppet::Type.type(:ssh_authorized_key).provide(:parsed,
     end
 
     def flush
-        raise Puppet::Error, "Cannot write SSH authorized keys without user" unless user
-        raise Puppet::Error, "User '#{user}' does not exist"                 unless uid = Puppet::Util.uid(user)
+      raise Puppet::Error, "Cannot write SSH authorized keys without user" unless user
+      raise Puppet::Error, "User '#{user}' does not exist"                 unless uid = Puppet::Util.uid(user)
+      Puppet::Util::SUIDManager.asuser(@resource.should(:user)) do
         unless File.exist?(dir = File.dirname(target))
-            Puppet.debug "Creating #{dir}"
-            Dir.mkdir(dir, dir_perm)
-            File.chown(uid, nil, dir)
+          Puppet.debug "Creating #{dir}"
+          Dir.mkdir(dir, dir_perm)
         end
-        Puppet::Util::SUIDManager.asuser(user) { super }
-        File.chown(uid, nil, target)
+
+        super
+
         File.chmod(file_perm, target)
+      end
     end
 
     # parse sshv2 option strings, wich is a comma separated list of
