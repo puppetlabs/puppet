@@ -11,7 +11,29 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
 
   # Install a package using 'up2date'.
   def install
-    up2date "-u", @resource[:name]
+    archs = []
+    begin
+      execpipe("#{command(:rpm)} --showrc | grep '^compatible arch'") { |output|
+      # output is 'compatible arch     : arch arch arch arch...'
+      # there should only be one line, but just in case we loop
+      output.each { |line|
+        # Split up the line after the : on spaces and append to the archs list
+        items = line.split(":")[1].split()
+          items.each { |item|
+            archs << item
+          }
+        }
+      }
+    rescue Puppet::ExecutionFailure
+      raise Puppet::Error, "Failed to list compatible archs"
+    end
+
+    parts = @resource[:name].split(".")
+    if archs.index(parts[-1]) != nil
+      up2date "--arch", parts[-1], "-u", parts[0..-2].join(".")
+    else
+      up2date "-u", @resource[:name]
+    end
 
     unless self.query
       raise Puppet::ExecutionFailure.new(

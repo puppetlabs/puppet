@@ -123,6 +123,9 @@ Puppet::Type.type(:package).provide :rpm, :source => :rpm, :parent => Puppet::Pr
   def self.nevra_to_hash(line)
     line.chomp!
     hash = {}
+    if line == ""
+      return hash
+    end
     NEVRA_FIELDS.zip(line.split) { |f, v| hash[f] = v }
     hash[:provider] = self.name
     hash[:ensure] = "#{hash[:version]}-#{hash[:release]}"
