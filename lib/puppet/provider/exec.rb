@@ -26,7 +26,7 @@ class Puppet::Provider::Exec < Puppet::Provider
       Dir.chdir(dir) do
         environment = {}
 
-        environment[:PATH] = resource[:path].join(":") if resource[:path]
+        environment[:PATH] = resource[:path].join(File::PATH_SEPARATOR) if resource[:path]
 
         if envlist = resource[:environment]
           envlist = [envlist] unless envlist.is_a? Array
