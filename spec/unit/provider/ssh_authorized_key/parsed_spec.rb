@@ -133,15 +133,15 @@ describe provider_class do
         @provider.flush
       end
 
-      it "should chown the directory to the user" do
+      it "should absolutely not chown the directory to the user" do
         uid = Puppet::Util.uid("random_bob")
-        File.expects(:chown).with(uid, nil, "/tmp/.ssh_dir")
+        File.expects(:chown).never
         @provider.flush
       end
 
-      it "should chown the key file to the user" do
+      it "should absolutely not chown the key file to the user" do
         uid = Puppet::Util.uid("random_bob")
-        File.expects(:chown).with(uid, nil, "/tmp/.ssh_dir/place_to_put_authorized_keys")
+        File.expects(:chown).never
         @provider.flush
       end
 
@@ -177,11 +177,11 @@ describe provider_class do
         @provider.flush
       end
 
-      it "should chown the directory to the user if it creates it" do
+      it "should absolutely not chown the directory to the user if it creates it" do
         File.stubs(:exist?).with(@dir).returns false
         Dir.stubs(:mkdir).with(@dir,0700)
         uid = Puppet::Util.uid("nobody")
-        File.expects(:chown).with(uid, nil, @dir)
+        File.expects(:chown).never
         @provider.flush
       end
 
@@ -192,9 +192,9 @@ describe provider_class do
         @provider.flush
       end
 
-      it "should chown the key file to the user" do
+      it "should absolutely not chown the key file to the user" do
         uid = Puppet::Util.uid("nobody")
-        File.expects(:chown).with(uid, nil, File.expand_path("~nobody/.ssh/authorized_keys"))
+        File.expects(:chown).never
         @provider.flush
       end
 
