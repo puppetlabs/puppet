@@ -355,6 +355,20 @@ Puppet::Type.newtype(:cron) do
     defaultto { Etc.getpwuid(Process.uid).name || "root" }
   end
 
+  # Autorequire the owner of the crontab entry.
+  autorequire(:user) do
+    if @parameters.include?(:user)
+      # The user property automatically converts to IDs
+      next unless should = @parameters[:user].shouldorig
+      val = should[0]
+      if val.is_a?(Integer) or val =~ /^\d+$/
+        nil
+      else
+        val
+      end
+    end
+  end
+
   newproperty(:target) do
     desc "Where the cron job should be stored.  For crontab-style
       entries this is the same as the user and defaults that way.
