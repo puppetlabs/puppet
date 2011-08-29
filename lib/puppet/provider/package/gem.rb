@@ -121,4 +121,3 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
     self.install(false)
   end
 end
-

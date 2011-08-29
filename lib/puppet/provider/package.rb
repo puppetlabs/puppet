@@ -21,4 +21,8 @@ class Puppet::Provider::Package < Puppet::Provider
     end
     @property_hash.dup
   end
+
+  def validate_source(value)
+    true
+  end
 end

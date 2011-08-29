@@ -48,11 +48,11 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
 
     if output =~ /Candidate:\s+(\S+)\s/
       return $1
-        else
+    else
       self.err "Could not find latest version"
       return nil
-        end
-        end
+    end
+  end
 
   #
   # preseeds answers to dpkg-set-selection from the "responsefile"
@@ -79,4 +79,3 @@ Puppet::Type.type(:package).provide :fink, :parent => :dpkg, :source => :dpkg do
     aptget '-y', '-q', 'remove', '--purge', @resource[:name]
   end
 end
-
