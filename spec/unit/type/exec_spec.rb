@@ -156,16 +156,32 @@ describe Puppet::Type.type(:exec) do
 
   describe "when handling the path parameter" do
     expect = %w{one two three four}
-    { "an array"                        => expect,
-      "a colon separated list"          => "one:two:three:four",
-      "a semi-colon separated list"     => "one;two;three;four",
-      "both array and colon lists"      => ["one", "two:three", "four"],
-      "both array and semi-colon lists" => ["one", "two;three", "four"],
-      "colon and semi-colon lists"      => ["one:two", "three;four"]
+    { "an array"                                      => expect,
+      "a path-separator delimited list"               => expect.join(File::PATH_SEPARATOR),
+      "both array and path-separator delimited lists" => ["one", "two#{File::PATH_SEPARATOR}three", "four"],
     }.each do |test, input|
       it "should accept #{test}" do
         type = Puppet::Type.type(:exec).new(:name => @command, :path => input)
         type[:path].should == expect
+      end
+    end
+
+    describe "on platforms where path separator is not :" do
+      before :each do
+        @old_verbosity = $VERBOSE
+        $VERBOSE = nil
+        @old_separator = File::PATH_SEPARATOR
+        File::PATH_SEPARATOR = 'q'
+      end
+
+      after :each do
+        File::PATH_SEPARATOR = @old_separator
+        $VERBOSE = @old_verbosity
+      end
+
+      it "should use the path separator of the current platform" do
+        type = Puppet::Type.type(:exec).new(:name => @command, :path => "fooqbarqbaz")
+        type[:path].should == %w[foo bar baz]
       end
     end
   end

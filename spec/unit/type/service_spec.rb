@@ -106,17 +106,17 @@ describe Puppet::Type.type(:service), "when validating attribute values" do
     svc.should(:enable).should be_nil
   end
 
-  it "should split paths on ':'" do
+  it "should split paths on '#{File::PATH_SEPARATOR}'" do
     FileTest.stubs(:exist?).returns(true)
     FileTest.stubs(:directory?).returns(true)
-    svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two:/three/four")
+    svc = Puppet::Type.type(:service).new(:name => "yay", :path => "/one/two#{File::PATH_SEPARATOR}/three/four")
     svc[:path].should == %w{/one/two /three/four}
   end
 
-  it "should accept arrays of paths joined by ':'" do
+  it "should accept arrays of paths joined by '#{File::PATH_SEPARATOR}'" do
     FileTest.stubs(:exist?).returns(true)
     FileTest.stubs(:directory?).returns(true)
-    svc = Puppet::Type.type(:service).new(:name => "yay", :path => ["/one:/two", "/three:/four"])
+    svc = Puppet::Type.type(:service).new(:name => "yay", :path => ["/one#{File::PATH_SEPARATOR}/two", "/three#{File::PATH_SEPARATOR}/four"])
     svc[:path].should == %w{/one /two /three /four}
   end
 end
