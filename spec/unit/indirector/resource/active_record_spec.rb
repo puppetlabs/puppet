@@ -1,10 +1,12 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
+require 'sqlite3' rescue nil
+
 require 'puppet/rails'
 require 'puppet/node/facts'
 
-describe "Puppet::Resource::ActiveRecord", :if => Puppet.features.rails? do
+describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and defined? SQLite3) do
   include PuppetSpec::Files
 
   before :each do
