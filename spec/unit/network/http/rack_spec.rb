@@ -6,6 +6,11 @@ require 'puppet/network/http/rack' if Puppet.features.rack?
 describe "Puppet::Network::HTTP::Rack", :if => Puppet.features.rack? do
   describe "while initializing" do
 
+    it "should reopen logs" do
+      Puppet::Util::Log.expects(:reopen)
+      Puppet::Network::HTTP::Rack.new({:protocols => [:rest]})
+    end
+
     it "should require a protocol specification" do
       Proc.new { Puppet::Network::HTTP::Rack.new({}) }.should raise_error(ArgumentError)
     end

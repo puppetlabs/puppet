@@ -10,6 +10,7 @@ require 'puppet/network/http/rack/xmlrpc'
 class Puppet::Network::HTTP::Rack
 
   def initialize(args)
+    Puppet::Util::Log.reopen
     raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
     protocols = args[:protocols]
 
