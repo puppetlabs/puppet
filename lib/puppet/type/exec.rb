@@ -139,18 +139,12 @@ module Puppet
     newparam(:path) do
       desc "The search path used for command execution.
         Commands must be fully qualified if no path is specified.  Paths
-        can be specified as an array or as a colon separated list."
+        can be specified as an array or as a '#{File::PATH_SEPARATOR}' separated list."
 
       # Support both arrays and colon-separated fields.
       def value=(*values)
         @value = values.flatten.collect { |val|
-          if val =~ /;/ # recognize semi-colon separated paths
-            val.split(";")
-          elsif val =~ /^\w:[^:]*$/ # heuristic to avoid splitting a driveletter away
-            val
-          else
-            val.split(":")
-          end
+          val.split(File::PATH_SEPARATOR)
         }.flatten
       end
     end
