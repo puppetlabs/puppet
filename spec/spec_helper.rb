@@ -54,7 +54,7 @@ RSpec.configure do |config|
     indirections.each do |indirector|
       $saved_indirection_state[indirector.name] = {
         :@terminus_class => indirector.instance_variable_get(:@terminus_class),
-        :@cache_glass    => indirector.instance_variable_get(:@cache_class)
+        :@cache_class    => indirector.instance_variable_get(:@cache_class)
       }
     end
 
