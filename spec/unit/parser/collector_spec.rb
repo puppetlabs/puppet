@@ -276,20 +276,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
     @resource_type = "notify"
     @equery = ["title", "!=", ""]
     @vquery = proc { |r| true }
-
-    dir = Pathname(tmpdir('puppet-var'))
-    Puppet[:vardir]       = dir.to_s
-    Puppet[:dbadapter]    = 'sqlite3'
-    Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
-    Puppet[:storeconfigs] = true
-    Puppet[:environment]  = "production"
-    Puppet::Rails.init
-
-    @collector = Puppet::Parser::Collector.new(@scope, @resource_type, @equery, @vquery, :exported)
-  end
-
-  after :each do
-    ActiveRecord::Base.remove_connection
+    @collector = Puppet::Parser::Collector.new(@scope, @resource_type,
+                                               @equery, @vquery, :exported)
   end
 
   it "should just return false if :storeconfigs is not enabled" do
@@ -297,137 +285,153 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
     @collector.evaluate.should be_false
   end
 
-  it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
-    one = Puppet::Parser::Resource.new('notify', 'one',
-                                       :virtual  => true,
-                                       :exported => true,
-                                       :scope    => @scope)
-    two = Puppet::Parser::Resource.new('notify', 'two',
-                                       :virtual  => true,
-                                       :exported => true,
-                                       :scope    => @scope)
-
-    @compiler.resources << one
-    @compiler.resources << two
-
-    @collector.evaluate.should == [one, two]
-    one.should_not be_virtual
-    two.should_not be_virtual
-
-    # REVISIT: Apparently we never actually marked local resources as
-    # non-exported.  So, this is what the previous test asserted, and checking
-    # what it claims to do causes test failures. --daniel 2011-08-23
-  end
-
-  it "should mark all returned resources as not virtual" do
-    one = Puppet::Parser::Resource.new('notify', 'one',
-                                       :virtual  => true,
-                                       :exported => true,
-                                       :scope    => @scope)
-
-    @compiler.resources << one
-
-    @collector.evaluate.should == [one]
-    one.should_not be_virtual
-  end
-
-  it "should convert all found resources into parser resources" do
-    host = Puppet::Rails::Host.create!(:name => 'one.local')
-    Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'whammo',
-              :exported => true)
-
-    result = @collector.evaluate
-    result.length.should == 1
-    result.first.should be_an_instance_of Puppet::Parser::Resource
-    result.first.type.should == 'Notify'
-    result.first.title.should == 'whammo'
-  end
-
-  it "should override all exported collected resources if collector has an override" do
-    host = Puppet::Rails::Host.create!(:name => 'one.local')
-    Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'whammo',
-              :exported => true)
-
-    param = Puppet::Parser::Resource::Param.
-      new(:name => 'message', :value => 'howdy')
-    @collector.add_override(:parameters => [param], :scope => @scope)
-
-    got = @collector.evaluate
-    got.first[:message].should == param.value
-  end
-
-  it "should store converted resources in the compile's resource list" do
-    host = Puppet::Rails::Host.create!(:name => 'one.local')
-    Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'whammo',
-              :exported => true)
-
-    @compiler.expects(:add_resource).with do |scope, resource|
-      scope.should be_an_instance_of Puppet::Parser::Scope
-      resource.type.should  == 'Notify'
-      resource.title.should == 'whammo'
-      true
+  context "with storeconfigs enabled" do
+    before :each do
+      dir = Pathname(tmpdir('puppet-var'))
+      Puppet[:vardir]       = dir.to_s
+      Puppet[:dbadapter]    = 'sqlite3'
+      Puppet[:dblocation]   = (dir + 'storeconfigs.sqlite').to_s
+      Puppet[:storeconfigs] = true
+      Puppet[:environment]  = "production"
+      Puppet::Rails.init
     end
 
-    @collector.evaluate
-  end
+    after :each do
+      ActiveRecord::Base.remove_connection
+    end
 
-  # This way one host doesn't store another host's resources as exported.
-  it "should mark resources collected from the database as not exported" do
-    host = Puppet::Rails::Host.create!(:name => 'one.local')
-    Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'whammo',
-              :exported => true)
+    it "should return all matching resources from the current compile and mark them non-virtual and non-exported" do
+      one = Puppet::Parser::Resource.new('notify', 'one',
+                                         :virtual  => true,
+                                         :exported => true,
+                                         :scope    => @scope)
+      two = Puppet::Parser::Resource.new('notify', 'two',
+                                         :virtual  => true,
+                                         :exported => true,
+                                         :scope    => @scope)
 
-    got = @collector.evaluate
-    got.length.should == 1
-    got.first.type.should == "Notify"
-    got.first.title.should == "whammo"
-    got.first.should_not be_exported
-  end
+      @compiler.resources << one
+      @compiler.resources << two
 
-  it "should fail if an equivalent resource already exists in the compile" do
-    host = Puppet::Rails::Host.create!(:name => 'one.local')
-    Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'whammo',
-              :exported => true)
+      @collector.evaluate.should == [one, two]
+      one.should_not be_virtual
+      two.should_not be_virtual
 
-    local = Puppet::Parser::Resource.new('notify', 'whammo', :scope => @scope)
-    @compiler.add_resource(@scope, local)
+      # REVISIT: Apparently we never actually marked local resources as
+      # non-exported.  So, this is what the previous test asserted, and checking
+      # what it claims to do causes test failures. --daniel 2011-08-23
+    end
 
-    expect { @collector.evaluate }.
-      to raise_error Puppet::ParseError, /cannot override local resource/
-  end
+    it "should mark all returned resources as not virtual" do
+      one = Puppet::Parser::Resource.new('notify', 'one',
+                                         :virtual  => true,
+                                         :exported => true,
+                                         :scope    => @scope)
 
-  it "should ignore exported resources that match already-collected resources" do
-    host = Puppet::Rails::Host.create!(:name => 'one.local')
-    # One that we already collected...
-    db = Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'whammo',
-              :exported => true)
-    # ...and one we didn't.
-    Puppet::Rails::Resource.
-      create!(:host     => host,
-              :restype  => 'notify', :title => 'boingy-boingy',
-              :exported => true)
+      @compiler.resources << one
 
-    local = Puppet::Parser::Resource.new('notify', 'whammo',
-                                         :scope        => @scope,
-                                         :collector_id => db.id)
-    @compiler.add_resource(@scope, local)
+      @collector.evaluate.should == [one]
+      one.should_not be_virtual
+    end
 
-    got = nil
-    expect { got = @collector.evaluate }.not_to raise_error(Puppet::ParseError)
-    got.length.should == 1
-    got.first.type.should == "Notify"
-    got.first.title.should == "boingy-boingy"
+    it "should convert all found resources into parser resources" do
+      host = Puppet::Rails::Host.create!(:name => 'one.local')
+      Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'whammo',
+                :exported => true)
+
+      result = @collector.evaluate
+      result.length.should == 1
+      result.first.should be_an_instance_of Puppet::Parser::Resource
+      result.first.type.should == 'Notify'
+      result.first.title.should == 'whammo'
+    end
+
+    it "should override all exported collected resources if collector has an override" do
+      host = Puppet::Rails::Host.create!(:name => 'one.local')
+      Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'whammo',
+                :exported => true)
+
+      param = Puppet::Parser::Resource::Param.
+        new(:name => 'message', :value => 'howdy')
+      @collector.add_override(:parameters => [param], :scope => @scope)
+
+      got = @collector.evaluate
+      got.first[:message].should == param.value
+    end
+
+    it "should store converted resources in the compile's resource list" do
+      host = Puppet::Rails::Host.create!(:name => 'one.local')
+      Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'whammo',
+                :exported => true)
+
+      @compiler.expects(:add_resource).with do |scope, resource|
+        scope.should be_an_instance_of Puppet::Parser::Scope
+        resource.type.should  == 'Notify'
+        resource.title.should == 'whammo'
+        true
+      end
+
+      @collector.evaluate
+    end
+
+    # This way one host doesn't store another host's resources as exported.
+    it "should mark resources collected from the database as not exported" do
+      host = Puppet::Rails::Host.create!(:name => 'one.local')
+      Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'whammo',
+                :exported => true)
+
+      got = @collector.evaluate
+      got.length.should == 1
+      got.first.type.should == "Notify"
+      got.first.title.should == "whammo"
+      got.first.should_not be_exported
+    end
+
+    it "should fail if an equivalent resource already exists in the compile" do
+      host = Puppet::Rails::Host.create!(:name => 'one.local')
+      Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'whammo',
+                :exported => true)
+
+      local = Puppet::Parser::Resource.new('notify', 'whammo', :scope => @scope)
+      @compiler.add_resource(@scope, local)
+
+      expect { @collector.evaluate }.
+        to raise_error Puppet::ParseError, /cannot override local resource/
+    end
+
+    it "should ignore exported resources that match already-collected resources" do
+      host = Puppet::Rails::Host.create!(:name => 'one.local')
+      # One that we already collected...
+      db = Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'whammo',
+                :exported => true)
+      # ...and one we didn't.
+      Puppet::Rails::Resource.
+        create!(:host     => host,
+                :restype  => 'notify', :title => 'boingy-boingy',
+                :exported => true)
+
+      local = Puppet::Parser::Resource.new('notify', 'whammo',
+                                           :scope        => @scope,
+                                           :collector_id => db.id)
+      @compiler.add_resource(@scope, local)
+
+      got = nil
+      expect { got = @collector.evaluate }.not_to raise_error(Puppet::ParseError)
+      got.length.should == 1
+      got.first.type.should == "Notify"
+      got.first.title.should == "boingy-boingy"
+    end
   end
 end
