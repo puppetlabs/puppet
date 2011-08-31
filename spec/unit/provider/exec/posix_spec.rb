@@ -11,13 +11,8 @@ describe Puppet::Type.type(:exec).provider(:posix) do
     command
   end
 
-  let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo')) }
+  let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo'), :provider => :posix) }
   let(:provider) { described_class.new(resource) }
-
-  before :each do
-    Puppet.features.stubs(:posix?).returns(true)
-    Puppet.features.stubs(:microsoft_windows?).returns(false)
-  end
 
   describe "#validatecmd" do
     it "should fail if no path is specified and the command is not fully qualified" do
@@ -67,7 +62,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
         provider.resource[:path] = [File.dirname(command)]
         filename = File.basename(command)
 
-        Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == [filename]) && (arguments.is_a? Hash) }
+        Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == filename) && (arguments.is_a? Hash) }
 
         provider.run(filename)
       end
@@ -98,7 +93,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.resource[:path] = ['/bogus/bin']
       command = make_exe
 
-      Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == ["#{command} bar --sillyarg=true --blah"]) && (arguments.is_a? Hash) }
+      Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == "#{command} bar --sillyarg=true --blah") && (arguments.is_a? Hash) }
       provider.run("#{command} bar --sillyarg=true --blah")
     end
 
@@ -113,7 +108,7 @@ describe Puppet::Type.type(:exec).provider(:posix) do
       provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
       command = make_exe
 
-      Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline== [command]) && (arguments.is_a? Hash) }
+      Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == command) && (arguments.is_a? Hash) }
       provider.run(command)
       @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end

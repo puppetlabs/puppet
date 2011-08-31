@@ -73,7 +73,7 @@ class Puppet::Parameter
       define_method(:unsafe_munge, &block)
     end
 
-    # Does the parameter supports reverse munge?
+    # Does the parameter support reverse munging?
     # This will be called when something wants to access the parameter
     # in a canonical form different to what the storage form is.
     def unmunge(&block)

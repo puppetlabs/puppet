@@ -36,6 +36,28 @@ RSpec.configure do |config|
   config.before :each do
     GC.disable
 
+    # We need to preserve the current state of all our indirection cache and
+    # terminus classes.  This is pretty important, because changes to these
+    # are global and lead to order dependencies in our testing.
+    #
+    # We go direct to the implementation because there is no safe, sane public
+    # API to manage restoration of these to their default values.  This
+    # should, once the value is proved, be moved to a standard API on the
+    # indirector.
+    #
+    # To make things worse, a number of the tests stub parts of the
+    # indirector.  These stubs have very specific expectations that what
+    # little of the public API we could use is, well, likely to explode
+    # randomly in some tests.  So, direct access.  --daniel 2011-08-30
+    $saved_indirection_state = {}
+    indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
+    indirections.each do |indirector|
+      $saved_indirection_state[indirector.name] = {
+        :@terminus_class => indirector.instance_variable_get(:@terminus_class),
+        :@cache_class    => indirector.instance_variable_get(:@cache_class)
+      }
+    end
+
     # these globals are set by Application
     $puppet_application_mode = nil
     $puppet_application_name = nil
@@ -70,6 +92,15 @@ RSpec.configure do |config|
     @logs.clear
     Puppet::Util::Log.close_all
     Puppet::Util::Log.level = @log_level
+
+    # Restore the indirector configuration.  See before hook.
+    indirections = Puppet::Indirector::Indirection.send(:class_variable_get, :@@indirections)
+    indirections.each do |indirector|
+      $saved_indirection_state.fetch(indirector.name, {}).each do |variable, value|
+        indirector.instance_variable_set(variable, value)
+      end
+    end
+    $saved_indirection_state = nil
 
     GC.enable
   end

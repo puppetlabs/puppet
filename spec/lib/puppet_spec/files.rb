@@ -35,7 +35,7 @@ module PuppetSpec::Files
     return path if path =~ /^[A-Za-z]:/
 
     pwd = Dir.getwd
-    return "#{pwd[0,2]}#{path}" if pwd.length > 2 and pwd =~ /^[A-Za-z]:/
+    return "#{pwd[0,2]}#{path}" if pwd =~ /^[A-Za-z]:/
     return "C:#{path}"
   end
 

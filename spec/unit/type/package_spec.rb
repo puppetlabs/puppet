@@ -27,7 +27,7 @@ describe Puppet::Type.type(:package) do
   end
 
   it "should default to being installed" do
-    pkg = Puppet::Type.type(:package).new(:name => "yay")
+    pkg = Puppet::Type.type(:package).new(:name => "yay", :provider => :apt)
     pkg.should(:ensure).should == :present
   end
 
@@ -45,7 +45,12 @@ describe Puppet::Type.type(:package) do
 
   describe "when validating attribute values" do
     before do
-      @provider = stub 'provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil
+      @provider = stub(
+        'provider',
+        :class           => Puppet::Type.type(:package).defaultprovider,
+        :clear           => nil,
+        :validate_source => nil
+      )
       Puppet::Type.type(:package).defaultprovider.expects(:new).returns(@provider)
     end
 
@@ -105,7 +110,14 @@ describe Puppet::Type.type(:package) do
 
   describe Puppet::Type.type(:package) do
     before :each do
-      @provider = stub 'provider', :class => Puppet::Type.type(:package).defaultprovider, :clear => nil, :satisfies? => true, :name => :mock
+      @provider = stub(
+        'provider',
+        :class           => Puppet::Type.type(:package).defaultprovider,
+        :clear           => nil,
+        :satisfies?      => true,
+        :name            => :mock,
+        :validate_source => nil
+      )
       Puppet::Type.type(:package).defaultprovider.stubs(:new).returns(@provider)
       Puppet::Type.type(:package).defaultprovider.stubs(:instances).returns([])
       @package = Puppet::Type.type(:package).new(:name => "yay")

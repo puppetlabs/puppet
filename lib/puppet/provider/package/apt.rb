@@ -109,4 +109,3 @@ Puppet::Type.type(:package).provide :apt, :parent => :dpkg, :source => :dpkg do
     super
   end
 end
-

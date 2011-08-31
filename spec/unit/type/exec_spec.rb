@@ -5,8 +5,6 @@ describe Puppet::Type.type(:exec) do
   include PuppetSpec::Files
 
   def exec_tester(command, exitstatus = 0, rest = {})
-    @user_name  = 'some_user_name'
-    @group_name = 'some_group_name'
     Puppet.features.stubs(:root?).returns(true)
 
     output = rest.delete(:output) || ''
@@ -15,8 +13,6 @@ describe Puppet::Type.type(:exec) do
     args = {
       :name      => command,
       :path      => @example_path,
-      :user      => @user_name,
-      :group     => @group_name,
       :logoutput => false,
       :loglevel  => :err,
       :returns   => 0
@@ -26,7 +22,7 @@ describe Puppet::Type.type(:exec) do
 
     status = stub "process", :exitstatus => exitstatus
     Puppet::Util::SUIDManager.expects(:run_and_capture).times(tries).
-      with([command], @user_name, @group_name).returns([output, status])
+      with(command, nil, nil).returns([output, status])
 
     return exec
   end
@@ -37,14 +33,19 @@ describe Puppet::Type.type(:exec) do
     @bogus_cmd = make_absolute('/bogus/cmd')
   end
 
-  describe "when not stubbing the provider", :fails_on_windows => true do
+  describe "when not stubbing the provider" do
     before do
-      File.stubs(:exists?).returns false
-      File.stubs(:exists?).with(@executable).returns true
-      File.stubs(:exists?).with('/bin/false').returns true
-      @example_path = Puppet.features.posix? ? %w{/usr/bin /bin} : [ "C:/Program Files/something/bin", "C:/Ruby/bin" ]
-      File.stubs(:exists?).with(File.join(@example_path[0],"true")).returns true
-      File.stubs(:exists?).with(File.join(@example_path[0],"false")).returns true
+      path = tmpdir('path')
+      true_cmd = File.join(path, 'true')
+      false_cmd = File.join(path, 'false')
+
+      FileUtils.touch(true_cmd)
+      FileUtils.touch(false_cmd)
+
+      File.chmod(0755, true_cmd)
+      File.chmod(0755, false_cmd)
+
+      @example_path = [path]
     end
 
     it "should return :executed_command as its event" do
@@ -142,7 +143,7 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  it "should be able to autorequire files mentioned in the command", :fails_on_windows => true do
+  it "should be able to autorequire files mentioned in the command" do
     foo = make_absolute('/bin/foo')
     catalog = Puppet::Resource::Catalog.new
     tmp = Puppet::Type.type(:file).new(:name => foo)
@@ -153,18 +154,34 @@ describe Puppet::Type.type(:exec) do
     catalog.relationship_graph.dependencies(execer).should == [tmp]
   end
 
-  describe "when handling the path parameter", :fails_on_windows => true do
+  describe "when handling the path parameter" do
     expect = %w{one two three four}
-    { "an array"                        => expect,
-      "a colon separated list"          => "one:two:three:four",
-      "a semi-colon separated list"     => "one;two;three;four",
-      "both array and colon lists"      => ["one", "two:three", "four"],
-      "both array and semi-colon lists" => ["one", "two;three", "four"],
-      "colon and semi-colon lists"      => ["one:two", "three;four"]
+    { "an array"                                      => expect,
+      "a path-separator delimited list"               => expect.join(File::PATH_SEPARATOR),
+      "both array and path-separator delimited lists" => ["one", "two#{File::PATH_SEPARATOR}three", "four"],
     }.each do |test, input|
       it "should accept #{test}" do
         type = Puppet::Type.type(:exec).new(:name => @command, :path => input)
         type[:path].should == expect
+      end
+    end
+
+    describe "on platforms where path separator is not :" do
+      before :each do
+        @old_verbosity = $VERBOSE
+        $VERBOSE = nil
+        @old_separator = File::PATH_SEPARATOR
+        File::PATH_SEPARATOR = 'q'
+      end
+
+      after :each do
+        File::PATH_SEPARATOR = @old_separator
+        $VERBOSE = @old_verbosity
+      end
+
+      it "should use the path separator of the current platform" do
+        type = Puppet::Type.type(:exec).new(:name => @command, :path => "fooqbarqbaz")
+        type[:path].should == %w[foo bar baz]
       end
     end
   end
@@ -209,7 +226,8 @@ describe Puppet::Type.type(:exec) do
   describe "when setting cwd" do
     it_should_behave_like "all path parameters", :cwd, :array => false do
       def instance(path)
-        Puppet::Type.type(:exec).new(:name => @executable, :cwd => path)
+        # Specify shell provider so we don't have to care about command validation
+        Puppet::Type.type(:exec).new(:name => @executable, :cwd => path, :provider => :shell)
       end
     end
   end
@@ -334,11 +352,17 @@ describe Puppet::Type.type(:exec) do
         end
       end
 
-      # REMIND: the exec provider is not supported on windows yet
       it "should fail if timeout is exceeded", :fails_on_windows => true do
-        File.stubs(:exists?).with('/bin/sleep').returns(true)
-        File.stubs(:exists?).with('sleep').returns(false)
+        Puppet::Util.stubs(:execute).with do |cmd,args|
+          sleep 1
+          true
+        end
+        FileTest.stubs(:file?).returns(false)
+        FileTest.stubs(:file?).with('/bin/sleep').returns(true)
+        FileTest.stubs(:executable?).returns(false)
+        FileTest.stubs(:executable?).with('/bin/sleep').returns(true)
         sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
+
         lambda { sleep_exec.refresh }.should raise_error Puppet::Error, "Command exceeded timeout"
       end
 
@@ -449,7 +473,8 @@ describe Puppet::Type.type(:exec) do
     describe "when setting creates" do
       it_should_behave_like "all path parameters", :creates, :array => true do
         def instance(path)
-          Puppet::Type.type(:exec).new(:name => @executable, :creates => path)
+          # Specify shell provider so we don't have to care about command validation
+          Puppet::Type.type(:exec).new(:name => @executable, :creates => path, :provider => :shell)
         end
       end
     end
@@ -480,10 +505,10 @@ describe Puppet::Type.type(:exec) do
     end
 
     describe ":creates" do
-      before :all do
-        @exist   = "/"
-        @unexist = "/this/path/should/never/exist"
-        while FileTest.exist?(@unexist) do @unexist += "/foo" end
+      before :each do
+        @exist   = tmpfile('exist')
+        FileUtils.touch(@exist)
+        @unexist = tmpfile('unexist')
       end
 
       context "with a single item" do

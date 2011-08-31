@@ -103,4 +103,3 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
     end
   end
 end
-
