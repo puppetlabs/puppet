@@ -287,6 +287,8 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
 
   context "with storeconfigs enabled" do
     before :each do
+      ActiveRecord::Base.remove_connection
+
       dir = Pathname(tmpdir('puppet-var'))
       Puppet[:vardir]       = dir.to_s
       Puppet[:dbadapter]    = 'sqlite3'
