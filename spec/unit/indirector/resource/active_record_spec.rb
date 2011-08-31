@@ -1,7 +1,10 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'sqlite3' rescue nil
+begin
+  require 'sqlite3'
+rescue LoadError
+end
 
 require 'puppet/rails'
 require 'puppet/node/facts'
