@@ -1,6 +1,11 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
+begin
+  require 'sqlite3'
+rescue LoadError
+end
+
 require 'puppet/rails'
 require 'puppet/parser/collector'
 
@@ -262,7 +267,7 @@ describe Puppet::Parser::Collector, "when collecting virtual and catalog resourc
   end
 end
 
-describe Puppet::Parser::Collector, "when collecting exported resources", :if => Puppet.features.rails? do
+describe Puppet::Parser::Collector, "when collecting exported resources", :if => (Puppet.features.rails? and defined? SQLite3) do
   include PuppetSpec::Files
 
   before do
