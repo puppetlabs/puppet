@@ -39,4 +39,3 @@ Puppet::Type.type(:package).provide :up2date, :parent => :rpm, :source => :rpm d
     self.install
   end
 end
-

@@ -81,4 +81,3 @@ Puppet::Type.type(:package).provide :aptrpm, :parent => :rpm, :source => :rpm do
     aptget '-y', '-q', 'remove', '--purge', @resource[:name]
   end
 end
-

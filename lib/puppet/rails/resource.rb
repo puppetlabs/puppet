@@ -224,7 +224,7 @@ class Puppet::Rails::Resource < ActiveRecord::Base
     obj = Puppet::Parser::Resource.new(hash.delete("type"), hash.delete("title"), hash)
 
     # Store the ID, so we can check if we're re-collecting the same resource.
-    obj.rails_id = self.id
+    obj.collector_id = self.id
 
     obj
   end

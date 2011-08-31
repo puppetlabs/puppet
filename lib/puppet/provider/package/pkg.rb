@@ -104,5 +104,4 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
     hash
   end
-
 end

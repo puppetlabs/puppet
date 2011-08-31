@@ -1,4 +1,5 @@
 require 'puppet/util/package'
+
 Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
   desc "Support via `yum`."
 
@@ -104,4 +105,3 @@ Puppet::Type.type(:package).provide :yum, :parent => :rpm, :source => :rpm do
     yum "-y", :erase, @resource[:name]
   end
 end
-
