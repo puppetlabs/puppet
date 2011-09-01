@@ -92,4 +92,8 @@ describe tagmail do
       results.should be_nil
     end
   end
+
+  describe "when there are no changes" do
+    it "should not send an email"
+  end
 end
