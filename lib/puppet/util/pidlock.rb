@@ -61,7 +61,7 @@ class Puppet::Util::Pidlock
 
     begin
       Process.kill(0, lock_pid)
-    rescue Errno::ESRCH
+    rescue Errno::ESRCH, Process::Error
       File.unlink(@lockfile)
     end
   end
