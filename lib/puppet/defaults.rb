@@ -730,7 +730,12 @@ EOT
       Your puppet master needs to support compression (usually by activating some settings in a reverse-proxy
       in front of the puppet master, which rules out webrick).
       It is harmless to activate this settings if your master doesn't support
-      compression, but if it supports it, this setting might reduce performance on high-speed LANs."]
+      compression, but if it supports it, this setting might reduce performance on high-speed LANs."],
+    :waitforcert => [120, # 2 minutes
+      "The time interval, specified in seconds, 'puppet agent' should connect to the server
+      and ask it to sign a certificate request. This is useful for the initial setup of a
+      puppet client. You can turn off waiting for certificates by specifying a time of 0."
+    ]
   )
 
   setdefaults(:inspect,
