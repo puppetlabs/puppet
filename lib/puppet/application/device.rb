@@ -78,7 +78,7 @@ USAGE
 
 DESCRIPTION
 -----------
-Once the client has a signed certificate for a given remote device, it will 
+Once the client has a signed certificate for a given remote device, it will
 retrieve its configuration and apply it.
 
 USAGE NOTES
@@ -148,7 +148,7 @@ Brice Figureau
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Labs, LLC 
+Copyright (c) 2011 Puppet Labs, LLC
 Licensed under the Apache 2.0 License
       HELP
     end
@@ -216,7 +216,7 @@ Licensed under the Apache 2.0 License
 
   def setup_host
     @host = Puppet::SSL::Host.new
-    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : 120)
+    waitforcert = options[:waitforcert] || (Puppet[:onetime] ? 0 : Puppet[:waitforcert])
     cert = @host.wait_for_cert(waitforcert)
   end
 
