@@ -246,7 +246,7 @@ describe Puppet::Face[:node, '0.0.1'] do
             Puppet::Type.stubs(:type).returns(nil)
             Puppet::Resource::TypeCollection.any_instance.expects(:find_definition).with('', "File").returns(nil)
             Puppet::Rails::ParamName.expects(:find_or_create_by_name).never
-            subject.clean_storeconfigs(@host)
+            subject.clean_storeconfigs(@host, true)
           end
 
           it "should not unexport the resource of a not ensurable native type" do
