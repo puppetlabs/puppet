@@ -54,10 +54,7 @@ Puppet::Face.define(:node, '0.0.1') do
     clean_cached_facts(node)
     clean_cached_node(node)
     clean_reports(node)
-
-    # This is roughly functional, but seems to introduce order-dependent test
-    # failures; this can be re-added when those issues are resolved.
-    # clean_storeconfigs(node, unexport)
+    clean_storeconfigs(node, unexport)
   end
 
   # clean signed cert for +host+
