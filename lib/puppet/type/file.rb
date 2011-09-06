@@ -632,6 +632,7 @@ Puppet::Type.newtype(:file) do
         FileUtils.rmtree(self[:path])
       else
         notice "Not removing directory; use 'force' to override"
+        return
       end
     when "link", "file"
       debug "Removing existing #{s.ftype} for replacement with #{should}"
@@ -640,6 +641,7 @@ Puppet::Type.newtype(:file) do
       self.fail "Could not back up files of type #{s.ftype}"
     end
     @stat = :needs_stat
+    true
   end
 
   def retrieve
