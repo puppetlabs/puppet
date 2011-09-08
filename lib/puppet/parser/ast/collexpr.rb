@@ -44,17 +44,7 @@ class CollExpr < AST::Branch
       end
     end
 
-    # Now build up the rails conditions code
-    if self.parens and self.form == :exported
-      Puppet.warning "Parentheses are ignored in Rails searches"
-    end
-
-    if form == :exported and (@oper =~ /^(and|or)$/i) then
-      raise Puppet::ParseError, "Puppet does not currently support collecting exported resources with more than one condition"
-    end
-
     match = [match1, @oper, match2]
-
     return match, code
   end
 
