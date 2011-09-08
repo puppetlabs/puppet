@@ -54,7 +54,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     "/System/Library/LaunchDaemons",]
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
-
+  
+  def has_macosx_plist_overrides?
+    product_version = sw_vers "-productVersion"
+    return true unless /^10\.[0-5]/.match(product_version)
+    return false
+  end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
@@ -200,8 +205,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   # launchd jobs are enabled by default. They are only disabled if the key
   # "Disabled" is set to true, but it can also be set to false to enable it.
-  # In 10.6, the Disabled key in the job plist is consulted, but only if there
-  # is no entry in the global overrides plist.
+  # Starting in 10.6, the Disabled key in the job plist is consulted, but only 
+  # if there is no entry in the global overrides plist.
   # We need to draw a distinction between undefined, true and false for both
   # locations where the Disabled flag can be defined.
   def enabled?
@@ -211,7 +216,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_path, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if self.class.get_macosx_version_major == "10.6"
+    if has_macosx_plist_overrides?
       if FileTest.file?(Launchd_Overrides) and overrides = self.class.read_plist(Launchd_Overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
@@ -233,10 +238,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
-  # In 10.6 we need to write out a disabled key to the global overrides plist, in earlier
-  # versions this is stored in the job plist itself.
+  # Starting in 10.6 we need to write out a disabled key to the global 
+  # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
-    if self.class.get_macosx_version_major == "10.6"
+    if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
@@ -251,7 +256,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
   def disable
-    if self.class.get_macosx_version_major == "10.6"
+    if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
