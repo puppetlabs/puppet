@@ -59,16 +59,20 @@ describe Puppet::Parser::AST::CollExpr do
       end
     end
 
-    it "should warn if this is an exported collection containing parenthesis (unsupported)" do
-      collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=>"==", :parens => true, :form => :exported)
-      Puppet.expects(:warning)
-      collexpr.evaluate(@scope)
+    it "should work if this is an exported collection containing parenthesis" do
+      collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2,
+                                   :oper => "==", :parens => true, :form => :exported)
+      match, code = collexpr.evaluate(@scope)
+      match.should == ["test1", "==", "test2"]
+      @logs.should be_empty     # no warnings emitted
     end
 
     %w{and or}.each do |op|
-      it "should raise an error if this is an exported collection with #{op} operator (unsupported)" do
-        collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2, :oper=> op, :form => :exported)
-        lambda { collexpr.evaluate(@scope) }.should raise_error(Puppet::ParseError)
+      it "should parse / eval if this is an exported collection with #{op} operator" do
+        collexpr = ast::CollExpr.new(:test1 => @test1, :test2 => @test2,
+                                     :oper => op, :form => :exported)
+        match, code = collexpr.evaluate(@scope)
+        match.should == ["test1", op, "test2"]
       end
     end
   end

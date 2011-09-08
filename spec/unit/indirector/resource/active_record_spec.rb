@@ -56,6 +56,15 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
       search("exec").should == []
     end
 
+    # Assert that this is a case-insensitive rule, too.
+    %w{and or AND OR And Or anD oR}.each do |op|
+      it "should fail if asked to search with #{op.inspect}" do
+        filter = [%w{tag == foo}, op, %w{title == bar}]
+        expect { search("notify", 'localhost', filter) }.
+          to raise_error Puppet::Error, /not supported/
+      end
+    end
+
     context "with a matching resource" do
       before :each do
         host = Puppet::Rails::Host.create!(:name => 'one.local')
