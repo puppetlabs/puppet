@@ -137,7 +137,7 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
       got.keys.should =~ [:conditions]
       got[:conditions][0].should be_include "(exported=? AND restype=?)"
       got[:conditions][1].should == true
-      got[:conditions][2].should == type
+      got[:conditions][2].should == type.to_s
     end
   end
 
