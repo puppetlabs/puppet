@@ -6,6 +6,10 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
     host   = request.options[:host]
     filter = request.options[:filter]
 
+    if filter and filter[1] =~ /^(and|or)$/i then
+      raise Puppet::Error, "Complex search on StoreConfigs resources is not supported"
+    end
+
     query = build_active_record_query(type, host, filter)
     Puppet::Rails::Resource.find(:all, query)
   end
@@ -55,7 +59,10 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
     raise Puppet::DevError, "Cannot collect resources for a nil host" unless host
 
     search = "(exported=? AND restype=?)"
-    arguments = [true, type]
+    # Some versions of ActiveRecord just to_s a symbol, which our type is, but
+    # others preserve the symbol-nature, which causes our storage (string) and
+    # query (symbol) to mismatch.  So, manually stringify. --daniel 2011-09-08
+    arguments = [true, type.to_s]
 
     if filter then
       sql, values = filter_to_active_record(filter)
