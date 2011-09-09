@@ -76,9 +76,11 @@ module Puppet
       end
     end
 
+    SEPARATOR_REGEX = [Regexp.escape(File::SEPARATOR.to_s), Regexp.escape(File::ALT_SEPARATOR.to_s)].join
+
     munge do |sources|
       sources = [sources] unless sources.is_a?(Array)
-      sources.collect { |source| source.sub(/\/$/, '') }
+      sources.collect { |source| source.sub(/[#{SEPARATOR_REGEX}]+$/, '') }
     end
 
     def change_to_s(currentvalue, newvalue)

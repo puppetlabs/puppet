@@ -29,6 +29,18 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
       lambda { s.value = %w{http://foo/bar} }.must raise_error(Puppet::Error)
     end
+
+    it "should strip trailing forward slashes", :unless => Puppet.features.microsoft_windows? do
+      s = source.new(:resource => @resource, :value => "/foo/bar\\//")
+
+      s.value.should == %w{/foo/bar\\}
+    end
+
+    it "should strip trailing forward and backslashes", :if => Puppet.features.microsoft_windows? do
+      s = source.new(:resource => @resource, :value => "X:\\foo\\bar/\\")
+
+      s.value.should == %w{X:\foo\bar}
+    end
   end
 
   describe "when returning the metadata", :fails_on_windows => true do
