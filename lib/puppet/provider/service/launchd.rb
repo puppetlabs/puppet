@@ -55,6 +55,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
   
+  # Launchd implemented plist overrides in version 10.6.
+  # This method checks the major_version of OS X and returns true if 
+  # it is 10.6 or greater. This allows us to implement different plist
+  # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
     product_version = sw_vers "-productVersion"
     return true unless /^10\.[0-5]/.match(product_version)
