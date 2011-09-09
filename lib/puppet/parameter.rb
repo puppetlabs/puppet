@@ -293,6 +293,15 @@ class Puppet::Parameter
   def to_s
     name.to_s
   end
+
+  def self.format_value_for_display(value)
+    if value.is_a? Array
+      formatted_values = value.collect {|value| format_value_for_display(value)}.join(', ')
+      "[#{formatted_values}]"
+    else
+      "'#{value}'"
+    end
+  end
 end
 
 require 'puppet/parameter/path'

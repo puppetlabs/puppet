@@ -157,4 +157,28 @@ describe Puppet::Parameter do
       @parameter.log "mymessage"
     end
   end
+
+  describe ".format_value_for_display" do
+    it 'should format strings appropriately' do
+      described_class.format_value_for_display('foo').should == "'foo'"
+    end
+
+    it 'should format numbers appropriately' do
+      described_class.format_value_for_display(1).should == "'1'"
+    end
+
+    it 'should format symbols appropriately' do
+      described_class.format_value_for_display(:bar).should == "'bar'"
+    end
+
+    it 'should format arrays appropriately' do
+      described_class.format_value_for_display([1, 'foo', :bar]).should == "['1', 'foo', 'bar']"
+    end
+
+    it 'should format arrays with nested data appropriately' do
+      described_class.format_value_for_display(
+        [1, 'foo', :bar, [1, 2, 3]]
+      ).should == "['1', 'foo', 'bar', ['1', '2', '3']]"
+    end
+  end
 end
