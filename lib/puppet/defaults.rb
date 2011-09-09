@@ -112,9 +112,15 @@ module Puppet
     :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
       is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
       This feature currently requires the `diff/lcs` Ruby library."],
-    :daemonize => { :default => true,
+    :daemonize => {
+      :default => (Puppet.features.microsoft_windows? ? false : true),
       :desc => "Send the process into the background.  This is the default.",
-      :short => "D"
+      :short => "D",
+      :hook => proc do |value|
+        if value and Puppet.features.microsoft_windows?
+          raise "Cannot daemonize on Windows"
+        end
+      end
     },
     :maximum_uid => [4294967290, "The maximum allowed UID.  Some platforms use negative UIDs
       but then ship with tools that do not know how to handle signed ints, so the UIDs show up as
