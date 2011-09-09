@@ -175,10 +175,22 @@ describe Puppet::Parameter do
       described_class.format_value_for_display([1, 'foo', :bar]).should == "['1', 'foo', 'bar']"
     end
 
+    it 'should format hashes appropriately' do
+      described_class.format_value_for_display(
+        {1 => 'foo', :bar => 2, 'baz' => :qux}
+      ).should == "{'1' => 'foo', 'bar' => '2', 'baz' => 'qux'}"
+    end
+
     it 'should format arrays with nested data appropriately' do
       described_class.format_value_for_display(
-        [1, 'foo', :bar, [1, 2, 3]]
-      ).should == "['1', 'foo', 'bar', ['1', '2', '3']]"
+        [1, 'foo', :bar, [1, 2, 3], {1 => 2, 3 => 4}]
+      ).should == "['1', 'foo', 'bar', ['1', '2', '3'], {'1' => '2', '3' => '4'}]"
+    end
+
+    it 'should format hashes with nested data appropriately' do
+      described_class.format_value_for_display(
+        {1 => 'foo', :bar => [2, 3, 4], 'baz' => {:qux => 1, :quux => 'two'}}
+      ).should == "{'1' => 'foo', 'bar' => ['2', '3', '4'], 'baz' => {'quux' => 'two', 'qux' => '1'}}"
     end
   end
 end
