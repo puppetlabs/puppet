@@ -3,6 +3,8 @@ require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
+require 'enumerator'
+require 'pathname'
 require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
@@ -258,17 +260,12 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
-    basedir = ::File.dirname(self[:path])
-    if basedir != self[:path]
-      parents = []
-      until basedir == parents.last
-        parents << basedir
-        basedir = ::File.dirname(basedir)
-      end
-      # The filename of the first ancestor found, or nil
-      parents.find { |dir| catalog.resource(:file, dir) }
-    else
-      nil
+    path = Pathname(self[:path])
+    if !path.root?
+      # Start at our parent, to avoid autorequiring ourself
+      parents = path.parent.enum_for(:ascend)
+      found = parents.find { |p| catalog.resource(:file, p.to_s) }
+      found and found.to_s
     end
   end
 
