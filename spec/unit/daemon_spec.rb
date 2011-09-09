@@ -28,7 +28,9 @@ describe Puppet::Daemon do
   end
 
   describe "when setting signal traps" do
-    {:INT => :stop, :TERM => :stop, :HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}.each do |signal, method|
+    signals = {:INT => :stop, :TERM => :stop }
+    signals.update({:HUP => :restart, :USR1 => :reload, :USR2 => :reopen_logs}) unless Puppet.features.microsoft_windows?
+    signals.each do |signal, method|
       it "should log and call #{method} when it receives #{signal}" do
         Signal.expects(:trap).with(signal).yields
 

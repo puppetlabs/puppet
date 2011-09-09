@@ -5,7 +5,7 @@ target  = "/tmp/test-#{Time.new.to_i}"
 source  = "/tmp/test-#{Time.new.to_i}-source"
 
 step "clean up the system before we begin"
-on agents, "rm -vrf #{target}"
+on agents, "rm -rf #{target}"
 on agents, "echo '#{message}' > #{source}"
 
 step "verify we can create a symlink"
@@ -13,6 +13,7 @@ on(agents, puppet_resource("file", target, "ensure=#{source}"))
 
 step "verify the symlink was created"
 on agents, "test -L #{target} && test -f #{target}"
+step "verify source file"
 on agents, "test -f #{source}"
 
 step "verify the content is identical on both sides"
@@ -24,4 +25,4 @@ on(agents, "cat #{target}") do
 end
 
 step "clean up after the test run"
-on agents, "rm -vrf #{target} #{source}"
+on agents, "rm -rf #{target} #{source}"

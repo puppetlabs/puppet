@@ -215,11 +215,10 @@ class Application
     def find(name)
       klass = name.to_s.capitalize
 
-      # const_defined? is used before const_get since const_defined? will only
-      # check within our namespace, whereas const_get will check ancestor
-      # trees as well, resulting in unexpected behaviour.
-      if !self.const_defined?(klass)
-        puts "Unable to find application '#{name.to_s}'."
+      begin
+        require File.join('puppet', 'application', name.to_s.downcase)
+      rescue LoadError => e
+        puts "Unable to find application '#{name}'.  #{e}"
         Kernel::exit(1)
       end
 

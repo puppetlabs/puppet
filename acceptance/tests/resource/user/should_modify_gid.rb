@@ -1,8 +1,8 @@
 test_name "verify that we can modify the gid"
 
-user   = "test-user-#{Time.new.to_i}"
-group1 = "#{user}-old"
-group2 = "#{user}-new"
+user = "pl#{rand(99999).to_i}"
+group1 = "#{user}old"
+group2 = "#{user}new"
 
 agents.each do |host|
     step "ensure that the groups both exist"

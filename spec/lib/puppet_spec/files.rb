@@ -1,21 +1,19 @@
 require 'fileutils'
 require 'tempfile'
+require 'pathname'
 
 # A support module for testing files.
 module PuppetSpec::Files
   # This code exists only to support tests that run as root, pretty much.
   # Once they have finally been eliminated this can all go... --daniel 2011-04-08
-  if Puppet.features.posix? then
-    def self.in_tmp(path)
-      path =~ /^\/tmp/ or path =~ /^\/var\/folders/
+  def self.in_tmp(path)
+    tempdir = Dir.tmpdir
+
+    Pathname.new(path).ascend do |dir|
+      return true if File.identical?(tempdir, dir)
     end
-  elsif Puppet.features.microsoft_windows?
-    def self.in_tmp(path)
-      tempdir = File.expand_path(File.join(Dir::LOCAL_APPDATA, "Temp"))
-      path =~ /^#{tempdir}/
-    end
-  else
-    fail "Help! Can't find in_tmp for this platform"
+
+    false
   end
 
   def self.cleanup
@@ -29,6 +27,16 @@ module PuppetSpec::Files
         # nothing to do
       end
     end
+  end
+
+  def make_absolute(path)
+    return path unless Puppet.features.microsoft_windows?
+    # REMIND UNC
+    return path if path =~ /^[A-Za-z]:/
+
+    pwd = Dir.getwd
+    return "#{pwd[0,2]}#{path}" if pwd =~ /^[A-Za-z]:/
+    return "C:#{path}"
   end
 
   def tmpfile(name)

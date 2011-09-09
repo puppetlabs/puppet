@@ -3,9 +3,10 @@ require 'spec_helper'
 require 'puppet/resource'
 
 describe Puppet::Resource do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
   end
 
   [:catalog, :file, :line].each do |attr|
@@ -106,9 +107,8 @@ describe Puppet::Resource do
   end
 
   it "should fail if the title is a hash and the type is not a valid resource reference string" do
-    lambda { Puppet::Resource.new({:type => "foo", :title => "bar"}) }.should raise_error(ArgumentError,
-      'Puppet::Resource.new does not take a hash as the first argument. Did you mean ("foo", "bar") ?'
-    )
+    expect { Puppet::Resource.new({:type => "foo", :title => "bar"}) }.
+      to raise_error ArgumentError, /Puppet::Resource.new does not take a hash/
   end
 
   it "should be able to produce a backward-compatible reference array" do
@@ -778,7 +778,7 @@ type: File
     end
 
     it "should have a default terminus" do
-      Puppet::Resource.indirection.terminus_class.should == :ral
+      Puppet::Resource.indirection.terminus_class.should be
     end
 
     it "should have a name" do

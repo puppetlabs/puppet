@@ -102,9 +102,6 @@ shared_examples_for "Delegation Authorizer" do
 end
 
 describe Puppet::Indirector::Indirection do
-  after do
-    Puppet::Util::Cacher.expire
-  end
   describe "when initializing" do
     # (LAK) I've no idea how to test this, really.
     it "should store a reference to itself before it consumes its options" do
@@ -643,7 +640,6 @@ describe Puppet::Indirector::Indirection do
 
     after :each do
       @indirection.delete
-      Puppet::Util::Cacher.expire
     end
   end
 

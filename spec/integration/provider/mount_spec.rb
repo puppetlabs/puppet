@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'puppet/file_bucket/dipper'
 
-describe "mount provider (integration)" do
+describe "mount provider (integration)", :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   def create_fake_fstab(initially_contains_entry)

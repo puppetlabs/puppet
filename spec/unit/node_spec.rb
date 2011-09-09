@@ -130,15 +130,8 @@ end
 describe Puppet::Node, "when indirecting" do
   it "should default to the 'plain' node terminus" do
     Puppet::Node.indirection.reset_terminus_class
+
     Puppet::Node.indirection.terminus_class.should == :plain
-  end
-
-  it "should not have a cache class defined" do
-    Puppet::Node.indirection.cache_class.should be_nil
-  end
-
-  after do
-    Puppet::Util::Cacher.expire
   end
 end
 

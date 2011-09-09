@@ -1,10 +1,5 @@
-#
-#  Created by Luke Kanies on 2007-10-16.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/network/authstore'
 require 'puppet/util/logging'
-require 'puppet/util/cacher'
 require 'puppet/file_serving'
 require 'puppet/file_serving/metadata'
 require 'puppet/file_serving/content'

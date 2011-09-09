@@ -9,7 +9,6 @@ require 'puppet/metatype/manager'
 require 'puppet/util/errors'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
-require 'puppet/util/cacher'
 require 'puppet/file_collection/lookup'
 require 'puppet/util/tagging'
 
@@ -21,7 +20,6 @@ class Type
   include Puppet::Util::Errors
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
-  include Puppet::Util::Cacher
   include Puppet::FileCollection::Lookup
   include Puppet::Util::Tagging
 
@@ -228,15 +226,14 @@ class Type
   def self.newparam(name, options = {}, &block)
     options[:attributes] ||= {}
 
-      param = genclass(
-        name,
-      :parent => options[:parent] || Puppet::Parameter,
+    param = genclass(
+      name,
+      :parent     => options[:parent] || Puppet::Parameter,
       :attributes => options[:attributes],
-      :block => block,
-      :prefix => "Parameter",
-      :array => @parameters,
-
-      :hash => @paramhash
+      :block      => block,
+      :prefix     => "Parameter",
+      :array      => @parameters,
+      :hash       => @paramhash
     )
 
     handle_param_options(name, options)
@@ -467,12 +464,6 @@ class Type
   # a property.
   def event(options = {})
     Puppet::Transaction::Event.new({:resource => self, :file => file, :line => line, :tags => tags}.merge(options))
-  end
-
-  # Let the catalog determine whether a given cached value is
-  # still valid or has expired.
-  def expirer
-    catalog
   end
 
   # retrieve the 'should' value for a specified property
@@ -980,7 +971,7 @@ class Type
 
   newmetaparam(:audit) do
     desc "Marks a subset of this resource's unmanaged attributes for auditing. Accepts an
-      attribute name or a list of attribute names.
+      attribute name, an array of attribute names, or `all`.
 
       Auditing a resource attribute has two effects: First, whenever a catalog
       is applied with puppet apply or puppet agent, Puppet will check whether
@@ -1442,9 +1433,8 @@ class Type
   def self.provide(name, options = {}, &block)
     name = Puppet::Util.symbolize(name)
 
-    if obj = provider_hash[name]
+    if unprovide(name)
       Puppet.debug "Reloading #{name} #{self.name} provider"
-      unprovide(name)
     end
 
     parent = if pname = options[:parent]
@@ -1467,16 +1457,14 @@ class Type
 
     self.providify
 
-
-      provider = genclass(
-        name,
-      :parent => parent,
-      :hash => provider_hash,
-      :prefix => "Provider",
-      :block => block,
-      :include => feature_module,
-      :extend => feature_module,
-
+    provider = genclass(
+      name,
+      :parent     => parent,
+      :hash       => provider_hash,
+      :prefix     => "Provider",
+      :block      => block,
+      :include    => feature_module,
+      :extend     => feature_module,
       :attributes => options
     )
 
@@ -1536,18 +1524,11 @@ class Type
   end
 
   def self.unprovide(name)
-    if provider_hash.has_key? name
-
-      rmclass(
-        name,
-        :hash => provider_hash,
-
-        :prefix => "Provider"
-      )
-      if @defaultprovider and @defaultprovider.name == name
-        @defaultprovider = nil
-      end
+    if @defaultprovider and @defaultprovider.name == name
+      @defaultprovider = nil
     end
+
+    rmclass(name, :hash => provider_hash, :prefix => "Provider")
   end
 
   # Return an array of all of the suitable providers.
@@ -1607,7 +1588,6 @@ class Type
 
       # Collect the current prereqs
       list.each { |dep|
-        obj = nil
         # Support them passing objects directly, to save some effort.
         unless dep.is_a? Puppet::Type
           # Skip autorequires that we aren't managing

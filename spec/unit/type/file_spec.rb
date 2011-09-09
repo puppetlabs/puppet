@@ -37,7 +37,6 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#write" do
-
     it "should propagate failures encountered when renaming the temporary file" do
       File.stubs(:open)
 
@@ -92,7 +91,6 @@ describe Puppet::Type.type(:file) do
 
         lambda { @file.write :NOTUSED }.should_not raise_error(Puppet::Error)
       end
-
     end
   end
 
@@ -152,255 +150,204 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when using POSIX filenames" do
-    describe "on POSIX systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(true)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
-      end
-
-      it "should autorequire its parent directory" do
-        file = Puppet::Type::File.new(:path => "/foo/bar")
-        dir = Puppet::Type::File.new(:path => "/foo")
-        @catalog.add_resource file
-        @catalog.add_resource dir
-        reqs = file.autorequire
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
-      end
-
-      it "should autorequire its nearest ancestor directory" do
-        file = Puppet::Type::File.new(:path => "/foo/bar/baz")
-        dir = Puppet::Type::File.new(:path => "/foo")
-        root = Puppet::Type::File.new(:path => "/")
-        @catalog.add_resource file
-        @catalog.add_resource dir
-        @catalog.add_resource root
-        reqs = file.autorequire
-        reqs.length.must == 1
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
-      end
-
-      it "should not autorequire anything when there is no nearest ancestor directory" do
-        file = Puppet::Type::File.new(:path => "/foo/bar/baz")
-        @catalog.add_resource file
-        file.autorequire.should be_empty
-      end
-
-      it "should not autorequire its parent dir if its parent dir is itself" do
-        file = Puppet::Type::File.new(:path => "/")
-        @catalog.add_resource file
-        file.autorequire.should be_empty
-      end
-
-      it "should remove trailing slashes" do
-        file = Puppet::Type::File.new(:path => "/foo/bar/baz/")
-        file[:path].should == "/foo/bar/baz"
-      end
-
-      it "should remove double slashes" do
-        file = Puppet::Type::File.new(:path => "/foo/bar//baz")
-        file[:path].should == "/foo/bar/baz"
-      end
-
-      it "should remove trailing double slashes" do
-        file = Puppet::Type::File.new(:path => "/foo/bar/baz//")
-        file[:path].should == "/foo/bar/baz"
-      end
-
-      it "should leave a single slash alone" do
-        file = Puppet::Type::File.new(:path => "/")
-        file[:path].should == "/"
-      end
-
-      it "should accept a double-slash at the start of the path" do
-        expect {
-          file = Puppet::Type::File.new(:path => "//tmp/xxx")
-          # REVISIT: This should be wrong, later.  See the next test.
-          # --daniel 2011-01-31
-          file[:path].should == '/tmp/xxx'
-        }.should_not raise_error
-      end
-
-      # REVISIT: This is pending, because I don't want to try and audit the
-      # entire codebase to make sure we get this right.  POSIX treats two (and
-      # exactly two) '/' characters at the start of the path specially.
-      #
-      # See sections 3.2 and 4.11, which allow DomainOS to be all special like
-      # and still have the POSIX branding and all. --daniel 2011-01-31
-      it "should preserve the double-slash at the start of the path"
+    it "should autorequire its parent directory" do
+      file = Puppet::Type::File.new(:path => "/foo/bar")
+      dir = Puppet::Type::File.new(:path => "/foo")
+      @catalog.add_resource file
+      @catalog.add_resource dir
+      reqs = file.autorequire
+      reqs[0].source.must == dir
+      reqs[0].target.must == file
     end
 
-    describe "on Microsoft Windows systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
-      end
+    it "should autorequire its nearest ancestor directory" do
+      file = Puppet::Type::File.new(:path => "/foo/bar/baz")
+      dir = Puppet::Type::File.new(:path => "/foo")
+      root = Puppet::Type::File.new(:path => "/")
+      @catalog.add_resource file
+      @catalog.add_resource dir
+      @catalog.add_resource root
+      reqs = file.autorequire
+      reqs.length.must == 1
+      reqs[0].source.must == dir
+      reqs[0].target.must == file
+    end
 
-      it "should refuse to work" do
-        lambda { Puppet::Type::File.new(:path => "/foo/bar") }.should raise_error(Puppet::Error)
-      end
+    it "should not autorequire anything when there is no nearest ancestor directory" do
+      file = Puppet::Type::File.new(:path => "/foo/bar/baz")
+      @catalog.add_resource file
+      file.autorequire.should be_empty
+    end
+
+    it "should not autorequire its parent dir if its parent dir is itself" do
+      file = Puppet::Type::File.new(:path => "/")
+      @catalog.add_resource file
+      file.autorequire.should be_empty
+    end
+
+    it "should remove trailing slashes" do
+      file = Puppet::Type::File.new(:path => "/foo/bar/baz/")
+      file[:path].should == "/foo/bar/baz"
+    end
+
+    it "should remove double slashes" do
+      file = Puppet::Type::File.new(:path => "/foo/bar//baz")
+      file[:path].should == "/foo/bar/baz"
+    end
+
+    it "should remove trailing double slashes" do
+      file = Puppet::Type::File.new(:path => "/foo/bar/baz//")
+      file[:path].should == "/foo/bar/baz"
+    end
+
+    it "should leave a single slash alone" do
+      file = Puppet::Type::File.new(:path => "/")
+      file[:path].should == "/"
+    end
+
+    it "should accept a double-slash at the start of the path" do
+      expect {
+        file = Puppet::Type::File.new(:path => "//tmp/xxx")
+        # REVISIT: This should be wrong, later.  See the next test.
+        # --daniel 2011-01-31
+        file[:path].should == '/tmp/xxx'
+      }.should_not raise_error
+    end
+
+    # REVISIT: This is pending, because I don't want to try and audit the
+    # entire codebase to make sure we get this right.  POSIX treats two (and
+    # exactly two) '/' characters at the start of the path specially.
+    #
+    # See sections 3.2 and 4.11, which allow DomainOS to be all special like
+    # and still have the POSIX branding and all. --daniel 2011-01-31
+    it "should preserve the double-slash at the start of the path"
+  end
+
+  describe "when using Microsoft Windows filenames" do
+    it "should autorequire its parent directory" do
+      file = Puppet::Type::File.new(:path => "X:/foo/bar")
+      dir = Puppet::Type::File.new(:path => "X:/foo")
+      @catalog.add_resource file
+      @catalog.add_resource dir
+      reqs = file.autorequire
+      reqs[0].source.must == dir
+      reqs[0].target.must == file
+    end
+
+    it "should autorequire its nearest ancestor directory" do
+      file = Puppet::Type::File.new(:path => "X:/foo/bar/baz")
+      dir = Puppet::Type::File.new(:path => "X:/foo")
+      root = Puppet::Type::File.new(:path => "X:/")
+      @catalog.add_resource file
+      @catalog.add_resource dir
+      @catalog.add_resource root
+      reqs = file.autorequire
+      reqs.length.must == 1
+      reqs[0].source.must == dir
+      reqs[0].target.must == file
+    end
+
+    it "should not autorequire anything when there is no nearest ancestor directory" do
+      file = Puppet::Type::File.new(:path => "X:/foo/bar/baz")
+      @catalog.add_resource file
+      file.autorequire.should be_empty
+    end
+
+    it "should not autorequire its parent dir if its parent dir is itself" do
+      file = Puppet::Type::File.new(:path => "X:/")
+      @catalog.add_resource file
+      file.autorequire.should be_empty
+    end
+
+    it "should remove trailing slashes" do
+      file = Puppet::Type::File.new(:path => "X:/foo/bar/baz/")
+      file[:path].should == "X:/foo/bar/baz"
+    end
+
+    it "should remove double slashes" do
+      file = Puppet::Type::File.new(:path => "X:/foo/bar//baz")
+      file[:path].should == "X:/foo/bar/baz"
+    end
+
+    it "should remove trailing double slashes" do
+      file = Puppet::Type::File.new(:path => "X:/foo/bar/baz//")
+      file[:path].should == "X:/foo/bar/baz"
+    end
+
+    it "should leave a drive letter with a slash alone", :'fails_on_ruby_1.9.2' => true do
+      file = Puppet::Type::File.new(:path => "X:/")
+      file[:path].should == "X:/"
+    end
+
+    it "should not accept a drive letter without a slash", :'fails_on_ruby_1.9.2' => true do
+      lambda { Puppet::Type::File.new(:path => "X:") }.should raise_error(/File paths must be fully qualified/)
     end
   end
 
-  describe "when using Microsoft Windows filenames", :if => Puppet.features.microsoft_windows? do
-    describe "on Microsoft Windows systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
-      end
-
-      it "should autorequire its parent directory" do
-        file = Puppet::Type::File.new(:path => "X:/foo/bar")
-        dir = Puppet::Type::File.new(:path => "X:/foo")
-        @catalog.add_resource file
-        @catalog.add_resource dir
-        reqs = file.autorequire
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
-      end
-
-      it "should autorequire its nearest ancestor directory" do
-        file = Puppet::Type::File.new(:path => "X:/foo/bar/baz")
-        dir = Puppet::Type::File.new(:path => "X:/foo")
-        root = Puppet::Type::File.new(:path => "X:/")
-        @catalog.add_resource file
-        @catalog.add_resource dir
-        @catalog.add_resource root
-        reqs = file.autorequire
-        reqs.length.must == 1
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
-      end
-
-      it "should not autorequire anything when there is no nearest ancestor directory" do
-        file = Puppet::Type::File.new(:path => "X:/foo/bar/baz")
-        @catalog.add_resource file
-        file.autorequire.should be_empty
-      end
-
-      it "should not autorequire its parent dir if its parent dir is itself" do
-        file = Puppet::Type::File.new(:path => "X:/")
-        @catalog.add_resource file
-        file.autorequire.should be_empty
-      end
-
-      it "should remove trailing slashes" do
-        file = Puppet::Type::File.new(:path => "X:/foo/bar/baz/")
-        file[:path].should == "X:/foo/bar/baz"
-      end
-
-      it "should remove double slashes" do
-        file = Puppet::Type::File.new(:path => "X:/foo/bar//baz")
-        file[:path].should == "X:/foo/bar/baz"
-      end
-
-      it "should remove trailing double slashes" do
-        file = Puppet::Type::File.new(:path => "X:/foo/bar/baz//")
-        file[:path].should == "X:/foo/bar/baz"
-      end
-
-      it "should leave a drive letter with a slash alone", :'fails_on_ruby_1.9.2' => true do
-        file = Puppet::Type::File.new(:path => "X:/")
-        file[:path].should == "X:/"
-      end
-
-      it "should add a slash to a drive letter", :'fails_on_ruby_1.9.2' => true do
-        file = Puppet::Type::File.new(:path => "X:")
-        file[:path].should == "X:/"
-      end
+  describe "when using UNC filenames", :'fails_on_ruby_1.9.2' => true do
+    before :each do
+      pending("UNC file paths not yet supported")
     end
 
-    describe "on POSIX systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(true)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
-      end
-
-      it "should refuse to work" do
-        lambda { Puppet::Type::File.new(:path => "X:/foo/bar") }.should raise_error(Puppet::Error)
-      end
-    end
-  end
-
-  describe "when using UNC filenames" do
-    describe "on Microsoft Windows systems", :if => Puppet.features.microsoft_windows?, :'fails_on_ruby_1.9.2' => true do
-      before do
-        Puppet.features.stubs(:posix?).returns(false)
-        Puppet.features.stubs(:microsoft_windows?).returns(true)
-      end
-
-      it "should autorequire its parent directory" do
-        file = Puppet::Type::File.new(:path => "//server/foo/bar")
-        dir = Puppet::Type::File.new(:path => "//server/foo")
-        @catalog.add_resource file
-        @catalog.add_resource dir
-        reqs = file.autorequire
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
-      end
-
-      it "should autorequire its nearest ancestor directory" do
-        file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/qux")
-        dir = Puppet::Type::File.new(:path => "//server/foo/bar")
-        root = Puppet::Type::File.new(:path => "//server/foo")
-        @catalog.add_resource file
-        @catalog.add_resource dir
-        @catalog.add_resource root
-        reqs = file.autorequire
-        reqs.length.must == 1
-        reqs[0].source.must == dir
-        reqs[0].target.must == file
-      end
-
-      it "should not autorequire anything when there is no nearest ancestor directory" do
-        file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/qux")
-        @catalog.add_resource file
-        file.autorequire.should be_empty
-      end
-
-      it "should not autorequire its parent dir if its parent dir is itself" do
-        file = Puppet::Type::File.new(:path => "//server/foo")
-        @catalog.add_resource file
-        puts file.autorequire
-        file.autorequire.should be_empty
-      end
-
-      it "should remove trailing slashes" do
-        file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/")
-        file[:path].should == "//server/foo/bar/baz"
-      end
-
-      it "should remove double slashes" do
-        file = Puppet::Type::File.new(:path => "//server/foo/bar//baz")
-        file[:path].should == "//server/foo/bar/baz"
-      end
-
-      it "should remove trailing double slashes" do
-        file = Puppet::Type::File.new(:path => "//server/foo/bar/baz//")
-        file[:path].should == "//server/foo/bar/baz"
-      end
-
-      it "should remove a trailing slash from a sharename" do
-        file = Puppet::Type::File.new(:path => "//server/foo/")
-        file[:path].should == "//server/foo"
-      end
-
-      it "should not modify a sharename" do
-        file = Puppet::Type::File.new(:path => "//server/foo")
-        file[:path].should == "//server/foo"
-      end
+    it "should autorequire its parent directory" do
+      file = Puppet::Type::File.new(:path => "//server/foo/bar")
+      dir = Puppet::Type::File.new(:path => "//server/foo")
+      @catalog.add_resource file
+      @catalog.add_resource dir
+      reqs = file.autorequire
+      reqs[0].source.must == dir
+      reqs[0].target.must == file
     end
 
-    describe "on POSIX systems" do
-      before do
-        Puppet.features.stubs(:posix?).returns(true)
-        Puppet.features.stubs(:microsoft_windows?).returns(false)
-      end
+    it "should autorequire its nearest ancestor directory" do
+      file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/qux")
+      dir = Puppet::Type::File.new(:path => "//server/foo/bar")
+      root = Puppet::Type::File.new(:path => "//server/foo")
+      @catalog.add_resource file
+      @catalog.add_resource dir
+      @catalog.add_resource root
+      reqs = file.autorequire
+      reqs.length.must == 1
+      reqs[0].source.must == dir
+      reqs[0].target.must == file
+    end
 
-      it "should refuse to work" do
-        lambda { Puppet::Type::File.new(:path => "X:/foo/bar") }.should raise_error(Puppet::Error)
-      end
+    it "should not autorequire anything when there is no nearest ancestor directory" do
+      file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/qux")
+      @catalog.add_resource file
+      file.autorequire.should be_empty
+    end
+
+    it "should not autorequire its parent dir if its parent dir is itself" do
+      file = Puppet::Type::File.new(:path => "//server/foo")
+      @catalog.add_resource file
+      puts file.autorequire
+      file.autorequire.should be_empty
+    end
+
+    it "should remove trailing slashes" do
+      file = Puppet::Type::File.new(:path => "//server/foo/bar/baz/")
+      file[:path].should == "//server/foo/bar/baz"
+    end
+
+    it "should remove double slashes" do
+      file = Puppet::Type::File.new(:path => "//server/foo/bar//baz")
+      file[:path].should == "//server/foo/bar/baz"
+    end
+
+    it "should remove trailing double slashes" do
+      file = Puppet::Type::File.new(:path => "//server/foo/bar/baz//")
+      file[:path].should == "//server/foo/bar/baz"
+    end
+
+    it "should remove a trailing slash from a sharename" do
+      file = Puppet::Type::File.new(:path => "//server/foo/")
+      file[:path].should == "//server/foo"
+    end
+
+    it "should not modify a sharename" do
+      file = Puppet::Type::File.new(:path => "//server/foo")
+      file[:path].should == "//server/foo"
     end
   end
 
@@ -1236,6 +1183,12 @@ describe Puppet::Type.type(:file) do
       @file[:source] = '/foo'
 
       @file[:checksum].should be :md5lite
+    end
+  end
+
+  describe ".instances" do
+    it 'should return an empty array' do
+      Puppet::Type::File.instances.should == []
     end
   end
 end

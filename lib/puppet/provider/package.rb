@@ -1,6 +1,3 @@
-#  Created by Luke A. Kanies on 2007-06-05.
-#  Copyright (c) 2007. All rights reserved.
-
 class Puppet::Provider::Package < Puppet::Provider
   # Prefetch our package list, yo.
   def self.prefetch(packages)
@@ -23,5 +20,9 @@ class Puppet::Provider::Package < Puppet::Provider
       @property_hash[:ensure] = :absent if @property_hash.empty?
     end
     @property_hash.dup
+  end
+
+  def validate_source(value)
+    true
   end
 end

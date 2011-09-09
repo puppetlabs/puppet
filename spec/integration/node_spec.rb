@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-9-23.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/node'
@@ -10,6 +6,9 @@ require 'puppet/node'
 describe Puppet::Node do
   describe "when delegating indirection calls" do
     before do
+      Puppet::Node.indirection.reset_terminus_class
+      Puppet::Node.indirection.cache_class = nil
+
       @name = "me"
       @node = Puppet::Node.new(@name)
     end

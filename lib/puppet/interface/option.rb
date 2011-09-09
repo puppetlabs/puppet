@@ -2,12 +2,11 @@ require 'puppet/interface'
 
 class Puppet::Interface::Option
   include Puppet::Interface::TinyDocs
-  # For compatibility, deprecated, and should go fairly soon...
-  ['', '='].each { |x| alias :"desc#{x}" :"description#{x}" }
 
   def initialize(parent, *declaration, &block)
     @parent   = parent
     @optparse = []
+    @default  = nil
 
     # Collect and sort the arguments in the declaration.
     dups = {}
@@ -83,8 +82,26 @@ class Puppet::Interface::Option
     !!@required
   end
 
+  def has_default?
+    !!@default
+  end
+
+  def default=(proc)
+    required and raise ArgumentError, "#{self} can't be optional and have a default value"
+    proc.is_a? Proc or raise ArgumentError, "default value for #{self} is a #{proc.class.name.inspect}, not a proc"
+    @default = proc
+  end
+
+  def default
+    @default and @default.call
+  end
+
   attr_reader   :parent, :name, :aliases, :optparse
   attr_accessor :required
+  def required=(value)
+    has_default? and raise ArgumentError, "#{self} can't be optional and have a default value"
+    @required = value
+  end
 
   attr_accessor :before_action
   def before_action=(proc)

@@ -5,8 +5,10 @@ require 'puppet/file_bucket/dipper'
 tidy = Puppet::Type.type(:tidy)
 
 describe tidy do
+  include PuppetSpec::Files
+
   before do
-    @basepath = Puppet.features.posix? ? "/what/ever" : "C:/tmp"
+    @basepath = make_absolute("/what/ever")
     Puppet.settings.stubs(:use)
 
     # for an unknown reason some of these specs fails when run individually

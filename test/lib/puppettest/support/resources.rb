@@ -1,8 +1,4 @@
 #!/usr/bin/env ruby
-#
-#  Created by Luke A. Kanies on 2006-11-29.
-#  Copyright (c) 2006. All rights reserved.
-
 module PuppetTest::Support::Resources
   def tree_resource(name)
     Puppet::Type.type(:file).new :title => name, :path => "/tmp/#{name}", :mode => 0755

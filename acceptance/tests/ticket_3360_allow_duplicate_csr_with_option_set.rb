@@ -2,8 +2,8 @@ test_name "#3360: Allow duplicate CSR when allow_duplicate_certs is on"
 
 agent_hostnames = agents.map {|a| a.to_s}
 
-step "Remove existing SSL directory for agents"
-on agents, "rm -r #{config['puppetpath']}/ssl"
+step "Remove existing SSL directory for hosts"
+on hosts, "rm -r #{config['puppetpath']}/ssl"
 
 with_master_running_on master, "--allow_duplicate_certs --certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop" do
   step "Generate a certificate request for the agent"

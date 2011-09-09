@@ -1,5 +1,4 @@
 require 'puppet/util/warnings'
-require 'puppet/util/cacher'
 
 # Autoload paths, either based on names or all at once.
 class Puppet::Util::Autoload
@@ -7,7 +6,6 @@ class Puppet::Util::Autoload
 
   include Puppet::Util
   include Puppet::Util::Warnings
-  include Puppet::Util::Cacher
   include Puppet::Util::Autoload::FileCache
 
   @autoloaders = {}

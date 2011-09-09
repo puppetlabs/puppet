@@ -11,6 +11,8 @@ provider_class = Puppet::Type.type(:service).provider(:smf)
 describe provider_class do
 
   before(:each) do
+    Puppet.features.stubs(:posix?).returns(true)
+    Puppet.features.stubs(:microsoft_windows?).returns(false)
     # Create a mock resource
     @resource = Puppet::Type.type(:service).new(
       :name => "/system/myservice", :ensure => :running, :enable => :true)
@@ -111,6 +113,7 @@ describe provider_class do
     it "should import the manifest if service is missing" do
       @provider.expects(:svccfg).with(:import, "/tmp/myservice.xml")
       @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "/system/myservice"], true)
+      @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.start
     end
 

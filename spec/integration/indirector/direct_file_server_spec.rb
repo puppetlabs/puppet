@@ -1,18 +1,16 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-19.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/indirector/file_content/file'
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model" do
+describe Puppet::Indirector::DirectFileServer, " when interacting with the filesystem and the model", :fails_on_windows => true do
+  include PuppetSpec::Files
+
   before do
     # We just test a subclass, since it's close enough.
     @terminus = Puppet::Indirector::FileContent::File.new
 
-    @filepath = "/path/to/my/file"
+    @filepath = make_absolute("/path/to/my/file")
   end
 
   it "should return an instance of the model" do
@@ -32,7 +30,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   end
 end
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model" do
+describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model", :fails_on_windows => true do
   before do
     @terminus = Puppet::Indirector::FileContent::File.new
 

@@ -7,13 +7,14 @@ module Puppet::Interface::ActionManager
     require 'puppet/interface/action_builder'
 
     @actions ||= {}
-    @default_action ||= nil
     raise "Action #{name} already defined for #{self}" if action?(name)
+
     action = Puppet::Interface::ActionBuilder.build(self, name, &block)
-    if action.default
-      raise "Actions #{@default_action.name} and #{name} cannot both be default" if @default_action
-      @default_action = action
+
+    if action.default and current = get_default_action
+      raise "Actions #{current.name} and #{name} cannot both be default"
     end
+
     @actions[action.name] = action
   end
 
@@ -61,7 +62,11 @@ module Puppet::Interface::ActionManager
   end
 
   def get_default_action
-    @default_action
+    default = actions.map {|x| get_action(x) }.select {|x| x.default }
+    if default.length > 1
+      raise "The actions #{default.map(&:name).join(", ")} cannot all be default"
+    end
+    default.first
   end
 
   def action?(name)

@@ -7,10 +7,14 @@ describe Puppet::Transaction::ResourceHarness do
   include PuppetSpec::Files
 
   before do
+    @mode_750 = Puppet.features.microsoft_windows? ? '644' : '750'
+    @mode_755 = Puppet.features.microsoft_windows? ? '644' : '755'
+    path = make_absolute("/my/file")
+
     @transaction = Puppet::Transaction.new(Puppet::Resource::Catalog.new)
-    @resource = Puppet::Type.type(:file).new :path => "/my/file"
+    @resource = Puppet::Type.type(:file).new :path => path
     @harness = Puppet::Transaction::ResourceHarness.new(@transaction)
-    @current_state = Puppet::Resource.new(:file, "/my/file")
+    @current_state = Puppet::Resource.new(:file, path)
     @resource.stubs(:retrieve).returns @current_state
     @status = Puppet::Resource::Status.new(@resource)
     Puppet::Resource::Status.stubs(:new).returns @status
@@ -148,8 +152,8 @@ describe Puppet::Transaction::ResourceHarness do
 
   describe "when applying changes" do
     [false, true].each do |noop_mode|; describe (noop_mode ? "in noop mode" : "in normal mode") do
-      [nil, '750'].each do |machine_state|; describe (machine_state ? "with a file initially present" : "with no file initially present") do
-        [nil, '750', '755'].each do |yaml_mode|
+      [nil, @mode_750].each do |machine_state|; describe (machine_state ? "with a file initially present" : "with no file initially present") do
+        [nil, @mode_750, @mode_755].each do |yaml_mode|
           [nil, :file, :absent].each do |yaml_ensure|; describe "with mode=#{yaml_mode.inspect} and ensure=#{yaml_ensure.inspect} stored in state.yml" do
             [false, true].each do |auditing_ensure|
               [false, true].each do |auditing_mode|
@@ -157,7 +161,7 @@ describe Puppet::Transaction::ResourceHarness do
                 auditing.push(:mode) if auditing_mode
                 auditing.push(:ensure) if auditing_ensure
                 [nil, :file, :absent].each do |ensure_property| # what we set "ensure" to in the manifest
-                  [nil, '750', '755'].each do |mode_property| # what we set "mode" to in the manifest
+                  [nil, @mode_750, @mode_755].each do |mode_property| # what we set "mode" to in the manifest
                     manifest_settings = {}
                     manifest_settings[:audit] = auditing if !auditing.empty?
                     manifest_settings[:ensure] = ensure_property if ensure_property

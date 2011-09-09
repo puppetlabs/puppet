@@ -47,10 +47,14 @@ module Puppet
       exits.  Comma-separate multiple values.  For a list of all values,
       specify 'all'.  This feature is only available in Puppet versions
       higher than 0.18.4."],
-    :color => ["ansi", "Whether to use colors when logging to the console.
+    :color => {
+      :default => (Puppet.features.microsoft_windows? ? "false" : "ansi"),
+      :type    => :setting,
+      :desc    => "Whether to use colors when logging to the console.
       Valid values are `ansi` (equivalent to `true`), `html` (mostly
       used during testing with TextMate), and `false`, which produces
-      no color."],
+      no color.",
+    },
     :mkusers => [false,
       "Whether to create the necessary user and group that puppet agent will
       run as."],
@@ -437,9 +441,11 @@ module Puppet
       authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
-    :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
-      :desc => "The search path for modules as a colon-separated list of
-      directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
+    :modulepath => {
+      :default => "$confdir/modules#{File::PATH_SEPARATOR}/usr/share/puppet/modules",
+      :desc => "The search path for modules as a list of directories separated by the '#{File::PATH_SEPARATOR}' character.",
+      :type => :setting # We don't want this to be considered a file, since it's multiple files.
+    },
     :ssl_client_header => ["HTTP_X_CLIENT_DN", "The header containing an authenticated
       client's SSL DN.  Only used with Mongrel.  This header must be set by the proxy
       to the authenticated client's SSL DN (e.g., `/CN=puppet.puppetlabs.com`).
@@ -466,7 +472,7 @@ module Puppet
       :desc => "The directory in which to store reports
         received from the client.  Each client gets a separate
         subdirectory."},
-    :reporturl => ["http://localhost:3000/reports",
+    :reporturl => ["http://localhost:3000/reports/upload",
       "The URL used by the http reports processor to send reports"],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
     :strict_hostname_checking => [false, "Whether to only search for the complete
@@ -545,7 +551,10 @@ module Puppet
     :puppetport => [8139, "Which port puppet agent listens on."],
     :noop => [false, "Whether puppet agent should be run in noop mode."],
     :runinterval => [1800, # 30 minutes
-      "How often puppet agent applies the client configuration; in seconds."],
+      "How often puppet agent applies the client configuration; in seconds.
+      Note that a runinterval of 0 means \"run continuously\" rather than
+      \"never run.\" If you want puppet agent to never run, you should start
+      it with the `--no-client` option."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then puppet agent will accept incoming
       REST API requests, subject to the default ACLs and the ACLs set in 
@@ -678,7 +687,7 @@ module Puppet
 
     setdefaults(
     :main,
-    :factpath => {:default => "$vardir/lib/facter:$vardir/facts",
+    :factpath => {:default => "$vardir/lib/facter#{File::PATH_SEPARATOR}$vardir/facts",
       :desc => "Where Puppet should look for facts.  Multiple directories should
         be colon-separated, like normal PATH variables.",
 
@@ -821,20 +830,36 @@ module Puppet
   )
 
   setdefaults(:master,
-    :storeconfigs => {:default => false, :desc => "Whether to store each client's configuration.  This
-      requires ActiveRecord from Ruby on Rails.",
-      :call_on_define => true, # Call our hook with the default value, so we always get the libdir set.
+    :storeconfigs => {
+      :default => false,
+      :desc => "Whether to store each client's configuration, including catalogs, facts,
+and related data.  This also enables the import and export of resources in
+the Puppet language - a mechanism for exchange resources between nodes.
+
+By default this uses ActiveRecord and an SQL database to store and query
+the data; this, in turn, will depend on Rails being available.
+
+You can adjust the backend using the storeconfigs_backend setting.",
+      # Call our hook with the default value, so we always get the libdir set.
+      :call_on_define => true,
       :hook => proc do |value|
         require 'puppet/node'
         require 'puppet/node/facts'
         if value
-          require 'puppet/rails'
-          raise "StoreConfigs not supported without ActiveRecord 2.1 or higher" unless Puppet.features.rails?
-          Puppet::Resource::Catalog.indirection.cache_class = :active_record unless Puppet.settings[:async_storeconfigs]
-          Puppet::Node::Facts.indirection.cache_class = :active_record
-          Puppet::Node.indirection.cache_class = :active_record
+          Puppet.settings[:async_storeconfigs] or
+            Puppet::Resource::Catalog.indirection.cache_class = :store_configs
+          Puppet::Node::Facts.indirection.cache_class = :store_configs
+          Puppet::Node.indirection.cache_class = :store_configs
+
+          Puppet::Resource.indirection.terminus_class = :store_configs
         end
       end
+    },
+    :storeconfigs_backend => {
+      :default => "active_record",
+      :desc => "Configure the backend terminus used for StoreConfigs.
+By default, this uses the ActiveRecord store, which directly talks to the
+database from within the Puppet Master process."
     }
   )
 

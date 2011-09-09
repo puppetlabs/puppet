@@ -3,9 +3,13 @@ require 'spec_helper'
 
 source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
+  include PuppetSpec::Files
+
   before do
     # Wow that's a messy interface to the resource.
     @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false), :line => 0, :file => ''
+    @foobar = make_absolute("/foo/bar")
+    @feebooz = make_absolute("/fee/booz")
   end
 
   it "should be a subclass of Parameter" do
@@ -27,15 +31,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
   end
 
-  it "should have a method for retrieving its metadata" do
-    source.new(:resource => @resource).must respond_to(:metadata)
-  end
-
-  it "should have a method for setting its metadata" do
-    source.new(:resource => @resource).must respond_to(:metadata=)
-  end
-
-  describe "when returning the metadata" do
+  describe "when returning the metadata", :fails_on_windows => true do
     before do
       @metadata = stub 'metadata', :source= => nil
     end
@@ -52,57 +48,43 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     end
 
     it "should collect its metadata using the Metadata class if it is not already set" do
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns @metadata
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar).returns @metadata
       @source.metadata
     end
 
     it "should use the metadata from the first found source" do
       metadata = stub 'metadata', :source= => nil
-      @source = source.new(:resource => @resource, :value => ["/foo/bar", "/fee/booz"])
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/fee/booz").returns metadata
+      @source = source.new(:resource => @resource, :value => [@foobar, @feebooz])
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar).returns nil
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@feebooz).returns metadata
       @source.metadata.should equal(metadata)
     end
 
     it "should store the found source as the metadata's source" do
       metadata = mock 'metadata'
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns metadata
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar).returns metadata
 
-      metadata.expects(:source=).with("/foo/bar")
+      metadata.expects(:source=).with(@foobar)
       @source.metadata
     end
 
     it "should fail intelligently if an exception is encountered while querying for metadata" do
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").raises RuntimeError
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar).raises RuntimeError
 
       @source.expects(:fail).raises ArgumentError
       lambda { @source.metadata }.should raise_error(ArgumentError)
     end
 
     it "should fail if no specified sources can be found" do
-      @source = source.new(:resource => @resource, :value => "/foo/bar")
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/foo/bar").returns nil
+      @source = source.new(:resource => @resource, :value => @foobar)
+      Puppet::FileServing::Metadata.indirection.expects(:find).with(@foobar).returns nil
 
       @source.expects(:fail).raises RuntimeError
 
       lambda { @source.metadata }.should raise_error(RuntimeError)
-    end
-
-    it "should expire the metadata appropriately" do
-      expirer = stub 'expired', :dependent_data_expired? => true
-
-      metadata = stub 'metadata', :source= => nil
-      Puppet::FileServing::Metadata.indirection.expects(:find).with("/fee/booz").returns metadata
-
-      @source = source.new(:resource => @resource, :value => ["/fee/booz"])
-      @source.metadata = "foo"
-
-      @source.stubs(:expirer).returns expirer
-
-      @source.metadata.should_not == "foo"
     end
   end
 
@@ -113,7 +95,7 @@ describe Puppet::Type.type(:file).attrclass(:source) do
   describe "when copying the source values" do
     before do
 
-      @resource = Puppet::Type.type(:file).new :path => "/foo/bar"
+      @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
       @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file"

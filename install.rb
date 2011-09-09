@@ -243,6 +243,14 @@ def prepare_installation
 
   if not InstallOptions.configdir.nil?
     configdir = InstallOptions.configdir
+  elsif $operatingsystem == "windows"
+    begin
+      require 'win32/dir'
+    rescue LoadError => e
+      puts "Cannot run on Microsoft Windows without the sys-admin, win32-process, win32-dir & win32-service gems: #{e}"
+      exit -1
+    end
+    configdir = File.join(Dir::COMMON_APPDATA, "PuppetLabs", "puppet", "etc")
   else
     configdir = "/etc/puppet"
   end
@@ -283,18 +291,18 @@ def prepare_installation
   if not InstallOptions.destdir.nil?
     destdir = InstallOptions.destdir
   # To be deprecated once people move over to using --destdir option
-  elsif ENV['DESTDIR'] != nil?
+  elsif not ENV['DESTDIR'].nil?
     destdir = ENV['DESTDIR']
     warn "DESTDIR is deprecated. Use --destdir instead."
   else
     destdir = ''
   end
 
-  configdir = "#{destdir}#{configdir}"
-  bindir = "#{destdir}#{bindir}"
-  sbindir = "#{destdir}#{sbindir}"
-  mandir = "#{destdir}#{mandir}"
-  sitelibdir = "#{destdir}#{sitelibdir}"
+  configdir = join(destdir, configdir)
+  bindir = join(destdir, bindir)
+  sbindir = join(destdir, sbindir)
+  mandir = join(destdir, mandir)
+  sitelibdir = join(destdir, sitelibdir)
 
   FileUtils.makedirs(configdir) if InstallOptions.configs
   FileUtils.makedirs(bindir)
@@ -311,6 +319,16 @@ def prepare_installation
   InstallOptions.sbin_dir = sbindir
   InstallOptions.lib_dir  = libdir
   InstallOptions.man_dir  = mandir
+end
+
+##
+# Join two paths. On Windows, dir must be converted to a relative path,
+# by stripping the drive letter, but only if the basedir is not empty.
+#
+def join(basedir, dir)
+  return "#{basedir}#{dir[2..-1]}" if $operatingsystem == "windows" and basedir.length > 0 and dir.length > 2
+
+  "#{basedir}#{dir}"
 end
 
 ##
@@ -405,8 +423,10 @@ def install_binfile(from, op_file, target)
     if not installed_wrapper
       tmp_file2 = File.join(tmp_dir, '_tmp_wrapper')
       cwn = File.join(Config::CONFIG['bindir'], op_file)
-      cwv = CMD_WRAPPER.gsub('<ruby>', ruby.gsub(%r{/}) { "\\" }).gsub!('<command>', cwn.gsub(%r{/}) { "\\" } )
+      regex_safe_ruby = Regexp.escape(ruby.gsub(%r{/}) { "\\" })
+      regex_safe_cwn = Regexp.escape(cwn.gsub(%r{/}) { "\\" })
 
+      cwv = CMD_WRAPPER.gsub('<ruby>', regex_safe_ruby).gsub('<command>', regex_safe_cwn)
       File.open(tmp_file2, "wb") { |cw| cw.puts cwv }
       FileUtils.install(tmp_file2, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
 

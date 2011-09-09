@@ -36,36 +36,83 @@ module Puppet::Util::SUIDManager
   end
   module_function :groups=
 
-  if Facter['kernel'].value == 'Darwin'
-    # Cannot change real UID on Darwin so we set euid
-    alias :uid :euid
-    alias :gid :egid
-  end
-
   def self.root?
-    Process.uid == 0
+    return Process.uid == 0 unless Puppet.features.microsoft_windows?
+
+    require 'sys/admin'
+    require 'win32/security'
+    require 'facter'
+
+    majversion = Facter.value(:kernelmajversion)
+    return false unless majversion
+
+    # if Vista or later, check for unrestricted process token
+    return Win32::Security.elevated_security? unless majversion.to_f < 6.0
+
+    group = Sys::Admin.get_group("Administrators", :sid => Win32::Security::SID::BuiltinAdministrators)
+    group and group.members.index(Sys::Admin.get_login) != nil
   end
 
   # Runs block setting uid and gid if provided then restoring original ids
   def asuser(new_uid=nil, new_gid=nil)
     return yield if Puppet.features.microsoft_windows? or !root?
 
-    # We set both because some programs like to drop privs, i.e. bash.
-    old_uid, old_gid = self.uid, self.gid
     old_euid, old_egid = self.euid, self.egid
-    old_groups = self.groups
     begin
-      self.egid = convert_xid :gid, new_gid if new_gid
-      self.initgroups(convert_xid(:uid, new_uid)) if new_uid
-      self.euid = convert_xid :uid, new_uid if new_uid
+      change_group(new_gid) if new_gid
+      change_user(new_uid) if new_uid
 
       yield
     ensure
-      self.euid, self.egid = old_euid, old_egid
-      self.groups = old_groups
+      change_group(old_egid)
+      change_user(old_euid)
     end
   end
   module_function :asuser
+
+  def change_group(group, permanently=false)
+    gid = convert_xid(:gid, group)
+    raise Puppet::Error, "No such group #{group}" unless gid
+
+    if permanently
+      begin
+        Process::GID.change_privilege(gid)
+      rescue NotImplementedError
+        Process.egid = gid
+        Process.gid  = gid
+      end
+    else
+      Process.egid = gid
+    end
+  end
+  module_function :change_group
+
+  def change_user(user, permanently=false)
+    uid = convert_xid(:uid, user)
+    raise Puppet::Error, "No such user #{user}" unless uid
+
+    if permanently
+      begin
+        Process::UID.change_privilege(uid)
+      rescue NotImplementedError
+        # If changing uid, we must be root. So initgroups first here.
+        initgroups(uid)
+        Process.euid = uid
+        Process.uid  = uid
+      end
+    else
+      # If we're already root, initgroups before changing euid. If we're not,
+      # change euid (to root) first.
+      if Process.euid == 0
+        initgroups(uid)
+        Process.euid = uid
+      else
+        Process.euid = uid
+        initgroups(uid)
+      end
+    end
+  end
+  module_function :change_user
 
   # Make sure the passed argument is a number.
   def convert_xid(type, id)

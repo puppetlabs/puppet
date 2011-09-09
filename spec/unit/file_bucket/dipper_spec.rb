@@ -16,7 +16,7 @@ describe Puppet::FileBucket::Dipper do
   end
 
   it "should fail in an informative way when there are failures checking for the file on the server" do
-    @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
+    @dipper = Puppet::FileBucket::Dipper.new(:Path => make_absolute("/my/bucket"))
 
     file = make_tmp_file('contents')
     Puppet::FileBucket::File.indirection.expects(:head).raises ArgumentError
@@ -25,7 +25,7 @@ describe Puppet::FileBucket::Dipper do
   end
 
   it "should fail in an informative way when there are failures backing up to the server" do
-    @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
+    @dipper = Puppet::FileBucket::Dipper.new(:Path => make_absolute("/my/bucket"))
 
     file = make_tmp_file('contents')
     Puppet::FileBucket::File.indirection.expects(:head).returns false
@@ -34,7 +34,7 @@ describe Puppet::FileBucket::Dipper do
     lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
   end
 
-  it "should backup files to a local bucket" do
+  it "should backup files to a local bucket", :fails_on_windows => true do
     Puppet[:bucketdir] = "/non/existent/directory"
     file_bucket = tmpdir("bucket")
 
@@ -91,7 +91,7 @@ describe Puppet::FileBucket::Dipper do
     [request1, request2].each do |r|
       r.server.should == 'puppetmaster'
       r.port.should == 31337
-      r.key.should == "md5/#{checksum}#{real_path}"
+      r.key.should == "md5/#{checksum}/#{real_path}"
     end
   end
 

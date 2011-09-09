@@ -3,6 +3,7 @@
 require 'English'
 require 'puppet/util/monkey_patches'
 require 'sync'
+require 'tempfile'
 require 'puppet/external/lock'
 require 'monitor'
 require 'puppet/util/execution_stub'
@@ -30,16 +31,15 @@ module Util
     end
   end
 
-  
   def self.synchronize_on(x,type)
     sync_object,users = 0,1
     begin
-      @@sync_objects.synchronize { 
+      @@sync_objects.synchronize {
         (@@sync_objects[x] ||= [Sync.new,0])[users] += 1
       }
       @@sync_objects[x][sync_object].synchronize(type) { yield }
     ensure
-      @@sync_objects.synchronize { 
+      @@sync_objects.synchronize {
         @@sync_objects.delete(x) unless (@@sync_objects[x][users] -= 1) > 0
       }
     end
@@ -48,35 +48,24 @@ module Util
   # Change the process to a different user
   def self.chuser
     if group = Puppet[:group]
-      group = self.gid(group)
-      raise Puppet::Error, "No such group #{Puppet[:group]}" unless group
-      unless Puppet::Util::SUIDManager.gid == group
-        begin
-          Puppet::Util::SUIDManager.egid = group
-          Puppet::Util::SUIDManager.gid = group
-        rescue => detail
-          Puppet.warning "could not change to group #{group.inspect}: #{detail}"
-          $stderr.puts "could not change to group #{group.inspect}"
+      begin
+        Puppet::Util::SUIDManager.change_group(group, true)
+      rescue => detail
+        Puppet.warning "could not change to group #{group.inspect}: #{detail}"
+        $stderr.puts "could not change to group #{group.inspect}"
 
-          # Don't exit on failed group changes, since it's
-          # not fatal
-          #exit(74)
-        end
+        # Don't exit on failed group changes, since it's
+        # not fatal
+        #exit(74)
       end
     end
 
     if user = Puppet[:user]
-      user = self.uid(user)
-      raise Puppet::Error, "No such user #{Puppet[:user]}" unless user
-      unless Puppet::Util::SUIDManager.uid == user
-        begin
-          Puppet::Util::SUIDManager.initgroups(user)
-          Puppet::Util::SUIDManager.uid = user
-          Puppet::Util::SUIDManager.euid = user
-        rescue => detail
-          $stderr.puts "Could not change to user #{user}: #{detail}"
-          exit(74)
-        end
+      begin
+        Puppet::Util::SUIDManager.change_user(user, true)
+      rescue => detail
+        $stderr.puts "Could not change to user #{user}: #{detail}"
+        exit(74)
       end
     end
   end
@@ -91,18 +80,14 @@ module Util
         if useself
 
           Puppet::Util::Log.create(
-
             :level => level,
             :source => self,
-
             :message => args
           )
         else
 
           Puppet::Util::Log.create(
-
             :level => level,
-
             :message => args
           )
         end
@@ -201,7 +186,7 @@ module Util
   end
 
   def which(bin)
-    if bin =~ /^\//
+    if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
@@ -212,6 +197,22 @@ module Util
     nil
   end
   module_function :which
+
+  # Determine in a platform-specific way whether a path is absolute. This
+  # defaults to the local platform if none is specified.
+  def absolute_path?(path, platform=nil)
+    # Escape once for the string literal, and once for the regex.
+    slash = '[\\\\/]'
+    name = '[^\\\\/]+'
+    regexes = {
+      :windows => %r!^([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name})!i,
+      :posix   => %r!^/!,
+    }
+    platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
+
+    !! (path =~ regexes[platform])
+  end
+  module_function :absolute_path?
 
   # Execute the provided command in a pipe, yielding the pipe object.
   def execpipe(command, failonfail = true)
@@ -241,6 +242,41 @@ module Util
       raise exception, output
   end
 
+  def execute_posix(command, arguments, stdin, stdout, stderr)
+    child_pid = Kernel.fork do
+      command = Array(command)
+      Process.setsid
+      begin
+        $stdin.reopen(stdin)
+        $stdout.reopen(stdout)
+        $stderr.reopen(stderr)
+
+        3.upto(256){|fd| IO::new(fd).close rescue nil}
+
+        Puppet::Util::SUIDManager.change_group(arguments[:gid], true) if arguments[:gid]
+        Puppet::Util::SUIDManager.change_user(arguments[:uid], true)  if arguments[:uid]
+
+        ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
+        Kernel.exec(*command)
+      rescue => detail
+        puts detail.to_s
+        exit!(1)
+      end
+    end
+    child_pid
+  end
+  module_function :execute_posix
+
+  def execute_windows(command, arguments, stdin, stdout, stderr)
+    command = command.map do |part|
+      part.include?(' ') ? %Q["#{part.gsub(/"/, '\"')}"] : part
+    end.join(" ") if command.is_a?(Array)
+
+    process_info = Process.create( :command_line => command, :startup_info => {:stdin => stdin, :stdout => stdout, :stderr => stderr} )
+    process_info.process_id
+  end
+  module_function :execute_windows
+
   # Execute the desired command, and return the status and output.
   # def execute(command, failonfail = true, uid = nil, gid = nil)
   # :combine sets whether or not to combine stdout/stderr in the output
@@ -248,13 +284,10 @@ module Util
   # for stdin is not currently supported.
   def execute(command, arguments = {:failonfail => true, :combine => true})
     if command.is_a?(Array)
-      command = command.flatten.collect { |i| i.to_s }
+      command = command.flatten.map(&:to_s)
       str = command.join(" ")
-    else
-      # We require an array here so we know where we're incorrectly
-      # using a string instead of an array.  Once everything is
-      # switched to an array, we might relax this requirement.
-      raise ArgumentError, "Must pass an array to execute()"
+    elsif command.is_a?(String)
+      str = command
     end
 
     if respond_to? :debug
@@ -263,114 +296,62 @@ module Util
       Puppet.debug "Executing '#{str}'"
     end
 
-    arguments[:uid] = Puppet::Util::SUIDManager.convert_xid(:uid, arguments[:uid]) if arguments[:uid]
-    arguments[:gid] = Puppet::Util::SUIDManager.convert_xid(:gid, arguments[:gid]) if arguments[:gid]
+    null_file = Puppet.features.microsoft_windows? ? 'NUL' : '/dev/null'
+
+    stdin = File.open(arguments[:stdinfile] || null_file, 'r')
+    stdout = arguments[:squelch] ? File.open(null_file, 'w') : Tempfile.new('puppet')
+    stderr = arguments[:combine] ? stdout : File.open(null_file, 'w')
+
+
+    exec_args = [command, arguments, stdin, stdout, stderr]
 
     if execution_stub = Puppet::Util::ExecutionStub.current_value
-      return execution_stub.call(command, arguments)
-    end
-
-    @@os ||= Facter.value(:operatingsystem)
-    output = nil
-    child_pid, child_status = nil
-    # There are problems with read blocking with badly behaved children
-    # read.partialread doesn't seem to capture either stdout or stderr
-    # We hack around this using a temporary file
-
-    # The idea here is to avoid IO#read whenever possible.
-    output_file="/dev/null"
-    error_file="/dev/null"
-    if ! arguments[:squelch]
-      require "tempfile"
-      output_file = Tempfile.new("puppet")
-      error_file=output_file if arguments[:combine]
-    end
-
-    if Puppet.features.posix?
-      oldverb = $VERBOSE
-      $VERBOSE = nil
-      child_pid = Kernel.fork
-      $VERBOSE = oldverb
-      if child_pid
-        # Parent process executes this
-        child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
-      else
-        # Child process executes this
-        Process.setsid
-        begin
-          if arguments[:stdinfile]
-            $stdin.reopen(arguments[:stdinfile])
-          else
-            $stdin.reopen("/dev/null")
-          end
-          $stdout.reopen(output_file)
-          $stderr.reopen(error_file)
-
-          3.upto(256){|fd| IO::new(fd).close rescue nil}
-          if arguments[:gid]
-            Process.egid = arguments[:gid]
-            Process.gid = arguments[:gid] unless @@os == "Darwin"
-          end
-          if arguments[:uid]
-            Process.euid = arguments[:uid]
-            Process.uid = arguments[:uid] unless @@os == "Darwin"
-          end
-          ENV['LANG'] = ENV['LC_ALL'] = ENV['LC_MESSAGES'] = ENV['LANGUAGE'] = 'C'
-          if command.is_a?(Array)
-            Kernel.exec(*command)
-          else
-            Kernel.exec(command)
-          end
-        rescue => detail
-          puts detail.to_s
-          exit!(1)
-        end
-      end
+      return execution_stub.call(*exec_args)
+    elsif Puppet.features.posix?
+      child_pid = execute_posix(*exec_args)
     elsif Puppet.features.microsoft_windows?
-      command = command.collect {|part| '"' + part.gsub(/"/, '\\"') + '"'}.join(" ") if command.is_a?(Array)
-      Puppet.debug "Creating process '#{command}'"
-      processinfo = Process.create( :command_line => command )
-      child_status = (Process.waitpid2(child_pid)[1]).to_i >> 8
+      child_pid = execute_windows(*exec_args)
     end
+
+    child_status = Process.waitpid2(child_pid).last
+
+    [stdin, stdout, stderr].each {|io| io.close rescue nil}
 
     # read output in if required
-    if ! arguments[:squelch]
-
-      # Make sure the file's actually there.  This is
-      # basically a race condition, and is probably a horrible
-      # way to handle it, but, well, oh well.
-      unless FileTest.exists?(output_file.path)
-        Puppet.warning "sleeping"
-        sleep 0.5
-        unless FileTest.exists?(output_file.path)
-          Puppet.warning "sleeping 2"
-          sleep 1
-          unless FileTest.exists?(output_file.path)
-            Puppet.warning "Could not get output"
-            output = ""
-          end
-        end
-      end
-      unless output
-        # We have to explicitly open here, so that it reopens
-        # after the child writes.
-        output = output_file.open.read
-
-        # The 'true' causes the file to get unlinked right away.
-        output_file.close(true)
-      end
+    unless arguments[:squelch]
+      output = wait_for_output(stdout)
+      Puppet.warning "Could not get output" unless output
     end
 
-    if arguments[:failonfail]
-      unless child_status == 0
-        raise ExecutionFailure, "Execution of '#{str}' returned #{child_status}: #{output}"
-      end
+    if arguments[:failonfail] and child_status != 0
+      raise ExecutionFailure, "Execution of '#{str}' returned #{child_status.exitstatus}: #{output}"
     end
 
     output
   end
 
   module_function :execute
+
+  def wait_for_output(stdout)
+    # Make sure the file's actually been written.  This is basically a race
+    # condition, and is probably a horrible way to handle it, but, well, oh
+    # well.
+    2.times do |try|
+      if File.exists?(stdout.path)
+        output = stdout.open.read
+
+        stdout.close(true)
+
+        return output
+      else
+        time_to_sleep = try / 2.0
+        Puppet.warning "Waiting for output; will sleep #{time_to_sleep} seconds"
+        sleep(time_to_sleep)
+      end
+    end
+    nil
+  end
+  module_function :wait_for_output
 
   # Create an exclusive lock.
   def threadlock(resource, type = Sync::EX)

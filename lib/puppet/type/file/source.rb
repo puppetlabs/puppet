@@ -42,7 +42,7 @@ module Puppet
       on the local host, whereas `agent` will connect to the
       puppet server that it received the manifest from.
 
-      See the [fileserver configuration documentation](http://projects.puppetlabs.com/projects/puppet/wiki/File_Serving_Configuration) for information on how to configure
+      See the [fileserver configuration documentation](http://docs.puppetlabs.com/guides/file_serving.html) for information on how to configure
       and use file services within Puppet.
 
       If you specify multiple file sources for a file, then the first
@@ -72,7 +72,7 @@ module Puppet
           self.fail "Could not understand source #{source}: #{detail}"
         end
 
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme)
+        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme) or (Puppet.features.microsoft_windows? and uri.scheme =~ /^[a-z]$/i)
       end
     end
 
@@ -95,13 +95,14 @@ module Puppet
     end
 
     # Look up (if necessary) and return remote content.
-    cached_attr(:content) do
+    def content
+      return @content if @content
       raise Puppet::DevError, "No source for content was stored with the metadata" unless metadata.source
 
       unless tmp = Puppet::FileServing::Content.indirection.find(metadata.source)
         fail "Could not find any content at %s" % metadata.source
       end
-      tmp.content
+      @content = tmp.content
     end
 
     # Copy the values from the source to the resource.  Yay.
@@ -137,25 +138,27 @@ module Puppet
       ! (metadata.nil? or metadata.ftype.nil?)
     end
 
+    attr_writer :metadata
+
     # Provide, and retrieve if necessary, the metadata for this file.  Fail
     # if we can't find data about this host, and fail if there are any
     # problems in our query.
-    cached_attr(:metadata) do
+    def metadata
+      return @metadata if @metadata
       return nil unless value
-      result = nil
       value.each do |source|
         begin
           if data = Puppet::FileServing::Metadata.indirection.find(source)
-            result = data
-            result.source = source
+            @metadata = data
+            @metadata.source = source
             break
           end
         rescue => detail
           fail detail, "Could not retrieve file metadata for #{source}: #{detail}"
         end
       end
-      fail "Could not retrieve information from source(s) #{value.join(", ")}" unless result
-      result
+      fail "Could not retrieve information from environment #{Puppet[:environment]} source(s) #{value.join(", ")}" unless @metadata
+      @metadata
     end
 
     def local?
@@ -177,6 +180,8 @@ module Puppet
     private
 
     def uri
+      return nil if metadata.source =~ /^[a-z]:[\/\\]/i # Abspath for Windows
+
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
   end

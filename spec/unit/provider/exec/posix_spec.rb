@@ -1,120 +1,116 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-provider_class = Puppet::Type.type(:exec).provider(:posix)
+describe Puppet::Type.type(:exec).provider(:posix) do
+  include PuppetSpec::Files
 
-describe provider_class do
-  before :each do
-    @resource = Puppet::Resource.new(:exec, 'foo')
-    @provider = provider_class.new(@resource)
+  def make_exe
+    command = tmpfile('my_command')
+    FileUtils.touch(command)
+    File.chmod(0755, command)
+    command
   end
 
-  ["posix", "microsoft_windows"].each do |feature|
-    describe "when in #{feature} environment" do
-      before :each do
-        if feature == "microsoft_windows"
-          Puppet.features.stubs(:microsoft_windows?).returns(true)
-          Puppet.features.stubs(:posix?).returns(false)
-        else
-          Puppet.features.stubs(:posix?).returns(true)
-          Puppet.features.stubs(:microsoft_windows?).returns(false)
-        end
+  let(:resource) { Puppet::Type.type(:exec).new(:title => File.expand_path('/foo'), :provider => :posix) }
+  let(:provider) { described_class.new(resource) }
+
+  describe "#validatecmd" do
+    it "should fail if no path is specified and the command is not fully qualified" do
+      expect { provider.validatecmd("foo") }.to raise_error(
+        Puppet::Error,
+        "'foo' is not qualified and no path was specified. Please qualify the command or specify a path."
+      )
+    end
+
+    it "should pass if a path is given" do
+      provider.resource[:path] = ['/bogus/bin']
+      provider.validatecmd("../foo")
+    end
+
+    it "should pass if command is fully qualifed" do
+      provider.resource[:path] = ['/bogus/bin']
+      provider.validatecmd(File.expand_path("/bin/blah/foo"))
+    end
+  end
+
+  describe "#run" do
+    describe "when the command is an absolute path" do
+      let(:command) { tmpfile('foo') }
+
+      it "should fail if the command doesn't exist" do
+        expect { provider.run(command) }.to raise_error(ArgumentError, "Could not find command '#{command}'")
       end
 
-      describe "#validatecmd" do
-        it "should fail if no path is specified and the command is not fully qualified" do
-          lambda { @provider.validatecmd("foo") }.should raise_error(
-            Puppet::Error,
-            "'foo' is not qualified and no path was specified. Please qualify the command or specify a path."
-          )
-        end
+      it "should fail if the command isn't a file" do
+        FileUtils.mkdir(command)
+        FileUtils.chmod(0755, command)
 
-        it "should pass if a path is given" do
-          @provider.resource[:path] = ['/bogus/bin']
-          @provider.validatecmd("../foo")
-        end
-
-        it "should pass if command is fully qualifed" do
-          @provider.resource[:path] = ['/bogus/bin']
-          @provider.validatecmd("/bin/blah/foo")
-        end
+        expect { provider.run(command) }.to raise_error(ArgumentError, "'#{command}' is a directory, not a file")
       end
 
-      describe "#run" do
-        it "should fail if no path is specified and command does not exist" do
-          lambda { @provider.run("foo") }.should raise_error(ArgumentError, "Could not find command 'foo'")
-        end
+      it "should fail if the command isn't executable" do
+        FileUtils.touch(command)
+        File.stubs(:executable?).with(command).returns(false)
 
-        it "should fail if the command isn't in the path" do
-          @provider.resource[:path] = ['/bogus/bin']
-          lambda { @provider.run("foo") }.should raise_error(ArgumentError, "Could not find command 'foo'")
-        end
-
-        it "should fail if the command isn't executable" do
-          @provider.resource[:path] = ['/bogus/bin']
-          File.stubs(:exists?).with("foo").returns(true)
-
-          lambda { @provider.run("foo") }.should raise_error(ArgumentError, "'foo' is not executable")
-        end
-
-        it "should not be able to execute shell builtins" do
-          @provider.resource[:path] = ['/bin']
-          lambda { @provider.run("cd ..") }.should raise_error(ArgumentError, "Could not find command 'cd'")
-        end
-
-        it "should execute the command if the command given includes arguments or subcommands" do
-          @provider.resource[:path] = ['/bogus/bin']
-          File.stubs(:exists?).returns(false)
-          File.stubs(:exists?).with("foo").returns(true)
-          File.stubs(:executable?).with("foo").returns(true)
-
-          Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo bar --sillyarg=true --blah']) && (arguments.is_a? Hash) }
-          @provider.run("foo bar --sillyarg=true --blah")
-        end
-
-        it "should fail if quoted command doesn't exist" do
-          @provider.resource[:path] = ['/bogus/bin']
-          File.stubs(:exists?).returns(false)
-          File.stubs(:exists?).with("foo").returns(true)
-          File.stubs(:executable?).with("foo").returns(true)
-
-          lambda { @provider.run('"foo bar --sillyarg=true --blah"') }.should raise_error(ArgumentError, "Could not find command 'foo bar --sillyarg=true --blah'")
-        end
-
-        it "should execute the command if it finds it in the path and is executable" do
-          @provider.resource[:path] = ['/bogus/bin']
-          File.stubs(:exists?).with("foo").returns(true)
-          File.stubs(:executable?).with("foo").returns(true)
-          Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo']) && (arguments.is_a? Hash) }
-
-          @provider.run("foo")
-        end
-
-        if feature == "microsoft_windows"
-          [".exe", ".ps1", ".bat", ".com", ""].each do |extension|
-            it "should check file extension #{extension} when it can't find the executable" do
-              @provider.resource[:path] = ['/bogus/bin']
-              File.stubs(:exists?).returns(false)
-              File.stubs(:exists?).with("/bogus/bin/foo#{extension}").returns(true)
-              File.stubs(:executable?).with("foo").returns(true)
-              Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo']) && (arguments.is_a? Hash) }
-
-              @provider.run("foo")
-            end
-          end
-        end
-
-        it "should warn if you're overriding something in environment" do
-          @provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
-          File.stubs(:exists?).returns(false)
-          File.stubs(:exists?).with("foo").returns(true)
-          File.stubs(:executable?).with("foo").returns(true)
-
-          Puppet::Util.expects(:execute).with() { |command, arguments| (command == ['foo']) && (arguments.is_a? Hash) }
-          @provider.run("foo")
-          @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
-        end
+        expect { provider.run(command) }.to raise_error(ArgumentError, "'#{command}' is not executable")
       end
+    end
+
+    describe "when the command is a relative path" do
+      it "should execute the command if it finds it in the path and is executable" do
+        command = make_exe
+        provider.resource[:path] = [File.dirname(command)]
+        filename = File.basename(command)
+
+        Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == filename) && (arguments.is_a? Hash) }
+
+        provider.run(filename)
+      end
+
+      it "should fail if the command isn't in the path" do
+        resource[:path] = ["/fake/path"]
+
+        expect { provider.run('foo') }.to raise_error(ArgumentError, "Could not find command 'foo'")
+      end
+
+      it "should fail if the command is in the path but not executable" do
+        command = tmpfile('foo')
+        FileUtils.touch(command)
+        FileTest.stubs(:executable?).with(command).returns(false)
+        resource[:path] = [File.dirname(command)]
+        filename = File.basename(command)
+
+        expect { provider.run(filename) }.to raise_error(ArgumentError, "Could not find command '#{filename}'")
+      end
+    end
+
+    it "should not be able to execute shell builtins" do
+      provider.resource[:path] = ['/bin']
+      expect { provider.run("cd ..") }.to raise_error(ArgumentError, "Could not find command 'cd'")
+    end
+
+    it "should execute the command if the command given includes arguments or subcommands" do
+      provider.resource[:path] = ['/bogus/bin']
+      command = make_exe
+
+      Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == "#{command} bar --sillyarg=true --blah") && (arguments.is_a? Hash) }
+      provider.run("#{command} bar --sillyarg=true --blah")
+    end
+
+    it "should fail if quoted command doesn't exist" do
+      provider.resource[:path] = ['/bogus/bin']
+      command = "#{File.expand_path('/foo')} bar --sillyarg=true --blah"
+
+      expect { provider.run(%Q["#{command}"]) }.to raise_error(ArgumentError, "Could not find command '#{command}'")
+    end
+
+    it "should warn if you're overriding something in environment" do
+      provider.resource[:environment] = ['WHATEVER=/something/else', 'WHATEVER=/foo']
+      command = make_exe
+
+      Puppet::Util.expects(:execute).with { |cmdline, arguments| (cmdline == command) && (arguments.is_a? Hash) }
+      provider.run(command)
+      @logs.map {|l| "#{l.level}: #{l.message}" }.should == ["warning: Overriding environment setting 'WHATEVER' with '/foo'"]
     end
   end
 end

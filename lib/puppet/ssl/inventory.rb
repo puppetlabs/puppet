@@ -48,5 +48,7 @@ class Puppet::SSL::Inventory
 
       return Integer($1)
     end
+
+    return nil
   end
 end

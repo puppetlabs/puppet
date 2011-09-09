@@ -1,8 +1,4 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-9-23.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'spec_helper'
 
 require 'puppet/indirector/catalog/compiler'
@@ -42,24 +38,6 @@ describe Puppet::Resource::Catalog::Compiler do
     it "should provide a method for determining if the catalog is networked" do
       compiler = Puppet::Resource::Catalog::Compiler.new
       compiler.should respond_to(:networked?)
-    end
-
-    describe "and storeconfigs is enabled" do
-      before do
-        Puppet.settings.expects(:value).with(:storeconfigs).returns true
-      end
-
-      it "should initialize Rails if it is available" do
-        Puppet.features.expects(:rails?).returns true
-        Puppet::Rails.expects(:init)
-        Puppet::Resource::Catalog::Compiler.new
-      end
-
-      it "should fail if Rails is unavailable" do
-        Puppet.features.expects(:rails?).returns false
-        Puppet::Rails.expects(:init).never
-        lambda { Puppet::Resource::Catalog::Compiler.new }.should raise_error(Puppet::Error)
-      end
     end
   end
 

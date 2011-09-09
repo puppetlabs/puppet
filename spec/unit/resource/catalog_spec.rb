@@ -2,28 +2,12 @@
 require 'spec_helper'
 
 describe Puppet::Resource::Catalog, "when compiling" do
+  include PuppetSpec::Files
 
   before do
-    @basepath = Puppet.features.posix? ? "/somepath" : "C:/somepath"
+    @basepath = make_absolute("/somepath")
     # stub this to not try to create state.yaml
     Puppet::Util::Storage.stubs(:store)
-  end
-
-  it "should be an Expirer" do
-    Puppet::Resource::Catalog.ancestors.should be_include(Puppet::Util::Cacher::Expirer)
-  end
-
-  it "should always be expired if it's not applying" do
-    @catalog = Puppet::Resource::Catalog.new("host")
-    @catalog.expects(:applying?).returns false
-    @catalog.should be_dependent_data_expired(Time.now)
-  end
-
-  it "should not be expired if it's applying and the timestamp is late enough" do
-    @catalog = Puppet::Resource::Catalog.new("host")
-    @catalog.expire
-    @catalog.expects(:applying?).returns true
-    @catalog.should_not be_dependent_data_expired(Time.now)
   end
 
   it "should be able to write its list of classes to the class file" do
@@ -500,7 +484,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       lambda { @catalog.alias(@one, "other") }.should_not raise_error
     end
 
-    it "should create aliases for resources isomorphic resources whose names do not match their titles" do
+    it "should create aliases for isomorphic resources whose names do not match their titles" do
       resource = Puppet::Type::File.new(:title => "testing", :path => @basepath+"/something")
 
       @catalog.add_resource(resource)
@@ -508,7 +492,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.resource(:file, @basepath+"/something").should equal(resource)
     end
 
-    it "should not create aliases for resources non-isomorphic resources whose names do not match their titles" do
+    it "should not create aliases for non-isomorphic resources whose names do not match their titles", :fails_on_windows => true  do
       resource = Puppet::Type.type(:exec).new(:title => "testing", :command => "echo", :path => %w{/bin /usr/bin /usr/local/bin})
 
       @catalog.add_resource(resource)
@@ -522,11 +506,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.add_resource @one
       @catalog.alias(@one, "other")
       @catalog.resource("notify", "other").should equal(@one)
-    end
-
-    it "should ignore conflicting aliases that point to the aliased resource" do
-      @catalog.alias(@one, "other")
-      lambda { @catalog.alias(@one, "other") }.should_not raise_error
     end
 
     it "should fail to add an alias if the aliased name already exists" do
@@ -582,13 +561,66 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @catalog.create_resource :file, args
       @catalog.resource("File[/yay]").should equal(resource)
     end
+
+    describe "when adding resources with multiple namevars" do
+      before :each do
+        Puppet::Type.newtype(:multiple) do
+          newparam(:color, :namevar => true)
+          newparam(:designation, :namevar => true)
+
+          def self.title_patterns
+            [ [
+                /^(\w+) (\w+)$/,
+                [
+                  [:color,  lambda{|x| x}],
+                  [:designation, lambda{|x| x}]
+                ]
+            ] ]
+          end
+        end
+      end
+
+      it "should add an alias using the uniqueness key" do
+        @resource = Puppet::Type.type(:multiple).new(:title => "some resource", :color => "red", :designation => "5")
+
+        @catalog.add_resource(@resource)
+        @catalog.resource(:multiple, "some resource").must == @resource
+        @catalog.resource("Multiple[some resource]").must == @resource
+        @catalog.resource("Multiple[red 5]").must == @resource
+      end
+
+      it "should conflict with a resource with the same uniqueness key" do
+        @resource = Puppet::Type.type(:multiple).new(:title => "some resource", :color => "red", :designation => "5")
+        @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "5")
+
+        @catalog.add_resource(@resource)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "5"\].*resource \["Multiple", "red", "5"\] already defined/)
+      end
+
+      it "should conflict when its uniqueness key matches another resource's title" do
+        path = make_absolute("/tmp/foo")
+        @resource = Puppet::Type.type(:file).new(:title => path)
+        @other    = Puppet::Type.type(:file).new(:title => "another file", :path => path)
+
+        @catalog.add_resource(@resource)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["#{Regexp.escape(path)}"\].*resource \["File", "#{Regexp.escape(path)}"\] already defined/)
+      end
+
+      it "should conflict when its uniqueness key matches the uniqueness key derived from another resource's title" do
+        @resource = Puppet::Type.type(:multiple).new(:title => "red leader")
+        @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "leader")
+
+        @catalog.add_resource(@resource)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "leader"\].*resource \["Multiple", "red", "leader"\] already defined/)
+      end
+    end
   end
 
   describe "when applying" do
     before :each do
       @catalog = Puppet::Resource::Catalog.new("host")
 
-      @transaction = mock 'transaction'
+      @transaction = Puppet::Transaction.new(@catalog)
       Puppet::Transaction.stubs(:new).returns(@transaction)
       @transaction.stubs(:evaluate)
       @transaction.stubs(:add_times)
@@ -641,11 +673,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     it "should set ignoreschedules on the transaction if specified in apply()" do
       @transaction.expects(:ignoreschedules=).with(true)
       @catalog.apply(:ignoreschedules => true)
-    end
-
-    it "should expire cached data in the resources both before and after the transaction" do
-      @catalog.expects(:expire).times(2)
-      @catalog.apply
     end
 
     describe "host catalogs" do
@@ -808,8 +835,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @real_indirection = Puppet::Resource::Catalog.indirection
 
       @indirection = stub 'indirection', :name => :catalog
-
-      Puppet::Util::Cacher.expire
     end
 
     it "should use the value of the 'catalog_terminus' setting to determine its terminus class" do
@@ -828,7 +853,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
 
     after do
-      Puppet::Util::Cacher.expire
       @real_indirection.reset_terminus_class
     end
   end

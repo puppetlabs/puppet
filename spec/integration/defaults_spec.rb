@@ -144,30 +144,25 @@ describe "Puppet defaults" do
       Puppet.features.stubs(:rails?).returns true
     end
 
-    it "should set the Catalog cache class to :active_record" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:active_record)
+    it "should set the Catalog cache class to :store_configs" do
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:store_configs)
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should not set the Catalog cache class to :active_record if asynchronous storeconfigs is enabled" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:active_record).never
+    it "should not set the Catalog cache class to :store_configs if asynchronous storeconfigs is enabled" do
+      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:store_configs).never
       Puppet.settings.expects(:value).with(:async_storeconfigs).returns true
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Facts cache class to :active_record" do
-      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:active_record)
+    it "should set the Facts cache class to :store_configs" do
+      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:store_configs)
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Node cache class to :active_record" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:active_record)
+    it "should set the Node cache class to :store_configs" do
+      Puppet::Node.indirection.expects(:cache_class=).with(:store_configs)
       Puppet.settings[:storeconfigs] = true
-    end
-
-    it "should fail if rails is not available" do
-      Puppet.features.stubs(:rails?).returns false
-      lambda { Puppet.settings[:storeconfigs] = true }.should raise_error
     end
   end
 
@@ -189,13 +184,13 @@ describe "Puppet defaults" do
       Puppet.settings[:async_storeconfigs] = true
     end
 
-    it "should set the Facts cache class to :active_record" do
-      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:active_record)
+    it "should set the Facts cache class to :store_configs" do
+      Puppet::Node::Facts.indirection.expects(:cache_class=).with(:store_configs)
       Puppet.settings[:storeconfigs] = true
     end
 
-    it "should set the Node cache class to :active_record" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:active_record)
+    it "should set the Node cache class to :store_configs" do
+      Puppet::Node.indirection.expects(:cache_class=).with(:store_configs)
       Puppet.settings[:storeconfigs] = true
     end
   end
@@ -275,6 +270,16 @@ describe "Puppet defaults" do
 
   describe "reporturl" do
     subject { Puppet.settings[:reporturl] }
-    it { should == "http://localhost:3000/reports" }
+    it { should == "http://localhost:3000/reports/upload" }
+  end
+
+  describe "when configuring color" do
+    it "should default to ansi", :unless => Puppet.features.microsoft_windows? do
+      Puppet.settings[:color].should == 'ansi'
+    end
+
+    it "should default to false", :if => Puppet.features.microsoft_windows? do
+      Puppet.settings[:color].should == 'false'
+    end
   end
 end

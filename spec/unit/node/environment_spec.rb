@@ -1,6 +1,8 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
+require 'tmpdir'
+
 require 'puppet/node/environment'
 require 'puppet/util/execution'
 
@@ -10,20 +12,12 @@ describe Puppet::Node::Environment do
     Puppet::Node::Environment.clear
   end
 
-  it "should include the Cacher module" do
-    Puppet::Node::Environment.ancestors.should be_include(Puppet::Util::Cacher)
-  end
-
   it "should use the filetimeout for the ttl for the modulepath" do
     Puppet::Node::Environment.attr_ttl(:modulepath).should == Integer(Puppet[:filetimeout])
   end
 
   it "should use the filetimeout for the ttl for the module list" do
     Puppet::Node::Environment.attr_ttl(:modules).should == Integer(Puppet[:filetimeout])
-  end
-
-  it "should use the filetimeout for the ttl for the manifestdir" do
-    Puppet::Node::Environment.attr_ttl(:manifestdir).should == Integer(Puppet[:filetimeout])
   end
 
   it "should use the default environment if no name is provided while initializing an environment" do
@@ -109,27 +103,15 @@ describe Puppet::Node::Environment do
     end
   end
 
-  [:modulepath, :manifestdir].each do |setting|
-    it "should validate the #{setting} directories" do
-      path = %w{/one /two}.join(File::PATH_SEPARATOR)
+  it "should validate the modulepath directories" do
+    real_file = tmpdir('moduledir')
+    path = %W[/one /two #{real_file}].join(File::PATH_SEPARATOR)
 
-      env = Puppet::Node::Environment.new("testing")
-      env.stubs(:[]).with(setting).returns path
+    Puppet[:modulepath] = path
 
-      env.expects(:validate_dirs).with(%w{/one /two})
+    env = Puppet::Node::Environment.new("testing")
 
-      env.send(setting)
-    end
-
-    it "should return the validated dirs for #{setting}" do
-      path = %w{/one /two}.join(File::PATH_SEPARATOR)
-
-      env = Puppet::Node::Environment.new("testing")
-      env.stubs(:[]).with(setting).returns path
-      env.stubs(:validate_dirs).returns %w{/one /two}
-
-      env.send(setting).should == %w{/one /two}
-    end
+    env.modulepath.should == [real_file]
   end
 
   it "should prefix the value of the 'PUPPETLIB' environment variable to the module path if present" do
@@ -144,21 +126,26 @@ describe Puppet::Node::Environment do
   end
 
   describe "when validating modulepath or manifestdir directories" do
+    before :each do
+      @path_one = make_absolute('/one')
+      @path_two = make_absolute('/two')
+    end
+
     it "should not return non-directories" do
       env = Puppet::Node::Environment.new("testing")
 
-      FileTest.expects(:directory?).with("/one").returns true
-      FileTest.expects(:directory?).with("/two").returns false
+      FileTest.expects(:directory?).with(@path_one).returns true
+      FileTest.expects(:directory?).with(@path_two).returns false
 
-      env.validate_dirs(%w{/one /two}).should == %w{/one}
+      env.validate_dirs([@path_one, @path_two]).should == [@path_one]
     end
 
     it "should use the current working directory to fully-qualify unqualified paths" do
       FileTest.stubs(:directory?).returns true
       env = Puppet::Node::Environment.new("testing")
 
-      two = File.join(Dir.getwd, "two")
-      env.validate_dirs(%w{/one two}).should == ["/one", two]
+      two = File.expand_path(File.join(Dir.getwd, "two"))
+      env.validate_dirs([@path_one, 'two']).should == [@path_one, two]
     end
   end
 

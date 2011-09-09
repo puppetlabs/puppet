@@ -5,13 +5,13 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.6.0
-Release:        1%{?dist}
+Version:        2.7.2
+Release:        0.2.rc1%{?dist}
 Summary:        A network tool for managing many disparate systems
-License:        Apache 2.0
+License:        ASL 2.0
 URL:            http://puppetlabs.com
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
-Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.sign
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -27,11 +27,11 @@ Requires:       ruby-shadow
 %endif
 
 # Pull in ruby selinux bindings where available
-%if 0%{?fedora} >= 12 || 0%{?rhel} >= 6
-%{!?_without_selinux:Requires: ruby(selinux)}
+%if 0%{?fedora} || 0%{?rhel} >= 6
+%{!?_without_selinux:Requires: ruby(selinux), libselinux-utils}
 %else
-%if 0%{?fedora} || 0%{?rhel} >= 5
-%{!?_without_selinux:Requires: libselinux-ruby}
+%if 0%{?rhel} && 0%{?rhel} == 5
+%{!?_without_selinux:Requires: libselinux-ruby, libselinux-utils}
 %endif
 %endif
 
@@ -65,8 +65,8 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q
-patch -p1 < conf/redhat/rundir-perms.patch
+%setup -q -n %{name}-%{version}rc1
+patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
 %build
@@ -102,7 +102,6 @@ install -Dp -m0644 %{confdir}/server.sysconfig %{buildroot}%{_sysconfdir}/syscon
 install -Dp -m0755 %{confdir}/server.init %{buildroot}%{_initrddir}/puppetmaster
 install -Dp -m0644 %{confdir}/fileserver.conf %{buildroot}%{_sysconfdir}/puppet/fileserver.conf
 install -Dp -m0644 %{confdir}/puppet.conf %{buildroot}%{_sysconfdir}/puppet/puppet.conf
-install -Dp -m0644 conf/auth.conf %{buildroot}%{_sysconfdir}/puppet/auth.conf
 install -Dp -m0644 %{confdir}/logrotate %{buildroot}%{_sysconfdir}/logrotate.d/puppet
 
 # We need something for these ghosted files, otherwise rpmbuild
@@ -111,7 +110,7 @@ touch %{buildroot}%{_sysconfdir}/puppet/puppetmasterd.conf
 touch %{buildroot}%{_sysconfdir}/puppet/puppetca.conf
 touch %{buildroot}%{_sysconfdir}/puppet/puppetd.conf
 
-# Install the ext/ directory to %{_datadir}/%{name}
+# Install the ext/ directory to %%{_datadir}/%%{name}
 install -d %{buildroot}%{_datadir}/%{name}
 cp -a ext/ %{buildroot}%{_datadir}/%{name}
 # emacs and vim bits are installed elsewhere
@@ -128,9 +127,16 @@ vimdir=%{buildroot}%{_datadir}/vim/vimfiles
 install -Dp -m0644 ext/vim/ftdetect/puppet.vim $vimdir/ftdetect/puppet.vim
 install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 
+%if 0%{?fedora} >= 15
+# Setup tmpfiles.d config
+mkdir -p %{buildroot}%{_sysconfdir}/tmpfiles.d
+echo "D /var/run/%{name} 0755 %{name} %{name} -" > \
+    %{buildroot}%{_sysconfdir}/tmpfiles.d/%{name}.conf
+%endif
+
 %files
 %defattr(-, root, root, 0755)
-%doc CHANGELOG COPYING LICENSE README README.queueing examples
+%doc CHANGELOG LICENSE README.md examples
 %{_bindir}/pi
 %{_bindir}/puppet
 %{_bindir}/ralsh
@@ -141,6 +147,9 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %{ruby_sitelibdir}/*
 %{_initrddir}/puppet
 %dir %{_sysconfdir}/puppet
+%if 0%{?fedora} >= 15
+%config(noreplace) %{_sysconfdir}/tmpfiles.d/%{name}.conf
+%endif
 %config(noreplace) %{_sysconfdir}/sysconfig/puppet
 %config(noreplace) %{_sysconfdir}/puppet/puppet.conf
 %config(noreplace) %{_sysconfdir}/puppet/auth.conf
@@ -163,6 +172,34 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %{_mandir}/man8/puppetd.8.gz
 %{_mandir}/man8/ralsh.8.gz
 %{_mandir}/man8/puppetdoc.8.gz
+%{_mandir}/man8/puppet-agent.8.gz
+%{_mandir}/man8/puppet-apply.8.gz
+%{_mandir}/man8/puppet-catalog.8.gz
+%{_mandir}/man8/puppet-describe.8.gz
+%{_mandir}/man8/puppet-cert.8.gz
+%{_mandir}/man8/puppet-certificate.8.gz
+%{_mandir}/man8/puppet-certificate_request.8.gz
+%{_mandir}/man8/puppet-certificate_revocation_list.8.gz
+%{_mandir}/man8/puppet-config.8.gz
+%{_mandir}/man8/puppet-device.8.gz
+%{_mandir}/man8/puppet-doc.8.gz
+%{_mandir}/man8/puppet-facts.8.gz
+%{_mandir}/man8/puppet-file.8.gz
+%{_mandir}/man8/puppet-filebucket.8.gz
+%{_mandir}/man8/puppet-help.8.gz
+%{_mandir}/man8/puppet-inspect.8.gz
+%{_mandir}/man8/puppet-key.8.gz
+%{_mandir}/man8/puppet-kick.8.gz
+%{_mandir}/man8/puppet-man.8.gz
+%{_mandir}/man8/puppet-node.8.gz
+%{_mandir}/man8/puppet-parser.8.gz
+%{_mandir}/man8/puppet-plugin.8.gz
+%{_mandir}/man8/puppet-queue.8.gz
+%{_mandir}/man8/puppet-report.8.gz
+%{_mandir}/man8/puppet-resource.8.gz
+%{_mandir}/man8/puppet-resource_type.8.gz
+%{_mandir}/man8/puppet-secret_agent.8.gz
+%{_mandir}/man8/puppet-status.8.gz
 
 %files server
 %defattr(-, root, root, 0755)
@@ -178,6 +215,7 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 %{_mandir}/man8/puppetmasterd.8.gz
 %{_mandir}/man8/puppetrun.8.gz
 %{_mandir}/man8/puppetqd.8.gz
+%{_mandir}/man8/puppet-master.8.gz
 
 # Fixed uid/gid were assigned in bz 472073 (Fedora), 471918 (RHEL-5),
 # and 471919 (RHEL-4)
@@ -185,27 +223,48 @@ install -Dp -m0644 ext/vim/syntax/puppet.vim $vimdir/syntax/puppet.vim
 getent group puppet &>/dev/null || groupadd -r puppet -g 52 &>/dev/null
 getent passwd puppet &>/dev/null || \
 useradd -r -u 52 -g puppet -d %{_localstatedir}/lib/puppet -s /sbin/nologin \
-    -c "Puppet" puppet &>/dev/null || :
+    -c "Puppet" puppet &>/dev/null
 # ensure that old setups have the right puppet home dir
 if [ $1 -gt 1 ] ; then
-  usermod -d %{_localstatedir}/lib/puppet puppet &>/dev/null || :
+  usermod -d %{_localstatedir}/lib/puppet puppet &>/dev/null
 fi
+exit 0
 
 %post
 /sbin/chkconfig --add puppet || :
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetd.pid"
+  newpid="%{_localstatedir}/run/puppet/agent.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /sbin/service puppet start) >/dev/null 2>&1 || :
+  fi
+fi
 
 %post server
 /sbin/chkconfig --add puppetmaster || :
+if [ "$1" -ge 1 ]; then
+  # The pidfile changed from 0.25.x to 2.6.x, handle upgrades without leaving
+  # the old process running.
+  oldpid="%{_localstatedir}/run/puppet/puppetmasterd.pid"
+  newpid="%{_localstatedir}/run/puppet/master.pid"
+  if [ -s "$oldpid" -a ! -s "$newpid" ]; then
+    (kill $(< "$oldpid") && rm -f "$oldpid" && \
+      /sbin/service puppetmaster start) >/dev/null 2>&1 || :
+  fi
+fi
 
 %preun
 if [ "$1" = 0 ] ; then
-  /sbin/service puppet stop > /dev/null 2>&1
+  /sbin/service puppet stop >/dev/null 2>&1
   /sbin/chkconfig --del puppet || :
 fi
 
 %preun server
 if [ "$1" = 0 ] ; then
-  /sbin/service puppetmaster stop > /dev/null 2>&1
+  /sbin/service puppetmaster stop >/dev/null 2>&1
   /sbin/chkconfig --del puppetmaster || :
 fi
 
@@ -216,27 +275,75 @@ fi
 
 %postun server
 if [ "$1" -ge 1 ]; then
-  /sbin/service puppetmaster condrestart > /dev/null 2>&1 || :
+  /sbin/service puppetmaster condrestart >/dev/null 2>&1 || :
 fi
 
 %clean
 rm -rf %{buildroot}
 
 %changelog
-* Tue Jul 20 2010 Todd Zullinger <tmz@pobox.com> - 2.6.0-1
-- Update to 2.6.0
-- Create and own /usr/share/puppet/modules (#615432)
+* Wed Jul 06 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.2-0.2.rc1
+- Clean up rpmlint errors
+- Put man pages in correct package
 
-* Mon May 03 2010 Todd Zullinger <tmz@pobox.com> - 0.25.5-1
+* Wed Jul 06 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.2-0.1.rc1
+- Update to 2.7.2rc1
+
+* Tue Jun 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.9-1
+- Release of 2.6.9 
+
+* Wed Jun 15 2011 Todd Zullinger <tmz@pobox.com> - 2.6.9-0.1.rc1
+- Update rc versioning to ensure 2.6.9 final is newer to rpm
+- sync changes with Fedora/EPEL
+
+* Tue Jun 14 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.9rc1-1
+- Update to 2.6.9rc1
+
+* Thu Apr 14 2011 Todd Zullinger <tmz@pobox.com> - 2.6.8-1
+- Update to 2.6.8
+
+* Thu Mar 24 2011 Todd Zullinger <tmz@pobox.com> - 2.6.7-1
+- Update to 2.6.7
+
+* Wed Mar 16 2011 Todd Zullinger <tmz@pobox.com> - 2.6.6-1
+- Update to 2.6.6
+- Ensure %%pre exits cleanly
+- Fix License tag, puppet is now GPLv2 only
+- Create and own /usr/share/puppet/modules (#615432)
+- Properly restart puppet agent/master daemons on upgrades from 0.25.x
+- Require libselinux-utils when selinux support is enabled
+- Support tmpfiles.d for Fedora >= 15 (#656677)
+
+* Wed Feb 09 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.25.5-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
+* Mon May 17 2010 Todd Zullinger <tmz@pobox.com> - 0.25.5-1
 - Update to 0.25.5
 - Adjust selinux conditional for EL-6
 - Apply rundir-perms patch from tarball rather than including it separately
+- Update URL's to reflect the new puppetlabs.com domain
 
-* Fri Jan 01 2010 Todd Zullinger <tmz@pobox.com> - 0.25.2-1
+* Fri Jan 29 2010 Todd Zullinger <tmz@pobox.com> - 0.25.4-1
+- Update to 0.25.4
+
+* Tue Jan 19 2010 Todd Zullinger <tmz@pobox.com> - 0.25.3-2
+- Apply upstream patch to fix cron resources (upstream #2845)
+
+* Mon Jan 11 2010 Todd Zullinger <tmz@pobox.com> - 0.25.3-1
+- Update to 0.25.3
+
+* Tue Jan 05 2010 Todd Zullinger <tmz@pobox.com> - 0.25.2-1.1
+- Replace %%define with %%global for macros
+
+* Tue Jan 05 2010 Todd Zullinger <tmz@pobox.com> - 0.25.2-1
 - Update to 0.25.2
+- Fixes CVE-2010-0156, tmpfile security issue (#502881)
 - Install auth.conf, puppetqd manpage, and queuing examples/docs
 
-* Tue Oct 20 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-1
+* Wed Nov 25 2009 Jeroen van Meeuwen <j.van.meeuwen@ogd.nl> - 0.25.1-1
+- New upstream version
+
+* Tue Oct 27 2009 Todd Zullinger <tmz@pobox.com> - 0.25.1-0.3
 - Update to 0.25.1
 - Include the pi program and man page (R.I.Pienaar)
 
@@ -252,7 +359,7 @@ rm -rf %{buildroot}
 - Update to 0.25.0
 - Fix permissions on /var/log/puppet (#495096)
 - Install emacs mode and vim syntax files (#491437)
-- Install ext/ directory in %%{_datadir}/%{name} (/usr/share/puppet)
+- Install ext/ directory in %%{_datadir}/%%{name} (/usr/share/puppet)
 
 * Mon May 04 2009 Todd Zullinger <tmz@pobox.com> - 0.25.0-0.1.beta1
 - Update to 0.25.0beta1

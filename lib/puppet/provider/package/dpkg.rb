@@ -102,16 +102,15 @@ Puppet::Type.type(:package).provide :dpkg, :parent => Puppet::Provider::Package 
 
     # list out our specific package
     begin
-
-            output = dpkgquery(
-        "-W", "--showformat",
-        
-        '${Status} ${Package} ${Version}\\n', @resource[:name]
+      output = dpkgquery(
+        "-W",
+        "--showformat",
+        '${Status} ${Package} ${Version}\\n',
+        @resource[:name]
       )
     rescue Puppet::ExecutionFailure
       # dpkg-query exits 1 if the package is not found.
       return {:ensure => :purged, :status => 'missing', :name => @resource[:name], :error => 'ok'}
-
     end
 
     hash = self.class.parse_line(output) || {:ensure => :absent, :status => 'missing', :name => @resource[:name], :error => 'ok'}

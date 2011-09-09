@@ -2,7 +2,6 @@ require 'puppet/util/methodhelper'
 require 'puppet/util/log_paths'
 require 'puppet/util/logging'
 require 'puppet/util/docs'
-require 'puppet/util/cacher'
 
 class Puppet::Parameter
   include Puppet::Util
@@ -10,7 +9,6 @@ class Puppet::Parameter
   include Puppet::Util::LogPaths
   include Puppet::Util::Logging
   include Puppet::Util::MethodHelper
-  include Puppet::Util::Cacher
 
   require 'puppet/parameter/value_collection'
 
@@ -75,7 +73,7 @@ class Puppet::Parameter
       define_method(:unsafe_munge, &block)
     end
 
-    # Does the parameter supports reverse munge?
+    # Does the parameter support reverse munging?
     # This will be called when something wants to access the parameter
     # in a canonical form different to what the storage form is.
     def unmunge(&block)
@@ -148,10 +146,6 @@ class Puppet::Parameter
 
   def devfail(msg)
     self.fail(Puppet::DevError, msg)
-  end
-
-  def expirer
-    resource.catalog
   end
 
   def fail(*args)

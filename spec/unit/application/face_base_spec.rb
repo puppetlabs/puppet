@@ -55,6 +55,7 @@ describe Puppet::Application::FaceBase do
     it "should stop if the first thing found is not an action" do
       app.command_line.stubs(:args).returns %w{banana count_args}
       expect { app.run }.to exit_with 1
+      @logs.first.should_not be_nil
       @logs.first.message.should =~ /has no 'banana' action/
     end
 

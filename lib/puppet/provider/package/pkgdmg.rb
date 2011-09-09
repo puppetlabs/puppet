@@ -12,7 +12,13 @@ require 'puppet/provider/package'
 require 'facter/util/plist'
 
 Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Package do
-  desc "Package management based on Apple's Installer.app and DiskUtility.app.  This package works by checking the contents of a DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg files may exist in the root directory of the DMG file system. Sub directories are not checked for packages.  See `the wiki docs <http://projects.puppetlabs.com/projects/puppet/wiki/Package_Management_With_Dmg_Patterns>` for more detail."
+  desc "Package management based on Apple's Installer.app and
+    DiskUtility.app.  This package works by checking the contents of a
+    DMG image for Apple pkg or mpkg files. Any number of pkg or mpkg
+    files may exist in the root directory of the DMG file system. Sub
+    directories are not checked for packages.  See `the wiki docs
+    <http://projects.puppetlabs.com/projects/puppet/wiki/Package_Management_With_Dmg_Patterns>`
+    for more detail."
 
   confine :operatingsystem => :darwin
   defaultfor :operatingsystem => :darwin
@@ -33,13 +39,10 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
 
   def self.instances
     instance_by_name.collect do |name|
-
       new(
-
-        :name => name,
+        :name     => name,
         :provider => :pkgdmg,
-
-        :ensure => :installed
+        :ensure   => :installed
       )
     end
   end
@@ -124,4 +127,3 @@ Puppet::Type.type(:package).provide :pkgdmg, :parent => Puppet::Provider::Packag
     self.class.installpkgdmg(source,name)
   end
 end
-

@@ -16,8 +16,10 @@ module Puppet
     attr_reader :actual_content
 
     desc "Specify the contents of a file as a string.  Newlines, tabs, and
-      spaces can be specified using the escaped syntax (e.g., \\n for a newline).  The primary purpose of this parameter is to provide a
-      kind of limited templating:
+      spaces can be specified using standard escaped syntax in
+      double-quoted strings (e.g., \\n for a newline).
+
+      With very small files, you can construct strings directly...
 
           define resolve(nameserver1, nameserver2, domain, search) {
               $str = \"search $search
@@ -31,7 +33,9 @@ module Puppet
               }
           }
 
-      This attribute is especially useful when used with templating."
+      ...but for larger files, this attribute is more useful when combined with the
+      [template](http://docs.puppetlabs.com/references/latest/function.html#template)
+      function."
 
     # Store a checksum as the value, rather than the actual content.
     # Simplifies everything.

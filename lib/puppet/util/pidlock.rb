@@ -59,9 +59,13 @@ class Puppet::Util::Pidlock
   def clear_if_stale
     return if lock_pid.nil?
 
+    errors = [Errno::ESRCH]
+    # Process::Error can only happen, and is only defined, on Windows
+    errors << Process::Error if defined? Process::Error
+
     begin
       Process.kill(0, lock_pid)
-    rescue Errno::ESRCH
+    rescue *errors
       File.unlink(@lockfile)
     end
   end

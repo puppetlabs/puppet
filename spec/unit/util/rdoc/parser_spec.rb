@@ -8,6 +8,8 @@ require 'rdoc/options'
 require 'rdoc/rdoc'
 
 describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
+  include PuppetSpec::Files
+
   before :each do
     File.stubs(:stat).with("init.pp")
     @top_level = stub_everything 'toplevel', :file_relative_name => "init.pp"
@@ -21,7 +23,7 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
       Puppet::Parser::Parser.stubs(:new).returns(parser)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
       parser.expects(:file=).with("module/manifests/init.pp")
-      parser.expects(:file=).with("/dev/null/manifests/site.pp")
+      parser.expects(:file=).with(make_absolute("/dev/null/manifests/site.pp"))
 
       @parser.scan
     end
@@ -146,6 +148,10 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
       File.stubs(:expand_path).returns("/path/to/manifests/init.pp")
       File.stubs(:identical?).returns(false)
       @parser.split_module("/path/to/manifests/init.pp").should == RDoc::Parser::SITE
+    end
+
+    it "should handle windows paths with drive letters", :if => Puppet.features.microsoft_windows? do
+      @parser.split_module("C:/temp/init.pp").should == RDoc::Parser::SITE
     end
   end
 

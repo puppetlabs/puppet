@@ -87,29 +87,40 @@ puppet doc will output a single manifest's documentation on stdout.
 OPTIONS
 -------
 * --all:
-  Output the docs for all of the reference types. In 'rdoc'
-  modes, this also outputs documentation for all resources
+  Output the docs for all of the reference types. In 'rdoc' mode, this also
+  outputs documentation for all resources.
 
 * --help:
   Print this help message
 
 * --outputdir:
-  Specifies the directory where to output the rdoc
-  documentation in 'rdoc' mode.
+  Used only in 'rdoc' mode. The directory to which the rdoc output should
+  be written.
 
 * --mode:
-  Determine the output mode. Valid modes are 'text', 'pdf' and
-  'rdoc'. The 'pdf' mode creates PDF formatted files in the
-  /tmp directory. The default mode is 'text'. In 'rdoc' mode
-  you must provide 'manifests-path'
+  Determine the output mode. Valid modes are 'text', 'pdf' and 'rdoc'. The 'pdf'
+  mode creates PDF formatted files in the /tmp directory. The default mode is
+  'text'. In 'rdoc' mode you must provide 'manifests-path'
 
 * --reference:
-  Build a particular reference. Get a list of references by
-  running 'puppet doc --list'.
+  Build a particular reference. Get a list of references by running
+  'puppet doc --list'.
 
 * --charset:
-  Used only in 'rdoc' mode. It sets the charset used in the
-  html files produced.
+  Used only in 'rdoc' mode. It sets the charset used in the html files produced.
+
+* --manifestdir:
+  Used only in 'rdoc' mode. The directory to scan for stand-alone manifests.
+  If not supplied, puppet doc will use the manifestdir from puppet.conf.
+
+* --modulepath:
+  Used only in 'rdoc' mode. The directory or directories to scan for modules.
+  If not supplied, puppet doc will use the modulepath from puppet.conf.
+
+* --environment:
+  Used only in 'rdoc' mode. The configuration environment from which
+  to read the modulepath and manifestdir settings, when reading said settings
+  from puppet.conf. Due to a known bug, this option is not currently effective.
 
 
 EXAMPLE
@@ -241,7 +252,7 @@ HELP
       @unknown_args.each do |option|
         # force absolute path for modulepath when passed on commandline
         if option[:opt]=="--modulepath" or option[:opt] == "--manifestdir"
-          option[:arg] = option[:arg].split(':').collect { |p| File.expand_path(p) }.join(':')
+          option[:arg] = option[:arg].split(File::PATH_SEPARATOR).collect { |p| File.expand_path(p) }.join(File::PATH_SEPARATOR)
         end
         Puppet.settings.handlearg(option[:opt], option[:arg])
       end

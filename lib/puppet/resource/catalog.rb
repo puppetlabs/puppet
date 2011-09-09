@@ -3,7 +3,6 @@ require 'puppet/indirector'
 require 'puppet/simple_graph'
 require 'puppet/transaction'
 
-require 'puppet/util/cacher'
 require 'puppet/util/pson'
 
 require 'puppet/util/tagging'
@@ -20,7 +19,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
   include Puppet::Util::Tagging
   extend Puppet::Util::Pson
-  include Puppet::Util::Cacher::Expirer
 
   # The host name this is a catalog for.
   attr_accessor :name
@@ -94,7 +92,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     resource.ref =~ /^(.+)\[/
     class_name = $1 || resource.class.name
 
-    newref = [class_name, key]
+    newref = [class_name, key].flatten
 
     if key.is_a? String
       ref_string = "#{class_name}[#{key}]"
@@ -107,7 +105,10 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     # isn't sufficient.
     if existing = @resource_table[newref]
       return if existing == resource
-      raise(ArgumentError, "Cannot alias #{resource.ref} to #{key.inspect}; resource #{newref.inspect} already exists")
+      resource_definition = " at #{resource.file}:#{resource.line}" if resource.file and resource.line
+      existing_definition = " at #{existing.file}:#{existing.line}" if existing.file and existing.line
+      msg = "Cannot alias #{resource.ref} to #{key.inspect}#{resource_definition}; resource #{newref.inspect} already defined#{existing_definition}"
+      raise ArgumentError, msg
     end
     @resource_table[newref] = resource
     @aliases[resource.ref] ||= []
@@ -123,14 +124,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   def apply(options = {})
     @applying = true
 
-    # Expire all of the resource data -- this ensures that all
-    # data we're operating against is entirely current.
-    expire
-
     Puppet::Util::Storage.load if host_config?
-    transaction = Puppet::Transaction.new(self)
 
-    transaction.report = options[:report] if options[:report]
+    transaction = Puppet::Transaction.new(self, options[:report])
+    register_report = options[:report].nil?
+
     transaction.tags = options[:tags] if options[:tags]
     transaction.ignoreschedules = true if options[:ignoreschedules]
     transaction.for_network_device = options[:network_device]
@@ -138,7 +136,12 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     transaction.add_times :config_retrieval => self.retrieval_duration || 0
 
     begin
-      transaction.evaluate
+      Puppet::Util::Log.newdestination(transaction.report) if register_report
+      begin
+        transaction.evaluate
+      ensure
+        Puppet::Util::Log.close(transaction.report) if register_report
+      end
     rescue Puppet::Error => detail
       puts detail.backtrace if Puppet[:trace]
       Puppet.err "Could not apply complete catalog: #{detail}"
@@ -156,7 +159,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     return transaction
   ensure
     @applying = false
-    cleanup
   end
 
   # Are we in the middle of applying the catalog?
@@ -189,14 +191,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
 
     add_resource(resource)
     resource
-  end
-
-  def dependent_data_expired?(ts)
-    if applying?
-      return super
-    else
-      return true
-    end
   end
 
   # Turn our catalog graph into an old-style tree of TransObjects and TransBuckets.
@@ -430,7 +424,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
       res = Puppet::Resource.new(nil, type)
     end
     title_key      = [res.type, res.title.to_s]
-    uniqueness_key = [res.type, res.uniqueness_key]
+    uniqueness_key = [res.type, res.uniqueness_key].flatten
     @resource_table[title_key] || @resource_table[uniqueness_key]
   end
 
@@ -557,11 +551,6 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   end
 
   private
-
-  def cleanup
-    # Expire any cached data the resources are keeping.
-    expire
-  end
 
   # Verify that the given resource isn't defined elsewhere.
   def fail_on_duplicate_type_and_title(resource)

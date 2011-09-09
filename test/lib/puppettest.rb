@@ -280,7 +280,6 @@ module PuppetTest
     Puppet::Util::Storage.clear
     Puppet.clear
     Puppet.settings.clear
-    Puppet::Util::Cacher.expire
 
     @memoryatend = Puppet::Util.memory
     diff = @memoryatend - @memoryatstart

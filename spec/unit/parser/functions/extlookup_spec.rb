@@ -3,6 +3,8 @@ require 'spec_helper'
 require 'tempfile'
 
 describe "the extlookup function" do
+  include PuppetSpec::Files
+
   before :all do
     Puppet::Parser::Functions.autoloader.loadall
   end
@@ -64,9 +66,10 @@ describe "the extlookup function" do
 
   describe "should look in $extlookup_datadir for data files listed by $extlookup_precedence" do
     before do
-      @scope.stubs(:lookupvar).with('::extlookup_datadir').returns("/tmp")
-      File.open("/tmp/one.csv","w"){|one| one.puts "key,value1" }
-      File.open("/tmp/two.csv","w") do |two|
+      dir = tmpdir('extlookup_datadir')
+      @scope.stubs(:lookupvar).with('::extlookup_datadir').returns(dir)
+      File.open(File.join(dir, "one.csv"),"w"){|one| one.puts "key,value1" }
+      File.open(File.join(dir, "two.csv"),"w") do |two|
         two.puts "key,value2"
         two.puts "key2,value_two"
       end

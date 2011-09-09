@@ -1,7 +1,3 @@
-#
-#  Created by Luke Kanies on 2007-10-19.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet/file_serving/configuration'
 require 'puppet/file_serving/fileset'
 require 'puppet/file_serving/terminus_helper'
@@ -64,6 +60,6 @@ class Puppet::Indirector::FileServer < Puppet::Indirector::Terminus
 
   # Our fileserver configuration, if needed.
   def configuration
-    Puppet::FileServing::Configuration.create
+    Puppet::FileServing::Configuration.configuration
   end
 end

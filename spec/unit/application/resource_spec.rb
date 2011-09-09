@@ -221,4 +221,30 @@ describe Puppet::Application::Resource do
 
     end
   end
+
+  describe "when handling file type" do
+    before :each do
+      Facter.stubs(:loadfacts)
+      @resource.preinit
+    end
+
+    it "should raise an exception if no file specified" do
+      @resource.command_line.stubs(:args).returns(['file'])
+
+      lambda { @resource.main }.should raise_error(RuntimeError, /Listing all file instances is not supported/)
+    end
+
+    it "should output a file resource when given a file path" do
+      path = File.expand_path('/etc')
+      res = Puppet::Type.type(:file).new(:path => path).to_resource
+      Puppet::Resource.indirection.expects(:find).returns(res)
+
+      @resource.command_line.stubs(:args).returns(['file', path])
+      @resource.expects(:puts).with do |args|
+        args.should =~ /file \{ '#{Regexp.escape(path)}'/m
+      end
+
+      @resource.main
+    end
+  end
 end

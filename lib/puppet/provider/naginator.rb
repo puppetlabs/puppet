@@ -1,6 +1,3 @@
-#  Created by Luke Kanies on 2007-11-27.
-#  Copyright (c) 2007. All rights reserved.
-
 require 'puppet'
 require 'puppet/provider/parsedfile'
 require 'puppet/external/nagios'

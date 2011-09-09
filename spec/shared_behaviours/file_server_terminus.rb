@@ -1,13 +1,9 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-10-18.
-#  Copyright (c) 2007. All rights reserved.
-
 shared_examples_for "Puppet::Indirector::FileServerTerminus" do
   # This only works if the shared behaviour is included before
   # the 'before' block in the including context.
   before do
-    Puppet::Util::Cacher.expire
+    Puppet::FileServing::Configuration.instance_variable_set(:@configuration, nil)
     FileTest.stubs(:exists?).returns true
     FileTest.stubs(:exists?).with(Puppet[:fileserverconfig]).returns(true)
 

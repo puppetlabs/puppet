@@ -4,8 +4,12 @@ require 'puppet/ssl/host'
 require 'puppet/indirector/certificate_status'
 require 'tempfile'
 
-describe "Puppet::Indirector::CertificateStatus::File" do
+describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => true do
   include PuppetSpec::Files
+
+  before :all do
+    Puppet::SSL::Host.configure_indirection(:file)
+  end
 
   before do
     Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true

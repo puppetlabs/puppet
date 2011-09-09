@@ -139,18 +139,12 @@ module Puppet
     newparam(:path) do
       desc "The search path used for command execution.
         Commands must be fully qualified if no path is specified.  Paths
-        can be specified as an array or as a colon separated list."
+        can be specified as an array or as a '#{File::PATH_SEPARATOR}' separated list."
 
       # Support both arrays and colon-separated fields.
       def value=(*values)
         @value = values.flatten.collect { |val|
-          if val =~ /;/ # recognize semi-colon separated paths
-            val.split(";")
-          elsif val =~ /^\w:[^:]*$/ # heuristic to avoid splitting a driveletter away
-            val
-          else
-            val.split(":")
-          end
+          val.split(File::PATH_SEPARATOR)
         }.flatten
       end
     end
@@ -165,6 +159,7 @@ module Puppet
       # Most validation is handled by the SUIDManager class.
       validate do |user|
         self.fail "Only root can execute commands as other users" unless Puppet.features.root?
+        self.fail "Unable to execute commands as other users on Windows" if Puppet.features.microsoft_windows?
       end
     end
 
@@ -311,17 +306,20 @@ module Puppet
     end
 
     newcheck(:creates, :parent => Puppet::Parameter::Path) do
-      desc "A file that this command creates.  If this
+      desc <<-EOT
+        A file that this command creates.  If this
         parameter is provided, then the command will only be run
-        if the specified file does not exist:
+        if the specified file does not exist.
 
-            exec { \"tar xf /my/tar/file.tar\":
-              cwd => \"/var/tmp\",
-              creates => \"/var/tmp/myfile\",
-              path => [\"/usr/bin\", \"/usr/sbin\"]
+            exec { "tar -xf /Volumes/nfs02/important.tar":
+              cwd => "/var/tmp",
+              creates => "/var/tmp/myfile",
+              path => ["/usr/bin", "/usr/sbin"]
             }
 
-        "
+        In this example, if `/var/tmp/myfile` is ever deleted, the exec
+        will bring it back by re-extracting the tarball.
+      EOT
 
       accept_arrays
 
@@ -425,7 +423,9 @@ module Puppet
       # Stick the cwd in there if we have it
       reqs << self[:cwd] if self[:cwd]
 
-      self[:command].scan(/^(#{File::SEPARATOR}\S+)/) { |str|
+      file_regex = Puppet.features.microsoft_windows? ? %r{^([a-zA-Z]:[\\/]\S+)} : %r{^(/\S+)}
+
+      self[:command].scan(file_regex) { |str|
         reqs << str
       }
 
@@ -444,7 +444,7 @@ module Puppet
           # fully qualified.  It might not be a bad idea to add
           # unqualified files, but, well, that's a bit more annoying
           # to do.
-          reqs += line.scan(%r{(#{File::SEPARATOR}\S+)})
+          reqs += line.scan(file_regex)
         end
       }
 

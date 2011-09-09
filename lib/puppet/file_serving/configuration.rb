@@ -1,29 +1,23 @@
-#
-#  Created by Luke Kanies on 2007-10-16.
-#  Copyright (c) 2007. All rights reserved.
-
+require 'monitor'
 require 'puppet'
 require 'puppet/file_serving'
 require 'puppet/file_serving/mount'
 require 'puppet/file_serving/mount/file'
 require 'puppet/file_serving/mount/modules'
 require 'puppet/file_serving/mount/plugins'
-require 'puppet/util/cacher'
 
 class Puppet::FileServing::Configuration
   require 'puppet/file_serving/configuration/parser'
 
-  class << self
-    include Puppet::Util::Cacher
-    cached_attr(:configuration) { new }
+  extend MonitorMixin
+
+  def self.configuration
+    synchronize do
+      @configuration ||= new
+    end
   end
 
   Mount = Puppet::FileServing::Mount
-
-  # Create our singleton configuration.
-  def self.create
-    configuration
-  end
 
   private_class_method  :new
 

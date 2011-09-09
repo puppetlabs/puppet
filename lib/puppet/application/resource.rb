@@ -183,6 +183,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         [ Puppet::Resource.indirection.save(Puppet::Resource.new( type, name, :parameters => params ), key) ]
       end
     else
+      if type == "file"
+        raise "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
+      end
       Puppet::Resource.indirection.search( key, {} )
     end.map(&format).join("\n")
 

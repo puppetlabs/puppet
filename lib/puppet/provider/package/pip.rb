@@ -105,5 +105,4 @@ Puppet::Type.type(:package).provide :pip,
       raise e
     end
   end
-
 end

@@ -1,14 +1,10 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2007-9-12.
-#  Copyright (c) 2006. All rights reserved.
-
 require 'spec_helper'
 require 'shared_behaviours/all_parsedfile_providers'
 
 provider_class = Puppet::Type.type(:mount).provider(:parsed)
 
-describe provider_class do
+describe provider_class, :fails_on_windows => true do
 
   before :each do
     @mount_class = Puppet::Type.type(:mount)

@@ -1,14 +1,9 @@
 #!/usr/bin/env rspec
-#
-#  Created by Luke Kanies on 2008-4-8.
-#  Copyright (c) 2008. All rights reserved.
-
 require 'spec_helper'
 
 describe Puppet::Transaction::Report do
   describe "when using the indirector" do
     after do
-      Puppet::Util::Cacher.expire
       Puppet.settings.stubs(:use)
     end
 

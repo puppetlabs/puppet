@@ -118,6 +118,14 @@ describe Puppet::FileServing::Configuration::Parser do
       @parser.parse
     end
 
+    it "should support inline comments" do
+      mock_file_content "[one]\nallow something \# will it work?\n"
+
+      @mount.expects(:info)
+      @mount.expects(:allow).with("something")
+      @parser.parse
+    end
+
     it "should tell the mount to deny any deny values from the section" do
       mock_file_content "[one]\ndeny something\n"
 
