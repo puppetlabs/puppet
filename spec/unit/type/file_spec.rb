@@ -1258,7 +1258,7 @@ describe Puppet::Type.type(:file) do
       end
 
       it "should not autorequire its parent dir if its parent dir is itself" do
-        file[:path] = '/'
+        file[:path] = File.expand_path('/')
         catalog.add_resource file
         file.autorequire.should be_empty
       end

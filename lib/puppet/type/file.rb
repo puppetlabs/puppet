@@ -35,8 +35,7 @@ Puppet::Type.newtype(:file) do
     isnamevar
 
     validate do |value|
-      # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and value =~ /^\//) or (value =~ /^[A-Za-z]:\// or value =~ /^\/\/[^\/]+\/[^\/]+/)
+      unless Puppet::Util.absolute_path?(value)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -44,20 +43,8 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      # We need to save off, and remove the volume designator in the
-      # path if it is there, since File.split does not handle paths
-      # with volume designators properly, except when run on Windows.
-      # Since we are potentially compiling a catalog for a Windows
-      # machine on a non-Windows master, we need to handle this
-      # ourselves.
-      optional_volume_designator = value.match(/^([a-z]:)[\/\\].*/i)
-      value_without_designator   = value.sub(/^(?:[a-z]:)?(.*)/i, '\1')
-
-      path, name = ::File.split(value_without_designator.gsub(/\/+/,'/'))
-
-      if optional_volume_designator
-        path = optional_volume_designator[1] + path
-      end
+      # We know the value is absolute, so expanding it will just standardize it.
+      path, name = ::File.split(::File.expand_path value)
 
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
@@ -65,12 +52,8 @@ Puppet::Type.newtype(:file) do
     # and the reverse
     unmunge do |value|
       basedir = Puppet::FileCollection.collection.path(value[:index])
-      # a lone slash as :name indicates a root dir on windows
-      if value[:name] == '/'
-        basedir
-      else
-        ::File.join( basedir, value[:name] )
-      end
+
+      ::File.expand_path ::File.join( basedir, value[:name] )
     end
   end
 
