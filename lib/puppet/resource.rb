@@ -1,6 +1,7 @@
 require 'puppet'
 require 'puppet/util/tagging'
 require 'puppet/util/pson'
+require 'puppet/parameter'
 
 # The simplest resource class.  Eventually it will function as the
 # base class for all resource-like behaviour.
@@ -264,11 +265,7 @@ class Puppet::Resource
 
     attributes = attr.collect { |k|
       v = parameters[k]
-      if v.is_a? Array
-        "  %-#{attr_max}s => %s,\n" % [ k, "[\'#{v.join("', '")}\']" ]
-      else
-        "  %-#{attr_max}s => %s,\n" % [ k, "\'#{v}\'" ]
-      end
+      "  %-#{attr_max}s => %s,\n" % [k, Puppet::Parameter.format_value_for_display(v)]
     }.join
 
     "%s { '%s':\n%s}" % [self.type.to_s.downcase, self.title, attributes]
