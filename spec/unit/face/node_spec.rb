@@ -145,7 +145,7 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "when cleaning cached node" do
         it "should destroy the cached node" do
-          Puppet::Node::Yaml.any_instance.expects(:destroy)
+          Puppet::Node.indirection.expects(:destroy).with(@host)
           subject.clean_cached_node(@host)
         end
       end

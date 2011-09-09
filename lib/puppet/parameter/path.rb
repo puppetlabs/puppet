@@ -17,11 +17,7 @@ class Puppet::Parameter::Path < Puppet::Parameter
     absolute = "[/#{::Regexp.quote(::File::SEPARATOR)}]"
     win32    = Puppet.features.microsoft_windows?
 
-    Array(paths).each do |path|
-      next if path =~ %r{^#{absolute}}
-      next if win32 and path =~ %r{^(?:[a-zA-Z]:)?#{absolute}}
-      fail("#{name} must be a fully qualified path")
-    end
+    fail("#{name} must be a fully qualified path") unless Array(paths).all? {|path| absolute_path?(path)}
 
     paths
   end

@@ -41,13 +41,13 @@ module Puppet::Util::SUIDManager
 
     require 'sys/admin'
     require 'win32/security'
+    require 'facter'
+
+    majversion = Facter.value(:kernelmajversion)
+    return false unless majversion
 
     # if Vista or later, check for unrestricted process token
-    begin
-      return Win32::Security.elevated_security?
-    rescue Win32::Security::Error => e
-      raise e unless e.to_s =~ /Incorrect function/i
-    end
+    return Win32::Security.elevated_security? unless majversion.to_f < 6.0
 
     group = Sys::Admin.get_group("Administrators", :sid => Win32::Security::SID::BuiltinAdministrators)
     group and group.members.index(Sys::Admin.get_login) != nil

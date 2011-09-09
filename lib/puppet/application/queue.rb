@@ -151,7 +151,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     require 'puppet/resource/catalog'
-    Puppet::Resource::Catalog.indirection.terminus_class = :active_record
+    Puppet::Resource::Catalog.indirection.terminus_class = :store_configs
 
     daemon.daemonize if Puppet[:daemonize]
 

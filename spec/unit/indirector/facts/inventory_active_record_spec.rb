@@ -22,6 +22,9 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
   end
 
   before :each do
+    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.indirection.cache_class = nil
+
     Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
     Puppet[:dbadapter]  = 'sqlite3'
     Puppet[:dblocation] = @dbfile.path

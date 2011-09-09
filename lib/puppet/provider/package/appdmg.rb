@@ -107,4 +107,3 @@ Puppet::Type.type(:package).provide(:appdmg, :parent => Puppet::Provider::Packag
     self.class.installpkgdmg(source,name)
   end
 end
-

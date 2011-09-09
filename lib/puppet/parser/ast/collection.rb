@@ -13,11 +13,11 @@ class Puppet::Parser::AST
 
     # We return an object that does a late-binding evaluation.
     def evaluate(scope)
-      str, code = query && query.safeevaluate(scope)
+      match, code = query && query.safeevaluate(scope)
 
       resource_type = scope.find_resource_type(@type)
       fail "Resource type #{@type} doesn't exist" unless resource_type
-      newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, str, code, self.form)
+      newcoll = Puppet::Parser::Collector.new(scope, resource_type.name, match, code, self.form)
 
       scope.compiler.add_collection(newcoll)
 

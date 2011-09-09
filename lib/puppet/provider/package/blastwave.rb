@@ -109,4 +109,3 @@ Puppet::Type.type(:package).provide :blastwave, :parent => :sun, :source => :sun
     pkgget_with_cat "-f", :remove, @resource[:name]
   end
 end
-

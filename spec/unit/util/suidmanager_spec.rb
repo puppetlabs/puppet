@@ -250,19 +250,23 @@ describe Puppet::Util::SUIDManager do
 
     describe "on Microsoft Windows", :if => Puppet.features.microsoft_windows? do
       describe "2003 without UAC" do
+        before :each do
+          Facter.stubs(:value).with(:kernelmajversion).returns("5.2")
+        end
+
         it "should be root if user is a member of the Administrators group" do
-          Win32::Security.stubs(:elevated_security?).raises(Win32::Security::Error, "Incorrect function.")
           Sys::Admin.stubs(:get_login).returns("Administrator")
           Sys::Group.stubs(:members).returns(%w[Administrator])
 
+          Win32::Security.expects(:elevated_security?).never
           Puppet::Util::SUIDManager.should be_root
         end
 
         it "should not be root if the process is running as Guest" do
-          Win32::Security.stubs(:elevated_security?).raises(Win32::Security::Error, "Incorrect function.")
           Sys::Admin.stubs(:get_login).returns("Guest")
           Sys::Group.stubs(:members).returns([])
 
+          Win32::Security.expects(:elevated_security?).never
           Puppet::Util::SUIDManager.should_not be_root
         end
 
@@ -276,6 +280,10 @@ describe Puppet::Util::SUIDManager do
       end
 
       describe "2008 with UAC" do
+        before :each do
+          Facter.stubs(:value).with(:kernelmajversion).returns("6.0")
+        end
+
         it "should be root if user is running with elevated privileges" do
           Win32::Security.stubs(:elevated_security?).returns(true)
           Sys::Admin.expects(:get_login).never
