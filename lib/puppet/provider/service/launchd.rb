@@ -7,12 +7,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   Mac OS X and is potentially available for use on other platforms.
 
   See:
-  
   * http://developer.apple.com/macosx/launchd.html
   * http://launchd.macosforge.org/
 
   This provider reads plists out of the following directories:
-  
   * /System/Library/LaunchDaemons
   * /System/Library/LaunchAgents
   * /Library/LaunchDaemons
@@ -21,14 +19,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   ...and builds up a list of services based upon each plist's \"Label\" entry.
 
   This provider supports:
-  
   * ensure => running/stopped,
   * enable => true/false
   * status
   * restart
 
   Here is how the Puppet states correspond to launchd states:
-  
   * stopped --- job unloaded
   * started --- job loaded
   * enabled --- 'Disable' removed from job plist file
@@ -40,18 +36,18 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   "
 
   commands :launchctl => "/bin/launchctl"
-  commands :sw_vers => "/usr/bin/sw_vers"
-  commands :plutil => "/usr/bin/plutil"
+  commands :sw_vers   => "/usr/bin/sw_vers"
+  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
-  confine :operatingsystem => :darwin
+  confine :operatingsystem    => :darwin
 
   has_feature :enableable
 
-  Launchd_Paths = ["/Library/LaunchAgents",
-    "/Library/LaunchDaemons",
-    "/System/Library/LaunchAgents",
-    "/System/Library/LaunchDaemons",]
+  Launchd_Paths = [ "/Library/LaunchAgents",
+                    "/Library/LaunchDaemons",
+                    "/System/Library/LaunchAgents",
+                    "/System/Library/LaunchDaemons"]
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
 
@@ -167,7 +163,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
     end
   end
-
 
   # start the service. To get to a state of running/enabled, we need to
   # conditionally enable at load, then disable by modifying the plist file
