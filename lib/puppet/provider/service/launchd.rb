@@ -43,6 +43,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   confine :operatingsystem    => :darwin
 
   has_feature :enableable
+  mk_resource_methods
 
   Launchd_Paths = [ "/Library/LaunchAgents",
                     "/Library/LaunchDaemons",
@@ -50,12 +51,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                     "/System/Library/LaunchDaemons"]
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
-
-  if Facter.value(:macosx_productversion_major)
-    @product_version = Facter.value(:macosx_productversion_major)
-  else
-    @product_version = sw_vers "-productVersion"
-  end
+  @product_version = Facter.value(:macosx_productversion_major) ? Facter.value(:macosx_productversion_major) : (sw_vers "-productVersion")
+  fail("#{@product_version} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3}.include?(@product_version)
   
   # Launchd implemented plist overrides in version 10.6.
   # This method checks the major_version of OS X and returns true if 
@@ -72,41 +69,71 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
   end
 
-  # returns a label => path map for either all jobs, or just a single
-  # job if the label is specified
+  # Sets a class instance variable with a hash of all launchd plist files that
+  # are found on the system. The key of the hash is the job id and the value
+  # is the path to the file. If a label is passed, we return the job id and
+  # path for that specific job.
   def self.jobsearch(label=nil)
-    label_to_path_map = {}
-    Launchd_Paths.each do |path|
-      if FileTest.exists?(path)
-        Dir.entries(path).each do |f|
-          next if f =~ /^\..*$/
-          next if FileTest.directory?(f)
-          fullpath = File.join(path, f)
-          if FileTest.file?(fullpath) and job = read_plist(fullpath) and job.has_key?("Label")
-            if job["Label"] == label
-              return { label => fullpath }
-            else
-              label_to_path_map[job["Label"]] = fullpath
-            end
+    @label_to_path_map ||= {}
+    if @label_to_path_map.empty?
+      Launchd_Paths.each do |path|
+        Dir.glob(File.join(path,'*')).each do |filepath|
+          next if ! File.file?(filepath)
+          job = read_plist(filepath)
+          if job.has_key?("Label") and job["Label"] == label
+            return { label => filepath }
+          else
+            @label_to_path_map[job["Label"]] = filepath
           end
         end
       end
     end
 
-    # if we didn't find the job above and we should have, error.
-    raise Puppet::Error.new("Unable to find launchd plist for job: #{label}") if label
-    # if returning all jobs
-    label_to_path_map
-  end
-
-
-  def self.instances
-    jobs = self.jobsearch
-    jobs.keys.collect do |job|
-      new(:name => job, :provider => :launchd, :path => jobs[job])
+    if label
+      if @label_to_path_map.has_key? label
+        return { label => @label_to_path_map[label] }
+      else
+        raise Puppet::Error.new("Unable to find launchd plist for job: #{label}")
+      end
+    else
+      @label_to_path_map
     end
   end
 
+  # Caching is enabled through the following three methods. Self.prefetch will
+  # call self.instances to create an instance for each service. Self.flush will
+  # clear out our cache when we're done.
+  def self.prefetch(resources)
+    instances.each do |prov|
+      if resource = resources[prov.name]
+        resource.provider = prov
+      end
+    end
+  end
+
+  # Self.instances will be called for every service on the system, and
+  # it will call the jobsearch and self.status method to get get a list
+  # of all plist files on the system as well as all currently running
+  # services.
+  def self.instances
+    jobs = self.jobsearch
+    unless @status
+      self.status
+    end
+    jobs.keys.collect do |job|
+      status = @status.has_key?(job) ? :running : :stopped
+      new(:name => job, :provider => :launchd, :path => jobs[job], :status => status)
+    end
+  end
+
+  def flush
+    @property_hash.clear
+  end
+
+  def exists?
+    Puppet.debug("Puppet::Provider::Launchd:Ensure for #{@property_hash[:name]}: #{@property_hash[:ensure]}")
+    @property_hash[:ensure] != :absent
+  end
 
   def self.get_macosx_version_major
     return @macosx_version_major if defined?(@macosx_version_major)
@@ -145,23 +172,21 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     [job_path, job_plist]
   end
 
-
-  def status
-    # launchctl list <jobname> exits zero if the job is loaded
-    # and non-zero if it isn't. Simple way to check... but is only
-    # available on OS X 10.5 unfortunately, so we grab the whole list
-    # and check if our resource is included. The output formats differ
-    # between 10.4 and 10.5, thus the necessity for splitting
+  # This status method lists out all currently running services and saves each
+  # job label as a key in the @status hash. This hash is returned at the end
+  # of the method.
+  def self.status
+    @status = Hash.new
     begin
       output = launchctl :list
       raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
-      output.split("\n").each do |j|
-        return :running if j.split(/\s/).last == resource[:name]
+      output.split("\n").each do |line|
+        @status[line.split(/\s/).last] = :running
       end
-      return :stopped
     rescue Puppet::ExecutionFailure
       raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
     end
+    @status
   end
 
   # start the service. To get to a state of running/enabled, we need to
