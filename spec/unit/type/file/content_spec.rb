@@ -179,7 +179,7 @@ describe content do
         it "should display a diff if the current contents are different from the desired content" do
           @content.should = "some content"
           @content.expects(:diff).returns("my diff").once
-          @content.expects(:print).with("my diff").once
+          @content.expects(:notice).with("\nmy diff").once
 
           @content.safe_insync?("other content")
         end
