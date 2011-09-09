@@ -1,3 +1,155 @@
+2.7.4rc1
+===
+04519a7 Revert "Merge pull request #100 from glarizza/tickets/2.7.x/9192_launchd_fix"
+769f2b2 Revert "Merge pull request #99 from nigelkersten/tickets/2.7.x/9143-make-macauthorization-work-on-lion"
+ff13d8d Add comment explaining helper method
+40f64e9 Add has_macosx_plist_overrides? method
+670d30c Fix ActiveRecord handling of symbols in query interpolation.
+51b0c00 Fixes #9143, allows macauthorization provider to work on OS X Lion 10.7
+a04051a (#9051) Move complex collect expression error into terminus.
+f7e526b (#8413) Only try to catch Process::Error if it's defined
+2c96286 Debug order-dependent test failures in CI / ActiveRecord.
+38070d5 Don't toggle storeconfigs back and forth.
+cf60243 One character typo, entire code path broken...
+40dc39c More protection against accidentally using sqlite3
+f898749 Save and restore indirector configuration around all tests.
+e3073ac (#9051) More storeconfigs test cleanup.
+51461de (#9051) Protect SQLite tests from running without gem.
+bb0380f (#8662) Don't rely on error message to detect UAC capable platform
+2ab5634 (#8413) Properly clean up stale pidfile on Windows
+cc958e1 (#8412) Add MSI package provider for use with Windows
+878ea25 (#8412) Add optional type-level validation of the source parameter
+dad075d Correct grammar in parameter comment
+4168a4c Clean up formatting & whitespace in Puppet::Type
+fd1d4b9 (#9051) de-ActiveRecord-ify Collection expressions.
+78e33cc (#9051) Port query tests into the indirection.
+65580e7 (#9051) Implement the `resource` terminus for StoreConfigs.
+89aaa51 (#9051) Make generic tagging imported resource origins.
+d5b295d (#9051) Whitespace cleanup for puppet/parser/collector
+611c466 (#9051) Dead code elimination in the compiler terminus.
+6e0ff6a (#9051) Get the compiler out of the ActiveRecord business.
+4d51680 (#9051) Implement the StoreConfigs indirection itself.
+d0357c8 (#9051) Add configuration around StoreConfigs indirection.
+8700682 (#9051) de-ActiveRecord-ify Collection expressions.
+4274e15 (#9174) Provide a helpful error when missing a gem and installing on Windows
+f53db3d Clean up formatting & whitespace in package type & providers
+6dff78c (#8489) Use File::PATH_SEPARATOR in path attribute of service type
+64dbd3b (#8489) Use File::PATH_SEPARATOR for path attribute of exec type
+3e40207 (#8489) Use File::PATH_SEPARATOR rather than ':' for factpath setting
+c469294 (#8489) Use File::PATH_SEPARATOR rather than ':' for args to puppet doc
+a2ced0f Properly determine file deletion in puppet/unit/util_spec.rb
+bc5f1e3 (#9051) Port query tests into the indirection.
+fa78e99 (#9051) Implement the `resource` terminus for StoreConfigs.
+f6b91be (#8140) Add an exec provider for Windows
+18c322a (#8410) Factor out a base class for exec providers
+cb53870 (#8410) Cleanup and fix Windows support in Puppet::Util.execute
+39a582b (#8410) Use absolute_path? for Puppet::Parameter::Path validation
+fb6df31 (#8410) Add a helper to Puppet::Util to determine absoluteness of a path
+c2a432a maint: Fix trailing whitespace in lib/puppet/util.rb
+fab2fe7 (#9051) Make generic tagging imported resource origins.
+5300368 (#9051) Whitespace cleanup for puppet/parser/collector
+6420ede (#9051) Dead code elimination in the compiler terminus.
+543f331 (#9051) Get the compiler out of the ActiveRecord business.
+4b55e72 (#9051) Implement the StoreConfigs indirection itself.
+0f207a8 (#8662) Don't manage internal file permissions on Windows
+47058ab (#8662) Skip user and group resources when applying settings on Windows
+2ac8790 (#8662) Fix Puppet.features.root? on Windows
+ccdd043 (#8662) Break circular feature dependency
+4b29f5f (#9051) Add configuration around StoreConfigs indirection.
+9f39cc4 maint: Stub spec test so directory is not created unnecessarily
+66fb531 Don't use non-1.8.5-compatible methods 'Object#tap' and 'Dir.mktmpdir'
+2091cbe maint: Fix build break due to recent merge from 2.7.x to master
+2681ca5 Fix posix exec provider spec failures on Windows
+3812fc3 (#5495) Remove dead Windows-specific code from posix exec provider
+b6ca78c Stop trying to make config directories in Windows specs
+4237cb1 (#8272) Add missing tests for Windows service provider methods.
+a32c8be (#8409) Add a default group provider for Windows
+4f7170a (#8408) Add a default user provider for Windows
+f19a0ea (#8408/8409) Add a Windows ADSI helper module
+6919d2c (#8663) Exclude exec timeout test on Windows
+8009209 (#8663) Exclude git rev-parse HEAD spec test on Windows
+a0013e4 Check for the appropriate permissions in File type tests on Windows
+58c7dac Remove :fails_on_windows from file type tests that no longer fail on Windows
+9f2a7b9 Disable file bucket diffing tests on Windows
+1e59b26 Always put a slash between the checksum and path in filebucket URLs
+37f87b7 Treat Windows absolute paths as absolute paths
+4a6d617 Consolidate test logic determining if a registered file is in the temp directory
+8c88918 Clarify logic and error messages when initializing Puppet::FileBucket::File
+2efaa85 Disable symlink related file tests on Windows
+7259e1e (#8644) Host provider on Windows
+328eaa2 (#8660) Fix destdir option on Windows
+088c7ac (#8660) Default config dir to %PROGRAMDATA% on Windows
+925af95 (#8663) Disable spec tests for unsupported functionality on Windows
+04965d7 (#8663) Drive letters are not valid absolute paths on Windows
+f4598ec (#8663) Update the run_mode spec test on Windows to match the code
+68bdc74 (#8663) The ssh_authorized_key type is not supported on Windows
+9fbb0be (#8663) Reenable spec tests on Windows that now pass
+c930152 (#8392) Disable master related tests on Windows
+28b1658 (#8272) Allow disabled Windows services to be started
+c69baf6 (#8272) Refactor specs for Windows service provider
+881c385 (#8272) Use symbols instead of booleans for enabled property on Windows
+9c575bd (#8272) Fixup logging in Windows service provider
+ad29bf6 Fix issue with forward and backslashes in Windows paths
+eaa7d92 Disable spec tests for unsupported functionality on Windows
+945bf74 Update certificate spec tests for Windows
+3be4d79 Add basic service provider for Windows
+d9a693d Regexp escape substituted commands in Windows wrapper script
+49d1e9d Rework Puppet::Util::Cacher to only expire using TTLs
+9849d56 Remove use of Puppet::Util::Cacher in Puppet::SSL::Host
+028b795 Remove dead uses of Puppet::Util::Cacher from autoloader
+7c4dbeb Remove Puppet::Util::Cacher use from Puppet::Indirector::Indirection
+d6e0b71 Remove caching from the catalog, types, and parameters
+d49dd9e Remove cached_attrs from Puppet::Type::File
+546e0f9 Remove Puppet::Util::Cacher usage from Puppet::Util::Settings
+b6b5498 Remove Util::Cacher usage from SSL::CertificateAuthority
+777b2f2 Remove unused require 'puppet/util/cacher' from Network::HttpPool
+41425bd Remove use of Util::Cacher from FileServing::Mount::File
+8d53090 Remove use of Util::Cacher in FileServing::Configuration
+3093047 Remove Puppet::Network::HttpPool keep_alive handling
+57d6217 Fix spec test failure on 1.9.2
+5d3a40f Maint: Fix miscellaneous tests
+ce0c258 Maint: Don't test for extended signals on Windows
+bdc9790 Maint: Tagged spec tests that are known to fail on Windows
+c26f3e5 Fix tests with "relative" paths on Windows
+bfeb337 (#8268) Require windows drive letters in absolute file paths
+fe81dec (#8489) Consistently use File::PATH_SEPARATOR
+a437812 (#8356) Specify setting type for color
+af2446a (#8268) Fix resource harness spec tests
+d9c3b0f (#8356) Color defaults to false on Windows
+9ebe500 Disable the master on Windows instead of blowing up with failed resources
+7467a08 (#7581) Provide more detailed error message when missing gems on Windows
+654de01 Maint: Correct docs for filebucket type and file's backup parameter
+b623826 Maint: Fix line wrapping in create_resources function
+fd7332b maint: remove inaccurate copyright and license statements.
+a8b27de Maint: Improve create_resources function's doc string
+5f22985 maint: Fix order dependent test failure
+7ac1093 (#8037) Fix incorrect example in Augeas type reference
+35c1006 (#9039) Update Augeas commands documentation
+2bf6721 Reset indirector state after configurer tests.
+e9b558d Fix posix exec provider spec failures on Windows
+b28bcb0 (#5495) Remove dead Windows-specific code from posix exec provider
+2297899 Do not leak indirector state from apply tests
+b52fbf4 (#8612) Clarify the function of the example for exec's "creates" parameter
+bb224dd (#8770) Don't fail to set supplementary groups when changing user to root
+2a0de12 (#8770) Always fully drop privileges when changing user
+00c4b25 (#8662) Migrate suidmanager test case to rspec
+d7c9c76 (#8740) Do not enumerate files in the root directory.
+39da99d (#4411) Explain that runinterval = 0 does not mean "never run"
+4146a33 Maint: Fix missing option text in puppet agent and arrange options alphabetically
+0e00473 (#3553) Explain that cron resources require time attributes
+769d432 (#8302) Improve documentation of exec providers
+76d45d2 (#7853) Clarify and complete docs for the tagmail report processor
+d60852b Maint: Mention that audit metaparameter will accept "all"
+51d989e Maint: Adjust wording for file type's content parameter
+a110d83 Maint: Fix poor documentation for versioncmp function.
+746a374 maint: Fix case sensitive require
+310bd55 maint: Add inspect app options to help
+3a19628 maint: Fix inspect help
+344aef9 (#8808) Fail Augeas resource when unable to save changes
+c209f62 Add document outlining preferred contribution methods
+839e7c9 (#7999) Add some basic tests of the systemd provider
+1cae354 (#7999) Add a service provider that manages systemd services natively
+
 2.7.3
 ===
 7113448 (#4762) Ensure that clients on the moon can successfully connect.
