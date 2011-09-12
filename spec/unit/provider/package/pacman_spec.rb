@@ -62,6 +62,10 @@ describe provider do
     end
 
     context "when :source is specified" do
+      before :each do
+        @install = sequence("install")
+      end
+
       context "recognizable by pacman" do
         %w{
           /some/package/file
@@ -70,10 +74,15 @@ describe provider do
         }.each do |source|
           it "should install #{source} directly" do
             @resource.stubs(:[]).with(:source).returns source
+
             provider.expects(:execute).
-              with { |args|
-                args.index("-U") == args.index(source) - 1
-              }.
+              with(all_of(includes("-Sy"), includes("--noprogressbar"))).
+              in_sequence(@install).
+              returns("")
+
+            provider.expects(:execute).
+              with(all_of(includes("-U"), includes(source))).
+              in_sequence(@install).
               returns("")
 
             @provider.install
@@ -90,9 +99,14 @@ describe provider do
 
         it "should install from the path segment of the URL" do
           provider.expects(:execute).
-            with { |args|
-              args.index("-U") == args.index(@actual_file_path) - 1
-            }.
+            with(all_of(includes("-Sy"), includes("--noprogressbar"),
+                        includes("--noconfirm"))).
+            in_sequence(@install).
+            returns("")
+
+          provider.expects(:execute).
+            with(all_of(includes("-U"), includes(@actual_file_path))).
+            in_sequence(@install).
             returns("")
 
           @provider.install

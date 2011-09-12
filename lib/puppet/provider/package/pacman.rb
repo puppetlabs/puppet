@@ -47,6 +47,7 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
     else
       fail "Source #{source} is not supported by pacman"
     end
+    pacman "--noconfirm", "--noprogressbar", "-Sy"
     pacman "--noconfirm", "--noprogressbar", "-U", source
   end
   private :install_from_file
