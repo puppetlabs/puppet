@@ -7,6 +7,7 @@ describe provider do
   before do
     provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
     @resource = stub 'resource'
+    @resource.stubs(:[]).with(:name).returns("package")
     @resource.stubs(:[]).returns("package")
     @resource.stubs(:name).returns("name")
     @provider = provider.new(@resource)
@@ -46,7 +47,7 @@ describe provider do
       provider.
         expects(:execute).
         with { |args|
-          args[3,4] == ["-Sy", @resource[0]]
+          args[3,4] == ["-Sy", @resource[:name]]
         }.
         returns("")
 
@@ -95,7 +96,7 @@ describe provider do
       provider.
         expects(:execute).
         with { |args|
-          args[3,4] == ["-R", @resource[0]]
+          args[3,4] == ["-R", @resource[:name]]
         }.
         returns("")
 
@@ -107,7 +108,7 @@ describe provider do
     it "should query pacman" do
       provider.
         expects(:execute).
-        with(["/usr/bin/pacman", "-Qi", @resource[0]])
+        with(["/usr/bin/pacman", "-Qi", @resource[:name]])
       @provider.query
     end
 
@@ -149,7 +150,7 @@ EOF
       @provider.query.should == {
         :ensure => :purged,
         :status => 'missing',
-        :name => @resource[0],
+        :name => @resource[:name],
         :error => 'ok',
       }
     end
@@ -219,7 +220,7 @@ EOF
       provider.
         expects(:execute).
         when(refreshed.is('refreshed')).
-        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[0]]).
+        with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]]).
         returns("")
 
       @provider.latest
