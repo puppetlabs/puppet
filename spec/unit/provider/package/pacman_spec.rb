@@ -78,6 +78,78 @@ describe provider do
           @provider.install
         end
       end
+
+      context "as an HTTP URL" do
+        before do
+          @package_url = "http://some.package.in/the/air"
+          @resource.stubs(:[]).with(:source).returns @package_url
+        end
+
+        it "should install from the URL" do
+          provider.expects(:execute).
+            with { |args|
+              args.index("-U") == args.index(@package_url) - 1
+            }.
+            returns("")
+
+          @provider.install
+        end
+      end
+
+      context "as an FTP URL" do
+        before do
+          @package_url = "ftp://some.package.in/the/air"
+          @resource.stubs(:[]).with(:source).returns @package_url
+        end
+
+        it "should install from the URL" do
+          provider.expects(:execute).
+            with { |args|
+              args.index("-U") == args.index(@package_url) - 1
+            }.
+            returns("")
+
+          @provider.install
+        end
+      end
+
+      context "as a file:// URL" do
+        before do
+          @package_file = "file:///some/package/file"
+          @actual_file_path = "/some/package/file"
+          @resource.stubs(:[]).with(:source).returns @package_file
+        end
+
+        it "should install from the path segment of the URL" do
+          provider.expects(:execute).
+            with { |args|
+              args.index("-U") == args.index(@actual_file_path) - 1
+            }.
+            returns("")
+
+          @provider.install
+        end
+      end
+
+      context "as a puppet URL" do
+        before do
+          @resource.stubs(:[]).with(:source).returns "puppet://server/whatever"
+        end
+
+        it "should fail" do
+          lambda { @provider.install }.should raise_error(Puppet::Error)
+        end
+      end
+
+      context "as a malformed URL" do
+        before do
+          @resource.stubs(:[]).with(:source).returns "blah://"
+        end
+
+        it "should fail" do
+          lambda { @provider.install }.should raise_error(Puppet::Error)
+        end
+      end
     end
   end
 

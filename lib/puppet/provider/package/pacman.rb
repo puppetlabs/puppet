@@ -1,4 +1,5 @@
 require 'puppet/provider/package'
+require 'uri'
 
 Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Package do
   desc "Support for the Package Manager Utility (pacman) used in Archlinux."
@@ -29,7 +30,24 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   private :install_from_repo
 
   def install_from_file
-    pacman "--noconfirm", "--noprogressbar", "-U", @resource[:source]
+    source = @resource[:source]
+    begin
+      source_uri = URI.parse source
+    rescue => detail
+      fail "Invalid source '#{source}': #{detail}"
+    end
+
+    source = case source_uri.scheme
+    when nil then source
+    when /https?/i then source
+    when /ftp/i then source
+    when /file/i then source_uri.path
+    when /puppet/i
+      fail "puppet:// URL is not supported by pacman"
+    else
+      fail "Source #{source} is not supported by pacman"
+    end
+    pacman "--noconfirm", "--noprogressbar", "-U", source
   end
   private :install_from_file
 
