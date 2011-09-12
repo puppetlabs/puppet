@@ -65,3 +65,56 @@ describe Puppet::Util::Log.desttypes[:file] do
   end
 end
 
+describe Puppet::Util::Log.desttypes[:syslog] do
+  let (:klass) { Puppet::Util::Log.desttypes[:syslog] }
+
+  describe "when syslog is available", :if => Puppet.features.syslog? do
+    before :each do
+      Syslog.stubs(:opened?).returns(false)
+      Syslog.stubs(:const_get).returns("LOG_KERN").returns(0)
+      Syslog.stubs(:open)
+    end
+
+    it "should open syslog" do
+      Syslog.expects(:open)
+
+      klass.new
+    end
+
+    it "should close syslog" do
+      Syslog.expects(:close)
+
+      dest = klass.new
+      dest.close
+    end
+
+    it "should send messages to syslog" do
+      msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic")
+
+      syslog = mock 'syslog'
+      syslog.expects(:info).with("don't panic")
+      Syslog.stubs(:open).returns(syslog)
+
+      dest = klass.new
+      dest.handle(msg)
+    end
+  end
+
+  describe "when syslog is unavailable", :unless => Puppet.features.syslog? do
+    it "should create an instance of the syslog destination" do
+      klass.new
+    end
+
+    it "should not close syslog" do
+      dest = klass.new
+      dest.close
+    end
+
+    it "should not send messages to syslog" do
+      msg = Puppet::Util::Log.new(:level => :info, :message => "don't panic")
+
+      dest = klass.new
+      dest.handle(msg)
+    end
+  end
+end
