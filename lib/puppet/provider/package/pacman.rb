@@ -12,12 +12,26 @@ Puppet::Type.type(:package).provide :pacman, :parent => Puppet::Provider::Packag
   # Installs quietly, without confirmation or progressbar, updates package
   # list from servers defined in pacman.conf.
   def install
-    pacman "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]
+    if @resource[:source]
+      install_from_file
+    else
+      install_from_repo
+    end
 
     unless self.query
       raise Puppet::ExecutionFailure.new("Could not find package %s" % self.name)
     end
   end
+
+  def install_from_repo
+    pacman "--noconfirm", "--noprogressbar", "-Sy", @resource[:name]
+  end
+  private :install_from_repo
+
+  def install_from_file
+    pacman "--noconfirm", "--noprogressbar", "-U", @resource[:source]
+  end
+  private :install_from_file
 
   def self.listcmd
     [command(:pacman), " -Q"]

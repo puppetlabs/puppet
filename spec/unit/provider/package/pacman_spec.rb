@@ -8,7 +8,7 @@ describe provider do
     provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
     @resource = stub 'resource'
     @resource.stubs(:[]).with(:name).returns("package")
-    @resource.stubs(:[]).returns("package")
+    @resource.stubs(:[]).with(:source).returns(nil)
     @resource.stubs(:name).returns("name")
     @provider = provider.new(@resource)
   end
@@ -59,6 +59,25 @@ describe provider do
       @provider.expects(:query).returns(nil)
 
       lambda { @provider.install }.should raise_exception(Puppet::ExecutionFailure)
+    end
+
+    context "when :source is specified" do
+      context "as a normal file" do
+        before do
+          @package_file = "/some/package/file"
+          @resource.stubs(:[]).with(:source).returns @package_file
+        end
+
+        it "should install from the file" do
+          provider.expects(:execute).
+            with { |args|
+              args.index("-U") == args.index(@package_file) - 1
+            }.
+            returns("")
+
+          @provider.install
+        end
+      end
     end
   end
 
