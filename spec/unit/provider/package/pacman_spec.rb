@@ -62,54 +62,22 @@ describe provider do
     end
 
     context "when :source is specified" do
-      context "as a normal file" do
-        before do
-          @package_file = "/some/package/file"
-          @resource.stubs(:[]).with(:source).returns @package_file
-        end
+      context "recognizable by pacman" do
+        %w{
+          /some/package/file
+          http://some.package.in/the/air
+          ftp://some.package.in/the/air
+        }.each do |source|
+          it "should install #{source} directly" do
+            @resource.stubs(:[]).with(:source).returns source
+            provider.expects(:execute).
+              with { |args|
+                args.index("-U") == args.index(source) - 1
+              }.
+              returns("")
 
-        it "should install from the file" do
-          provider.expects(:execute).
-            with { |args|
-              args.index("-U") == args.index(@package_file) - 1
-            }.
-            returns("")
-
-          @provider.install
-        end
-      end
-
-      context "as an HTTP URL" do
-        before do
-          @package_url = "http://some.package.in/the/air"
-          @resource.stubs(:[]).with(:source).returns @package_url
-        end
-
-        it "should install from the URL" do
-          provider.expects(:execute).
-            with { |args|
-              args.index("-U") == args.index(@package_url) - 1
-            }.
-            returns("")
-
-          @provider.install
-        end
-      end
-
-      context "as an FTP URL" do
-        before do
-          @package_url = "ftp://some.package.in/the/air"
-          @resource.stubs(:[]).with(:source).returns @package_url
-        end
-
-        it "should install from the URL" do
-          provider.expects(:execute).
-            with { |args|
-              args.index("-U") == args.index(@package_url) - 1
-            }.
-            returns("")
-
-          @provider.install
+            @provider.install
+          end
         end
       end
 
