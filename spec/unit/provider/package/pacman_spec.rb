@@ -70,10 +70,16 @@ describe provider do
         }.each do |source|
           it "should install #{source} directly" do
             @resource.stubs(:[]).with(:source).returns source
+            db = states("db").starts_as(:not_synced)
+
             provider.expects(:execute).
-              with { |args|
-                args.index("-U") == args.index(source) - 1
-              }.
+              with(all_of(includes("-Sy"), includes("--noprogressbar"))).
+              then(db.is(:synced)).
+              returns("")
+
+            provider.expects(:execute).
+              with(all_of(includes("-U"), includes(source))).
+              when(db.is(:synced)).
               returns("")
 
             @provider.install
@@ -89,10 +95,17 @@ describe provider do
         end
 
         it "should install from the path segment of the URL" do
+          db = states("db").starts_as(:not_synced)
+
           provider.expects(:execute).
-            with { |args|
-              args.index("-U") == args.index(@actual_file_path) - 1
-            }.
+            with(all_of(includes("-Sy"), includes("--noprogressbar"),
+                        includes("--noconfirm"))).
+            then(db.is(:synced)).
+            returns("")
+
+          provider.expects(:execute).
+            with(all_of(includes("-U"), includes(@actual_file_path))).
+            when(db.is(:synced)).
             returns("")
 
           @provider.install
