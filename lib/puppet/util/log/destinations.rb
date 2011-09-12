@@ -37,7 +37,11 @@ Puppet::Util::Log.newdesttype :syslog do
 end
 
 Puppet::Util::Log.newdesttype :file do
-  match(/^\//)
+  def self.match?(obj)
+    return true if Puppet::Util.absolute_path?(obj)
+
+    super(obj)
+  end
 
   def close
     if defined?(@file)

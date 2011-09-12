@@ -32,5 +32,36 @@ describe Puppet::Util::Log.desttypes[:file] do
   it "should default to autoflush false" do
     @class.new('/tmp/log').autoflush.should == false
   end
+
+  describe "when matching" do
+    shared_examples_for "file destination" do
+      it "should match an absolute path" do
+        @class.match?(abspath).should be_true
+      end
+
+      it "should not match a relative path" do
+        @class.match?(relpath).should be_false
+      end
+
+    end
+
+    describe "on POSIX systems" do
+      before :each do Puppet.features.stubs(:microsoft_windows?).returns false end
+
+      let (:abspath) { '/tmp/log' }
+      let (:relpath) { 'log' }
+
+      it_behaves_like "file destination"
+    end
+
+    describe "on Windows systems" do
+      before :each do Puppet.features.stubs(:microsoft_windows?).returns true end
+
+      let (:abspath) { 'C:\\temp\\log.txt' }
+      let (:relpath) { 'log.txt' }
+
+      it_behaves_like "file destination"
+    end
+  end
 end
 
