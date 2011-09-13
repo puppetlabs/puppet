@@ -1,3 +1,5 @@
+#!/usr/bin/env rspec
+require 'spec_helper'
 require 'puppet/application/certificate'
 
 describe Puppet::Application::Certificate do
