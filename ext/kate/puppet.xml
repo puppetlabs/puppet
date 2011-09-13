@@ -818,7 +818,7 @@
       <itemData name="Constant" defStyleNum="dsDataType" color="#c0a25f"/>
       <itemData name="List" defStyleNum="dsDataType"/>
       <itemData name="Constant Value" defStyleNum="dsDataType" color="#bb1188"  />
-      <itemData name="Attribute" defStyleNum="dsNormal" color="#ffffff" bold="1"/> <!-- #4A00C0 -->
+      <itemData name="Attribute" defStyleNum="dsNormal" color="#08A5FF" bold="1"/> <!-- #4A00C0 -->
       <itemData name="Metaparameters" defStyleNum="dsNormal" color="#BADEFF" selColor="#ffffff" bold="1"/> <!-- #CC0E86 -->
       <itemData name="Member" defStyleNum="dsNormal"/>
       <itemData name="Instance Variable" defStyleNum="dsOthers"/>
