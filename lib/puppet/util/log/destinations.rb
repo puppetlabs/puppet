@@ -1,4 +1,8 @@
 Puppet::Util::Log.newdesttype :syslog do
+  def self.suitable?(obj)
+    Puppet.features.syslog?
+  end
+
   def close
     Syslog.close
   end
