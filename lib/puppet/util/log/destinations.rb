@@ -1,9 +1,11 @@
 Puppet::Util::Log.newdesttype :syslog do
   def close
-    Syslog.close
+    Syslog.close if Puppet.features.syslog?
   end
 
   def initialize
+    return unless Puppet.features.syslog?
+
     Syslog.close if Syslog.opened?
     name = Puppet[:name]
     name = "puppet-#{name}" unless name =~ /puppet/
@@ -22,6 +24,8 @@ Puppet::Util::Log.newdesttype :syslog do
   end
 
   def handle(msg)
+    return unless Puppet.features.syslog?
+
     # XXX Syslog currently has a bug that makes it so you
     # cannot log a message with a '%' in it.  So, we get rid
     # of them.
@@ -37,7 +41,11 @@ Puppet::Util::Log.newdesttype :syslog do
 end
 
 Puppet::Util::Log.newdesttype :file do
-  match(/^\//)
+  def self.match?(obj)
+    return true if Puppet::Util.absolute_path?(obj)
+
+    super(obj)
+  end
 
   def close
     if defined?(@file)
