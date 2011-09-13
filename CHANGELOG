@@ -1,3 +1,10 @@
+2.7.4rc2
+===
+d59a0b3 Update certificate_spec.rb test to include spec_helper
+f325b40 Fix #7984 - GigabitEthernet/TenGigabitEthernet are uncorrectly parsed
+6cc15c2 Fix #7983 - Cisco uptime facts doesn't always work
+41302e9 Fixes #9143, allows macauthorization provider to work on OS X Lion 10.7
+
 2.7.4rc1
 ===
 04519a7 Revert "Merge pull request #100 from glarizza/tickets/2.7.x/9192_launchd_fix"
