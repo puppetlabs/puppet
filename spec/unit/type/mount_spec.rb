@@ -16,7 +16,7 @@ describe Puppet::Type.type(:mount), :fails_on_windows => true do
   end
 end
 
-describe Puppet::Type.type(:mount), "when validating attributes", :fails_on_windows => true do
+describe Puppet::Type.type(:mount), "when validating attributes" do
   [:name, :remounts, :provider].each do |param|
     it "should have a #{param} parameter" do
       Puppet::Type.type(:mount).attrtype(param).should == :param

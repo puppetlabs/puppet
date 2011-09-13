@@ -3,8 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/host'
 
-# REMIND: Fails on windows because there is no user provider yet
-describe Puppet::SSL::Host, :fails_on_windows => true do
+describe Puppet::SSL::Host do
   include PuppetSpec::Files
 
   before do

@@ -2,7 +2,7 @@
 require 'spec_helper'
 
 describe "Puppet::Resource::Ral" do
-  describe "find", :fails_on_windows => true do
+  describe "find" do
     before do
       @request = stub 'request', :key => "user/root"
     end

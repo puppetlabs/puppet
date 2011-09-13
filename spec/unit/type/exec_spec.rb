@@ -352,7 +352,7 @@ describe Puppet::Type.type(:exec) do
         end
       end
 
-      it "should fail if timeout is exceeded", :fails_on_windows => true do
+      it "should fail if timeout is exceeded" do
         Puppet::Util.stubs(:execute).with do |cmd,args|
           sleep 1
           true
