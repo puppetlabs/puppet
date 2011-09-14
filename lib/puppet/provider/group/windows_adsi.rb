@@ -34,6 +34,11 @@ Puppet::Type.type(:group).provide :windows_adsi do
     Puppet::Util::ADSI::Group.delete(@resource[:name])
   end
 
+  # Only flush if we created or modified a group, not deleted
+  def flush
+    @group.commit if @group
+  end
+
   def gid
     nil
   end

@@ -47,20 +47,36 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     end
   end
 
-  it "should be able to create a group" do
-    resource[:members] = ['user1', 'user2']
+  describe 'when creating groups' do
 
-    group = stub 'group'
-    Puppet::Util::ADSI::Group.expects(:create).with('testers').returns group
+    it "should be able to create a group" do
+      resource[:members] = ['user1', 'user2']
 
-    group.expects(:set_members).with(['user1', 'user2'])
+      group = stub 'group'
+      Puppet::Util::ADSI::Group.expects(:create).with('testers').returns group
 
-    provider.create
+      group.expects(:set_members).with(['user1', 'user2'])
+
+      provider.create
+    end
+
+    it 'should not create a group if a user by the same name exists' do
+      Puppet::Util::ADSI::Group.expects(:create).with('testers').raises( Puppet::Error.new("Cannot create group if user 'testers' exists.") )
+      expect{ provider.create }.to raise_error( Puppet::Error,
+        /Cannot create group if user 'testers' exists./ )
+    end
+
+    it 'should commit a newly created group' do
+      provider.group.expects( :commit )
+
+      provider.flush
+    end
+
   end
 
   it "should be able to test whether a group exists" do
     Puppet::Util::ADSI.stubs(:connect).returns stub('connection')
-    provider.should be_exists
+    provider.should be_exists if Puppet.features.microsoft_windows?
 
     Puppet::Util::ADSI.stubs(:connect).returns nil
     provider.should_not be_exists
@@ -77,3 +93,4 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     provider.send(:gid=, 500)
   end
 end
+
