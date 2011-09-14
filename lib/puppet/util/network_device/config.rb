@@ -51,7 +51,7 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
           when /^\s*$/  # skip blank lines
             count += 1
             next
-          when /^\[([\w.]+)\]\s*$/ # [device.fqdn]
+          when /^\[([\w.-]+)\]\s*$/ # [device.fqdn]
             name = $1
             name.chomp!
             raise ConfigurationError, "Duplicate device found at line #{count}, already found at #{device.line}" if devices.include?(name)
