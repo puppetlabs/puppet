@@ -3,6 +3,12 @@
 require 'spec_helper'
 
 describe Puppet::Util do
+  def process_status(exitstatus)
+    return exitstatus if Puppet.features.microsoft_windows?
+
+    stub('child_status', :exitstatus => exitstatus)
+  end
+
   describe "#absolute_path?" do
     it "should default to the platform of the local system" do
       Puppet.features.stubs(:posix?).returns(true)
@@ -122,7 +128,7 @@ describe Puppet::Util do
 
       before :each do
         Process.stubs(:create).returns(proc_info_stub)
-        Process.stubs(:waitpid2).with(pid).returns([pid, 0])
+        Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
 
         @stdin  = File.open(null_file, 'r')
         @stdout = Tempfile.new('stdout')
@@ -153,7 +159,7 @@ describe Puppet::Util do
 
     describe "#execute" do
       before :each do
-        Process.stubs(:waitpid2).with(pid).returns([pid, 0])
+        Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
       end
 
       describe "when an execution stub is specified" do
@@ -251,8 +257,9 @@ describe Puppet::Util do
 
     describe "after execution" do
       let(:executor) { Puppet.features.microsoft_windows? ? 'execute_windows' : 'execute_posix' }
+
       before :each do
-        Process.stubs(:waitpid2).with(pid).returns([pid, 0])
+        Process.stubs(:waitpid2).with(pid).returns([pid, process_status(0)])
 
         Puppet::Util.stubs(executor).returns(pid)
       end
@@ -260,7 +267,7 @@ describe Puppet::Util do
       it "should wait for the child process to exit" do
         Puppet::Util.stubs(:wait_for_output)
 
-        Process.expects(:waitpid2).with(pid).returns([pid, 0])
+        Process.expects(:waitpid2).with(pid).returns([pid, process_status(0)])
 
         Puppet::Util.execute('test command')
       end
@@ -306,9 +313,7 @@ describe Puppet::Util do
       end
 
       it "should raise an error if failonfail is true and the child failed" do
-        child_status = stub('child_status', :exitstatus => 1)
-
-        Process.expects(:waitpid2).with(pid).returns([pid, child_status])
+        Process.expects(:waitpid2).with(pid).returns([pid, process_status(1)])
 
         expect {
           Puppet::Util.execute('fail command', :failonfail => true)
@@ -316,7 +321,7 @@ describe Puppet::Util do
       end
 
       it "should not raise an error if failonfail is false and the child failed" do
-        Process.expects(:waitpid2).with(pid).returns([pid, 1])
+        Process.expects(:waitpid2).with(pid).returns([pid, process_status(1)])
 
         expect {
           Puppet::Util.execute('fail command', :failonfail => false)
@@ -324,7 +329,7 @@ describe Puppet::Util do
       end
 
       it "should not raise an error if failonfail is true and the child succeeded" do
-        Process.expects(:waitpid2).with(pid).returns([pid, 0])
+        Process.expects(:waitpid2).with(pid).returns([pid, process_status(0)])
 
         expect {
           Puppet::Util.execute('fail command', :failonfail => true)
