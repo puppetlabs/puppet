@@ -152,6 +152,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
       describe "getting the mode" do
         it "should report when extra aces are encounted" do
+          winsec.set_acl(path, true) do |acl|
+            [ 544, 545, 546, 547 ].each do |rid|
+              winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL, "S-1-5-32-#{rid}")
+            end
+          end
           mode = winsec.get_mode(path)
           (mode & WindowsSecurityTester::S_IEXTRA).should_not == 0
         end
@@ -188,8 +193,27 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         it "should be present when the access control list is unprotected" do
-          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path, false)
-          (winsec.get_mode(path) & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
+          dir = tmpdir('win_sec_parent')
+
+          # add a bunch of aces, make sure we can add to the directory
+          allow = WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
+          inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
+
+          winsec.set_acl(dir, true) do |acl|
+            winsec.add_access_allowed_ace(acl, allow, "S-1-1-0", inherit) # everyone
+
+            [ 544, 545, 546, 547 ].each do |rid|
+              winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL, "S-1-5-32-#{rid}", inherit)
+            end
+          end
+
+          # add a file
+          child = File.join(dir, "child")
+          File.new(child, "w").close
+
+          # unprotect child, it should inherit from parent
+          winsec.set_mode(WindowsSecurityTester::S_IRWXU, child, false)
+          (winsec.get_mode(child) & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
         end
       end
     end
