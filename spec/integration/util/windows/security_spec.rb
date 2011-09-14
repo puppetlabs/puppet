@@ -29,7 +29,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   let (:sids) { @sids }
   let (:winsec) { WindowsSecurityTester.new }
 
-  shared_examples "a securable object" do
+  shared_examples_for "a securable object" do
     describe "for a normal user" do
       before :each do
         Puppet.features.stubs(:root?).returns(false)
