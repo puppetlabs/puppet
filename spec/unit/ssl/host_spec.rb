@@ -22,7 +22,7 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
 
   after do
     # Cleaned out any cached localhost instance.
-    Puppet::SSL::Host.instance_variable_set(:@localhost, nil)
+    Puppet::SSL::Host.reset
     Puppet::SSL::Host.ca_location = :none
   end
 
@@ -63,6 +63,12 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
 
   it "should have a method for producing an instance to manage the local host's keys" do
     Puppet::SSL::Host.should respond_to(:localhost)
+  end
+
+  it "should allow to reset localhost" do
+    previous_host = Puppet::SSL::Host.localhost
+    Puppet::SSL::Host.reset
+    Puppet::SSL::Host.localhost.should_not == previous_host
   end
 
   it "should generate the certificate for the localhost instance if no certificate is available" do

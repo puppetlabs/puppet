@@ -196,6 +196,7 @@ Licensed under the Apache 2.0 License
         Puppet.settings.set_value(:vardir, vardir, :cli)
         Puppet.settings.set_value(:confdir, confdir, :cli)
         Puppet.settings.set_value(:certname, certname, :cli)
+        Puppet::SSL::Host.reset
       end
     end
   end
