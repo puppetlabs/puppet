@@ -12,6 +12,10 @@ describe Puppet::Util::ADSI do
     Puppet::Util::ADSI.stubs(:connect).returns connection
   end
 
+  after(:each) do
+    Puppet::Util::ADSI.instance_variable_set(:@computer_name, nil)
+  end
+
   it "should generate the correct URI for a resource" do
     Puppet::Util::ADSI.uri('test', 'user').should == "WinNT://testcomputername/test,user"
   end
