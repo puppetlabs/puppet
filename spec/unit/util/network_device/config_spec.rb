@@ -52,10 +52,10 @@ describe Puppet::Util::NetworkDevice::Config do
     end
 
     it "should increment line number even on commented lines" do
-      @fd.stubs(:each).multiple_yields('  # comment','[router.puppetlabs.com]')
+      @fd.stubs(:each).multiple_yields('  # comment','[router-foo.puppetlabs.com]')
 
       @config.read
-      @config.devices.should be_include('router.puppetlabs.com')
+      @config.devices.should be_include('router-foo.puppetlabs.com')
     end
 
     it "should skip blank lines" do
@@ -79,7 +79,7 @@ describe Puppet::Util::NetworkDevice::Config do
     end
 
     it "should create a new device for each found device line" do
-      @fd.stubs(:each).multiple_yields('[router.puppetlabs.com]', '[swith.puppetlabs.com]')
+      @fd.stubs(:each).multiple_yields('[router.puppetlabs.com]', '[test-switch.puppetlabs.com]')
 
       @config.read
       @config.devices.size.should == 2
