@@ -1,3 +1,12 @@
+2.7.4rc3
+===
+fe92f20 (#9440) Allow cron vars to have leading whitespace
+da69637 Fix failing spec for resource file
+7a39ca7 (#8667) Write out a list of resources that are managed by puppet agent
+bc40516 Fix order dependent spec failure in exec specs
+3b152e4 (#7114) Fix value validation on options
+aa1b36f (#7114) Add tests for option property
+
 2.7.4rc2
 ===
 d59a0b3 Update certificate_spec.rb test to include spec_helper

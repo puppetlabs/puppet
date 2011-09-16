@@ -378,6 +378,7 @@ class TestCronParsedProvider < Test::Unit::TestCase
     target = @provider.target_object(@me)
 
     [
+      "   FOO=var",
       "* * * * * /some/command",
       "0,30 * * * * /some/command",
       "0-30 * * * * /some/command",

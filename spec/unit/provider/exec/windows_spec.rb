@@ -13,6 +13,12 @@ describe Puppet::Type.type(:exec).provider(:windows) do
     Puppet.features.stubs(:posix?).returns(false)
   end
 
+  after :all do
+    # This provider may not be suitable on some machines, so we want to reset
+    # the default so it isn't used by mistake in future specs.
+    Puppet::Type.type(:exec).defaultprovider = nil
+  end
+
   describe "#extractexe" do
     describe "when the command has no arguments" do
       it "should return the command if it's quoted" do
