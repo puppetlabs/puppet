@@ -52,6 +52,26 @@ describe Puppet::Parser::Scope do
     Puppet::Parser::Scope.ancestors.should include(Puppet::Resource::TypeCollectionHelper)
   end
 
+  describe "when missing methods are called" do
+    before :each do
+      @env      = Puppet::Node::Environment.new('testing')
+      @compiler = Puppet::Parser::Compiler.new(Puppet::Node.new('foo', :environment => @env))
+      @scope    = Puppet::Parser::Scope.new(:compiler => @compiler)
+    end
+
+    it "should load and call the method if it looks like a function and it exists" do
+      @scope.function_sprintf(["%b", 123]).should == "1111011"
+    end
+
+    it "should raise NoMethodError if the method doesn't look like a function" do
+      expect { @scope.sprintf(["%b", 123]) }.should raise_error(NoMethodError)
+    end
+
+    it "should raise NoMethodError if the method looks like a function but doesn't exist" do
+      expect { @scope.function_fake_bs(['cows']) }.should raise_error(NoMethodError)
+    end
+  end
+
   describe "when initializing" do
     it "should extend itself with its environment's Functions module as well as the default" do
       env = Puppet::Node::Environment.new("myenv")
