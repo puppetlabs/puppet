@@ -418,6 +418,16 @@ class Puppet::Parser::Scope
     environment.known_resource_types.find_definition(namespaces, type.to_s.downcase)
   end
 
+  def method_missing(method, *args, &block)
+    method.to_s =~ /^function_(.*)$/
+    super unless $1
+    super unless Puppet::Parser::Functions.function($1)
+
+    # Calling .function(name) adds "function_#{name}" as a callable method on
+    # self if it's found, so now we can just send it
+    send(method, *args)
+  end
+
   def resolve_type_and_titles(type, titles)
     raise ArgumentError, "titles must be an array" unless titles.is_a?(Array)
 
