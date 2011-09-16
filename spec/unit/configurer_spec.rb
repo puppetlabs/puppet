@@ -574,6 +574,12 @@ describe Puppet::Configurer do
 
       @agent.convert_catalog(@oldcatalog, 10)
     end
+
+    it "should write the RAL catalog's resource file" do
+      @catalog.expects(:write_resource_file)
+
+      @agent.convert_catalog(@oldcatalog, 10)
+    end
   end
 
   describe "when preparing for a run" do

@@ -539,6 +539,11 @@ module Puppet
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
         option."},
+    :resourcefile => { :default => "$statedir/resources.txt",
+      :owner => "root",
+      :mode => 0644,
+      :desc => "The file in which puppet agent stores a list of the resources
+        associated with the retrieved configuration."  },
     :puppetdlog => { :default => "$logdir/puppetd.log",
       :owner => "root",
       :mode => 0640,

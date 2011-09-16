@@ -102,6 +102,7 @@ class Puppet::Configurer
     catalog.finalize
     catalog.retrieval_duration = duration
     catalog.write_class_file
+    catalog.write_resource_file
     catalog
   end
 
