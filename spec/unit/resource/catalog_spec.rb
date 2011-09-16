@@ -36,12 +36,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
   it "should log an error if unable to write to the resource file" do
     catalog = Puppet::Resource::Catalog.new("host")
-    Puppet[:resourcefile] = '//bad file'
+    Puppet[:resourcefile] = '/not/writable/file'
 
     catalog.add_resource(Puppet::Type.type('file').new(:title => '/tmp/foo'))
     catalog.write_resource_file
     @logs.size.should == 1
-    @logs.first.message.should =~ /Could not create resource file \/\/bad file/
+    @logs.first.message.should =~ /Could not create resource file/
     @logs.first.level.should == :err
   end
 
