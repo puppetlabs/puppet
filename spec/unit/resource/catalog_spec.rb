@@ -16,29 +16,29 @@ describe Puppet::Resource::Catalog, "when compiling" do
     resourcefile = tmpfile('resourcefile')
     Puppet[:resourcefile] = resourcefile
 
-    res = Puppet::Type.type('file').new(:title => '/tmp/sam')
+    res = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/sam'))
     res.file = 'site.pp'
     res.line = 21
 
-    res2 = Puppet::Type.type('exec').new(:title => 'bob', :command => '/bin/rm -rf /')
-    res2.file = '/modules/bob/manifests/bob.pp'
+    res2 = Puppet::Type.type('exec').new(:title => 'bob', :command => "#{File.expand_path('/bin/rm')} -rf /")
+    res2.file = File.expand_path('/modules/bob/manifests/bob.pp')
     res2.line = 42
 
     comp_res = Puppet::Type.type('component').new(:title => 'Class[Main]')
 
     catalog.add_resource(res, res2, comp_res)
     catalog.write_resource_file
-    File.open(resourcefile).readlines.map(&:chomp).should =~ [
-      "file[/tmp/sam]",
-      "exec[/bin/rm -rf /]"
+    File.readlines(resourcefile).map(&:chomp).should =~ [
+      "file[#{File.expand_path('/tmp/sam')}]",
+      "exec[#{File.expand_path('/bin/rm')} -rf /]"
     ]
   end
 
   it "should log an error if unable to write to the resource file" do
     catalog = Puppet::Resource::Catalog.new("host")
-    Puppet[:resourcefile] = '/not/writable/file'
+    Puppet[:resourcefile] = File.expand_path('/not/writable/file')
 
-    catalog.add_resource(Puppet::Type.type('file').new(:title => '/tmp/foo'))
+    catalog.add_resource(Puppet::Type.type('file').new(:title => File.expand_path('/tmp/foo')))
     catalog.write_resource_file
     @logs.size.should == 1
     @logs.first.message.should =~ /Could not create resource file/
