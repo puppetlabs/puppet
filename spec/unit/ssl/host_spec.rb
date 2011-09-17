@@ -16,6 +16,7 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
     dir = tmpdir("ssl_host_testing")
     Puppet.settings[:confdir] = dir
     Puppet.settings[:vardir] = dir
+    Puppet.settings.use :main, :ssl
 
     @host = Puppet::SSL::Host.new("myname")
   end
