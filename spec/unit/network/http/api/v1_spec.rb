@@ -123,6 +123,10 @@ describe Puppet::Network::HTTP::API::V1 do
       @tester.uri2indirection("GET", "/env/statuses/bar", {})[0].should == 'status'
     end
 
+    it "should change indirection name to 'probe' if the http method is a GET and the indirection name is probes" do
+      @tester.uri2indirection("GET", "/env/probes/bar", {})[0].should == 'probe'
+    end
+
     it "should choose 'delete' as the indirection method if the http method is a DELETE and the indirection name is singular" do
       @tester.uri2indirection("DELETE", "/env/foo/bar", {})[1].should == :destroy
     end
