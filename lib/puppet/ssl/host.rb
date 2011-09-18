@@ -34,6 +34,10 @@ class Puppet::SSL::Host
     @localhost
   end
 
+  def self.reset
+    @localhost = nil
+  end
+
   # This is the constant that people will use to mark that a given host is
   # a certificate authority.
   def self.ca_name
