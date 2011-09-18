@@ -78,6 +78,13 @@ describe Puppet::Util::NetworkDevice::Config do
       lambda { @config.read }.should raise_error
     end
 
+    it "should accept device certname containing dashes" do
+      @fd.stubs(:each).yields('[router-1.puppetlabs.com]')
+
+      @config.read
+      @config.devices.should include('router-1.puppetlabs.com')
+    end
+
     it "should create a new device for each found device line" do
       @fd.stubs(:each).multiple_yields('[router.puppetlabs.com]', '[swith.puppetlabs.com]')
 
