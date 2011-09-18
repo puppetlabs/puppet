@@ -24,6 +24,6 @@ class Puppet::Util::Instrumentation::IndirectionProbe
   end
 
   def self.from_pson(data)
-    self.new("dummy")
+    self.new(data["name"])
   end
 end
