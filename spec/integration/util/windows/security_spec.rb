@@ -45,7 +45,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
       end
 
-      describe "when setting the owner sid" do
+      describe "#owner=" do
         it "should allow setting to the current user" do
           winsec.set_owner(sids[:current_user], path)
         end
@@ -55,7 +55,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "when getting the owner sid" do
+      describe "#owner" do
         it "it should not be empty" do
           winsec.get_owner(path).should_not be_empty
         end
@@ -65,7 +65,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "when setting the group sid" do
+      describe "#group=" do
         it "should allow setting to a group the current owner is a member of" do
           winsec.set_group(sids[:users], path)
         end
@@ -77,7 +77,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "when getting the group sid" do
+      describe "#group" do
         it "should not be empty" do
           winsec.get_group(path).should_not be_empty
         end
@@ -87,7 +87,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "setting the mode" do
+      describe "#mode=" do
         [0000, 0100, 0200, 0300, 0400, 0500, 0600, 0700].each do |mode|
           it "should enforce mode #{mode.to_s(8)}" do
             winsec.set_mode(mode, path)
@@ -150,7 +150,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "getting the mode" do
+      describe "#mode" do
         it "should report when extra aces are encounted" do
           winsec.set_acl(path, true) do |acl|
             [ 544, 545, 546, 547 ].each do |rid|
@@ -231,7 +231,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
       end
 
-      describe "when setting the owner sid" do
+      describe "#owner=" do
         it "should accept a user sid" do
           winsec.set_owner(sids[:admin], path)
           winsec.get_owner(path).should == sids[:admin]
@@ -251,7 +251,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "when setting the group sid" do
+      describe "#group=" do
         it "should accept a group sid" do
           winsec.set_group(sids[:power_users], path)
           winsec.get_group(path).should == sids[:power_users]
@@ -321,7 +321,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
       end
 
-      describe "when getting the dacl" do
+      describe "#mode" do
         it "should deny all access when the DACL is empty" do
           winsec.set_acl(path, true) { |acl| }
 
@@ -336,6 +336,26 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         #   end
         #   winsec.get_mode(path).to_s(8).should == "777"
         # end
+      end
+
+      describe "#string_to_sid_ptr" do
+        it "should raise an error if an invalid SID is specified" do
+          expect do
+            winsec.string_to_sid_ptr('foobar')
+          end.to raise_error(Puppet::Util::Windows::Error) { |error| error.code.should == 1337 }
+        end
+
+        it "should yield if a block is given" do
+          yielded = nil
+          winsec.string_to_sid_ptr('S-1-1-0') do |sid|
+            yielded = sid
+          end
+          yielded.should_not be_nil
+        end
+
+        it "should allow no block to be specified" do
+          winsec.string_to_sid_ptr('S-1-1-0').should be_true
+        end
       end
     end
   end

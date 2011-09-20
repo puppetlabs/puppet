@@ -514,7 +514,11 @@ module Puppet::Util::Windows::Security
 
     sid_ptr = sid_buf.unpack('L')[0]
     begin
-      yield sid_ptr
+      if block_given?
+        yield sid_ptr
+      else
+        true
+      end
     ensure
       LocalFree(sid_ptr)
     end
