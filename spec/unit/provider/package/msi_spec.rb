@@ -15,6 +15,7 @@ describe 'Puppet::Provider::Package::Msi' do
         :name   => 'mysql-5.1.58-winx64',
         :source => 'E:\mysql-5.1.58-winx64.msi'
       )
+
       resource.provider.stubs(:execute)
       resource.provider.install
 
@@ -90,6 +91,7 @@ describe 'Puppet::Provider::Package::Msi' do
     end
 
     it 'should remove the state file' do
+      Puppet::Type.type(:package).provider(:msi).any_instance.stubs(:source).returns('E:\mysql-5.1.58-winx64.msi')
       resource = Puppet::Type.type(:package).new(
         :name   => 'mysql-5.1.58-winx64',
         :source => 'E:\mysql-5.1.58-winx64.msi'
@@ -101,10 +103,12 @@ describe 'Puppet::Provider::Package::Msi' do
     end
 
     it 'should leave the state file if uninstalling fails' do
+      Puppet::Type.type(:package).provider(:msi).any_instance.stubs(:source).returns('E:\mysql-5.1.58-winx64.msi')
       resource = Puppet::Type.type(:package).new(
         :name   => 'mysql-5.1.58-winx64',
         :source => 'E:\mysql-5.1.58-winx64.msi'
       )
+
       resource.provider.stubs(:msiexec).raises(Puppet::ExecutionFailure.new("Execution of 'msiexec.exe' returned 128: Blargle"))
       expect { resource.provider.uninstall }.to raise_error(Puppet::ExecutionFailure, /msiexec\.exe/)
 
@@ -112,6 +116,7 @@ describe 'Puppet::Provider::Package::Msi' do
     end
 
     it 'should fail if the source parameter is not set' do
+      Puppet::Type.type(:package).provider(:msi).any_instance.stubs(:source).returns(nil)
       expect do
         resource = Puppet::Type.type(:package).new(
           :name => 'mysql-5.1.58-winx64'
@@ -120,6 +125,7 @@ describe 'Puppet::Provider::Package::Msi' do
     end
 
     it 'should fail if the source parameter is empty' do
+      Puppet::Type.type(:package).provider(:msi).any_instance.stubs(:source).returns('')
       expect do
         resource = Puppet::Type.type(:package).new(
           :name   => 'mysql-5.1.58-winx64',
@@ -148,6 +154,7 @@ describe 'Puppet::Provider::Package::Msi' do
     FileUtils.mkdir_p(@state_dir)
     File.open(File.join(@state_dir, 'mysql-5.1.58-winx64.yml'), 'w') {|f| f.puts 'Hello'}
 
+    Puppet::Type.type(:package).provider(:msi).any_instance.stubs(:source).returns('E:\mysql-5.1.58-winx64.msi')
     resource = Puppet::Type.type(:package).new(
       :name   => 'mysql-5.1.58-winx64',
       :source => 'E:\mysql-5.1.58-winx64.msi'
@@ -166,5 +173,14 @@ describe 'Puppet::Provider::Package::Msi' do
     )
 
     resource.provider.query.should be_nil
+  end
+
+  it "should return the package name as the 'source' property" do
+    resource = Puppet::Type.type(:package).new(
+      :name   => 'mysql-5.1.58-winx64',
+      :source => 'E:\mysql-5.1.58-winx64.msi'
+    )
+
+    resource.provider.source.should == 'E:\mysql-5.1.58-winx64.msi'
   end
 end
