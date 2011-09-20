@@ -47,7 +47,7 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when writing files" do
-    it "should backup files to a filebucket when one is configured", :fails_on_windows => true do
+    it "should backup files to a filebucket when one is configured" do
       filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = described_class.new :path => path, :backup => "mybucket", :content => "foo"
       catalog.add_resource file
@@ -126,7 +126,7 @@ describe Puppet::Type.type(:file) do
       File.read(File.join(backup, "foo")).should == "yay"
     end
 
-    it "should backup directories to filebuckets by backing up each file separately", :fails_on_windows => true do
+    it "should backup directories to filebuckets by backing up each file separately" do
       bucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
       file = described_class.new :path => tmpfile("bucket_backs"), :backup => "mybucket", :content => "foo", :force => true
       catalog.add_resource file
@@ -186,7 +186,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recurse over a nonexistent file", :fails_on_windows => true do
+    it "should be able to recurse over a nonexistent file" do
       @file = described_class.new(
         :name    => path,
         :mode    => 0644,
@@ -252,7 +252,7 @@ describe Puppet::Type.type(:file) do
       end
     end
 
-    it "should be able to recursively copy files", :fails_on_windows => true do
+    it "should be able to recursively copy files" do
       source = tmpfile("file_source_integration_source")
 
       build_path(source)
@@ -316,7 +316,7 @@ describe Puppet::Type.type(:file) do
     end
   end
 
-  describe "when generating resources", :fails_on_windows => true do
+  describe "when generating resources" do
     before do
       source = tmpfile("generating_in_catalog_source")
 

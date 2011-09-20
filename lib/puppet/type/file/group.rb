@@ -47,6 +47,8 @@ module Puppet
     end
 
     def insync?(current)
+      return true if Puppet.features.microsoft_windows?
+
       @should.each do |value|
         if value =~ /^\d+$/
           gid = Integer(value)
@@ -62,6 +64,7 @@ module Puppet
     end
 
     def retrieve
+      return 0 if Puppet.features.microsoft_windows?
       return :absent unless stat = resource.stat
 
       currentvalue = stat.gid
