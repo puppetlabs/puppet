@@ -92,6 +92,19 @@ describe Puppet::Util::ADSI do
         user.password = 'pwd'
       end
 
+      it "should be able to get its SID" do
+        result = [stub('user', :name => 'joe', :Sid => 'S-1-1-50')]
+        connection.expects(:execquery).returns(result)
+
+        user.sid.should == 'S-1-1-50'
+      end
+
+      it "should return nil if the user does not exist" do
+        connection.expects(:execquery).returns([])
+
+        user.sid.should be_nil
+      end
+
       it "should generate the correct URI" do
         user.uri.should == "WinNT://testcomputername/#{username},user"
       end
@@ -169,6 +182,19 @@ describe Puppet::Util::ADSI do
         adsi_group.expects(:Add).with('WinNT://testcomputername/user3,user')
 
         group.set_members(['user2', 'user3'])
+      end
+
+      it "should be able to get its SID" do
+        result = [stub('group', :name => 'somegroup', :Sid => 'S-1-1-51')]
+        connection.expects(:execquery).returns(result)
+
+        group.sid.should == 'S-1-1-51'
+      end
+
+      it "should return nil if the group does not exist" do
+        connection.expects(:execquery).returns([])
+
+        group.sid.should be_nil
       end
 
       it "should generate the correct URI" do

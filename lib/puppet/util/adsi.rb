@@ -96,6 +96,17 @@ module Puppet::Util::ADSI
       native_user.Put(attribute, value)
     end
 
+    def sid
+      sid = nil
+
+      Puppet::Util::ADSI.execquery(
+        "SELECT Sid from Win32_Account
+         WHERE Name = '#{name}' AND LocalAccount = true"
+      ).each {|u| sid ||= u.Sid}
+
+      sid
+    end
+
     def commit
       begin
         native_user.SetInfo unless native_user.nil?
@@ -206,6 +217,17 @@ module Puppet::Util::ADSI
 
     def native_group
       @native_group ||= Puppet::Util::ADSI.connect(uri)
+    end
+
+    def sid
+      sid = nil
+
+      Puppet::Util::ADSI.execquery(
+        "SELECT Sid from Win32_Account
+         WHERE Name = '#{name}' AND LocalAccount = true"
+      ).each {|u| sid ||= u.Sid}
+
+      sid
     end
 
     def commit
