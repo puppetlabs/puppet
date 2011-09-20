@@ -48,6 +48,17 @@ module Puppet::Util::ADSI
     def execquery(query)
       connect(wmi_resource_uri).execquery(query)
     end
+
+    def sid_for_account(name)
+      sid = nil
+
+      execquery(
+        "SELECT Sid from Win32_Account
+         WHERE Name = '#{name}' AND LocalAccount = true"
+      ).each {|u| sid ||= u.Sid}
+
+      sid
+    end
   end
 
   class User
@@ -94,17 +105,6 @@ module Puppet::Util::ADSI
 
     def []=(attribute, value)
       native_user.Put(attribute, value)
-    end
-
-    def sid
-      sid = nil
-
-      Puppet::Util::ADSI.execquery(
-        "SELECT Sid from Win32_Account
-         WHERE Name = '#{name}' AND LocalAccount = true"
-      ).each {|u| sid ||= u.Sid}
-
-      sid
     end
 
     def commit
@@ -217,17 +217,6 @@ module Puppet::Util::ADSI
 
     def native_group
       @native_group ||= Puppet::Util::ADSI.connect(uri)
-    end
-
-    def sid
-      sid = nil
-
-      Puppet::Util::ADSI.execquery(
-        "SELECT Sid from Win32_Account
-         WHERE Name = '#{name}' AND LocalAccount = true"
-      ).each {|u| sid ||= u.Sid}
-
-      sid
     end
 
     def commit

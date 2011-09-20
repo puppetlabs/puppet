@@ -14,19 +14,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   include PuppetSpec::Files
 
   before :all do
-    sid = nil
-
-    wql = Puppet::Util::ADSI.execquery("select Sid from win32_account where name='#{Sys::Admin.get_login}'")
-    wql.each do |u|
-      sid = u.Sid
-      break
-    end
-
     @sids = {
-      :current_user => sid,
-      :admin => Sys::Admin.get_user("Administrator").sid,
-      :guest => Sys::Admin.get_user("Guest").sid,
-
+      :current_user => Puppet::Util::ADSI.sid_for_account(Sys::Admin.get_login),
+      :admin => Puppet::Util::ADSI.sid_for_account("Administrator"),
+      :guest => Puppet::Util::ADSI.sid_for_account("Guest"),
       :users => Win32::Security::SID::BuiltinUsers,
       :power_users => Win32::Security::SID::PowerUsers,
     }

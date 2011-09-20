@@ -42,7 +42,7 @@ Puppet::Type.type(:file).provide :windows do
       raise unless e.code == ERROR_INVALID_SID_STRUCTURE
     end
 
-    Puppet::Util::ADSI::User.new(value).sid rescue nil
+    Puppet::Util::ADSI.sid_for_account(value) rescue nil
   end
 
   def owner
