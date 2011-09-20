@@ -77,6 +77,8 @@ module Puppet::Util::Windows::Security
   include Windows::Memory
   include Windows::MSVCRT::Buffer
 
+  extend Puppet::Util::Windows::Security
+
   # file modes
   S_IRUSR = 0000400
   S_IRGRP = 0000040
