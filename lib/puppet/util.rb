@@ -205,7 +205,7 @@ module Util
     slash = '[\\\\/]'
     name = '[^\\\\/]+'
     regexes = {
-      :windows => %r!^([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name})!i,
+      :windows => %r!^(([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name}))!i,
       :posix   => %r!^/!,
     }
     platform ||= Puppet.features.microsoft_windows? ? :windows : :posix

@@ -19,13 +19,13 @@ describe Puppet::Util do
     end
 
     describe "when using platform :posix" do
-      %w[/ /foo /foo/../bar //foo //Server/Foo/Bar //?/C:/foo/bar /\Server/Foo].each do |path|
+      %w[/ /foo /foo/../bar //foo //Server/Foo/Bar //?/C:/foo/bar /\Server/Foo /foo//bar/baz].each do |path|
         it "should return true for #{path}" do
           Puppet::Util.should be_absolute_path(path, :posix)
         end
       end
 
-      %w[. ./foo \foo C:/foo \\Server\Foo\Bar \\?\C:\foo\bar \/?/foo\bar \/Server/foo].each do |path|
+      %w[. ./foo \foo C:/foo \\Server\Foo\Bar \\?\C:\foo\bar \/?/foo\bar \/Server/foo foo//bar/baz].each do |path|
         it "should return false for #{path}" do
           Puppet::Util.should_not be_absolute_path(path, :posix)
         end
@@ -33,13 +33,13 @@ describe Puppet::Util do
     end
 
     describe "when using platform :windows" do
-      %w[C:/foo C:\foo \\\\Server\Foo\Bar \\\\?\C:\foo\bar //Server/Foo/Bar //?/C:/foo/bar /\?\C:/foo\bar \/Server\Foo/Bar].each do |path|
+      %w[C:/foo C:\foo \\\\Server\Foo\Bar \\\\?\C:\foo\bar //Server/Foo/Bar //?/C:/foo/bar /\?\C:/foo\bar \/Server\Foo/Bar c:/foo//bar//baz].each do |path|
         it "should return true for #{path}" do
           Puppet::Util.should be_absolute_path(path, :windows)
         end
       end
 
-      %w[/ . ./foo \foo /foo /foo/../bar //foo C:foo/bar].each do |path|
+      %w[/ . ./foo \foo /foo /foo/../bar //foo C:foo/bar foo//bar/baz].each do |path|
         it "should return false for #{path}" do
           Puppet::Util.should_not be_absolute_path(path, :windows)
         end
