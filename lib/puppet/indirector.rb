@@ -31,7 +31,13 @@ module Puppet::Indirector
         @indirection
     end
 
-    module ClassMethods   
+    # Helper definition for indirections that handle filenames.
+    BadNameRegexp = Regexp.union(/^\.\./,
+                                 %r{[\\/]},
+                                 "\0",
+                                 /(?i)^[a-z]:/)
+
+    module ClassMethods
         attr_reader :indirection
 
         def cache_class=(klass)

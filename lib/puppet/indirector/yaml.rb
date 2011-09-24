@@ -50,6 +50,11 @@ class Puppet::Indirector::Yaml < Puppet::Indirector::Terminus
 
     # Return the path to a given node's file.
     def path(name)
+        if name =~ Puppet::Indirector::BadNameRegexp then
+            Puppet.crit("directory traversal detected in #{self.class}: #{name.inspect}")
+            raise ArgumentError, "invalid key"
+        end
+
         File.join(base, self.class.indirection_name.to_s, name.to_s + ".yaml")
     end
 

@@ -89,6 +89,25 @@ describe Puppet::Indirector::SslFile do
             end
         end
 
+        ['../foo', '..\\foo', './../foo', '.\\..\\foo',
+            '/foo', '//foo', '\\foo', '\\\\goo',
+            "test\0/../bar", "test\0\\..\\bar",
+            "..\\/bar", "/tmp/bar", "/tmp\\bar", "tmp\\bar",
+            " / bar", " /../ bar", " \\..\\ bar",
+            "c:\\foo", "c:/foo", "\\\\?\\UNC\\bar", "\\\\foo\\bar",
+            "\\\\?\\c:\\foo", "//?/UNC/bar", "//foo/bar",
+            "//?/c:/foo",
+        ].each do |input|
+            it "should resist directory traversal attacks (#{input.inspect})" do
+                expect { @searcher.path(input) }.to raise_error
+            end
+        end
+
+      # REVISIT: Should probably test MS-DOS reserved names here, too, since
+      # they would represent a vulnerability on a Win32 system, should we ever
+      # support that path.  Don't forget that 'CON.foo' == 'CON'
+      # --daniel 2011-09-24
+
         describe "when finding certificates on disk" do
             describe "and no certificate is present" do
                 before do

@@ -54,6 +54,11 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
 
     # Use a setting to determine our path.
     def path(name)
+        if name =~ Puppet::Indirector::BadNameRegexp then
+            Puppet.crit("directory traversal detected in #{self.class}: #{name.inspect}")
+            raise ArgumentError, "invalid key"
+        end
+
         if ca?(name) and ca_location
             ca_location
         elsif collection_directory
