@@ -52,8 +52,12 @@ class Puppet::Indirector::SslFile < Puppet::Indirector::Terminus
     (collection_directory || file_location) or raise Puppet::DevError, "No file or directory setting provided; terminus #{self.class.name} cannot function"
   end
 
-  # Use a setting to determine our path.
   def path(name)
+    if name =~ Puppet::Indirector::BadNameRegexp then
+      Puppet.crit("directory traversal detected in #{self.class}: #{name.inspect}")
+      raise ArgumentError, "invalid key"
+    end
+
     if ca?(name) and ca_location
       ca_location
     elsif collection_directory
