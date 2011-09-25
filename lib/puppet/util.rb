@@ -222,7 +222,8 @@ module Util
       Puppet.debug "Executing '#{command}'"
     end
 
-    output = open("| #{command} 2>&1") do |pipe|
+    command_str = command.respond_to?(:join) ? command.join('') : command
+    output = open("| #{command_str} 2>&1") do |pipe|
       yield pipe
     end
 
