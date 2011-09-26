@@ -159,6 +159,15 @@ describe Puppet::Type, :fails_on_windows => true do
       @type.provider_hash.clear
     end
 
+    it "should have documentation for the 'provider' parameter if there are providers" do
+      @type.provide(:test_provider)
+      @type.paramdoc(:provider).should =~ /`provider_test_type`[\s\r]+resource/
+    end
+
+    it "should not have documentation for the 'provider' parameter if there are no providers" do
+      expect { @type.paramdoc(:provider) }.to raise_error(NoMethodError)
+    end
+
     it "should create a subclass of Puppet::Provider for the provider" do
       provider = @type.provide(:test_provider)
 
