@@ -3,11 +3,32 @@ require 'spec_helper'
 
 require 'puppet_spec/files'
 
+if Puppet.features.microsoft_windows?
+  require 'puppet/util/windows'
+  class WindowsSecurity
+    extend Puppet::Util::Windows::Security
+  end
+end
+
 describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
   let(:catalog) { Puppet::Resource::Catalog.new }
   let(:path) { tmpfile('file_testing') }
+
+  if Puppet.features.posix?
+    def get_mode(file)
+      File.lstat(file).mode
+    end
+  else
+    class SecurityHelper
+      extend Puppet::Util::Windows::Security
+    end
+
+    def get_mode(file)
+      SecurityHelper.get_mode(file)
+    end
+  end
 
   before do
     # stub this to not try to create state.yaml
@@ -196,12 +217,12 @@ describe Puppet::Type.type(:file) do
 
       @dirs.should_not be_empty
       @dirs.each do |path|
-        (File.stat(path).mode & 007777).should == 0755
+        (get_mode(path) & 007777).should == 0755
       end
 
       @files.should_not be_empty
       @files.each do |path|
-        (File.stat(path).mode & 007777).should == 0644
+        (get_mode(path) & 007777).should == 0644
       end
     end
 
@@ -274,13 +295,13 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      (File.stat(file).mode & 007777).should == 0644
+      (get_mode(file) & 007777).should == 0644
     end
 
     it "should recursively manage files even if there is an explicit file whose name is a prefix of the managed file" do
       managed      = File.join(path, "file")
       generated    = File.join(path, "file_with_a_name_starting_with_the_word_file")
-      managed_mode = Puppet.features.microsoft_windows? ? 0444 : 0700
+      managed_mode = 0700
 
       FileUtils.mkdir_p(path)
       FileUtils.touch(managed)
@@ -291,7 +312,7 @@ describe Puppet::Type.type(:file) do
 
       catalog.apply
 
-      (File.stat(generated).mode & 007777).should == managed_mode
+      (get_mode(generated) & 007777).should == managed_mode
     end
   end
 

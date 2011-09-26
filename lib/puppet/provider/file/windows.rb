@@ -1,11 +1,14 @@
-Puppet::Type.type(:file).provide :microsoft_windows do
+Puppet::Type.type(:file).provide :windows do
   desc "Uses Microsoft Windows functionality to manage file's users and rights."
 
   confine :feature => :microsoft_windows
 
   include Puppet::Util::Warnings
+  if Puppet.features.microsoft_windows?
+    require 'puppet/util/windows'
+    include Puppet::Util::Windows::Security
+  end
 
-  require 'sys/admin' if Puppet.features.microsoft_windows?
 
   def id2name(id)
     return id.to_s if id.is_a?(Symbol)
@@ -68,5 +71,24 @@ Puppet::Type.type(:file).provide :microsoft_windows do
 
   def sync(path, links, should)
     info("should set '%s'%%owner to '%s'" % [path, should])
+  end
+
+  def mode
+    if resource.exist?
+      get_mode(resource[:path]).to_s(8)
+    else
+      :absent
+    end
+  end
+
+  def mode=(value)
+    begin
+      set_mode(value.to_i(8), resource[:path])
+    rescue => detail
+      error = Puppet::Error.new("failed to set mode #{mode} on #{resource[:path]}: #{detail.message}")
+      error.set_backtrace detail.backtrace
+      raise error
+    end
+    :file_changed
   end
 end
