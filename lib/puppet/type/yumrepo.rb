@@ -48,20 +48,20 @@ module Puppet
   end
 
   # Doc string for properties that can be made 'absent'
-  ABSENT_DOC="Set this to 'absent' to remove it from the file completely"
+  ABSENT_DOC="Set this to `absent` to remove it from the file completely."
 
   newtype(:yumrepo) do
     @doc = "The client-side description of a yum repository. Repository
       configurations are found by parsing `/etc/yum.conf` and
-      the files indicated by the `reposdir` option in that file 
-      (see yum.conf(5) for details)
+      the files indicated by the `reposdir` option in that file
+      (see `yum.conf(5)` for details).
 
       Most parameters are identical to the ones documented
-      in yum.conf(5)
+      in the `yum.conf(5)` man page.
 
-      Continuation lines that yum supports for example for the
-      baseurl are not supported. No attempt is made to access
-      files included with the **include** directive"
+      Continuation lines that yum supports (for the `baseurl`, for example)
+      are not supported. This type does not attempt to read or verify the
+      exinstence of files listed in the `include` attribute."
 
     class << self
       attr_accessor :filetype
@@ -200,13 +200,13 @@ module Puppet
 
     newparam(:name) do
       desc "The name of the repository.  This corresponds to the
-        repositoryid parameter in yum.conf(5)."
+        `repositoryid` parameter in `yum.conf(5)`."
       isnamevar
     end
 
     newproperty(:descr, :parent => Puppet::IniProperty) do
-      desc "A human readable description of the repository.
-        This corresponds to the name parameter in yum.conf(5).
+      desc "A human-readable description of the repository.
+        This corresponds to the name parameter in `yum.conf(5)`.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
@@ -222,37 +222,39 @@ module Puppet
     end
 
     newproperty(:baseurl, :parent => Puppet::IniProperty) do
-      desc "The URL for this repository.\n#{ABSENT_DOC}"
+      desc "The URL for this repository. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       # Should really check that it's a valid URL
       newvalue(/.*/) { }
     end
 
     newproperty(:enabled, :parent => Puppet::IniProperty) do
-      desc "Whether this repository is enabled or disabled. Possible
-        values are '0', and '1'.\n#{ABSENT_DOC}"
+      desc "Whether this repository is enabled, as represented by a
+        `0` or `1`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{(0|1)}) { }
     end
 
     newproperty(:gpgcheck, :parent => Puppet::IniProperty) do
       desc "Whether to check the GPG signature on packages installed
-        from this repository. Possible values are '0', and '1'.
-        \n#{ABSENT_DOC}"
+        from this repository, as represented by a `0` or `1`.
+        #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{(0|1)}) { }
     end
 
     newproperty(:gpgkey, :parent => Puppet::IniProperty) do
       desc "The URL for the GPG key with which packages from this
-        repository are signed.\n#{ABSENT_DOC}"
+        repository are signed. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       # Should really check that it's a valid URL
       newvalue(/.*/) { }
     end
 
     newproperty(:include, :parent => Puppet::IniProperty) do
-      desc "A URL from which to include the config.\n#{ABSENT_DOC}"
+      desc "The URL of a remote file containing additional yum configuration
+        settings. Puppet does not check for this file's existence or validity.
+        #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       # Should really check that it's a valid URL
       newvalue(/.*/) { }
@@ -269,41 +271,41 @@ module Puppet
     newproperty(:includepkgs, :parent => Puppet::IniProperty) do
       desc "List of shell globs. If this is set, only packages
         matching one of the globs will be considered for
-        update or install.\n#{ABSENT_DOC}"
+        update or install from this repo. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end
 
     newproperty(:enablegroups, :parent => Puppet::IniProperty) do
-      desc "Determines whether yum will allow the use of
-        package groups for this  repository. Possible
-        values are '0', and '1'.\n#{ABSENT_DOC}"
+      desc "Whether yum will allow the use of package groups for this
+        repository, as represented by a `0` or `1`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{(0|1)}) { }
     end
 
     newproperty(:failovermethod, :parent => Puppet::IniProperty) do
-      desc "Either 'roundrobin' or 'priority'.\n#{ABSENT_DOC}"
+      desc "The failover methode for this repository; should be either
+        `roundrobin` or `priority`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{roundrobin|priority}) { }
     end
 
     newproperty(:keepalive, :parent => Puppet::IniProperty) do
-      desc "Either '1' or '0'. This tells yum whether or not HTTP/1.1
-        keepalive  should  be  used with this repository.\n#{ABSENT_DOC}"
+      desc "Whether HTTP/1.1 keepalive should be used with this repository, as
+        represented by a `0` or `1`. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{(0|1)}) { }
     end
 
      newproperty(:http_caching, :parent => Puppet::IniProperty) do
-       desc "Either 'packages' or 'all' or 'none'.\n#{ABSENT_DOC}" 
+       desc "What to cache from this repository. #{ABSENT_DOC}"
        newvalue(:absent) { self.should = :absent }
        newvalue(%r(packages|all|none)) { }
      end
 
     newproperty(:timeout, :parent => Puppet::IniProperty) do
       desc "Number of seconds to wait for a connection before timing
-        out.\n#{ABSENT_DOC}"
+        out. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{[0-9]+}) { }
     end
@@ -317,7 +319,7 @@ module Puppet
 
     newproperty(:protect, :parent => Puppet::IniProperty) do
       desc "Enable or disable protection for this repository. Requires
-        that the protectbase plugin is installed and enabled.
+        that the `protectbase` plugin is installed and enabled.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{(0|1)}) { }
@@ -325,7 +327,7 @@ module Puppet
 
     newproperty(:priority, :parent => Puppet::IniProperty) do
       desc "Priority of this repository from 1-99. Requires that
-        the priorities plugin is installed and enabled.
+        the `priorities` plugin is installed and enabled.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(%r{[1-9][0-9]?}) { }
@@ -338,20 +340,20 @@ module Puppet
     end
 
     newproperty(:proxy, :parent => Puppet::IniProperty) do
-      desc "URL to the proxy server for this repository.\n#{ABSENT_DOC}"
+      desc "URL to the proxy server for this repository. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       # Should really check that it's a valid URL
       newvalue(/.*/) { }
     end
 
     newproperty(:proxy_username, :parent => Puppet::IniProperty) do
-      desc "Username for this proxy.\n#{ABSENT_DOC}"
+      desc "Username for this proxy. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end
 
     newproperty(:proxy_password, :parent => Puppet::IniProperty) do
-      desc "Password for this proxy.\n#{ABSENT_DOC}"
+      desc "Password for this proxy. #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
       newvalue(/.*/) { }
     end

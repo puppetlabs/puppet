@@ -6,8 +6,11 @@ Puppet::Type.newtype(:selmodule) do
   @doc = "Manages loading and unloading of SELinux policy modules
     on the system.  Requires SELinux support.  See man semodule(8)
     for more information on SELinux policy modules.
-    
-    **Autorequires:** If Puppet is managing the file containing this SELinux policy module (which is either explicitly specified in the `selmodulepath` attribute or will be found at {`selmoduledir`}/{`name`}.pp), the selmodule resource will autorequire that file."
+
+    **Autorequires:** If Puppet is managing the file containing this SELinux
+    policy module (which is either explicitly specified in the `selmodulepath`
+    attribute or will be found at {`selmoduledir`}/{`name`}.pp), the selmodule
+    resource will autorequire that file."
 
   ensurable
 
@@ -20,9 +23,10 @@ Puppet::Type.newtype(:selmodule) do
   newparam(:selmoduledir) do
 
     desc "The directory to look for the compiled pp module file in.
-      Currently defaults to `/usr/share/selinux/targeted`.  If selmodulepath
-      is not specified the module will be looked for in this directory in a
-      in a file called NAME.pp, where NAME is the value of the name parameter."
+      Currently defaults to `/usr/share/selinux/targeted`.  If the
+      `selmodulepath` attribute is not specified, Puppet will expect to find
+      the module in `<selmoduledir>/<name>.pp`, where `name` is the value of the
+      `name` parameter."
 
     defaultto "/usr/share/selinux/targeted"
   end
@@ -30,7 +34,7 @@ Puppet::Type.newtype(:selmodule) do
   newparam(:selmodulepath) do
 
     desc "The full path to the compiled .pp policy module.  You only need to use
-      this if the module file is not in the directory pointed at by selmoduledir."
+      this if the module file is not in the `selmoduledir` directory."
 
   end
 

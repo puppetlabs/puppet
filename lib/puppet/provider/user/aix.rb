@@ -17,7 +17,7 @@ require 'tempfile'
 require 'date'
 
 Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
-  desc "User management for AIX! Users are managed with mkuser, rmuser, chuser, lsuser"
+  desc "User management for AIX."
 
   # This will the the default provider for this platform
   defaultfor :operatingsystem => :aix
@@ -28,7 +28,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   commands :add       => "/usr/bin/mkuser"
   commands :delete    => "/usr/sbin/rmuser"
   commands :modify    => "/usr/bin/chuser"
-  
+
   commands :lsgroup   => "/usr/sbin/lsgroup"
   commands :chpasswd  => "/bin/chpasswd"
 
@@ -52,7 +52,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   # AIX attributes to properties mapping.
-  # 
+  #
   # Valid attributes to be managed by this provider.
   # It is a list with of hash
   #  :aix_attr      AIX command attribute name
@@ -73,10 +73,10 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     {:aix_attr => :minage,     :puppet_prop => :password_min_age},
     {:aix_attr => :attributes, :puppet_prop => :attributes},
   ]
-  
+
   #--------------
   # Command definition
-  
+
   # Return the IA module arguments based on the resource param ia_load_module
   def get_ia_module_args
     if @resource[:ia_load_module]
@@ -85,7 +85,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
       []
     end
   end
-  
+
   # List groups and Ids
   def lsgroupscmd(value=@resource[:name])
     [command(:lsgroup)] +
@@ -116,7 +116,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   def modifycmd(hash = property_hash)
     args = self.hash2args(hash)
     return nil if args.empty?
-    
+
     [self.class.command(:modify)] + self.get_ia_module_args +
       args + [@resource[:name]]
   end
@@ -131,9 +131,9 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     super
     # Reset the password if needed
     self.password = @resource[:password] if @resource[:password]
-  end 
+  end
 
-  
+
   def get_arguments(key, value, mapping, objectinfo)
     # In the case of attributes, return a list of key=vlaue
     if key == :attributes
@@ -141,10 +141,10 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
         unless value and value.is_a? Hash
       return value.select { |k,v| true }.map { |pair| pair.join("=") }
     end
-        
+
     super(key, value, mapping, objectinfo)
   end
-  
+
   # Get the groupname from its id
   def self.groupname_by_id(gid)
     groupname=nil
@@ -165,16 +165,16 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
 
   # Check that a group exists and is valid
   def verify_group(value)
-    if value.is_a? Integer or value.is_a? Fixnum  
+    if value.is_a? Integer or value.is_a? Fixnum
       groupname = self.groupname_by_id(value)
       raise ArgumentError, "AIX group must be a valid existing group" unless groupname
-    else 
+    else
       raise ArgumentError, "AIX group must be a valid existing group" unless groupid_by_name(value)
       groupname = value
     end
     groupname
   end
-  
+
   # The user's primary group.  Can be specified numerically or by name.
   def gid_to_attr(value)
     verify_group(value)
@@ -186,7 +186,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
   end
 
   # The expiry date for this user. Must be provided in
-  # a zero padded YYYY-MM-DD HH:MM format 
+  # a zero padded YYYY-MM-DD HH:MM format
   def expiry_to_attr(value)
     # For chuser the expires parameter is a 10-character string in the MMDDhhmmyy format
     # that is,"%m%d%H%M%y"
@@ -197,7 +197,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
     newdate
   end
-  
+
   def expiry_from_attr(value)
     if value =~ /(..)(..)(..)(..)(..)/
       #d= DateTime.parse("20#{$5}-#{$1}-#{$2} #{$3}:#{$4}")
@@ -233,7 +233,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     if ! f.eof?
       f.each { |l|
         # If there is a new user stanza, stop
-        break if l  =~ /^\S*:\s*$/ 
+        break if l  =~ /^\S*:\s*$/
         # If the password= entry is found, return it
         if l  =~ /^\s*password\s*=\s*(.*)$/
           password = $1; break;
@@ -242,11 +242,11 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     end
     f.close()
     return password
-  end 
+  end
 
   def password=(value)
     user = @resource[:name]
-    
+
     # Puppet execute does not support strings as input, only files.
     tmpfile = Tempfile.new('puppet_#{user}_pw')
     tmpfile << "#{user}:#{value}\n"
@@ -264,7 +264,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     ensure
       tmpfile.delete()
     end
-  end 
+  end
 
   def filter_attributes(hash)
     # Return only not managed attributtes.
@@ -284,7 +284,7 @@ Puppet::Type.type(:user).provide :aix, :parent => Puppet::Provider::AixObject do
     #self.class.validate(param, value)
     param = :attributes
     cmd = modifycmd({param => filter_attributes(attr_hash)})
-    if cmd 
+    if cmd
       begin
         execute(cmd)
       rescue Puppet::ExecutionFailure  => detail

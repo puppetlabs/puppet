@@ -20,10 +20,10 @@ module Puppet
 
       Note that if a `service` receives an event from another resource,
       the service will get restarted. The actual command to restart the
-      service depends on the platform. You can provide an explicit command
-      for restarting with the `restart` attribute, or use the init script's
-      restart command with the `hasrestart` attribute; if you do neither,
-      the service's stop and start commands will be used."
+      service depends on the platform. You can provide an explicit command for
+      restarting with the `restart` attribute, or you can set `hasrestart` to
+      true to use the init script's restart command; if you do neither, the
+      service's stop and start commands will be used."
 
     feature :refreshable, "The provider can restart the service.",
       :methods => [:restart]
@@ -143,10 +143,8 @@ module Puppet
         status on those service whose init scripts do not include a status
         command.
 
-        If this is left unspecified and is needed to check the status
-        of a service, then the service name will be used instead.
-
-        The pattern can be a simple string or any legal Ruby pattern."
+        Defaults to the name of the service. The pattern can be a simple string
+        or any legal Ruby pattern."
 
       defaultto { @resource[:binary] || @resource[:name] }
     end
@@ -164,7 +162,7 @@ module Puppet
         return 0 if the service is running and a nonzero value otherwise.
         Ideally, these return codes should conform to
         [the LSB's specification for init script status actions](http://refspecs.freestandards.org/LSB_3.1.1/LSB-Core-generic/LSB-Core-generic/iniscrptact.html),
-        but puppet only considers the difference between 0 and nonzero
+        but Puppet only considers the difference between 0 and nonzero
         to be relevant.
 
         If left unspecified, the status method will be determined
@@ -184,8 +182,10 @@ module Puppet
     end
 
     newparam :hasrestart do
-      desc "Specify that an init script has a `restart` option.  Otherwise,
-        the init script's `stop` and `start` methods are used."
+      desc "Specify that an init script has a `restart` command.  If this is
+        false and you do not specify a command in the `restart` attribute,
+        the init script's `stop` and `start` commands will be used. Defaults
+        to true; note that this is a change from earlier versions of Puppet."
       newvalues(:true, :false)
     end
 

@@ -1,10 +1,8 @@
 Puppet::Type.type(:service).provide :upstart, :parent => :init do
-  desc "Ubuntu service manager upstart.
+  desc "Ubuntu service management with `upstart`.
 
-  This provider manages upstart jobs which have replaced initd.
-
-  See:
-   * http://upstart.ubuntu.com/
+  This provider manages `upstart` jobs, which have replaced `initd` services
+  on Ubuntu. For `upstart` documentation, see <http://upstart.ubuntu.com/>.
   "
   # confine to :ubuntu for now because I haven't tested on other platforms
   confine :operatingsystem => :ubuntu #[:ubuntu, :fedora, :debian]

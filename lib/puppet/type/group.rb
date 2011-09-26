@@ -89,10 +89,9 @@ module Puppet
     end
 
     newparam(:name) do
-      desc "The group name.  While naming limitations vary by
-        system, it is advisable to keep the name to the degenerate
-        limitations, which is a maximum of 8 characters beginning with
-        a letter."
+      desc "The group name. While naming limitations vary by operating system,
+        it is advisable to restrict names to the lowest common denominator,
+        which is a maximum of 8 characters beginning with a letter."
       isnamevar
     end
 
@@ -110,7 +109,7 @@ module Puppet
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify group AIX attributes in an array of keyvalue pairs"
+      desc "Specify group AIX attributes in an array of `key=value` pairs."
 
       def membership
         :attribute_membership
