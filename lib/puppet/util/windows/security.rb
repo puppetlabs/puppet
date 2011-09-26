@@ -246,7 +246,7 @@ module Puppet::Util::Windows::Security
     S_IROTH => FILE_GENERIC_READ,
     S_IWOTH => FILE_GENERIC_WRITE,
     S_IXOTH => (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES),
-    (S_IWOTH | S_IXUSR) => FILE_DELETE_CHILD,
+    (S_IWOTH | S_IXOTH) => FILE_DELETE_CHILD,
   }
 
   # Set the mode of the object referenced by +path+ to the specified
