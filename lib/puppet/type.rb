@@ -1477,9 +1477,15 @@ class Type
     return if @paramhash.has_key? :provider
 
     newparam(:provider) do
-      desc "The specific backend for #{self.name.to_s} to use. You will
-        seldom need to specify this --- Puppet will usually discover the
-        appropriate provider for your platform."
+      # We're using a hacky way to get the name of our type, since there doesn't
+      # seem to be a correct way to introspect this at the time this code is run.
+      # We expect that the class in which this code is executed will be something
+      # like Puppet::Type::Ssh_authorized_key::ParameterProvider.
+      desc <<-EOT
+        The specific backend to use for this `#{self.to_s.split('::')[2].downcase}`
+        resource. You will seldom need to specify this --- Puppet will usually
+        discover the appropriate provider for your platform.
+      EOT
 
       # This is so we can refer back to the type to get a list of
       # providers for documentation.
