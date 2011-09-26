@@ -54,19 +54,30 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   @product_version = Facter.value(:macosx_productversion_major) ? Facter.value(:macosx_productversion_major) : (sw_vers "-productVersion")
   fail("#{@product_version} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3}.include?(@product_version)
   
-  # Launchd implemented plist overrides in version 10.6.
-  # This method checks the major_version of OS X and returns true if 
-  # it is 10.6 or greater. This allows us to implement different plist
-  # behavior for versions >= 10.6
-  def has_macosx_plist_overrides?
-    return true unless /^10\.[0-5]/.match(@product_version)
-    return false
+  # Caching is enabled through the following three methods. Self.prefetch will
+  # call self.instances to create an instance for each service. Self.flush will
+  # clear out our cache when we're done.
+  def self.prefetch(resources)
+    instances.each do |prov|
+      if resource = resources[prov.name]
+        resource.provider = prov
+      end
+    end
   end
 
-  # Read a plist, whether its format is XML or in Apple's "binary1"
-  # format.
-  def self.read_plist(path)
-    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+  # Self.instances will be called for every service on the system, and
+  # it will call the jobsearch and self.status method to get get a list
+  # of all plist files on the system as well as all currently running
+  # services.
+  def self.instances
+    jobs = self.jobsearch
+    unless @status
+      self.status
+    end
+    jobs.keys.collect do |job|
+      status = @status.has_key?(job) ? :running : :stopped
+      new(:name => job, :provider => :launchd, :path => jobs[job], :status => status)
+    end
   end
 
   # Sets a class instance variable with a hash of all launchd plist files that
@@ -100,30 +111,36 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
   end
 
-  # Caching is enabled through the following three methods. Self.prefetch will
-  # call self.instances to create an instance for each service. Self.flush will
-  # clear out our cache when we're done.
-  def self.prefetch(resources)
-    instances.each do |prov|
-      if resource = resources[prov.name]
-        resource.provider = prov
+  # This status method lists out all currently running services and saves each
+  # job label as a key in the @status hash. This hash is returned at the end
+  # of the method.
+  def self.status
+    @status = Hash.new
+    begin
+      output = launchctl :list
+      raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
+      output.split("\n").each do |line|
+        @status[line.split(/\s/).last] = :running
       end
+    rescue Puppet::ExecutionFailure
+      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
     end
+    @status
   end
 
-  # Self.instances will be called for every service on the system, and
-  # it will call the jobsearch and self.status method to get get a list
-  # of all plist files on the system as well as all currently running
-  # services.
-  def self.instances
-    jobs = self.jobsearch
-    unless @status
-      self.status
-    end
-    jobs.keys.collect do |job|
-      status = @status.has_key?(job) ? :running : :stopped
-      new(:name => job, :provider => :launchd, :path => jobs[job], :status => status)
-    end
+  # Launchd implemented plist overrides in version 10.6.
+  # This method checks the major_version of OS X and returns true if 
+  # it is 10.6 or greater. This allows us to implement different plist
+  # behavior for versions >= 10.6
+  def has_macosx_plist_overrides?
+    return true unless /^10\.[0-5]/.match(@product_version)
+    return false
+  end
+
+  # Read a plist, whether its format is XML or in Apple's "binary1"
+  # format.
+  def self.read_plist(path)
+    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
   end
 
   def flush
@@ -170,23 +187,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       raise Puppet::Error.new("Unable to parse launchd plist at path: #{job_path}")
     end
     [job_path, job_plist]
-  end
-
-  # This status method lists out all currently running services and saves each
-  # job label as a key in the @status hash. This hash is returned at the end
-  # of the method.
-  def self.status
-    @status = Hash.new
-    begin
-      output = launchctl :list
-      raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
-      output.split("\n").each do |line|
-        @status[line.split(/\s/).last] = :running
-      end
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
-    end
-    @status
   end
 
   # start the service. To get to a state of running/enabled, we need to
