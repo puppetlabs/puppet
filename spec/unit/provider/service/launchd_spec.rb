@@ -3,36 +3,41 @@
 # Unit testing for the launchd service provider
 #
 
-require 'spec_helper'
-
+require 'mocha'
 require 'puppet'
 
-provider_class = Puppet::Type.type(:service).provider(:launchd)
+RSpec.configure do |config|
+  config.mock_with :mocha
+end
 
+provider_class = Puppet::Type.type(:service).provider(:launchd)
 describe provider_class do
 
   before :each do
     # Create a mock resource
-    @resource = stub 'resource'
-
-    @provider = provider_class.new
     @joblabel = "com.foo.food"
+    @resource = Puppet::Type::Service.new({
+      :name => @joblabel,
+      :ensure => :running,
+      :enable => :true,
+    })
+    @provider = provider_class.new(@resource)
     @jobplist = {}
 
     # A catch all; no parameters set
-    @resource.stubs(:[]).returns(nil)
+    #@resource.stubs(:[]).returns(nil)
 
     # But set name, ensure and enable
-    @resource.stubs(:[]).with(:name).returns @joblabel
-    @resource.stubs(:[]).with(:ensure).returns :enabled
-    @resource.stubs(:[]).with(:enable).returns :true
-    @resource.stubs(:ref).returns "Service[#{@joblabel}]"
+    # @resource.stubs(:[]).with(:name).returns @joblabel
+    # @resource.stubs(:[]).with(:ensure).returns :enabled
+    # @resource.stubs(:[]).with(:enable).returns :true
+    # @resource.stubs(:ref).returns "Service[#{@joblabel}]"
 
     # stub out the provider methods that actually touch the filesystem
     # or execute commands
-    @provider.stubs(:plist_from_label).returns([@joblabel, @jobplist])
-    @provider.stubs(:execute).returns("")
-    @provider.stubs(:resource).returns @resource
+    # @provider.stubs(:plist_from_label).returns([@joblabel, @jobplist])
+    # @provider.stubs(:execute).returns("")
+    # @provider.stubs(:resource).returns @resource
 
     # We stub this out for the normal case as 10.6 is "special".
     provider_class.stubs(:get_macosx_version_major).returns("10.5")
@@ -66,12 +71,20 @@ describe provider_class do
 
   describe "when checking status" do
     it "should call the external command 'launchctl list' once" do
-      @provider.expects(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
+      @provider.expects(:launchctl).with(:list).never
       @provider.status
     end
     it "should return stopped if not listed in launchctl list output" do
-      @provider.stubs(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
-      @provider.status.should == :stopped
+      @provider.stubs(:launchctl).with(:list).returns("0 0 com.foo.food\n1 1 com.foo.bar\n2 2 com.foo.baz")
+      @provider.stubs(:sw_vers).with("-productVersion").returns("10.5")
+      @provider.class.stubs(:jobsearch).returns({"com.foo.food" => "/Library/LaunchDaemons/com.foo.food.plist"})
+      @provider.stubs(:ensure).returns(:running)
+      @provider.stubs(:plist_from_label).returns("foo", {"Disabled" => false})
+      @provider.stubs(:enabled?).returns(:true)
+      @provider.stubs(:start).returns(:true)
+      @provider.ensure = :running
+      @provider.enabled?.should == :true
+      @provider.status.should == :running
     end
     it "should return running if listed in launchctl list output" do
       @provider.stubs(:launchctl).with(:list).returns(@joblabel)
