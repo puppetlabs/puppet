@@ -156,7 +156,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     begin
       # Make sure we've loaded all of the facts
       Facter.loadfacts
-
       if Facter.value(:macosx_productversion_major)
         product_version_major = Facter.value(:macosx_productversion_major)
       else
