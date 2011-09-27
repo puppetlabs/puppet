@@ -18,6 +18,9 @@ describe provider_class do
     @provider = provider_class.new
     @joblabel = "com.foo.food"
     @jobplist = {}
+    @services = {}
+    @args     = {}
+    @class    = Puppet::Type.type(:service).provider(:launchd)
 
     # A catch all; no parameters set
     @resource.stubs(:[]).returns(nil)
@@ -66,16 +69,22 @@ describe provider_class do
 
   describe "when checking status" do
     it "should call the external command 'launchctl list' once" do
-      @provider.expects(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
-      @provider.status
+      @class.expects(:launchctl).with(:list).returns(@joblabel)
+      @class.stubs(:jobsearch).with(nil).returns({@joblabel => "/Library/LaunchDaemons/#{@joblabel}"})
+      @services = @class.prefetch(@args)
     end
     it "should return stopped if not listed in launchctl list output" do
-      @provider.stubs(:launchctl).with(:list).returns("rotating-strawberry-madonnas")
-      @provider.status.should == :stopped
+      #@class.expects(:launchctl).with(:list).returns(@joblabel)
+      @class.stubs(:launchctl).with(:list).returns('com.bar.barred')
+      @class.stubs(:jobsearch).with(nil).returns({'com.bar.barred' => ""})
+      @services = @class.prefetch(@args)
+      @services.last.status.should == :stopped
     end
     it "should return running if listed in launchctl list output" do
-      @provider.stubs(:launchctl).with(:list).returns(@joblabel)
-      @provider.status.should == :running
+      @class.stubs(:launchctl).with(:list).returns(@joblabel)
+      @class.stubs(:jobsearch).with(nil).returns({@joblabel => "/Library/LaunchDaemons/#{@joblabel}"})
+      @services = @class.prefetch(@args)
+      @services.last.status.should == :running
     end
   end
 
