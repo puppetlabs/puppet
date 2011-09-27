@@ -310,11 +310,11 @@ module Util
       return execution_stub.call(*exec_args)
     elsif Puppet.features.posix?
       child_pid = execute_posix(*exec_args)
+      child_status = Process.waitpid2(child_pid).last.exitstatus
     elsif Puppet.features.microsoft_windows?
       child_pid = execute_windows(*exec_args)
+      child_status = Process.waitpid2(child_pid).last
     end
-
-    child_status = Process.waitpid2(child_pid).last
 
     [stdin, stdout, stderr].each {|io| io.close rescue nil}
 
@@ -325,7 +325,7 @@ module Util
     end
 
     if arguments[:failonfail] and child_status != 0
-      raise ExecutionFailure, "Execution of '#{str}' returned #{child_status.exitstatus}: #{output}"
+      raise ExecutionFailure, "Execution of '#{str}' returned #{child_status}: #{output}"
     end
 
     output
