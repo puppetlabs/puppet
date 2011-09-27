@@ -1,5 +1,4 @@
 require 'facter/util/plist'
-
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc "launchd service management framework.
 
@@ -63,10 +62,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
   end
 
-  # Self.instances will be called for every service on the system, and
-  # it will call the jobsearch and self.status method to get get a list
-  # of all plist files on the system as well as all currently running
-  # services.
+  # Self.instances will return an array with each element being a hash
+  # containing the name, provider, path, and status of each service on the
+  # system.
   def self.instances
     jobs = self.jobsearch
     unless @status
@@ -142,6 +140,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
   end
 
+  # Clean out the @property_hash variable containing the cached list of services
   def flush
     @property_hash.clear
   end
