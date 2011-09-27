@@ -1,122 +1,60 @@
 #!/usr/bin/env rspec
+
 require 'spec_helper'
 
-property = Puppet::Type.type(:file).attrclass(:group)
+describe Puppet::Type.type(:file).attrclass(:group) do
+  include PuppetSpec::Files
 
-describe property do
-  before do
-    @resource = stub 'resource', :line => "foo", :file => "bar"
-    @resource.stubs(:[]).returns "foo"
-    @resource.stubs(:[]).with(:path).returns "/my/file"
-    @group = property.new :resource => @resource
+  let(:path) { tmpfile('mode_spec') }
+  let(:resource) { Puppet::Type.type(:file).new :path => path, :group => 'users' }
+  let(:group) { resource.property(:group) }
+
+  before :each do
+    # If the provider was already loaded without root, it won't have the
+    # feature, so we have to add it here to test.
+    Puppet::Type.type(:file).defaultprovider.has_feature :manages_ownership
   end
 
-  it "should have a method for testing whether a group is valid" do
-    @group.must respond_to(:validgroup?)
-  end
+  describe "#insync?" do
+    before :each do
+      resource[:group] = ['foos', 'bars']
 
-  it "should return the found gid if a group is valid" do
-    @group.expects(:gid).with("foo").returns 500
-    @group.validgroup?("foo").should == 500
-  end
-
-  it "should return false if a group is not valid" do
-    @group.expects(:gid).with("foo").returns nil
-    @group.validgroup?("foo").should be_false
-  end
-
-  describe "when retrieving the current value" do
-    it "should return :absent if the file cannot stat" do
-      @resource.expects(:stat).returns nil
-
-      @group.retrieve.should == :absent
+      resource.provider.stubs(:name2gid).with('foos').returns 1001
+      resource.provider.stubs(:name2gid).with('bars').returns 1002
     end
 
-    it "should get the gid from the stat instance from the file" do
-      stat = stub 'stat', :ftype => "foo"
-      @resource.expects(:stat).returns stat
-      stat.expects(:gid).returns 500
+    it "should fail if an group's id can't be found by name" do
+      resource.provider.stubs(:name2gid).returns nil
 
-      @group.retrieve.should == 500
+      expect { group.insync?(5) }.to raise_error(/Could not find group foos/)
     end
 
-    it "should warn and return :silly if the found value is higher than the maximum uid value" do
-      Puppet.settings.expects(:value).with(:maximum_uid).returns 500
+    it "should use the id for comparisons, not the name" do
+      group.insync?('foos').should be_false
+    end
 
-      stat = stub 'stat', :ftype => "foo"
-      @resource.expects(:stat).returns stat
-      stat.expects(:gid).returns 1000
+    it "should return true if the current group is one of the desired group" do
+      group.insync?(1001).should be_true
+    end
 
-      @group.expects(:warning)
-      @group.retrieve.should == :silly
+    it "should return false if the current group is not one of the desired group" do
+      group.insync?(1003).should be_false
     end
   end
 
-  describe "when determining if the file is in sync" do
-    it "should directly compare the group values if the desired group is an integer" do
-      @group.should = [10]
-      @group.must be_safe_insync(10)
-    end
+  %w[is_to_s should_to_s].each do |prop_to_s|
+    describe "##{prop_to_s}" do
+      it "should use the name of the user if it can find it" do
+        resource.provider.stubs(:gid2name).with(1001).returns 'foos'
 
-    it "should treat numeric strings as integers" do
-      @group.should = ["10"]
-      @group.must be_safe_insync(10)
-    end
+        group.send(prop_to_s, 1001).should == 'foos'
+      end
 
-    it "should convert the group name to an integer if the desired group is a string" do
-      @group.expects(:gid).with("foo").returns 10
-      @group.should = %w{foo}
+      it "should use the id of the user if it can't" do
+        resource.provider.stubs(:gid2name).with(1001).returns nil
 
-      @group.must be_safe_insync(10)
-    end
-
-    it "should not validate that groups exist when a group is specified as an integer" do
-      @group.expects(:gid).never
-      @group.validgroup?(10)
-    end
-
-    it "should fail if it cannot convert a group name to an integer" do
-      @group.expects(:gid).with("foo").returns nil
-      @group.should = %w{foo}
-
-      lambda { @group.safe_insync?(10) }.should raise_error(Puppet::Error)
-    end
-
-    it "should return false if the groups are not equal" do
-      @group.should = [10]
-      @group.should_not be_safe_insync(20)
-    end
-  end
-
-  describe "when changing the group" do
-    before do
-      @group.should = %w{one}
-      @group.stubs(:gid).returns 500
-    end
-
-    it "should chown the file if :links is set to :follow" do
-      @resource.expects(:[]).with(:links).returns :follow
-      File.expects(:chown)
-
-      @group.sync
-    end
-
-    it "should lchown the file if :links is set to :manage" do
-      @resource.expects(:[]).with(:links).returns :manage
-      File.expects(:lchown)
-
-      @group.sync
-    end
-
-    it "should use the first valid group in its 'should' list" do
-      @group.should = %w{one two three}
-      @group.expects(:validgroup?).with("one").returns nil
-      @group.expects(:validgroup?).with("two").returns 500
-      @group.expects(:validgroup?).with("three").never
-
-      File.expects(:chown).with(nil, 500, "/my/file")
-
-      @group.sync
+        group.send(prop_to_s, 1001).should == 1001
+      end
     end
   end
 end

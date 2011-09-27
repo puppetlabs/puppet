@@ -13,7 +13,7 @@ Puppet::Type.type(:file).provide :windows do
 
   ERROR_INVALID_SID_STRUCTURE = 1337
 
-  def uid2name(id)
+  def id2name(id)
     # If it's a valid sid, get the name. Otherwise, it's already a name, so
     # just return it.
     begin
@@ -22,7 +22,7 @@ Puppet::Type.type(:file).provide :windows do
         Puppet::Util::ADSI.execquery(
           "SELECT Name FROM Win32_Account WHERE SID = '#{id}'
            AND LocalAccount = true"
-        ).each { |u| name ||= u.name }
+        ).each { |a| name ||= a.name }
         return name
       end
     rescue Puppet::Util::Windows::Error => e
@@ -32,9 +32,9 @@ Puppet::Type.type(:file).provide :windows do
     id
   end
 
-  # Determine if the user is valid, and if so, return the UID
-  def name2uid(value)
-    # If it's a valid sid, then return it. Else, it's name we need to convert
+  # Determine if the account is valid, and if so, return the UID
+  def name2id(value)
+    # If it's a valid sid, then return it. Else, it's a name we need to convert
     # to sid.
     begin
       return value if string_to_sid_ptr(value)
@@ -44,6 +44,14 @@ Puppet::Type.type(:file).provide :windows do
 
     Puppet::Util::ADSI.sid_for_account(value) rescue nil
   end
+
+  # We use users and groups interchangeably, so use the same methods for both
+  # (the type expects different methods, so we have to oblige).
+  alias :uid2name :id2name
+  alias :gid2name :id2name
+
+  alias :name2gid :name2id
+  alias :name2uid :name2id
 
   def owner
     return :absent unless resource.exist?
@@ -55,6 +63,19 @@ Puppet::Type.type(:file).provide :windows do
       set_owner(should, resource[:path])
     rescue => detail
       raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}"
+    end
+  end
+
+  def group
+    return :absent unless resource.exist?
+    get_group(resource[:path])
+  end
+
+  def group=(should)
+    begin
+      set_group(should, resource[:path])
+    rescue => detail
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}"
     end
   end
 

@@ -30,6 +30,27 @@ Puppet::Type.type(:file).provide :posix do
     Integer(value) rescue uid(value) || false
   end
 
+  def gid2name(id)
+    return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
+    return nil if id > Puppet[:maximum_uid].to_i
+
+    begin
+      group = Etc.getgrgid(id)
+    rescue TypeError, ArgumentError
+      return nil
+    end
+
+    if group.gid == ""
+      return nil
+    else
+      return group.name
+    end
+  end
+
+  def name2gid(value)
+    Integer(value) rescue gid(value) || false
+  end
+
   def owner
     unless stat = resource.stat
       return :absent
@@ -60,6 +81,37 @@ Puppet::Type.type(:file).provide :posix do
       File.send(method, should, nil, resource[:path])
     rescue => detail
       raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}"
+    end
+  end
+
+  def group
+    return :absent unless stat = resource.stat
+
+    currentvalue = stat.gid
+
+    # On OS X, files that are owned by -2 get returned as really
+    # large GIDs instead of negative ones.  This isn't a Ruby bug,
+    # it's an OS X bug, since it shows up in perl, too.
+    if currentvalue > Puppet[:maximum_uid].to_i
+      self.warning "Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them"
+      currentvalue = :silly
+    end
+
+    currentvalue
+  end
+
+  def group=(should)
+    # Set our method appropriately, depending on links.
+    if resource[:links] == :manage
+      method = :lchgrp
+    else
+      method = :chgrp
+    end
+
+    begin
+      File.send(method, nil, should, resource[:path])
+    rescue => detail
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}"
     end
   end
 

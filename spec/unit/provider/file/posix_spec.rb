@@ -130,4 +130,97 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       expect { provider.owner = 25 }.to raise_error(Puppet::Error, /Failed to set owner to '25'/)
     end
   end
+
+  describe "#gid2name" do
+    it "should return the name of the group identified by the id" do
+      Etc.stubs(:getgrgid).with(501).returns(Struct::Passwd.new('unicorns', nil, nil, 501))
+
+      provider.gid2name(501).should == 'unicorns'
+    end
+
+    it "should return the argument if it's already a name" do
+      provider.gid2name('leprechauns').should == 'leprechauns'
+    end
+
+    it "should return nil if the argument is above the maximum gid" do
+      provider.gid2name(Puppet[:maximum_uid] + 1).should == nil
+    end
+
+    it "should return nil if the group doesn't exist" do
+      Etc.expects(:getgrgid).raises(ArgumentError, "can't find group for 999")
+
+      provider.gid2name(999).should == nil
+    end
+  end
+
+  describe "#name2gid" do
+    it "should return the id of the group if it exists" do
+      passwd = Struct::Passwd.new('penguins', nil, nil, 502)
+
+      Etc.stubs(:getgrnam).with('penguins').returns(passwd)
+      Etc.stubs(:getgrgid).with(502).returns(passwd)
+
+      provider.name2gid('penguins').should == 502
+    end
+
+    it "should return the argument if it's already an id" do
+      provider.name2gid('503').should == 503
+    end
+
+    it "should return false if the group doesn't exist" do
+      Etc.stubs(:getgrnam).with('wombats').raises(ArgumentError, "can't find group for wombats")
+
+      provider.name2gid('wombats').should == false
+    end
+
+  end
+
+  describe "#group" do
+    it "should return the gid of the file group" do
+      FileUtils.touch(path)
+      group = File.stat(path).gid
+
+      provider.group.should == group
+    end
+
+    it "should return absent if the file can't be statted" do
+      provider.group.should == :absent
+    end
+
+    it "should warn and return :silly if the value is beyond the maximum gid" do
+      stat = stub('stat', :gid => Puppet[:maximum_uid] + 1)
+      resource.stubs(:stat).returns(stat)
+
+      provider.group.should == :silly
+      @logs.should be_any {|log| log.level == :warning and log.message =~ /Apparently using negative GID/}
+    end
+  end
+
+  describe "#group=" do
+    it "should set the group but not the owner of the file" do
+      File.expects(:lchgrp).with(nil, 15, resource[:path])
+
+      provider.group = 15
+    end
+
+    it "should chgrp a link if managing links" do
+      resource[:links] = :manage
+      File.expects(:lchgrp).with(nil, 20, resource[:path])
+
+      provider.group = 20
+    end
+
+    it "should chgrp a link target if following links" do
+      resource[:links] = :follow
+      File.expects(:chgrp).with(nil, 20, resource[:path])
+
+      provider.group = 20
+    end
+
+    it "should pass along any error encountered setting the group" do
+      File.expects(:lchgrp).raises(ArgumentError)
+
+      expect { provider.group = 25 }.to raise_error(Puppet::Error, /Failed to set group to '25'/)
+    end
+  end
 end
