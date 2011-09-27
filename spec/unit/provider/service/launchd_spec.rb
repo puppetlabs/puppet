@@ -4,8 +4,8 @@
 #
 
 require 'spec_helper'
-
 require 'puppet'
+require 'facter'
 
 provider_class = Puppet::Type.type(:service).provider(:launchd)
 
@@ -90,6 +90,7 @@ describe provider_class do
     end
     it "should return false if the job plist says disabled is true" do
       @provider.stubs(:plist_from_label).returns(["foo", {"Disabled" => true}])
+      Facter.stubs(:value).with(:macosx_productversion_major).returns('10.5')
       @provider.enabled?.should == :false
     end
   end
