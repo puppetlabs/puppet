@@ -43,13 +43,14 @@ shared_examples_for "Puppet::FileServing::Files" do
   end
 
   it "should use the file terminus when the 'file' URI scheme is used" do
-    uri = "file:///fakemod/my/file"
+    uri = Puppet::Util.path_to_uri(File.expand_path('/fakemod/my/other file'))
+    uri.scheme.should == 'file'
     @indirection.terminus(:file).expects(:find)
-    @indirection.find(uri)
+    @indirection.find(uri.to_s)
   end
 
   it "should use the file terminus when a fully qualified path is provided" do
-    uri = "/fakemod/my/file"
+    uri = File.expand_path("/fakemod/my/file")
     @indirection.terminus(:file).expects(:find)
     @indirection.find(uri)
   end

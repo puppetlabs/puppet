@@ -314,6 +314,195 @@ describe Puppet::Type.type(:file) do
 
       (get_mode(generated) & 007777).should == managed_mode
     end
+
+    describe "when recursing remote directories" do
+      describe "when sourceselect first" do
+        describe "for a directory" do
+          it "should recursively copy the first directory that exists" do
+            one = File.expand_path('thisdoesnotexist')
+            two = tmpdir('two')
+
+            FileUtils.mkdir_p(File.join(two, 'three'))
+            FileUtils.touch(File.join(two, 'three', 'four'))
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :directory,
+                               :backup  => false,
+                               :recurse => true,
+                               :sourceselect => :first,
+                               :source => [one, two]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.should be_directory(path)
+            File.should_not be_exist(File.join(path, 'one'))
+            File.should be_exist(File.join(path, 'three', 'four'))
+          end
+
+          it "should recursively copy an empty directory" do
+            one = File.expand_path('thisdoesnotexist')
+            two = tmpdir('two')
+            three = tmpdir('three')
+
+            FileUtils.mkdir_p(two)
+            FileUtils.mkdir_p(three)
+            FileUtils.touch(File.join(three, 'a'))
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :directory,
+                               :backup  => false,
+                               :recurse => true,
+                               :sourceselect => :first,
+                               :source => [one, two, three]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.should be_directory(path)
+            File.should_not be_exist(File.join(path, 'a'))
+          end
+
+          it "should only recurse one level" do
+            one = tmpdir('one')
+            FileUtils.mkdir_p(File.join(one, 'a', 'b'))
+            FileUtils.touch(File.join(one, 'a', 'b', 'c'))
+
+            two = tmpdir('two')
+            FileUtils.mkdir_p(File.join(two, 'z'))
+            FileUtils.touch(File.join(two, 'z', 'y'))
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :directory,
+                               :backup  => false,
+                               :recurse => true,
+                               :recurselimit => 1,
+                               :sourceselect => :first,
+                               :source => [one, two]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.should be_exist(File.join(path, 'a'))
+            File.should_not be_exist(File.join(path, 'a', 'b'))
+            File.should_not be_exist(File.join(path, 'z'))
+          end
+        end
+
+        describe "for a file" do
+          it "should copy the first file that exists" do
+            one = File.expand_path('thisdoesnotexist')
+            two = tmpfile('two')
+            File.open(two, "w") { |f| f.print 'yay' }
+            three = tmpfile('three')
+            File.open(three, "w") { |f| f.print 'no' }
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :file,
+                               :backup  => false,
+                               :sourceselect => :first,
+                               :source => [one, two, three]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.read(path).should == 'yay'
+          end
+
+          it "should copy an empty file" do
+            one = File.expand_path('thisdoesnotexist')
+            two = tmpfile('two')
+            FileUtils.touch(two)
+            three = tmpfile('three')
+            File.open(three, "w") { |f| f.print 'no' }
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :file,
+                               :backup  => false,
+                               :sourceselect => :first,
+                               :source => [one, two, three]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.read(path).should == ''
+          end
+        end
+      end
+
+      describe "when sourceselect all" do
+        describe "for a directory" do
+          it "should recursively copy all sources from the first valid source" do
+            one = tmpdir('one')
+            two = tmpdir('two')
+            three = tmpdir('three')
+            four = tmpdir('four')
+
+            [one, two, three, four].each {|dir| FileUtils.mkdir_p(dir)}
+
+            File.open(File.join(one, 'a'), "w") { |f| f.print one }
+            File.open(File.join(two, 'a'), "w") { |f| f.print two }
+            File.open(File.join(two, 'b'), "w") { |f| f.print two }
+            File.open(File.join(three, 'a'), "w") { |f| f.print three }
+            File.open(File.join(three, 'c'), "w") { |f| f.print three }
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :directory,
+                               :backup  => false,
+                               :recurse => true,
+                               :sourceselect => :all,
+                               :source => [one, two, three, four]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.read(File.join(path, 'a')).should == one
+            File.read(File.join(path, 'b')).should == two
+            File.read(File.join(path, 'c')).should == three
+          end
+
+          it "should only recurse one level from each valid source" do
+            one = tmpdir('one')
+            FileUtils.mkdir_p(File.join(one, 'a', 'b'))
+            FileUtils.touch(File.join(one, 'a', 'b', 'c'))
+
+            two = tmpdir('two')
+            FileUtils.mkdir_p(File.join(two, 'z'))
+            FileUtils.touch(File.join(two, 'z', 'y'))
+
+            obj = Puppet::Type.newfile(
+                               :path    => path,
+                               :ensure  => :directory,
+                               :backup  => false,
+                               :recurse => true,
+                               :recurselimit => 1,
+                               :sourceselect => :all,
+                               :source => [one, two]
+                               )
+
+            catalog.add_resource obj
+            catalog.apply
+
+            File.should be_exist(File.join(path, 'a'))
+            File.should_not be_exist(File.join(path, 'a', 'b'))
+            File.should be_exist(File.join(path, 'z'))
+            File.should_not be_exist(File.join(path, 'z', 'y'))
+          end
+        end
+      end
+    end
   end
 
   describe "when generating resources" do

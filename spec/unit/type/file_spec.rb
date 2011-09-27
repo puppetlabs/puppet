@@ -459,7 +459,7 @@ describe Puppet::Type.type(:file) do
       :recurse => true,
       :recurselimit => 5,
       :target => "some_target",
-      :source => "some_source",
+      :source => File.expand_path("some_source"),
     }.each do |param, value|
       it "should omit the #{param} parameter" do
         # Make a new file, because we have to set the param at initialization
@@ -824,14 +824,22 @@ describe Puppet::Type.type(:file) do
     end
 
     describe "and multiple sources are provided" do
+      let(:sources) do
+        h = {}
+        %w{/one /two /three /four}.each do |key|
+          h[key] = URI.unescape(Puppet::Util.path_to_uri(File.expand_path(key)).to_s)
+        end
+        h
+      end
+
       describe "and :sourceselect is set to :first" do
         it "should create file instances for the results for the first source to return any values" do
           data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
-          file[:source] = %w{/one /two /three /four}
-          file.expects(:perform_recursion).with("/one").returns nil
-          file.expects(:perform_recursion).with("/two").returns []
-          file.expects(:perform_recursion).with("/three").returns [data]
-          file.expects(:perform_recursion).with("/four").never
+          file[:source] = sources.keys.map { |key| File.expand_path(key) }
+          file.expects(:perform_recursion).with(sources['/one']).returns nil
+          file.expects(:perform_recursion).with(sources['/two']).returns []
+          file.expects(:perform_recursion).with(sources['/three']).returns [data]
+          file.expects(:perform_recursion).with(sources['/four']).never
           file.expects(:newchild).with("foobar").returns @resource
           file.recurse_remote({})
         end
@@ -844,22 +852,22 @@ describe Puppet::Type.type(:file) do
 
         it "should return every found file that is not in a previous source" do
           klass = Puppet::FileServing::Metadata
-          file[:source] = %w{/one /two /three /four}
+          file[:source] = %w{/one /two /three /four}.map {|f| File.expand_path(f) }
           file.stubs(:newchild).returns @resource
 
           one = [klass.new("/one", :relative_path => "a")]
-          file.expects(:perform_recursion).with("/one").returns one
+          file.expects(:perform_recursion).with(sources['/one']).returns one
           file.expects(:newchild).with("a").returns @resource
 
           two = [klass.new("/two", :relative_path => "a"), klass.new("/two", :relative_path => "b")]
-          file.expects(:perform_recursion).with("/two").returns two
+          file.expects(:perform_recursion).with(sources['/two']).returns two
           file.expects(:newchild).with("b").returns @resource
 
           three = [klass.new("/three", :relative_path => "a"), klass.new("/three", :relative_path => "c")]
-          file.expects(:perform_recursion).with("/three").returns three
+          file.expects(:perform_recursion).with(sources['/three']).returns three
           file.expects(:newchild).with("c").returns @resource
 
-          file.expects(:perform_recursion).with("/four").returns []
+          file.expects(:perform_recursion).with(sources['/four']).returns []
 
           file.recurse_remote({})
         end
@@ -994,7 +1002,7 @@ describe Puppet::Type.type(:file) do
 
   describe "#retrieve" do
     it "should copy the source values if the 'source' parameter is set" do
-      file[:source] = '/foo/bar'
+      file[:source] = File.expand_path('/foo/bar')
       file.parameter(:source).expects(:copy_source_values)
       file.retrieve
     end
@@ -1196,7 +1204,7 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should be true if the file has specified source" do
-      file[:source] = '/tmp/foo'
+      file[:source] = File.expand_path('/tmp/foo')
 
       file.send(:write_temporary_file?).should be_true
     end
@@ -1353,7 +1361,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when using source" do
     before do
-      file[:source]   = '/one'
+      file[:source] = File.expand_path('/one')
     end
     Puppet::Type::File::ParameterChecksum.value_collection.values.reject {|v| v == :none}.each do |checksum_type|
       describe "with checksum '#{checksum_type}'" do
@@ -1437,7 +1445,7 @@ describe Puppet::Type.type(:file) do
 
   describe "when specifying both source and checksum" do
     it 'should use the specified checksum when source is first' do
-      file[:source] = '/foo'
+      file[:source] = File.expand_path('/foo')
       file[:checksum] = :md5lite
 
       file[:checksum].should == :md5lite
@@ -1445,7 +1453,7 @@ describe Puppet::Type.type(:file) do
 
     it 'should use the specified checksum when source is last' do
       file[:checksum] = :md5lite
-      file[:source] = '/foo'
+      file[:source] = File.expand_path('/foo')
 
       file[:checksum].should == :md5lite
     end
@@ -1454,7 +1462,7 @@ describe Puppet::Type.type(:file) do
   describe "when validating" do
     [[:source, :target], [:source, :content], [:target, :content]].each do |prop1,prop2|
       it "should fail if both #{prop1} and #{prop2} are specified" do
-          file[prop1] = "prop1 value"
+          file[prop1] = prop1 == :source ? File.expand_path("prop1 value") : "prop1 value"
           file[prop2] = "prop2 value"
         expect do
           file.validate

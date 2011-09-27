@@ -66,13 +66,17 @@ module Puppet
     validate do |sources|
       sources = [sources] unless sources.is_a?(Array)
       sources.each do |source|
+        next if Puppet::Util.absolute_path?(source)
+
         begin
           uri = URI.parse(URI.escape(source))
         rescue => detail
           self.fail "Could not understand source #{source}: #{detail}"
         end
 
-        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless uri.scheme.nil? or %w{file puppet}.include?(uri.scheme) or (Puppet.features.microsoft_windows? and uri.scheme =~ /^[a-z]$/i)
+        self.fail "Cannot use relative URLs '#{source}'" unless uri.absolute?
+        self.fail "Cannot use opaque URLs '#{source}'" unless uri.hierarchical?
+        self.fail "Cannot use URLs of type '#{uri.scheme}' as source for fileserving" unless %w{file puppet}.include?(uri.scheme)
       end
     end
 
@@ -80,7 +84,15 @@ module Puppet
 
     munge do |sources|
       sources = [sources] unless sources.is_a?(Array)
-      sources.collect { |source| source.sub(/[#{SEPARATOR_REGEX}]+$/, '') }
+      sources.map do |source|
+        source = source.sub(/[#{SEPARATOR_REGEX}]+$/, '')
+
+        if Puppet::Util.absolute_path?(source)
+          URI.unescape(Puppet::Util.path_to_uri(source).to_s)
+        else
+          source
+        end
+      end
     end
 
     def change_to_s(currentvalue, newvalue)
@@ -164,11 +176,11 @@ module Puppet
     end
 
     def local?
-      found? and uri and (uri.scheme || "file") == "file"
+      found? and scheme == "file"
     end
 
     def full_path
-      URI.unescape(uri.path) if found? and uri
+      Puppet::Util.uri_to_path(uri) if found?
     end
 
     def server
@@ -178,12 +190,13 @@ module Puppet
     def port
       (uri and uri.port) or Puppet.settings[:masterport]
     end
-
     private
 
-    def uri
-      return nil if metadata.source =~ /^[a-z]:[\/\\]/i # Abspath for Windows
+    def scheme
+      (uri and uri.scheme)
+    end
 
+    def uri
       @uri ||= URI.parse(URI.escape(metadata.source))
     end
   end
