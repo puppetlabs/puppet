@@ -367,6 +367,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should daemonize if needed" do
+      Puppet.features.stubs(:microsoft_windows?).returns false
       Puppet[:daemonize] = true
 
       @daemon.expects(:daemonize)
