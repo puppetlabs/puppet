@@ -185,12 +185,29 @@ module Util
     end
   end
 
+  # keep a cache of the translated windows binaries
+  @@winbin_cache = {}
+
   def which(bin)
     if absolute_path?(bin)
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
-        dest=File.join(dir, bin)
+        dest=File.expand_path( File.join(dir, bin) )
+        if Puppet.features.microsoft_windows? && File.extname( dest ).empty?
+          pexts = ENV[ 'PATHEXT' ].split( ';' )
+          # Ruby sometimes converts ENV['PATHENV'] into ENV['%PATHEXT%;.rb;.rw']
+          pexts = [ ".ps1", ".bat", ".exe", ".com" ] if( pexts.empty? || ENV['PATHEXT'] =~ /\%PATHEXT\%/ )
+          pexts.each{ |ext|
+            wdest = File.expand_path( dest + ext )
+            return @@winbin_cache[ dest ] if @@winbin_cache.include? dest
+            if FileTest.file? wdest and FileTest.executable? wdest
+              # cache the value for subsequent lookups
+              @@winbin_cache[ dest ] = wdest
+              return wdest
+            end
+          }
+        end
         return dest if FileTest.file? dest and FileTest.executable? dest
       end
     end

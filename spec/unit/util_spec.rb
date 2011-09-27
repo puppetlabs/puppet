@@ -332,4 +332,14 @@ describe Puppet::Util do
       end
     end
   end
+
+  describe "#which" do
+    it 'should search for Windows binary when passed a filename without extension' do
+      Puppet.features.stubs(:posix?).returns(false)
+      Puppet.features.stubs(:microsoft_windows?).returns(true)
+      Puppet::Util.expects( 'which' ).with( 'foo' ).returns( 'foo.bat' )
+      Puppet::Util.which( 'foo' ).should == 'foo.bat'
+    end
+  end
+
 end

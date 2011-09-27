@@ -301,7 +301,7 @@ module Puppet
     end
 
     validate do
-      provider.validate_source(self[:source])
+      provider.validate_source(self.provider.source) if self.provider.respond_to?(:source)
     end
 
     autorequire(:file) do
@@ -312,9 +312,11 @@ module Puppet
         end
       }
 
-      if source = self[:source]
-        if source =~ /^#{File::SEPARATOR}/
-          autos << source
+      if self.provider.respond_to?( :source )
+        if source = self.provider.source
+          if source =~ /^#{File::SEPARATOR}/
+            autos << source
+          end
         end
       end
       autos

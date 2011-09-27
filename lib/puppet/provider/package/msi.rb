@@ -20,6 +20,10 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
     end
   end
 
+  def source
+    yaml.nil? ? resource[:source] : yaml['source']
+  end
+
   def query
     {:name => resource[:name], :ensure => :installed} if FileTest.exists?(state_file)
   end
@@ -78,5 +82,10 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
 
   def shell_quote(value)
     value.include?(' ') ? %Q["#{value.gsub(/"/, '\"')}"] : value
+  end
+
+  def yaml
+    @yaml ||= YAML.load_file( File.expand_path( state_file ) ) rescue nil
+    @yaml
   end
 end
