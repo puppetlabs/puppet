@@ -129,7 +129,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # it is 10.6 or greater. This allows us to implement different plist
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
-    @product_version = self.class.get_macosx_version_major
+    @product_version ||= self.class.get_macosx_version_major
     return true unless /^10\.[0-5]/.match(@product_version)
     return false
   end
