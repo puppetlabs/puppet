@@ -120,6 +120,10 @@ class Puppet::Util::Log
       klass.match?(dest)
     end
 
+    if type.respond_to?(:suitable?) and not type.suitable?(dest)
+      return
+    end
+
     raise Puppet::DevError, "Unknown destination type #{dest}" unless type
 
     begin
