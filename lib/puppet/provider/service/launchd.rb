@@ -51,8 +51,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                     "/System/Library/LaunchDaemons"]
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
-  @product_version = Facter.value(:macosx_productversion_major) ? Facter.value(:macosx_productversion_major) : (sw_vers "-productVersion")
-  fail("#{@product_version} is not supported by the launchd provider") if %w{10.0 10.1 10.2 10.3}.include?(@product_version)
   
   # Caching is enabled through the following three methods. Self.prefetch will
   # call self.instances to create an instance for each service. Self.flush will
@@ -133,6 +131,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # it is 10.6 or greater. This allows us to implement different plist
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
+    @product_version = self.class.get_macosx_version_major
     return true unless /^10\.[0-5]/.match(@product_version)
     return false
   end
