@@ -32,7 +32,7 @@ will be used as default values for all resources.
   end
   # iterate through the resources to create
   args[1].each do |title, params|
-    defaults = args[2] || {}
+    defaults = args[2] || {}
     params = defaults.merge(params)
     raise ArgumentError, 'params should not contain title' if(params['title'])
     case type_of_resource
