@@ -10,13 +10,15 @@ describe Puppet::Resource::Catalog, "when compiling" do
     Puppet::Util::Storage.stubs(:store)
   end
 
-  it "should write its resources' types, namevars" do
+  # audit only resources are unmanaged
+  # as are resources without properties with should values
+  it "should write its managed resources' types, namevars" do
     catalog = Puppet::Resource::Catalog.new("host")
 
     resourcefile = tmpfile('resourcefile')
     Puppet[:resourcefile] = resourcefile
 
-    res = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/sam'))
+    res = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/sam'), :ensure => 'present')
     res.file = 'site.pp'
     res.line = 21
 
@@ -24,9 +26,17 @@ describe Puppet::Resource::Catalog, "when compiling" do
     res2.file = File.expand_path('/modules/bob/manifests/bob.pp')
     res2.line = 42
 
+    res3 = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/susan'), :audit => 'all')
+    res3.file = 'site.pp'
+    res3.line = 63
+
+    res4 = Puppet::Type.type('file').new(:title => File.expand_path('/tmp/lilly'))
+    res4.file = 'site.pp'
+    res4.line = 84
+
     comp_res = Puppet::Type.type('component').new(:title => 'Class[Main]')
 
-    catalog.add_resource(res, res2, comp_res)
+    catalog.add_resource(res, res2, res3, res4, comp_res)
     catalog.write_resource_file
     File.readlines(resourcefile).map(&:chomp).should =~ [
       "file[#{File.expand_path('/tmp/sam')}]",
