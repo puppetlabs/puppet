@@ -24,6 +24,11 @@ describe Puppet::Util::ADSI do
     Puppet::Util::ADSI.computer_uri.should == "WinNT://testcomputername"
   end
 
+  it "should return a SID for a passed user or group name" do
+    Puppet::Util::ADSI.expects(:execquery).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+    Puppet::Util::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
+  end
+
   describe Puppet::Util::ADSI::User do
     let(:username)  { 'testuser' }
 

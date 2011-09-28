@@ -72,8 +72,13 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     provider.delete
   end
 
-  it "should warn when trying to manage the gid property" do
-    provider.expects(:warning).with { |msg| msg =~ /No support for managing property gid/ }
+  it "should report the group's SID as gid" do
+    Puppet::Util::ADSI.expects(:sid_for_account).with('testers').returns('S-1-5-32-547')
+    provider.gid.should == 'S-1-5-32-547'
+  end
+
+  it "should fail when trying to manage the gid property" do
+    provider.expects(:fail).with { |msg| msg =~ /gid is read-only/ }
     provider.send(:gid=, 500)
   end
 end

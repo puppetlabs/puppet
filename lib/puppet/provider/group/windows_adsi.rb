@@ -35,11 +35,11 @@ Puppet::Type.type(:group).provide :windows_adsi do
   end
 
   def gid
-    nil
+    Puppet::Util::ADSI.sid_for_account(resource[:name])
   end
 
   def gid=(value)
-    warning "No support for managing property gid of group #{@resource[:name]} on Windows"
+    fail "gid is read-only"
   end
 
   def self.instances

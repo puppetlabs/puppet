@@ -93,7 +93,10 @@ module Puppet
         recommended.  This is especially noteworthy if you use Puppet
         to manage the same user on both Darwin and other platforms,
         since Puppet does the ID generation for you on Darwin, but the
-        tools do so on other platforms."
+        tools do so on other platforms.
+
+        On Windows, the property will return the user's security
+        identifier (SID)."
 
       munge do |value|
         case value

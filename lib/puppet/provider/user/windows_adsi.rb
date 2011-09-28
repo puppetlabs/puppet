@@ -57,11 +57,18 @@ Puppet::Type.type(:user).provide :windows_adsi do
     user['HomeDirectory'] = value
   end
 
-  [:uid, :gid, :shell].each do |prop|
-    define_method(prop) { nil }
+  def uid
+    Puppet::Util::ADSI.sid_for_account(resource[:name])
+  end
 
+  def uid=(value)
+    fail "uid is read-only"
+  end
+
+  [:gid, :shell].each do |prop|
+    define_method(prop) { nil }
     define_method("#{prop}=") do |v|
-      warning "No support for managing property #{prop} of user #{@resource[:name]} on Windows"
+      fail "No support for managing property #{prop} of user #{@resource[:name]} on Windows"
     end
   end
 
