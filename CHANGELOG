@@ -1,3 +1,10 @@
+2.6.10
+===
+ec5a32a Update spec and lib/puppet.rb for 2.6.10 release
+fe2de81 Resist directory traversal attacks through indirections. (CVE-2011-3484)
+243aaa9 (#7956) Porting cron tests
+3e3fc69 (#7956) Port resource acceptance tests
+
 2.6.9
 ====
 db1a392 (#7506) Organize READMEs; specify supported Ruby versions in README.md
