@@ -79,6 +79,28 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
 
       provider.create
     end
+
+    it "should set a user's password" do
+      provider.user.expects(:password=).with('plaintextbad')
+
+      provider.password = "plaintextbad"
+    end
+
+    it "should test a valid user password" do
+      resource[:password] = 'plaintext'
+      provider.user.expects(:password_is?).with('plaintext').returns true
+
+      provider.password.should == 'plaintext'
+
+    end
+
+    it "should test a bad user password" do
+      resource[:password] = 'plaintext'
+      provider.user.expects(:password_is?).with('plaintext').returns false
+
+      provider.password.should == :absent
+    end
+
   end
 
   it 'should be able to test whether a user exists' do
