@@ -1,14 +1,21 @@
 Puppet::Parser::Functions::newfunction(:create_resources, :doc => '
 Converts a hash into a set of resources and adds them to the catalog.
-Takes two parameters:
-  create_resource($type, $resources)
-    Creates resources of type $type from the $resources hash. Assumes that
-    hash is in the following form:
-     {title=>{parameters}}
-  This is currently tested for defined resources, classes, as well as native types
+Takes two mandatory and an optional third parameter:
+  create_resource($type, $resources, [$defaults])
+  
+This function assumes that the $resources hash is in the following form:
+     { title => {parameters}, title2 => {parameters2}, ... }
+     
+It will then create a resource of type $type for every element in the hash,
+using the title and parameters for construction. 
+
+This is currently tested for defined resources, classes, as well as native types.
+
+If the third argument $defaults is passed, it has to be a hash as well and 
+will be used as default values for all resources.
 ') do |args|
-  raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be 2)") if args.length != 2
-  #raise ArgumentError, 'requires resource type and param hash' if args.size < 2
+  raise ArgumentError, ("create_resources(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
+
   # figure out what kind of resource we are
   type_of_resource = nil
   type_name = args[0].downcase
@@ -25,6 +32,8 @@ Takes two parameters:
   end
   # iterate through the resources to create
   args[1].each do |title, params|
+    defaults = args[2] || {}
+    params = defaults.merge(params)
     raise ArgumentError, 'params should not contain title' if(params['title'])
     case type_of_resource
     # JJM The only difference between a type and a define is the call to instantiate_resource
