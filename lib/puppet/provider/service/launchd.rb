@@ -34,6 +34,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   "
 
+  include Puppet::Util::Warnings
+
   commands :launchctl => "/bin/launchctl"
   commands :sw_vers   => "/usr/bin/sw_vers"
   commands :plutil    => "/usr/bin/plutil"
@@ -159,7 +161,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         product_version_major = Facter.value(:macosx_productversion_major)
       else
         # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-        Puppet.warning("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
+        warnonce("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
         product_version = Facter.value(:macosx_productversion)
         fail("Could not determine OS X version from Facter") if product_version.nil?
         product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
