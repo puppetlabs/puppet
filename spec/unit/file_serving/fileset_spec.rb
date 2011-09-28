@@ -26,7 +26,7 @@ describe Puppet::FileServing::Fileset, " when initializing" do
   end
 
   it "should not fail if the path is just the file separator" do
-    path = make_absolute(File::SEPARATOR)
+    path = File.expand_path(File::SEPARATOR)
     File.stubs(:lstat).with(path).returns stub('stat')
     fileset = Puppet::FileServing::Fileset.new(path)
     fileset.path.should == path

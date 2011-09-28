@@ -85,13 +85,15 @@ describe Puppet::Indirector::Request do
     end
 
     describe "and the request key is a URI" do
+      let(:file) { File.expand_path("/my/file with spaces") }
+
       describe "and the URI is a 'file' URI" do
         before do
-          @request = Puppet::Indirector::Request.new(:ind, :method, "file:///my/file with spaces")
+          @request = Puppet::Indirector::Request.new(:ind, :method, "#{URI.unescape(Puppet::Util.path_to_uri(file).to_s)}")
         end
 
         it "should set the request key to the unescaped full file path" do
-          @request.key.should == "/my/file with spaces"
+          @request.key.should == file
         end
 
         it "should not set the protocol" do
@@ -133,7 +135,15 @@ describe Puppet::Indirector::Request do
       end
 
       it "should set the :uri attribute to the full URI" do
-        Puppet::Indirector::Request.new(:ind, :method, "http:///stuff").uri.should == "http:///stuff"
+        Puppet::Indirector::Request.new(:ind, :method, "http:///stu ff").uri.should == 'http:///stu ff'
+      end
+
+      it "should not parse relative URI" do
+        Puppet::Indirector::Request.new(:ind, :method, "foo/bar").uri.should be_nil
+      end
+
+      it "should not parse opaque URI" do
+        Puppet::Indirector::Request.new(:ind, :method, "mailto:joe").uri.should be_nil
       end
     end
 

@@ -7,6 +7,7 @@ require 'tempfile'
 require 'puppet/external/lock'
 require 'monitor'
 require 'puppet/util/execution_stub'
+require 'uri'
 
 module Puppet
   # A command failed to execute.
@@ -205,7 +206,7 @@ module Util
     slash = '[\\\\/]'
     name = '[^\\\\/]+'
     regexes = {
-      :windows => %r!^([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name})!i,
+      :windows => %r!^(([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name}))!i,
       :posix   => %r!^/!,
     }
     platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
@@ -213,6 +214,51 @@ module Util
     !! (path =~ regexes[platform])
   end
   module_function :absolute_path?
+
+  # Convert a path to a file URI
+  def path_to_uri(path)
+    return unless path
+
+    params = { :scheme => 'file' }
+
+    if Puppet.features.microsoft_windows?
+      path = path.gsub(/\\/, '/')
+
+      if unc = /^\/\/([^\/]+)(\/[^\/]+)/.match(path)
+        params[:host] = unc[1]
+        path = unc[2]
+      elsif path =~ /^[a-z]:\//i
+        path = '/' + path
+      end
+    end
+
+    params[:path] = URI.escape(path)
+
+    begin
+      URI::Generic.build(params)
+    rescue => detail
+      raise Puppet::Error, "Failed to convert '#{path}' to URI: #{detail}"
+    end
+  end
+  module_function :path_to_uri
+
+  # Get the path component of a URI
+  def uri_to_path(uri)
+    return unless uri.is_a?(URI)
+
+    path = URI.unescape(uri.path)
+
+    if Puppet.features.microsoft_windows? and uri.scheme == 'file'
+      if uri.host
+        path = "//#{uri.host}" + path # UNC
+      else
+        path.sub!(/^\//, '')
+      end
+    end
+
+    path
+  end
+  module_function :uri_to_path
 
   # Execute the provided command in a pipe, yielding the pipe object.
   def execpipe(command, failonfail = true)
