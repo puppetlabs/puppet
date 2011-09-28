@@ -69,12 +69,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # system.
   def self.instances
     jobs = self.jobsearch
-    unless @status
-      self.status
-    end
     jobs.keys.collect do |job|
-      status = @status.has_key?(job) ? :running : :stopped
-      new(:name => job, :provider => :launchd, :path => jobs[job], :status => status)
+      job_status = job_list.has_key?(job) ? :running : :stopped
+      new(:name => job, :provider => :launchd, :path => jobs[job], :status => job_status)
     end
   end
 
@@ -109,21 +106,20 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
   end
 
-  # This status method lists out all currently running services and saves each
-  # job label as a key in the @status hash. This hash is returned at the end
-  # of the method.
-  def self.status
-    @status = Hash.new
+  # This status method lists out all currently running services.
+  # This hash is returned at the end of the method.
+  def self.job_list
+    job_list = Hash.new
     begin
       output = launchctl :list
       raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
       output.split("\n").each do |line|
-        @status[line.split(/\s/).last] = :running
+        job_list[line.split(/\s/).last] = :running
       end
     rescue Puppet::ExecutionFailure
       raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
     end
-    @status
+    job_list
   end
 
   # Launchd implemented plist overrides in version 10.6.
