@@ -342,5 +342,29 @@ class TestFileTarget < Test::Unit::TestCase
 
     assert_equal(dest, File.readlink(link), "Link did not get changed")
   end
+
+  def test_replace_links_noreplace
+    dest = tempfile
+    otherdest = tempfile
+    link = tempfile
+
+    File.open(otherdest, "w") { |f| f.puts "yay" }
+
+    obj = Puppet::Type.type(:file).new(
+      :path => link,
+      :ensure => dest,
+      :replace => false
+    )
+
+    assert_apply(obj)
+
+    assert_equal(dest, File.readlink(link), "Link did not get created")
+
+    obj[:ensure] = otherdest
+
+    assert_apply(obj)
+
+    assert_equal(dest, File.readlink(link), "Link did change when replace == false")
+  end
 end
 
