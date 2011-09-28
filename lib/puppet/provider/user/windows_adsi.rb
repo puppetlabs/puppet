@@ -7,7 +7,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
   confine :operatingsystem => :windows
   confine :feature => :microsoft_windows
 
-  has_features :manages_homedir
+  has_features :manages_homedir, :manages_passwords
 
   def user
     @user ||= Puppet::Util::ADSI::User.new(@resource[:name])
@@ -55,6 +55,14 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def home=(value)
     user['HomeDirectory'] = value
+  end
+
+  def password
+    user.password_is?( @resource[:password] ) ? @resource[:password] : :absent
+  end
+
+  def password=(value)
+    user.password = value
   end
 
   [:uid, :gid, :shell].each do |prop|
