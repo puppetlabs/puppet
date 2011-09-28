@@ -62,6 +62,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
   end
 
   describe "when creating a user" do
+
     it "should create the user on the system and set its other properties" do
       resource[:groups]     = ['group1', 'group2']
       resource[:membership] = :inclusive
@@ -76,14 +77,22 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       user.expects(:set_groups).with('group1,group2', false)
       user.expects(:[]=).with('Description', 'a test user')
       user.expects(:[]=).with('HomeDirectory', 'C:\Users\testuser')
+      user.expects(:commit) #9459: ensure the state is set before enumerating groups
 
       provider.create
     end
+
+    it 'should not create a user if a group by the same name exists' do
+      Puppet::Util::ADSI::User.expects(:create).with('testuser').raises( Puppet::Error.new("Cannot create user if group 'testuser' exists.") )
+      expect{ provider.create }.to raise_error( Puppet::Error,
+        /Cannot create user if group 'testuser' exists./ )
+    end
+
   end
 
   it 'should be able to test whether a user exists' do
     Puppet::Util::ADSI.stubs(:connect).returns stub('connection')
-    provider.should be_exists
+    provider.should be_exists if Puppet.features.microsoft_windows?
 
     Puppet::Util::ADSI.stubs(:connect).returns nil
     provider.should_not be_exists

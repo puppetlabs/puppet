@@ -23,6 +23,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def create
     @user = Puppet::Util::ADSI::User.create(@resource[:name])
+    @user.commit if @user #9459: ensure the state is set before enumerating groups
     [:comment, :home, :groups].each do |prop|
       send("#{prop}=", @resource[prop]) if @resource[prop]
     end
