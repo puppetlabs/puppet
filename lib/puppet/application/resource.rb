@@ -141,23 +141,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     raise "You cannot edit a remote host" if options[:edit] and @host
 
-    format = proc {|trans|
-      properties = trans.resource_type.properties.map(&:name)
-
-      trans.dup.collect do |attribute, value|
-        if value.nil? or value.to_s.empty?
-          trans.delete(attribute)
-        elsif value.to_s == "absent" and attribute.to_s != "ensure"
-          trans.delete(attribute)
-        end
-
-        trans.delete(attribute) unless properties.include?(attribute) or @extra_params.include?(attribute)
-      end
-      trans.to_manifest
-    }
-
     resources = find_or_save_resources(type, name, params)
-    text = resources.map(&format).join("\n")
+    text = resources.
+      map { |resource| resource.format_for_manifest(@extra_params) }.
+      join("\n")
 
     options[:edit] ?
       handle_editing(text) :

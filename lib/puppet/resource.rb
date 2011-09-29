@@ -355,6 +355,21 @@ class Puppet::Resource
     raise ArgumentError, "Invalid parameter #{name}" unless valid_parameter?(name)
   end
 
+  def format_for_manifest(parameters_to_include)
+    properties = resource_type.properties.map(&:name)
+
+    dup.collect do |attribute, value|
+      if value.nil? or value.to_s.empty?
+        delete(attribute)
+      elsif value.to_s == "absent" and attribute.to_s != "ensure"
+        delete(attribute)
+      end
+
+      delete(attribute) unless properties.include?(attribute) or parameters_to_include.include?(attribute)
+    end
+    to_manifest
+  end
+
   private
 
   # Produce a canonical method name.

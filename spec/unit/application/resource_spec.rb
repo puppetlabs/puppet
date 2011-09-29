@@ -141,8 +141,7 @@ describe Puppet::Application::Resource do
 
         res = stub "resource"
         Puppet::Resource.indirection.expects(:save).with(res, 'https://host:8139/production/resources/type/name').returns(res)
-        res.expects(:collect)
-        res.expects(:to_manifest)
+        res.expects(:format_for_manifest)
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)
 
         @resource_app.main
@@ -176,8 +175,7 @@ describe Puppet::Application::Resource do
 
         res = stub "resource"
         Puppet::Resource.indirection.expects(:save).with(res, 'type/name').returns(res)
-        res.expects(:collect)
-        res.expects(:to_manifest)
+        res.expects(:format_for_manifest)
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)
 
         @resource_app.main
