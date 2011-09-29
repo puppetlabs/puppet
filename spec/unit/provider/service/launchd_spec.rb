@@ -37,8 +37,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
 
   describe "when checking whether the service is enabled on OS X 10.5" do
     it "should return true in if the job plist says disabled is false" do
-      Facter.expects(:value).times(2).with(:macosx_productversion_major).returns('10.5')
-      Facter.expects(:value).times(11).with(:kernel).returns('Darwin')
+      Facter.stubs(:value).with(:macosx_productversion_major).returns('10.5')
+      Facter.stubs(:value).with(:kernel).returns('Darwin')
       subject.expects(:plist_from_label).with(joblabel).returns(["foo", {"Disabled" => false}])
       subject.expects(:resource).returns({:name => joblabel})
       subject.enabled?.should == :true
@@ -61,7 +61,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => true}])
       provider.stubs(:read_plist).returns({joblabel => {"Disabled" => false}})
       FileTest.expects(:file?).with(launchd_overrides).returns(true)
-      subject.expects(:resource).times(4).returns({:name => joblabel})
+      subject.stubs(:resource).returns({:name => joblabel})
       subject.enabled?.should == :true
     end
     it "should return false if the job plist says disabled is false and the global overrides says disabled is true" do
@@ -69,7 +69,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:plist_from_label).returns([joblabel, {"Disabled" => false}])
       provider.stubs(:read_plist).returns({joblabel => {"Disabled" => true}})
       FileTest.expects(:file?).with(launchd_overrides).returns(true)
-      subject.expects(:resource).times(4).returns({:name => joblabel})
+      subject.stubs(:resource).returns({:name => joblabel})
       subject.enabled?.should == :false
     end
     it "should return true if the job plist and the global overrides have no disabled keys" do
@@ -77,7 +77,7 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:plist_from_label).returns([joblabel, {}])
       provider.stubs(:read_plist).returns({})
       FileTest.expects(:file?).with(launchd_overrides).returns(true)
-      subject.expects(:resource).times(2).returns({:name => joblabel})
+      subject.stubs(:resource).returns({:name => joblabel})
       subject.enabled?.should == :true
     end
   end
