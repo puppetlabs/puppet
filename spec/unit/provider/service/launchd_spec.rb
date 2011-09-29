@@ -22,13 +22,16 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     end
     it "should return stopped if not listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
-      provider.expects(:jobsearch).with(nil).returns({'com.bar.is_not_running' => ""})
+      provider.expects(:jobsearch).with(nil).returns({'com.bar.is_not_running' => "/Library/LaunchDaemons/com.bar.is_not_running"})
       provider.prefetch({}).last.status.should eq :stopped
     end
     it "should return running if listed in launchctl list output" do
       provider.expects(:launchctl).with(:list).returns('com.bar.is_running')
-      provider.expects(:jobsearch).with(nil).returns({'com.bar.is_running' => ""})
+      provider.expects(:jobsearch).with(nil).returns({'com.bar.is_running' => "/Library/LaunchDaemons/com.bar.is_running"})
       provider.prefetch({}).last.status.should eq :running
+    end
+    after :each do
+      provider.instance_variable_set(:@job_list, nil)
     end
   end
 
