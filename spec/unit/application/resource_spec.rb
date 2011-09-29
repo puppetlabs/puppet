@@ -14,33 +14,7 @@ describe Puppet::Application::Resource do
     @resource.should_parse_config?.should be_false
   end
 
-  it "should declare a main command" do
-    @resource.should respond_to(:main)
-  end
-
-  it "should declare a host option" do
-    @resource.should respond_to(:handle_host)
-  end
-
-  it "should declare a types option" do
-    @resource.should respond_to(:handle_types)
-  end
-
-  it "should declare a param option" do
-    @resource.should respond_to(:handle_param)
-  end
-
-  it "should declare a preinit block" do
-    @resource.should respond_to(:preinit)
-  end
-
   describe "in preinit" do
-    it "should set hosts to nil", :'fails_on_ruby_1.9.2' => true do
-      @resource.preinit
-
-      @resource.host.should be_nil
-    end
-
     it "should init extra_params to empty array", :'fails_on_ruby_1.9.2' => true do
       @resource.preinit
 
@@ -56,10 +30,6 @@ describe Puppet::Application::Resource do
   describe "when handling options" do
 
     [:debug, :verbose, :edit].each do |option|
-      it "should declare handle_#{option} method" do
-        @resource.should respond_to("handle_#{option}".to_sym)
-      end
-
       it "should store argument value when calling handle_#{option}" do
         @resource.options.expects(:[]=).with(option, 'arg')
         @resource.send("handle_#{option}".to_sym, 'arg')
@@ -126,26 +96,26 @@ describe Puppet::Application::Resource do
 
     before :each do
       @type = stub_everything 'type', :properties => []
-      @resource.command_line.stubs(:args).returns(['type'])
+      @resource.command_line.stubs(:args).returns(['mytype'])
       Puppet::Type.stubs(:type).returns(@type)
     end
 
     it "should raise an error if no type is given" do
       @resource.command_line.stubs(:args).returns([])
-      lambda { @resource.main }.should raise_error
+      lambda { @resource.main }.should raise_error(RuntimeError, "You must specify the type to display")
     end
 
     it "should raise an error when editing a remote host" do
       @resource.options.stubs(:[]).with(:edit).returns(true)
       @resource.host = 'host'
 
-      lambda { @resource.main }.should raise_error
+      lambda { @resource.main }.should raise_error(RuntimeError, "You cannot edit a remote host")
     end
 
     it "should raise an error if the type is not found" do
       Puppet::Type.stubs(:type).returns(nil)
 
-      lambda { @resource.main }.should raise_error
+      lambda { @resource.main }.should raise_error(RuntimeError, 'Could not find type mytype')
     end
 
     describe "with a host" do
@@ -196,7 +166,7 @@ describe Puppet::Application::Resource do
       end
 
       it "should search for resources" do
-        Puppet::Resource.indirection.expects(:search).with('type/', {}).returns([])
+        Puppet::Resource.indirection.expects(:search).with('mytype/', {}).returns([])
         @resource.main
       end
 

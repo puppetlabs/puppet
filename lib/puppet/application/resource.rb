@@ -8,7 +8,6 @@ class Puppet::Application::Resource < Puppet::Application
 
   def preinit
     @extra_params = []
-    @host = nil
     Facter.loadfacts
   end
 
@@ -156,14 +155,14 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     properties = typeobj.properties.collect { |s| s.name }
 
     format = proc {|trans|
-      trans.dup.collect do |param, value|
+      trans.dup.collect do |attribute, value|
         if value.nil? or value.to_s.empty?
-          trans.delete(param)
-        elsif value.to_s == "absent" and param.to_s != "ensure"
-          trans.delete(param)
+          trans.delete(attribute)
+        elsif value.to_s == "absent" and attribute.to_s != "ensure"
+          trans.delete(attribute)
         end
 
-        trans.delete(param) unless properties.include?(param) or @extra_params.include?(param)
+        trans.delete(attribute) unless properties.include?(attribute) or @extra_params.include?(attribute)
       end
       trans.to_manifest
     }
