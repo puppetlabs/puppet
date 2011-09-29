@@ -137,22 +137,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    args = command_line.args
-    type = args.shift or raise "You must specify the type to display"
-    typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
-    name = args.shift
-    params = {}
-    args.each do |setting|
-      if setting =~ /^(\w+)=(.+)$/
-        params[$1] = $2
-      else
-        raise "Invalid parameter setting #{setting}"
-      end
-    end
+    type, name, properties, params = parse_args(command_line.args)
 
     raise "You cannot edit a remote host" if options[:edit] and @host
-
-    properties = typeobj.properties.collect { |s| s.name }
 
     format = proc {|trans|
       trans.dup.collect do |attribute, value|
@@ -167,15 +154,75 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       trans.to_manifest
     }
 
-    if @host
-      Puppet::Resource.indirection.terminus_class = :rest
-      port = Puppet[:puppetport]
-      key = ["https://#{host}:#{port}", "production", "resources", type, name].join('/')
-    else
-      key = [type, name].join('/')
+    resources = find_or_save_resources(type, name, params)
+    text = resources.map(&format).join("\n")
+
+    options[:edit] ?
+      handle_editing(text) :
+      (puts text)
+  end
+
+  def setup
+    Puppet::Util::Log.newdestination(:console)
+
+    Puppet.parse_config
+
+    if options[:debug]
+      Puppet::Util::Log.level = :debug
+    elsif options[:verbose]
+      Puppet::Util::Log.level = :info
+    end
+  end
+
+  private
+
+  def remote_key(type, name)
+    Puppet::Resource.indirection.terminus_class = :rest
+    port = Puppet[:puppetport]
+    ["https://#{@host}:#{port}", "production", "resources", type, name].join('/')
+  end
+
+  def local_key(type, name)
+    [type, name].join('/')
+  end
+
+  def handle_editing(text)
+    file = "/tmp/x2puppet-#{Process.pid}.pp"
+    begin
+      File.open(file, "w") do |f|
+        f.puts text
+      end
+      ENV["EDITOR"] ||= "vi"
+      system(ENV["EDITOR"], file)
+      system("puppet -v #{file}")
+    ensure
+      #if FileTest.exists? file
+      #    File.unlink(file)
+      #end
+    end
+  end
+
+  def parse_args(args)
+    type = args.shift or raise "You must specify the type to display"
+    typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
+    name = args.shift
+    params = {}
+    args.each do |setting|
+      if setting =~ /^(\w+)=(.+)$/
+        params[$1] = $2
+      else
+        raise "Invalid parameter setting #{setting}"
+      end
     end
 
-    text = if name
+    properties = typeobj.properties.collect { |s| s.name }
+    [type, name, properties, params]
+  end
+
+  def find_or_save_resources(type, name, params)
+    key = @host ? remote_key(type, name) : local_key(type, name)
+
+    if name
       if params.empty?
         [ Puppet::Resource.indirection.find( key ) ]
       else
@@ -186,37 +233,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         raise "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
       end
       Puppet::Resource.indirection.search( key, {} )
-    end.map(&format).join("\n")
-
-    if options[:edit]
-      file = "/tmp/x2puppet-#{Process.pid}.pp"
-      begin
-        File.open(file, "w") do |f|
-          f.puts text
-        end
-        ENV["EDITOR"] ||= "vi"
-        system(ENV["EDITOR"], file)
-        system("puppet -v #{file}")
-      ensure
-        #if FileTest.exists? file
-        #    File.unlink(file)
-        #end
-      end
-    else
-      puts text
-    end
-  end
-
-  def setup
-    Puppet::Util::Log.newdestination(:console)
-
-    # Now parse the config
-    Puppet.parse_config
-
-    if options[:debug]
-      Puppet::Util::Log.level = :debug
-    elsif options[:verbose]
-      Puppet::Util::Log.level = :info
     end
   end
 end
