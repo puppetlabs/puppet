@@ -69,7 +69,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # system.
   def self.instances
     jobs = self.jobsearch
-    self.job_list unless @job_list
+    @job_list ||= self.job_list
     jobs.keys.collect do |job|
       job_status = @job_list.has_key?(job) ? :running : :stopped
       new(:name => job, :provider => :launchd, :path => jobs[job], :status => job_status)
