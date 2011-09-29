@@ -137,11 +137,13 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    type, name, properties, params = parse_args(command_line.args)
+    type, name, params = parse_args(command_line.args)
 
     raise "You cannot edit a remote host" if options[:edit] and @host
 
     format = proc {|trans|
+      properties = trans.resource_type.properties.map(&:name)
+
       trans.dup.collect do |attribute, value|
         if value.nil? or value.to_s.empty?
           trans.delete(attribute)
@@ -204,7 +206,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
   def parse_args(args)
     type = args.shift or raise "You must specify the type to display"
-    typeobj = Puppet::Type.type(type) or raise "Could not find type #{type}"
+    Puppet::Type.type(type) or raise "Could not find type #{type}"
     name = args.shift
     params = {}
     args.each do |setting|
@@ -215,8 +217,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
     end
 
-    properties = typeobj.properties.collect { |s| s.name }
-    [type, name, properties, params]
+    [type, name, params]
   end
 
   def find_or_save_resources(type, name, params)
