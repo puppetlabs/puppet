@@ -194,7 +194,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       end
       ENV["EDITOR"] ||= "vi"
       system(ENV["EDITOR"], file)
-      system("puppet -v #{file}")
+      system("puppet apply -v #{file}")
     ensure
       #if FileTest.exists? file
       #    File.unlink(file)
