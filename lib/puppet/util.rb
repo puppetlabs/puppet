@@ -208,6 +208,7 @@ module Util
       :windows => %r!^([A-Z]:#{slash})|(#{slash}#{slash}#{name}#{slash}#{name})|(#{slash}#{slash}\?#{slash}#{name})!i,
       :posix   => %r!^/!,
     }
+    require 'puppet'
     platform ||= Puppet.features.microsoft_windows? ? :windows : :posix
 
     !! (path =~ regexes[platform])
