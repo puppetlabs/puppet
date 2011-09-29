@@ -194,17 +194,20 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   end
 
   describe "when using an incompatible version of Facter" do
+    before :each do
+      provider.instance_variable_set(:@macosx_version_major, nil)
+    end
     it "should display a deprecation warning" do
-    Facter.stubs(:value).with(:macosx_productversion_major).returns(nil)
-    Facter.stubs(:value).with(:kernel).returns('Darwin')
-    Facter.stubs(:value).with(:macosx_productversion).returns('10.5.8')
-    Puppet::Util::Warnings.expects(:maybe_log)
-    provider.stubs(:read_plist).returns({joblabel => {"Disabled" => false}})
-    subject.stubs(:plist_from_label).returns([joblabel, {"Disabled" => false}])
-    subject.stubs(:enabled?).returns :false
-    subject.stubs(:execute).with([:launchctl, :load, '-w', joblabel])
-    subject.stubs(:resource).returns({:name => joblabel, :enable => :true})
-    subject.enable
+      Facter.stubs(:value).with(:macosx_productversion_major).returns(nil)
+      Facter.stubs(:value).with(:kernel).returns('Darwin')
+      Facter.stubs(:value).with(:macosx_productversion).returns('10.5.8')
+      Puppet::Util::Warnings.expects(:maybe_log)
+      provider.stubs(:read_plist).returns({joblabel => {"Disabled" => false}})
+      subject.stubs(:plist_from_label).returns([joblabel, {"Disabled" => false}])
+      subject.stubs(:enabled?).returns :false
+      subject.stubs(:execute).with([:launchctl, :load, '-w', joblabel])
+      subject.stubs(:resource).returns({:name => joblabel, :enable => :true})
+      subject.enable
     end
   end
 end
