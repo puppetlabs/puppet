@@ -150,7 +150,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   def self.get_macosx_version_major
-    return @macosx_version_major if defined?(@macosx_version_major)
+    return @macosx_version_major if @macosx_version_major
     begin
       # Make sure we've loaded all of the facts
       Facter.loadfacts
