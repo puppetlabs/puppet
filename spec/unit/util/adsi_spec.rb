@@ -29,8 +29,19 @@ describe Puppet::Util::ADSI do
   end
 
   it "should return a SID for a passed user or group name" do
-    Puppet::Util::ADSI.expects(:execquery).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+    Puppet::Util::ADSI.expects(:execquery).with(
+      "SELECT Sid from Win32_Account WHERE Name = 'testers' AND LocalAccount = true"
+    ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+
     Puppet::Util::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
+  end
+
+  it "should return a SID for a passed fully-qualified user or group name" do
+    Puppet::Util::ADSI.expects(:execquery).with(
+      "SELECT Sid from Win32_Account WHERE Name = 'testers' AND Domain = 'MACHINE' AND LocalAccount = true"
+    ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+
+    Puppet::Util::ADSI.sid_for_account('MACHINE\testers').should == 'S-1-5-32-547'
   end
 
   describe Puppet::Util::ADSI::User do
