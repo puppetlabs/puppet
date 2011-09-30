@@ -70,7 +70,7 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
         host = Puppet::Rails::Host.create!(:name => 'one.local')
         Puppet::Rails::Resource.
           create!(:host     => host,
-                  :restype  => 'exec', :title => 'whammo',
+                  :restype  => 'Exec', :title => 'whammo',
                   :exported => true)
 
       end
@@ -80,12 +80,12 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
         found.length.should == 1
         found.map do |item|
           item.should respond_to :to_resource
-          item.restype.should == "exec"
+          item.restype.should == "Exec"
         end
       end
 
       it "should not filter resources that have been found before" do
-        search("exec").should == search("exec")
+        search("Exec").should == search("Exec")
       end
     end
   end
@@ -137,7 +137,12 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
       got.keys.should =~ [:conditions]
       got[:conditions][0].should be_include "(exported=? AND restype=?)"
       got[:conditions][1].should == true
-      got[:conditions][2].should == type.to_s
+      got[:conditions][2].should == type.to_s.capitalize
+    end
+
+    it "should capitalize the type, since PGSQL is case sensitive" do
+      got = query(type, 'whatever')
+      got[:conditions][2].should == 'Notify'
     end
   end
 
