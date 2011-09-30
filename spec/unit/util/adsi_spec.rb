@@ -28,9 +28,19 @@ describe Puppet::Util::ADSI do
     Puppet::Util::ADSI.computer_uri.should == "WinNT://testcomputername"
   end
 
-  it "should return a SID for a passed user or group name" do
-    Puppet::Util::ADSI.expects(:execquery).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
-    Puppet::Util::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
+  describe ".sid_for_account" do
+    it "should return the SID" do
+      result = [stub('account', :Sid => 'S-1-1-50')]
+      connection.expects(:execquery).returns(result)
+
+      Puppet::Util::ADSI.sid_for_account('joe').should == 'S-1-1-50'
+    end
+
+    it "should return nil if the account does not exist" do
+        connection.expects(:execquery).returns([])
+
+      Puppet::Util::ADSI.sid_for_account('foobar').should be_nil
+    end
   end
 
   describe Puppet::Util::ADSI::User do

@@ -97,8 +97,8 @@ describe Puppet::Configurer::Downloader do
 
   describe "when creating the catalog to do the downloading" do
     before do
-      @path = make_absolute("/download/path")
-      @dler = Puppet::Configurer::Downloader.new("foo", @path, "source")
+      @path = File.expand_path("/download/path")
+      @dler = Puppet::Configurer::Downloader.new("foo", @path, File.expand_path("source"))
     end
 
     it "should create a catalog and add the file to it" do

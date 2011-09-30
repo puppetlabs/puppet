@@ -77,6 +77,8 @@ module Puppet::Util::Windows::Security
   include Windows::Memory
   include Windows::MSVCRT::Buffer
 
+  extend Puppet::Util::Windows::Security
+
   # file modes
   S_IRUSR = 0000400
   S_IRGRP = 0000040
@@ -246,7 +248,7 @@ module Puppet::Util::Windows::Security
     S_IROTH => FILE_GENERIC_READ,
     S_IWOTH => FILE_GENERIC_WRITE,
     S_IXOTH => (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES),
-    (S_IWOTH | S_IXUSR) => FILE_DELETE_CHILD,
+    (S_IWOTH | S_IXOTH) => FILE_DELETE_CHILD,
   }
 
   # Set the mode of the object referenced by +path+ to the specified
@@ -514,7 +516,11 @@ module Puppet::Util::Windows::Security
 
     sid_ptr = sid_buf.unpack('L')[0]
     begin
-      yield sid_ptr
+      if block_given?
+        yield sid_ptr
+      else
+        true
+      end
     ensure
       LocalFree(sid_ptr)
     end

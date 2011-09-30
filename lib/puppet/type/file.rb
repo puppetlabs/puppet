@@ -3,6 +3,8 @@ require 'cgi'
 require 'etc'
 require 'uri'
 require 'fileutils'
+require 'enumerator'
+require 'pathname'
 require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
@@ -35,8 +37,7 @@ Puppet::Type.newtype(:file) do
     isnamevar
 
     validate do |value|
-      # accept various path syntaxes: lone slash, posix, win32, unc
-      unless (Puppet.features.posix? and value =~ /^\//) or (value =~ /^[A-Za-z]:\// or value =~ /^\/\/[^\/]+\/[^\/]+/)
+      unless Puppet::Util.absolute_path?(value)
         fail Puppet::Error, "File paths must be fully qualified, not '#{value}'"
       end
     end
@@ -44,20 +45,8 @@ Puppet::Type.newtype(:file) do
     # convert the current path in an index into the collection and the last
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
-      # We need to save off, and remove the volume designator in the
-      # path if it is there, since File.split does not handle paths
-      # with volume designators properly, except when run on Windows.
-      # Since we are potentially compiling a catalog for a Windows
-      # machine on a non-Windows master, we need to handle this
-      # ourselves.
-      optional_volume_designator = value.match(/^([a-z]:)[\/\\].*/i)
-      value_without_designator   = value.sub(/^(?:[a-z]:)?(.*)/i, '\1')
-
-      path, name = ::File.split(value_without_designator.gsub(/\/+/,'/'))
-
-      if optional_volume_designator
-        path = optional_volume_designator[1] + path
-      end
+      # We know the value is absolute, so expanding it will just standardize it.
+      path, name = ::File.split(::File.expand_path value)
 
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
@@ -65,12 +54,8 @@ Puppet::Type.newtype(:file) do
     # and the reverse
     unmunge do |value|
       basedir = Puppet::FileCollection.collection.path(value[:index])
-      # a lone slash as :name indicates a root dir on windows
-      if value[:name] == '/'
-        basedir
-      else
-        ::File.join( basedir, value[:name] )
-      end
+
+      ::File.expand_path ::File.join( basedir, value[:name] )
     end
   end
 
@@ -275,17 +260,12 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
-    basedir = ::File.dirname(self[:path])
-    if basedir != self[:path]
-      parents = []
-      until basedir == parents.last
-        parents << basedir
-        basedir = ::File.dirname(basedir)
-      end
-      # The filename of the first ancestor found, or nil
-      parents.find { |dir| catalog.resource(:file, dir) }
-    else
-      nil
+    path = Pathname(self[:path])
+    if !path.root?
+      # Start at our parent, to avoid autorequiring ourself
+      parents = path.parent.enum_for(:ascend)
+      found = parents.find { |p| catalog.resource(:file, p.to_s) }
+      found and found.to_s
     end
   end
 
@@ -632,6 +612,7 @@ Puppet::Type.newtype(:file) do
         FileUtils.rmtree(self[:path])
       else
         notice "Not removing directory; use 'force' to override"
+        return
       end
     when "link", "file"
       debug "Removing existing #{s.ftype} for replacement with #{should}"
@@ -640,6 +621,7 @@ Puppet::Type.newtype(:file) do
       self.fail "Could not back up files of type #{s.ftype}"
     end
     @stat = :needs_stat
+    true
   end
 
   def retrieve
