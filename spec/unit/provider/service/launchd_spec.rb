@@ -39,6 +39,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should return true in if the job plist says disabled is false" do
       Facter.stubs(:value).with(:macosx_productversion_major).returns('10.5')
       Facter.stubs(:value).with(:kernel).returns('Darwin')
+      Facter.stubs(:value).with(:macaddress).returns('')
+      Facter.stubs(:value).with(:arp).returns('')
       subject.expects(:plist_from_label).with(joblabel).returns(["foo", {"Disabled" => false}])
       subject.expects(:resource).returns({:name => joblabel})
       subject.enabled?.should == :true
