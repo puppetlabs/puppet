@@ -50,21 +50,22 @@ require 'puppet/provider/parsedfile'
   def flush
     raise Puppet::Error, "Cannot write SSH authorized keys without user"    unless @resource.should(:user)
     raise Puppet::Error, "User '#{@resource.should(:user)}' does not exist" unless uid = Puppet::Util.uid(@resource.should(:user))
-    unless File.exist?(dir = File.dirname(target))
-      Puppet.debug "Creating #{dir}"
-      Dir.mkdir(dir, dir_perm)
-      File.chown(uid, nil, dir)
-    end
-
     # ParsedFile usually calls backup_target much later in the flush process,
     # but our SUID makes that fail to open filebucket files for writing.
     # Fortunately, there's already logic to make sure it only ever happens once,
     # so calling it here supresses the later attempt by our superclass's flush method.
     self.class.backup_target(target)
 
-    Puppet::Util::SUIDManager.asuser(@resource.should(:user)) { super }
-    File.chown(uid, nil, target)
-    File.chmod(file_perm, target)
+    Puppet::Util::SUIDManager.asuser(@resource.should(:user)) do
+        unless File.exist?(dir = File.dirname(target))
+          Puppet.debug "Creating #{dir}"
+          Dir.mkdir(dir, dir_perm)
+        end
+
+        super
+
+        File.chmod(file_perm, target)
+    end
   end
 
   # parse sshv2 option strings, wich is a comma separated list of

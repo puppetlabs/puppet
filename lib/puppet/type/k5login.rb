@@ -79,7 +79,9 @@ Puppet::Type.newtype(:k5login) do
 
     private
     def write(value)
-      File.open(@resource[:name], "w") { |f| f.puts value.join("\n") }
+      Puppet::Util.secure_open(@resource[:name], "w") do |f|
+        f.puts value.join("\n")
+      end
     end
   end
 end
