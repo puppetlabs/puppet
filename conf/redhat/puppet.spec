@@ -5,7 +5,7 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.6.10
+Version:        2.6.11
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2
@@ -253,11 +253,14 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Sep 30 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.11-1
+- CVE-2011-3869, 3870, 3871
+
 * Wed Sep 28 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.10-1
 - Fix for CVE-2011-3484
 
 * Tue Jun 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.9-1
-- Release of 2.6.9 
+- Release of 2.6.9
 
 * Wed Jun 15 2011 Todd Zullinger <tmz@pobox.com> - 2.6.9-0.1.rc1
 - Update rc versioning to ensure 2.6.9 final is newer to rpm

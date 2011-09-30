@@ -1,3 +1,10 @@
+2.6.11
+===
+e158b26 (#9793) "secure" indirector file backed terminus base class.
+343c7bd (#9792) Predictable temporary filename in ralsh.
+88512e8 Drop privileges before creating and chmodding SSH keys.
+2775c21 (#9794) k5login can overwrite arbitrary files as root
+
 2.6.10
 ===
 ec5a32a Update spec and lib/puppet.rb for 2.6.10 release
