@@ -14,8 +14,7 @@ class TestSnippets < Test::Unit::TestCase
   def setup
     super
     @file = Puppet::Type.type(:file)
-    Facter.stubs(:to_hash).returns({})
-    Facter.stubs(:value).returns("whatever")
+    Puppet::Node::Facts.stubs(:[]).returns("whatever")
   end
 
   def self.snippetdir

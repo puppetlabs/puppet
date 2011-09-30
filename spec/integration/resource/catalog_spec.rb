@@ -11,8 +11,7 @@ describe Puppet::Resource::Catalog do
   describe "when using the indirector" do
     before do
       # This is so the tests work w/out networking.
-      Facter.stubs(:to_hash).returns({"hostname" => "foo.domain.com"})
-      Facter.stubs(:value).returns("eh")
+      Puppet::Node::Facts.stubs(:[]).returns("eh")
     end
 
 

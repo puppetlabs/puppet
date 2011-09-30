@@ -1,7 +1,7 @@
 require 'puppet/provider/parsedfile'
 
 Puppet::Type.type(:maillist).provide(:mailman) do
-  if [ "CentOS", "RedHat", "Fedora" ].any? { |os|  Facter.value(:operatingsystem) == os }
+  if [ "CentOS", "RedHat", "Fedora" ].any? { |os|  Puppet::Node::Facts["operatingsystem"] == os }
     commands :list_lists => "/usr/lib/mailman/bin/list_lists", :rmlist => "/usr/lib/mailman/bin/rmlist", :newlist => "/usr/lib/mailman/bin/newlist"
     commands :mailman => "/usr/lib/mailman/mail/mailman"
   else

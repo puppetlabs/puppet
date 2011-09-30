@@ -40,7 +40,7 @@ class TestImpl < Test::Unit::TestCase
     }
 
     assert_nothing_raised do
-      @provider.defaultfor :operatingsystem => Facter["operatingsystem"].value
+      @provider.defaultfor :operatingsystem => Puppet::Node::Facts["operatingsystem"]
     end
 
     assert_equal(@provider.name, @type.defaultprovider.name, "Did not get right provider")

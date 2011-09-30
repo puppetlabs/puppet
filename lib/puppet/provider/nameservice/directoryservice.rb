@@ -90,15 +90,13 @@ class DirectoryService < Puppet::Provider::NameService
   def self.get_macosx_version_major
     return @macosx_version_major if defined?(@macosx_version_major)
     begin
-      # Make sure we've loaded all of the facts
-      Facter.loadfacts
-
-      if Facter.value(:macosx_productversion_major)
-        product_version_major = Facter.value(:macosx_productversion_major)
+      Puppet::Node::Facts.load
+      if Puppet::Node::Facts["macosx_productversion_major"]
+        product_version_major = Puppet::Node::Facts["macosx_productversion_major"]
       else
         # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
         Puppet.warning("DEPRECATION WARNING: Future versions of the directoryservice provider will require Facter 1.5.5 or newer.")
-        product_version = Facter.value(:macosx_productversion)
+        product_version = Puppet::Node::Facts["macosx_productversion"]
         fail("Could not determine OS X version from Facter") if product_version.nil?
         product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
       end

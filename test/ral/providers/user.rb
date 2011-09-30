@@ -29,7 +29,7 @@ class TestUserProvider < Test::Unit::TestCase
     super
   end
 
-  case Facter["operatingsystem"].value
+  case Puppet::Node::Facts["operatingsystem"]
   when "Darwin"
     def missing?(user)
       output = %x{nidump -r /users/#{user} / 2>/dev/null}.chomp
@@ -317,7 +317,7 @@ class TestUserProvider < Test::Unit::TestCase
     end
 
     # Stupid DirectoryServices
-    if Facter.value(:operatingsystem) == "Darwin"
+    if Puppet::Node::Facts["operatingsystem"] == "Darwin"
       assert_raise(ArgumentError, "gid allowed a non-integer value") do
         user.gid = group.name
       end
@@ -566,7 +566,7 @@ class TestUserProvider < Test::Unit::TestCase
 
     # If we're Darwin, then we should get results, but everyone else should
     # get nil
-    darwin = (Facter.value(:operatingsystem) == "Darwin")
+    darwin = (Puppet::Node::Facts["operatingsystem"] == "Darwin")
 
     should = {
       :comment => user[:name].capitalize,

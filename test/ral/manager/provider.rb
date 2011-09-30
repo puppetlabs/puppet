@@ -28,7 +28,7 @@ class TestTypeProviders < Test::Unit::TestCase
     @type.defaultprovider = nil
 
     greater = @type.provide(:greater) do
-      defaultfor :operatingsystem => Facter.value("operatingsystem")
+      defaultfor :operatingsystem => Puppet::Node::Facts["operatingsystem"]
     end
 
     assert_equal(greater, @type.defaultprovider)

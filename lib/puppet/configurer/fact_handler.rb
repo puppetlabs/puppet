@@ -55,23 +55,9 @@ module Puppet::Configurer::FactHandler
     Puppet::Configurer::Downloader.new("fact", Puppet[:factdest], Puppet[:factsource], Puppet[:factsignore]).evaluate
   end
 
-  # Clear out all of the loaded facts and reload them from disk.
-  # NOTE: This is clumsy and shouldn't be required for later (1.5.x) versions
-  # of Facter.
   def reload_facter
-    Facter.clear
-
-    # Reload everything.
-    if Facter.respond_to? :loadfacts
-      Facter.loadfacts
-    elsif Facter.respond_to? :load
-      Facter.load
-    else
-      Puppet.warning "You should upgrade your version of Facter to at least 1.3.8"
-    end
-
     # This loads all existing facts and any new ones.  We have to remove and
     # reload because there's no way to unload specific facts.
-    Puppet::Node::Facts::Facter.load_fact_plugins
+    Puppet::Node::Facts.load
   end
 end

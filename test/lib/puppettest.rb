@@ -200,11 +200,6 @@ module PuppetTest
     #end
 
     Puppet[:ignoreschedules] = true
-
-    #@start = Time.now
-
-    #Facter.stubs(:value).returns "stubbed_value"
-    #Facter.stubs(:to_hash).returns({})
   end
 
   def tempfile(suffix = '')
@@ -231,8 +226,9 @@ module PuppetTest
   end
 
   def tmpdir
+    $operatingsystem ||= Puppet::Node::Facts["operatingsystem"]
     unless @tmpdir
-      @tmpdir = case Facter["operatingsystem"].value
+      @tmpdir = case $operatingsystem
         when "Darwin"; "/private/tmp"
         when "SunOS"; "/var/tmp"
         else

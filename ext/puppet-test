@@ -337,7 +337,7 @@ end
 Suite.new :rails, "Rails Interactions" do
     def prepare
         Puppet::Rails.init
-        @facts = Facter.to_hash
+        @facts = Puppet::Node::Facts.indirection.find(Puppet[:certname]).values
 
         if num = ENV["RESOURCECOUNT"]
             @resources = Integer(num)

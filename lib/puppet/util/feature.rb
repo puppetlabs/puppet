@@ -16,6 +16,7 @@ class Puppet::Util::Feature
       begin
         result = yield
       rescue Exception => detail
+        puts detail.backtrace if Puppet[:trace]
         warn "Failed to load feature test for #{name}: #{detail}"
         result = false
       end

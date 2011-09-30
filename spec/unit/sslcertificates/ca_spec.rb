@@ -93,12 +93,8 @@ describe Puppet::SSLCertificates::CA, :unless => Puppet.features.microsoft_windo
     end
 
     it 'should prepend "Puppet CA: " to the fqdn as the ca_name by default' do
-      host_mock_fact = mock()
-      host_mock_fact.expects(:value).returns('myhost')
-      domain_mock_fact = mock()
-      domain_mock_fact.expects(:value).returns('puppetlabs.lan')
-      Facter.stubs(:[]).with('hostname').returns(host_mock_fact)
-      Facter.stubs(:[]).with('domain').returns(domain_mock_fact)
+      Puppet::Node::Facts.stubs(:[]).with('hostname').returns("myhost")
+      Puppet::Node::Facts.stubs(:[]).with('domain').returns("puppetlabs.lan")
 
       @ca.mkrootcert.name.should == 'Puppet CA: myhost.puppetlabs.lan'
     end

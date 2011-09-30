@@ -19,7 +19,7 @@ class TestFileIgnoreSources < Test::Unit::TestCase
       system("rm -rf #{Puppet[:statefile]}")
     end
 
-    Facter.stubs(:to_hash).returns({})
+    Puppet::Node::Facts.stubs(:[]).returns "meh"
   end
 
 #This is not needed unless using md5 (correct me if I'm wrong)

@@ -44,7 +44,7 @@ class TestGroupProvider < Test::Unit::TestCase
     group
   end
 
-  case Facter["operatingsystem"].value
+  case Puppet::Node::Facts["operatingsystem"]
   when "Darwin"
     def missing?(group)
       output = %x{nidump -r /groups/#{group} / 2>/dev/null}.chomp
@@ -202,7 +202,7 @@ class TestGroupProvider < Test::Unit::TestCase
     end
 
     # groupadd -o is broken in FreeBSD.
-    unless Facter["operatingsystem"].value == "FreeBSD"
+    unless Puppet::Node::Facts["operatingsystem"] == "FreeBSD"
     def test_duplicateIDs
       group1 = mkgroup("group1", :gid => 125)
 

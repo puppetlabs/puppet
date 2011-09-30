@@ -4,8 +4,8 @@ require 'puppet/file_serving/mount/file'
 
 module FileServingMountTesting
   def stub_facter(hostname)
-    Facter.stubs(:value).with("hostname").returns(hostname.sub(/\..+/, ''))
-    Facter.stubs(:value).with("domain").returns(hostname.sub(/^[^.]+\./, ''))
+    Puppet::Node::Facts.stubs(:[]).with("hostname").returns(hostname.sub(/\..+/, ''))
+    Puppet::Node::Facts.stubs(:[]).with("domain").returns(hostname.sub(/^[^.]+\./, ''))
   end
 end
 

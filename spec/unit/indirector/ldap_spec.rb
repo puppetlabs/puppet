@@ -131,7 +131,7 @@ describe Puppet::Indirector::Ldap do
     end
   end
 
-  describe "when reconnecting to ldap", :if => (Puppet.features.root? and Facter.value("hostname") == "culain") do
+  describe "when reconnecting to ldap", :if => (Puppet.features.root? and Puppet::Node::Facts["hostname"] == "culain") do
     it "should reconnect to ldap when connections are lost"
   end
 end

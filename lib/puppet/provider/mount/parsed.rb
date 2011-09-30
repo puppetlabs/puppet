@@ -2,7 +2,7 @@ require 'puppet/provider/parsedfile'
 require 'puppet/provider/mount'
 
 fstab = nil
-case Facter.value(:operatingsystem)
+case Puppet::Node::Facts["operatingsystem"]
 when "Solaris"; fstab = "/etc/vfstab"
 else
   fstab = "/etc/fstab"
@@ -18,7 +18,7 @@ Puppet::Type.type(:mount).provide(
 
   commands :mountcmd => "mount", :umount => "umount"
 
-  case Facter.value(:operatingsystem)
+  case Puppet::Node::Facts["operatingsystem"]
   when "Solaris"
     @fields = [:device, :blockdevice, :name, :fstype, :pass, :atboot, :options]
   else
@@ -88,7 +88,7 @@ Puppet::Type.type(:mount).provide(
 
   def self.mountinstances
     # XXX: Will not work for mount points that have spaces in path (does fstab support this anyways?)
-    regex = case Facter.value(:operatingsystem)
+    regex = case Puppet::Node::Facts["operatingsystem"]
       when "Darwin"
         / on (?:\/private\/var\/automount)?(\S*)/
       when "Solaris", "HP-UX"

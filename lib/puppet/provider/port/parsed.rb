@@ -1,7 +1,7 @@
 require 'puppet/provider/parsedfile'
 
 #services = nil
-#case Facter.value(:operatingsystem)
+#case Puppet::Node::Facts["operatingsystem"]
 #when "Solaris"; services = "/etc/inet/services"
 #else
 #    services = "/etc/services"
@@ -108,7 +108,7 @@ require 'puppet/provider/parsedfile'
 #            end
 #        else
 #            if line =~ /^\s+\d+/ and
-#                Facter["operatingsystem"].value == "Darwin"
+#                Puppet::Node::Facts["operatingsystem"] == "Darwin"
 #                    #Puppet.notice "Skipping wonky OS X port entry %s" %
 #                    #    line.inspect
 #                    next

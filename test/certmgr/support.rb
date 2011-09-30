@@ -82,7 +82,7 @@ class TestCertSupport < Test::Unit::TestCase
 
   # Fixing #1382.  This test will always fail on Darwin, because its
   # FS is case-insensitive.
-  unless Facter.value(:operatingsystem) == "Darwin"
+  unless Puppet::Node::Facts["operatingsystem"] == "Darwin"
     def test_uppercase_files_are_renamed_and_read
       # Write a key out to disk in a file containing upper-case.
       key = OpenSSL::PKey::RSA.new(32)

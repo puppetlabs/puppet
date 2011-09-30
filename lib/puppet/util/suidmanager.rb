@@ -1,7 +1,7 @@
-require 'puppet/util/warnings'
-require 'forwardable'
-
 module Puppet::Util::SUIDManager
+  require 'puppet/util/warnings'
+  require 'puppet/node/facts'
+  require 'forwardable'
   include Puppet::Util::Warnings
   extend Forwardable
 
@@ -17,13 +17,13 @@ module Puppet::Util::SUIDManager
     return @osx_maj_ver unless @osx_maj_ver.nil?
     require 'facter'
     # 'kernel' is available without explicitly loading all facts
-    if Facter.value('kernel') != 'Darwin'
+    if Puppet::Node::Facts["kernel"] != 'Darwin'
       @osx_maj_ver = false
       return @osx_maj_ver
     end
     # But 'macosx_productversion_major' requires it.
-    Facter.loadfacts
-    @osx_maj_ver = Facter.value('macosx_productversion_major')
+    Puppet::Node::Facts.load
+    @osx_maj_ver = Puppet::Node::Facts["macosx_productversion_major"]
   end
   module_function :osx_maj_ver
 
@@ -43,7 +43,7 @@ module Puppet::Util::SUIDManager
     require 'win32/security'
     require 'facter'
 
-    majversion = Facter.value(:kernelmajversion)
+    majversion = Puppet::Node::Facts['kernelmajversion']
     return false unless majversion
 
     # if Vista or later, check for unrestricted process token

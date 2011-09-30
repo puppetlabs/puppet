@@ -11,14 +11,14 @@ describe provider_class, :fails_on_windows => true do
     @provider = @mount_class.provider(:parsed)
   end
 
-  # LAK:FIXME I can't mock Facter because this test happens at parse-time.
+  # LAK:FIXME I can't mock facts because this test happens at parse-time.
   it "should default to /etc/vfstab on Solaris" do
-    pending "This test only works on Solaris" unless Facter.value(:operatingsystem) == 'Solaris'
+    pending "This test only works on Solaris" unless Puppet::Node::Facts["operatingsystem"] == 'Solaris'
     Puppet::Type.type(:mount).provider(:parsed).default_target.should == '/etc/vfstab'
   end
 
   it "should default to /etc/fstab on anything else" do
-    pending "This test does not work on Solaris" if Facter.value(:operatingsystem) == 'Solaris'
+    pending "This test does not work on Solaris" if Puppet::Node::Facts["operatingsystem"] == 'Solaris'
     Puppet::Type.type(:mount).provider(:parsed).default_target.should == '/etc/fstab'
   end
 
@@ -35,7 +35,7 @@ FSTAB
 #   it_should_behave_like "all parsedfile providers",
 #     provider_class, my_fixtures('*.fstab')
 
-    describe "on Solaris", :if => Facter.value(:operatingsystem) == 'Solaris', :'fails_on_ruby_1.9.2' => true do
+    describe "on Solaris", :if => Puppet::Node::Facts[:operatingsystem] == 'Solaris', :'fails_on_ruby_1.9.2' => true do
 
       before :each do
         @example_line = "/dev/dsk/c0d0s0 /dev/rdsk/c0d0s0 \t\t    /  \t    ufs     1 no\t-"
@@ -71,7 +71,7 @@ FSTAB
 
     end
 
-    describe "on other platforms than Solaris", :if => Facter.value(:operatingsystem) != 'Solaris' do
+    describe "on other platforms than Solaris", :if => Puppet::Node::Facts[:operatingsystem] != 'Solaris' do
 
       before :each do
         @example_line = "/dev/vg00/lv01\t/spare   \t  \t   ext3    defaults\t1 2"
@@ -107,7 +107,7 @@ FSTAB
 
   describe "mountinstances" do
     it "should get name from mountoutput found on Solaris" do
-      Facter.stubs(:value).with(:operatingsystem).returns 'Solaris'
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns "Solaris"
       @provider.stubs(:mountcmd).returns(File.read(my_fixture('solaris.mount')))
       mounts = @provider.mountinstances
       mounts.size.should == 6
@@ -120,7 +120,7 @@ FSTAB
     end
 
     it "should get name from mountoutput found on HP-UX" do
-      Facter.stubs(:value).with(:operatingsystem).returns 'HP-UX'
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns "HP-UX"
       @provider.stubs(:mountcmd).returns(File.read(my_fixture('hpux.mount')))
       mounts = @provider.mountinstances
       mounts.size.should == 17
@@ -144,7 +144,7 @@ FSTAB
     end
 
     it "should get name from mountoutput found on Darwin" do
-      Facter.stubs(:value).with(:operatingsystem).returns 'Darwin'
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns "Darwin"
       @provider.stubs(:mountcmd).returns(File.read(my_fixture('darwin.mount')))
       mounts = @provider.mountinstances
       mounts.size.should == 6
@@ -157,7 +157,7 @@ FSTAB
     end
 
     it "should get name from mountoutput found on Linux" do
-      Facter.stubs(:value).with(:operatingsystem).returns 'Gentoo'
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns "Gentoo"
       @provider.stubs(:mountcmd).returns(File.read(my_fixture('linux.mount')))
       mounts = @provider.mountinstances
       mounts[0].should == { :name => '/', :mounted => :yes }
@@ -168,7 +168,7 @@ FSTAB
     end
 
     it "should get name from mountoutput found on AIX" do
-      Facter.stubs(:value).with(:operatingsystem).returns 'AIX'
+      Puppet::Node::Facts.stubs(:[]).with("operatingsystem").returns "AIX"
       @provider.stubs(:mountcmd).returns(File.read(my_fixture('aix.mount')))
       mounts = @provider.mountinstances
       mounts[0].should == { :name => '/', :mounted => :yes }
@@ -192,7 +192,7 @@ FSTAB
 
     describe "when calling instances on #{platform}" do
       before :each do
-        if Facter[:operatingsystem] == "Solaris" then
+        if Puppet::Node::Facts["operatingsystem"] == "Solaris" then
           platform == 'solaris' or
             pending "We need to stub the operatingsystem fact at load time, but can't"
         else
@@ -232,7 +232,7 @@ FSTAB
 
     describe "when prefetching on #{platform}" do
       before :each do
-        if Facter[:operatingsystem] == "Solaris" then
+        if Puppet::Node::Facts["operatingsystem"] == "Solaris" then
           platform == 'solaris' or
             pending "We need to stub the operatingsystem fact at load time, but can't"
         else

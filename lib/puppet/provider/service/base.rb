@@ -19,7 +19,7 @@ Puppet::Type.type(:service).provide :base do
   # parameter.
   def getpid
     @resource.fail "Either stop/status commands or a pattern must be specified" unless @resource[:pattern]
-    ps = Facter["ps"].value
+    ps = Puppet::Node::Facts["ps"]
     @resource.fail "You must upgrade Facter to a version that includes 'ps'" unless ps and ps != ""
     regex = Regexp.new(@resource[:pattern])
     self.debug "Executing '#{ps}'"

@@ -180,7 +180,7 @@ describe Puppet::Module do
     it "should fail when not running on a supported platform" do
       pending "Not sure how to send client platform to the module"
       mod = Puppet::Module.new("mymod")
-      Facter.expects(:value).with("operatingsystem").returns "Solaris"
+      Puppet::Node::Facts.expects(:[]).with("operatingsystem").returns "Solaris"
 
       mod.supports "hpux"
 
@@ -190,8 +190,8 @@ describe Puppet::Module do
     it "should fail when supported platforms are present but of the wrong version" do
       pending "Not sure how to send client platform to the module"
       mod = Puppet::Module.new("mymod")
-      Facter.expects(:value).with("operatingsystem").returns "Solaris"
-      Facter.expects(:value).with("operatingsystemrelease").returns 2.0
+      Puppet::Node::Facts.expects(:[]).with("operatingsystem").returns "Solaris"
+      Puppet::Node::Facts.expects(:[]).with("operatingsystemrelease").returns 2.0
 
       mod.supports "Solaris", 1.0
 
@@ -207,8 +207,8 @@ describe Puppet::Module do
     it "should be considered supported when running on a supported platform" do
       pending "Not sure how to send client platform to the module"
       mod = Puppet::Module.new("mymod")
-      Facter.expects(:value).with("operatingsystem").returns "Solaris"
-      Facter.expects(:value).with("operatingsystemrelease").returns 2.0
+      Puppet::Node::Facts.expects(:[]).with("operatingsystem").returns "Solaris"
+      Puppet::Node::Facts.expects(:[]).with("operatingsystemrelease").returns 2.0
 
       mod.supports "Solaris", 1.0
 

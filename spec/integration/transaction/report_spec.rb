@@ -12,7 +12,7 @@ describe Puppet::Transaction::Report do
 
       terminus = Puppet::Transaction::Report.indirection.terminus(:processor)
 
-      Facter.stubs(:value).returns "host.domain.com"
+      Puppet::Node::Facts.stubs(:[]).returns "host.domain.com"
 
       report = Puppet::Transaction::Report.new("apply")
 

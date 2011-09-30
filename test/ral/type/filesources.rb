@@ -21,7 +21,7 @@ class TestFileSources < Test::Unit::TestCase
     @file = Puppet::Type.type(:file)
     Puppet[:filetimeout] = -1
     Puppet::Util::SUIDManager.stubs(:asuser).yields
-    Facter.stubs(:to_hash).returns({})
+    Puppet::Node::Facts.stubs(:[]).returns "meh"
   end
 
   def teardown

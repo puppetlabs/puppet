@@ -16,8 +16,8 @@ describe Puppet::Type.type(:package), "when choosing a default package provider"
   end
 
   it "should choose the correct provider each platform" do
-    unless default_provider = provider_name(Facter.value(:operatingsystem))
-      pending("No default provider specified in this test for #{Facter.value(:operatingsystem)}")
+    unless default_provider = provider_name(Puppet::Node::Facts["operatingsystem"])
+      pending("No default provider specified in this test for #{Puppet::Node::Facts["operatingsystem"]}")
     end
     Puppet::Type.type(:package).defaultprovider.name.should == default_provider
   end

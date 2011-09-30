@@ -24,7 +24,7 @@ class TestMongrelServer < PuppetTest::TestCase
 
     mongrel = mkserver
 
-    ip = Facter.value(:ipaddress)
+    ip = Puppet::Node::Facts["ipaddress"]
     params["REMOTE_ADDR"] = ip
     params[Puppet[:ssl_client_header]] = ""
     params[Puppet[:ssl_client_verify_header]] = "failure"

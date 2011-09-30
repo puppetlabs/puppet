@@ -8,6 +8,68 @@ describe Puppet::Node::Facts, "when indirecting" do
     @facts = Puppet::Node::Facts.new("me")
   end
 
+  it "should use array indexer methods for interacting with values" do
+    @facts["foobar"] = "yayness"
+    @facts["foobar"].should == "yayness"
+    @facts.values["foobar"].should == "yayness"
+  end
+
+  describe "when using the class-level indexer methods" do
+    before do
+      # Force the cache to clear
+      Puppet::Node::Facts.load
+    end
+
+    it "should use a Facts instance found via the certname" do
+      Puppet[:certname] = "fooness"
+      Puppet::Node::Facts.indirection.expects(:find).with("fooness").returns({})
+      Puppet::Node::Facts["hostname"]
+    end
+
+    it "should return the asked for value from any found facts" do
+      facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
+      Puppet::Node::Facts["hostname"].should == facts["hostname"]
+    end
+
+    it "should return nil when facts cannot be found" do
+      Puppet::Node::Facts.indirection.expects(:find).returns(nil)
+      Puppet::Node::Facts["hostname"].should be_nil
+    end
+
+    it "should cache the facts between calls" do
+      Puppet::Node::Facts["hostname"]
+      Puppet::Node::Facts.indirection.expects(:find).never
+      Puppet::Node::Facts["hostname"]
+    end
+
+    it "should clear the cache when the facts are reloaded" do
+      Puppet::Node::Facts["hostname"]
+      Puppet::Node::Facts.load
+      Puppet::Node::Facts.indirection.expects(:find).returns({})
+      Puppet::Node::Facts["hostname"]
+    end
+  end
+
+  describe "when asked to load" do
+    it "should do nothing if there is no terminus configured" do
+      Puppet::Node::Facts.indirection.expects(:terminus).returns nil
+      lambda { Puppet::Node::Facts.load }.should_not raise_error
+    end
+
+    it "should do nothing if its terminus does not support loading" do
+      terminus = "non_loading_plugin"
+      Puppet::Node::Facts.indirection.expects(:terminus).returns terminus
+      lambda { Puppet::Node::Facts.load }.should_not raise_error
+    end
+
+    it "should call 'load' on its terminus if one is available and supports the 'load' method" do
+      terminus = Puppet::Node::Facts::Facter.new
+      terminus.expects(:load)
+      Puppet::Node::Facts.indirection.expects(:terminus).returns terminus
+      Puppet::Node::Facts.load
+    end
+  end
+
   it "should be able to convert all fact values to strings" do
     @facts.values["one"] = 1
     @facts.stringify

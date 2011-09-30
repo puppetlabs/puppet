@@ -7,7 +7,7 @@ Puppet::Resource::Catalog.indirection.terminus(:compiler)
 
 describe Puppet::Resource::Catalog::Compiler do
   before do
-    Facter.stubs(:value).returns "something"
+    Puppet::Node::Facts.stubs(:[]).returns "something"
     @catalog = Puppet::Resource::Catalog.new
     @catalog.add_resource(@one = Puppet::Resource.new(:file, "/one"))
     @catalog.add_resource(@two = Puppet::Resource.new(:file, "/two"))

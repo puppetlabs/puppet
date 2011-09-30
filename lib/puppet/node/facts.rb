@@ -21,9 +21,37 @@ class Puppet::Node::Facts
     end
   end
 
+  # This is a simplistic interface, in that we could provide access
+  # to individual facts and all facts and still retain things like
+  # caching, but this seems to be sufficient for essentially all
+  # of the way Puppet uses Facter.
+  #   We cache the facts until Facts.load is called again, because
+  # otherwise we reload all facts all the time, which gets expensive
+  # quickly.
+  def self.[](name)
+    return nil unless @cached_local_facts ||= indirection.find(Puppet[:certname])
+    @cached_local_facts[name.to_s]
+  end
+
+  # Load any plugins in our terminus (usually Facter)
+  def self.load
+    @cached_local_facts = nil
+    return unless terminus = indirection.terminus
+    return unless terminus.respond_to?(:load)
+    terminus.load
+  end
+
   indirects :facts, :terminus_setting => :facts_terminus, :extend => NodeExpirer
 
   attr_accessor :name, :values
+
+  def [](name)
+    @values[name]
+  end
+
+  def []=(name, value)
+    @values[name] = value
+  end
 
   def add_local_facts
     values["clientcert"] = Puppet.settings[:certname]

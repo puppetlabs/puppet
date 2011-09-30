@@ -6,7 +6,7 @@ require 'puppettest'
 require 'puppet/type/zone'
 
 class TestZone < PuppetTest::TestCase
-  confine "Zones are only functional on Solaris" => (Facter["operatingsystem"].value == "Solaris")
+  confine "Zones are only functional on Solaris" => (Puppet::Node::Facts["operatingsystem"] == "Solaris")
 
   def setup
     super
@@ -179,7 +179,7 @@ end
 
 class TestZoneAsRoot < TestZone
   confine "Not running Zone creation tests" => Puppet.features.root?
-  confine "Zones are only functional on Solaris" => (Facter["operatingsystem"].value == "Solaris")
+  confine "Zones are only functional on Solaris" => (Puppet::Node::Facts["operatingsystem"] == "Solaris")
 
   def teardown
     current = %x{zoneadm list -cp}.split("\n").inject({}) { |h, line|

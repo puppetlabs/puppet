@@ -1,4 +1,5 @@
 require 'puppet/resource/status'
+require 'forwardable'
 
 class Puppet::Transaction::ResourceHarness
   extend Forwardable

@@ -37,7 +37,7 @@ describe Puppet::Provider::ConfineCollection do
     end
 
     describe "and the test cannot be found" do
-      it "should create a Facter test with the provided values and set the name to the test name" do
+      it "should create a fact test with the provided values and set the name to the test name" do
         confine = Puppet::Provider::Confine.test(:variable).new(%w{my values})
         confine.expects(:name=).with(:foo)
         confine.class.expects(:new).with(%w{my values}).returns confine

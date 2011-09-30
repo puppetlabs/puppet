@@ -78,7 +78,7 @@ describe Puppet::Configurer::FactHandler do
       Puppet[:node_name_value].should == 'other_node_name'
     end
 
-    it "should reload Facter before finding facts" do
+    it "should reload facts before finding them" do
       @facthandler.expects(:reload_facter)
 
       @facthandler.find_facts
@@ -146,25 +146,9 @@ describe Puppet::Configurer::FactHandler do
     @facthandler.facts_for_uploading
   end
 
-  describe "when reloading Facter" do
-    before do
-      Facter.stubs(:clear)
-      Facter.stubs(:load)
-      Facter.stubs(:loadfacts)
-    end
-
-    it "should clear Facter" do
-      Facter.expects(:clear)
-      @facthandler.reload_facter
-    end
-
-    it "should load all Facter facts" do
-      Facter.expects(:loadfacts)
-      @facthandler.reload_facter
-    end
-
-    it "should use the Facter terminus load all Puppet Fact plugins" do
-      Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
+  describe "when reloading facts" do
+    it "should use Facts to load all plugins" do
+      Puppet::Node::Facts.expects(:load)
       @facthandler.reload_facter
     end
   end
