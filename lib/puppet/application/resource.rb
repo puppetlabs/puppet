@@ -143,7 +143,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     resources = find_or_save_resources(type, name, params)
     text = resources.
-      map { |resource| resource.format_for_manifest(@extra_params) }.
+      map { |resource| resource.prune_parameters(:parameters_to_include => @extra_params).to_manifest }.
       join("\n")
 
     options[:edit] ?

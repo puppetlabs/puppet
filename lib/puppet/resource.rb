@@ -355,7 +355,7 @@ class Puppet::Resource
     raise ArgumentError, "Invalid parameter #{name}" unless valid_parameter?(name)
   end
 
-  def format_for_manifest(parameters_to_include)
+  def prune_parameters(options = {})
     properties = resource_type.properties.map(&:name)
 
     dup.collect do |attribute, value|
@@ -365,9 +365,10 @@ class Puppet::Resource
         delete(attribute)
       end
 
-      delete(attribute) unless properties.include?(attribute) or parameters_to_include.include?(attribute)
+      parameters_to_include = options[:parameters_to_include] || []
+      delete(attribute) unless properties.include?(attribute) || parameters_to_include.include?(attribute)
     end
-    to_manifest
+    self
   end
 
   private

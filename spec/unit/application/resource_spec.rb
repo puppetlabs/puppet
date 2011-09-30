@@ -93,6 +93,9 @@ describe Puppet::Application::Resource do
       @type = stub_everything 'type', :properties => []
       @resource_app.command_line.stubs(:args).returns(['mytype'])
       Puppet::Type.stubs(:type).returns(@type)
+
+      @res = stub_everything "resource"
+      @res.stubs(:prune_parameters).returns(@res)
     end
 
     it "should raise an error if no type is given" do
@@ -131,18 +134,15 @@ describe Puppet::Application::Resource do
 
       it "should describe the given resource" do
         @resource_app.command_line.stubs(:args).returns(['type', 'name'])
-        x = stub_everything 'resource'
-        Puppet::Resource.indirection.expects(:find).with('https://host:8139/production/resources/type/name').returns(x)
+        Puppet::Resource.indirection.expects(:find).with('https://host:8139/production/resources/type/name').returns(@res)
         @resource_app.main
       end
 
       it "should add given parameters to the object" do
         @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-        res = stub "resource"
-        Puppet::Resource.indirection.expects(:save).with(res, 'https://host:8139/production/resources/type/name').returns(res)
-        res.expects(:format_for_manifest)
-        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)
+        Puppet::Resource.indirection.expects(:save).with(@res, 'https://host:8139/production/resources/type/name').returns(@res)
+        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
 
         @resource_app.main
       end
@@ -165,18 +165,15 @@ describe Puppet::Application::Resource do
 
       it "should describe the given resource" do
         @resource_app.command_line.stubs(:args).returns(['type','name'])
-        x = stub_everything 'resource'
-        Puppet::Resource.indirection.expects(:find).with('type/name').returns(x)
+        Puppet::Resource.indirection.expects(:find).with('type/name').returns(@res)
         @resource_app.main
       end
 
       it "should add given parameters to the object" do
         @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-        res = stub "resource"
-        Puppet::Resource.indirection.expects(:save).with(res, 'type/name').returns(res)
-        res.expects(:format_for_manifest)
-        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(res)
+        Puppet::Resource.indirection.expects(:save).with(@res, 'type/name').returns(@res)
+        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
 
         @resource_app.main
       end
