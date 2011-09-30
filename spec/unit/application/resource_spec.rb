@@ -96,6 +96,7 @@ describe Puppet::Application::Resource do
 
       @res = stub_everything "resource"
       @res.stubs(:prune_parameters).returns(@res)
+      @report = stub_everything "report"
     end
 
     it "should raise an error if no type is given" do
@@ -141,7 +142,9 @@ describe Puppet::Application::Resource do
       it "should add given parameters to the object" do
         @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-        Puppet::Resource.indirection.expects(:save).with(@res, 'https://host:8139/production/resources/type/name').returns(@res)
+        Puppet::Resource.indirection.expects(:save).
+          with(@res, 'https://host:8139/production/resources/type/name').
+          returns([@res, @report])
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
 
         @resource_app.main
@@ -172,7 +175,7 @@ describe Puppet::Application::Resource do
       it "should add given parameters to the object" do
         @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-        Puppet::Resource.indirection.expects(:save).with(@res, 'type/name').returns(@res)
+        Puppet::Resource.indirection.expects(:save).with(@res, 'type/name').returns([@res, @report])
         Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
 
         @resource_app.main
