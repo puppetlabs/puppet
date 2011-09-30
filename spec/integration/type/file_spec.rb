@@ -76,17 +76,22 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should fail if no backup can be performed" do
-      file = described_class.new :path => path, :backup => ".bak", :content => "foo"
+      dir = tmpfile("backups")
+      Dir.mkdir(dir)
+
+      file = described_class.new :path => File.join(dir, "testfile"), :backup => ".bak", :content => "foo"
       catalog.add_resource file
 
-      File.open(path, 'w') { |f| f.puts "bar" }
+      File.open(file[:path], 'w') { |f| f.puts "bar" }
 
       # Create a directory where the backup should be so that writing to it fails
-      Dir.mkdir("#{path}.bak")
+      Dir.mkdir(File.join(dir, "testfile.bak"))
+
+      Puppet::Util::Log.stubs(:newmessage)
 
       catalog.apply
 
-      File.read(path).should == "bar\n"
+      File.read(file[:path]).should == "bar\n"
     end
 
     it "should not backup symlinks", :unless => Puppet.features.microsoft_windows? do
