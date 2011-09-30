@@ -15,6 +15,11 @@ describe Puppet::Node::Facts, "when indirecting" do
   end
 
   describe "when using the class-level indexer methods" do
+    before do
+      # Force the cache to clear
+      Puppet::Node::Facts.load
+    end
+
     it "should use a Facts instance found via the certname" do
       Puppet[:certname] = "fooness"
       Puppet::Node::Facts.indirection.expects(:find).with("fooness").returns({})
@@ -29,6 +34,19 @@ describe Puppet::Node::Facts, "when indirecting" do
     it "should return nil when facts cannot be found" do
       Puppet::Node::Facts.indirection.expects(:find).returns(nil)
       Puppet::Node::Facts["hostname"].should be_nil
+    end
+
+    it "should cache the facts between calls" do
+      Puppet::Node::Facts["hostname"]
+      Puppet::Node::Facts.indirection.expects(:find).never
+      Puppet::Node::Facts["hostname"]
+    end
+
+    it "should clear the cache when the facts are reloaded" do
+      Puppet::Node::Facts["hostname"]
+      Puppet::Node::Facts.load
+      Puppet::Node::Facts.indirection.expects(:find).returns({})
+      Puppet::Node::Facts["hostname"]
     end
   end
 

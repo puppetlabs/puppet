@@ -21,16 +21,21 @@ class Puppet::Node::Facts
     end
   end
 
-  # XXX:LAK This is pretty damn slow - does a full query for every attribute.
-  # I'm leaving it for now, figuring anything else would be a premature optimization,
-  # but it's definitely something to look out for.
+  # This is a simplistic interface, in that we could provide access
+  # to individual facts and all facts and still retain things like
+  # caching, but this seems to be sufficient for essentially all
+  # of the way Puppet uses Facter.
+  #   We cache the facts until Facts.load is called again, because
+  # otherwise we reload all facts all the time, which gets expensive
+  # quickly.
   def self.[](name)
-    return nil unless facts = indirection.find(Puppet[:certname])
-    facts[name]
+    return nil unless @cached_local_facts ||= indirection.find(Puppet[:certname])
+    @cached_local_facts[name.to_s]
   end
 
   # Load any plugins in our terminus (usually Facter)
   def self.load
+    @cached_local_facts = nil
     return unless terminus = indirection.terminus
     return unless terminus.respond_to?(:load)
     terminus.load
