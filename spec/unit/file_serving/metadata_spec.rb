@@ -195,13 +195,13 @@ describe Puppet::FileServing::Metadata do
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
         let(:checksum) { Digest::MD5.hexdigest("some content\n") }
+        let(:fmode) { File.lstat(path).mode & 0777 }
 
         before :each do
           File.open(target, "w") {|f| f.print("some content\n")}
           set_mode(0644, target)
 
           FileUtils.symlink(target, path)
-          set_mode(0755, path)
         end
 
         it "should read links instead of returning their checksums" do
@@ -214,7 +214,7 @@ describe Puppet::FileServing::Metadata do
         end
 
         it "should produce tab-separated mode, type, owner, group, checksum, and destination for xmlrpc" do
-          metadata.attributes_with_tabs.should == "#{0755}\tlink\t#{owner}\t#{group}\t{md5}eb9c2bf0eb63f3a7bc0ea37ef18aeba5\t#{target}"
+          metadata.attributes_with_tabs.should == "#{fmode}\tlink\t#{owner}\t#{group}\t{md5}eb9c2bf0eb63f3a7bc0ea37ef18aeba5\t#{target}"
         end
       end
     end
