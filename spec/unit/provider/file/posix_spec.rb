@@ -198,27 +198,27 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
 
   describe "#group=" do
     it "should set the group but not the owner of the file" do
-      File.expects(:lchgrp).with(nil, 15, resource[:path])
+      File.expects(:lchown).with(nil, 15, resource[:path])
 
       provider.group = 15
     end
 
-    it "should chgrp a link if managing links" do
+    it "should change the group for a link if managing links" do
       resource[:links] = :manage
-      File.expects(:lchgrp).with(nil, 20, resource[:path])
+      File.expects(:lchown).with(nil, 20, resource[:path])
 
       provider.group = 20
     end
 
-    it "should chgrp a link target if following links" do
+    it "should change the group for a link target if following links" do
       resource[:links] = :follow
-      File.expects(:chgrp).with(nil, 20, resource[:path])
+      File.expects(:chown).with(nil, 20, resource[:path])
 
       provider.group = 20
     end
 
     it "should pass along any error encountered setting the group" do
-      File.expects(:lchgrp).raises(ArgumentError)
+      File.expects(:lchown).raises(ArgumentError)
 
       expect { provider.group = 25 }.to raise_error(Puppet::Error, /Failed to set group to '25'/)
     end

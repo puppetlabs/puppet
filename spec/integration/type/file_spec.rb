@@ -20,6 +20,14 @@ describe Puppet::Type.type(:file) do
     def get_mode(file)
       File.lstat(file).mode
     end
+
+    def get_owner(file)
+      File.lstat(file).uid
+    end
+
+    def get_group(file)
+      File.lstat(file).gid
+    end
   else
     class SecurityHelper
       extend Puppet::Util::Windows::Security
@@ -27,6 +35,14 @@ describe Puppet::Type.type(:file) do
 
     def get_mode(file)
       SecurityHelper.get_mode(file)
+    end
+
+    def get_owner(file)
+      SecurityHelper.get_owner(file)
+    end
+
+    def get_group(file)
+      SecurityHelper.get_group(file)
     end
   end
 
@@ -44,6 +60,38 @@ describe Puppet::Type.type(:file) do
     report = catalog.apply.report
     report.resource_statuses["File[#{path}]"].should_not be_failed
     File.should_not be_exist(path)
+  end
+
+  describe "when setting permissions" do
+    it "should set the owner" do
+      FileUtils.touch(path)
+      owner = get_owner(path)
+
+      file = described_class.new(
+        :name    => path,
+        :owner   => owner
+      )
+
+      catalog.add_resource file
+      catalog.apply
+
+      get_owner(path).should == owner
+    end
+
+    it "should set the group" do
+      FileUtils.touch(path)
+      group = get_group(path)
+
+      file = described_class.new(
+        :name    => path,
+        :group   => group
+      )
+
+      catalog.add_resource file
+      catalog.apply
+
+      get_group(path).should == group
+    end
   end
 
   describe "when writing files" do
