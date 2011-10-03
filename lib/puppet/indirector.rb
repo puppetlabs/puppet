@@ -49,7 +49,6 @@ module Puppet::Indirector
     attr_reader :indirection
   end
 
-
   # Helper definition for indirections that handle filenames.
   BadNameRegexp = Regexp.union(/^\.\./,
                                %r{[\\/]},
