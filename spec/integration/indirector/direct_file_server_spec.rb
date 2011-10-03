@@ -30,24 +30,18 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with the files
   end
 end
 
-describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model", :fails_on_windows => true do
+describe Puppet::Indirector::DirectFileServer, " when interacting with FileServing::Fileset and the model" do
+  include PuppetSpec::Files
+
+  let(:path) { tmpdir('direct_file_server_testing') }
+
   before do
     @terminus = Puppet::Indirector::FileContent::File.new
 
-    @path = Tempfile.new("direct_file_server_testing")
-    path = @path.path
-    @path.close!
-    @path = path
+    File.open(File.join(path, "one"), "w") { |f| f.print "one content" }
+    File.open(File.join(path, "two"), "w") { |f| f.print "two content" }
 
-    Dir.mkdir(@path)
-    File.open(File.join(@path, "one"), "w") { |f| f.print "one content" }
-    File.open(File.join(@path, "two"), "w") { |f| f.print "two content" }
-
-    @request = @terminus.indirection.request(:search, "file:///#{@path}", :recurse => true)
-  end
-
-  after do
-    system("rm -rf #{@path}")
+    @request = @terminus.indirection.request(:search, "file:///#{path}", :recurse => true)
   end
 
   it "should return an instance for every file in the fileset" do
@@ -62,7 +56,7 @@ describe Puppet::Indirector::DirectFileServer, " when interacting with FileServi
       case instance.full_path
       when /one/; instance.content.should == "one content"
       when /two/; instance.content.should == "two content"
-      when @path
+      when path
       else
         raise "No valid key for #{instance.path.inspect}"
       end
