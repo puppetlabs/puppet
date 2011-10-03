@@ -23,6 +23,10 @@ describe "Package provider", :'fails_on_ruby_1.9.2' => true do
       end
 
       it "should be able to get a list of existing packages", :fails_on_windows => true do
+        if provider.name == :msi
+          Puppet[:vardir] = tmpdir('msi_package_var_dir')
+        end
+
         provider.instances.each do |package|
           package.should be_instance_of(provider)
           package.properties[:provider].should == provider.name
