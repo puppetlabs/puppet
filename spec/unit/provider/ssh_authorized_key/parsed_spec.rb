@@ -75,6 +75,34 @@ describe provider_class do
 
     @provider_class.parse(line)[0][:name].should == ""
   end
+
+  ['ssh-dss', 'ssh-rsa', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521'].each do |keytype|
+    it "should be able to parse a #{keytype} key entry" do
+      # use some real world examples generated with ssh-keygen
+      key = case keytype
+        when 'ssh-dss' # ssh-keygen -t dsa -b 1024
+          'AAAAB3NzaC1kc3MAAACBANGTefWMXS780qLMMgysq3GNMKzg55LXZODif6Tqv1vtTh4Wuk3J5X5u644jTyNdAIn1RiBI9MnwnZMZ6nXKvucMcMQWMibYS9W2MhkRj3oqsLWMMsdGXJL18SWM5A6oC3oIRC4JHJZtkm0OctR2trKxmX+MGhdCd+Xpsh9CNK8XAAAAFQD4olFiwv+QQUFdaZbWUy1CLEG9xQAAAIByCkXKgoriZF8bQ0OX1sKuR69M/6n5ngmQGVBKB7BQkpUjbK/OggB6iJgst5utKkDcaqYRnrTYG9q3jJ/flv7yYePuoSreS0nCMMx9gpEYuq+7Sljg9IecmN/IHrNd9qdYoASy5iuROQMvEZM7KFHA8vBv0tWdBOsp4hZKyiL1DAAAAIEAjkZlOps9L+cD/MTzxDj7toYYypdLOvjlcPBaglkPZoFZ0MAKTI0zXlVX1cWAnkd0Yfo4EpP+6XAjlZkod+QXKXM4Tb4PnR34ASMeU6sEjM61Na24S7JD3gpPKataFU/oH3hzXsBdK2ttKYmoqvf61h32IA/3Z5PjCCD9pPLPpAY'
+        when 'ssh-rsa' # ssh-keygen -t rsa -b 2048
+          'AAAAB3NzaC1yc2EAAAADAQABAAABAQDYtEaWa1mlxaAh9vtiz6RCVKDiJHDY15nsqqWU7F7A1+U1498+sWDyRDkZ8vXWQpzyOMBzBSHIxhsprlKhkjomy8BuJP+bHDBIKx4zgSFDrklrPIf467Iuug8J0qqDLxO4rOOjeAiLEyC0t2ZGnsTEea+rmat0bJ2cv3g5L4gH/OFz2pI4ZLp1HGN83ipl5UH8CjXQKwo3Db1E3WJCqKgszVX0Z4/qjnBRxFMoqky/1mGb/mX1eoT9JyQ8OhU9uENZOShkksSpgUqjlrjpj0Yd14hBlnE3M18pE4ivxjzectA/XRKNZaxOL1YREtU8sXusAwmlEY4aJ64aR0JrXfgx'
+        when 'ecdsa-sha2-nistp256' # ssh-keygen -t ecdsa -b 256
+          'AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBBO5PfBf0c2jAuqD+Lj3j+SuXOXNT2uqESLVOn5jVQfEF9GzllOw+CMOpUvV1CiOOn+F1ET15vcsfmD7z05WUTA='
+        when 'ecdsa-sha2-nistp384' # ssh-keygen -t ecdsa -b 384
+          'AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBJIfxNoVK4FX3RuMlkHOwwxXwAh6Fqx5uAp4ftXrJ+64qYuIzb+/zSAkJV698Sre1b1lb0G4LyDdVAvXwaYK9kN25vy8umV3WdfZeHKXJGCcrplMCbbOERWARlpiPNEblg=='
+        when 'ecdsa-sha2-nistp521' #ssh-keygen -t ecdsa -b 521
+          'AAAAE2VjZHNhLXNoYTItbmlzdHA1MjEAAAAIbmlzdHA1MjEAAACFBADLK+u12xwB0JOwpmaxYXv8KnPK4p+SE2405qoo+vpAQ569fMwPMgKzltd770amdeuFogw/MJu17PN9LDdrD3o0uwHMjWee6TpHQDkuEetaxiou6K0WAzgbxx9QsY0MsJgXf1BuMLqdK+xT183wOSXwwumv99G7T32dOJZ5tYrH0y4XMw=='
+        else
+          pending("No sample key for #{keytype} yet")
+      end
+      comment = 'sample_key'
+
+      record = @provider_class.parse_line("#{keytype} #{key} #{comment}")
+      record.should_not be_nil
+      record[:name].should == comment
+      record[:key].should == key
+      record[:type].should == keytype
+    end
+  end
+
 end
 
 describe provider_class do
