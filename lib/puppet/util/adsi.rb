@@ -48,6 +48,17 @@ module Puppet::Util::ADSI
     def execquery(query)
       connect(wmi_resource_uri).execquery(query)
     end
+
+    def sid_for_account(name)
+      sid = nil
+
+      execquery(
+        "SELECT Sid from Win32_Account
+         WHERE Name = '#{name}' AND LocalAccount = true"
+      ).each {|u| sid ||= u.Sid}
+
+      sid
+    end
   end
 
   class User

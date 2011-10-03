@@ -12,6 +12,10 @@ describe Puppet::Util::ADSI do
     Puppet::Util::ADSI.stubs(:connect).returns connection
   end
 
+  after(:each) do
+    Puppet::Util::ADSI.instance_variable_set(:@computer_name, nil)
+  end
+
   it "should generate the correct URI for a resource" do
     Puppet::Util::ADSI.uri('test', 'user').should == "WinNT://testcomputername/test,user"
   end
@@ -22,6 +26,21 @@ describe Puppet::Util::ADSI do
 
   it "should be able to provide the correct WinNT base URI for the computer" do
     Puppet::Util::ADSI.computer_uri.should == "WinNT://testcomputername"
+  end
+
+  describe ".sid_for_account" do
+    it "should return the SID" do
+      result = [stub('account', :Sid => 'S-1-1-50')]
+      connection.expects(:execquery).returns(result)
+
+      Puppet::Util::ADSI.sid_for_account('joe').should == 'S-1-1-50'
+    end
+
+    it "should return nil if the account does not exist" do
+        connection.expects(:execquery).returns([])
+
+      Puppet::Util::ADSI.sid_for_account('foobar').should be_nil
+    end
   end
 
   describe Puppet::Util::ADSI::User do

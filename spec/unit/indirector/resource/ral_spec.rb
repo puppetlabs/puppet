@@ -108,21 +108,23 @@ describe "Puppet::Resource::Ral" do
       @instance    = stub 'instance', :to_ral => @ral_res
       @request     = stub 'request',  :key => "user/", :instance => @instance
       @catalog     = stub 'catalog'
+      @report      = stub 'report'
+      @transaction = stub 'transaction', :report => @report
 
       Puppet::Resource::Catalog.stubs(:new).returns(@catalog)
-      @catalog.stubs(:apply)
+      @catalog.stubs(:apply).returns(@transaction)
       @catalog.stubs(:add_resource)
     end
 
     it "should apply a new catalog with a ral object in it" do
       Puppet::Resource::Catalog.expects(:new).returns(@catalog)
       @catalog.expects(:add_resource).with(@ral_res)
-      @catalog.expects(:apply)
-      Puppet::Resource::Ral.new.save(@request)
+      @catalog.expects(:apply).returns(@transaction)
+      Puppet::Resource::Ral.new.save(@request).should
     end
 
     it "should return a regular resource that used to be the ral resource" do
-      Puppet::Resource::Ral.new.save(@request).should == @rebuilt_res
+      Puppet::Resource::Ral.new.save(@request).should == [@rebuilt_res, @report]
     end
   end
 end

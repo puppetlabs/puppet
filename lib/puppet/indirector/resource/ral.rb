@@ -27,9 +27,9 @@ class Puppet::Resource::Ral < Puppet::Indirector::Code
 
     catalog = Puppet::Resource::Catalog.new
     catalog.add_resource ral_res
-    catalog.apply
+    transaction = catalog.apply
 
-    ral_res.to_resource
+    [ral_res.to_resource, transaction.report]
   end
 
   private

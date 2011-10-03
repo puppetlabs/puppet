@@ -61,7 +61,7 @@ class Puppet::FileServing::Fileset
     else
       path = path.chomp(File::SEPARATOR) unless path == File::SEPARATOR
     end
-    raise ArgumentError.new("Fileset paths must be fully qualified: #{path}") unless File.expand_path(path) == path
+    raise ArgumentError.new("Fileset paths must be fully qualified: #{path}") unless Puppet::Util.absolute_path?(path)
 
     @path = path
 

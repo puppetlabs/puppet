@@ -562,10 +562,6 @@ type: File
     end
   end
 
-  it "should be able to convert itself to Puppet code" do
-    Puppet::Resource.new("one::two", "/my/file").should respond_to(:to_manifest)
-  end
-
   describe "when converting to puppet code" do
     before do
       @resource = Puppet::Resource.new("one::two", "/my/file",
@@ -586,10 +582,6 @@ type: File
         }
       HEREDOC
     end
-  end
-
-  it "should be able to convert itself to a TransObject instance" do
-    Puppet::Resource.new("one::two", "/my/file").should respond_to(:to_trans)
   end
 
   describe "when converting to a TransObject" do
@@ -867,6 +859,61 @@ type: File
       )
       res = Puppet::Resource.new("file", "/my/file", :parameters => {:owner => 'root', :content => 'hello'})
       res.uniqueness_key.should == [ nil, 'root', '/my/file']
+    end
+  end
+
+  describe "#prune_parameters" do
+    before do
+      Puppet.newtype('blond') do
+        newproperty(:ensure)
+        newproperty(:height)
+        newproperty(:weight)
+        newproperty(:sign)
+        newproperty(:friends)
+        newparam(:admits_to_dying_hair)
+        newparam(:admits_to_age)
+        newparam(:name)
+      end
+    end
+
+    it "should strip all parameters and strip properties that are nil, empty or absent except for ensure" do
+      resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
+        :ensure               => 'absent',
+        :height               => '',
+        :weight               => 'absent',
+        :friends              => [],
+        :admits_to_age        => true,
+        :admits_to_dying_hair => false
+      })
+
+      pruned_resource = resource.prune_parameters
+      pruned_resource.should == Puppet::Resource.new("blond", "Bambi", :parameters => {:ensure => 'absent'})
+    end
+
+    it "should leave parameters alone if in parameters_to_include" do
+      resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
+        :admits_to_age        => true,
+        :admits_to_dying_hair => false
+      })
+
+      pruned_resource = resource.prune_parameters(:parameters_to_include => [:admits_to_dying_hair])
+      pruned_resource.should == Puppet::Resource.new("blond", "Bambi", :parameters => {:admits_to_dying_hair => false})
+    end
+
+    it "should leave properties if not nil, absent or empty" do
+      resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
+        :ensure          => 'silly',
+        :height          => '7 ft 5 in',
+        :friends         => ['Oprah'],
+      })
+
+      pruned_resource = resource.prune_parameters
+      pruned_resource.should ==
+      resource = Puppet::Resource.new("blond", "Bambi", :parameters => {
+        :ensure          => 'silly',
+        :height          => '7 ft 5 in',
+        :friends         => ['Oprah'],
+      })
     end
   end
 end

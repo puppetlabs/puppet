@@ -37,16 +37,55 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
     @checksum_type = type
   end
 
+  class MetaStat
+    extend Forwardable
+
+    def initialize(stat)
+      @stat = stat
+    end
+
+    def_delegator :@stat, :uid, :owner
+    def_delegator :@stat, :gid, :group
+    def_delegators :@stat, :mode, :ftype
+  end
+
+  class WindowsStat < MetaStat
+    if Puppet.features.microsoft_windows?
+      require 'puppet/util/windows/security'
+    end
+
+    def initialize(stat, path)
+      super(stat)
+      @path = path
+    end
+
+    [:owner, :group, :mode].each do |method|
+      define_method method do
+        Puppet::Util::Windows::Security.send("get_#{method}", @path)
+      end
+    end
+  end
+
+  def collect_stat(path)
+    stat = stat()
+
+    if Puppet.features.microsoft_windows?
+      WindowsStat.new(stat, path)
+    else
+      MetaStat.new(stat)
+    end
+  end
+
   # Retrieve the attributes for this file, relative to a base directory.
   # Note that File.stat raises Errno::ENOENT if the file is absent and this
   # method does not catch that exception.
   def collect
     real_path = full_path
-    stat = stat()
-    @owner = stat.uid
-    @group = stat.gid
-    @ftype = stat.ftype
 
+    stat = collect_stat(real_path)
+    @owner = stat.owner
+    @group = stat.group
+    @ftype = stat.ftype
 
     # We have to mask the mode, yay.
     @mode = stat.mode & 007777

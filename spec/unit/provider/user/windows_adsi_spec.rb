@@ -79,6 +79,28 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
 
       provider.create
     end
+
+    it "should set a user's password" do
+      provider.user.expects(:password=).with('plaintextbad')
+
+      provider.password = "plaintextbad"
+    end
+
+    it "should test a valid user password" do
+      resource[:password] = 'plaintext'
+      provider.user.expects(:password_is?).with('plaintext').returns true
+
+      provider.password.should == 'plaintext'
+
+    end
+
+    it "should test a bad user password" do
+      resource[:password] = 'plaintext'
+      provider.user.expects(:password_is?).with('plaintext').returns false
+
+      provider.password.should == :absent
+    end
+
   end
 
   it 'should be able to test whether a user exists' do
@@ -101,9 +123,20 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
     provider.flush
   end
 
-  [:uid, :gid, :shell].each do |prop|
-    it "should warn when trying to manage the #{prop} property" do
-      provider.expects(:warning).with { |msg| msg =~ /No support for managing property #{prop}/ }
+  it "should return the user's SID as uid" do
+    Puppet::Util::ADSI.expects(:sid_for_account).with('testuser').returns('S-1-5-21-1362942247-2130103807-3279964888-1111')
+
+    provider.uid.should == 'S-1-5-21-1362942247-2130103807-3279964888-1111'
+  end
+
+  it "should fail when trying to manage the uid property" do
+    provider.expects(:fail).with { |msg| msg =~ /uid is read-only/ }
+    provider.send(:uid=, 500)
+  end
+
+  [:gid, :shell].each do |prop|
+    it "should fail when trying to manage the #{prop} property" do
+      provider.expects(:fail).with { |msg| msg =~ /No support for managing property #{prop}/ }
       provider.send("#{prop}=", 'foo')
     end
   end

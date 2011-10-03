@@ -8,15 +8,13 @@ Puppet::Type.type(:file).provide :posix do
 
   require 'etc'
 
-  def id2name(id)
-    return id.to_s if id.is_a?(Symbol)
+  def uid2name(id)
+    return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
     return nil if id > Puppet[:maximum_uid].to_i
 
     begin
       user = Etc.getpwuid(id)
-    rescue TypeError
-      return nil
-    rescue ArgumentError
+    rescue TypeError, ArgumentError
       return nil
     end
 
@@ -27,33 +25,33 @@ Puppet::Type.type(:file).provide :posix do
     end
   end
 
-  def is_owner_insync?(current, should)
-    should.each do |value|
-      if value =~ /^\d+$/
-        uid = Integer(value)
-      elsif value.is_a?(String)
-        fail "Could not find user #{value}" unless uid = uid(value)
-      else
-        uid = value
-      end
-
-      return true if uid == current
-    end
-
-    unless Puppet.features.root?
-      warnonce "Cannot manage ownership unless running as root"
-      return true
-    end
-
-    false
-  end
-
   # Determine if the user is valid, and if so, return the UID
-  def validuser?(value)
+  def name2uid(value)
     Integer(value) rescue uid(value) || false
   end
 
-  def retrieve(resource)
+  def gid2name(id)
+    return id.to_s if id.is_a?(Symbol) or id.is_a?(String)
+    return nil if id > Puppet[:maximum_uid].to_i
+
+    begin
+      group = Etc.getgrgid(id)
+    rescue TypeError, ArgumentError
+      return nil
+    end
+
+    if group.gid == ""
+      return nil
+    else
+      return group.name
+    end
+  end
+
+  def name2gid(value)
+    Integer(value) rescue gid(value) || false
+  end
+
+  def owner
     unless stat = resource.stat
       return :absent
     end
@@ -71,27 +69,67 @@ Puppet::Type.type(:file).provide :posix do
     currentvalue
   end
 
-  def sync(path, links, should)
+  def owner=(should)
     # Set our method appropriately, depending on links.
-    if links == :manage
+    if resource[:links] == :manage
       method = :lchown
     else
       method = :chown
     end
 
-    uid = nil
-    should.each do |user|
-      break if uid = validuser?(user)
+    begin
+      File.send(method, should, nil, resource[:path])
+    rescue => detail
+      raise Puppet::Error, "Failed to set owner to '#{should}': #{detail}"
+    end
+  end
+
+  def group
+    return :absent unless stat = resource.stat
+
+    currentvalue = stat.gid
+
+    # On OS X, files that are owned by -2 get returned as really
+    # large GIDs instead of negative ones.  This isn't a Ruby bug,
+    # it's an OS X bug, since it shows up in perl, too.
+    if currentvalue > Puppet[:maximum_uid].to_i
+      self.warning "Apparently using negative GID (#{currentvalue}) on a platform that does not consistently handle them"
+      currentvalue = :silly
     end
 
-    raise Puppet::Error, "Could not find user(s) #{should.join(",")}" unless uid
+    currentvalue
+  end
+
+  def group=(should)
+    # Set our method appropriately, depending on links.
+    if resource[:links] == :manage
+      method = :lchown
+    else
+      method = :chown
+    end
 
     begin
-      File.send(method, uid, nil, path)
+      File.send(method, nil, should, resource[:path])
     rescue => detail
-      raise Puppet::Error, "Failed to set owner to '#{uid}': #{detail}"
+      raise Puppet::Error, "Failed to set group to '#{should}': #{detail}"
     end
+  end
 
-    :file_changed
+  def mode
+    if stat = resource.stat
+      return (stat.mode & 007777).to_s(8)
+    else
+      return :absent
+    end
+  end
+
+  def mode=(value)
+    begin
+      File.chmod(value.to_i(8), resource[:path])
+    rescue => detail
+      error = Puppet::Error.new("failed to set mode #{mode} on #{resource[:path]}: #{detail.message}")
+      error.set_backtrace detail.backtrace
+      raise error
+    end
   end
 end

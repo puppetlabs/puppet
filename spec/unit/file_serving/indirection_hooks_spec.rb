@@ -13,7 +13,7 @@ describe Puppet::FileServing::IndirectionHooks do
 
   describe "when being used to select termini" do
     it "should return :file if the request key is fully qualified" do
-      @request.expects(:key).returns "#{File::SEPARATOR}foo"
+      @request.expects(:key).returns File.expand_path('/foo')
       @object.select_terminus(@request).should == :file
     end
 

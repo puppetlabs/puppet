@@ -24,8 +24,12 @@ module Puppet::Configurer::PluginHandler
     return if FileTest.directory?(file)
 
     begin
-      Puppet.info "Loading downloaded plugin #{file}"
-      load file
+      if file =~ /.rb$/
+        Puppet.info "Loading downloaded plugin #{file}"
+        load file
+      else
+        Puppet.debug "Skipping downloaded plugin #{file}"
+      end
     rescue Exception => detail
       Puppet.err "Could not load downloaded file #{file}: #{detail}"
     end

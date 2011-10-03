@@ -75,18 +75,25 @@ describe Puppet::Configurer::PluginHandler do
     @pluginhandler.download_plugins
   end
 
-  it "should load plugins when asked to do so" do
+  it "should load ruby plugins when asked to do so" do
     FileTest.stubs(:exist?).returns true
-    @pluginhandler.expects(:load).with("foo")
+    @pluginhandler.expects(:load).with("foo.rb")
+
+    @pluginhandler.load_plugin("foo.rb")
+  end
+
+  it "should skip non-ruby plugins when asked to do so" do
+    FileTest.stubs(:exist?).returns true
+    @pluginhandler.expects(:load).never
 
     @pluginhandler.load_plugin("foo")
   end
 
   it "should not try to load files that don't exist" do
-    FileTest.expects(:exist?).with("foo").returns false
+    FileTest.expects(:exist?).with("foo.rb").returns false
     @pluginhandler.expects(:load).never
 
-    @pluginhandler.load_plugin("foo")
+    @pluginhandler.load_plugin("foo.rb")
   end
 
   it "should not try to load directories" do
@@ -99,17 +106,17 @@ describe Puppet::Configurer::PluginHandler do
 
   it "should warn but not fail if loading a file raises an exception" do
     FileTest.stubs(:exist?).returns true
-    @pluginhandler.expects(:load).with("foo").raises "eh"
+    @pluginhandler.expects(:load).with("foo.rb").raises "eh"
 
     Puppet.expects(:err)
-    @pluginhandler.load_plugin("foo")
+    @pluginhandler.load_plugin("foo.rb")
   end
 
   it "should warn but not fail if loading a file raises a LoadError" do
     FileTest.stubs(:exist?).returns true
-    @pluginhandler.expects(:load).with("foo").raises LoadError.new("eh")
+    @pluginhandler.expects(:load).with("foo.rb").raises LoadError.new("eh")
 
     Puppet.expects(:err)
-    @pluginhandler.load_plugin("foo")
+    @pluginhandler.load_plugin("foo.rb")
   end
 end

@@ -13,7 +13,7 @@ describe content do
 
   describe "when determining the checksum type" do
     it "should use the type specified in the source checksum if a source is set" do
-      @resource[:source] = "/foo"
+      @resource[:source] = File.expand_path("/foo")
       @resource.parameter(:source).expects(:checksum).returns "{md5lite}eh"
 
       @content = content.new(:resource => @resource)
@@ -301,14 +301,14 @@ describe content do
 
     describe "from local source", :fails_on_windows => true do
       before(:each) do
-        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
         @sourcename = tmpfile('source')
+        @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename
+
         @source_content = "source file content"*10000
         @sourcefile = File.open(@sourcename, 'w') {|f| f.write @source_content}
 
         @content = @resource.newattr(:content)
-        @source = @resource.newattr(:source)
-        @source.stubs(:metadata).returns stub_everything('metadata', :source => @sourcename, :ftype => 'file')
+        @source = @resource.parameter :source #newattr(:source)
       end
 
       it "should copy content from the source to the file" do

@@ -127,9 +127,8 @@ class Puppet::Indirector::Request
       # because it rewrites the key.  We could otherwise strip server/port/etc
       # info out in the REST class, but it seemed bad design for the REST
       # class to rewrite the key.
-      if key.to_s =~ /^[a-z]:[\/\\]/i # It's an absolute path for Windows.
-        @key = key
-      elsif key.to_s =~ /^\w+:\/\// # it's a URI
+
+      if key.to_s =~ /^\w+:\// and not Puppet::Util.absolute_path?(key.to_s) # it's a URI
         set_uri_key(key)
       else
         @key = key
@@ -224,7 +223,7 @@ class Puppet::Indirector::Request
 
     # Just short-circuit these to full paths
     if uri.scheme == "file"
-      @key = URI.unescape(uri.path)
+      @key = Puppet::Util.uri_to_path(uri)
       return
     end
 
