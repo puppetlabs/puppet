@@ -204,14 +204,14 @@ describe Puppet::Transaction::Report do
     end
 
     describe "for times" do
-      it "should provide the total amount of time for each resource type", :fails_on_windows => true do
+      it "should provide the total amount of time for each resource type" do
         add_statuses(3, :file) do |status|
           status.evaluation_time = 1
         end
         add_statuses(3, :exec) do |status|
           status.evaluation_time = 2
         end
-        add_statuses(3, :mount) do |status|
+        add_statuses(3, :tidy) do |status|
           status.evaluation_time = 3
         end
 
@@ -219,7 +219,7 @@ describe Puppet::Transaction::Report do
 
         metric(:time, "file").should == 3
         metric(:time, "exec").should == 6
-        metric(:time, "mount").should == 9
+        metric(:time, "tidy").should == 9
       end
 
       it "should add any provided times from external sources" do
