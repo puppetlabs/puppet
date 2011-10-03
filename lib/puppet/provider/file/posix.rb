@@ -103,9 +103,9 @@ Puppet::Type.type(:file).provide :posix do
   def group=(should)
     # Set our method appropriately, depending on links.
     if resource[:links] == :manage
-      method = :lchgrp
+      method = :lchown
     else
-      method = :chgrp
+      method = :chown
     end
 
     begin
