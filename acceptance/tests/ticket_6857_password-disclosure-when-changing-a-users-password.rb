@@ -1,7 +1,7 @@
 test_name "#6857: redact password hashes when applying in noop mode"
 
 hosts_to_test = agents.reject do |agent|
-  if agent['platform'].match /(?:ubuntu|centos|debian|rhel)/
+  if agent['platform'].match /(?:ubuntu|centos|debian|el-)/
     result = on(agent, %q{ruby -e 'require "shadow" or raise'}, :silent => true)
     result.exit_code != 0
   else

@@ -55,4 +55,10 @@ module Puppet::Indirector
                                %r{[\\/]},
                                "\0",
                                /(?i)^[a-z]:/)
+
+  module InstanceMethods
+    def save(key = nil)
+      self.class.indirection.save key, self
+    end
+  end
 end
