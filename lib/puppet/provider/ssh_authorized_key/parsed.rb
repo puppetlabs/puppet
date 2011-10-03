@@ -17,7 +17,7 @@ require 'puppet/provider/parsedfile'
     :fields   => %w{options type key name},
     :optional => %w{options},
     :rts => /^\s+/,
-    :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa) ([^ ]+) ?(.*)$/,
+    :match    => /^(?:(.+) )?(ssh-dss|ssh-rsa|ecdsa-sha2-nistp256|ecdsa-sha2-nistp384|ecdsa-sha2-nistp521) ([^ ]+) ?(.*)$/,
     :post_parse => proc { |h|
       h[:name] = "" if h[:name] == :absent
       h[:options] ||= [:absent]
