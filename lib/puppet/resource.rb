@@ -355,6 +355,22 @@ class Puppet::Resource
     raise ArgumentError, "Invalid parameter #{name}" unless valid_parameter?(name)
   end
 
+  def prune_parameters(options = {})
+    properties = resource_type.properties.map(&:name)
+
+    dup.collect do |attribute, value|
+      if value.nil? or value.to_s.empty?
+        delete(attribute)
+      elsif value.to_s == "absent" and attribute.to_s != "ensure"
+        delete(attribute)
+      end
+
+      parameters_to_include = options[:parameters_to_include] || []
+      delete(attribute) unless properties.include?(attribute) || parameters_to_include.include?(attribute)
+    end
+    self
+  end
+
   private
 
   # Produce a canonical method name.
