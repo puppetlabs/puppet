@@ -282,4 +282,20 @@ describe "Puppet defaults" do
       Puppet.settings[:color].should == 'false'
     end
   end
+
+  describe "daemonize" do
+    it "should default to true", :unless => Puppet.features.microsoft_windows? do
+      Puppet.settings[:daemonize].should == true
+    end
+
+    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+      it "should default to false" do
+        Puppet.settings[:daemonize].should == false
+      end
+
+      it "should raise an error if set to true" do
+        lambda { Puppet.settings[:daemonize] = true }.should raise_error(/Cannot daemonize on Windows/)
+      end
+    end
+  end
 end

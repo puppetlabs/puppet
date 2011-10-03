@@ -152,11 +152,29 @@ describe Puppet::Type, :fails_on_windows => true do
 
   describe "when creating a provider" do
     before :each do
-      @type = Puppet::Type.newtype(:provider_test_type)
+      @type = Puppet::Type.newtype(:provider_test_type) do
+        newparam(:name) { isnamevar }
+        newparam(:foo)
+        newproperty(:bar)
+      end
     end
 
     after :each do
       @type.provider_hash.clear
+    end
+
+    describe "when determining if instances of the type are managed" do
+      it "should not consider audit only resources to be managed" do
+        @type.new(:name => "foo", :audit => 'all').managed?.should be_false
+      end
+
+      it "should not consider resources with only parameters to be managed" do
+        @type.new(:name => "foo", :foo => 'did someone say food?').managed?.should be_false
+      end
+
+      it "should consider resources with any properties set to be managed" do
+        @type.new(:name => "foo", :bar => 'Let us all go there').managed?.should be_true
+      end
     end
 
     it "should create a subclass of Puppet::Provider for the provider" do

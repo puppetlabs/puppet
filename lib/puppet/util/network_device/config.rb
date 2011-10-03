@@ -51,10 +51,10 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
           when /^\s*$/  # skip blank lines
             count += 1
             next
-          when /^\[([\w.]+)\]\s*$/ # [device.fqdn]
+          when /^\[([\w.-]+)\]\s*$/ # [device.fqdn]
             name = $1
             name.chomp!
-            raise ConfigurationError, "Duplicate device found at line #{count}, already found at #{device.line}" if devices.include?(name)
+            raise Puppet::Error, "Duplicate device found at line #{count}, already found at #{device.line}" if devices.include?(name)
             device = OpenStruct.new
             device.name = name
             device.line = count
@@ -63,7 +63,7 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
           when /^\s*(type|url)\s+(.+)$/
             parse_directive(device, $1, $2, count)
           else
-            raise ConfigurationError, "Invalid line #{count}: #{line}"
+            raise Puppet::Error, "Invalid line #{count}: #{line}"
           end
           count += 1
         }
@@ -85,8 +85,7 @@ class Puppet::Util::NetworkDevice::Config < Puppet::Util::LoadedFile
     when "url"
       device.url = value
     else
-      raise ConfigurationError,
-        "Invalid argument '#{var}' at line #{count}"
+      raise Puppet::Error, "Invalid argument '#{var}' at line #{count}"
     end
   end
 

@@ -546,7 +546,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
   def write_resource_file
     ::File.open(Puppet[:resourcefile], "w") do |f|
       to_print = resources.map do |resource|
-        next if resource.type == :component
+        next unless resource.managed?
         "#{resource.type}[#{resource[resource.name_var]}]"
       end.compact
       f.puts to_print.join("\n")

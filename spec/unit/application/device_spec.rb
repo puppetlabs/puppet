@@ -338,6 +338,11 @@ describe Puppet::Application::Device do
         @device.main
       end
 
+      it "should expire all cached attributes" do
+        Puppet::SSL::Host.expects(:reset).twice
+
+        @device.main
+      end
     end
   end
 end

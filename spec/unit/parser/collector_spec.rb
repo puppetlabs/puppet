@@ -340,7 +340,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'whammo',
+                :restype  => 'Notify', :title => 'whammo',
                 :exported => true)
 
       result = @collector.evaluate
@@ -354,7 +354,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'whammo',
+                :restype  => 'Notify', :title => 'whammo',
                 :exported => true)
 
       param = Puppet::Parser::Resource::Param.
@@ -369,7 +369,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'whammo',
+                :restype  => 'Notify', :title => 'whammo',
                 :exported => true)
 
       @compiler.expects(:add_resource).with do |scope, resource|
@@ -387,7 +387,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'whammo',
+                :restype  => 'Notify', :title => 'whammo',
                 :exported => true)
 
       got = @collector.evaluate
@@ -401,7 +401,7 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       host = Puppet::Rails::Host.create!(:name => 'one.local')
       Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'whammo',
+                :restype  => 'Notify', :title => 'whammo',
                 :exported => true)
 
       local = Puppet::Parser::Resource.new('notify', 'whammo', :scope => @scope)
@@ -416,12 +416,12 @@ describe Puppet::Parser::Collector, "when collecting exported resources", :if =>
       # One that we already collected...
       db = Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'whammo',
+                :restype  => 'Notify', :title => 'whammo',
                 :exported => true)
       # ...and one we didn't.
       Puppet::Rails::Resource.
         create!(:host     => host,
-                :restype  => 'notify', :title => 'boingy-boingy',
+                :restype  => 'Notify', :title => 'boingy-boingy',
                 :exported => true)
 
       local = Puppet::Parser::Resource.new('notify', 'whammo',

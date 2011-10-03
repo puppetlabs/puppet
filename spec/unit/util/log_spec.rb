@@ -50,6 +50,12 @@ describe Puppet::Util::Log do
     end
   end
 
+  describe Puppet::Util::Log::DestSyslog do
+    before do
+      @syslog = Puppet::Util::Log::DestSyslog.new
+    end
+  end
+
   describe "instances" do
     before do
       Puppet::Util::Log.stubs(:newmessage)
@@ -165,6 +171,15 @@ describe Puppet::Util::Log do
       report.should be_include("foo")
       report.should be_include(log.source)
       report.should be_include(log.time.to_s)
+    end
+
+    it "should not create unsuitable log destinations" do
+      Puppet.features.stubs(:syslog?).returns(false)
+
+      Puppet::Util::Log::DestSyslog.expects(:suitable?)
+      Puppet::Util::Log::DestSyslog.expects(:new).never
+
+      Puppet::Util::Log.newdestination(:syslog)
     end
 
     describe "when setting the source as a RAL object" do

@@ -1,4 +1,8 @@
 Puppet::Util::Log.newdesttype :syslog do
+  def self.suitable?(obj)
+    Puppet.features.syslog?
+  end
+
   def close
     Syslog.close
   end
@@ -37,7 +41,9 @@ Puppet::Util::Log.newdesttype :syslog do
 end
 
 Puppet::Util::Log.newdesttype :file do
-  match(/^\//)
+  def self.match?(obj)
+    Puppet::Util.absolute_path?(obj)
+  end
 
   def close
     if defined?(@file)

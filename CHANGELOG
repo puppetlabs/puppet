@@ -1,21 +1,27 @@
-2.7.4rc3
+2.7.5
 ===
+a36f39d Updating version numbers for 2.7.5
+de51f3d (#9832) 2.7.4 StoreConfigs regression with PostgreSQL.
+1aa9be5 (#9793) "secure" indirector file backed terminus base class.
+d76c309 (#9792) Predictable temporary filename in ralsh. (CVE-2011-3871)
+b29b178 Drop privileges before creating and chmodding SSH keys.(CVE-2011-3870)
+7d4c169 (#9794) k5login can overwrite arbitrary files as root (CVE-2011-3869)
+
+
+2.7.4
+===
+47135fb Resist directory traversal attacks through indirections. (CVE-2011-3484)
+9dd18cf Updated CHANGELOG for 2.7.4rc3
 fe92f20 (#9440) Allow cron vars to have leading whitespace
 da69637 Fix failing spec for resource file
 7a39ca7 (#8667) Write out a list of resources that are managed by puppet agent
 bc40516 Fix order dependent spec failure in exec specs
-3b152e4 (#7114) Fix value validation on options
-aa1b36f (#7114) Add tests for option property
-
-2.7.4rc2
-===
+a20551f Updated CHANGELOG for 2.7.4rc2
 d59a0b3 Update certificate_spec.rb test to include spec_helper
 f325b40 Fix #7984 - GigabitEthernet/TenGigabitEthernet are uncorrectly parsed
 6cc15c2 Fix #7983 - Cisco uptime facts doesn't always work
 41302e9 Fixes #9143, allows macauthorization provider to work on OS X Lion 10.7
-
-2.7.4rc1
-===
+5a3f24d Updated CHANGELOG for 2.7.4rc1
 04519a7 Revert "Merge pull request #100 from glarizza/tickets/2.7.x/9192_launchd_fix"
 769f2b2 Revert "Merge pull request #99 from nigelkersten/tickets/2.7.x/9143-make-macauthorization-work-on-lion"
 ff13d8d Add comment explaining helper method
@@ -165,6 +171,8 @@ a110d83 Maint: Fix poor documentation for versioncmp function.
 c209f62 Add document outlining preferred contribution methods
 839e7c9 (#7999) Add some basic tests of the systemd provider
 1cae354 (#7999) Add a service provider that manages systemd services natively
+3b152e4 (#7114) Fix value validation on options
+aa1b36f (#7114) Add tests for option property
 
 2.7.3
 ===
@@ -1081,6 +1089,20 @@ a1d216c Fixed the return types were valid, and removed the copy paste error with
 d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
+
+2.6.11
+===
+e158b26 (#9793) "secure" indirector file backed terminus base class.
+343c7bd (#9792) Predictable temporary filename in ralsh.
+88512e8 Drop privileges before creating and chmodding SSH keys.
+2775c21 (#9794) k5login can overwrite arbitrary files as root
+
+2.6.10
+===
+ec5a32a Update spec and lib/puppet.rb for 2.6.10 release
+fe2de81 Resist directory traversal attacks through indirections. (CVE-2011-3484)
+243aaa9 (#7956) Porting cron tests
+3e3fc69 (#7956) Port resource acceptance tests
 
 2.6.9
 ====
