@@ -507,6 +507,7 @@ type: File
         :parameters => {
           :noop => true,
           :foo => %w{one two},
+          :bar => { 'one' => 'two', 'three' => 'four' },
           :ensure => 'present',
         }
       )
@@ -516,6 +517,8 @@ type: File
       @resource.to_manifest.should == <<-HEREDOC.gsub(/^\s{8}/, '').gsub(/\n$/, '')
         one::two { '/my/file':
           ensure => 'present',
+          bar    => { 'one'   => 'two',
+                      'three' => 'four' },
           foo    => ['one', 'two'],
           noop   => 'true',
         }
