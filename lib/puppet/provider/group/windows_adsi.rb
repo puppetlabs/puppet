@@ -23,6 +23,8 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   def create
     @group = Puppet::Util::ADSI::Group.create(@resource[:name])
+    @group.commit
+
     self.members = @resource[:members]
   end
 
@@ -32,6 +34,11 @@ Puppet::Type.type(:group).provide :windows_adsi do
 
   def delete
     Puppet::Util::ADSI::Group.delete(@resource[:name])
+  end
+
+  # Only flush if we created or modified a group, not deleted
+  def flush
+    @group.commit if @group
   end
 
   def gid

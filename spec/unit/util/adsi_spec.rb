@@ -54,6 +54,7 @@ describe Puppet::Util::ADSI do
       adsi_user = stub('adsi')
 
       connection.expects(:Create).with('user', username).returns(adsi_user)
+      Puppet::Util::ADSI::Group.expects(:exists?).with(username).returns(false)
 
       user = Puppet::Util::ADSI::User.create(username)
 
@@ -199,6 +200,7 @@ describe Puppet::Util::ADSI do
       adsi_group = stub("adsi")
 
       connection.expects(:Create).with('group', groupname).returns(adsi_group)
+      Puppet::Util::ADSI::User.expects(:exists?).with(groupname).returns(false)
 
       group = Puppet::Util::ADSI::Group.create(groupname)
 

@@ -138,7 +138,7 @@ module Puppet::Util::ADSI
     def groups
       # WIN32OLE objects aren't enumerable, so no map
       groups = []
-      native_user.Groups.each {|g| groups << g.Name}
+      native_user.Groups.each {|g| groups << g.Name} rescue nil
       groups
     end
 
@@ -174,6 +174,8 @@ module Puppet::Util::ADSI
     end
 
     def self.create(name)
+      # Windows error 1379: The specified local group already exists.
+      raise Puppet::Error.new( "Cannot create user if group '#{name}' exists." ) if Puppet::Util::ADSI::Group.exists? name
       new(name, Puppet::Util::ADSI.create(name, 'user'))
     end
 
@@ -264,6 +266,8 @@ module Puppet::Util::ADSI
     end
 
     def self.create(name)
+      # Windows error 2224: The account already exists.
+      raise Puppet::Error.new( "Cannot create group if user '#{name}' exists." ) if Puppet::Util::ADSI::User.exists? name
       new(name, Puppet::Util::ADSI.create(name, 'group'))
     end
 

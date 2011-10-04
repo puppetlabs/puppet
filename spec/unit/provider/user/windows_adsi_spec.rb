@@ -73,7 +73,9 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
 
       user.stubs(:groups).returns(['group2', 'group3'])
 
-      user.expects(:set_groups).with('group1,group2', false)
+      create = sequence('create')
+      user.expects(:commit).in_sequence(create)
+      user.expects(:set_groups).with('group1,group2', false).in_sequence(create)
       user.expects(:[]=).with('Description', 'a test user')
       user.expects(:[]=).with('HomeDirectory', 'C:\Users\testuser')
 
@@ -101,6 +103,11 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       provider.password.should == :absent
     end
 
+    it 'should not create a user if a group by the same name exists' do
+      Puppet::Util::ADSI::User.expects(:create).with('testuser').raises( Puppet::Error.new("Cannot create user if group 'testuser' exists.") )
+      expect{ provider.create }.to raise_error( Puppet::Error,
+        /Cannot create user if group 'testuser' exists./ )
+    end
   end
 
   it 'should be able to test whether a user exists' do
