@@ -5,8 +5,8 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.7.5
-Release:        1%{?dist}
+Version:        2.7.6
+Release:        0.1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        ASL 2.0
 URL:            http://puppetlabs.com
@@ -282,7 +282,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
-<<<<<<< HEAD
+* Mon Oct 03 2011 Michael Stahnke <stahnma@puppetlabs.com> -  2.7.6-0.1rc1
+- New RC
+
 * Fri Sep 30 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.5-1
 - Fixes for CVE-2011-3869, 3870, 3871
 
@@ -295,18 +297,6 @@ rm -rf %{buildroot}
 
 * Wed Jul 06 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.2-0.1.rc1
 - Update to 2.7.2rc1
-
-||||||| merged common ancestors
-=======
-* Fri Sep 30 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.11-1
-- CVE-2011-3869, 3870, 3871
-
-* Wed Sep 28 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.10-1
-- Fix for CVE-2011-3484
-
->>>>>>> 2.6.x
-* Tue Jun 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.9-1
-- Release of 2.6.9
 
 * Wed Jun 15 2011 Todd Zullinger <tmz@pobox.com> - 2.6.9-0.1.rc1
 - Update rc versioning to ensure 2.6.9 final is newer to rpm
