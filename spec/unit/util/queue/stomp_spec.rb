@@ -14,7 +14,7 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
   before do
     # So we make sure we never create a real client instance.
     # Otherwise we'll try to connect, and that's bad.
-    Stomp::Client.stubs(:new).returns stub("client")
+    Stomp::Client.stubs(:new).returns stub("client", :publish => true)
   end
 
   it 'should be registered with Puppet::Util::Queue as :stomp type' do
@@ -23,7 +23,7 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
 
   describe "when initializing" do
     it "should create a Stomp client instance" do
-      Stomp::Client.expects(:new).returns stub("stomp_client")
+      Stomp::Client.expects(:new).returns stub("stomp_client", :publish => true)
       Puppet::Util::Queue::Stomp.new
     end
 
@@ -66,7 +66,7 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
 
   describe "when publishing a message" do
     before do
-      @client = stub 'client'
+      @client = stub 'client', :publish => true
       Stomp::Client.stubs(:new).returns @client
       @queue = Puppet::Util::Queue::Stomp.new
     end
@@ -85,11 +85,16 @@ describe 'Puppet::Util::Queue::Stomp', :if => Puppet.features.stomp? do
       @client.expects(:publish).with { |queue, msg, options| options[:persistent] == true }
       @queue.publish_message('fooqueue', 'Smite!')
     end
+
+    it "should use send when the gem does not support publish" do
+      Stomp::Client.stubs(:new).returns(stub('client', :send => true))
+      Puppet::Util::Queue::Stomp.new.publish_message('fooqueue', 'Smite!')
+    end
   end
 
   describe "when subscribing to a queue" do
     before do
-      @client = stub 'client', :acknowledge => true
+      @client = stub 'client', :acknowledge => true, :publish => true
       Stomp::Client.stubs(:new).returns @client
       @queue = Puppet::Util::Queue::Stomp.new
     end
