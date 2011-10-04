@@ -250,11 +250,16 @@ class Puppet::Resource
     return(resource_type.respond_to? :key_attributes) ? resource_type.key_attributes : [:name]
   end
 
+  # caculate whitespace padding for an array of strings
+  def whitespace_padding(values)
+    values.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+  end
+
   # Convert our resource to Puppet code.
   def to_manifest
     # Collect list of attributes to align => and move ensure first
     attr = parameters.keys
-    attr_max = attr.inject(0) { |max,k| k.to_s.length > max ? k.to_s.length : max }
+    attr_pad = whitespace_padding(attr)
 
     attr.sort!
     if attr.first != :ensure  && attr.include?(:ensure)
@@ -265,9 +270,15 @@ class Puppet::Resource
     attributes = attr.collect { |k|
       v = parameters[k]
       if v.is_a? Array
-        "  %-#{attr_max}s => %s,\n" % [ k, "[\'#{v.join("', '")}\']" ]
+        "  %-#{attr_pad}s => %s,\n" % [ k, "[\'#{v.join("', '")}\']" ]
+      elsif v.is_a? Hash
+        hash_pad = whitespace_padding(v.keys)
+        output = v.sort.collect { |key, val|
+          "%-#{hash_pad}s => '%s'" % [ key, val ]
+        }.join(",\n "+' '*(attr_pad+7))
+        "  %-#{attr_pad}s => %s,\n" % [ k, "{ #{output} }" ]
       else
-        "  %-#{attr_max}s => %s,\n" % [ k, "\'#{v}\'" ]
+        "  %-#{attr_pad}s => %s,\n" % [ k, "\'#{v}\'" ]
       end
     }.join
 
