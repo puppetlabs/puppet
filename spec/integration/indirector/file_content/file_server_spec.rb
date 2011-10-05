@@ -6,7 +6,7 @@ require 'shared_behaviours/file_server_terminus'
 
 require 'puppet_spec/files'
 
-describe Puppet::Indirector::FileContent::FileServer, " when finding files", :fails_on_windows => true do
+describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
   it_should_behave_like "Puppet::Indirector::FileServerTerminus"
   include PuppetSpec::Files
 

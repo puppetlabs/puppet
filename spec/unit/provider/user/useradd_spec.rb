@@ -3,7 +3,7 @@ require 'spec_helper'
 
 provider_class = Puppet::Type.type(:user).provider(:useradd)
 
-describe provider_class, :fails_on_windows => true do
+describe provider_class do
   before do
     @resource = stub("resource", :name => "myuser", :managehome? => nil)
     @resource.stubs(:should).returns "fakeval"

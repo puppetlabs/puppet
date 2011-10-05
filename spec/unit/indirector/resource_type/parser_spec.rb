@@ -25,7 +25,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       @terminus.find(@request).should == type
     end
 
-    it "should attempt to load the type if none is found in memory", :fails_on_windows => true do
+    it "should attempt to load the type if none is found in memory" do
       dir = tmpdir("find_a_type")
       FileUtils.mkdir_p(dir)
       Puppet[:modulepath] = dir
@@ -122,7 +122,7 @@ describe Puppet::Indirector::ResourceType::Parser do
       @terminus.search(@request).should be_nil
     end
 
-    it "should load all resource types from all search paths", :fails_on_windows => true do
+    it "should load all resource types from all search paths" do
       dir = tmpdir("searching_in_all")
       first = File.join(dir, "first")
       second = File.join(dir, "second")
