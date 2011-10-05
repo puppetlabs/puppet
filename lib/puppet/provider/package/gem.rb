@@ -85,7 +85,12 @@ Puppet::Type.type(:package).provide :gem, :parent => Puppet::Provider::Package d
         # no URI scheme => interpret the source as a local file
         command << source
       when /file/i
-        command << uri.path
+        if /\/$/ === uri.path
+          # ends with slash: interpret it as a gem repository
+          command << "--source" << "#{source}" << resource[:name]
+        else
+          command << uri.path
+        end
       when 'puppet'
         # we don't support puppet:// URLs (yet)
         raise Puppet::Error.new("puppet:// URLs are not supported as gem sources")
