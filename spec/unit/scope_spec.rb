@@ -26,6 +26,18 @@ class Hiera
                 scope = Scope.new(real)
                 scope["foo"].should == "bar"
             end
+
+            it "should get calling_class and calling_module from puppet scope" do
+                real = mock
+                resource = mock
+                resource.expects(:name).returns("Foo::Bar").twice
+
+                real.expects(:resource).returns(resource).twice
+
+                scope = Scope.new(real)
+                scope["calling_class"].should == "foo::bar"
+                scope["calling_module"].should == "foo"
+            end
         end
 
         describe "#include?" do
@@ -35,6 +47,16 @@ class Hiera
 
                 scope = Scope.new(real)
                 scope.include?("foo").should == false
+            end
+
+            it "should always return true for calling_class and calling_module" do
+                real = mock
+                real.expects(:lookupvar).with("calling_class").never
+                real.expects(:lookupvar).with("calling_module").never
+
+                scope = Scope.new(real)
+                scope.include?("calling_class").should == true
+                scope.include?("calling_module").should == true
             end
         end
     end
