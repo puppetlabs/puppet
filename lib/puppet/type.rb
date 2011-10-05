@@ -1116,13 +1116,22 @@ class Type
       (e.g., each class and definition containing the resource), it can
       be useful to add your own tags to a given resource.
 
-      Tags are currently useful for things like applying a subset of a
-      host's configuration:
+      Multiple tags can be specified as an array:
 
-          puppet agent --test --tags mytag
+          file {'/etc/hosts':
+            ensure => file,
+            source => 'puppet:///modules/site/hosts',
+            mode   => 0644,
+            tag    => ['bootstrap', 'minimumrun', 'mediumrun'],
+          }
 
-      This way, when you're testing a configuration you can run just the
-      portion you're testing."
+      Tags are useful for things like applying a subset of a host's configuration
+      with [the `tags` setting](/references/latest/configuration.html#tags):
+
+          puppet agent --test --tags bootstrap
+
+      This way, you can easily isolate the portion of the configuration you're
+      trying to test."
 
     munge do |tags|
       tags = [tags] unless tags.is_a? Array
