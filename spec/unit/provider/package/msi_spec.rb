@@ -69,7 +69,7 @@ describe 'Puppet::Provider::Package::Msi' do
       expect do
         resource = Puppet::Type.type(:package).new(
           :name => 'mysql-5.1.58-winx64'
-        )
+        ).provider.install
       end.to raise_error(Puppet::Error, /The source parameter is required when using the MSI provider/)
     end
 
@@ -115,7 +115,7 @@ describe 'Puppet::Provider::Package::Msi' do
       expect do
         resource = Puppet::Type.type(:package).new(
           :name => 'mysql-5.1.58-winx64'
-        )
+        ).provider.install
       end.to raise_error(Puppet::Error, /The source parameter is required when using the MSI provider/)
     end
 
