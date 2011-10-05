@@ -7,7 +7,13 @@ class Hiera
         end
 
         def [](key)
-            ans = @real.lookupvar(key)
+            if key == "calling_class"
+                ans = @real.resource.name.to_s.downcase
+            elsif key == "calling_module"
+                ans = @real.resource.name.to_s.downcase.split("::").first
+            else
+                ans = @real.lookupvar(key)
+            end
 
             # damn you puppet visual basic style variables.
             return nil if ans == ""
@@ -15,7 +21,9 @@ class Hiera
         end
 
         def include?(key)
-            @real.lookupvar(key) != ""
+            return true if ["calling_class", "calling_module"].include?(key)
+
+            return @real.lookupvar(key) != ""
         end
 
         def catalog
