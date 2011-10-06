@@ -46,18 +46,18 @@ describe Puppet::Util::Logging do
       @logger.notice "foo"
     end
 
-    it "should use the path of any provided resource type", :fails_on_windows => true do
-      resource = Puppet::Type.type(:mount).new :name => "foo"
+    it "should use the path of any provided resource type" do
+      resource = Puppet::Type.type(:host).new :name => "foo"
 
-      resource.expects(:path).returns "/path/to/mount".to_sym
+      resource.expects(:path).returns "/path/to/host".to_sym
 
-      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "/path/to/mount" }
+      Puppet::Util::Log.expects(:create).with { |args| args[:source] == "/path/to/host" }
 
       resource.notice "foo"
     end
 
-    it "should use the path of any provided resource parameter", :fails_on_windows => true do
-      resource = Puppet::Type.type(:mount).new :name => "foo"
+    it "should use the path of any provided resource parameter" do
+      resource = Puppet::Type.type(:host).new :name => "foo"
 
       param = resource.parameter(:name)
 

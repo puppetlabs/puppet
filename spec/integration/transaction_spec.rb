@@ -16,6 +16,14 @@ describe Puppet::Transaction do
     catalog
   end
 
+  def usr_bin_touch(path)
+    Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32/cmd.exe /c \"type NUL >> \"#{path}\"\"" : "/usr/bin/touch #{path}"
+  end
+
+  def touch(path)
+    Puppet.features.microsoft_windows? ? "cmd.exe /c \"type NUL >> \"#{path}\"\"" : "touch #{path}"
+  end
+
   it "should not apply generated resources if the parent resource fails" do
     catalog = Puppet::Resource::Catalog.new
     resource = Puppet::Type.type(:file).new :path => make_absolute("/foo/bar"), :backup => false
@@ -131,11 +139,11 @@ describe Puppet::Transaction do
 
   # Verify that one component requiring another causes the contained
   # resources in the requiring component to get refreshed.
-  it "should propagate events from a contained resource through its container to its dependent container's contained resources", :fails_on_windows => true do
+  it "should propagate events from a contained resource through its container to its dependent container's contained resources" do
     transaction = nil
     file = Puppet::Type.type(:file).new :path => tmpfile("event_propagation"), :ensure => :present
     execfile = File.join(tmpdir("exec_event"), "exectestingness2")
-    exec = Puppet::Type.type(:exec).new :command => "touch #{execfile}", :path => ENV['PATH']
+    exec = Puppet::Type.type(:exec).new :command => touch(execfile), :path => ENV['PATH']
     catalog = mk_catalog(file)
 
     fcomp = Puppet::Type.type(:component).new(:name => "Foo[file]")
@@ -155,7 +163,7 @@ describe Puppet::Transaction do
   end
 
   # Make sure that multiple subscriptions get triggered.
-  it "should propagate events to all dependent resources", :fails_on_windows => true do
+  it "should propagate events to all dependent resources" do
     path = tmpfile("path")
     file1 = tmpfile("file1")
     file2 = tmpfile("file2")
@@ -167,14 +175,14 @@ describe Puppet::Transaction do
 
     exec1 = Puppet::Type.type(:exec).new(
       :path    => ENV["PATH"],
-      :command => "touch #{file1}",
+      :command => touch(file1),
       :refreshonly => true,
       :subscribe   => Puppet::Resource.new(:file, path)
     )
 
     exec2 = Puppet::Type.type(:exec).new(
       :path        => ENV["PATH"],
-      :command     => "touch #{file2}",
+      :command     => touch(file2),
       :refreshonly => true,
       :subscribe   => Puppet::Resource.new(:file, path)
     )
@@ -185,7 +193,7 @@ describe Puppet::Transaction do
     FileTest.should be_exist(file2)
   end
 
-  it "should not let one failed refresh result in other refreshes failing", :fails_on_windows => true do
+  it "should not let one failed refresh result in other refreshes failing" do
     path = tmpfile("path")
     newfile = tmpfile("file")
       file = Puppet::Type.type(:file).new(
@@ -195,7 +203,7 @@ describe Puppet::Transaction do
 
     exec1 = Puppet::Type.type(:exec).new(
       :path => ENV["PATH"],
-      :command => "touch /this/cannot/possibly/exist",
+      :command => touch(File.expand_path("/this/cannot/possibly/exist")),
       :logoutput => true,
       :refreshonly => true,
       :subscribe => file,
@@ -204,7 +212,7 @@ describe Puppet::Transaction do
 
     exec2 = Puppet::Type.type(:exec).new(
       :path => ENV["PATH"],
-      :command => "touch #{newfile}",
+      :command => touch(newfile),
       :logoutput => true,
       :refreshonly => true,
       :subscribe => [file, exec1],
@@ -218,7 +226,7 @@ describe Puppet::Transaction do
     FileTest.should be_exists(newfile)
   end
 
-  it "should still trigger skipped resources", :'fails_on_ruby_1.9.2' => true, :fails_on_windows => true do
+  it "should still trigger skipped resources", :'fails_on_ruby_1.9.2' => true do
     catalog = mk_catalog
     catalog.add_resource(*Puppet::Type.type(:schedule).mkdefaultschedules)
 
@@ -233,8 +241,8 @@ describe Puppet::Transaction do
     fname = tmpfile("exec")
 
     exec = Puppet::Type.type(:exec).new(
-      :name => "touch #{fname}",
-      :path => "/usr/bin:/bin",
+      :name => touch(fname),
+      :path => Puppet.features.microsoft_windows? ? "#{ENV['windir']}/system32" : "/usr/bin:/bin",
       :schedule => "monthly",
       :subscribe => Puppet::Resource.new("file", file.name)
     )
@@ -270,10 +278,10 @@ describe Puppet::Transaction do
     FileTest.should be_exists(fname)
   end
 
-  it "should not attempt to evaluate resources with failed dependencies", :fails_on_windows => true do
+  it "should not attempt to evaluate resources with failed dependencies" do
 
     exec = Puppet::Type.type(:exec).new(
-      :command => "/bin/mkdir /this/path/cannot/possibly/exist",
+      :command => "#{File.expand_path('/bin/mkdir')} /this/path/cannot/possibly/exist",
       :title => "mkdir"
     )
 
@@ -298,22 +306,22 @@ describe Puppet::Transaction do
     FileTest.should_not be_exists(file2[:path])
   end
 
-  it "should not trigger subscribing resources on failure", :fails_on_windows => true do
+  it "should not trigger subscribing resources on failure" do
     file1 = tmpfile("file1")
     file2 = tmpfile("file2")
 
     create_file1 = Puppet::Type.type(:exec).new(
-      :command => "/usr/bin/touch #{file1}"
+      :command => usr_bin_touch(file1)
     )
 
     exec = Puppet::Type.type(:exec).new(
-      :command => "/bin/mkdir /this/path/cannot/possibly/exist",
+      :command => "#{File.expand_path('/bin/mkdir')} /this/path/cannot/possibly/exist",
       :title => "mkdir",
       :notify => create_file1
     )
 
     create_file2 = Puppet::Type.type(:exec).new(
-      :command => "/usr/bin/touch #{file2}",
+      :command => usr_bin_touch(file2),
       :subscribe => exec
     )
 
