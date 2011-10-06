@@ -48,19 +48,15 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
       subject.search(Puppet::Resource.indirection.request(:search, type, args))
     end
 
-    it "should fail if the type is not known to Puppet" do
-      expect { search("banana") }.to raise_error Puppet::Error, /Could not find type/
-    end
-
     it "should return an empty array if no resources match" do
-      search("exec").should == []
+      search("Exec").should == []
     end
 
     # Assert that this is a case-insensitive rule, too.
     %w{and or AND OR And Or anD oR}.each do |op|
       it "should fail if asked to search with #{op.inspect}" do
         filter = [%w{tag == foo}, op, %w{title == bar}]
-        expect { search("notify", 'localhost', filter) }.
+        expect { search("Notify", 'localhost', filter) }.
           to raise_error Puppet::Error, /not supported/
       end
     end
@@ -76,7 +72,7 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
       end
 
       it "should return something responding to `to_resource` if a resource matches" do
-        found = search("exec")
+        found = search("Exec")
         found.length.should == 1
         found.map do |item|
           item.should respond_to :to_resource
@@ -95,9 +91,7 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
       Puppet::Rails.init
     end
 
-    let :type do
-      Puppet::Type.type('notify').name
-    end
+    let :type do 'Notify' end
 
     def query(type, host, filter = nil)
       subject.send :build_active_record_query, type, host, filter
