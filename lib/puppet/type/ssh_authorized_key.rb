@@ -15,9 +15,6 @@ module Puppet
 
       isnamevar
 
-      validate do |value|
-        raise Puppet::Error, "Resourcename must not contain whitespace: #{value}" if value =~ /\s/
-      end
     end
 
     newproperty(:type) do
