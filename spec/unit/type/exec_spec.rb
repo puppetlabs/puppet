@@ -378,10 +378,10 @@ describe Puppet::Type.type(:exec) do
           true
         end
         FileTest.stubs(:file?).returns(false)
-        FileTest.stubs(:file?).with('/bin/sleep').returns(true)
+        FileTest.stubs(:file?).with(File.expand_path('/bin/sleep')).returns(true)
         FileTest.stubs(:executable?).returns(false)
-        FileTest.stubs(:executable?).with('/bin/sleep').returns(true)
-        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
+        FileTest.stubs(:executable?).with(File.expand_path('/bin/sleep')).returns(true)
+        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => [File.expand_path('/bin')], :timeout => '0.2')
 
         lambda { sleep_exec.refresh }.should raise_error Puppet::Error, "Command exceeded timeout"
       end
