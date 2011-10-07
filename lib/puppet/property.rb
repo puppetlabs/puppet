@@ -100,11 +100,11 @@ class Puppet::Property < Puppet::Parameter
   def change_to_s(current_value, newvalue)
     begin
       if current_value == :absent
-        return "defined '#{name}' as '#{should_to_s(newvalue)}'"
+        return "defined '#{name}' as #{self.class.format_value_for_display should_to_s(newvalue)}"
       elsif newvalue == :absent or newvalue == [:absent]
-        return "undefined '#{name}' from '#{is_to_s(current_value)}'"
+        return "undefined '#{name}' from #{self.class.format_value_for_display is_to_s(current_value)}"
       else
-        return "#{name} changed '#{is_to_s(current_value)}' to '#{should_to_s(newvalue)}'"
+        return "#{name} changed #{self.class.format_value_for_display is_to_s(current_value)} to #{self.class.format_value_for_display should_to_s(newvalue)}"
       end
     rescue Puppet::Error, Puppet::DevError
       raise
