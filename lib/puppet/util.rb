@@ -191,7 +191,15 @@ module Util
       return bin if FileTest.file? bin and FileTest.executable? bin
     else
       ENV['PATH'].split(File::PATH_SEPARATOR).each do |dir|
-        dest=File.join(dir, bin)
+        dest = File.expand_path(File.join(dir, bin))
+        if Puppet.features.microsoft_windows? && File.extname(dest).empty?
+          exts = ENV['PATHEXT']
+          exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
+          exts.each do |ext|
+            bin = File.expand_path(dest + ext)
+            return bin if FileTest.file? bin and FileTest.executable? bin
+          end
+        end
         return dest if FileTest.file? dest and FileTest.executable? dest
       end
     end
