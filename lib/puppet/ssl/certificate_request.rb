@@ -22,6 +22,10 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     [:s]
   end
 
+  def extension_factory
+    @ef ||= OpenSSL::X509::ExtensionFactory.new
+  end
+
   # How to create a certificate request with our system defaults.
   def generate(key)
     Puppet.info "Creating a new SSL certificate request for #{name}"
@@ -38,6 +42,19 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
     csr.public_key = key.public_key
+
+    if Puppet[:certdnsnames] and Puppet[:certdnsnames] != "" then
+      names = [name] + Puppet[:certdnsnames].split(':')
+      names = names.uniq.map {|name| "DNS:#{name}" }.join(", ")
+      names = extension_factory.create_extension("subjectAltName", names, "true")
+
+      extReq = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence([names])])
+
+      # We only support the standard request extensions.  If you really need
+      # msExtReq support, let us know and we can restore them. --daniel 2011-10-10
+      csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
+    end
+
     csr.sign(key, OpenSSL::Digest::MD5.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)

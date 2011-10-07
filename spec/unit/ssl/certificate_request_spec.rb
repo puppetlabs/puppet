@@ -126,7 +126,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should set the CN to the :ca_name setting when the CSR is for a CA" do
       subject = mock 'subject'
-      Puppet.settings.expects(:value).with(:ca_name).returns "mycertname"
+      Puppet[:ca_name] = "mycertname"
       OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == "mycertname" }.returns(subject)
       @request.expects(:subject=).with(subject)
       Puppet::SSL::CertificateRequest.new(Puppet::SSL::CA_NAME).generate(@key)
@@ -143,6 +143,40 @@ describe Puppet::SSL::CertificateRequest do
       @key.stubs(:public_key).returns pubkey
       @request.expects(:public_key=).with(@key.public_key)
       @instance.generate(@key)
+    end
+
+    context "without subjectAltName / certdnsnames" do
+      before :each do
+        Puppet[:certdnsnames] = ""
+      end
+
+      ["extreq", "msExtReq"].each do |name|
+        it "should not add any #{name} attribute" do
+          @request.expects(:add_attribute).never
+          @request.expects(:attributes=).never
+          @instance.generate(@key)
+        end
+      end
+    end
+
+    context "with subjectAltName / certdnsnames" do
+      before :each do
+        Puppet[:certdnsnames] = "one:two"
+      end
+
+      ["extreq", "msExtReq"].each do |name|
+        it "should add a #{name} attribute" do
+          @request.expects(:add_attribute).with do |arg|
+            arg.value.value.all? do |x|
+              x.value.all? do |y|
+                y.value[0].value == "subjectAltName"
+              end
+            end
+          end.twice
+
+          @instance.generate(@key)
+        end
+      end
     end
 
     it "should sign the csr with the provided key and a digest" do
