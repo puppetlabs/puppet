@@ -1,3 +1,7 @@
+2.7.6rc2
+===
+d457763 (#9832) General StoreConfigs regression.
+
 2.7.6rc1
 ===
 2958b05 maint: Deal with [].to_s problem in 1.9.2
