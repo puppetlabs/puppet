@@ -4,8 +4,7 @@ Puppet::Type.type(:group).provide :windows_adsi do
   desc "Group management for Windows"
 
   defaultfor :operatingsystem => :windows
-  confine :operatingsystem => :windows
-  confine :feature => :microsoft_windows
+  confine    :operatingsystem => :windows
 
   has_features :manages_members
 

@@ -13,7 +13,7 @@ Puppet::Type.type(:service).provide :windows do
   * Control of service groups (dependencies) is not yet supported."
 
   defaultfor :operatingsystem => :windows
-  confine :operatingsystem => :windows
+  confine    :operatingsystem => :windows
 
   has_feature :refreshable
 

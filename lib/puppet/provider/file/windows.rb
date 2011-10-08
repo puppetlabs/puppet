@@ -1,7 +1,7 @@
 Puppet::Type.type(:file).provide :windows do
   desc "Uses Microsoft Windows functionality to manage file's users and rights."
 
-  confine :feature => :microsoft_windows
+  confine :operatingsystem => :windows
 
   include Puppet::Util::Warnings
 
