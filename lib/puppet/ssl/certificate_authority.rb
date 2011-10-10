@@ -11,6 +11,15 @@ require 'puppet/util/cacher'
 # it can also be seen as a general interface into all of the
 # SSL stuff.
 class Puppet::SSL::CertificateAuthority
+  # We will only sign extensions on this whitelist, ever.  Any CSR with a
+  # requested extension that we don't recognize is rejected, against the risk
+  # that it will introduce some security issue through our ignorance of it.
+  #
+  # Adding an extension to this whitelist simply means we will consider it
+  # further, not that we will always accept a certificate with an extension
+  # requested on this list.
+  RequestExtensionWhitelist = %w{}
+
   require 'puppet/ssl/certificate_factory'
   require 'puppet/ssl/inventory'
   require 'puppet/ssl/certificate_revocation_list'
@@ -52,7 +61,6 @@ class Puppet::SSL::CertificateAuthority
   def apply(method, options)
     raise ArgumentError, "You must specify the hosts to apply to; valid values are an array or the symbol :all" unless options[:to]
     applier = Interface.new(method, options)
-
     applier.apply(self)
   end
 
@@ -233,6 +241,15 @@ class Puppet::SSL::CertificateAuthority
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
       issuer = host.certificate.content
+
+      # Reject unknown request extensions.
+      unknown_req = csr.request_extensions.
+        reject {|x| RequestExtensionWhitelist.include? x["oid"] }
+
+      if unknown_req and unknown_req.count > 0
+        names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
+        raise ArgumentError, "CSR has unknown request extensions: #{names}"
+      end
     end
 
     cert = Puppet::SSL::Certificate.new(hostname)

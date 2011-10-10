@@ -200,6 +200,7 @@ describe Puppet::SSL::CertificateAuthority do
       request = mock 'request'
       Puppet::SSL::CertificateRequest.expects(:new).with(@ca.host.name).returns request
       request.expects(:generate).with(@ca.host.key)
+      request.stubs(:request_extensions => [])
 
       @ca.expects(:sign).with(@host.name, :ca, request)
 
@@ -246,7 +247,7 @@ describe Puppet::SSL::CertificateAuthority do
       @factory = stub 'factory', :result => "my real cert"
       Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
 
-      @request = stub 'request', :content => "myrequest", :name => @name
+      @request = stub 'request', :content => "myrequest", :name => @name, :request_extensions => []
 
       # And the inventory
       @inventory = stub 'inventory', :add => nil
@@ -362,6 +363,13 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet::SSL::CertificateRequest.expects(:find).with(@name).returns nil
 
         lambda { @ca.sign(@name) }.should raise_error(ArgumentError)
+      end
+
+      it "should fail if an unknown request extension is present" do
+        @request.stubs :request_extensions => [{ "oid"   => "bananas",
+                                                 "value" => "delicious" }]
+        expect { @ca.sign(@name) }.
+          should raise_error ArgumentError, /unknown request extensions/
       end
 
       it "should use the CA certificate as the issuer" do
