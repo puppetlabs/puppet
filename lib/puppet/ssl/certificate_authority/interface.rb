@@ -45,37 +45,79 @@ class Puppet::SSL::CertificateAuthority::Interface
 
     # List the hosts.
     def list(ca)
-        unless subjects
-            puts ca.waiting?.join("\n")
-            return nil
-        end
-
         signed = ca.list
         requests = ca.waiting?
 
-        if subjects == :all
+        case subjects
+        when :all
             hosts = [signed, requests].flatten
-        elsif subjects == :signed
+        when :signed
             hosts = signed.flatten
+        when nil
+            hosts = requests
         else
             hosts = subjects
         end
 
+        certs = {:signed => {}, :invalid => {}, :request => {}}
+
+        return if hosts.empty?
+
         hosts.uniq.sort.each do |host|
-            invalid = false
             begin
                 ca.verify(host) unless requests.include?(host)
             rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => details
-                invalid = details.to_s
+                verify_error = details.to_s
             end
-            if not invalid and signed.include?(host)
-                puts "+ " + host
-            elsif invalid
-                puts "- " + host + " (" + invalid + ")"
+
+            if verify_error
+                cert = Puppet::SSL::Certificate.indirection.find(host)
+                certs[:invalid][host] = [cert, verify_error]
+            elsif signed.include?(host)
+                cert = Puppet::SSL::Certificate.indirection.find(host)
+                certs[:signed][host] = cert
             else
-                puts host
+                req = Puppet::SSL::CertificateRequest.indirection.find(host)
+                certs[:request][host] = req
             end
         end
+
+        names = certs.values.map(&:keys).flatten
+
+        name_width = names.sort_by(&:length).last.length rescue 0
+
+        output = [:request, :signed, :invalid].map do |type|
+            next if certs[type].empty?
+
+            certs[type].map do |host,info|
+                format_host(ca, host, type, info, name_width)
+            end
+        end.flatten.compact.sort.join("\n")
+
+        puts output
+    end
+
+    def format_host(ca, host, type, info, width)
+        certish, verify_error = info
+        alt_names = case type
+                    when :signed
+                        certish.alternate_names
+                    when :request
+                        (certish.subject_alt_names || [])
+                    else
+                        []
+                    end
+
+        alt_names.delete(host)
+
+        alt_str = "(alt names: #{alt_names.join(', ')})" unless alt_names.empty?
+
+        glyph = {:signed => '+', :request => ' ', :invalid => '-'}[type]
+
+        name = host.ljust(width)
+        explanation = "(#{verify_error})" if verify_error
+
+        [glyph, name, alt_str, explanation].compact.join(' ')
     end
 
     # Set the method to apply.
