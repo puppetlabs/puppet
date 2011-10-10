@@ -137,10 +137,15 @@ describe Puppet::SSL::CertificateRequest do
         Puppet[:certdnsnames] = ""
       end
 
-            it "should not add any extReq attribute" do
+      it "should not add any extReq attribute" do
         @request.expects(:add_attribute).never
         @request.expects(:attributes=).never
         @instance.generate(@key)
+      end
+
+      it "should return no subjectAltNames" do
+        @instance.generate(@key)
+        @instance.subject_alt_names.should be_nil
       end
     end
 
@@ -159,6 +164,11 @@ describe Puppet::SSL::CertificateRequest do
         end
 
         @instance.generate(@key)
+      end
+
+      it "should return the certdnsnames as subjectAltNames" do
+        @instance.generate(@key)
+        @instance.subject_alt_names.should == ["DNS:myname", "DNS:one", "DNS:two"]
       end
     end
 
