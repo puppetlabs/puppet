@@ -40,6 +40,13 @@ Puppet::Type.type(:service).provide :debian, :parent => :init do
     # See x-man-page://invoke-rc.d
     if [104, 106].include?($CHILD_STATUS.exitstatus)
       return :true
+    elsif [105].include?($CHILD_STATUS.exitstatus)
+      # 105 is unknown, which generally means the the iniscript does not support query
+      if `/bin/ls -1 /etc/rc*.d/S*#{@resource[:name]} 2>/dev/null| wc -l`.to_i >= 4
+        return :true
+      else
+        return :false
+      end
     else
       return :false
     end
