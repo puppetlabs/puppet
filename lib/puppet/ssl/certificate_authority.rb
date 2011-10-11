@@ -253,7 +253,8 @@ class Puppet::SSL::CertificateAuthority
     end
 
     cert = Puppet::SSL::Certificate.new(hostname)
-    cert.content = Puppet::SSL::CertificateFactory.new(cert_type, csr.content, issuer, next_serial).result
+    cert.content = Puppet::SSL::CertificateFactory.
+      build(cert_type, csr, issuer, next_serial)
     cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
 
     Puppet.notice "Signed certificate request for #{hostname}"

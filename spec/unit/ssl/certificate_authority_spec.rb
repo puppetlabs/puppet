@@ -244,8 +244,7 @@ describe Puppet::SSL::CertificateAuthority do
       @cert.stubs(:save)
 
       # Stub out the factory
-      @factory = stub 'factory', :result => "my real cert"
-      Puppet::SSL::CertificateFactory.stubs(:new).returns @factory
+      Puppet::SSL::CertificateFactory.stubs(:build).returns "my real cert"
 
       @request = stub 'request', :content => "myrequest", :name => @name, :request_extensions => []
 
@@ -302,30 +301,30 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should use a certificate type of :ca" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[0] == :ca
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
       it "should pass the provided CSR as the CSR" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
-          args[1] == "myrequest"
-        end.returns @factory
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
+          args[1] == @request
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
       it "should use the provided CSR's content as the issuer" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[2] == "myrequest"
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
       it "should pass the next serial as the serial number" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[3] == @serial
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
 
@@ -346,9 +345,9 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should use a certificate type of :server" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[0] == :server
-        end.returns @factory
+        end.returns "my real cert"
 
         @ca.sign(@name)
       end
@@ -373,16 +372,16 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should use the CA certificate as the issuer" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[2] == @cacert.content
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name)
       end
 
       it "should pass the next serial as the serial number" do
-        Puppet::SSL::CertificateFactory.expects(:new).with do |*args|
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
           args[3] == @serial
-        end.returns @factory
+        end.returns "my real cert"
         @ca.sign(@name)
       end
 
