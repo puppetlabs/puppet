@@ -27,7 +27,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   end
 
   # How to create a certificate request with our system defaults.
-  def generate(key)
+  def generate(key, options = {})
     Puppet.info "Creating a new SSL certificate request for #{name}"
 
     # Support either an actual SSL key, or a Puppet key.
@@ -43,10 +43,10 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
     csr.public_key = key.public_key
 
-    if Puppet[:certdnsnames] and Puppet[:certdnsnames] != "" then
-      names = [name] + Puppet[:certdnsnames].split(':')
+    if options[:subject_alt_name] then
+      names = options[:subject_alt_name].split(':').map(&:strip) + [name]
       names = names.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      names = extension_factory.create_extension("subjectAltName", names, "true")
+      names = extension_factory.create_extension("subjectAltName", names, true)
 
       extReq = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence([names])])
 

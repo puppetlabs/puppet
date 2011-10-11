@@ -377,7 +377,7 @@ describe Puppet::SSL::Host do
 
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.expects(:generate).with("mycontent")
+      @request.expects(:generate).with("mycontent", {})
       @request.expects(:save)
 
       @host.generate_certificate_request.should be_true

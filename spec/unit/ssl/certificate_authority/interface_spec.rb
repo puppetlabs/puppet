@@ -122,8 +122,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
       it "should call :generate on the CA for each host specified" do
         @applier = @class.new(:generate, :to => %w{host1 host2})
 
-        @ca.expects(:generate).with("host1")
-        @ca.expects(:generate).with("host2")
+        @ca.expects(:generate).with("host1", {})
+        @ca.expects(:generate).with("host2", {})
 
         @applier.apply(@ca)
       end
@@ -154,15 +154,24 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
     describe ":sign" do
       describe "and an array of names was provided" do
-        before do
-          @applier = @class.new(:sign, :to => %w{host1 host2})
-        end
+        let(:applier) { @class.new(:sign, @options.merge(:to => %w{host1 host2})) }
 
         it "should sign the specified waiting certificate requests" do
-          @ca.expects(:sign).with("host1")
-          @ca.expects(:sign).with("host2")
+          @options = {:allow_subject_alt_name => false}
 
-          @applier.apply(@ca)
+          @ca.expects(:sign).with("host1", false)
+          @ca.expects(:sign).with("host2", false)
+
+          applier.apply(@ca)
+        end
+
+        it "should sign the certificate requests with alt names if specified" do
+          @options = {:allow_subject_alt_name => true}
+
+          @ca.expects(:sign).with("host1", true)
+          @ca.expects(:sign).with("host2", true)
+
+          applier.apply(@ca)
         end
       end
 
@@ -170,8 +179,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         it "should sign all waiting certificate requests" do
           @ca.stubs(:waiting?).returns(%w{cert1 cert2})
 
-          @ca.expects(:sign).with("cert1")
-          @ca.expects(:sign).with("cert2")
+          @ca.expects(:sign).with("cert1", nil)
+          @ca.expects(:sign).with("cert2", nil)
 
           @applier = @class.new(:sign, :to => :all)
           @applier.apply(@ca)

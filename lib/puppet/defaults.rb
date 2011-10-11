@@ -207,7 +207,7 @@ module Puppet
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
     :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
       If it's anything other than an empty string, it will be used as an alias in the created
-      certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
+      certificate.  Only the locally generated master certificate gets an alias set up, and only if this is set."],
     :certdir => {
       :default => "$ssldir/certs",
       :owner => "service",

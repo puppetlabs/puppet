@@ -56,6 +56,10 @@
 #   Generate a certificate for a named client.  A certificate/keypair will be
 #   generated for each client named on the command line.
 #
+#   When generate is used the additional `--subject-alt-name` argument can be
+#   used.  The names, separated by `:`, passed will be added as the
+#   subjectAltName of the final certificate.
+#
 # help::
 #   Print this help message
 #
@@ -83,6 +87,19 @@
 #   Sign an outstanding certificate request.  Unless '--all' is specified,
 #   hosts must be listed after all flags.
 #
+#   Puppet will refuse to sign a CSR that requests a `subjectAltName`
+#   extension unless you specify `--allow-subject-alt-name`.  This is required
+#   because of the critical security risks around allowing `subjectAltName`
+#   from client generated certificates.
+#
+#   To further enforce security, if `--allow-subject-alt-name` is given Puppet
+#   will refuse to sign any certificate that does not have request additional
+#   names.
+#
+#   Finally, Puppet will still enforce security policy over the
+#   `subjectAltName` field, and will refuse to allow unknown values, or
+#   wildcards, as part of the certificate.
+#
 # verbose::
 #   Enable verbosity.
 #
@@ -98,6 +115,12 @@
 #   culain.madstop.com
 #   $ puppet cert -s culain.madstop.com
 #
+#   Signing a certificate with `subjectAltName` set, which will be requested
+#   automatically when you bring up a new master in a distributed CA
+#   environment:
+#
+#   $ puppet cert --sign --allow-subject-alt-name master12.local
+#
 # = Author
 #
 # Luke Kanies
@@ -106,5 +129,3 @@
 #
 # Copyright (c) 2005 Puppet Labs, LLC
 # Licensed under the GNU Public License
-
-#Puppet::Application[:cert].run

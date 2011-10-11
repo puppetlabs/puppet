@@ -18,7 +18,7 @@ class Puppet::SSL::CertificateAuthority
   # Adding an extension to this whitelist simply means we will consider it
   # further, not that we will always accept a certificate with an extension
   # requested on this list.
-  RequestExtensionWhitelist = %w{}
+  RequestExtensionWhitelist = %w{subjectAltName}
 
   require 'puppet/ssl/certificate_factory'
   require 'puppet/ssl/inventory'
@@ -31,6 +31,14 @@ class Puppet::SSL::CertificateAuthority
 
     def initialize(code)
       @error_code = code
+    end
+  end
+
+  class CertificateSigningError < RuntimeError
+    attr_accessor :host
+
+    def initialize(host)
+      @host = host
     end
   end
 
@@ -116,13 +124,15 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Generate a new certificate.
-  def generate(name)
+  def generate(name, options = {})
     raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.find(name)
+
+    # Pass on any requested subjectAltName field.
+    san = options[:subject_alt_name]
+
     host = Puppet::SSL::Host.new(name)
-
-    host.generate_certificate_request
-
-    sign(name)
+    host.generate_certificate_request(:subject_alt_name => san)
+    sign(name, !!san)
   end
 
   # Generate our CA certificate.
@@ -131,14 +141,16 @@ class Puppet::SSL::CertificateAuthority
 
     host.generate_key unless host.key
 
-    # Create a new cert request.  We do this
-    # specially, because we don't want to actually
-    # save the request anywhere.
+    # Create a new cert request.  We do this specially, because we don't want
+    # to actually save the request anywhere.
     request = Puppet::SSL::CertificateRequest.new(host.name)
+
+    # We deliberately do not put any subjectAltName in here: the CA
+    # certificate absolutely does not need them. --daniel 2011-10-13
     request.generate(host.key)
 
     # Create a self-signed certificate.
-    @certificate = sign(host.name, :ca, request)
+    @certificate = sign(host.name, false, request)
 
     # And make sure we initialize our CRL.
     crl
@@ -231,25 +243,28 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Sign a given certificate request.
-  def sign(hostname, cert_type = :server, self_signing_csr = nil)
+  def sign(hostname, allow_subject_alt_name = false, self_signing_csr = nil)
     # This is a self-signed certificate
     if self_signing_csr
+      # # This is a self-signed certificate, which is for the CA.  Since this
+      # # forces the certificate to be self-signed, anyone who manages to trick
+      # # the system into going through this path gets a certificate they could
+      # # generate anyway.  There should be no security risk from that.
       csr = self_signing_csr
+      cert_type = :ca
       issuer = csr.content
     else
       unless csr = Puppet::SSL::CertificateRequest.find(hostname)
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
+
+      cert_type = :server
       issuer = host.certificate.content
 
-      # Reject unknown request extensions.
-      unknown_req = csr.request_extensions.
-        reject {|x| RequestExtensionWhitelist.include? x["oid"] }
-
-      if unknown_req and unknown_req.count > 0
-        names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
-        raise ArgumentError, "CSR has unknown request extensions: #{names}"
-      end
+      # Make sure that the CSR conforms to our internal signing policies.
+      # This will raise if the CSR doesn't conform, but just in case...
+      check_internal_signing_policies(hostname, csr, allow_subject_alt_name) or
+        raise CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!"
     end
 
     cert = Puppet::SSL::Certificate.new(hostname)
@@ -272,6 +287,42 @@ class Puppet::SSL::CertificateAuthority
     Puppet::SSL::CertificateRequest.destroy(csr.name) unless self_signing_csr
 
     cert
+  end
+
+  def check_internal_signing_policies(hostname, csr, allow_subject_alt_name)
+    # Reject unknown request extensions.
+    unknown_req = csr.request_extensions.
+      reject {|x| RequestExtensionWhitelist.include? x["oid"] }
+
+    if unknown_req and unknown_req.count > 0
+      names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
+      raise ArgumentError, "CSR has request extensions that are not permitted: #{names}"
+    end
+
+    # If you alt names are allowed, they are required. Otherwise they are
+    # disallowed. Self-signed certs are implicitly trusted, however.
+    if csr.subject_alt_names and !allow_subject_alt_name
+      raise CertificateSigningError.new(hostname), "CSR contained subject alt names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use --allow-subject-alt-name to sign this request."
+    elsif !csr.subject_alt_names and allow_subject_alt_name
+      raise CertificateSigningError.new(hostname), "CSR did not contain subject alt names, which are required. Omit --allow-subject-alt-name to sign this request."
+    end
+
+    # If subjectAltNames are present, validate that they are only for DNS
+    # labels, not any other kind.
+    if san = csr.subject_alt_names and not san.all? {|x| x =~ /^DNS:/ }
+      raise CertificateSigningError.new(hostname), "CSR contained a subjectAltName outside the DNS label space: #{san.join(', ')}"
+    end
+
+
+    # Wildcards: we don't allow 'em at any point.
+    if csr.content.subject.to_s.include? '*'
+      raise CertificateSigningError.new(hostname), "CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}"
+    end
+    if san = csr.subject_alt_names and san.any? {|x| x.include? '*' }
+      raise CertificateSigningError.new(hostname), "CSR subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}"
+    end
+
+    return true                 # good enough for us!
   end
 
   # Verify a given host's certificate.

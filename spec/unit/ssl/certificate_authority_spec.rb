@@ -202,7 +202,7 @@ describe Puppet::SSL::CertificateAuthority do
       request.expects(:generate).with(@ca.host.key)
       request.stubs(:request_extensions => [])
 
-      @ca.expects(:sign).with(@host.name, :ca, request)
+      @ca.expects(:sign).with(@host.name, false, request)
 
       @ca.stubs :generate_password
 
@@ -246,7 +246,8 @@ describe Puppet::SSL::CertificateAuthority do
       # Stub out the factory
       Puppet::SSL::CertificateFactory.stubs(:build).returns "my real cert"
 
-      @request = stub 'request', :content => "myrequest", :name => @name, :request_extensions => []
+      @request_content = stub "request content stub", :subject => @name
+      @request = stub 'request', :name => @name, :request_extensions => [], :subject_alt_names => nil, :content => @request_content
 
       # And the inventory
       @inventory = stub 'inventory', :add => nil
@@ -297,7 +298,7 @@ describe Puppet::SSL::CertificateAuthority do
       it "should not look up a certificate request for the host" do
         Puppet::SSL::CertificateRequest.expects(:find).never
 
-        @ca.sign(@name, :ca, @request)
+        @ca.sign(@name, true, @request)
       end
 
       it "should use a certificate type of :ca" do
@@ -316,7 +317,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should use the provided CSR's content as the issuer" do
         Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
-          args[2] == "myrequest"
+          args[2].subject == "myhost"
         end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
       end
@@ -326,6 +327,14 @@ describe Puppet::SSL::CertificateAuthority do
           args[3] == @serial
         end.returns "my real cert"
         @ca.sign(@name, :ca, @request)
+      end
+
+      it "should sign the certificate request even if it contains alt names" do
+        @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
+
+        expect do
+          @ca.sign(@name, false, @request)
+        end.not_to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
       end
 
       it "should save the resulting certificate" do
@@ -368,7 +377,32 @@ describe Puppet::SSL::CertificateAuthority do
         @request.stubs :request_extensions => [{ "oid"   => "bananas",
                                                  "value" => "delicious" }]
         expect { @ca.sign(@name) }.
-          should raise_error ArgumentError, /unknown request extensions/
+          should raise_error(ArgumentError,
+                             /CSR has request extensions that are not permitted/)
+      end
+
+      it "should fail if the CSR contains alt names and they are not expected" do
+        @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
+
+        expect do
+          @ca.sign(@name, false)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alt names/)
+      end
+
+      it "should fail if the CSR does not contain alt names and they are expected" do
+        @request.stubs(:subject_alt_names).returns nil
+
+        expect do
+          @ca.sign(@name, true)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR did not contain subject alt names/)
+      end
+
+      it "should reject alt names by default" do
+        @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
+
+        expect do
+          @ca.sign(@name)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alt names/)
       end
 
       it "should use the CA certificate as the issuer" do
@@ -770,8 +804,7 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should sign the generated request" do
-        @ca.expects(:sign).with("him")
-
+        @ca.expects(:sign).with("him", false)
         @ca.generate("him")
       end
     end
