@@ -9,7 +9,7 @@ module Puppet
 
         class InterfaceError < ArgumentError; end
 
-        attr_reader :method, :subjects, :digest
+        attr_reader :method, :subjects, :digest, :options
 
         # Actually perform the work.
         def apply(ca)
@@ -35,14 +35,15 @@ module Puppet
           raise InterfaceError, "It makes no sense to generate all hosts; you must specify a list" if subjects == :all
 
           subjects.each do |host|
-            ca.generate(host)
+            ca.generate(host, options)
           end
         end
 
         def initialize(method, options)
           self.method = method
-          self.subjects = options[:to]
-          @digest = options[:digest] || :MD5
+          self.subjects = options.delete(:to)
+          @digest = options.delete(:digest) || :MD5
+          @options = options
         end
 
         # List the hosts.
@@ -157,7 +158,7 @@ module Puppet
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
           list.each do |host|
-            ca.sign(host)
+            ca.sign(host, options[:allow_subject_alt_name])
           end
         end
 

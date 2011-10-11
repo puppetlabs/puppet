@@ -91,12 +91,11 @@ describe Puppet::SSL::Certificate do
 
     describe "#alternate_names" do
       it "should list all alternate names when the extension is present" do
-        Puppet[:certdnsnames] = 'foo:bar:baz'
         key = Puppet::SSL::Key.new('quux')
         key.generate
 
         csr = Puppet::SSL::CertificateRequest.new('quux')
-        csr.generate(key)
+        csr.generate(key, :subject_alt_name => 'foo:bar:baz')
 
         raw_csr = csr.content
 
@@ -106,7 +105,6 @@ describe Puppet::SSL::Certificate do
       end
 
       it "should return an empty list of names if the extension is absent" do
-        Puppet[:certdnsnames] = ''
         key = Puppet::SSL::Key.new('quux')
         key.generate
 

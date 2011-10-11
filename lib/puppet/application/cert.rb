@@ -10,6 +10,7 @@ class Puppet::Application::Cert < Puppet::Application
   def subcommand
     @subcommand
   end
+
   def subcommand=(name)
     # Handle the nasty, legacy mapping of "clean" to "destroy".
     sub = name.to_sym
@@ -38,9 +39,17 @@ class Puppet::Application::Cert < Puppet::Application
 
   require 'puppet/ssl/certificate_authority/interface'
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject {|m| m == :destroy }.each do |method|
-    option("--#{method}", "-#{method.to_s[0,1]}") do
+    option("--#{method.to_s.gsub('_','-')}", "-#{method.to_s[0,1]}") do
       self.subcommand = method
     end
+  end
+
+  option("--[no-]allow-subject-alt-name") do |value|
+    options[:allow_subject_alt_name] = value
+  end
+
+  option("--subject-alt-name NAME") do |value|
+    options[:subject_alt_name] = value
   end
 
   option("--verbose", "-v") do
@@ -181,8 +190,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       hosts = command_line.args.collect { |h| h.downcase }
     end
     begin
-      @ca.apply(:revoke, :to => hosts) if subcommand == :destroy
-      @ca.apply(subcommand, :to => hosts, :digest => @digest)
+      @ca.apply(:revoke, options.merge(:to => hosts)) if subcommand == :destroy
+      @ca.apply(subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       puts detail.to_s

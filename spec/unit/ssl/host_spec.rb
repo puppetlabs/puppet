@@ -388,7 +388,7 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
 
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.expects(:generate).with("mycontent")
+      @request.expects(:generate).with("mycontent", {})
       Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       @host.generate_certificate_request.should be_true
