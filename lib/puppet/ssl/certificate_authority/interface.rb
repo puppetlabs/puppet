@@ -6,7 +6,7 @@ class Puppet::SSL::CertificateAuthority::Interface
 
     class InterfaceError < ArgumentError; end
 
-    attr_reader :method, :subjects
+    attr_reader :method, :subjects, :options
 
     # Actually perform the work.
     def apply(ca)
@@ -34,14 +34,22 @@ class Puppet::SSL::CertificateAuthority::Interface
         raise InterfaceError, "It makes no sense to generate all hosts; you must specify a list" if subjects == :all
 
         subjects.each do |host|
-            ca.generate(host)
+            ca.generate(host, options)
         end
     end
 
-    def initialize(method, subjects)
+#<<<<<<< HEAD
+    #def initialize(method, subjects)
+    #    self.method = method
+    #    self.subjects = subjects
+    #end
+#=======
+    def initialize(method, options)
         self.method = method
-        self.subjects = subjects
+        self.subjects = options.delete(:to)
+        @options = options
     end
+#>>>>>>> b052c24... (#2848) CSR subjectAltNames handling while signing.
 
     # List the hosts.
     def list(ca)
@@ -142,7 +150,7 @@ class Puppet::SSL::CertificateAuthority::Interface
         list = subjects == :all ? ca.waiting? : subjects
         raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
         list.each do |host|
-            ca.sign(host)
+            ca.sign(host, options[:allow_subject_alt_name])
         end
     end
 

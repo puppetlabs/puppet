@@ -139,18 +139,17 @@ class Puppet::SSL::Host
     end
 
     # Our certificate request requires the key but that's all.
-    def generate_certificate_request
+    def generate_certificate_request(options = {})
         generate_key unless key
         @certificate_request = CertificateRequest.new(name)
-        @certificate_request.generate(key.content)
+        @certificate_request.generate(key.content, options)
         begin
             @certificate_request.save
         rescue
             @certificate_request = nil
             raise
         end
-
-        return true
+        @certificate_request
     end
 
     def certificate

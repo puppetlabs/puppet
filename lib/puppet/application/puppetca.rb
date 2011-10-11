@@ -36,6 +36,10 @@ Puppet::Application.new(:puppetca) do
         end
     end
 
+    option("--[no-]allow-subject-alt-name") do |value|
+        options[:allow_subject_alt_name] = value
+    end
+
     option("--verbose", "-v") do
         Puppet::Util::Log.level = :info
     end
@@ -49,7 +53,7 @@ Puppet::Application.new(:puppetca) do
             hosts = ARGV.collect { |h| puts h; h.downcase }
         end
         begin
-            @ca.apply(@cert_mode, :to => hosts)
+            @ca.apply(@cert_mode, options.merge(:to => hosts))
         rescue => detail
             puts detail.backtrace if Puppet[:trace]
             puts detail.to_s

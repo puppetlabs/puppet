@@ -85,11 +85,7 @@ describe Puppet::SSL::CertificateFactory do
     # See #2848 for why we are doing this: we need to make sure that
     # subjectAltName is set if the CSR has it, but *not* if it is set when the
     # certificate is built!
-    it "should not add subjectAltNames when it isn't configured" do
-      # Force creation of the CSR, and check it has no extReq
-      Puppet[:certdnsnames] = ''
-      csr.request_extensions.should == []
-
+    it "should not add subjectAltNames from certdnsnames" do
       Puppet[:certdnsnames] = 'one:two'
       # Verify the CSR still has no extReq, just in case...
       csr.request_extensions.should == []
@@ -99,15 +95,20 @@ describe Puppet::SSL::CertificateFactory do
     end
 
     it "should add subjectAltName when the CSR requests them" do
-      Puppet[:certdnsnames] = 'one:two'
-      csr.request_extensions.should_not be_nil
-      csr.subject_alt_names.should =~ %w{example.local one two}.map{|x| "DNS:#{x}"}
-
       Puppet[:certdnsnames] = ''
+
+      expect = %w{one two} + [name]
+
+      csr = Puppet::SSL::CertificateRequest.new(name)
+      csr.generate(key, :subject_alt_name => expect.join(':'))
+
+      csr.request_extensions.should_not be_nil
+      csr.subject_alt_names.should =~ expect.map{|x| "DNS:#{x}"}
+
       cert = subject.build(:server, csr, issuer, serial)
       san = cert.extensions.find {|x| x.oid == 'subjectAltName' }
       san.should_not be_nil
-      %w{one two example.local}.each do |name|
+      expect.each do |name|
         san.value.should =~ /DNS:#{name}\b/i
       end
     end
