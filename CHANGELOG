@@ -1,3 +1,76 @@
+2.7.6rc2
+===
+d457763 (#9832) General StoreConfigs regression.
+
+2.7.6rc1
+===
+2958b05 maint: Deal with [].to_s problem in 1.9.2
+9c25af4 (#9027) Get rid of spurious info messages in groupadd
+1f25c20 (#8411) Fix change group for POSIX file provider
+599642d Fix problem with set_mode (chmod) behavior on different test environments.
+b43765d Undo change to failing test on 1.8.5
+c275a51 Resist directory traversal attacks through indirections.
+d759f84 (#9838) Return the tranaction report when doing a ral save
+127f83e (#9837) Split parameter pruning from manifest formatting
+9d5ce00 (#9837) Move resource formatting method to Puppet::Resource
+86230d8 (#9837) Move properties in prep to move proc to method
+bf952e1 (#9837) Make a clearer variable name in the specs
+6885c36 (#9837) Call puppet apply to avoid deprecation warning
+93f8057 (#9837) Extract methods from the main section of the resource application
+5d33214 (#9837) Start the cleanup of the puppet resource application
+54a2565 (#9832) Test failures with some ActiveRecord versions.
+2bf8004 Updates for 2.6.11
+8343077 (#9832) 2.7.4 StoreConfigs regression with PostgreSQL.
+dce82ea (#9458) Require main puppet module
+e158b26 (#9793) "secure" indirector file backed terminus base class.
+343c7bd (#9792) Predictable temporary filename in ralsh.
+88512e8 Drop privileges before creating and chmodding SSH keys.
+6533292 (#9328) Retrieve user and group SIDs on windows.
+2775c21 (#9794) k5login can overwrite arbitrary files as root
+e7a6995 (#9794) k5login can overwrite arbitrary files as root
+408d117 Updated CHANGELOG for 2.6.10
+ec5a32a Update spec and lib/puppet.rb for 2.6.10 release
+4e8d3a1 (#9775) Only list managed resources in the resources file
+51b33d1 (#9326) Support plaintext passwords in Windows 'user' provider.
+fe2de81 Resist directory traversal attacks through indirections.
+5fea1dc Fix issues with Windows based file URIs
+1a13d24 Simplify absolute path detection
+a163cd5 Eliminate duplicate absolute path detection
+0ce60a5 Added methods for manipulating URI and file paths
+71ba92c Restrict the absolute path regex to the start of the string
+1edf767 Move group management into providers
+15149c1 Remove duplicate SID resolution code
+f932511 Move owner management into providers
+f05fc83 Add platform-specific metadata collectors
+db0b4fb Make string_to_sid_ptr block optional
+7fc6baf Add the ability to retrieve user and group SIDs
+22bfd9c Move mode management into the providers
+4c3aae8 Fix typo bug that prevented FILE_DELETE_CHILD from being set
+7de0a80 Sub away trailing backslashes at the end of sources on Windows
+44cb1f1 Refactor autorequire of parent to use pathname with ancestors
+1300e0a Remove unnecessary Windows-on-non-Windows-master code for path parameter
+1f9b57f Cleanup file type integration tests
+8d21262 Cleanup and improve coverage of file type unit tests
+0a92a70 Resist directory traversal attacks through indirections.
+8b6a775 Call Array#join explicitly on command
+ae74c68 Fix failing SSL Host test introduced by b6a67edc
+37a1975 (#4549) Fix templates to be able to call all functions
+a74e56d Expand paths in catalog_spec for windows testing
+8d86e5a (9547) Minor mods to acceptance tests
+8ec3c7b (#4135) Update pluginsync to only load ruby files.
+0c8a0c7 Fix order dependent test failures relating to ADSI
+c0edb76 (#9186) Fix tests that fail on 2008 when running as SYSTEM
+8e14de6 (#9186) Handle when running under non 'user' contexts
+7595475 Fix device.conf error reporting
+1d3a3a7 Fix #9164 - allow '-' in device certificate names
+b6a67ed Fix #7982 - puppet device doesn't reset all cached attributes
+ba1f469 (#9186) Change to shared_examples_for
+b27b013 (#8410) Fix child exit status on Windows
+42c9982 (#9186) Add the ability to get/set windows permissions
+d34d28d (#9435) Gracefully handle when syslog feature is unavailable
+f013c65 (#9435) Fix absolute path matching for file log destinations
+ea88745 (#9329) Disable agent daemonizing on Windows
+
 2.7.5
 ===
 a36f39d Updating version numbers for 2.7.5

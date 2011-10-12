@@ -293,6 +293,24 @@ class Puppet::Parameter
   def to_s
     name.to_s
   end
+
+  def self.format_value_for_display(value)
+    if value.is_a? Array
+      formatted_values = value.collect {|value| format_value_for_display(value)}.join(', ')
+      "[#{formatted_values}]"
+    elsif value.is_a? Hash
+      # Sorting the hash keys for display is largely for having stable
+      # output to test against, but also helps when scanning for hash
+      # keys, since they will be in ASCIIbetical order.
+      hash = value.keys.sort {|a,b| a.to_s <=> b.to_s}.collect do |k|
+        "'#{k}' => #{format_value_for_display(value[k])}"
+      end.join(', ')
+
+      "{#{hash}}"
+    else
+      "'#{value}'"
+    end
+  end
 end
 
 require 'puppet/parameter/path'

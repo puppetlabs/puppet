@@ -5,8 +5,7 @@ require 'puppet/ssl/host'
 require 'puppet/sslcertificates'
 require 'puppet/sslcertificates/ca'
 
-# REMIND: Fails on windows because there is no user provider yet
-describe Puppet::SSL::Host, :fails_on_windows => true do
+describe Puppet::SSL::Host do
   include PuppetSpec::Files
 
   before do

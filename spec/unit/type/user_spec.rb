@@ -3,7 +3,7 @@ require 'spec_helper'
 
 user = Puppet::Type.type(:user)
 
-describe user, :fails_on_windows => true do
+describe user do
   before do
     ENV["PATH"] += File::PATH_SEPARATOR + "/usr/sbin" unless ENV["PATH"].split(File::PATH_SEPARATOR).include?("/usr/sbin")
     @provider = stub 'provider'
@@ -326,6 +326,7 @@ describe user, :fails_on_windows => true do
 
     it "should autorequire roles" do
       testuser = Puppet::Type.type(:user).new(:name => "testuser")
+      testuser.provider.stubs(:send).with(:roles).returns("")
       testuser[:roles] = "testrole"
 
       testrole = Puppet::Type.type(:user).new(:name => "testrole")

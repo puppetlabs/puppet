@@ -23,6 +23,8 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def create
     @user = Puppet::Util::ADSI::User.create(@resource[:name])
+    @user.commit
+
     [:comment, :home, :groups].each do |prop|
       send("#{prop}=", @resource[prop]) if @resource[prop]
     end

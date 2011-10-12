@@ -186,18 +186,38 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  describe "when setting user", :fails_on_windows => true do
-    it "should fail if we are not root" do
-      Puppet.features.stubs(:root?).returns(false)
-      expect { Puppet::Type.type(:exec).new(:name => @command, :user => 'input') }.
-        should raise_error Puppet::Error, /Parameter user failed/
+  describe "when setting user" do
+    describe "on POSIX systems" do
+      before :each do
+        Puppet.features.stubs(:posix?).returns(true)
+        Puppet.features.stubs(:microsoft_windows?).returns(false)
+      end
+
+      it "should fail if we are not root" do
+        Puppet.features.stubs(:root?).returns(false)
+        expect { Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => 'input') }.
+          should raise_error Puppet::Error, /Parameter user failed/
+      end
+
+      ['one', 2, 'root', 4294967295, 4294967296].each do |value|
+        it "should accept '#{value}' as user if we are root" do
+          Puppet.features.stubs(:root?).returns(true)
+          type = Puppet::Type.type(:exec).new(:name => '/bin/true whatever', :user => value)
+          type[:user].should == value
+        end
+      end
     end
 
-    ['one', 2, 'root', 4294967295, 4294967296].each do |value|
-      it "should accept '#{value}' as user if we are root" do
+    describe "on Windows systems" do
+      before :each do
+        Puppet.features.stubs(:posix?).returns(false)
+        Puppet.features.stubs(:microsoft_windows?).returns(true)
         Puppet.features.stubs(:root?).returns(true)
-        type = Puppet::Type.type(:exec).new(:name => @command, :user => value)
-        type[:user].should == value
+      end
+
+      it "should reject user parameter" do
+        expect { Puppet::Type.type(:exec).new(:name => 'c:\windows\notepad.exe', :user => 'input') }.
+          should raise_error Puppet::Error, /Unable to execute commands as other users on Windows/
       end
     end
   end
@@ -205,7 +225,7 @@ describe Puppet::Type.type(:exec) do
   describe "when setting group" do
     shared_examples_for "exec[:group]" do
       ['one', 2, 'wheel', 4294967295, 4294967296].each do |value|
-        it "should accept '#{value}' without error or judgement", :fails_on_windows => true do
+        it "should accept '#{value}' without error or judgement" do
           type = Puppet::Type.type(:exec).new(:name => @command, :group => value)
           type[:group].should == value
         end
@@ -352,16 +372,16 @@ describe Puppet::Type.type(:exec) do
         end
       end
 
-      it "should fail if timeout is exceeded", :fails_on_windows => true do
+      it "should fail if timeout is exceeded" do
         Puppet::Util.stubs(:execute).with do |cmd,args|
           sleep 1
           true
         end
         FileTest.stubs(:file?).returns(false)
-        FileTest.stubs(:file?).with('/bin/sleep').returns(true)
+        FileTest.stubs(:file?).with(File.expand_path('/bin/sleep')).returns(true)
         FileTest.stubs(:executable?).returns(false)
-        FileTest.stubs(:executable?).with('/bin/sleep').returns(true)
-        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => ['/bin'], :timeout => '0.2')
+        FileTest.stubs(:executable?).with(File.expand_path('/bin/sleep')).returns(true)
+        sleep_exec = Puppet::Type.type(:exec).new(:name => 'sleep 1', :path => [File.expand_path('/bin')], :timeout => '0.2')
 
         lambda { sleep_exec.refresh }.should raise_error Puppet::Error, "Command exceeded timeout"
       end
@@ -616,7 +636,7 @@ describe Puppet::Type.type(:exec) do
     end
   end
 
-  describe "#retrieve", :fails_on_windows => true do
+  describe "#retrieve" do
     before :each do
       @exec_resource = Puppet::Type.type(:exec).new(:name => @bogus_cmd)
     end

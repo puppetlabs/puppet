@@ -29,17 +29,26 @@ describe Puppet::Util::ADSI do
   end
 
   describe ".sid_for_account" do
-    it "should return the SID" do
-      result = [stub('account', :Sid => 'S-1-1-50')]
-      connection.expects(:execquery).returns(result)
-
-      Puppet::Util::ADSI.sid_for_account('joe').should == 'S-1-1-50'
-    end
-
     it "should return nil if the account does not exist" do
-        connection.expects(:execquery).returns([])
+      connection.expects(:execquery).returns([])
 
       Puppet::Util::ADSI.sid_for_account('foobar').should be_nil
+    end
+
+    it "should return a SID for a passed user or group name" do
+      Puppet::Util::ADSI.expects(:execquery).with(
+        "SELECT Sid from Win32_Account WHERE Name = 'testers' AND LocalAccount = true"
+      ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+
+      Puppet::Util::ADSI.sid_for_account('testers').should == 'S-1-5-32-547'
+    end
+
+    it "should return a SID for a passed fully-qualified user or group name" do
+      Puppet::Util::ADSI.expects(:execquery).with(
+        "SELECT Sid from Win32_Account WHERE Name = 'testers' AND Domain = 'MACHINE' AND LocalAccount = true"
+      ).returns([stub('acct_id', :Sid => 'S-1-5-32-547')])
+
+      Puppet::Util::ADSI.sid_for_account('MACHINE\testers').should == 'S-1-5-32-547'
     end
   end
 
@@ -54,6 +63,7 @@ describe Puppet::Util::ADSI do
       adsi_user = stub('adsi')
 
       connection.expects(:Create).with('user', username).returns(adsi_user)
+      Puppet::Util::ADSI::Group.expects(:exists?).with(username).returns(false)
 
       user = Puppet::Util::ADSI::User.create(username)
 
@@ -199,6 +209,7 @@ describe Puppet::Util::ADSI do
       adsi_group = stub("adsi")
 
       connection.expects(:Create).with('group', groupname).returns(adsi_group)
+      Puppet::Util::ADSI::User.expects(:exists?).with(groupname).returns(false)
 
       group = Puppet::Util::ADSI::Group.create(groupname)
 

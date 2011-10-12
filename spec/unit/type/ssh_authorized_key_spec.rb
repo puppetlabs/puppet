@@ -47,9 +47,8 @@ describe ssh_authorized_key, :unless => Puppet.features.microsoft_windows? do
         proc { @class.new(:name => "username@hostname", :ensure => :present, :user => "nobody") }.should_not raise_error
       end
 
-      it "should not support whitespaces" do
-        proc { @class.new(:name => "my test", :ensure => :present, :user => "nobody") }.should raise_error(Puppet::Error,/Resourcename must not contain whitespace/)
-        proc { @class.new(:name => "my\ttest", :ensure => :present, :user => "nobody") }.should raise_error(Puppet::Error,/Resourcename must not contain whitespace/)
+      it "should support whitespace" do
+        proc { @class.new(:name => "my test", :ensure => :present, :user => "nobody") }.should_not raise_error
       end
 
     end

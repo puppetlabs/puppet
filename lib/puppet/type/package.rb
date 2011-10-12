@@ -6,8 +6,9 @@
 module Puppet
   newtype(:package) do
     @doc = "Manage packages.  There is a basic dichotomy in package
-      support right now:  Some package types (e.g., yum and apt) can
-      retrieve their own package files, while others (e.g., rpm and sun) cannot.  For those package formats that cannot retrieve
+      support right now: Some package types (e.g., yum and apt) can
+      retrieve their own package files, while others (e.g., rpm and
+      sun) cannot.  For those package formats that cannot retrieve
       their own files, you can use the `source` parameter to point to
       the correct file.
 
@@ -17,9 +18,9 @@ module Puppet
       requires in order to function, and you must meet those requirements
       to use a given provider.
 
-      **Autorequires:** If Puppet is managing the files specified as a package's
-      `adminfile`, `responsefile`, or `source`, the package resource will autorequire
-      those files."
+      **Autorequires:** If Puppet is managing the files specified as a
+      package's `adminfile`, `responsefile`, or `source`, the package
+      resource will autorequire those files."
 
     feature :installable, "The provider can install packages.",
       :methods => [:install]
@@ -222,6 +223,10 @@ module Puppet
       desc "Where to find the actual package.  This must be a local file
         (or on a network file system) or a URL that your specific
         packaging type understands; Puppet will not retrieve files for you."
+
+      validate do |value|
+        provider.validate_source(value)
+      end
     end
 
     newparam(:instance) do
@@ -298,10 +303,6 @@ module Puppet
     newparam(:install_options, :required_features => :install_options) do
       desc "A hash of options to be handled by the provider when
         installing a package."
-    end
-
-    validate do
-      provider.validate_source(self[:source])
     end
 
     autorequire(:file) do

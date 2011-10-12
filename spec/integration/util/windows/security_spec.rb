@@ -26,6 +26,24 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   let (:sids) { @sids }
   let (:winsec) { WindowsSecurityTester.new }
 
+  shared_examples_for "only child owner" do
+    it "should allow child owner" do
+      check_child_owner
+    end
+
+    it "should deny parent owner" do
+      lambda { check_parent_owner }.should raise_error(Errno::EACCES)
+    end
+
+    it "should deny group" do
+      lambda { check_group }.should raise_error(Errno::EACCES)
+    end
+
+    it "should deny other" do
+      lambda { check_other }.should raise_error(Errno::EACCES)
+    end
+  end
+
   shared_examples_for "a securable object" do
     describe "for a normal user" do
       before :each do
@@ -33,7 +51,8 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       end
 
       after :each do
-        winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
+        winsec.set_mode(WindowsSecurityTester::S_IRWXU, parent)
+        winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if File.exists?(path)
       end
 
       describe "#owner=" do
@@ -79,7 +98,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       end
 
       describe "#mode=" do
-        [0000, 0100, 0200, 0300, 0400, 0500, 0600, 0700].each do |mode|
+        (0000..0700).step(0100).each do |mode|
           it "should enforce mode #{mode.to_s(8)}" do
             winsec.set_mode(mode, path)
 
@@ -87,19 +106,21 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           end
         end
 
-        it "should round-trip all 64 modes that do not require deny ACEs" do
-          0.upto(7).each do |u|
-            0.upto(u).each do |g|
-              0.upto(g).each do |o|
-                # if user is superset of group, and group superset of other, then
-                # no deny ace is required, and mode can be converted to win32
-                # access mask, and back to mode without loss of information
-                # (provided the owner and group are not the same)
-                next if ((u & g) != g) or ((g & o) != o)
+        it "should round-trip all 128 modes that do not require deny ACEs" do
+          0.upto(1).each do |s|
+            0.upto(7).each do |u|
+              0.upto(u).each do |g|
+                0.upto(g).each do |o|
+                  # if user is superset of group, and group superset of other, then
+                  # no deny ace is required, and mode can be converted to win32
+                  # access mask, and back to mode without loss of information
+                  # (provided the owner and group are not the same)
+                  next if ((u & g) != g) or ((g & o) != o)
 
-                mode = (u << 6 | g << 3 | o << 0)
-                winsec.set_mode(mode, path)
-                winsec.get_mode(path).to_s(8).should == mode.to_s(8)
+                  mode = (s << 9 | u << 6 | g << 3 | o << 0)
+                  winsec.set_mode(mode, path)
+                  winsec.get_mode(path).to_s(8).should == mode.to_s(8)
+                end
               end
             end
           end
@@ -144,7 +165,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       describe "#mode" do
         it "should report when extra aces are encounted" do
           winsec.set_acl(path, true) do |acl|
-            [ 544, 545, 546, 547 ].each do |rid|
+            (544..547).each do |rid|
               winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL, "S-1-5-32-#{rid}")
             end
           end
@@ -184,27 +205,21 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         it "should be present when the access control list is unprotected" do
-          dir = tmpdir('win_sec_parent')
-
-          # add a bunch of aces, make sure we can add to the directory
+          # add a bunch of aces to the parent with permission to add children
           allow = WindowsSecurityTester::STANDARD_RIGHTS_ALL | WindowsSecurityTester::SPECIFIC_RIGHTS_ALL
           inherit = WindowsSecurityTester::OBJECT_INHERIT_ACE | WindowsSecurityTester::CONTAINER_INHERIT_ACE
 
-          winsec.set_acl(dir, true) do |acl|
+          winsec.set_acl(parent, true) do |acl|
             winsec.add_access_allowed_ace(acl, allow, "S-1-1-0", inherit) # everyone
 
-            [ 544, 545, 546, 547 ].each do |rid|
+            (544..547).each do |rid|
               winsec.add_access_allowed_ace(acl, WindowsSecurityTester::STANDARD_RIGHTS_ALL, "S-1-5-32-#{rid}", inherit)
             end
           end
 
-          # add a file
-          child = File.join(dir, "child")
-          File.new(child, "w").close
-
           # unprotect child, it should inherit from parent
-          winsec.set_mode(WindowsSecurityTester::S_IRWXU, child, false)
-          (winsec.get_mode(child) & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
+          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path, false)
+          (winsec.get_mode(path) & WindowsSecurityTester::S_IEXTRA).should == WindowsSecurityTester::S_IEXTRA
         end
       end
     end
@@ -218,8 +233,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       end
 
       after :each do
-        winsec.set_owner(sids[:current_user], path)
-        winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
+        if File.exists?(path)
+          winsec.set_owner(sids[:current_user], path)
+          winsec.set_mode(WindowsSecurityTester::S_IRWXU, path)
+        end
       end
 
       describe "#owner=" do
@@ -348,13 +365,119 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
           winsec.string_to_sid_ptr('S-1-1-0').should be_true
         end
       end
+
+      describe "when the parent directory" do
+        before :each do
+          winsec.set_owner(sids[:current_user], parent)
+          winsec.set_owner(sids[:current_user], path)
+          winsec.set_mode(0777, path, false)
+        end
+
+        def check_child_owner
+          winsec.set_group(sids[:guest], parent)
+          winsec.set_owner(sids[:guest], parent)
+
+          check_delete(path)
+        end
+
+        def check_parent_owner
+          winsec.set_group(sids[:guest], path)
+          winsec.set_owner(sids[:guest], path)
+
+          check_delete(path)
+        end
+
+        def check_group
+          winsec.set_group(sids[:current_user], path)
+          winsec.set_owner(sids[:guest], path)
+
+          winsec.set_owner(sids[:guest], parent)
+
+          check_delete(path)
+        end
+
+        def check_other
+          winsec.set_group(sids[:guest], path)
+          winsec.set_owner(sids[:guest], path)
+
+          winsec.set_owner(sids[:guest], parent)
+
+          check_delete(path)
+        end
+
+        describe "is writable and executable" do
+          describe "and sticky bit is set" do
+            before :each do
+              winsec.set_mode(01777, parent)
+            end
+
+            it "should allow child owner" do
+              check_child_owner
+            end
+
+            it "should allow parent owner" do
+              check_parent_owner
+            end
+
+            it "should deny group" do
+              lambda { check_group }.should raise_error(Errno::EACCES)
+            end
+
+            it "should deny other" do
+              lambda { check_other }.should raise_error(Errno::EACCES)
+            end
+          end
+
+          describe "and sticky bit is not set" do
+            before :each do
+              winsec.set_mode(0777, parent)
+            end
+
+            it "should allow child owner" do
+              check_child_owner
+            end
+
+            it "should allow parent owner" do
+              check_parent_owner
+            end
+
+            it "should allow group" do
+              check_group
+            end
+
+            it "should allow other" do
+              check_other
+            end
+          end
+        end
+
+        describe "is not writable" do
+          before :each do
+            winsec.set_mode(0555, parent)
+          end
+
+          it_behaves_like "only child owner"
+        end
+
+        describe "is not executable" do
+          before :each do
+            winsec.set_mode(0666, parent)
+          end
+
+          it_behaves_like "only child owner"
+        end
+      end
     end
   end
 
   describe "file" do
-    let :path do
-      path = tmpfile('win_sec_test_file')
-      File.new(path, "w").close
+    let (:parent) do
+      tmpdir('win_sec_test_file')
+    end
+
+    let (:path) do
+      path = File.join(parent, 'childfile')
+      File.new(path, 'w').close
       path
     end
 
@@ -390,6 +513,10 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       def check_execute(path)
         Kernel.exec(path)
       end
+
+      def check_delete(path)
+        File.delete(path)
+      end
     end
 
     describe "locked files" do
@@ -410,8 +537,14 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
   end
 
   describe "directory" do
-    let :path do
+    let (:parent) do
       tmpdir('win_sec_test_dir')
+    end
+
+    let (:path) do
+      path = File.join(parent, 'childdir')
+      Dir.mkdir(path)
+      path
     end
 
     it_behaves_like "a securable object" do
@@ -444,7 +577,11 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
       end
 
       def check_execute(path)
-        Dir.chdir(path) {|dir| }
+        Dir.chdir(path) {}
+      end
+
+      def check_delete(path)
+        Dir.rmdir(path)
       end
     end
 

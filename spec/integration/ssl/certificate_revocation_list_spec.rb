@@ -3,8 +3,7 @@ require 'spec_helper'
 
 require 'puppet/ssl/certificate_revocation_list'
 
-# REMIND: Fails on windows because there is no user provider yet
-describe Puppet::SSL::CertificateRevocationList, :fails_on_windows => true do
+describe Puppet::SSL::CertificateRevocationList do
   include PuppetSpec::Files
 
   before do

@@ -177,6 +177,15 @@ describe Puppet::Type, :fails_on_windows => true do
       end
     end
 
+    it "should have documentation for the 'provider' parameter if there are providers" do
+      @type.provide(:test_provider)
+      @type.paramdoc(:provider).should =~ /`provider_test_type`[\s\r]+resource/
+    end
+
+    it "should not have documentation for the 'provider' parameter if there are no providers" do
+      expect { @type.paramdoc(:provider) }.to raise_error(NoMethodError)
+    end
+
     it "should create a subclass of Puppet::Provider for the provider" do
       provider = @type.provide(:test_provider)
 
@@ -546,7 +555,7 @@ describe Puppet::Type, :fails_on_windows => true do
   end
 end
 
-describe Puppet::Type::RelationshipMetaparam, :fails_on_windows => true do
+describe Puppet::Type::RelationshipMetaparam do
   include PuppetSpec::Files
 
   it "should be a subclass of Puppet::Parameter" do
@@ -557,7 +566,7 @@ describe Puppet::Type::RelationshipMetaparam, :fails_on_windows => true do
     Puppet::Type::RelationshipMetaparam.should respond_to(:subclasses)
   end
 
-  describe "when munging relationships", :'fails_on_windows' => true do
+  describe "when munging relationships", :fails_on_windows => true do
     before do
       @path = make_absolute('/foo')
       @resource = Puppet::Type.type(:mount).new :name => @path
@@ -593,7 +602,7 @@ describe Puppet::Type::RelationshipMetaparam, :fails_on_windows => true do
   end
 end
 
-describe Puppet::Type.metaparamclass(:check), :fails_on_windows => true do
+describe Puppet::Type.metaparamclass(:check) do
   include PuppetSpec::Files
 
   it "should warn and create an instance of ':audit'" do
@@ -604,7 +613,7 @@ describe Puppet::Type.metaparamclass(:check), :fails_on_windows => true do
   end
 end
 
-describe Puppet::Type.metaparamclass(:audit), :fails_on_windows => true do
+describe Puppet::Type.metaparamclass(:audit) do
   include PuppetSpec::Files
 
   before do

@@ -92,6 +92,7 @@ module Puppet::Util::Windows::Security
   S_IRWXU = 0000700
   S_IRWXG = 0000070
   S_IRWXO = 0000007
+  S_ISVTX = 0001000
   S_IEXTRA = 02000000  # represents an extra ace
 
   # constants that are missing from Windows::Security
@@ -192,15 +193,15 @@ module Puppet::Util::Windows::Security
 
   # Get the mode of the object referenced by +path+.  The returned
   # integer value represents the POSIX-style read, write, and execute
-  # modes for the user, group, and other classes, e.g. 0640.  Other
-  # modes, e.g. S_ISVTX, are not supported.  Any user with read access
-  # to an object can get the mode. Only a user with the SE_BACKUP_NAME
-  # privilege in their process token can get the mode for objects they
-  # do not have read access to.
+  # modes for the user, group, and other classes, e.g. 0640.  Any user
+  # with read access to an object can get the mode. Only a user with
+  # the SE_BACKUP_NAME privilege in their process token can get the
+  # mode for objects they do not have read access to.
   def get_mode(path)
     owner_sid = get_owner(path)
     group_sid = get_group(path)
     well_known_world_sid = Win32::Security::SID::Everyone
+    well_known_nobody_sid = Win32::Security::SID::Nobody
 
     with_privilege(SE_BACKUP_NAME) do
       open_file(path, READ_CONTROL) do |handle|
@@ -226,6 +227,13 @@ module Puppet::Util::Windows::Security
                 mode |= (v << 6) | (v << 3) | v
               end
             end
+            if File.directory?(path) and (ace[:mask] & (FILE_WRITE_DATA | FILE_EXECUTE | FILE_DELETE_CHILD)) == (FILE_WRITE_DATA | FILE_EXECUTE)
+              mode |= S_ISVTX;
+            end
+          when well_known_nobody_sid
+            if (ace[:mask] & FILE_APPEND_DATA).nonzero?
+              mode |= S_ISVTX
+            end
           else
             #puts "Warning, unable to map SID into POSIX mode: #{ace[:sid]}"
             mode |= S_IEXTRA
@@ -248,17 +256,18 @@ module Puppet::Util::Windows::Security
     S_IROTH => FILE_GENERIC_READ,
     S_IWOTH => FILE_GENERIC_WRITE,
     S_IXOTH => (FILE_GENERIC_EXECUTE & ~FILE_READ_ATTRIBUTES),
-    (S_IWOTH | S_IXOTH) => FILE_DELETE_CHILD,
   }
 
   # Set the mode of the object referenced by +path+ to the specified
   # +mode+.  The mode should be specified as POSIX-stye read, write,
   # and execute modes for the user, group, and other classes,
-  # e.g. 0640. Other modes, e.g. S_ISVTX, are not supported. By
-  # default, the DACL is set to protected, meaning it does not inherit
-  # access control entries from parent objects. This can be changed by
-  # setting +protected+ to false. The owner of the object (with
-  # READ_CONTROL and WRITE_DACL access) can always change the
+  # e.g. 0640. The sticky bit, S_ISVTX, is supported, but is only
+  # meaningful for directories. If set, group and others are not
+  # allowed to delete child objects for which they are not the owner.
+  # By default, the DACL is set to protected, meaning it does not
+  # inherit access control entries from parent objects. This can be
+  # changed by setting +protected+ to false. The owner of the object
+  # (with READ_CONTROL and WRITE_DACL access) can always change the
   # mode. Only a user with the SE_BACKUP_NAME and SE_RESTORE_NAME
   # privileges in their process token can change the mode for objects
   # that they do not have read and write access to.
@@ -266,10 +275,12 @@ module Puppet::Util::Windows::Security
     owner_sid = get_owner(path)
     group_sid = get_group(path)
     well_known_world_sid = Win32::Security::SID::Everyone
+    well_known_nobody_sid = Win32::Security::SID::Nobody
 
     owner_allow = STANDARD_RIGHTS_ALL  | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES
     group_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
     other_allow = STANDARD_RIGHTS_READ | FILE_READ_ATTRIBUTES | SYNCHRONIZE
+    nobody_allow = 0
 
     MODE_TO_MASK.each do |k,v|
       if ((mode >> 6) & k) == k
@@ -280,6 +291,24 @@ module Puppet::Util::Windows::Security
       end
       if (mode & k) == k
         other_allow |= v
+      end
+    end
+
+    if (mode & S_ISVTX).nonzero?
+      nobody_allow |= FILE_APPEND_DATA;
+    end
+
+    isdir = File.directory?(path)
+
+    if isdir
+      if (mode & (S_IWUSR | S_IXUSR)) == (S_IWUSR | S_IXUSR)
+        owner_allow |= FILE_DELETE_CHILD
+      end
+      if (mode & (S_IWGRP | S_IXGRP)) == (S_IWGRP | S_IXGRP) and (mode & S_ISVTX) == 0
+        group_allow |= FILE_DELETE_CHILD
+      end
+      if (mode & (S_IWOTH | S_IXOTH)) == (S_IWOTH | S_IXOTH) and (mode & S_ISVTX) == 0
+        other_allow |= FILE_DELETE_CHILD
       end
     end
 
@@ -301,8 +330,11 @@ module Puppet::Util::Windows::Security
       #puts "ace: other #{well_known_world_sid}, mask 0x#{other_allow.to_s(16)}"
       add_access_allowed_ace(acl, other_allow, well_known_world_sid)
 
+      #puts "ace: nobody #{well_known_nobody_sid}, mask 0x#{nobody_allow.to_s(16)}"
+      add_access_allowed_ace(acl, nobody_allow, well_known_nobody_sid)
+
       # add inheritable aces for child dirs and files that are created within the dir
-      if File.directory?(path)
+      if isdir
         inherit = INHERIT_ONLY_ACE | OBJECT_INHERIT_ACE | CONTAINER_INHERIT_ACE
 
         add_access_allowed_ace(acl, owner_allow, Win32::Security::SID::CreatorOwner, inherit)
