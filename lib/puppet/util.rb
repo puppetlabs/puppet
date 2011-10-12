@@ -300,7 +300,12 @@ module Util
 
   def execute_posix(command, arguments, stdin, stdout, stderr)
     child_pid = Kernel.fork do
-      command = Array(command)
+      # We can't just call Array(command), and rely on it returning
+      # things like ['foo'], when passed ['foo'], because
+      # Array(command) will call command.to_a internally, which when
+      # given a string can end up doing Very Bad Things(TM), such as
+      # turning "/tmp/foo;\r\n /bin/echo" into ["/tmp/foo;\r\n", " /bin/echo"]
+      command = [command].flatten
       Process.setsid
       begin
         $stdin.reopen(stdin)
