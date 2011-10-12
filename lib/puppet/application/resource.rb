@@ -88,18 +88,25 @@ class Puppet::Application::Resource < Puppet::Application
     end.map(&format).join("\n")
 
     if options[:edit]
-      file = "/tmp/x2puppet-#{Process.pid}.pp"
+      require 'tempfile'
+      # Prefer the current directory, which is more likely to be secure
+      # and, in the case of interactive use, accessible to the user.
+      tmpfile = Tempfile.new('x2puppet', Dir.pwd)
       begin
-        File.open(file, "w") do |f|
-          f.puts text
-        end
-        ENV["EDITOR"] ||= "vi"
-        system(ENV["EDITOR"], file)
-        system("puppet -v #{file}")
+        # sync write, so nothing buffers before we invoke the editor.
+        tmpfile.sync = true
+        tmpfile.puts text
+
+        # edit the content
+        system(ENV["EDITOR"] || 'vi', tmpfile.path)
+
+        # ...and, now, pass that file to puppet to apply.  Because
+        # many editors rename or replace the original file we need to
+        # feed the pathname, not the file content itself, to puppet.
+        system('puppet -v ' + tmpfile.path)
       ensure
-        #if FileTest.exists? file
-        #    File.unlink(file)
-        #end
+        # The temporary file will be safely removed.
+        tmpfile.close(true)
       end
     else
       puts text

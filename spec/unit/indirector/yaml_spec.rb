@@ -63,6 +63,20 @@ describe Puppet::Indirector::Yaml, " when choosing file location" do
     it "should use the object's name to determine the file name" do
       @store.path(:me).should =~ %r{me.yaml$}
     end
+
+    ['../foo', '..\\foo', './../foo', '.\\..\\foo',
+     '/foo', '//foo', '\\foo', '\\\\goo',
+     "test\0/../bar", "test\0\\..\\bar",
+     "..\\/bar", "/tmp/bar", "/tmp\\bar", "tmp\\bar",
+     " / bar", " /../ bar", " \\..\\ bar",
+     "c:\\foo", "c:/foo", "\\\\?\\UNC\\bar", "\\\\foo\\bar",
+     "\\\\?\\c:\\foo", "//?/UNC/bar", "//foo/bar",
+     "//?/c:/foo",
+    ].each do |input|
+      it "should resist directory traversal attacks (#{input.inspect})" do
+        expect { @store.path(input) }.to raise_error
+      end
+    end
   end
 
   describe Puppet::Indirector::Yaml, " when storing objects as YAML" do

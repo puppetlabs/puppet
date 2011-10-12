@@ -68,4 +68,11 @@ module Puppet::Indirector
       self.class.indirection.save key, self
     end
   end
+
+
+  # Helper definition for indirections that handle filenames.
+  BadNameRegexp = Regexp.union(/^\.\./,
+                               %r{[\\/]},
+                               "\0",
+                               /(?i)^[a-z]:/)
 end
