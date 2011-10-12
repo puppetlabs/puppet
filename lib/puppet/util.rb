@@ -196,8 +196,8 @@ module Util
           exts = ENV['PATHEXT']
           exts = exts ? exts.split(File::PATH_SEPARATOR) : %w[.COM .EXE .BAT .CMD]
           exts.each do |ext|
-            bin = File.expand_path(dest + ext)
-            return bin if FileTest.file? bin and FileTest.executable? bin
+            destext = File.expand_path(dest + ext)
+            return destext if FileTest.file? destext and FileTest.executable? destext
           end
         end
         return dest if FileTest.file? dest and FileTest.executable? dest
