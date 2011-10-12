@@ -220,6 +220,12 @@ describe Puppet::Util do
         Puppet::Util.execute_posix(['test command', 'with', 'arguments'], {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
       end
 
+      it "should properly execute string commands with embedded newlines" do
+        Kernel.expects(:exec).with("/bin/echo 'foo' ; \n /bin/echo 'bar' ;")
+
+        Puppet::Util.execute_posix("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
+      end
+
       it "should return the pid of the child process" do
         Puppet::Util.execute_posix('test command', {}, @stdin, @stdout, @stderr).should == pid
       end
