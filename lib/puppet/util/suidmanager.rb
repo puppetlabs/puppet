@@ -150,4 +150,3 @@ module Puppet::Util::SUIDManager
   end
   module_function :system
 end
-
