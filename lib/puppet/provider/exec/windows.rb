@@ -23,11 +23,10 @@ only directly calls the command with the arguments given."
       return
     end
 
-    path = resource[:path] || []
-
-    exts = [".exe", ".ps1", ".bat", ".com", ""]
-    withenv :PATH => path.join(File::PATH_SEPARATOR) do
-      return if exts.any? {|ext| which(exe + ext) }
+    if resource[:path]
+      withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
+        return if which(exe)
+      end
     end
 
     raise ArgumentError, "Could not find command '#{exe}'"
