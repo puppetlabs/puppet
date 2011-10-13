@@ -138,9 +138,34 @@ class Puppet::SSL::Host
         @certificate_request ||= CertificateRequest.find(name)
     end
 
+    def this_csr_is_for_a_local_master
+        # If this is for another machine, we are *not* generating a master cert.
+        # At least, not in an automatic fashion.
+        return false unless name == Puppet[:certname].downcase
+
+        # If we are the CA, we are generating a master cert.
+        return true if Puppet::SSL::CertificateAuthority.ca?
+
+        # ...otherwise, no.
+        return false
+    end
+
     # Our certificate request requires the key but that's all.
     def generate_certificate_request(options = {})
         generate_key unless key
+
+        # If this is for the current machine...
+        if this_csr_is_for_a_local_master
+            # ...add our configured certdnsnames
+            have_certdnsnames = (Puppet[:certdnsnames] and Puppet[:certdnsnames] != '')
+
+            if options[:subject_alt_name] and have_certdnsnames
+                raise ArgumentError, "When generating the CSR for #{name}, command line subjectAltName and configured certdnsnames are both set.  Omit one or the other."
+            end
+
+            options[:subject_alt_name] = Puppet[:certdnsnames]
+        end
+
         @certificate_request = CertificateRequest.new(name)
         @certificate_request.generate(key.content, options)
         begin
@@ -149,6 +174,7 @@ class Puppet::SSL::Host
             @certificate_request = nil
             raise
         end
+
         @certificate_request
     end
 
@@ -183,8 +209,8 @@ class Puppet::SSL::Host
         # If we can get a CA instance, then we're a valid CA, and we
         # should use it to sign our request; else, just try to read
         # the cert.
-        if ! certificate() and ca = Puppet::SSL::CertificateAuthority.instance
-            ca.sign(self.name)
+        if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
+            ca.sign(self.name, true)
         end
     end
 
