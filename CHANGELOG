@@ -1,3 +1,7 @@
+2.7.6rc3
+===
+43d1e38 (#9996) Restore functionality for multi-line commands in exec resources
+
 2.7.6rc2
 ===
 d457763 (#9832) General StoreConfigs regression.
