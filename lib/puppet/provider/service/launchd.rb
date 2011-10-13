@@ -121,6 +121,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
   end
 
+  def self.has_launchd_overrides?
+  	return (self.get_macosx_version_major == "10.6" || self.get_macosx_version_major == "10.7")
+  end
 
   # finds the path for a given label and returns the path and parsed plist
   # as an array of [path, plist]. Note plist is really a Hash here.
@@ -211,7 +214,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_path, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if self.class.get_macosx_version_major == "10.6"
+    if self.class.has_launchd_overrides?
       if FileTest.file?(Launchd_Overrides) and overrides = self.class.read_plist(Launchd_Overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
@@ -236,7 +239,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # In 10.6 we need to write out a disabled key to the global overrides plist, in earlier
   # versions this is stored in the job plist itself.
   def enable
-    if self.class.get_macosx_version_major == "10.6"
+    if self.class.has_launchd_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
@@ -251,7 +254,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
   def disable
-    if self.class.get_macosx_version_major == "10.6"
+    if self.class.has_launchd_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
