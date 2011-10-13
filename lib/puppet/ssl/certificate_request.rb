@@ -51,7 +51,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     csr.version = 0
     csr.subject = OpenSSL::X509::Name.new([["CN", common_name]])
     csr.public_key = key.public_key
-    csr.sign(key, OpenSSL::Digest::MD5.new)
+    csr.sign(key, OpenSSL::Digest::SHA256.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
 

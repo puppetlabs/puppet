@@ -128,11 +128,7 @@ class Puppet::SSLCertificates::Certificate
     @csr.version = 0
     @csr.subject = name
     @csr.public_key = @key.public_key
-    @csr.sign(@key, OpenSSL::Digest::SHA1.new)
-
-    #File.open(@csrfile, "w") { |f|
-    #    f << @csr.to_pem
-    #}
+    @csr.sign(@key, OpenSSL::Digest::SHA256.new)
 
     raise Puppet::Error, "CSR sign verification failed" unless @csr.verify(@key.public_key)
 
@@ -142,28 +138,14 @@ class Puppet::SSLCertificates::Certificate
   def mkkey
     # @key is the file
 
-    @key = OpenSSL::PKey::RSA.new(1024)
-#            { |p,n|
-#                case p
-#                when 0; Puppet.info "key info: ."  # BN_generate_prime
-#                when 1; Puppet.info "key info: +"  # BN_generate_prime
-#                when 2; Puppet.info "key info: *"  # searching good prime,
-#                                          # n = #of try,
-#                                          # but also data from BN_generate_prime
-#                when 3; Puppet.info "key info: \n" # found good prime, n==0 - p, n==1 - q,
-#                                          # but also data from BN_generate_prime
-#                else;   Puppet.info "key info: *"  # BN_generate_prime
-#                end
-#            }
+    @key = OpenSSL::PKey::RSA.new(2048)
 
-  if @password
-  #        passwdproc = proc { @password }
+    if @password
+      keytext = @key.export(
 
-    keytext = @key.export(
+        OpenSSL::Cipher::DES.new(:EDE3, :CBC),
 
-      OpenSSL::Cipher::DES.new(:EDE3, :CBC),
-
-      @password
+        @password
       )
       File.open(@keyfile, "w", 0400) { |f|
         f << keytext
@@ -173,8 +155,6 @@ class Puppet::SSLCertificates::Certificate
         f << @key.to_pem
       }
     end
-
-    #cmd = "#{ossl} genrsa -out #{@key} 1024"
   end
 
   def mkselfsigned
@@ -196,7 +176,7 @@ class Puppet::SSLCertificates::Certificate
     end
     @cert = SSLCertificates.mkcert(args)
 
-    @cert.sign(@key, OpenSSL::Digest::SHA1.new) if @selfsign
+    @cert.sign(@key, OpenSSL::Digest::SHA256.new) if @selfsign
 
     @cert
   end
@@ -213,11 +193,6 @@ class Puppet::SSLCertificates::Certificate
     else
       return subj
     end
-  end
-
-  # verify that we can track down the cert chain or whatever
-  def verify
-    "openssl verify -verbose -CAfile /home/luke/.puppet/ssl/certs/ca.pem -purpose sslserver culain.madstop.com.pem"
   end
 
   def write
