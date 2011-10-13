@@ -77,17 +77,10 @@ describe Puppet::Type.type(:exec).provider(:windows) do
         end
 
         it "should search for executables with no extension" do
+          provider.resource[:path] = [File.expand_path('/bogus/bin')]
           provider.expects(:which).with('foo').returns('foo')
 
           provider.checkexe('foo')
-        end
-
-        %w[bat com ps1 exe].each do |ext|
-          it "should search for executables with the extension '#{ext}'" do
-            provider.expects(:which).with("foo.#{ext}").returns("foo.#{ext}")
-
-            provider.checkexe('foo')
-          end
         end
 
         it "should fail if the command isn't in the path" do

@@ -504,10 +504,13 @@ describe Puppet::Util do
 
       describe "when a file extension is not specified" do
         it "should walk each extension in PATHEXT until an executable is found" do
-          ENV.stubs(:[]).with('PATH').returns(base)
+          bar = File.expand_path('/bar')
+          ENV.stubs(:[]).with('PATH').returns("#{bar}#{File::PATH_SEPARATOR}#{base}")
           ENV.stubs(:[]).with('PATHEXT').returns(".EXE#{File::PATH_SEPARATOR}.CMD")
 
           exts = sequence('extensions')
+          FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.EXE')).returns false
+          FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.CMD')).returns false
           FileTest.expects(:file?).in_sequence(exts).with(File.join(base, 'foo.EXE')).returns false
           FileTest.expects(:file?).in_sequence(exts).with(path).returns true
 
