@@ -126,6 +126,14 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     [initscript, :stop]
   end
 
+  def gracefulcmd
+    (@resource[:hasgraceful] == :true) && [initscript, :graceful]
+  end
+
+  def reloadcmd
+    (@resource[:hasreload] == :true) && [initscript, :reload]
+  end
+
   def restartcmd
     (@resource[:hasrestart] == :true) && [initscript, :restart]
   end

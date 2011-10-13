@@ -35,6 +35,34 @@ Puppet::Type.type(:service).provide :base do
     nil
   end
 
+  # How to reload the process
+  def reload
+    if @resource[:reload] or reloadcmd
+      ucommand(:reload)
+    elsif
+      self.stop
+      self.start
+    end
+  end
+
+  # There is no default command, which causes other methods to be used
+  def reloadcmd
+  end
+
+  # How to gracefully restart the service
+  def graceful
+    if @resource[:graceful] or gracefulcmd
+      ucommand(:graceful)
+    elsif
+      self.stop
+      self.start
+    end
+  end
+
+  # There is no default command, which causes other methods to be used
+  def gracefulcmd
+  end
+
   # How to restart the process.
   def restart
     if @resource[:restart] or restartcmd
