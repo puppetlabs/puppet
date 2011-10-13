@@ -3,8 +3,8 @@ require 'puppet/provider/exec'
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
   include Puppet::Util::Execution
 
-  confine :feature => :microsoft_windows
-  defaultfor :feature => :microsoft_windows
+  confine    :operatingsystem => :windows
+  defaultfor :operatingsystem => :windows
 
   desc "Execute external binaries directly, on Windows systems.
 This does not pass through a shell, or perform any interpolation, but
