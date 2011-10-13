@@ -377,8 +377,7 @@ describe Puppet::SSL::CertificateAuthority do
         @request.stubs :request_extensions => [{ "oid"   => "bananas",
                                                  "value" => "delicious" }]
         expect { @ca.sign(@name) }.
-          should raise_error(ArgumentError,
-                             /CSR has request extensions that are not permitted/)
+          should raise_error(/CSR has request extensions that are not permitted/)
       end
 
       it "should fail if the CSR contains alt names and they are not expected" do
@@ -439,6 +438,80 @@ describe Puppet::SSL::CertificateAuthority do
         Puppet::SSL::CertificateRequest.expects(:destroy).with(@name)
 
         @ca.sign(@name)
+      end
+
+      it "should check the internal signing policies" do
+        @ca.expects(:check_internal_signing_policies).returns true
+        @ca.sign(@name)
+      end
+    end
+
+    context "#check_internal_signing_policies" do
+      before do
+        @serial = 10
+        @ca.stubs(:next_serial).returns @serial
+
+        Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
+        @cert.stubs :save
+      end
+
+      it "should reject a critical extension that isn't on the whitelist" do
+        @request.stubs(:request_extensions).returns [{ "oid" => "banana",
+                                                       "value" => "yumm",
+                                                       "critical" => true }]
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /request extensions that are not permitted/
+        )
+      end
+
+      it "should reject a non-critical extension that isn't on the whitelist" do
+        @request.stubs(:request_extensions).returns [{ "oid" => "peach",
+                                                       "value" => "meh",
+                                                       "critical" => false }]
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /request extensions that are not permitted/
+        )
+      end
+
+      it "should reject non-whitelist extensions even if a valid extension is present" do
+        @request.stubs(:request_extensions).returns [{ "oid" => "peach",
+                                                       "value" => "meh",
+                                                       "critical" => false },
+                                                     { "oid" => "subjectAltName",
+                                                       "value" => "DNS:foo",
+                                                       "critical" => true }]
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /request extensions that are not permitted/
+        )
+      end
+
+      it "should reject a subjectAltName for a non-DNS value" do
+        @request.stubs(:subject_alt_names).returns ['DNS:foo', 'email:bar@example.com']
+        expect { @ca.sign(@name, true) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /subjectAltName outside the DNS label space/
+        )
+      end
+
+      it "should reject a wildcard subject" do
+        @request.content.stubs(:subject).
+          returns(OpenSSL::X509::Name.new([["CN", "*.local"]]))
+
+        expect { @ca.sign(@name) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /subject contains a wildcard/
+        )
+      end
+
+      it "should reject a wildcard subjectAltName" do
+        @request.stubs(:subject_alt_names).returns ['DNS:foo', 'DNS:*.bar']
+        expect { @ca.sign(@name, true) }.to raise_error(
+          Puppet::SSL::CertificateAuthority::CertificateSigningError,
+          /subjectAltName contains a wildcard/
+        )
       end
     end
 

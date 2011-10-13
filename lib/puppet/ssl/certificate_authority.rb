@@ -296,7 +296,7 @@ class Puppet::SSL::CertificateAuthority
 
     if unknown_req and unknown_req.count > 0
       names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
-      raise ArgumentError, "CSR has request extensions that are not permitted: #{names}"
+      raise CertificateSigningError.new(hostname), "CSR has request extensions that are not permitted: #{names}"
     end
 
     # If you alt names are allowed, they are required. Otherwise they are
@@ -315,6 +315,10 @@ class Puppet::SSL::CertificateAuthority
 
 
     # Wildcards: we don't allow 'em at any point.
+    #
+    # The stringification here makes the content visible, and saves us having
+    # to scrobble through the content of the CSR subject field to make sure it
+    # is what we expect where we expect it.
     if csr.content.subject.to_s.include? '*'
       raise CertificateSigningError.new(hostname), "CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}"
     end
