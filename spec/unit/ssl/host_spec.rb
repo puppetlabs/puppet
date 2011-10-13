@@ -82,6 +82,70 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
     Puppet::SSL::Host.localhost.should equal(host)
   end
 
+  context "#this_csr_is_for_a_local_master" do
+    it "should treat hostnames other than :certname as non-master" do
+      Puppet[:certname] = 'fred.local'
+      Puppet::SSL::Host.new('barney.local').this_csr_is_for_a_local_master.should be_false
+    end
+
+    it "should be true if we are a CA" do
+      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
+      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
+      Puppet[:ca] = true
+
+      Puppet::SSL::Host.new(Puppet[:certname]).
+        this_csr_is_for_a_local_master.should be_true
+    end
+
+    it "should be true if we are in master mode, but not a CA" do
+      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
+      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
+      Puppet[:ca] = false
+
+      Puppet::SSL::Host.new(Puppet[:certname]).
+        this_csr_is_for_a_local_master.should be_true
+    end
+
+    it "should be false otherwise" do
+      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:user])
+      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
+      Puppet[:ca] = false
+
+      Puppet::SSL::Host.new(Puppet[:certname]).
+        this_csr_is_for_a_local_master.should be_false
+    end
+  end
+
+  context "with certdnsnames" do
+    before :each do
+      Puppet[:certdnsnames] = 'one:two'
+
+      @key = stub('key content')
+      key = stub('key', :generate => true, :save => true, :content => @key)
+      Puppet::SSL::Key.stubs(:new).returns key
+
+      @cr = stub('certificate request', :save => true)
+      Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
+    end
+
+    it "should not include subjectAltName if not a CA" do
+      @cr.expects(:generate).with(@key, {})
+
+      Puppet[:ca] = false
+      Puppet::SSL::Host.localhost
+    end
+
+    it "should include subjectAltName if I am a CA" do
+      @cr.expects(:generate).with(@key, { :subject_alt_name => Puppet[:certdnsnames] })
+
+
+      Puppet[:ca] = true
+      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
+      Puppet::SSL::CertificateAuthority.stubs(:instance).returns stub('ca', :sign => nil)
+      Puppet::SSL::Host.localhost
+    end
+  end
+
   it "should always read the key for the localhost instance in from disk" do
     host = stub 'host', :certificate => "eh"
     Puppet::SSL::Host.expects(:new).returns host
@@ -580,7 +644,7 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
       it "should use the CA to sign its certificate request if it does not have a certificate" do
         @host.expects(:certificate).returns nil
 
-        @ca.expects(:sign).with(@host.name)
+        @ca.expects(:sign).with(@host.name, true)
 
         @host.generate
       end
