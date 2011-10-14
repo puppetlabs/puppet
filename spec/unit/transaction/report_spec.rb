@@ -29,13 +29,23 @@ describe Puppet::Transaction::Report do
   end
 
   it "should take a 'configuration_version' as an argument" do
-    Puppet::Transaction::Report.new("inspect", "some configuration version").configuration_version.should == "some configuration version"
+    Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").configuration_version.should == "some configuration version"
   end
 
   it "should be able to set configuration_version" do
     report = Puppet::Transaction::Report.new("inspect")
     report.configuration_version = "some version"
     report.configuration_version.should == "some version"
+  end
+
+  it "should take 'environment' as an argument" do
+    Puppet::Transaction::Report.new("inspect", "some configuration version", "some environment").environment.should == "some environment"
+  end
+
+  it "should be able to set environment" do
+    report = Puppet::Transaction::Report.new("inspect")
+    report.environment = "some environment"
+    report.environment.should == "some environment"
   end
 
   it "should not include whits" do
