@@ -205,9 +205,24 @@ module Puppet
       to the fully qualified domain name.",
       :call_on_define => true, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
-    :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
-      If it's anything other than an empty string, it will be used as an alias in the created
-      certificate.  Only the locally generated master certificate gets an alias set up, and only if this is set."],
+      :certdnsnames => {
+        :default => '',
+        :hook    => proc do |value|
+          unless value.nil? or value == '' then
+            Puppet.warning <<WARN
+The `certdnsnames` setting is no longer functional,
+after CVE-2011-3872. We ignore the value completely.
+
+For the master it has been replaced by the `master_dns_alt_names` setting,
+or the interactive use of the `--dns-alt-names` option.  We strongly advise
+the later method.
+WARN
+          end
+        end,
+        :desc    => <<EOT
+      certificate.  Only the locally generated master certificate gets an alias set up, and only if this is
+EOT
+      },
     :certdir => {
       :default => "$ssldir/certs",
       :owner => "service",
@@ -435,6 +450,16 @@ module Puppet
       authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
+    :master_dns_alt_names => ['', <<EOT],
+When a master certificate is bootstrapped, use this comma-separated list of
+DNS names as the subjectAltName for the certificate.  This is identical in
+behaviour to specifying the `--dns-alt-names` option, and can't be used
+together with that option.
+
+This only applies to the locally generated certificate, and only when we
+generate it for the first time.  It exists primarily as a convenience for
+scripted installations of new master nodes, and is not recommended.
+EOT
     :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
       :desc => "The search path for modules as a colon-separated list of
       directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.

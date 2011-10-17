@@ -7,7 +7,7 @@ step "Master: kill running Puppet Master"
 on master, "ps -U puppet | awk '/puppet/ { print \$1 }' | xargs kill || echo \"Puppet Master not running\""
 
 step "Master: Start Puppet Master"
-on master, puppet_master("--allow_duplicate_certs --certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop")
+on master, puppet_master("--allow_duplicate_certs --dns-alt-names=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --noop")
 
 step "Generate a certificate request for the agent"
 on agents, "puppet certificate generate `hostname -f` --ca-location remote --server #{master}"
