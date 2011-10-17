@@ -36,8 +36,8 @@ Puppet::Application.new(:puppetca) do
         end
     end
 
-    option("--[no-]allow-subject-alt-name") do |value|
-        options[:allow_subject_alt_name] = value
+    option("--[no-]allow-dns-alt-names") do |value|
+        options[:allow_dns_alt_names] = value
     end
 
     option("--verbose", "-v") do

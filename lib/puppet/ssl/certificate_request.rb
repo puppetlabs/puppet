@@ -38,9 +38,9 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         csr.subject = OpenSSL::X509::Name.new([["CN", name]])
         csr.public_key = key.public_key
 
-        if options[:subject_alt_name] then
-            names = options[:subject_alt_name].split(':').map(&:strip) + [name]
-            names = names.uniq.map {|name| "DNS:#{name}" }.join(", ")
+        if options[:dns_alt_names] then
+            names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
+            names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
             names = extension_factory.create_extension("subjectAltName", names, true)
 
             extReq = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence([names])])

@@ -164,7 +164,7 @@ class Puppet::SSL::Host
                 raise ArgumentError, "When generating the CSR for #{name}, command line subjectAltName and configured master_dns_alt_names are both set.  Omit one or the other."
             end
 
-            options[:subject_alt_name] = Puppet[:master_dns_alt_names]
+            options[:dns_alt_names] = Puppet[:master_dns_alt_names]
         end
 
         @certificate_request = CertificateRequest.new(name)

@@ -110,9 +110,9 @@ class Puppet::SSL::CertificateAuthority::Interface
         alt_names = case type
                     when :signed
                         certish.alternate_names
-                    when :request
-                        (certish.subject_alt_names || [])
-                    else
+                      when :request
+                        certish.subject_alt_names || []
+                      else
                         []
                     end
 
@@ -150,7 +150,7 @@ class Puppet::SSL::CertificateAuthority::Interface
         list = subjects == :all ? ca.waiting? : subjects
         raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
         list.each do |host|
-            ca.sign(host, options[:allow_subject_alt_name])
+            ca.sign(host, options[:allow_dns_alt_names])
         end
     end
 

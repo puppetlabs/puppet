@@ -86,7 +86,7 @@ describe Puppet::SSL::CertificateFactory do
     # subjectAltName is set if the CSR has it, but *not* if it is set when the
     # certificate is built!
     it "should not add subjectAltNames from master_dns_alt_names" do
-      Puppet[:master_dns_alt_names] = 'one:two'
+      Puppet[:master_dns_alt_names] = 'one, two'
       # Verify the CSR still has no extReq, just in case...
       csr.request_extensions.should == []
       cert = subject.build(:server, csr, issuer, serial)
@@ -100,7 +100,7 @@ describe Puppet::SSL::CertificateFactory do
       expect = %w{one two} + [name]
 
       csr = Puppet::SSL::CertificateRequest.new(name)
-      csr.generate(key, :subject_alt_name => expect.join(':'))
+      csr.generate(key, :dns_alt_names => expect.join(', '))
 
       csr.request_extensions.should_not be_nil
       csr.subject_alt_names.should =~ expect.map{|x| "DNS:#{x}"}

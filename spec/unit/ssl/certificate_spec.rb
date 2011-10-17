@@ -96,7 +96,7 @@ describe Puppet::SSL::Certificate do
         key.generate
 
         csr = Puppet::SSL::CertificateRequest.new('quux')
-        csr.generate(key, :subject_alt_name => 'foo:bar:baz')
+        csr.generate(key, :dns_alt_names => 'foo, bar,baz')
 
         raw_csr = csr.content
 
