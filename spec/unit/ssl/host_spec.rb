@@ -87,9 +87,9 @@ describe Puppet::SSL::Host do
     end
   end
 
-  context "with certdnsnames" do
+  context "with master_dns_alt_names" do
     before :each do
-      Puppet[:certdnsnames] = 'one:two'
+      Puppet[:master_dns_alt_names] = 'one:two'
 
       @key = stub('key content')
       key = stub('key', :generate => true, :save => true, :content => @key)
@@ -103,6 +103,17 @@ describe Puppet::SSL::Host do
       @cr.expects(:generate).with(@key, {})
 
       Puppet[:ca] = false
+      Puppet::SSL::Host.localhost
+    end
+
+    it "should include subjectAltName if I am a CA" do
+      @cr.expects(:generate).
+        with(@key, { :subject_alt_name => Puppet[:master_dns_alt_names] })
+
+
+      Puppet[:ca] = true
+      Puppet::SSL::CertificateAuthority.stubs(:instance).returns stub('ca', :sign => nil)
+      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
       Puppet::SSL::Host.localhost
     end
   end

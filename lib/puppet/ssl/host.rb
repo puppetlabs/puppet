@@ -156,14 +156,15 @@ class Puppet::SSL::Host
 
         # If this is for the current machine...
         if this_csr_is_for_a_local_master
-            # ...add our configured certdnsnames
-            have_certdnsnames = (Puppet[:certdnsnames] and Puppet[:certdnsnames] != '')
+            # ...add our configured dns-alt-names
+            have_dns_alt_names = (Puppet[:master_dns_alt_names] and
+                                  Puppet[:master_dns_alt_names] != '')
 
-            if options[:subject_alt_name] and have_certdnsnames
-                raise ArgumentError, "When generating the CSR for #{name}, command line subjectAltName and configured certdnsnames are both set.  Omit one or the other."
+            if options[:subject_alt_name] and have_dns_alt_names
+                raise ArgumentError, "When generating the CSR for #{name}, command line subjectAltName and configured master_dns_alt_names are both set.  Omit one or the other."
             end
 
-            options[:subject_alt_name] = Puppet[:certdnsnames]
+            options[:subject_alt_name] = Puppet[:master_dns_alt_names]
         end
 
         @certificate_request = CertificateRequest.new(name)
