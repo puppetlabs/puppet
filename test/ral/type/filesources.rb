@@ -237,23 +237,18 @@ class TestFileSources < Test::Unit::TestCase
 
     Puppet[:autosign] = true
     Puppet[:masterport] = @port
-    Puppet[:certdnsnames] = "localhost"
+    Puppet[:master_dns_alt_names] = "localhost"
 
     serverpid = nil
     assert_nothing_raised("Could not start on port #{@port}") {
-
-            server = Puppet::Network::HTTPServer::WEBrick.new(
-                
-        :Port => @port,
-        
-        :Handlers => {
-          :CA => {}, # so that certs autogenerate
-          :FileServer => {
-            :Config => fileserverconf
-          }
-        }
-      )
-
+      server = Puppet::Network::HTTPServer::WEBrick.
+      new(:Port => @port,
+          :Handlers => {
+            :CA => {}, # so that certs autogenerate
+            :FileServer => {
+              :Config => fileserverconf
+            }
+          })
     }
 
     serverpid = fork {
