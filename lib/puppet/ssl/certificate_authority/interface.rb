@@ -106,7 +106,7 @@ module Puppet
                       when :signed
                         certish.alternate_names
                       when :request
-                        (certish.subject_alt_names || []).map {|al| al.sub(/^DNS:/,'')}
+                        certish.subject_alt_names || []
                       else
                         []
                       end
@@ -158,7 +158,7 @@ module Puppet
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
           list.each do |host|
-            ca.sign(host, options[:allow_subject_alt_name])
+            ca.sign(host, options[:allow_dns_alt_names])
           end
         end
 

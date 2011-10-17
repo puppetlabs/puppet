@@ -385,15 +385,12 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name, false)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alt names/)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alternative names/)
       end
 
-      it "should fail if the CSR does not contain alt names and they are expected" do
+      it "should not fail if the CSR does not contain alt names and they are expected" do
         @request.stubs(:subject_alt_names).returns nil
-
-        expect do
-          @ca.sign(@name, true)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR did not contain subject alt names/)
+        expect { @ca.sign(@name, true) }.not_to raise_error
       end
 
       it "should reject alt names by default" do
@@ -401,7 +398,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alt names/)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alternative names/)
       end
 
       it "should use the CA certificate as the issuer" do

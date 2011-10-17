@@ -164,11 +164,11 @@ class Puppet::SSL::Host
       have_dns_alt_names = (Puppet[:master_dns_alt_names] and
                            Puppet[:master_dns_alt_names] != '')
 
-      if options[:subject_alt_name] and have_dns_alt_names
-        raise ArgumentError, "When generating the CSR for #{name}, command line subjectAltName and configured master_dns_alt_names are both set.  Omit one or the other."
+      if options[:dns_alt_names] and have_dns_alt_names
+        raise ArgumentError, "When generating the CSR for #{name}, --dns-alt-names was passed, and master_dns_alt_names was also set.  They are incompatible, so you must omit one or the other."
       end
 
-      options[:subject_alt_name] = Puppet[:master_dns_alt_names]
+      options[:dns_alt_names] = Puppet[:master_dns_alt_names]
     end
 
     @certificate_request = CertificateRequest.new(name)

@@ -128,10 +128,10 @@ class Puppet::SSL::CertificateAuthority
     raise ArgumentError, "A Certificate already exists for #{name}" if Puppet::SSL::Certificate.find(name)
 
     # Pass on any requested subjectAltName field.
-    san = options[:subject_alt_name]
+    san = options[:dns_alt_names]
 
     host = Puppet::SSL::Host.new(name)
-    host.generate_certificate_request(:subject_alt_name => san)
+    host.generate_certificate_request(:dns_alt_names => san)
     sign(name, !!san)
   end
 
@@ -243,7 +243,7 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Sign a given certificate request.
-  def sign(hostname, allow_subject_alt_name = false, self_signing_csr = nil)
+  def sign(hostname, allow_dns_alt_names = false, self_signing_csr = nil)
     # This is a self-signed certificate
     if self_signing_csr
       # # This is a self-signed certificate, which is for the CA.  Since this
@@ -263,7 +263,7 @@ class Puppet::SSL::CertificateAuthority
 
       # Make sure that the CSR conforms to our internal signing policies.
       # This will raise if the CSR doesn't conform, but just in case...
-      check_internal_signing_policies(hostname, csr, allow_subject_alt_name) or
+      check_internal_signing_policies(hostname, csr, allow_dns_alt_names) or
         raise CertificateSigningError.new(hostname), "CSR had an unknown failure checking internal signing policies, will not sign!"
     end
 
@@ -289,7 +289,7 @@ class Puppet::SSL::CertificateAuthority
     cert
   end
 
-  def check_internal_signing_policies(hostname, csr, allow_subject_alt_name)
+  def check_internal_signing_policies(hostname, csr, allow_dns_alt_names)
     # Reject unknown request extensions.
     unknown_req = csr.request_extensions.
       reject {|x| RequestExtensionWhitelist.include? x["oid"] }
@@ -301,10 +301,8 @@ class Puppet::SSL::CertificateAuthority
 
     # If you alt names are allowed, they are required. Otherwise they are
     # disallowed. Self-signed certs are implicitly trusted, however.
-    if csr.subject_alt_names and !allow_subject_alt_name
-      raise CertificateSigningError.new(hostname), "CSR contained subject alt names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use --allow-subject-alt-name to sign this request."
-    elsif !csr.subject_alt_names and allow_subject_alt_name
-      raise CertificateSigningError.new(hostname), "CSR did not contain subject alt names, which are required. Omit --allow-subject-alt-name to sign this request."
+    if csr.subject_alt_names and !allow_dns_alt_names
+      raise CertificateSigningError.new(hostname), "CSR contained subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use --allow-dns-alt-names to sign this request."
     end
 
     # If subjectAltNames are present, validate that they are only for DNS

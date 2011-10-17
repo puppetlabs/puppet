@@ -100,7 +100,7 @@ describe Puppet::SSL::Host do
 
   context "with master_dns_alt_names" do
     before :each do
-      Puppet[:master_dns_alt_names] = 'one:two'
+      Puppet[:master_dns_alt_names] = 'one, two'
 
       @key = stub('key content')
       key = stub('key', :generate => true, :save => true, :content => @key)
@@ -119,7 +119,7 @@ describe Puppet::SSL::Host do
 
     it "should include subjectAltName if I am a CA" do
       @cr.expects(:generate).
-        with(@key, { :subject_alt_name => Puppet[:master_dns_alt_names] })
+        with(@key, { :dns_alt_names => Puppet[:master_dns_alt_names] })
 
 
       Puppet[:ca] = true
