@@ -165,7 +165,7 @@ describe Puppet::SSL::CertificateRequest do
 
     context "with master_dns_alt_names" do
       before :each do
-        Puppet[:master_dns_alt_names] = "one:two:three"
+        Puppet[:master_dns_alt_names] = "one, two, three"
       end
 
       ["extreq", "msExtReq"].each do |name|
@@ -196,11 +196,11 @@ describe Puppet::SSL::CertificateRequest do
           end
         end
 
-        @instance.generate(@key, :subject_alt_name => 'one:two')
+        @instance.generate(@key, :dns_alt_names => 'one, two')
       end
 
       it "should return the subjectAltName values" do
-        @instance.generate(@key, :subject_alt_name => 'one:two')
+        @instance.generate(@key, :dns_alt_names => 'one,two')
         @instance.subject_alt_names.should =~ ["DNS:myname", "DNS:one", "DNS:two"]
       end
     end

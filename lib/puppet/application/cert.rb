@@ -44,12 +44,12 @@ class Puppet::Application::Cert < Puppet::Application
     end
   end
 
-  option("--[no-]allow-subject-alt-name") do |value|
-    options[:allow_subject_alt_name] = value
+  option("--[no-]allow-dns-alt-names") do |value|
+    options[:allow_dns_alt_names] = value
   end
 
-  option("--subject-alt-name NAME") do |value|
-    options[:subject_alt_name] = value
+  option("--dns-alt-names NAME[,NAME...]") do |value|
+    options[:dns_alt_names] = value
   end
 
   option("--verbose", "-v") do
