@@ -205,11 +205,11 @@ module Puppet
       to the fully qualified domain name.",
       :call_on_define => true, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
-      :certdnsnames => {
-        :default => '',
-        :hook    => proc do |value|
-          unless value.nil? or value == '' then
-            Puppet.warning <<WARN
+    :certdnsnames => {
+      :default => '',
+      :hook    => proc do |value|
+        unless value.nil? or value == '' then
+          Puppet.warning <<WARN
 The `certdnsnames` setting is no longer functional,
 after CVE-2011-3872. We ignore the value completely.
 
@@ -217,12 +217,28 @@ For the master it has been replaced by the `master_dns_alt_names` setting,
 or the interactive use of the `--dns-alt-names` option.  We strongly advise
 the later method.
 WARN
-          end
-        end,
-        :desc    => <<EOT
+        end
+      end,
+      :desc    => <<EOT
       certificate.  Only the locally generated master certificate gets an alias set up, and only if this is
 EOT
-      },
+    },
+    :dns_alt_names => {
+      :default => '',
+      :desc    => <<EOT,
+The comma-separated list of alternative names to use for the local host.
+
+When the node generates a CSR for itself, these are added to the request
+as the desired `subjectAltName` in the certificate: additional DNS labels
+that the certificate is also valid answering as.
+
+This is generally required if you use a non-hostname `certname`, or if you
+want to use `puppet kick` or `puppet resource -H` and the primary certname
+does not match the DNS name you use to communicate with the host.
+
+This is unnecessary for the vast majority of agents.
+EOT
+    },
     :certdir => {
       :default => "$ssldir/certs",
       :owner => "service",

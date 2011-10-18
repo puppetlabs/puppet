@@ -48,10 +48,6 @@ class Puppet::Application::Cert < Puppet::Application
     options[:allow_dns_alt_names] = value
   end
 
-  option("--dns-alt-names NAME[,NAME...]") do |value|
-    options[:dns_alt_names] = value
-  end
-
   option("--verbose", "-v") do
     Puppet::Util::Log.level = :info
   end
@@ -84,6 +80,15 @@ class Puppet::Application::Cert < Puppet::Application
       Puppet::SSL::Host.ca_location = :local
     else
       Puppet::SSL::Host.ca_location = :only
+    end
+
+    # If we are generating, and the option came from the CLI, it gets added to
+    # the data.  This will do the right thing for non-local certificates, in
+    # that the command line but *NOT* the config file option will apply.
+    if subcommand == :generate
+      if Puppet.settings.setting(:dns_alt_names).setbycli
+        options[:dns_alt_names] = Puppet[:dns_alt_names]
+      end
     end
 
     begin
