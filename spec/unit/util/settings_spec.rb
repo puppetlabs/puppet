@@ -129,6 +129,16 @@ describe Puppet::Util::Settings do
       @settings[:myval].should == ""
     end
 
+    it "should flag settings from the CLI" do
+      @settings.handlearg("--myval")
+      @settings.setting(:myval).setbycli.should be_true
+    end
+
+    it "should not flag settings memory" do
+      @settings[:myval] = "12"
+      @settings.setting(:myval).setbycli.should be_false
+    end
+
     it "should clear the cache when setting getopt-specific values" do
       @settings.setdefaults :mysection, :one => ["whah", "yay"], :two => ["$one yay", "bah"]
       @settings[:two].should == "whah yay"
