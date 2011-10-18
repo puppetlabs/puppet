@@ -75,6 +75,11 @@ module Puppet::SSL::CertificateFactory
       val, crit = *val
       val       = val.join(', ') unless val.is_a? String
 
+      # Enforce the X509v3 rules about subjectAltName being critical:
+      # specifically, it SHOULD NOT be critical if we have a subject, which we
+      # always do. --daniel 2011-10-18
+      crit = false if oid == "subjectAltName"
+
       # val can be either a string, or [string, critical], and this does the
       # right thing regardless of what we get passed.
       ef.create_ext(oid, val, crit)
