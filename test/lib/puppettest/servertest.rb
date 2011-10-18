@@ -1,5 +1,4 @@
 require 'puppettest'
-require 'puppet/network/http_server/webrick'
 
 module PuppetTest::ServerTest
   include PuppetTest
