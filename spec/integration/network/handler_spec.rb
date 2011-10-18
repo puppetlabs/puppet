@@ -1,7 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 
-require 'puppet/network/client'
+require 'puppet/network/handler'
 
 describe Puppet::Network::Handler do
   %w{ca filebucket fileserver master report runner status}.each do |name|

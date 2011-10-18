@@ -4,8 +4,6 @@ require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/parser/parser'
-require 'puppet/network/client'
-require 'puppet/network/handler'
 require 'puppettest'
 
 class TestSnippets < Test::Unit::TestCase
@@ -67,13 +65,6 @@ class TestSnippets < Test::Unit::TestCase
     ast = parser.parse
 
     ast
-  end
-
-  def client
-    args = {
-      :Listen => false
-    }
-    Puppet::Network::Client.new(args)
   end
 
   def ast2scope(ast)
