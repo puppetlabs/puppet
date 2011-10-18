@@ -59,7 +59,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
     if options[:dns_alt_names] then
       names = options[:dns_alt_names].split(/\s*,\s*/).map(&:strip) + [name]
       names = names.sort.uniq.map {|name| "DNS:#{name}" }.join(", ")
-      names = extension_factory.create_extension("subjectAltName", names, true)
+      names = extension_factory.create_extension("subjectAltName", names, false)
 
       extReq = OpenSSL::ASN1::Set([OpenSSL::ASN1::Sequence([names])])
 
