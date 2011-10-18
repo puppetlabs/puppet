@@ -138,10 +138,14 @@ class Puppet::SSL::Host
         @certificate_request ||= CertificateRequest.find(name)
     end
 
+    def this_csr_is_for_the_current_host
+      name == Puppet[:certname].downcase
+    end
+
     def this_csr_is_for_a_local_master
-        # If this is for another machine, we are *not* generating a master cert.
-        # At least, not in an automatic fashion.
-        return false unless name == Puppet[:certname].downcase
+      # If this is for another machine, we are *not* generating a master cert.
+      # At least, not in an automatic fashion.
+      return false unless this_csr_is_for_the_current_host
 
         # If we are the CA, we are generating a master cert.
         return true if Puppet::SSL::CertificateAuthority.ca?
@@ -165,6 +169,10 @@ class Puppet::SSL::Host
             end
 
             options[:dns_alt_names] = Puppet[:master_dns_alt_names]
+        elsif this_csr_is_for_the_current_host
+            if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
+                options[:dns_alt_names] ||= Puppet[:dns_alt_names]
+            end
         end
 
         @certificate_request = CertificateRequest.new(name)

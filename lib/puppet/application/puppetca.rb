@@ -52,6 +52,16 @@ Puppet::Application.new(:puppetca) do
         else
             hosts = ARGV.collect { |h| puts h; h.downcase }
         end
+
+        # If we are generating, and the option came from the CLI, it gets added to
+        # the data.  This will do the right thing for non-local certificates, in
+        # that the command line but *NOT* the config file option will apply.
+        if @cert_mode == :generate
+            if Puppet.settings.setting(:dns_alt_names).setbycli
+                options[:dns_alt_names] = Puppet[:dns_alt_names]
+            end
+        end
+
         begin
             @ca.apply(@cert_mode, options.merge(:to => hosts))
         rescue => detail
