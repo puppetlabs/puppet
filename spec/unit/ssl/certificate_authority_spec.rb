@@ -205,7 +205,7 @@ describe Puppet::SSL::CertificateAuthority do
       Puppet::SSL::CertificateFactory.stubs(:build).returns "my real cert"
 
       @request_content = stub "request content stub", :subject => @name
-      @request = stub 'request', :name => @name, :request_extensions => [], :subject_alt_names => nil, :content => @request_content
+      @request = stub 'request', :name => @name, :request_extensions => [], :subject_alt_names => [], :content => @request_content
 
       # And the inventory
       @inventory = stub 'inventory', :add => nil
@@ -347,8 +347,8 @@ describe Puppet::SSL::CertificateAuthority do
       end
 
       it "should not fail if the CSR does not contain alt names and they are expected" do
-        @request.stubs(:subject_alt_names).returns nil
-        expect { @ca.sign(@name, true) }.should_not raise_error
+        @request.stubs(:subject_alt_names).returns []
+        expect { @ca.sign(@name, true) }.not_to raise_error
       end
 
       it "should reject alt names by default" do

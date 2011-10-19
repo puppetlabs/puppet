@@ -314,18 +314,6 @@ class Puppet::SSL::CertificateAuthority
             raise CertificateSigningError.new(hostname), "CSR has request extensions that are not permitted: #{names}"
         end
 
-        # If you alt names are allowed, they are required. Otherwise they are
-        # disallowed. Self-signed certs are implicitly trusted, however.
-        if csr.subject_alt_names and !allow_dns_alt_names
-            raise CertificateSigningError.new(hostname), "CSR contained subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use --allow-dns-alt-names to sign this request."
-        end
-
-        # If subjectAltNames are present, validate that they are only for DNS
-        # labels, not any other kind.
-        if san = csr.subject_alt_names and not san.all? {|x| x =~ /^DNS:/ }
-            raise CertificateSigningError.new(hostname), "CSR contained a subjectAltName outside the DNS label space: #{san.join(', ')}"
-        end
-
         # Wildcards: we don't allow 'em at any point.
         #
         # The stringification here makes the content visible, and saves us having
@@ -334,8 +322,24 @@ class Puppet::SSL::CertificateAuthority
         if csr.content.subject.to_s.include? '*'
             raise CertificateSigningError.new(hostname), "CSR subject contains a wildcard, which is not allowed: #{csr.content.subject.to_s}"
         end
-        if san = csr.subject_alt_names and san.any? {|x| x.include? '*' }
-            raise CertificateSigningError.new(hostname), "CSR subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}"
+
+        unless csr.subject_alt_names.empty?
+            # If you alt names are allowed, they are required. Otherwise they are
+            # disallowed. Self-signed certs are implicitly trusted, however.
+            unless allow_dns_alt_names
+                raise CertificateSigningError.new(hostname), "CSR contained subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use --allow-dns-alt-names to sign this request."
+            end
+
+            # If subjectAltNames are present, validate that they are only for DNS
+            # labels, not any other kind.
+            unless csr.subject_alt_names.all? {|x| x =~ /^DNS:/ }
+                raise CertificateSigningError.new(hostname), "CSR contained a subjectAltName outside the DNS label space: #{csr.subject_alt_names.join(', ')}"
+            end
+
+            # Check for wildcards in the subjectAltName fields too.
+            if csr.subject_alt_names.any? {|x| x.include? '*' }
+                raise CertificateSigningError.new(hostname), "CSR subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}"
+            end
         end
 
         return true                 # good enough for us!

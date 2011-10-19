@@ -143,10 +143,11 @@ describe Puppet::SSL::CertificateRequest do
         @instance.generate(@key)
       end
 
-      it "should return no subjectAltNames" do
-        @instance.generate(@key)
-        @instance.subject_alt_names.should be_nil
-      end
+            it "should return no subjectAltNames" do
+                @instance.generate(@key)
+                @instance.subject_alt_names.should be_empty
+            end
+        end
     end
 
     context "with master_dns_alt_names" do
@@ -163,7 +164,7 @@ describe Puppet::SSL::CertificateRequest do
 
         it "should return no subjectAltNames" do
           @instance.generate(@key)
-          @instance.subject_alt_names.should be_nil
+          @instance.subject_alt_names.should be_empty
         end
       end
     end
