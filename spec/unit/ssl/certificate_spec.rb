@@ -116,7 +116,7 @@ describe Puppet::SSL::Certificate do
 
         cert = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
         certificate = @class.from_s(cert.to_pem)
-        certificate.subject_alt_names.should == []
+        certificate.subject_alt_names.should be_empty
       end
     end
 

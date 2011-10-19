@@ -158,7 +158,7 @@ describe Puppet::SSL::CertificateRequest do
 
         it "should return no subjectAltNames" do
           @instance.generate(@key)
-          @instance.subject_alt_names.should be_nil
+          @instance.subject_alt_names.should be_empty
         end
       end
     end
@@ -177,7 +177,7 @@ describe Puppet::SSL::CertificateRequest do
 
         it "should return no subjectAltNames" do
           @instance.generate(@key)
-          @instance.subject_alt_names.should be_nil
+          @instance.subject_alt_names.should be_empty
         end
       end
     end

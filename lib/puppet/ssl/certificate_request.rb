@@ -139,13 +139,11 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
   end
 
   def subject_alt_names
-    names = request_extensions.
+    @subject_alt_names ||= request_extensions.
       select {|x| x["oid"] = "subjectAltName" }.
       map {|x| x["value"].split(/\s*,\s*/) }.
       flatten.
       sort.
       uniq
-
-    names.empty? ? nil : names
   end
 end
