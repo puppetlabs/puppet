@@ -104,7 +104,7 @@ module Puppet
           certish, verify_error = info
           alt_names = case type
                       when :signed
-                        certish.alternate_names
+                        certish.subject_alt_names
                       when :request
                         certish.subject_alt_names || []
                       else

@@ -197,7 +197,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
     describe ":list" do
       before :each do
-        certish = stub('certish', :alternate_names => [], :subject_alt_names => nil)
+        certish = stub('certish', :subject_alt_names => [], :subject_alt_names => nil)
         Puppet::SSL::Certificate.indirection.stubs(:find).returns certish
         Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns certish
 
