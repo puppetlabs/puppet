@@ -109,10 +109,10 @@ class Puppet::SSL::CertificateAuthority::Interface
         certish, verify_error = info
         alt_names = case type
                     when :signed
-                        certish.alternate_names
-                      when :request
                         certish.subject_alt_names || []
-                      else
+                    when :request
+                        certish.subject_alt_names || []
+                    else
                         []
                     end
 
