@@ -138,7 +138,7 @@ module Puppet::SSL::CertificateFactory
   def self.build_server_extensions
     {
       "keyUsage"         => [%w{digitalSignature keyEncipherment}, true],
-      "extendedKeyUsage" => [%w{serverAuth clientAuth emailProtection}, true],
+      "extendedKeyUsage" => [%w{serverAuth clientAuth}, true],
       "basicConstraints" => ["CA:FALSE", true],
     }
   end
@@ -156,6 +156,7 @@ module Puppet::SSL::CertificateFactory
   def self.build_client_extensions
     {
       "keyUsage"         => [%w{nonRepudiation digitalSignature keyEncipherment}, true],
+      # We don't seem to use this, but that seems much more reasonable here...
       "extendedKeyUsage" => [%w{clientAuth emailProtection}, true],
       "basicConstraints" => ["CA:FALSE", true],
       "nsCertType"       => "client,email",
