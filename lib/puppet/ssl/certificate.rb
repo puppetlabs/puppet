@@ -30,7 +30,7 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
   def alternate_names
     alts = content.extensions.find{|ext| ext.oid == "subjectAltName"}
     return [] unless alts
-    alts.value.split(/\s*,\s*/).map{|al| al.sub(/^DNS:/,'')}
+    alts.value.split(/\s*,\s*/)
   end
 
   def expiration

@@ -102,7 +102,8 @@ describe Puppet::SSL::Certificate do
 
         cert = Puppet::SSL::CertificateFactory.build('server', csr, raw_csr, 14)
         certificate = @class.from_s(cert.to_pem)
-        certificate.alternate_names.should =~ ['foo', 'bar', 'baz', 'quux']
+        certificate.subject_alt_names.
+          should =~ ['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux']
       end
 
       it "should return an empty list of names if the extension is absent" do
