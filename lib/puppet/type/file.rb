@@ -46,7 +46,7 @@ Puppet::Type.newtype(:file) do
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
       # We know the value is absolute, so expanding it will just standardize it.
-      path, name = ::File.split(::File.expand_path value)
+      path, name = ::File.split(::File.expand_path(value))
 
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
