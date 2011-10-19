@@ -89,7 +89,7 @@ describe Puppet::SSL::Certificate do
       @certificate.should respond_to(:content)
     end
 
-    describe "#alternate_names" do
+    describe "#subject_alt_names" do
       it "should list all alternate names when the extension is present" do
         key = Puppet::SSL::Key.new('quux')
         key.generate
@@ -116,7 +116,7 @@ describe Puppet::SSL::Certificate do
 
         cert = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
         certificate = @class.from_s(cert.to_pem)
-        certificate.alternate_names.should == []
+        certificate.subject_alt_names.should == []
       end
     end
 
