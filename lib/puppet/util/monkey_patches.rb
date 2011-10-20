@@ -67,6 +67,21 @@ class Symbol
   end unless method_defined? :to_proc
 end
 
+module Enumerable
+  # Use *args so we can distinguish no argument from nil.
+  def count(*args)
+    seq = 0
+    if !args.empty?
+      item = args[0]
+      each { |o| seq += 1 if item == o }
+    elsif block_given?
+      each { |o| seq += 1 if yield(o) }
+    else
+      each { seq += 1 }
+    end
+    seq
+  end unless method_defined? :count
+end
 
 class String
   def lines(separator = $/)
