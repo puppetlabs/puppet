@@ -70,11 +70,10 @@ describe Puppet::SSL::CertificateFactory do
 
     it "should build extensions for the certificate" do
       cert = subject.build(:server, csr, issuer, serial)
-      exts = cert.extensions.map {|x| x.to_h }.group_by {|x| x["oid"] }
-      exts["nsComment"].should ==
-        [{ "oid"      => "nsComment",
-           "value"    => "Puppet Ruby/OpenSSL Internal Certificate",
-           "critical" => false }]
+      cert.extensions.map {|x| x.to_h }.find {|x| x["oid"] == "nsComment" }.should ==
+        { "oid"      => "nsComment",
+          "value"    => "Puppet Ruby/OpenSSL Internal Certificate",
+          "critical" => false }
     end
 
     # See #2848 for why we are doing this: we need to make sure that

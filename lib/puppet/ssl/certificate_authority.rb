@@ -294,7 +294,7 @@ class Puppet::SSL::CertificateAuthority
     unknown_req = csr.request_extensions.
       reject {|x| RequestExtensionWhitelist.include? x["oid"] }
 
-    if unknown_req and unknown_req.count > 0
+    if unknown_req and not unknown_req.empty?
       names = unknown_req.map {|x| x["oid"] }.sort.uniq.join(", ")
       raise CertificateSigningError.new(hostname), "CSR has request extensions that are not permitted: #{names}"
     end

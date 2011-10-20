@@ -94,8 +94,8 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       raise Puppet::Error, "In #{ext.oid}, expected Set[Array] but found #{ext.value.value.class}"
     end
 
-    unless ext.value.value.count == 1
-      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[...]], but found #{ext.value.value.count} items in the array"
+    unless ext.value.value.length == 1
+      raise Puppet::Error, "In #{ext.oid}, expected Set[Array[...]], but found #{ext.value.value.length} items in the array"
     end
 
     san = ext.value.value.first
@@ -119,7 +119,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       # perhaps that the ASN.1 representation chose to pack them in a
       # strange order where the optional component comes *earlier* than the
       # fixed component in the sequence.
-      case name.count
+      case name.length
       when 2
         ev = OpenSSL::X509::Extension.new(name[0].value, name[1].value)
         { "oid" => ev.oid, "value" => ev.value }
@@ -129,7 +129,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
         { "oid" => ev.oid, "value" => ev.value, "critical" => ev.critical? }
 
       else
-        raise Puppet::Error, "In #{ext.oid}, expected extension record #{index} to have two or three items, but found #{name.count}"
+        raise Puppet::Error, "In #{ext.oid}, expected extension record #{index} to have two or three items, but found #{name.length}"
       end
     end.flatten
   end
