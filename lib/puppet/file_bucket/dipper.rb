@@ -64,7 +64,7 @@ class Puppet::FileBucket::Dipper
   def restore(file,sum)
     restore = true
     if FileTest.exists?(file)
-      cursum = Digest::MD5.hexdigest(::File.read(file))
+      cursum = Digest::MD5.hexdigest(Puppet::Util.binread(file))
 
       # if the checksum has changed...
       # this might be extra effort
@@ -83,6 +83,7 @@ class Puppet::FileBucket::Dipper
           ::File.chmod(changed | 0200, file)
         end
         ::File.open(file, ::File::WRONLY|::File::TRUNC|::File::CREAT) { |of|
+          of.binmode
           of.print(newcontents)
         }
         ::File.chmod(changed, file) if changed

@@ -110,4 +110,61 @@ describe Puppet::FileBucket::Dipper do
     request.port.should == 31337
     request.key.should == "md5/#{checksum}"
   end
+
+  describe "#restore" do
+    shared_examples_for "a restorable file" do
+      let(:contents) { "my\ncontents" }
+      let(:md5) { Digest::MD5.hexdigest(contents) }
+      let(:dest) { tmpfile('file_bucket_dest') }
+
+      it "should restore the file" do
+        request = nil
+
+        klass.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new(contents))
+
+        dipper.restore(dest, md5).should == md5
+        Digest::MD5.file(dest).hexdigest.should == md5
+
+        request.key.should == "md5/#{md5}"
+        request.server.should == server
+        request.port.should == port
+      end
+
+      it "should skip restoring if existing file has the same checksum" do
+        crnl = "my\r\ncontents"
+        File.open(dest, 'wb') {|f| f.print(crnl) }
+
+        dipper.expects(:getfile).never
+        dipper.restore(dest, Digest::MD5.hexdigest(crnl)).should be_nil
+      end
+
+      it "should overwrite existing file if it has different checksum" do
+        klass.any_instance.expects(:find).returns(Puppet::FileBucket::File.new(contents))
+
+        File.open(dest, 'wb') {|f| f.print('other contents') }
+
+        dipper.restore(dest, md5).should == md5
+      end
+    end
+
+    describe "when restoring from a remote server" do
+      let(:klass) { Puppet::FileBucketFile::Rest }
+      let(:server) { "puppetmaster" }
+      let(:port) { 31337 }
+
+      it_behaves_like "a restorable file" do
+        let (:dipper) { Puppet::FileBucket::Dipper.new(:Server => server, :Port => port.to_s) }
+      end
+    end
+
+    describe "when restoring from a local server" do
+      let(:klass) { Puppet::FileBucketFile::File }
+      let(:server) { nil }
+      let(:port) { nil }
+
+      it_behaves_like "a restorable file" do
+        let (:dipper) { Puppet::FileBucket::Dipper.new(:Path => "/my/bucket") }
+      end
+    end
+  end
 end
