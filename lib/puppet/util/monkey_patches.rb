@@ -96,6 +96,8 @@ class Array
       ret += tmp.combination(num - 1).map{|a| a.unshift(e) }
     end
   end unless method_defined? :combination
+
+  alias :count :length unless method_defined? :count
 end
 
 
