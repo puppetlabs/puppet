@@ -64,3 +64,12 @@ class Symbol
     Proc.new { |*args| args.shift.__send__(self, *args) }
   end unless method_defined? :to_proc
 end
+
+
+class String
+  alias :lines :each_line unless method_defined?(:lines)
+end
+
+class IO
+  alias :lines :each_line unless method_defined? :lines
+end
