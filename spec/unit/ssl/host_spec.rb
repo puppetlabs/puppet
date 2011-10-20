@@ -64,43 +64,9 @@ describe Puppet::SSL::Host do
     Puppet::SSL::Host.localhost.should equal(host)
   end
 
-  context "#this_csr_is_for_a_local_master" do
-    it "should treat hostnames other than :certname as non-master" do
-      Puppet[:certname] = 'fred.local'
-      Puppet::SSL::Host.new('barney.local').this_csr_is_for_a_local_master.should be_false
-    end
-
-    it "should be true if we are a CA" do
-      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
-      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(true)
-      Puppet[:ca] = true
-
-      Puppet::SSL::Host.new(Puppet[:certname]).
-        this_csr_is_for_a_local_master.should be_true
-    end
-
-    it "should be true if we are in master mode, but not a CA" do
-      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
-      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-      Puppet[:ca] = false
-
-      Puppet::SSL::Host.new(Puppet[:certname]).
-        this_csr_is_for_a_local_master.should be_true
-    end
-
-    it "should be false otherwise" do
-      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:user])
-      Puppet::SSL::CertificateAuthority.stubs(:ca?).returns(false)
-      Puppet[:ca] = false
-
-      Puppet::SSL::Host.new(Puppet[:certname]).
-        this_csr_is_for_a_local_master.should be_false
-    end
-  end
-
-  context "with master_dns_alt_names" do
+  context "with dns_alt_names" do
     before :each do
-      Puppet[:master_dns_alt_names] = 'one, two'
+      Puppet[:dns_alt_names] = 'one, two'
 
       @key = stub('key content')
       key = stub('key', :generate => true, :save => true, :content => @key)
@@ -110,21 +76,16 @@ describe Puppet::SSL::Host do
       Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
     end
 
-    it "should not include subjectAltName if not a CA" do
+    it "should not include subjectAltName if not the local node" do
       @cr.expects(:generate).with(@key, {})
 
-      Puppet[:ca] = false
-      Puppet::SSL::Host.localhost
+      Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
     end
 
     it "should include subjectAltName if I am a CA" do
       @cr.expects(:generate).
-        with(@key, { :dns_alt_names => Puppet[:master_dns_alt_names] })
+        with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
 
-
-      Puppet[:ca] = true
-      Puppet.stubs(:run_mode).returns(Puppet::Util::RunMode[:master])
-      Puppet::SSL::CertificateAuthority.stubs(:instance).returns stub('ca', :sign => nil)
       Puppet::SSL::Host.localhost
     end
   end

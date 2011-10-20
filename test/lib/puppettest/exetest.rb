@@ -50,7 +50,7 @@ module PuppetTest::ExeTest
     args += " --confdir #{Puppet[:confdir]}"
     args += " --rundir #{File.join(Puppet[:vardir], "run")}"
     args += " --vardir #{Puppet[:vardir]}"
-    args += " --master_dns_alt_names #{Puppet[:master_dns_alt_names]}"
+    args += " --dns_alt_names #{Puppet[:master_dns_alt_names]}"
     args += " --masterport #{@@port}"
     args += " --user #{Puppet::Util::SUIDManager.uid}"
     args += " --group #{Puppet::Util::SUIDManager.gid}"

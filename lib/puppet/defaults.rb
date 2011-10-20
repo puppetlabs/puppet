@@ -213,20 +213,33 @@ module Puppet
 The `certdnsnames` setting is no longer functional,
 after CVE-2011-3872. We ignore the value completely.
 
-For the master it has been replaced by the `master_dns_alt_names` setting,
-or the interactive use of the `--dns-alt-names` option.  We strongly advise
-the later method.
+For your own certificate request you can set `dns_alt_names` in the
+configuration and it will apply locally.  There is no configuration option to
+set DNS alt names, or any other `subjectAltName` value, for another nodes
+certificate.
+
+Alternately you can use the `--dns-alt-names` command line option to set the
+labels added while generating your own CSR.
 WARN
         end
       end,
       :desc    => <<EOT
-      certificate.  Only the locally generated master certificate gets an alias set up, and only if this is
+The `certdnsnames` setting is no longer functional,
+after CVE-2011-3872. We ignore the value completely.
+
+For your own certificate request you can set `dns_alt_names` in the
+configuration and it will apply locally.  There is no configuration option to
+set DNS alt names, or any other `subjectAltName` value, for another nodes
+certificate.
+
+Alternately you can use the `--dns-alt-names` command line option to set the
+labels added while generating your own CSR.
 EOT
     },
     :dns_alt_names => {
       :default => '',
       :desc    => <<EOT,
-The comma-separated list of alternative names to use for the local host.
+The comma-separated list of alternative DNS names to use for the local host.
 
 When the node generates a CSR for itself, these are added to the request
 as the desired `subjectAltName` in the certificate: additional DNS labels
@@ -236,7 +249,12 @@ This is generally required if you use a non-hostname `certname`, or if you
 want to use `puppet kick` or `puppet resource -H` and the primary certname
 does not match the DNS name you use to communicate with the host.
 
-This is unnecessary for the vast majority of agents.
+This is unnecessary for agents, unless you intend to use them as a server for
+`puppet kick` or remote `puppet resource` management.
+
+It is rarely necessary for servers; it is usually helpful only if you need to
+have a pool of multiple load balanced masters, or for the same master to
+respond on two physically separate networks under different names.
 EOT
     },
     :certdir => {
@@ -466,16 +484,6 @@ EOT
       authorization system for `puppet master`."
     ],
     :ca => [true, "Wether the master should function as a certificate authority."],
-    :master_dns_alt_names => ['', <<EOT],
-When a master certificate is bootstrapped, use this comma-separated list of
-DNS names as the subjectAltName for the certificate.  This is identical in
-behaviour to specifying the `--dns-alt-names` option, and can't be used
-together with that option.
-
-This only applies to the locally generated certificate, and only when we
-generate it for the first time.  It exists primarily as a convenience for
-scripted installations of new master nodes, and is not recommended.
-EOT
     :modulepath => {:default => "$confdir/modules:/usr/share/puppet/modules",
       :desc => "The search path for modules as a colon-separated list of
       directories.", :type => :setting }, # We don't want this to be considered a file, since it's multiple files.
