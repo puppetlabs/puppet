@@ -166,7 +166,7 @@ class Puppet::SSL::Host
 
     # If this is for the current machine...
     if this_csr_is_for_the_current_host
-      # ...add our configured dns-alt-names
+      # ...add our configured dns_alt_names
       if Puppet[:dns_alt_names] and Puppet[:dns_alt_names] != ''
         options[:dns_alt_names] ||= Puppet[:dns_alt_names]
       end

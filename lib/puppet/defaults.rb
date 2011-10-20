@@ -229,7 +229,7 @@ configuration and it will apply locally.  There is no configuration option to
 set DNS alt names, or any other `subjectAltName` value, for another nodes
 certificate.
 
-Alternately you can use the `--dns-alt-names` command line option to set the
+Alternately you can use the `--dns_alt_names` command line option to set the
 labels added while generating your own CSR.
 WARN
         end
@@ -243,7 +243,7 @@ configuration and it will apply locally.  There is no configuration option to
 set DNS alt names, or any other `subjectAltName` value, for another nodes
 certificate.
 
-Alternately you can use the `--dns-alt-names` command line option to set the
+Alternately you can use the `--dns_alt_names` command line option to set the
 labels added while generating your own CSR.
 EOT
     },
