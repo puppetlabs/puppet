@@ -107,9 +107,17 @@ end
 
 
 class String
-  alias :lines :each_line unless method_defined?(:lines)
+  def lines(separator = $/)
+    lines = split(separator)
+    block_given? and lines.each {|line| yield line }
+    lines
+  end
 end
 
 class IO
-  alias :lines :each_line unless method_defined? :lines
+  def lines(separator = $/)
+    lines = split(separator)
+    block_given? and lines.each {|line| yield line }
+    lines
+  end
 end
