@@ -49,20 +49,16 @@ module PuppetTest::ExeTest
     def startmasterd(args = "")
         output = nil
 
-        manifest = mktestmanifest()
-        args += " --manifest %s" % manifest
-        args += " --confdir %s" % Puppet[:confdir]
-        args += " --rundir %s" % File.join(Puppet[:vardir], "run")
-        args += " --vardir %s" % Puppet[:vardir]
-        args += " --master_dns_alt_names %s" % Puppet[:certdnsnames]
-        args += " --masterport %s" % @@port
-        args += " --user %s" % Puppet::Util::SUIDManager.uid
-        args += " --group %s" % Puppet::Util::SUIDManager.gid
+        manifest = mktestmanifest
+        args += " --manifest #{manifest}"
+        args += " --confdir #{Puppet[:confdir]}"
+        args += " --rundir #{File.join(Puppet[:vardir], "run")}"
+        args += " --vardir #{Puppet[:vardir]}"
+        args += " --dns_alt_names #{Puppet[:dns_alt_names]}"
+        args += " --masterport #{@@port}"
+        args += " --user #{Puppet::Util::SUIDManager.uid}"
+        args += " --group #{Puppet::Util::SUIDManager.gid}"
         args += " --autosign true"
-
-        #if Puppet[:debug]
-        #    args += " --debug"
-        #end
 
         cmd = "puppetmasterd %s" % args
 

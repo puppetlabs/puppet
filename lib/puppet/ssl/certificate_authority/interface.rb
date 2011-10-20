@@ -38,18 +38,11 @@ class Puppet::SSL::CertificateAuthority::Interface
         end
     end
 
-#<<<<<<< HEAD
-    #def initialize(method, subjects)
-    #    self.method = method
-    #    self.subjects = subjects
-    #end
-#=======
     def initialize(method, options)
         self.method = method
         self.subjects = options.delete(:to)
         @options = options
     end
-#>>>>>>> b052c24... (#2848) CSR subjectAltNames handling while signing.
 
     # List the hosts.
     def list(ca)

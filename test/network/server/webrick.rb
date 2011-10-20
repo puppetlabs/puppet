@@ -80,7 +80,7 @@ class TestWebrickServer < Test::Unit::TestCase
 
     def mk_status_server
         server = nil
-        Puppet[:master_dns_alt_names] = "localhost"
+        Puppet[:dns_alt_names] = "localhost"
         assert_nothing_raised() {
             server = Puppet::Network::HTTPServer::WEBrick.new(
                 :Port => @@port,

@@ -39,7 +39,7 @@ describe "puppetmasterd" do
         args += " --rundir %s" % rundir
         args += " --pidfile %s" % @pidfile
         args += " --vardir %s" % Puppet[:vardir]
-        args += " --master_dns_alt_names %s" % Puppet[:certdnsnames]
+        args += " --dns_alt_names %s" % Puppet[:dns_alt_names]
         args += " --masterport %s" % @@port
         args += " --user %s" % Puppet::Util::SUIDManager.uid
         args += " --group %s" % Puppet::Util::SUIDManager.gid
