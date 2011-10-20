@@ -144,9 +144,9 @@ describe Puppet::SSL::CertificateRequest do
       @instance.generate(@key)
     end
 
-    context "without subjectAltName / master_dns_alt_names" do
+    context "without subjectAltName / dns_alt_names" do
       before :each do
-        Puppet[:master_dns_alt_names] = ""
+        Puppet[:dns_alt_names] = ""
       end
 
       ["extreq", "msExtReq"].each do |name|
@@ -163,9 +163,9 @@ describe Puppet::SSL::CertificateRequest do
       end
     end
 
-    context "with master_dns_alt_names" do
+    context "with dns_alt_names" do
       before :each do
-        Puppet[:master_dns_alt_names] = "one, two, three"
+        Puppet[:dns_alt_names] = "one, two, three"
       end
 
       ["extreq", "msExtReq"].each do |name|
@@ -184,7 +184,7 @@ describe Puppet::SSL::CertificateRequest do
 
     context "with subjectAltName to generate request" do
       before :each do
-        Puppet[:master_dns_alt_names] = ""
+        Puppet[:dns_alt_names] = ""
       end
 
       it "should add an extreq attribute" do
