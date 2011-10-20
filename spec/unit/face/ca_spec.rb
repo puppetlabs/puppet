@@ -174,6 +174,28 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       list.length.should == 1
       list.first.name.should == 'random-host'
     end
+
+    describe "when the CSR specifies DNS alt names" do
+      let(:host) { Puppet::SSL::Host.new('someone') }
+
+      before :each do
+        host.generate_certificate_request(:dns_alt_names => 'some,alt,names')
+      end
+
+      it "should sign the CSR if DNS alt names are allowed" do
+        subject.sign('someone', :allow_dns_alt_names => true)
+
+        host.certificate.should be_a(Puppet::SSL::Certificate)
+      end
+
+      it "should refuse to sign the CSR if DNS alt names are not allowed" do
+        expect do
+          subject.sign('someone')
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alternative names (.*), which are disallowed./)
+
+        host.certificate.should be_nil
+      end
+    end
   end
 
   context "#generate" do
@@ -201,6 +223,17 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       expect {
         subject.generate('random-host').should =~ /already has a certificate/
       }.should_not raise_error
+    end
+
+    it "should include the specified DNS alt names" do
+      subject.generate('some-host', :dns_alt_names => 'some,alt,names')
+
+      host = subject.list(:signed => true).first
+
+      host.name.should == 'some-host'
+      host.certificate.subject_alt_names.should =~ %w[DNS:some DNS:alt DNS:names DNS:some-host]
+
+      subject.list(:pending => true).should be_empty
     end
   end
 
