@@ -65,7 +65,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       # them. Otherwise, they will default to the config file setting iff this
       # cert is for the host we're running on.
 
-      host.generate_certificate_request(:dns_alt_names => options.delete(:dns_alt_names))
+      host.generate_certificate_request(:dns_alt_names => options[:dns_alt_names])
     end
   end
 
@@ -97,10 +97,28 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       $ puppet certificate sign somenode.puppetlabs.lan --ca-location remote
     EOT
 
+    option("--[no-]allow-dns-alt-names") do
+      summary "Whether or not to accept DNS alt names in the certificate request"
+    end
+
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
-      host.desired_state = 'signed'
-      Puppet::SSL::Host.indirection.save(host)
+      if options[:ca_location] == :remote
+        if options[:allow_dns_alt_names]
+          raise ArgumentError, "--allow-dns-alt-names may not be specified with a remote CA"
+        end
+
+        host.desired_state = 'signed'
+        Puppet::SSL::Host.indirection.save(host)
+      else
+        # We have to do this case manually because we need to specify
+        # allow_dns_alt_names.
+        unless ca = Puppet::SSL::CertificateAuthority.instance
+          raise ArgumentError, "This process is not configured as a certificate authority"
+        end
+
+        ca.sign(name, options[:allow_dns_alt_names])
+      end
     end
   end
 
