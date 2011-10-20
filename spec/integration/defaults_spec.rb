@@ -47,7 +47,7 @@ describe "Puppet defaults" do
 
   describe "when :certdnsnames is set" do
     it "should not fail" do
-      expect { Puppet[:certdnsnames] = 'fred:wilma' }.not_to raise_error
+      expect { Puppet[:certdnsnames] = 'fred:wilma' }.should_not raise_error
     end
 
     it "should warn the value is ignored" do
