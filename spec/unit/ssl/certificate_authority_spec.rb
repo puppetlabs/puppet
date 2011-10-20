@@ -334,7 +334,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name, false, @request)
-        end.not_to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
+        end.should_not raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError)
       end
 
       it "should save the resulting certificate" do
@@ -390,7 +390,7 @@ describe Puppet::SSL::CertificateAuthority do
 
       it "should not fail if the CSR does not contain alt names and they are expected" do
         @request.stubs(:subject_alt_names).returns []
-        expect { @ca.sign(@name, true) }.not_to raise_error
+        expect { @ca.sign(@name, true) }.should_not raise_error
       end
 
       it "should reject alt names by default" do
