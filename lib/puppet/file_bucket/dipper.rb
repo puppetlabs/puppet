@@ -31,7 +31,7 @@ class Puppet::FileBucket::Dipper
   # Back up a file to our bucket
   def backup(file)
     raise(ArgumentError, "File #{file} does not exist") unless ::File.exist?(file)
-    contents = ::File.read(file)
+    contents = Puppet::Util.binread(file)
     begin
       file_bucket_file = Puppet::FileBucket::File.new(contents, :bucket_path => @local_path)
       files_original_path = absolutize_path(file)

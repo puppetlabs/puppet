@@ -11,7 +11,7 @@ describe Puppet::FileBucket::Dipper do
 
   def make_tmp_file(contents)
     file = tmpfile("file_bucket_file")
-    File.open(file, 'w') { |f| f.write(contents) }
+    File.open(file, 'wb') { |f| f.write(contents) }
     file
   end
 
@@ -40,19 +40,19 @@ describe Puppet::FileBucket::Dipper do
 
     @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
 
-    file = make_tmp_file('my contents')
-    checksum = "2975f560750e71c478b8e3b39a956adb"
-    Digest::MD5.hexdigest('my contents').should == checksum
+    file = make_tmp_file("my\r\ncontents")
+    checksum = "f0d7d4e480ad698ed56aeec8b6bd6dea"
+    Digest::MD5.hexdigest("my\r\ncontents").should == checksum
 
     @dipper.backup(file).should == checksum
-    File.exists?("#{file_bucket}/2/9/7/5/f/5/6/0/2975f560750e71c478b8e3b39a956adb/contents").should == true
+    File.exists?("#{file_bucket}/f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea/contents").should == true
   end
 
   it "should not backup a file that is already in the bucket" do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
 
-    file = make_tmp_file('my contents')
-    checksum = Digest::MD5.hexdigest('my contents')
+    file = make_tmp_file("my\r\ncontents")
+    checksum = Digest::MD5.hexdigest("my\r\ncontents")
 
     Puppet::FileBucket::File.indirection.expects(:head).returns true
     Puppet::FileBucket::File.indirection.expects(:save).never
@@ -76,8 +76,8 @@ describe Puppet::FileBucket::Dipper do
   it "should backup files to a remote server" do
     @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
 
-    file = make_tmp_file('my contents')
-    checksum = Digest::MD5.hexdigest('my contents')
+    file = make_tmp_file("my\r\ncontents")
+    checksum = Digest::MD5.hexdigest("my\r\ncontents")
 
     real_path = Pathname.new(file).realpath
 
