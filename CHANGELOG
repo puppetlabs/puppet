@@ -1,3 +1,36 @@
+2.6.12 (CVE-2011-3872 see http://puppetlabs.com/security/hotfixes/cve-2011-3872/)
+===
+3ed6499 Backport Enumerable#count to Rubies < 1.8.7
+5f44c23 More 1.8.5 compatibility fixes.
+ef1b960 Better 1.8.5 compatible implementation of `lines`.
+246e875 (#2848) Config options require '_', not '-'.
+3bdeb3a Ruby 1.8.5 compatibility changes in tests and code.
+6866d4b Add `lines` alias for `each_line` in Ruby 1.8.5.
+2f9ec3c s/not_to/should_not/ for older versions of RSpec 2.
+56320ea (#2848) Eliminate redundant `master_dns_alt_names`.
+de19861 (#2848) Remove the legacy SSLCertificates code
+cf008a6 (#2848) Rework the xmlrpc CA handler to use the modern SSL code
+32be180 (#2848) Remove unused xmlrpc code
+5f2a44d (#2848) Consistent return values from `subject_alt_names` accessors.
+5e507f2 (#2848) Consistently use `subject_alt_names` as accessor name.
+5ac2417 (#2848) Don't strip the subjectAltName label when listing.
+44cf3a2 (#2848) Don't enable `emailProtection` for server keys.
+d66def9 (#2848) Only mark `subjectAltName` critical if `subject` is empty.
+8174047 (#2848) Migrate `dns-alt-names` back to settings.
+f18df2b Wire up the `setbycli` slot in Puppet settings.
+efa61f2 (#2848) rename subject-alt-name option to dns-alt-names
+f103b20 (#2848) Rename `certdnsnames` to match new behaviour.
+363b47b (#2848) Use `certdnsnames` when bootstrapping a local master.
+49334ff (#2848) CSR subjectAltNames handling while signing.
+5f2af93 (#2848) List subject alt names in output of puppet cert --list
+bb475ec (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+bab9310 (#2848) Rewrite SSL Certificate Factory, fixing `subjectAltName` leak.
+fca1ff0 (#2848) Reject unknown (== all) extensions on the CSR.
+443a756 (#2848) extract the subjectAltName value from the CSR.
+66101f1 (#2848) Set `certdnsnames` values into the CSR.
+77b814f (#6928) Don't blow up when the method is undefined...
+5427f1e (#6928) backport Symbol#to_proc for Ruby < 1.8.7
+
 2.6.11
 ===
 e158b26 (#9793) "secure" indirector file backed terminus base class.
