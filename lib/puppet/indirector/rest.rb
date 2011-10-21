@@ -98,7 +98,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     elsif error.message.include? "hostname was not match"
       raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
 
-      valid_certnames = [cert.name, *cert.alternate_names].uniq
+      valid_certnames = [cert.name, *cert.subject_alt_names].uniq
       msg = valid_certnames.length > 1 ? "one of #{valid_certnames.join(', ')}" : valid_certnames.first
 
       raise Puppet::Error, "Server hostname '#{http_connection.address}' did not match server certificate; expected #{msg}"

@@ -74,8 +74,8 @@ describe Puppet::Network::Handler::CA do
       it "should save the CSR without signing it" do
         subject.getcert(csr.to_pem)
 
-        Puppet::SSL::Certificate.find(host).should be_nil
-        Puppet::SSL::CertificateRequest.find(host).should be_a(Puppet::SSL::CertificateRequest)
+        Puppet::SSL::Certificate.indirection.find(host).should be_nil
+        Puppet::SSL::CertificateRequest.indirection.find(host).should be_a(Puppet::SSL::CertificateRequest)
       end
 
       it "should not return a cert" do

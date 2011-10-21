@@ -2,8 +2,6 @@
 require 'spec_helper'
 
 require 'puppet/ssl/host'
-require 'puppet/sslcertificates'
-require 'puppet/sslcertificates/ca'
 
 # REMIND: Fails on windows because there is no user provider yet
 describe Puppet::SSL::Host, :fails_on_windows => true do
@@ -87,11 +85,13 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
       Puppet[:dns_alt_names] = 'one, two'
 
       @key = stub('key content')
-      key = stub('key', :generate => true, :save => true, :content => @key)
+      key = stub('key', :generate => true, :content => @key)
       Puppet::SSL::Key.stubs(:new).returns key
+      Puppet::SSL::Key.indirection.stubs(:save).with(key)
 
-      @cr = stub('certificate request', :save => true)
+      @cr = stub('certificate request')
       Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
+      Puppet::SSL::CertificateRequest.indirection.stubs(:save).with(@cr)
     end
 
     it "should not include subjectAltName if not the local node" do
@@ -749,7 +749,6 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
     before do
       Puppet[:vardir] = tmpdir("ssl_test_vardir")
       Puppet[:ssldir] = tmpdir("ssl_test_ssldir")
-      Puppet::SSLCertificates::CA.new.mkrootcert
       # localcacert is where each client stores the CA certificate
       # cacert is where the master stores the CA certificate
       # Since we need to play the role of both for testing we need them to be the same and exist

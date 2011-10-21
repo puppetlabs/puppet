@@ -448,7 +448,7 @@ describe Puppet::SSL::CertificateAuthority do
         @serial = 10
         @ca.stubs(:next_serial).returns @serial
 
-        Puppet::SSL::CertificateRequest.stubs(:find).with(@name).returns @request
+        Puppet::SSL::CertificateRequest.indirection.stubs(:find).with(@name).returns @request
         @cert.stubs :save
       end
 

@@ -91,6 +91,8 @@ describe Puppet::Indirector::REST do
   end
 
   describe "when making http requests" do
+    include PuppetSpec::Files
+
     it "should provide a suggestive error message when certificate verify failed" do
       connection = Net::HTTP.new('my_server', 8140)
       @searcher.stubs(:network).returns(connection)
@@ -103,11 +105,8 @@ describe Puppet::Indirector::REST do
     end
 
     it "should provide a helpful error message when hostname was not match with server certificate" do
-      Puppet[:certdnsnames] = 'foo:bar:baz'
-      csr            = OpenSSL::X509::Request.new
-      csr.subject    = OpenSSL::X509::Name.new([['CN', 'not_my_server']])
-      csr.public_key = OpenSSL::PKey::RSA.generate(Puppet[:keylength]).public_key
-      cert = Puppet::SSL::CertificateFactory.new('server', csr, csr, 14).result
+      Puppet[:confdir] = tmpdir('conf')
+      cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
 
       connection = Net::HTTP.new('my_server', 8140)
       @searcher.stubs(:network).returns(connection)
@@ -121,7 +120,7 @@ describe Puppet::Indirector::REST do
       expect { @searcher.http_request(:get, stub('request')) }.to(
         raise_error(Puppet::Error, msg) do |error|
           error.message =~ msg
-          $1.split(', ').should =~ ['foo', 'bar', 'baz', 'not_my_server']
+          $1.split(', ').should =~ %w[DNS:foo DNS:bar DNS:baz DNS:not_my_server not_my_server]
         end
       )
     end
