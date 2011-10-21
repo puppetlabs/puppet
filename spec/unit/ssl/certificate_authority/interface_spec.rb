@@ -196,9 +196,14 @@ describe Puppet::SSL::CertificateAuthority::Interface do
 
     describe ":list" do
       before :each do
-        certish = stub('certish', :subject_alt_names => [])
-        Puppet::SSL::Certificate.indirection.stubs(:find).returns certish
-        Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns certish
+        @cert = Puppet::SSL::Certificate.new 'foo'
+        @csr = Puppet::SSL::CertificateRequest.new 'bar'
+
+        @cert.stubs(:subject_alt_names).returns []
+        @csr.stubs(:subject_alt_names).returns []
+
+        Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
+        Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns @csr
 
         @ca.expects(:waiting?).returns %w{host1 host2 host3}
         @ca.expects(:list).returns %w{host4 host5 host6}
@@ -253,8 +258,7 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         end
 
         it "should include subject alt names if they are on the certificate request" do
-          request = stub 'request', :subject_alt_names => ["DNS:foo", "DNS:bar"]
-          Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns(request)
+          @csr.stubs(:subject_alt_names).returns ["DNS:foo", "DNS:bar"]
 
           applier = @class.new(:list, :to => ['host1'])
 
