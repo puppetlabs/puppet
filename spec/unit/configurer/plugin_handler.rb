@@ -80,7 +80,7 @@ describe Puppet::Configurer::PluginHandler do
     end
 
     it "should not try to load files that don't exist" do
-        FileTest.expects(:exist?).with("foo").returns true
+        FileTest.expects(:exist?).with("foo").returns false
         @pluginhandler.expects(:load).never
 
         @pluginhandler.load_plugin("foo")

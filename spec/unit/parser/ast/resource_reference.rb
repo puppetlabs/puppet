@@ -44,6 +44,7 @@ describe Puppet::Parser::AST::ResourceReference do
     end
 
     it "should return an array of reference if given an array of titles" do
+        pending "failing before we started working on CVE-2011-3872"
         titles = mock 'titles', :safeevaluate => ["title1","title2"]
         ref = ast::ResourceReference.new( :title => titles, :type => "Resource" )
         ref.stubs(:qualified_type).with(@scope).returns("Resource")

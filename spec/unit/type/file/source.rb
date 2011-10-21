@@ -6,7 +6,7 @@ source = Puppet::Type.type(:file).attrclass(:source)
 describe Puppet::Type.type(:file).attrclass(:source) do
     before do
         # Wow that's a messy interface to the resource.
-        @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false)
+        @resource = stub 'resource', :[]= => nil, :property => nil, :catalog => stub("catalog", :dependent_data_expired? => false), :line => 12, :file => 'foo.pp'
     end
 
     it "should be a subclass of Parameter" do
