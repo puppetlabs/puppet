@@ -168,9 +168,21 @@ module Puppet
             to the fully qualified domain name.",
             :call_on_define => true, # Call our hook with the default value, so we're always downcased
             :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
-        :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
-            If it's anything other than an empty string, it will be used as an alias in the created
-            certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
+        :certdnsnames => {:default => '',
+            :desc => "The DNS names on the Server certificate as a
+            colon-separated list.  If it's anything other than an empty string,
+            it will be used as an alias in the created certificate.  By
+            default, only the server gets an alias set up, and only for
+            'puppet'.",
+            :hook => proc { |value|
+                msg = <<WARN
+The `certdnsnames` setting is no longer functional, after CVE-2011-3872. We
+ignore the value completely. See http://puppetlabs.com/security/cve/3872 for
+more information"
+WARN
+                puts msg if value and value != ''
+            }
+        },
         :certdir => ["$ssldir/certs", "The certificate directory."],
         :publickeydir => ["$ssldir/public_keys", "The public key directory."],
         :privatekeydir => { :default => "$ssldir/private_keys",

@@ -61,16 +61,7 @@ module Puppet::SSLCertificates
             key_usage = %w{cRLSign keyCertSign}
         when :server:
             basic_constraint = "CA:FALSE"
-            dnsnames = Puppet[:certdnsnames]
             name = hash[:name].to_s.sub(%r{/CN=},'')
-            if dnsnames != ""
-                dnsnames.split(':').each { |d| subject_alt_name << 'DNS:' + d }
-                subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
-            elsif name == Facter.value(:fqdn) # we're a CA server, and thus probably the server
-                subject_alt_name << 'DNS:' + "puppet" # Add 'puppet' as an alias
-                subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
-                subject_alt_name << 'DNS:' + name.sub(/^[^.]+./, "puppet.") # add puppet.domain as an alias
-            end
             key_usage = %w{digitalSignature keyEncipherment}
             ext_key_usage = %w{serverAuth clientAuth emailProtection}
         when :ocsp:
