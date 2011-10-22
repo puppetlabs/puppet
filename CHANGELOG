@@ -1,3 +1,64 @@
+0.25.6
+===
+d63f824 Allow a master to bootstrap itself with dns_alt_names and autosign
+671b072 Backport Enumerable#count to Rubies < 1.8.7
+63ace8b More 1.8.5 compatibility fixes.
+d740851 Better 1.8.5 compatible implementation of `lines`.
+d08bd73 (#2848) Config options require '_', not '-'.
+252ca8f Ruby 1.8.5 compatibility changes in tests and code.
+5588b22 Add `lines` alias for `each_line` in Ruby 1.8.5.
+de6770d (#2848) Eliminate redundant `master_dns_alt_names`.
+b581f55 (#2848) Rework the xmlrpc CA handler to use the modern SSL code
+fb89b61 (#2848) Consistent return values from `subject_alt_names` accessors.
+af1fcb4 (#2848) Consistently use `subject_alt_names` as accessor name.
+f550d85 (#2848) Don't strip the subjectAltName label when listing.
+cec397b (#2848) Don't enable `emailProtection` for server keys.
+aec5f5d (#2848) Only mark `subjectAltName` critical if `subject` is empty.
+e203c68 (#2848) Migrate `dns-alt-names` back to settings.
+44ba8fa Wire up the `setbycli` slot in Puppet settings.
+7ebcca5 (#2848) rename subject-alt-name option to dns-alt-names
+4f3457e (#2848) Rename `certdnsnames` to match new behaviour.
+6af39ea (#2848) Use `certdnsnames` when bootstrapping a local master.
+ecd8b42 (#2848) CSR subjectAltNames handling while signing.
+5fc243f (#2848) List subject alt names in output of puppet cert --list
+8b80e50 (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+cf706be (#2848) Rewrite SSL Certificate Factory, fixing `subjectAltName` leak.
+b997159 (#2848) Reject unknown (== all) extensions on the CSR.
+3353b86 (#2848) extract the subjectAltName value from the CSR.
+b0dec7f (#2848) Set `certdnsnames` values into the CSR.
+f0ba5ef (#6928) Don't blow up when the method is undefined...
+9764164 (#6928) backport Symbol#to_proc for Ruby < 1.8.7
+0a51b9f Ensure that all tests pass before fixing CVE-2011-3872
+268984a (#9792) Predictable temporary filename in ralsh.
+1e5fbb2 Drop privileges before creating and chmodding SSH keys.
+38b49a8 (#9794) k5login can overwrite arbitrary files as root
+6e5a821 Resist directory traversal attacks through indirections.
+ad386c2 [#2370] Allow OpenBSD to add packages with versions and flavors
+f4f3680 [#3961] Part two: --destroy should also be local
+34f1fc7 [#3961] puppet cert --generate implies ca_location = :local
+e8c49d1 [#3961] Rename cert's @mode to @cert_mode to reduce confusion
+390e1b5 Fixed subscribe example
+83d9874 Use the name in the search path for looking for metadata
+70c293a Fix for environments in startup script. - Dropped the forced --manifest switch in the   suse startup script to allow for environments   to re-define this. Otherwise, environments will   not work as puppet override configuration with   command line arguments.
+62bc09e Redmine: 2474 - Fix for mount fstype documentation
+7faf27c [#4064]  Modify confine to also allow a message and a block containing the test.
+e4b3aac [#4063] Add confine to describe block that depends on ActiveRecord
+97936c6 [#3921] Add facts_terminus setting to Puppet settings
+db39b7c [#4026] When --use_cached_catalog is specified on a puppetd run actully use the cache
+4286839 [#4001] Added explicit check and error message when creating a file if parent doesn't exist
+34d1897 [#3835] Fixed recursively absent directories improperly managing their files
+9d0d94c [#3804] Fixed one failing spec for RackREST
+da66e16 Fixing #3651 failing to pop comment stack for some constructs
+069bf1b Fixed require warning documentation
+23431da Fixed mcx documentation error
+705cfe1 Documentation fixes
+0a0923c [#4006] Fix test failures caused by reverting ticket 2890
+8faa466 [#3866] Rename the method metaclass to singleton_class to avoid the deprecation warnings from Rails ActiveSupport
+53e3610 Bug 3731. Applied Fix suggested by Doug Warner to always flatten out the array
+b9aba7c maint: Have 'rake spec' output in color
+3d7168b Fix for #3107 Changing users on AIX
+5716028 Fixes #3663 - It should be possible to list signed hosts only
+
 0.25.5
 ======
 d88b357  Fixes incorrect line in partial CRL fix
