@@ -254,6 +254,7 @@ class Puppet::SSL::CertificateAuthority
       cert_type = :ca
       issuer = csr.content
     else
+      allow_dns_alt_names = true if hostname == Puppet[:certname].downcase
       unless csr = Puppet::SSL::CertificateRequest.find(hostname)
         raise ArgumentError, "Could not find certificate request for #{hostname}"
       end
