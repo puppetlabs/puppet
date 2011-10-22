@@ -247,7 +247,7 @@ describe Puppet::Configurer do
       Puppet.settings[:prerun_command] = "/my/command"
       Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
-      report.expects(:<<).with { |log| log.message.start_with?("Could not run command from prerun_command") }
+      report.expects(:<<).with { |log| log.message.include?("Could not run command from prerun_command") }
 
       @agent.run.should be_nil
     end
@@ -270,7 +270,7 @@ describe Puppet::Configurer do
       Puppet.settings[:postrun_command] = "/my/command"
       Puppet::Util.expects(:execute).with(["/my/command"]).raises(Puppet::ExecutionFailure, "Failed")
 
-      report.expects(:<<).with { |log| log.message.start_with?("Could not run command from postrun_command") }
+      report.expects(:<<).with { |log| log.message.include?("Could not run command from postrun_command") }
 
       @agent.run.should be_nil
     end

@@ -2,7 +2,7 @@ require 'puppet/ssl'
 
 # The tedious class that does all the manipulations to the
 # certificate to correctly sign it.  Yay.
-class Puppet::SSL::CertificateFactory
+module Puppet::SSL::CertificateFactory
   # How we convert from various units to the required seconds.
   UNITMAP = {
     "y" => 365 * 24 * 60 * 60,
@@ -11,75 +11,84 @@ class Puppet::SSL::CertificateFactory
     "s" => 1
   }
 
-  attr_reader :name, :cert_type, :csr, :issuer, :serial
+  def self.build(cert_type, csr, issuer, serial)
+    # Work out if we can even build the requested type of certificate.
+    build_extensions = "build_#{cert_type.to_s}_extensions"
+    respond_to?(build_extensions) or
+      raise ArgumentError, "#{cert_type.to_s} is an invalid certificate type!"
 
-  def initialize(cert_type, csr, issuer, serial)
-    @cert_type, @csr, @issuer, @serial = cert_type, csr, issuer, serial
+    # set up the certificate, and start building the content.
+    cert = OpenSSL::X509::Certificate.new
 
-    @name = @csr.subject
-  end
+    cert.version    = 2 # X509v3
+    cert.subject    = csr.content.subject
+    cert.issuer     = issuer.subject
+    cert.public_key = csr.content.public_key
+    cert.serial     = serial
 
-  # Actually generate our certificate.
-  def result
-    @cert = OpenSSL::X509::Certificate.new
+    # Make the certificate valid as of yesterday, because so many people's
+    # clocks are out of sync.  This gives one more day of validity than people
+    # might expect, but is better than making every person who has a messed up
+    # clock fail, and better than having every cert we generate expire a day
+    # before the user expected it to when they asked for "one year".
+    cert.not_before = Time.now - (60*60*24)
+    cert.not_after  = Time.now + ttl
 
-    @cert.version = 2 # X509v3
-    @cert.subject = @csr.subject
-    @cert.issuer = @issuer.subject
-    @cert.public_key = @csr.public_key
-    @cert.serial = @serial
+    add_extensions_to(cert, csr, issuer, send(build_extensions))
 
-    build_extensions
-
-    set_ttl
-
-    @cert
+    return cert
   end
 
   private
 
-  # This is pretty ugly, but I'm not really sure it's even possible to do
-  # it any other way.
-  def build_extensions
-    @ef = OpenSSL::X509::ExtensionFactory.new
+  def self.add_extensions_to(cert, csr, issuer, extensions)
+    ef = OpenSSL::X509::ExtensionFactory.
+      new(cert, issuer.is_a?(OpenSSL::X509::Request) ? cert : issuer)
 
-    @ef.subject_certificate = @cert
-
-    if @issuer.is_a?(OpenSSL::X509::Request) # It's a self-signed cert
-      @ef.issuer_certificate = @cert
-    else
-      @ef.issuer_certificate = @issuer
+    # Extract the requested extensions from the CSR.
+    requested_exts = csr.request_extensions.inject({}) do |hash, re|
+      hash[re["oid"]] = [re["value"], re["critical"]]
+      hash
     end
 
-    @subject_alt_name = []
-    @key_usage = nil
-    @ext_key_usage = nil
-    @extensions = []
+    # Produce our final set of extensions.  We deliberately order these to
+    # build the way we want:
+    # 1. "safe" default values, like the comment, that no one cares about.
+    # 2. request extensions, from the CSR
+    # 3. extensions based on the type we are generating
+    # 4. overrides, which we always want to have in their form
+    #
+    # This ordering *is* security-critical, but we want to allow the user
+    # enough rope to shoot themselves in the foot, if they want to ignore our
+    # advice and externally approve a CSR that sets the basicConstraints.
+    #
+    # Swapping the order of 2 and 3 would ensure that you couldn't slip a
+    # certificate through where the CA constraint was true, though, if
+    # something went wrong up there. --daniel 2011-10-11
+    defaults = { "nsComment" => "Puppet Ruby/OpenSSL Internal Certificate" }
+    override = { "subjectKeyIdentifier" => "hash" }
 
-    method = "add_#{@cert_type.to_s}_extensions"
+    exts = [defaults, requested_exts, extensions, override].
+      inject({}) {|ret, val| ret.merge(val) }
 
-    begin
-      send(method)
-    rescue NoMethodError
-      raise ArgumentError, "#{@cert_type} is an invalid certificate type"
+    cert.extensions = exts.map do |oid, val|
+      val, crit = *val
+      val       = val.join(', ') unless val.is_a? String
+
+      # Enforce the X509v3 rules about subjectAltName being critical:
+      # specifically, it SHOULD NOT be critical if we have a subject, which we
+      # always do. --daniel 2011-10-18
+      crit = false if oid == "subjectAltName"
+
+      # val can be either a string, or [string, critical], and this does the
+      # right thing regardless of what we get passed.
+      ef.create_ext(oid, val, crit)
     end
-
-    @extensions << @ef.create_extension("nsComment", "Puppet Ruby/OpenSSL Generated Certificate")
-    @extensions << @ef.create_extension("basicConstraints", @basic_constraint, true)
-    @extensions << @ef.create_extension("subjectKeyIdentifier", "hash")
-    @extensions << @ef.create_extension("keyUsage", @key_usage.join(",")) if @key_usage
-    @extensions << @ef.create_extension("extendedKeyUsage", @ext_key_usage.join(",")) if @ext_key_usage
-    @extensions << @ef.create_extension("subjectAltName", @subject_alt_name.join(",")) if ! @subject_alt_name.empty?
-
-    @cert.extensions = @extensions
-
-    # for some reason this _must_ be the last extension added
-    @extensions << @ef.create_extension("authorityKeyIdentifier", "keyid:always,issuer:always") if @cert_type == :ca
   end
 
   # TTL for new certificates in seconds. If config param :ca_ttl is set,
   # use that, otherwise use :ca_days for backwards compatibility
-  def ttl
+  def self.ttl
     ttl = Puppet.settings[:ca_ttl]
 
     return ttl unless ttl.is_a?(String)
@@ -89,57 +98,69 @@ class Puppet::SSL::CertificateFactory
     $1.to_i * UNITMAP[$2]
   end
 
-  def set_ttl
-    # Make the certificate valid as of yesterday, because
-    # so many people's clocks are out of sync.
-    from = Time.now - (60*60*24)
-    @cert.not_before = from
-    @cert.not_after = from + ttl
-  end
-
   # Woot! We're a CA.
-  def add_ca_extensions
-    @basic_constraint = "CA:TRUE"
-    @key_usage = %w{cRLSign keyCertSign}
+  def self.build_ca_extensions
+    {
+      # This was accidentally omitted in the previous version of this code: an
+      # effort was made to add it last, but that actually managed to avoid
+      # adding it to the certificate at all.
+      #
+      # We have some sort of bug, which means that when we add it we get a
+      # complaint that the issuer keyid can't be fetched, which breaks all
+      # sorts of things in our test suite and, e.g., bootstrapping the CA.
+      #
+      # http://tools.ietf.org/html/rfc5280#section-4.2.1.1 says that, to be a
+      # conforming CA we MAY omit the field if we are self-signed, which I
+      # think gives us a pass in the specific case.
+      #
+      # It also notes that we MAY derive the ID from the subject and serial
+      # number of the issuer, or from the key ID, and we definitely have the
+      # former data, should we want to restore this...
+      #
+      # Anyway, preserving this bug means we don't risk breaking anything in
+      # the field, even though it would be nice to have. --daniel 2011-10-11
+      #
+      # "authorityKeyIdentifier" => "keyid:always,issuer:always",
+      "keyUsage"               => [%w{cRLSign keyCertSign}, true],
+      "basicConstraints"       => ["CA:TRUE", true],
+    }
   end
 
   # We're a terminal CA, probably not self-signed.
-  def add_terminalsubca_extensions
-    @basic_constraint = "CA:TRUE,pathlen:0"
-    @key_usage = %w{cRLSign keyCertSign}
+  def self.build_terminalsubca_extensions
+    {
+      "keyUsage"         => [%w{cRLSign keyCertSign}, true],
+      "basicConstraints" => ["CA:TRUE,pathlen:0", true],
+    }
   end
 
   # We're a normal server.
-  def add_server_extensions
-    @basic_constraint = "CA:FALSE"
-    dnsnames = Puppet[:certdnsnames]
-    name = @name.to_s.sub(%r{/CN=},'')
-    if dnsnames != ""
-      dnsnames.split(':').each { |d| @subject_alt_name << 'DNS:' + d }
-      @subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
-    elsif name == Facter.value(:fqdn) # we're a CA server, and thus probably the server
-      @subject_alt_name << 'DNS:' + "puppet" # Add 'puppet' as an alias
-      @subject_alt_name << 'DNS:' + name # Add the fqdn as an alias
-      @subject_alt_name << 'DNS:' + name.sub(/^[^.]+./, "puppet.") # add puppet.domain as an alias
-    end
-    @key_usage = %w{digitalSignature keyEncipherment}
-    @ext_key_usage = %w{serverAuth clientAuth emailProtection}
+  def self.build_server_extensions
+    {
+      "keyUsage"         => [%w{digitalSignature keyEncipherment}, true],
+      "extendedKeyUsage" => [%w{serverAuth clientAuth}, true],
+      "basicConstraints" => ["CA:FALSE", true],
+    }
   end
 
   # Um, no idea.
-  def add_ocsp_extensions
-    @basic_constraint = "CA:FALSE"
-    @key_usage = %w{nonRepudiation digitalSignature}
-    @ext_key_usage = %w{serverAuth OCSPSigning}
+  def self.build_ocsp_extensions
+    {
+      "keyUsage"         => [%w{nonRepudiation digitalSignature}, true],
+      "extendedKeyUsage" => [%w{serverAuth OCSPSigning}, true],
+      "basicConstraints" => ["CA:FALSE", true],
+    }
   end
 
   # Normal client.
-  def add_client_extensions
-    @basic_constraint = "CA:FALSE"
-    @key_usage = %w{nonRepudiation digitalSignature keyEncipherment}
-    @ext_key_usage = %w{clientAuth emailProtection}
-
-    @extensions << @ef.create_extension("nsCertType", "client,email")
+  def self.build_client_extensions
+    {
+      "keyUsage"         => [%w{nonRepudiation digitalSignature keyEncipherment}, true],
+      # We don't seem to use this, but that seems much more reasonable here...
+      "extendedKeyUsage" => [%w{clientAuth emailProtection}, true],
+      "basicConstraints" => ["CA:FALSE", true],
+      "nsCertType"       => "client,email",
+    }
   end
 end
 

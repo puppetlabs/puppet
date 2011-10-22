@@ -6,7 +6,6 @@ require 'fileutils'
 require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
-require 'puppet/network/client'
 require 'puppet/util/backups'
 
 Puppet::Type.newtype(:file) do

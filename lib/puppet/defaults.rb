@@ -205,9 +205,58 @@ module Puppet
       to the fully qualified domain name.",
       :call_on_define => true, # Call our hook with the default value, so we're always downcased
       :hook => proc { |value| raise(ArgumentError, "Certificate names must be lower case; see #1168") unless value == value.downcase }},
-    :certdnsnames => ['', "The DNS names on the Server certificate as a colon-separated list.
-      If it's anything other than an empty string, it will be used as an alias in the created
-      certificate.  By default, only the server gets an alias set up, and only for 'puppet'."],
+    :certdnsnames => {
+      :default => '',
+      :hook    => proc do |value|
+        unless value.nil? or value == '' then
+          Puppet.warning <<WARN
+The `certdnsnames` setting is no longer functional,
+after CVE-2011-3872. We ignore the value completely.
+
+For your own certificate request you can set `dns_alt_names` in the
+configuration and it will apply locally.  There is no configuration option to
+set DNS alt names, or any other `subjectAltName` value, for another nodes
+certificate.
+
+Alternately you can use the `--dns_alt_names` command line option to set the
+labels added while generating your own CSR.
+WARN
+        end
+      end,
+      :desc    => <<EOT
+The `certdnsnames` setting is no longer functional,
+after CVE-2011-3872. We ignore the value completely.
+
+For your own certificate request you can set `dns_alt_names` in the
+configuration and it will apply locally.  There is no configuration option to
+set DNS alt names, or any other `subjectAltName` value, for another nodes
+certificate.
+
+Alternately you can use the `--dns_alt_names` command line option to set the
+labels added while generating your own CSR.
+EOT
+    },
+    :dns_alt_names => {
+      :default => '',
+      :desc    => <<EOT,
+The comma-separated list of alternative DNS names to use for the local host.
+
+When the node generates a CSR for itself, these are added to the request
+as the desired `subjectAltName` in the certificate: additional DNS labels
+that the certificate is also valid answering as.
+
+This is generally required if you use a non-hostname `certname`, or if you
+want to use `puppet kick` or `puppet resource -H` and the primary certname
+does not match the DNS name you use to communicate with the host.
+
+This is unnecessary for agents, unless you intend to use them as a server for
+`puppet kick` or remote `puppet resource` management.
+
+It is rarely necessary for servers; it is usually helpful only if you need to
+have a pool of multiple load balanced masters, or for the same master to
+respond on two physically separate networks under different names.
+EOT
+    },
     :certdir => {
       :default => "$ssldir/certs",
       :owner => "service",

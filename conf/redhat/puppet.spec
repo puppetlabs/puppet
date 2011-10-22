@@ -5,13 +5,13 @@
 %global confdir conf/redhat
 
 Name:           puppet
-Version:        2.6.11
+Version:        2.6.12
 Release:        1%{?dist}
 Summary:        A network tool for managing many disparate systems
 License:        GPLv2
 URL:            http://puppetlabs.com
-Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}rc1.tar.gz
-#Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
+Source0:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz
+Source1:        http://puppetlabs.com/downloads/%{name}/%{name}-%{version}.tar.gz.asc
 
 Group:          System Environment/Base
 
@@ -65,7 +65,7 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q -n %{name}-%{version}rc1
+%setup -q -n %{name}-%{version}
 patch -s -p1 < conf/redhat/rundir-perms.patch
 
 
@@ -253,6 +253,9 @@ fi
 rm -rf %{buildroot}
 
 %changelog
+* Fri Oct 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.12-1
+- CVE-2011-3872 fixes
+
 * Fri Sep 30 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.6.11-1
 - CVE-2011-3869, 3870, 3871
 

@@ -9,8 +9,9 @@ test_name "Ticket 5477, Puppet Master does not detect newly created site.pp file
 manifest_file = "/tmp/missing_site-5477-#{$$}.pp"
 
 on master, "rm -f #{manifest_file}"
+on hosts, "rm -rf /etc/puppet/ssl"
 
-with_master_running_on(master, "--manifest #{manifest_file} --certdnsnames=\"puppet:$(hostname -s):$(hostname -f)\" --verbose --filetimeout 1") do
+with_master_running_on(master, "--manifest #{manifest_file} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --verbose --filetimeout 1 --autosign true") do
   # Run test on Agents
   step "Agent: agent --test"
   on agents, puppet_agent("--test")
