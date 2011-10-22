@@ -189,9 +189,10 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
       end
 
       it "should refuse to sign the CSR if DNS alt names are not allowed" do
+        certname = 'someone'
         expect do
-          subject.sign('someone')
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alternative names (.*), which are disallowed./)
+          subject.sign(certname)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{certname}' contains subject alternative names \(.*\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{certname}` to sign this request./i)
 
         host.certificate.should be_nil
       end

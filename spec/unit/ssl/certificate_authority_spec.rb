@@ -385,7 +385,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name, false)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alternative names/)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{@name}` to sign this request./)
       end
 
       it "should not fail if the CSR does not contain alt names and they are expected" do
@@ -398,7 +398,7 @@ describe Puppet::SSL::CertificateAuthority do
 
         expect do
           @ca.sign(@name)
-        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR contained subject alternative names/)
+        end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError, /CSR '#{@name}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{@name}` to sign this request./)
       end
 
       it "should use the CA certificate as the issuer" do

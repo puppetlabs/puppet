@@ -157,7 +157,7 @@ describe Puppet::Face[:certificate, '0.0.1'] do
           expect do
             subject.sign(hostname, options)
           end.to raise_error(Puppet::SSL::CertificateAuthority::CertificateSigningError,
-                             /CSR contained subject alternative names (.*), which are disallowed./)
+                             /CSR '#{hostname}' contains subject alternative names \(.*?\), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{hostname}` to sign this request./i)
 
           host.state.should == 'requested'
         end
