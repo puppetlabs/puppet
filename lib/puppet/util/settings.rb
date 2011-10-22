@@ -16,7 +16,7 @@ class Puppet::Util::Settings
     require 'puppet/util/settings/file_setting'
     require 'puppet/util/settings/boolean_setting'
 
-    attr_accessor :file
+    attr_accessor :file, :setbycli
     attr_reader :timer
 
     # Retrieve a config value
@@ -508,6 +508,11 @@ class Puppet::Util::Settings
             @name = nil
         end
         @sync.synchronize do # yay, thread-safe
+            # Allow later inspection to determine if the setting was set on the
+            # command line, or through some other code path.  Used for the
+            # `dns-alt-names` option during cert generate. --daniel 2011-10-18
+            setting.setbycli = true if type == :cli
+
             @values[type][param] = value
             @cache.clear
 

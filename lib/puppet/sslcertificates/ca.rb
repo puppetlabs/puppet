@@ -263,7 +263,7 @@ class Puppet::SSLCertificates::CA
             :publickey => csr.public_key
         )
 
-
+        newcert = Puppet::SSL::CertificateFactory.build(:server, csr, @cert, serial)
         sign_with_key(newcert)
 
         self.storeclientcert(newcert)

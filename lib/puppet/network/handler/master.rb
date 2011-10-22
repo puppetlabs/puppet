@@ -1,7 +1,5 @@
 require 'openssl'
 require 'puppet'
-require 'puppet/parser/interpreter'
-require 'puppet/sslcertificates'
 require 'xmlrpc/server'
 require 'yaml'
 
@@ -34,14 +32,6 @@ class Puppet::Network::Handler
                 @local = hash[:Local]
             else
                 @local = false
-            end
-
-            args[:Local] = true
-
-            if hash.include?(:CA) and hash[:CA]
-                @ca = Puppet::SSLCertificates::CA.new()
-            else
-                @ca = nil
             end
 
             Puppet.debug("Creating interpreter")

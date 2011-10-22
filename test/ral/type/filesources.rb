@@ -236,7 +236,7 @@ class TestFileSources < Test::Unit::TestCase
 
         Puppet[:autosign] = true
         Puppet[:masterport] = @port
-        Puppet[:certdnsnames] = "localhost"
+        Puppet[:dns_alt_names] = "localhost"
 
         serverpid = nil
         assert_nothing_raised("Could not start on port %s" % @port) {

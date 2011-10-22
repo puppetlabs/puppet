@@ -27,8 +27,14 @@ class Puppet::SSL::Certificate < Puppet::SSL::Base
         [:s]
     end
 
+    def subject_alt_names
+        alts = content.extensions.find{|ext| ext.oid == "subjectAltName"}
+        return [] unless alts
+        alts.value.split(/\s*,\s*/)
+    end
+
     def expiration
         return nil unless content
-        return content.not_after
+        content.not_after
     end
 end

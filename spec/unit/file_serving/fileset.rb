@@ -307,6 +307,8 @@ describe Puppet::FileServing::Fileset, "when merging other filesets" do
     before do
         @paths = %w{/first/path /second/path /third/path}
 
+        File.stubs(:lstat).returns stub("file stat", :directory? => false)
+
         @filesets = @paths.collect do |path|
             File.stubs(:lstat).with(path).returns stub("stat", :directory? => true)
             Puppet::FileServing::Fileset.new(path, :recurse => true)

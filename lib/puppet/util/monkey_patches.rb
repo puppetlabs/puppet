@@ -44,3 +44,57 @@ if RUBY_VERSION == '1.8.7'
     end
 end
 
+class Array
+  # Ruby < 1.8.7 doesn't have this method but we use it in tests
+  def combination(num)
+    return [] if num < 0 || num > size
+    return [[]] if num == 0
+    return map{|e| [e] } if num == 1
+    tmp = self.dup
+    self[0, size - (num - 1)].inject([]) do |ret, e|
+      tmp.shift
+      ret += tmp.combination(num - 1).map{|a| a.unshift(e) }
+    end
+  end unless method_defined? :combination
+
+  alias :count :length unless method_defined? :count
+end
+
+
+class Symbol
+  def to_proc
+    Proc.new { |*args| args.shift.__send__(self, *args) }
+  end unless method_defined? :to_proc
+end
+
+module Enumerable
+  # Use *args so we can distinguish no argument from nil.
+  def count(*args)
+    seq = 0
+    if !args.empty?
+      item = args[0]
+      each { |o| seq += 1 if item == o }
+    elsif block_given?
+      each { |o| seq += 1 if yield(o) }
+    else
+      each { seq += 1 }
+    end
+    seq
+  end unless method_defined? :count
+end
+
+class String
+  def lines(separator = $/)
+    lines = split(separator)
+    block_given? and lines.each {|line| yield line }
+    lines
+  end
+end
+
+class IO
+  def lines(separator = $/)
+    lines = split(separator)
+    block_given? and lines.each {|line| yield line }
+    lines
+  end
+end
