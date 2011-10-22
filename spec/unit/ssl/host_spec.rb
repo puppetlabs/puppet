@@ -2,9 +2,13 @@
 
 require File.dirname(__FILE__) + '/../../spec_helper'
 
+require 'puppet_spec/files'
+
 require 'puppet/ssl/host'
 
 describe Puppet::SSL::Host do
+  include PuppetSpec::Files
+
   before do
     @class = Puppet::SSL::Host
     @host = @class.new("myname")
@@ -62,6 +66,20 @@ describe Puppet::SSL::Host do
     host.expects(:generate)
 
     Puppet::SSL::Host.localhost.should equal(host)
+  end
+
+  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names" do
+    Puppet[:autosign] = true
+    Puppet[:confdir] = tmpfile('conf')
+    Puppet[:dns_alt_names] = "foo,bar,baz"
+    ca = Puppet::SSL::CertificateAuthority.new
+    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+
+    localhost = Puppet::SSL::Host.localhost
+    cert = localhost.certificate
+
+    cert.should be_a(Puppet::SSL::Certificate)
+    cert.subject_alt_names.should =~ %W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz]
   end
 
   context "with dns_alt_names" do
