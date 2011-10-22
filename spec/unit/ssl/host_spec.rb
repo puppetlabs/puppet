@@ -80,6 +80,20 @@ describe Puppet::SSL::Host, :fails_on_windows => true do
     Puppet::SSL::Host.localhost.should equal(host)
   end
 
+  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names" do
+    Puppet[:autosign] = true
+    Puppet[:confdir] = tmpdir('conf')
+    Puppet[:dns_alt_names] = "foo,bar,baz"
+    ca = Puppet::SSL::CertificateAuthority.new
+    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+
+    localhost = Puppet::SSL::Host.localhost
+    cert = localhost.certificate
+
+    cert.should be_a(Puppet::SSL::Certificate)
+    cert.subject_alt_names.should =~ %W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz]
+  end
+
   context "with dns_alt_names" do
     before :each do
       Puppet[:dns_alt_names] = 'one, two'
