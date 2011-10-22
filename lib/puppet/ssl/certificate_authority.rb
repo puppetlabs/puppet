@@ -313,18 +313,18 @@ class Puppet::SSL::CertificateAuthority
       # If you alt names are allowed, they are required. Otherwise they are
       # disallowed. Self-signed certs are implicitly trusted, however.
       unless allow_dns_alt_names
-        raise CertificateSigningError.new(hostname), "CSR contained subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use --allow-dns-alt-names to sign this request."
+        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains subject alternative names (#{csr.subject_alt_names.join(', ')}), which are disallowed. Use `puppet cert --allow-dns-alt-names sign #{csr.name}` to sign this request."
       end
 
       # If subjectAltNames are present, validate that they are only for DNS
       # labels, not any other kind.
       unless csr.subject_alt_names.all? {|x| x =~ /^DNS:/ }
-        raise CertificateSigningError.new(hostname), "CSR contained a subjectAltName outside the DNS label space: #{csr.subject_alt_names.join(', ')}"
+        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' contains a subjectAltName outside the DNS label space: #{csr.subject_alt_names.join(', ')}.  To continue, this CSR needs to be cleaned."
       end
 
       # Check for wildcards in the subjectAltName fields too.
       if csr.subject_alt_names.any? {|x| x.include? '*' }
-        raise CertificateSigningError.new(hostname), "CSR subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}"
+        raise CertificateSigningError.new(hostname), "CSR '#{csr.name}' subjectAltName contains a wildcard, which is not allowed: #{csr.subject_alt_names.join(', ')}  To continue, this CSR needs to be cleaned."
       end
     end
 
