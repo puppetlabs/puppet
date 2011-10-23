@@ -1552,7 +1552,7 @@ class Type
 
   def suitable?
     # If we don't use providers, then we consider it suitable.
-    return true unless self.class.paramclass(:provider)
+    return true unless self.class.parameter(:provider)
 
     # We have a provider and it is suitable.
     return true if provider && provider.class.suitable?

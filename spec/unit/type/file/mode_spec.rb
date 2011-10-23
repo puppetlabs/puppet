@@ -2,7 +2,7 @@
 
 require 'spec_helper'
 
-describe Puppet::Type.type(:file).attrclass(:mode) do
+describe Puppet::Type.type(:file).parameter(:mode) do
   include PuppetSpec::Files
 
   let(:path) { tmpfile('mode_spec') }

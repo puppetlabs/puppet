@@ -777,7 +777,11 @@ describe Puppet::Type, :unless => Puppet.features.microsoft_windows? do
     let(:provider) { resource.provider }
 
     it "should be suitable if its type doesn't use providers" do
-      type.stubs(:paramclass).with(:provider).returns nil
+      path = type.parameter(:path)
+      # The specific parameter doesn't matter here, just that we don't
+      # fail because of this big stub.
+      type.stubs(:parameter).returns path
+      type.stubs(:parameter).with(:provider).returns nil
       resource.must be_suitable
     end
 
@@ -947,7 +951,7 @@ describe Puppet::Type::RelationshipMetaparam do
   end
 end
 
-describe Puppet::Type.metaparameter(:check) do
+describe Puppet::Type.parameter(:check) do
   include PuppetSpec::Files
   it "should warn and create an instance of ':audit'" do
     file = Puppet::Type.type(:file).new :path => make_absolute('/foo')
@@ -957,7 +961,7 @@ describe Puppet::Type.metaparameter(:check) do
   end
 end
 
-describe Puppet::Type.metaparameter(:audit) do
+describe Puppet::Type.parameter(:audit) do
   include PuppetSpec::Files
   before do
     @resource = Puppet::Type.type(:file).new :path => make_absolute('/foo')
