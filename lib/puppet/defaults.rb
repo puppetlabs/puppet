@@ -480,6 +480,9 @@ module Puppet
         subdirectory."},
     :reporturl => ["http://localhost:3000/reports/upload",
       "The URL used by the http reports processor to send reports"],
+    :reporturl_ssl_verify => [ false, "Whether to verify SSL connections for reporting URL."],
+    :reporturl_ssl_cert => ["/etc/ssl/certs/ca-certificates.crt",
+      "File path to SSL CA certificate for HTTPS connections to report URL."],
     :fileserverconfig => ["$confdir/fileserver.conf", "Where the fileserver configuration is stored."],
     :strict_hostname_checking => [false, "Whether to only search for the complete
       hostname as it is in the certificate when searching for node information
