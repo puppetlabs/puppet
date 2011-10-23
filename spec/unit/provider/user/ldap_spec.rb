@@ -50,14 +50,16 @@ describe provider_class do
       # So we don't try to actually talk to ldap
       @connection = mock 'connection'
       provider_class.manager.stubs(:connect).yields @connection
+      @resource = Puppet::Type.type(:user).new(:name => "luke", :ensure => :present, :comment => "Luke Kanies")
     end
 
     it "should generate the sn as the last field of the cn" do
-      resource = stub 'resource', :should => %w{whatever}
-      resource.stubs(:should).with(:comment).returns ["Luke Kanies"]
-      resource.stubs(:should).with(:ensure).returns :present
+      @resource[:comment] = "Luke Kanies"
+
+      # So it doesn't try to autogen one, which requires more mocking
+      @resource[:uid] = 100
       instance = provider_class.new(:name => "luke", :ensure => :absent)
-      instance.stubs(:resource).returns resource
+      instance.resource = @resource
 
       @connection.expects(:add).with { |dn, attrs| attrs["sn"] == ["Kanies"] }
 
@@ -71,11 +73,8 @@ describe provider_class do
         high = {:name=>["testing"], :shell=>:absent, :uid=>["640"], :home=>["/h"], :gid=>["1000"], :password=>["blah"], :comment=>["t u"]}
         provider_class.manager.expects(:search).returns([low, high])
 
-        resource = stub 'resource', :should => %w{whatever}
-        resource.stubs(:should).with(:uid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
         instance = provider_class.new(:name => "luke", :ensure => :absent)
-        instance.stubs(:resource).returns resource
+        instance.resource = @resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["641"] }
 
@@ -86,11 +85,8 @@ describe provider_class do
       it "should pick 501 of no users exist" do
         provider_class.manager.expects(:search).returns nil
 
-        resource = stub 'resource', :should => %w{whatever}
-        resource.stubs(:should).with(:uid).returns nil
-        resource.stubs(:should).with(:ensure).returns :present
         instance = provider_class.new(:name => "luke", :ensure => :absent)
-        instance.stubs(:resource).returns resource
+        instance.resource = @resource
 
         @connection.expects(:add).with { |dn, attrs| attrs["uidNumber"] == ["501"] }
 
