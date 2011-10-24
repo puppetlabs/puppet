@@ -1,5 +1,6 @@
 require 'puppet/run'
 require 'puppet/network/handler'
+require 'xmlrpc/server'
 
 class Puppet::Network::Handler
   class MissingMasterError < RuntimeError; end # Cannot find the master client
