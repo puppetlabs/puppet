@@ -2,6 +2,7 @@ require 'openssl'
 require 'puppet'
 require 'xmlrpc/server'
 require 'yaml'
+require 'puppet/network/handler'
 
 class Puppet::Network::Handler
   class MasterError < Puppet::Error; end

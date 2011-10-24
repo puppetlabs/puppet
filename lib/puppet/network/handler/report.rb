@@ -1,5 +1,7 @@
 require 'puppet/util/instance_loader'
 require 'puppet/reports'
+require 'puppet/network/handler'
+require 'xmlrpc/server'
 
 # A simple server for triggering a new run on a Puppet client.
 class Puppet::Network::Handler

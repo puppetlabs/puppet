@@ -4,6 +4,7 @@ require 'webrick/httpstatus'
 require 'cgi'
 require 'delegate'
 require 'sync'
+require 'puppet/network/handler'
 
 require 'puppet/network/handler'
 require 'puppet/network/xmlrpc/server'
