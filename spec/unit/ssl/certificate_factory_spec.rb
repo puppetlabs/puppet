@@ -4,103 +4,123 @@ require 'spec_helper'
 require 'puppet/ssl/certificate_factory'
 
 describe Puppet::SSL::CertificateFactory do
-  before do
-    @cert_type = mock 'cert_type'
-    @name = mock 'name'
-    @csr = stub 'csr', :subject => @name
-    @issuer = mock 'issuer'
-    @serial = mock 'serial'
-
-    @factory = Puppet::SSL::CertificateFactory.new(@cert_type, @csr, @issuer, @serial)
+  let :serial    do OpenSSL::BN.new('12') end
+  let :name      do "example.local" end
+  let :x509_name do OpenSSL::X509::Name.new([['CN', name]]) end
+  let :key       do Puppet::SSL::Key.new(name).generate end
+  let :csr       do
+    csr = Puppet::SSL::CertificateRequest.new(name)
+    csr.generate(key)
+    csr
   end
-
-  describe "when initializing" do
-    it "should set its :cert_type to its first argument" do
-      @factory.cert_type.should equal(@cert_type)
-    end
-
-    it "should set its :csr to its second argument" do
-      @factory.csr.should equal(@csr)
-    end
-
-    it "should set its :issuer to its third argument" do
-      @factory.issuer.should equal(@issuer)
-    end
-
-    it "should set its :serial to its fourth argument" do
-      @factory.serial.should equal(@serial)
-    end
-
-    it "should set its name to the subject of the csr" do
-      @factory.name.should equal(@name)
-    end
+  let :issuer do
+    cert = OpenSSL::X509::Certificate.new
+    cert.subject = OpenSSL::X509::Name.new([["CN", 'issuer.local']])
+    cert
   end
 
   describe "when generating the certificate" do
-    before do
-      @cert = mock 'cert'
-
-      @cert.stub_everything
-
-      @factory.stubs :build_extensions
-
-      @factory.stubs :set_ttl
-
-      @issuer_name = mock 'issuer_name'
-      @issuer.stubs(:subject).returns @issuer_name
-
-      @public_key = mock 'public_key'
-      @csr.stubs(:public_key).returns @public_key
-
-      OpenSSL::X509::Certificate.stubs(:new).returns @cert
-    end
-
     it "should return a new X509 certificate" do
-      OpenSSL::X509::Certificate.expects(:new).returns @cert
-      @factory.result.should equal(@cert)
+      subject.build(:server, csr, issuer, serial).should_not ==
+        subject.build(:server, csr, issuer, serial)
     end
 
     it "should set the certificate's version to 2" do
-      @cert.expects(:version=).with 2
-      @factory.result
+      subject.build(:server, csr, issuer, serial).version.should == 2
     end
 
     it "should set the certificate's subject to the CSR's subject" do
-      @cert.expects(:subject=).with @name
-      @factory.result
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.subject.should eql x509_name
     end
 
     it "should set the certificate's issuer to the Issuer's subject" do
-      @cert.expects(:issuer=).with @issuer_name
-      @factory.result
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.issuer.should eql issuer.subject
     end
 
     it "should set the certificate's public key to the CSR's public key" do
-      @cert.expects(:public_key=).with @public_key
-      @factory.result
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.public_key.should be_public
+      cert.public_key.to_s.should == csr.content.public_key.to_s
     end
 
     it "should set the certificate's serial number to the provided serial number" do
-      @cert.expects(:serial=).with @serial
-      @factory.result
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.serial.should == serial
+    end
+
+    it "should have 24 hours grace on the start of the cert" do
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.not_before.should be_within(1).of(Time.now - 24*60*60)
+    end
+
+    it "should set the default TTL of the certificate" do
+      ttl  = Puppet::SSL::CertificateFactory.ttl
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.not_after.should be_within(1).of(Time.now + ttl)
+    end
+
+    it "should respect a custom TTL for the CA" do
+      Puppet[:ca_ttl] = 12
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.not_after.should be_within(1).of(Time.now + 12)
     end
 
     it "should build extensions for the certificate" do
-      @factory.expects(:build_extensions)
-      @factory.result
+      cert = subject.build(:server, csr, issuer, serial)
+      cert.extensions.map {|x| x.to_h }.find {|x| x["oid"] == "nsComment" }.should ==
+        { "oid"      => "nsComment",
+          "value"    => "Puppet Ruby/OpenSSL Internal Certificate",
+          "critical" => false }
     end
 
-    it "should set the ttl of the certificate" do
-      @factory.expects(:set_ttl)
-      @factory.result
+    # See #2848 for why we are doing this: we need to make sure that
+    # subjectAltName is set if the CSR has it, but *not* if it is set when the
+    # certificate is built!
+    it "should not add subjectAltNames from dns_alt_names" do
+      Puppet[:dns_alt_names] = 'one, two'
+      # Verify the CSR still has no extReq, just in case...
+      csr.request_extensions.should == []
+      cert = subject.build(:server, csr, issuer, serial)
+
+      cert.extensions.find {|x| x.oid == 'subjectAltName' }.should be_nil
     end
-  end
 
-  describe "when building extensions" do
-    it "should have tests"
-  end
+    it "should add subjectAltName when the CSR requests them" do
+      Puppet[:dns_alt_names] = ''
 
-  describe "when setting the ttl" do
-    it "should have tests"
+      expect = %w{one two} + [name]
+
+      csr = Puppet::SSL::CertificateRequest.new(name)
+      csr.generate(key, :dns_alt_names => expect.join(', '))
+
+      csr.request_extensions.should_not be_nil
+      csr.subject_alt_names.should =~ expect.map{|x| "DNS:#{x}"}
+
+      cert = subject.build(:server, csr, issuer, serial)
+      san = cert.extensions.find {|x| x.oid == 'subjectAltName' }
+      san.should_not be_nil
+      expect.each do |name|
+        san.value.should =~ /DNS:#{name}\b/i
+      end
+    end
+
+    # Can't check the CA here, since that requires way more infrastructure
+    # that I want to build up at this time.  We can verify the critical
+    # values, though, which are non-CA certs. --daniel 2011-10-11
+    { :ca            => 'CA:TRUE',
+      :terminalsubca => ['CA:TRUE', 'pathlen:0'],
+      :server        => 'CA:FALSE',
+      :ocsp          => 'CA:FALSE',
+      :client        => 'CA:FALSE',
+    }.each do |name, value|
+      it "should set basicConstraints for #{name} #{value.inspect}" do
+        cert = subject.build(name, csr, issuer, serial)
+        bc = cert.extensions.find {|x| x.oid == 'basicConstraints' }
+        bc.should be
+        bc.value.split(/\s*,\s*/).should =~ Array(value)
+      end
+    end
   end
 end

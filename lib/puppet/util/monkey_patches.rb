@@ -103,6 +103,8 @@ class Array
       ret += tmp.combination(num - 1).map{|a| a.unshift(e) }
     end
   end unless method_defined? :combination
+
+  alias :count :length unless method_defined? :count
 end
 
 
@@ -110,4 +112,21 @@ class Symbol
   def to_proc
     Proc.new { |*args| args.shift.__send__(self, *args) }
   end unless method_defined? :to_proc
+end
+
+
+class String
+  def lines(separator = $/)
+    lines = split(separator)
+    block_given? and lines.each {|line| yield line }
+    lines
+  end
+end
+
+class IO
+  def lines(separator = $/)
+    lines = split(separator)
+    block_given? and lines.each {|line| yield line }
+    lines
+  end
 end

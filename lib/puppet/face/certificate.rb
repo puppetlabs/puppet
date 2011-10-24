@@ -51,10 +51,21 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       $ puppet certificate generate somenode.puppetlabs.lan --ca-location remote
     EOT
 
+    # Duplicate the option here explicitly to distinguish if it was passed arg
+    # us vs. set in the config file.
+    option "--dns-alt-names NAMES" do
+      summary "Additional DNS names to add to the certificate request"
+      description Puppet.settings.setting(:dns_alt_names).desc
+    end
+
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
-      host.generate_certificate_request
-      host.certificate_request.class.indirection.save(host.certificate_request)
+
+      # If dns_alt_names are specified via the command line, we will always add
+      # them. Otherwise, they will default to the config file setting iff this
+      # cert is for the host we're running on.
+
+      host.generate_certificate_request(:dns_alt_names => options[:dns_alt_names])
     end
   end
 
@@ -86,10 +97,28 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
       $ puppet certificate sign somenode.puppetlabs.lan --ca-location remote
     EOT
 
+    option("--[no-]allow-dns-alt-names") do
+      summary "Whether or not to accept DNS alt names in the certificate request"
+    end
+
     when_invoked do |name, options|
       host = Puppet::SSL::Host.new(name)
-      host.desired_state = 'signed'
-      Puppet::SSL::Host.indirection.save(host)
+      if options[:ca_location] == :remote
+        if options[:allow_dns_alt_names]
+          raise ArgumentError, "--allow-dns-alt-names may not be specified with a remote CA"
+        end
+
+        host.desired_state = 'signed'
+        Puppet::SSL::Host.indirection.save(host)
+      else
+        # We have to do this case manually because we need to specify
+        # allow_dns_alt_names.
+        unless ca = Puppet::SSL::CertificateAuthority.instance
+          raise ArgumentError, "This process is not configured as a certificate authority"
+        end
+
+        ca.sign(name, options[:allow_dns_alt_names])
+      end
     end
   end
 

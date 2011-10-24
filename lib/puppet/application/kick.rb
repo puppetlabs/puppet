@@ -173,8 +173,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def main
-    require 'puppet/network/client'
-
     Puppet.warning "Failed to load ruby LDAP library. LDAP functionality will not be available" unless Puppet.features.ldap?
     require 'puppet/util/ldap/connection'
 

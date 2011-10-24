@@ -44,6 +44,17 @@ describe "Puppet defaults" do
     end
   end
 
+  describe "when :certdnsnames is set" do
+    it "should not fail" do
+      expect { Puppet[:certdnsnames] = 'fred:wilma' }.should_not raise_error
+    end
+
+    it "should warn the value is ignored" do
+      Puppet.expects(:warning).with {|msg| msg =~ /CVE-2011-3872/ }
+      Puppet[:certdnsnames] = 'fred:wilma'
+    end
+  end
+
   describe "when configuring the :crl" do
     it "should warn if :cacrl is set to false" do
       Puppet.expects(:warning)

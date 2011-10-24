@@ -2,8 +2,6 @@
 require 'spec_helper'
 
 require 'puppet/ssl/host'
-require 'puppet/sslcertificates'
-require 'puppet/sslcertificates/ca'
 require 'puppet/indirector/certificate_request/ca'
 
 describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microsoft_windows? do
@@ -14,7 +12,6 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
 
     Puppet::SSL::Host.ca_location = :local
     Puppet[:localcacert] = Puppet[:cacert]
-    Puppet::SSLCertificates::CA.new.mkrootcert
 
     @ca = Puppet::SSL::CertificateAuthority.new
   end

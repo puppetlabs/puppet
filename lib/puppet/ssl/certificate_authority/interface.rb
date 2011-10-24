@@ -9,7 +9,7 @@ module Puppet
 
         class InterfaceError < ArgumentError; end
 
-        attr_reader :method, :subjects, :digest
+        attr_reader :method, :subjects, :digest, :options
 
         # Actually perform the work.
         def apply(ca)
@@ -35,49 +35,94 @@ module Puppet
           raise InterfaceError, "It makes no sense to generate all hosts; you must specify a list" if subjects == :all
 
           subjects.each do |host|
-            ca.generate(host)
+            ca.generate(host, options)
           end
         end
 
         def initialize(method, options)
           self.method = method
-          self.subjects = options[:to]
-          @digest = options[:digest] || :MD5
+          self.subjects = options.delete(:to)
+          @digest = options.delete(:digest) || :MD5
+          @options = options
         end
 
         # List the hosts.
         def list(ca)
-          unless subjects
-            puts ca.waiting?.join("\n")
-            return nil
-          end
-
           signed = ca.list
           requests = ca.waiting?
 
-          if subjects == :all
+          case subjects
+          when :all
             hosts = [signed, requests].flatten
-          elsif subjects == :signed
+          when :signed
             hosts = signed.flatten
+          when nil
+            hosts = requests
           else
             hosts = subjects
           end
 
+          certs = {:signed => {}, :invalid => {}, :request => {}}
+
+          return if hosts.empty?
+
           hosts.uniq.sort.each do |host|
-            invalid = false
             begin
               ca.verify(host) unless requests.include?(host)
             rescue Puppet::SSL::CertificateAuthority::CertificateVerificationError => details
-              invalid = details.to_s
+              verify_error = details.to_s
             end
-            if not invalid and signed.include?(host)
-              puts "+ #{host} (#{ca.fingerprint(host, @digest)})"
-            elsif invalid
-              puts "- #{host} (#{ca.fingerprint(host, @digest)}) (#{invalid})"
+
+            if verify_error
+              cert = Puppet::SSL::Certificate.indirection.find(host)
+              certs[:invalid][host] = [cert, verify_error]
+            elsif signed.include?(host)
+              cert = Puppet::SSL::Certificate.indirection.find(host)
+              certs[:signed][host] = cert
             else
-              puts "#{host} (#{ca.fingerprint(host, @digest)})"
+              req = Puppet::SSL::CertificateRequest.indirection.find(host)
+              certs[:request][host] = req
             end
           end
+
+          names = certs.values.map(&:keys).flatten
+
+          name_width = names.sort_by(&:length).last.length rescue 0
+
+          output = [:request, :signed, :invalid].map do |type|
+            next if certs[type].empty?
+
+            certs[type].map do |host,info|
+              format_host(ca, host, type, info, name_width)
+            end
+          end.flatten.compact.sort.join("\n")
+
+          puts output
+        end
+
+        def format_host(ca, host, type, info, width)
+          certish, verify_error = info
+          alt_names = case type
+                      when :signed
+                        certish.subject_alt_names
+                      when :request
+                        certish.subject_alt_names
+                      else
+                        []
+                      end
+
+          alt_names.delete(host)
+
+          alt_str = "(alt names: #{alt_names.join(', ')})" unless alt_names.empty?
+
+          glyph = {:signed => '+', :request => ' ', :invalid => '-'}[type]
+
+          name = host.ljust(width)
+          fingerprint = "(#{ca.fingerprint(host, @digest)})"
+
+          explanation = "(#{verify_error})" if verify_error
+
+          [glyph, name, fingerprint, alt_str, explanation].compact.join(' ')
         end
 
         # Set the method to apply.
@@ -113,7 +158,7 @@ module Puppet
           list = subjects == :all ? ca.waiting? : subjects
           raise InterfaceError, "No waiting certificate requests to sign" if list.empty?
           list.each do |host|
-            ca.sign(host)
+            ca.sign(host, options[:allow_dns_alt_names])
           end
         end
 

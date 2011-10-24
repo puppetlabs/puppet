@@ -10,6 +10,7 @@ class Puppet::Application::Cert < Puppet::Application
   def subcommand
     @subcommand
   end
+
   def subcommand=(name)
     # Handle the nasty, legacy mapping of "clean" to "destroy".
     sub = name.to_sym
@@ -38,9 +39,13 @@ class Puppet::Application::Cert < Puppet::Application
 
   require 'puppet/ssl/certificate_authority/interface'
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject {|m| m == :destroy }.each do |method|
-    option("--#{method}", "-#{method.to_s[0,1]}") do
+    option("--#{method.to_s.gsub('_','-')}", "-#{method.to_s[0,1]}") do
       self.subcommand = method
     end
+  end
+
+  option("--[no-]allow-dns-alt-names") do |value|
+    options[:allow_dns_alt_names] = value
   end
 
   option("--verbose", "-v") do
@@ -181,8 +186,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       hosts = command_line.args.collect { |h| h.downcase }
     end
     begin
-      @ca.apply(:revoke, :to => hosts) if subcommand == :destroy
-      @ca.apply(subcommand, :to => hosts, :digest => @digest)
+      @ca.apply(:revoke, options.merge(:to => hosts)) if subcommand == :destroy
+      @ca.apply(subcommand, options.merge(:to => hosts, :digest => @digest))
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       puts detail.to_s
@@ -200,6 +205,15 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet::SSL::Host.ca_location = :local
     else
       Puppet::SSL::Host.ca_location = :only
+    end
+
+    # If we are generating, and the option came from the CLI, it gets added to
+    # the data.  This will do the right thing for non-local certificates, in
+    # that the command line but *NOT* the config file option will apply.
+    if subcommand == :generate
+      if Puppet.settings.setting(:dns_alt_names).setbycli
+        options[:dns_alt_names] = Puppet[:dns_alt_names]
+      end
     end
 
     begin
