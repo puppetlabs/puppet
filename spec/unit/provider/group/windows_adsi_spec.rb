@@ -47,15 +47,31 @@ describe Puppet::Type.type(:group).provider(:windows_adsi) do
     end
   end
 
-  it "should be able to create a group" do
-    resource[:members] = ['user1', 'user2']
+  describe 'when creating groups' do
+    it "should be able to create a group" do
+      resource[:members] = ['user1', 'user2']
 
-    group = stub 'group'
-    Puppet::Util::ADSI::Group.expects(:create).with('testers').returns group
+      group = stub 'group'
+      Puppet::Util::ADSI::Group.expects(:create).with('testers').returns group
 
-    group.expects(:set_members).with(['user1', 'user2'])
+      create = sequence('create')
+      group.expects(:commit).in_sequence(create)
+      group.expects(:set_members).with(['user1', 'user2']).in_sequence(create)
 
-    provider.create
+      provider.create
+    end
+
+    it 'should not create a group if a user by the same name exists' do
+      Puppet::Util::ADSI::Group.expects(:create).with('testers').raises( Puppet::Error.new("Cannot create group if user 'testers' exists.") )
+      expect{ provider.create }.to raise_error( Puppet::Error,
+        /Cannot create group if user 'testers' exists./ )
+    end
+
+    it 'should commit a newly created group' do
+      provider.group.expects( :commit )
+
+      provider.flush
+    end
   end
 
   it "should be able to test whether a group exists" do

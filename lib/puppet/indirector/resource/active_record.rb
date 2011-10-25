@@ -16,9 +16,8 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
 
   private
   def request_to_type_name(request)
-    name = request.key.split('/', 2)[0]
-    type = Puppet::Type.type(name) or raise Puppet::Error, "Could not find type #{name}"
-    type.name
+    request.key.split('/', 2)[0] or
+      raise "No key found in the request, failing: #{request.inspect}"
   end
 
   def filter_to_active_record(filter)
@@ -59,13 +58,7 @@ class Puppet::Resource::ActiveRecord < Puppet::Indirector::ActiveRecord
     raise Puppet::DevError, "Cannot collect resources for a nil host" unless host
 
     search = "(exported=? AND restype=?)"
-    # Some versions of ActiveRecord just to_s a symbol, which our type is, but
-    # others preserve the symbol-nature, which causes our storage (string) and
-    # query (symbol) to mismatch.  So, manually stringify. --daniel 2011-09-08
-    #
-    # Also, PostgreSQL is case sensitive; we need to make sure our type name
-    # here matches what we inject. --daniel 2011-09-30
-    arguments = [true, type.to_s.capitalize]
+    arguments = [true, type]
 
     if filter then
       sql, values = filter_to_active_record(filter)

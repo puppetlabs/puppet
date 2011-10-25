@@ -439,4 +439,99 @@ describe Puppet::Util do
       end
     end
   end
+
+  describe "#which" do
+    let(:base) { File.expand_path('/bin') }
+    let(:path) { File.join(base, 'foo') }
+
+    before :each do
+      FileTest.stubs(:file?).returns false
+      FileTest.stubs(:file?).with(path).returns true
+
+      FileTest.stubs(:executable?).returns false
+      FileTest.stubs(:executable?).with(path).returns true
+    end
+
+    it "should accept absolute paths" do
+      Puppet::Util.which(path).should == path
+    end
+
+    it "should return nil if no executable found" do
+      Puppet::Util.which('doesnotexist').should be_nil
+    end
+
+    it "should reject directories" do
+      Puppet::Util.which(base).should be_nil
+    end
+
+    describe "on POSIX systems" do
+      before :each do
+        Puppet.features.stubs(:posix?).returns true
+        Puppet.features.stubs(:microsoft_windows?).returns false
+      end
+
+      it "should walk the search PATH returning the first executable" do
+        ENV.stubs(:[]).with('PATH').returns(File.expand_path('/bin'))
+
+        Puppet::Util.which('foo').should == path
+      end
+    end
+
+    describe "on Windows systems" do
+      let(:path) { File.expand_path(File.join(base, 'foo.CMD')) }
+
+      before :each do
+        Puppet.features.stubs(:posix?).returns false
+        Puppet.features.stubs(:microsoft_windows?).returns true
+      end
+
+      describe "when a file extension is specified" do
+        it "should walk each directory in PATH ignoring PATHEXT" do
+          ENV.stubs(:[]).with('PATH').returns(%w[/bar /bin].map{|dir| File.expand_path(dir)}.join(File::PATH_SEPARATOR))
+
+          FileTest.expects(:file?).with(File.join(File.expand_path('/bar'), 'foo.CMD')).returns false
+
+          ENV.expects(:[]).with('PATHEXT').never
+          Puppet::Util.which('foo.CMD').should == path
+        end
+      end
+
+      describe "when a file extension is not specified" do
+        it "should walk each extension in PATHEXT until an executable is found" do
+          ENV.stubs(:[]).with('PATH').returns(base)
+          ENV.stubs(:[]).with('PATHEXT').returns(".EXE#{File::PATH_SEPARATOR}.CMD")
+
+          exts = sequence('extensions')
+          FileTest.expects(:file?).in_sequence(exts).with(File.join(base, 'foo.EXE')).returns false
+          FileTest.expects(:file?).in_sequence(exts).with(path).returns true
+
+          Puppet::Util.which('foo').should == path
+        end
+
+        it "should walk the default extension path if the environment variable is not defined" do
+          ENV.stubs(:[]).with('PATH').returns(base)
+          ENV.stubs(:[]).with('PATHEXT').returns(nil)
+
+          exts = sequence('extensions')
+          %w[.COM .EXE .BAT].each do |ext|
+            FileTest.expects(:file?).in_sequence(exts).with(File.join(base, "foo#{ext}")).returns false
+          end
+          FileTest.expects(:file?).in_sequence(exts).with(path).returns true
+
+          Puppet::Util.which('foo').should == path
+        end
+
+        it "should fall back if no extension matches" do
+          ENV.stubs(:[]).with('PATH').returns(base)
+          ENV.stubs(:[]).with('PATHEXT').returns(".EXE")
+
+          FileTest.stubs(:file?).with(File.join(base, 'foo.EXE')).returns false
+          FileTest.stubs(:file?).with(File.join(base, 'foo')).returns true
+          FileTest.stubs(:executable?).with(File.join(base, 'foo')).returns true
+
+          Puppet::Util.which('foo').should == File.join(base, 'foo')
+        end
+      end
+    end
+  end
 end
