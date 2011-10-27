@@ -107,8 +107,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       if additional_key_attributes.include?(name)
         doc = "(**Namevar:** If omitted, this parameter's value defaults to the resource's title.)\n\n" + doc
       end
-      str << markdown_header(name, 5)
-      str << doc
+      str << markdown_definitionlist(name, doc)
     }
     str << "\n"
   }
