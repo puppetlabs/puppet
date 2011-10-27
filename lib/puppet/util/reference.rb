@@ -85,6 +85,16 @@ class Puppet::Util::Reference
     "#{HEADER_LEVELS[level]} #{name}\n\n"
   end
 
+  def markdown_definitionlist(term, definition)
+    lines = definition.split("\n")
+    str = "#{term}\n: #{lines.shift}\n"
+    lines.each do |line|
+      str << "    " if line =~ /\S/
+      str << "#{line}\n"
+    end
+    str << "\n"
+  end
+
   def initialize(name, options = {}, &block)
     @name = name
     options.each do |option, value|
