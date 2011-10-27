@@ -109,17 +109,6 @@ class Puppet::Util::Reference
     ":#{name.to_s.capitalize}: #{value}\n"
   end
 
-  def paramwrap(name, text, options = {})
-    options[:level] ||= 5
-    #str = "#{name} : "
-    str = markdown_header(name, options[:level])
-    str += "- **namevar**\n\n" if options[:namevar]
-    str += text
-    #str += text.gsub(/\n/, "\n    ")
-
-    str += "\n\n"
-  end
-
   def text
     puts output
   end

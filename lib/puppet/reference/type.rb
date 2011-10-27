@@ -104,7 +104,11 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
     docs.sort { |a, b|
       a[0].to_s <=> b[0].to_s
     }.each { |name, doc|
-      str << paramwrap(name, doc, :namevar => additional_key_attributes.include?(name))
+      if additional_key_attributes.include?(name)
+        doc = "(**Namevar:** If omitted, this parameter's value defaults to the resource's title.)\n\n" + doc
+      end
+      str << markdown_header(name, 5)
+      str << doc
     }
     str << "\n"
   }
