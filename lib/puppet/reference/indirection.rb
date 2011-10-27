@@ -13,11 +13,10 @@ reference = Puppet::Util::Reference.newreference :indirection, :doc => "Indirect
     text << ind.doc + "\n\n"
 
     Puppet::Indirector::Terminus.terminus_classes(ind.name).sort { |a,b| a.to_s <=> b.to_s }.each do |terminus|
-      text += "### " + terminus.to_s + "\n\n"
-
+      terminus_name = terminus.to_s
       term_class = Puppet::Indirector::Terminus.terminus_class(ind.name, terminus)
-
-      text += Puppet::Util::Docs.scrub(term_class.doc) + "\n\n"
+      terminus_doc = Puppet::Util::Docs.scrub(term_class.doc)
+      text << markdown_definitionlist(terminus_name, terminus_doc)
     end
   end
 
