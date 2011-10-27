@@ -10,7 +10,7 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
   }.each do |name, object|
     # Make each name an anchor
     header = name.to_s
-    str << h(header, 3)
+    str << markdown_header(header, 3)
 
     # Print the doc string itself
     begin

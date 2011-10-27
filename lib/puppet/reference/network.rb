@@ -9,7 +9,7 @@ network = Puppet::Util::Reference.newreference :network, :depth => 2, :doc => "A
 
     interface = handler.interface
 
-    ret << h(name, 2)
+    ret << markdown_header(name, 2)
 
     ret << scrub(handler.doc)
     ret << "\n\n"

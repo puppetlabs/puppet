@@ -60,12 +60,12 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
 
 "
 
-  str << h(name, 3)
+  str << markdown_header(name, 3)
   str << scrub(type.doc) + "\n\n"
 
   # Handle the feature docs.
   if featuredocs = type.featuredocs
-    str << h("Features", 4)
+    str << markdown_header("Features", 4)
     str << featuredocs
     end
 
@@ -92,7 +92,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       docs[sname]  = tmp
     }
 
-    str << h("Parameters", 4) + "\n"
+    str << markdown_header("Parameters", 4) + "\n"
     type.parameters.sort { |a,b|
       a.to_s <=> b.to_s
     }.each { |name,param|
