@@ -54,19 +54,19 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       a.to_s <=> b.to_s
     }.each { |name,type|
 
-      str += "
+      str << "
 
 ----------------
 
 "
 
-  str += h(name, 3)
-  str += scrub(type.doc) + "\n\n"
+  str << h(name, 3)
+  str << scrub(type.doc) + "\n\n"
 
   # Handle the feature docs.
   if featuredocs = type.featuredocs
-    str += h("Features", 4)
-    str += featuredocs
+    str << h("Features", 4)
+    str << featuredocs
     end
 
     docs = {}
@@ -92,7 +92,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       docs[sname]  = tmp
     }
 
-    str += h("Parameters", 4) + "\n"
+    str << h("Parameters", 4) + "\n"
     type.parameters.sort { |a,b|
       a.to_s <=> b.to_s
     }.each { |name,param|
@@ -104,9 +104,9 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
     docs.sort { |a, b|
       a[0].to_s <=> b[0].to_s
     }.each { |name, doc|
-      str += paramwrap(name, doc, :namevar => additional_key_attributes.include?(name))
+      str << paramwrap(name, doc, :namevar => additional_key_attributes.include?(name))
     }
-    str += "\n"
+    str << "\n"
   }
 
   str
