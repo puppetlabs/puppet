@@ -1,6 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
 require 'puppet/node'
+require 'puppet/indirector/memory'
 require 'puppet/indirector/node/store_configs'
 
 class Puppet::Node::StoreConfigsTesting < Puppet::Indirector::Memory
