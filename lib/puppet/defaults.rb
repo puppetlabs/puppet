@@ -124,7 +124,8 @@ module Puppet
       :desc => "The node facts terminus.",
       :hook => proc do |value|
         require 'puppet/node/facts'
-        if value.to_s == "rest"
+        # Cache to YAML if we're uploading facts away
+        if %w[rest inventory_service].include? value.to_s
           Puppet::Node::Facts.cache_class = :yaml
         end
       end
