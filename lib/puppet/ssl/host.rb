@@ -160,6 +160,10 @@ class Puppet::SSL::Host
     name == Puppet[:certname].downcase
   end
 
+  def this_csr_is_for_the_current_host
+    name == Puppet[:certname].downcase
+  end
+
   # Our certificate request requires the key but that's all.
   def generate_certificate_request(options = {})
     generate_key unless key
