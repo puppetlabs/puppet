@@ -10,19 +10,19 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
   }.each do |name, object|
     # Make each name an anchor
     header = name.to_s
-    str += h(header, 3)
+    str << markdown_header(header, 3)
 
     # Print the doc string itself
     begin
-      str += object.desc.gsub(/\n/, " ")
+      str << object.desc.gsub(/\n/, " ")
     rescue => detail
       puts detail.backtrace
       puts detail
     end
-    str += "\n\n"
+    str << "\n\n"
 
     # Now print the data about the item.
-    str += ""
+    str << ""
     val = object.default
     if name.to_s == "vardir"
       val = "/var/lib/puppet"
@@ -31,11 +31,11 @@ config = Puppet::Util::Reference.newreference(:configuration, :depth => 1, :doc 
     end
 
     # Leave out the section information; it was apparently confusing people.
-    #str += "- **Section**: #{object.section}\n"
+    #str << "- **Section**: #{object.section}\n"
     unless val == ""
-      str += "- *Default*: #{val}\n"
+      str << "- *Default*: #{val}\n"
     end
-    str += "\n"
+    str << "\n"
   end
 
   return str

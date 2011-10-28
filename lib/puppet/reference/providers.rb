@@ -17,16 +17,16 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
   ["Ruby Version", "Puppet Version", "Operating System", "Operating System Release"].each do |label|
     name = label.gsub(/\s+/, '')
     value = Facter.value(name)
-    ret += option(label, value)
+    ret << option(label, value)
   end
-  ret += "\n"
+  ret << "\n"
 
   count = 1
 
   # Produce output for each type.
   types.each do |type|
     features = type.features
-    ret += "\n" # add a trailing newline
+    ret << "\n" # add a trailing newline
 
     # Now build up a table of provider suitability.
     headers = %w{Provider Suitable?} + features.collect { |f| f.to_s }.sort
@@ -61,21 +61,21 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
         missing.each do |test, values|
           case test
           when :exists
-            details += "  - Missing files #{values.join(", ")}\n"
+            details << "  - Missing files #{values.join(", ")}\n"
           when :variable
             values.each do |name, facts|
               if Puppet.settings.valid?(name)
-                details += "  - Setting #{name} (currently #{Puppet.settings.value(name).inspect}) not in list #{facts.join(", ")}\n"
+                details << "  - Setting #{name} (currently #{Puppet.settings.value(name).inspect}) not in list #{facts.join(", ")}\n"
               else
-                details += "  - Fact #{name} (currently #{Facter.value(name).inspect}) not in list #{facts.join(", ")}\n"
+                details << "  - Fact #{name} (currently #{Facter.value(name).inspect}) not in list #{facts.join(", ")}\n"
               end
             end
           when :true
-            details += "  - Got #{values} true tests that should have been false\n"
+            details << "  - Got #{values} true tests that should have been false\n"
           when :false
-            details += "  - Got #{values} false tests that should have been true\n"
+            details << "  - Got #{values} false tests that should have been true\n"
           when :feature
-            details += "  - Missing features #{values.collect { |f| f.to_s }.join(",")}\n"
+            details << "  - Missing features #{values.collect { |f| f.to_s }.join(",")}\n"
           end
         end
         notes << details
@@ -93,20 +93,20 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
       end
     end
 
-    ret += h(type.name.to_s + "_", 2)
+    ret << markdown_header(type.name.to_s + "_", 2)
 
-    ret += "[#{type.name}](#{"http://docs.puppetlabs.com/references/stable/type.html##{type.name}"})\n\n"
-    ret += option("Default provider", default)
-    ret += doctable(headers, table_data)
+    ret << "[#{type.name}](#{"http://docs.puppetlabs.com/references/stable/type.html##{type.name}"})\n\n"
+    ret << option("Default provider", default)
+    ret << doctable(headers, table_data)
 
     notes.each do |note|
-      ret += note + "\n"
+      ret << note + "\n"
     end
 
-    ret += "\n"
+    ret << "\n"
   end
 
-  ret += "\n"
+  ret << "\n"
 
   ret
 end
