@@ -2,7 +2,7 @@ require 'puppet/provider/package'
 require 'puppet/util/package'
 
 Puppet::Type.type(:package).provide :nim, :parent => :aix, :source => :aix do
-  desc "Installation from NIM LPP source"
+  desc "Installation from NIM LPP source."
 
   # The commands we are using on an AIX box are installed standard
   # (except nimclient) nimclient needs the bos.sysmgt.nim.client fileset.

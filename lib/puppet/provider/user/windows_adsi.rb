@@ -1,11 +1,10 @@
 require 'puppet/util/adsi'
 
 Puppet::Type.type(:user).provide :windows_adsi do
-  desc "User management for Windows"
+  desc "User management for Windows."
 
   defaultfor :operatingsystem => :windows
-  confine :operatingsystem => :windows
-  confine :feature => :microsoft_windows
+  confine    :operatingsystem => :windows
 
   has_features :manages_homedir, :manages_passwords
 

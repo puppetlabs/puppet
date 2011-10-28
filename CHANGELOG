@@ -1,9 +1,43 @@
-2.7.6rc2
+2.7.6 (includes CVE-2011-3872 see http://puppetlabs.com/security/hotfixes/cve-2011-3872/
 ===
+c09517a Improve the error message when a CSR is rejected
+9346530 Allow a master to bootstrap itself with dns_alt_names and autosign
+7679c66 (maint) Remove ssl dir before starting a master with DNS alt names
+e4c64c7 Fix failing CA Interface specs on Ruby 1.9
+9ee1215 Fix some inconsistencies from merging
+8144939 Add support for DNS alt names to `puppet ca`
+2ba56e3 More 1.8.5 compatibility fixes.
+6257188 Better 1.8.5 compatible implementation of `lines`.
+4ba4db7 (#2848) Config options require '_', not '-'.
+493f8d1 Add --allow-dns-alt-names option to `puppet certificate sign`
+0cc8936 Add support for dns-alt-names option to `puppet certificate generate`
+c65236d Ruby 1.8.5 compatibility changes in tests and code.
+6c37623 Add `lines` alias for `each_line` in Ruby 1.8.5.
+e29eb6a s/not_to/should_not/ for older versions of RSpec 2.
+f1f5298 (#2848) Eliminate redundant `master_dns_alt_names`.
+3a8b376 (#2848) Remove the legacy SSLCertificates code
+28dead0 (#2848) Rework the xmlrpc CA handler to use the modern SSL code
+a644514 (#2848) Remove unused xmlrpc code
+2b1ad43 (#2848) Consistent return values from `subject_alt_names` accessors.
+d8516d9 (#2848) Consistently use `subject_alt_names` as accessor name.
+0b45f4c (#2848) Don't strip the subjectAltName label when listing.
+99488f3 (#2848) Don't enable `emailProtection` for server keys.
+f1285a4 (#2848) Only mark `subjectAltName` critical if `subject` is empty.
+e65a88e (#2848) Migrate `dns-alt-names` back to settings.
+b876c39 Wire up the `setbycli` slot in Puppet settings.
+a53f2f2 (#2848) rename subject-alt-name option to dns-alt-names
+bc2267a (#2848) Rename `certdnsnames` to match new behaviour.
+a720499 (#2848) Use `certdnsnames` when bootstrapping a local master.
+6e3f529 (#2848) CSR subjectAltNames handling while signing.
+978b65c (#2848) List subject alt names in output of puppet cert --list
+7460a5e (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+94345eb (#2848) Rewrite SSL Certificate Factory, fixing `subjectAltName` leak.
+a729d90 (#2848) Reject unknown (== all) extensions on the CSR.
+f4fc11d (#2848) extract the subjectAltName value from the CSR.
+d64b01b (#2848) Set `certdnsnames` values into the CSR.
+78a01a2 (#6928) Don't blow up when the method is undefined...
+43d1e38 (#9996) Restore functionality for multi-line commands in exec resources
 d457763 (#9832) General StoreConfigs regression.
-
-2.7.6rc1
-===
 2958b05 maint: Deal with [].to_s problem in 1.9.2
 9c25af4 (#9027) Get rid of spurious info messages in groupadd
 1f25c20 (#8411) Fix change group for POSIX file provider

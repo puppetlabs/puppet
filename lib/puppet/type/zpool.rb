@@ -37,7 +37,7 @@ module Puppet
     ensurable
 
     newproperty(:disk, :array_matching => :all, :parent => Puppet::Property::VDev) do
-      desc "The disk(s) for this pool. Can be an array or space separated string"
+      desc "The disk(s) for this pool. Can be an array or a space separated string."
     end
 
     newproperty(:mirror, :array_matching => :all, :parent => Puppet::Property::MultiVDev) do
@@ -71,7 +71,7 @@ module Puppet
     end
 
     newproperty(:log, :array_matching => :all, :parent => Puppet::Property::VDev) do
-      desc "Log disks for this pool. (doesn't support mirroring yet)"
+      desc "Log disks for this pool. This type does not currently support mirroring of log disks."
     end
 
     newparam(:pool) do
@@ -80,7 +80,7 @@ module Puppet
     end
 
     newparam(:raid_parity) do
-      desc "Determines parity when using raidz property."
+      desc "Determines parity when using the `raidz` parameter."
     end
 
     validate do

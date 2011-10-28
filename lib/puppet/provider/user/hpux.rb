@@ -1,5 +1,7 @@
 Puppet::Type.type(:user).provide :hpuxuseradd, :parent => :useradd do
-  desc "User management for hp-ux! Undocumented switch to special usermod because HP-UX regular usermod is TOO STUPID to change stuff while the user is logged in."
+  desc "User management for HP-UX. This provider uses the undocumented `-F`
+    switch to HP-UX's special `usermod` binary to work around the fact that
+    its standard `usermod` cannot make changes while the user is logged in."
 
   defaultfor :operatingsystem => "hp-ux"
   confine :operatingsystem => "hp-ux"

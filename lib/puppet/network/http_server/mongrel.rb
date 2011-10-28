@@ -127,4 +127,3 @@ module Puppet::Network
     end
   end
 end
-

@@ -124,6 +124,11 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :generate do
+    option "--dns-alt-names NAMES" do
+      summary "Additional DNS names to add to the certificate request"
+      description Puppet.settings.setting(:dns_alt_names).desc
+    end
+
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
@@ -131,7 +136,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       end
 
       begin
-        ca.generate host
+        ca.generate(host, :dns_alt_names => options[:dns_alt_names])
       rescue RuntimeError => e
         if e.to_s =~ /already has a requested certificate/
           "#{host} already has a certificate request; use sign instead"
@@ -149,6 +154,10 @@ Puppet::Face.define(:ca, '0.1.0') do
   end
 
   action :sign do
+    option("--[no-]allow-dns-alt-names") do
+      summary "Whether or not to accept DNS alt names in the certificate request"
+    end
+
     when_invoked do |host, options|
       raise "Not a CA" unless Puppet::SSL::CertificateAuthority.ca?
       unless ca = Puppet::SSL::CertificateAuthority.instance
@@ -156,7 +165,7 @@ Puppet::Face.define(:ca, '0.1.0') do
       end
 
       begin
-        ca.sign host
+        ca.sign(host, options[:allow_dns_alt_names])
       rescue ArgumentError => e
         if e.to_s =~ /Could not find certificate request/
           e.to_s

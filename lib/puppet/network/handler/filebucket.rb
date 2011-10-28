@@ -1,6 +1,8 @@
 require 'fileutils'
 require 'digest/md5'
 require 'puppet/external/base64'
+require 'puppet/network/handler'
+require 'xmlrpc/server'
 
 class Puppet::Network::Handler # :nodoc:
   # Accept files and store them by md5 sum, returning the md5 sum back

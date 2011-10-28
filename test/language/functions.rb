@@ -4,7 +4,6 @@ require File.expand_path(File.dirname(__FILE__) + '/../lib/puppettest')
 
 require 'puppet'
 require 'puppet/parser/parser'
-require 'puppet/network/client'
 require 'puppettest'
 require 'puppettest/resourcetesting'
 

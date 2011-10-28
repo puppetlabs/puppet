@@ -23,7 +23,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       file { "/etc/passwd":
         owner => root,
         group => root,
-        mode => 644
+        mode  => 644
       }
 
   `/etc/passwd` is considered the title of the file object (used for things like
@@ -54,19 +54,19 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       a.to_s <=> b.to_s
     }.each { |name,type|
 
-      str += "
+      str << "
 
 ----------------
 
 "
 
-  str += h(name, 3)
-  str += scrub(type.doc) + "\n\n"
+  str << markdown_header(name, 3)
+  str << scrub(type.doc) + "\n\n"
 
   # Handle the feature docs.
   if featuredocs = type.featuredocs
-    str += h("Features", 4)
-    str += featuredocs
+    str << markdown_header("Features", 4)
+    str << featuredocs
     end
 
     docs = {}
@@ -92,7 +92,7 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
       docs[sname]  = tmp
     }
 
-    str += h("Parameters", 4) + "\n"
+    str << markdown_header("Parameters", 4) + "\n"
     type.parameters.sort { |a,b|
       a.to_s <=> b.to_s
     }.each { |name,param|
@@ -104,9 +104,12 @@ type = Puppet::Util::Reference.newreference :type, :doc => "All Puppet resource 
     docs.sort { |a, b|
       a[0].to_s <=> b[0].to_s
     }.each { |name, doc|
-      str += paramwrap(name, doc, :namevar => additional_key_attributes.include?(name))
+      if additional_key_attributes.include?(name)
+        doc = "(**Namevar:** If omitted, this parameter's value defaults to the resource's title.)\n\n" + doc
+      end
+      str << markdown_definitionlist(name, doc)
     }
-    str += "\n"
+    str << "\n"
   }
 
   str

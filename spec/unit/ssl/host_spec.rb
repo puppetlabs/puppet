@@ -2,8 +2,6 @@
 require 'spec_helper'
 
 require 'puppet/ssl/host'
-require 'puppet/sslcertificates'
-require 'puppet/sslcertificates/ca'
 
 describe Puppet::SSL::Host do
   include PuppetSpec::Files
@@ -79,6 +77,48 @@ describe Puppet::SSL::Host do
     host.expects(:generate)
 
     Puppet::SSL::Host.localhost.should equal(host)
+  end
+
+  it "should create a localhost cert if no cert is available and it is a CA with autosign and it is using DNS alt names", :unless => Puppet.features.microsoft_windows? do
+    Puppet[:autosign] = true
+    Puppet[:confdir] = tmpdir('conf')
+    Puppet[:dns_alt_names] = "foo,bar,baz"
+    ca = Puppet::SSL::CertificateAuthority.new
+    Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+
+    localhost = Puppet::SSL::Host.localhost
+    cert = localhost.certificate
+
+    cert.should be_a(Puppet::SSL::Certificate)
+    cert.subject_alt_names.should =~ %W[DNS:#{Puppet[:certname]} DNS:foo DNS:bar DNS:baz]
+  end
+
+  context "with dns_alt_names" do
+    before :each do
+      Puppet[:dns_alt_names] = 'one, two'
+
+      @key = stub('key content')
+      key = stub('key', :generate => true, :content => @key)
+      Puppet::SSL::Key.stubs(:new).returns key
+      Puppet::SSL::Key.indirection.stubs(:save).with(key)
+
+      @cr = stub('certificate request')
+      Puppet::SSL::CertificateRequest.stubs(:new).returns @cr
+      Puppet::SSL::CertificateRequest.indirection.stubs(:save).with(@cr)
+    end
+
+    it "should not include subjectAltName if not the local node" do
+      @cr.expects(:generate).with(@key, {})
+
+      Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+    end
+
+    it "should include subjectAltName if I am a CA" do
+      @cr.expects(:generate).
+        with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+
+      Puppet::SSL::Host.localhost
+    end
   end
 
   it "should always read the key for the localhost instance in from disk" do
@@ -387,7 +427,7 @@ describe Puppet::SSL::Host do
 
       key = stub 'key', :public_key => mock("public_key"), :content => "mycontent"
       @host.stubs(:key).returns(key)
-      @request.expects(:generate).with("mycontent")
+      @request.expects(:generate).with("mycontent", {})
       Puppet::SSL::CertificateRequest.indirection.expects(:save).with(@request)
 
       @host.generate_certificate_request.should be_true
@@ -579,7 +619,7 @@ describe Puppet::SSL::Host do
       it "should use the CA to sign its certificate request if it does not have a certificate" do
         @host.expects(:certificate).returns nil
 
-        @ca.expects(:sign).with(@host.name)
+        @ca.expects(:sign).with(@host.name, true)
 
         @host.generate
       end
@@ -722,7 +762,6 @@ describe Puppet::SSL::Host do
     before do
       Puppet[:vardir] = tmpdir("ssl_test_vardir")
       Puppet[:ssldir] = tmpdir("ssl_test_ssldir")
-      Puppet::SSLCertificates::CA.new.mkrootcert
       # localcacert is where each client stores the CA certificate
       # cacert is where the master stores the CA certificate
       # Since we need to play the role of both for testing we need them to be the same and exist

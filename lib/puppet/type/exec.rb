@@ -24,7 +24,10 @@ module Puppet
       us at Puppet Labs what you are doing, and hopefully we can work with
       you to get a native resource type for the work you are doing.
 
-      **Autorequires:** If Puppet is managing an exec's cwd or the executable file used in an exec's command, the exec resource will autorequire those files. If Puppet is managing the user that an exec should run as, the exec resource will autorequire that user."
+      **Autorequires:** If Puppet is managing an exec's cwd or the executable
+      file used in an exec's command, the exec resource will autorequire those
+      files. If Puppet is managing the user that an exec should run as, the
+      exec resource will autorequire that user."
 
     # Create a new check mechanism.  It's basically just a parameter that
     # provides one extra 'check' method.
@@ -271,25 +274,27 @@ module Puppet
 
 
     newcheck(:refreshonly) do
-      desc "The command should only be run as a
+      desc <<-EOT
+        The command should only be run as a
         refresh mechanism for when a dependent object is changed.  It only
         makes sense to use this option when this command depends on some
         other object; it is useful for triggering an action:
 
             # Pull down the main aliases file
-            file { \"/etc/aliases\":
-              source => \"puppet://server/module/aliases\"
+            file { "/etc/aliases":
+              source => "puppet://server/module/aliases"
             }
 
             # Rebuild the database, but only when the file changes
             exec { newaliases:
-              path => [\"/usr/bin\", \"/usr/sbin\"],
-              subscribe => File[\"/etc/aliases\"],
+              path        => ["/usr/bin", "/usr/sbin"],
+              subscribe   => File["/etc/aliases"],
               refreshonly => true
             }
 
         Note that only `subscribe` and `notify` can trigger actions, not `require`,
-        so it only makes sense to use `refreshonly` with `subscribe` or `notify`."
+        so it only makes sense to use `refreshonly` with `subscribe` or `notify`.
+      EOT
 
       newvalues(:true, :false)
 
@@ -312,9 +317,9 @@ module Puppet
         if the specified file does not exist.
 
             exec { "tar -xf /Volumes/nfs02/important.tar":
-              cwd => "/var/tmp",
+              cwd     => "/var/tmp",
               creates => "/var/tmp/myfile",
-              path => ["/usr/bin", "/usr/sbin"]
+              path    => ["/usr/bin", "/usr/sbin"]
             }
 
         In this example, if `/var/tmp/myfile` is ever deleted, the exec
@@ -331,12 +336,13 @@ module Puppet
     end
 
     newcheck(:unless) do
-      desc "If this parameter is set, then this `exec` will run unless
+      desc <<-EOT
+        If this parameter is set, then this `exec` will run unless
         the command returns 0.  For example:
 
-            exec { \"/bin/echo root >> /usr/lib/cron/cron.allow\":
-              path => \"/usr/bin:/usr/sbin:/bin\",
-              unless => \"grep root /usr/lib/cron/cron.allow 2>/dev/null\"
+            exec { "/bin/echo root >> /usr/lib/cron/cron.allow":
+              path   => "/usr/bin:/usr/sbin:/bin",
+              unless => "grep root /usr/lib/cron/cron.allow 2>/dev/null"
             }
 
         This would add `root` to the cron.allow file (on Solaris) unless
@@ -344,7 +350,7 @@ module Puppet
 
         Note that this command follows the same rules as the main command,
         which is to say that it must be fully qualified if the path is not set.
-        "
+      EOT
 
       validate do |cmds|
         cmds = [cmds] unless cmds.is_a? Array
@@ -368,12 +374,13 @@ module Puppet
     end
 
     newcheck(:onlyif) do
-      desc "If this parameter is set, then this `exec` will only run if
+      desc <<-EOT
+        If this parameter is set, then this `exec` will only run if
         the command returns 0.  For example:
 
-            exec { \"logrotate\":
-              path => \"/usr/bin:/usr/sbin:/bin\",
-              onlyif => \"test `du /var/log/messages | cut -f1` -gt 100000\"
+            exec { "logrotate":
+              path   => "/usr/bin:/usr/sbin:/bin",
+              onlyif => "test `du /var/log/messages | cut -f1` -gt 100000"
             }
 
         This would run `logrotate` only if that test returned true.
@@ -383,10 +390,10 @@ module Puppet
 
         Also note that onlyif can take an array as its value, e.g.:
 
-            onlyif => [\"test -f /tmp/file1\", \"test -f /tmp/file2\"]
+            onlyif => ["test -f /tmp/file1", "test -f /tmp/file2"]
 
-        This will only run the exec if /all/ conditions in the array return true.
-        "
+        This will only run the exec if _all_ conditions in the array return true.
+      EOT
 
       validate do |cmds|
         cmds = [cmds] unless cmds.is_a? Array

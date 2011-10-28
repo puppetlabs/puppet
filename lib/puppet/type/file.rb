@@ -8,7 +8,6 @@ require 'pathname'
 require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
-require 'puppet/network/client'
 require 'puppet/util/backups'
 
 Puppet::Type.newtype(:file) do
@@ -26,7 +25,9 @@ Puppet::Type.newtype(:file) do
     Puppet Labs and we can hopefully work with you to develop a
     native resource to support what you are doing.
 
-    **Autorequires:** If Puppet is managing the user or group that owns a file, the file resource will autorequire them. If Puppet is managing any parent directories of a file, the file resource will autorequire them."
+    **Autorequires:** If Puppet is managing the user or group that owns a
+    file, the file resource will autorequire them. If Puppet is managing any
+    parent directories of a file, the file resource will autorequire them."
 
   def self.title_patterns
     [ [ /^(.*?)\/*\Z/m, [ [ :path, lambda{|x| x} ] ] ] ]
@@ -222,8 +223,8 @@ Puppet::Type.newtype(:file) do
       `follow` will copy the target file instead of the link, `manage`
       will copy the link itself, and `ignore` will just pass it by.
       When not copying, `manage` and `ignore` behave equivalently
-      (because you cannot really ignore links entirely during local recursion), and `follow` will manage the file to which the
-      link points."
+      (because you cannot really ignore links entirely during local
+      recursion), and `follow` will manage the file to which the link points."
 
     newvalues(:follow, :manage)
 

@@ -4,10 +4,10 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   desc "Package management using MacPorts on OS X.
 
     Supports MacPorts versions and revisions, but not variants.
-    Variant preferences may be specified using the MacPorts variants.conf file
-    http://guide.macports.org/chunked/internals.configuration-files.html#internals.configuration-files.variants-conf
+    Variant preferences may be specified using
+    [the MacPorts variants.conf file](http://guide.macports.org/chunked/internals.configuration-files.html#internals.configuration-files.variants-conf).
 
-    When specifying a version in the Puppet DSL, only specify the version, not the revision
+    When specifying a version in the Puppet DSL, only specify the version, not the revision.
     Revisions are only used internally for ensuring the latest version/revision of a port.
   "
 

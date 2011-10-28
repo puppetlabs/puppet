@@ -89,28 +89,34 @@ describe Puppet::SSL::Certificate do
       @certificate.should respond_to(:content)
     end
 
-    describe "#alternate_names" do
-      before do
-        Puppet[:certdnsnames] = 'foo:bar:baz'
-        @csr            = OpenSSL::X509::Request.new
-        @csr.subject    = OpenSSL::X509::Name.new([['CN', 'quux']])
-        @csr.public_key = OpenSSL::PKey::RSA.generate(Puppet[:keylength]).public_key
-      end
-
+    describe "#subject_alt_names" do
       it "should list all alternate names when the extension is present" do
-        cert = Puppet::SSL::CertificateFactory.new('server', @csr, @csr, 14).result
+        key = Puppet::SSL::Key.new('quux')
+        key.generate
 
-        @certificate = @class.from_s(cert.to_pem)
+        csr = Puppet::SSL::CertificateRequest.new('quux')
+        csr.generate(key, :dns_alt_names => 'foo, bar,baz')
 
-        @certificate.alternate_names.should =~ ['foo', 'bar', 'baz', 'quux']
+        raw_csr = csr.content
+
+        cert = Puppet::SSL::CertificateFactory.build('server', csr, raw_csr, 14)
+        certificate = @class.from_s(cert.to_pem)
+        certificate.subject_alt_names.
+          should =~ ['DNS:foo', 'DNS:bar', 'DNS:baz', 'DNS:quux']
       end
 
       it "should return an empty list of names if the extension is absent" do
-        cert = Puppet::SSL::CertificateFactory.new('client', @csr, @csr, 14).result
+        key = Puppet::SSL::Key.new('quux')
+        key.generate
 
-        @certificate = @class.from_s(cert.to_pem)
+        csr = Puppet::SSL::CertificateRequest.new('quux')
+        csr.generate(key)
 
-        @certificate.alternate_names.should == []
+        raw_csr = csr.content
+
+        cert = Puppet::SSL::CertificateFactory.build('client', csr, raw_csr, 14)
+        certificate = @class.from_s(cert.to_pem)
+        certificate.subject_alt_names.should be_empty
       end
     end
 

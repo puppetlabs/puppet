@@ -12,7 +12,8 @@ module Puppet
     include Puppet::Util::Diff
 
     attr_accessor :source, :local
-    desc "Copy a file over the current file.  Uses `checksum` to
+    desc <<-EOT
+      Copy a file over the current file.  Uses `checksum` to
       determine when a file should be copied.  Valid values are either
       fully qualified paths to files, or URIs.  Currently supported URI
       types are *puppet* and *file*.
@@ -23,8 +24,8 @@ module Puppet
       sytems.  For instance:
 
           class sendmail {
-            file { \"/etc/mail/sendmail.cf\":
-              source => \"puppet://server/modules/module_name/sendmail.cf\"
+            file { "/etc/mail/sendmail.cf":
+              source => "puppet://server/modules/module_name/sendmail.cf"
             }
           }
 
@@ -42,18 +43,18 @@ module Puppet
       on the local host, whereas `agent` will connect to the
       puppet server that it received the manifest from.
 
-      See the [fileserver configuration documentation](http://docs.puppetlabs.com/guides/file_serving.html) for information on how to configure
-      and use file services within Puppet.
+      See the [fileserver configuration documentation](http://docs.puppetlabs.com/guides/file_serving.html)
+      for information on how to configure and use file services within Puppet.
 
       If you specify multiple file sources for a file, then the first
       source that exists will be used.  This allows you to specify
       what amount to search paths for files:
 
-          file { \"/path/to/my/file\":
+          file { "/path/to/my/file":
             source => [
-              \"/modules/nfs/files/file.$host\",
-              \"/modules/nfs/files/file.$operatingsystem\",
-              \"/modules/nfs/files/file\"
+              "/modules/nfs/files/file.$host",
+              "/modules/nfs/files/file.$operatingsystem",
+              "/modules/nfs/files/file"
             ]
           }
 
@@ -61,7 +62,7 @@ module Puppet
 
       You cannot currently copy links using this mechanism; set `links`
       to `follow` if any remote sources are links.
-      "
+    EOT
 
     validate do |sources|
       sources = [sources] unless sources.is_a?(Array)

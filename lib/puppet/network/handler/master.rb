@@ -1,8 +1,8 @@
 require 'openssl'
 require 'puppet'
-require 'puppet/sslcertificates'
 require 'xmlrpc/server'
 require 'yaml'
+require 'puppet/network/handler'
 
 class Puppet::Network::Handler
   class MasterError < Puppet::Error; end
@@ -32,8 +32,6 @@ class Puppet::Network::Handler
       @local = hash[:Local]
 
       args[:Local] = true
-
-      @ca = (hash.include?(:CA) and hash[:CA]) ? Puppet::SSLCertificates::CA.new : nil
 
       # This is only used by the cfengine module, or if --loadclasses was
       # specified in +puppet+.

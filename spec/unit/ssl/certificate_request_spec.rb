@@ -125,7 +125,7 @@ describe Puppet::SSL::CertificateRequest do
 
     it "should set the CN to the :ca_name setting when the CSR is for a CA" do
       subject = mock 'subject'
-      Puppet.settings.expects(:value).with(:ca_name).returns "mycertname"
+      Puppet[:ca_name] = "mycertname"
       OpenSSL::X509::Name.expects(:new).with { |subject| subject[0][1] == "mycertname" }.returns(subject)
       @request.expects(:subject=).with(subject)
       Puppet::SSL::CertificateRequest.new(Puppet::SSL::CA_NAME).generate(@key)
@@ -142,6 +142,67 @@ describe Puppet::SSL::CertificateRequest do
       @key.stubs(:public_key).returns pubkey
       @request.expects(:public_key=).with(@key.public_key)
       @instance.generate(@key)
+    end
+
+    context "without subjectAltName / dns_alt_names" do
+      before :each do
+        Puppet[:dns_alt_names] = ""
+      end
+
+      ["extreq", "msExtReq"].each do |name|
+        it "should not add any #{name} attribute" do
+          @request.expects(:add_attribute).never
+          @request.expects(:attributes=).never
+          @instance.generate(@key)
+        end
+
+        it "should return no subjectAltNames" do
+          @instance.generate(@key)
+          @instance.subject_alt_names.should be_empty
+        end
+      end
+    end
+
+    context "with dns_alt_names" do
+      before :each do
+        Puppet[:dns_alt_names] = "one, two, three"
+      end
+
+      ["extreq", "msExtReq"].each do |name|
+        it "should not add any #{name} attribute" do
+          @request.expects(:add_attribute).never
+          @request.expects(:attributes=).never
+          @instance.generate(@key)
+        end
+
+        it "should return no subjectAltNames" do
+          @instance.generate(@key)
+          @instance.subject_alt_names.should be_empty
+        end
+      end
+    end
+
+    context "with subjectAltName to generate request" do
+      before :each do
+        Puppet[:dns_alt_names] = ""
+      end
+
+      it "should add an extreq attribute" do
+        @request.expects(:add_attribute).with do |arg|
+          arg.value.value.all? do |x|
+            x.value.all? do |y|
+              y.value[0].value == "subjectAltName"
+            end
+          end
+        end
+
+        @instance.generate(@key, :dns_alt_names => 'one, two')
+      end
+
+      it "should return the subjectAltName values" do
+        @instance.generate(@key, :dns_alt_names => 'one,two')
+        @instance.subject_alt_names.should =~ ["DNS:myname", "DNS:one", "DNS:two"]
+      end
     end
 
     it "should sign the csr with the provided key and a digest" do

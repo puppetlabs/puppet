@@ -1,7 +1,7 @@
 Puppet::Type.newtype(:stage) do
   desc "A resource type for specifying run stages.  The actual stage should
   be specified on resources:
-      
+
       class { foo: stage => pre }
 
   And you must manually control stage order:

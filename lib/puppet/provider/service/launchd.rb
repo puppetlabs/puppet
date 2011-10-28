@@ -1,60 +1,140 @@
 require 'facter/util/plist'
-
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
-  desc "launchd service management framework.
+  desc <<-EOT
+    This provider manages jobs with `launchd`, which is the default service
+    framework for Mac OS X (and may be available for use on other platforms).
 
-  This provider manages jobs with launchd, which is the default service framework for
-  Mac OS X and is potentially available for use on other platforms.
+    For `launchd` documentation, see:
 
-  See:
-  
-  * http://developer.apple.com/macosx/launchd.html
-  * http://launchd.macosforge.org/
+    * <http://developer.apple.com/macosx/launchd.html>
+    * <http://launchd.macosforge.org/>
 
-  This provider reads plists out of the following directories:
-  
-  * /System/Library/LaunchDaemons
-  * /System/Library/LaunchAgents
-  * /Library/LaunchDaemons
-  * /Library/LaunchAgents
+    This provider reads plists out of the following directories:
 
-  ...and builds up a list of services based upon each plist's \"Label\" entry.
+    * `/System/Library/LaunchDaemons`
+    * `/System/Library/LaunchAgents`
+    * `/Library/LaunchDaemons`
+    * `/Library/LaunchAgents`
 
-  This provider supports:
-  
-  * ensure => running/stopped,
-  * enable => true/false
-  * status
-  * restart
+    ...and builds up a list of services based upon each plist's "Label" entry.
 
-  Here is how the Puppet states correspond to launchd states:
-  
-  * stopped --- job unloaded
-  * started --- job loaded
-  * enabled --- 'Disable' removed from job plist file
-  * disabled --- 'Disable' added to job plist file
+    This provider supports:
 
-  Note that this allows you to do something launchctl can't do, which is to
-  be in a state of \"stopped/enabled\ or \"running/disabled\".
+    * ensure => running/stopped,
+    * enable => true/false
+    * status
+    * restart
 
-  "
+    Here is how the Puppet states correspond to `launchd` states:
+
+    * stopped --- job unloaded
+    * started --- job loaded
+    * enabled --- 'Disable' removed from job plist file
+    * disabled --- 'Disable' added to job plist file
+
+    Note that this allows you to do something `launchctl` can't do, which is to
+    be in a state of "stopped/enabled" or "running/disabled".
+
+  EOT
+
+  include Puppet::Util::Warnings
 
   commands :launchctl => "/bin/launchctl"
-  commands :sw_vers => "/usr/bin/sw_vers"
-  commands :plutil => "/usr/bin/plutil"
+  commands :sw_vers   => "/usr/bin/sw_vers"
+  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
-  confine :operatingsystem => :darwin
+  confine :operatingsystem    => :darwin
 
   has_feature :enableable
+  mk_resource_methods
 
-  Launchd_Paths = ["/Library/LaunchAgents",
-    "/Library/LaunchDaemons",
-    "/System/Library/LaunchAgents",
-    "/System/Library/LaunchDaemons",]
+  Launchd_Paths = [ "/Library/LaunchAgents",
+                    "/Library/LaunchDaemons",
+                    "/System/Library/LaunchAgents",
+                    "/System/Library/LaunchDaemons"]
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+  
+  # Caching is enabled through the following three methods. Self.prefetch will
+  # call self.instances to create an instance for each service. Self.flush will
+  # clear out our cache when we're done.
+  def self.prefetch(resources)
+    instances.each do |prov|
+      if resource = resources[prov.name]
+        resource.provider = prov
+      end
+    end
+  end
 
+  # Self.instances will return an array with each element being a hash
+  # containing the name, provider, path, and status of each service on the
+  # system.
+  def self.instances
+    jobs = self.jobsearch
+    @job_list ||= self.job_list
+    jobs.keys.collect do |job|
+      job_status = @job_list.has_key?(job) ? :running : :stopped
+      new(:name => job, :provider => :launchd, :path => jobs[job], :status => job_status)
+    end
+  end
+
+  # Sets a class instance variable with a hash of all launchd plist files that
+  # are found on the system. The key of the hash is the job id and the value
+  # is the path to the file. If a label is passed, we return the job id and
+  # path for that specific job.
+  def self.jobsearch(label=nil)
+    @label_to_path_map ||= {}
+    if @label_to_path_map.empty?
+      Launchd_Paths.each do |path|
+        Dir.glob(File.join(path,'*')).each do |filepath|
+          next if ! File.file?(filepath)
+          job = read_plist(filepath)
+          if job.has_key?("Label") and job["Label"] == label
+            return { label => filepath }
+          else
+            @label_to_path_map[job["Label"]] = filepath
+          end
+        end
+      end
+    end
+
+    if label
+      if @label_to_path_map.has_key? label
+        return { label => @label_to_path_map[label] }
+      else
+        raise Puppet::Error.new("Unable to find launchd plist for job: #{label}")
+      end
+    else
+      @label_to_path_map
+    end
+  end
+
+  # This status method lists out all currently running services.
+  # This hash is returned at the end of the method.
+  def self.job_list
+    @job_list = Hash.new
+    begin
+      output = launchctl :list
+      raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
+      output.split("\n").each do |line|
+        @job_list[line.split(/\s/).last] = :running
+      end
+    rescue Puppet::ExecutionFailure
+      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
+    end
+    @job_list
+  end
+
+  # Launchd implemented plist overrides in version 10.6.
+  # This method checks the major_version of OS X and returns true if 
+  # it is 10.6 or greater. This allows us to implement different plist
+  # behavior for versions >= 10.6
+  def has_macosx_plist_overrides?
+    @product_version ||= self.class.get_macosx_version_major
+    return true unless /^10\.[0-5]/.match(@product_version)
+    return false
+  end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
@@ -62,53 +142,26 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
   end
 
-  # returns a label => path map for either all jobs, or just a single
-  # job if the label is specified
-  def self.jobsearch(label=nil)
-    label_to_path_map = {}
-    Launchd_Paths.each do |path|
-      if FileTest.exists?(path)
-        Dir.entries(path).each do |f|
-          next if f =~ /^\..*$/
-          next if FileTest.directory?(f)
-          fullpath = File.join(path, f)
-          if FileTest.file?(fullpath) and job = read_plist(fullpath) and job.has_key?("Label")
-            if job["Label"] == label
-              return { label => fullpath }
-            else
-              label_to_path_map[job["Label"]] = fullpath
-            end
-          end
-        end
-      end
-    end
-
-    # if we didn't find the job above and we should have, error.
-    raise Puppet::Error.new("Unable to find launchd plist for job: #{label}") if label
-    # if returning all jobs
-    label_to_path_map
+  # Clean out the @property_hash variable containing the cached list of services
+  def flush
+    @property_hash.clear
   end
 
-
-  def self.instances
-    jobs = self.jobsearch
-    jobs.keys.collect do |job|
-      new(:name => job, :provider => :launchd, :path => jobs[job])
-    end
+  def exists?
+    Puppet.debug("Puppet::Provider::Launchd:Ensure for #{@property_hash[:name]}: #{@property_hash[:ensure]}")
+    @property_hash[:ensure] != :absent
   end
-
 
   def self.get_macosx_version_major
-    return @macosx_version_major if defined?(@macosx_version_major)
+    return @macosx_version_major if @macosx_version_major
     begin
       # Make sure we've loaded all of the facts
       Facter.loadfacts
-
       if Facter.value(:macosx_productversion_major)
         product_version_major = Facter.value(:macosx_productversion_major)
       else
         # TODO: remove this code chunk once we require Facter 1.5.5 or higher.
-        Puppet.warning("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
+        warnonce("DEPRECATION WARNING: Future versions of the launchd provider will require Facter 1.5.5 or newer.")
         product_version = Facter.value(:macosx_productversion)
         fail("Could not determine OS X version from Facter") if product_version.nil?
         product_version_major = product_version.scan(/(\d+)\.(\d+)./).join(".")
@@ -134,26 +187,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     end
     [job_path, job_plist]
   end
-
-
-  def status
-    # launchctl list <jobname> exits zero if the job is loaded
-    # and non-zero if it isn't. Simple way to check... but is only
-    # available on OS X 10.5 unfortunately, so we grab the whole list
-    # and check if our resource is included. The output formats differ
-    # between 10.4 and 10.5, thus the necessity for splitting
-    begin
-      output = launchctl :list
-      raise Puppet::Error.new("launchctl list failed to return any data.") if output.nil?
-      output.split("\n").each do |j|
-        return :running if j.split(/\s/).last == resource[:name]
-      end
-      return :stopped
-    rescue Puppet::ExecutionFailure
-      raise Puppet::Error.new("Unable to determine status of #{resource[:name]}")
-    end
-  end
-
 
   # start the service. To get to a state of running/enabled, we need to
   # conditionally enable at load, then disable by modifying the plist file
@@ -200,8 +233,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   # launchd jobs are enabled by default. They are only disabled if the key
   # "Disabled" is set to true, but it can also be set to false to enable it.
-  # In 10.6, the Disabled key in the job plist is consulted, but only if there
-  # is no entry in the global overrides plist.
+  # Starting in 10.6, the Disabled key in the job plist is consulted, but only 
+  # if there is no entry in the global overrides plist.
   # We need to draw a distinction between undefined, true and false for both
   # locations where the Disabled flag can be defined.
   def enabled?
@@ -211,7 +244,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     job_path, job_plist = plist_from_label(resource[:name])
     job_plist_disabled = job_plist["Disabled"] if job_plist.has_key?("Disabled")
 
-    if self.class.get_macosx_version_major == "10.6"
+    if has_macosx_plist_overrides?
       if FileTest.file?(Launchd_Overrides) and overrides = self.class.read_plist(Launchd_Overrides)
         if overrides.has_key?(resource[:name])
           overrides_disabled = overrides[resource[:name]]["Disabled"] if overrides[resource[:name]].has_key?("Disabled")
@@ -233,10 +266,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
-  # In 10.6 we need to write out a disabled key to the global overrides plist, in earlier
-  # versions this is stored in the job plist itself.
+  # Starting in 10.6 we need to write out a disabled key to the global 
+  # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
-    if self.class.get_macosx_version_major == "10.6"
+    if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)
@@ -251,7 +284,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
   def disable
-    if self.class.get_macosx_version_major == "10.6"
+    if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
       Plist::Emit.save_plist(overrides, Launchd_Overrides)

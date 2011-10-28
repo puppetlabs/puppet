@@ -220,6 +220,12 @@ describe Puppet::Util do
         Puppet::Util.execute_posix(['test command', 'with', 'arguments'], {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
       end
 
+      it "should properly execute string commands with embedded newlines" do
+        Kernel.expects(:exec).with("/bin/echo 'foo' ; \n /bin/echo 'bar' ;")
+
+        Puppet::Util.execute_posix("/bin/echo 'foo' ; \n /bin/echo 'bar' ;", {:uid => 50, :gid => 55}, @stdin, @stdout, @stderr)
+      end
+
       it "should return the pid of the child process" do
         Puppet::Util.execute_posix('test command', {}, @stdin, @stdout, @stderr).should == pid
       end
@@ -498,10 +504,13 @@ describe Puppet::Util do
 
       describe "when a file extension is not specified" do
         it "should walk each extension in PATHEXT until an executable is found" do
-          ENV.stubs(:[]).with('PATH').returns(base)
+          bar = File.expand_path('/bar')
+          ENV.stubs(:[]).with('PATH').returns("#{bar}#{File::PATH_SEPARATOR}#{base}")
           ENV.stubs(:[]).with('PATHEXT').returns(".EXE#{File::PATH_SEPARATOR}.CMD")
 
           exts = sequence('extensions')
+          FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.EXE')).returns false
+          FileTest.expects(:file?).in_sequence(exts).with(File.join(bar, 'foo.CMD')).returns false
           FileTest.expects(:file?).in_sequence(exts).with(File.join(base, 'foo.EXE')).returns false
           FileTest.expects(:file?).in_sequence(exts).with(path).returns true
 

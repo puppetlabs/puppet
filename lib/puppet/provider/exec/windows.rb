@@ -3,8 +3,8 @@ require 'puppet/provider/exec'
 Puppet::Type.type(:exec).provide :windows, :parent => Puppet::Provider::Exec do
   include Puppet::Util::Execution
 
-  confine :feature => :microsoft_windows
-  defaultfor :feature => :microsoft_windows
+  confine    :operatingsystem => :windows
+  defaultfor :operatingsystem => :windows
 
   desc "Execute external binaries directly, on Windows systems.
 This does not pass through a shell, or perform any interpolation, but
@@ -23,11 +23,10 @@ only directly calls the command with the arguments given."
       return
     end
 
-    path = resource[:path] || []
-
-    exts = [".exe", ".ps1", ".bat", ".com", ""]
-    withenv :PATH => path.join(File::PATH_SEPARATOR) do
-      return if exts.any? {|ext| which(exe + ext) }
+    if resource[:path]
+      withenv :PATH => resource[:path].join(File::PATH_SEPARATOR) do
+        return if which(exe)
+      end
     end
 
     raise ArgumentError, "Could not find command '#{exe}'"

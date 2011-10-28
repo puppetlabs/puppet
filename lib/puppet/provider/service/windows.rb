@@ -4,16 +4,16 @@ require 'win32/service' if Puppet.features.microsoft_windows?
 
 Puppet::Type.type(:service).provide :windows do
 
-  desc "Support for Windows Service Control Manager (SCM).
+  desc <<-EOT
+    Support for Windows Service Control Manager (SCM).
 
-  Services are controlled according to win32-service gem.
-
-  * All SCM operations (start/stop/enable/disable/query) are supported.
-
-  * Control of service groups (dependencies) is not yet supported."
+    Services are controlled according to the capabilities of the `win32-service`
+    gem. All SCM operations (start/stop/enable/disable/query) are supported.
+    Control of service groups (dependencies) is not yet supported.
+  EOT
 
   defaultfor :operatingsystem => :windows
-  confine :operatingsystem => :windows
+  confine    :operatingsystem => :windows
 
   has_feature :refreshable
 

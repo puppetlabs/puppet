@@ -7,7 +7,7 @@ require 'puppet/util/network_device/ipcalc'
 Puppet::Type.newtype(:interface) do
 
     @doc = "This represents a router or switch interface. It is possible to manage
-    interface mode (access or trunking, native vlan and encapsulation), 
+    interface mode (access or trunking, native vlan and encapsulation) and
     switchport characteristics (speed, duplex)."
 
     apply_to_device
@@ -22,11 +22,11 @@ Puppet::Type.newtype(:interface) do
     end
 
     newparam(:name) do
-      desc "Interface name"
+      desc "The interface's name."
     end
 
     newparam(:device_url) do
-      desc "Url to connect to a router or switch."
+      desc "The URL at which the router or switch can be reached."
     end
 
     newproperty(:description) do
@@ -73,14 +73,17 @@ Puppet::Type.newtype(:interface) do
     newproperty(:ipaddress, :array_matching => :all) do
       include Puppet::Util::NetworkDevice::IPCalc
 
-      desc "IP Address of this interface (it might not be possible to set an interface IP address 
-      it depends on the interface type and device type).
+      desc "IP Address of this interface. Note that it might not be possible to set
+      an interface IP address; it depends on the interface type and device type.
+
       Valid format of ip addresses are:
-       * IPV4, like 127.0.0.1
-       * IPV4/prefixlength like 127.0.1.1/24
-       * IPV6/prefixlength like FE80::21A:2FFF:FE30:ECF0/128
-       * an optional suffix for IPV6 addresses from this list: eui-64, link-local
-      It is also possible to use an array of values. 
+
+      * IPV4, like 127.0.0.1
+      * IPV4/prefixlength like 127.0.1.1/24
+      * IPV6/prefixlength like FE80::21A:2FFF:FE30:ECF0/128
+      * an optional suffix for IPV6 addresses from this list: `eui-64`, `link-local`
+
+      It is also possible to supply an array of values.
       "
 
       validate do |values|
