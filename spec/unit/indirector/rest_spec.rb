@@ -104,7 +104,7 @@ describe Puppet::Indirector::REST do
       end.to raise_error(/This is often because the time is out of sync on the server or client/)
     end
 
-    it "should provide a helpful error message when hostname was not match with server certificate" do
+    it "should provide a helpful error message when hostname was not match with server certificate", :unless => Puppet.features.microsoft_windows? do
       Puppet[:confdir] = tmpdir('conf')
       cert = Puppet::SSL::CertificateAuthority.new.generate('not_my_server', :dns_alt_names => 'foo,bar,baz').content
 

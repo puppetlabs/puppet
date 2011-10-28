@@ -2,7 +2,7 @@ require 'spec_helper'
 
 require 'puppet/network/handler/ca'
 
-describe Puppet::Network::Handler::CA do
+describe Puppet::Network::Handler::CA, :unless => Puppet.features.microsoft_windows? do
   include PuppetSpec::Files
 
   describe "#getcert" do
