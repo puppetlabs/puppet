@@ -1,6 +1,6 @@
 Puppet::Type.type(:service).provide :freebsd, :parent => :init do
 
-  desc "Provider for FreeBSD. Makes use of rcvar argument of init scripts and parses/edits rc files."
+  desc "Provider for FreeBSD. Uses the `rcvar` argument of init scripts and parses/edits rc files."
 
   confine :operatingsystem => [:freebsd]
   defaultfor :operatingsystem => [:freebsd]

@@ -3,13 +3,12 @@ Puppet::Type.type(:service).provide :src, :parent => :base do
 
   desc "Support for AIX's System Resource controller.
 
-  Services are started/stopped based on the stopsrc and startsrc
-  commands, and some services can be refreshed with refresh command.
+  Services are started/stopped based on the `stopsrc` and `startsrc`
+  commands, and some services can be refreshed with `refresh` command.
 
-  * Enabling and disableing services is not supported, as it requires
-  modifications to /etc/inittab.
-
-  * Starting and stopping groups of subsystems is not yet supported
+  Enabling and disabling services is not supported, as it requires
+  modifications to `/etc/inittab`. Starting and stopping groups of subsystems
+  is not yet supported.
   "
 
   defaultfor :operatingsystem => :aix

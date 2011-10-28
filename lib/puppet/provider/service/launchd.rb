@@ -1,38 +1,41 @@
 require 'facter/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
-  desc "launchd service management framework.
+  desc <<-EOT
+    This provider manages jobs with `launchd`, which is the default service
+    framework for Mac OS X (and may be available for use on other platforms).
 
-  This provider manages jobs with launchd, which is the default service framework for
-  Mac OS X and is potentially available for use on other platforms.
+    For `launchd` documentation, see:
 
-  See:
-  * http://developer.apple.com/macosx/launchd.html
-  * http://launchd.macosforge.org/
+    * <http://developer.apple.com/macosx/launchd.html>
+    * <http://launchd.macosforge.org/>
 
-  This provider reads plists out of the following directories:
-  * /System/Library/LaunchDaemons
-  * /System/Library/LaunchAgents
-  * /Library/LaunchDaemons
-  * /Library/LaunchAgents
+    This provider reads plists out of the following directories:
 
-  ...and builds up a list of services based upon each plist's \"Label\" entry.
+    * `/System/Library/LaunchDaemons`
+    * `/System/Library/LaunchAgents`
+    * `/Library/LaunchDaemons`
+    * `/Library/LaunchAgents`
 
-  This provider supports:
-  * ensure => running/stopped,
-  * enable => true/false
-  * status
-  * restart
+    ...and builds up a list of services based upon each plist's "Label" entry.
 
-  Here is how the Puppet states correspond to launchd states:
-  * stopped --- job unloaded
-  * started --- job loaded
-  * enabled --- 'Disable' removed from job plist file
-  * disabled --- 'Disable' added to job plist file
+    This provider supports:
 
-  Note that this allows you to do something launchctl can't do, which is to
-  be in a state of \"stopped/enabled\ or \"running/disabled\".
+    * ensure => running/stopped,
+    * enable => true/false
+    * status
+    * restart
 
-  "
+    Here is how the Puppet states correspond to `launchd` states:
+
+    * stopped --- job unloaded
+    * started --- job loaded
+    * enabled --- 'Disable' removed from job plist file
+    * disabled --- 'Disable' added to job plist file
+
+    Note that this allows you to do something `launchctl` can't do, which is to
+    be in a state of "stopped/enabled" or "running/disabled".
+
+  EOT
 
   include Puppet::Util::Warnings
 

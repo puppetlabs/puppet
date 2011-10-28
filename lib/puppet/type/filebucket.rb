@@ -42,7 +42,7 @@ module Puppet
         specified then *path* is checked. If it is set, then the
         bucket is local.  Otherwise the puppetmaster server specified
         in the config or at the commandline is used.
-        
+
         Due to a known issue, you currently must set the `path` attribute to
         false if you wish to specify a `server` attribute."
       defaultto { Puppet[:server] }

@@ -43,17 +43,18 @@ Puppet::Type.newtype(:tidy) do
   end
 
   newparam(:matches) do
-    desc "One or more (shell type) file glob patterns, which restrict
+    desc <<-EOT
+      One or more (shell type) file glob patterns, which restrict
       the list of files to be tidied to those whose basenames match
       at least one of the patterns specified. Multiple patterns can
       be specified using an array.
 
       Example:
 
-          tidy { \"/tmp\":
-            age => \"1w\",
+          tidy { "/tmp":
+            age     => "1w",
             recurse => 1,
-            matches => [ \"[0-9]pub*.tmp\", \"*.temp\", \"tmpfile?\" ]
+            matches => [ "[0-9]pub*.tmp", "*.temp", "tmpfile?" ]
           }
 
       This removes files from `/tmp` if they are one week old or older,
@@ -68,7 +69,8 @@ Puppet::Type.newtype(:tidy) do
       for recurse if matches is used, as matches only apply to files found
       by recursion (there's no reason to use static patterns match against
       a statically determined path).  Requiering explicit recursion clears
-      up a common source of confusion."
+      up a common source of confusion.
+    EOT
 
     # Make sure we convert to an array.
     munge do |value|
@@ -87,8 +89,8 @@ Puppet::Type.newtype(:tidy) do
 
   newparam(:backup) do
     desc "Whether tidied files should be backed up.  Any values are passed
-      directly to the file resources used for actual file deletion, so use
-      its backup documentation to determine valid values."
+      directly to the file resources used for actual file deletion, so consult
+      the `file` type's backup documentation to determine valid values."
   end
 
   newparam(:age) do
@@ -143,7 +145,7 @@ Puppet::Type.newtype(:tidy) do
       the specified size.  Unqualified values are in kilobytes, but
       *b*, *k*, *m*, *g*, and *t* can be appended to specify *bytes*,
       *kilobytes*, *megabytes*, *gigabytes*, and *terabytes*, respectively.
-      Only the first character is significant, so the full word can also 
+      Only the first character is significant, so the full word can also
       be used."
 
     @@sizeconvertors = {

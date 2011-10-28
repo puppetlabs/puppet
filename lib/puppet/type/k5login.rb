@@ -2,31 +2,31 @@
 
 Puppet::Type.newtype(:k5login) do
   @doc = "Manage the `.k5login` file for a user.  Specify the full path to
-    the `.k5login` file as the name and an array of principals as the
-    property principals."
+    the `.k5login` file as the name, and an array of principals as the
+    `principals` attribute."
 
   ensurable
 
   # Principals that should exist in the file
   newproperty(:principals, :array_matching => :all) do
-    desc "The principals present in the `.k5login` file."
+    desc "The principals present in the `.k5login` file. This should be specified as an array."
   end
 
   # The path/name of the k5login file
   newparam(:path) do
     isnamevar
-    desc "The path to the file to manage.  Must be fully qualified."
+    desc "The path to the `.k5login` file to manage.  Must be fully qualified."
 
     validate do |value|
       unless value =~ /^#{File::SEPARATOR}/
-        raise Puppet::Error, "File paths must be fully qualified"
+        raise Puppet::Error, "File paths must be fully qualified."
       end
     end
   end
 
   # To manage the mode of the file
   newproperty(:mode) do
-    desc "Manage the k5login file's mode"
+    desc "The desired permissions mode of the `.k5login` file. Defaults to `644`."
     defaultto { "644" }
   end
 

@@ -2,42 +2,42 @@
 #
 # author Brice Figureau <brice-puppet@daysofwonder.com>
 Puppet::Type.type(:service).provide :daemontools, :parent => :base do
-  desc "Daemontools service management.
+  desc <<-EOT
+    Daemontools service management.
 
-  This provider manages daemons running supervised by D.J.Bernstein daemontools.
-  It tries to detect the service directory, with by order of preference:
+    This provider manages daemons supervised by D.J. Bernstein daemontools.
+    When detecting the service directory it will check, in order of preference:
 
-  * /service
-  * /etc/service
-  * /var/lib/svscan
+    * `/service`
+    * `/etc/service`
+    * `/var/lib/svscan`
 
-  The daemon directory should be placed in a directory that can be
-  by default in:
+    The daemon directory should be in one of the following locations:
 
-  * /var/lib/service
-  * /etc
+    * `/var/lib/service`
+    * `/etc`
 
-  or this can be overriden in the service resource parameters::
+    ...or this can be overriden in the resource's attributes:
 
-      service { \"myservice\":
-        provider => \"daemontools\",
-        path => \"/path/to/daemons\",
-      }
+        service { "myservice":
+          provider => "daemontools",
+          path     => "/path/to/daemons",
+        }
 
-  This provider supports out of the box:
+    This provider supports out of the box:
 
-  * start/stop (mapped to enable/disable)
-  * enable/disable
-  * restart
-  * status
+    * start/stop (mapped to enable/disable)
+    * enable/disable
+    * restart
+    * status
 
-  If a service has `ensure => \"running\"`, it will link /path/to/daemon to
-  /path/to/service, which will automatically enable the service.
+    If a service has `ensure => "running"`, it will link /path/to/daemon to
+    /path/to/service, which will automatically enable the service.
 
-  If a service has `ensure => \"stopped\"`, it will only down the service, not
-  remove the /path/to/service link.
+    If a service has `ensure => "stopped"`, it will only shut down the service, not
+    remove the `/path/to/service` link.
 
-  "
+  EOT
 
   commands :svc  => "/usr/bin/svc", :svstat => "/usr/bin/svstat"
 

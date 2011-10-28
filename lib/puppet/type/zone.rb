@@ -1,7 +1,9 @@
 Puppet::Type.newtype(:zone) do
-  @doc = "Solaris zones.
+  @doc = "Manages Solaris zones.
 
-**Autorequires:** If Puppet is managing the directory specified as the root of the zone's filesystem (with the `path` attribute), the zone resource will autorequire that directory."
+**Autorequires:** If Puppet is managing the directory specified as the root of
+the zone's filesystem (with the `path` attribute), the zone resource will
+autorequire that directory."
 
   # These properties modify the zone configuration, and they need to provide
   # the text separately from syncing it, so all config statements can be rolled
@@ -72,7 +74,7 @@ Puppet::Type.newtype(:zone) do
   ensurable do
     desc "The running state of the zone.  The valid states directly reflect
       the states that `zoneadm` provides.  The states are linear,
-      in that a zone must be `configured` then `installed`, and
+      in that a zone must be `configured`, then `installed`, and
       only then can be `running`.  Note also that `halt` is currently
       used to stop zones."
 
@@ -198,8 +200,8 @@ Puppet::Type.newtype(:zone) do
   newparam(:clone) do
     desc "Instead of installing the zone, clone it from another zone.
       If the zone root resides on a zfs file system, a snapshot will be
-      used to create the clone, is it redisides on ufs, a copy of the zone
-      will be used. The zone you clone from must not be running."
+      used to create the clone; if it resides on a ufs filesystem, a copy of the
+      zone will be used. The zone from which you clone must not be running."
   end
 
   newproperty(:ip, :parent => ZoneMultiConfigProperty) do
@@ -243,7 +245,7 @@ Puppet::Type.newtype(:zone) do
   end
 
   newproperty(:iptype, :parent => ZoneConfigProperty) do
-    desc "The IP stack type of the zone. Can either be 'shared' or 'exclusive'."
+    desc "The IP stack type of the zone."
 
     defaultto :shared
 
@@ -285,9 +287,9 @@ Puppet::Type.newtype(:zone) do
   end
 
   newproperty(:dataset, :parent => ZoneMultiConfigProperty) do
-    desc "The list of datasets delegated to the non global zone from the
-      global zone.  All datasets must be zfs filesystem names which is
-      different than the mountpoint." 
+    desc "The list of datasets delegated to the non-global zone from the
+      global zone.  All datasets must be zfs filesystem names which are
+      different from the mountpoint."
 
     validate do |value|
       unless value !~ /^\//
@@ -341,10 +343,10 @@ Puppet::Type.newtype(:zone) do
   # Specify the sysidcfg file.  This is pretty hackish, because it's
   # only used to boot the zone the very first time.
   newparam(:sysidcfg) do
-    desc %{The text to go into the sysidcfg file when the zone is first
+    desc %{The text to go into the `sysidcfg` file when the zone is first
       booted.  The best way is to use a template:
 
-          # $templatedir/sysidcfg
+          # $confdir/modules/site/templates/sysidcfg.erb
           system_locale=en_US
           timezone=GMT
           terminal=xterms
@@ -362,20 +364,20 @@ Puppet::Type.newtype(:zone) do
       And then call that:
 
           zone { myzone:
-            ip => "bge0:192.168.0.23",
-            sysidcfg => template(sysidcfg),
-            path => "/opt/zones/myzone",
+            ip           => "bge0:192.168.0.23",
+            sysidcfg     => template("site/sysidcfg.erb"),
+            path         => "/opt/zones/myzone",
             realhostname => "fully.qualified.domain.name"
           }
 
-      The sysidcfg only matters on the first booting of the zone,
+      The `sysidcfg` only matters on the first booting of the zone,
       so Puppet only checks for it at that time.}
   end
 
   newparam(:path) do
     desc "The root of the zone's filesystem.  Must be a fully qualified
-      file name.  If you include '%s' in the path, then it will be
-      replaced with the zone's name.  At this point, you cannot use
+      file name.  If you include `%s` in the path, then it will be
+      replaced with the zone's name.  Currently, you cannot use
       Puppet to move a zone."
 
     validate do |value|
@@ -394,11 +396,11 @@ Puppet::Type.newtype(:zone) do
   end
 
   newparam(:create_args) do
-    desc "Arguments to the zonecfg create command.  This can be used to create branded zones."
+    desc "Arguments to the `zonecfg` create command.  This can be used to create branded zones."
   end
 
   newparam(:install_args) do
-    desc "Arguments to the zoneadm install command.  This can be used to create branded zones."
+    desc "Arguments to the `zoneadm` install command.  This can be used to create branded zones."
   end
 
   newparam(:realhostname) do
