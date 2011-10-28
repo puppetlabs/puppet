@@ -1,27 +1,32 @@
 module Puppet
   newtype(:schedule) do
-    @doc = "Defined schedules for Puppet.  The important thing to understand
-      about how schedules are currently implemented in Puppet is that they
-      can only be used to stop a resource from being applied, they never
-      guarantee that it is applied.
+    @doc = <<-EOT
+      Define schedules for Puppet. Resources can be limited to a schedule by using the
+      [`schedule`](http://docs.puppetlabs.com/references/latest/metaparameter.html#schedule)
+      metaparameter.
 
-      Every time Puppet applies its configuration, it will collect the
-      list of resources whose schedule does not eliminate them from
+      Currently, **schedules can only be used to stop a resource from being
+      applied;** they cannot cause a resource to be applied when it otherwise
+      wouldn't be, and they cannot accurately specify a time when a resource
+      should run.
+
+      Every time Puppet applies its configuration, it will apply the
+      set of resources whose schedule does not eliminate them from
       running right then, but there is currently no system in place to
       guarantee that a given resource runs at a given time.  If you
       specify a very  restrictive schedule and Puppet happens to run at a
       time within that schedule, then the resources will get applied;
       otherwise, that work may never get done.
 
-      Thus, it behooves you to use wider scheduling (e.g., over a couple of
+      Thus, it is advisable to use wider scheduling (e.g., over a couple of
       hours) combined with periods and repetitions.  For instance, if you
       wanted to restrict certain resources to only running once, between
       the hours of two and 4 AM, then you would use this schedule:
 
-          schedule { maint:
-            range => \"2 - 4\",
+          schedule { 'maint':
+            range  => "2 - 4",
             period => daily,
-            repeat => 1
+            repeat => 1,
           }
 
       With this schedule, the first time that Puppet runs between 2 and 4 AM,
@@ -30,51 +35,54 @@ module Puppet
       run once that day, and they won't get applied outside that schedule
       because they will be outside the scheduled range.
 
-      Puppet automatically creates a schedule for each valid period with the
-      same name as that period (e.g., hourly and daily).  Additionally,
-      a schedule named *puppet* is created and used as the default,
-      with the following attributes:
+      Puppet automatically creates a schedule for each of the valid periods
+      with the same name as that period (e.g., hourly and daily).
+      Additionally, a schedule named `puppet` is created and used as the
+      default, with the following attributes:
 
-          schedule { puppet:
+          schedule { 'puppet':
             period => hourly,
-            repeat => 2
+            repeat => 2,
           }
 
       This will cause resources to be applied every 30 minutes by default.
-      "
+      EOT
 
     apply_to_all
 
     newparam(:name) do
-      desc "The name of the schedule.  This name is used to retrieve the
+      desc <<-EOT
+        The name of the schedule.  This name is used to retrieve the
         schedule when assigning it to an object:
 
-            schedule { daily:
+            schedule { 'daily':
               period => daily,
-              range => \"2 - 4\",
-            }
-  
-            exec { \"/usr/bin/apt-get update\":
-              schedule => daily
+              range  => "2 - 4",
             }
 
-        "
+            exec { "/usr/bin/apt-get update":
+              schedule => 'daily',
+            }
+
+        EOT
       isnamevar
     end
 
     newparam(:range) do
-      desc "The earliest and latest that a resource can be applied.  This
-        is always a range within a 24 hour period, and hours must be
-        specified in numbers between 0 and 23, inclusive.  Minutes and
-        seconds can be provided, using the normal colon as a separator.
-        For instance:
+      desc <<-EOT
+        The earliest and latest that a resource can be applied.  This is
+        always a hyphen-separated range within a 24 hour period, and hours
+        must be specified in numbers between 0 and 23, inclusive.  Minutes and
+        seconds can optionally be provided, using the normal colon as a
+        separator. For instance:
 
-            schedule { maintenance:
-              range => \"1:30 - 4:30\"
+            schedule { 'maintenance':
+              range => "1:30 - 4:30",
             }
 
         This is mostly useful for restricting certain resources to being
-        applied in maintenance windows or during off-peak hours."
+        applied in maintenance windows or during off-peak hours.
+      EOT
 
       # This is lame; properties all use arrays as values, but parameters don't.
       # That's going to hurt eventually.
@@ -190,24 +198,23 @@ module Puppet
     end
 
     newparam(:period) do
-      desc "The period of repetition for a resource.  Choose from among
-        a fixed list of *hourly*, *daily*, *weekly*, and *monthly*.
-        The default is for a resource to get applied every time that
-        Puppet runs, whatever that period is.
+      desc <<-EOT
+        The period of repetition for a resource. The default is for a resource
+        to get applied every time Puppet runs.
 
         Note that the period defines how often a given resource will get
         applied but not when; if you would like to restrict the hours
         that a given resource can be applied (e.g., only at night during
-        a maintenance window) then use the `range` attribute.
+        a maintenance window), then use the `range` attribute.
 
         If the provided periods are not sufficient, you can provide a
         value to the *repeat* attribute, which will cause Puppet to
         schedule the affected resources evenly in the period the
         specified number of times.  Take this schedule:
 
-            schedule { veryoften:
+            schedule { 'veryoften':
               period => hourly,
-              repeat => 6
+              repeat => 6,
             }
 
         This can cause Puppet to apply that resource up to every 10 minutes.
@@ -218,7 +225,8 @@ module Puppet
         often (e.g., long-running Puppet runs will squash conflictingly scheduled runs).
 
         See the `periodmatch` attribute for tuning whether to match
-        times by their distance apart or by their specific value."
+        times by their distance apart or by their specific value.
+      EOT
 
       newvalues(:hourly, :daily, :weekly, :monthly, :never)
 
@@ -268,8 +276,8 @@ module Puppet
     end
 
     newparam(:repeat) do
-      desc "How often the application gets repeated in a given period.
-        Defaults to 1. Must be an integer."
+      desc "How often a given resource may be applied in this schedule's `period`.
+        Defaults to 1; must be an integer."
 
       defaultto 1
 

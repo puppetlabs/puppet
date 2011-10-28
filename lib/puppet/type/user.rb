@@ -14,7 +14,10 @@ module Puppet
       groups and generally uses POSIX APIs for retrieving information
       about them.  It does not directly modify `/etc/passwd` or anything.
 
-      **Autorequires:** If Puppet is managing the user's primary group (as provided in the `gid` attribute), the user resource will autorequire that group. If Puppet is managing any role accounts corresponding to the user's roles, the user resource will autorequire those role accounts."
+      **Autorequires:** If Puppet is managing the user's primary group (as
+      provided in the `gid` attribute), the user resource will autorequire
+      that group. If Puppet is managing any role accounts corresponding to the
+      user's roles, the user resource will autorequire those role accounts."
 
     feature :allows_duplicates,
       "The provider supports duplicate users with the same UID."
@@ -86,17 +89,16 @@ module Puppet
     end
 
     newproperty(:uid) do
-      desc "The user ID.  Must be specified numerically.  For new users
-        being created, if no user ID is specified then one will be
-        chosen automatically, which will likely result in the same user
-        having different IDs on different systems, which is not
-        recommended.  This is especially noteworthy if you use Puppet
-        to manage the same user on both Darwin and other platforms,
-        since Puppet does the ID generation for you on Darwin, but the
-        tools do so on other platforms.
+      desc "The user ID; must be specified numerically. If no user ID is
+        specified when creating a new user, then one will be chosen
+        automatically. This will likely result in the same user having
+        different UIDs on different systems, which is not recommended. This is
+        especially noteworthy when managing the same user on both Darwin and
+        other platforms, since Puppet does UID generation on Darwin, but
+        the underlying tools do so on other platforms.
 
-        On Windows, the property will return the user's security
-        identifier (SID)."
+        On Windows, this property is read-only and will return the user's
+        security identifier (SID)."
 
       munge do |value|
         case value
@@ -149,7 +151,7 @@ module Puppet
     end
 
     newproperty(:comment) do
-      desc "A description of the user.  Generally is a user's full name."
+      desc "A description of the user.  Generally the user's full name."
     end
 
     newproperty(:shell) do
@@ -158,7 +160,10 @@ module Puppet
     end
 
     newproperty(:password, :required_features => :manages_passwords) do
-      desc "The user's password, in whatever encrypted format the local machine requires. Be sure to enclose any value that includes a dollar sign ($) in single quotes (\')."
+      desc %q{The user's password, in whatever encrypted format the local
+        machine requires. Be sure to enclose any value that includes a dollar
+        sign ($) in single quotes (') to avoid accidental variable
+        interpolation.}
 
       validate do |value|
         raise ArgumentError, "Passwords cannot include ':'" if value.is_a?(String) and value.include?(":")
@@ -182,7 +187,7 @@ module Puppet
     end
 
     newproperty(:password_min_age, :required_features => :manages_password_age) do
-      desc "The minimum amount of time in days a password must be used before it may be changed"
+      desc "The minimum number of days a password must be used before it may be changed."
 
       munge do |value|
         case value
@@ -195,13 +200,13 @@ module Puppet
 
       validate do |value|
         if value.to_s !~ /^-?\d+$/
-          raise ArgumentError, "Password minimum age must be provided as a number"
+          raise ArgumentError, "Password minimum age must be provided as a number."
         end
       end
     end
 
     newproperty(:password_max_age, :required_features => :manages_password_age) do
-      desc "The maximum amount of time in days a password may be used before it must be changed"
+      desc "The maximum number of days a password may be used before it must be changed."
 
       munge do |value|
         case value
@@ -214,35 +219,35 @@ module Puppet
 
       validate do |value|
         if value.to_s !~ /^-?\d+$/
-          raise ArgumentError, "Password maximum age must be provided as a number"
+          raise ArgumentError, "Password maximum age must be provided as a number."
         end
       end
     end
 
     newproperty(:groups, :parent => Puppet::Property::List) do
-      desc "The groups of which the user is a member.  The primary
-        group should not be listed.  Multiple groups should be
-        specified as an array."
+      desc "The groups to which the user belongs.  The primary group should
+        not be listed, and groups should be identified by name rather than by
+        GID.  Multiple groups should be specified as an array."
 
       validate do |value|
         if value =~ /^\d+$/
-          raise ArgumentError, "Group names must be provided, not numbers"
+          raise ArgumentError, "Group names must be provided, not GID numbers."
         end
-        raise ArgumentError, "Group names must be provided as an array, not a comma-separated list" if value.include?(",")
+        raise ArgumentError, "Group names must be provided as an array, not a comma-separated list." if value.include?(",")
       end
     end
 
     newparam(:name) do
-      desc "User name.  While limitations are determined for
-        each operating system, it is generally a good idea to keep to
-        the degenerate 8 characters, beginning with a letter."
+      desc "The user name. While naming limitations vary by operating system,
+        it is advisable to restrict names to the lowest common denominator,
+        which is a maximum of 8 characters beginning with a letter."
       isnamevar
     end
 
     newparam(:membership) do
-      desc "Whether specified groups should be treated as the only groups
-        of which the user is a member or whether they should merely
-        be treated as the minimum membership list."
+      desc "Whether specified groups should be considered the **complete list**
+        (`inclusive`) or the **minimum list** (`minimum`) of groups to which
+        the user belongs. Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 
@@ -250,7 +255,9 @@ module Puppet
     end
 
     newparam(:system, :boolean => true) do
-      desc "Whether the user is a system user with lower UID."
+      desc "Whether the user is a system user, according to the OS's criteria;
+      on most platforms, a UID less than or equal to 500 indicates a system
+      user. Defaults to `false`."
 
       newvalues(:true, :false)
 
@@ -258,7 +265,7 @@ module Puppet
     end
 
     newparam(:allowdupe, :boolean => true) do
-      desc "Whether to allow duplicate UIDs."
+      desc "Whether to allow duplicate UIDs. Defaults to `false`."
 
       newvalues(:true, :false)
 
@@ -266,7 +273,8 @@ module Puppet
     end
 
     newparam(:managehome, :boolean => true) do
-      desc "Whether to manage the home directory when managing the user."
+      desc "Whether to manage the home directory when managing the user.
+        Defaults to `false`."
 
       newvalues(:true, :false)
 
@@ -281,7 +289,7 @@ module Puppet
 
     newproperty(:expiry, :required_features => :manages_expiry) do
       desc "The expiry date for this user. Must be provided in
-           a zero padded YYYY-MM-DD format - e.g 2010-02-19."
+           a zero-padded YYYY-MM-DD format --- e.g. 2010-02-19."
 
       validate do |value|
         if value !~ /^\d{4}-\d{2}-\d{2}$/
@@ -373,9 +381,9 @@ module Puppet
     end
 
     newparam(:role_membership) do
-      desc "Whether specified roles should be treated as the only roles
-        of which the user is a member or whether they should merely
-        be treated as the minimum membership list."
+      desc "Whether specified roles should be considered the **complete list**
+        (`inclusive`) or the **minimum list** (`minimum`) of roles the user
+        has. Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 
@@ -399,9 +407,9 @@ module Puppet
     end
 
     newparam(:auth_membership) do
-      desc "Whether specified auths should be treated as the only auths
-        of which the user is a member or whether they should merely
-        be treated as the minimum membership list."
+      desc "Whether specified auths should be considered the **complete list**
+        (`inclusive`) or the **minimum list** (`minimum`) of auths the user
+        has. Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 
@@ -425,9 +433,9 @@ module Puppet
     end
 
     newparam(:profile_membership) do
-      desc "Whether specified roles should be treated as the only roles
-        of which the user is a member or whether they should merely
-        be treated as the minimum membership list."
+      desc "Whether specified roles should be treated as the **complete list**
+        (`inclusive`) or the **minimum list** (`minimum`) of roles
+        of which the user is a member. Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 
@@ -435,21 +443,21 @@ module Puppet
     end
 
     newproperty(:keys, :parent => Puppet::Property::KeyValue, :required_features => :manages_solaris_rbac) do
-      desc "Specify user attributes in an array of keyvalue pairs"
+      desc "Specify user attributes in an array of key = value pairs."
 
       def membership
         :key_membership
       end
 
       validate do |value|
-        raise ArgumentError, "key value pairs must be seperated by an =" unless value.include?("=")
+        raise ArgumentError, "Key/value pairs must be seperated by an =" unless value.include?("=")
       end
     end
 
     newparam(:key_membership) do
-      desc "Whether specified key value pairs should be treated as the only attributes
-        of the user or whether they should merely
-        be treated as the minimum list."
+      desc "Whether specified key/value pairs should be considered the
+        **complete list** (`inclusive`) or the **minimum list** (`minimum`) of
+        the user's attributes. Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 
@@ -457,15 +465,15 @@ module Puppet
     end
 
     newproperty(:project, :required_features => :manages_solaris_rbac) do
-      desc "The name of the project associated with a user"
+      desc "The name of the project associated with a user."
     end
 
     newparam(:ia_load_module, :required_features => :manages_aix_lam) do
-      desc "The name of the I&A module to use to manage this user"
+      desc "The name of the I&A module to use to manage this user."
     end
 
     newproperty(:attributes, :parent => Puppet::Property::KeyValue, :required_features => :manages_aix_lam) do
-      desc "Specify user AIX attributes in an array of keyvalue pairs"
+      desc "Specify AIX attributes for the user in an array of attribute = value pairs."
 
       def membership
         :attribute_membership
@@ -481,9 +489,9 @@ module Puppet
     end
 
     newparam(:attribute_membership) do
-      desc "Whether specified attribute value pairs should be treated as the only attributes
-        of the user or whether they should merely
-        be treated as the minimum list."
+      desc "Whether specified attribute value pairs should be treated as the
+        **complete list** (`inclusive`) or the **minimum list** (`minimum`) of
+        attribute/value pairs for the user. Defaults to `minimum`."
 
       newvalues(:inclusive, :minimum)
 

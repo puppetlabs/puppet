@@ -21,13 +21,13 @@ Puppet::Type.newtype(:augeas) do
   feature :execute_changes, "Actually make the changes"
 
   @doc = <<-EOT
-    Apply the changes (single or array of changes) to the filesystem
-    via the augeas tool.
+    Apply a change or an array of changes to the filesystem
+    using the augeas tool.
 
     Requires:
 
-    - augeas to be installed (http://www.augeas.net)
-    - ruby-augeas bindings
+    - [Augeas](http://www.augeas.net)
+    - The ruby-augeas bindings
 
     Sample usage with a string:
 
@@ -40,23 +40,25 @@ Puppet::Type.newtype(:augeas) do
     Sample usage with an array and custom lenses:
 
         augeas{"jboss_conf":
-          context => "/files",
-          changes => [
-            "set etc/jbossas/jbossas.conf/JBOSS_IP $ipaddress",
-            "set etc/jbossas/jbossas.conf/JAVA_HOME /usr",
-          ],
+          context   => "/files",
+          changes   => [
+              "set etc/jbossas/jbossas.conf/JBOSS_IP $ipaddress",
+              "set etc/jbossas/jbossas.conf/JAVA_HOME /usr",
+            ],
           load_path => "$/usr/share/jbossas/lenses",
         }
 
   EOT
 
   newparam (:name) do
-    desc "The name of this task. Used for uniqueness"
+    desc "The name of this task. Used for uniqueness."
     isnamevar
   end
 
   newparam (:context) do
-    desc "Optional context path. This value is prepended to the paths of all changes if the path is relative. If INCL is set, defaults to '/files' + INCL, otherwise the empty string"
+    desc "Optional context path. This value is prepended to the paths of all
+      changes if the path is relative. If the `incl` parameter is set,
+      defaults to `/files + incl`; otherwise, defaults to the empty string."
     defaultto ""
     munge do |value|
       if value.empty? and resource[:incl]
@@ -71,91 +73,123 @@ Puppet::Type.newtype(:augeas) do
     desc "Optional augeas command and comparisons to control the execution of this type.
       Supported onlyif syntax:
 
-          get [AUGEAS_PATH] [COMPARATOR] [STRING]
-          match [MATCH_PATH] size [COMPARATOR] [INT]
-          match [MATCH_PATH] include [STRING]
-          match [MATCH_PATH] not_include [STRING]
-          match [MATCH_PATH] == [AN_ARRAY]
-          match [MATCH_PATH] != [AN_ARRAY]
+      * `get <AUGEAS_PATH> <COMPARATOR> <STRING>`
+      * `match <MATCH_PATH> size <COMPARATOR> <INT>`
+      * `match <MATCH_PATH> include <STRING>`
+      * `match <MATCH_PATH> not_include <STRING>`
+      * `match <MATCH_PATH> == <AN_ARRAY>`
+      * `match <MATCH_PATH> != <AN_ARRAY>`
 
       where:
 
-          AUGEAS_PATH is a valid path scoped by the context
-          MATCH_PATH is a valid match synatx scoped by the context
-          COMPARATOR is in the set [> >= != == <= <]
-          STRING is a string
-          INT is a number
-          AN_ARRAY is in the form ['a string', 'another']"
+      * `AUGEAS_PATH` is a valid path scoped by the context
+      * `MATCH_PATH` is a valid match synatx scoped by the context
+      * `COMPARATOR` is one of `>, >=, !=, ==, <=,` or `<`
+      * `STRING` is a string
+      * `INT` is a number
+      * `AN_ARRAY` is in the form `['a string', 'another']`"
     defaultto ""
   end
 
 
   newparam(:changes) do
     desc "The changes which should be applied to the filesystem. This
-    can be either a string which contains a command or an array of commands.
-    Commands supported are:
+    can be a command or an array of commands. The following commands are supported:
 
-        set [PATH] [VALUE]            Sets the value VALUE at loction PATH
-        setm [PATH] [SUB] [VALUE]     Sets multiple nodes matching SUB relative to PATH, to VALUE
-        rm [PATH]                     Removes the node at location PATH
-        remove [PATH]                 Synonym for rm
-        clear [PATH]                  Sets the node at PATH to NULL, creating it if needed
-        ins [LABEL] [WHERE] [PATH]    Inserts an empty node LABEL either [WHERE={before|after}] PATH.
-        insert [LABEL] [WHERE] [PATH] Synonym for ins
-        mv [PATH] [PATH]              Moves a node at PATH to the new location PATH
-        move [PATH] [PATH]            Synonym for mv
-        defvar [NAME] [PATH]          Sets Augeas variable $NAME to PATH
-        defnode [NAME] [PATH] [VALUE] Sets Augeas variable $NAME to PATH, creating it with VALUE if needed
+    `set <PATH> <VALUE>`
+    : Sets the value `VALUE` at loction `PATH`
 
-    If the parameter 'context' is set that value is prepended to a relative PATH"
+
+    `setm <PATH> <SUB> <VALUE>`
+    : Sets multiple nodes (matching `SUB` relative to `PATH`) to `VALUE`
+
+
+    `rm <PATH>`
+    : Removes the node at location `PATH`
+
+
+    `remove <PATH>`
+    : Synonym for `rm`
+
+
+    `clear <PATH>`
+    : Sets the node at `PATH` to `NULL`, creating it if needed
+
+
+    `ins <LABEL> (before|after) <PATH>`
+    : Inserts an empty node `LABEL` either before or after `PATH`.
+
+
+    `insert <LABEL> <WHERE> <PATH>`
+    : Synonym for `ins`
+
+
+    `mv <PATH> <OTHER PATH>`
+    : Moves a node at `PATH` to the new location `OTHER PATH`
+
+
+    `move <PATH> <OTHER PATH>`
+    : Synonym for `mv`
+
+
+    `defvar <NAME> <PATH>`
+    : Sets Augeas variable `$NAME` to `PATH`
+
+
+    `defnode <NAME> <PATH> <VALUE>`
+    : Sets Augeas variable `$NAME` to `PATH`, creating it with `VALUE` if needed
+
+    If the `context` parameter is set, that value is prepended to any relative `PATH`s."
   end
 
 
   newparam(:root) do
-    desc "A file system path; all files loaded by Augeas are loaded underneath ROOT"
+    desc "A file system path; all files loaded by Augeas are loaded underneath `root`."
     defaultto "/"
   end
 
   newparam(:load_path) do
-    desc "Optional colon separated list of directories; these directories are searched for schema definitions"
+    desc "Optional colon-separated list of directories; these directories are searched for schema definitions."
     defaultto ""
   end
 
   newparam(:force) do
     desc "Optional command to force the augeas type to execute even if it thinks changes
-    will not be made. This does not overide the only setting. If onlyif is set, then the
-    foce setting will not override that result"
+    will not be made. This does not overide the `onlyif` parameter."
 
     defaultto false
   end
 
   newparam(:type_check) do
-    desc "Set to true if augeas should perform typechecking. Optional, defaults to false"
+    desc "Whether augeas should perform typechecking. Defaults to false."
     newvalues(:true, :false)
 
     defaultto :false
   end
 
   newparam(:lens) do
-    desc "Use a specific lens, e.g. `Hosts.lns`. When this parameter is set, you must also set the incl parameter to indicate which file to load. Only that file will be loaded, which greatly speeds up execution of the type"
+    desc "Use a specific lens, e.g. `Hosts.lns`. When this parameter is set, you
+      must also set the `incl` parameter to indicate which file to load."
   end
 
   newparam(:incl) do
-    desc "Load only a specific file, e.g. `/etc/hosts`.  When this parameter is set, you must also set the lens parameter to indicate which lens to use."
+    desc "Load only a specific file, e.g. `/etc/hosts`. This can greatly speed
+      up the execution the resource. When this parameter is set, you must also
+      set the `lens` parameter to indicate which lens to use."
   end
 
   validate do
     has_lens = !self[:lens].nil?
     has_incl = !self[:incl].nil?
-    self.fail "You must specify both the lens and incl parameters, or neither" if has_lens != has_incl
+    self.fail "You must specify both the lens and incl parameters, or neither." if has_lens != has_incl
   end
 
-  # This is the acutal meat of the code. It forces
+  # This is the actual meat of the code. It forces
   # augeas to be run and fails or not based on the augeas return
   # code.
   newproperty(:returns) do |property|
     include Puppet::Util
-    desc "The expected return code from the augeas command. Should not be set"
+    desc "The expected return code from the augeas command. Should not be set."
 
     defaultto 0
 

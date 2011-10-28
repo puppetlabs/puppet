@@ -16,7 +16,7 @@ module Puppet::Util::NagiosMaker
     type.ensurable
 
     type.newparam(nagtype.namevar, :namevar => true) do
-      desc "The name parameter for Nagios type #{nagtype.name}"
+      desc "The name of this nagios_#{nagtype.name} resource."
     end
 
     # We deduplicate the parameters because it makes sense to allow Naginator to have dupes.
@@ -33,7 +33,7 @@ module Puppet::Util::NagiosMaker
     end
 
     type.newproperty(:target) do
-      desc 'target'
+      desc 'The target.'
 
       defaultto do
         resource.class.defaultprovider.default_target

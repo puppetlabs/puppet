@@ -3,24 +3,24 @@
 #
 
 Puppet::Type.newtype(:vlan) do
-    @doc = "This represents a router or switch vlan."
+    @doc = "Manages a VLAN on a router or switch."
 
     apply_to_device
 
     ensurable
 
     newparam(:name) do
-      desc "Vlan id. It must be a number"
+      desc "The numeric VLAN ID."
       isnamevar
 
       newvalues(/^\d+/)
     end
 
     newproperty(:description) do
-      desc "Vlan name"
+      desc "The VLAN's name."
     end
 
     newparam(:device_url) do
-      desc "Url to connect to a router or switch."
+      desc "The URL of the router or switch maintaining this VLAN."
     end
 end

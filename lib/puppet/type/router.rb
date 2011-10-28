@@ -7,7 +7,10 @@ module Puppet
     @doc = "Manages connected router."
 
     newparam(:url) do
-      desc "An URL to access the router of the form (ssh|telnet)://user:pass:enable@host/."
+      desc <<-EOT
+        An SSH or telnet URL at which to access the router, in the form
+        `ssh://user:pass:enable@host/` or `telnet://user:pass:enable@host/`.
+      EOT
       isnamevar
     end
   end

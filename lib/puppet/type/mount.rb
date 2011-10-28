@@ -16,10 +16,11 @@ module Puppet
     newproperty(:ensure) do
       desc "Control what to do with this mount. Set this attribute to
         `umounted` to make sure the filesystem is in the filesystem table
-        but not mounted (if the filesystem is currently mounted, it will be unmounted).  Set it to `absent` to unmount (if necessary) and remove
+        but not mounted (if the filesystem is currently mounted, it will be
+        unmounted).  Set it to `absent` to unmount (if necessary) and remove
         the filesystem from the fstab.  Set to `mounted` to add it to the
         fstab and mount it. Set to `present` to add to fstab but not change
-        mount/unmount status"
+        mount/unmount status."
 
       #  IS        -> SHOULD     In Sync  Action
       #  ghost     -> present    NO       create

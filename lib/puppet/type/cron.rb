@@ -20,17 +20,17 @@ Puppet::Type.newtype(:cron) do
 
         cron { logrotate:
           command => "/usr/sbin/logrotate",
-          user => root,
-          hour => 2,
-          minute => 0
+          user    => root,
+          hour    => 2,
+          minute  => 0
         }
 
     Note that all periodic attributes can be specified as an array of values:
 
         cron { logrotate:
           command => "/usr/sbin/logrotate",
-          user => root,
-          hour => [2, 4]
+          user    => root,
+          hour    => [2, 4]
         }
 
     ...or using ranges or the step syntax `*/2` (although there's no guarantee
@@ -38,9 +38,9 @@ Puppet::Type.newtype(:cron) do
 
         cron { logrotate:
           command => "/usr/sbin/logrotate",
-          user => root,
-          hour => ['2-4'],
-          minute => '*/10'
+          user    => root,
+          hour    => ['2-4'],
+          minute  => '*/10'
         }
   EOT
   ensurable
@@ -338,9 +338,9 @@ Puppet::Type.newtype(:cron) do
       is used for human reference only and is generated automatically
       for cron jobs found on the system.  This generally won't
       matter, as Puppet will do its best to match existing cron jobs
-      against specified jobs (and Puppet adds a comment to cron jobs it adds), but it is at least possible that converting from
-      unmanaged jobs to managed jobs might require manual
-      intervention."
+      against specified jobs (and Puppet adds a comment to cron jobs it adds),
+      but it is at least possible that converting from unmanaged jobs to
+      managed jobs might require manual intervention."
 
     isnamevar
   end

@@ -3,7 +3,7 @@ Puppet::Type.newtype(:mcx) do
   @doc = "MCX object management using DirectoryService on OS X.
 
 The default provider of this type merely manages the XML plist as
-reported by the dscl -mcxexport command.  This is similar to the
+reported by the `dscl -mcxexport` command.  This is similar to the
 content property of the file type in Puppet.
 
 The recommended method of using this type is to use Work Group Manager
@@ -53,14 +53,14 @@ MCX settings refer to, the MCX resource will autorequire that user, group, or co
   end
 
   newparam(:ds_name) do
-    desc "The name to attach the MCX Setting to.
-    e.g. 'localhost' when ds_type => computer. This setting is not
-    required, as it may be parsed so long as the resource name is
-    parseable.  e.g. /Groups/admin where 'group' is the dstype."
+    desc "The name to attach the MCX Setting to. (For example, `localhost`
+    when `ds_type => computer`.) This setting is not required, as it can be
+    automatically discovered when the resource name is parseable.  (For
+    example, in `/Groups/admin`, `group` will be used as the dstype.)"
   end
 
   newproperty(:content, :required_features => :manages_content) do
-    desc "The XML Plist.  The value of MCXSettings in DirectoryService.
+    desc "The XML Plist used as the value of MCXSettings in DirectoryService.
     This is the standard output from the system command:
 
         dscl localhost -mcxexport /Local/Default/<ds_type>/ds_name

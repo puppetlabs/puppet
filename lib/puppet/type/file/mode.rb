@@ -15,7 +15,7 @@ module Puppet
       world-readable by setting e.g.:
 
           file { '/some/dir':
-            mode => 644,
+            mode    => 644,
             recurse => true,
           }
 

@@ -1,5 +1,9 @@
 Puppet::Type.newtype(:whit) do
-  desc "The smallest possible resource type, for when you need a resource and naught else."
+  desc "Whits are internal artifacts of Puppet's current implementation, and
+    Puppet suppresses their appearance in all logs. We make no guarantee of
+    the whit's continued existence, and it should never be used in an actual
+    manifest. Use the `anchor` type from the puppetlabs-stdlib module if you
+    need arbitrary whit-like no-op resources."
 
   newparam :name do
     desc "The name of the whit, because it must have one."
@@ -18,6 +22,6 @@ Puppet::Type.newtype(:whit) do
   def refresh
     # We don't do anything with them, but we need this to
     #   show that we are "refresh aware" and not break the
-    #   chain of propogation.
+    #   chain of propagation.
   end
 end

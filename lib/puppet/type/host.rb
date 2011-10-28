@@ -36,7 +36,7 @@ module Puppet
     end
 
     newproperty(:comment) do
-      desc "A comment that will be attached to the line with a # character"
+      desc "A comment that will be attached to the line with a # character."
     end
 
     newproperty(:target) do
