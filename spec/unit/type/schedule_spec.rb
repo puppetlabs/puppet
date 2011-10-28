@@ -340,4 +340,86 @@ describe Puppet::Type.type(:schedule) do
       @schedule.should_not be_match(previous)
     end
   end
+
+  describe Puppet::Type.type(:schedule), "when matching days of the week" do
+    include ScheduleTesting
+
+    before do
+      # 2011-05-23 is a Monday
+      Time.stubs(:now).returns(Time.local(2011, "may", 23, 11, 0, 0))
+    end
+
+    it "should raise an error if the weekday is 'Someday'" do
+      proc { @schedule[:weekday] = "Someday" }.should raise_error(Puppet::Error)
+    end
+
+    it "should raise an error if the weekday is '7'" do
+      proc { @schedule[:weekday] = "7" }.should raise_error(Puppet::Error)
+    end
+
+    it "should accept all full weekday names as valid values" do
+      proc { @schedule[:weekday] = ['Sunday', 'Monday', 'Tuesday', 'Wednesday',
+          'Thursday', 'Friday', 'Saturday'] }.should_not raise_error
+    end
+
+    it "should accept all short weekday names as valid values" do
+      proc { @schedule[:weekday] = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu',
+          'Fri', 'Sat'] }.should_not raise_error
+    end
+
+    it "should match if the weekday is 'Monday'" do
+      @schedule[:weekday] = "Monday"
+      @schedule.match?.should be_true
+    end
+
+    it "should match if the weekday is 'Mon'" do
+      @schedule[:weekday] = "Mon"
+      @schedule.match?.should be_true
+    end
+
+    it "should match if the weekday is '1'" do
+      @schedule[:weekday] = "1"
+      @schedule.match?.should be_true
+    end
+
+    it "should not match if the weekday is Tuesday" do
+      @schedule[:weekday] = "Tuesday"
+      @schedule.should_not be_match
+    end
+
+    it "should match if weekday is ['Sun', 'Mon']" do
+      @schedule[:weekday] = ["Sun", "Mon"]
+      @schedule.match?.should be_true
+    end
+
+    it "should not match if weekday is ['Sun', 'Tue']" do
+      @schedule[:weekday] = ["Sun", "Tue"]
+      @schedule.should_not be_match
+    end
+
+    it "should match if the weekday is 'Monday'" do
+      @schedule[:weekday] = "Monday"
+      @schedule.match?.should be_true
+    end
+
+    it "should match if the weekday is 'Mon'" do
+      @schedule[:weekday] = "Mon"
+      @schedule.match?.should be_true
+    end
+
+    it "should match if the weekday is '1'" do
+      @schedule[:weekday] = "1"
+      @schedule.match?.should be_true
+    end
+
+    it "should not match if the weekday is Tuesday" do
+      @schedule[:weekday] = "Tuesday"
+      @schedule.should_not be_match
+    end
+
+    it "should match if weekday is ['Sun', 'Mon']" do
+      @schedule[:weekday] = ["Sun", "Mon"]
+      @schedule.match?.should be_true
+    end
+  end
 end
