@@ -16,7 +16,7 @@ describe Puppet::Node::Facts::InventoryService do
 
     expect {
       subject.save(request)
-    }.not_to raise_error
+    }.should_not raise_error
   end
 end
 
