@@ -104,7 +104,7 @@ module Puppet
 
       if ! result and Puppet[:show_diff]
         write_temporarily do |path|
-          print diff(@resource[:path], path)
+          notice "\n" + diff(@resource[:path], path)
         end
       end
       result
