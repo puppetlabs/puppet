@@ -162,6 +162,18 @@ describe Puppet::Type.type(:file) do
 
           (get_mode(path) & 07777).should == 0666
         end
+
+        it "should not set executable bits when replacing an executable directory (#10365)" do
+          pending("bug #10365")
+
+          FileUtils.mkdir(path)
+          set_mode(0777, path)
+
+          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666, :backup => false, :force => true)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0666
+        end
       end
 
       describe "for links", :unless => Puppet.features.microsoft_windows? do
