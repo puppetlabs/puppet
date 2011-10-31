@@ -26,11 +26,17 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
   end
 
   describe "#munge" do
-    it "should dirmask the value when munging" do
-      Dir.mkdir(path)
-      mode.value = 0644
+    # This is sort of a redundant test, but its spec is important.
+    it "should return the value as a string" do
+      mode.munge('0644').should be_a(String)
+    end
 
-      mode.value.must == '755'
+    it "should accept strings as arguments" do
+      mode.munge('0644').should == '644'
+    end
+
+    it "should accept integers are arguments" do
+      mode.munge(0644).should == '644'
     end
   end
 
@@ -39,30 +45,17 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       Dir.mkdir(path)
     end
 
-    # This is sort of a redundant test, but its spec is important.
-    it "should return the value as a string" do
-      mode.dirmask('0644').should be_a(String)
-    end
-
-    it "should accept strings as arguments" do
+    it "should add execute bits corresponding to read bits for directories" do
       mode.dirmask('0644').should == '755'
     end
 
-    it "should accept integers are arguments" do
-      mode.dirmask(0644).should == '755'
-    end
-
-    it "should add execute bits corresponding to read bits for directories" do
-      mode.dirmask(0644).should == '755'
-    end
-
     it "should not add an execute bit when there is no read bit" do
-      mode.dirmask(0600).should == '700'
+      mode.dirmask('0600').should == '700'
     end
 
     it "should not add execute bits for files that aren't directories" do
       resource[:path] = tmpfile('other_file')
-      mode.dirmask(0644).should == '644'
+      mode.dirmask('0644').should == '0644'
     end
   end
 
@@ -83,6 +76,31 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       File.symlink('anything', path)
 
       mode.must be_insync('644')
+    end
+  end
+
+  describe "#retrieve" do
+    it "should return absent if the resource doesn't exist" do
+      resource[:path] = File.expand_path("/does/not/exist")
+      mode.retrieve.should == :absent
+    end
+
+    it "should retrieve the directory mode from the provider" do
+      Dir.mkdir(path)
+
+      mode.expects(:dirmask).with('644').returns '755'
+      resource.provider.expects(:mode).returns '755'
+
+      mode.retrieve.should == '755'
+    end
+
+    it "should retrieve the file mode from the provider" do
+      FileUtils.touch(path)
+
+      mode.expects(:dirmask).with('644').returns '644'
+      resource.provider.expects(:mode).returns '644'
+
+      mode.retrieve.should == '644'
     end
   end
 end

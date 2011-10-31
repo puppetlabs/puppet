@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet/network/http_pool'
 
 content = Puppet::Type.type(:file).attrclass(:content)
 describe content do
