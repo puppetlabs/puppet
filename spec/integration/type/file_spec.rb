@@ -228,6 +228,10 @@ describe Puppet::Type.type(:file) do
               File.symlink(target, link)
             end
 
+            after :each do
+              File.chmod(0750, target)
+            end
+
             describe "that is readable" do
               it "should set the executable bits when creating the destination (#10315)" do
                 pending "bug #10315"
@@ -314,6 +318,10 @@ describe Puppet::Type.type(:file) do
               # link -> target -> real_target
               File.symlink(real_target, target)
               File.symlink(target, link)
+            end
+
+            after :each do
+              File.chmod(0750, real_target)
             end
 
             describe "when following all links" do
