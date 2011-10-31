@@ -9,7 +9,7 @@ require 'rspec'
 require "rspec/core/rake_task"
 
 module Puppet
-    PUPPETVERSION = `git describe`.strip
+    PUPPETVERSION = File.read('lib/puppet.rb')[/PUPPETVERSION *= *'(.*)'/,1] or fail "Couldn't find PUPPETVERSION"
 end
 
 Dir['tasks/**/*.rake'].each { |t| load t }
