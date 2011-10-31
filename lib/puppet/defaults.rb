@@ -23,14 +23,14 @@ module Puppet
       syslog.  Syslog has a fixed list of valid facilities, and you must
       choose one of those; you cannot just make one up."],
     :statedir => { :default => "$vardir/state",
-      :mode => 01755,
+      :mode => '01755',
       :desc => "The directory where Puppet state is stored.  Generally,
         this directory can be removed without causing harm (although it
         might result in spurious service restarts)."
     },
     :rundir => {
       :default => Puppet.run_mode.run_dir,
-      :mode => 01777,
+      :mode => '01777',
       :desc => "Where Puppet PID files are kept."
     },
     :genconfig => [false,
@@ -143,7 +143,7 @@ module Puppet
     :inventory_terminus => [ "$facts_terminus", "Should usually be the same as the facts terminus" ],
     :httplog => { :default => "$logdir/http.log",
       :owner => "root",
-      :mode => 0640,
+      :mode => '0640',
       :desc => "Where the puppet agent web server logs."
     },
     :http_proxy_host => ["none",
@@ -275,7 +275,7 @@ EOT
     },
     :ssldir => {
       :default => "$confdir/ssl",
-      :mode => 0771,
+      :mode => '0771',
       :owner => "service",
       :desc => "Where SSL certificates are kept."
     },
@@ -290,48 +290,48 @@ EOT
       :desc => "Where host certificate requests are stored."
     },
     :privatekeydir => { :default => "$ssldir/private_keys",
-      :mode => 0750,
+      :mode => '0750',
       :owner => "service",
       :desc => "The private key directory."
     },
     :privatedir => { :default => "$ssldir/private",
-      :mode => 0750,
+      :mode => '0750',
       :owner => "service",
       :desc => "Where the client stores private certificate information."
     },
     :passfile => { :default => "$privatedir/password",
-      :mode => 0640,
+      :mode => '0640',
       :owner => "service",
       :desc => "Where puppet agent stores the password for its private key.
         Generally unused."
     },
     :hostcsr => { :default => "$ssldir/csr_$certname.pem",
-      :mode => 0644,
+      :mode => '0644',
       :owner => "service",
       :desc => "Where individual hosts store and look for their certificate requests."
     },
     :hostcert => { :default => "$certdir/$certname.pem",
-      :mode => 0644,
+      :mode => '0644',
       :owner => "service",
       :desc => "Where individual hosts store and look for their certificates."
     },
     :hostprivkey => { :default => "$privatekeydir/$certname.pem",
-      :mode => 0600,
+      :mode => '0600',
       :owner => "service",
       :desc => "Where individual hosts store and look for their private key."
     },
     :hostpubkey => { :default => "$publickeydir/$certname.pem",
-      :mode => 0644,
+      :mode => '0644',
       :owner => "service",
       :desc => "Where individual hosts store and look for their public key."
     },
     :localcacert => { :default => "$certdir/ca.pem",
-      :mode => 0644,
+      :mode => '0644',
       :owner => "service",
       :desc => "Where each client stores the CA certificate."
     },
     :hostcrl => { :default => "$ssldir/crl.pem",
-      :mode => 0644,
+      :mode => '0644',
       :owner => "service",
       :desc => "Where the host's certificate revocation list can be found.
         This is distinct from the certificate authority's CRL."
@@ -346,19 +346,19 @@ EOT
     :cadir => {  :default => "$ssldir/ca",
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => '0770',
       :desc => "The root directory for the certificate authority."
     },
     :cacert => { :default => "$cadir/ca_crt.pem",
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "The CA certificate."
     },
     :cakey => { :default => "$cadir/ca_key.pem",
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "The CA private key."
     },
     :capub => { :default => "$cadir/ca_pub.pem",
@@ -369,7 +369,7 @@ EOT
     :cacrl => { :default => "$cadir/ca_crl.pem",
       :owner => "service",
       :group => "service",
-      :mode => 0664,
+      :mode => '0664',
 
       :desc => "The certificate revocation list (CRL) for the CA. Will be used if present but otherwise ignored.",
       :hook => proc do |value|
@@ -381,7 +381,7 @@ EOT
     :caprivatedir => { :default => "$cadir/private",
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => '0770',
       :desc => "Where the CA stores private certificate information."
     },
     :csrdir => { :default => "$cadir/requests",
@@ -392,23 +392,23 @@ EOT
     :signeddir => { :default => "$cadir/signed",
       :owner => "service",
       :group => "service",
-      :mode => 0770,
+      :mode => '0770',
       :desc => "Where the CA stores signed certificates."
     },
     :capass => { :default => "$caprivatedir/ca.pass",
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "Where the CA stores the password for the private key"
     },
     :serial => { :default => "$cadir/serial",
       :owner => "service",
       :group => "service",
-      :mode => 0644,
+      :mode => '0644',
       :desc => "Where the serial number for certificates is stored."
     },
     :autosign => { :default => "$confdir/autosign.conf",
-      :mode => 0644,
+      :mode => '0644',
       :desc => "Whether to enable autosign.  Valid values are true (which
         autosigns any key request, and is a very bad idea), false (which
         never autosigns any key request), and the path to a file, which
@@ -428,7 +428,7 @@ EOT
     :keylength => [1024, "The bit length of keys."],
     :cert_inventory => {
       :default => "$cadir/inventory.txt",
-      :mode => 0644,
+      :mode => '0644',
       :owner => "service",
       :group => "service",
       :desc => "A Complete listing of all certificates"
@@ -465,14 +465,14 @@ EOT
     :masterlog => { :default => "$logdir/puppetmaster.log",
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "Where puppet master logs.  This is generally not used,
         since syslog is the default log destination."
     },
     :masterhttplog => { :default => "$logdir/masterhttp.log",
       :owner => "service",
       :group => "service",
-      :mode => 0660,
+      :mode => '0660',
       :create => true,
       :desc => "Where the puppet master web server logs."
     },
@@ -485,7 +485,7 @@ EOT
       reported in its facts)"],
     :bucketdir => {
       :default => "$vardir/bucket",
-      :mode => 0750,
+      :mode => '0750',
       :owner => "service",
       :group => "service",
       :desc => "Where FileBucket files are stored."
@@ -511,9 +511,15 @@ EOT
       See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
     # To make sure this directory is created before we try to use it on the server, we need
     # it to be in the server section (#1138).
-    :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",
-      :desc => "The directory in which YAML data is stored, usually in a subdirectory."},
-    :server_datadir => {:default => "$vardir/server_data", :owner => "service", :group => "service", :mode => "750",
+    :yamldir => {:default => "$vardir/yaml", 
+         :owner => "service", 
+         :group => "service", 
+         :mode  => '0750',
+         :desc  => "The directory in which YAML data is stored, usually in a subdirectory."},
+    :server_datadir => {:default => "$vardir/server_data", 
+         :owner => "service", 
+         :group => "service", 
+         :mode  => '0750',
       :desc => "The directory in which serialized data is stored, usually in a subdirectory."},
     :reports => ["store",
       "The list of reports to generate.  All reports are looked for
@@ -521,7 +527,7 @@ EOT
       comma-separated (whitespace is okay)."
     ],
     :reportdir => {:default => "$vardir/reports",
-      :mode => 0750,
+      :mode => '0750',
       :owner => "service",
       :group => "service",
       :desc => "The directory in which to store reports
@@ -537,7 +543,7 @@ EOT
 
   setdefaults(:metrics,
     :rrddir => {:default => "$vardir/rrd",
-      :mode => 0750,
+      :mode => '0750',
       :owner => "service",
       :group => "service",
       :desc => "The directory where RRD database files are stored.
@@ -549,7 +555,9 @@ EOT
   )
 
   setdefaults(:device,
-    :devicedir =>  {:default => "$vardir/devices", :mode => "750", :desc => "The root directory of devices' $vardir"},
+    :devicedir =>  {:default => "$vardir/devices", 
+         :mode => '0750', 
+         :desc => "The root directory of devices' $vardir"},
     :deviceconfig => ["$confdir/device.conf","Path to the device config file for puppet device"]
   )
 
@@ -575,21 +583,25 @@ EOT
     },
     :localconfig => { :default => "$statedir/localconfig",
       :owner => "root",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "Where puppet agent caches the local configuration.  An
         extension indicating the cache format is added automatically."},
     :statefile => { :default => "$statedir/state.yaml",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "Where puppet agent and puppet master store state associated
         with the running configuration.  In the case of puppet master,
         this file reflects the state discovered through interacting
         with clients."
       },
-    :clientyamldir => {:default => "$vardir/client_yaml", :mode => "750", :desc => "The directory in which client-side YAML data is stored."},
-    :client_datadir => {:default => "$vardir/client_data", :mode => "750", :desc => "The directory in which serialized data is stored on the client."},
+    :clientyamldir => {:default => "$vardir/client_yaml", 
+      :mode => '0750', 
+      :desc => "The directory in which client-side YAML data is stored."},
+    :client_datadir => {:default => "$vardir/client_data", 
+      :mode => '0750', 
+      :desc => "The directory in which serialized data is stored on the client."},
     :classfile => { :default => "$statedir/classes.txt",
       :owner => "root",
-      :mode => 0644,
+      :mode => '0644',
       :desc => "The file in which puppet agent stores a list of the classes
         associated with the retrieved configuration.  Can be loaded in
         the separate `puppet` executable using the `--loadclasses`
@@ -601,7 +613,7 @@ EOT
         associated with the retrieved configuration."  },
     :puppetdlog => { :default => "$logdir/puppetd.log",
       :owner => "root",
-      :mode => 0640,
+      :mode => '0640',
       :desc => "The log file for puppet agent.  This is generally not used."
     },
     :server => ["puppet", "The server to which server puppet agent should connect"],
@@ -671,7 +683,7 @@ EOT
       a run."],
     :clientbucketdir => {
       :default => "$vardir/clientbucket",
-      :mode => 0750,
+      :mode => '0750',
       :desc => "Where FileBucket files are stored locally."
     },
     :configtimeout => [120,
@@ -703,11 +715,11 @@ EOT
       "Whether to send reports after every transaction."
     ],
     :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
-      :mode => 0660,
+      :mode => '0660',
       :desc => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => [false, "Whether to create dot graph files for the different
@@ -778,7 +790,7 @@ EOT
     setdefaults(
     :rails,
     :dblocation => { :default => "$statedir/clientconfigs.sqlite3",
-      :mode => 0660,
+      :mode => '0660',
       :owner => "service",
       :group => "service",
       :desc => "The database cache for client configurations.  Used for
@@ -800,7 +812,7 @@ EOT
     :dbsocket => [ "", "The database socket location. Only used when networked
       databases are used.  Will be ignored if the value is an empty string."],
     :railslog => {:default => "$logdir/rails.log",
-      :mode => 0600,
+      :mode => '0600',
       :owner => "service",
       :group => "service",
       :desc => "Where Rails-specific logs are sent"
