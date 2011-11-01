@@ -14,9 +14,11 @@ module Puppet
       { :acl => "/file" },
       { :acl => "/certificate_revocation_list/ca", :method => :find, :authenticated => true },
       { :acl => "/report", :method => :save, :authenticated => true },
-      { :acl => "/certificate/ca", :method => :find, :authenticated => false },
-      { :acl => "/certificate/", :method => :find, :authenticated => false },
-      { :acl => "/certificate_request", :method => [:find, :save], :authenticated => false },
+      # These allow `auth any`, because if you can do them anonymously you
+      # should probably also be able to do them when trusted.
+      { :acl => "/certificate/ca", :method => :find, :authenticated => nil },
+      { :acl => "/certificate/", :method => :find, :authenticated => nil },
+      { :acl => "/certificate_request", :method => [:find, :save], :authenticated => nil },
       { :acl => "/status", :method => [:find], :authenticated => true },
     ]
 
