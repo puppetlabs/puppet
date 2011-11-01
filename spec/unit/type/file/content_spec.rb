@@ -251,7 +251,7 @@ describe content do
     end
 
     it "should attempt to read from the filebucket if no actual content nor source exists" do
-      @fh = File.open(@filename, 'w')
+      @fh = File.open(@filename, 'wb')
       @content.should = "{md5}foo"
       @content.resource.bucket.class.any_instance.stubs(:getfile).returns "foo"
       @content.write(@fh)
@@ -305,8 +305,8 @@ describe content do
         @sourcename = tmpfile('source')
         @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false, :source => @sourcename
 
-        @source_content = "source file content"*10000
-        @sourcefile = File.open(@sourcename, 'w') {|f| f.write @source_content}
+        @source_content = "source file content\r\n"*10000
+        @sourcefile = File.open(@sourcename, 'wb') {|f| f.write @source_content}
 
         @content = @resource.newattr(:content)
         @source = @resource.parameter :source #newattr(:source)
@@ -314,11 +314,11 @@ describe content do
 
       it "should copy content from the source to the file" do
         @resource.write(@source)
-        File.read(@filename).should == @source_content
+        Puppet::Util.binread(@filename).should == @source_content
       end
 
       it "should return the checksum computed" do
-        File.open(@filename, 'w') do |file|
+        File.open(@filename, 'wb') do |file|
           @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
         end
       end
@@ -328,8 +328,8 @@ describe content do
       before(:each) do
         @resource = Puppet::Type.type(:file).new :path => @filename, :backup => false
         @response = stub_everything 'response', :code => "200"
-        @source_content = "source file content"*10000
-        @response.stubs(:read_body).multiple_yields(*(["source file content"]*10000))
+        @source_content = "source file content\n"*10000
+        @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
 
         @conn = stub_everything 'connection'
         @conn.stubs(:request_get).yields(@response)
@@ -343,7 +343,7 @@ describe content do
 
       it "should write the contents to the file" do
         @resource.write(@source)
-        File.read(@filename).should == @source_content
+        Puppet::Util.binread(@filename).should == @source_content
       end
 
       it "should not write anything if source is not found" do

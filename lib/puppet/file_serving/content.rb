@@ -41,6 +41,6 @@ class Puppet::FileServing::Content < Puppet::FileServing::Base
   end
 
   def to_raw
-    File.new(full_path, "r")
+    File.new(full_path, "rb")
   end
 end

@@ -192,7 +192,7 @@ module Puppet
     end
 
     def chunk_file_from_disk(source_or_content)
-      File.open(source_or_content.full_path, "r") do |src|
+      File.open(source_or_content.full_path, "rb") do |src|
         while chunk = src.read(8192)
           yield chunk
         end
