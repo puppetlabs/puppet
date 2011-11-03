@@ -565,6 +565,11 @@ EOT
         :type     => :boolean,
         :desc     => "Whether certificate revocation should be supported by downloading a Certificate Revocation List (CRL)
             to all clients.  If enabled, CA chaining will almost definitely not work.",
+    },
+    :digest_algorithm => {
+        :default  => 'md5',
+        :desc     => 'Which digest algorithm to use for file resources and the filebucket.
+                      Valid values are md5, sha256. Default is md5.',
     }
   )
 
