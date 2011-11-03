@@ -4,15 +4,29 @@ require 'puppet/network/http_pool'
 
 require 'puppet/network/resolver'
 
+ALGORITHMS_TO_TRY = [nil, 'md5', 'sha256']
+
 content = Puppet::Type.type(:file).attrclass(:content)
+ALGORITHMS_TO_TRY.each do |algo|
+  describe "when digest_algorithm is #{algo ? 'set to ' + algo : 'unset'}" do
 describe content do
   include PuppetSpec::Files
   before do
+    Puppet[:digest_algorithm] = algo
+    # construct the @resource after the Puppet#[]= call, so it will get
+    # the setting
     @filename = tmpfile('testfile')
     @catalog = Puppet::Resource::Catalog.new
     @resource = Puppet::Type.type(:file).new :path => @filename, :catalog => @catalog
     File.open(@filename, 'w') {|f| f.write "initial file content"}
     content.stubs(:standalone?).returns(false)
+    @algo = algo || 'md5'
+    def self.digest *args
+      myDigest = Class.new do
+        include Puppet::Util::Checksums
+      end
+      myDigest.new.method(@algo).call *args
+    end
   end
 
   describe "when determining the checksum type" do
@@ -29,6 +43,11 @@ describe content do
 
       @content = content.new(:resource => @resource)
       @content.checksum_type.should == :md5lite
+    end
+
+    it "should use the type specified by digest_algorithm by default" do
+      @content = content.new(:resource => @resource)
+      @content.checksum_type.should == @algo.intern
     end
   end
 
@@ -60,12 +79,12 @@ describe content do
 
     it "should store the checksum as the desired content" do
       @content = content.new(:resource => @resource)
-      digest = Digest::MD5.hexdigest("this is some content")
+      d = digest("this is some content")
 
-      @content.stubs(:checksum_type).returns "md5"
+      @content.stubs(:checksum_type).returns @algo
       @content.should = "this is some content"
 
-      @content.should.must == "{md5}#{digest}"
+      @content.should.must == "{#@algo}#{d}"
     end
 
     it "should not checksum 'absent'" do
@@ -77,9 +96,9 @@ describe content do
 
     it "should accept a checksum as the desired content" do
       @content = content.new(:resource => @resource)
-      digest = Digest::MD5.hexdigest("this is some content")
+      d = digest("this is some content")
 
-      string = "{md5}#{digest}"
+      string = "{#@algo}#{d}"
       @content.should = string
 
       @content.should.must == string
@@ -129,9 +148,9 @@ describe content do
       @content = content.new(:resource => @resource)
       stat = mock 'stat', :ftype => "file"
       @resource.expects(:stat).returns stat
-      @resource.parameter(:checksum).expects(:md5_file).with(@resource[:path]).returns "mysum"
+      @resource.parameter(:checksum).expects("#{@algo}_file".intern).with(@resource[:path]).returns "mysum"
 
-      @content.retrieve.should == "{md5}mysum"
+      @content.retrieve.should == "{#@algo}mysum"
     end
   end
 
@@ -171,7 +190,7 @@ describe content do
 
       it "should return true if the sum for the current contents is the same as the sum for the desired content" do
         @content.should = "some content"
-        @content.must be_safe_insync("{md5}" + Digest::MD5.hexdigest("some content"))
+        @content.must be_safe_insync("{#@algo}" + digest("some content"))
       end
 
       describe "and Puppet[:show_diff] is set" do
@@ -191,7 +210,7 @@ describe content do
           @content.should = "some content"
           @content.expects(:diff).never
 
-          @content.safe_insync?("{md5}" + Digest::MD5.hexdigest("some content"))
+          @content.safe_insync?("{#@algo}" + digest("some content"))
         end
       end
     end
@@ -322,7 +341,7 @@ describe content do
 
       it "should return the checksum computed" do
         File.open(@filename, 'wb') do |file|
-          @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
+          @content.write(file).should == "{#@algo}#{digest(@source_content)}"
         end
       end
     end
@@ -362,7 +381,7 @@ describe content do
 
       it "should return the checksum computed" do
         File.open(@filename, 'w') do |file|
-          @content.write(file).should == "{md5}#{Digest::MD5.hexdigest(@source_content)}"
+          @content.write(file).should == "{#@algo}#{digest(@source_content)}"
         end
       end
     end
@@ -437,4 +456,6 @@ describe content do
       end
     end
   end
+end
+end
 end
