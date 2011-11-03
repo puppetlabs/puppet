@@ -736,157 +736,157 @@ describe Puppet::Type.type(:file) do
 
   ALGORITHMS_TO_TRY.each do |algo|
     describe "when using digest_algorithm #{algo || 'nil'}" do
-  describe "#recurse_remote" do
-    before do
-      file[:source] = "puppet://foo/bar"
-
-      @first = Puppet::FileServing::Metadata.new("/my", :relative_path => "first")
-      @second = Puppet::FileServing::Metadata.new("/my", :relative_path => "second")
-      @first.stubs(:ftype).returns "directory"
-      @second.stubs(:ftype).returns "directory"
-
-      @parameter = stub 'property', :metadata= => nil
-      @resource = stub 'file', :[]= => nil, :parameter => @parameter
-
-      @oda = Puppet[:digest_algorithm]
-      Puppet[:digest_algorithm] = algo
-      @algo = algo || 'md5'
-    end
-
-    after do
-      Puppet[:digest_algorithm] = @oda
-    end
-
-    it "should pass its source to the :perform_recursion method" do
-      data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
-      file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
-      file.stubs(:newchild).returns @resource
-      file.recurse_remote({})
-    end
-
-    it "should not recurse when the remote file is not a directory" do
-      data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => ".")
-      data.stubs(:ftype).returns "file"
-      file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
-      file.expects(:newchild).never
-      file.recurse_remote({})
-    end
-
-    it "should set the source of each returned file to the searched-for URI plus the found relative path" do
-      @first.expects(:source=).with File.join("puppet://foo/bar", @first.relative_path)
-      file.expects(:perform_recursion).returns [@first]
-      file.stubs(:newchild).returns @resource
-      file.recurse_remote({})
-    end
-
-    it "should create a new resource for any relative file paths that do not already have a resource" do
-      file.stubs(:perform_recursion).returns [@first]
-      file.expects(:newchild).with("first").returns @resource
-      file.recurse_remote({}).should == {"first" => @resource}
-    end
-
-    it "should not create a new resource for any relative file paths that do already have a resource" do
-      file.stubs(:perform_recursion).returns [@first]
-      file.expects(:newchild).never
-      file.recurse_remote("first" => @resource)
-    end
-
-    it "should set the source of each resource to the source of the metadata" do
-      file.stubs(:perform_recursion).returns [@first]
-      @resource.stubs(:[]=)
-      @resource.expects(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
-      file.recurse_remote("first" => @resource)
-    end
-
-    # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
-    # filed, and when it's fixed, we'll just fix the whole flow.
-    it "should set the checksum type to #{(algo || 'md5').intern} if the remote file is a file" do
-      @first.stubs(:ftype).returns "file"
-      file.stubs(:perform_recursion).returns [@first]
-      @resource.stubs(:[]=)
-      @resource.expects(:[]=).with(:checksum, @algo.intern)
-      file.recurse_remote("first" => @resource)
-    end
-
-    it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
-      file.stubs(:perform_recursion).returns [@first]
-      @resource.expects(:parameter).with(:source).returns @parameter
-
-      @parameter.expects(:metadata=).with(@first)
-
-      file.recurse_remote("first" => @resource)
-    end
-
-    it "should not create a new resource for the '.' file" do
-      @first.stubs(:relative_path).returns "."
-      file.stubs(:perform_recursion).returns [@first]
-
-      file.expects(:newchild).never
-
-      file.recurse_remote({})
-    end
-
-    it "should store the metadata in the main file's source property if the relative path is '.'" do
-      @first.stubs(:relative_path).returns "."
-      file.stubs(:perform_recursion).returns [@first]
-
-      file.parameter(:source).expects(:metadata=).with @first
-
-      file.recurse_remote("first" => @resource)
-    end
-
-    describe "and multiple sources are provided" do
-      let(:sources) do
-        h = {}
-        %w{/one /two /three /four}.each do |key|
-          h[key] = URI.unescape(Puppet::Util.path_to_uri(File.expand_path(key)).to_s)
-        end
-        h
-      end
-
-      describe "and :sourceselect is set to :first" do
-        it "should create file instances for the results for the first source to return any values" do
-          data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
-          file[:source] = sources.keys.map { |key| File.expand_path(key) }
-          file.expects(:perform_recursion).with(sources['/one']).returns nil
-          file.expects(:perform_recursion).with(sources['/two']).returns []
-          file.expects(:perform_recursion).with(sources['/three']).returns [data]
-          file.expects(:perform_recursion).with(sources['/four']).never
-          file.expects(:newchild).with("foobar").returns @resource
-          file.recurse_remote({})
-        end
-      end
-
-      describe "and :sourceselect is set to :all" do
+      describe "#recurse_remote" do
         before do
-          file[:sourceselect] = :all
+          file[:source] = "puppet://foo/bar"
+
+          @first = Puppet::FileServing::Metadata.new("/my", :relative_path => "first")
+          @second = Puppet::FileServing::Metadata.new("/my", :relative_path => "second")
+          @first.stubs(:ftype).returns "directory"
+          @second.stubs(:ftype).returns "directory"
+
+          @parameter = stub 'property', :metadata= => nil
+          @resource = stub 'file', :[]= => nil, :parameter => @parameter
+
+          @oda = Puppet[:digest_algorithm]
+          Puppet[:digest_algorithm] = algo
+          @algo = algo || 'md5'
         end
 
-        it "should return every found file that is not in a previous source" do
-          klass = Puppet::FileServing::Metadata
-          file[:source] = %w{/one /two /three /four}.map {|f| File.expand_path(f) }
+        after do
+          Puppet[:digest_algorithm] = @oda
+        end
+
+        it "should pass its source to the :perform_recursion method" do
+          data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
+          file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
           file.stubs(:newchild).returns @resource
+          file.recurse_remote({})
+        end
 
-          one = [klass.new("/one", :relative_path => "a")]
-          file.expects(:perform_recursion).with(sources['/one']).returns one
-          file.expects(:newchild).with("a").returns @resource
+        it "should not recurse when the remote file is not a directory" do
+          data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => ".")
+          data.stubs(:ftype).returns "file"
+          file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
+          file.expects(:newchild).never
+          file.recurse_remote({})
+        end
 
-          two = [klass.new("/two", :relative_path => "a"), klass.new("/two", :relative_path => "b")]
-          file.expects(:perform_recursion).with(sources['/two']).returns two
-          file.expects(:newchild).with("b").returns @resource
+        it "should set the source of each returned file to the searched-for URI plus the found relative path" do
+          @first.expects(:source=).with File.join("puppet://foo/bar", @first.relative_path)
+          file.expects(:perform_recursion).returns [@first]
+          file.stubs(:newchild).returns @resource
+          file.recurse_remote({})
+        end
 
-          three = [klass.new("/three", :relative_path => "a"), klass.new("/three", :relative_path => "c")]
-          file.expects(:perform_recursion).with(sources['/three']).returns three
-          file.expects(:newchild).with("c").returns @resource
+        it "should create a new resource for any relative file paths that do not already have a resource" do
+          file.stubs(:perform_recursion).returns [@first]
+          file.expects(:newchild).with("first").returns @resource
+          file.recurse_remote({}).should == {"first" => @resource}
+        end
 
-          file.expects(:perform_recursion).with(sources['/four']).returns []
+        it "should not create a new resource for any relative file paths that do already have a resource" do
+          file.stubs(:perform_recursion).returns [@first]
+          file.expects(:newchild).never
+          file.recurse_remote("first" => @resource)
+        end
+
+        it "should set the source of each resource to the source of the metadata" do
+          file.stubs(:perform_recursion).returns [@first]
+          @resource.stubs(:[]=)
+          @resource.expects(:[]=).with(:source, File.join("puppet://foo/bar", @first.relative_path))
+          file.recurse_remote("first" => @resource)
+        end
+
+        # LAK:FIXME This is a bug, but I can't think of a fix for it.  Fortunately it's already
+        # filed, and when it's fixed, we'll just fix the whole flow.
+        it "should set the checksum type to #{(algo || 'md5').intern} if the remote file is a file" do
+          @first.stubs(:ftype).returns "file"
+          file.stubs(:perform_recursion).returns [@first]
+          @resource.stubs(:[]=)
+          @resource.expects(:[]=).with(:checksum, @algo.intern)
+          file.recurse_remote("first" => @resource)
+        end
+
+        it "should store the metadata in the source property for each resource so the source does not have to requery the metadata" do
+          file.stubs(:perform_recursion).returns [@first]
+          @resource.expects(:parameter).with(:source).returns @parameter
+
+          @parameter.expects(:metadata=).with(@first)
+
+          file.recurse_remote("first" => @resource)
+        end
+
+        it "should not create a new resource for the '.' file" do
+          @first.stubs(:relative_path).returns "."
+          file.stubs(:perform_recursion).returns [@first]
+
+          file.expects(:newchild).never
 
           file.recurse_remote({})
         end
+
+        it "should store the metadata in the main file's source property if the relative path is '.'" do
+          @first.stubs(:relative_path).returns "."
+          file.stubs(:perform_recursion).returns [@first]
+
+          file.parameter(:source).expects(:metadata=).with @first
+
+          file.recurse_remote("first" => @resource)
+        end
+
+        describe "and multiple sources are provided" do
+          let(:sources) do
+            h = {}
+            %w{/one /two /three /four}.each do |key|
+              h[key] = URI.unescape(Puppet::Util.path_to_uri(File.expand_path(key)).to_s)
+            end
+            h
+          end
+
+          describe "and :sourceselect is set to :first" do
+            it "should create file instances for the results for the first source to return any values" do
+              data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
+              file[:source] = sources.keys.map { |key| File.expand_path(key) }
+              file.expects(:perform_recursion).with(sources['/one']).returns nil
+              file.expects(:perform_recursion).with(sources['/two']).returns []
+              file.expects(:perform_recursion).with(sources['/three']).returns [data]
+              file.expects(:perform_recursion).with(sources['/four']).never
+              file.expects(:newchild).with("foobar").returns @resource
+              file.recurse_remote({})
+            end
+          end
+
+          describe "and :sourceselect is set to :all" do
+            before do
+              file[:sourceselect] = :all
+            end
+
+            it "should return every found file that is not in a previous source" do
+              klass = Puppet::FileServing::Metadata
+              file[:source] = %w{/one /two /three /four}.map {|f| File.expand_path(f) }
+              file.stubs(:newchild).returns @resource
+
+              one = [klass.new("/one", :relative_path => "a")]
+              file.expects(:perform_recursion).with(sources['/one']).returns one
+              file.expects(:newchild).with("a").returns @resource
+
+              two = [klass.new("/two", :relative_path => "a"), klass.new("/two", :relative_path => "b")]
+              file.expects(:perform_recursion).with(sources['/two']).returns two
+              file.expects(:newchild).with("b").returns @resource
+
+              three = [klass.new("/three", :relative_path => "a"), klass.new("/three", :relative_path => "c")]
+              file.expects(:perform_recursion).with(sources['/three']).returns three
+              file.expects(:newchild).with("c").returns @resource
+
+              file.expects(:perform_recursion).with(sources['/four']).returns []
+
+              file.recurse_remote({})
+            end
+          end
+        end
       end
     end
-  end
-  end
   end
 
   describe "#perform_recursion" do
