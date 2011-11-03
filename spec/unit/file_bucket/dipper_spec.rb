@@ -5,6 +5,35 @@ require 'pathname'
 
 require 'puppet/file_bucket/dipper'
 require 'puppet/indirector/file_bucket_file/rest'
+require 'puppet/util/checksums'
+
+ALGORITHMS_TO_TRY = [nil, 'md5', 'sha256']
+
+ALGORITHMS_TO_TRY.each do |algo|
+  describe "when using digest_algorithm #{algo || 'nil'}" do
+    before do
+      Puppet['digest_algorithm'] = algo
+      # while we may set Puppet['digest_algorithm'] to nil, @algo is always
+      # defined
+      @algo      = algo || 'md5'
+      @plaintext = 'my\r\ncontents'
+      # These are written out, rather than calculated, so that you the reader
+      # can see more simply what behavior this spec is specifying.
+      @checksums = {
+        'md5'    => 'f0d7d4e480ad698ed56aeec8b6bd6dea',
+        'sha256' => '409a11465ed0938227128b1756c677a8480a8b84814f1963853775e15a74d4b4',
+      }
+      @dirs      = {
+        'md5'    => 'f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea',
+        'sha256' => '4/0/9/a/1/1/4/6/409a11465ed0938227128b1756c677a8480a8b84814f1963853775e15a74d4b4',
+      }
+      def self.digest *args
+        myDigest = Class.new do
+          include Puppet::Util::Checksums
+        end
+        myDigest.new.method(@algo || 'md5').call *args
+      end
+    end
 
 describe Puppet::FileBucket::Dipper do
   include PuppetSpec::Files
@@ -40,44 +69,39 @@ describe Puppet::FileBucket::Dipper do
 
     @dipper = Puppet::FileBucket::Dipper.new(:Path => file_bucket)
 
-    file = make_tmp_file("my\r\ncontents")
-    checksum = "f0d7d4e480ad698ed56aeec8b6bd6dea"
-    Digest::MD5.hexdigest("my\r\ncontents").should == checksum
+    file = make_tmp_file(@plaintext)
+    digest(@plaintext).should == @checksums[@algo]
 
-    @dipper.backup(file).should == checksum
-    File.exists?("#{file_bucket}/f/0/d/7/d/4/e/4/f0d7d4e480ad698ed56aeec8b6bd6dea/contents").should == true
+    @dipper.backup(file).should == @checksums[@algo]
+    File.exists?("#{file_bucket}/#{@dirs[@algo]}/contents").should == true
   end
 
   it "should not backup a file that is already in the bucket" do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
 
-    file = make_tmp_file("my\r\ncontents")
-    checksum = Digest::MD5.hexdigest("my\r\ncontents")
+    file = make_tmp_file(@plaintext)
 
     Puppet::FileBucket::File.indirection.expects(:head).returns true
     Puppet::FileBucket::File.indirection.expects(:save).never
-    @dipper.backup(file).should == checksum
+    @dipper.backup(file).should == @checksums[@algo]
   end
 
   it "should retrieve files from a local bucket" do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => "/my/bucket")
 
-    checksum = Digest::MD5.hexdigest('my contents')
-
     request = nil
 
-    Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new('my contents'))
+    Puppet::FileBucketFile::File.any_instance.expects(:find).with{ |r| request = r }.once.returns(Puppet::FileBucket::File.new(@plaintext))
 
-    @dipper.getfile(checksum).should == 'my contents'
+    @dipper.getfile(@checksums[@algo]).should == @plaintext
 
-    request.key.should == "md5/#{checksum}"
+    request.key.should == "#@algo/#{@checksums[@algo]}"
   end
 
   it "should backup files to a remote server" do
     @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
 
-    file = make_tmp_file("my\r\ncontents")
-    checksum = Digest::MD5.hexdigest("my\r\ncontents")
+    file = make_tmp_file(@plaintext)
 
     real_path = Pathname.new(file).realpath
 
@@ -87,28 +111,26 @@ describe Puppet::FileBucket::Dipper do
     Puppet::FileBucketFile::Rest.any_instance.expects(:head).with { |r| request1 = r }.once.returns(nil)
     Puppet::FileBucketFile::Rest.any_instance.expects(:save).with { |r| request2 = r }.once
 
-    @dipper.backup(file).should == checksum
+    @dipper.backup(file).should == @checksums[@algo]
     [request1, request2].each do |r|
       r.server.should == 'puppetmaster'
       r.port.should == 31337
-      r.key.should == "md5/#{checksum}/#{real_path}"
+      r.key.should == "#@algo/#{@checksums[@algo]}/#{real_path}"
     end
   end
 
   it "should retrieve files from a remote server" do
     @dipper = Puppet::FileBucket::Dipper.new(:Server => "puppetmaster", :Port => "31337")
 
-    checksum = Digest::MD5.hexdigest('my contents')
-
     request = nil
 
     Puppet::FileBucketFile::Rest.any_instance.expects(:find).with { |r| request = r }.returns(Puppet::FileBucket::File.new('my contents'))
 
-    @dipper.getfile(checksum).should == "my contents"
+    @dipper.getfile(@checksums[@algo]).should == @plaintext
 
     request.server.should == 'puppetmaster'
     request.port.should == 31337
-    request.key.should == "md5/#{checksum}"
+    request.key.should == "#@algo/#{@checksums[@algo]}"
   end
 
   describe "#restore" do
@@ -167,4 +189,6 @@ describe Puppet::FileBucket::Dipper do
       end
     end
   end
+end
+end
 end
