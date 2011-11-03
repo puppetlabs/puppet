@@ -9,12 +9,18 @@ describe Puppet::Util::Checksums do
     @summer.extend(Puppet::Util::Checksums)
   end
 
-  content_sums = [:md5, :md5lite, :sha1, :sha1lite]
+  content_sums = [:md5, :md5lite, :sha1, :sha1lite, :sha256, :sha256lite]
   file_only = [:ctime, :mtime, :none]
 
   content_sums.each do |sumtype|
     it "should be able to calculate #{sumtype} sums from strings" do
       @summer.should be_respond_to(sumtype)
+    end
+  end
+
+  content_sums.each do |sumtype|
+    it "should know the expected length of #{sumtype} sums" do
+      @summer.should be_respond_to(sumtype.to_s + "_hex_length")
     end
   end
 
@@ -34,13 +40,14 @@ describe Puppet::Util::Checksums do
     @summer.should respond_to(:checksum?)
   end
 
-  %w{{md5}asdfasdf {sha1}asdfasdf {ctime}asdasdf {mtime}asdfasdf}.each do |sum|
+  %w{{md5}asdfasdf {sha1}asdfasdf {ctime}asdasdf {mtime}asdfasdf 
+     {sha256}asdfasdf {sha256lite}asdfasdf}.each do |sum|
     it "should consider #{sum} to be a checksum" do
       @summer.should be_checksum(sum)
     end
   end
 
-  %w{{nosuchsum}asdfasdf {a}asdfasdf {ctime}}.each do |sum|
+  %w{{nosuchsumthislong}asdfasdf {a}asdfasdf {ctime}}.each do |sum|
     it "should not consider #{sum} to be a checksum" do
       @summer.should_not be_checksum(sum)
     end
@@ -58,7 +65,7 @@ describe Puppet::Util::Checksums do
     @summer.sumtype("asdfasdfa").should be_nil
   end
 
-  {:md5 => Digest::MD5, :sha1 => Digest::SHA1}.each do |sum, klass|
+  {:md5 => Digest::MD5, :sha1 => Digest::SHA1, :sha256 => Digest::SHA256}.each do |sum, klass|
     describe("when using #{sum}") do
       it "should use #{klass} to calculate string checksums" do
         klass.expects(:hexdigest).with("mycontent").returns "whatever"
@@ -97,7 +104,7 @@ describe Puppet::Util::Checksums do
     end
   end
 
-  {:md5lite => Digest::MD5, :sha1lite => Digest::SHA1}.each do |sum, klass|
+  {:md5lite => Digest::MD5, :sha1lite => Digest::SHA1, :sha256lite => Digest::SHA256}.each do |sum, klass|
     describe("when using #{sum}") do
       it "should use #{klass} to calculate string checksums from the first 512 characters of the string" do
         content = "this is a test" * 100

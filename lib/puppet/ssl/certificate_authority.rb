@@ -348,7 +348,7 @@ class Puppet::SSL::CertificateAuthority
     raise CertificateVerificationError.new(store.error), store.error_string unless store.verify(cert.content)
   end
 
-  def fingerprint(name, md = :MD5)
+  def fingerprint(name, md = :SHA1)
     unless cert = Puppet::SSL::Certificate.indirection.find(name) || Puppet::SSL::CertificateRequest.indirection.find(name)
       raise ArgumentError, "Could not find a certificate or csr for #{name}"
     end

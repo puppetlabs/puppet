@@ -11,6 +11,7 @@ module Puppet::FileBucketFile
 
     def initialize
       Puppet.settings.use(:filebucket)
+      Puppet.settings.use(:main)
     end
 
     def find( request )
@@ -103,8 +104,9 @@ module Puppet::FileBucketFile
       if path == '' # Treat "md5/<checksum>/" like "md5/<checksum>"
         path = nil
       end
-      raise "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != 'md5'
-      raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{32}$/
+      raise ArgumentError, "Unsupported checksum type #{checksum_type.inspect}" if checksum_type != Puppet['digest_algorithm']
+      expected = method(checksum_type + "_hex_length").call
+      raise "Invalid checksum #{checksum.inspect}" if checksum !~ /^[0-9a-f]{#{expected}}$/
       [checksum, path]
     end
 
