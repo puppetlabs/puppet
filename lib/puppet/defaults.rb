@@ -198,6 +198,11 @@ module Puppet
       than in the site manifest."]
   )
 
+  setdefaults(:main,
+    :digest_algorithm => ['md5', 'Which digest algorithm to use for file resources and the filebucket. Valid values are md5, sha256. Default is md5.']
+             )
+
+
   hostname = Facter["hostname"].value
   domain = Facter["domain"].value
   if domain and domain != ""
