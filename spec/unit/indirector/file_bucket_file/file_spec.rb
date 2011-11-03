@@ -156,11 +156,11 @@ ALGORITHMS_TO_TRY.each do |algo|
             checksum2 = save_bucket_file("foo\nbiz\nbaz")
             diff = Puppet::FileBucket::File.indirection.find("#@algo/#{checksum1}", :diff_with => checksum2)
             diff.should == <<HERE
-    2c2
-    < bar
-    ---
-    > biz
-    HERE
+2c2
+< bar
+---
+> biz
+HERE
           end
 
           it "should raise an exception if the hash to diff against isn't found" do
