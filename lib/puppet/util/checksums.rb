@@ -4,6 +4,13 @@ require 'digest/sha1'
 # A stand-alone module for calculating checksums
 # in a generic way.
 module Puppet::Util::Checksums
+  # It's not a good idea to use some of these in some contexts: for example, I
+  # wouldn't try bucketing a file using the :none checksum type.
+  def known_checksum_types
+    [:sha256, :sha256lite, :md5, :md5lite, :sha1, :sha1lite,
+      :mtime, :ctime, :none]
+  end
+
   class FakeChecksum
     def <<(*args)
       self
@@ -12,7 +19,8 @@ module Puppet::Util::Checksums
 
   # Is the provided string a checksum?
   def checksum?(string)
-    string =~ /^\{(\w{3,5})\}\S+/
+    # 'sha256lite'.length == 10
+    string =~ /^\{(\w{3,10})\}\S+/
   end
 
   # Strip the checksum type from an existing checksum
@@ -24,6 +32,41 @@ module Puppet::Util::Checksums
   def sumtype(checksum)
     checksum =~ /^\{(\w+)\}/ ? $1 : nil
   end
+
+  # Calculate a checksum using Digest::SHA256.
+  def sha256(content)
+    require 'digest/sha2'
+    Digest::SHA256.hexdigest(content)
+  end
+
+  def sha256lite(content)
+    sha256(content[0..511])
+  end
+
+  def sha256_file(filename, lite = false)
+    require 'digest/sha2'
+
+    digest = Digest::SHA256.new
+    checksum_file(digest, filename,  lite)
+  end
+
+  def sha256lite_file(filename)
+    sha256_file(filename, true)
+  end
+
+  def sha256_stream(&block)
+    require 'digest/sha2'
+    digest = Digest::SHA256.new
+    yield digest
+    digest.hexdigest
+  end
+
+  def sha256_hex_length
+    64
+  end
+
+  alias :sha256lite_stream :sha256_stream
+  alias :sha256lite_hex_length :sha256_hex_length
 
   # Calculate a checksum using Digest::MD5.
   def md5(content)
@@ -52,7 +95,12 @@ module Puppet::Util::Checksums
     digest.hexdigest
   end
 
+  def md5_hex_length
+    32
+  end
+
   alias :md5lite_stream :md5_stream
+  alias :md5lite_hex_length :md5_hex_length
 
   # Return the :mtime timestamp of a file.
   def mtime_file(filename)
@@ -98,7 +146,12 @@ module Puppet::Util::Checksums
     digest.hexdigest
   end
 
+  def sha1_hex_length
+    40
+  end
+
   alias :sha1lite_stream :sha1_stream
+  alias :sha1lite_hex_length :sha1_hex_length
 
   # Return the :ctime of a file.
   def ctime_file(filename)
@@ -140,4 +193,5 @@ module Puppet::Util::Checksums
 
     digest.hexdigest
   end
+
 end
