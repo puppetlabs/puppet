@@ -10,6 +10,8 @@ if Puppet.features.microsoft_windows?
   end
 end
 
+ALGORITHMS_TO_TRY = [nil, 'md5', 'sha256']
+
 describe Puppet::Type.type(:file) do
   include PuppetSpec::Files
 
@@ -94,6 +96,21 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  ALGORITHMS_TO_TRY.each do |algo|
+    describe "using digest_algorithm #{algo || 'nil'}" do
+      before do
+        Puppet['digest_algorithm'] = algo
+        # while we may set Puppet['digest_algorithm'] to nil, @algo is always
+        # defined
+        @algo      = algo || 'md5'
+        def self.digest *args
+          myDigest = Class.new do
+            include Puppet::Util::Checksums
+          end
+          myDigest.new.method(@algo).call *args
+        end
+      end
+
   describe "when writing files" do
     it "should backup files to a filebucket when one is configured" do
       filebucket = Puppet::Type.type(:filebucket).new :path => tmpfile("filebucket"), :name => "mybucket"
@@ -103,11 +120,11 @@ describe Puppet::Type.type(:file) do
 
       File.open(file[:path], "w") { |f| f.puts "bar" }
 
-      md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+      d = digest(File.read(file[:path]))
 
       catalog.apply
 
-      filebucket.bucket.getfile(md5).should == "bar\n"
+      filebucket.bucket.getfile(d).should == "bar\n"
     end
 
     it "should backup files in the local directory when a backup string is provided" do
@@ -154,7 +171,7 @@ describe Puppet::Type.type(:file) do
       File.open(dest1, "w") { |f| f.puts "whatever" }
       File.symlink(dest1, link)
 
-      md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+      d = digest(File.read(file[:path]))
 
       catalog.apply
 
@@ -192,13 +209,13 @@ describe Puppet::Type.type(:file) do
       File.open(barfile, "w") { |f| f.print "baryay" }
 
 
-      foomd5 = Digest::MD5.hexdigest(File.read(foofile))
-      barmd5 = Digest::MD5.hexdigest(File.read(barfile))
+      food = digest(File.read(foofile))
+      bard = digest(File.read(barfile))
 
       catalog.apply
 
-      bucket.bucket.getfile(foomd5).should == "fooyay"
-      bucket.bucket.getfile(barmd5).should == "baryay"
+      bucket.bucket.getfile(food).should == "fooyay"
+      bucket.bucket.getfile(bard).should == "baryay"
     end
 
     it "should propagate failures encountered when renaming the temporary file" do
@@ -214,6 +231,8 @@ describe Puppet::Type.type(:file) do
       expect { file.write(:content) }.to raise_error(Puppet::Error, /Could not rename temporary file/)
       File.read(path).should == "bar"
     end
+  end
+  end
   end
 
   describe "when recursing" do

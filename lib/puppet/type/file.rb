@@ -576,7 +576,9 @@ Puppet::Type.newtype(:file) do
       end
       children[meta.relative_path] ||= newchild(meta.relative_path)
       children[meta.relative_path][:source] = meta.source
-      children[meta.relative_path][:checksum] = :md5 if meta.ftype == "file"
+      algo = Puppet[:digest_algorithm] || 'md5'
+      algo = algo.intern unless algo.is_a? Symbol
+      children[meta.relative_path][:checksum] = algo if meta.ftype == "file"
 
       children[meta.relative_path].parameter(:source).metadata = meta
     end
