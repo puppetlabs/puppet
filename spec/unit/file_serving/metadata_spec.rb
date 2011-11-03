@@ -2,6 +2,9 @@
 require 'spec_helper'
 
 require 'puppet/file_serving/metadata'
+require 'puppet/util/checksums'
+
+ALGORITHMS_TO_TRY = [nil, 'md5', 'sha256']
 
 describe Puppet::FileServing::Metadata do
   it "should should be a subclass of Base" do
@@ -135,15 +138,27 @@ describe Puppet::FileServing::Metadata do
           metadata.mode.should == 0755
         end
 
+        ALGORITHMS_TO_TRY.each do |algo|
+          describe "when digest_algorithm is #{algo || 'nil'}" do
+            before do
+              Puppet['digest_algorithm'] = algo
+              @algo = algo || 'md5'
+              def self.digest *args
+                myDigest = Class.new do
+                  include Puppet::Util::Checksums
+                end
+                myDigest.new.method(@algo).call *args
+              end
+            end
         describe "#checksum" do
-          let(:checksum) { Digest::MD5.hexdigest("some content\n") }
+          let(:checksum) { digest("some content\n") }
 
           before :each do
             File.open(path, "w") {|f| f.print("some content\n")}
           end
 
           it "should default to a checksum of type MD5 with the file's current checksum" do
-            metadata.checksum.should == "{md5}#{checksum}"
+            metadata.checksum.should == "{#@algo}#{checksum}"
           end
 
           it "should give a mtime checksum when checksum_type is set" do
@@ -157,8 +172,10 @@ describe Puppet::FileServing::Metadata do
           it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
             set_mode(0755, path)
 
-            metadata.attributes_with_tabs.should == "#{0755.to_s}\tfile\t#{owner}\t#{group}\t{md5}#{checksum}"
+            metadata.attributes_with_tabs.should == "#{0755.to_s}\tfile\t#{owner}\t#{group}\t{#@algo}#{checksum}"
           end
+        end
+        end
         end
       end
 
@@ -190,11 +207,23 @@ describe Puppet::FileServing::Metadata do
         end
       end
 
+      ALGORITHMS_TO_TRY.each do |algo|
+        describe "when digest_algorithm is #{algo || 'nil'}" do
+          before do
+            Puppet['digest_algorithm'] = algo
+            @algo = algo || 'md5'
+            def self.digest *args
+              myDigest = Class.new do
+                include Puppet::Util::Checksums
+              end
+              myDigest.new.method(@algo).call *args
+            end
+          end
       describe "when managing links", :unless => Puppet.features.microsoft_windows? do
         # 'path' is a link that points to 'target'
         let(:path) { tmpfile('file_serving_metadata_link') }
         let(:target) { tmpfile('file_serving_metadata_target') }
-        let(:checksum) { Digest::MD5.hexdigest("some content\n") }
+        let(:checksum) { digest("some content\n") }
         let(:fmode) { File.lstat(path).mode & 0777 }
 
         before :each do
@@ -214,8 +243,10 @@ describe Puppet::FileServing::Metadata do
         end
 
         it "should produce tab-separated mode, type, owner, group, checksum, and destination for xmlrpc" do
-          metadata.attributes_with_tabs.should == "#{fmode}\tlink\t#{owner}\t#{group}\t{md5}eb9c2bf0eb63f3a7bc0ea37ef18aeba5\t#{target}"
+          metadata.attributes_with_tabs.should == "#{fmode}\tlink\t#{owner}\t#{group}\t{#@algo}#{checksum}\t#{target}"
         end
+      end
+      end
       end
     end
 
@@ -284,6 +315,18 @@ describe Puppet::FileServing::Metadata do
 end
 
 
+ALGORITHMS_TO_TRY.each do |algo|
+  describe "when digest_algorithm is #{algo || 'nil'}" do
+    before do
+      Puppet['digest_algorithm'] = algo
+      @algo = algo || 'md5'
+      def self.digest *args
+        myDigest = Class.new do
+          include Puppet::Util::Checksums
+        end
+        myDigest.new.method(@algo).call *args
+      end
+    end
 describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => Puppet.features.microsoft_windows? do
   describe "when links are managed" do
     before do
@@ -291,8 +334,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => P
       File.expects(:lstat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "link", :mode => 0755)
       File.expects(:readlink).with("/base/path/my/file").returns "/some/other/path"
 
-      @checksum = Digest::MD5.hexdigest("some content\n") # Remove these when :managed links are no longer checksumed.
-      @file.stubs(:md5_file).returns(@checksum)           #
+      @checksum = digest("some content\n") # Remove these when :managed links are no longer checksumed.
+      @file.stubs("#{@algo}_file".intern).returns(@checksum)           #
     end
     it "should store the destination of the link in :destination if links are :manage" do
       @file.collect
@@ -305,7 +348,7 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => P
     end
     it "should collect the checksum if links are :manage" do # see pending note above
       @file.collect
-      @file.checksum.should == "{md5}#{@checksum}"
+      @file.checksum.should == "{#@algo}#{@checksum}"
     end
   end
 
@@ -314,8 +357,8 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => P
       @file = Puppet::FileServing::Metadata.new("/base/path/my/file", :links => :follow)
       File.expects(:stat).with("/base/path/my/file").returns stub("stat", :uid => 1, :gid => 2, :ftype => "file", :mode => 0755)
       File.expects(:readlink).with("/base/path/my/file").never
-      @checksum = Digest::MD5.hexdigest("some content\n")
-      @file.stubs(:md5_file).returns(@checksum)
+      @checksum = digest("some content\n")
+      @file.stubs("#{@algo}_file".intern).returns(@checksum)
     end
     it "should not store the destination of the link in :destination if links are :follow" do
       @file.collect
@@ -323,7 +366,9 @@ describe Puppet::FileServing::Metadata, " when pointing to a link", :unless => P
     end
     it "should collect the checksum if links are :follow" do
       @file.collect
-      @file.checksum.should == "{md5}#{@checksum}"
+      @file.checksum.should == "{#@algo}#{@checksum}"
     end
   end
+end
+end
 end

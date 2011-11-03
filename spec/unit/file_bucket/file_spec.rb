@@ -1,9 +1,7 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-
 require 'puppet/file_bucket/file'
-require 'digest/md5'
-require 'digest/sha1'
+
 
 describe Puppet::FileBucket::File do
   include PuppetSpec::Files
@@ -13,10 +11,18 @@ describe Puppet::FileBucket::File do
     @bucketdir = tmpdir('bucket')
     Puppet[:bucketdir] = @bucketdir
 
-    @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-    @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-    @dir = File.join(@bucketdir, '4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0')
-
+    @digests = {
+      "md5"    => "4a8ec4fa5f01b4ab1a0ab8cbccb709f0",
+      "sha256" => "7bb6f9f7a47a63e684925af3608c059edcc371eb81188c48c9714896fb1091fd",
+    }
+    @checksums = {
+      "md5"    => "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0",
+      "sha256" => "{sha256}7bb6f9f7a47a63e684925af3608c059edcc371eb81188c48c9714896fb1091fd",
+    }
+    @dirs = {
+      "md5"    => File.join(@bucketdir, "4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0"),
+      "sha256" => File.join(@bucketdir, "7/b/b/6/f/9/f/7/7bb6f9f7a47a63e684925af3608c059edcc371eb81188c48c9714896fb1091fd"),
+    }
     @contents = "file contents"
   end
 
@@ -47,8 +53,38 @@ describe Puppet::FileBucket::File do
     Puppet::FileBucket::File.new(@contents).checksum_type.should == "md5"
   end
 
-  it "should calculate the checksum" do
-    Puppet::FileBucket::File.new(@contents).checksum.should == @checksum
+  it "should support multiple checksum algorithms" do
+    oda = Puppet[:digest_algorithm]
+    Puppet[:digest_algorithm] = 'sha256'
+    p = Puppet::FileBucket::File.new(@contents)
+    p.checksum_type.should == 'sha256'
+    Puppet[:digest_algorithm] = oda
+  end
+
+  it "should reject unknown checksum algorithms" do
+    proc {
+      oda = Puppet[:digest_algorithm]
+      begin
+        Puppet[:digest_algorithm] = 'wefoijwefoij23f02j'
+        Puppet::FileBucket::File.new(@contents)
+      ensure
+        Puppet[:digest_algorithm] = oda
+      end
+    }.should raise_error(ArgumentError)
+  end
+
+  it "should calculate an MD5 checksum" do
+    require 'digest/md5'
+    @contents.should == 'file contents'
+    Digest::MD5.hexdigest(@contents).should == @digests['md5']
+    Puppet::FileBucket::File.new(@contents).checksum.should == @checksums['md5']
+  end
+
+  it "should calculate an SHA256 checksum" do
+    oda = Puppet[:digest_algorithm]
+    Puppet[:digest_algorithm] = 'sha256'
+    Puppet::FileBucket::File.new(@contents).checksum.should == @checksums['sha256']
+    Puppet[:digest_algorithm] = oda
   end
 
   describe "when using back-ends" do
@@ -78,35 +114,42 @@ describe Puppet::FileBucket::File do
     Puppet::FileBucket::File.from_pson({"contents"=>"file contents"}).contents.should == "file contents"
   end
 
-  def make_bucketed_file
-    FileUtils.mkdir_p(@dir)
-    File.open("#{@dir}/contents", 'w') { |f| f.write @contents }
+  def make_bucketed_file(algorithm)
+    FileUtils.mkdir_p(@dirs[algorithm])
+    File.open("#{@dirs[algorithm]}/contents", 'w') { |f| f.write @contents }
   end
 
   describe "using the indirector's find method" do
-    it "should return nil if a file doesn't exist" do
-      bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{@digest}")
-      bucketfile.should == nil
-    end
+    ['md5', 'sha256'].each do |algo|
+      describe "using #{algo}" do
+        before do
+          Puppet[:digest_algorithm] = algo
+        end
 
-    it "should find a filebucket if the file exists" do
-      make_bucketed_file
-      bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{@digest}")
-      bucketfile.should_not == nil
-    end
+        it "should return nil if a file doesn't exist" do
+          bucketfile = Puppet::FileBucket::File.indirection.find("#{algo}/#{@digests[algo]}")
+          bucketfile.should == nil
+        end
 
-    describe "using RESTish digest notation" do
-      it "should return nil if a file doesn't exist" do
-        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{@digest}")
-        bucketfile.should == nil
+        it "should find a filebucket if the file exists" do
+          make_bucketed_file(algo)
+          bucketfile = Puppet::FileBucket::File.indirection.find("#{algo}/#{@digests[algo]}")
+          bucketfile.should_not == nil
+        end
+
+        describe "using RESTish digest notation" do
+          it "should return nil if a file doesn't exist" do
+            bucketfile = Puppet::FileBucket::File.indirection.find("#{algo}/#{@digests[algo]}")
+            bucketfile.should == nil
+          end
+
+          it "should find a filebucket if the file exists" do
+            make_bucketed_file(algo)
+            bucketfile = Puppet::FileBucket::File.indirection.find("#{algo}/#{@digests[algo]}")
+            bucketfile.should_not == nil
+          end
+        end
       end
-
-      it "should find a filebucket if the file exists" do
-        make_bucketed_file
-        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{@digest}")
-        bucketfile.should_not == nil
-      end
-
     end
   end
 end
