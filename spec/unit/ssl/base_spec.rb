@@ -14,7 +14,7 @@ describe Puppet::SSL::Certificate do
     before :each do
       @cert = stub 'cert', :to_der => "DER"
       @base.stubs(:content).returns(@cert)
-      OpenSSL::Digest.stubs(:constants).returns ["MD5", "DIGEST"]
+      OpenSSL::Digest.stubs(:constants).returns ["SHA1", "DIGEST"]
       @digest = stub_everything
       OpenSSL::Digest.stubs(:const_get).returns @digest
     end

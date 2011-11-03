@@ -54,7 +54,7 @@ class Puppet::SSL::Base
     content.to_text
   end
 
-  def fingerprint(md = :MD5)
+  def fingerprint(md = :SHA1)
     require 'openssl/digest'
 
     # ruby 1.8.x openssl digest constants are string

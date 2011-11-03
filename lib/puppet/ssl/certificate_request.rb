@@ -68,7 +68,7 @@ class Puppet::SSL::CertificateRequest < Puppet::SSL::Base
       csr.add_attribute(OpenSSL::X509::Attribute.new("extReq", extReq))
     end
 
-    csr.sign(key, OpenSSL::Digest::MD5.new)
+    csr.sign(key, OpenSSL::Digest::SHA1.new)
 
     raise Puppet::Error, "CSR sign verification failed; you need to clean the certificate request for #{name} on the server" unless csr.verify(key.public_key)
 
