@@ -173,10 +173,16 @@ describe Puppet::Util::Settings::FileSetting do
       @file.to_resource.title.should == path
     end
 
-    it "should set the mode on the file if a mode is provided" do
+    it "should set the mode on the file if a mode is provided as an octal number" do
       @file.mode = 0755
 
-      @file.to_resource[:mode].should == 0755
+      @file.to_resource[:mode].should == '755'
+    end
+
+    it "should set the mode on the file if a mode is provided as a string" do
+      @file.mode = '0755'
+
+      @file.to_resource[:mode].should == '755'
     end
 
     it "should not set the mode on a the file if manage_internal_file_permissions is disabled" do
