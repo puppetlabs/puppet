@@ -56,7 +56,7 @@ Puppet::Type.newtype(:file) do
     unmunge do |value|
       basedir = Puppet::FileCollection.collection.path(value[:index])
 
-      ::File.expand_path ::File.join( basedir, value[:name] )
+      ::File.join( basedir, value[:name] )
     end
   end
 
