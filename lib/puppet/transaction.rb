@@ -145,6 +145,7 @@ class Puppet::Transaction
   end
 
   def eval_generate(resource)
+    return false unless resource.respond_to?(:eval_generate)
     raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
       made = resource.eval_generate.uniq
@@ -292,29 +293,44 @@ class Puppet::Transaction
   # except via the Transaction#relationship_graph
 
   class Relationship_graph_wrapper
-    attr_reader :real_graph,:transaction,:ready,:generated,:done,:unguessable_deterministic_key
+    attr_reader :real_graph,:transaction,:ready,:generated,:done,:blockers,:unguessable_deterministic_key
     def initialize(real_graph,transaction)
       @real_graph = real_graph
       @transaction = transaction
       @ready = {}
       @generated = {}
       @done = {}
+      @blockers = {}
       @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.title}") }
-      vertices.each { |v| check_if_now_ready(v) }
+      vertices.each do |v|
+        blockers[v] = direct_dependencies_of(v).length
+        enqueue(v) if blockers[v] == 0
+      end
     end
     def method_missing(*args,&block)
       real_graph.send(*args,&block)
     end
     def add_vertex(v)
       real_graph.add_vertex(v)
-      check_if_now_ready(v) # ?????????????????????????????????????????
     end
     def add_edge(f,t,label=nil)
       ready.delete(t)
+
       real_graph.add_edge(f,t,label)
     end
-    def check_if_now_ready(r)
-      ready[r] = true if direct_dependencies_of(r).all? { |r2| done[r2] }
+    # Decrement the blocker count for resource r by 1. If the number of
+    # blockers is unknown, count them and THEN decrement by 1.
+    def unblock(r)
+      blockers[r] ||= direct_dependencies_of(r).select { |r2| !done[r2] }.length
+      if blockers[r] > 0
+        blockers[r] -= 1
+      else
+        r.warning "appears to have a negative number of dependencies"
+      end
+      blockers[r] <= 0
+    end
+    def enqueue(r)
+      ready[r] = true
     end
     def next_resource
       ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
@@ -322,15 +338,17 @@ class Puppet::Transaction
     def traverse(&block)
       real_graph.report_cycles_in_graph
       while (r = next_resource) && !transaction.stop_processing?
-        if !generated[r] && r.respond_to?(:eval_generate)
-          transaction.eval_generate(r)
-          generated[r] = true
-        else
-          ready.delete(r)
-          yield r
-          done[r] = true
-          direct_dependents_of(r).each { |v| check_if_now_ready(v) }
+        # If we generated resources, we don't know what they are now
+        # blocking, so we opt to recompute it, rather than try to track every
+        # change that would affect the number.
+        blockers.clear if transaction.eval_generate(r)
+
+        ready.delete(r)
+        yield r
+        direct_dependents_of(r).each do |v|
+          enqueue(v) if unblock(v)
         end
+        done[r] = true
       end
     end
   end
