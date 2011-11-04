@@ -293,15 +293,16 @@ class Puppet::Transaction
   # except via the Transaction#relationship_graph
 
   class Relationship_graph_wrapper
+    require 'puppet/rb_tree_map'
     attr_reader :real_graph,:transaction,:ready,:generated,:done,:blockers,:unguessable_deterministic_key
     def initialize(real_graph,transaction)
       @real_graph = real_graph
       @transaction = transaction
-      @ready = {}
+      @ready = Puppet::RbTreeMap.new
       @generated = {}
       @done = {}
       @blockers = {}
-      @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.title}") }
+      @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
       vertices.each do |v|
         blockers[v] = direct_dependencies_of(v).length
         enqueue(v) if blockers[v] == 0
@@ -314,7 +315,9 @@ class Puppet::Transaction
       real_graph.add_vertex(v)
     end
     def add_edge(f,t,label=nil)
-      ready.delete(t)
+      key = unguessable_deterministic_key[t]
+
+      ready.delete(key)
 
       real_graph.add_edge(f,t,label)
     end
@@ -330,21 +333,23 @@ class Puppet::Transaction
       blockers[r] <= 0
     end
     def enqueue(r)
-      ready[r] = true
+      key = unguessable_deterministic_key[r]
+      ready[key] = r
     end
     def next_resource
-      ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
+      ready.delete_min
     end
     def traverse(&block)
       real_graph.report_cycles_in_graph
+
       while (r = next_resource) && !transaction.stop_processing?
         # If we generated resources, we don't know what they are now
         # blocking, so we opt to recompute it, rather than try to track every
         # change that would affect the number.
         blockers.clear if transaction.eval_generate(r)
 
-        ready.delete(r)
         yield r
+
         direct_dependents_of(r).each do |v|
           enqueue(v) if unblock(v)
         end
