@@ -388,6 +388,12 @@ Puppet::Type.newtype(:file) do
     #end
   end
 
+  def ancestors
+    ancestors = Pathname.new(self[:path]).enum_for(:ascend).map(&:to_s)
+    ancestors.delete(self[:path])
+    ancestors
+  end
+
   def flush
     # We want to make sure we retrieve metadata anew on each transaction.
     @parameters.each do |name, param|

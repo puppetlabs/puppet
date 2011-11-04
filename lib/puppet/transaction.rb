@@ -147,13 +147,14 @@ class Puppet::Transaction
   def eval_generate(resource)
     raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
-      made = resource.eval_generate.uniq.reverse
+      made = resource.eval_generate.uniq
+      made = Hash[made.map(&:name).zip(made)]
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
       return
     end
-    made.each do |res|
+    made.values.each do |res|
       begin
         res.tag(*resource.tags)
         @catalog.add_resource(res)
@@ -162,16 +163,29 @@ class Puppet::Transaction
         res.info "Duplicate generated resource; skipping"
       end
     end
-    sentinel = Puppet::Type::Whit.new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+
+    # The completed whit is now the thing that represents the resource is done
     relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
       add_conditional_directed_dependency(sentinel, e.target, e.label)
       relationship_graph.remove_edge! e
     }
+
     default_label = Puppet::Resource::Catalog::Default_label
-    made.each do |res|
-      add_conditional_directed_dependency(made.find { |r| r != res && r.name == res.name[0,r.name.length]} || resource, res)
+    made.values.each do |res|
+      # Depend on the nearest ancestor we generated, falling back to the
+      # resource if we have none
+      parent_name = res.ancestors.find { |a| made[a] and made[a] != res }
+      parent = made[parent_name] || resource
+
+      add_conditional_directed_dependency(parent, res)
+
+      # This resource isn't 'completed' until each child has run
       add_conditional_directed_dependency(res, sentinel, default_label)
     end
+
+    # This edge allows the resource's events to propagate, though it isn't
+    # strictly necessary for ordering purposes
     add_conditional_directed_dependency(resource, sentinel, default_label)
   end
 
