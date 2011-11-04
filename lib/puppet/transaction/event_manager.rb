@@ -77,7 +77,7 @@ class Puppet::Transaction::EventManager
 
     @event_queues[target] ||= {}
     @event_queues[target][callback] ||= []
-    @event_queues[target][callback] += events
+    @event_queues[target][callback].concat(events)
   end
 
   def queued_events(resource)
