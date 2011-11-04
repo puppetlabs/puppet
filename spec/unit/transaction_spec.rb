@@ -297,6 +297,146 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "#unblock" do
+    let(:graph) { @transaction.relationship_graph }
+    let(:resource) { Puppet::Type.type(:notify).new(:name => 'foo') }
+
+    it "should calculate the number of blockers if it's not known" do
+      graph.add_vertex(resource)
+      3.times do |i|
+        other = Puppet::Type.type(:notify).new(:name => i.to_s)
+        graph.add_vertex(other)
+        graph.add_edge(other, resource)
+      end
+
+      graph.unblock(resource)
+
+      graph.blockers[resource].should == 2
+    end
+
+    it "should decrement the number of blockers if there are any" do
+      graph.blockers[resource] = 40
+
+      graph.unblock(resource)
+
+      graph.blockers[resource].should == 39
+    end
+
+    it "should warn if there are no blockers" do
+      vertex = stub('vertex')
+      vertex.expects(:warning).with "appears to have a negative number of dependencies"
+      graph.blockers[vertex] = 0
+
+      graph.unblock(vertex)
+    end
+
+    it "should return true if the resource is now unblocked" do
+      graph.blockers[resource] = 1
+
+      graph.unblock(resource).should == true
+    end
+
+    it "should return false if the resource is still blocked" do
+      graph.blockers[resource] = 2
+
+      graph.unblock(resource).should == false
+    end
+  end
+
+  describe "when traversing" do
+    let(:graph) { @transaction.relationship_graph }
+    let(:path) { tmpdir('eval_generate') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
+
+    before :each do
+      @transaction.catalog.add_resource(resource)
+    end
+
+    it "should clear blockers if resources are added" do
+      graph.blockers['foo'] = 3
+      graph.blockers['bar'] = 4
+
+      graph.ready[resource] = true
+
+      @transaction.expects(:eval_generate).with(resource).returns true
+
+      graph.traverse {}
+
+      graph.blockers.should be_empty
+    end
+
+    it "should yield the resource even if eval_generate is called" do
+      graph.ready[resource] = true
+
+      @transaction.expects(:eval_generate).with(resource).returns true
+
+      yielded = false
+      graph.traverse do |res|
+        yielded = true if res == resource
+      end
+
+      yielded.should == true
+    end
+
+    it "should not clear blockers if resources aren't added" do
+      graph.blockers['foo'] = 3
+      graph.blockers['bar'] = 4
+
+      graph.ready[resource] = true
+
+      @transaction.expects(:eval_generate).with(resource).returns false
+
+      graph.traverse {}
+
+      graph.blockers.should == {'foo' => 3, 'bar' => 4, resource => 0}
+    end
+
+    it "should unblock all dependents of the resource" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
+
+      @transaction.catalog.add_resource(dependent, dependent2)
+
+      graph.blockers[dependent].should == 1
+      graph.blockers[dependent2].should == 1
+
+      graph.ready[resource] = true
+
+      graph.traverse {}
+
+      graph.blockers[dependent].should == 0
+      graph.blockers[dependent2].should == 0
+    end
+
+    it "should enqueue any unblocked dependents" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
+
+      @transaction.catalog.add_resource(dependent, dependent2)
+
+      graph.blockers[dependent].should == 1
+      graph.blockers[dependent2].should == 1
+
+      graph.ready[resource] = true
+
+      seen = []
+
+      graph.traverse do |res|
+        seen << res
+      end
+
+      seen.should =~ [resource, dependent, dependent2]
+    end
+
+    it "should mark the resource done" do
+      graph.ready[resource] = true
+
+      graph.traverse {}
+
+      graph.done[resource].should == true
+    end
+  end
+
   describe "when generating resources" do
     it "should call 'generate' on all created resources" do
       first = Puppet::Type.type(:notify).new(:name => "first")
