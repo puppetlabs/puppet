@@ -307,7 +307,7 @@ class Puppet::Parser::Compiler
   def fail_on_unevaluated_overrides
     remaining = []
     @resource_overrides.each do |name, overrides|
-      remaining += overrides
+      remaining.concat overrides
     end
 
     unless remaining.empty?
