@@ -356,7 +356,7 @@ describe Puppet::Transaction do
       graph.blockers['foo'] = 3
       graph.blockers['bar'] = 4
 
-      graph.ready[resource] = true
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
 
       @transaction.expects(:eval_generate).with(resource).returns true
 
@@ -366,7 +366,7 @@ describe Puppet::Transaction do
     end
 
     it "should yield the resource even if eval_generate is called" do
-      graph.ready[resource] = true
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
 
       @transaction.expects(:eval_generate).with(resource).returns true
 
@@ -382,7 +382,7 @@ describe Puppet::Transaction do
       graph.blockers['foo'] = 3
       graph.blockers['bar'] = 4
 
-      graph.ready[resource] = true
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
 
       @transaction.expects(:eval_generate).with(resource).returns false
 
@@ -400,7 +400,7 @@ describe Puppet::Transaction do
       graph.blockers[dependent].should == 1
       graph.blockers[dependent2].should == 1
 
-      graph.ready[resource] = true
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
 
       graph.traverse {}
 
@@ -417,7 +417,7 @@ describe Puppet::Transaction do
       graph.blockers[dependent].should == 1
       graph.blockers[dependent2].should == 1
 
-      graph.ready[resource] = true
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
 
       seen = []
 
@@ -429,7 +429,7 @@ describe Puppet::Transaction do
     end
 
     it "should mark the resource done" do
-      graph.ready[resource] = true
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
 
       graph.traverse {}
 
@@ -454,7 +454,7 @@ describe Puppet::Transaction do
     end
 
     it "should finish all resources" do
-      generator = stub 'generator', :depthfirst? => true, :tags => []
+      generator = stub 'generator', :depthfirst? => true, :tags => [], :ref => "Some[resource]"
       resource = stub 'resource', :tag => nil
 
       @catalog = Puppet::Resource::Catalog.new
@@ -487,8 +487,8 @@ describe Puppet::Transaction do
     end
 
     it "should copy all tags to the newly generated resources" do
-      child = stub 'child'
-      generator = stub 'resource', :tags => ["one", "two"]
+      child = stub 'child', :ref => "Some[child_resource]"
+      generator = stub 'resource', :tags => ["one", "two"], :ref => "Some[resource]"
 
       @catalog = Puppet::Resource::Catalog.new
       @transaction = Puppet::Transaction.new(@catalog)
