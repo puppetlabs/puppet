@@ -162,17 +162,17 @@ class Puppet::Transaction
         res.info "Duplicate generated resource; skipping"
       end
     end
-    sentinal = Puppet::Type::Whit.new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    sentinel = Puppet::Type::Whit.new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
     relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
-      add_conditional_directed_dependency(sentinal, e.target, e.label)
+      add_conditional_directed_dependency(sentinel, e.target, e.label)
       relationship_graph.remove_edge! e
     }
     default_label = Puppet::Resource::Catalog::Default_label
     made.each do |res|
       add_conditional_directed_dependency(made.find { |r| r != res && r.name == res.name[0,r.name.length]} || resource, res)
-      add_conditional_directed_dependency(res, sentinal, default_label)
+      add_conditional_directed_dependency(res, sentinel, default_label)
     end
-    add_conditional_directed_dependency(resource, sentinal, default_label)
+    add_conditional_directed_dependency(resource, sentinel, default_label)
   end
 
   # A general method for recursively generating new resources from a

@@ -361,7 +361,7 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     #
     # These two hashes comprise the aforementioned attention to the possible
     #   case of containers that contain / depend on other containers; they map
-    #   containers to their sentinals but pass other verticies through.  Thus we
+    #   containers to their sentinels but pass other verticies through.  Thus we
     #   can "do the right thing" for references to other verticies that may or
     #   may not be containers.
     #
