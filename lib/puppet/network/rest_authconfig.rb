@@ -16,9 +16,9 @@ module Puppet
       { :acl => "/report", :method => :save, :authenticated => true },
       # These allow `auth any`, because if you can do them anonymously you
       # should probably also be able to do them when trusted.
-      { :acl => "/certificate/ca", :method => :find, :authenticated => nil },
-      { :acl => "/certificate/", :method => :find, :authenticated => nil },
-      { :acl => "/certificate_request", :method => [:find, :save], :authenticated => nil },
+      { :acl => "/certificate/ca", :method => :find, :authenticated => :any },
+      { :acl => "/certificate/", :method => :find, :authenticated => :any },
+      { :acl => "/certificate_request", :method => [:find, :save], :authenticated => :any },
       { :acl => "/status", :method => [:find], :authenticated => true },
     ]
 
@@ -67,9 +67,15 @@ module Puppet
 
     # force regular ACLs to be present
     def insert_default_acl
+      if exists? then
+        reason = "none were found in '#{@file}'"
+      else
+        reason = "#{Puppet[:rest_authconfig]} doesn't exist"
+      end
+
       DEFAULT_ACL.each do |acl|
         unless rights[acl[:acl]]
-          Puppet.info "Inserting default '#{acl[:acl]}'(#{acl[:authenticated] ? "auth" : "non-auth"}) ACL because #{( !exists? ? "#{Puppet[:rest_authconfig]} doesn't exist" : "none were found in '#{@file}'")}"
+          Puppet.info "Inserting default '#{acl[:acl]}' (auth #{acl[:authenticated]}) ACL because #{reason}"
           mk_acl(acl)
         end
       end
