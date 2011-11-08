@@ -55,6 +55,20 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         winsec.set_mode(WindowsSecurityTester::S_IRWXU, path) if File.exists?(path)
       end
 
+      describe "#supports_acl?" do
+        %w[c:/ c:\\ c:/windows/system32 \\\\localhost\\C$ \\\\127.0.0.1\\C$\\foo].each do |path|
+          it "should accept #{path}" do
+            winsec.should be_supports_acl(path)
+          end
+        end
+
+        it "should raise an exception if it cannot get volume information" do
+          expect {
+            winsec.supports_acl?('foobar')
+          }.to raise_error(Puppet::Error, /Failed to get volume information/)
+        end
+      end
+
       describe "#owner=" do
         it "should allow setting to the current user" do
           winsec.set_owner(sids[:current_user], path)
