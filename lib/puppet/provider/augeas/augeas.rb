@@ -298,7 +298,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
             saved_files.each do |key|
               saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
               if Puppet[:show_diff]
-                print diff(saved_file, saved_file + ".augnew")
+                notice "\n" + diff(saved_file, saved_file + ".augnew")
               end
               if resource.noop?
                 File.delete(saved_file + ".augnew")
