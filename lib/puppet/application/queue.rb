@@ -10,7 +10,6 @@ class Puppet::Application::Queue < Puppet::Application
     require 'puppet/daemon'
     @daemon = Puppet::Daemon.new
     @daemon.argv = ARGV.dup
-    Puppet::Util::Log.newdestination(:console)
 
     # Do an initial trap, so that cancels don't get a stack trace.
 
@@ -36,6 +35,16 @@ class Puppet::Application::Queue < Puppet::Application
 
   option("--debug","-d")
   option("--verbose","-v")
+
+  option("--logdest DEST", "-l DEST") do |arg|
+    begin
+      Puppet::Util::Log.newdestination(arg)
+      options[:setdest] = true
+    rescue => detail
+      puts detail.backtrace if Puppet[:debug]
+      $stderr.puts detail.to_s
+    end
+  end
 
   def main
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
@@ -67,6 +76,7 @@ class Puppet::Application::Queue < Puppet::Application
         Puppet::Util::Log.level = :info
       end
     end
+    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
   end
 
   def setup
