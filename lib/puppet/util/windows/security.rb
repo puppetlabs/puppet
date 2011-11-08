@@ -60,6 +60,7 @@
 #   (and different) owner or group.
 
 require 'puppet/util/windows'
+require 'pathname'
 
 require 'win32/security'
 
@@ -68,6 +69,7 @@ require 'windows/handle'
 require 'windows/security'
 require 'windows/process'
 require 'windows/memory'
+require 'windows/volume'
 
 module Puppet::Util::Windows::Security
   include Windows::File
@@ -76,6 +78,7 @@ module Puppet::Util::Windows::Security
   include Windows::Process
   include Windows::Memory
   include Windows::MSVCRT::Buffer
+  include Windows::Volume
 
   extend Puppet::Util::Windows::Security
 
@@ -138,6 +141,19 @@ module Puppet::Util::Windows::Security
   # for objects they do not have read access to.
   def get_group(path)
     get_sid(GROUP_SECURITY_INFORMATION, path)
+  end
+
+  def supports_acl?(path)
+    flags = 0.chr * 4
+
+    root = Pathname.new(path).enum_for(:ascend).to_a.last.to_s
+    # 'A trailing backslash is required'
+    root = "#{root}\\" unless root =~ /[\/\\]$/
+    unless GetVolumeInformation(root, nil, 0, nil, nil, flags, nil, 0)
+      raise Puppet::Util::Windows::Error.new("Failed to get volume information")
+    end
+
+    (flags.unpack('L')[0] & Windows::File::FILE_PERSISTENT_ACLS) != 0
   end
 
   def change_sid(old_sid, new_sid, info, path)
