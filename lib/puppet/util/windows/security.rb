@@ -363,7 +363,7 @@ module Puppet::Util::Windows::Security
             raise Puppet::Util::Windows::Error.new("Failed to initialize ACL")
           end
 
-          raise Puppet::Util::Windows::Error.new("Invalid DACL") if IsValidAcl(acl) == 0
+          raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(acl)
 
           yield acl
 
@@ -380,9 +380,9 @@ module Puppet::Util::Windows::Security
 
   def add_access_allowed_ace(acl, mask, sid, inherit = NO_INHERITANCE)
     string_to_sid_ptr(sid) do |sid_ptr|
-      raise Puppet::Util::Windows::Error.new("Invalid SID") if IsValidSid(sid_ptr) == 0
+      raise Puppet::Util::Windows::Error.new("Invalid SID") unless IsValidSid(sid_ptr)
 
-      if AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr) == 0
+      unless AddAccessAllowedAceEx(acl, ACL_REVISION, inherit, mask, sid_ptr)
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
@@ -390,9 +390,9 @@ module Puppet::Util::Windows::Security
 
   def add_access_denied_ace(acl, mask, sid)
     string_to_sid_ptr(sid) do |sid_ptr|
-      raise Puppet::Util::Windows::Error.new("Invalid SID") if IsValidSid(sid_ptr) == 0
+      raise Puppet::Util::Windows::Error.new("Invalid SID") unless IsValidSid(sid_ptr)
 
-      if AddAccessDeniedAce(acl, ACL_REVISION, mask, sid_ptr) == 0
+      unless AddAccessDeniedAce(acl, ACL_REVISION, mask, sid_ptr)
         raise Puppet::Util::Windows::Error.new("Failed to add access control entry")
       end
     end
@@ -401,7 +401,7 @@ module Puppet::Util::Windows::Security
   def get_dacl(handle)
     get_dacl_ptr(handle) do |dacl_ptr|
       # REMIND: need to handle NULL DACL
-      raise Puppet::Util::Windows::Error.new("Invalid DACL") if IsValidAcl(dacl_ptr) == 0
+      raise Puppet::Util::Windows::Error.new("Invalid DACL") unless IsValidAcl(dacl_ptr)
 
       # ACL structure, size and count are the important parts. The
       # size includes both the ACL structure and all the ACEs.
@@ -422,7 +422,8 @@ module Puppet::Util::Windows::Security
 
       0.upto(ace_count - 1) do |i|
         ace_ptr = [0].pack('L')
-        next if GetAce(dacl_ptr, i, ace_ptr) == 0
+
+        next unless GetAce(dacl_ptr, i, ace_ptr)
 
         # ACE structures vary depending on the type. All structures
         # begin with an ACE header, which specifies the type, flags
@@ -524,9 +525,9 @@ module Puppet::Util::Windows::Security
     sid_buf = 0.chr * 256
     str_ptr = 0.chr * 4
 
-    raise Puppet::Util::Windows::Error.new("Invalid SID") if IsValidSid(psid) == 0
+    raise Puppet::Util::Windows::Error.new("Invalid SID") unless IsValidSid(psid)
 
-    raise Puppet::Util::Windows::Error.new("Failed to convert binary SID") if ConvertSidToStringSid(psid, str_ptr) == 0
+    raise Puppet::Util::Windows::Error.new("Failed to convert binary SID") unless ConvertSidToStringSid(psid, str_ptr)
 
     begin
       strncpy(sid_buf, str_ptr.unpack('L')[0], sid_buf.size - 1)
@@ -594,14 +595,14 @@ module Puppet::Util::Windows::Security
       tmpLuid = 0.chr * 8
 
       # Get the LUID for specified privilege.
-      if LookupPrivilegeValue("", privilege, tmpLuid) == 0
+      unless LookupPrivilegeValue("", privilege, tmpLuid)
         raise Puppet::Util::Windows::Error.new("Failed to lookup privilege")
       end
 
       # DWORD + [LUID + DWORD]
       tkp = [1].pack('L') + tmpLuid + [enable ? SE_PRIVILEGE_ENABLED : 0].pack('L')
 
-      if AdjustTokenPrivileges(token, 0, tkp, tkp.length , nil, nil) == 0
+      unless AdjustTokenPrivileges(token, 0, tkp, tkp.length , nil, nil)
         raise Puppet::Util::Windows::Error.new("Failed to adjust process privileges")
       end
     end
@@ -611,7 +612,7 @@ module Puppet::Util::Windows::Security
   def with_process_token(access)
     token = 0.chr * 4
 
-    if OpenProcessToken(GetCurrentProcess(), access, token) == 0
+    unless OpenProcessToken(GetCurrentProcess(), access, token)
       raise Puppet::Util::Windows::Error.new("Failed to open process token")
     end
     begin
