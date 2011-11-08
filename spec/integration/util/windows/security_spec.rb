@@ -226,9 +226,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
 
     describe "for an administrator", :if => Puppet.features.root? do
       before :each do
-        winsec.set_owner(sids[:guest], path)
-        winsec.set_group(sids[:guest], path)
         winsec.set_mode(WindowsSecurityTester::S_IRWXU | WindowsSecurityTester::S_IRWXG, path)
+        winsec.set_group(sids[:guest], path)
+        winsec.set_owner(sids[:guest], path)
         lambda { File.open(path, 'r') }.should raise_error(Errno::EACCES)
       end
 
@@ -271,9 +271,9 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         it "should allow owner and group to be the same sid" do
+          winsec.set_mode(0610, path)
           winsec.set_owner(sids[:power_users], path)
           winsec.set_group(sids[:power_users], path)
-          winsec.set_mode(0610, path)
 
           winsec.get_owner(path).should == sids[:power_users]
           winsec.get_group(path).should == sids[:power_users]

@@ -174,15 +174,23 @@ module Puppet::Util::Windows::Security
   end
 
   def add_attributes(path, flags)
-    set_attributes(path, get_attributes(path) | flags)
+    oldattrs = get_attributes(path)
+
+    if (oldattrs | flags) != oldattrs
+      set_attributes(path, oldattrs | flags)
+    end
   end
 
   def remove_attributes(path, flags)
-    set_attributes(path, get_attributes(path) & ~flags)
+    oldattrs = get_attributes(path)
+
+    if (oldattrs & ~flags) != oldattrs
+      set_attributes(path, oldattrs & ~flags)
+    end
   end
 
   def set_attributes(path, flags)
-    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") if SetFileAttributes(path, flags) == 0
+    raise Puppet::Util::Windows::Error.new("Failed to set file attributes") unless SetFileAttributes(path, flags)
   end
 
   MASK_TO_MODE = {
@@ -318,6 +326,12 @@ module Puppet::Util::Windows::Security
       owner_allow |= group_allow
     end
 
+    # if any ACE allows write, then clear readonly bit, but do this before we overwrite
+    # the DACl and lose our ability to set the attribute
+    if ((owner_allow | group_allow | other_allow ) & FILE_WRITE_DATA) == FILE_WRITE_DATA
+      remove_attributes(path, FILE_ATTRIBUTE_READONLY)
+    end
+
     set_acl(path, protected) do |acl|
       #puts "ace: owner #{owner_sid}, mask 0x#{owner_allow.to_s(16)}"
       add_access_allowed_ace(acl, owner_allow, owner_sid)
@@ -341,11 +355,6 @@ module Puppet::Util::Windows::Security
         add_access_allowed_ace(acl, group_allow, Win32::Security::SID::CreatorGroup, inherit)
         add_access_allowed_ace(acl, other_allow, well_known_world_sid, inherit)
       end
-    end
-
-    # if any ACE allows write, then clear readonly bit
-    if ((owner_allow | group_allow | other_allow ) & FILE_WRITE_DATA) == FILE_WRITE_DATA
-      remove_attributes(path, FILE_ATTRIBUTE_READONLY)
     end
 
     nil
