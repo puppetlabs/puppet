@@ -174,25 +174,21 @@ class Puppet::RbTreeMap
     result
   end
 
-  # Iterates over the TreeMap from smallest to largest element. Iterative approach.
-  def each
+  # Yields [key, value] pairs in order by key.
+  def each(&blk)
+    recursive_yield(@root, &blk)
+  end
+
+  def first
     return nil unless @root
-    stack = Array.new
-    cursor = @root
-    loop do
-      if cursor
-        stack.push(cursor)
-        cursor = cursor.left
-      else
-        unless stack.empty?
-          cursor = stack.pop
-          yield(cursor.key, cursor.value)
-          cursor = cursor.right
-        else
-          break
-        end
-      end
-    end
+    node = min_recursive(@root)
+    [node.key, node.value]
+  end
+
+  def last
+    return nil unless @root
+    node = max_recursive(@root)
+    [node.key, node.value]
   end
 
   def to_hash
@@ -287,6 +283,13 @@ class Puppet::RbTreeMap
   end
 
   private
+
+  def recursive_yield(node, &blk)
+    return unless node
+    recursive_yield(node.left, &blk)
+    yield node.key, node.value
+    recursive_yield(node.right, &blk)
+  end
 
   def delete_recursive(node, key)
     if (key <=> node.key) == -1
