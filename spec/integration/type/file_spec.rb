@@ -358,9 +358,9 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource file
       catalog.add_resource filebucket
 
-      File.open(file[:path], "w") { |f| f.puts "bar" }
+      File.open(file[:path], "wb") { |f| f.puts "bar" }
 
-      md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+      md5 = Digest::MD5.hexdigest(Puppet::Util.binread(file[:path]))
 
       catalog.apply
 
