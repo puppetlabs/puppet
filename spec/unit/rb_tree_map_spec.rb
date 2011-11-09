@@ -48,20 +48,6 @@ describe Puppet::RbTreeMap do
     end
   end
 
-  describe "#height" do
-    it "should be 0 for an empty tree" do
-      subject.height.should == 0
-    end
-
-    # This is kind of a cop-out, but height depends on insertion order.
-    it "should be the height of the root node" do
-      root = stub('root', :height => 5)
-      subject.instance_variable_set(:@root, root)
-
-      subject.height.should == 5
-    end
-  end
-
   describe "#has_key?" do
     it "should be true if the tree contains the key" do
       subject[1] = 2
@@ -173,16 +159,12 @@ describe Puppet::RbTreeMap do
           :key => 2,
           :value => '2',
           :color => :black,
-          :size => 2,
-          :height => 2,
         },
         :left => {
           :node => {
             :key => 0,
             :value => '0',
             :color => :red,
-            :size => 1,
-            :height => 1,
           }
         }
       }
@@ -198,16 +180,12 @@ describe Puppet::RbTreeMap do
           :key => 2,
           :value => '2',
           :color => :black,
-          :size => 2,
-          :height => 2,
         },
         :left => {
           :node => {
             :key => 1,
             :value => '1',
             :color => :red,
-            :size => 1,
-            :height => 1,
           }
         }
       }
@@ -223,16 +201,12 @@ describe Puppet::RbTreeMap do
           :key => 1,
           :value => '1',
           :color => :black,
-          :size => 2,
-          :height => 2,
         },
         :left => {
           :node => {
             :key => 0,
             :value => '0',
             :color => :red,
-            :size => 1,
-            :height => 1,
           }
         }
       }
@@ -248,32 +222,24 @@ describe Puppet::RbTreeMap do
           :key => 5,
           :value => '5',
           :color => :black,
-          :size => 6,
-          :height => 4,
         },
         :left => {
           :node => {
             :key => 3,
             :value => '3',
             :color => :red,
-            :size => 4,
-            :height => 3,
           },
           :left => {
             :node => {
               :key => 2,
               :value => '2',
               :color => :black,
-              :size => 2,
-              :height => 2,
             },
             :left => {
               :node => {
                 :key => 0,
                 :value => '0',
                 :color => :red,
-                :size => 1,
-                :height => 1,
               },
             },
           },
@@ -282,8 +248,6 @@ describe Puppet::RbTreeMap do
               :key => 4,
               :value => '4',
               :color => :black,
-              :size => 1,
-              :height => 1,
             },
           },
         },
@@ -292,8 +256,6 @@ describe Puppet::RbTreeMap do
             :key => 6,
             :value => '6',
             :color => :black,
-            :size => 1,
-            :height => 1,
           },
         },
       }
@@ -309,24 +271,18 @@ describe Puppet::RbTreeMap do
           :key => 3,
           :value => '3',
           :color => :black,
-          :size => 6,
-          :height => 3,
         },
         :left => {
           :node => {
             :key => 1,
             :value => '1',
             :color => :red,
-            :size => 3,
-            :height => 2,
           },
           :left => {
             :node => {
               :key => 0,
               :value => '0',
               :color => :black,
-              :size => 1,
-              :height => 1,
             },
           },
           :right => {
@@ -334,8 +290,6 @@ describe Puppet::RbTreeMap do
               :key => 2,
               :value => '2',
               :color => :black,
-              :size => 1,
-              :height => 1,
             },
           },
         },
@@ -344,16 +298,12 @@ describe Puppet::RbTreeMap do
             :key => 6,
             :value => '6',
             :color => :black,
-            :size => 2,
-            :height => 2,
           },
           :left => {
             :node => {
               :key => 4,
               :value => '4',
               :color => :red,
-              :size => 1,
-              :height => 1,
             },
           },
         },
@@ -372,6 +322,7 @@ describe Puppet::RbTreeMap do
       (0..4).each {|i| subject[i] = i.to_s}
 
       subject.delete(2.5).should be_nil
+      subject.size.should == 5
     end
 
     it "should return nil if the key is larger than the maximum key" do
@@ -402,6 +353,7 @@ describe Puppet::RbTreeMap do
       (1..15).each {|i| subject[i] = i.to_s}
 
       subject.delete_min.should == '1'
+      subject.size.should == 14
     end
 
     it "should return nil if the tree is empty" do
@@ -414,6 +366,7 @@ describe Puppet::RbTreeMap do
       (1..15).each {|i| subject[i] = i.to_s}
 
       subject.delete_max.should == '15'
+      subject.size.should == 14
     end
 
     it "should return nil if the tree is empty" do
@@ -498,91 +451,6 @@ describe Puppet::RbTreeMap::Node do
     end
   end
 
-  describe "#update_size" do
-    describe "when recalculating size" do
-      it "should set the size to the sum of its subtrees + 1 for itself" do
-        subject.left.size = 13
-        subject.right.size = 17
-
-        subject.update_size
-
-        subject.size.should == 31
-      end
-
-      it "should only count the left subtree if there is no right" do
-        subject.left = nil
-        subject.right.size = 11
-
-        subject.update_size
-
-        subject.size.should == 12
-      end
-
-      it "should only count the left subtree if there is no right" do
-        subject.right = nil
-        subject.left.size = 19
-
-        subject.update_size
-
-        subject.size.should == 20
-      end
-
-      it "should be 1 if there are no children" do
-        subject.left = nil
-        subject.right = nil
-
-        subject.update_size
-
-        subject.size.should == 1
-      end
-    end
-
-    describe "when recalculating height" do
-      it "should set the height to the height of the longer subtree + 1 for itself" do
-        subject.height.should == 2
-
-        subject.left.height = 5
-        subject.update_size
-
-        subject.height.should == 6
-
-        subject.right.height = 10
-        subject.update_size
-
-        subject.height.should == 11
-      end
-
-      it "should use the left subtree if there is no right" do
-        subject.left.height = 9
-        subject.right.height = 20
-        subject.right = nil
-
-        subject.update_size
-
-        subject.height.should == 10
-      end
-
-      it "should use the right subtree if there is no right" do
-        subject.left.height = 20
-        subject.left = nil
-        subject.right.height = 14
-
-        subject.update_size
-
-        subject.height.should == 15
-      end
-
-      it "should be 1 if there are no children" do
-        subject.left = nil
-        subject.right = nil
-
-        subject.update_size
-
-        subject.height.should == 1
-      end
-    end
-  end
-
   describe "#rotate_left" do
     it "should rotate the tree once to the left" do
       (4..7).each {|i| tree[i] = i.to_s}
@@ -596,32 +464,24 @@ describe Puppet::RbTreeMap::Node do
           :key => 6,
           :value => '6',
           :color => :black,
-          :size => 7,
-          :height => 4,
         },
         :left => {
           :node => {
             :key => 4,
             :value => '4',
             :color => :red,
-            :size => 5,
-            :height => 3,
           },
           :left => {
             :node => {
               :key => 2,
               :value => '2',
               :color => :black,
-              :size => 3,
-              :height => 2,
             },
             :left => {
               :node => {
                 :key => 1,
                 :value => '1',
                 :color => :black,
-                :size => 1,
-                :height => 1,
               },
             },
             :right => {
@@ -629,8 +489,6 @@ describe Puppet::RbTreeMap::Node do
                 :key => 3,
                 :value => '3',
                 :color => :black,
-                :size => 1,
-                :height => 1,
               },
             },
           },
@@ -639,8 +497,6 @@ describe Puppet::RbTreeMap::Node do
               :key => 5,
               :value => '5',
               :color => :black,
-              :size => 1,
-              :height => 1,
             },
           },
         },
@@ -649,8 +505,6 @@ describe Puppet::RbTreeMap::Node do
             :key => 7,
             :value => '7',
             :color => :black,
-            :size => 1,
-            :height => 1,
           },
         },
       }
@@ -670,16 +524,12 @@ describe Puppet::RbTreeMap::Node do
           :key => 2,
           :value => '2',
           :color => :black,
-          :size => 7,
-          :height => 4,
         },
         :left => {
           :node => {
             :key => 1,
             :value => '1',
             :color => :black,
-            :size => 1,
-            :height => 1,
           },
         },
         :right => {
@@ -687,16 +537,12 @@ describe Puppet::RbTreeMap::Node do
             :key => 4,
             :value => '4',
             :color => :red,
-            :size => 5,
-            :height => 3,
           },
           :left => {
             :node => {
               :key => 3,
               :value => '3',
               :color => :black,
-              :size => 1,
-              :height => 1,
             },
           },
           :right => {
@@ -704,16 +550,12 @@ describe Puppet::RbTreeMap::Node do
               :key => 6,
               :value => '6',
               :color => :black,
-              :size => 3,
-              :height => 2,
             },
             :left => {
               :node => {
                 :key => 5,
                 :value => '5',
                 :color => :black,
-                :size => 1,
-                :height => 1,
               },
             },
             :right => {
@@ -721,8 +563,6 @@ describe Puppet::RbTreeMap::Node do
                 :key => 7,
                 :value => '7',
                 :color => :black,
-                :size => 1,
-                :height => 1,
               },
             },
           },
