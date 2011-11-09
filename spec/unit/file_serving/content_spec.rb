@@ -73,7 +73,7 @@ describe Puppet::FileServing::Content do
   it "should return an opened File when converted to raw" do
     content = Puppet::FileServing::Content.new("/path")
 
-    File.expects(:new).with("/path","r").returns :file
+    File.expects(:new).with("/path","rb").returns :file
 
     content.to_raw.should == :file
   end

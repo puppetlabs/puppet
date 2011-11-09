@@ -57,6 +57,7 @@ describe Puppet::Application::Inspect do
     it "should audit the specified properties" do
       catalog = Puppet::Resource::Catalog.new
       file = Tempfile.new("foo")
+      file.binmode
       file.puts("file contents")
       file.close
       resource = Puppet::Resource.new(:file, file.path, :parameters => {:audit => "all"})

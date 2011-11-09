@@ -4,6 +4,8 @@ require 'spec_helper'
 require 'puppet/util/checksums'
 
 describe Puppet::Util::Checksums do
+  include PuppetSpec::Files
+
   before do
     @summer = Object.new
     @summer.extend(Puppet::Util::Checksums)
@@ -76,7 +78,7 @@ describe Puppet::Util::Checksums do
         #fh.expects(:read).with(512).returns("secondline")
         #fh.expects(:read).with(512).returns(nil)
 
-        File.expects(:open).with(file, "r").yields(fh)
+        File.expects(:open).with(file, "rb").yields(fh)
 
         digest.expects(:<<).with "firstline"
         digest.expects(:<<).with "secondline"
@@ -94,6 +96,7 @@ describe Puppet::Util::Checksums do
           sum.should == digest
         end.should == :mydigest
       end
+
     end
   end
 
@@ -114,7 +117,7 @@ describe Puppet::Util::Checksums do
         fh = mock 'filehandle'
         fh.expects(:read).with(512).returns('my content')
 
-        File.expects(:open).with(file, "r").yields(fh)
+        File.expects(:open).with(file, "rb").yields(fh)
 
         digest.expects(:<<).with "my content"
         digest.expects(:hexdigest).returns :mydigest
@@ -152,6 +155,21 @@ describe Puppet::Util::Checksums do
       expectation = stub "expectation"
       expectation.expects(:do_something!).at_least_once
       @summer.none_stream{ |checksum| checksum << "anything" ; expectation.do_something!  }.should == ""
+    end
+  end
+
+  {:md5 => Digest::MD5, :sha1 => Digest::SHA1}.each do |sum, klass|
+    describe "when using #{sum}" do
+      let(:content) { "hello\r\nworld" }
+      let(:path) do
+        path = tmpfile("checksum_#{sum}")
+        File.open(path, 'wb') {|f| f.write(content)}
+        path
+      end
+
+      it "should preserve nl/cr sequences" do
+        @summer.send(sum.to_s + "_file", path).should == klass.hexdigest(content)
+      end
     end
   end
 end
