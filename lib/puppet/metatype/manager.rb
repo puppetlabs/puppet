@@ -99,6 +99,9 @@ module Manager
   def rmtype(name)
     # Then create the class.
 
+    if klass = type(name)
+      klass.clear_providers
+    end
     klass = rmclass(name, :hash => @types)
 
     singleton_class.send(:remove_method, "new#{name}") if respond_to?("new#{name}")

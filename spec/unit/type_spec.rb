@@ -243,20 +243,75 @@ describe Puppet::Type, :fails_on_windows => true do
     end
   end
 
-  describe "when choosing a default provider" do
-    it "should choose the provider with the highest specificity" do
-      # Make a fake type
-      type = Puppet::Type.newtype(:defaultprovidertest) do
+  describe "when removing a type" do
+    before :each do
+      @type = Puppet::Type.newtype(:providertest) do
         newparam(:name) do end
       end
+    end
 
-      basic = type.provide(:basic) {}
-      greater = type.provide(:greater) {}
+    it "should remove the type" do
+      Puppet::Type.rmtype(@type.name)
+      Puppet::Type.type(@type.name).should be_nil
+    end
+
+    it "should remove the type's providers" do
+      @type.provide(:something) {}
+      Puppet::Type.rmtype(@type.name)
+      Puppet::Type.provider_hash_by_type(@type.name).should == {}
+    end
+  end
+
+  describe "when choosing a default provider" do
+    before :each do
+      @type = Puppet::Type.newtype(:providertest) do
+        newparam(:name) do end
+      end
+    end
+
+    after do
+      Puppet::Type.rmtype(@type.name)
+    end
+
+    it "should choose the provider with the highest specificity" do
+      basic = @type.provide(:basic) {}
+      greater = @type.provide(:greater) {}
 
       basic.stubs(:specificity).returns 1
       greater.stubs(:specificity).returns 2
 
-      type.defaultprovider.should equal(greater)
+      @type.defaultprovider.should equal(greater)
+    end
+
+    it "should choose an unsuitable provider if no suitable provider is available" do
+      unsuitable = @type.provide(:unsuitable) {
+        commands "nope" => "/this/command/no/exist"
+      }
+
+      Puppet.expects(:warning)
+
+      @type.defaultprovider.should equal(unsuitable)
+    end
+  end
+
+  describe "when discovering resource type instances" do
+    before :each do
+      @type = Puppet::Type.newtype(:providertest) do
+        newparam(:name) do end
+      end
+    end
+
+    after do
+      Puppet::Type.rmtype(@type.name)
+    end
+
+    it "should not attempt to find instances on unsuitable providers" do
+      provider = @type.provide :unsuitable do
+        commands :foo => "/no/such/command"
+      end
+
+      provider.expects(:instances).never
+      @type.instances
     end
   end
 
