@@ -67,7 +67,7 @@ class Puppet::RbTreeMap
   #   map.has_key?("GA") #=> true
   #   map.has_key?("DE") #=> false
   def has_key?(key)
-    !get(key).nil?
+    !get_recursive(@root, key).nil?
   end
 
   # Return the item associated with the key, or nil if none found.
@@ -79,7 +79,9 @@ class Puppet::RbTreeMap
   #   map.push("GA", "Georgia")
   #   map.get("GA") #=> "Georgia"
   def get(key)
-    get_recursive(@root, key)
+    node = get_recursive(@root, key)
+    node ? node.value : nil
+    node.value if node
   end
   alias_method :[], :get
 
@@ -92,7 +94,7 @@ class Puppet::RbTreeMap
   #   map.push("GA", "Georgia")
   #   map.min_key #=> "GA"
   def min_key
-    @root.nil? ? nil : min_recursive(@root)
+    @root.nil? ? nil : min_recursive(@root).key
   end
 
   # Return the largest key in the map.
@@ -104,7 +106,7 @@ class Puppet::RbTreeMap
   #   map.push("GA", "Georgia")
   #   map.max_key #=> "MA"
   def max_key
-    @root.nil? ? nil : max_recursive(@root)
+    @root.nil? ? nil : max_recursive(@root).key
   end
 
   # Deletes the item and key if it's found, and returns the item. Returns nil
@@ -300,8 +302,9 @@ class Puppet::RbTreeMap
       end
       if (key <=> node.key) == 0
         result = node.value
-        node.value = get_recursive(node.right, min_recursive(node.right))
-        node.key = min_recursive(node.right)
+        min_child = min_recursive(node.right)
+        node.value = min_child.value
+        node.key = min_child.key
         node.right = delete_min_recursive(node.right).first
       else
         node.right, result = delete_recursive(node.right, key)
@@ -338,20 +341,20 @@ class Puppet::RbTreeMap
   def get_recursive(node, key)
     return nil if node.nil?
     case key <=> node.key
-    when  0 then return node.value
+    when  0 then return node
     when -1 then return get_recursive(node.left, key)
     when  1 then return get_recursive(node.right, key)
     end
   end
 
   def min_recursive(node)
-    return node.key if node.left.nil?
+    return node if node.left.nil?
 
     min_recursive(node.left)
   end
 
   def max_recursive(node)
-    return node.key if node.right.nil?
+    return node if node.right.nil?
 
     max_recursive(node.right)
   end

@@ -56,7 +56,6 @@ describe Puppet::RbTreeMap do
     end
 
     it "should be true if the tree contains the key and its value is nil" do
-      pending "We can't yet distinguish a missing key from a nil value here"
       subject[0] = nil
 
       subject.should be_has_key(0)
