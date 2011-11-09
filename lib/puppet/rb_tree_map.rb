@@ -33,12 +33,14 @@
 class Puppet::RbTreeMap
   include Enumerable
 
-  attr_accessor :height_black
+  attr_reader :size
+
+  alias_method :length, :size
 
   # Create and initialize a new empty TreeMap.
   def initialize
     @root = nil
-    @height_black = 0
+    @size = 0
   end
 
   # Insert an item with an associated key into the TreeMap, and returns the item inserted
@@ -50,33 +52,10 @@ class Puppet::RbTreeMap
   # map.get("MA") #=> "Massachusetts"
   def push(key, value)
     @root = insert(@root, key, value)
-    @height_black += 1 if isred(@root)
     @root.color = :black
     value
   end
   alias_method :[]=, :push
-
-  # Return the number of items in the TreeMap.
-  #
-  #   map = Containers::TreeMap.new
-  #   map.push("MA", "Massachusetts")
-  #   map.push("GA", "Georgia")
-  #   map.size #=> 2
-  def size
-    @root and @root.size or 0
-  end
-
-  # Return the height of the tree structure in the TreeMap.
-  #
-  # Complexity: O(1)
-  #
-  #   map = Containers::TreeMap.new
-  #   map.push("MA", "Massachusetts")
-  #   map.push("GA", "Georgia")
-  #   map.height #=> 2
-  def height
-    @root and @root.height or 0
-  end
 
   # Return true if key is found in the TreeMap, false otherwise
   #
@@ -143,6 +122,7 @@ class Puppet::RbTreeMap
       return unless has_key? key
       @root, result = delete_recursive(@root, key)
       @root.color = :black if @root
+      @size -= 1
     end
     result
   end
@@ -167,6 +147,7 @@ class Puppet::RbTreeMap
     if @root
       @root, result = delete_min_recursive(@root)
       @root.color = :black if @root
+      @size -= 1
     end
     result
   end
@@ -186,6 +167,7 @@ class Puppet::RbTreeMap
     if @root
       @root, result = delete_max_recursive(@root)
       @root.color = :black if @root
+      @size -= 1
     end
     result
   end
@@ -216,15 +198,13 @@ class Puppet::RbTreeMap
   end
 
   class Node # :nodoc: all
-    attr_accessor :color, :key, :value, :left, :right, :size, :height
+    attr_accessor :color, :key, :value, :left, :right
     def initialize(key, value)
       @key = key
       @value = value
       @color = :red
       @left = nil
       @right = nil
-      @size = 1
-      @height = 1
     end
 
     def to_hash
@@ -233,8 +213,6 @@ class Puppet::RbTreeMap
           :key => @key,
           :value => @value,
           :color => @color,
-          :size => size,
-          :height => height,
         }
       }
       h.merge!(:left => left.to_hash) if @left
@@ -252,18 +230,6 @@ class Puppet::RbTreeMap
       @right.color = @right.color == :red ? :black : :red
     end
 
-    def update_size
-      @size = (@left ? @left.size : 0) + (@right ? @right.size : 0) + 1
-      left_height = (@left ? @left.height : 0)
-      right_height = (@right ? @right.height : 0)
-      if left_height > right_height
-        @height = left_height + 1
-      else
-        @height = right_height + 1
-      end
-      self
-    end
-
     def rotate_left
       r = @right
       r_key, r_value, r_color = r.key, r.value, r.color
@@ -274,8 +240,7 @@ class Puppet::RbTreeMap
       r.right = b
       r.color, r.key, r.value = :red, @key, @value
       @key, @value = r_key, r_value
-      r.update_size
-      update_size
+      self
     end
 
     def rotate_right
@@ -288,8 +253,7 @@ class Puppet::RbTreeMap
       l.left = b
       l.color, l.key, l.value = :red, @key, @value
       @key, @value = l_key, l_value
-      l.update_size
-      update_size
+      self
     end
 
     def move_red_left
@@ -316,7 +280,7 @@ class Puppet::RbTreeMap
       rotate_right if (@left && @left.red?) && (@left.left && @left.left.red?)
       colorflip if (@left && @left.red?) && (@right && @right.red?)
 
-      update_size
+      self
     end
   end
 
@@ -393,7 +357,10 @@ class Puppet::RbTreeMap
   end
 
   def insert(node, key, value)
-    return Node.new(key, value) unless node
+    unless node
+      @size += 1
+      return Node.new(key, value)
+    end
 
     case key <=> node.key
     when  0 then node.value = value
@@ -404,7 +371,7 @@ class Puppet::RbTreeMap
     node.rotate_left if (node.right && node.right.red?)
     node.rotate_right if (node.left && node.left.red? && node.left.left && node.left.left.red?)
     node.colorflip if (node.left && node.left.red? && node.right && node.right.red?)
-    node.update_size
+    node
   end
 
   def isred(node)
