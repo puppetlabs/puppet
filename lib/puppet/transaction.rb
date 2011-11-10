@@ -148,11 +148,12 @@ class Puppet::Transaction
     raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
       made = resource.eval_generate.uniq
+      return false if made.empty?
       made = Hash[made.map(&:name).zip(made)]
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
-      return
+      return false
     end
     made.values.each do |res|
       begin
@@ -187,6 +188,7 @@ class Puppet::Transaction
     # This edge allows the resource's events to propagate, though it isn't
     # strictly necessary for ordering purposes
     add_conditional_directed_dependency(resource, sentinel, default_label)
+    true
   end
 
   # A general method for recursively generating new resources from a
