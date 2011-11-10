@@ -9,11 +9,14 @@ require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
 require 'puppet/util/backups'
+require 'puppet/util/symbolic_file_mode'
 
 Puppet::Type.newtype(:file) do
   include Puppet::Util::MethodHelper
   include Puppet::Util::Checksums
   include Puppet::Util::Backups
+  include Puppet::Util::SymbolicFileMode
+
   @doc = "Manages local files, including setting ownership and
     permissions, creation of both files and directories, and
     retrieving entire files from remote servers.  As Puppet matures, it
@@ -734,7 +737,7 @@ Puppet::Type.newtype(:file) do
 
     mode = self.should(:mode) # might be nil
     umask = mode ? 000 : 022
-    mode_int = mode ? mode.to_i(8) : nil
+    mode_int = mode ? symbolic_mode_to_int(mode, 0644) : nil
 
     content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'wb', mode_int ) { |f| write_content(f) } }
 
