@@ -23,7 +23,7 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
       Puppet::Parser::Parser.stubs(:new).returns(parser)
       parser.expects(:parse).returns(Puppet::Parser::AST::Hostclass.new('')).at_least_once
       parser.expects(:file=).with("module/manifests/init.pp")
-      parser.expects(:file=).with(make_absolute("/dev/null/manifests/site.pp"))
+      parser.expects(:file=).with(File.expand_path("/dev/null/manifests/site.pp"))
 
       @parser.scan
     end
