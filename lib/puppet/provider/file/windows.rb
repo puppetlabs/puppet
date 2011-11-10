@@ -81,7 +81,8 @@ Puppet::Type.type(:file).provide :windows do
 
   def mode
     if resource.exist?
-      get_mode(resource[:path]).to_s(8)
+      mode = get_mode(resource[:path])
+      mode ? mode.to_s(8) : :absent
     else
       :absent
     end

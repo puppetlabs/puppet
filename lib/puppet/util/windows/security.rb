@@ -120,6 +120,8 @@ module Puppet::Util::Windows::Security
   # SE_BACKUP_NAME privilege in their process token can get the owner
   # for objects they do not have read access to.
   def get_owner(path)
+    return unless supports_acl?(path)
+
     get_sid(OWNER_SECURITY_INFORMATION, path)
   end
 
@@ -140,6 +142,8 @@ module Puppet::Util::Windows::Security
   # SE_BACKUP_NAME privilege in their process token can get the group
   # for objects they do not have read access to.
   def get_group(path)
+    return unless supports_acl?(path)
+
     get_sid(GROUP_SECURITY_INFORMATION, path)
   end
 
@@ -222,6 +226,8 @@ module Puppet::Util::Windows::Security
   # the SE_BACKUP_NAME privilege in their process token can get the
   # mode for objects they do not have read access to.
   def get_mode(path)
+    return unless supports_acl?(path)
+
     owner_sid = get_owner(path)
     group_sid = get_group(path)
     well_known_world_sid = Win32::Security::SID::Everyone
