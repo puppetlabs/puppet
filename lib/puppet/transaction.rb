@@ -168,6 +168,9 @@ class Puppet::Transaction
 
     # The completed whit is now the thing that represents the resource is done
     relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
+      # But children run as part of the resource, not after it
+      next if made[e.target.name]
+
       add_conditional_directed_dependency(sentinel, e.target, e.label)
       relationship_graph.remove_edge! e
     }
