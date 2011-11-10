@@ -223,4 +223,10 @@ describe Puppet::Type.type(:file).provider(:posix), :if => Puppet.features.posix
       expect { provider.group = 25 }.to raise_error(Puppet::Error, /Failed to set group to '25'/)
     end
   end
+
+  describe "when validating" do
+    it "should not perform any validation" do
+      resource.validate
+    end
+  end
 end
