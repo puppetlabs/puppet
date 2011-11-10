@@ -272,6 +272,27 @@ describe Puppet::Transaction do
 
       graph.should be_edge(res, sentinel)
     end
+
+    it "should return false if an error occured when generating resources" do
+      resource.stubs(:eval_generate).raises(Puppet::Error)
+
+      @transaction.eval_generate(resource).should == false
+    end
+
+    it "should return true if resources were generated" do
+      @transaction.eval_generate(resource).should == true
+    end
+
+    it "should not add a sentinel if no resources are generated" do
+      path2 = tmpfile('empty')
+      other_file = Puppet::Type.type(:file).new(:path => path2)
+
+      @transaction.catalog.add_resource(other_file)
+
+      @transaction.eval_generate(other_file).should == false
+
+      find_vertex(:whit, "completed_#{path2}").should be_nil
+    end
   end
 
   describe "when generating resources" do
