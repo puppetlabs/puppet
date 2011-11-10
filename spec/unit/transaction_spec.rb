@@ -196,8 +196,10 @@ describe Puppet::Transaction do
       @filenames = []
 
       'a'.upto('c') do |x|
+        @filenames << File.join(path,x)
 
         'a'.upto('c') do |y|
+          @filenames << File.join(path,x,y)
           FileUtils.mkdir_p(File.join(path,x,y))
 
           'a'.upto('c') do |z|
