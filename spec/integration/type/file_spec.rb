@@ -952,6 +952,69 @@ describe Puppet::Type.type(:file) do
     File.should_not be_exist(path)
   end
 
+  describe "when sourcing" do
+    let(:source) {
+      source = tmpfile("source_default_values")
+      File.open(source, "w") { |f| f.puts "yay" }
+      source
+    }
+
+    it "should apply the source metadata values" do
+      set_mode(0770, source)
+
+      file = described_class.new(
+        :path   => path,
+        :ensure => :file,
+        :source => source,
+        :backup => false
+      )
+
+      catalog.add_resource file
+      catalog.apply
+
+      get_owner(path).should == get_owner(source)
+      get_group(path).should == get_group(source)
+      (get_mode(path) & 07777).should == 0770
+    end
+
+    it "should override the default metadata values" do
+      set_mode(0770, source)
+
+      file = described_class.new(
+         :path   => path,
+         :ensure => :file,
+         :source => source,
+         :backup => false,
+         :mode => 0440
+       )
+
+      catalog.add_resource file
+      catalog.apply
+
+      (get_mode(path) & 07777).should == 0440
+    end
+
+    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+      it "should provide valid default values when ACLs are not supported" do
+        Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
+
+        file = described_class.new(
+          :path   => path,
+          :ensure => :file,
+          :source => source,
+          :backup => false
+        )
+
+        catalog.add_resource file
+        catalog.apply
+
+        get_owner(path).should == 'S-1-5-32-544'
+        get_group(path).should == 'S-1-0-0'
+        get_mode(path).should == 0644
+      end
+    end
+  end
+
   describe "when purging files" do
     before do
       sourcedir = tmpfile("purge_source")

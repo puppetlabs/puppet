@@ -306,6 +306,8 @@ Puppet::Type.newtype(:file) do
     end
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
+
+    provider.validate if provider.respond_to?(:validate)
   end
 
   def self.[](path)

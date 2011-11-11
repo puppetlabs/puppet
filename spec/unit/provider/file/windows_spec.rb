@@ -133,4 +133,22 @@ describe Puppet::Type.type(:file).provider(:windows), :if => Puppet.features.mic
       expect { provider.group = 'S-1-1-50' }.to raise_error(Puppet::Error, /Failed to set group/)
     end
   end
+
+  describe "when validating" do
+    {:owner => 'foo', :group => 'foo', :mode => 0777}.each do |k,v|
+      it "should fail if the filesystem doesn't support ACLs and we're managing #{k}" do
+        described_class.any_instance.stubs(:supports_acl?).returns false
+
+        expect {
+          Puppet::Type.type(:file).new :path => path, k => v
+        }.to raise_error(Puppet::Error, /Can only manage owner, group, and mode on filesystems that support Windows ACLs, such as NTFS/)
+      end
+    end
+
+    it "should not fail if the filesystem doesn't support ACLs and we're not managing permissions" do
+      described_class.any_instance.stubs(:supports_acl?).returns false
+
+      Puppet::Type.type(:file).new :path => path
+    end
+  end
 end
