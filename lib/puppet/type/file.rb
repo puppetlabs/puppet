@@ -56,7 +56,7 @@ Puppet::Type.newtype(:file) do
     unmunge do |value|
       basedir = Puppet::FileCollection.collection.path(value[:index])
 
-      ::File.expand_path ::File.join( basedir, value[:name] )
+      ::File.join( basedir, value[:name] )
     end
   end
 
@@ -386,6 +386,12 @@ Puppet::Type.newtype(:file) do
     #    catalog.add_resource child
     #    catalog.relationship_graph.add_edge self, child
     #end
+  end
+
+  def ancestors
+    ancestors = Pathname.new(self[:path]).enum_for(:ascend).map(&:to_s)
+    ancestors.delete(self[:path])
+    ancestors
   end
 
   def flush
