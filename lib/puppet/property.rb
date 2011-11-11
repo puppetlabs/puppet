@@ -194,13 +194,10 @@ class Puppet::Property < Puppet::Parameter
 
   # Send a log message.
   def log(msg)
-
-          Puppet::Util::Log.create(
-
-      :level => resource[:loglevel],
+    Puppet::Util::Log.create(
+      :level   => resource[:loglevel],
       :message => msg,
-
-      :source => self
+      :source  => self
     )
   end
 
