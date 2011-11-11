@@ -30,13 +30,9 @@ module PuppetSpec::Files
   end
 
   def make_absolute(path)
-    return path unless Puppet.features.microsoft_windows?
-    # REMIND UNC
-    return path if path =~ /^[A-Za-z]:/
-
-    pwd = Dir.getwd
-    return "#{pwd[0,2]}#{path}" if pwd =~ /^[A-Za-z]:/
-    return "C:#{path}"
+    path = File.expand_path(path)
+    path[0] = 'c' if Puppet.features.microsoft_windows?
+    path
   end
 
   def tmpfile(name)

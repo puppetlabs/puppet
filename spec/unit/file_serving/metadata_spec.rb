@@ -277,6 +277,33 @@ describe Puppet::FileServing::Metadata do
 
     it_should_behave_like "metadata collector"
 
+    describe "if ACL metadata cannot be collected" do
+      let(:path) { tmpdir('file_serving_metadata_acl') }
+      let(:metadata) do
+        data = described_class.new(path)
+        data.collect
+        data
+      end
+
+      it "should default owner" do
+        Puppet::Util::Windows::Security.stubs(:get_owner).returns nil
+
+        metadata.owner.should == 'S-1-5-32-544'
+      end
+
+      it "should default group" do
+        Puppet::Util::Windows::Security.stubs(:get_group).returns nil
+
+        metadata.group.should == 'S-1-0-0'
+      end
+
+      it "should default mode" do
+        Puppet::Util::Windows::Security.stubs(:get_mode).returns nil
+
+        metadata.mode.should == 0644
+      end
+    end
+
     def set_mode(mode, path)
       Puppet::Util::Windows::Security.set_mode(mode, path)
     end
