@@ -261,7 +261,7 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
-    path = Pathname(self[:path])
+    path = Pathname.new(self[:path])
     if !path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
