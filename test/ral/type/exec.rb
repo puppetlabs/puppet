@@ -134,7 +134,7 @@ class TestExec < Test::Unit::TestCase
 
     # Now change our content, so we throw a refresh
     file[:content] = "yayness"
-    assert_events([:content_changed, :restarted], file, cmd)
+    assert_events([:content_changed], file, cmd)
     assert(FileTest.exists?(maker), "file was not made in refresh")
   end
 

@@ -145,15 +145,18 @@ class Puppet::Transaction
   end
 
   def eval_generate(resource)
+    return false unless resource.respond_to?(:eval_generate)
     raise Puppet::DevError,"Depthfirst resources are not supported by eval_generate" if resource.depthfirst?
     begin
-      made = resource.eval_generate.uniq.reverse
+      made = resource.eval_generate.uniq
+      return false if made.empty?
+      made = Hash[made.map(&:name).zip(made)]
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"
-      return
+      return false
     end
-    made.each do |res|
+    made.values.each do |res|
       begin
         res.tag(*resource.tags)
         @catalog.add_resource(res)
@@ -162,17 +165,34 @@ class Puppet::Transaction
         res.info "Duplicate generated resource; skipping"
       end
     end
-    sentinal = Puppet::Type::Whit.new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+    sentinel = Puppet::Type.type(:whit).new(:name => "completed_#{resource.title}", :catalog => resource.catalog)
+
+    # The completed whit is now the thing that represents the resource is done
     relationship_graph.adjacent(resource,:direction => :out,:type => :edges).each { |e|
-      add_conditional_directed_dependency(sentinal, e.target, e.label)
+      # But children run as part of the resource, not after it
+      next if made[e.target.name]
+
+      add_conditional_directed_dependency(sentinel, e.target, e.label)
       relationship_graph.remove_edge! e
     }
+
     default_label = Puppet::Resource::Catalog::Default_label
-    made.each do |res|
-      add_conditional_directed_dependency(made.find { |r| r != res && r.name == res.name[0,r.name.length]} || resource, res)
-      add_conditional_directed_dependency(res, sentinal, default_label)
+    made.values.each do |res|
+      # Depend on the nearest ancestor we generated, falling back to the
+      # resource if we have none
+      parent_name = res.ancestors.find { |a| made[a] and made[a] != res }
+      parent = made[parent_name] || resource
+
+      add_conditional_directed_dependency(parent, res)
+
+      # This resource isn't 'completed' until each child has run
+      add_conditional_directed_dependency(res, sentinel, default_label)
     end
-    add_conditional_directed_dependency(resource, sentinal, default_label)
+
+    # This edge allows the resource's events to propagate, though it isn't
+    # strictly necessary for ordering purposes
+    add_conditional_directed_dependency(resource, sentinel, default_label)
+    true
   end
 
   # A general method for recursively generating new resources from a
@@ -273,45 +293,67 @@ class Puppet::Transaction
   # except via the Transaction#relationship_graph
 
   class Relationship_graph_wrapper
-    attr_reader :real_graph,:transaction,:ready,:generated,:done,:unguessable_deterministic_key
+    require 'puppet/rb_tree_map'
+    attr_reader :real_graph,:transaction,:ready,:generated,:done,:blockers,:unguessable_deterministic_key
     def initialize(real_graph,transaction)
       @real_graph = real_graph
       @transaction = transaction
-      @ready = {}
+      @ready = Puppet::RbTreeMap.new
       @generated = {}
       @done = {}
-      @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.title}") }
-      vertices.each { |v| check_if_now_ready(v) }
+      @blockers = {}
+      @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
+      vertices.each do |v|
+        blockers[v] = direct_dependencies_of(v).length
+        enqueue(v) if blockers[v] == 0
+      end
     end
     def method_missing(*args,&block)
       real_graph.send(*args,&block)
     end
     def add_vertex(v)
       real_graph.add_vertex(v)
-      check_if_now_ready(v) # ?????????????????????????????????????????
     end
     def add_edge(f,t,label=nil)
-      ready.delete(t)
+      key = unguessable_deterministic_key[t]
+
+      ready.delete(key)
+
       real_graph.add_edge(f,t,label)
     end
-    def check_if_now_ready(r)
-      ready[r] = true if direct_dependencies_of(r).all? { |r2| done[r2] }
+    # Decrement the blocker count for resource r by 1. If the number of
+    # blockers is unknown, count them and THEN decrement by 1.
+    def unblock(r)
+      blockers[r] ||= direct_dependencies_of(r).select { |r2| !done[r2] }.length
+      if blockers[r] > 0
+        blockers[r] -= 1
+      else
+        r.warning "appears to have a negative number of dependencies"
+      end
+      blockers[r] <= 0
+    end
+    def enqueue(r)
+      key = unguessable_deterministic_key[r]
+      ready[key] = r
     end
     def next_resource
-      ready.keys.sort_by { |r0| unguessable_deterministic_key[r0] }.first
+      ready.delete_min
     end
     def traverse(&block)
       real_graph.report_cycles_in_graph
+
       while (r = next_resource) && !transaction.stop_processing?
-        if !generated[r] && r.respond_to?(:eval_generate)
-          transaction.eval_generate(r)
-          generated[r] = true
-        else
-          ready.delete(r)
-          yield r
-          done[r] = true
-          direct_dependents_of(r).each { |v| check_if_now_ready(v) }
+        # If we generated resources, we don't know what they are now
+        # blocking, so we opt to recompute it, rather than try to track every
+        # change that would affect the number.
+        blockers.clear if transaction.eval_generate(r)
+
+        yield r
+
+        direct_dependents_of(r).each do |v|
+          enqueue(v) if unblock(v)
         end
+        done[r] = true
       end
     end
   end
