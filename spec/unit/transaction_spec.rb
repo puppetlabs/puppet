@@ -2,6 +2,7 @@
 require 'spec_helper'
 
 require 'puppet/transaction'
+require 'fileutils'
 
 def without_warnings
   flag = $VERBOSE
@@ -182,6 +183,260 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "#eval_generate" do
+    let(:path) { tmpdir('eval_generate') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
+    let(:graph) { @transaction.relationship_graph }
+
+    def find_vertex(type, title)
+      graph.vertices.find {|v| v.type == type and v.title == title}
+    end
+
+    before :each do
+      @filenames = []
+
+      'a'.upto('c') do |x|
+        @filenames << File.join(path,x)
+
+        'a'.upto('c') do |y|
+          @filenames << File.join(path,x,y)
+          FileUtils.mkdir_p(File.join(path,x,y))
+
+          'a'.upto('c') do |z|
+            @filenames << File.join(path,x,y,z)
+            FileUtils.touch(File.join(path,x,y,z))
+          end
+        end
+      end
+
+      @transaction.catalog.add_resource(resource)
+    end
+
+    it "should add the generated resources to the catalog" do
+      @transaction.eval_generate(resource)
+
+      @filenames.each do |file|
+        @transaction.catalog.resource(:file, file).should be_a(Puppet::Type.type(:file))
+      end
+    end
+
+    it "should add a sentinel whit for the resource" do
+      @transaction.eval_generate(resource)
+
+      find_vertex(:whit, "completed_#{path}").should be_a(Puppet::Type.type(:whit))
+    end
+
+    it "should replace dependencies on the resource with dependencies on the sentinel" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+
+      @transaction.catalog.add_resource(dependent)
+
+      res = find_vertex(resource.type, resource.title)
+      generated = find_vertex(dependent.type, dependent.title)
+
+      graph.should be_edge(res, generated)
+
+      @transaction.eval_generate(resource)
+
+      sentinel = find_vertex(:whit, "completed_#{path}")
+
+      graph.should be_edge(sentinel, generated)
+      graph.should_not be_edge(res, generated)
+    end
+
+    it "should add an edge from the nearest ancestor to the generated resource" do
+      @transaction.eval_generate(resource)
+
+      @filenames.each do |file|
+        v = find_vertex(:file, file)
+        p = find_vertex(:file, File.dirname(file))
+
+        graph.should be_edge(p, v)
+      end
+    end
+
+    it "should add an edge from each generated resource to the sentinel" do
+      @transaction.eval_generate(resource)
+
+      sentinel = find_vertex(:whit, "completed_#{path}")
+      @filenames.each do |file|
+        v = find_vertex(:file, file)
+
+        graph.should be_edge(v, sentinel)
+      end
+    end
+
+    it "should add an edge from the resource to the sentinel" do
+      @transaction.eval_generate(resource)
+
+      res = find_vertex(:file, path)
+      sentinel = find_vertex(:whit, "completed_#{path}")
+
+      graph.should be_edge(res, sentinel)
+    end
+
+    it "should return false if an error occured when generating resources" do
+      resource.stubs(:eval_generate).raises(Puppet::Error)
+
+      @transaction.eval_generate(resource).should == false
+    end
+
+    it "should return true if resources were generated" do
+      @transaction.eval_generate(resource).should == true
+    end
+
+    it "should not add a sentinel if no resources are generated" do
+      path2 = tmpfile('empty')
+      other_file = Puppet::Type.type(:file).new(:path => path2)
+
+      @transaction.catalog.add_resource(other_file)
+
+      @transaction.eval_generate(other_file).should == false
+
+      find_vertex(:whit, "completed_#{path2}").should be_nil
+    end
+  end
+
+  describe "#unblock" do
+    let(:graph) { @transaction.relationship_graph }
+    let(:resource) { Puppet::Type.type(:notify).new(:name => 'foo') }
+
+    it "should calculate the number of blockers if it's not known" do
+      graph.add_vertex(resource)
+      3.times do |i|
+        other = Puppet::Type.type(:notify).new(:name => i.to_s)
+        graph.add_vertex(other)
+        graph.add_edge(other, resource)
+      end
+
+      graph.unblock(resource)
+
+      graph.blockers[resource].should == 2
+    end
+
+    it "should decrement the number of blockers if there are any" do
+      graph.blockers[resource] = 40
+
+      graph.unblock(resource)
+
+      graph.blockers[resource].should == 39
+    end
+
+    it "should warn if there are no blockers" do
+      vertex = stub('vertex')
+      vertex.expects(:warning).with "appears to have a negative number of dependencies"
+      graph.blockers[vertex] = 0
+
+      graph.unblock(vertex)
+    end
+
+    it "should return true if the resource is now unblocked" do
+      graph.blockers[resource] = 1
+
+      graph.unblock(resource).should == true
+    end
+
+    it "should return false if the resource is still blocked" do
+      graph.blockers[resource] = 2
+
+      graph.unblock(resource).should == false
+    end
+  end
+
+  describe "when traversing" do
+    let(:graph) { @transaction.relationship_graph }
+    let(:path) { tmpdir('eval_generate') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
+
+    before :each do
+      @transaction.catalog.add_resource(resource)
+    end
+
+    it "should clear blockers if resources are added" do
+      graph.blockers['foo'] = 3
+      graph.blockers['bar'] = 4
+
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+
+      @transaction.expects(:eval_generate).with(resource).returns true
+
+      graph.traverse {}
+
+      graph.blockers.should be_empty
+    end
+
+    it "should yield the resource even if eval_generate is called" do
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+
+      @transaction.expects(:eval_generate).with(resource).returns true
+
+      yielded = false
+      graph.traverse do |res|
+        yielded = true if res == resource
+      end
+
+      yielded.should == true
+    end
+
+    it "should not clear blockers if resources aren't added" do
+      graph.blockers['foo'] = 3
+      graph.blockers['bar'] = 4
+
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+
+      @transaction.expects(:eval_generate).with(resource).returns false
+
+      graph.traverse {}
+
+      graph.blockers.should == {'foo' => 3, 'bar' => 4, resource => 0}
+    end
+
+    it "should unblock all dependents of the resource" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
+
+      @transaction.catalog.add_resource(dependent, dependent2)
+
+      graph.blockers[dependent].should == 1
+      graph.blockers[dependent2].should == 1
+
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+
+      graph.traverse {}
+
+      graph.blockers[dependent].should == 0
+      graph.blockers[dependent2].should == 0
+    end
+
+    it "should enqueue any unblocked dependents" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
+
+      @transaction.catalog.add_resource(dependent, dependent2)
+
+      graph.blockers[dependent].should == 1
+      graph.blockers[dependent2].should == 1
+
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+
+      seen = []
+
+      graph.traverse do |res|
+        seen << res
+      end
+
+      seen.should =~ [resource, dependent, dependent2]
+    end
+
+    it "should mark the resource done" do
+      graph.ready[graph.unguessable_deterministic_key[resource]] = resource
+
+      graph.traverse {}
+
+      graph.done[resource].should == true
+    end
+  end
+
   describe "when generating resources" do
     it "should call 'generate' on all created resources" do
       first = Puppet::Type.type(:notify).new(:name => "first")
@@ -199,7 +454,7 @@ describe Puppet::Transaction do
     end
 
     it "should finish all resources" do
-      generator = stub 'generator', :depthfirst? => true, :tags => []
+      generator = stub 'generator', :depthfirst? => true, :tags => [], :ref => "Some[resource]"
       resource = stub 'resource', :tag => nil
 
       @catalog = Puppet::Resource::Catalog.new
@@ -232,8 +487,8 @@ describe Puppet::Transaction do
     end
 
     it "should copy all tags to the newly generated resources" do
-      child = stub 'child'
-      generator = stub 'resource', :tags => ["one", "two"]
+      child = stub 'child', :ref => "Some[child_resource]"
+      generator = stub 'resource', :tags => ["one", "two"], :ref => "Some[resource]"
 
       @catalog = Puppet::Resource::Catalog.new
       @transaction = Puppet::Transaction.new(@catalog)
