@@ -585,11 +585,11 @@ describe Puppet::SimpleGraph do
       x
     end
 
-    def admissible_sentinal_of(x)
+    def admissible_sentinel_of(x)
       @depgraph.vertex?(x) ? x : whit_called("admissible_#{x.ref}")
     end
 
-    def completed_sentinal_of(x)
+    def completed_sentinel_of(x)
       @depgraph.vertex?(x) ? x : whit_called("completed_#{x.ref}")
     end
 
@@ -617,28 +617,28 @@ describe Puppet::SimpleGraph do
 
     #    0) completed_X depends on admissible_X
     #
-    it "every container's completed sentinal should depend on its admissible sentinal" do
+    it "every container's completed sentinel should depend on its admissible sentinel" do
       containers.each { |container|
-        @depgraph.path_between(admissible_sentinal_of(container),completed_sentinal_of(container)).should be
+        @depgraph.path_between(admissible_sentinel_of(container),completed_sentinel_of(container)).should be
       }
     end
 
     #    1) contents of X each depend on admissible_X
     #
-    it "all contained objects should depend on their container's admissible sentinal" do
+    it "all contained objects should depend on their container's admissible sentinel" do
       containers.each { |container|
         contents_of(container).each { |leaf|
-          @depgraph.should be_edge(admissible_sentinal_of(container),admissible_sentinal_of(leaf))
+          @depgraph.should be_edge(admissible_sentinel_of(container),admissible_sentinel_of(leaf))
         }
       }
     end
 
     #    2) completed_X depends on each on the contents of X
     #
-    it "completed sentinals should depend on their container's contents" do
+    it "completed sentinels should depend on their container's contents" do
       containers.each { |container|
         contents_of(container).each { |leaf|
-          @depgraph.should be_edge(completed_sentinal_of(leaf),completed_sentinal_of(container))
+          @depgraph.should be_edge(completed_sentinel_of(leaf),completed_sentinel_of(container))
         }
       }
     end
@@ -665,7 +665,7 @@ describe Puppet::SimpleGraph do
 
     it "should retain labels on non-containment edges" do
       @explicit_dependencies.each { |f,t|
-        @depgraph.edges_between(completed_sentinal_of(f),admissible_sentinal_of(t))[0].label.should == {:callback => :refresh}
+        @depgraph.edges_between(completed_sentinel_of(f),admissible_sentinel_of(t))[0].label.should == {:callback => :refresh}
       }
     end
 
