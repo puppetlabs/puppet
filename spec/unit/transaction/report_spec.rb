@@ -279,13 +279,14 @@ describe Puppet::Transaction::Report do
       resource = Puppet::Type.type(:notify).new(:name => "testing")
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
+      catalog.version = 1234567
       trans = catalog.apply
 
       @report = trans.report
       @report.finalize_report
     end
 
-    %w{changes time resources events}.each do |main|
+    %w{changes time resources events version}.each do |main|
       it "should include the key #{main} in the raw summary hash" do
         @report.raw_summary.should be_key main
       end
@@ -308,6 +309,14 @@ describe Puppet::Transaction::Report do
         events_report = @report.raw_summary["events"]
         events_report.should be_include(r)
       end
+    end
+
+    it "should include config version" do
+      @report.raw_summary["version"]["config"].should == 1234567
+    end
+
+    it "should include puppet version" do
+      @report.raw_summary["version"]["puppet"].should == Puppet.version
     end
 
     %w{Changes Total Resources Time Events}.each do |main|
