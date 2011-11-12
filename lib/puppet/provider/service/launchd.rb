@@ -1,4 +1,3 @@
-require 'facter/util/plist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-EOT
     This provider manages jobs with `launchd`, which is the default service
@@ -41,7 +40,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
   commands :launchctl => "/bin/launchctl"
   commands :sw_vers   => "/usr/bin/sw_vers"
-  commands :plutil    => "/usr/bin/plutil"
 
   defaultfor :operatingsystem => :darwin
   confine :operatingsystem    => :darwin
@@ -139,7 +137,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
-    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
   end
 
   # Clean out the @property_hash variable containing the cached list of services
@@ -272,12 +269,10 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
-      Plist::Emit.save_plist(overrides, Launchd_Overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
-        Plist::Emit.save_plist(job_plist, job_path)
       end
     end
   end
@@ -287,11 +282,9 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
-      Plist::Emit.save_plist(overrides, Launchd_Overrides)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true
-      Plist::Emit.save_plist(job_plist, job_path)
     end
   end
 
