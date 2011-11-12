@@ -1,3 +1,4 @@
+require 'facter/util/cfpropertylist'
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-EOT
     This provider manages jobs with `launchd`, which is the default service
@@ -137,6 +138,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # Read a plist, whether its format is XML or in Apple's "binary1"
   # format.
   def self.read_plist(path)
+    plist_file = CFPropertyList::List.new(:file => path)
+    plist_data = CFPropertyList.native_types(plist_file.value)
   end
 
   # Clean out the @property_hash variable containing the cached list of services
@@ -269,10 +272,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
+      overrides.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
+        jobplist.save(job_path, CFPropertyList::List::FORMAT_XML)
       end
     end
   end
@@ -282,9 +287,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
+      overrides.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true
+      jobplist.save(job_path, CFPropertyList::List::FORMAT_XML)
     end
   end
 
