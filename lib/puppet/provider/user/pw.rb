@@ -39,6 +39,13 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     cmd
   end
 
+  def create
+    super
+
+    # Set the password after create if given
+    self.password = @resource[:password] if @resource[:password]
+  end
+
   # use pw to update password hash
   def password=(cryptopw)
     Puppet.debug "change password for user '#{@resource[:name]}' method called with hash '#{cryptopw}'"
@@ -56,6 +63,5 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     Puppet.debug "finished password for user '#{@resource[:name]}' method called : '#{current_password}'"
     current_password
   end
-
 end
 

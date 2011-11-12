@@ -64,6 +64,14 @@ describe provider_class do
       provider.expects(:execute).with(includes("-m"))
       provider.create
     end
+    it "should call the password set function with the correct argument when the password property is set" do
+      resource = resource_class.new(:name => "testuser", :password => "*")
+      provider = provider_class.new(resource)
+      provider.expects(:exists?).returns nil
+      provider.expects(:execute)
+      provider.expects(:password=).with("*")
+      provider.create
+    end
     it "should use -s with the correct argument when the shell property is set" do
       resource = resource_class.new(:name => "testuser", :shell => "/bin/sh")
       provider = provider_class.new(resource)
@@ -81,11 +89,12 @@ describe provider_class do
 
     # This will break if the order of arguments change. To be observed.
     it "should give a full command with all flags when eveything is set" do
-      resource = resource_class.new(:name => "testuser", :allowdupe => true, :comment => "Testuser Name", :gid => 12345, :groups => ["group1", "group2"], :home => "/home/testuser", :managehome => true, :shell => "/bin/sh", :uid => 12345)
+      resource = resource_class.new(:name => "testuser", :allowdupe => true, :comment => "Testuser Name", :gid => 12345, :groups => ["group1", "group2"], :home => "/home/testuser", :managehome => true, :password => "*", :shell => "/bin/sh", :uid => 12345)
       provider = provider_class.new(resource)
       provider.expects(:exists?).returns nil
       provider.addcmd.must == [provider_class.command(:pw), "useradd", "testuser", "-c", "Testuser Name", "-d", "/home/testuser", "-s", "/bin/sh", "-u", 12345, "-G", "group1,group2", "-g", 12345, "-o", "-m"]
       provider.expects(:execute).with([provider_class.command(:pw), "useradd", "testuser", "-c", "Testuser Name", "-d", "/home/testuser", "-s", "/bin/sh", "-u", 12345, "-G", "group1,group2", "-g", 12345, "-o", "-m"])
+      provider.expects(:password=).with("*")
       provider.create
     end
 
@@ -150,6 +159,12 @@ describe provider_class do
       provider = provider_class.new(resource)
       provider.expects(:execute).with(all_of(includes("-d"), includes("/newhome/testuser")))
       provider.home = "/newhome/testuser"
+    end
+    it "should call the password set function with the correct argument when the password property is changed" do
+      resource = resource_class.new(:name => "testuser", :password => "*")
+      provider = provider_class.new(resource)
+      provider.expects(:password=).with("!")
+      provider.password = "!"
     end
     it "should use -s with the correct argument when the shell property is changed" do
       resource = resource_class.new(:name => "testuser", :shell => "/bin/sh")
