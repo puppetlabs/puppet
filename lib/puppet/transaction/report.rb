@@ -115,7 +115,7 @@ class Puppet::Transaction::Report
 
   # Provide a raw hash summary of this report.
   def raw_summary
-    report = {}
+    report = { "version" => { "config" => configuration_version, "puppet" => Puppet.version  } }
 
     @metrics.each do |name, metric|
       key = metric.name.to_s
