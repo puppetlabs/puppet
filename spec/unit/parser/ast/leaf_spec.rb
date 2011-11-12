@@ -151,12 +151,28 @@ describe Puppet::Parser::AST::HashOrArrayAccess do
       lambda { access.evaluate(@scope) }.should raise_error
     end
 
+    it "should be able to return :undef for an unknown array index" do
+      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns(["val1", "val2", "val3"])
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => 6 )
+
+      access.evaluate(@scope).should == :undef
+    end
+
     it "should be able to return an hash value" do
       @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
 
       access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key2" )
 
       access.evaluate(@scope).should == "val2"
+    end
+
+    it "should be able to return :undef for unknown hash keys" do
+      @scope.stubs(:lookupvar).with { |name,options| name == 'a'}.returns({ "key1" => "val1", "key2" => "val2", "key3" => "val3" })
+
+      access = Puppet::Parser::AST::HashOrArrayAccess.new(:variable => "a", :key => "key12" )
+
+      access.evaluate(@scope).should == :undef
     end
 
     it "should be able to return an hash value with a numerical key" do
