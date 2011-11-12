@@ -273,12 +273,12 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
-      overrides.save(Launchd_Overrides, CFPropertyList::List::FORMAT_AUTO)
+      overrides_plist.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
-        job_plist.save(job_path, CFPropertyList::List::FORMAT_AUTO)
+        job_plist_file.save(job_path, CFPropertyList::List::FORMAT_XML)
       end
     end
   end
@@ -288,11 +288,11 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
-      overrides.save(Launchd_Overrides, CFPropertyList::List::FORMAT_AUTO)
+      overrides_plist.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true
-      job_plist.save(job_path, CFPropertyList::List::FORMAT_AUTO)
+      job_plist_file.save(job_path, CFPropertyList::List::FORMAT_XML)
     end
   end
 
