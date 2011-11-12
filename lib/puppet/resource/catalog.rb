@@ -322,6 +322,16 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
             end
           end
         end
+        vertex.autonotify(self).each do |edge|
+          unless @relationship_graph.edge?(edge.source, edge.target) # don't let automatic relationships conflict with manual ones.
+            unless @relationship_graph.edge?(edge.target, edge.source)
+              vertex.debug "Autonotifying #{edge.target}"
+              @relationship_graph.add_edge(edge)
+            else
+              vertex.debug "Skipping automatic relationship with #{(edge.source == vertex ? edge.target : edge.source)}"
+            end
+          end
+        end
       end
       @relationship_graph.write_graph(:relationships) if host_config?
 

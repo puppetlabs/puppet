@@ -1578,10 +1578,22 @@ class Type
     @autorequires[name] = block
   end
 
+  def self.autonotify(name, &block)
+    @autonotifies ||= {}
+    @autonotifies[name] = block
+  end
+
   # Yield each of those autorequires in turn, yo.
   def self.eachautorequire
     @autorequires ||= {}
     @autorequires.each { |type, block|
+      yield(type, block)
+    }
+  end
+
+  def self.eachautonotify
+    @autonotifies ||= {}
+    @autonotifies.each { |type, block|
       yield(type, block)
     }
   end
@@ -1612,6 +1624,36 @@ class Type
         end
 
         reqs << Puppet::Relationship.new(dep, self)
+      }
+    }
+
+    reqs
+  end
+
+  def autonotify(rel_catalog = nil)
+    rel_catalog ||= catalog
+    raise(Puppet::DevError, "You cannot add relationships without a catalog") unless rel_catalog
+
+    reqs = []
+    self.class.eachautonotify { |type, block|
+      # Ignore any types we can't find, although that would be a bit odd.
+      next unless typeobj = Puppet::Type.type(type)
+
+      # Retrieve the list of names from the block.
+      next unless list = self.instance_eval(&block)
+      list = [list] unless list.is_a?(Array)
+
+      # Collect the current prereqs
+      list.each { |dep|
+        # Support them passing objects directly, to save some effort.
+        unless dep.is_a? Puppet::Type
+          # Skip autonotifies that we aren't managing
+          unless dep = rel_catalog.resource(type, dep)
+            next
+          end
+        end
+
+        reqs << Puppet::Relationship.new(self, dep, {:event => :ALL_EVENTS, :callback => :refresh})
       }
     }
 
