@@ -88,6 +88,17 @@ describe provider_class do
       provider.expects(:execute).with([provider_class.command(:pw), "useradd", "testuser", "-c", "Testuser Name", "-d", "/home/testuser", "-s", "/bin/sh", "-u", 12345, "-G", "group1,group2", "-g", 12345, "-o", "-m"])
       provider.create
     end
+
+    # (#7500) -p should not be used to set a password (it means something else)
+    it "should not use -p when a password is given" do
+      resource = resource_class.new(:name => "testuser", :password => "*")
+      provider = provider_class.new(resource)
+      provider.expects(:exists?).returns nil
+      provider.addcmd.should_not include("-p")
+      provider.expects(:password=)
+      provider.expects(:execute).with(Not(includes("-p")))
+      provider.create
+    end
   end
 
   describe "when deleting users" do

@@ -24,7 +24,7 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   def addcmd
     cmd = [command(:pw), "useradd", @resource[:name]]
     @resource.class.validproperties.each do |property|
-      next if property == :ensure
+      next if property == :ensure or property == :password
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
