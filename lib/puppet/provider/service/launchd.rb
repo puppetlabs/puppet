@@ -89,6 +89,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         Dir.glob(File.join(path,'*')).each do |filepath|
           next if ! File.file?(filepath)
           job = read_plist(filepath)
+          next if job.nil?
           if job.has_key?("Label") and job["Label"] == label
             return { label => filepath }
           else
