@@ -8,6 +8,9 @@ class Puppet::Agent
   require 'puppet/agent/locker'
   include Puppet::Agent::Locker
 
+  require 'puppet/agent/disabler'
+  include Puppet::Agent::Disabler
+
   attr_reader :client_class, :client, :splayed
 
   # Just so we can specify that we are "the" instance.

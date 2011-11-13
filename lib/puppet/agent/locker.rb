@@ -3,20 +3,6 @@ require 'puppet/util/pidlock'
 # Break out the code related to locking the agent.  This module is just
 # included into the agent, but having it here makes it easier to test.
 module Puppet::Agent::Locker
-  # Let the daemon run again, freely in the filesystem.
-  def enable
-    Puppet::Util::AnonymousFilelock.new(lockfile_path + ".disabled").unlock
-  end
-
-  # Stop the daemon from making any catalog runs.
-  def disable
-    Puppet::Util::AnonymousFilelock.new(lockfile_path + ".disabled").lock
-  end
-
-  def disabled?
-    Puppet::Util::AnonymousFilelock.new(lockfile_path + ".disabled").locked?
-  end
-
   # Yield if we get a lock, else do nothing.  Return
   # true/false depending on whether we get the lock.
   def lock
