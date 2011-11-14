@@ -67,7 +67,7 @@ module Puppet::Util::Diff
     tempfile.open
     tempfile.print string
     tempfile.close
-    print diff(path, tempfile.path)
+    notice "\n" + diff(path, tempfile.path)
     tempfile.delete
   end
 end
