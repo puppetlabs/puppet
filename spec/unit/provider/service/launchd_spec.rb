@@ -207,7 +207,8 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       provider.stubs(:read_plist).returns({joblabel => {"Disabled" => false}})
       subject.stubs(:plist_from_label).returns([joblabel, {"Disabled" => false}])
       subject.stubs(:enabled?).returns :false
-      subject.stubs(:execute).with([:launchctl, :load, '-w', joblabel])
+      subject.stubs(:execute).with([:launchctl, :load, '-w', joblabel]).returns('')
+      File.stubs(:open).returns('')
       subject.stubs(:resource).returns({:name => joblabel, :enable => :true})
       subject.enable
     end

@@ -502,6 +502,12 @@ module Util
     end
   end
   module_function :secure_open
+
+  # Because IO#binread is only available in 1.9
+  def binread(file)
+    File.open(file, 'rb') { |f| f.read }
+  end
+  module_function :binread
 end
 end
 

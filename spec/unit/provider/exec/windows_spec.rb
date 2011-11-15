@@ -9,6 +9,7 @@ describe Puppet::Type.type(:exec).provider(:windows) do
   let(:provider) { described_class.new(resource) }
 
   before :each do
+    Facter.stubs(:value).with(:operatingsystem).returns 'Windows'
     Puppet.features.stubs(:microsoft_windows?).returns(true)
     Puppet.features.stubs(:posix?).returns(false)
   end

@@ -139,7 +139,7 @@ describe Puppet::FileServing::Metadata do
           let(:checksum) { Digest::MD5.hexdigest("some content\n") }
 
           before :each do
-            File.open(path, "w") {|f| f.print("some content\n")}
+            File.open(path, "wb") {|f| f.print("some content\n")}
           end
 
           it "should default to a checksum of type MD5 with the file's current checksum" do
@@ -198,7 +198,7 @@ describe Puppet::FileServing::Metadata do
         let(:fmode) { File.lstat(path).mode & 0777 }
 
         before :each do
-          File.open(target, "w") {|f| f.print("some content\n")}
+          File.open(target, "wb") {|f| f.print("some content\n")}
           set_mode(0644, target)
 
           FileUtils.symlink(target, path)
@@ -223,7 +223,7 @@ describe Puppet::FileServing::Metadata do
       let(:path) { tmpfile('file_serving_metadata_find_file') }
 
       before :each do
-        File.open(path, "w") {|f| f.print("some content\n")}
+        File.open(path, "wb") {|f| f.print("some content\n")}
         set_mode(0755, path)
       end
 
@@ -276,6 +276,33 @@ describe Puppet::FileServing::Metadata do
     end
 
     it_should_behave_like "metadata collector"
+
+    describe "if ACL metadata cannot be collected" do
+      let(:path) { tmpdir('file_serving_metadata_acl') }
+      let(:metadata) do
+        data = described_class.new(path)
+        data.collect
+        data
+      end
+
+      it "should default owner" do
+        Puppet::Util::Windows::Security.stubs(:get_owner).returns nil
+
+        metadata.owner.should == 'S-1-5-32-544'
+      end
+
+      it "should default group" do
+        Puppet::Util::Windows::Security.stubs(:get_group).returns nil
+
+        metadata.group.should == 'S-1-0-0'
+      end
+
+      it "should default mode" do
+        Puppet::Util::Windows::Security.stubs(:get_mode).returns nil
+
+        metadata.mode.should == 0644
+      end
+    end
 
     def set_mode(mode, path)
       Puppet::Util::Windows::Security.set_mode(mode, path)

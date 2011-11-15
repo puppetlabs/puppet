@@ -28,6 +28,8 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
   # testing purposes.
   def params(request)
     params = Mongrel::HttpRequest.query_parse(request.params["QUERY_STRING"])
+    params.merge!(Mongrel::HttpRequest.query_parse(body(request))) if http_method(request).upcase == 'POST'
+
     params = decode_params(params)
     params.merge(client_info(request))
   end
@@ -41,7 +43,12 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
 
   # return the request body
   def body(request)
-    request.body.read
+    body = request.body.read
+    # We rewind the body, since read on a StringIO is destructive, and
+    # subsequent reads will return an empty string.
+    request.body.rewind
+
+    body
   end
 
   def set_content_type(response, format)

@@ -1,3 +1,78 @@
+2.7.7rc1
+===
+674068a (#10269) Make directories executable so they can be cleaned up
+fd747cc (#10365) Add pending test when file overwrites an executable directory
+fe30d8f (#10315) Add pending tests when following symlinks
+a22c7aa Maint: Fix test breakage
+8576e86 (#10269) Search bit not set on newly created directories
+428e08c Stub File.open to not touch the disk
+a97337f (#10346) Fix storeconfigs spec failures when run alone
+5c4daa4 (#7601) Use definition lists in indirection references
+7df46a2 (#7601) Use definition lists in type references
+ad97dc9 (#7601) Add markdown_definitionlist method to reference.rb
+455c9aa Maint: Revise reference text for most types and providers
+ced8e19 (#7601) Remove unnecessarily abstracted paramwrap method
+a6957ac (#7601) Rename "h" method to "markdown_header"
+7a0ade6 (#7601) Use << instead of += in references
+7d65796 (#9109) Retrieve request parameters from the request body for POSTs
+5a2952c (maint) Fix CA-related specs failing on Windows
+42fb76e Fix typo in report debug message
+eab5965 missing includes in network XML-RPC handlers
+614526a (#10244) Restore Mongrel XMLRPC functionality
+6ef1d3a (#6371) Update lastchg field in shadow file on Solaris.
+c343615 (#10161) Parenthesize method arguments
+5721ab9 Maint: Remove duplicate path extension code
+edc721e (#9636) Always set $CHILD_STATUS when executing on Windows
+448d5db (#9636) Fix PATHEXT resolution for paths other than system32
+424379d (#9996) Restore functionality for multi-line commands in exec resources
+ad98d47 (#9831) Standardize Windows provider confining
+cf8fae2 (#9832) General StoreConfigs regression.
+1e8a2cd (#9607) Only validate package source when it is set or needed
+0258096 (#9461) Resolve executables using PATHEXT on Windows
+d78afda (#9938) Allow directory sticky-ness to be set
+23b4864 Maint: Document tag metaparameter's ability to take an array
+b3c0f1d Stub method for getting roles from the user provider
+006a128 Set vardir so that msi package provider runs on Windows
+4185b4e Add Windows-specific tests when user parameter specified in exec
+aab6b40 Disable mount provider tests on Windows
+58f97e3 Update test due to lack of 'true' on Windows
+1fd90c3 Change tests to not use 'mount' provider
+220f5e0 Added 'touch' method enabling tests to run on Windows
+ca0bc4f Change test to not call 'rm -rf'
+1883455 Remove 'fails_on_windows' tag for passing tests
+0d7c797 (#8414) Create scheduled_task type for use with Windows scheduled tasks
+4ddef89 (#8414) Require win32-taskscheduler gem on Windows
+0ecf3ab Add ability to look up fully qualified local accounts using Puppet::Util::Adsi.sid_for_account
+23d5aeb Add support for displaying hashes to Puppet::Parameter.format_value_for_display
+f0c3414 Move parameter formatting rules into helper method
+845e05b Wrap long lines in Type::Package
+18d65ec Whitespace cleanup in Type::SshAuthorizedKey
+b2e2175 Include necessary Facter stubs
+f5bc897 Remove test dependencies on QUANTITY of calls
+51adf31 Reset the @macosx_version_major variable
+4b9dfdd Reset the @job_list variable between tests
+446a5bf Remove use of defined?()
+0e4079d Use memoization instead of 'unless'
+9d504ff (#9796) ssh_authorized_key supports whitespace again
+122b8c2 (#9459) Fix problems with Windows 'user' and 'group' providers.
+ee107cf Use instance variable for job_list
+d1e0fa1 Refactor launchd provider spec tests
+3440c10 Refactor status method
+62b8d6b Deprecation Warning if using Facter <= 1.5.5
+8a50c3a Test prefetching
+f09d264 Stub call to Facter
+a6bc5a5 Optimize @product_version variable
+af42ff8 Documentation Commit
+55610bf Whitespace Commit
+cf3d378 Change method used to get Fact Value
+ce776b0 Revert launchd_spec
+f65b111 Rearrange launchd provider
+ed90957 First attempt at launchd spec
+637b57b Implement Caching
+60482f4 Whitespace and Alignment Commit
+5b52bd6 Bring up to date with topic branch
+27057a6 Maint: Fix the "provider" parameter documentation
+
 2.7.6 (includes CVE-2011-3872 see http://puppetlabs.com/security/hotfixes/cve-2011-3872/
 ===
 c09517a Improve the error message when a CSR is rejected

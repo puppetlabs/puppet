@@ -30,9 +30,9 @@ describe Puppet::FileBucketFile::File do
     describe "when servicing a save request" do
       describe "when supplying a path" do
         it "should store the path if not already stored" do
-          checksum = save_bucket_file("stuff", "/foo/bar")
-          dir_path = "#{Puppet[:bucketdir]}/c/1/3/d/8/8/c/b/c13d88cb4cb02003daedb8a84e5d272a"
-          File.read("#{dir_path}/contents").should == "stuff"
+          checksum = save_bucket_file("stuff\r\n", "/foo/bar")
+          dir_path = "#{Puppet[:bucketdir]}/f/c/7/7/7/c/0/b/fc777c0bc467e1ab98b4c6915af802ec"
+          Puppet::Util.binread("#{dir_path}/contents").should == "stuff\r\n"
           File.read("#{dir_path}/paths").should == "foo/bar\n"
         end
 
@@ -241,33 +241,30 @@ HERE
   end
 
   describe "when verifying identical files" do
-    before do
-      # this is the default from spec_helper, but it keeps getting reset at odd times
-      Puppet[:bucketdir] = make_absolute("/dev/null/bucket")
+    let(:contents) { "file\r\n contents" }
+    let(:digest) { "8b3702ad1aed1ace7e32bde76ffffb2d" }
+    let(:checksum) { "{md5}#{@digest}" }
+    let(:bucketdir) { tmpdir('file_bucket_file') }
+    let(:destdir) { "#{bucketdir}/8/b/3/7/0/2/a/d/8b3702ad1aed1ace7e32bde76ffffb2d" }
+    let(:bucket) { Puppet::FileBucket::File.new(contents) }
 
-      @digest = "4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-      @checksum = "{md5}4a8ec4fa5f01b4ab1a0ab8cbccb709f0"
-      @dir = make_absolute('/dev/null/bucket/4/a/8/e/c/4/f/a/4a8ec4fa5f01b4ab1a0ab8cbccb709f0')
-
-      @contents = "file contents"
-
-      @bucket = stub "bucket file"
-      @bucket.stubs(:bucket_path)
-      @bucket.stubs(:checksum).returns(@checksum)
-      @bucket.stubs(:checksum_data).returns(@digest)
-      @bucket.stubs(:path).returns(nil)
-      @bucket.stubs(:contents).returns("file contents")
+    before :each do
+      Puppet[:bucketdir] = bucketdir
+      FileUtils.mkdir_p(destdir)
     end
 
     it "should raise an error if the files don't match" do
-      File.expects(:read).with("#{@dir}/contents").returns("corrupt contents")
-      lambda{ Puppet::FileBucketFile::File.new.send(:verify_identical_file!, @bucket) }.should raise_error(Puppet::FileBucket::BucketError)
+      File.open(File.join(destdir, 'contents'), 'wb') { |f| f.print "corrupt contents" }
+
+      lambda{
+        Puppet::FileBucketFile::File.new.send(:verify_identical_file!, bucket)
+      }.should raise_error(Puppet::FileBucket::BucketError)
     end
 
     it "should do nothing if the files match" do
-      File.expects(:read).with("#{@dir}/contents").returns("file contents")
-      Puppet::FileBucketFile::File.new.send(:verify_identical_file!, @bucket)
-    end
+      File.open(File.join(destdir, 'contents'), 'wb') { |f| f.print contents }
 
+      Puppet::FileBucketFile::File.new.send(:verify_identical_file!, bucket)
+    end
   end
 end
