@@ -47,7 +47,7 @@ Puppet::Type.type(:package).provide(:msi, :parent => Puppet::Provider::Package) 
         'source'          => msi_source
       }
 
-      f.puts(YAML.dump metadata)
+      f.puts(YAML.dump(metadata))
     end
   end
 

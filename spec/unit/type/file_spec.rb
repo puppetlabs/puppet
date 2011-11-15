@@ -385,6 +385,21 @@ describe Puppet::Type.type(:file) do
     end
   end
 
+  describe "#ancestors" do
+    it "should return the ancestors of the file, in ascending order" do
+      file = described_class.new(:path => make_absolute("/tmp/foo/bar/baz/qux"))
+
+      pieces = %W[#{make_absolute('/')} tmp foo bar baz]
+
+      ancestors = file.ancestors
+
+      ancestors.should_not be_empty
+      ancestors.reverse.each_with_index do |path,i|
+        path.should == File.join(*pieces[0..i])
+      end
+    end
+  end
+
   describe "#flush" do
     it "should flush all properties that respond to :flush" do
       file[:source] = File.expand_path(__FILE__)

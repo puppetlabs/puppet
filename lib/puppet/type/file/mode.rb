@@ -29,20 +29,25 @@ module Puppet
     end
 
     munge do |should|
-      dirmask(should)
+      if should.is_a?(String)
+        should.to_i(8).to_s(8)
+      else
+        should.to_s(8)
+      end
     end
 
     # If we're a directory, we need to be executable for all cases
     # that are readable.  This should probably be selectable, but eh.
     def dirmask(value)
-      value = value.to_i(8) unless value.is_a? Integer
       if FileTest.directory?(resource[:path])
+        value = value.to_i(8)
         value |= 0100 if value & 0400 != 0
         value |= 010 if value & 040 != 0
         value |= 01 if value & 04 != 0
+        value = value.to_s(8)
       end
 
-      value.to_s(8)
+      value
     end
 
     # If we're not following links and we're a link, then we just turn
@@ -54,6 +59,19 @@ module Puppet
       else
         return super(currentvalue)
       end
+    end
+
+    # Ideally, dirmask'ing could be done at munge time, but we don't know if 'ensure'
+    # will eventually be a directory or something else. And unfortunately, that logic
+    # depends on the ensure, source, and target properties. So rather than duplicate
+    # that logic, and get it wrong, we do dirmask during retrieve, after 'ensure' has
+    # been synced.
+    def retrieve
+      if @resource.stat
+        @should &&= @should.collect { |s| self.dirmask(s) }
+      end
+
+      super
     end
   end
 end

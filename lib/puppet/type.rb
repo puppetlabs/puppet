@@ -635,6 +635,10 @@ class Type
   ###############################
   # Code related to evaluating the resources.
 
+  def ancestors
+    []
+  end
+
   # Flush the provider, if it supports it.  This is called by the
   # transaction.
   def flush

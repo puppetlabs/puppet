@@ -17,6 +17,10 @@ describe Puppet::Type.type(:file) do
   let(:path) { tmpfile('file_testing') }
 
   if Puppet.features.posix?
+    def set_mode(mode, file)
+      File.chmod(mode, file)
+    end
+
     def get_mode(file)
       File.lstat(file).mode
     end
@@ -31,6 +35,10 @@ describe Puppet::Type.type(:file) do
   else
     class SecurityHelper
       extend Puppet::Util::Windows::Security
+    end
+
+    def set_mode(mode, file)
+      SecurityHelper.set_mode(mode, file)
     end
 
     def get_mode(file)
@@ -92,6 +100,255 @@ describe Puppet::Type.type(:file) do
 
       get_group(path).should == group
     end
+
+    describe "when setting mode" do
+      describe "for directories" do
+        let(:path) { tmpdir('dir_mode') }
+
+        it "should set executable bits for newly created directories" do
+          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0600)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0700
+        end
+
+        it "should set executable bits for existing readable directories" do
+          File.should be_directory(path)
+          set_mode(0600, path)
+
+          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0644)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0755
+        end
+
+        it "should not set executable bits for unreadable directories" do
+          begin
+            catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0300)
+            catalog.apply
+
+            (get_mode(path) & 07777).should == 0300
+          ensure
+            # so we can cleanup
+            set_mode(0700, path)
+          end
+        end
+
+        it "should set user, group, and other executable bits" do
+          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0664)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0775
+        end
+
+        it "should set executable bits when overwriting a non-executable file" do
+          FileUtils.rmdir(path)
+          FileUtils.touch(path)
+          set_mode(0444, path)
+
+          catalog.add_resource described_class.new(:path => path, :ensure => :directory, :mode => 0666, :backup => false)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0777
+        end
+      end
+
+      describe "for files" do
+        let(:path) { tmpfile('file_mode') }
+
+        it "should not set executable bits" do
+          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0666
+        end
+
+        it "should not set executable bits when replacing an executable directory (#10365)" do
+          pending("bug #10365")
+
+          FileUtils.mkdir(path)
+          set_mode(0777, path)
+
+          catalog.add_resource described_class.new(:path => path, :ensure => :file, :mode => 0666, :backup => false, :force => true)
+          catalog.apply
+
+          (get_mode(path) & 07777).should == 0666
+        end
+      end
+
+      describe "for links", :unless => Puppet.features.microsoft_windows? do
+        let(:link) { tmpfile('link_mode') }
+
+        describe "when managing links" do
+          let(:target) { tmpfile('target') }
+
+          before :each do
+            FileUtils.touch(target)
+            File.chmod(0444, target)
+
+            File.symlink(target, link)
+          end
+
+          it "should not set the executable bit on the link nor the target" do
+            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => target, :links => :manage)
+            catalog.apply
+
+            (File.stat(link).mode & 07777) == 0666
+            (File.lstat(target).mode & 07777) == 0444
+          end
+
+          it "should ignore dangling symlinks (#6856)" do
+            File.delete(target)
+
+            catalog.add_resource described_class.new(:path => link, :ensure => :link, :mode => 0666, :target => target, :links => :manage)
+            catalog.apply
+
+            File.should_not be_exist(link)
+          end
+        end
+
+        describe "when following links" do
+          it "should ignore dangling symlinks (#6856)" do
+            target = tmpfile('dangling')
+
+            FileUtils.touch(target)
+            File.symlink(target, link)
+            File.delete(target)
+
+            catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+            catalog.apply
+          end
+
+          describe "to a directory" do
+            let(:target) { tmpdir('dir_target') }
+
+            before :each do
+              File.chmod(0600, target)
+
+              File.symlink(target, link)
+            end
+
+            after :each do
+              File.chmod(0750, target)
+            end
+
+            describe "that is readable" do
+              it "should set the executable bits when creating the destination (#10315)" do
+                pending "bug #10315"
+
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.apply
+
+                (get_mode(path) & 07777).should == 0777
+              end
+
+              it "should set the executable bits when overwriting the destination (#10315)" do
+                pending "bug #10315"
+
+                FileUtils.touch(path)
+
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.apply
+
+                (get_mode(path) & 07777).should == 0777
+              end
+            end
+
+            describe "that is not readable" do
+              before :each do
+                set_mode(0300, target)
+              end
+
+              # so we can cleanup
+              after :each do
+                set_mode(0700, target)
+              end
+
+              it "should not set executable bits when creating the destination (#10315)" do
+                pending "bug #10315"
+
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.apply
+
+                (get_mode(path) & 07777).should == 0666
+              end
+
+              it "should not set executable bits when overwriting the destination" do
+                FileUtils.touch(path)
+
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0666, :links => :follow)
+                catalog.apply
+
+                (get_mode(path) & 07777).should == 0666
+              end
+            end
+          end
+
+          describe "to a file" do
+            let(:target) { tmpfile('file_target') }
+
+            it "should create the file, not a symlink (#2817, #10315)" do
+              pending "bug #2817, #10315"
+
+              catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+              catalog.apply
+
+              File.should be_file(path)
+              (get_mode(path) & 07777) == 0600
+            end
+
+            it "should overwrite the file" do
+              FileUtils.touch(path)
+
+              catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+              catalog.apply
+
+              File.should be_file(path)
+              (get_mode(path) & 07777) == 0600
+            end
+          end
+
+          describe "to a link to a directory" do
+            let(:real_target) { tmpdir('real_target') }
+            let(:target) { tmpfile('target') }
+
+            before :each do
+              File.chmod(0666, real_target)
+
+              # link -> target -> real_target
+              File.symlink(real_target, target)
+              File.symlink(target, link)
+            end
+
+            after :each do
+              File.chmod(0750, real_target)
+            end
+
+            describe "when following all links" do
+              it "should create the destination and apply executable bits (#10315)" do
+                pending "bug #10315"
+
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+                catalog.apply
+
+                File.should be_directory(path)
+                (get_mode(path) & 07777) == 0777
+              end
+
+              it "should overwrite the destination and apply executable bits" do
+                FileUtils.mkdir(path)
+
+                catalog.add_resource described_class.new(:path => path, :source => link, :mode => 0600, :links => :follow)
+                catalog.apply
+
+                File.should be_directory(path)
+                (get_mode(path) & 07777) == 0777
+              end
+            end
+          end
+        end
+      end
+    end
   end
 
   describe "when writing files" do
@@ -101,9 +358,9 @@ describe Puppet::Type.type(:file) do
       catalog.add_resource file
       catalog.add_resource filebucket
 
-      File.open(file[:path], "w") { |f| f.puts "bar" }
+      File.open(file[:path], "wb") { |f| f.puts "bar" }
 
-      md5 = Digest::MD5.hexdigest(File.read(file[:path]))
+      md5 = Digest::MD5.hexdigest(Puppet::Util.binread(file[:path]))
 
       catalog.apply
 
@@ -693,6 +950,69 @@ describe Puppet::Type.type(:file) do
     catalog.apply
 
     File.should_not be_exist(path)
+  end
+
+  describe "when sourcing" do
+    let(:source) {
+      source = tmpfile("source_default_values")
+      File.open(source, "w") { |f| f.puts "yay" }
+      source
+    }
+
+    it "should apply the source metadata values" do
+      set_mode(0770, source)
+
+      file = described_class.new(
+        :path   => path,
+        :ensure => :file,
+        :source => source,
+        :backup => false
+      )
+
+      catalog.add_resource file
+      catalog.apply
+
+      get_owner(path).should == get_owner(source)
+      get_group(path).should == get_group(source)
+      (get_mode(path) & 07777).should == 0770
+    end
+
+    it "should override the default metadata values" do
+      set_mode(0770, source)
+
+      file = described_class.new(
+         :path   => path,
+         :ensure => :file,
+         :source => source,
+         :backup => false,
+         :mode => 0440
+       )
+
+      catalog.add_resource file
+      catalog.apply
+
+      (get_mode(path) & 07777).should == 0440
+    end
+
+    describe "on Windows systems", :if => Puppet.features.microsoft_windows? do
+      it "should provide valid default values when ACLs are not supported" do
+        Puppet::Util::Windows::Security.stubs(:supports_acl?).with(source).returns false
+
+        file = described_class.new(
+          :path   => path,
+          :ensure => :file,
+          :source => source,
+          :backup => false
+        )
+
+        catalog.add_resource file
+        catalog.apply
+
+        get_owner(path).should == 'S-1-5-32-544'
+        get_group(path).should == 'S-1-0-0'
+        get_mode(path).should == 0644
+      end
+    end
   end
 
   describe "when purging files" do

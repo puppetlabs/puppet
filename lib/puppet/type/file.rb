@@ -47,7 +47,7 @@ Puppet::Type.newtype(:file) do
     # path name. The aim is to use less storage for all common paths in a hierarchy
     munge do |value|
       # We know the value is absolute, so expanding it will just standardize it.
-      path, name = ::File.split(::File.expand_path value)
+      path, name = ::File.split(::File.expand_path(value))
 
       { :index => Puppet::FileCollection.collection.index(path), :name => name }
     end
@@ -56,7 +56,7 @@ Puppet::Type.newtype(:file) do
     unmunge do |value|
       basedir = Puppet::FileCollection.collection.path(value[:index])
 
-      ::File.expand_path ::File.join( basedir, value[:name] )
+      ::File.join( basedir, value[:name] )
     end
   end
 
@@ -261,7 +261,7 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
-    path = Pathname(self[:path])
+    path = Pathname.new(self[:path])
     if !path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
@@ -306,6 +306,8 @@ Puppet::Type.newtype(:file) do
     end
 
     self.warning "Possible error: recurselimit is set but not recurse, no recursion will happen" if !self[:recurse] and self[:recurselimit]
+
+    provider.validate if provider.respond_to?(:validate)
   end
 
   def self.[](path)
@@ -384,6 +386,12 @@ Puppet::Type.newtype(:file) do
     #    catalog.add_resource child
     #    catalog.relationship_graph.add_edge self, child
     #end
+  end
+
+  def ancestors
+    ancestors = Pathname.new(self[:path]).enum_for(:ascend).map(&:to_s)
+    ancestors.delete(self[:path])
+    ancestors
   end
 
   def flush
@@ -723,7 +731,7 @@ Puppet::Type.newtype(:file) do
     umask = mode ? 000 : 022
     mode_int = mode ? mode.to_i(8) : nil
 
-    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'w', mode_int ) { |f| write_content(f) } }
+    content_checksum = Puppet::Util.withumask(umask) { ::File.open(path, 'wb', mode_int ) { |f| write_content(f) } }
 
     # And put our new file in place
     if use_temporary_file # This is only not true when our file is empty.

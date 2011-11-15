@@ -59,9 +59,12 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
       @path = path
     end
 
-    [:owner, :group, :mode].each do |method|
+    { :owner => 'S-1-5-32-544',
+      :group => 'S-1-0-0',
+      :mode => 0644
+    }.each do |method, default_value|
       define_method method do
-        Puppet::Util::Windows::Security.send("get_#{method}", @path)
+        Puppet::Util::Windows::Security.send("get_#{method}", @path) || default_value
       end
     end
   end
