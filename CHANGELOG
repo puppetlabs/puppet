@@ -1,3 +1,35 @@
+2.7.7rc2
+===
+7f3a1bb (#9617) Use an RbTreeMap to store ready resources
+9eff0f4 (#9671) Implement RbTreeMap#each recursively, and #first/#last explicitly
+5f7f467 (#9671) Return nodes from internal RbTreeMap recursion
+1dc9c72 (#9671) Stop tracking size and height of nodes in RbTreeMap
+f180f9b (#9617) Add a red-black tree map
+c62e949 (#9617) Keep track of blockers for resources when traversing
+2cb6d72 (#9671) Generated resources should not depend on the completed_ whit
+a5845b7 (#9671) Exit early from #eval_generate if nothing is created
+7002eff (#9617) Be smarter about finding parents when eval_generating
+11fda78 maint: Don't File#expand_path when unmunging file paths
+ad4316a (#9671) Use Array#concat rather than +=
+20260f3 maint: Correct the spelling of sentinel
+4f03384 (#10614) Detect when trying to managing ACLs on a non-ACL volume
+37b9f0f (#10614) Provide default metadata values for Windows ACLs
+1cb37c9 (#10614) Add method for detecting Windows volumes that support ACLs
+c9ee5a0 (#10614) Fix setting and clearing read-only attribute on Windows
+ed27a90 (#10614) Fix error checking for Windows BOOL return values
+7f0756d (#10727) Don't rely on Kernel#Pathname
+0a34697 (#2744) Display file diffs through the Puppet log system.
+0c28238 (#9508) Be explicit is setting `auth any` for default ACLs.
+057cda6 (#9508) Default ACL of `auth any` makes sense where we had `auth no`
+78670ed (#9983) Checksum file in binary mode when storing to filebucket
+da11a78 (#9983) Serve file content in binary mode
+13f1054 (#9983) Read file content from disk using binary mode
+4b4bb8b (#9983) Use binary mode when reading and writing FileBucketFiles
+899833b (#9983) Read file content in binary mode when backing up
+dc8bcf8 (#9983) Restore files in binary mode
+489a679 (#9983) Checksum files in binary mode
+f7bfa05 (#9983) Add method for reading binary files
+
 2.7.7rc1
 ===
 674068a (#10269) Make directories executable so they can be cleaned up
