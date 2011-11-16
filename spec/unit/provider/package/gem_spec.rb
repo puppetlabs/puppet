@@ -4,20 +4,20 @@ require 'spec_helper'
 provider_class = Puppet::Type.type(:package).provider(:gem)
 
 describe provider_class do
+  let(:resource) do
+    Puppet::Type.type(:package).new(
+      :name     => 'myresource',
+      :ensure   => :installed
+    )
+  end
+
+  let(:provider) do
+    provider = provider_class.new
+    provider.resource = resource
+    provider
+  end
+
   describe "when installing" do
-    let(:resource) do
-      Puppet::Type.type(:package).new(
-        :name     => 'myresource',
-        :ensure   => :installed
-      )
-    end
-
-    let(:provider) do
-      provider = provider_class.new
-      provider.resource = resource
-      provider
-    end
-
     it "should use the path to the gem" do
       provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
       provider.expects(:execute).with { |args| args[0] == "/my/gem" }.returns ""
@@ -84,6 +84,29 @@ describe provider_class do
           lambda { provider.install }.should raise_error(Puppet::Error)
         end
       end
+    end
+  end
+
+  describe "#instances" do
+    before do
+      provider_class.stubs(:command).with(:gemcmd).returns "/my/gem"
+    end
+
+    it "should return an empty array when no gems installed" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns("\n")
+      provider_class.instances.should == []
+    end
+
+    it "should return ensure values as an array of installed versions" do
+      provider_class.expects(:execute).with(%w{/my/gem list --local}).returns <<-HEREDOC.gsub(/        /, '')
+        systemu (1.2.0)
+        vagrant (0.8.7, 0.6.9)
+      HEREDOC
+
+      provider_class.instances.map {|p| p.properties}.should == [
+        {:ensure => ["1.2.0"],          :provider => :gem, :name => 'systemu'},
+        {:ensure => ["0.8.7", "0.6.9"], :provider => :gem, :name => 'vagrant'}
+      ]
     end
   end
 end

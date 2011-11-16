@@ -115,7 +115,6 @@ module Puppet
       # Override the parent method, because we've got all kinds of
       # funky definitions of 'in sync'.
       def insync?(is)
-        @latest ||= nil
         @lateststamp ||= (Time.now.to_i - 1000)
         # Iterate across all of the should values, and see how they
         # turn out.
@@ -156,7 +155,9 @@ module Puppet
             return true if is == :absent or is == :purged
           when :purged
             return true if is == :purged
-          when is
+          # this handles version number matches and
+          # supports providers that can have multiple versions installed
+          when *Array(is)
             return true
           end
         }
