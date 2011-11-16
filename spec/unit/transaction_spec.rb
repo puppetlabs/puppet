@@ -411,6 +411,12 @@ describe Puppet::Transaction do
       yielded.should == true
     end
 
+    it "should prefetch the provider if necessary" do
+      @transaction.expects(:prefetch_if_necessary).with(resource)
+
+      graph.traverse {}
+    end
+
     it "should not clear blockers if resources aren't added" do
       graph.blockers['foo'] = 3
       graph.blockers['bar'] = 4
@@ -673,17 +679,72 @@ describe Puppet::Transaction do
   end
 
   describe "when prefetching" do
+    let(:catalog) { Puppet::Resource::Catalog.new }
+    let(:transaction) { Puppet::Transaction.new(catalog) }
+    let(:resource) { Puppet::Type.type(:sshkey).create :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
+    let(:resource2) { Puppet::Type.type(:package).create :title => "blah", :provider => "apt" }
+
+    before :each do
+      catalog.add_resource resource
+      catalog.add_resource resource2
+    end
+
+
+    describe "#resources_by_provider" do
+      it "should fetch resources by their type and provider" do
+        transaction.resources_by_provider(:sshkey, :parsed).should == {
+          resource.name => resource,
+        }
+
+        transaction.resources_by_provider(:package, :apt).should == {
+          resource2.name => resource2,
+        }
+      end
+
+      it "should omit resources whose types don't use providers" do
+        # faking the sshkey type not to have a provider
+        resource.class.stubs(:attrclass).returns nil
+
+        transaction.resources_by_provider(:sshkey, :parsed).should == {}
+      end
+
+      it "should return empty hash for providers with no resources" do
+        transaction.resources_by_provider(:package, :yum).should == {}
+      end
+    end
+
     it "should match resources by name, not title" do
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
-
-      # Have both a title and name
-      resource = Puppet::Type.type(:sshkey).create :title => "foo", :name => "bar", :type => :dsa, :key => "eh"
-      @catalog.add_resource resource
-
       resource.provider.class.expects(:prefetch).with("bar" => resource)
 
-      @transaction.prefetch
+      transaction.prefetch_if_necessary(resource)
+    end
+
+    it "should not prefetch a provider which has already been prefetched" do
+      transaction.prefetched_providers[:sshkey][:parsed] = true
+
+      resource.provider.class.expects(:prefetch).never
+
+      transaction.prefetch_if_necessary(resource)
+    end
+
+    it "should mark the provider prefetched" do
+      resource.provider.class.stubs(:prefetch)
+
+      transaction.prefetch_if_necessary(resource)
+
+      transaction.prefetched_providers[:sshkey][:parsed].should be_true
+    end
+
+    it "should prefetch resources without a provider if prefetching the default provider" do
+      other = Puppet::Type.type(:sshkey).create :name => "other"
+
+      other.instance_variable_set(:@provider, nil)
+
+      catalog.add_resource other
+
+      resource.provider.class.expects(:prefetch).with('bar' => resource, 'other' => other)
+
+      transaction.prefetch_if_necessary(resource)
     end
   end
 
@@ -729,7 +790,7 @@ describe Puppet::Transaction do
       before do
         @resource = Puppet::Type.type(:notify).new :title => "foobar"
         @catalog.add_resource @resource
-        @transaction.stubs(:prepare)
+        @transaction.stubs(:xgenerate)
       end
 
       it 'should stop processing if :stop_processing? is true' do
