@@ -343,6 +343,39 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "#finish" do
+    let(:graph) { @transaction.relationship_graph }
+    let(:path) { tmpdir('eval_generate') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
+
+    before :each do
+      @transaction.catalog.add_resource(resource)
+    end
+
+    it "should unblock the resource's dependents and queue them if ready" do
+      dependent = Puppet::Type.type(:file).new(:path => tmpfile('dependent'), :require => resource)
+      more_dependent = Puppet::Type.type(:file).new(:path => tmpfile('more_dependent'), :require => [resource, dependent])
+      @transaction.catalog.add_resource(dependent, more_dependent)
+
+      graph.finish(resource)
+
+      graph.blockers[dependent].should == 0
+      graph.blockers[more_dependent].should == 1
+
+      key = graph.unguessable_deterministic_key[dependent]
+
+      graph.ready[key].must == dependent
+
+      graph.ready.should_not be_has_key(graph.unguessable_deterministic_key[more_dependent])
+    end
+
+    it "should mark the resource as done" do
+      graph.finish(resource)
+
+      graph.done[resource].should == true
+    end
+  end
+
   describe "when traversing" do
     let(:graph) { @transaction.relationship_graph }
     let(:path) { tmpdir('eval_generate') }
@@ -434,6 +467,40 @@ describe Puppet::Transaction do
       graph.traverse {}
 
       graph.done[resource].should == true
+    end
+
+    it "should not evaluate the resource if it's not suitable" do
+      resource.stubs(:suitable?).returns false
+
+      graph.traverse do |resource|
+        raise "evaluated a resource"
+      end
+    end
+
+    it "should defer an unsuitable resource unless it can't go on" do
+      other = Puppet::Type.type(:notify).new(:name => "hello")
+      @transaction.catalog.add_resource(other)
+
+      # Show that we check once, then get the resource back and check again
+      resource.expects(:suitable?).twice.returns(false).then.returns(true)
+
+      graph.traverse {}
+    end
+
+    it "should fail unsuitable resources and go on if it gets blocked" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      @transaction.catalog.add_resource(dependent)
+
+      resource.stubs(:suitable?).returns false
+
+      evaluated = []
+      graph.traverse do |res|
+        evaluated << res
+      end
+
+      # We should have gone on to evaluate the children
+      evaluated.should == [dependent]
+      @transaction.resource_status(resource).should be_failed
     end
   end
 

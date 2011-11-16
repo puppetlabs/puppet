@@ -553,6 +553,41 @@ describe Puppet::Type, :fails_on_windows => true do
   it "should have a 'stage' metaparam" do
     Puppet::Type.metaparamclass(:stage).should be_instance_of(Class)
   end
+
+  describe "#suitable?" do
+    let(:type) { Puppet::Type.type(:file) }
+    let(:resource) { type.new :path => tmpfile('suitable') }
+    let(:provider) { resource.provider }
+
+    it "should be suitable if its type doesn't use providers" do
+      type.stubs(:paramclass).with(:provider).returns nil
+
+      resource.should be_suitable
+    end
+
+    it "should be suitable if it has a provider which is suitable" do
+      resource.should be_suitable
+    end
+
+    it "should not be suitable if it has a provider which is not suitable" do
+      provider.class.stubs(:suitable?).returns false
+
+      resource.should_not be_suitable
+    end
+
+    it "should be suitable if it does not have a provider and there is a default provider" do
+      resource.stubs(:provider).returns nil
+
+      resource.should be_suitable
+    end
+
+    it "should not be suitable if it doesn't have a provider and there is not default provider" do
+      resource.stubs(:provider).returns nil
+      type.stubs(:defaultprovider).returns nil
+
+      resource.should_not be_suitable
+    end
+  end
 end
 
 describe Puppet::Type::RelationshipMetaparam do

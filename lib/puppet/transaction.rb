@@ -303,6 +303,7 @@ class Puppet::Transaction
       @done = {}
       @blockers = {}
       @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
+      @providerless_types = []
       vertices.each do |v|
         blockers[v] = direct_dependencies_of(v).length
         enqueue(v) if blockers[v] == 0
@@ -332,9 +333,17 @@ class Puppet::Transaction
       end
       blockers[r] <= 0
     end
-    def enqueue(r)
-      key = unguessable_deterministic_key[r]
-      ready[key] = r
+    def enqueue(*resources)
+      resources.each do |r|
+        key = unguessable_deterministic_key[r]
+        ready[key] = r
+      end
+    end
+    def finish(r)
+      direct_dependents_of(r).each do |v|
+        enqueue(v) if unblock(v)
+      end
+      done[r] = true
     end
     def next_resource
       ready.delete_min
@@ -342,18 +351,55 @@ class Puppet::Transaction
     def traverse(&block)
       real_graph.report_cycles_in_graph
 
+      deferred = []
+
       while (r = next_resource) && !transaction.stop_processing?
-        # If we generated resources, we don't know what they are now
-        # blocking, so we opt to recompute it, rather than try to track every
-        # change that would affect the number.
-        blockers.clear if transaction.eval_generate(r)
+        if r.suitable?
+          made_progress = true
 
-        yield r
+          # If we generated resources, we don't know what they are now
+          # blocking, so we opt to recompute it, rather than try to track every
+          # change that would affect the number.
+          blockers.clear if transaction.eval_generate(r)
 
-        direct_dependents_of(r).each do |v|
-          enqueue(v) if unblock(v)
+          yield r
+
+          finish(r)
+        else
+          deferred << r
         end
-        done[r] = true
+
+        if ready.empty? and deferred.any?
+          if made_progress
+            enqueue(*deferred)
+          else
+            fail_unsuitable_resources(deferred)
+          end
+
+          made_progress = false
+          deferred = []
+        end
+      end
+
+      # Just once per type. No need to punish the user.
+      @providerless_types.uniq.each do |type|
+        Puppet.err "Could not find a suitable provider for #{type}"
+      end
+    end
+
+    def fail_unsuitable_resources(resources)
+      resources.each do |resource|
+        # We don't automatically assign unsuitable providers, so if there
+        # is one, it must have been selected by the user.
+        if resource.provider
+          resource.err "Provider #{resource.provider.class.name} is not functional on this host"
+        else
+          @providerless_types << resource.type
+        end
+
+        transaction.resource_status(resource).failed = true
+
+        finish(resource)
       end
     end
   end
