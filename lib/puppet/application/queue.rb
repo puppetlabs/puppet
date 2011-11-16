@@ -118,6 +118,16 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
   end
 
+  option("--logdest DEST", "-l DEST") do |arg|
+    begin
+      Puppet::Util::Log.newdestination(arg)
+      options[:setdest] = true
+    rescue => detail
+      puts detail.backtrace if Puppet[:debug]
+      $stderr.puts detail.to_s
+    end
+  end
+
   def main
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
     Puppet.notice "Starting puppetqd #{Puppet.version}"
