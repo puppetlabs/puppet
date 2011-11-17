@@ -423,11 +423,17 @@ def install_binfile(from, op_file, target)
     if not installed_wrapper
       tmp_file2 = File.join(tmp_dir, '_tmp_wrapper')
       cwn = File.join(Config::CONFIG['bindir'], op_file)
-      regex_safe_ruby = Regexp.escape(ruby.gsub(%r{/}) { "\\" })
-      regex_safe_cwn = Regexp.escape(cwn.gsub(%r{/}) { "\\" })
-
-      cwv = CMD_WRAPPER.gsub('<ruby>', regex_safe_ruby).gsub('<command>', regex_safe_cwn)
-      File.open(tmp_file2, "wb") { |cw| cw.puts cwv }
+      cwv = <<-EOS
+@echo off
+if "%OS%"=="Windows_NT" goto WinNT
+#{ruby} -x "#{cwn}" %1 %2 %3 %4 %5 %6 %7 %8 %9
+goto done
+:WinNT
+#{ruby} -x "#{cwn}" %*
+goto done
+:done
+EOS
+      File.open(tmp_file2, "w") { |cw| cw.puts cwv }
       FileUtils.install(tmp_file2, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
 
       File.unlink(tmp_file2)
@@ -437,17 +443,6 @@ def install_binfile(from, op_file, target)
   FileUtils.install(tmp_file, File.join(target, op_file), :mode => 0755, :verbose => true)
   File.unlink(tmp_file)
 end
-
-CMD_WRAPPER = <<-EOS
-@echo off
-if "%OS%"=="Windows_NT" goto WinNT
-<ruby> -x "<command>" %1 %2 %3 %4 %5 %6 %7 %8 %9
-goto done
-:WinNT
-<ruby> -x "<command>" %*
-goto done
-:done
-EOS
 
 check_prereqs
 prepare_installation
