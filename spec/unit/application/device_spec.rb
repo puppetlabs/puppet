@@ -113,6 +113,12 @@ describe Puppet::Application::Device do
       @device.args[:Port].should == "42"
     end
 
+    it "should print all configuration if asked" do
+      Puppet[:configprint] = "all"
+
+      Puppet.settings.expects(:print_configs).returns(true)
+      expect { @device.main }.to exit_with 0
+    end
   end
 
   describe "during setup" do
@@ -219,6 +225,7 @@ describe Puppet::Application::Device do
       @device.setup
       Puppet[:facts_terminus].should == :network_device
     end
+
   end
 
   describe "when initializing each devices SSL" do

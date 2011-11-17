@@ -1,7 +1,6 @@
 require 'puppet/application'
 require 'puppet/util/network_device'
 
-
 class Puppet::Application::Device < Puppet::Application
 
   should_parse_config
@@ -56,8 +55,8 @@ class Puppet::Application::Device < Puppet::Application
     @args[:Port] = arg
   end
 
-    def help
-      <<-HELP
+  def help
+    <<-HELP
 
 puppet-device(8) -- Manage remote network devices
 ========
@@ -78,7 +77,7 @@ USAGE
 
 DESCRIPTION
 -----------
-Once the client has a signed certificate for a given remote device, it will 
+Once the client has a signed certificate for a given remote device, it will
 retrieve its configuration and apply it.
 
 USAGE NOTES
@@ -148,7 +147,7 @@ Brice Figureau
 
 COPYRIGHT
 ---------
-Copyright (c) 2011 Puppet Labs, LLC 
+Copyright (c) 2011 Puppet Labs, LLC
 Licensed under the Apache 2.0 License
       HELP
     end
@@ -161,11 +160,15 @@ Licensed under the Apache 2.0 License
 
     # find device list
     require 'puppet/util/network_device/config'
+
+    exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
+
     devices = Puppet::Util::NetworkDevice::Config.devices
     if devices.empty?
       Puppet.err "No device found in #{Puppet[:deviceconfig]}"
       exit(1)
     end
+
     devices.each_value do |device|
       begin
         Puppet.info "starting applying configuration to #{device.name} at #{device.url}"
