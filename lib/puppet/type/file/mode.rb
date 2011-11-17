@@ -73,6 +73,13 @@ module Puppet
 
       super
     end
+
+    def should_to_s(should_value)
+      should_value.rjust(4,"0")
+    end
+
+    def is_to_s(currentvalue)
+      currentvalue.rjust(4,"0")
+    end
   end
 end
-
