@@ -20,7 +20,7 @@ describe Puppet::Application::Apply do
     Puppet::Node.indirection.cache_class = nil
   end
 
-  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
+  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
     end
@@ -52,6 +52,17 @@ describe Puppet::Application::Apply do
       @apply.options.expects(:[]=).with(:logset,true)
 
       @apply.handle_logdest("console")
+    end
+
+    it "should deprecate --apply" do
+      Puppet.expects(:warning).with do |arg|
+        arg.match(/--apply is deprecated/)
+      end
+
+      command_line = Puppet::Util::CommandLine.new('puppet', ['apply', '--apply', 'catalog.json'])
+      apply = Puppet::Application::Apply.new(command_line)
+      apply.stubs(:run_command)
+      apply.run
     end
   end
 
