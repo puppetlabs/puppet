@@ -91,7 +91,20 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     resource = Puppet::Resource.new(:file, path)
 
     if Puppet[:manage_internal_file_permissions]
-      resource[:mode] = self.mode if self.mode
+      if self.mode
+        # This ends up mimicking the munge method of the mode
+        # parameter to make sure that we're always passing the string
+        # version of the octal number.  If we were setting the
+        # 'should' value for mode rather than the 'is', then the munge
+        # method would be called for us automatically.  Normally, one
+        # wouldn't need to call the munge method manually, since
+        # 'should' gets set by the provider and it should be able to
+        # provide the data in the appropriate format.
+        mode = self.mode
+        mode = mode.to_i(8) if mode.is_a?(String)
+        mode = mode.to_s(8)
+        resource[:mode] = mode
+      end
 
       # REMIND fails on Windows because chown/chgrp functionality not supported yet
       if Puppet.features.root? and !Puppet.features.microsoft_windows?
@@ -122,4 +135,3 @@ class Puppet::Util::Settings::FileSetting < Puppet::Util::Settings::Setting
     }
   end
 end
-
