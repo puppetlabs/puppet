@@ -160,6 +160,12 @@ describe provider_class do
       provider.expects(:execute).with(all_of(includes("-d"), includes("/newhome/testuser")))
       provider.home = "/newhome/testuser"
     end
+    it "should use -m and -d with the correct argument when the home property is changed and managehome is enabled" do
+      resource = resource_class.new(:name => "testuser", :home => "/home/testuser", :managehome => true)
+      provider = provider_class.new(resource)
+      provider.expects(:execute).with(all_of(includes("-d"), includes("/newhome/testuser"), includes("-m")))
+      provider.home = "/newhome/testuser"
+    end
     it "should call the password set function with the correct argument when the password property is changed" do
       resource = resource_class.new(:name => "testuser", :password => "*")
       provider = provider_class.new(resource)

@@ -39,6 +39,12 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     cmd
   end
 
+  def modifycmd(param, value)
+    cmd = super(param, value)
+    cmd << "-m" if @resource.managehome?
+    cmd
+  end
+
   def create
     super
 
