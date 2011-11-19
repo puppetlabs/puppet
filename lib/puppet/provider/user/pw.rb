@@ -5,13 +5,14 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   desc "User management via `pw` on FreeBSD."
 
   commands :pw => "pw"
-  has_features :manages_homedir, :allows_duplicates, :manages_passwords
+  has_features :manages_homedir, :allows_duplicates, :manages_passwords, :manages_expiry
 
   defaultfor :operatingsystem => :freebsd
 
   options :home, :flag => "-d", :method => :dir
   options :comment, :method => :gecos
   options :groups, :flag => "-G"
+  options :expiry, :method => :expire
 
   verify :gid, "GID must be an integer" do |value|
     value.is_a? Integer
@@ -28,6 +29,10 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
       # the value needs to be quoted, mostly because -c might
       # have spaces in it
       if value = @resource.should(property) and value != ""
+        if property == :expiry
+          # FreeBSD uses DD-MM-YYYY rather than YYYY-MM-DD
+          value = value.split("-").reverse.join("-")
+        end
         cmd << flag(property) << value
       end
     end
@@ -40,6 +45,10 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
   end
 
   def modifycmd(param, value)
+    if param == :expiry
+      # FreeBSD uses DD-MM-YYYY rather than YYYY-MM-DD
+      value = value.split("-").reverse.join("-")
+    end
     cmd = super(param, value)
     cmd << "-m" if @resource.managehome?
     cmd
@@ -68,6 +77,19 @@ Puppet::Type.type(:user).provide :pw, :parent => Puppet::Provider::NameService::
     current_password = current_passline.chomp.split(':')[1] if current_passline
     Puppet.debug "finished password for user '#{@resource[:name]}' method called : '#{current_password}'"
     current_password
+  end
+
+  # Get expiry from system and convert to Puppet-style date
+  def expiry
+    expiry = self.get(:expiry)
+    expiry = :absent if expiry == 0
+
+    if expiry != :absent
+      t = Time.at(expiry)
+      expiry = "%4d-%02d-%02d" % [t.year, t.month, t.mday]
+    end
+
+    expiry
   end
 end
 

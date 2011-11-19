@@ -29,6 +29,13 @@ describe provider_class do
       provider.expects(:execute).with(all_of(includes("-c"), includes("Testuser Name")))
       provider.create
     end
+    it "should use -e with the correct argument when the expiry property is set" do
+      resource = resource_class.new(:name => "testuser", :expiry => "2010-02-19")
+      provider = provider_class.new(resource)
+      provider.expects(:exists?).returns nil
+      provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2010")))
+      provider.create
+    end
     it "should use -g with the correct argument when the gid property is set" do
       resource = resource_class.new(:name => "testuser", :gid => 12345)
       provider = provider_class.new(resource)
@@ -135,6 +142,12 @@ describe provider_class do
       provider = provider_class.new(resource)
       provider.expects(:execute).with(all_of(includes("-c"), includes("Testuser New Name")))
       provider.comment = "Testuser New Name"
+    end
+    it "should use -e with the correct argument when the expiry property is changed" do
+      resource = resource_class.new(:name => "testuser", :expiry => "2010-02-19")
+      provider = provider_class.new(resource)
+      provider.expects(:execute).with(all_of(includes("-e"), includes("19-02-2011")))
+      provider.expiry = "2011-02-19"
     end
     it "should use -g with the correct argument when the gid property is changed" do
       resource = resource_class.new(:name => "testuser", :gid => 12345)
