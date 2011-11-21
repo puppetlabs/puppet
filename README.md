@@ -32,6 +32,8 @@ Generally, you need the following things installed:
 
 * Facter => 1.5.1 (available via your package manager or from the [Facter site](http://puppetlabs.com/projects/facter).
 
+ * For Windows development, run `bundle install windows`
+
 License
 -------
 

@@ -36,6 +36,14 @@ Rake::PackageTask.new("puppet", Puppet::PUPPETVERSION) do |pkg|
 end
 
 task :default do
+    processor, platform, *rest = RUBY_PLATFORM.split("-")
+    require 'bundler'
+	if platform == 'mswin32' then
+		Bundler.require(:default, :windows) 
+	else
+		Bundler.require
+	end
+	
     sh %{rake -T}
 end
 
@@ -49,5 +57,7 @@ end
 
 desc "Run the unit tests"
 task :unit do
+  require 'bundler'
+  Bundler.require(:dev)
   Dir.chdir("test") { sh "rake" }
 end
