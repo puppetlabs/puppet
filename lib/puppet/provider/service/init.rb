@@ -12,6 +12,8 @@ Puppet::Type.type(:service).provide :init, :parent => :base do
     @defpath = ["/etc/rc.d", "/usr/local/etc/rc.d"]
   when "HP-UX"
     @defpath = "/sbin/init.d"
+  when "Archlinux"
+    @defpath = "/etc/rc.d"
   else
     @defpath = "/etc/init.d"
   end
