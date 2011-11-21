@@ -1,6 +1,6 @@
 PKG=CSWpuppet
 NAME=puppet - System Automation Framework
-VERSION=2.7.2
+VERSION=2.7.7
 CATEGORY=application
 VENDOR=http://projects.puppetlabs.com/projects/puppet
-EMAIL=luke@puppetlabs.com
+EMAIL=info@puppetlabs.com

@@ -1,4 +1,4 @@
-2.7.7rc2
+2.7.7
 ===
 7f3a1bb (#9617) Use an RbTreeMap to store ready resources
 9eff0f4 (#9671) Implement RbTreeMap#each recursively, and #first/#last explicitly
@@ -29,9 +29,6 @@ da11a78 (#9983) Serve file content in binary mode
 dc8bcf8 (#9983) Restore files in binary mode
 489a679 (#9983) Checksum files in binary mode
 f7bfa05 (#9983) Add method for reading binary files
-
-2.7.7rc1
-===
 674068a (#10269) Make directories executable so they can be cleaned up
 fd747cc (#10365) Add pending test when file overwrites an executable directory
 fe30d8f (#10315) Add pending tests when following symlinks
