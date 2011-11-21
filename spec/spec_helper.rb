@@ -100,7 +100,7 @@ RSpec.configure do |config|
         indirector.instance_variable_set(variable, value)
       end
     end
-    $saved_indirection_state = nil
+    $saved_indirection_state = {}
 
     GC.enable
   end

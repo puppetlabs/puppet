@@ -184,6 +184,10 @@ module Puppet
       Puppet::Util.uri_to_path(uri) if found?
     end
 
+    def server?
+       uri and uri.host
+    end
+
     def server
       (uri and uri.host) or Puppet.settings[:server]
     end

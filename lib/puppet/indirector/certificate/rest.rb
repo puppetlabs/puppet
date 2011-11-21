@@ -6,6 +6,7 @@ class Puppet::SSL::Certificate::Rest < Puppet::Indirector::REST
 
   use_server_setting(:ca_server)
   use_port_setting(:ca_port)
+  use_srv_service(:ca)
 
   def find(request)
     return nil unless result = super
