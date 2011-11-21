@@ -605,7 +605,12 @@ EOT
       :mode => 0640,
       :desc => "The log file for puppet agent.  This is generally not used."
     },
-    :server => ["puppet", "The server to which server puppet agent should connect"],
+    :server => {
+      :default => "puppet",
+      :desc => "The server to which the puppet agent should connect"
+    },
+    :use_srv_records => [true, "Whether the server will search for SRV records in DNS for the current domain."],
+    :srv_domain => [ "#{domain}", "The domain which will be queried to find the SRV records of servers to use."],
     :ignoreschedules => [false,
       "Boolean; whether puppet agent should ignore schedules.  This is useful
       for initial puppet agent runs."],
@@ -618,7 +623,7 @@ EOT
       it with the `--no-client` option."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then puppet agent will accept incoming
-      REST API requests, subject to the default ACLs and the ACLs set in 
+      REST API requests, subject to the default ACLs and the ACLs set in
       the `rest_authconfig` file. Puppet agent can respond usefully to
       requests on the `run`, `facts`, `certificate`, and `resource` endpoints."],
     :ca_server => ["$server", "The server to use for certificate
