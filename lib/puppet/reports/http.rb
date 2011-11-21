@@ -1,5 +1,6 @@
 require 'puppet'
 require 'net/http'
+require 'net/https'
 require 'uri'
 
 Puppet::Reports.register_report(:http) do
@@ -15,7 +16,9 @@ Puppet::Reports.register_report(:http) do
     req = Net::HTTP::Post.new(url.path)
     req.body = self.to_yaml
     req.content_type = "application/x-yaml"
-    Net::HTTP.new(url.host, url.port).start {|http|
+    http = Net::HTTP.new(url.host, url.port)
+    http.use_ssl = true if url.scheme == 'https'
+    http.start {|http|
       http.request(req)
     }
   end
