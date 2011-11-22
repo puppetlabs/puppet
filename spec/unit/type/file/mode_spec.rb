@@ -103,4 +103,40 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
       mode.retrieve.should == '644'
     end
   end
+
+  describe '#should_to_s' do
+    describe 'with a 3-digit mode' do
+      it 'returns a 4-digit mode with a leading zero' do
+        mode.should_to_s('755').should == '0755'
+      end
+    end
+
+    describe 'with a 4-digit mode' do
+      it 'returns the 4-digit mode when the first digit is a zero' do
+        mode.should_to_s('0755').should == '0755'
+      end
+
+      it 'returns the 4-digit mode when the first digit is not a zero' do
+        mode.should_to_s('1755').should == '1755'
+      end
+    end
+  end
+
+  describe '#is_to_s' do
+    describe 'with a 3-digit mode' do
+      it 'returns a 4-digit mode with a leading zero' do
+        mode.is_to_s('755').should == '0755'
+      end
+    end
+
+    describe 'with a 4-digit mode' do
+      it 'returns the 4-digit mode when the first digit is a zero' do
+        mode.is_to_s('0755').should == '0755'
+      end
+
+      it 'returns the 4-digit mode when the first digit is not a zero' do
+        mode.is_to_s('1755').should == '1755'
+      end
+    end
+  end
 end
