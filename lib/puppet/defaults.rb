@@ -272,6 +272,7 @@ EOT
     :certdir => {
       :default => "$ssldir/certs",
       :owner => "service",
+      :group => "service",
       :desc => "The certificate directory."
     },
     :ssldir => {
@@ -288,11 +289,13 @@ EOT
     :requestdir => {
       :default => "$ssldir/certificate_requests",
       :owner => "service",
+      :group => "service",
       :desc => "Where host certificate requests are stored."
     },
     :privatekeydir => { :default => "$ssldir/private_keys",
       :mode => 0750,
       :owner => "service",
+      :group => "service",
       :desc => "The private key directory."
     },
     :privatedir => { :default => "$ssldir/private",
@@ -329,11 +332,13 @@ EOT
     :localcacert => { :default => "$certdir/ca.pem",
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where each client stores the CA certificate."
     },
     :hostcrl => { :default => "$ssldir/crl.pem",
       :mode => 0644,
       :owner => "service",
+      :group => "service",
       :desc => "Where the host's certificate revocation list can be found.
         This is distinct from the certificate authority's CRL."
     },
