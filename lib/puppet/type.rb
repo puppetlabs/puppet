@@ -870,7 +870,9 @@ class Type
 
     # Put the default provider first, then the rest of the suitable providers.
     provider_instances = {}
-    providers_by_source.collect do |provider|
+    providers_by_source.reject { |provider|
+      ! provider.suitable?
+    }.collect do |provider|
       all_properties = self.properties.find_all do |property|
         provider.supports_parameter?(property)
       end.collect do |property|
@@ -1385,6 +1387,12 @@ class Type
   def self.defaultprovider
     unless @defaultprovider
       suitable = suitableprovider
+      if suitable.empty? and ! provider_hash.empty?
+        # We've got providers but none are suitable.  Pick from this list, but know there aren't
+        # any suitable providers
+        Puppet.warning "Could not find suitable providers for type '#{self.name}'; defaulting to an unsuitable provider"
+        suitable = provider_hash.values
+      end
 
       # Find which providers are a default for this system.
       defaults = suitable.find_all { |provider| provider.default? }
@@ -1433,6 +1441,12 @@ class Type
   # Just list all of the providers.
   def self.providers
     provider_hash.keys
+  end
+
+  # Clear all registered providers. This is generally only
+  # used when cleaning up from testing.
+  def self.clear_providers
+    provider_hash.clear
   end
 
   def self.validprovider?(name)
