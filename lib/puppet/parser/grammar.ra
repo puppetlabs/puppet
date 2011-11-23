@@ -648,7 +648,7 @@ argumentlist: nil
   | LPAREN nothing RPAREN {
     result = nil
 }
-  | LPAREN arguments RPAREN {
+  | LPAREN arguments endcomma RPAREN {
     result = val[1]
     result = [result] unless result[0].is_a?(Array)
 }
