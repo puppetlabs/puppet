@@ -34,7 +34,7 @@ class Puppet::SSL::Key::File < Puppet::Indirector::SslFile
     super
 
     begin
-      Puppet.settings.writesub(:capub, public_key_path(request.key)) { |f| f.print request.instance.content.public_key.to_pem }
+      Puppet.settings.writesub(ca?(request.key) ? :capub : :publickeydir, public_key_path(request.key)) { |f| f.print request.instance.content.public_key.to_pem }
     rescue => detail
       raise Puppet::Error, "Could not write #{request.key}: #{detail}"
     end
