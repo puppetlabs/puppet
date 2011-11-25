@@ -27,6 +27,10 @@ describe Puppet::SSL::Ocsp::Verifier do
     Puppet::SSL::Host.stubs(:ca_location=)
   end
 
+  after do
+    Puppet::SSL::Ocsp::Verifier.expire!
+  end
+
   def make_certs(*crt_names)
     Array(crt_names).map do |name|
       a = Puppet::SSL::Host.new(name) ; a.generate ; a
@@ -53,5 +57,31 @@ describe Puppet::SSL::Ocsp::Verifier do
     invalid = Puppet::SSL::Ocsp::Responder.ocsp_invalid_request_response
     Puppet::SSL::Ocsp::Request.indirection.stubs(:save).returns(invalid)
     lambda { Puppet::SSL::Ocsp::Verifier.verify(host.certificate, Puppet::SSL::Host.localhost).first }.should raise_error(Puppet::SSL::Ocsp::Response::VerificationError)
+  end
+
+  it "should cache verification result" do
+    host = make_certs('certificate').first
+    response = Puppet::SSL::Ocsp::Verifier.verify(host.certificate, Puppet::SSL::Host.localhost).first
+    response[:serial].should == host.certificate.content.serial
+
+    Puppet::SSL::Ocsp::Response.any_instance.expects(:verify).never
+
+    response = Puppet::SSL::Ocsp::Verifier.verify(host.certificate, Puppet::SSL::Host.localhost).first
+    response[:serial].should == host.certificate.content.serial
+  end
+
+  it "should expire verification result after ocsp_ttl seconds" do
+    Puppet.settings[:ocsp_ttl] = 3600
+    host = make_certs('certificate').first
+    Time.stubs(:now).returns(Time.utc(2011,11,27,15,34,23))
+
+    response = Puppet::SSL::Ocsp::Verifier.verify(host.certificate, Puppet::SSL::Host.localhost).first
+    response[:serial].should == host.certificate.content.serial
+
+    Time.stubs(:now).returns(Time.utc(2011,11,27,16,34,24))
+
+    Puppet::SSL::Ocsp::Response.any_instance.expects(:verify).returns([{:valid => true}])
+
+    response = Puppet::SSL::Ocsp::Verifier.verify(host.certificate, Puppet::SSL::Host.localhost).first
   end
 end

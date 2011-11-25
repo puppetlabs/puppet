@@ -26,6 +26,10 @@ describe Puppet::Face[:ocsp, '0.0.1'] do
 
   end
 
+  after do
+    Puppet::SSL::Ocsp::Verifier.expire!
+  end
+
   def make_certs(*crt_names)
     Array(crt_names).map do |name|
       a = Puppet::SSL::Host.new(name) ; a.generate ; a
