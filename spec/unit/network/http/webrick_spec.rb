@@ -332,5 +332,31 @@ describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_wi
     it "should set the certificate name to 'nil'" do
       @server.setup_ssl[:SSLCertName].should be_nil
     end
+
+    it "should install a verify_callback for ocsp verification" do
+      Puppet.settings[:ocsp_verification] = true
+      @server.setup_ssl[:SSLVerifyCallback].should_not be_nil
+    end
+
+    it "should not install a verify_callback if ocsp is disabled" do
+      Puppet.settings[:ocsp_verification] = false
+      @server.setup_ssl[:SSLVerifyCallback].should be_nil
+    end
+
+    describe "verify callback" do
+      it "should trigger an ocsp verification" do
+        Puppet.settings[:ocsp_verification] = true
+        ctx = stub 'x509 store context'
+        @host.expects(:ocsp_verify).with(true, ctx)
+        @server.setup_ssl[:SSLVerifyCallback].call(true, ctx)
+      end
+
+      it "should return the ocsp verification result" do
+        Puppet.settings[:ocsp_verification] = true
+        ctx = stub 'x509 store context'
+        @host.stubs(:ocsp_verify).with(true, ctx).returns(false)
+        @server.setup_ssl[:SSLVerifyCallback].call(true, ctx).should be_false
+      end
+    end
   end
 end

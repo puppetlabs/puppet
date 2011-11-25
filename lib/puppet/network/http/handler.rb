@@ -5,6 +5,7 @@ require 'puppet/network/http/api/v1'
 require 'puppet/network/rest_authorization'
 require 'puppet/network/rights'
 require 'resolv'
+require 'puppet/ssl/ocsp/verifier'
 
 module Puppet::Network::HTTP::Handler
   include Puppet::Network::HTTP::API::V1
@@ -61,6 +62,7 @@ module Puppet::Network::HTTP::Handler
 
   # handle an HTTP request
   def process(request, response)
+    ocsp_verification(request)
     indirection, method, key, params = uri2indirection(http_method(request), path(request), params(request))
 
     check_authorization(indirection, method, key, params)
@@ -215,6 +217,25 @@ module Puppet::Network::HTTP::Handler
 
   def params(request)
     raise NotImplementedError
+  end
+
+  def certificate(request)
+    # this is the default for webrick which performs the ocsp verification
+    # through the SSLSocket context, in which case we should skip
+    # ocsp verification at the HTTP level.
+    nil
+  end
+
+  def ocsp_verification(request)
+    return unless Puppet.settings[:ocsp_verification]
+    return unless current_cert = certificate(request)
+    begin
+      status = Puppet::SSL::Ocsp::Verifier.verify(current_cert, Puppet::SSL::Host.localhost)
+      raise Puppet::Network::AuthorizationError, "Certificate #{current_cert.subject} invalid" unless status[0][:valid]
+    rescue Puppet::SSL::Ocsp::Response::VerificationError => e
+      Puppet.warning "OCSP verification failed for #{current_cert.subject} because #{e}"
+      raise Puppet::Network::AuthorizationError, e.to_s
+    end
   end
 
   def decode_params(params)

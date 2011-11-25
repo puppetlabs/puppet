@@ -517,6 +517,17 @@ EOT
       message of the client verification. Only used with Mongrel.  This header must be set by the proxy
       to 'SUCCESS' if the client successfully authenticated, and anything else otherwise.
       See http://projects.puppetlabs.com/projects/puppet/wiki/Using_Mongrel for more information."],
+    :ssl_client_certificate_header => ["HTTP_X_CLIENT_CERTIFICATE", "The header containing the client certificate. 
+      Only used with Mongrel and Rack.  This header must be set by the proxy
+      to the client certificate if the client is successfully authenticated, and and empty string otherwise.
+      For Nginx/mongrel this can be done with this nginx.conf directive:
+        proxy_set_header X-Client-Certificate $ssl_client_cert;
+
+      For apache/passenger setups this can be done with:
+        SetEnv HTTP_X_CLIENT_CERTIFICATE %{SSL_CLIENT_CERTIFICATE}e
+      or
+        SSLOptions +StdEnv +ExportCertData
+        (this one requires changing this option value to HTTP_SSL_CLIENT_CERTIFICATE)."],
     # To make sure this directory is created before we try to use it on the server, we need
     # it to be in the server section (#1138).
     :yamldir => {:default => "$vardir/yaml", :owner => "service", :group => "service", :mode => "750",

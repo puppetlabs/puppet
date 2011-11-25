@@ -67,6 +67,11 @@ class Puppet::Network::HTTP::RackREST < Puppet::Network::HTTP::RackHttpHandler
     result.merge(extract_client_info(request))
   end
 
+  def certificate(request)
+    return unless certificate = request.env[Puppet[:ssl_client_certificate_header]]
+    Puppet::SSL::Certificate.from_s(certificate.gsub("\t",''))
+  end
+
   # what path was requested? (this is, without any query parameters)
   def path(request)
     request.path
