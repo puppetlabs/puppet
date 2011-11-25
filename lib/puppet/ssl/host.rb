@@ -5,6 +5,7 @@ require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
 require 'puppet/ssl/ocsp/request'
+require 'puppet/ssl/ocsp/verifier'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -253,6 +254,17 @@ ERROR_STRING
     key.content.public_key
   end
 
+  def ocsp_verify(ok, store_context)
+    return ok unless ok
+    begin
+      status = Puppet::SSL::Ocsp::Verifier.verify(store_context.current_cert, self)
+      return status[0][:valid]
+    rescue Puppet::SSL::Ocsp::Response::VerificationError => e
+      Puppet.warning "OCSP verification failed for #{store_context.current_cert.subject} because #{e}"
+      false
+    end
+  end
+
   # Create/return a store that uses our SSL info to validate
   # connections.
   def ssl_store(purpose = OpenSSL::X509::PURPOSE_ANY)
@@ -264,12 +276,11 @@ ERROR_STRING
       # a lookup in the middle of setting our ssl connection.
       @ssl_store.add_file(Puppet[:localcacert])
 
-      # If there's a CRL, add it to our store.
-      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+      # If there's a CRL, add it to our store, unless we're doing OCSP verification
+      if not Puppet.settings[:ocsp_verification] and crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
         @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
         @ssl_store.add_crl(crl.content)
       end
-      return @ssl_store
     end
     @ssl_store
   end

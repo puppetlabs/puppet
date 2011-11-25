@@ -27,8 +27,11 @@ module Puppet::SSL::Ocsp::Responder
     serial = candidate.serial
     return ocsp_response(request, ca_cert, ca.host.key.content) unless candidate.cmp_issuer(cacid)
 
-    # Let's now check if our cert has been revoked
+    # Let's now check if our cert has been revoked (we can't use ca.crl here because the CA is caching
+    # the CRL without a way to expire it)
     return ocsp_internal_error_response unless crl = Puppet::SSL::CertificateRevocationList.indirection.find(Puppet::SSL::CA_NAME)
+
+    Puppet.debug "Answering OCSP response for #{candidate.serial}"
 
     ocsp_response(request, candidate, ca_cert, ca.host.key.content, crl.content.revoked.find { |r| r.serial == serial })
   end
@@ -50,9 +53,11 @@ module Puppet::SSL::Ocsp::Responder
       reason = revoked.extensions.select { |ext| ext.oid == 'CRLReason' }.map { |ext| ext.value }
       # there seems to be an openssl bug, where add_status doesn't use absolute time but relative time
       # to now. That means there are great chances the revoked time will be be wrong in the response
+      Puppet.debug("OCSP: certificate #{certid.serial} has been revoked because #{reason}")
       basic_response.add_status(certid, OpenSSL::OCSP::V_CERTSTATUS_REVOKED, Puppet::SSL::Ocsp.reason_to_code(reason), revoked.time, 0, Puppet.settings[:ocsp_ttl], nil)
     else
       # certificate is not in the CRL
+      Puppet.debug("OCSP: certificate #{certid.serial} is good")
       basic_response.add_status(certid, OpenSSL::OCSP::V_CERTSTATUS_GOOD, 0, nil, 0, Puppet.settings[:ocsp_ttl], nil)
     end
 

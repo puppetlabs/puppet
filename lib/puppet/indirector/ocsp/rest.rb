@@ -6,4 +6,8 @@ class Puppet::Indirector::Ocsp::Rest < Puppet::Indirector::REST
 
   use_server_setting(:ca_server)
   use_port_setting(:ca_port)
+
+  # do not even try to verify the connection we use for ocsp_verification
+  # otherwise we'll loop forever :)
+  disable_ocsp_verification
 end
