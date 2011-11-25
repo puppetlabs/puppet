@@ -39,13 +39,8 @@ Puppet::Indirector::Face.define(:ocsp, '0.0.1') do
 
       Puppet::SSL::Host.ca_location = :remote
 
-      request = Puppet::SSL::Ocsp::Request.new('fake').generate(to_check, cert, key, ca)
-      yaml = Puppet::SSL::Ocsp::Request.indirection.save(request)
-      # normally in a remote REST scenario YAML is returned for save
-      # but when testing an instance of the Puppet::SSL::Ocsp::Response is returned
-      response = yaml.is_a?(String) ? Puppet::SSL::Ocsp::Response.from_yaml(yaml) : Puppet::SSL::Ocsp::Response.new("n/a").content = yaml
       begin
-        status = response.verify(request)
+        status = Puppet::SSL::Ocsp::Verifier.verify(to_check, Puppet::SSL::Host.localhost)
         if status[0][:valid]
           { :host => certificate, :valid => true, :response => status }
         else

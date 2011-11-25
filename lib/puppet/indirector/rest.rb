@@ -32,6 +32,18 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     Puppet.settings[port_setting || :masterport].to_i
   end
 
+  def self.disable_ocsp_verification
+    @ocsp_verification = false
+  end
+
+  def self.enable_ocsp_verification
+    @ocsp_verification = true
+  end
+
+  def self.ocsp_verification_enabled?
+    @ocsp_verification.nil? ? true : @ocsp_verification
+  end
+
   # Figure out the content type, turn that into a format, and use the format
   # to extract the body of the response.
   def deserialize(response, multiple = false)
@@ -88,6 +100,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
     #
     http_connection.verify_callback = proc do |preverify_ok, ssl_context|
       peer_certs << Puppet::SSL::Certificate.from_s(ssl_context.current_cert.to_pem)
+      preverify_ok = Puppet::SSL::Host.localhost.ocsp_verify(preverify_ok, ssl_context) if self.class.ocsp_verification_enabled? and Puppet.settings[:ocsp_verification]
       preverify_ok
     end
 

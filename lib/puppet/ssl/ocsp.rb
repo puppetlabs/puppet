@@ -26,3 +26,4 @@ class Puppet::SSL::Ocsp
     REASONSTR_TO_CODE.invert[code]
   end
 end
+
