@@ -34,6 +34,11 @@ class Puppet::Network::HTTP::MongrelREST < Mongrel::HttpHandler
     params.merge(client_info(request))
   end
 
+  def certificate(request)
+    return unless certificate = request.params[Puppet[:ssl_client_certificate_header]]
+    Puppet::SSL::Certificate.from_s(certificate.gsub("\t",''))
+  end
+
   # what path was requested?
   def path(request)
     # LAK:NOTE See http://snurl.com/21zf8  [groups_google_com]

@@ -125,6 +125,39 @@ describe Puppet::Network::HTTP::Handler do
       @handler.request_format(@request).should == "s"
     end
 
+    describe "during ocsp verification" do
+      before(:each) do
+        @host = stub 'host'
+        @certificate = stub_everything 'certificate'
+        @handler.stubs(:certificate).returns @certificate
+        Puppet::SSL::Host.stubs(:localhost).returns(@host)
+        Puppet.settings[:ocsp_verification] = true
+      end
+
+      it "should not perform the verification if disabled" do
+        Puppet.settings[:ocsp_verification] = false
+        Puppet::SSL::Ocsp::Verifier.expects(:verify).never
+        @handler.process(@request, @response)
+      end
+
+      it "should perform an ocsp verification if enabled" do
+        Puppet::SSL::Ocsp::Verifier.expects(:verify).with(@certificate, @host)
+        @handler.process(@request, @response)
+      end
+
+      it "should return an HTTP error if certificate has been revoked" do
+        Puppet::SSL::Ocsp::Verifier.expects(:verify).with(@certificate, @host).returns([{:valid => false}])
+        @handler.expects(:set_response).with { |response, body, status| status == 403 }
+        @handler.process(@request, @response)
+      end
+
+      it "should return an HTTP authorization error if verification failed" do
+        Puppet::SSL::Ocsp::Verifier.expects(:verify).with(@certificate, @host).raises(Puppet::SSL::Ocsp::Response::VerificationError)
+        @handler.expects(:set_response).with { |response, body, status| status == 403 }
+        @handler.process(@request, @response)
+      end
+    end
+
     describe "when finding a model instance" do
       before do
         @indirection.stubs(:find).returns @result

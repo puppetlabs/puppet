@@ -102,6 +102,12 @@ class Puppet::Network::HTTP::WEBrick
 
     results[:SSLCertificateStore] = host.ssl_store
 
+    if Puppet[:ocsp_verification]
+      results[:SSLVerifyCallback] = proc do |ok, ctx|
+        Puppet::SSL::Host.localhost.ocsp_verify(ok, ctx)
+      end
+    end
+
     results
   end
 end
