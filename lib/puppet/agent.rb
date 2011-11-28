@@ -46,7 +46,7 @@ class Puppet::Agent
       end
       true
     end
-    Puppet.notice "Shutdown/restart in progress; skipping run" unless block_run
+    Puppet.notice "Shutdown/restart in progress (#{Puppet::Application.run_status.inspect}); skipping run" unless block_run
     result
   end
 
