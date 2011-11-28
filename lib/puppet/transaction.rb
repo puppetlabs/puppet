@@ -92,8 +92,7 @@ class Puppet::Transaction
   # collects all of the changes, executes them, and responds to any
   # necessary events.
   def evaluate
-    # Add any dynamically generated resources
-    xgenerate
+    add_dynamically_generated_resources
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
@@ -221,9 +220,7 @@ class Puppet::Transaction
     end
   end
 
-  # Collect any dynamically generated resources.  This method is called
-  # before the transaction starts.
-  def xgenerate
+  def add_dynamically_generated_resources
     @catalog.vertices.each { |resource| generate_additional_resources(resource) }
   end
 

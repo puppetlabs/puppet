@@ -263,7 +263,7 @@ class TestTransactions < Test::Unit::TestCase
       str = "from #{before} to #{after}"
 
        assert_nothing_raised("Failed to create graph #{str}") do
-         trans.xgenerate
+         trans.add_dynamically_generated_resources
        end
 
 
