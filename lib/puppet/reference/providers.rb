@@ -35,11 +35,7 @@ providers = Puppet::Util::Reference.newreference :providers, :title => "Provider
 
     functional = false
     notes = []
-    begin
-      default = type.defaultprovider.name
-    rescue Puppet::DevError
-      default = "none"
-    end
+    default = type.defaultprovider ? type.defaultprovider.name : 'none'
     type.providers.sort { |a,b| a.to_s <=> b.to_s }.each do |pname|
       data = []
       table_data[pname] = data

@@ -92,7 +92,7 @@ class Puppet::Transaction
   # collects all of the changes, executes them, and responds to any
   # necessary events.
   def evaluate
-    prepare
+    add_dynamically_generated_resources
 
     Puppet.info "Applying configuration version '#{catalog.version}'" if catalog.version
 
@@ -220,9 +220,7 @@ class Puppet::Transaction
     end
   end
 
-  # Collect any dynamically generated resources.  This method is called
-  # before the transaction starts.
-  def xgenerate
+  def add_dynamically_generated_resources
     @catalog.vertices.each { |resource| generate_additional_resources(resource) }
   end
 
@@ -241,41 +239,56 @@ class Puppet::Transaction
     @event_manager = Puppet::Transaction::EventManager.new(self)
 
     @resource_harness = Puppet::Transaction::ResourceHarness.new(self)
+
+    @prefetched_providers = Hash.new { |h,k| h[k] = {} }
   end
 
-  # Prefetch any providers that support it.  We don't support prefetching
+  def resources_by_provider(type_name, provider_name)
+    unless @resources_by_provider
+      @resources_by_provider = Hash.new { |h, k| h[k] = Hash.new { |h, k| h[k] = {} } }
+
+      @catalog.vertices.each do |resource|
+        if resource.class.attrclass(:provider)
+          prov = resource.provider && resource.provider.class.name
+          @resources_by_provider[resource.type][prov][resource.name] = resource
+        end
+      end
+    end
+
+    @resources_by_provider[type_name][provider_name] || {}
+  end
+
+  def prefetch_if_necessary(resource)
+    provider_class = resource.provider.class
+    return unless provider_class.respond_to?(:prefetch) and !prefetched_providers[resource.type][provider_class.name]
+
+    resources = resources_by_provider(resource.type, provider_class.name)
+
+    if provider_class == resource.class.defaultprovider
+      providerless_resources = resources_by_provider(resource.type, nil)
+      providerless_resources.values.each {|res| res.provider = provider_class.name}
+      resources.merge! providerless_resources
+    end
+
+    prefetch(provider_class, resources)
+  end
+
+  attr_reader :prefetched_providers
+
+  # Prefetch any providers that support it, yo.  We don't support prefetching
   # types, just providers.
-  def prefetch
-    prefetchers = {}
-    @catalog.vertices.each do |resource|
-      if provider = resource.provider and provider.class.respond_to?(:prefetch)
-        prefetchers[provider.class] ||= {}
-        prefetchers[provider.class][resource.name] = resource
-      end
+  def prefetch(provider_class, resources)
+    type_name = provider_class.resource_type.name
+    return if @prefetched_providers[type_name][provider_class.name]
+    Puppet.debug "Prefetching #{provider_class.name} resources for #{type_name}"
+    begin
+      provider_class.prefetch(resources)
+    rescue => detail
+      puts detail.backtrace if Puppet[:trace]
+      Puppet.err "Could not prefetch #{type_name} provider '#{provider_class.name}': #{detail}"
     end
-
-    # Now call prefetch, passing in the resources so that the provider instances can be replaced.
-    prefetchers.each do |provider, resources|
-      Puppet.debug "Prefetching #{provider.name} resources for #{provider.resource_type.name}"
-      begin
-        provider.prefetch(resources)
-      rescue => detail
-        puts detail.backtrace if Puppet[:trace]
-        Puppet.err "Could not prefetch #{provider.resource_type.name} provider '#{provider.name}': #{detail}"
-      end
-    end
+    @prefetched_providers[type_name][provider_class.name] = true
   end
-
-  # Prepare to evaluate the resources in a transaction.
-  def prepare
-    # Now add any dynamically generated resources
-    xgenerate
-
-    # Then prefetch.  It's important that we generate and then prefetch,
-    # so that any generated resources also get prefetched.
-    prefetch
-  end
-
 
   # We want to monitor changes in the relationship graph of our
   # catalog but this is complicated by the fact that the catalog
@@ -303,6 +316,7 @@ class Puppet::Transaction
       @done = {}
       @blockers = {}
       @unguessable_deterministic_key = Hash.new { |h,k| h[k] = Digest::SHA1.hexdigest("NaCl, MgSO4 (salts) and then #{k.ref}") }
+      @providerless_types = []
       vertices.each do |v|
         blockers[v] = direct_dependencies_of(v).length
         enqueue(v) if blockers[v] == 0
@@ -321,20 +335,28 @@ class Puppet::Transaction
 
       real_graph.add_edge(f,t,label)
     end
-    # Decrement the blocker count for resource r by 1. If the number of
+    # Decrement the blocker count for the resource by 1. If the number of
     # blockers is unknown, count them and THEN decrement by 1.
-    def unblock(r)
-      blockers[r] ||= direct_dependencies_of(r).select { |r2| !done[r2] }.length
-      if blockers[r] > 0
-        blockers[r] -= 1
+    def unblock(resource)
+      blockers[resource] ||= direct_dependencies_of(resource).select { |r2| !done[r2] }.length
+      if blockers[resource] > 0
+        blockers[resource] -= 1
       else
-        r.warning "appears to have a negative number of dependencies"
+        resource.warning "appears to have a negative number of dependencies"
       end
-      blockers[r] <= 0
+      blockers[resource] <= 0
     end
-    def enqueue(r)
-      key = unguessable_deterministic_key[r]
-      ready[key] = r
+    def enqueue(*resources)
+      resources.each do |resource|
+        key = unguessable_deterministic_key[resource]
+        ready[key] = resource
+      end
+    end
+    def finish(resource)
+      direct_dependents_of(resource).each do |v|
+        enqueue(v) if unblock(v)
+      end
+      done[resource] = true
     end
     def next_resource
       ready.delete_min
@@ -342,18 +364,57 @@ class Puppet::Transaction
     def traverse(&block)
       real_graph.report_cycles_in_graph
 
-      while (r = next_resource) && !transaction.stop_processing?
-        # If we generated resources, we don't know what they are now
-        # blocking, so we opt to recompute it, rather than try to track every
-        # change that would affect the number.
-        blockers.clear if transaction.eval_generate(r)
+      deferred_resources = []
 
-        yield r
+      while (resource = next_resource) && !transaction.stop_processing?
+        if resource.suitable?
+          made_progress = true
 
-        direct_dependents_of(r).each do |v|
-          enqueue(v) if unblock(v)
+          transaction.prefetch_if_necessary(resource)
+
+          # If we generated resources, we don't know what they are now
+          # blocking, so we opt to recompute it, rather than try to track every
+          # change that would affect the number.
+          blockers.clear if transaction.eval_generate(resource)
+
+          yield resource
+
+          finish(resource)
+        else
+          deferred_resources << resource
         end
-        done[r] = true
+
+        if ready.empty? and deferred_resources.any?
+          if made_progress
+            enqueue(*deferred_resources)
+          else
+            fail_unsuitable_resources(deferred_resources)
+          end
+
+          made_progress = false
+          deferred_resources = []
+        end
+      end
+
+      # Just once per type. No need to punish the user.
+      @providerless_types.uniq.each do |type|
+        Puppet.err "Could not find a suitable provider for #{type}"
+      end
+    end
+
+    def fail_unsuitable_resources(resources)
+      resources.each do |resource|
+        # We don't automatically assign unsuitable providers, so if there
+        # is one, it must have been selected by the user.
+        if resource.provider
+          resource.err "Provider #{resource.provider.class.name} is not functional on this host"
+        else
+          @providerless_types << resource.type
+        end
+
+        transaction.resource_status(resource).failed = true
+
+        finish(resource)
       end
     end
   end
