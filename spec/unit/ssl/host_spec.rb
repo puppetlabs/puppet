@@ -607,8 +607,9 @@ describe Puppet::SSL::Host do
 
       it "should use the CA to sign its certificate request if it does not have a certificate" do
         @host.expects(:certificate).returns nil
+        @host.stubs(:default_alt_names).returns %w[foo bar]
 
-        @ca.expects(:sign).with(@host.name, true)
+        @ca.expects(:sign).with(@host.name, true, nil, %w[foo bar])
 
         @host.generate
       end
@@ -624,6 +625,55 @@ describe Puppet::SSL::Host do
 
         @host.generate
       end
+
+      it "should never include default alt names" do
+        @host.expects(:certificate).returns nil
+        @host.expects(:default_alt_names).never
+
+        @host.generate
+      end
+    end
+  end
+
+  describe "#default_alt_names" do
+    it "should return nil if we're not the CA" do
+      Puppet.stubs(:[]).with(:ca).returns false
+
+      @host.default_alt_names.should be_nil
+    end
+
+    it "should return nil if we're not a master" do
+      Puppet.stubs(:[]).with(:ca).returns true
+      Puppet.run_mode.stubs(:master?).returns false
+
+      @host.default_alt_names.should be_nil
+    end
+
+    it "should return nil when cert is for another host" do
+      Puppet.stubs(:[]).with(:ca).returns true
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet.stubs(:[]).with(:certname).returns 'me'
+      @host.stubs(:name).returns 'not-me'
+
+      @host.default_alt_names.should be_nil
+    end
+
+    it "should return nil when we can't resolve our fqdn" do
+      Puppet.stubs(:[]).with(:ca).returns true
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet.stubs(:[]).with(:certname).returns @host.name
+      Facter.stubs(:value).with(:fqdn).returns nil
+
+      @host.default_alt_names.should be_nil
+    end
+
+    it "should provide default alt names when we're the local master" do
+      Puppet.stubs(:[]).with(:ca).returns true
+      Puppet.run_mode.stubs(:master?).returns true
+      Puppet.stubs(:[]).with(:certname).returns @host.name
+      Facter.stubs(:value).with(:fqdn).returns 'web.foo.com'
+
+      @host.default_alt_names.should =~ %w[puppet web.foo.com puppet.foo.com]
     end
   end
 

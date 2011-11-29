@@ -123,5 +123,29 @@ describe Puppet::SSL::CertificateFactory do
         bc.value.split(/\s*,\s*/).should =~ Array(value)
       end
     end
+
+    it "should only add default subject alt names" do
+      expect = %w{one two}
+
+      cert = subject.build(:server, csr, issuer, serial, expect)
+      san = cert.extensions.find {|x| x.oid == 'subjectAltName' }
+
+      san.value.split(/\s*,\s*/).should =~ expect.map{|name| "DNS:#{name}"}
+    end
+
+    it "should not overwrite subject alt names from the CSR" do
+      expect = %w{one two}
+      default_alt_names = %w{three four}
+
+      csr = Puppet::SSL::CertificateRequest.new(name)
+      csr.generate(key, :dns_alt_names => expect.join(', '))
+
+      cert = subject.build(:server, csr, issuer, serial, default_alt_names)
+      san = cert.extensions.find {|x| x.oid == 'subjectAltName' }
+      san.should_not be_nil
+      expect.each do |name|
+        san.value.should =~ /DNS:#{name}\b/i
+      end
+    end
   end
 end

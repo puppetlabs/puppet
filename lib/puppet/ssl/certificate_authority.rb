@@ -243,7 +243,7 @@ class Puppet::SSL::CertificateAuthority
   end
 
   # Sign a given certificate request.
-  def sign(hostname, allow_dns_alt_names = false, self_signing_csr = nil)
+  def sign(hostname, allow_dns_alt_names = false, self_signing_csr = nil, default_alt_names = nil)
     # This is a self-signed certificate
     if self_signing_csr
       # # This is a self-signed certificate, which is for the CA.  Since this
@@ -270,7 +270,7 @@ class Puppet::SSL::CertificateAuthority
 
     cert = Puppet::SSL::Certificate.new(hostname)
     cert.content = Puppet::SSL::CertificateFactory.
-      build(cert_type, csr, issuer, next_serial)
+      build(cert_type, csr, issuer, next_serial, default_alt_names)
     cert.content.sign(host.key.content, OpenSSL::Digest::SHA1.new)
 
     Puppet.notice "Signed certificate request for #{hostname}"

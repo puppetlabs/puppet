@@ -329,6 +329,13 @@ describe Puppet::SSL::CertificateAuthority do
         @ca.sign(@name, :ca, @request)
       end
 
+      it "should pass nil for the default subject alt names" do
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
+          args[4] == nil
+        end.returns "my real cert"
+        @ca.sign(@name, :ca, @request)
+      end
+
       it "should sign the certificate request even if it contains alt names" do
         @request.stubs(:subject_alt_names).returns %w[DNS:foo DNS:bar DNS:baz]
 
@@ -413,6 +420,13 @@ describe Puppet::SSL::CertificateAuthority do
           args[3] == @serial
         end.returns "my real cert"
         @ca.sign(@name)
+      end
+
+      it "should pass the default subject alt names" do
+        Puppet::SSL::CertificateFactory.expects(:build).with do |*args|
+          args[4] == %w[blarg]
+        end.returns "my real cert"
+        @ca.sign(@name, :server, @request, %w[blarg])
       end
 
       it "should sign the resulting certificate using its real key and a digest" do

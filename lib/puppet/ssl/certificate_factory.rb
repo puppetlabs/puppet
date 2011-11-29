@@ -11,7 +11,7 @@ module Puppet::SSL::CertificateFactory
     "s" => 1
   }
 
-  def self.build(cert_type, csr, issuer, serial)
+  def self.build(cert_type, csr, issuer, serial, default_alt_names = nil)
     # Work out if we can even build the requested type of certificate.
     build_extensions = "build_#{cert_type.to_s}_extensions"
     respond_to?(build_extensions) or
@@ -34,7 +34,13 @@ module Puppet::SSL::CertificateFactory
     cert.not_before = Time.now - (60*60*24)
     cert.not_after  = Time.now + ttl
 
-    add_extensions_to(cert, csr, issuer, send(build_extensions))
+    extensions = send(build_extensions)
+
+    if csr.subject_alt_names.empty? and default_alt_names and ! default_alt_names.empty?
+      extensions['subjectAltName'] = default_alt_names.map{|name| "DNS:#{name}"}.join(", ")
+    end
+
+    add_extensions_to(cert, csr, issuer, extensions)
 
     return cert
   end

@@ -198,7 +198,7 @@ class Puppet::SSL::Host
     # should use it to sign our request; else, just try to read
     # the cert.
     if ! certificate and ca = Puppet::SSL::CertificateAuthority.instance
-      ca.sign(self.name, true)
+      ca.sign(self.name, true, nil, default_alt_names)
     end
   end
 
@@ -206,6 +206,18 @@ class Puppet::SSL::Host
     @name = (name || Puppet[:certname]).downcase
     @key = @certificate = @certificate_request = nil
     @ca = (name == self.class.ca_name)
+  end
+
+  def default_alt_names
+    return unless Puppet::SSL::CertificateAuthority.ca?
+    return unless this_csr_is_for_the_current_host
+    return unless fqdn = Facter.value(:fqdn)
+
+    alt_names = []
+    alt_names << "puppet" # add 'puppet' as an alias
+    alt_names << fqdn     # add the fqdn as an alias
+    alt_names << fqdn.sub(/^[^.]+./, "puppet.") # add puppet.domain as an alias
+    alt_names
   end
 
   # Extract the public key from the private key.
