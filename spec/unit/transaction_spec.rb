@@ -343,6 +343,39 @@ describe Puppet::Transaction do
     end
   end
 
+  describe "#finish" do
+    let(:graph) { @transaction.relationship_graph }
+    let(:path) { tmpdir('eval_generate') }
+    let(:resource) { Puppet::Type.type(:file).new(:path => path, :recurse => true) }
+
+    before :each do
+      @transaction.catalog.add_resource(resource)
+    end
+
+    it "should unblock the resource's dependents and queue them if ready" do
+      dependent = Puppet::Type.type(:file).new(:path => tmpfile('dependent'), :require => resource)
+      more_dependent = Puppet::Type.type(:file).new(:path => tmpfile('more_dependent'), :require => [resource, dependent])
+      @transaction.catalog.add_resource(dependent, more_dependent)
+
+      graph.finish(resource)
+
+      graph.blockers[dependent].should == 0
+      graph.blockers[more_dependent].should == 1
+
+      key = graph.unguessable_deterministic_key[dependent]
+
+      graph.ready[key].must == dependent
+
+      graph.ready.should_not be_has_key(graph.unguessable_deterministic_key[more_dependent])
+    end
+
+    it "should mark the resource as done" do
+      graph.finish(resource)
+
+      graph.done[resource].should == true
+    end
+  end
+
   describe "when traversing" do
     let(:graph) { @transaction.relationship_graph }
     let(:path) { tmpdir('eval_generate') }
@@ -376,6 +409,12 @@ describe Puppet::Transaction do
       end
 
       yielded.should == true
+    end
+
+    it "should prefetch the provider if necessary" do
+      @transaction.expects(:prefetch_if_necessary).with(resource)
+
+      graph.traverse {}
     end
 
     it "should not clear blockers if resources aren't added" do
@@ -434,6 +473,40 @@ describe Puppet::Transaction do
       graph.traverse {}
 
       graph.done[resource].should == true
+    end
+
+    it "should not evaluate the resource if it's not suitable" do
+      resource.stubs(:suitable?).returns false
+
+      graph.traverse do |resource|
+        raise "evaluated a resource"
+      end
+    end
+
+    it "should defer an unsuitable resource unless it can't go on" do
+      other = Puppet::Type.type(:notify).new(:name => "hello")
+      @transaction.catalog.add_resource(other)
+
+      # Show that we check once, then get the resource back and check again
+      resource.expects(:suitable?).twice.returns(false).then.returns(true)
+
+      graph.traverse {}
+    end
+
+    it "should fail unsuitable resources and go on if it gets blocked" do
+      dependent = Puppet::Type.type(:notify).new(:name => "hello", :require => resource)
+      @transaction.catalog.add_resource(dependent)
+
+      resource.stubs(:suitable?).returns false
+
+      evaluated = []
+      graph.traverse do |res|
+        evaluated << res
+      end
+
+      # We should have gone on to evaluate the children
+      evaluated.should == [dependent]
+      @transaction.resource_status(resource).should be_failed
     end
   end
 
@@ -606,17 +679,72 @@ describe Puppet::Transaction do
   end
 
   describe "when prefetching" do
+    let(:catalog) { Puppet::Resource::Catalog.new }
+    let(:transaction) { Puppet::Transaction.new(catalog) }
+    let(:resource) { Puppet::Type.type(:sshkey).create :title => "foo", :name => "bar", :type => :dsa, :key => "eh", :provider => :parsed }
+    let(:resource2) { Puppet::Type.type(:package).create :title => "blah", :provider => "apt" }
+
+    before :each do
+      catalog.add_resource resource
+      catalog.add_resource resource2
+    end
+
+
+    describe "#resources_by_provider" do
+      it "should fetch resources by their type and provider" do
+        transaction.resources_by_provider(:sshkey, :parsed).should == {
+          resource.name => resource,
+        }
+
+        transaction.resources_by_provider(:package, :apt).should == {
+          resource2.name => resource2,
+        }
+      end
+
+      it "should omit resources whose types don't use providers" do
+        # faking the sshkey type not to have a provider
+        resource.class.stubs(:attrclass).returns nil
+
+        transaction.resources_by_provider(:sshkey, :parsed).should == {}
+      end
+
+      it "should return empty hash for providers with no resources" do
+        transaction.resources_by_provider(:package, :yum).should == {}
+      end
+    end
+
     it "should match resources by name, not title" do
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
-
-      # Have both a title and name
-      resource = Puppet::Type.type(:sshkey).create :title => "foo", :name => "bar", :type => :dsa, :key => "eh"
-      @catalog.add_resource resource
-
       resource.provider.class.expects(:prefetch).with("bar" => resource)
 
-      @transaction.prefetch
+      transaction.prefetch_if_necessary(resource)
+    end
+
+    it "should not prefetch a provider which has already been prefetched" do
+      transaction.prefetched_providers[:sshkey][:parsed] = true
+
+      resource.provider.class.expects(:prefetch).never
+
+      transaction.prefetch_if_necessary(resource)
+    end
+
+    it "should mark the provider prefetched" do
+      resource.provider.class.stubs(:prefetch)
+
+      transaction.prefetch_if_necessary(resource)
+
+      transaction.prefetched_providers[:sshkey][:parsed].should be_true
+    end
+
+    it "should prefetch resources without a provider if prefetching the default provider" do
+      other = Puppet::Type.type(:sshkey).create :name => "other"
+
+      other.instance_variable_set(:@provider, nil)
+
+      catalog.add_resource other
+
+      resource.provider.class.expects(:prefetch).with('bar' => resource, 'other' => other)
+
+      transaction.prefetch_if_necessary(resource)
     end
   end
 
@@ -662,7 +790,7 @@ describe Puppet::Transaction do
       before do
         @resource = Puppet::Type.type(:notify).new :title => "foobar"
         @catalog.add_resource @resource
-        @transaction.stubs(:prepare)
+        @transaction.stubs(:add_dynamically_generated_resources)
       end
 
       it 'should stop processing if :stop_processing? is true' do

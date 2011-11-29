@@ -98,14 +98,7 @@ class TestTransactions < Test::Unit::TestCase
     # Create a transaction
     trans = Puppet::Transaction.new(mk_catalog(inst))
 
-    # Make sure prefetch works
-    assert_nothing_raised do
-      trans.prefetch
-    end
-
-    assert_equal({inst.title => inst}, $prefetched, "type prefetch was not called")
-
-    # Now make sure it gets called from within evaluate
+    # Make sure it gets called from within evaluate
     $prefetched = false
     assert_nothing_raised do
       trans.evaluate
@@ -269,9 +262,10 @@ class TestTransactions < Test::Unit::TestCase
       trans = Puppet::Transaction.new(config)
       str = "from #{before} to #{after}"
 
-      assert_nothing_raised("Failed to create graph #{str}") do
-        trans.prepare
-      end
+       assert_nothing_raised("Failed to create graph #{str}") do
+         trans.add_dynamically_generated_resources
+       end
+
 
       graph = trans.relationship_graph
       assert(graph.edge?(before, after), "did not create manual relationship #{str}")
