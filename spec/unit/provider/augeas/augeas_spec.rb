@@ -587,4 +587,40 @@ describe provider_class do
       File.read(target).should =~ /PermitRootLogin no/
     end
   end
+
+  # Run initialisation tests of the real Augeas library to test our open_augeas
+  # method.  This relies on Augeas and ruby-augeas on the host to be
+  # functioning.
+  describe "augeas lib initialisation", :if => Puppet.features.augeas? do
+    # Expect lenses for fstab and hosts
+    it "should have loaded standard files by default" do
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == []
+    end
+
+    # Only the file specified should be loaded
+    it "should load one file if incl/lens used" do
+      @resource[:incl] = "/etc/hosts"
+      @resource[:lens] = "Hosts.lns"
+
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == []
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == []
+    end
+
+    it "should also load lenses from load_path" do
+      @resource[:load_path] = my_fixture_dir
+
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == ["/files/etc/test"]
+    end
+  end
 end
