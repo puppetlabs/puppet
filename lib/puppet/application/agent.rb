@@ -423,9 +423,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
-    # If noop is set, then also enable diffs
-    Puppet[:show_diff] = true if Puppet[:noop]
-
     args[:Server] = Puppet[:server]
     if options[:fqdn]
       args[:FQDN] = options[:fqdn]
