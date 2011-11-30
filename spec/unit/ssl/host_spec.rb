@@ -95,8 +95,6 @@ describe Puppet::SSL::Host do
 
   context "with dns_alt_names" do
     before :each do
-      Puppet[:dns_alt_names] = 'one, two'
-
       @key = stub('key content')
       key = stub('key', :generate => true, :content => @key)
       Puppet::SSL::Key.stubs(:new).returns key
@@ -107,17 +105,68 @@ describe Puppet::SSL::Host do
       Puppet::SSL::CertificateRequest.indirection.stubs(:save).with(@cr)
     end
 
-    it "should not include subjectAltName if not the local node" do
-      @cr.expects(:generate).with(@key, {})
+    describe "explicitly specified" do
+      before :each do
+        Puppet[:dns_alt_names] = 'one, two'
+      end
 
-      Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+      it "should not include subjectAltName if not the local node" do
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+      end
+
+      it "should include subjectAltName if I am a CA" do
+        @cr.expects(:generate).
+          with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+
+        Puppet::SSL::Host.localhost
+      end
     end
 
-    it "should include subjectAltName if I am a CA" do
-      @cr.expects(:generate).
-        with(@key, { :dns_alt_names => Puppet[:dns_alt_names] })
+    describe "implicitly defaulted" do
+      let(:ca) { stub('ca', :sign => nil) }
 
-      Puppet::SSL::Host.localhost
+      before :each do
+        Puppet[:dns_alt_names] = ''
+
+        Puppet::SSL::CertificateAuthority.stubs(:instance).returns ca
+      end
+
+      it "should not include defaults if we're not the CA" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns false
+
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.localhost
+      end
+
+      it "should not include defaults if not the local node" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.new('not-the-' + Puppet[:certname]).generate
+      end
+
+      it "should not include defaults if we can't resolve our fqdn" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+        Facter.stubs(:value).with(:fqdn).returns nil
+
+        @cr.expects(:generate).with(@key, {})
+
+        Puppet::SSL::Host.localhost
+      end
+
+      it "should provide defaults if we're bootstrapping the local master" do
+        Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
+        Facter.stubs(:value).with(:fqdn).returns 'web.foo.com'
+        Facter.stubs(:value).with(:domain).returns 'foo.com'
+
+        @cr.expects(:generate).with(@key, {:dns_alt_names => "puppet, web.foo.com, puppet.foo.com"})
+
+        Puppet::SSL::Host.localhost
+      end
     end
   end
 
