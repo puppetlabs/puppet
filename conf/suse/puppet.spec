@@ -4,13 +4,13 @@
 
 Summary: A network tool for managing many disparate systems
 Name: puppet
-Version: 2.7.7
-Release: 1%{?dist}
+Version: 2.7.8
+Release: 0.1rc1%{?dist}
 License: Apache 2.0
 Group:    Productivity/Networking/System
 
 URL: http://puppetlabs.com/projects/puppet/
-Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}.tar.gz
+Source0: http://puppetlabs.com/downloads/puppet/%{name}-%{version}rc1.tar.gz
 
 PreReq: %{insserv_prereq} %{fillup_prereq}
 Requires: ruby >= 1.8.2
@@ -35,7 +35,7 @@ Provides the central puppet server daemon which provides manifests to clients.
 The server can also function as a certificate authority and file server.
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}rc1
 
 %build
 for f in bin/* sbin/*; do
@@ -136,6 +136,9 @@ find %{buildroot}%{ruby_sitelibdir} -type f -perm +ugo+x -exec chmod a-x '{}' \;
 %{__rm} -rf %{buildroot}
 
 %changelog
+* Wed Nov 30 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.8-0.1rc1
+- Update for 2.7.8rc1
+
 * Mon Nov 21 2011 Michael Stahnke <stahnma@puppetlabs.com> - 2.7.7-1
 - Release 2.7.7
 
