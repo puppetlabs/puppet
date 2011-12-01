@@ -10,7 +10,6 @@ class Puppet::Application::Queue < Puppet::Application
     require 'puppet/daemon'
     @daemon = Puppet::Daemon.new
     @daemon.argv = ARGV.dup
-    Puppet::Util::Log.newdestination(:console)
 
     # Do an initial trap, so that cancels don't get a stack trace.
 
@@ -109,6 +108,26 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     HELP
   end
 
+  option("--logdest DEST", "-l DEST") do |arg|
+    begin
+      Puppet::Util::Log.newdestination(arg)
+      options[:setdest] = true
+    rescue => detail
+      puts detail.backtrace if Puppet[:debug]
+      $stderr.puts detail.to_s
+    end
+  end
+
+  option("--logdest DEST", "-l DEST") do |arg|
+    begin
+      Puppet::Util::Log.newdestination(arg)
+      options[:setdest] = true
+    rescue => detail
+      puts detail.backtrace if Puppet[:debug]
+      $stderr.puts detail.to_s
+    end
+  end
+
   def main
     require 'puppet/indirector/catalog/queue' # provides Puppet::Indirector::Queue.subscribe
     Puppet.notice "Starting puppetqd #{Puppet.version}"
@@ -139,6 +158,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         Puppet::Util::Log.level = :info
       end
     end
+    Puppet::Util::Log.newdestination(:syslog) unless options[:setdest]
   end
 
   def setup

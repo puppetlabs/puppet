@@ -1383,33 +1383,25 @@ class Type
 
   # Find the default provider.
   def self.defaultprovider
-    unless @defaultprovider
-      suitable = suitableprovider
+    return @defaultprovider if @defaultprovider
 
-      # Find which providers are a default for this system.
-      defaults = suitable.find_all { |provider| provider.default? }
+    suitable = suitableprovider
 
-      # If we don't have any default we use suitable providers
-      defaults = suitable if defaults.empty?
-      max = defaults.collect { |provider| provider.specificity }.max
-      defaults = defaults.find_all { |provider| provider.specificity == max }
+    # Find which providers are a default for this system.
+    defaults = suitable.find_all { |provider| provider.default? }
 
-      retval = nil
-      if defaults.length > 1
-        Puppet.warning(
-          "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
-        )
-        retval = defaults.shift
-      elsif defaults.length == 1
-        retval = defaults.shift
-      else
-        raise Puppet::DevError, "Could not find a default provider for #{self.name}"
-      end
+    # If we don't have any default we use suitable providers
+    defaults = suitable if defaults.empty?
+    max = defaults.collect { |provider| provider.specificity }.max
+    defaults = defaults.find_all { |provider| provider.specificity == max }
 
-      @defaultprovider = retval
+    if defaults.length > 1
+      Puppet.warning(
+        "Found multiple default providers for #{self.name}: #{defaults.collect { |i| i.name.to_s }.join(", ")}; using #{defaults[0].name}"
+      )
     end
 
-    @defaultprovider
+    @defaultprovider = defaults.shift unless defaults.empty?
   end
 
   def self.provider_hash_by_type(type)
@@ -1516,7 +1508,8 @@ class Type
       end
 
       defaultto {
-        @resource.class.defaultprovider.name
+        prov = @resource.class.defaultprovider
+        prov.name if prov
       }
 
       validate do |provider_class|
@@ -1558,6 +1551,24 @@ class Type
     }.collect { |name, provider|
       provider
     }.reject { |p| p.name == :fake } # For testing
+  end
+
+  def suitable?
+    # If we don't use providers, then we consider it suitable.
+    return true unless self.class.paramclass(:provider)
+
+    # We have a provider and it is suitable.
+    return true if provider && provider.class.suitable?
+
+    # We're using the default provider and there is one.
+    if !provider and self.class.defaultprovider
+      self.provider = self.class.defaultprovider.name
+      return true
+    end
+
+    # We specified an unsuitable provider, or there isn't any suitable
+    # provider.
+    false
   end
 
   def provider=(name)
