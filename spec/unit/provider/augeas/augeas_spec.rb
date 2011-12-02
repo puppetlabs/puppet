@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet/util/package'
 
 provider_class = Puppet::Type.type(:augeas).provider(:augeas)
 
@@ -622,6 +623,87 @@ describe provider_class do
       @augeas.expects(:get).with("/augeas/files/foo/error/message").returns("Failed to...")
       @provider.expects(:debug).times(3)
       @provider.print_put_errors
+    end
+  end
+
+  # Run initialisation tests of the real Augeas library to test our open_augeas
+  # method.  This relies on Augeas and ruby-augeas on the host to be
+  # functioning.
+  describe "augeas lib initialisation", :if => Puppet.features.augeas? do
+    before(:each) do
+      @resource = Puppet::Type.type(:augeas).new(
+        :name     => "test",
+        :root     => my_fixture_dir,
+        :provider => :augeas
+      )
+      @provider = provider_class.new(@resource)
+    end
+
+    after(:each) do
+      @provider.close_augeas
+    end
+
+    # Expect lenses for fstab and hosts
+    it "should have loaded standard files by default" do
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == []
+    end
+
+    # Only the file specified should be loaded
+    it "should load one file if incl/lens used" do
+      @resource[:incl] = "/etc/hosts"
+      @resource[:lens] = "Hosts.lns"
+
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == []
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == []
+    end
+
+    it "should also load lenses from load_path" do
+      @resource[:load_path] = my_fixture_dir
+
+      aug = @provider.open_augeas
+      aug.should_not == nil
+      aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+      aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      aug.match("/files/etc/test").should == ["/files/etc/test"]
+    end
+
+    # Optimisations added for Augeas 0.8.2 or higher is available, see #7285
+    describe ">= 0.8.2 optimisations", :if => Puppet.features.augeas? && Puppet::Util::Package.versioncmp(Facter.value(:augeasversion), "0.8.2") >= 0 do
+      it "should only load one file if relevant context given" do
+        @resource[:context] = "/files/etc/fstab"
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+        aug.match("/files/etc/hosts").should == []
+      end
+
+      it "should only load one lens from load_path if context given" do
+        @resource[:context] = "/files/etc/test"
+        @resource[:load_path] = my_fixture_dir
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == []
+        aug.match("/files/etc/hosts").should == []
+        aug.match("/files/etc/test").should == ["/files/etc/test"]
+      end
+
+      it "should load standard files if context isn't specific" do
+        @resource[:context] = "/files/etc"
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+        aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      end
     end
   end
 end
