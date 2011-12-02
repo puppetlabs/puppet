@@ -134,7 +134,19 @@ class Puppet::Resource::Type
 
     resource.add_edge_to_stage
 
-    code.safeevaluate(scope) if code
+    if code
+      if @match # Only bother setting up the ephemeral scope if there are match variables to add into it
+        begin
+          elevel = scope.ephemeral_level
+          scope.ephemeral_from(@match, file, line)
+          code.safeevaluate(scope)
+        ensure
+          scope.unset_ephemeral_var(elevel)
+        end
+      else
+        code.safeevaluate(scope)
+      end
+    end
 
     evaluate_ruby_code(resource, scope) if ruby_code
   end
@@ -154,6 +166,8 @@ class Puppet::Resource::Type
 
     set_arguments(options[:arguments])
 
+    @match = nil
+
     @module_name = options[:module_name]
   end
 
@@ -162,7 +176,7 @@ class Puppet::Resource::Type
   def match(string)
     return string.to_s.downcase == name unless name_is_regex?
 
-    @name =~ string
+    @match = @name.match(string)
   end
 
   # Add code from a new instance to our code.
