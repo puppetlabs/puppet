@@ -1,5 +1,6 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
+require 'puppet/util/package'
 
 provider_class = Puppet::Type.type(:augeas).provider(:augeas)
 
@@ -671,6 +672,38 @@ describe provider_class do
       aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
       aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
       aug.match("/files/etc/test").should == ["/files/etc/test"]
+    end
+
+    # Optimisations added for Augeas 0.8.2 or higher is available, see #7285
+    describe ">= 0.8.2 optimisations", :if => Puppet.features.augeas? && Puppet::Util::Package.versioncmp(Facter.value(:augeasversion), "0.8.2") >= 0 do
+      it "should only load one file if relevant context given" do
+        @resource[:context] = "/files/etc/fstab"
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+        aug.match("/files/etc/hosts").should == []
+      end
+
+      it "should only load one lens from load_path if context given" do
+        @resource[:context] = "/files/etc/test"
+        @resource[:load_path] = my_fixture_dir
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == []
+        aug.match("/files/etc/hosts").should == []
+        aug.match("/files/etc/test").should == ["/files/etc/test"]
+      end
+
+      it "should load standard files if context isn't specific" do
+        @resource[:context] = "/files/etc"
+
+        aug = @provider.open_augeas
+        aug.should_not == nil
+        aug.match("/files/etc/fstab").should == ["/files/etc/fstab"]
+        aug.match("/files/etc/hosts").should == ["/files/etc/hosts"]
+      end
     end
   end
 end
