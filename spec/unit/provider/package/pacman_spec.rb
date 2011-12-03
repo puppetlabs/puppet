@@ -62,7 +62,7 @@ describe provider do
     end
 
     context "when :source is specified" do
-      context "reconizable by pacman" do
+      context "recognizable by pacman" do
         %w{
           /some/package/file
           http://some.package.in/the/air
@@ -87,7 +87,7 @@ describe provider do
         end
       end
 
-      context "as an file:// URL" do
+      context "as a file:// URL" do
         before do
           @package_file = "file:///some/package/file"
           @actual_file_path = "/some/package/file"
@@ -127,7 +127,7 @@ describe provider do
           @resource.stubs(:[]).with(:source).returns "blah://"
         end
 
-        it "shoudl fail" do
+        it "should fail" do
           lambda { @provider.install }.should raise_error(Puppet::Error)
         end
       end
