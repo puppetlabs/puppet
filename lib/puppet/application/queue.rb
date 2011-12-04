@@ -137,7 +137,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       # by the terminus_class = :active_record setting above)
       Puppet::Util.benchmark(:notice, "Processing queued catalog for #{catalog.name}") do
         begin
-          Puppet::Resource::Catalog.indirection.save(catalog)
+          Puppet::Resource::Catalog.save(catalog)
         rescue => detail
           puts detail.backtrace if Puppet[:trace]
           Puppet.err "Could not save queued catalog for #{catalog.name}: #{detail}"

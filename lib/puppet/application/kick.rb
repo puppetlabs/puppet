@@ -243,7 +243,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
         :background => ! options[:foreground],
         :ignoreschedules => options[:ignoreschedules]
       }
-      run = Puppet::Run.indirection.save(Puppet::Run.new( run_options ), url)
+      run = Puppet::Run.new(run_options).save(url)
       puts "Getting status"
       result = run.status
       puts "status is #{result}"
@@ -298,12 +298,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     if Puppet[:node_terminus] == "ldap" and (options[:all] or @classes)
       if options[:all]
-        @hosts = Puppet::Node.indirection.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
+        @hosts = Puppet::Node.search("whatever", :fqdn => options[:fqdn]).collect { |node| node.name }
         puts "all: #{@hosts.join(", ")}"
       else
         @hosts = []
         @classes.each do |klass|
-          list = Puppet::Node.indirection.search("whatever", :fqdn => options[:fqdn], :class => klass).collect { |node| node.name }
+          list = Puppet::Node.search("whatever", :fqdn => options[:fqdn], :class => klass).collect { |node| node.name }
           puts "#{klass}: #{list.join(", ")}"
 
           @hosts += list

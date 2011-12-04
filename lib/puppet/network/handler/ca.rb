@@ -36,8 +36,8 @@ class Puppet::Network::Handler
       # and it mucks with the permissions requirements.
 
       # first check to see if we already have a signed cert for the host
-      cert = Puppet::SSL::Certificate.indirection.find(hostname)
-      cacert = Puppet::SSL::Certificate.indirection.find(@ca.host.name)
+      cert = Puppet::SSL::Certificate.find(hostname)
+      cacert = Puppet::SSL::Certificate.find(@ca.host.name)
 
       if cert
         Puppet.info "Retrieving existing certificate for #{hostname}"
@@ -46,10 +46,10 @@ class Puppet::Network::Handler
         end
         [cert.to_s, cacert.to_s]
       else
-        Puppet::SSL::CertificateRequest.indirection.save(csr)
+        csr.save
 
         # We determine whether we signed the csr by checking if there's a certificate for it
-        if cert = Puppet::SSL::Certificate.indirection.find(hostname)
+        if cert = Puppet::SSL::Certificate.find(hostname)
           [cert.to_s, cacert.to_s]
         else
           nil

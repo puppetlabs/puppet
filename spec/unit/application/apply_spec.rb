@@ -136,15 +136,15 @@ describe Puppet::Application::Apply do
         Puppet::Node.indirection.cache_class = :memory
 
         @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
-        Puppet::Node::Facts.indirection.save(@facts)
+        @facts.save
 
         @node = Puppet::Node.new(Puppet[:node_name_value])
-        Puppet::Node.indirection.save(@node)
+        @node.save
 
         @catalog = Puppet::Resource::Catalog.new
         @catalog.stubs(:to_ral).returns(@catalog)
 
-        Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
+        Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
 
         STDIN.stubs(:read)
 
@@ -201,10 +201,10 @@ describe Puppet::Application::Apply do
 
       it "should set the facts name based on the node_name_fact" do
         @facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-        Puppet::Node::Facts.indirection.save(@facts)
+        @facts.save
 
         node = Puppet::Node.new('other_node_name')
-        Puppet::Node.indirection.save(node)
+        node.save
 
         Puppet[:node_name_fact] = 'my_name_fact'
 
@@ -215,9 +215,9 @@ describe Puppet::Application::Apply do
 
       it "should set the node_name_value based on the node_name_fact" do
         facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-        Puppet::Node::Facts.indirection.save(facts)
+        facts.save
         node = Puppet::Node.new('other_node_name')
-        Puppet::Node.indirection.save(node)
+        node.save
         Puppet[:node_name_fact] = 'my_name_fact'
 
         expect { @apply.main }.to exit_with 0
@@ -226,13 +226,13 @@ describe Puppet::Application::Apply do
       end
 
       it "should raise an error if we can't find the facts" do
-        Puppet::Node::Facts.indirection.expects(:find).returns(nil)
+        Puppet::Node::Facts.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
       end
 
       it "should raise an error if we can't find the node" do
-        Puppet::Node.indirection.expects(:find).returns(nil)
+        Puppet::Node.expects(:find).returns(nil)
 
         lambda { @apply.main }.should raise_error
       end
@@ -257,7 +257,7 @@ describe Puppet::Application::Apply do
       end
 
       it "should compile the catalog" do
-        Puppet::Resource::Catalog.indirection.expects(:find).returns(@catalog)
+        Puppet::Resource::Catalog.expects(:find).returns(@catalog)
 
         expect { @apply.main }.to exit_with 0
       end

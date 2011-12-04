@@ -9,6 +9,6 @@ describe Puppet::Node::Ldap do
     Puppet::Node.indirection.stubs(:terminus).returns ldap
     ldap.expects(:ldapsearch).with("(&(objectclass=puppetClient)(puppetclass=foo))")
 
-    Puppet::Node.indirection.search "eh", :class => "foo"
+    Puppet::Node.search "eh", :class => "foo"
   end
 end

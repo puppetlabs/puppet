@@ -113,7 +113,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     benchmark(:notice, "Finished inspection") do
       retrieval_starttime = Time.now
 
-      unless catalog = Puppet::Resource::Catalog.indirection.find(Puppet[:certname])
+      unless catalog = Puppet::Resource::Catalog.find(Puppet[:certname])
         raise "Could not find catalog for #{Puppet[:certname]}"
       end
 
@@ -180,7 +180,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       @report.finalize_report
 
       begin
-        Puppet::Transaction::Report.indirection.save(@report)
+        @report.save
       rescue => detail
         puts detail.backtrace if Puppet[:trace]
         Puppet.err "Could not send report: #{detail}"

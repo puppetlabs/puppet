@@ -219,19 +219,19 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     if name
       if params.empty?
-        [ Puppet::Resource.indirection.find( key ) ]
+        [Puppet::Resource.find(key)]
       else
         resource = Puppet::Resource.new( type, name, :parameters => params )
 
         # save returns [resource that was saved, transaction log from applying the resource]
-        save_result = Puppet::Resource.indirection.save(resource, key)
+        save_result = resource.save(key)
         [ save_result.first ]
       end
     else
       if type == "file"
         raise "Listing all file instances is not supported.  Please specify a file or directory, e.g. puppet resource file /etc"
       end
-      Puppet::Resource.indirection.search( key, {} )
+      Puppet::Resource.search( key, {} )
     end
   end
 end

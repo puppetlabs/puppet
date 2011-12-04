@@ -135,7 +135,7 @@ class Puppet::SSL::Host
   end
 
   def key
-    @key ||= Key.indirection.find(name)
+    @key ||= Key.find(name)
   end
 
   # This is the private key; we can create it from scratch
@@ -144,7 +144,7 @@ class Puppet::SSL::Host
     @key = Key.new(name)
     @key.generate
     begin
-      Key.indirection.save(@key)
+      @key.save
     rescue
       @key = nil
       raise
@@ -153,7 +153,7 @@ class Puppet::SSL::Host
   end
 
   def certificate_request
-    @certificate_request ||= CertificateRequest.indirection.find(name)
+    @certificate_request ||= CertificateRequest.find(name)
   end
 
   def this_csr_is_for_the_current_host
@@ -181,7 +181,7 @@ class Puppet::SSL::Host
     @certificate_request = CertificateRequest.new(name)
     @certificate_request.generate(key.content, options)
     begin
-      CertificateRequest.indirection.save(@certificate_request)
+      @certificate_request.save
     rescue
       @certificate_request = nil
       raise
@@ -196,8 +196,8 @@ class Puppet::SSL::Host
 
       # get the CA cert first, since it's required for the normal cert
       # to be of any use.
-      return nil unless Certificate.indirection.find("ca") unless ca?
-      return nil unless @certificate = Certificate.indirection.find(name)
+      return nil unless Certificate.find("ca") unless ca?
+      return nil unless @certificate = Certificate.find(name)
 
       unless certificate_matches_key?
         raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
@@ -249,7 +249,7 @@ class Puppet::SSL::Host
       @ssl_store.add_file(Puppet[:localcacert])
 
       # If there's a CRL, add it to our store.
-      if crl = Puppet::SSL::CertificateRevocationList.indirection.find(CA_NAME)
+      if crl = Puppet::SSL::CertificateRevocationList.find(CA_NAME)
         @ssl_store.flags = OpenSSL::X509::V_FLAG_CRL_CHECK_ALL|OpenSSL::X509::V_FLAG_CRL_CHECK if Puppet.settings[:certificate_revocation]
         @ssl_store.add_crl(crl.content)
       end
@@ -259,7 +259,7 @@ class Puppet::SSL::Host
   end
 
   def to_pson(*args)
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    my_cert = Puppet::SSL::Certificate.find(name)
     pson_hash = { :name  => name }
 
     my_state = state
@@ -314,7 +314,7 @@ class Puppet::SSL::Host
   end
 
   def state
-    my_cert = Puppet::SSL::Certificate.indirection.find(name)
+    my_cert = Puppet::SSL::Certificate.find(name)
     if certificate_request
       return 'requested'
     end

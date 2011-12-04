@@ -7,7 +7,7 @@ class Puppet::SSL::CertificateRequest::Ca < Puppet::Indirector::SslFile
   store_in :csrdir
 
   def save(request)
-    if host = Puppet::SSL::Host.indirection.find(request.key)
+    if host = Puppet::SSL::Host.find(request.key)
       if Puppet[:allow_duplicate_certs]
         Puppet.notice "#{request.key} already has a #{host.state} certificate; new certificate will overwrite it"
       else

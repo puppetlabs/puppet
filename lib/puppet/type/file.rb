@@ -593,7 +593,7 @@ Puppet::Type.newtype(:file) do
   end
 
   def perform_recursion(path)
-    Puppet::FileServing::Metadata.indirection.search(
+    Puppet::FileServing::Metadata.search(
       path,
       :links => self[:links],
       :recurse => (self[:recurse] == :remote ? true : self[:recurse]),

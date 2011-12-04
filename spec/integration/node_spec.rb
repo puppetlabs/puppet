@@ -23,7 +23,7 @@ describe Puppet::Node do
       terminus.expects(:translate).with(@name, "myresults").returns "translated_results"
       terminus.expects(:create_node).with(@name, "translated_results").returns @node
 
-      Puppet::Node.indirection.find(@name).should equal(@node)
+      Puppet::Node.find(@name).should equal(@node)
     end
 
     it "should be able to use the yaml terminus" do
@@ -35,7 +35,7 @@ describe Puppet::Node do
       terminus.expects(:path).with(@name).returns "/my/yaml/file"
 
       FileTest.expects(:exist?).with("/my/yaml/file").returns false
-      Puppet::Node.indirection.find(@name).should be_nil
+      Puppet::Node.find(@name).should be_nil
     end
 
     it "should have an ldap terminus" do
@@ -50,7 +50,7 @@ describe Puppet::Node do
 
       Puppet::Node.expects(:new).with(@name).returns @node
 
-      Puppet::Node.indirection.find(@name).should equal(@node)
+      Puppet::Node.find(@name).should equal(@node)
     end
 
     describe "and using the memory terminus" do
@@ -63,29 +63,29 @@ describe Puppet::Node do
       end
 
       it "should find no nodes by default" do
-        Puppet::Node.indirection.find(@name).should be_nil
+        Puppet::Node.find(@name).should be_nil
       end
 
       it "should be able to find nodes that were previously saved" do
-        Puppet::Node.indirection.save(@node)
-        Puppet::Node.indirection.find(@name).should equal(@node)
+        @node.save
+        Puppet::Node.find(@name).should equal(@node)
       end
 
       it "should replace existing saved nodes when a new node with the same name is saved" do
-        Puppet::Node.indirection.save(@node)
+        @node.save
         two = Puppet::Node.new(@name)
-        Puppet::Node.indirection.save(two)
-        Puppet::Node.indirection.find(@name).should equal(two)
+        two.save
+        Puppet::Node.find(@name).should equal(two)
       end
 
       it "should be able to remove previously saved nodes" do
-        Puppet::Node.indirection.save(@node)
-        Puppet::Node.indirection.destroy(@node.name)
-        Puppet::Node.indirection.find(@name).should be_nil
+        @node.save
+        Puppet::Node.destroy(@node.name)
+        Puppet::Node.find(@name).should be_nil
       end
 
       it "should fail when asked to destroy a node that does not exist" do
-        proc { Puppet::Node.indirection.destroy(@node) }.should raise_error(ArgumentError)
+        proc { Puppet::Node.destroy(@node) }.should raise_error(ArgumentError)
       end
     end
   end

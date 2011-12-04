@@ -18,7 +18,7 @@ describe Puppet::Transaction::Report do
 
       terminus.expects(:process).with(report)
 
-      Puppet::Transaction::Report.indirection.save(report)
+      report.save
     end
   end
 end

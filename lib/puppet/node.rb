@@ -57,7 +57,7 @@ class Puppet::Node
 
   # Merge the node facts with parameters from the node source.
   def fact_merge
-      if facts = Puppet::Node::Facts.indirection.find(name)
+      if facts = Puppet::Node::Facts.find(name)
         merge(facts.values)
       end
   rescue => detail

@@ -38,7 +38,7 @@ describe Puppet::SSL::Host do
     it "should save the key such that the Indirector can find it" do
       @host.generate_key
 
-      Puppet::SSL::Key.indirection.find(@host.name).content.to_s.should == @host.key.to_s
+      Puppet::SSL::Key.find(@host.name).content.to_s.should == @host.key.to_s
     end
 
     it "should save the private key into the :privatekeydir" do
@@ -55,7 +55,7 @@ describe Puppet::SSL::Host do
     it "should save the certificate request such that the Indirector can find it" do
       @host.generate_certificate_request
 
-      Puppet::SSL::CertificateRequest.indirection.find(@host.name).content.to_s.should == @host.certificate_request.to_s
+      Puppet::SSL::CertificateRequest.find(@host.name).content.to_s.should == @host.certificate_request.to_s
     end
 
     it "should save the private certificate request into the :privatekeydir" do

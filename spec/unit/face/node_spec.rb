@@ -137,7 +137,7 @@ describe Puppet::Face[:node, '0.0.1'] do
       describe "when cleaning cached facts" do
         it "should destroy facts" do
           @host = 'node'
-          Puppet::Node::Facts.indirection.expects(:destroy).with(@host)
+          Puppet::Node::Facts.expects(:destroy).with(@host)
 
           subject.clean_cached_facts(@host)
         end
@@ -145,14 +145,14 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "when cleaning cached node" do
         it "should destroy the cached node" do
-          Puppet::Node.indirection.expects(:destroy).with(@host)
+          Puppet::Node.expects(:destroy).with(@host)
           subject.clean_cached_node(@host)
         end
       end
 
       describe "when cleaning archived reports" do
         it "should tell the reports to remove themselves" do
-          Puppet::Transaction::Report.indirection.stubs(:destroy).with(@host)
+          Puppet::Transaction::Report.stubs(:destroy).with(@host)
 
           subject.clean_reports(@host)
         end

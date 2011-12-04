@@ -126,7 +126,7 @@ class Puppet::Resource::Catalog::StaticCompiler < Puppet::Indirector::Code
     type = @summer.sumtype(resource[:content])
     sum = @summer.sumdata(resource[:content])
 
-    if Puppet::FileBucket::File.indirection.find("#{type}/#{sum}")
+    if Puppet::FileBucket::File.find("#{type}/#{sum}")
       Puppet.info "Content for '#{resource[:source]}' already exists"
     else
       Puppet.info "Storing content for source '#{resource[:source]}'"

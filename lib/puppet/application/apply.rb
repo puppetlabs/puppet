@@ -169,7 +169,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     # Collect our facts.
-    unless facts = Puppet::Node::Facts.indirection.find(Puppet[:node_name_value])
+    unless facts = Puppet::Node::Facts.find(Puppet[:node_name_value])
       raise "Could not find facts for #{Puppet[:node_name_value]}"
     end
 
@@ -179,7 +179,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     # Find our Node
-    unless node = Puppet::Node.indirection.find(Puppet[:node_name_value])
+    unless node = Puppet::Node.find(Puppet[:node_name_value])
       raise "Could not find node #{Puppet[:node_name_value]}"
     end
 
@@ -201,7 +201,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     begin
       # Compile our catalog
       starttime = Time.now
-      catalog = Puppet::Resource::Catalog.indirection.find(node.name, :use_node => node)
+      catalog = Puppet::Resource::Catalog.find(node.name, :use_node => node)
 
       # Translate it to a RAL catalog
       catalog = catalog.to_ral

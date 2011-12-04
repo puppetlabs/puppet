@@ -252,7 +252,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       it "should compile a catalog for the specified node" do
         @master.options[:node] = "foo"
-        Puppet::Resource::Catalog.indirection.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
+        Puppet::Resource::Catalog.expects(:find).with("foo").returns Puppet::Resource::Catalog.new
         $stdout.stubs(:puts)
 
         expect { @master.compile }.to exit_with 0
@@ -260,7 +260,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       it "should convert the catalog to a pure-resource catalog and use 'jj' to pretty-print the catalog" do
         catalog = Puppet::Resource::Catalog.new
-        Puppet::Resource::Catalog.indirection.expects(:find).returns catalog
+        Puppet::Resource::Catalog.expects(:find).returns catalog
 
         catalog.expects(:to_resource).returns("rescat")
 
@@ -272,14 +272,14 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
 
       it "should exit with error code 30 if no catalog can be found" do
         @master.options[:node] = "foo"
-        Puppet::Resource::Catalog.indirection.expects(:find).returns nil
+        Puppet::Resource::Catalog.expects(:find).returns nil
         $stderr.expects(:puts)
         expect { @master.compile }.to exit_with 30
       end
 
       it "should exit with error code 30 if there's a failure" do
         @master.options[:node] = "foo"
-        Puppet::Resource::Catalog.indirection.expects(:find).raises ArgumentError
+        Puppet::Resource::Catalog.expects(:find).raises ArgumentError
         $stderr.expects(:puts)
         expect { @master.compile }.to exit_with 30
       end

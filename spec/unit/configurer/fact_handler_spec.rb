@@ -50,10 +50,8 @@ describe Puppet::Configurer::FactHandler do
     end
 
     it "should use the node name value to retrieve the facts" do
-      foo_facts = Puppet::Node::Facts.new('foo')
-      bar_facts = Puppet::Node::Facts.new('bar')
-      Puppet::Node::Facts.indirection.save(foo_facts)
-      Puppet::Node::Facts.indirection.save(bar_facts)
+      foo_facts = Puppet::Node::Facts.new('foo').save
+      bar_facts = Puppet::Node::Facts.new('bar').save
       Puppet[:certname] = 'foo'
       Puppet[:node_name_value] = 'bar'
 
@@ -61,16 +59,13 @@ describe Puppet::Configurer::FactHandler do
     end
 
     it "should set the facts name based on the node_name_fact" do
-      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
       Puppet[:node_name_fact] = 'my_name_fact'
-
       @facthandler.find_facts.name.should == 'other_node_name'
     end
 
     it "should set the node_name_value based on the node_name_fact" do
-      facts = Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name')
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.new(Puppet[:node_name_value], 'my_name_fact' => 'other_node_name').save
       Puppet[:node_name_fact] = 'my_name_fact'
 
       @facthandler.find_facts
@@ -87,7 +82,7 @@ describe Puppet::Configurer::FactHandler do
     it "should fail if finding facts fails" do
       Puppet[:trace] = false
       Puppet[:certname] = "myhost"
-      Puppet::Node::Facts.indirection.expects(:find).raises RuntimeError
+      Puppet::Node::Facts.expects(:find).raises RuntimeError
 
       lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
     end

@@ -257,7 +257,7 @@ describe Puppet::SSL::CertificateRequest do
         Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
         terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
-        Puppet::SSL::CertificateRequest.indirection.save(csr)
+        csr.save
       end
     end
 
@@ -270,7 +270,7 @@ describe Puppet::SSL::CertificateRequest do
         Puppet::SSL::CertificateRequest.indirection.expects(:prepare).returns(terminus)
         terminus.expects(:save).with { |request| request.instance == csr && request.key == "me" }
 
-        Puppet::SSL::CertificateRequest.indirection.save(csr)
+        csr.save
       end
     end
   end

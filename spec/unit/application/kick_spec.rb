@@ -154,7 +154,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => :something).returns([])
+        Puppet::Node.expects(:search).with("whatever",:fqdn => :something).returns([])
 
         @kick.setup
       end
@@ -163,7 +163,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.options.stubs(:[]).with(:all).returns(true)
         @kick.stubs(:puts)
 
-        Puppet::Node.indirection.expects(:search).with("whatever",:fqdn => nil).returns([])
+        Puppet::Node.expects(:search).with("whatever",:fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -173,7 +173,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         @kick.stubs(:puts)
         @kick.classes = ['class']
 
-        Puppet::Node.indirection.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
+        Puppet::Node.expects(:search).with("whatever", :class => "class", :fqdn => nil).returns([])
 
         @kick.setup
       end
@@ -263,7 +263,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
         end
 
         it "should call run on a Puppet::Run for the given host" do
-          Puppet::Run.indirection.expects(:save).with(@agent_run, 'https://host:8139/production/run/host').returns(@agent_run)
+          Puppet::Run.expects(:save).with(@agent_run, 'https://host:8139/production/run/host').returns(@agent_run)
 
           expect { @kick.run_for_host('host') }.to exit_with 0
         end

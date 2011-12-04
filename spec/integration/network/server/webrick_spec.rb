@@ -23,7 +23,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
       Puppet::SSL::Host.ca_location = :local
 
       ca = Puppet::SSL::CertificateAuthority.new
-      ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.indirection.find(Puppet[:certname])
+      ca.generate(Puppet[:certname]) unless Puppet::SSL::Certificate.find(Puppet[:certname])
     end
 
     after do

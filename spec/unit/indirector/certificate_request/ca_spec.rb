@@ -35,11 +35,11 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
     host.generate_certificate_request
     @ca.sign(host.name)
 
-    Puppet::SSL::Host.indirection.find("foo").generate_certificate_request
+    Puppet::SSL::Host.find("foo").generate_certificate_request
 
-    Puppet::SSL::Certificate.indirection.find("foo").name.should == "foo"
-    Puppet::SSL::CertificateRequest.indirection.find("foo").name.should == "foo"
-    Puppet::SSL::Host.indirection.find("foo").state.should == "requested"
+    Puppet::SSL::Certificate.find("foo").name.should == "foo"
+    Puppet::SSL::CertificateRequest.find("foo").name.should == "foo"
+    Puppet::SSL::Host.find("foo").state.should == "requested"
   end
 
   it "should reject a new certificate request if allow_duplicate_certs is false" do
@@ -48,10 +48,10 @@ describe Puppet::SSL::CertificateRequest::Ca, :unless => Puppet.features.microso
     host.generate_certificate_request
     @ca.sign(host.name)
 
-    expect { Puppet::SSL::Host.indirection.find("bar").generate_certificate_request }.should raise_error(/ignoring certificate request/)
+    expect { Puppet::SSL::Host.find("bar").generate_certificate_request }.should raise_error(/ignoring certificate request/)
 
-    Puppet::SSL::Certificate.indirection.find("bar").name.should == "bar"
-    Puppet::SSL::CertificateRequest.indirection.find("bar").should be_nil
-    Puppet::SSL::Host.indirection.find("bar").state.should == "signed"
+    Puppet::SSL::Certificate.find("bar").name.should == "bar"
+    Puppet::SSL::CertificateRequest.find("bar").should be_nil
+    Puppet::SSL::Host.find("bar").state.should == "signed"
   end
 end

@@ -122,30 +122,33 @@ describe Puppet::Application::Resource do
         @resource_app.stubs(:puts)
         @resource_app.host = 'host'
 
-        Puppet::Resource.indirection.stubs(:find  ).never
-        Puppet::Resource.indirection.stubs(:search).never
-        Puppet::Resource.indirection.stubs(:save  ).never
+        Puppet::Resource.stubs(:find  ).never
+        Puppet::Resource.stubs(:search).never
+        Puppet::Resource.stubs(:save  ).never
       end
 
       it "should search for resources" do
         @resource_app.command_line.stubs(:args).returns(['type'])
-        Puppet::Resource.indirection.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
+        Puppet::Resource.expects(:search).with('https://host:8139/production/resources/type/', {}).returns([])
         @resource_app.main
       end
 
       it "should describe the given resource" do
         @resource_app.command_line.stubs(:args).returns(['type', 'name'])
-        Puppet::Resource.indirection.expects(:find).with('https://host:8139/production/resources/type/name').returns(@res)
+        Puppet::Resource.expects(:find).with('https://host:8139/production/resources/type/name').returns(@res)
         @resource_app.main
       end
 
       it "should add given parameters to the object" do
         @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-        Puppet::Resource.indirection.expects(:save).
-          with(@res, 'https://host:8139/production/resources/type/name').
+        @res.expects(:save).
+          with('https://host:8139/production/resources/type/name').
           returns([@res, @report])
-        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
+
+        Puppet::Resource.expects(:new).
+          with('type', 'name', :parameters => {'param' => 'temp'}).
+          returns(@res)
 
         @resource_app.main
       end
@@ -156,27 +159,29 @@ describe Puppet::Application::Resource do
         @resource_app.stubs(:puts)
         @resource_app.host = nil
 
-        Puppet::Resource.indirection.stubs(:find  ).never
-        Puppet::Resource.indirection.stubs(:search).never
-        Puppet::Resource.indirection.stubs(:save  ).never
+        Puppet::Resource.stubs(:find  ).never
+        Puppet::Resource.stubs(:search).never
+        Puppet::Resource.stubs(:save  ).never
       end
 
       it "should search for resources" do
-        Puppet::Resource.indirection.expects(:search).with('mytype/', {}).returns([])
+        Puppet::Resource.expects(:search).with('mytype/', {}).returns([])
         @resource_app.main
       end
 
       it "should describe the given resource" do
         @resource_app.command_line.stubs(:args).returns(['type','name'])
-        Puppet::Resource.indirection.expects(:find).with('type/name').returns(@res)
+        Puppet::Resource.expects(:find).with('type/name').returns(@res)
         @resource_app.main
       end
 
       it "should add given parameters to the object" do
         @resource_app.command_line.stubs(:args).returns(['type','name','param=temp'])
 
-        Puppet::Resource.indirection.expects(:save).with(@res, 'type/name').returns([@res, @report])
-        Puppet::Resource.expects(:new).with('type', 'name', :parameters => {'param' => 'temp'}).returns(@res)
+        @res.expects(:save).with('type/name').returns([@res, @report])
+        Puppet::Resource.expects(:new).
+          with('type', 'name', :parameters => {'param' => 'temp'}).
+          returns(@res)
 
         @resource_app.main
       end
@@ -198,7 +203,7 @@ describe Puppet::Application::Resource do
     it "should output a file resource when given a file path" do
       path = File.expand_path('/etc')
       res = Puppet::Type.type(:file).new(:path => path).to_resource
-      Puppet::Resource.indirection.expects(:find).returns(res)
+      Puppet::Resource.expects(:find).returns(res)
 
       @resource_app.command_line.stubs(:args).returns(['file', path])
       @resource_app.expects(:puts).with do |args|

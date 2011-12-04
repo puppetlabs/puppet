@@ -14,7 +14,7 @@ Puppet::Face.define(:file, '0.0.1') do
       file = Puppet::FileBucket::File.new(Puppet::Util.binread(path))
 
       Puppet::FileBucket::File.indirection.terminus_class = :file
-      Puppet::FileBucket::File.indirection.save file
+      file.save
       file.checksum
     end
   end

@@ -103,7 +103,7 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our find.
   def do_find(indirection_name, key, params, request, response)
-    unless result = model(indirection_name).indirection.find(key, params)
+    unless result = model(indirection_name).find(key, params)
       Puppet.info("Could not find #{indirection_name} for '#{key}'")
       return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
     end
@@ -123,7 +123,7 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our head.
   def do_head(indirection_name, key, params, request, response)
-    unless self.model(indirection_name).indirection.head(key, params)
+    unless self.model(indirection_name).head(key, params)
       Puppet.info("Could not find #{indirection_name} for '#{key}'")
       return do_exception(response, "Could not find #{indirection_name} #{key}", 404)
     end
@@ -135,7 +135,7 @@ module Puppet::Network::HTTP::Handler
   # Execute our search.
   def do_search(indirection_name, key, params, request, response)
     model  = self.model(indirection_name)
-    result = model.indirection.search(key, params)
+    result = model.search(key, params)
 
     if result.nil?
       return do_exception(response, "Could not find instances in #{indirection_name} with '#{key}'", 404)
@@ -149,7 +149,7 @@ module Puppet::Network::HTTP::Handler
 
   # Execute our destroy.
   def do_destroy(indirection_name, key, params, request, response)
-    result = model(indirection_name).indirection.destroy(key, params)
+    result = model(indirection_name).destroy(key, params)
 
     return_yaml_response(response, result)
   end
@@ -160,8 +160,7 @@ module Puppet::Network::HTTP::Handler
     raise ArgumentError, "No data to save" if !data or data.empty?
 
     format = request_format(request)
-    obj = model(indirection_name).convert_from(format, data)
-    result = model(indirection_name).indirection.save(obj, key)
+    result = model(indirection_name).convert_from(format, data).save(key)
     return_yaml_response(response, result)
   end
 

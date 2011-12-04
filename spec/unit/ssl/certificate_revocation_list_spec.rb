@@ -118,7 +118,7 @@ describe Puppet::SSL::CertificateRevocationList do
       @crl.generate(@cert, @key)
       @crl.content.stubs(:sign)
 
-      Puppet::SSL::CertificateRevocationList.indirection.stubs :save
+      Puppet::SSL::CertificateRevocationList.stubs :save
 
       @key = mock 'key'
     end
@@ -160,7 +160,7 @@ describe Puppet::SSL::CertificateRevocationList do
     end
 
     it "should save the CRL" do
-      Puppet::SSL::CertificateRevocationList.indirection.expects(:save).with(@crl, nil)
+      Puppet::SSL::CertificateRevocationList.expects(:save).with(@crl, nil)
       @crl.revoke(1, @key)
     end
   end
