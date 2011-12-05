@@ -103,18 +103,18 @@ describe provider_class do
   end
 
   describe "when updating a port" do
-    it "should execute port upgrade if the port is installed" do
+    it "should execute port install if the port is installed" do
       resource[:name] = resource_name
       resource[:ensure] = :present
-      provider.expects(:query).returns(current_hash)
-      provider.expects(:port).with("-q", :upgrade, resource_name)
+      provider.stubs(:query).returns(current_hash)
+      provider.expects(:port).with("-q", :install, resource_name)
       provider.update
     end
 
     it "should execute port install if the port is not installed", :'fails_on_ruby_1.9.2' => true do
       resource[:name] = resource_name
       resource[:ensure] = :present
-      provider.expects(:query).returns("")
+      provider.stubs(:query).returns("")
       provider.expects(:port).with("-q", :install, resource_name)
       provider.update
     end

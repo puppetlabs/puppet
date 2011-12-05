@@ -96,10 +96,6 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def update
-    if query[:name] == @resource[:name]  # 'port upgrade' cannot install new ports
-      port("-q", :upgrade, @resource[:name])
-    else
-      install
-    end
+    install
   end
 end
