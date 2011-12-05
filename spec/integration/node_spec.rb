@@ -7,7 +7,7 @@ describe Puppet::Node do
   describe "when delegating indirection calls" do
     before do
       Puppet::Node.indirection.reset_terminus_class
-      Puppet::Node.indirection.cache_class = nil
+      Puppet::Node.cache_class = nil
 
       @name = "me"
       @node = Puppet::Node.new(@name)
@@ -56,7 +56,7 @@ describe Puppet::Node do
     describe "and using the memory terminus" do
       before do
         @name = "me"
-        @old_terminus = Puppet::Node.indirection.terminus_class
+        @old_terminus = Puppet::Node.terminus_class
         @terminus = Puppet::Node.terminus(:memory)
         Puppet::Node.indirection.stubs(:terminus).returns @terminus
         @node = Puppet::Node.new(@name)

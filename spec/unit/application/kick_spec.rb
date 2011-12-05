@@ -258,7 +258,7 @@ describe Puppet::Application::Kick, :if => Puppet.features.posix? do
           @agent_run = Puppet::Run.new( options.dup )
           @agent_run.stubs(:status).returns("success")
 
-          Puppet::Run.indirection.expects(:terminus_class=).with( :rest )
+          Puppet::Run.expects(:terminus_class=).with( :rest )
           Puppet::Run.expects(:new).with( options ).returns(@agent_run)
         end
 

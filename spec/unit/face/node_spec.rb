@@ -24,8 +24,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
   describe 'when running #clean' do
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.stubs(:terminus_class=)
+      Puppet::Node::Facts.stubs(:cache_class=)
       Puppet::Node.stubs(:terminus_class=)
       Puppet::Node.stubs(:cache_class=)
     end
@@ -38,8 +38,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
   describe "clean action" do
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.stubs(:terminus_class=)
+      Puppet::Node::Facts.stubs(:cache_class=)
       Puppet::Node.stubs(:terminus_class=)
       Puppet::Node.stubs(:cache_class=)
       subject.stubs(:cleanup)
@@ -81,8 +81,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "during setup" do
         it "should set facts terminus and cache class to yaml" do
-          Puppet::Node::Facts.indirection.expects(:terminus_class=).with(:yaml)
-          Puppet::Node::Facts.indirection.expects(:cache_class=).with(:yaml)
+          Puppet::Node::Facts.expects(:terminus_class=).with(:yaml)
+          Puppet::Node::Facts.expects(:cache_class=).with(:yaml)
 
           subject.clean('hostname')
         end
@@ -93,8 +93,8 @@ describe Puppet::Face[:node, '0.0.1'] do
         end
 
         it "should set node cache as yaml" do
-          Puppet::Node.indirection.expects(:terminus_class=).with(:yaml)
-          Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
+          Puppet::Node.expects(:terminus_class=).with(:yaml)
+          Puppet::Node.expects(:cache_class=).with(:yaml)
 
           subject.clean('hostname')
         end

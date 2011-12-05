@@ -10,7 +10,7 @@ end
 describe Puppet::Node::Facts::StoreConfigs do
   after :all do
     Puppet::Node::Facts.indirection.reset_terminus_class
-    Puppet::Node::Facts.indirection.cache_class = nil
+    Puppet::Node::Facts.cache_class = nil
   end
 
   it_should_behave_like "a StoreConfigs terminus"

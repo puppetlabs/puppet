@@ -241,7 +241,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     # we want the last report to be persisted locally
-    Puppet::Transaction::Report.indirection.cache_class = :yaml
+    Puppet::Transaction::Report.cache_class = :yaml
 
     if options[:debug]
       Puppet::Util::Log.level = :debug

@@ -14,10 +14,10 @@ describe Puppet::Application::Apply do
 
   after :each do
     Puppet::Node::Facts.indirection.reset_terminus_class
-    Puppet::Node::Facts.indirection.cache_class = nil
+    Puppet::Node::Facts.cache_class = nil
 
     Puppet::Node.indirection.reset_terminus_class
-    Puppet::Node.indirection.cache_class = nil
+    Puppet::Node.cache_class = nil
   end
 
   [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
@@ -61,7 +61,7 @@ describe Puppet::Application::Apply do
       Puppet.stubs(:parse_config)
       Puppet::FileBucket::Dipper.stubs(:new)
       STDIN.stubs(:read)
-      Puppet::Transaction::Report.indirection.stubs(:cache_class=)
+      Puppet::Transaction::Report.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
     end
@@ -102,7 +102,7 @@ describe Puppet::Application::Apply do
     end
 
     it "should tell the report handler to cache locally as yaml" do
-      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
 
       @apply.setup
     end
@@ -130,10 +130,10 @@ describe Puppet::Application::Apply do
         Puppet[:prerun_command] = ''
         Puppet[:postrun_command] = ''
 
-        Puppet::Node::Facts.indirection.terminus_class = :memory
-        Puppet::Node::Facts.indirection.cache_class = :memory
-        Puppet::Node.indirection.terminus_class = :memory
-        Puppet::Node.indirection.cache_class = :memory
+        Puppet::Node::Facts.terminus_class = :memory
+        Puppet::Node::Facts.cache_class = :memory
+        Puppet::Node.terminus_class = :memory
+        Puppet::Node.cache_class = :memory
 
         @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
         @facts.save

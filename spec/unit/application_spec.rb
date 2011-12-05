@@ -413,7 +413,7 @@ describe Puppet::Application do
 
       @app.configure_indirector_routes
 
-      Puppet::Node.indirection.terminus_class.should == 'exec'
+      Puppet::Node.terminus_class.should == 'exec'
     end
 
     it "should not fail if the route file doesn't exist" do

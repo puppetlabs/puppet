@@ -171,7 +171,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     exit(Puppet.settings.print_configs ? 0 : 1) if Puppet.settings.print_configs?
 
     require 'puppet/resource/catalog'
-    Puppet::Resource::Catalog.indirection.terminus_class = :store_configs
+    Puppet::Resource::Catalog.terminus_class = :store_configs
 
     daemon.daemonize if Puppet[:daemonize]
 
@@ -179,6 +179,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # class set up, because if storeconfigs is enabled,
     # we'll get a loop of continually caching the catalog
     # for storage again.
-    Puppet::Resource::Catalog.indirection.cache_class = nil
+    Puppet::Resource::Catalog.cache_class = nil
   end
 end

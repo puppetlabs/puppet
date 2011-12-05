@@ -46,7 +46,7 @@ describe Puppet::Configurer::FactHandler do
   describe "when finding facts" do
     before :each do
       @facthandler.stubs(:reload_facter)
-      Puppet::Node::Facts.indirection.terminus_class = :memory
+      Puppet::Node::Facts.terminus_class = :memory
     end
 
     it "should use the node name value to retrieve the facts" do

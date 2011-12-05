@@ -436,9 +436,9 @@ file { "/tmp/yayness":
   def test_virtualresources
     tests = [:virtual]
     if Puppet.features.rails?
-      catalog_cache_class = Puppet::Resource::Catalog.indirection.cache_class
-      facts_cache_class = Puppet::Node::Facts.indirection.cache_class
-      node_cache_class = Puppet::Node.indirection.cache_class
+      catalog_cache_class = Puppet::Resource::Catalog.cache_class
+      facts_cache_class = Puppet::Node::Facts.cache_class
+      node_cache_class = Puppet::Node.cache_class
       Puppet[:storeconfigs] = true
       tests << :exported
     end
@@ -499,18 +499,18 @@ file { "/tmp/yayness":
   ensure
     if Puppet.features.rails?
       Puppet[:storeconfigs] = false
-      Puppet::Resource::Catalog.indirection.cache_class =  catalog_cache_class
-      Puppet::Node::Facts.indirection.cache_class = facts_cache_class
-      Puppet::Node.indirection.cache_class = node_cache_class
+      Puppet::Resource::Catalog.cache_class =  catalog_cache_class
+      Puppet::Node::Facts.cache_class = facts_cache_class
+      Puppet::Node.cache_class = node_cache_class
     end
   end
 
   def test_collections
     tests = [:virtual]
     if Puppet.features.rails?
-      catalog_cache_class = Puppet::Resource::Catalog.indirection.cache_class
-      facts_cache_class = Puppet::Node::Facts.indirection.cache_class
-      node_cache_class = Puppet::Node.indirection.cache_class
+      catalog_cache_class = Puppet::Resource::Catalog.cache_class
+      facts_cache_class = Puppet::Node::Facts.cache_class
+      node_cache_class = Puppet::Node.cache_class
       Puppet[:storeconfigs] = true
       tests << :exported
     end
@@ -538,9 +538,9 @@ file { "/tmp/yayness":
   ensure
     if Puppet.features.rails?
       Puppet[:storeconfigs] = false
-      Puppet::Resource::Catalog.indirection.cache_class =  catalog_cache_class
-      Puppet::Node::Facts.indirection.cache_class = facts_cache_class
-      Puppet::Node.indirection.cache_class = node_cache_class
+      Puppet::Resource::Catalog.cache_class =  catalog_cache_class
+      Puppet::Node::Facts.cache_class = facts_cache_class
+      Puppet::Node.cache_class = node_cache_class
     end
   end
 

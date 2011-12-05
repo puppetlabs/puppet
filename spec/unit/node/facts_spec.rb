@@ -80,14 +80,14 @@ describe Puppet::Node::Facts, "when indirecting" do
     describe "when the Puppet application is 'master'" do
       it "should default to the 'yaml' terminus" do
         pending "Cannot test the behavior of defaults in defaults.rb"
-        # Puppet::Node::Facts.indirection.terminus_class.should == :yaml
+        # Puppet::Node::Facts.terminus_class.should == :yaml
       end
     end
 
     describe "when the Puppet application is not 'master'" do
       it "should default to the 'facter' terminus" do
         pending "Cannot test the behavior of defaults in defaults.rb"
-        # Puppet::Node::Facts.indirection.terminus_class.should == :facter
+        # Puppet::Node::Facts.terminus_class.should == :facter
       end
     end
 

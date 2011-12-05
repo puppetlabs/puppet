@@ -95,7 +95,7 @@ describe Puppet::Transaction::Report do
     end
 
     it "should default to the 'processor' terminus" do
-      Puppet::Transaction::Report.indirection.terminus_class.should == :processor
+      Puppet::Transaction::Report.terminus_class.should == :processor
     end
 
     it "should delegate its name attribute to its host method" do

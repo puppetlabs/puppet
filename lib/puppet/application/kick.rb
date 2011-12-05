@@ -232,7 +232,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     end
 
     require 'puppet/run'
-    Puppet::Run.indirection.terminus_class = :rest
+    Puppet::Run.terminus_class = :rest
     port = Puppet[:puppetport]
     url = ["https://#{host}:#{port}", "production", "run", host].join('/')
 

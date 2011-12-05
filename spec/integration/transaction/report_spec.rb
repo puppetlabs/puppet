@@ -8,7 +8,7 @@ describe Puppet::Transaction::Report do
     end
 
     it "should be able to delegate to the :processor terminus" do
-      Puppet::Transaction::Report.indirection.stubs(:terminus_class).returns :processor
+      Puppet::Transaction::Report.stubs(:terminus_class).returns :processor
 
       terminus = Puppet::Transaction::Report.terminus(:processor)
 

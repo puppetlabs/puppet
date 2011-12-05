@@ -447,9 +447,9 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # access to the local files and we don't need a ca.
     Puppet::SSL::Host.ca_location = options[:fingerprint] ? :none : :remote
 
-    Puppet::Transaction::Report.indirection.terminus_class = :rest
+    Puppet::Transaction::Report.terminus_class = :rest
     # we want the last report to be persisted locally
-    Puppet::Transaction::Report.indirection.cache_class = :yaml
+    Puppet::Transaction::Report.cache_class = :yaml
 
     # Override the default; puppetd needs this, usually.
     # You can still override this on the command-line with, e.g., :compiler.
@@ -458,7 +458,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     # Override the default.
     Puppet[:facts_terminus] = :facter
 
-    Puppet::Resource::Catalog.indirection.cache_class = :yaml
+    Puppet::Resource::Catalog.cache_class = :yaml
 
     # We need tomake the client either way, we just don't start it
     # if --no-client is set.

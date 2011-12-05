@@ -7,7 +7,7 @@ describe Puppet::Application::Resource do
   before :each do
     @resource_app = Puppet::Application[:resource]
     Puppet::Util::Log.stubs(:newdestination)
-    Puppet::Resource.indirection.stubs(:terminus_class=)
+    Puppet::Resource.stubs(:terminus_class=)
   end
 
   it "should ask Puppet::Application to not parse Puppet configuration file" do

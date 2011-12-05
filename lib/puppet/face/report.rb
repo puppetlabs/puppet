@@ -17,7 +17,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
     From the implementation of `puppet report submit` (API example):
 
         begin
-          Puppet::Transaction::Report.indirection.terminus_class = :rest
+          Puppet::Transaction::Report.terminus_class = :rest
           Puppet::Face[:report, "0.0.1"].save(report)
           Puppet.notice "Uploaded report for #{report.name}"
         rescue => detail
@@ -44,7 +44,7 @@ Puppet::Indirector::Face.define(:report, '0.0.1') do
     EOT
     when_invoked do |report, options|
       begin
-        Puppet::Transaction::Report.indirection.terminus_class = :rest
+        Puppet::Transaction::Report.terminus_class = :rest
         Puppet::Face[:report, "0.0.1"].save(report)
         Puppet.notice "Uploaded report for #{report.name}"
       rescue => detail

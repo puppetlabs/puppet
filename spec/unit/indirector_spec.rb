@@ -7,12 +7,12 @@ require 'puppet/indirector'
 describe Puppet::Indirector, "when configuring routes" do
   before :each do
     Puppet::Node.indirection.reset_terminus_class
-    Puppet::Node.indirection.cache_class = nil
+    Puppet::Node.cache_class = nil
   end
 
   after :each do
     Puppet::Node.indirection.reset_terminus_class
-    Puppet::Node.indirection.cache_class = nil
+    Puppet::Node.cache_class = nil
   end
 
   it "should configure routes as requested" do
@@ -25,8 +25,8 @@ describe Puppet::Indirector, "when configuring routes" do
 
     Puppet::Indirector.configure_routes(routes)
 
-    Puppet::Node.indirection.terminus_class.should == "exec"
-    Puppet::Node.indirection.cache_class.should    == "plain"
+    Puppet::Node.terminus_class.should == "exec"
+    Puppet::Node.cache_class.should    == "plain"
   end
 
   it "should fail when given an invalid indirection" do

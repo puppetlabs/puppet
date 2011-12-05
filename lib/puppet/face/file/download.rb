@@ -34,18 +34,18 @@ Puppet::Face.define(:file, '0.0.1') do
 
         key = "#{type}/#{sumdata}"
 
-        Puppet::FileBucket::File.indirection.terminus_class = :file
+        Puppet::FileBucket::File.terminus_class = :file
         if Puppet::FileBucket::File.find(key)
           Puppet.info "Content for '#{sum}' already exists"
           return
         end
 
-        Puppet::FileBucket::File.indirection.terminus_class = :rest
+        Puppet::FileBucket::File.terminus_class = :rest
         raise "Could not download content for '#{sum}'" unless file = Puppet::FileBucket::File.find(key)
       end
 
 
-      Puppet::FileBucket::File.indirection.terminus_class = :file
+      Puppet::FileBucket::File.terminus_class = :file
       Puppet.notice "Saved #{sum} to filebucket"
       file.save
       return nil

@@ -50,13 +50,13 @@ class Puppet::SSL::Host
 
   # Configure how our various classes interact with their various terminuses.
   def self.configure_indirection(terminus, cache = nil)
-    Certificate.indirection.terminus_class = terminus
-    CertificateRequest.indirection.terminus_class = terminus
-    CertificateRevocationList.indirection.terminus_class = terminus
+    Certificate.terminus_class = terminus
+    CertificateRequest.terminus_class = terminus
+    CertificateRevocationList.terminus_class = terminus
 
     host_map = {:ca => :file, :file => nil, :rest => :rest}
     if term = host_map[terminus]
-      self.indirection.terminus_class = term
+      self.terminus_class = term
     else
       self.indirection.reset_terminus_class
     end
@@ -65,23 +65,23 @@ class Puppet::SSL::Host
       # This is weird; we don't actually cache our keys, we
       # use what would otherwise be the cache as our normal
       # terminus.
-      Key.indirection.terminus_class = cache
+      Key.terminus_class = cache
     else
-      Key.indirection.terminus_class = terminus
+      Key.terminus_class = terminus
     end
 
     if cache
-      Certificate.indirection.cache_class = cache
-      CertificateRequest.indirection.cache_class = cache
-      CertificateRevocationList.indirection.cache_class = cache
+      Certificate.cache_class = cache
+      CertificateRequest.cache_class = cache
+      CertificateRevocationList.cache_class = cache
     else
       # Make sure we have no cache configured.  puppet master
       # switches the configurations around a bit, so it's important
       # that we specify the configs for absolutely everything, every
       # time.
-      Certificate.indirection.cache_class = nil
-      CertificateRequest.indirection.cache_class = nil
-      CertificateRevocationList.indirection.cache_class = nil
+      Certificate.cache_class = nil
+      CertificateRequest.cache_class = nil
+      CertificateRevocationList.cache_class = nil
     end
   end
 

@@ -166,7 +166,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   private
 
   def remote_key(type, name)
-    Puppet::Resource.indirection.terminus_class = :rest
+    Puppet::Resource.terminus_class = :rest
     port = Puppet[:puppetport]
     ["https://#{@host}:#{port}", "production", "resources", type, name].join('/')
   end

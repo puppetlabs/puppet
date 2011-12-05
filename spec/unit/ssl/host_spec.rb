@@ -7,7 +7,7 @@ describe Puppet::SSL::Host do
   include PuppetSpec::Files
 
   before do
-    Puppet::SSL::Host.indirection.terminus_class = :file
+    Puppet::SSL::Host.terminus_class = :file
 
     # Get a safe temporary file
     dir = tmpdir("ssl_host_testing")
@@ -262,20 +262,20 @@ describe Puppet::SSL::Host do
       end
 
       it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Certificate.indirection.cache_class.should == :file
-        Puppet::SSL::CertificateRequest.indirection.cache_class.should == :file
-        Puppet::SSL::CertificateRevocationList.indirection.cache_class.should == :file
+        Puppet::SSL::Certificate.cache_class.should == :file
+        Puppet::SSL::CertificateRequest.cache_class.should == :file
+        Puppet::SSL::CertificateRevocationList.cache_class.should == :file
       end
 
       it "should set the terminus class for Key and Host as :file" do
-        Puppet::SSL::Key.indirection.terminus_class.should == :file
-        Puppet::SSL::Host.indirection.terminus_class.should == :file
+        Puppet::SSL::Key.terminus_class.should == :file
+        Puppet::SSL::Host.terminus_class.should == :file
       end
 
       it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
-        Puppet::SSL::Certificate.indirection.terminus_class.should == :ca
-        Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :ca
-        Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :ca
+        Puppet::SSL::Certificate.terminus_class.should == :ca
+        Puppet::SSL::CertificateRequest.terminus_class.should == :ca
+        Puppet::SSL::CertificateRevocationList.terminus_class.should == :ca
       end
     end
 
@@ -285,20 +285,20 @@ describe Puppet::SSL::Host do
       end
 
       it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Certificate.indirection.cache_class.should == :file
-        Puppet::SSL::CertificateRequest.indirection.cache_class.should == :file
-        Puppet::SSL::CertificateRevocationList.indirection.cache_class.should == :file
+        Puppet::SSL::Certificate.cache_class.should == :file
+        Puppet::SSL::CertificateRequest.cache_class.should == :file
+        Puppet::SSL::CertificateRevocationList.cache_class.should == :file
       end
 
       it "should set the terminus class for Key as :file" do
-        Puppet::SSL::Key.indirection.terminus_class.should == :file
+        Puppet::SSL::Key.terminus_class.should == :file
       end
 
       it "should set the terminus class for Host, Certificate, CertificateRevocationList, and CertificateRequest as :rest" do
-        Puppet::SSL::Host.indirection.terminus_class.should == :rest
-        Puppet::SSL::Certificate.indirection.terminus_class.should == :rest
-        Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :rest
-        Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :rest
+        Puppet::SSL::Host.terminus_class.should == :rest
+        Puppet::SSL::Certificate.terminus_class.should == :rest
+        Puppet::SSL::CertificateRequest.terminus_class.should == :rest
+        Puppet::SSL::CertificateRevocationList.terminus_class.should == :rest
       end
     end
 
@@ -308,20 +308,20 @@ describe Puppet::SSL::Host do
       end
 
       it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
-        Puppet::SSL::Key.indirection.terminus_class.should == :ca
-        Puppet::SSL::Certificate.indirection.terminus_class.should == :ca
-        Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :ca
-        Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :ca
+        Puppet::SSL::Key.terminus_class.should == :ca
+        Puppet::SSL::Certificate.terminus_class.should == :ca
+        Puppet::SSL::CertificateRequest.terminus_class.should == :ca
+        Puppet::SSL::CertificateRevocationList.terminus_class.should == :ca
       end
 
       it "should set the cache class for Certificate, CertificateRevocationList, and CertificateRequest to nil" do
-        Puppet::SSL::Certificate.indirection.cache_class.should be_nil
-        Puppet::SSL::CertificateRequest.indirection.cache_class.should be_nil
-        Puppet::SSL::CertificateRevocationList.indirection.cache_class.should be_nil
+        Puppet::SSL::Certificate.cache_class.should be_nil
+        Puppet::SSL::CertificateRequest.cache_class.should be_nil
+        Puppet::SSL::CertificateRevocationList.cache_class.should be_nil
       end
 
       it "should set the terminus class for Host to :file" do
-        Puppet::SSL::Host.indirection.terminus_class.should == :file
+        Puppet::SSL::Host.terminus_class.should == :file
       end
     end
 
@@ -331,14 +331,14 @@ describe Puppet::SSL::Host do
       end
 
       it "should set the terminus class for Key, Certificate, CertificateRevocationList, and CertificateRequest as :file" do
-        Puppet::SSL::Key.indirection.terminus_class.should == :file
-        Puppet::SSL::Certificate.indirection.terminus_class.should == :file
-        Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :file
-        Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :file
+        Puppet::SSL::Key.terminus_class.should == :file
+        Puppet::SSL::Certificate.terminus_class.should == :file
+        Puppet::SSL::CertificateRequest.terminus_class.should == :file
+        Puppet::SSL::CertificateRevocationList.terminus_class.should == :file
       end
 
       it "should set the terminus class for Host to 'none'" do
-        lambda { Puppet::SSL::Host.indirection.terminus_class }.should raise_error(Puppet::DevError)
+        lambda { Puppet::SSL::Host.terminus_class }.should raise_error(Puppet::DevError)
       end
     end
   end

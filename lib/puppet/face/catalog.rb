@@ -96,7 +96,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
     returns "Nothing."
     notes <<-'EOT'
       When used from the Ruby API, this action has a side effect of leaving
-      Puppet::Resource::Catalog.indirection.terminus_class set to yaml. The
+      Puppet::Resource::Catalog.terminus_class set to yaml. The
       terminus must be explicitly re-set for subsequent catalog actions.
     EOT
     examples <<-'EOT'
@@ -112,8 +112,8 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
           # ...
     EOT
     when_invoked do |options|
-      Puppet::Resource::Catalog.indirection.terminus_class = :rest
-      Puppet::Resource::Catalog.indirection.cache_class = nil
+      Puppet::Resource::Catalog.terminus_class = :rest
+      Puppet::Resource::Catalog.cache_class = nil
       catalog = nil
       retrieval_duration = thinmark do
         catalog = Puppet::Face[:catalog, '0.0.1'].find(Puppet[:certname])
@@ -121,7 +121,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
       catalog.retrieval_duration = retrieval_duration
       catalog.write_class_file
 
-      Puppet::Resource::Catalog.indirection.terminus_class = :yaml
+      Puppet::Resource::Catalog.terminus_class = :yaml
       Puppet::Face[:catalog, "0.0.1"].save(catalog)
       Puppet.notice "Saved catalog for #{Puppet[:certname]} to yaml"
       nil

@@ -40,10 +40,10 @@ Puppet::Face.define(:node, '0.0.1') do
         Puppet::SSL::Host.ca_location = :none
       end
 
-      Puppet::Node::Facts.indirection.terminus_class = :yaml
-      Puppet::Node::Facts.indirection.cache_class = :yaml
-      Puppet::Node.indirection.terminus_class = :yaml
-      Puppet::Node.indirection.cache_class = :yaml
+      Puppet::Node::Facts.terminus_class = :yaml
+      Puppet::Node::Facts.cache_class = :yaml
+      Puppet::Node.terminus_class = :yaml
+      Puppet::Node.cache_class = :yaml
 
       nodes.each { |node| cleanup(node.downcase, options[:unexport]) }
     end

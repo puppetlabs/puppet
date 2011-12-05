@@ -75,13 +75,13 @@ describe Puppet::Configurer do
     before do
       Puppet.settings.stubs(:use).returns(true)
       @agent.stubs(:prepare)
-      Puppet::Node::Facts.indirection.terminus_class = :memory
+      Puppet::Node::Facts.terminus_class = :memory
       @facts = Puppet::Node::Facts.new(Puppet[:node_name_value])
       @facts.save
 
       @catalog = Puppet::Resource::Catalog.new
       @catalog.stubs(:to_ral).returns(@catalog)
-      Puppet::Resource::Catalog.indirection.terminus_class = :rest
+      Puppet::Resource::Catalog.terminus_class = :rest
       Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
       @agent.stubs(:send_report)
       @agent.stubs(:save_last_run_summary)
@@ -318,7 +318,7 @@ describe Puppet::Configurer do
 
     describe "when not using a REST terminus for catalogs" do
       it "should not pass any facts when retrieving the catalog" do
-        Puppet::Resource::Catalog.indirection.terminus_class = :compiler
+        Puppet::Resource::Catalog.terminus_class = :compiler
         @agent.expects(:facts_for_uploading).never
         Puppet::Resource::Catalog.expects(:find).with { |name, options|
           options[:facts].nil?
@@ -330,7 +330,7 @@ describe Puppet::Configurer do
 
     describe "when using a REST terminus for catalogs" do
       it "should pass the prepared facts and the facts format as arguments when retrieving the catalog" do
-        Puppet::Resource::Catalog.indirection.terminus_class = :rest
+        Puppet::Resource::Catalog.terminus_class = :rest
         @agent.expects(:facts_for_uploading).returns(:facts => "myfacts", :facts_format => :foo)
         Puppet::Resource::Catalog.expects(:find).with { |name, options|
           options[:facts] == "myfacts" and options[:facts_format] == :foo
@@ -444,7 +444,7 @@ describe Puppet::Configurer do
       @catalog = Puppet::Resource::Catalog.new
 
       # this is the default when using a Configurer instance
-      Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :rest
+      Puppet::Resource::Catalog.stubs(:terminus_class).returns :rest
 
       @agent.stubs(:convert_catalog).returns @catalog
     end

@@ -12,12 +12,12 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     Puppet::Daemon.stubs(:new).returns(@daemon)
     Puppet::Util::Log.stubs(:newdestination)
 
-    Puppet::Node.indirection.stubs(:terminus_class=)
-    Puppet::Node.indirection.stubs(:cache_class=)
-    Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-    Puppet::Node::Facts.indirection.stubs(:cache_class=)
-    Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
-    Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
+    Puppet::Node.stubs(:terminus_class=)
+    Puppet::Node.stubs(:cache_class=)
+    Puppet::Node::Facts.stubs(:terminus_class=)
+    Puppet::Node::Facts.stubs(:cache_class=)
+    Puppet::Transaction::Report.stubs(:terminus_class=)
+    Puppet::Resource::Catalog.stubs(:terminus_class=)
     Puppet::SSL::Host.stubs(:ca_location=)
   end
 
@@ -174,7 +174,7 @@ describe Puppet::Application::Master, :unless => Puppet.features.microsoft_windo
     end
 
     it "should cache class in yaml" do
-      Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
+      Puppet::Node.expects(:cache_class=).with(:yaml)
 
       @master.setup
     end

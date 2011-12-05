@@ -27,7 +27,7 @@ describe Puppet::Resource::Type do
   end
 
   it "should default to 'parser' for its terminus class" do
-    Puppet::Resource::Type.indirection.terminus_class.should == :parser
+    Puppet::Resource::Type.terminus_class.should == :parser
   end
 
   describe "when converting to json" do

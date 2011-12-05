@@ -770,7 +770,7 @@ type: File
     end
 
     it "should have a default terminus" do
-      Puppet::Resource.indirection.terminus_class.should be
+      Puppet::Resource.terminus_class.should be
     end
 
     it "should have a name" do
