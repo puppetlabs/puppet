@@ -13,7 +13,7 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
 
   before do
     Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
-    @terminus = Puppet::SSL::Host.indirection.terminus(:file)
+    @terminus = Puppet::SSL::Host.terminus(:file)
 
     @tmpdir = tmpdir("certificate_status_ca_testing")
     Puppet[:confdir] = @tmpdir

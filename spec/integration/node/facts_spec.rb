@@ -6,8 +6,8 @@ describe Puppet::Node::Facts do
     it "should expire any cached node instances when it is saved" do
       Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
 
-      Puppet::Node::Facts.indirection.terminus(:yaml).should equal(Puppet::Node::Facts.indirection.terminus(:yaml))
-      terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
+      Puppet::Node::Facts.terminus(:yaml).should equal(Puppet::Node::Facts.terminus(:yaml))
+      terminus = Puppet::Node::Facts.terminus(:yaml)
       terminus.stubs :save
 
       Puppet::Node.expects(:expire).with("me")
@@ -19,7 +19,7 @@ describe Puppet::Node::Facts do
       Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
 
       # Load now, before we stub the exists? method.
-      terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
+      terminus = Puppet::Node::Facts.terminus(:yaml)
 
       terminus.expects(:path).with("me").returns "/my/yaml/file"
       FileTest.expects(:exist?).with("/my/yaml/file").returns false

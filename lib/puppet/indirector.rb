@@ -58,7 +58,8 @@ module Puppet::Indirector
   module ClassMethods
     attr_reader :indirection
 
-    [:expire, :find, :head, :destroy, :search, :save].each do |forward|
+    [:expire, :find, :head, :destroy, :search, :save, :terminus
+    ].each do |forward|
       define_method(forward) {|*args| indirection.__send__(forward, *args) }
     end
   end

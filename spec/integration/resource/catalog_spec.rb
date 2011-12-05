@@ -20,7 +20,7 @@ describe Puppet::Resource::Catalog do
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :yaml
 
       # Load now, before we stub the exists? method.
-      terminus = Puppet::Resource::Catalog.indirection.terminus(:yaml)
+      terminus = Puppet::Resource::Catalog.terminus(:yaml)
       terminus.expects(:path).with("me").returns "/my/yaml/file"
 
       FileTest.expects(:exist?).with("/my/yaml/file").returns false
@@ -31,7 +31,7 @@ describe Puppet::Resource::Catalog do
       Puppet::Resource::Catalog.indirection.stubs(:terminus_class).returns :compiler
 
       # Load now, before we stub the exists? method.
-      compiler = Puppet::Resource::Catalog.indirection.terminus(:compiler)
+      compiler = Puppet::Resource::Catalog.terminus(:compiler)
 
       node = mock 'node'
       node.stub_everything

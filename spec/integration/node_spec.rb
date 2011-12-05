@@ -17,7 +17,7 @@ describe Puppet::Node do
       Puppet::Node.indirection.stubs(:terminus_class).returns :exec
 
       # Load now so we can stub
-      terminus = Puppet::Node.indirection.terminus(:exec)
+      terminus = Puppet::Node.terminus(:exec)
 
       terminus.expects(:query).with(@name).returns "myresults"
       terminus.expects(:translate).with(@name, "myresults").returns "translated_results"
@@ -30,7 +30,7 @@ describe Puppet::Node do
       Puppet::Node.indirection.stubs(:terminus_class).returns :yaml
 
       # Load now, before we stub the exists? method.
-      terminus = Puppet::Node.indirection.terminus(:yaml)
+      terminus = Puppet::Node.terminus(:yaml)
 
       terminus.expects(:path).with(@name).returns "/my/yaml/file"
 
@@ -39,14 +39,14 @@ describe Puppet::Node do
     end
 
     it "should have an ldap terminus" do
-      Puppet::Node.indirection.terminus(:ldap).should_not be_nil
+      Puppet::Node.terminus(:ldap).should_not be_nil
     end
 
     it "should be able to use the plain terminus", :'fails_on_ruby_1.9.2' => true do
       Puppet::Node.indirection.stubs(:terminus_class).returns :plain
 
       # Load now, before we stub the exists? method.
-      Puppet::Node.indirection.terminus(:plain)
+      Puppet::Node.terminus(:plain)
 
       Puppet::Node.expects(:new).with(@name).returns @node
 
@@ -57,7 +57,7 @@ describe Puppet::Node do
       before do
         @name = "me"
         @old_terminus = Puppet::Node.indirection.terminus_class
-        @terminus = Puppet::Node.indirection.terminus(:memory)
+        @terminus = Puppet::Node.terminus(:memory)
         Puppet::Node.indirection.stubs(:terminus).returns @terminus
         @node = Puppet::Node.new(@name)
       end

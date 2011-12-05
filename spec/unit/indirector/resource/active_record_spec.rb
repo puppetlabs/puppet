@@ -26,7 +26,7 @@ describe "Puppet::Resource::ActiveRecord", :if => (Puppet.features.rails? and de
 
   subject {
     require 'puppet/indirector/resource/active_record'
-    Puppet::Resource.indirection.terminus(:active_record)
+    Puppet::Resource.terminus(:active_record)
   }
 
   it "should automatically initialize Rails" do
