@@ -21,12 +21,12 @@ PACKAGEMAKER  = '/Developer/usr/bin/packagemaker'
 SED           = '/usr/bin/sed'
 
 # Class Instance Variables
-@version               = `git describe`.split('-')[0].chomp
+@version               = Puppet::PUPPETVERSION
 @title                 = "puppet-#{@version}"
 @reverse_domain        = 'com.puppetlabs.puppet'
 @package_major_version = @version.split('.')[0]
 @package_minor_version = @version.split('.')[1] +
-                         @version.split('.')[2].split('rc')[0]
+                         @version.split('.')[2]
 
 # Template-specific Variables
 @pm_restart            = 'None'
