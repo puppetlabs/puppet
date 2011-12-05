@@ -334,7 +334,8 @@ class Nagios::Base
       :stalking_options, :notes, :notes_url, :action_url, :icon_image,
       :icon_image_alt, :vrml_image, :statusmap_image, "2d_coords".intern,
       "3d_coords".intern,
-      :register, :use
+      :register, :use,
+      :realm, :poller_tag, :importance
 
     setsuperior "person"
     map :address => "ipHostNumber"
@@ -343,7 +344,8 @@ class Nagios::Base
   newtype :hostgroup do
     setparameters :hostgroup_name, :alias, :members, :hostgroup_members, :notes,
       :notes_url, :action_url,
-      :register, :use
+      :register, :use,
+      :realm
   end
 
   newtype :service do
@@ -362,7 +364,8 @@ class Nagios::Base
       :notifications_enabled, :contacts, :contact_groups, :stalking_options,
       :notes, :notes_url, :action_url, :icon_image, :icon_image_alt,
       :register, :use,
-      :_naginator_name
+      :_naginator_name,
+      :poller_tag, :importance
 
     suppress :host_name
 
@@ -402,7 +405,8 @@ class Nagios::Base
   end
 
   newtype :command do
-    setparameters :command_name, :command_line
+    setparameters :command_name, :command_line,
+    :poller_tag
   end
 
   newtype :servicedependency do
@@ -467,6 +471,10 @@ class Nagios::Base
       :_naginator_name
 
     setnamevar :_naginator_name
+  end
+
+  newtype :realm do
+    setparameters :realm_name, :realm_members, :default
   end
 
 end
