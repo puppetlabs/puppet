@@ -58,29 +58,8 @@ module Puppet::Indirector
   module ClassMethods
     attr_reader :indirection
 
-    # Expire any cached instance.
-    def expire(*args)
-      indirection.expire(*args)
-    end
-
-    def find(*args)
-      indirection.find(*args)
-    end
-
-    def head(*args)
-      indirection.head(*args)
-    end
-
-    def destroy(*args)
-      indirection.destroy(*args)
-    end
-
-    def search(*args)
-      indirection.search(*args)
-    end
-
-    def save(instance, key = nil)
-      indirection.save(instance, key)
+    [:expire, :find, :head, :destroy, :search, :save].each do |forward|
+      define_method(forward) {|*args| indirection.__send__(forward, *args) }
     end
   end
 
