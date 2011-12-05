@@ -1253,6 +1253,36 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "when autorequiring" do
+    describe "target" do
+      it "should require file resource when specified with the target property" do
+        file = described_class.new(:path => "/foo", :ensure => :directory)
+        link = described_class.new(:path => "/bar", :ensure => :symlink, :target => "/foo")
+        catalog.add_resource file
+        catalog.add_resource link
+        reqs = link.autorequire
+        reqs.size.must == 1
+        reqs[0].source.must == file
+        reqs[0].target.must == link
+      end
+
+      it "should require file resource when specified with the ensure property" do
+        file = described_class.new(:path => "/foo", :ensure => :directory)
+        link = described_class.new(:path => "/bar", :ensure => "/foo")
+        catalog.add_resource file
+        catalog.add_resource link
+        reqs = link.autorequire
+        reqs.size.must == 1
+        reqs[0].source.must == file
+        reqs[0].target.must == link
+      end
+
+      it "should not require target if target is not managed" do
+        link = described_class.new(:path => '/foo', :ensure => :symlink, :target => '/bar')
+        catalog.add_resource link
+        link.autorequire.size.should == 0
+      end
+    end
+
     describe "directories" do
       it "should autorequire its parent directory" do
         dir = described_class.new(:path => File.dirname(path))
