@@ -6,12 +6,12 @@ require 'puppet/indirector'
 
 describe Puppet::Indirector, "when configuring routes" do
   before :each do
-    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.terminus_class = nil
     Puppet::Node.cache_class = nil
   end
 
   after :each do
-    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.terminus_class = nil
     Puppet::Node.cache_class = nil
   end
 

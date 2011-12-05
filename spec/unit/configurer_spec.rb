@@ -90,8 +90,8 @@ describe Puppet::Configurer do
     end
 
     after :all do
-      Puppet::Node::Facts.indirection.reset_terminus_class
-      Puppet::Resource::Catalog.indirection.reset_terminus_class
+      Puppet::Node::Facts.terminus_class = nil
+      Puppet::Resource::Catalog.terminus_class = nil
     end
 
     it "should prepare for the run" do

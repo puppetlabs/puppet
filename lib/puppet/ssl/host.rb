@@ -54,31 +54,24 @@ class Puppet::SSL::Host
     CertificateRequest.terminus_class = terminus
     CertificateRevocationList.terminus_class = terminus
 
+    # Set, or reset, the terminus class.
     host_map = {:ca => :file, :file => nil, :rest => :rest}
-    if term = host_map[terminus]
-      self.terminus_class = term
-    else
-      self.indirection.reset_terminus_class
-    end
+    self.terminus_class = host_map[terminus]
 
     if cache
-      # This is weird; we don't actually cache our keys, we
-      # use what would otherwise be the cache as our normal
-      # terminus.
+      # This is weird; we don't actually cache our keys, we use what would
+      # otherwise be the cache as our normal terminus.
       Key.terminus_class = cache
-    else
-      Key.terminus_class = terminus
-    end
 
-    if cache
       Certificate.cache_class = cache
       CertificateRequest.cache_class = cache
       CertificateRevocationList.cache_class = cache
     else
-      # Make sure we have no cache configured.  puppet master
-      # switches the configurations around a bit, so it's important
-      # that we specify the configs for absolutely everything, every
-      # time.
+      Key.terminus_class = terminus
+
+      # Make sure we have no cache configured.  puppet master switches the
+      # configurations around a bit, so it's important that we specify the
+      # configs for absolutely everything, every time.
       Certificate.cache_class = nil
       CertificateRequest.cache_class = nil
       CertificateRevocationList.cache_class = nil

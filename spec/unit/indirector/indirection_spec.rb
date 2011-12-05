@@ -722,10 +722,6 @@ describe Puppet::Indirector::Indirection do
       proc { @indirection.terminus_class = "" }.should raise_error(ArgumentError)
     end
 
-    it "should fail when the terminus class name is nil" do
-      proc { @indirection.terminus_class = nil }.should raise_error(ArgumentError)
-    end
-
     it "should fail when the specified terminus class cannot be found" do
       Puppet::Indirector::Terminus.expects(:terminus_class).with(:test, :foo).returns(nil)
       proc { @indirection.terminus_class = :foo }.should raise_error(ArgumentError)

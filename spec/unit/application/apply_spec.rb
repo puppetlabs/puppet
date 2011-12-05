@@ -13,10 +13,10 @@ describe Puppet::Application::Apply do
   end
 
   after :each do
-    Puppet::Node::Facts.indirection.reset_terminus_class
+    Puppet::Node::Facts.terminus_class = nil
     Puppet::Node::Facts.cache_class = nil
 
-    Puppet::Node.indirection.reset_terminus_class
+    Puppet::Node.terminus_class = nil
     Puppet::Node.cache_class = nil
   end
 

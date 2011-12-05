@@ -25,7 +25,11 @@ class Puppet::Indirector::Face < Puppet::Face
     end
 
     after_action do |action, args, options|
-      indirection.reset_terminus_class
+      # Reset the indirection to the default terminus class.  Technically, we
+      # could destroy some other hand configuration here, but there is no
+      # *robust* way for someone to make that not break - so, hopefully, no
+      # one is doing that.  I found no evidence to date. --daniel 2011-12-04
+      indirection.terminus_class = nil
     end
   end
 
