@@ -276,6 +276,12 @@ describe Puppet::Application::Apply do
         expect { @apply.main }.to exit_with 0
       end
 
+      it "should write the classes.txt file" do
+        @catalog.expects(:write_class_file)
+
+        expect { @apply.main }.to exit_with 0
+      end
+
       it "should transform the catalog to ral" do
 
         @catalog.expects(:to_ral).returns(@catalog)
