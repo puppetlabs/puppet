@@ -1,4 +1,3 @@
-# Tested this spec test with rspec 2.5.1
 require 'spec_helper'
 require 'puppet/module_tool'
 

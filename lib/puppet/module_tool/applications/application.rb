@@ -1,4 +1,5 @@
 require 'net/http'
+require 'semver'
 
 module Puppet::Module::Tool
   module Applications
@@ -73,7 +74,7 @@ module Puppet::Module::Tool
         unless @username && @module_name
           raise ArgumentError, "Username and Module name not provided"
         end
-        if @version !~ /^(\d+)\.(\d+)\.(\d+)([a-zA-Z][a-zA-Z0-9-]*){0,1}$/ then
+        unless SemVer.valid?(@version)
           raise ArgumentError, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
         end
       end

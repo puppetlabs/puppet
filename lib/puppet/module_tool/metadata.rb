@@ -17,8 +17,8 @@ module Puppet::Module::Tool
     # The name of this module. See also +full_module_name+.
     attr_reader :name
 
-    # The version of this module, a string like '0.1.0'.
-    attr_accessor :version
+    # The version of this module.
+    attr_reader :version
 
     # Instantiate from a hash, whose keys are setters in this class.
     def initialize(settings={})
@@ -109,6 +109,16 @@ module Puppet::Module::Tool
     # of the module and its +version+ number.
     def release_name
       return [dashed_name, @version].join('-')
+    end
+
+    # Set the version of this module, ensure a string like '0.1.0' see the
+    # Semantic Versions here: http://semver.org
+    def version=(version)
+      if SemVer.valid?(version)
+        @version = version
+      else
+        raise ArgumentError, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
+      end
     end
 
     # Return the PSON record representing this instance.
