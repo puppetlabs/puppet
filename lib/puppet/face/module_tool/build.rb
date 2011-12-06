@@ -10,13 +10,11 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     returns "Pathname object representing the path to the release archive."
 
     examples <<-EOT
-      Build a module release from within the module directory:
+      Build a module release:
 
-      $ puppet module_tool build
-
-      Build a module release from outside the module directory:
-
-      $ puppet module_tool build /path/to/module
+      $ puppet module_tool build puppetlabs-apache
+      notice: Building /Users/kelseyhightower/puppetlabs-apache for release
+      puppetlabs-apache/pkg/puppetlabs-apache-0.0.1.tar.gz
     EOT
 
     arguments "<path>"

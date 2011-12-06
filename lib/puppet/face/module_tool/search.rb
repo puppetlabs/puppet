@@ -10,7 +10,33 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Search the default repository for a module:
 
-      $ puppet module_tool search modulename
+      $ puppet module_tool search puppetlabs
+      notice: Searching http://forge.puppetlabs.com
+      notice: 24 found.
+      puppetlabs/apache (0.0.3)
+      puppetlabs/collectd (0.0.1)
+      puppetlabs/ruby (0.0.1)
+      puppetlabs/vcsrepo (0.0.4)
+      puppetlabs/gcc (0.0.3)
+      puppetlabs/passenger (0.0.2)
+      puppetlabs/DeveloperBootstrap (0.0.5)
+      jeffmccune/tomcat (1.0.1)
+      puppetlabs/motd (1.0.0)
+      puppetlabs/lvm (0.1.0)
+      puppetlabs/rabbitmq (1.0.4)
+      puppetlabs/prosvc_repo (1.0.1)
+      puppetlabs/stdlib (2.2.0)
+      puppetlabs/java (0.1.5)
+      puppetlabs/activemq (0.1.6)
+      puppetlabs/mcollective (0.1.8)
+      puppetlabs/git (0.0.2)
+      puppetlabs/ntp (0.0.4)
+      puppetlabs/nginx (0.0.1)
+      puppetlabs/cloud_provisioner (0.6.0rc1)
+      puppetlabs/mrepo (0.1.1)
+      puppetlabs/f5 (0.1.0)
+      puppetlabs/firewall (0.0.3)
+      puppetlabs/bprobe (0.0.3)
     EOT
 
     arguments "<term>"

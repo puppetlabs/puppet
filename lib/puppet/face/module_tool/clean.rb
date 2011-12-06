@@ -11,6 +11,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
       Clean the module download cache:
 
       $ puppet module_tool clean
+      Cleaned module cache.
     EOT
 
     when_invoked do |options|

@@ -13,19 +13,27 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Install a module from the default repository:
 
-      $ puppet module_tool install username-modulename
+      $ puppet module_tool install puppetlabs/vcsrepo
+      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
+      /etc/puppet/modules/vcsrepo
 
       Install a specific module version from a repository:
 
-      $ puppet module_tool install username-modulename --version=0.0.1
+      $ puppet module_tool install puppetlabs/vcsrepo -v 0.0.4
+      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
+      /etc/puppet/modules/vcsrepo
 
       Install a module into a specific directory:
 
-      $ puppet module_tool install username-modulename --install-dir=path
+      $ puppet module_tool install puppetlabs/vcsrepo --install-dir=/usr/share/puppet/modules
+      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
+      /usr/share/puppet/modules/vcsrepo
 
       Install a module from a release archive:
 
-      $ puppet module_tool install username-modulename-0.0.1.tar.gz
+      $ puppet module_tool install puppetlabs-vcsrepo-0.0.4.tar.gz
+      notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
+      /etc/puppet/modules/vcsrepo
     EOT
 
     arguments "<name>"

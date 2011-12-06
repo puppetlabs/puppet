@@ -12,7 +12,19 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Generate a new module in the current directory:
 
-      $ puppet module_tool generate username-modulename
+      $ puppet module_tool generate puppetlabs-ssh
+      notice: Generating module at /Users/kelseyhightower/puppetlabs-ssh
+      puppetlabs-ssh
+      puppetlabs-ssh/tests
+      puppetlabs-ssh/tests/init.pp
+      puppetlabs-ssh/spec
+      puppetlabs-ssh/spec/spec_helper.rb
+      puppetlabs-ssh/spec/spec.opts
+      puppetlabs-ssh/README
+      puppetlabs-ssh/Modulefile
+      puppetlabs-ssh/metadata.json
+      puppetlabs-ssh/manifests
+      puppetlabs-ssh/manifests/init.pp
     EOT
 
     arguments "<name>"
