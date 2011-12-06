@@ -64,9 +64,11 @@ describe "module_tool" do
   before do
     @tmp_confdir = Puppet[:confdir] = tmpdir("module_tool_test_confdir")
     @tmp_vardir = Puppet[:vardir] = tmpdir("module_tool_test_vardir")
+    Puppet[:module_repository] = "http://forge.puppetlabs.com"
     @mytmpdir = Pathname.new(tmpdir("module_tool_test"))
     @options = {}
     @options[:install_dir] = @mytmpdir
+    @options[:module_repository] = "http://forge.puppetlabs.com"
   end
 
   def build_and_install_module

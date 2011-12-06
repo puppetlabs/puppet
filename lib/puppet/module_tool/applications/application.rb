@@ -16,7 +16,7 @@ module Puppet::Module::Tool
       end
 
       def repository
-        @repository ||= Repository.new(@options[:module_repository] || Puppet::Module::Tool::REPOSITORY_URL)
+        @repository ||= Repository.new(@options[:module_repository])
       end
 
       def run
