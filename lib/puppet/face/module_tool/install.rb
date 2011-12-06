@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '0.0.1') do
+Puppet::Face.define(:module_tool, '1.0.0') do
   action(:install) do
     summary "Install a module from a repository or release archive."
     description <<-EOT

@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '0.0.1') do
+Puppet::Face.define(:module_tool, '1.0.0') do
   action(:generate) do
     summary "Generate boilerplate for a new module."
     description <<-EOT
