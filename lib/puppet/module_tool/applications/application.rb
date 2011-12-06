@@ -38,7 +38,7 @@ module Puppet::Module::Tool
           unless @path
             raise SystemExit, "Could not determine module path"
           end
-          @metadata = Metadata.new
+          @metadata = Puppet::Module::Tool::Metadata.new
           contents = ContentsDescription.new(@path)
           contents.annotate(@metadata)
           checksums = Checksums.new(@path)
