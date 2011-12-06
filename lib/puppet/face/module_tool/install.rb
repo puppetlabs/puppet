@@ -4,8 +4,8 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     description <<-EOT
       Install a module from a release archive file on-disk or by downloading
       one from a repository. Unpack the archive into the install directory
-      specified by the --install-dir option, which defaults to the first
-      directory in the modulepath.
+      specified by the --install-dir option, which defaults to
+      #{Puppet.settings[:modulepath].split(File::PATH_SEPARATOR).first}
     EOT
 
     returns "Pathname object representing the path to the installed module."
