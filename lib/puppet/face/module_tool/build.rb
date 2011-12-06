@@ -22,8 +22,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     arguments "<path>"
 
     when_invoked do |path, options|
-      root_path = Puppet::Module::Tool.find_module_root(path)
-      Puppet::Module::Tool::Applications::Builder.run(root_path, options)
+      Puppet::Module::Tool::Applications::Builder.run(path, options)
     end
 
     when_rendering :console do |return_value|
