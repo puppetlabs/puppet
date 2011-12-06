@@ -1256,7 +1256,7 @@ describe Puppet::Type.type(:file) do
     describe "target" do
       it "should require file resource when specified with the target property" do
         file = described_class.new(:path => File.expand_path("/foo"), :ensure => :directory)
-        link = described_class.new(:path => File.expand_path("/bar"), :ensure => :symlink, :target => "/foo")
+        link = described_class.new(:path => File.expand_path("/bar"), :ensure => :symlink, :target => File.expand_path("/foo"))
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
@@ -1267,7 +1267,7 @@ describe Puppet::Type.type(:file) do
 
       it "should require file resource when specified with the ensure property" do
         file = described_class.new(:path => File.expand_path("/foo"), :ensure => :directory)
-        link = described_class.new(:path => File.expand_path("/bar"), :ensure => "/foo")
+        link = described_class.new(:path => File.expand_path("/bar"), :ensure => File.expand_path("/foo"))
         catalog.add_resource file
         catalog.add_resource link
         reqs = link.autorequire
