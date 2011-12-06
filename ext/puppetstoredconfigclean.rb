@@ -62,7 +62,7 @@ args = {:adapter => adapter, :log_level => pm_conf[:rails_loglevel]}
 case adapter
   when "sqlite3"
     args[:dbfile] = pm_conf[:dblocation]
-  when "mysql", "postgresql"
+  when "mysql", "mysql2", "postgresql"
     args[:host]     = pm_conf[:dbserver] unless pm_conf[:dbserver].to_s.empty?
     args[:username] = pm_conf[:dbuser] unless pm_conf[:dbuser].to_s.empty?
     args[:password] = pm_conf[:dbpassword] unless pm_conf[:dbpassword].to_s.empty?
