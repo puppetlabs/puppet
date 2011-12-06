@@ -10,7 +10,7 @@ module Puppet
 
       # Directory names that should not be checksummed.
       ARTIFACTS = ['pkg', /^\./, /^~/, /^#/, 'coverage']
-      FULL_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
+      FULL_MODULE_NAME_PATTERN = /\A([^-\/|.]+)[-|\/](.+)\z/
       REPOSITORY_URL = Puppet.settings[:module_repository]
 
       # Is this a directory that shouldn't be checksummed?
@@ -27,13 +27,13 @@ module Puppet
         end
       end
 
-      # Return the +username+ and +modname+ for a given +full_name+, or raise an
+      # Return the +username+ and +modname+ for a given +full_module_name+, or raise an
       # ArgumentError if the argument isn't parseable.
-      def self.username_and_modname_from(full_name)
-        if matcher = full_name.match(FULL_NAME_PATTERN)
+      def self.username_and_modname_from(full_module_name)
+        if matcher = full_module_name.match(FULL_MODULE_NAME_PATTERN)
           return matcher.captures
         else
-          raise ArgumentError, "Not a valid full name: #{full_name}"
+          raise ArgumentError, "Not a valid full name: #{full_module_name}"
         end
       end
 

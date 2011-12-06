@@ -24,10 +24,10 @@ module Puppet::Module::Tool
       @metadata = metadata
     end
 
-    # Set the +full_name+ (e.g. "myuser-mymodule"), which will also set the
+    # Set the +full_module_name+ (e.g. "myuser-mymodule"), which will also set the
     # +username+ and module +name+. Required.
     def name(name)
-      @metadata.full_name = name
+      @metadata.full_module_name = name
     end
 
     # Set the module +version+ (e.g., "0.0.1"). Required.
@@ -35,7 +35,7 @@ module Puppet::Module::Tool
       @metadata.version = version
     end
 
-    # Add a dependency with the full_name +name+ (e.g. "myuser-mymodule"), an
+    # Add a dependency with the full_module_name +name+ (e.g. "myuser-mymodule"), an
     # optional +version_requirement+ (e.g. "0.0.1") and +repository+ (a URL
     # string). Optional. Can be called multiple times to add many dependencies.
     def dependency(name, version_requirement = nil, repository = nil)

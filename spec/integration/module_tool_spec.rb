@@ -72,11 +72,11 @@ describe "module_tool" do
   end
 
   def build_and_install_module
-    Puppet::Module::Tool::Applications::Generator.run(@full_name)
-    Puppet::Module::Tool::Applications::Builder.run(@full_name)
+    Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+    Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
 
-    FileUtils.mv("#{@full_name}/pkg/#{@release_name}.tar.gz", "#{@release_name}.tar.gz")
-    FileUtils.rm_rf(@full_name)
+    FileUtils.mv("#{@full_module_name}/pkg/#{@release_name}.tar.gz", "#{@release_name}.tar.gz")
+    FileUtils.rm_rf(@full_module_name)
 
     Puppet::Module::Tool::Applications::Installer.run("#{@release_name}.tar.gz", @options)
   end
@@ -91,9 +91,9 @@ describe "module_tool" do
   before :all do
     @username = "myuser"
     @module_name  = "mymodule"
-    @full_name = "#{@username}-#{@module_name}"
+    @full_module_name = "#{@username}-#{@module_name}"
     @version = "0.0.1"
-    @release_name = "#{@full_name}-#{@version}"
+    @release_name = "#{@full_module_name}-#{@version}"
   end
 
   before :each do
@@ -108,14 +108,14 @@ describe "module_tool" do
   describe "generate" do
     it "should generate a module if given a dashed name" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
 
-        File.directory?(@full_name).should == true
-        modulefile = File.join(@full_name, "Modulefile")
+        File.directory?(@full_module_name).should == true
+        modulefile = File.join(@full_module_name, "Modulefile")
         File.file?(modulefile).should == true
         metadata = Puppet::Module::Tool::Metadata.new
         Puppet::Module::Tool::Modulefile.evaluate(metadata, modulefile)
-        metadata.full_name.should == @full_name
+        metadata.full_module_name.should == @full_module_name
         metadata.username.should == @username
         metadata.name.should == @module_name
       end
@@ -129,14 +129,14 @@ describe "module_tool" do
 
     it "should fail if directory already exists" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        lambda { Puppet::Module::Tool::Applications::Generator.run(@full_name) }.should raise_error(SystemExit)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        lambda { Puppet::Module::Tool::Applications::Generator.run(@full_module_name) }.should raise_error(SystemExit)
       end
     end
 
     it "should return an array of Pathname objects representing paths of generated files" do
       run do
-        return_value = Puppet::Module::Tool::Applications::Generator.run(@full_name)
+        return_value = Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
         return_value.each do |generated_file|
           generated_file.should be_kind_of(Pathname)
         end
@@ -148,15 +148,15 @@ describe "module_tool" do
   describe "build" do
     it "should build a module in a directory" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
 
-        File.directory?(File.join(@full_name, "pkg", @release_name)).should == true
-        File.file?(File.join(@full_name, "pkg", @release_name + ".tar.gz")).should == true
-        metadata_file = File.join(@full_name, "pkg", @release_name, "metadata.json")
+        File.directory?(File.join(@full_module_name, "pkg", @release_name)).should == true
+        File.file?(File.join(@full_module_name, "pkg", @release_name + ".tar.gz")).should == true
+        metadata_file = File.join(@full_module_name, "pkg", @release_name, "metadata.json")
         File.file?(metadata_file).should == true
         metadata = PSON.parse(File.read(metadata_file))
-        metadata["name"].should == @full_name
+        metadata["name"].should == @full_module_name
         metadata["version"].should == @version
         metadata["checksums"].should be_a_kind_of(Hash)
         metadata["dependencies"].should == []
@@ -166,14 +166,14 @@ describe "module_tool" do
 
     it "should build a module's checksums" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
 
-        metadata_file = File.join(@full_name, "pkg", @release_name, "metadata.json")
+        metadata_file = File.join(@full_module_name, "pkg", @release_name, "metadata.json")
         metadata = PSON.parse(File.read(metadata_file))
         metadata["checksums"].should be_a_kind_of(Hash)
 
-        modulefile_path = Pathname.new(File.join(@full_name, "Modulefile"))
+        modulefile_path = Pathname.new(File.join(@full_module_name, "Modulefile"))
         metadata["checksums"]["Modulefile"].should == Digest::MD5.hexdigest(modulefile_path.read)
       end
     end
@@ -215,8 +215,8 @@ describe "module_tool" do
 
     it "should build a module's dependencies" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        modulefile = File.join(@full_name, "Modulefile")
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        modulefile = File.join(@full_module_name, "Modulefile")
 
         dependency1_name = "anotheruser-anothermodule"
         dependency1_requirement = ">= 1.2.3"
@@ -229,9 +229,9 @@ describe "module_tool" do
           handle.puts "dependency '#{dependency2_name}', '#{dependency2_requirement}', '#{dependency2_repository}'"
         end
 
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
 
-        metadata_file = File.join(@full_name, "pkg", "#{@full_name}-#{@version}", "metadata.json")
+        metadata_file = File.join(@full_module_name, "pkg", "#{@full_module_name}-#{@version}", "metadata.json")
         metadata = PSON.parse(File.read(metadata_file))
 
         metadata['dependencies'].size.should == 2
@@ -253,16 +253,16 @@ describe "module_tool" do
 
     it "should rebuild a module in a directory" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
       end
     end
 
     it "should build a module in the current directory" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Dir.chdir(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Dir.chdir(@full_module_name)
         Puppet::Module::Tool::Applications::Builder.run(Puppet::Module::Tool.find_module_root(nil))
 
         File.file?(File.join("pkg", @release_name + ".tar.gz")).should == true
@@ -271,16 +271,16 @@ describe "module_tool" do
 
     it "should fail to build a module without a Modulefile" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        FileUtils.rm(File.join(@full_name, "Modulefile"))
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        FileUtils.rm(File.join(@full_module_name, "Modulefile"))
 
-        lambda { Puppet::Module::Tool::Applications::Builder.run(Puppet::Module::Tool.find_module_root(@full_name)) }.should raise_error(ArgumentError)
+        lambda { Puppet::Module::Tool::Applications::Builder.run(Puppet::Module::Tool.find_module_root(@full_module_name)) }.should raise_error(ArgumentError)
       end
     end
 
     it "should fail to build a module directory that doesn't exist" do
       run do
-        lambda { Puppet::Module::Tool::Applications::Builder.run(Puppet::Module::Tool.find_module_root(@full_name)) }.should raise_error(ArgumentError)
+        lambda { Puppet::Module::Tool::Applications::Builder.run(Puppet::Module::Tool.find_module_root(@full_module_name)) }.should raise_error(ArgumentError)
       end
     end
 
@@ -292,8 +292,8 @@ describe "module_tool" do
 
     it "should return a Pathname object representing the path to the release archive." do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name).should be_kind_of(Pathname)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name).should be_kind_of(Pathname)
       end
     end
   end
@@ -303,8 +303,8 @@ describe "module_tool" do
       run do
         stub_repository_read 200, <<-HERE
           [
-            {"full_name": "cli", "version": "1.0"},
-            {"full_name": "web", "version": "2.0"}
+            {"full_module_name": "cli", "version": "1.0"},
+            {"full_module_name": "web", "version": "2.0"}
           ]
         HERE
         Puppet::Module::Tool::Applications::Searcher.run("mymodule", @options).size.should == 2
@@ -329,13 +329,13 @@ describe "module_tool" do
       run do
         results = <<-HERE
           [
-            {"full_name": "cli", "version": "1.0"},
-            {"full_name": "web", "version": "2.0"}
+            {"full_module_name": "cli", "version": "1.0"},
+            {"full_module_name": "web", "version": "2.0"}
           ]
         HERE
         expected = [
-          {"version"=>"1.0", "full_name"=>"cli"},
-          {"version"=>"2.0", "full_name"=>"web"}
+          {"version"=>"1.0", "full_module_name"=>"cli"},
+          {"version"=>"2.0", "full_module_name"=>"web"}
         ]
         stub_repository_read 200, results
         return_value = Puppet::Module::Tool::Applications::Searcher.run("mymodule", @options)
@@ -370,17 +370,17 @@ describe "module_tool" do
 
     it "should install a module from a webserver URL" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
 
-        stub_cache_read File.read("#{@full_name}/pkg/#{@release_name}.tar.gz")
-        FileUtils.rm_rf(@full_name)
+        stub_cache_read File.read("#{@full_module_name}/pkg/#{@release_name}.tar.gz")
+        FileUtils.rm_rf(@full_module_name)
 
         stub_installer_read <<-HERE
           {"file": "/foo/bar/#{@release_name}.tar.gz", "version": "#{@version}"}
         HERE
 
-        Puppet::Module::Tool::Applications::Installer.run(@full_name, @options)
+        Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options)
 
         File.directory?(@mytmpdir + @module_name).should == true
         File.file?(@mytmpdir + @module_name + 'metadata.json').should == true
@@ -420,17 +420,17 @@ describe "module_tool" do
 
     it "should return a Pathname object representing the path to the installed module" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
 
-        stub_cache_read File.read("#{@full_name}/pkg/#{@release_name}.tar.gz")
-        FileUtils.rm_rf(@full_name)
+        stub_cache_read File.read("#{@full_module_name}/pkg/#{@release_name}.tar.gz")
+        FileUtils.rm_rf(@full_module_name)
 
         stub_installer_read <<-HERE
           {"file": "/foo/bar/#{@release_name}.tar.gz", "version": "#{@version}"}
         HERE
 
-        Puppet::Module::Tool::Applications::Installer.run(@full_name, @options).should be_kind_of(Pathname)
+        Puppet::Module::Tool::Applications::Installer.run(@full_module_name, @options).should be_kind_of(Pathname)
       end
     end
 
@@ -461,9 +461,9 @@ describe "module_tool" do
   describe "changes" do
     it "should return an array of modified files" do
       run do
-        Puppet::Module::Tool::Applications::Generator.run(@full_name)
-        Puppet::Module::Tool::Applications::Builder.run(@full_name)
-        Dir.chdir("#{@full_name}/pkg/#{@release_name}")
+        Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
+        Puppet::Module::Tool::Applications::Builder.run(@full_module_name)
+        Dir.chdir("#{@full_module_name}/pkg/#{@release_name}")
         File.open("Modulefile", "a") do |handle|
           handle.puts
           handle.puts "# Added"

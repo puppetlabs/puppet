@@ -6,11 +6,11 @@ module Puppet::Module::Tool
   module Applications
     class Generator < Application
 
-      def initialize(full_name, options = {})
+      def initialize(full_module_name, options = {})
         begin
-          @metadata = Metadata.new(:full_name => full_name)
+          @metadata = Metadata.new(:full_module_name => full_module_name)
         rescue ArgumentError
-          raise SystemExit, "Could not generate directory #{full_name.inspect}, you must specify a dash-separated username and module name."
+          raise SystemExit, "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
         end
         super(options)
       end

@@ -9,12 +9,12 @@ module Puppet::Module::Tool
 
     # The full name of the module, which is a dash-separated combination of the
     # +username+ and module +name+.
-    attr_reader :full_name
+    attr_reader :full_module_name
 
     # The name of the user that owns this module.
     attr_reader :username
 
-    # The name of this module. See also +full_name+.
+    # The name of this module. See also +full_module_name+.
     attr_reader :name
 
     # The version of this module, a string like '0.1.0'.
@@ -29,9 +29,9 @@ module Puppet::Module::Tool
 
     # Set the full name of this module, and from it, the +username+ and
     # module +name+.
-    def full_name=(full_name)
-      @full_name = full_name
-      @username, @name = Puppet::Module::Tool::username_and_modname_from(full_name)
+    def full_module_name=(full_module_name)
+      @full_module_name = full_module_name
+      @username, @name = Puppet::Module::Tool::username_and_modname_from(full_module_name)
     end
 
     # Return an array of the module's Dependency objects.
@@ -115,7 +115,7 @@ module Puppet::Module::Tool
     # Return the PSON record representing this instance.
     def to_pson(*args)
       return {
-        :name         => @full_name,
+        :name         => @full_module_name,
         :version      => @version,
         :source       => source,
         :author       => author,

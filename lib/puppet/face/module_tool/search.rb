@@ -57,6 +57,8 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     when_rendering :console do |return_value|
       Puppet.notice "#{return_value.size} found."
       return_value.map do |match|
+        # We reference the full_name here when referring to the full_module_name,
+        # because full_name is what is returned from the forge API call.
         "#{match['full_name']} (#{match['version']})"
       end.join("\n")
     end

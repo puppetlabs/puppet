@@ -69,7 +69,7 @@ module Puppet::Module::Tool
         else
           raise SystemExit, "Could not parse filename to obtain the username, module name and version.  (#{@release_name})"
         end
-        @full_name = [@username, @module_name].join('-')
+        @full_module_name = [@username, @module_name].join('-')
         unless @username && @module_name
           raise SystemExit, "Username and Module name not provided"
         end

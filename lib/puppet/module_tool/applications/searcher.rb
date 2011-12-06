@@ -29,8 +29,8 @@ module Puppet::Module::Tool
         #     "name"        => "nginx",
         #     "project_url" => "http://github.com/puppetlabs/puppetlabs-nginx",
         #     "version"     => "0.0.1",
-        #     "full_name"   => "puppetlabs/nginx"
-        #   }
+        #     "full_name"   => "puppetlabs/nginx" # full_name comes back from
+        #   }                                     # API all to the forge.
         # ]
         #
         matches
