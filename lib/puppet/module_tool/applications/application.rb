@@ -45,7 +45,7 @@ module Puppet::Module::Tool
           checksums.annotate(@metadata)
           modulefile_path = File.join(@path, 'Modulefile')
           if File.file?(modulefile_path)
-            Modulefile.evaluate(@metadata, modulefile_path)
+            Puppet::Module::Tool::ModulefileReader.evaluate(@metadata, modulefile_path)
           elsif require_modulefile
             raise SystemExit, "No Modulefile found."
           end

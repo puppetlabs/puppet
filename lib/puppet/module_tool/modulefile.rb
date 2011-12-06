@@ -5,7 +5,7 @@ module Puppet::Module::Tool
   # This class provides the DSL used for evaluating the module's 'Modulefile'.
   # These methods are used to concisely define this module's attributes, which
   # are later rendered as PSON into a 'metadata.json' file.
-  class Modulefile
+  class ModulefileReader
 
     # Read the +filename+ and eval its Ruby code to set values in the Metadata
     # +metadata+ instance.

@@ -114,7 +114,7 @@ describe "module_tool" do
         modulefile = File.join(@full_module_name, "Modulefile")
         File.file?(modulefile).should == true
         metadata = Puppet::Module::Tool::Metadata.new
-        Puppet::Module::Tool::Modulefile.evaluate(metadata, modulefile)
+        Puppet::Module::Tool::ModulefileReader.evaluate(metadata, modulefile)
         metadata.full_module_name.should == @full_module_name
         metadata.username.should == @username
         metadata.name.should == @module_name
