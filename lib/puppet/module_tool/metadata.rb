@@ -89,7 +89,6 @@ module Puppet::Module::Tool
 
     # Return an array of the module's Puppet types, each one is a hash
     # containing :name and :doc.
-    # TODO Shouldn't this be it's own class?
     def types
       return @types ||= []
     end
