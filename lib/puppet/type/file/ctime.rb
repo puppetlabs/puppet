@@ -10,7 +10,7 @@ module Puppet
       current_value
     end
 
-    validate do
+    validate do |val|
       fail "ctime is read-only"
     end
   end
