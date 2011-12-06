@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '1.0.0') do
+Puppet::Face.define(:module, '1.0.0') do
   action(:install) do
     summary "Install a module from a repository or release archive."
     description <<-EOT
@@ -13,25 +13,25 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Install a module from the default repository:
 
-      $ puppet module_tool install puppetlabs/vcsrepo
+      $ puppet module install puppetlabs/vcsrepo
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
       /etc/puppet/modules/vcsrepo
 
       Install a specific module version from a repository:
 
-      $ puppet module_tool install puppetlabs/vcsrepo -v 0.0.4
+      $ puppet module install puppetlabs/vcsrepo -v 0.0.4
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
       /etc/puppet/modules/vcsrepo
 
       Install a module into a specific directory:
 
-      $ puppet module_tool install puppetlabs/vcsrepo --install-dir=/usr/share/puppet/modules
+      $ puppet module install puppetlabs/vcsrepo --install-dir=/usr/share/puppet/modules
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /usr/share/puppet/modules/vcsrepo
       /usr/share/puppet/modules/vcsrepo
 
       Install a module from a release archive:
 
-      $ puppet module_tool install puppetlabs-vcsrepo-0.0.4.tar.gz
+      $ puppet module install puppetlabs-vcsrepo-0.0.4.tar.gz
       notice: Installing puppetlabs-vcsrepo-0.0.4.tar.gz to /etc/puppet/modules/vcsrepo
       /etc/puppet/modules/vcsrepo
     EOT

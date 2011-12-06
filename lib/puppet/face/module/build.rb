@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '1.0.0') do
+Puppet::Face.define(:module, '1.0.0') do
   action(:build) do
     summary "Build a module release package."
     description <<-EOT
@@ -12,7 +12,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Build a module release:
 
-      $ puppet module_tool build puppetlabs-apache
+      $ puppet module build puppetlabs-apache
       notice: Building /Users/kelseyhightower/puppetlabs-apache for release
       puppetlabs-apache/pkg/puppetlabs-apache-0.0.1.tar.gz
     EOT

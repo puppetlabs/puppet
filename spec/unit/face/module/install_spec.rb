@@ -1,8 +1,8 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe "puppet module_tool install" do
-  subject { Puppet::Face[:module_tool, :current] }
+describe "puppet module install" do
+  subject { Puppet::Face[:module, :current] }
 
   let(:options) do
     {}
@@ -58,7 +58,7 @@ describe "puppet module_tool install" do
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module_tool, :current].get_action :install }
+    subject { Puppet::Face[:module, :current].get_action :install }
 
     its(:summary)     { should =~ /install.*module/im }
     its(:description) { should =~ /install.*module/im }

@@ -1,8 +1,8 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe "puppet module_tool search" do
-  subject { Puppet::Face[:module_tool, :current] }
+describe "puppet module search" do
+  subject { Puppet::Face[:module, :current] }
 
   let(:options) do
     {}
@@ -24,7 +24,7 @@ describe "puppet module_tool search" do
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module_tool, :current].get_action :search }
+    subject { Puppet::Face[:module, :current].get_action :search }
 
     its(:summary)     { should =~ /search.*module/im }
     its(:description) { should =~ /search.*module/im }

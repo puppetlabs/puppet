@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '1.0.0') do
+Puppet::Face.define(:module, '1.0.0') do
   action(:changes) do
     summary "Show modified files of an installed module."
     description <<-EOT
@@ -12,7 +12,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Show modified files of an installed module:
 
-      $ puppet module_tool changes /etc/puppet/modules/vcsrepo/
+      $ puppet module changes /etc/puppet/modules/vcsrepo/
       warning: 1 files modified
       lib/puppet/provider/vcsrepo.rb
     EOT

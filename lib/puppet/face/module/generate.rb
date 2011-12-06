@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '1.0.0') do
+Puppet::Face.define(:module, '1.0.0') do
   action(:generate) do
     summary "Generate boilerplate for a new module."
     description <<-EOT
@@ -12,7 +12,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Generate a new module in the current directory:
 
-      $ puppet module_tool generate puppetlabs-ssh
+      $ puppet module generate puppetlabs-ssh
       notice: Generating module at /Users/kelseyhightower/puppetlabs-ssh
       puppetlabs-ssh
       puppetlabs-ssh/tests

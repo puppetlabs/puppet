@@ -1,24 +1,24 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe "puppet module_tool build" do
-  subject { Puppet::Face[:module_tool, :current] }
+describe "puppet module generate" do
+  subject { Puppet::Face[:module, :current] }
 
   describe "option validation" do
     context "without any options" do
-      it "should require a path" do
+      it "should require name" do
         pattern = /wrong number of arguments/
-        expect { subject.build }.to raise_error ArgumentError, pattern
+        expect { subject.generate }.to raise_error ArgumentError, pattern
       end
     end
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module_tool, :current].get_action :build }
+    subject { Puppet::Face[:module, :current].get_action :generate }
 
-    its(:summary)     { should =~ /build.*module/im }
-    its(:description) { should =~ /build.*module/im }
-    its(:returns)     { should =~ /pathname/i }
+    its(:summary)     { should =~ /generate.*module/im }
+    its(:description) { should =~ /generate.*module/im }
+    its(:returns)     { should =~ /array/i }
     its(:examples)    { should_not be_empty }
 
     %w{ license copyright summary description returns examples }.each do |doc|

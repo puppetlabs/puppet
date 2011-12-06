@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '1.0.0') do
+Puppet::Face.define(:module, '1.0.0') do
   action(:search) do
     summary "Search a repository for a module."
     description <<-EOT
@@ -10,7 +10,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Search the default repository for a module:
 
-      $ puppet module_tool search puppetlabs
+      $ puppet module search puppetlabs
       notice: Searching http://forge.puppetlabs.com
       notice: 24 found.
       puppetlabs/apache (0.0.3)

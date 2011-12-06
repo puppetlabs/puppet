@@ -1,8 +1,8 @@
 require 'spec_helper'
 require 'puppet/face'
 
-describe "puppet module_tool clean" do
-  subject { Puppet::Face[:module_tool, :current] }
+describe "puppet module clean" do
+  subject { Puppet::Face[:module, :current] }
 
   describe "option validation" do
     context "without any options" do
@@ -14,7 +14,7 @@ describe "puppet module_tool clean" do
   end
 
   describe "inline documentation" do
-    subject { Puppet::Face[:module_tool, :current].get_action :clean }
+    subject { Puppet::Face[:module, :current].get_action :clean }
 
     its(:summary)     { should =~ /clean.*module/im }
     its(:description) { should =~ /clean.*module/im }

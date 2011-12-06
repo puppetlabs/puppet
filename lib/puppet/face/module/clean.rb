@@ -1,4 +1,4 @@
-Puppet::Face.define(:module_tool, '1.0.0') do
+Puppet::Face.define(:module, '1.0.0') do
   action(:clean) do
     summary "Clean the module download cache."
     description <<-EOT
@@ -14,7 +14,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     examples <<-EOT
       Clean the module download cache:
 
-      $ puppet module_tool clean
+      $ puppet module clean
       Cleaned module cache.
     EOT
 
