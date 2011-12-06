@@ -34,9 +34,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     end
 
     when_rendering :console do |return_value|
-      return_value.map do |generated_file|
-        "#{generated_file}"
-      end.join("\n")
+      return_value.map {|f| f.to_s }.join("\n")
     end
   end
 end
