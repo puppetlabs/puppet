@@ -1,10 +1,9 @@
-require 'pathname'
-dir = Pathname.new(__FILE__).parent
-$LOAD_PATH.unshift(dir, dir + 'lib', dir + '../lib')
+dir = File.expand_path(File.dirname(__FILE__))
+$LOAD_PATH.unshift File.join(dir, 'lib')
 
 require 'mocha'
 require 'puppet'
-gem 'rspec', '=1.2.9'
+require 'rspec'
 require 'spec/autorun'
 
 Spec::Runner.configure do |config|
