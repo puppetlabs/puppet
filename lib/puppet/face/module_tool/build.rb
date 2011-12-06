@@ -26,8 +26,7 @@ Puppet::Face.define(:module_tool, '1.0.0') do
     end
 
     when_rendering :console do |return_value|
-      # Get the string representation of the Pathname object and print it to
-      # the console.
+      # Get the string representation of the Pathname object.
       return_value.to_s
     end
   end
