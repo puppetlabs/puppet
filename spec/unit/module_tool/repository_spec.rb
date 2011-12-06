@@ -30,23 +30,21 @@ describe Puppet::Module::Tool::Repository do
     end
 
     describe '#authenticate' do
-      before do
-        @request = stub
-        @repository.expects(:prompt).twice
-      end
-
       it "should set basic auth on the request" do
-        @request.expects(:basic_auth)
-        @repository.authenticate(@request)
+        authenticated_request = stub
+        authenticated_request.expects(:basic_auth)
+        @repository.expects(:prompt).twice
+        @repository.authenticate(authenticated_request)
       end
     end
 
     describe '#retrieve' do
       before do
         @uri = URI.parse('http://some.url.com')
-        @repository.cache.expects(:retrieve).with(@uri)
       end
+
       it "should access the cache" do
+        @repository.cache.expects(:retrieve).with(@uri)
         @repository.retrieve(@uri)
       end
     end
