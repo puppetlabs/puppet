@@ -22,7 +22,7 @@ class Puppet::Rails::Schema
         # Thanks, mysql!  MySQL requires a length on indexes in text fields.
         # So, we provide them for mysql and handle everything else specially.
         # Oracle doesn't index on CLOB fields, so we skip it
-        if Puppet[:dbadapter] == "mysql"
+        if ['mysql','mysql2'].include? Puppet[:dbadapter]
           execute "CREATE INDEX typentitle ON resources (restype,title(50));"
         elsif Puppet[:dbadapter] != "oracle_enhanced"
           add_index :resources, [:title, :restype]
