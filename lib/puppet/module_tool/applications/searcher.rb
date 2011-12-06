@@ -9,7 +9,7 @@ module Puppet::Module::Tool
 
       def run
         request = Net::HTTP::Get.new("/modules.json?q=#{URI.escape(@term)}")
-        response = repository.contact(request)
+        response = repository.make_http_request(request)
         case response
         when Net::HTTPOK
           matches = PSON.parse(response.body)

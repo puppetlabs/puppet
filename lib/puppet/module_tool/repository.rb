@@ -23,18 +23,18 @@ module Puppet::Module::Tool
     #
     # Options:
     # * :authenticate => Request authentication on the terminal. Defaults to false.
-    def contact(request, options = {})
+    def make_http_request(request, options = {})
       if options[:authenticate]
         authenticate(request)
       end
       if ! @uri.user.nil? && ! @uri.password.nil?
         request.basic_auth(@uri.user, @uri.password)
       end
-      return read_contact(request)
+      return read_response(request)
     end
 
     # Return a Net::HTTPResponse read from this HTTPRequest +request+.
-    def read_contact(request)
+    def read_response(request)
       begin
         Net::HTTP::Proxy(
             Puppet::Module::Tool::http_proxy_host,

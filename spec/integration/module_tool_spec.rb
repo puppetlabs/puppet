@@ -8,7 +8,7 @@ def stub_repository_read(code, body)
   kind = Net::HTTPResponse.send(:response_class, code.to_s)
   response = kind.new('1.0', code.to_s, 'HTTP MESSAGE')
   response.stubs(:read_body).returns(body)
-  Puppet::Module::Tool::Repository.any_instance.stubs(:read_contact).returns(response)
+  Puppet::Module::Tool::Repository.any_instance.stubs(:read_response).returns(response)
 end
 
 def stub_installer_read(body)

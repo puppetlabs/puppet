@@ -8,7 +8,7 @@ describe Puppet::Module::Tool::Repository do
       @repository = described_class.new('http://fake.com')
     end
 
-    describe '#contact' do
+    describe '#make_http_request' do
       before do
         # Do a mock of the Proxy call so we can do proper expects for
         # Net::HTTP
@@ -18,13 +18,13 @@ describe Puppet::Module::Tool::Repository do
       context "when not given an :authenticate option" do
         it "should authenticate" do
           @repository.expects(:authenticate).never
-          @repository.contact(nil)
+          @repository.make_http_request(nil)
         end
       end
       context "when given an :authenticate option" do
         it "should authenticate" do
           @repository.expects(:authenticate)
-          @repository.contact(nil, :authenticate => true)
+          @repository.make_http_request(nil, :authenticate => true)
         end
       end
     end
