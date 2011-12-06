@@ -41,7 +41,7 @@ module Puppet::Module::Tool
         begin
           Puppet.notice "Installing #{@filename.basename} to #{@module_dir.expand_path}"
           unless system "tar xzf #{@filename} -C #{build_dir}"
-            raise SystemExit, "Could not extract contents of module archive."
+            raise RuntimeError, "Could not extract contents of module archive."
           end
           # grab the first directory
           extracted = build_dir.children.detect { |c| c.directory? }
@@ -58,7 +58,7 @@ module Puppet::Module::Tool
           Puppet.warning "Existing module '#{@module_dir.expand_path}' found"
           response = prompt "Overwrite module installed at #{@module_dir.expand_path}? [y/N]"
           unless response =~ /y/i
-            raise SystemExit, "Aborted installation."
+            raise RuntimeError, "Aborted installation."
           end
         end
 

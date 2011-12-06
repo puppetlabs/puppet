@@ -123,14 +123,14 @@ describe "module_tool" do
 
     it "should fail if given an undashed name" do
       run do
-        lambda { Puppet::Module::Tool::Applications::Generator.run("invalid") }.should raise_error(SystemExit)
+        lambda { Puppet::Module::Tool::Applications::Generator.run("invalid") }.should raise_error(RuntimeError)
       end
     end
 
     it "should fail if directory already exists" do
       run do
         Puppet::Module::Tool::Applications::Generator.run(@full_module_name)
-        lambda { Puppet::Module::Tool::Applications::Generator.run(@full_module_name) }.should raise_error(SystemExit)
+        lambda { Puppet::Module::Tool::Applications::Generator.run(@full_module_name) }.should raise_error(ArgumentError)
       end
     end
 
@@ -321,7 +321,7 @@ describe "module_tool" do
     it "should fail if can't get a connection" do
       run do
         stub_repository_read 500, "OH NOES!!1!"
-        lambda { Puppet::Module::Tool::Applications::Searcher.run("mymodule", @options) }.should raise_error(SystemExit)
+        lambda { Puppet::Module::Tool::Applications::Searcher.run("mymodule", @options) }.should raise_error(RuntimeError)
       end
     end
 
@@ -391,14 +391,14 @@ describe "module_tool" do
 
     it "should fail if module isn't a slashed name" do
       run do
-        lambda { Puppet::Module::Tool::Applications::Installer.run("invalid") }.should raise_error(SystemExit)
+        lambda { Puppet::Module::Tool::Applications::Installer.run("invalid") }.should raise_error(RuntimeError)
       end
     end
 
     it "should fail if module doesn't exist on webserver" do
       run do
         stub_installer_read "{}"
-        lambda { Puppet::Module::Tool::Applications::Installer.run("not-found", @options) }.should raise_error(SystemExit)
+        lambda { Puppet::Module::Tool::Applications::Installer.run("not-found", @options) }.should raise_error(RuntimeError)
       end
     end
 
@@ -414,7 +414,7 @@ describe "module_tool" do
       run do
         name = "myuser-mymodule"
         Dir.mkdir name
-        lambda { Puppet::Module::Tool::Applications::Installer.run(name) }.should raise_error(SystemExit)
+        lambda { Puppet::Module::Tool::Applications::Installer.run(name) }.should raise_error(ArgumentError)
       end
     end
 

@@ -14,7 +14,7 @@ module Puppet::Module::Tool
         when Net::HTTPOK
           matches = PSON.parse(response.body)
         else
-          raise SystemExit, "Could not execute search (HTTP #{response.code})"
+          raise RuntimeError, "Could not execute search (HTTP #{response.code})"
           matches = []
         end
 

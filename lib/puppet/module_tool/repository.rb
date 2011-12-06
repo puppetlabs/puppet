@@ -43,7 +43,7 @@ module Puppet::Module::Tool
           http.request(request)
         end
       rescue Errno::ECONNREFUSED, SocketError
-        raise SystemExit, "Could not reach remote repository"
+        raise RuntimeError, "Could not reach remote repository"
       end
     end
 

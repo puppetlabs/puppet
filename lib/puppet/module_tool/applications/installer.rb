@@ -10,7 +10,7 @@ module Puppet::Module::Tool
         if File.exist?(name)
           if File.directory?(name)
             # TODO Unify this handling with that of Unpacker#check_clobber!
-            raise SystemExit, "Module already installed: #{name}"
+            raise ArgumentError, "Module already installed: #{name}"
           end
           @source = :filesystem
           @filename = File.expand_path(name)
@@ -20,7 +20,7 @@ module Puppet::Module::Tool
           begin
             @username, @module_name = Puppet::Module::Tool::username_and_modname_from(name)
           rescue ArgumentError
-            raise SystemExit, "Could not install module with invalid name: #{name}"
+            raise "Could not install module with invalid name: #{name}"
           end
           @version_requirement = options[:version]
         end
@@ -38,11 +38,11 @@ module Puppet::Module::Tool
             begin
               cache_path = repository.retrieve(match['file'])
             rescue OpenURI::HTTPError => e
-              raise SystemExit, "Could not install module: #{e.message}"
+              raise RuntimeError, "Could not install module: #{e.message}"
             end
             module_dir = Unpacker.run(cache_path, options)
           else
-            raise SystemExit, "Malformed response from module repository."
+            raise RuntimeError, "Malformed response from module repository."
           end
         when :filesystem
           repository = Repository.new('file:///')
@@ -50,7 +50,7 @@ module Puppet::Module::Tool
           cache_path = repository.retrieve(uri)
           module_dir = Unpacker.run(cache_path, options)
         else
-          raise SystemExit, "Could not determine installation source"
+          raise ArgumentError, "Could not determine installation source"
         end
 
         # Return the Pathname object representing the path to the installed
@@ -75,7 +75,7 @@ module Puppet::Module::Tool
           begin
             raw_result = read_match(url)
           rescue => e
-            raise SystemExit, "Could not find a release for this module (#{e.message})"
+            raise ArgumentError, "Could not find a release for this module (#{e.message})"
           end
           @match = PSON.parse(raw_result)
         end

@@ -10,7 +10,7 @@ module Puppet::Module::Tool
         begin
           @metadata = Metadata.new(:full_module_name => full_module_name)
         rescue ArgumentError
-          raise SystemExit, "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
+          raise "Could not generate directory #{full_module_name.inspect}, you must specify a dash-separated username and module name."
         end
         super(options)
       end
@@ -25,7 +25,7 @@ module Puppet::Module::Tool
 
       def run
         if destination.directory?
-          raise SystemExit, "#{destination} already exists."
+          raise ArgumentError, "#{destination} already exists."
         end
         Puppet.notice "Generating module at #{Dir.pwd}/#{@metadata.dashed_name}"
         files_created = []

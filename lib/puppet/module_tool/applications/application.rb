@@ -36,7 +36,7 @@ module Puppet::Module::Tool
       def metadata(require_modulefile = false)
         unless @metadata
           unless @path
-            raise SystemExit, "Could not determine module path"
+            raise ArgumentError, "Could not determine module path"
           end
           @metadata = Puppet::Module::Tool::Metadata.new
           contents = ContentsDescription.new(@path)
@@ -47,7 +47,7 @@ module Puppet::Module::Tool
           if File.file?(modulefile_path)
             Puppet::Module::Tool::ModulefileReader.evaluate(@metadata, modulefile_path)
           elsif require_modulefile
-            raise SystemExit, "No Modulefile found."
+            raise ArgumentError, "No Modulefile found."
           end
         end
         @metadata
@@ -67,14 +67,14 @@ module Puppet::Module::Tool
         if match then
           @username, @module_name, @version = match.captures
         else
-          raise SystemExit, "Could not parse filename to obtain the username, module name and version.  (#{@release_name})"
+          raise ArgumentError, "Could not parse filename to obtain the username, module name and version.  (#{@release_name})"
         end
         @full_module_name = [@username, @module_name].join('-')
         unless @username && @module_name
-          raise SystemExit, "Username and Module name not provided"
+          raise ArgumentError, "Username and Module name not provided"
         end
         if @version !~ /^(\d+)\.(\d+)\.(\d+)([a-zA-Z][a-zA-Z0-9-]*){0,1}$/ then
-          raise SystemExit, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
+          raise ArgumentError, "Invalid version format: #{@version} (Semantic Versions are acceptable: http://semver.org)"
         end
       end
     end

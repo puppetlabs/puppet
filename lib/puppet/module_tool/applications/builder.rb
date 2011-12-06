@@ -44,7 +44,7 @@ module Puppet::Module::Tool
         Dir.chdir(@pkg_path) do
           FileUtils.rm tar_name rescue nil
           unless system "tar -cf #{tar_name} #{metadata.release_name}"
-            raise SystemExit, "Could not create #{tar_name}"
+            raise RuntimeError, "Could not create #{tar_name}"
           end
         end
       end
@@ -53,7 +53,7 @@ module Puppet::Module::Tool
         Dir.chdir(@pkg_path) do
           FileUtils.rm filename('tar.gz') rescue nil
           unless system "gzip #{filename('tar')}"
-            raise SystemExit, "Could not compress #{filename('tar')}"
+            raise RuntimeError, "Could not compress #{filename('tar')}"
           end
         end
       end

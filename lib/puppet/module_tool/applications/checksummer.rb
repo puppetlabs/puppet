@@ -18,7 +18,7 @@ module Puppet::Module::Tool
             end
           end
         else
-          raise SystemExit, "No metadata.json found."
+          raise ArgumentError, "No metadata.json found."
         end
 
         # Return an Array of strings representing file paths of files that have
