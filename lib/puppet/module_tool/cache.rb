@@ -1,10 +1,11 @@
+require 'uri'
+
 module Puppet::Module::Tool
 
   # = Cache
   #
   # Provides methods for reading files from local cache, filesystem or network.
   class Cache
-    include Puppet::Module::Tool::Utils::URI
 
     # Instantiate new cahe for the +repositry+ instance.
     def initialize(repository, options = {})
@@ -19,7 +20,7 @@ module Puppet::Module::Tool
     # TODO: Add error checking.
     def retrieve(url)
       (path + File.basename(url.to_s)).tap do |cached_file|
-        uri = normalize(url)
+        uri = url.is_a?(::URI) ? url : ::URI.parse(url)
         unless cached_file.file?
           if uri.scheme == 'file'
             FileUtils.cp(URI.unescape(uri.path), cached_file)

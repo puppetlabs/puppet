@@ -1,5 +1,6 @@
 require 'net/http'
 require 'digest/sha1'
+require 'uri'
 
 module Puppet::Module::Tool
 
@@ -7,7 +8,6 @@ module Puppet::Module::Tool
   #
   # This class is a file for accessing remote repositories with modules.
   class Repository
-    include Utils::URI
     include Utils::Interrogation
 
     attr_reader :uri, :cache
@@ -15,7 +15,7 @@ module Puppet::Module::Tool
     # Instantiate a new repository instance rooted at the optional string
     # +url+, else an instance of the default Puppet modules repository.
     def initialize(url=Puppet[:module_repository])
-      @uri = normalize(url)
+      @uri = url.is_a?(::URI) ? url : ::URI.parse(url)
       @cache = Cache.new(self)
     end
 
