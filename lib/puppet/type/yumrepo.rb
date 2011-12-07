@@ -166,7 +166,7 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Number of seconds after which the metadata will expire.
       #{ABSENT_DOC}"
 
-    newvalues(/[0-9]+/, :absent)
+    newvalues(/([0-9]+[dhm]?|never)/, :absent)
   end
 
   newproperty(:protect) do
