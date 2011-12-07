@@ -314,7 +314,7 @@ module Puppet
       desc "Number of seconds after which the metadata will expire.
         #{ABSENT_DOC}"
       newvalue(:absent) { self.should = :absent }
-      newvalue(%r{[0-9]+}) { }
+      newvalue(%r{[0-9]+[d|h|m]?|never}) { }
     end
 
     newproperty(:protect, :parent => Puppet::IniProperty) do
