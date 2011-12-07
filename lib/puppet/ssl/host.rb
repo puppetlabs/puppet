@@ -199,18 +199,26 @@ class Puppet::SSL::Host
       return nil unless Certificate.indirection.find("ca") unless ca?
       return nil unless @certificate = Certificate.indirection.find(name)
 
-      unless certificate_matches_key?
-        raise Puppet::Error, "Retrieved certificate does not match private key; please remove certificate from server and regenerate it with the current key"
-      end
+      validate_certificate_with_key
     end
     @certificate
   end
 
-  def certificate_matches_key?
-    return false unless key
-    return false unless certificate
-
-    certificate.content.check_private_key(key.content)
+  def validate_certificate_with_key
+    raise Puppet::Error, "No certificate to validate." unless certificate
+    raise Puppet::Error, "No private key with which to validate certificate with fingerprint: #{certificate.fingerprint}" unless key
+    unless certificate.content.check_private_key(key.content)
+      raise Puppet::Error, <<ERROR_STRING
+The certificate retrieved from the master does not match the agent's private key.
+Certificate fingerprint: #{certificate.fingerprint}
+To fix this, remove the certificate from both the master and the agent and then start a puppet run, which will automatically regenerate a certficate.
+On the master:
+  puppet cert clean #{Puppet[:certname]}
+On the agent:
+  rm -f #{Puppet[:hostcert]}
+  puppet agent -t
+ERROR_STRING
+    end
   end
 
   # Generate all necessary parts of our ssl host.
