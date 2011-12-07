@@ -89,6 +89,23 @@ Puppet::Type.newtype(:yumrepo) do
   newproperty(:gpgkey) do
     desc "The URL for the GPG key with which packages from this
       repository are signed. #{ABSENT_DOC}"
+    newvalues(/.*/, :absent)
+    validate do |value|
+      parsed = URI.parse(value)
+      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+
+    end
+  end
+
+  newproperty(:mirrorlist_expire) do
+    desc "Time (in seconds) after which the mirrorlist locally cached
+      will expire.\n#{ABSENT_DOC}"
+
+    newvalues(/[0-9]+/, :absent)
+  end
+
+  newproperty(:metalink) do
+    desc "Metalink for mirrors. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
     validate do |value|
@@ -115,6 +132,16 @@ Puppet::Type.newtype(:yumrepo) do
       #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
+  end
+
+  newproperty(:gpgcakey) do
+    desc "The URL for the GPG CA key for this repository. #{ABSENT_DOC}"
+    newvalues(/.*/, :absent)
+
+    validate do |value|
+      parsed = URI.parse(value)
+      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
+    end
   end
 
   newproperty(:includepkgs) do
@@ -145,8 +172,24 @@ Puppet::Type.newtype(:yumrepo) do
     desc "Whether HTTP/1.1 keepalive should be used with this repository.
       #{YUM_BOOLEAN_DOC}
       #{ABSENT_DOC}"
+    newvalues(YUM_BOOLEAN, :absent)
+  end
+
+  newproperty(:skip_if_unavailable) do
+    desc "Control whether yum will continue running if this repository
+      cannot be contacted for any reason.
+      #{YUM_BOOLEAN_DOC}
+      #{ABSENT_DOC}"
 
     newvalues(YUM_BOOLEAN, :absent)
+  end
+
+  newproperty(:retries) do
+    desc "Set the number of times any attempt to retrieve a file should
+      retry before returning an error. Setting this to `0` makes yum 
+     try forever.\n#{ABSENT_DOC}"
+
+    newvalues(/[0-9]+/, :absent)
   end
 
   newproperty(:http_caching) do
@@ -189,6 +232,25 @@ Puppet::Type.newtype(:yumrepo) do
         fail("Must be within range 1-99")
       end
     end
+  end
+
+  newproperty(:throttle) do
+    desc "Enable bandwidth throttling for downloads. This option
+      can be expressed as a absolute data rate in bytes/sec or a
+      percentage `60%`. An SI prefix (k, M or G) may be appended
+      to the data rate values.\n#{ABSENT_DOC}"
+
+    newvalues(/[.0-9]+[kMG%]?/, :absent)
+  end
+
+  newproperty(:bandwidth) do
+    desc "Use to specify the maximum available network bandwidth
+      in bytes/second. Used with the `throttle` option. If `throttle`
+      is a percentage and `bandwidth` is `0` then bandwidth throttling
+      will be disabled. If `throttle` is expressed as a data rate then
+      this option is ignored.\n#{ABSENT_DOC}"
+
+    newvalues(/[.0-9]+[kMG]?/, :absent)
   end
 
   newproperty(:cost) do
@@ -255,16 +317,6 @@ Puppet::Type.newtype(:yumrepo) do
       to repos/remote sites. #{ABSENT_DOC}"
 
     newvalues(/.*/, :absent)
-  end
-
-  newproperty(:metalink) do
-    desc "Metalink for mirrors. #{ABSENT_DOC}"
-
-    newvalues(/.*/, :absent)
-    validate do |value|
-      parsed = URI.parse(value)
-      fail("Must be a valid URL") unless ['file', 'http', 'https', 'ftp'].include?(parsed.scheme)
-    end
   end
 
 end
