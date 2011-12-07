@@ -199,12 +199,12 @@ module Puppet
       end
     end
 
-    def get_from_source(source_or_content)
+    def get_from_source(source_or_content, &block)
       request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''))
 
       request.do_request(:fileserver) do |req|
         connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
-        return yield connection.request_get(indirection2uri(req), add_accept_encoding({"Accept" => "raw"}))
+        connection.request_get(indirection2uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
       end
     end
 
