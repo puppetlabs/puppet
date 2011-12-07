@@ -334,7 +334,7 @@ describe provider_class do
         @resource[:changes] = ["set #{file}/foo bar"]
 
         @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-        @augeas.stubs(:get).with("/augeas/events/saved").returns(["/files#{file}"])
+        @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
         @augeas.expects(:set).with("/augeas/save", "newfile")
         @augeas.expects(:close).never()
 
@@ -350,8 +350,8 @@ describe provider_class do
         @resource[:changes] = ["set #{file1}/foo bar", "set #{file2}/baz biz"]
 
         @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved[1]", "/augeas/events/saved[2]"])
-        @augeas.stubs(:get).with("/augeas/events/saved[1]").returns(["/files#{file1}"])
-        @augeas.stubs(:get).with("/augeas/events/saved[2]").returns(["/files#{file2}"])
+        @augeas.stubs(:get).with("/augeas/events/saved[1]").returns("/files#{file1}")
+        @augeas.stubs(:get).with("/augeas/events/saved[2]").returns("/files#{file2}")
         @augeas.expects(:set).with("/augeas/save", "newfile")
         @augeas.expects(:close).never()
 
@@ -370,7 +370,7 @@ describe provider_class do
           @resource[:root] = root
 
           @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-          @augeas.stubs(:get).with("/augeas/events/saved").returns(["/files#{file}"])
+          @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
           @augeas.expects(:set).with("/augeas/save", "newfile")
           @augeas.expects(:close).never()
 
@@ -402,7 +402,7 @@ describe provider_class do
         @resource[:changes] = ["set #{file}/foo bar"]
 
         @augeas.stubs(:match).with("/augeas/events/saved").returns(["/augeas/events/saved"])
-        @augeas.stubs(:get).with("/augeas/events/saved").returns(["/files#{file}"])
+        @augeas.stubs(:get).with("/augeas/events/saved").returns("/files#{file}")
         @augeas.expects(:set).with("/augeas/save", "newfile")
         @augeas.expects(:close)
 
