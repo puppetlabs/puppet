@@ -331,7 +331,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
           if saved_files.size > 0
             root = resource[:root].sub(/^\/$/, "")
             saved_files.each do |key|
-              saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
+              saved_file = @aug.get(key).sub(/^\/files/, root)
               if Puppet[:show_diff]
                 notice "\n" + diff(saved_file, saved_file + ".augnew")
               end
@@ -363,7 +363,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       if saved_files
         saved_files.each do |key|
           root = resource[:root].sub(/^\/$/, "")
-          saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
+          saved_file = @aug.get(key).sub(/^\/files/, root)
           if File.exists?(saved_file + ".augnew")
             success = File.rename(saved_file + ".augnew", saved_file)
             debug(saved_file + ".augnew moved to " + saved_file)
