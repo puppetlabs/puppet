@@ -56,7 +56,7 @@ module Puppet::Module::Tool
     end
 
     def license
-      @license || 'UNKNOWN'
+      @license || 'Apache License, Version 2.0'
     end
 
     def license=(license)
