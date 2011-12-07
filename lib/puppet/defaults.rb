@@ -198,6 +198,10 @@ module Puppet
       essentially means that you can't have any code outside of a node, class, or definition other
       than in the site manifest."]
   )
+  Puppet.setdefaults(:module_tool,
+    :module_repository  => ['http://forge.puppetlabs.com', "The module repository"],
+    :module_working_dir => ['$vardir/puppet-module', "The directory into which module tool data is stored"]
+  )
 
   hostname = Facter["hostname"].value
   domain = Facter["domain"].value
