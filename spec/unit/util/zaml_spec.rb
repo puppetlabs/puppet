@@ -1,8 +1,15 @@
 #!/usr/bin/env rspec
 # encoding: UTF-8
-# The above encoding line is a magic comment to set the default encoding of
-# this file for the Ruby interpreter.  The source encoding affects String and
-# Regexp objects created from this source file.
+#
+# The above encoding line is a magic comment to set the default source encoding
+# of this file for the Ruby interpreter.  It must be on the first or second
+# line of the file if an interpreter is in use.  In Ruby 1.9 and later, the
+# source encoding determines the encoding of String and Regexp objects created
+# from this source file.  This explicit encoding is important becuase otherwise
+# Ruby will pick an encoding based on LANG or LC_CTYPE environment variables.
+# These may be different from site to site so it's important for us to
+# establish a consistent behavior.  For more information on M17n please see:
+# http://links.puppetlabs.com/understanding_m17n
 
 require 'spec_helper'
 
@@ -66,15 +73,15 @@ describe "Pure ruby yaml implementation" do
   end
 end
 
-# Note, many of these tests will pass on Ruby 1.8 but fail on 1.9.  This is
-# intentional since the string encoding behavior changed significantly in 1.9.
-describe "UTF-8 String YAML Handling (Bug #11246)" do
+# Note, many of these tests will pass on Ruby 1.8 but fail on 1.9 if the patch
+# fix is not applied to Puppet or there's a regression.  These version
+# dependant failures are intentional since the string encoding behavior changed
+# significantly in 1.9.
+describe "UTF-8 encoded String#to_yaml (Bug #11246)" do
   # JJM All of these snowmen are different representations of the same
   # UTF-8 encoded string.
   let(:snowman)         { 'Snowman: [☃]' }
   let(:snowman_escaped) { "Snowman: [\xE2\x98\x83]" }
-  let(:snowman_yaml)    { "--- \"Snowman: [\\xe2\\x98\\x83]\"" }
-  let(:snowman_re)      { /^Snowman: \[☃\]$/ }
 
   describe "UTF-8 String Literal" do
     subject { snowman }
@@ -85,21 +92,8 @@ describe "UTF-8 String YAML Handling (Bug #11246)" do
     it "should serialize and deserialize to the same thing" do
       YAML.load(subject.to_yaml).should == subject
     end
-  end
-  describe "YAML containing a UTF-8 String" do
-    subject { snowman_yaml }
-
-    it "should load from YAML" do
-      YAML.load(subject)
-    end
-    it "should equal the orginal string literal" do
-      YAML.load(subject).should == snowman
-    end
-    it "should equal the orginal string escape" do
-      YAML.load(subject).should == snowman_escaped
-    end
-    it "should work with Regexp's" do
-      YAML.load(subject).should =~ snowman_re
+    it "should serialize and deserialize to a String compatible with a UTF-8 encoded Regexp" do
+      YAML.load(subject.to_yaml).should =~ /☃/u
     end
   end
 end
