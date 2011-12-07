@@ -39,7 +39,7 @@ describe Puppet::Transaction::Report do
   end
 
   it "should not include whits" do
-    Puppet::FileBucket::File.indirection.stubs(:save)
+    Puppet::FileBucket::File.stubs(:save)
 
     filename = tmpfile('whit_test')
     file = Puppet::Type.type(:file).new(:path => filename)
@@ -91,11 +91,11 @@ describe Puppet::Transaction::Report do
       Puppet::Transaction::Report.stubs(:indirection).returns(@indirection)
       report = Puppet::Transaction::Report.new("apply")
       @indirection.expects(:save)
-      Puppet::Transaction::Report.indirection.save(report)
+      report.save
     end
 
     it "should default to the 'processor' terminus" do
-      Puppet::Transaction::Report.indirection.terminus_class.should == :processor
+      Puppet::Transaction::Report.terminus_class.should == :processor
     end
 
     it "should delegate its name attribute to its host method" do

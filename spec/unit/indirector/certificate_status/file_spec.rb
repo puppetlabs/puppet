@@ -13,7 +13,7 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
 
   before do
     Puppet::SSL::CertificateAuthority.stubs(:ca?).returns true
-    @terminus = Puppet::SSL::Host.indirection.terminus(:file)
+    @terminus = Puppet::SSL::Host.terminus(:file)
 
     @tmpdir = tmpdir("certificate_status_ca_testing")
     Puppet[:confdir] = @tmpdir
@@ -29,7 +29,7 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
     host.generate_key
     csr = Puppet::SSL::CertificateRequest.new(host.name)
     csr.generate(host.key.content)
-    Puppet::SSL::CertificateRequest.indirection.save(csr)
+    csr.save
   end
 
   def sign_csr(host)
@@ -123,7 +123,7 @@ describe "Puppet::Indirector::CertificateStatus::File", :fails_on_windows => tru
         signed_host = generate_signed_cert(@host)
 
         signed_host.state.should == "signed"
-        Puppet::SSL::Certificate.indirection.find("foobar").should be_instance_of(Puppet::SSL::Certificate)
+        Puppet::SSL::Certificate.find("foobar").should be_instance_of(Puppet::SSL::Certificate)
       end
     end
 

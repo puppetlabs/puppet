@@ -13,7 +13,7 @@ class TestMaster < Test::Unit::TestCase
     @master = Puppet::Network::Handler.master.new(:Manifest => tempfile)
 
     @catalog = stub 'catalog', :extract => ""
-    Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
+    Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
   end
 
   def test_freshness_is_always_now
@@ -28,7 +28,7 @@ class TestMaster < Test::Unit::TestCase
   def test_hostname_is_used_if_client_is_missing
     @master.expects(:decode_facts).returns("hostname" => "yay")
     facts = Puppet::Node::Facts.new("the_facts")
-    Puppet::Node::Facts.indirection.stubs(:save).with(facts)
+    Puppet::Node::Facts.stubs(:save).with(facts, nil)
     Puppet::Node::Facts.expects(:new).with { |name, facts| name == "yay" }.returns(facts)
 
     @master.getconfig("facts")
@@ -37,7 +37,7 @@ class TestMaster < Test::Unit::TestCase
   def test_facts_are_saved
     facts = Puppet::Node::Facts.new("the_facts")
     Puppet::Node::Facts.expects(:new).returns(facts)
-    Puppet::Node::Facts.indirection.expects(:save).with(facts)
+    Puppet::Node::Facts.expects(:save).with(facts, nil)
 
     @master.stubs(:decode_facts)
 
@@ -46,12 +46,12 @@ class TestMaster < Test::Unit::TestCase
 
   def test_catalog_is_used_for_compiling
     facts = Puppet::Node::Facts.new("the_facts")
-    Puppet::Node::Facts.indirection.stubs(:save).with(facts)
+    Puppet::Node::Facts.stubs(:save).with(facts, nil)
     Puppet::Node::Facts.stubs(:new).returns(facts)
 
     @master.stubs(:decode_facts)
 
-    Puppet::Resource::Catalog.indirection.expects(:find).with("foo.com").returns(@catalog)
+    Puppet::Resource::Catalog.expects(:find).with("foo.com").returns(@catalog)
 
     @master.getconfig("facts", "yaml", "foo.com")
   end
@@ -61,13 +61,13 @@ class TestMasterFormats < Test::Unit::TestCase
   def setup
     @facts = Puppet::Node::Facts.new("the_facts")
     Puppet::Node::Facts.stubs(:new).returns(@facts)
-    Puppet::Node::Facts.indirection.stubs(:save)
+    Puppet::Node::Facts.stubs(:save)
 
     @master = Puppet::Network::Handler.master.new(:Code => "")
     @master.stubs(:decode_facts)
 
     @catalog = stub 'catalog', :extract => ""
-    Puppet::Resource::Catalog.indirection.stubs(:find).returns(@catalog)
+    Puppet::Resource::Catalog.stubs(:find).returns(@catalog)
   end
 
   def test_marshal_can_be_used

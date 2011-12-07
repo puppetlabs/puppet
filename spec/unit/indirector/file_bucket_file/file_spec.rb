@@ -23,7 +23,7 @@ describe Puppet::FileBucketFile::File do
 
     def save_bucket_file(contents, path = "/who_cares")
       bucket_file = Puppet::FileBucket::File.new(contents)
-      Puppet::FileBucket::File.indirection.save(bucket_file, "md5/#{Digest::MD5.hexdigest(contents)}#{path}")
+      bucket_file.save("md5/#{Digest::MD5.hexdigest(contents)}#{path}")
       bucket_file.checksum_data
     end
 
@@ -66,21 +66,21 @@ describe Puppet::FileBucketFile::File do
     describe "when servicing a head/find request" do
       describe "when supplying a path" do
         it "should return false/nil if the file isn't bucketed" do
-          Puppet::FileBucket::File.indirection.head("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == false
-          Puppet::FileBucket::File.indirection.find("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == nil
+          Puppet::FileBucket::File.head("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == false
+          Puppet::FileBucket::File.find("md5/0ae2ec1980410229885fe72f7b44fe55/foo/bar").should == nil
         end
 
         it "should return false/nil if the file is bucketed but with a different path" do
           checksum = save_bucket_file("I'm the contents of a file", '/foo/bar')
-          Puppet::FileBucket::File.indirection.head("md5/#{checksum}/foo/baz").should == false
-          Puppet::FileBucket::File.indirection.find("md5/#{checksum}/foo/baz").should == nil
+          Puppet::FileBucket::File.head("md5/#{checksum}/foo/baz").should == false
+          Puppet::FileBucket::File.find("md5/#{checksum}/foo/baz").should == nil
         end
 
         it "should return true/file if the file is already bucketed with the given path" do
           contents = "I'm the contents of a file"
           checksum = save_bucket_file(contents, '/foo/bar')
-          Puppet::FileBucket::File.indirection.head("md5/#{checksum}/foo/bar").should == true
-          find_result = Puppet::FileBucket::File.indirection.find("md5/#{checksum}/foo/bar")
+          Puppet::FileBucket::File.head("md5/#{checksum}/foo/bar").should == true
+          find_result = Puppet::FileBucket::File.find("md5/#{checksum}/foo/bar")
           find_result.should be_a(Puppet::FileBucket::File)
           find_result.checksum.should == "{md5}#{checksum}"
           find_result.to_s.should == contents
@@ -93,15 +93,15 @@ describe Puppet::FileBucketFile::File do
             trailing_string = trailing_slash ? '/' : ''
 
             it "should return false/nil if the file isn't bucketed" do
-              Puppet::FileBucket::File.indirection.head("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == false
-              Puppet::FileBucket::File.indirection.find("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == nil
+              Puppet::FileBucket::File.head("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == false
+              Puppet::FileBucket::File.find("md5/0ae2ec1980410229885fe72f7b44fe55#{trailing_string}").should == nil
             end
 
             it "should return true/file if the file is already bucketed" do
               contents = "I'm the contents of a file"
               checksum = save_bucket_file(contents, '/foo/bar')
-              Puppet::FileBucket::File.indirection.head("md5/#{checksum}#{trailing_string}").should == true
-              find_result = Puppet::FileBucket::File.indirection.find("md5/#{checksum}#{trailing_string}")
+              Puppet::FileBucket::File.head("md5/#{checksum}#{trailing_string}").should == true
+              find_result = Puppet::FileBucket::File.find("md5/#{checksum}#{trailing_string}")
               find_result.should be_a(Puppet::FileBucket::File)
               find_result.checksum.should == "{md5}#{checksum}"
               find_result.to_s.should == contents
@@ -114,13 +114,13 @@ describe Puppet::FileBucketFile::File do
     describe "when diffing files", :unless => Puppet.features.microsoft_windows? do
       it "should generate an empty string if there is no diff" do
         checksum = save_bucket_file("I'm the contents of a file")
-        Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => checksum).should == ''
+        Puppet::FileBucket::File.find("md5/#{checksum}", :diff_with => checksum).should == ''
       end
 
       it "should generate a proper diff if there is a diff" do
         checksum1 = save_bucket_file("foo\nbar\nbaz")
         checksum2 = save_bucket_file("foo\nbiz\nbaz")
-        diff = Puppet::FileBucket::File.indirection.find("md5/#{checksum1}", :diff_with => checksum2)
+        diff = Puppet::FileBucket::File.find("md5/#{checksum1}", :diff_with => checksum2)
         diff.should == <<HERE
 2c2
 < bar
@@ -132,13 +132,13 @@ HERE
       it "should raise an exception if the hash to diff against isn't found" do
         checksum = save_bucket_file("whatever")
         bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
-        lambda { Puppet::FileBucket::File.indirection.find("md5/#{checksum}", :diff_with => bogus_checksum) }.should raise_error "could not find diff_with #{bogus_checksum}"
+        lambda { Puppet::FileBucket::File.find("md5/#{checksum}", :diff_with => bogus_checksum) }.should raise_error "could not find diff_with #{bogus_checksum}"
       end
 
       it "should return nil if the hash to diff from isn't found" do
         checksum = save_bucket_file("whatever")
         bogus_checksum = "d1bf072d0e2c6e20e3fbd23f022089a1"
-        Puppet::FileBucket::File.indirection.find("md5/#{bogus_checksum}", :diff_with => checksum).should == nil
+        Puppet::FileBucket::File.find("md5/#{bogus_checksum}", :diff_with => checksum).should == nil
       end
     end
   end

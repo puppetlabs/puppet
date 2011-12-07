@@ -202,8 +202,8 @@ describe Puppet::SSL::CertificateAuthority::Interface do
         @cert.stubs(:subject_alt_names).returns []
         @csr.stubs(:subject_alt_names).returns []
 
-        Puppet::SSL::Certificate.indirection.stubs(:find).returns @cert
-        Puppet::SSL::CertificateRequest.indirection.stubs(:find).returns @csr
+        Puppet::SSL::Certificate.stubs(:find).returns @cert
+        Puppet::SSL::CertificateRequest.stubs(:find).returns @csr
 
         @ca.expects(:waiting?).returns %w{host1 host2 host3}
         @ca.expects(:list).returns %w{host4 host5 host6}

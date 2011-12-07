@@ -149,7 +149,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet::Util::Log.newdestination :console
     raise ArgumentError, "Cannot render compiled catalogs without pson support" unless Puppet.features.pson?
     begin
-      unless catalog = Puppet::Resource::Catalog.indirection.find(options[:node])
+      unless catalog = Puppet::Resource::Catalog.find(options[:node])
         raise "Could not compile catalog for #{options[:node]}"
       end
 
@@ -229,7 +229,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     Puppet.settings.use :main, :master, :ssl, :metrics
 
     # Cache our nodes in yaml.  Currently not configurable.
-    Puppet::Node.indirection.cache_class = :yaml
+    Puppet::Node.cache_class = :yaml
 
     # Configure all of the SSL stuff.
     if Puppet::SSL::CertificateAuthority.ca?

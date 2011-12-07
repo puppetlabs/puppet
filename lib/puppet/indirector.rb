@@ -15,8 +15,8 @@ module Puppet::Indirector
   def self.configure_routes(application_routes)
     application_routes.each do |indirection_name, termini|
       indirection_name = indirection_name.to_sym
-      terminus_name = termini["terminus"]
-      cache_name    = termini["cache"]
+      terminus_name    = termini["terminus"]
+      cache_name       = termini["cache"]
 
       Puppet::Indirector::Terminus.terminus_class(indirection_name, terminus_name || cache_name)
 
@@ -24,7 +24,7 @@ module Puppet::Indirector
       raise "Indirection #{indirection_name} does not exist" unless indirection
 
       indirection.terminus_class = terminus_name if terminus_name
-      indirection.cache_class = cache_name if cache_name
+      indirection.cache_class    = cache_name if cache_name
     end
   end
 
@@ -36,17 +36,34 @@ module Puppet::Indirector
   def indirects(indirection, options = {})
     raise(ArgumentError, "Already handling indirection for #{@indirection.name}; cannot also handle #{indirection}") if @indirection
     # populate this class with the various new methods
-    extend ClassMethods
+    include InstanceMethods
+    extend  ClassMethods
+
     include Puppet::Indirector::Envelope
-    extend Puppet::Network::FormatHandler
+    extend  Puppet::Network::FormatHandler
 
     # instantiate the actual Terminus for that type and this name (:ldap, w/ args :node)
     # & hook the instantiated Terminus into this class (Node: @indirection = terminus)
-    @indirection = Puppet::Indirector::Indirection.new(self, indirection,  options)
+    @indirection = Puppet::Indirector::Indirection.new(self, indirection, options)
+  end
+
+  module InstanceMethods
+    # Only save really applies sensibly on an instance, and is shorthand for
+    # saving self.  Other methods are all sensibly class based.
+    def save(key = nil)
+      self.class.save(self, key)
+    end
   end
 
   module ClassMethods
     attr_reader :indirection
+
+    [:expire, :find, :head, :destroy, :search, :save, :terminus,
+     :terminus_class, :terminus_class=,
+     :cache_class, :cache_class=
+    ].each do |forward|
+      define_method(forward) {|*args| indirection.__send__(forward, *args) }
+    end
   end
 
   # Helper definition for indirections that handle filenames.

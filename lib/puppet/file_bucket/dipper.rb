@@ -40,8 +40,8 @@ class Puppet::FileBucket::Dipper
 
       # Make a HEAD request for the file so that we don't waste time
       # uploading it if it already exists in the bucket.
-      unless Puppet::FileBucket::File.indirection.head(file_bucket_path)
-        Puppet::FileBucket::File.indirection.save(file_bucket_file, dest_path)
+      unless Puppet::FileBucket::File.head(file_bucket_path)
+        file_bucket_file.save(dest_path)
       end
 
       return file_bucket_file.checksum_data
@@ -54,7 +54,7 @@ class Puppet::FileBucket::Dipper
   # Retrieve a file by sum.
   def getfile(sum)
     source_path = "#{@rest_path}md5/#{sum}"
-    file_bucket_file = Puppet::FileBucket::File.indirection.find(source_path, :bucket_path => @local_path)
+    file_bucket_file = Puppet::FileBucket::File.find(source_path, :bucket_path => @local_path)
 
     raise Puppet::Error, "File not found" unless file_bucket_file
     file_bucket_file.to_s

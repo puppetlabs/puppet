@@ -30,7 +30,7 @@ class Puppet::Resource::Catalog::ActiveRecord < Puppet::Indirector::ActiveRecord
       host.merge_resources(catalog.vertices)
       host.last_compile = Time.now
 
-      if node = Puppet::Node.indirection.find(catalog.name)
+      if node = Puppet::Node.find(catalog.name)
         host.ip = node.parameters["ipaddress"]
         host.environment = node.environment.to_s
       end

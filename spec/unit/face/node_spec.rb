@@ -24,8 +24,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
   describe 'when running #clean' do
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.stubs(:terminus_class=)
+      Puppet::Node::Facts.stubs(:cache_class=)
       Puppet::Node.stubs(:terminus_class=)
       Puppet::Node.stubs(:cache_class=)
     end
@@ -38,8 +38,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
   describe "clean action" do
     before :each do
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
-      Puppet::Node::Facts.indirection.stubs(:cache_class=)
+      Puppet::Node::Facts.stubs(:terminus_class=)
+      Puppet::Node::Facts.stubs(:cache_class=)
       Puppet::Node.stubs(:terminus_class=)
       Puppet::Node.stubs(:cache_class=)
       subject.stubs(:cleanup)
@@ -81,8 +81,8 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "during setup" do
         it "should set facts terminus and cache class to yaml" do
-          Puppet::Node::Facts.indirection.expects(:terminus_class=).with(:yaml)
-          Puppet::Node::Facts.indirection.expects(:cache_class=).with(:yaml)
+          Puppet::Node::Facts.expects(:terminus_class=).with(:yaml)
+          Puppet::Node::Facts.expects(:cache_class=).with(:yaml)
 
           subject.clean('hostname')
         end
@@ -93,8 +93,8 @@ describe Puppet::Face[:node, '0.0.1'] do
         end
 
         it "should set node cache as yaml" do
-          Puppet::Node.indirection.expects(:terminus_class=).with(:yaml)
-          Puppet::Node.indirection.expects(:cache_class=).with(:yaml)
+          Puppet::Node.expects(:terminus_class=).with(:yaml)
+          Puppet::Node.expects(:cache_class=).with(:yaml)
 
           subject.clean('hostname')
         end
@@ -137,7 +137,7 @@ describe Puppet::Face[:node, '0.0.1'] do
       describe "when cleaning cached facts" do
         it "should destroy facts" do
           @host = 'node'
-          Puppet::Node::Facts.indirection.expects(:destroy).with(@host)
+          Puppet::Node::Facts.expects(:destroy).with(@host)
 
           subject.clean_cached_facts(@host)
         end
@@ -145,14 +145,14 @@ describe Puppet::Face[:node, '0.0.1'] do
 
       describe "when cleaning cached node" do
         it "should destroy the cached node" do
-          Puppet::Node.indirection.expects(:destroy).with(@host)
+          Puppet::Node.expects(:destroy).with(@host)
           subject.clean_cached_node(@host)
         end
       end
 
       describe "when cleaning archived reports" do
         it "should tell the reports to remove themselves" do
-          Puppet::Transaction::Report.indirection.stubs(:destroy).with(@host)
+          Puppet::Transaction::Report.stubs(:destroy).with(@host)
 
           subject.clean_reports(@host)
         end

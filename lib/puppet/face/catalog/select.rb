@@ -28,7 +28,7 @@ Puppet::Face.define(:catalog, '0.0.1') do
       # REVISIT: Eventually, type should have a default value that triggers
       # the non-specific behaviour.  For now, though, this will do.
       # --daniel 2011-05-03
-      catalog = Puppet::Resource::Catalog.indirection.find(host)
+      catalog = Puppet::Resource::Catalog.find(host)
 
       if type == '*'
         catalog.resources

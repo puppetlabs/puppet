@@ -19,7 +19,7 @@ describe Puppet::FileBucket::Dipper do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => make_absolute("/my/bucket"))
 
     file = make_tmp_file('contents')
-    Puppet::FileBucket::File.indirection.expects(:head).raises ArgumentError
+    Puppet::FileBucket::File.expects(:head).raises ArgumentError
 
     lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
   end
@@ -28,8 +28,8 @@ describe Puppet::FileBucket::Dipper do
     @dipper = Puppet::FileBucket::Dipper.new(:Path => make_absolute("/my/bucket"))
 
     file = make_tmp_file('contents')
-    Puppet::FileBucket::File.indirection.expects(:head).returns false
-    Puppet::FileBucket::File.indirection.expects(:save).raises ArgumentError
+    Puppet::FileBucket::File.expects(:head).returns false
+    Puppet::FileBucket::File.expects(:save).raises ArgumentError
 
     lambda { @dipper.backup(file) }.should raise_error(Puppet::Error)
   end
@@ -54,8 +54,8 @@ describe Puppet::FileBucket::Dipper do
     file = make_tmp_file("my\r\ncontents")
     checksum = Digest::MD5.hexdigest("my\r\ncontents")
 
-    Puppet::FileBucket::File.indirection.expects(:head).returns true
-    Puppet::FileBucket::File.indirection.expects(:save).never
+    Puppet::FileBucket::File.expects(:head).returns true
+    Puppet::FileBucket::File.expects(:save).never
     @dipper.backup(file).should == checksum
   end
 

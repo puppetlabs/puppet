@@ -18,9 +18,9 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
       Puppet::SSL::Certificate,
       Puppet::SSL::CertificateRequest,
       Puppet::SSL::Key,
-    ].collect do |part|
-      if part.indirection.destroy(request.key)
-        deleted << "#{part}"
+    ].collect do |part_of_ssl_stuff|
+      if part_of_ssl_stuff.destroy(request.key)
+        deleted << "#{part_of_ssl_stuff}"
       end
     end
 
@@ -30,11 +30,11 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
 
   def save(request)
     if request.instance.desired_state == "signed"
-      certificate_request = Puppet::SSL::CertificateRequest.indirection.find(request.key)
+      certificate_request = Puppet::SSL::CertificateRequest.find(request.key)
       raise Puppet::Error, "Cannot sign for host #{request.key} without a certificate request" unless certificate_request
       ca.sign(request.key)
     elsif request.instance.desired_state == "revoked"
-      certificate = Puppet::SSL::Certificate.indirection.find(request.key)
+      certificate = Puppet::SSL::Certificate.find(request.key)
       raise Puppet::Error, "Cannot revoke host #{request.key} because has it doesn't have a signed certificate" unless certificate
       ca.revoke(request.key)
     else
@@ -63,7 +63,7 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
     end
 
     klasses.collect do |klass|
-      klass.indirection.search(request.key, request.options)
+      klass.search(request.key, request.options)
     end.flatten.collect do |result|
       result.name
     end.uniq.collect &Puppet::SSL::Host.method(:new)
@@ -71,7 +71,7 @@ class Puppet::Indirector::CertificateStatus::File < Puppet::Indirector::Code
 
   def find(request)
     ssl_host = Puppet::SSL::Host.new(request.key)
-    public_key = Puppet::SSL::Certificate.indirection.find(request.key)
+    public_key = Puppet::SSL::Certificate.find(request.key)
 
     if ssl_host.certificate_request || public_key
       ssl_host

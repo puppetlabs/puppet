@@ -139,13 +139,17 @@ class Puppet::Indirector::Indirection
     @terminus_class
   end
 
+  # Deprecated unofficially in 2.7, officially in 2.8; just set the terminus
+  # class to `nil` instead.  Keep in mind, though, that won't work reliably if
+  # you need to support older 2.7 earlier Puppet versions.
   def reset_terminus_class
-    @terminus_class = nil
+    self.terminus_class = nil
   end
 
-  # Specify the terminus class to use.
+  # Specify the terminus class to use.  `nil` will reset the class, just like
+  # the deprecated `reset_terminus_class` method would have.
   def terminus_class=(klass)
-    validate_terminus_class(klass)
+    klass.nil? or validate_terminus_class(klass)
     @terminus_class = klass
   end
 

@@ -136,7 +136,7 @@ class Puppet::Configurer
     begin
       prepare(options)
 
-      if Puppet::Resource::Catalog.indirection.terminus_class == :rest
+      if Puppet::Resource::Catalog.terminus_class == :rest
         # This is a bit complicated.  We need the serialized and escaped facts,
         # and we need to know which format they're encoded in.  Thus, we
         # get a hash with both of these pieces of information.
@@ -171,7 +171,7 @@ class Puppet::Configurer
   def send_report(report)
     puts report.summary if Puppet[:summarize]
     save_last_run_summary(report)
-    Puppet::Transaction::Report.indirection.save(report) if Puppet[:report]
+    Puppet::Transaction::Report.save(report) if Puppet[:report]
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err "Could not send report: #{detail}"
@@ -221,7 +221,7 @@ class Puppet::Configurer
   def retrieve_catalog_from_cache(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true))
+      result = Puppet::Resource::Catalog.find(Puppet[:node_name_value], fact_options.merge(:ignore_terminus => true))
     end
     Puppet.notice "Using cached catalog"
     result
@@ -234,7 +234,7 @@ class Puppet::Configurer
   def retrieve_new_catalog(fact_options)
     result = nil
     @duration = thinmark do
-      result = Puppet::Resource::Catalog.indirection.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true))
+      result = Puppet::Resource::Catalog.find(Puppet[:node_name_value], fact_options.merge(:ignore_cache => true))
     end
     result
   rescue SystemExit,NoMemoryError

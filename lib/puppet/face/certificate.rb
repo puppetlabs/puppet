@@ -79,9 +79,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
     EOT
 
     when_invoked do |options|
-      Puppet::SSL::Host.indirection.search("*", {
-        :for => :certificate_request,
-      }).map { |h| h.inspect }
+      Puppet::SSL::Host.search("*", {:for => :certificate_request}).map { |h| h.inspect }
     end
   end
 
@@ -109,7 +107,7 @@ Puppet::Indirector::Face.define(:certificate, '0.0.1') do
         end
 
         host.desired_state = 'signed'
-        Puppet::SSL::Host.indirection.save(host)
+        host.save
       else
         # We have to do this case manually because we need to specify
         # allow_dns_alt_names.

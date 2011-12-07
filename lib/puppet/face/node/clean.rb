@@ -40,10 +40,10 @@ Puppet::Face.define(:node, '0.0.1') do
         Puppet::SSL::Host.ca_location = :none
       end
 
-      Puppet::Node::Facts.indirection.terminus_class = :yaml
-      Puppet::Node::Facts.indirection.cache_class = :yaml
-      Puppet::Node.indirection.terminus_class = :yaml
-      Puppet::Node.indirection.cache_class = :yaml
+      Puppet::Node::Facts.terminus_class = :yaml
+      Puppet::Node::Facts.cache_class = :yaml
+      Puppet::Node.terminus_class = :yaml
+      Puppet::Node.cache_class = :yaml
 
       nodes.each { |node| cleanup(node.downcase, options[:unexport]) }
     end
@@ -73,19 +73,19 @@ Puppet::Face.define(:node, '0.0.1') do
 
   # clean facts for +host+
   def clean_cached_facts(node)
-    Puppet::Node::Facts.indirection.destroy(node)
+    Puppet::Node::Facts.destroy(node)
     Puppet.info "#{node}'s facts removed"
   end
 
   # clean cached node +host+
   def clean_cached_node(node)
-    Puppet::Node.indirection.destroy(node)
+    Puppet::Node.destroy(node)
     Puppet.info "#{node}'s cached node removed"
   end
 
   # clean node reports for +host+
   def clean_reports(node)
-    Puppet::Transaction::Report.indirection.destroy(node)
+    Puppet::Transaction::Report.destroy(node)
     Puppet.info "#{node}'s reports removed"
   end
 

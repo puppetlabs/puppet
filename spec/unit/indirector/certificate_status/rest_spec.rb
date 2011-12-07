@@ -5,7 +5,7 @@ require 'puppet/indirector/certificate_status'
 
 describe "Puppet::CertificateStatus::Rest" do
   before do
-    @terminus = Puppet::SSL::Host.indirection.terminus(:rest)
+    @terminus = Puppet::SSL::Host.terminus(:rest)
   end
 
   it "should be a terminus on Puppet::SSL::Host" do

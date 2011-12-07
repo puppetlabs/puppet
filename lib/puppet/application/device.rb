@@ -243,7 +243,7 @@ Licensed under the Apache 2.0 License
     # access to the local files and we don't need a ca.
     Puppet::SSL::Host.ca_location = :remote
 
-    Puppet::Transaction::Report.indirection.terminus_class = :rest
+    Puppet::Transaction::Report.terminus_class = :rest
 
     # Override the default; puppetd needs this, usually.
     # You can still override this on the command-line with, e.g., :compiler.
@@ -251,6 +251,6 @@ Licensed under the Apache 2.0 License
 
     Puppet[:facts_terminus] = :network_device
 
-    Puppet::Resource::Catalog.indirection.cache_class = :yaml
+    Puppet::Resource::Catalog.cache_class = :yaml
   end
 end

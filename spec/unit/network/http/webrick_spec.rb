@@ -278,7 +278,7 @@ describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_wi
       @cert = stub 'cert', :content => "mycert"
       @host = stub 'host', :key => @key, :certificate => @cert, :name => "yay", :ssl_store => "mystore"
 
-      Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns @cert
+      Puppet::SSL::Certificate.stubs(:find).with('ca').returns @cert
 
       Puppet::SSL::Host.stubs(:localhost).returns @host
     end
@@ -295,7 +295,7 @@ describe Puppet::Network::HTTP::WEBrick, :unless => Puppet.features.microsoft_wi
     end
 
     it "should fail if no CA certificate can be found" do
-      Puppet::SSL::Certificate.indirection.stubs(:find).with('ca').returns nil
+      Puppet::SSL::Certificate.stubs(:find).with('ca').returns nil
 
       lambda { @server.setup_ssl }.should raise_error(Puppet::Error)
     end

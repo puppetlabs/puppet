@@ -886,19 +886,19 @@ describe Puppet::Resource::Catalog, "when compiling" do
       # Puppet only checks the terminus setting the first time you ask
       # so this returns the object to the clean state
       # at the expense of making this test less pure
-      Puppet::Resource::Catalog.indirection.reset_terminus_class
+      Puppet::Resource::Catalog.terminus_class = nil
 
       Puppet.settings[:catalog_terminus] = "rest"
-      Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
+      Puppet::Resource::Catalog.terminus_class.should == :rest
     end
 
     it "should allow the terminus class to be set manually" do
-      Puppet::Resource::Catalog.indirection.terminus_class = :rest
-      Puppet::Resource::Catalog.indirection.terminus_class.should == :rest
+      Puppet::Resource::Catalog.terminus_class = :rest
+      Puppet::Resource::Catalog.terminus_class.should == :rest
     end
 
     after do
-      @real_indirection.reset_terminus_class
+      @real_indirection.terminus_class = nil
     end
   end
 

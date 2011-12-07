@@ -70,10 +70,10 @@ Puppet::Indirector::Face.define(:facts, '0.0.1') do
     render_as :yaml
 
     when_invoked do |options|
-      Puppet::Node::Facts.indirection.terminus_class = :facter
-      facts = Puppet::Node::Facts.indirection.find(Puppet[:certname])
-      Puppet::Node::Facts.indirection.terminus_class = :rest
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.terminus_class = :facter
+      facts = Puppet::Node::Facts.find(Puppet[:certname])
+      Puppet::Node::Facts.terminus_class = :rest
+      facts.save
       Puppet.notice "Uploaded facts for '#{Puppet[:certname]}'"
       nil
     end

@@ -6,26 +6,25 @@ describe Puppet::Node::Facts do
     it "should expire any cached node instances when it is saved" do
       Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
 
-      Puppet::Node::Facts.indirection.terminus(:yaml).should equal(Puppet::Node::Facts.indirection.terminus(:yaml))
-      terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
+      Puppet::Node::Facts.terminus(:yaml).should equal(Puppet::Node::Facts.terminus(:yaml))
+      terminus = Puppet::Node::Facts.terminus(:yaml)
       terminus.stubs :save
 
-      Puppet::Node.indirection.expects(:expire).with("me")
+      Puppet::Node.expects(:expire).with("me")
 
-      facts = Puppet::Node::Facts.new("me")
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.new("me").save
     end
 
     it "should be able to delegate to the :yaml terminus" do
       Puppet::Node::Facts.indirection.stubs(:terminus_class).returns :yaml
 
       # Load now, before we stub the exists? method.
-      terminus = Puppet::Node::Facts.indirection.terminus(:yaml)
+      terminus = Puppet::Node::Facts.terminus(:yaml)
 
       terminus.expects(:path).with("me").returns "/my/yaml/file"
       FileTest.expects(:exist?).with("/my/yaml/file").returns false
 
-      Puppet::Node::Facts.indirection.find("me").should be_nil
+      Puppet::Node::Facts.find("me").should be_nil
     end
 
     it "should be able to delegate to the :facter terminus" do
@@ -35,7 +34,7 @@ describe Puppet::Node::Facts do
       facts = Puppet::Node::Facts.new("me")
       Puppet::Node::Facts.expects(:new).with("me", "facter_hash").returns facts
 
-      Puppet::Node::Facts.indirection.find("me").should equal(facts)
+      Puppet::Node::Facts.find("me").should equal(facts)
     end
   end
 end

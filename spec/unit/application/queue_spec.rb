@@ -11,7 +11,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     @daemon = stub_everything 'daemon', :daemonize => nil
     Puppet::Util::Log.stubs(:newdestination)
 
-    Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
+    Puppet::Resource::Catalog.stubs(:terminus_class=)
   end
 
   it "should ask Puppet::Application to parse Puppet configuration file" do
@@ -74,7 +74,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
       @queue.daemon.stubs(:daemonize)
       Puppet.stubs(:info)
       Puppet.features.stubs(:stomp?).returns true
-      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
+      Puppet::Resource::Catalog.stubs(:terminus_class=)
       Puppet.stubs(:settraps)
       Puppet.settings.stubs(:print_config?)
       Puppet.settings.stubs(:print_config)
@@ -130,7 +130,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
     end
 
     it "should configure the Catalog class to use StoreConfigs" do
-      Puppet::Resource::Catalog.indirection.expects(:terminus_class=).with(:store_configs)
+      Puppet::Resource::Catalog.expects(:terminus_class=).with(:store_configs)
       @queue.setup
     end
 
@@ -157,7 +157,7 @@ describe Puppet::Application::Queue, :unless => Puppet.features.microsoft_window
 
     it "should log and save each catalog passed by the queue" do
       catalog = Puppet::Resource::Catalog.new('eh')
-      Puppet::Resource::Catalog.indirection.expects(:save).with(catalog)
+      Puppet::Resource::Catalog.expects(:save).with(catalog, nil)
 
       Puppet::Resource::Catalog::Queue.expects(:subscribe).yields(catalog)
       Puppet.expects(:notice).times(2)

@@ -52,7 +52,7 @@ describe Puppet::FileBucket::File do
     end
 
     it "should have a :save instance method" do
-      Puppet::FileBucket::File.indirection.should respond_to(:save)
+      Puppet::FileBucket::File.should respond_to(:save)
     end
   end
 
@@ -80,25 +80,25 @@ describe Puppet::FileBucket::File do
 
   describe "using the indirector's find method" do
     it "should return nil if a file doesn't exist" do
-      bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
+      bucketfile = Puppet::FileBucket::File.find("md5/#{digest}")
       bucketfile.should == nil
     end
 
     it "should find a filebucket if the file exists" do
       make_bucketed_file
-      bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
+      bucketfile = Puppet::FileBucket::File.find("md5/#{digest}")
       bucketfile.checksum.should == checksum
     end
 
     describe "using RESTish digest notation" do
       it "should return nil if a file doesn't exist" do
-        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
+        bucketfile = Puppet::FileBucket::File.find("md5/#{digest}")
         bucketfile.should == nil
       end
 
       it "should find a filebucket if the file exists" do
         make_bucketed_file
-        bucketfile = Puppet::FileBucket::File.indirection.find("md5/#{digest}")
+        bucketfile = Puppet::FileBucket::File.find("md5/#{digest}")
         bucketfile.checksum.should == checksum
       end
     end

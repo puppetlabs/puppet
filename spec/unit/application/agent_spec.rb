@@ -19,9 +19,9 @@ describe Puppet::Application::Agent do
     @puppetd.preinit
     Puppet::Util::Log.stubs(:newdestination)
 
-    Puppet::Node.indirection.stubs(:terminus_class=)
-    Puppet::Node.indirection.stubs(:cache_class=)
-    Puppet::Node::Facts.indirection.stubs(:terminus_class=)
+    Puppet::Node.stubs(:terminus_class=)
+    Puppet::Node.stubs(:cache_class=)
+    Puppet::Node::Facts.stubs(:terminus_class=)
   end
 
   it "should operate in agent run_mode" do
@@ -173,11 +173,11 @@ describe Puppet::Application::Agent do
       FileTest.stubs(:exists?).returns(true)
       Puppet[:libdir] = "/dev/null/lib"
       Puppet::SSL::Host.stubs(:ca_location=)
-      Puppet::Transaction::Report.indirection.stubs(:terminus_class=)
-      Puppet::Transaction::Report.indirection.stubs(:cache_class=)
-      Puppet::Resource::Catalog.indirection.stubs(:terminus_class=)
-      Puppet::Resource::Catalog.indirection.stubs(:cache_class=)
-      Puppet::Node::Facts.indirection.stubs(:terminus_class=)
+      Puppet::Transaction::Report.stubs(:terminus_class=)
+      Puppet::Transaction::Report.stubs(:cache_class=)
+      Puppet::Resource::Catalog.stubs(:terminus_class=)
+      Puppet::Resource::Catalog.stubs(:cache_class=)
+      Puppet::Node::Facts.stubs(:terminus_class=)
       @host = stub_everything 'host'
       Puppet::SSL::Host.stubs(:new).returns(@host)
       Puppet.stubs(:settraps)
@@ -295,13 +295,13 @@ describe Puppet::Application::Agent do
     end
 
     it "should tell the report handler to use REST" do
-      Puppet::Transaction::Report.indirection.expects(:terminus_class=).with(:rest)
+      Puppet::Transaction::Report.expects(:terminus_class=).with(:rest)
 
       @puppetd.setup
     end
 
     it "should tell the report handler to cache locally as yaml" do
-      Puppet::Transaction::Report.indirection.expects(:cache_class=).with(:yaml)
+      Puppet::Transaction::Report.expects(:cache_class=).with(:yaml)
 
       @puppetd.setup
     end
@@ -313,7 +313,7 @@ describe Puppet::Application::Agent do
     end
 
     it "should tell the catalog handler to use cache" do
-      Puppet::Resource::Catalog.indirection.expects(:cache_class=).with(:yaml)
+      Puppet::Resource::Catalog.expects(:cache_class=).with(:yaml)
 
       @puppetd.setup
     end

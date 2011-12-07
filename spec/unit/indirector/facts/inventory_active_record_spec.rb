@@ -17,15 +17,15 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
   end
 
   after :all do
-    Puppet::Node::Facts.indirection.reset_terminus_class
+    Puppet::Node::Facts.terminus_class = nil
     @dbfile.unlink
   end
 
   before :each do
-    Puppet::Node.indirection.reset_terminus_class
-    Puppet::Node.indirection.cache_class = nil
+    Puppet::Node.terminus_class = nil
+    Puppet::Node.cache_class = nil
 
-    Puppet::Node::Facts.indirection.terminus_class = :inventory_active_record
+    Puppet::Node::Facts.terminus_class = :inventory_active_record
     Puppet[:dbadapter]  = 'sqlite3'
     Puppet[:dblocation] = @dbfile.path
     Puppet[:railslog] = "/dev/null"
@@ -41,8 +41,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     it "should use an existing node if possible" do
       node = Puppet::Rails::InventoryNode.new(:name => "foo", :timestamp => Time.now)
       node.save
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin").save
 
       Puppet::Rails::InventoryNode.count.should == 1
       Puppet::Rails::InventoryNode.first.should == node
@@ -52,30 +51,28 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
       # This test isn't valid if there are nodes to begin with
       Puppet::Rails::InventoryNode.count.should == 0
 
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin").save
 
       Puppet::Rails::InventoryNode.count.should == 1
       Puppet::Rails::InventoryNode.first.name.should == "foo"
     end
 
     it "should save the facts" do
-      facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
-      Puppet::Node::Facts.indirection.save(facts)
+      Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin").save
 
       Puppet::Rails::InventoryFact.all.map{|f| [f.name,f.value]}.should =~ [["uptime_days","60"],["kernel","Darwin"]]
     end
 
     it "should remove the previous facts for an existing node" do
       facts = Puppet::Node::Facts.new("foo", "uptime_days" => "30", "kernel" => "Darwin")
-      Puppet::Node::Facts.indirection.save(facts)
       bar_facts = Puppet::Node::Facts.new("bar", "uptime_days" => "35", "kernel" => "Linux")
       foo_facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "is_virtual" => "false")
-      Puppet::Node::Facts.indirection.save(bar_facts)
-      Puppet::Node::Facts.indirection.save(foo_facts)
 
-      Puppet::Node::Facts.indirection.find("bar").should == bar_facts
-      Puppet::Node::Facts.indirection.find("foo").should == foo_facts
+      bar_facts.save
+      foo_facts.save
+
+      Puppet::Node::Facts.find("bar").should == bar_facts
+      Puppet::Node::Facts.find("foo").should == foo_facts
       Puppet::Rails::InventoryFact.all.map{|f| [f.name,f.value]}.should_not include(["uptime_days", "30"], ["kernel", "Darwin"])
     end
   end
@@ -84,16 +81,17 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
     before do
       @foo_facts = Puppet::Node::Facts.new("foo", "uptime_days" => "60", "kernel" => "Darwin")
       @bar_facts = Puppet::Node::Facts.new("bar", "uptime_days" => "30", "kernel" => "Linux")
-      Puppet::Node::Facts.indirection.save(@foo_facts)
-      Puppet::Node::Facts.indirection.save(@bar_facts)
+
+      @foo_facts.save
+      @bar_facts.save
     end
 
     it "should identify facts by node name" do
-      Puppet::Node::Facts.indirection.find("foo").should == @foo_facts
+      Puppet::Node::Facts.find("foo").should == @foo_facts
     end
 
     it "should return nil if no node instance can be found" do
-      Puppet::Node::Facts.indirection.find("non-existent node").should == nil
+      Puppet::Node::Facts.find("non-existent node").should == nil
     end
   end
 
@@ -112,7 +110,7 @@ describe "Puppet::Node::Facts::InventoryActiveRecord", :if => (Puppet.features.r
       @bar.timestamp = @now - 3600*3
       @baz.timestamp = @now - 3600*5
       @bat.timestamp = @now - 3600*7
-      [@foo, @bar, @baz, @bat].each {|facts| Puppet::Node::Facts.indirection.save(facts)}
+      [@foo, @bar, @baz, @bat].each {|facts| facts.save }
     end
 
     it "should return node names that match 'equal' constraints" do

@@ -101,8 +101,7 @@ class Puppet::Parser::Collector
       resources = collect_virtual(true).reject { |r| ! r.virtual? }
 
       # key is '#{type}/#{name}', and host and filter.
-      found = Puppet::Resource.indirection.
-        search(@type, :host => @scope.host, :filter => @equery)
+      found = Puppet::Resource.search(@type, :host => @scope.host, :filter => @equery)
 
       found.map {|x| x.to_resource(@scope) }.each do |item|
         if existing = @scope.findresource(item.type, item.title)

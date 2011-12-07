@@ -137,7 +137,7 @@ module Puppet
         require 'puppet/node/facts'
         # Cache to YAML if we're uploading facts away
         if %w[rest inventory_service].include? value.to_s
-          Puppet::Node::Facts.indirection.cache_class = :yaml
+          Puppet::Node::Facts.cache_class = :yaml
         end
       end
     },
@@ -168,7 +168,7 @@ module Puppet
           Puppet.settings[:storeconfigs] = true
 
           # But then we modify the configuration
-          Puppet::Resource::Catalog.indirection.cache_class = :queue
+          Puppet::Resource::Catalog.cache_class = :queue
         else
           raise "Cannot disable asynchronous storeconfigs in a running process"
         end
@@ -912,11 +912,11 @@ You can adjust the backend using the storeconfigs_backend setting.",
         require 'puppet/node/facts'
         if value
           Puppet.settings[:async_storeconfigs] or
-            Puppet::Resource::Catalog.indirection.cache_class = :store_configs
-          Puppet::Node::Facts.indirection.cache_class = :store_configs
-          Puppet::Node.indirection.cache_class = :store_configs
+            Puppet::Resource::Catalog.cache_class = :store_configs
+          Puppet::Node::Facts.cache_class = :store_configs
+          Puppet::Node.cache_class = :store_configs
 
-          Puppet::Resource.indirection.terminus_class = :store_configs
+          Puppet::Resource.terminus_class = :store_configs
         end
       end
     },

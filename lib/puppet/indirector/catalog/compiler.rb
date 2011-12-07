@@ -23,7 +23,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
       facts = Puppet::Node::Facts.convert_from(format, text_facts)
     end
     facts.add_timestamp
-    Puppet::Node::Facts.indirection.save(facts)
+    facts.save
   end
 
   # Compile a node's catalog.
@@ -87,7 +87,7 @@ class Puppet::Resource::Catalog::Compiler < Puppet::Indirector::Code
   # Turn our host name into a node object.
   def find_node(name)
     begin
-      return nil unless node = Puppet::Node.indirection.find(name)
+      return nil unless node = Puppet::Node.find(name)
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       raise Puppet::Error, "Failed when searching for node #{name}: #{detail}"

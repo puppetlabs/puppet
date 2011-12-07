@@ -98,7 +98,7 @@ HELP
 
     failed = false
 
-    terminus = Puppet::Node::Facts.indirection.terminus
+    terminus = Puppet::Node::Facts.terminus
 
     files.each do |file|
       facts = YAML.load_file(file)

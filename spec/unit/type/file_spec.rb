@@ -741,7 +741,7 @@ describe Puppet::Type.type(:file) do
 
     it "should set checksum_type to none if this file checksum is none" do
       file[:checksum] = :none
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
+      Puppet::FileServing::Metadata.expects(:search).with { |path,params| params[:checksum_type] == :none }.returns [@metadata]
       file.expects(:newchild).with("my/file").returns "fiebar"
       file.recurse_local
     end
@@ -892,47 +892,47 @@ describe Puppet::Type.type(:file) do
 
   describe "#perform_recursion" do
     it "should use Metadata to do its recursion" do
-      Puppet::FileServing::Metadata.indirection.expects(:search)
+      Puppet::FileServing::Metadata.expects(:search)
       file.perform_recursion(file[:path])
     end
 
     it "should use the provided path as the key to the search" do
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| key == "/foo" }
+      Puppet::FileServing::Metadata.expects(:search).with { |key, options| key == "/foo" }
       file.perform_recursion("/foo")
     end
 
     it "should return the results of the metadata search" do
-      Puppet::FileServing::Metadata.indirection.expects(:search).returns "foobar"
+      Puppet::FileServing::Metadata.expects(:search).returns "foobar"
       file.perform_recursion(file[:path]).should == "foobar"
     end
 
     it "should pass its recursion value to the search" do
       file[:recurse] = true
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurse] == true }
+      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == true }
       file.perform_recursion(file[:path])
     end
 
     it "should pass true if recursion is remote" do
       file[:recurse] = :remote
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurse] == true }
+      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurse] == true }
       file.perform_recursion(file[:path])
     end
 
     it "should pass its recursion limit value to the search" do
       file[:recurselimit] = 10
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:recurselimit] == 10 }
+      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:recurselimit] == 10 }
       file.perform_recursion(file[:path])
     end
 
     it "should configure the search to ignore or manage links" do
       file[:links] = :manage
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:links] == :manage }
+      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:links] == :manage }
       file.perform_recursion(file[:path])
     end
 
     it "should pass its 'ignore' setting to the search if it has one" do
       file[:ignore] = %w{.svn CVS}
-      Puppet::FileServing::Metadata.indirection.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
+      Puppet::FileServing::Metadata.expects(:search).with { |key, options| options[:ignore] == %w{.svn CVS} }
       file.perform_recursion(file[:path])
     end
   end

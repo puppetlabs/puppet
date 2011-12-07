@@ -389,11 +389,11 @@ describe Puppet::Application do
     include PuppetSpec::Files
 
     before :each do
-      Puppet::Node.indirection.reset_terminus_class
+      Puppet::Node.terminus_class = nil
     end
 
     after :each do
-      Puppet::Node.indirection.reset_terminus_class
+      Puppet::Node.terminus_class = nil
     end
 
     it "should use the routes specified for only the active application" do
@@ -413,7 +413,7 @@ describe Puppet::Application do
 
       @app.configure_indirector_routes
 
-      Puppet::Node.indirection.terminus_class.should == 'exec'
+      Puppet::Node.terminus_class.should == 'exec'
     end
 
     it "should not fail if the route file doesn't exist" do

@@ -84,11 +84,11 @@ end
 describe Puppet::Node, "when merging facts" do
   before do
     @node = Puppet::Node.new("testnode")
-    Puppet::Node::Facts.indirection.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
+    Puppet::Node::Facts.stubs(:find).with(@node.name).returns(Puppet::Node::Facts.new(@node.name, "one" => "c", "two" => "b"))
   end
 
   it "should fail intelligently if it cannot find facts" do
-    Puppet::Node::Facts.indirection.expects(:find).with(@node.name).raises "foo"
+    Puppet::Node::Facts.expects(:find).with(@node.name).raises "foo"
     lambda { @node.fact_merge }.should raise_error(Puppet::Error)
   end
 
@@ -129,9 +129,8 @@ end
 
 describe Puppet::Node, "when indirecting" do
   it "should default to the 'plain' node terminus" do
-    Puppet::Node.indirection.reset_terminus_class
-
-    Puppet::Node.indirection.terminus_class.should == :plain
+    Puppet::Node.terminus_class = nil
+    Puppet::Node.terminus_class.should == :plain
   end
 end
 

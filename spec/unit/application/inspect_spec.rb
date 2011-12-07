@@ -278,7 +278,7 @@ describe Puppet::Application::Inspect do
   end
 
   after :all do
-    Puppet::Resource::Catalog.indirection.reset_terminus_class
-    Puppet::Transaction::Report.indirection.terminus_class = :processor
+    Puppet::Resource::Catalog.terminus_class = nil
+    Puppet::Transaction::Report.terminus_class = :processor
   end
 end
