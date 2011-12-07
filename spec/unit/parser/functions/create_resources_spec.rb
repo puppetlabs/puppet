@@ -114,7 +114,7 @@ notify{tester:}
       @scope.resource=Puppet::Parser::Resource.new('class', 't', :scope => @scope)
       Puppet::Parser::Functions.function(:create_resources)
     end
-    it 'should be able to create classes', :'fails_on_ruby_1.9.2' => true do
+    it 'should be able to create classes' do
       @scope.function_create_resources(['class', {'bar'=>{'one'=>'two'}}])
       @scope.compiler.compile
       @compiler.catalog.resource(:notify, "test")['message'].should == 'two'
@@ -123,7 +123,7 @@ notify{tester:}
     it 'should fail to create non-existing classes' do
       lambda { @scope.function_create_resources(['class', {'blah'=>{'one'=>'two'}}]) }.should raise_error(ArgumentError ,'could not find hostclass blah')
     end
-    it 'should be able to add edges', :'fails_on_ruby_1.9.2' => true do
+    it 'should be able to add edges' do
       @scope.function_create_resources(['class', {'bar'=>{'one'=>'two', 'require' => 'Notify[tester]'}}])
       @scope.compiler.compile
       rg = @scope.compiler.catalog.to_ral.relationship_graph

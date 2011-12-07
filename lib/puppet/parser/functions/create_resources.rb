@@ -54,7 +54,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
       klass = find_hostclass(title)
       raise ArgumentError, "could not find hostclass #{title}" unless klass
       klass.ensure_in_catalog(self, params)
-      compiler.catalog.add_class([title])
+      compiler.catalog.add_class(title)
     end
   end
 end
