@@ -74,7 +74,8 @@ module Puppet::Network::HTTP::API::V1
 
     result = (indirection =~ /s$|_search$/) ? :plural : :singular
 
-    indirection.sub!(/s$|_search$|es$/, '')
+    indirection.sub!(/s$|_search$/, '')
+    indirection.sub!(/statuse$/, 'status')
 
     result
   end

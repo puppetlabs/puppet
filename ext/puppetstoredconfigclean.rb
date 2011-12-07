@@ -8,7 +8,10 @@
 # duritong adapted and improved the script a bit.
 
 require 'getoptlong'
-config = '/etc/puppet/puppet.conf'
+require 'puppet'
+require 'puppet/rails'
+
+config = Puppet[:config]
 
 def printusage(error_code)
   puts "Usage: #{$0} [ list of hostnames as stored in hosts table ]"
@@ -17,14 +20,11 @@ def printusage(error_code)
   exit(error_code)
 end
 
-
-      opts = GetoptLong.new(
-
-    [ "--config",     "-c",   GetoptLong::REQUIRED_ARGUMENT ],
-    [ "--help",        "-h",   GetoptLong::NO_ARGUMENT ],
-    [ "--usage",       "-u",   GetoptLong::NO_ARGUMENT ],
-
-    [ "--version",     "-v",   GetoptLong::NO_ARGUMENT ]
+opts = GetoptLong.new(
+  [ "--config",  "-c", GetoptLong::REQUIRED_ARGUMENT ],
+  [ "--help",    "-h", GetoptLong::NO_ARGUMENT ],
+  [ "--usage",   "-u", GetoptLong::NO_ARGUMENT ],
+  [ "--version", "-v", GetoptLong::NO_ARGUMENT ]
 )
 
 begin
@@ -51,24 +51,35 @@ end
 
 printusage(1) unless ARGV.size > 0
 
-require 'puppet/rails'
-Puppet[:config] = config
-Puppet.parse_config
-pm_conf = Puppet.settings.instance_variable_get(:@values)[:master]
+if config != Puppet[:config]
+  Puppet[:config]=config
+  Puppet.settings.parse
+end
 
-adapter = pm_conf[:dbadapter]
-args = {:adapter => adapter, :log_level => pm_conf[:rails_loglevel]}
+master = Puppet.settings.instance_variable_get(:@values)[:master]
+main = Puppet.settings.instance_variable_get(:@values)[:main]
+db_config = main.merge(master)
+
+# get default values
+[:master, :main, :rails].each do |section|
+  Puppet.settings.params(section).each do |key|
+    db_config[key] ||= Puppet[key]
+  end
+end
+
+adapter = db_config[:dbadapter]
+args = {:adapter => adapter, :log_level => db_config[:rails_loglevel]}
 
 case adapter
   when "sqlite3"
-    args[:dbfile] = pm_conf[:dblocation]
-  when "mysql", "postgresql"
-    args[:host]     = pm_conf[:dbserver] unless pm_conf[:dbserver].to_s.empty?
-    args[:username] = pm_conf[:dbuser] unless pm_conf[:dbuser].to_s.empty?
-    args[:password] = pm_conf[:dbpassword] unless pm_conf[:dbpassword].to_s.empty?
-    args[:database] = pm_conf[:dbname] unless pm_conf[:dbname].to_s.empty?
-    args[:port]     = pm_conf[:dbport] unless pm_conf[:dbport].to_s.empty?
-    socket          = pm_conf[:dbsocket]
+    args[:dbfile] = db_config[:dblocation]
+  when "mysql", "mysql2", "postgresql"
+    args[:host]     = db_config[:dbserver] unless db_config[:dbserver].to_s.empty?
+    args[:username] = db_config[:dbuser] unless db_config[:dbuser].to_s.empty?
+    args[:password] = db_config[:dbpassword] unless db_config[:dbpassword].to_s.empty?
+    args[:database] = db_config[:dbname] unless db_config[:dbname].to_s.empty?
+    args[:port]     = db_config[:dbport] unless db_config[:dbport].to_s.empty?
+    socket          = db_config[:dbsocket]
     args[:socket]   = socket unless socket.to_s.empty?
   else
     raise ArgumentError, "Invalid db adapter #{adapter}"
@@ -78,14 +89,15 @@ args[:database] = "puppet" unless not args[:database].to_s.empty?
 
 ActiveRecord::Base.establish_connection(args)
 
-ARGV.each { |hostname|
+ARGV.each do |hostname|
   if @host = Puppet::Rails::Host.find_by_name(hostname.strip)
-    print "Killing #{hostname}..."
+    print "Removing #{hostname} from storedconfig..."
     $stdout.flush
     @host.destroy
     puts "done."
   else
-    puts "Can't find host #{hostname}."
+    puts "Error: Can't find host #{hostname}."
   end
-}
+end
+
 exit 0

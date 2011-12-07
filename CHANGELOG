@@ -1,12 +1,69 @@
-2.7.7rc1
+2.7.8rc1
 ===
+3eff60a Readying for 2.7.8rc release
+e4ee794 (#10739) Provide default subjectAltNames while bootstrapping master
+2dedee6 (#2744) Don't automatically enable show_diff in noop mode
+ef78358 Give variables more descriptive names
+cd3d4ea maint: Rename xgenerate to add_dynamically_generated_resources
+000a2d8 (#6907) Prefetch unsuitable providers
+70114e9 (#6907) Allow providers to be selected in the run they become suitable
+a0ee5c7 maint: Fix incorrect whitespace
+4e8a73c Fix description in service provider test for FreeBSD
+a2eab4f (#6697) Set service provider default path to /etc/rc.d on Archlinux
+da75795 (#6335) Allow optional trailing comma in argument lists.
+47c786e Update CHANGELOG and packaging for 2.7.7 final
+8030428 (#8255) Always use string modes when creating resources from FileSetting settings
+c804346 (#7274) Output 4-digit file modes in File type
+220f2ba (#10799) Regexp escaping too much
+4462eb5 Merged 2.6.x into 2.7x
+67e048b Updated CHANGELOG for 2.7.7rc2
+93aca5a maint: Fix failing specs for Windows exec provider
+7f3a1bb (#9617) Use an RbTreeMap to store ready resources
+9eff0f4 (#9671) Implement RbTreeMap#each recursively, and #first/#last explicitly
+5f7f467 (#9671) Return nodes from internal RbTreeMap recursion
+1dc9c72 (#9671) Stop tracking size and height of nodes in RbTreeMap
+f180f9b (#9617) Add a red-black tree map
+c62e949 (#9617) Keep track of blockers for resources when traversing
+2cb6d72 (#9671) Generated resources should not depend on the completed_ whit
+a5845b7 (#9671) Exit early from #eval_generate if nothing is created
+7002eff (#9617) Be smarter about finding parents when eval_generating
+11fda78 maint: Don't File#expand_path when unmunging file paths
+ad4316a (#9671) Use Array#concat rather than +=
+20260f3 maint: Correct the spelling of sentinel
+4f03384 (#10614) Detect when trying to managing ACLs on a non-ACL volume
+37b9f0f (#10614) Provide default metadata values for Windows ACLs
+1cb37c9 (#10614) Add method for detecting Windows volumes that support ACLs
+c9ee5a0 (#10614) Fix setting and clearing read-only attribute on Windows
+ed27a90 (#10614) Fix error checking for Windows BOOL return values
+7f0756d (#10727) Don't rely on Kernel#Pathname
+23379d0 (#10614) Detect when trying to managing ACLs on a non-ACL volume
+374fee5 (#10614) Provide default metadata values for Windows ACLs
+f60e889 (#10614) Add method for detecting Windows volumes that support ACLs
+1371dbd (#10614) Fix setting and clearing read-only attribute on Windows
+7eb0197 (#10614) Fix error checking for Windows BOOL return values
+9dfd011 (#5617)  Puppet queue logging
+0a34697 (#2744) Display file diffs through the Puppet log system.
+0c28238 (#9508) Be explicit is setting `auth any` for default ACLs.
+f140eca Updated CHANGELOG for 2.7.7rc1
+057cda6 (#9508) Default ACL of `auth any` makes sense where we had `auth no`
+78670ed (#9983) Checksum file in binary mode when storing to filebucket
+da11a78 (#9983) Serve file content in binary mode
+13f1054 (#9983) Read file content from disk using binary mode
+4b4bb8b (#9983) Use binary mode when reading and writing FileBucketFiles
+899833b (#9983) Read file content in binary mode when backing up
+dc8bcf8 (#9983) Restore files in binary mode
+489a679 (#9983) Checksum files in binary mode
+f7bfa05 (#9983) Add method for reading binary files
 674068a (#10269) Make directories executable so they can be cleaned up
 fd747cc (#10365) Add pending test when file overwrites an executable directory
 fe30d8f (#10315) Add pending tests when following symlinks
 a22c7aa Maint: Fix test breakage
 8576e86 (#10269) Search bit not set on newly created directories
+a91cfa1 maint: Fix failing spec on old version of rspec
 428e08c Stub File.open to not touch the disk
+aa2a762 (#10289) Add an ext script to upload facts to inventory server
 a97337f (#10346) Fix storeconfigs spec failures when run alone
+5129d38 (#10289) Add a safe alternative to REST for inventory service
 5c4daa4 (#7601) Use definition lists in indirection references
 7df46a2 (#7601) Use definition lists in type references
 ad97dc9 (#7601) Add markdown_definitionlist method to reference.rb
@@ -18,7 +75,43 @@ a6957ac (#7601) Rename "h" method to "markdown_header"
 5a2952c (maint) Fix CA-related specs failing on Windows
 42fb76e Fix typo in report debug message
 eab5965 missing includes in network XML-RPC handlers
+7514d32 missing includes in network XML-RPC handlers
 614526a (#10244) Restore Mongrel XMLRPC functionality
+397a506 (#10244) Restore Mongrel XMLRPC functionality
+fcaf7c5 Updated CHANGELOG for 2.6.12
+f51d221 Improve the error message when a CSR is rejected
+d551747 Allow a master to bootstrap itself with dns_alt_names and autosign
+0405196 (maint) Remove ssl dir before starting a master with DNS alt names
+3ed6499 Backport Enumerable#count to Rubies < 1.8.7
+5f44c23 More 1.8.5 compatibility fixes.
+ef1b960 Better 1.8.5 compatible implementation of `lines`.
+246e875 (#2848) Config options require '_', not '-'.
+3bdeb3a Ruby 1.8.5 compatibility changes in tests and code.
+6866d4b Add `lines` alias for `each_line` in Ruby 1.8.5.
+2f9ec3c s/not_to/should_not/ for older versions of RSpec 2.
+56320ea (#2848) Eliminate redundant `master_dns_alt_names`.
+de19861 (#2848) Remove the legacy SSLCertificates code
+cf008a6 (#2848) Rework the xmlrpc CA handler to use the modern SSL code
+32be180 (#2848) Remove unused xmlrpc code
+5f2a44d (#2848) Consistent return values from `subject_alt_names` accessors.
+5e507f2 (#2848) Consistently use `subject_alt_names` as accessor name.
+5ac2417 (#2848) Don't strip the subjectAltName label when listing.
+44cf3a2 (#2848) Don't enable `emailProtection` for server keys.
+d66def9 (#2848) Only mark `subjectAltName` critical if `subject` is empty.
+8174047 (#2848) Migrate `dns-alt-names` back to settings.
+f18df2b Wire up the `setbycli` slot in Puppet settings.
+efa61f2 (#2848) rename subject-alt-name option to dns-alt-names
+f103b20 (#2848) Rename `certdnsnames` to match new behaviour.
+363b47b (#2848) Use `certdnsnames` when bootstrapping a local master.
+49334ff (#2848) CSR subjectAltNames handling while signing.
+5f2af93 (#2848) List subject alt names in output of puppet cert --list
+bb475ec (#7224) Add a helper to Puppet::SSL::Certificate to retrieve alternate names
+bab9310 (#2848) Rewrite SSL Certificate Factory, fixing `subjectAltName` leak.
+fca1ff0 (#2848) Reject unknown (== all) extensions on the CSR.
+443a756 (#2848) extract the subjectAltName value from the CSR.
+66101f1 (#2848) Set `certdnsnames` values into the CSR.
+77b814f (#6928) Don't blow up when the method is undefined...
+5427f1e (#6928) backport Symbol#to_proc for Ruby < 1.8.7
 6ef1d3a (#6371) Update lastchg field in shadow file on Solaris.
 c343615 (#10161) Parenthesize method arguments
 5721ab9 Maint: Remove duplicate path extension code

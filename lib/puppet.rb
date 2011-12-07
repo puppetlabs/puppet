@@ -24,7 +24,7 @@ require 'puppet/util/run_mode'
 # it's also a place to find top-level commands like 'debug'
 
 module Puppet
-  PUPPETVERSION = '2.7.7'
+  PUPPETVERSION = '2.7.8'
 
   def Puppet.version
     PUPPETVERSION

@@ -66,15 +66,6 @@ describe Puppet::Application::Apply do
       @apply.options.stubs(:[]).with(any_parameters)
     end
 
-    it "should set show_diff on --noop" do
-      Puppet[:noop] = true
-      Puppet[:show_diff] = false
-
-      @apply.setup
-
-      Puppet[:show_diff].should == true
-    end
-
     it "should set console as the log destination if logdest option wasn't provided" do
       Puppet::Log.expects(:newdestination).with(:console)
 
