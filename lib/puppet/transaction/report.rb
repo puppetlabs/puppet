@@ -10,7 +10,7 @@ class Puppet::Transaction::Report
 
   indirects :report, :terminus_class => :processor
 
-  attr_accessor :configuration_version, :host
+  attr_accessor :configuration_version, :host, :environment
   attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status
 
   # This is necessary since Marshall doesn't know how to
@@ -68,7 +68,7 @@ class Puppet::Transaction::Report
     @status = compute_status(resource_metrics, change_metric)
   end
 
-  def initialize(kind, configuration_version=nil)
+  def initialize(kind, configuration_version=nil, environment=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
@@ -79,6 +79,7 @@ class Puppet::Transaction::Report
     @report_format = 2
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
+    @environment = environment
     @status = 'failed' # assume failed until the report is finalized
   end
 
