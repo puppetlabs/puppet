@@ -109,8 +109,9 @@ module Puppet
     },
     :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
     :diff => ["diff", "Which diff command to use when printing differences between files."],
-    :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
-      is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
+    :show_diff => [false, "Whether to log and report a contextual diff when files are being replaced.  This causes
+      partial file contents to pass through Puppet's normal logging and reporting system, so this setting should be
+      used with caution if you are sending Puppet's reports to an insecure destination.
       This feature currently requires the `diff/lcs` Ruby library."],
     :daemonize => {
       :default => (Puppet.features.microsoft_windows? ? false : true),
@@ -618,7 +619,7 @@ EOT
       it with the `--no-client` option."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then puppet agent will accept incoming
-      REST API requests, subject to the default ACLs and the ACLs set in 
+      REST API requests, subject to the default ACLs and the ACLs set in
       the `rest_authconfig` file. Puppet agent can respond usefully to
       requests on the `run`, `facts`, `certificate`, and `resource` endpoints."],
     :ca_server => ["$server", "The server to use for certificate
