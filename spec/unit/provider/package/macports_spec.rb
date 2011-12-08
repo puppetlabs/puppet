@@ -30,7 +30,7 @@ describe provider_class do
     it { should be_versionable }
   end
 
-  describe "when listing all instances", :'fails_on_ruby_1.9.2' => true do
+  describe "when listing all instances" do
     it "should call port -q installed" do
       provider_class.expects(:port).with("-q", :installed).returns("")
       provider_class.instances
@@ -111,7 +111,7 @@ describe provider_class do
       provider.update
     end
 
-    it "should execute port install if the port is not installed", :'fails_on_ruby_1.9.2' => true do
+    it "should execute port install if the port is not installed" do
       resource[:name] = resource_name
       resource[:ensure] = :present
       provider.stubs(:query).returns("")
