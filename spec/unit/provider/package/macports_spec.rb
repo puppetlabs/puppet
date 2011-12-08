@@ -30,7 +30,7 @@ describe provider_class do
     it { should be_versionable }
   end
 
-  describe "when listing all instances", :'fails_on_ruby_1.9.2' => true do
+  describe "when listing all instances" do
     it "should call port -q installed" do
       provider_class.expects(:port).with("-q", :installed).returns("")
       provider_class.instances
@@ -45,6 +45,12 @@ describe provider_class do
       provider_class.expects(:port).returns("foo @1.234.5_2")
       provider_class.instances.size.should == 0
     end
+
+    it "should ignore variants" do
+      provider_class.parse_installed_query_line("bar @1.0beta2_38_1+x11+java (active)").
+        should == {:provider=>:macports, :revision=>"1", :name=>"bar", :ensure=>"1.0beta2_38"}
+    end
+
   end
 
   describe "when installing" do
@@ -78,26 +84,33 @@ describe provider_class do
       "1.2.3 2"
     end
     let :infoargs do
-      ["-q", :info, "--line", "--version", "--revision",  resource_name]
+      ["/opt/local/bin/port", "-q", :info, "--line", "--version", "--revision",  resource_name]
     end
 
     it "should return nil when the package cannot be found" do
       resource[:name] = resource_name
-      provider.expects(:port).returns("")
+      provider.expects(:execute).with(infoargs, {:combine=>false}).returns("")
       provider.latest.should == nil
     end
 
     it "should return the current version if the installed port has the same revision" do
       current_hash[:revision] = "2"
-      provider.expects(:port).with(*infoargs).returns(new_info_line)
+      provider.expects(:execute).with(infoargs, {:combine=>false}).returns(new_info_line)
       provider.expects(:query).returns(current_hash)
       provider.latest.should == current_hash[:ensure]
     end
 
     it "should return the new version_revision if the installed port has a lower revision" do
       current_hash[:revision] = "1"
-      provider.expects(:port).with(*infoargs).returns(new_info_line)
+      provider.expects(:execute).with(infoargs, {:combine=>false}).returns(new_info_line)
       provider.expects(:query).returns(current_hash)
+      provider.latest.should == "1.2.3_2"
+    end
+
+    it "should return the newest version if the port is not installed" do
+      resource[:name] = resource_name
+      provider.expects(:execute).with(infoargs, {:combine=>false}).returns(new_info_line)
+      provider.expects(:execute).with(["/opt/local/bin/port", "-q", :installed, resource[:name]], {:combine=>false}).returns("")
       provider.latest.should == "1.2.3_2"
     end
   end
@@ -111,7 +124,7 @@ describe provider_class do
       provider.update
     end
 
-    it "should execute port install if the port is not installed", :'fails_on_ruby_1.9.2' => true do
+    it "should execute port install if the port is not installed" do
       resource[:name] = resource_name
       resource[:ensure] = :present
       provider.stubs(:query).returns("")
