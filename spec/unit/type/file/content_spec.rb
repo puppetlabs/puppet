@@ -334,7 +334,7 @@ describe content do
         @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
 
         @conn = stub_everything 'connection'
-        @conn.stubs(:request_get).returns(@response)
+        @conn.stubs(:request_get).yields @response
         Puppet::Network::HttpPool.stubs(:http_instance).returns @conn
 
         @content = @resource.newattr(:content)
