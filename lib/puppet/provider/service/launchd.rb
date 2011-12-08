@@ -54,7 +54,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
                     "/System/Library/LaunchDaemons"]
 
   Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
-  
   # Caching is enabled through the following three methods. Self.prefetch will
   # call self.instances to create an instance for each service. Self.flush will
   # clear out our cache when we're done.
@@ -303,6 +302,4 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
       job_plist_file.save(job_path, CFPropertyList::List::FORMAT_XML)
     end
   end
-
-
 end
