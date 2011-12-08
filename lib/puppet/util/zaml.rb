@@ -1,4 +1,15 @@
+# encoding: UTF-8
 #
+# The above encoding line is a magic comment to set the default source encoding
+# of this file for the Ruby interpreter.  It must be on the first or second
+# line of the file if an interpreter is in use.  In Ruby 1.9 and later, the
+# source encoding determines the encoding of String and Regexp objects created
+# from this source file.  This explicit encoding is important becuase otherwise
+# Ruby will pick an encoding based on LANG or LC_CTYPE environment variables.
+# These may be different from site to site so it's important for us to
+# establish a consistent behavior.  For more information on M17n please see:
+# http://links.puppetlabs.com/understanding_m17n
+
 # ZAML -- A partial replacement for YAML, writen with speed and code clarity
 #         in mind.  ZAML fixes one YAML bug (loading Exceptions) and provides
 #         a replacement for YAML.dump unimaginatively called ZAML.dump,
@@ -218,10 +229,16 @@ end
 class String
   ZAML_ESCAPES = %w{\x00 \x01 \x02 \x03 \x04 \x05 \x06 \a \x08 \t \n \v \f \r \x0e \x0f \x10 \x11 \x12 \x13 \x14 \x15 \x16 \x17 \x18 \x19 \x1a \e \x1c \x1d \x1e \x1f }
   def escaped_for_zaml
-    gsub( /\x5C/, "\\\\\\" ).  # Demi-kludge for Maglev/rubinius; the regexp should be /\\/ but parsetree chokes on that.
-    gsub( /"/, "\\\"" ).
-    gsub( /([\x00-\x1F])/ ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }.
-    gsub( /([\x80-\xFF])/ ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
+    # JJM (Note the trailing dots to construct a multi-line method chain.) This
+    # code is meant to escape all bytes which are not ASCII-8BIT printable
+    # characters.  Multi-byte unicode characters are handled just fine because
+    # each byte of the character results in an escaped string emitted to the
+    # YAML stream.  When the YAML is de-serialized back into a String the bytes
+    # will be reconstructed properly into the unicode character.
+    self.to_ascii8bit.gsub( /\x5C/n, "\\\\\\" ).  # Demi-kludge for Maglev/rubinius; the regexp should be /\\/ but parsetree chokes on that.
+    gsub( /"/n, "\\\"" ).
+    gsub( /([\x00-\x1F])/n ) { |x| ZAML_ESCAPES[ x.unpack("C")[0] ] }.
+    gsub( /([\x80-\xFF])/n ) { |x| "\\x#{x.unpack("C")[0].to_s(16)}" }
   end
   def to_zaml(z)
     z.first_time_only(self) {
@@ -238,7 +255,10 @@ class String
           (self =~ /[\s:]$/) or
           (self =~ /^[>|][-+\d]*\s/i) or
           (self[-1..-1] =~ /\s/) or
-          (self =~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/) or
+          # This regular expression assumes the string is a byte sequence.
+          # It does not concern itself with characters so we convert the string
+          # to ASCII-8BIT for Ruby 1.9 to match up encodings.
+          (self.to_ascii8bit=~ /[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\xFF]/n) or
           (self =~ /[,\[\]\{\}\r\t]|:\s|\s#/) or
           (self =~ /\A([-:?!#&*'"]|<<|%.+:.)/)
           )
@@ -250,6 +270,20 @@ class String
           z.emit(self)
       end
     }
+  end
+
+  # Return a guranteed ASCII-8BIT encoding for Ruby 1.9 This is a helper
+  # method for other methods that perform regular expressions against byte
+  # sequences deliberately rather than dealing with characters.
+  # The method may or may not return a new instance.
+  def to_ascii8bit
+    if self.respond_to?(:encoding) and self.encoding.name != "ASCII-8BIT" then
+      str = self.dup
+      str.force_encoding("ASCII-8BIT")
+      return str
+    else
+      return self
+    end
   end
 end
 
