@@ -48,12 +48,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   has_feature :enableable
   mk_resource_methods
 
-  Launchd_Paths = [ "/Library/LaunchAgents",
-                    "/Library/LaunchDaemons",
-                    "/System/Library/LaunchAgents",
-                    "/System/Library/LaunchDaemons"]
+  Launchd_Paths      = [ "/Library/LaunchAgents",
+                         "/Library/LaunchDaemons",
+                         "/System/Library/LaunchAgents",
+                         "/System/Library/LaunchDaemons"]
+  Launchd_Overrides  = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+  Binary_Plist_Magic = "bplist00" # Magic number for binary Plist, with 00 version number.
+  Plist_Xml_Doctype  = '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
 
-  Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
   # Caching is enabled through the following three methods. Self.prefetch will
   # call self.instances to create an instance for each service. Self.flush will
   # clear out our cache when we're done.
@@ -126,7 +128,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   # Launchd implemented plist overrides in version 10.6.
-  # This method checks the major_version of OS X and returns true if 
+  # This method checks the major_version of OS X and returns true if
   # it is 10.6 or greater. This allows us to implement different plist
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
@@ -136,10 +138,29 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
-  # format.
+  # format. Plist files that contain a bad doctype string will pass
+  # lint, but will also cause Ruby's libxml to throw an error and
+  # fail hard. To remedy this, we have to search for an unquoted
+  # doctype string, which can be found in OS X version 10.6's
+  # /System/Library/LaunchDaemons/org.ntp.ntpd.plist file - a file
+  # that is SHIPPED by Apple.
   def self.read_plist(path)
-    plist_file = CFPropertyList::List.new(:file => path)
-    plist_data = CFPropertyList.native_types(plist_file.value)
+    bad_xml_doctype = /^.*<!DOCTYPE plist PUBLIC -\/\/Apple Computer.*$/
+    # We can't really read the file until we know the source encoding in
+    # Ruby 1.9.x, so we use the magic number to detect it.
+    # NOTE: We need to use IO.read to be Ruby 1.8.x compatible.
+    if IO.read(path, Binary_Plist_Magic.length) == Binary_Plist_Magic
+      plist_obj = CFPropertyList::List.new(:file => path)
+    else
+      plist_data = File.open(path, "r:UTF-8").read
+      if plist_data =~ bad_xml_doctype
+        plist_data.gsub!( bad_xml_doctype, Plist_Xml_Doctype )
+        debug("Had to fix plist with incorrect DOCTYPE declaration: #{path}")
+      end
+      plist_obj = CFPropertyList::List.new(:data => plist_data)
+    end
+
+    plist_data = CFPropertyList.native_types(plist_obj.value)
   end
 
   # Clean out the @property_hash variable containing the cached list of services
@@ -148,7 +169,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   def exists?
-    Puppet.debug("Puppet::Provider::Launchd:Ensure for #{@property_hash[:name]}: #{@property_hash[:ensure]}")
     @property_hash[:ensure] != :absent
   end
 
