@@ -547,7 +547,11 @@ class Puppet::Resource::Catalog < Puppet::SimpleGraph
     ::File.open(Puppet[:resourcefile], "w") do |f|
       to_print = resources.map do |resource|
         next unless resource.managed?
-        "#{resource.type}[#{resource[resource.name_var]}]"
+        if resource.name_var
+          "#{resource.type}[#{resource[resource.name_var]}]"
+        else
+          "#{resource.ref.downcase}"
+        end
       end.compact
       f.puts to_print.join("\n")
     end
