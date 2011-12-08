@@ -59,7 +59,7 @@ def install_release_fixture(name)
   FileUtils.cp_r(release_fixture(name), name)
 end
 
-describe "module_tool" do
+describe "module_tool", :fails_on_windows => true do
   include PuppetSpec::Files
   before do
     @tmp_confdir = Puppet[:confdir] = tmpdir("module_tool_test_confdir")

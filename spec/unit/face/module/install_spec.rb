@@ -1,5 +1,6 @@
 require 'spec_helper'
 require 'puppet/face'
+require 'puppet/module_tool'
 
 describe "puppet module install" do
   subject { Puppet::Face[:module, :current] }
@@ -11,7 +12,7 @@ describe "puppet module install" do
   describe "option validation" do
     let(:expected_options) do
       {
-        :install_dir => "/dev/null/modules",
+        :install_dir => File.expand_path("/dev/null/modules"),
         :module_repository => "http://forge.puppetlabs.com",
       }
     end
