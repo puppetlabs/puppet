@@ -87,6 +87,10 @@ describe provider_class do
       ["/opt/local/bin/port", "-q", :info, "--line", "--version", "--revision",  resource_name]
     end
 
+    before :each do
+      provider.stubs(:command).with(:port).returns("/opt/local/bin/port")
+    end
+
     it "should return nil when the package cannot be found" do
       resource[:name] = resource_name
       provider.expects(:execute).with(infoargs, {:combine=>false}).returns("")
