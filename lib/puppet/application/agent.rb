@@ -416,6 +416,35 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     cert = @host.wait_for_cert(waitforcert) unless options[:fingerprint]
   end
 
+  def setup_agent
+    # We need tomake the client either way, we just don't start it
+    # if --no-client is set.
+    require 'puppet/agent'
+    require 'puppet/configurer'
+    @agent = Puppet::Agent.new(Puppet::Configurer)
+
+    enable_disable_client(@agent) if options[:enable] or options[:disable]
+
+    @daemon.agent = agent if options[:client]
+
+    # It'd be nice to daemonize later, but we have to daemonize before the
+    # waitforcert happens.
+    @daemon.daemonize if Puppet[:daemonize]
+
+    setup_host
+
+    @objects = []
+
+    # This has to go after the certs are dealt with.
+    if Puppet[:listen]
+      unless Puppet[:onetime]
+        setup_listen
+      else
+        Puppet.notice "Ignoring --listen on onetime run"
+      end
+    end
+  end
+
   def setup
     setup_test if options[:test]
 
@@ -460,31 +489,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     Puppet::Resource::Catalog.indirection.cache_class = :yaml
 
-    # We need tomake the client either way, we just don't start it
-    # if --no-client is set.
-    require 'puppet/agent'
-    require 'puppet/configurer'
-    @agent = Puppet::Agent.new(Puppet::Configurer)
-
-    enable_disable_client(@agent) if options[:enable] or options[:disable]
-
-    @daemon.agent = agent if options[:client]
-
-    # It'd be nice to daemonize later, but we have to daemonize before the
-    # waitforcert happens.
-    @daemon.daemonize if Puppet[:daemonize]
-
-    setup_host
-
-    @objects = []
-
-    # This has to go after the certs are dealt with.
-    if Puppet[:listen]
-      unless Puppet[:onetime]
-        setup_listen
-      else
-        Puppet.notice "Ignoring --listen on onetime run"
-      end
+    unless options[:fingerprint]
+      setup_agent
+    else
+      setup_host
     end
   end
 end
