@@ -31,13 +31,13 @@ not compatible you can expect to receive and error such as:
     Encoding::CompatibilityError: incompatible encoding regexp match (ASCII-8BIT
     regexp with UTF-8 string)
 
-In addition, some escape sequences where were valid in Ruby 1.8 are no longer
-valid in 1.9 if the regular expression is not marked as an ASCII-8BIT object.
-You may expect errors like this in this situation:
+In addition, some escape sequences were valid in Ruby 1.8 are no longer valid
+in 1.9 if the regular expression is not marked as an ASCII-8BIT object.  You
+may expect errors like this in this situation:
 
     SyntaxError: (irb):7: invalid multibyte escape: /\xFF/
 
-This error is particularly comment when serializing a string to other
+This error is particularly common when serializing a string to other
 representations like JSON or YAML.  To resolve the problem you can explicitly
 mark the regular expression as ASCII-8BIT using the /n flag:
 
