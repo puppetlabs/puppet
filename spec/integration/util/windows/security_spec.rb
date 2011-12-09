@@ -123,7 +123,7 @@ describe "Puppet::Util::Windows::Security", :if => Puppet.features.microsoft_win
         end
 
         describe "#mode=" do
-          (0000..0700).step(0100).each do |mode|
+          (0000..0700).step(0100) do |mode|
             it "should enforce mode #{mode.to_s(8)}" do
               winsec.set_mode(mode, path)
 
