@@ -20,17 +20,17 @@ DITTO         = '/usr/bin/ditto'
 PACKAGEMAKER  = '/Developer/usr/bin/packagemaker'
 SED           = '/usr/bin/sed'
 
-# Class Instance Variables
-@version               = Puppet::PUPPETVERSION
-@title                 = "puppet-#{@version}"
-@reverse_domain        = 'com.puppetlabs.puppet'
-@package_major_version = @version.split('.')[0]
-@package_minor_version = @version.split('.')[1] +
-                         @version.split('.')[2]
-
-# Template-specific Variables
-@pm_restart            = 'None'
-@build_date            = Time.new.strftime("%Y-%m-%dT%H:%M:%SZ")
+# Setup task to populate all the variables
+task :setup do
+  @version               = `git describe --abbrev=0`.chomp
+  @title                 = "puppet-#{@version}"
+  @reverse_domain        = 'com.puppetlabs.puppet'
+  @package_major_version = @version.split('.')[0]
+  @package_minor_version = @version.split('.')[1] +
+                           @version.split('.')[2].split('rc')[0]
+  @pm_restart            = 'None'
+  @build_date            = Time.new.strftime("%Y-%m-%dT%H:%M:%SZ")
+end
 
 # method:       make_directory_tree
 # description:  This method sets up the directory structure that packagemaker
@@ -160,7 +160,7 @@ end
 
 namespace :package do
   desc "Task for building an Apple Package"
-  task :apple do
+  task :apple => [:setup] do
     # Test for Root and Packagemaker binary
     raise "Please run rake as root to build Apple Packages" unless Process.uid == 0
     raise "Packagemaker must be installed. Please install XCode Tools" unless \
