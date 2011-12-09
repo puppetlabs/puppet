@@ -13,11 +13,15 @@ result_file = "/tmp/#{$$}-result-file"
 source_file = File.join(modulepath, 'source_test_module', 'files', 'source_file')
 manifest = "/tmp/#{$$}-source-test.pp"
 
+# Remove the SSL dir so we don't have cert issues
+on master, "rm -rf `puppet master --configprint ssldir`"
+on agents, "rm -rf `puppet agent --configprint ssldir`"
+
 on master, "mkdir -p #{File.dirname(source_file)}"
 on master, "echo 'the content is present' > #{source_file}"
 on master, %Q[echo "file { '#{result_file}': source => 'puppet:///modules/source_test_module/source_file', ensure => present }" > #{source_file}]
 
-with_master_running_on master, "--autosign true --manifest #{manifest}" do
+with_master_running_on master, "--autosign true --manifest #{manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
   run_agent_on agents, "--test --server #{master}" do
     on agents, "cat #{result_file}" do
       assert_match(/the content is present/, stdout, "Result file not created")
