@@ -1,3 +1,9 @@
+2.7.9
+===
+da11dc7 Fix Ruby 1.8.5-incompatible code in FileBucket::Dipper spec
+737c2f6 Fix Ruby 1.8.5-incompatible code in Transaction#eval_generate
+042925d Fix Ruby 1.8.5-incompatible code in spec setup
+
 2.7.8
 ===
 3eff60a Readying for 2.7.8rc release
