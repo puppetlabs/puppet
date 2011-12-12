@@ -100,7 +100,7 @@ class Puppet::Transaction
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning "Somehow left a component in the relationship graph"
       else
-        resource.debug "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
+        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
         seconds = thinmark { eval_resource(resource) }
         resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
       end
