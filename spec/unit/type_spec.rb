@@ -588,6 +588,35 @@ describe Puppet::Type, :fails_on_windows => true do
       resource.should_not be_suitable
     end
   end
+
+  describe "::ensurable?" do
+    before :each do
+      class TestEnsurableType < Puppet::Type
+        def exists?; end
+        def create; end
+        def destroy; end
+      end
+    end
+
+    it "is true if the class has exists?, create, and destroy methods defined" do
+      TestEnsurableType.should be_ensurable
+    end
+
+    it "is false if exists? is not defined" do
+      TestEnsurableType.class_eval { remove_method(:exists?) }
+      TestEnsurableType.should_not be_ensurable
+    end
+
+    it "is false if create is not defined" do
+      TestEnsurableType.class_eval { remove_method(:create) }
+      TestEnsurableType.should_not be_ensurable
+    end
+
+    it "is false if destroy is not defined" do
+      TestEnsurableType.class_eval { remove_method(:destroy) }
+      TestEnsurableType.should_not be_ensurable
+    end
+  end
 end
 
 describe Puppet::Type::RelationshipMetaparam do
