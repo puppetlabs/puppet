@@ -20,7 +20,7 @@ describe Puppet::Application::Apply do
     Puppet::Node.indirection.cache_class = nil
   end
 
-  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes].each do |option|
+  [:debug,:loadclasses,:verbose,:use_nodes,:detailed_exitcodes,:catalog].each do |option|
     it "should declare handle_#{option} method" do
       @apply.should respond_to("handle_#{option}".to_sym)
     end
@@ -53,6 +53,17 @@ describe Puppet::Application::Apply do
 
       @apply.handle_logdest("console")
     end
+
+    it "should deprecate --apply" do
+      Puppet.expects(:warning).with do |arg|
+        arg.match(/--apply is deprecated/)
+      end
+
+      command_line = Puppet::Util::CommandLine.new('puppet', ['apply', '--apply', 'catalog.json'])
+      apply = Puppet::Application::Apply.new(command_line)
+      apply.stubs(:run_command)
+      apply.run
+    end
   end
 
   describe "during setup" do
@@ -64,15 +75,6 @@ describe Puppet::Application::Apply do
       Puppet::Transaction::Report.indirection.stubs(:cache_class=)
 
       @apply.options.stubs(:[]).with(any_parameters)
-    end
-
-    it "should set show_diff on --noop" do
-      Puppet[:noop] = true
-      Puppet[:show_diff] = false
-
-      @apply.setup
-
-      Puppet[:show_diff].should == true
     end
 
     it "should set console as the log destination if logdest option wasn't provided" do
