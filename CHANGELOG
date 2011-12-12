@@ -1,4 +1,4 @@
-2.6.13rc1
+2.6.13
 ===
 e4ee794 (#10739) Provide default subjectAltNames while bootstrapping master
 9dfd011 (#5617)  Puppet queue logging
