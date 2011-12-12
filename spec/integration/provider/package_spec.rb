@@ -27,6 +27,13 @@ describe "Package provider", :'fails_on_ruby_1.9.2' => true do
           Puppet[:vardir] = tmpdir('msi_package_var_dir')
         end
 
+        # the instances method requires root priviledges on gentoo
+        # if the eix cache is outdated (to run eix-update) so make
+        # sure we dont actually run eix-update
+        if provider.name == :portage
+          provider.stubs(:update_eix).returns('Database contains 15240 packages in 155 categories')
+        end
+
         provider.instances.each do |package|
           package.should be_instance_of(provider)
           package.properties[:provider].should == provider.name
