@@ -130,3 +130,11 @@ class IO
     lines
   end
 end
+
+# Ruby 1.8.5 doesn't have tap
+module Kernel
+  def tap
+    yield(self)
+    self
+  end unless method_defined?(:tap)
+end
