@@ -355,6 +355,71 @@ describe Puppet::Property do
     end
   end
 
+  describe "when calling safe_insync?" do
+
+    describe "and array_matching is set to :first" do
+
+      before :each do
+        @class.array_matching = :first
+      end
+
+      it "should return in sync if no @should value is set" do
+        @property.should.must be_nil # checking whether my assumption of an empty @should is correct
+        @property.safe_insync?('foo').should == true
+        @property.safe_insync?(['foo','bar']).should == true
+      end
+      it "should return in sync if @should is empty" do
+        @property.should = []
+        @property.safe_insync?('foo').should == true
+        @property.safe_insync?(['foo','bar']).should == true
+      end
+      it "should return in sync if @is matches any @should value" do
+        @property.should = ['alt1','alt2','alt3']
+        @property.safe_insync?('alt1').should == true
+        @property.safe_insync?('alt2').should == true
+        @property.safe_insync?('alt3').should == true
+      end
+      it "should return out of sync if @is matches no @should value" do
+        @property.should = ['alt1','alt2','alt3']
+        @property.safe_insync?('alt4').should == false
+      end
+    end
+
+    describe "and array_matching is set to :all" do
+
+      before :each do
+        @class.array_matching = :all
+      end
+
+      it "should return in sync if no @should value is set" do
+        @property.should.must be_nil # checking whether my assumption of an empty @should is correct
+        @property.safe_insync?('foo').should == true
+        @property.safe_insync?(['foo','bar']).should == true
+      end
+      it "should return in sync if both @is and @should are empty" do
+        @property.should = []
+        @property.safe_insync?([]).should == true
+      end
+      it "should return in sync if @is and @should have the same content" do
+        [ %w{single}, %w{mult1 mult2} ].each do |test_array|
+          @property.should = test_array
+          @property.safe_insync?(test_array).should == true
+        end
+      end
+      it "should return out of sync if @should is an empty array while @is is not" do
+        @property.should = []
+        @property.safe_insync?(['alt1']).should == false
+        @property.safe_insync?(['alt2','alt3']).should == false
+      end
+      it "should return out of sync if @should and @is have different contents" do
+        @property.should = ['alt1','alt2','alt3']
+        @property.safe_insync?(['alt2','alt3']).should == false
+      end
+    end
+
+  end
+
+
   describe "when syncing the 'should' value" do
     it "should set the value" do
       @class.newvalue(:foo)

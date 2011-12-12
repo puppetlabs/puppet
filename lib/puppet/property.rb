@@ -172,11 +172,11 @@ class Puppet::Property < Puppet::Parameter
   def insync?(is)
     self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
-    # an empty array is analogous to no should values
-    return true if @should.empty?
-
     # Look for a matching value
     return (is == @should or is == @should.collect { |v| v.to_s }) if match_all?
+
+    # an empty array is analogous to no should values
+    return true if @should.empty?
 
     @should.each { |val| return true if is == val or is == val.to_s }
 
