@@ -82,17 +82,17 @@ describe Puppet::Type.type(:schedule) do
 
     it "should match when the start time is before the current time and the end time is after the current time" do
       @schedule[:range] = "10:59:50 - 11:00:10"
-      @schedule.should be_match
+      @schedule.must be_match
     end
 
     it "should not match when the start time is after the current time" do
       @schedule[:range] = "11:00:05 - 11:00:10"
-      @schedule.should_not be_match
+      @schedule.must_not be_match
     end
 
     it "should not match when the end time is previous to the current time" do
       @schedule[:range] = "10:59:50 - 10:59:55"
-      @schedule.should be_match
+      @schedule.must_not be_match
     end
 
     it "should throw an error if the upper limit is less than the lower limit" do
@@ -103,17 +103,17 @@ describe Puppet::Type.type(:schedule) do
 
     it "should not match the current time fails between an array of ranges" do
       @schedule[:range] = ["4-6", "20-23"]
-      @schedule.should_not be_match
+      @schedule.must_not be_match
     end
 
     it "should match the lower array of ranges" do
       @schedule[:range] = ["9-11", "14-16"]
-      @schedule.should be_match
+      @schedule.must be_match
     end
 
     it "should match the upper array of ranges" do
       @schedule[:range] = ["4-6", "11-12"]
-      @schedule.should be_match
+      @schedule.must be_match
     end
   end
 
