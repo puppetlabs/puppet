@@ -161,7 +161,7 @@ class Puppet::Parser::AST
 
       raise Puppet::ParseError, "#{variable} is not an hash or array when accessing it with #{accesskey}" unless object.is_a?(Hash) or object.is_a?(Array)
 
-      object[array_index_or_key(object, accesskey)]
+      object[array_index_or_key(object, accesskey)] || :undef
     end
 
     # Assign value to this hashkey or array index
