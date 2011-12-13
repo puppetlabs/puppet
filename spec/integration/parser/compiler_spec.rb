@@ -207,6 +207,64 @@ describe Puppet::Parser::Compiler do
       ]
     end
 
+    it "should create relationships using resource names" do
+      code << "'File[a]' -> 'File[b]'"
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using variables" do
+      code << <<-MANIFEST
+        $var = File[a]
+        $var -> File[b]
+      MANIFEST
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using case statements" do
+      code << <<-MANIFEST
+        $var = 10
+        case $var {
+          10: {
+            file { s1: }
+          }
+          12: {
+            file { s2: }
+          }
+        }
+        ->
+        case $var + 2 {
+          10: {
+            file { t1: }
+          }
+          12: {
+            file { t2: }
+          }
+        }
+      MANIFEST
+
+      expected_relationships << ['s1', 't2']
+    end
+
+    it "should create relationships using array members" do
+      code << <<-MANIFEST
+        $var = [ [ [ File[a], File[b] ] ] ]
+        $var[0][0][0] -> $var[0][0][1]
+      MANIFEST
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using hash members" do
+      code << <<-MANIFEST
+        $var = {'foo' => {'bar' => {'source' => File[a], 'target' => File[b]}}}
+        $var[foo][bar][source] -> $var[foo][bar][target]
+      MANIFEST
+
+      expected_relationships << ['a', 'b']
+    end
+
     it "should create relationships using resource declarations" do
       code << "file { l: } -> file { r: }"
 

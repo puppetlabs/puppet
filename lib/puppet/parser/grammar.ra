@@ -76,7 +76,14 @@ relationship: relationship_side edge relationship_side {
     result = AST::Relationship.new(val[0], val[2], val[1][:value], ast_context)
 }
 
-relationship_side: resource | resourceref | collection
+relationship_side: resource
+  | resourceref
+  | collection
+  | variable
+  | quotedtext
+  | selector
+  | casestatement
+  | hasharrayaccesses
 
 edge: IN_EDGE | OUT_EDGE | IN_EDGE_SUB | OUT_EDGE_SUB
 
