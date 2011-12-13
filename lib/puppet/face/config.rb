@@ -37,6 +37,9 @@ Puppet::Face.define(:config, '0.0.1') do
 
     when_invoked do |*args|
       options = args.pop
+
+      args = [ "all" ] if args.empty?
+
       Puppet.settings[:configprint] = args.join(",")
       Puppet.settings.print_config_options
       nil
