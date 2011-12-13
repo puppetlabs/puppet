@@ -136,10 +136,10 @@ resource:       classname LBRACE resourceinstances endsemi RBRACE {
 }           | classname LBRACE params endcomma RBRACE {
   # This is a deprecated syntax.
   error "All resource specifications require names"
-}           | classref LBRACE params endcomma RBRACE {
+}           | type LBRACE params endcomma RBRACE {
   # a defaults setting for a type
   @lexer.commentpop
-  result = ast(AST::ResourceDefaults, :type => val[0], :parameters => val[2])
+  result = ast(AST::ResourceDefaults, :type => val[0].value, :parameters => val[2])
 }
 
 # Override a value set elsewhere in the configuration.
@@ -172,10 +172,9 @@ at:   AT { result = :virtual }
 
 # A collection statement.  Currently supports no arguments at all, but eventually
 # will, I assume.
-collection:     classref collectrhand LBRACE anyparams endcomma RBRACE {
+collection:     type collectrhand LBRACE anyparams endcomma RBRACE {
   @lexer.commentpop
-  Puppet.warning addcontext("Collection names must now be capitalized") if val[0] =~ /^[a-z]/
-  type = val[0].downcase
+  type = val[0].value.downcase
   args = {:type => type}
 
   if val[1].is_a?(AST::CollExpr)
@@ -191,11 +190,8 @@ collection:     classref collectrhand LBRACE anyparams endcomma RBRACE {
   args[:override] = val[3]
   result = ast AST::Collection, args
 }
-  | classref collectrhand {
-    if val[0] =~ /^[a-z]/
-    Puppet.warning addcontext("Collection names must now be capitalized")
-  end
-  type = val[0].downcase
+  | type collectrhand {
+  type = val[0].value.downcase
   args = {:type => type }
 
   if val[1].is_a?(AST::CollExpr)
@@ -368,8 +364,8 @@ boolean:    BOOLEAN {
 resourceref: NAME LBRACK expressions RBRACK {
   Puppet.warning addcontext("Deprecation notice:  Resource references should now be capitalized")
   result = ast AST::ResourceReference, :type => val[0][:value], :line => val[0][:line], :title => val[2]
-}               | classref LBRACK expressions RBRACK {
-  result = ast AST::ResourceReference, :type => val[0], :title => val[2]
+}               | type LBRACK expressions RBRACK {
+  result = ast AST::ResourceReference, :type => val[0].value, :title => val[2]
 }
 
 ifstatement_begin: IF ifstatement {
@@ -611,8 +607,6 @@ nodedef: NODE hostnames nodeparent LBRACE statements RBRACE {
   @lexer.commentpop
   result = Puppet::Parser::AST::Node.new(val[1], ast_context(true).merge(:parent => val[2], :line => val[0][:line]))
 }
-
-classref:       CLASSREF { result = val[0][:value] }
 
 classname:      NAME { result = val[0][:value] }
   | CLASS { result = "class" }
