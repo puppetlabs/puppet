@@ -1,4 +1,4 @@
-test_name "#6710: Relationship syntax should work with title arraysA"
+test_name "#6710: Relationship syntax should work with title arrays"
 
 # Jeff McCune <jeff@puppetlabs.com>
 # 2011-03-14
