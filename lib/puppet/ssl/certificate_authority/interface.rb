@@ -14,7 +14,7 @@ module Puppet
         # Actually perform the work.
         def apply(ca)
           unless subjects or method == :list
-            raise ArgumentError, "You must provide hosts or :all when using #{method}"
+            raise ArgumentError, "You must provide hosts or --all when using #{method}"
           end
 
           begin
