@@ -179,6 +179,11 @@ describe Puppet::Transaction::Report do
           @report.finalize_report
           metric(:resources, state.to_s).should == 3
         end
+
+        it "should provide 0 for states not in status" do
+          @report.finalize_report
+          metric(:resources, state.to_s).should == 0
+        end
       end
 
       it "should mark the report as 'failed' if there are failing resources" do
@@ -274,13 +279,14 @@ describe Puppet::Transaction::Report do
       resource = Puppet::Type.type(:notify).new(:name => "testing")
       catalog = Puppet::Resource::Catalog.new
       catalog.add_resource resource
+      catalog.version = 1234567
       trans = catalog.apply
 
       @report = trans.report
       @report.finalize_report
     end
 
-    %w{changes time resources events}.each do |main|
+    %w{changes time resources events version}.each do |main|
       it "should include the key #{main} in the raw summary hash" do
         @report.raw_summary.should be_key main
       end
@@ -289,6 +295,28 @@ describe Puppet::Transaction::Report do
     it "should include the last run time in the raw summary hash" do
       Time.stubs(:now).returns(Time.utc(2010,11,10,12,0,24))
       @report.raw_summary["time"]["last_run"].should == 1289390424
+    end
+
+    it "should include all resource statuses" do
+      resources_report = @report.raw_summary["resources"]
+      Puppet::Resource::Status::STATES.each do |state|
+        resources_report.should be_include(state.to_s)
+      end
+    end
+
+    %w{total failure success}.each do |r|
+      it "should include event #{r}" do
+        events_report = @report.raw_summary["events"]
+        events_report.should be_include(r)
+      end
+    end
+
+    it "should include config version" do
+      @report.raw_summary["version"]["config"].should == 1234567
+    end
+
+    it "should include puppet version" do
+      @report.raw_summary["version"]["puppet"].should == Puppet.version
     end
 
     %w{Changes Total Resources Time Events}.each do |main|
