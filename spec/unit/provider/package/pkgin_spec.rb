@@ -7,10 +7,6 @@ describe provider_class do
   subject        { provider_class.new(resource) }
 
   describe "Puppet provider interface" do
-    it { respond_to(:install)   }
-    it { respond_to(:uninstall) }
-    it { respond_to(:query)     }
-
     it "can return the list of all packages" do
       provider_class.should respond_to(:instances)
     end
@@ -128,12 +124,12 @@ describe provider_class do
     end
   end
 
-  describe "#parse" do
+  describe "#parse_pkgin_line" do
     context "with an installed package" do
       let(:package) { "vim-7.2.446 =        Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        hash = provider_class.parse(package)
+        hash = provider_class.parse_pkgin_line(package)
         hash[:name].should == "vim"
         hash[:ensure].should == :present
         hash[:provider].should == :pkgin
@@ -144,7 +140,7 @@ describe provider_class do
       let(:package) { "ruby18-puppet-0.25.5nb1 = Configuration management framework written in Ruby" }
 
       it "extracts the name and status" do
-        hash = provider_class.parse(package)
+        hash = provider_class.parse_pkgin_line(package)
         hash[:name].should == "ruby18-puppet"
         hash[:ensure].should == :present
         hash[:provider].should == :pkgin
@@ -155,14 +151,14 @@ describe provider_class do
       let(:package) { "vim-7.2.446          Vim editor (vi clone) without GUI" }
 
       it "extracts the name and status" do
-        hash = provider_class.parse(package)
+        hash = provider_class.parse_pkgin_line(package)
         hash[:name].should == "vim"
         hash[:ensure].should == :absent
         hash[:provider].should == :pkgin
       end
 
       it "extracts the name and an overridden status" do
-        hash = provider_class.parse(package, :present)
+        hash = provider_class.parse_pkgin_line(package, :present)
         hash[:name].should == "vim"
         hash[:ensure].should == :present
         hash[:provider].should == :pkgin
@@ -173,7 +169,7 @@ describe provider_class do
       let(:package) { "" }
 
       it "returns nil" do
-        provider_class.parse(package).should be_nil
+        provider_class.parse_pkgin_line(package).should be_nil
       end
     end
   end

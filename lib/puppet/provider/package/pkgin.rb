@@ -7,7 +7,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   has_feature :installable, :uninstallable
 
-  def self.parse(package, force_status=nil)
+  def self.parse_pkgin_line(package, force_status=nil)
 
     # e.g.
     #   vim-7.2.446 =        Vim editor (vi clone) without GUI
@@ -31,7 +31,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
   def self.instances
     pkgin(:list).split("\n").map do |package|
-      new(parse(package, :present))
+      new(parse_pkgin_line(package, :present))
     end
   end
 
@@ -43,7 +43,7 @@ Puppet::Type.type(:package).provide :pkgin, :parent => Puppet::Provider::Package
 
     matching_package = nil
     packages.detect do |package|
-      properties = self.class.parse(package)
+      properties = self.class.parse_pkgin_line(package)
       matching_package = properties if properties && resource[:name] == properties[:name]
     end
 
