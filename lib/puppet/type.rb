@@ -107,11 +107,9 @@ class Type
   def self.ensurable?
     # If the class has all three of these methods defined, then it's
     # ensurable.
-    ens = [:exists?, :create, :destroy].inject { |set, method|
-      set &&= self.public_method_defined?(method)
+    [:exists?, :create, :destroy].all? { |method|
+      self.public_method_defined?(method)
     }
-
-    ens
   end
 
   def self.apply_to_device
