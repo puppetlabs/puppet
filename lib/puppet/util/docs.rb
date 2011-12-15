@@ -80,10 +80,10 @@ module Puppet::Util::Docs
   end
 
   def markdown_definitionlist(term, definition)
-    lines = definition.split("\n")
+    lines = scrub(definition).split("\n")
     str = "#{term}\n: #{lines.shift}\n"
     lines.each do |line|
-      str << "    " if line =~ /\S/
+      str << "  " if line =~ /\S/
       str << "#{line}\n"
     end
     str << "\n"
