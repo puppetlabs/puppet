@@ -748,6 +748,16 @@ type: File
       result = Puppet::Resource.from_pson(PSON.parse(resource.to_pson))
       result[:requires].should == [ "File[/bar]",  "File[/baz]" ]
     end
+
+    it "should include the 'namevar' into params list during pson export" do
+      resource = Puppet::Resource.new("user", "bob")
+      resource[:var1] = "bob"
+      resource[:var2] = "var2"
+      resource.exported = true
+      Puppet::Type.type(:user).stubs(:key_attributes).returns [:var1]
+      Puppet::Resource.from_pson(PSON.parse(resource.to_pson))[:var1].should == 'bob'
+    end
+
   end
 
   describe "when converting from pson", :if => Puppet.features.pson? do

@@ -67,10 +67,6 @@ class Puppet::Resource
 
     params = self.to_hash.inject({}) do |hash, ary|
       param, value = ary
-
-      # Don't duplicate the title as the namevar
-      next hash if param == namevar and value == title
-
       hash[param] = Puppet::Resource.value_to_pson_data(value)
       hash
     end
