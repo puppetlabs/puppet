@@ -73,6 +73,22 @@ module Puppet::Util::Docs
     value.to_s + (" " * (length - value.to_s.length))
   end
 
+  HEADER_LEVELS = [nil, "#", "##", "###", "####", "#####"]
+
+  def markdown_header(name, level)
+    "#{HEADER_LEVELS[level]} #{name}\n\n"
+  end
+
+  def markdown_definitionlist(term, definition)
+    lines = definition.split("\n")
+    str = "#{term}\n: #{lines.shift}\n"
+    lines.each do |line|
+      str << "    " if line =~ /\S/
+      str << "#{line}\n"
+    end
+    str << "\n"
+  end
+
   # Handle the inline indentation in the docs.
   def scrub(text)
     # Stupid markdown
