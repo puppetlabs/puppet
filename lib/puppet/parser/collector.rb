@@ -109,7 +109,7 @@ class Puppet::Parser::Collector
           unless existing.collector_id == item.collector_id
             # unless this is the one we've already collected
             raise Puppet::ParseError,
-              "Exported resource #{item.ref} cannot override local resource"
+              "Exported resource #{item.ref} has the same type and title as another local or imported resource"
           end
         else
           item.exported = false
