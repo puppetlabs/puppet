@@ -64,8 +64,6 @@ class Puppet::Util::Reference
     loaded_instances(:reference).sort { |a,b| a.to_s <=> b.to_s }
   end
 
-  HEADER_LEVELS = [nil, "#", "##", "###", "####", "#####"]
-
   attr_accessor :page, :depth, :header, :title, :dynamic
   attr_writer :doc
 
@@ -79,20 +77,6 @@ class Puppet::Util::Reference
 
   def dynamic?
     self.dynamic
-  end
-
-  def markdown_header(name, level)
-    "#{HEADER_LEVELS[level]} #{name}\n\n"
-  end
-
-  def markdown_definitionlist(term, definition)
-    lines = definition.split("\n")
-    str = "#{term}\n: #{lines.shift}\n"
-    lines.each do |line|
-      str << "    " if line =~ /\S/
-      str << "#{line}\n"
-    end
-    str << "\n"
   end
 
   def initialize(name, options = {}, &block)
