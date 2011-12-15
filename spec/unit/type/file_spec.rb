@@ -500,8 +500,9 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should not copy values to the child which were set by the source" do
-      file[:source] = File.expand_path(__FILE__)
-      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => 0755, :ftype => "file", :checksum => "{md5}whatever"
+      source = File.expand_path(__FILE__)
+      file[:source] = source
+      metadata = stub 'metadata', :owner => "root", :group => "root", :mode => 0755, :ftype => "file", :checksum => "{md5}whatever", :source => source
       file.parameter(:source).stubs(:metadata).returns metadata
 
       file.parameter(:source).copy_source_values
