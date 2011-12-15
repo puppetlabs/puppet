@@ -20,10 +20,10 @@ module Puppet::Util::Docs
   def doc
     extra = methods.find_all { |m| m.to_s =~ /^dochook_.+/ }.sort.collect { |m|
       self.send(m)
-    }.join("  ")
+    }.delete_if {|r| r.nil? }.join("  ")
 
     if @doc
-      @doc + extra
+      @doc + (extra.empty? ? '' : "\n\n" + extra)
     else
       extra
     end

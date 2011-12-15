@@ -204,7 +204,7 @@ class Puppet::Provider
 
   dochook(:defaults) do
     if @defaults.length > 0
-      return "  Default for " + @defaults.collect do |f, v|
+      return "Default for " + @defaults.collect do |f, v|
         "`#{f}` == `#{v}`"
       end.join(" and ") + "."
     end
@@ -212,7 +212,7 @@ class Puppet::Provider
 
   dochook(:commands) do
     if @commands.length > 0
-      return "  Required binaries: " + @commands.collect do |n, c|
+      return "Required binaries: " + @commands.collect do |n, c|
         "`#{c}`"
       end.join(", ") + "."
     end
@@ -220,7 +220,7 @@ class Puppet::Provider
 
   dochook(:features) do
     if features.length > 0
-      return "  Supported features: " + features.collect do |f|
+      return "Supported features: " + features.collect do |f|
         "`#{f}`"
       end.join(", ") + "."
     end
