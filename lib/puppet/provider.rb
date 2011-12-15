@@ -205,7 +205,7 @@ class Puppet::Provider
   dochook(:defaults) do
     if @defaults.length > 0
       return "Default for " + @defaults.collect do |f, v|
-        "`#{f}` == `#{v}`"
+        "`#{f}` == `#{[v].flatten.join(', ')}`"
       end.join(" and ") + "."
     end
   end
