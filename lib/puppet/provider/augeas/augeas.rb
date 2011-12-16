@@ -325,7 +325,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     begin
       open_augeas
       saved_files = @aug.match("/augeas/events/saved")
-      if saved_files
+      unless saved_files.empty?
         saved_files.each do |key|
           root = resource[:root].sub(/^\/$/, "")
           saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
