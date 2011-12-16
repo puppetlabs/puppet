@@ -156,8 +156,10 @@ describe Puppet::Type.type(:file).attrclass(:source) do
       @resource = Puppet::Type.type(:file).new :path => @foobar
 
       @source = source.new(:resource => @resource)
-      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file"
+      @metadata = stub 'metadata', :owner => 100, :group => 200, :mode => 123, :checksum => "{md5}asdfasdf", :ftype => "file", :source => @foobar
       @source.stubs(:metadata).returns @metadata
+
+      Puppet.features.stubs(:root?).returns true
     end
 
     it "should fail if there is no metadata" do
@@ -184,11 +186,10 @@ describe Puppet::Type.type(:file).attrclass(:source) do
     describe "and the source is a file" do
       before do
         @metadata.stubs(:ftype).returns "file"
+        Puppet.features.stubs(:microsoft_windows?).returns false
       end
 
       it "should copy the metadata's owner, group, checksum, and mode to the resource if they are not set on the resource" do
-        Puppet.features.expects(:root?).returns true
-
         @source.copy_source_values
 
         @resource[:owner].must == 100
@@ -219,6 +220,30 @@ describe Puppet::Type.type(:file).attrclass(:source) do
 
           @source.copy_source_values
           @resource[:owner].should be_nil
+        end
+      end
+
+      describe "on Windows" do
+        before :each do
+          Puppet.features.stubs(:microsoft_windows?).returns true
+        end
+
+        it "should not copy owner and group from remote sources" do
+          @source.stubs(:local?).returns false
+
+          @source.copy_source_values
+
+          @resource[:owner].must be_nil
+          @resource[:group].must be_nil
+        end
+
+        it "should copy owner and group from local sources" do
+          @source.stubs(:local?).returns true
+
+          @source.copy_source_values
+
+          @resource[:owner].must == 100
+          @resource[:group].must == 200
         end
       end
     end
