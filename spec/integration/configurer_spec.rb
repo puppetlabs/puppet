@@ -57,7 +57,9 @@ describe Puppet::Configurer do
       @configurer.run :catalog => @catalog, :report => report
       t2 = Time.now.tv_sec
 
-      File.stat(Puppet[:lastrunfile]).mode.to_s(8).should == "100666"
+      file_mode = Puppet.features.microsoft_windows? ? '100644' : '100666'
+
+      File.stat(Puppet[:lastrunfile]).mode.to_s(8).should == file_mode
 
       summary = nil
       File.open(Puppet[:lastrunfile], "r") do |fd|
