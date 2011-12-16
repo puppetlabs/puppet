@@ -2,7 +2,7 @@
 require 'spec_helper'
 require 'puppet/application/cert'
 
-describe Puppet::Application::Cert, :'fails_on_ruby_1.9.2' => true do
+describe Puppet::Application::Cert => true do
   before :each do
     @cert_app = Puppet::Application[:cert]
     Puppet::Util::Log.stubs(:newdestination)

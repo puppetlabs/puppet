@@ -17,11 +17,11 @@ class Puppet::Application::Cert < Puppet::Application
     @subcommand = (sub == :clean ? :destroy : sub)
   end
 
-  option("--clean", "-c") do
+  option("--clean", "-c") do |arg|
     self.subcommand = "destroy"
   end
 
-  option("--all", "-a") do
+  option("--all", "-a") do |arg|
     @all = true
   end
 
@@ -29,7 +29,7 @@ class Puppet::Application::Cert < Puppet::Application
     @digest = arg
   end
 
-  option("--signed", "-s") do
+  option("--signed", "-s") do |arg|
     @signed = true
   end
 
@@ -39,7 +39,7 @@ class Puppet::Application::Cert < Puppet::Application
 
   require 'puppet/ssl/certificate_authority/interface'
   Puppet::SSL::CertificateAuthority::Interface::INTERFACE_METHODS.reject {|m| m == :destroy }.each do |method|
-    option("--#{method.to_s.gsub('_','-')}", "-#{method.to_s[0,1]}") do
+    option("--#{method.to_s.gsub('_','-')}", "-#{method.to_s[0,1]}") do |arg|
       self.subcommand = method
     end
   end
@@ -48,7 +48,7 @@ class Puppet::Application::Cert < Puppet::Application
     options[:allow_dns_alt_names] = value
   end
 
-  option("--verbose", "-v") do
+  option("--verbose", "-v") do |arg|
     Puppet::Util::Log.level = :info
   end
 
