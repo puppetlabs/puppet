@@ -407,33 +407,33 @@ describe Puppet::Configurer do
   end
 
   describe "when saving the summary report file" do
+    include PuppetSpec::Files
+
     before do
       Puppet.settings.stubs(:use).returns(true)
       @configurer = Puppet::Configurer.new
 
-      @report = stub 'report'
-      @trans = stub 'transaction'
-      @lastrunfd = stub 'lastrunfd'
-      Puppet::Util::FileLocking.stubs(:writelock).yields(@lastrunfd)
+      @report = stub 'report', :raw_summary => {}
+
+      Puppet[:lastrunfile] = tmpfile('last_run_file')
     end
 
-    it "should write the raw summary to the lastrunfile setting value" do
-      Puppet::Util::FileLocking.expects(:writelock).with(Puppet[:lastrunfile], 0660)
+    it "should write the last run file" do
       @configurer.save_last_run_summary(@report)
+      FileTest.exists?(Puppet[:lastrunfile]).should be_true
     end
 
     it "should write the raw summary as yaml" do
       @report.expects(:raw_summary).returns("summary")
-      @lastrunfd.expects(:print).with(YAML.dump("summary"))
       @configurer.save_last_run_summary(@report)
+      File.read(Puppet[:lastrunfile]).should == YAML.dump("summary")
     end
 
     it "should log but not fail if saving the last run summary fails" do
-      Puppet::Util::FileLocking.expects(:writelock).raises "exception"
+      Puppet[:lastrunfile] = "/dev/null/inexistant"
       Puppet.expects(:err)
       lambda { @configurer.save_last_run_summary(@report) }.should_not raise_error
     end
-
   end
 
   describe "when retrieving a catalog" do
