@@ -132,6 +132,10 @@ module Puppet
         next if metadata_method == :checksum and metadata.ftype == "directory"
         next if metadata_method == :checksum and metadata.ftype == "link" and metadata.links == :manage
 
+        if Puppet.features.microsoft_windows?
+          next if [:owner, :group].include?(metadata_method) and !local?
+        end
+
         if resource[param_name].nil? or resource[param_name] == :absent
           resource[param_name] = metadata.send(metadata_method)
         end

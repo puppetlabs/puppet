@@ -109,8 +109,9 @@ module Puppet
     },
     :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
     :diff => ["diff", "Which diff command to use when printing differences between files."],
-    :show_diff => [false, "Whether to print a contextual diff when files are being replaced.  The diff
-      is printed on stdout, so this option is meaningless unless you are running Puppet interactively.
+    :show_diff => [false, "Whether to log and report a contextual diff when files are being replaced.  This causes
+      partial file contents to pass through Puppet's normal logging and reporting system, so this setting should be
+      used with caution if you are sending Puppet's reports to an insecure destination.
       This feature currently requires the `diff/lcs` Ruby library."],
     :daemonize => {
       :default => (Puppet.features.microsoft_windows? ? false : true),
@@ -197,6 +198,10 @@ module Puppet
     :freeze_main => [false, "Freezes the 'main' class, disallowing any code to be added to it.  This
       essentially means that you can't have any code outside of a node, class, or definition other
       than in the site manifest."]
+  )
+  Puppet.setdefaults(:module_tool,
+    :module_repository  => ['http://forge.puppetlabs.com', "The module repository"],
+    :module_working_dir => ['$vardir/puppet-module', "The directory into which module tool data is stored"]
   )
 
   hostname = Facter["hostname"].value
@@ -709,11 +714,11 @@ EOT
       "Whether to send reports after every transaction."
     ],
     :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => [false, "Whether to create dot graph files for the different

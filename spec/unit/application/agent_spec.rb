@@ -437,6 +437,32 @@ describe Puppet::Application::Agent do
         @puppetd.setup_listen
       end
     end
+
+    describe "when setting up for fingerprint" do
+      before(:each) do
+        @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
+      end
+
+      it "should not setup as an agent" do
+        @puppetd.expects(:setup_agent).never
+        @puppetd.setup
+      end
+
+      it "should not create an agent" do
+        Puppet::Agent.stubs(:new).with(Puppet::Configurer).never
+        @puppetd.setup
+      end
+
+      it "should not daemonize" do
+        @daemon.expects(:daemonize).never
+        @puppetd.setup
+      end
+
+      it "should setup our certificate host" do
+        @puppetd.expects(:setup_host)
+        @puppetd.setup
+      end
+    end
   end
 
 

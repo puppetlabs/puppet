@@ -81,7 +81,8 @@ module Puppet
             }
 
         This is mostly useful for restricting certain resources to being
-        applied in maintenance windows or during off-peak hours.
+        applied in maintenance windows or during off-peak hours. Multiple
+        ranges can be applied in array context.
       EOT
 
       # This is lame; properties all use arrays as values, but parameters don't.
@@ -178,7 +179,7 @@ module Puppet
 
           #self.info limits.inspect
           #self.notice now
-          return now.between?(*limits)
+          return true if now.between?(*limits)
         end
 
         # Else, return false, since our current time isn't between

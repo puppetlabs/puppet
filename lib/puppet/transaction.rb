@@ -100,6 +100,7 @@ class Puppet::Transaction
       if resource.is_a?(Puppet::Type::Component)
         Puppet.warning "Somehow left a component in the relationship graph"
       else
+        resource.info "Starting to evaluate the resource" if Puppet[:evaltrace] and @catalog.host_config?
         seconds = thinmark { eval_resource(resource) }
         resource.info "Evaluated in %0.2f seconds" % seconds if Puppet[:evaltrace] and @catalog.host_config?
       end
@@ -150,7 +151,7 @@ class Puppet::Transaction
     begin
       made = resource.eval_generate.uniq
       return false if made.empty?
-      made = Hash[made.map(&:name).zip(made)]
+      made = made.inject({}) {|a,v| a.merge(v.name => v) }
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       resource.err "Failed to generate additional resources using 'eval_generate: #{detail}"

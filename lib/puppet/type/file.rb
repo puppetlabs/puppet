@@ -261,13 +261,18 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
+    req = []
     path = Pathname.new(self[:path])
     if !path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
-      found = parents.find { |p| catalog.resource(:file, p.to_s) }
-      found and found.to_s
+      if found = parents.find { |p| catalog.resource(:file, p.to_s) }
+        req << found.to_s
+      end
     end
+    # if the resource is a link, make sure the target is created first
+    req << self[:target] if self[:target]
+    req
   end
 
   # Autorequire the owner and group of the file.
