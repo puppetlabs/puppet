@@ -60,16 +60,35 @@ describe Puppet::Configurer::Downloader do
       @dler.file
     end
 
-    it "should always set the owner to the current UID" do
-      Process.expects(:uid).returns 51
-      Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == 51 }
-      @dler.file
+    describe "on POSIX" do
+      before :each do
+        Puppet.features.stubs(:microsoft_windows?).returns false
+      end
+
+      it "should always set the owner to the current UID" do
+        Process.expects(:uid).returns 51
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == 51 }
+        @dler.file
+      end
+
+      it "should always set the group to the current GID" do
+        Process.expects(:gid).returns 61
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == 61 }
+        @dler.file
+      end
     end
 
-    it "should always set the group to the current GID" do
-      Process.expects(:gid).returns 61
-      Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == 61 }
-      @dler.file
+    describe "on Windows", :if => Puppet.features.microsoft_windows? do
+      it "should always set the owner to the current user" do
+        Sys::Admin.expects(:get_login).returns 'foo'
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:owner] == 'foo' }
+        @dler.file
+      end
+
+      it "should always set the group to nobody" do
+        Puppet::Type.type(:file).expects(:new).with { |opts| opts[:group] == 'S-1-0-0' }
+        @dler.file
+      end
     end
 
     it "should always force the download" do
