@@ -158,6 +158,59 @@ describe Puppet::Agent do
       @agent.expects(:lock).returns(:result)
       @agent.run.should == :result
     end
+
+    describe "when should_fork is true" do
+      before do
+        @agent.should_fork = true
+        Kernel.stubs(:fork)
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 0)]
+        @agent.stubs(:exit)
+      end
+
+      it "should run the agent in a forked process" do
+        client = AgentTestClient.new
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:run)
+
+        Kernel.expects(:fork).yields
+        @agent.run
+      end
+
+      it "should exit child process if child exit" do
+        client = AgentTestClient.new
+        AgentTestClient.expects(:new).returns client
+
+        client.expects(:run).raises(SystemExit)
+
+        Kernel.expects(:fork).yields
+        @agent.expects(:exit).with(-1)
+        @agent.run
+      end
+
+      it "should re-raise exit happening in the child" do
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -1)]
+        lambda { @agent.run }.should raise_error(SystemExit)
+      end
+
+      it "should re-raise NoMoreMemory happening in the child" do
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => -2)]
+        lambda { @agent.run }.should raise_error(NoMemoryError)
+      end
+
+      it "should return the child exit code" do
+        Process.stubs(:waitpid2).returns [123, (stub 'process::status', :exitstatus => 777)]
+        @agent.run.should == 777
+      end
+
+      it "should return the block exit code as the child exit code" do
+        Kernel.expects(:fork).yields
+        @agent.expects(:exit).with(777)
+        @agent.run_in_fork {
+          777
+        }
+      end
+    end
   end
 
   describe "when splaying" do

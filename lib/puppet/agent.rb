@@ -9,6 +9,7 @@ class Puppet::Agent
   include Puppet::Agent::Locker
 
   attr_reader :client_class, :client, :splayed
+  attr_accessor :should_fork
 
   # Just so we can specify that we are "the" instance.
   def initialize(client_class)
@@ -34,14 +35,16 @@ class Puppet::Agent
     result = nil
     block_run = Puppet::Application.controlled_run do
       splay
-      result = with_client do |client|
-        begin
-          sync.synchronize { lock { client.run(*args) } }
-        rescue SystemExit,NoMemoryError
-          raise
-        rescue Exception => detail
-          puts detail.backtrace if Puppet[:trace]
-          Puppet.err "Could not run #{client_class}: #{detail}"
+      result = run_in_fork(should_fork) do
+        with_client do |client|
+          begin
+            sync.synchronize { lock { client.run(*args) } }
+          rescue SystemExit,NoMemoryError
+            raise
+          rescue Exception => detail
+            puts detail.backtrace if Puppet[:trace]
+            Puppet.err "Could not run #{client_class}: #{detail}"
+          end
         end
       end
       true
@@ -84,6 +87,29 @@ class Puppet::Agent
 
   def sync
     @sync ||= Sync.new
+  end
+
+  def run_in_fork(forking = true)
+    return yield unless forking or Puppet.features.windows?
+
+    child_pid = Kernel.fork do
+      $0 = "puppet agent: applying configuration"
+      begin
+        exit(yield)
+      rescue SystemExit
+        exit(-1)
+      rescue NoMemoryError
+        exit(-2)
+      end
+    end
+    exit_code = Process.waitpid2(child_pid)
+    case exit_code[1].exitstatus
+    when -1
+      raise SystemExit
+    when -2
+      raise NoMemoryError
+    end
+    exit_code[1].exitstatus
   end
 
   private
