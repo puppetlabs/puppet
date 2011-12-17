@@ -11,6 +11,7 @@ class Puppet::Util::Instrumentation
   # since this class sets up an indirection which is also used in Puppet::Indirector::Indirection
   # which is used to setup indirections...
   autoload :Listener, 'puppet/util/instrumentation/listener'
+  autoload :Data, 'puppet/util/instrumentation/data'
 
   # Set up autoloading and retrieving of instrumentation listeners.
   instance_load :listener, 'puppet/util/instrumentation/listeners'

@@ -16,6 +16,10 @@ describe Puppet::Util::Instrumentation::Listener do
     @listener.enabled = true
   end
 
+  it "should indirect instrumentation_listener" do
+    Listener.indirection.name.should == :instrumentation_listener
+  end
+
   it "should raise an error if delegate doesn't support notify" do
     lambda { Listener.new(Object.new) }.should raise_error
   end

@@ -1,8 +1,13 @@
 require 'puppet/indirector'
 require 'puppet/util/instrumentation'
+require 'puppet/util/instrumentation/data'
 
 class Puppet::Util::Instrumentation::Listener
   include Puppet::Util
+  include Puppet::Util::Warnings
+  extend Puppet::Indirector
+
+  indirects :instrumentation_listener, :terminus_class => :local
 
   attr_reader :pattern, :listener
   attr_accessor :enabled
