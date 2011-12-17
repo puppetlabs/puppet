@@ -19,6 +19,7 @@ module Puppet
       { :acl => "/certificate/ca", :method => :find, :authenticated => :any },
       { :acl => "/certificate/", :method => :find, :authenticated => :any },
       { :acl => "/certificate_request", :method => [:find, :save], :authenticated => :any },
+      { :acl => "/ocsp", :method => :save, :authenticated => :any },
       { :acl => "/status", :method => [:find], :authenticated => true },
     ]
 

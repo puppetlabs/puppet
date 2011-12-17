@@ -343,7 +343,8 @@ EOT
         This is distinct from the certificate authority's CRL."
     },
     :certificate_revocation => [true, "Whether certificate revocation should be supported by downloading a Certificate Revocation List (CRL)
-      to all clients.  If enabled, CA chaining will almost definitely not work."]
+      to all clients.  If enabled, CA chaining will almost definitely not work."],
+    :ocsp_ttl => [ 60 * 60, "How long to cache an OSCP verification response"]
   )
 
     setdefaults(
