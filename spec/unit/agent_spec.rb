@@ -150,6 +150,14 @@ describe Puppet::Agent do
       client.expects(:run).with("testargs")
       @agent.run("testargs")
     end
+
+    it "should return the agent result" do
+      client = AgentTestClient.new
+      AgentTestClient.expects(:new).returns client
+
+      @agent.expects(:lock).returns(:result)
+      @agent.run.should == :result
+    end
   end
 
   describe "when splaying" do

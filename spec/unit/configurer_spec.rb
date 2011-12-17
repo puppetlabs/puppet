@@ -111,7 +111,10 @@ describe Puppet::Configurer do
       Puppet[:node_name_fact] = 'my_name_fact'
       @facts.values = {'my_name_fact' => 'node_name_from_fact'}
 
-      @agent.run.host.should == 'node_name_from_fact'
+      report = Puppet::Transaction::Report.new("apply")
+
+      @agent.run(:report => report)
+      report.host.should == 'node_name_from_fact'
     end
 
     it "should pass the new report to the catalog" do
@@ -220,11 +223,12 @@ describe Puppet::Configurer do
       Puppet::Util::Log.destinations.should_not include(report)
     end
 
-    it "should return the report as the result of the run" do
+    it "should return the report exit_status as the result of the run" do
       report = Puppet::Transaction::Report.new("apply")
       Puppet::Transaction::Report.expects(:new).returns(report)
+      report.expects(:exit_status).returns(1234)
 
-      @agent.run.should equal(report)
+      @agent.run.should == 1234
     end
 
     it "should send the transaction report even if the pre-run command fails" do

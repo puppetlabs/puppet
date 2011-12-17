@@ -51,16 +51,16 @@ describe Puppet::Agent::Locker do
     yielded.should be_true
   end
 
-  it "should return true when the lock method successfully locked" do
+  it "should return the block result when the lock method successfully locked" do
     @locker.lockfile.expects(:lock).returns true
 
-    @locker.lock {}.should be_true
+    @locker.lock { :result }.should == :result
   end
 
-  it "should return true when the lock method does not receive the lock" do
+  it "should return nil when the lock method does not receive the lock" do
     @locker.lockfile.expects(:lock).returns false
 
-    @locker.lock {}.should be_false
+    @locker.lock {}.should be_nil
   end
 
   it "should not yield when the lock method does not receive the lock" do
