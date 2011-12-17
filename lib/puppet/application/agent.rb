@@ -324,7 +324,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     @daemon.set_signal_traps
 
     begin
-      report = @agent.run
+      exitstatus = @agent.run
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
       Puppet.err detail.to_s
@@ -332,10 +332,10 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     @daemon.stop(:exit => false)
 
-    if not report
+    if not exitstatus
       exit(1)
     elsif options[:detailed_exitcodes] then
-      exit(report.exit_status)
+      exit(exitstatus)
     else
       exit(0)
     end

@@ -41,9 +41,9 @@ class Puppet::Agent
     result = nil
     block_run = Puppet::Application.controlled_run do
       splay
-      with_client do |client|
+      result = with_client do |client|
         begin
-          sync.synchronize { lock { result = client.run(*args) } }
+          sync.synchronize { lock { client.run(*args) } }
         rescue SystemExit,NoMemoryError
           raise
         rescue Exception => detail
