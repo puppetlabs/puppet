@@ -507,6 +507,11 @@ describe Puppet::Application::Agent do
         expect { @puppetd.onetime }.to exit_with 0
       end
 
+      it "should not let the agent fork" do
+        @agent.expects(:should_fork=).with(false)
+        expect { @puppetd.onetime }.to exit_with 0
+      end
+
       it "should let the agent run" do
         @agent.expects(:run).returns(:report)
         expect { @puppetd.onetime }.to exit_with 0

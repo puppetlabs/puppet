@@ -324,6 +324,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     @daemon.set_signal_traps
 
     begin
+      @agent.should_fork = false
       exitstatus = @agent.run
     rescue => detail
       puts detail.backtrace if Puppet[:trace]
