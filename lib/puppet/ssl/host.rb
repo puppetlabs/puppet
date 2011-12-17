@@ -4,6 +4,7 @@ require 'puppet/ssl/key'
 require 'puppet/ssl/certificate'
 require 'puppet/ssl/certificate_request'
 require 'puppet/ssl/certificate_revocation_list'
+require 'puppet/ssl/ocsp/request'
 
 # The class that manages all aspects of our SSL certificates --
 # private keys, public keys, requests, etc.
@@ -14,6 +15,7 @@ class Puppet::SSL::Host
   Certificate = Puppet::SSL::Certificate
   CertificateRequest = Puppet::SSL::CertificateRequest
   CertificateRevocationList = Puppet::SSL::CertificateRevocationList
+  Ocsp = Puppet::SSL::Ocsp::Request
 
   extend Puppet::Indirector
   indirects :certificate_status, :terminus_class => :file
@@ -59,6 +61,12 @@ class Puppet::SSL::Host
       self.indirection.terminus_class = term
     else
       self.indirection.reset_terminus_class
+    end
+
+    if terminus == :file
+      Ocsp.indirection.reset_terminus_class
+    else
+      Ocsp.indirection.terminus_class = terminus
     end
 
     if cache

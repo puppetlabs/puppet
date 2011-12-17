@@ -263,6 +263,10 @@ describe Puppet::SSL::Host do
         Puppet::SSL::Host.indirection.terminus_class.should == :file
       end
 
+      it "should set the terminus class for Ocsp request as :ca" do
+        Puppet::SSL::Ocsp::Request.indirection.terminus_class.should == :ca
+      end
+
       it "should set the terminus class for Certificate, CertificateRevocationList, and CertificateRequest as :ca" do
         Puppet::SSL::Certificate.indirection.terminus_class.should == :ca
         Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :ca
@@ -283,6 +287,10 @@ describe Puppet::SSL::Host do
 
       it "should set the terminus class for Key as :file" do
         Puppet::SSL::Key.indirection.terminus_class.should == :file
+      end
+
+      it "should set the terminus class for Ocsp requests as :rest" do
+        Puppet::SSL::Ocsp::Request.indirection.terminus_class.should == :rest
       end
 
       it "should set the terminus class for Host, Certificate, CertificateRevocationList, and CertificateRequest as :rest" do
@@ -311,6 +319,10 @@ describe Puppet::SSL::Host do
         Puppet::SSL::CertificateRevocationList.indirection.cache_class.should be_nil
       end
 
+      it "should set the terminus class for Ocsp requests as :ca" do
+        Puppet::SSL::Ocsp::Request.indirection.terminus_class.should == :ca
+      end
+
       it "should set the terminus class for Host to :file" do
         Puppet::SSL::Host.indirection.terminus_class.should == :file
       end
@@ -326,6 +338,10 @@ describe Puppet::SSL::Host do
         Puppet::SSL::Certificate.indirection.terminus_class.should == :file
         Puppet::SSL::CertificateRequest.indirection.terminus_class.should == :file
         Puppet::SSL::CertificateRevocationList.indirection.terminus_class.should == :file
+      end
+
+      it "should set the terminus class for Ocsp requests to 'none'" do
+        lambda { Puppet::SSL::Ocsp::Request.indirection.terminus_class }.should raise_error(Puppet::DevError)
       end
 
       it "should set the terminus class for Host to 'none'" do
