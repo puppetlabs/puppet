@@ -6,10 +6,7 @@ provider = Puppet::Type.type(:package).provider(:pacman)
 describe provider do
   before do
     provider.stubs(:command).with(:pacman).returns('/usr/bin/pacman')
-    @resource = stub 'resource'
-    @resource.stubs(:[]).with(:name).returns("package")
-    @resource.stubs(:[]).with(:source).returns(nil)
-    @resource.stubs(:name).returns("name")
+    @resource = Puppet::Type.type(:package).new(:name => 'package')
     @provider = provider.new(@resource)
   end
 
@@ -73,7 +70,7 @@ describe provider do
           ftp://some.package.in/the/air
         }.each do |source|
           it "should install #{source} directly" do
-            @resource.stubs(:[]).with(:source).returns source
+            @resource[:source] = source
 
             provider.expects(:execute).
               with(all_of(includes("-Sy"), includes("--noprogressbar"))).
@@ -94,7 +91,7 @@ describe provider do
         before do
           @package_file = "file:///some/package/file"
           @actual_file_path = "/some/package/file"
-          @resource.stubs(:[]).with(:source).returns @package_file
+          @resource[:source] = @package_file
         end
 
         it "should install from the path segment of the URL" do
@@ -115,7 +112,7 @@ describe provider do
 
       context "as a puppet URL" do
         before do
-          @resource.stubs(:[]).with(:source).returns "puppet://server/whatever"
+          @resource[:source] = "puppet://server/whatever"
         end
 
         it "should fail" do
@@ -125,7 +122,7 @@ describe provider do
 
       context "as a malformed URL" do
         before do
-          @resource.stubs(:[]).with(:source).returns "blah://"
+          @resource[:source] = "blah://"
         end
 
         it "should fail" do
