@@ -254,31 +254,29 @@ EOF
 
   describe "when determining the latest version" do
     it "should refresh package list" do
-      refreshed = states('refreshed').starts_as('unrefreshed')
+      get_latest_version = sequence("get_latest_version")
       provider.
         expects(:execute).
-        when(refreshed.is('unrefreshed')).
-        with(['/usr/bin/pacman', '-Sy']).
-        then(refreshed.is('refreshed'))
+        in_sequence(get_latest_version).
+        with(['/usr/bin/pacman', '-Sy'])
 
       provider.
         stubs(:execute).
-        when(refreshed.is('refreshed')).
+        in_sequence(get_latest_version).
         returns("")
 
       @provider.latest
     end
 
     it "should get query pacman for the latest version" do
-      refreshed = states('refreshed').starts_as('unrefreshed')
+      get_latest_version = sequence("get_latest_version")
       provider.
         stubs(:execute).
-        when(refreshed.is('unrefreshed')).
-        then(refreshed.is('refreshed'))
+        in_sequence(get_latest_version)
 
       provider.
         expects(:execute).
-        when(refreshed.is('refreshed')).
+        in_sequence(get_latest_version).
         with(['/usr/bin/pacman', '-Sp', '--print-format', '%v', @resource[:name]]).
         returns("")
 
