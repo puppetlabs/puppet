@@ -19,4 +19,3 @@ describe Puppet::Node::Facts::InventoryService do
     }.should_not raise_error
   end
 end
-
