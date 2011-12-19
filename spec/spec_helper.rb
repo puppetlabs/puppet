@@ -75,6 +75,11 @@ RSpec.configure do |config|
     # Avoid opening ports to the outside world
     Puppet.settings[:bindaddress] = "127.0.0.1"
 
+    # We don't want to depend upon the reported domain name of the
+    # machine running the tests, nor upon the DNS setup of that
+    # domain.
+    Puppet.settings[:use_srv_records] = false
+
     @logs = []
     Puppet::Util::Log.newdestination(Puppet::Test::LogCollector.new(@logs))
 
