@@ -2,6 +2,7 @@ require 'puppet/rails'
 require 'puppet/rails/inventory_node'
 require 'puppet/rails/inventory_fact'
 require 'puppet/indirector/active_record'
+require 'puppet/util/retryaction'
 
 class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRecord
   def find(request)
@@ -17,15 +18,17 @@ class Puppet::Node::Facts::InventoryActiveRecord < Puppet::Indirector::ActiveRec
     node = Puppet::Rails::InventoryNode.find_by_name(request.key) || Puppet::Rails::InventoryNode.create(:name => request.key, :timestamp => facts.timestamp)
     node.timestamp = facts.timestamp
 
-    ActiveRecord::Base.transaction do
-      Puppet::Rails::InventoryFact.delete_all(:node_id => node.id)
-      # We don't want to save internal values as facts, because those are
-      # metadata that belong on the node
-      facts.values.each do |name,value|
-        next if name.to_s =~ /^_/
-        node.facts.build(:name => name, :value => value)
+    Puppet::Util::RetryAction.retry_action :timeout => 30, :retry_exceptions => {ActiveRecord::StatementInvalid => 'MySQL Error.  Retrying'} do
+      ActiveRecord::Base.transaction do
+        Puppet::Rails::InventoryFact.delete_all(:node_id => node.id)
+        # We don't want to save internal values as facts, because those are
+        # metadata that belong on the node
+        facts.values.each do |name,value|
+          next if name.to_s =~ /^_/
+          node.facts.build(:name => name, :value => value)
+        end
+        node.save
       end
-      node.save
     end
   end
 
