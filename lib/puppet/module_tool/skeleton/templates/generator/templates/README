@@ -1,0 +1,7 @@
+Templates associated with the module go in this directory.
+
+They can be accessed in the following manner.
+
+file { 'myfile':
+  content => template("${module_name}/myfile.erb"),
+}

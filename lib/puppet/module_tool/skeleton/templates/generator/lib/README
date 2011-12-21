@@ -1,0 +1,15 @@
+Ruby code to extend Puppet that is associated with this module goes in
+a specific subdirectory of this directory.
+
+lib
+├── facter (custom facts)
+└── puppet
+    ├── parser
+    │   └── functions (custom functions)
+    ├── provider
+        ├── exec
+        ├── package
+        └── etc... (any resource type)
+    └── type
+
+see http://docs.puppetlabs.com/guides/modules.html for more information.
