@@ -105,6 +105,15 @@ describe Puppet::Util::Instrumentation::Instrumentable::Probe do
         test.expects(:instrumented_mymethod).with(1,2,3).raises
         lambda { test.mymethod(1,2,3) }.should raise_error
       end
+
+      it "should stop the instrumentation" do
+        Puppet::Util::Instrumentation.expects(:stop)
+        probe = Puppet::Util::Instrumentation::Instrumentable::Probe.new(:mymethod, ProbeTest)
+        probe.enable
+        test = ProbeTest.new
+        test.expects(:instrumented_mymethod).with(1,2,3).raises
+        lambda { test.mymethod(1,2,3) }.should raise_error
+      end
     end
 
     describe "with a static label" do

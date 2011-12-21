@@ -125,6 +125,8 @@ class Puppet::Util::Instrumentation
   end
 
   def self.init
+    # let's init our probe indirection
+    require 'puppet/util/instrumentation/indirection_probe'
     synchronize {
       @listeners ||= {}
       @listeners_of ||= {}
