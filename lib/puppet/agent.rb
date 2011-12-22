@@ -35,7 +35,7 @@ class Puppet::Agent
       return
     end
     if disabled?
-      Puppet.notice "Run of #{client_class} is administratively disabled; skipping"
+      Puppet.notice "Skipping run of #{client_class}; administratively disabled: #{disable_message}"
       return
     end
     result = nil

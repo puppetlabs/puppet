@@ -35,6 +35,12 @@ describe Puppet::Agent::Disabler do
     @locker.disable
   end
 
+  it "should disable with a message" do
+    @locker.disable_lockfile.expects(:lock).with("disabled because")
+
+    @locker.disable("disabled because")
+  end
+
   it "should unlock the anonymous lock when enabled" do
     @locker.disable_lockfile.expects(:unlock)
 
@@ -45,5 +51,10 @@ describe Puppet::Agent::Disabler do
     @locker.disable_lockfile.expects(:locked?)
 
     @locker.disabled?
+  end
+
+  it "should report the disable message when disabled" do
+    @locker.disable_lockfile.expects(:message).returns("message")
+    @locker.disable_message.should == "message"
   end
 end

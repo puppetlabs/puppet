@@ -77,6 +77,7 @@ describe Puppet::Agent do
 
   describe "when being run" do
     before do
+      AgentTestClient.stubs(:lockfile_path).returns "/my/lock"
       @agent.stubs(:running?).returns false
     end
 

@@ -91,7 +91,7 @@ describe Puppet::Application::Agent do
       @puppetd.command_line.stubs(:args).returns([])
     end
 
-    [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
+    [:centrallogging, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
       it "should declare handle_#{option} method" do
         @puppetd.should respond_to("handle_#{option}".to_sym)
       end
@@ -99,6 +99,24 @@ describe Puppet::Application::Agent do
       it "should store argument value when calling handle_#{option}" do
         @puppetd.options.expects(:[]=).with(option, 'arg')
         @puppetd.send("handle_#{option}".to_sym, 'arg')
+      end
+    end
+
+    describe "when handling --disable" do
+      it "should declare handle_disable method" do
+        @puppetd.should respond_to(:handle_disable)
+      end
+
+      it "should set disable to true" do
+        @puppetd.options.stubs(:[]=)
+        @puppetd.options.expects(:[]=).with(:disable, true)
+        @puppetd.handle_disable('')
+      end
+
+      it "should store disable message" do
+        @puppetd.options.stubs(:[]=)
+        @puppetd.options.expects(:[]=).with(:disable_message, "message")
+        @puppetd.handle_disable('message')
       end
     end
 
@@ -347,6 +365,20 @@ describe Puppet::Application::Agent do
           @agent.expects(action)
           expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
         end
+      end
+
+      it "should pass the disable message when disabling" do
+        @puppetd.options.stubs(:[]).with(:disable).returns(true)
+        @puppetd.options.stubs(:[]).with(:disable_message).returns("message")
+        @agent.expects(:disable).with("message")
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+      end
+
+      it "should pass the default disable message when disabling without a message" do
+        @puppetd.options.stubs(:[]).with(:disable).returns(true)
+        @puppetd.options.stubs(:[]).with(:disable_message).returns(nil)
+        @agent.expects(:disable).with("reason not specified")
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
       end
 
       it "should finally exit" do
