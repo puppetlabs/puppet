@@ -14,7 +14,7 @@ Puppet::Parser::Functions::newfunction(:create_resources, :doc => <<-'ENDHEREDOC
                       groups => ['developers', 'prosvc', 'release'], }
         }
 
-        create_resource(user, $myusers)
+        create_resources(user, $myusers)
 
     A third, optional parameter may be given, also as a hash:
 
