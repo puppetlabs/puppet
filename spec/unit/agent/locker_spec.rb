@@ -30,13 +30,17 @@ describe Puppet::Agent::Locker do
   end
 
   it "should use the lock file to anonymously lock the process when disabled" do
-    @locker.lockfile.expects(:lock).with(:anonymous => true)
+    lock = stub 'lock'
+    Puppet::Util::AnonymousFilelock.expects(:new).with("/my/lock.disabled").returns lock
+    lock.expects(:lock)
 
     @locker.disable
   end
 
   it "should use the lock file to anonymously unlock the process when enabled" do
-    @locker.lockfile.expects(:unlock).with(:anonymous => true)
+    lock = stub 'lock'
+    Puppet::Util::AnonymousFilelock.expects(:new).with("/my/lock.disabled").returns lock
+    lock.expects(:unlock)
 
     @locker.enable
   end

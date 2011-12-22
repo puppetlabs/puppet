@@ -31,6 +31,10 @@ class Puppet::Agent
       Puppet.notice "Run of #{client_class} already in progress; skipping"
       return
     end
+    if disabled?
+      Puppet.notice "Run of #{client_class} is administratively disabled; skipping"
+      return
+    end
     result = nil
     block_run = Puppet::Application.controlled_run do
       splay
