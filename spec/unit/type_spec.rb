@@ -261,13 +261,6 @@ describe Puppet::Type, :fails_on_windows => true do
   end
 
   describe "when initializing" do
-    describe "and passed a TransObject" do
-      it "should fail" do
-        trans = Puppet::TransObject.new("/foo", :mount)
-        lambda { Puppet::Type.type(:mount).new(trans) }.should raise_error(Puppet::DevError)
-      end
-    end
-
     describe "and passed a Puppet::Resource instance" do
       it "should set its title to the title of the resource if the resource type is equal to the current type" do
         resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "/other"})

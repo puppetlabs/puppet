@@ -3,7 +3,6 @@
 
 require 'puppet/parser/parser'
 require 'puppet/parser/templatewrapper'
-require 'puppet/transportable'
 require 'strscan'
 
 require 'puppet/resource/type_collection_helper'

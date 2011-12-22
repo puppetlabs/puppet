@@ -4,7 +4,7 @@ require 'spec_helper'
 require 'puppet/network/handler'
 
 describe Puppet::Network::Handler do
-  %w{ca filebucket fileserver master report runner status}.each do |name|
+  %w{ca filebucket fileserver report runner status}.each do |name|
     it "should have a #{name} client" do
       Puppet::Network::Handler.handler(name).should be_instance_of(Class)
     end

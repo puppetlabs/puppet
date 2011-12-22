@@ -345,65 +345,6 @@ module PuppetTest::ParserTesting
     Puppet[:manifest] = oldmanifest
   end
 
-  def mk_transobject(file = "/etc/passwd")
-    obj = nil
-    assert_nothing_raised {
-      obj = Puppet::TransObject.new("file", file)
-      obj["owner"] = "root"
-      obj["mode"] = "644"
-    }
-
-    obj
-  end
-
-  def mk_transbucket(*resources)
-    bucket = nil
-    assert_nothing_raised {
-      bucket = Puppet::TransBucket.new
-      bucket.name = "yayname"
-      bucket.type = "yaytype"
-    }
-
-    resources.each { |o| bucket << o }
-
-    bucket
-  end
-
-  # Make a tree of resources, yielding if desired
-  def mk_transtree(depth = 4, width = 2)
-    top = nil
-    assert_nothing_raised {
-      top = Puppet::TransBucket.new
-      top.name = "top"
-      top.type = "bucket"
-    }
-
-    bucket = top
-
-    file = tempfile
-    depth.times do |i|
-      resources = []
-      width.times do |j|
-        path = tempfile + i.to_s
-        obj = Puppet::TransObject.new("file", path)
-        obj["owner"] = "root"
-        obj["mode"] = "644"
-
-        # Yield, if they want
-        yield(obj, i, j) if block_given?
-
-        resources << obj
-      end
-
-      newbucket = mk_transbucket(*resources)
-
-      bucket.push newbucket
-      bucket = newbucket
-    end
-
-    top
-  end
-
   # Take a list of AST resources, evaluate them, and return the results
   def assert_evaluate(children)
     top = nil
