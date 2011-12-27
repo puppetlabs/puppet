@@ -40,8 +40,8 @@ describe Puppet::Indirector::InstrumentationProbe::Local do
       instance2 = stub 'instance2', :method => "probe2", :klass => "Klass2"
       Puppet::Util::Instrumentation::IndirectionProbe.expects(:new).with("Klass1.probe1").returns(:instance1)
       Puppet::Util::Instrumentation::IndirectionProbe.expects(:new).with("Klass2.probe2").returns(:instance2)
-      Puppet::Util::Instrumentation::Instrumentable.expects(:each_probe).multiple_yields(instance1, instance2)
-      @probe.search(@request).should == [ :instance1, :instance2]
+      Puppet::Util::Instrumentation::Instrumentable.expects(:each_probe).multiple_yields([instance1], [instance2])
+      @probe.search(@request).should == [ :instance1, :instance2 ]
     end
   end
 
