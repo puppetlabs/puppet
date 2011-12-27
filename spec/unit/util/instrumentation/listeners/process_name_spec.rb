@@ -70,7 +70,8 @@ describe process_name do
       @process_name.push_activity(thread1,"Parsing file site.pp")
       @process_name.push_activity(thread2,"Parsing file node.pp")
 
-      @process_name.process_name.should == "12344321 Compiling node4.domain.com,Parsing file node.pp | deadbeef Compiling node1.domain.com,Parsing file site.pp"
+      @process_name.process_name.should =~ /12344321 Compiling node4.domain.com,Parsing file node.pp/
+      @process_name.process_name.should =~ /deadbeef Compiling node1.domain.com,Parsing file site.pp/
     end
   end
 
