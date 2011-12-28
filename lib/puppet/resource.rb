@@ -285,54 +285,6 @@ class Puppet::Resource
     end
   end
 
-  # Translate our object to a backward-compatible transportable object.
-  def to_trans
-    if builtin_type? and type.downcase.to_s != "stage"
-      result = to_transobject
-    else
-      result = to_transbucket
-    end
-
-    result.file = self.file
-    result.line = self.line
-
-    result
-  end
-
-  def to_trans_ref
-    [type.to_s, title.to_s]
-  end
-
-  # Create an old-style TransObject instance, for builtin resource types.
-  def to_transobject
-    # Now convert to a transobject
-    result = Puppet::TransObject.new(title, type)
-    to_hash.each do |p, v|
-      if v.is_a?(Puppet::Resource)
-        v = v.to_trans_ref
-      elsif v.is_a?(Array)
-        v = v.collect { |av|
-          av = av.to_trans_ref if av.is_a?(Puppet::Resource)
-          av
-        }
-      end
-
-      # If the value is an array with only one value, then
-      # convert it to a single value.  This is largely so that
-      # the database interaction doesn't have to worry about
-      # whether it returns an array or a string.
-      result[p.to_s] = if v.is_a?(Array) and v.length == 1
-        v[0]
-          else
-            v
-              end
-    end
-
-    result.tags = self.tags
-
-    result
-  end
-
   def name
     # this is potential namespace conflict
     # between the notion of an "indirector name"
@@ -420,17 +372,6 @@ class Puppet::Resource
     else
       :name
     end
-  end
-
-  # Create an old-style TransBucket instance, for non-builtin resource types.
-  def to_transbucket
-    bucket = Puppet::TransBucket.new([])
-
-    bucket.type = self.type
-    bucket.name = self.title
-
-    # TransBuckets don't support parameters, which is why they're being deprecated.
-    bucket
   end
 
   def extract_parameters(params)

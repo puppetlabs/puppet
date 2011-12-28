@@ -753,10 +753,6 @@ class Type
     noop?
   end
 
-  ###############################
-  # Code related to managing resource instances.
-  require 'puppet/transportable'
-
   # retrieve a named instance of the current type
   def self.[](name)
     raise "Global resource access is deprecated"
@@ -1754,7 +1750,6 @@ class Type
 
   # initialize the type instance
   def initialize(resource)
-    raise Puppet::DevError, "Got TransObject instead of Resource or hash" if resource.is_a?(Puppet::TransObject)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
 
     # The list of parameter/property instances.
@@ -1904,36 +1899,10 @@ class Type
     self.ref
   end
 
-  # Convert to a transportable object
-  def to_trans(ret = true)
-    trans = TransObject.new(self.title, self.class.name)
-
-    values = retrieve_resource
-    values.each do |name, value|
-      name = name.name if name.respond_to? :name
-      trans[name] = value
-    end
-
-    @parameters.each do |name, param|
-      # Avoid adding each instance name twice
-      next if param.class.isnamevar? and param.value == self.title
-
-      # We've already got property values
-      next if param.is_a?(Puppet::Property)
-      trans[name] = param.value
-    end
-
-    trans.tags = self.tags
-
-    # FIXME I'm currently ignoring 'parent' and 'path'
-
-    trans
-  end
-
   def to_resource
-    # this 'type instance' versus 'resource' distinction seems artificial
-    # I'd like to see it collapsed someday ~JW
-    self.to_trans.to_resource
+    resource = self.retrieve_resource
+    resource.tag(*self.tags)
+    resource
   end
 
   def virtual?;  !!@virtual;  end

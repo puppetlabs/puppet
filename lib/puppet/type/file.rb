@@ -710,13 +710,10 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  # We have to hack this just a little bit, because otherwise we'll get
-  # an error when the target and the contents are created as properties on
-  # the far side.
-  def to_trans(retrieve = true)
-    obj = super
-    obj.delete(:target) if obj[:target] == :notlink
-    obj
+  def to_resource
+    resource = super
+    resource.delete(:target) if resource[:target] == :notlink
+    resource
   end
 
   # Write out the file.  Requires the property name for logging.

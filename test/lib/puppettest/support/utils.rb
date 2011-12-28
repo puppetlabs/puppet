@@ -34,15 +34,6 @@ module PuppetTest::Support::Utils
   # explanatory.
   #
 
-  def newobj(type, name, hash)
-    transport = Puppet::TransObject.new(name, "file")
-    transport[:path] = path
-    transport[:ensure] = "file"
-    assert_nothing_raised {
-      file = transport.to_ral
-    }
-  end
-
   # Turn a list of resources, or possibly a catalog and some resources,
   # into a catalog object.
   def resources2catalog(*resources)
