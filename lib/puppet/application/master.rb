@@ -166,10 +166,6 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
     require 'puppet/file_serving/content'
     require 'puppet/file_serving/metadata'
 
-    xmlrpc_handlers = [:Status, :FileServer, :Master, :Report, :Filebucket]
-
-    xmlrpc_handlers << :CA if Puppet[:ca]
-
     # Make sure we've got a localhost ssl cert
     Puppet::SSL::Host.localhost
 
@@ -189,11 +185,11 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     unless options[:rack]
       require 'puppet/network/server'
-      @daemon.server = Puppet::Network::Server.new(:xmlrpc_handlers => xmlrpc_handlers)
+      @daemon.server = Puppet::Network::Server.new()
       @daemon.daemonize if Puppet[:daemonize]
     else
       require 'puppet/network/http/rack'
-      @app = Puppet::Network::HTTP::Rack.new(:xmlrpc_handlers => xmlrpc_handlers, :protocols => [:rest, :xmlrpc])
+      @app = Puppet::Network::HTTP::Rack.new(:protocols => [:rest])
     end
 
     Puppet.notice "Starting Puppet master version #{Puppet.version}"

@@ -99,11 +99,6 @@ class Puppet::Module
     ! path.nil?
   end
 
-  # Find the first 'files' directory.  This is used by the XMLRPC fileserver.
-  def file_directory
-    subpath("files")
-  end
-
   def license_file
     return @license_file if defined?(@license_file)
 

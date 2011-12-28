@@ -1,6 +1,5 @@
 #!/usr/bin/env rspec
 require 'spec_helper'
-require 'puppet/network/handler'
 require 'puppet/network/http'
 require 'puppet/network/http/webrick'
 
@@ -17,7 +16,7 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless =>
     WEBrick::HTTPServer.stubs(:new).returns(@mock_webrick)
     @server = Puppet::Network::HTTP::WEBrick.new
     [:setup_logger, :setup_ssl].each {|meth| @server.stubs(meth).returns({})} # the empty hash is required because of how we're merging
-    @listen_params = { :address => "127.0.0.1", :port => 31337, :xmlrpc_handlers => [], :protocols => [ :rest ] }
+    @listen_params = { :address => "127.0.0.1", :port => 31337, :protocols => [ :rest ] }
   end
 
   it "should fail if already listening" do
@@ -82,58 +81,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless =>
       @mock_webrick.expects(:mount).with { |path, klass, options| path == "/" and klass == Puppet::Network::HTTP::WEBrickREST }
 
       @server.listen(@listen_params.merge(:protocols => [:rest]))
-    end
-  end
-
-  describe "when the XMLRPC protocol is requested" do
-    before do
-      @servlet = mock 'servlet'
-
-      Puppet::Network::XMLRPC::WEBrickServlet.stubs(:new).returns @servlet
-
-      @master_handler = mock('master_handler')
-      @file_handler = mock('file_handler')
-
-      @master = mock 'master'
-      @file = mock 'file'
-      @master_handler.stubs(:new).returns @master
-      @file_handler.stubs(:new).returns @file
-
-      Puppet::Network::Handler.stubs(:handler).with(:master).returns @master_handler
-      Puppet::Network::Handler.stubs(:handler).with(:fileserver).returns @file_handler
-    end
-
-    it "should do nothing if no xmlrpc handlers have been specified" do
-      Puppet::Network::Handler.expects(:handler).never
-
-      @server.listen(@listen_params.merge(:protocols => [:xmlrpc], :xmlrpc_handlers => []))
-    end
-
-    it "should look the handler classes up via their base class" do
-      Puppet::Network::Handler.expects(:handler).with(:master).returns @master_handler
-      Puppet::Network::Handler.expects(:handler).with(:fileserver).returns @file_handler
-
-      @server.listen(@listen_params.merge(:protocols => [:xmlrpc], :xmlrpc_handlers => [:master, :fileserver]))
-    end
-
-    it "should create an instance for each requested xmlrpc handler" do
-      @master_handler.expects(:new).returns @master
-      @file_handler.expects(:new).returns @file
-
-      @server.listen(@listen_params.merge(:protocols => [:xmlrpc], :xmlrpc_handlers => [:master, :fileserver]))
-    end
-
-    it "should create a webrick servlet with the xmlrpc handler instances" do
-      Puppet::Network::XMLRPC::WEBrickServlet.expects(:new).with([@master, @file]).returns @servlet
-
-      @server.listen(@listen_params.merge(:protocols => [:xmlrpc], :xmlrpc_handlers => [:master, :fileserver]))
-    end
-
-    it "should mount the webrick servlet at /RPC2" do
-      @mock_webrick.stubs(:mount)
-      @mock_webrick.expects(:mount).with("/RPC2", @servlet)
-
-      @server.listen(@listen_params.merge(:protocols => [:xmlrpc], :xmlrpc_handlers => [:master, :fileserver]))
     end
   end
 end

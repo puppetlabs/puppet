@@ -14,7 +14,6 @@ class Puppet::Network::HTTP::Mongrel
     raise "Mongrel server is already listening" if listening?
 
     @protocols = args[:protocols]
-    @xmlrpc_handlers = args[:xmlrpc_handlers]
     @server = Mongrel::HttpServer.new(args[:address], args[:port])
     setup_handlers
 
@@ -39,13 +38,6 @@ class Puppet::Network::HTTP::Mongrel
     # Register our REST support at /
     klass = class_for_protocol(:rest)
     @server.register('/', klass.new(:server => @server))
-
-    setup_xmlrpc_handlers if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
-  end
-
-  # Use our existing code to provide the xmlrpc backward compatibility.
-  def setup_xmlrpc_handlers
-    @server.register('/RPC2', Puppet::Network::HTTPServer::Mongrel.new(@xmlrpc_handlers))
   end
 
   def class_for_protocol(protocol)

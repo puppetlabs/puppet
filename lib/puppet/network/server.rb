@@ -51,7 +51,7 @@ class Puppet::Network::Server
   end
 
   def initialize(args = {})
-    valid_args = [:handlers, :xmlrpc_handlers, :port]
+    valid_args = [:handlers, :port]
     bad_args = args.keys.find_all { |p| ! valid_args.include?(p) }.collect { |p| p.to_s }.join(",")
     raise ArgumentError, "Invalid argument(s) #{bad_args}" unless bad_args == ""
     @server_type = Puppet[:servertype] or raise "No servertype configuration found."  # e.g.,  WEBrick, Mongrel, etc.
@@ -60,12 +60,10 @@ class Puppet::Network::Server
     @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
     @address = determine_bind_address
 
-    @protocols = [ :rest, :xmlrpc ]
+    @protocols = [ :rest ]
     @listening = false
     @routes = {}
-    @xmlrpc_routes = {}
     self.register(args[:handlers]) if args[:handlers]
-    self.register_xmlrpc(args[:xmlrpc_handlers]) if args[:xmlrpc_handlers]
 
     # Make sure we have all of the directories we need to function.
     Puppet.settings.use(:main, :ssl, Puppet[:name])
@@ -94,29 +92,6 @@ class Puppet::Network::Server
     end
   end
 
-  # Register xmlrpc handlers for backward compatibility.
-  def register_xmlrpc(*namespaces)
-    raise ArgumentError, "XMLRPC namespaces are required." if namespaces.empty?
-    namespaces.flatten.each do |name|
-      Puppet::Network::Handler.handler(name) || raise(ArgumentError, "Cannot locate XMLRPC handler for namespace '#{name}'.")
-      @xmlrpc_routes[name.to_sym] = true
-    end
-  end
-
-  # Unregister xmlrpc handlers.
-  def unregister_xmlrpc(*namespaces)
-    raise "Cannot unregister xmlrpc handlers while server is listening." if listening?
-    namespaces = @xmlrpc_routes.keys if namespaces.empty?
-
-    namespaces.flatten.each do |i|
-      raise(ArgumentError, "XMLRPC handler '#{i}' is unknown.") unless @xmlrpc_routes[i.to_sym]
-    end
-
-    namespaces.flatten.each do |i|
-      @xmlrpc_routes.delete(i.to_sym)
-    end
-  end
-
   def listening?
     @listening
   end
@@ -124,7 +99,7 @@ class Puppet::Network::Server
   def listen
     raise "Cannot listen -- already listening." if listening?
     @listening = true
-    http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :xmlrpc_handlers => @xmlrpc_routes.keys, :protocols => protocols)
+    http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :protocols => protocols)
   end
 
   def unlisten

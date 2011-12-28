@@ -1,7 +1,6 @@
 require 'webrick'
 require 'webrick/https'
 require 'puppet/network/http/webrick/rest'
-require 'puppet/network/xmlrpc/webrick_servlet'
 require 'thread'
 
 require 'puppet/ssl/certificate'
@@ -24,7 +23,6 @@ class Puppet::Network::HTTP::WEBrick
     raise ArgumentError, ":port must be specified." unless args[:port]
 
     @protocols = args[:protocols]
-    @xmlrpc_handlers = args[:xmlrpc_handlers]
 
     arguments = {:BindAddress => args[:address], :Port => args[:port]}
     arguments.merge!(setup_logger)
@@ -121,19 +119,5 @@ class Puppet::Network::HTTP::WEBrick
     # Set up the new-style protocols.
     klass = self.class.class_for_protocol(:rest)
     @server.mount('/', klass, :this_value_is_apparently_necessary_but_unused)
-
-    # And then set up xmlrpc, if configured.
-    @server.mount("/RPC2", xmlrpc_servlet) if @protocols.include?(:xmlrpc) and ! @xmlrpc_handlers.empty?
-  end
-
-  # Create our xmlrpc servlet, which provides backward compatibility.
-  def xmlrpc_servlet
-    handlers = @xmlrpc_handlers.collect { |handler|
-      unless hclass = Puppet::Network::Handler.handler(handler)
-        raise "Invalid xmlrpc handler #{handler}"
-      end
-      hclass.new({})
-    }
-    Puppet::Network::XMLRPC::WEBrickServlet.new handlers
   end
 end
