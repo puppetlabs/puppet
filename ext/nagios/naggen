@@ -12,151 +12,151 @@ require 'puppet/provider/naginator'
 # Monkey-patch the rails resources so we can
 # easily convert them to nagios instances.
 class Puppet::Rails::Resource
-    def to_param_hash
-        values = @params_hash || Puppet::Rails::ParamValue.find_all_params_from_resource(self)
-        if values.size == 0
-            return {}
-        end
-        values.inject({}) do |hash, value|
-            hash[value['name']] ||= []
-            hash[value['name']] << value["value"]
-            hash
-        end
+  def to_param_hash
+    values = @params_hash || Puppet::Rails::ParamValue.find_all_params_from_resource(self)
+    if values.size == 0
+      return {}
+    end
+    values.inject({}) do |hash, value|
+      hash[value['name']] ||= []
+      hash[value['name']] << value["value"]
+      hash
+    end
+  end
+
+  def to_nagios
+    unless nagios_type = Nagios::Base.type(restype.sub("Nagios_", '').to_sym)
+      raise Puppet::DevError, "Could not find nagios type '%s'" % restype
     end
 
-    def to_nagios
-        unless nagios_type = Nagios::Base.type(restype.sub("Nagios_", '').to_sym)
-            raise Puppet::DevError, "Could not find nagios type '%s'" % restype
-        end
+    result = nagios_type.new
 
-        result = nagios_type.new
-
-        to_param_hash.each do |param, value|
-            next unless nagios_type.parameter?(param)
-            result[param] = value
-        end
-
-        result[:name] = self.title
-
-        result
+    to_param_hash.each do |param, value|
+      next unless nagios_type.parameter?(param)
+      result[param] = value
     end
+
+    result[:name] = self.title
+
+    result
+  end
 end
 
 class NagiosWriter
-    class FakeScope
-        def debug(string)
-            Puppet.debug string
-        end
-
-        def host
-            "this host doesn't exist"
-        end
+  class FakeScope
+    def debug(string)
+      Puppet.debug string
     end
 
-    attr_accessor :nagios_type, :bucket
+    def host
+      "this host doesn't exist"
+    end
+  end
 
-    def backup(target)
-        return unless FileTest.exist?(target) and File.stat(target).size > 0
+  attr_accessor :nagios_type, :bucket
 
-        Puppet.info "Backing up %s" % target
-        bucket.backup(target)
+  def backup(target)
+    return unless FileTest.exist?(target) and File.stat(target).size > 0
+
+    Puppet.info "Backing up %s" % target
+    bucket.backup(target)
+  end
+
+  def collector
+    collector = Puppet::Parser::Collector.new(FakeScope.new, "nagios_" + @nagios_type.to_s, nil, nil, :exported)
+
+    # We don't have a scope, so we're stubbing everything out that would interact
+    # with the scope.
+    class << collector
+      def collect_virtual(*args)
+        []
+      end
+
+      def exported_resource(res)
+        res
+      end
     end
 
-    def collector
-        collector = Puppet::Parser::Collector.new(FakeScope.new, "nagios_" + @nagios_type.to_s, nil, nil, :exported)
+    collector
+  end
 
-        # We don't have a scope, so we're stubbing everything out that would interact
-        # with the scope.
-        class << collector
-            def collect_virtual(*args)
-                []
-            end
+  def default_target
+    "/etc/nagios/nagios_#{nagios_type.to_s}.cfg"
+  end
 
-            def exported_resource(res)
-                res
-            end
-        end
+  def evaluate
+    return unless resources = rails_resources()
 
-        collector
+    resources_by_target = resources.inject({}) do |hash, resource|
+      target = resource["target"] || default_target
+      hash[target] ||= []
+      hash[target] << resource
+      hash
     end
 
-    def default_target
-        "/etc/nagios/nagios_#{nagios_type.to_s}.cfg"
+    changed = false
+    resources_by_target.each do |target, resources|
+      begin
+        result = write(target, resources)
+      rescue => detail
+        $stderr.puts detail.backtrace
+        Puppet.err "Could not write to %s: %s" % [target, detail]
+      end
+
+      changed = true if result
     end
 
-    def evaluate
-        return unless resources = rails_resources()
-
-        resources_by_target = resources.inject({}) do |hash, resource|
-            target = resource["target"] || default_target
-            hash[target] ||= []
-            hash[target] << resource
-            hash
-        end
-
-        changed = false
-        resources_by_target.each do |target, resources|
-            begin
-                result = write(target, resources)
-            rescue => detail
-                $stderr.puts detail.backtrace
-                Puppet.err "Could not write to %s: %s" % [target, detail]
-            end
-
-            changed = true if result
-        end
-
-        changed
-    end
+    changed
+  end
 
   def initialize(nagios_type, compare = false)
     @compare = compare
-        @nagios_type = nagios_type
+    @nagios_type = nagios_type
 
-        @bucket = Puppet::FileBucket::Dipper.new(:Path => Puppet[:clientbucketdir])
+    @bucket = Puppet::FileBucket::Dipper.new(:Path => Puppet[:clientbucketdir])
+  end
+
+  def rails_resources
+    collector.send(:collect_exported)
+  end
+
+  def write(target, resources)
+    # Skip the nagios type when we have no resources and no existing
+    # file.
+    return if resources.empty? and ! FileTest.exist?(target)
+
+    dir = File.dirname(target)
+    unless FileTest.exist?(dir)
+      FileUtils.mkdir_p(dir)
     end
 
-    def rails_resources
-        collector.send(:collect_exported)
+    count = 0
+
+    tempfile = target + ".tmp"
+    File.open(tempfile, "w") do |file|
+      resources.each do |resource|
+        count += 1
+        file.puts resource.to_nagios.to_s.gsub("_naginator_name", Puppet::Provider::Naginator::NAME_STRING)
+      end
     end
-
-    def write(target, resources)
-        # Skip the nagios type when we have no resources and no existing
-        # file.
-        return if resources.empty? and ! FileTest.exist?(target)
-
-        dir = File.dirname(target)
-        unless FileTest.exist?(dir)
-            FileUtils.mkdir_p(dir)
-        end
-
-        count = 0
-
-        tempfile = target + ".tmp"
-        File.open(tempfile, "w") do |file|
-            resources.each do |resource|
-                count += 1
-                file.puts resource.to_nagios.to_s.gsub("_naginator_name", Puppet::Provider::Naginator::NAME_STRING)
-            end
-        end
 
     if @compare
-            if FileTest.exist?(target) and File.read(tempfile) == File.read(target)
-                return false
-            end
-        end
-
-        backup(target)
-
-        # Atomic rename
-        File.rename(tempfile, target)
-
-        Puppet.notice "Wrote %s resources to %s" % [count, target]
-
-        return true
-    ensure
-        File.unlink(tempfile) if tempfile and FileTest.exist?(tempfile)
+      if FileTest.exist?(target) and File.read(tempfile) == File.read(target)
+        return false
+      end
     end
+
+    backup(target)
+
+    # Atomic rename
+    File.rename(tempfile, target)
+
+    Puppet.notice "Wrote %s resources to %s" % [count, target]
+
+    return true
+  ensure
+    File.unlink(tempfile) if tempfile and FileTest.exist?(tempfile)
+  end
 end
 
 
@@ -170,34 +170,34 @@ class Puppet::Application::Naggen < Puppet::Application
   option("--verbose", "-v")
 
   def handle_unknown(opt,arg)
-            Puppet.settings.handlearg(opt, arg)
-    end
+    Puppet.settings.handlearg(opt, arg)
+  end
 
   def main
     if options[:debug]
-    Puppet::Util::Log.level = :debug
+      Puppet::Util::Log.level = :debug
     elsif options[:verbose]
-    Puppet::Util::Log.level = :info
-end
+      Puppet::Util::Log.level = :info
+    end
 
-begin
-    require 'nagios'
-rescue LoadError
-    require 'puppet/external/nagios'
-end
+    begin
+      require 'nagios'
+    rescue LoadError
+      require 'puppet/external/nagios'
+    end
 
-changed = false
-Nagios::Base.eachtype do |name, type|
+    changed = false
+    Nagios::Base.eachtype do |name, type|
       writer = NagiosWriter.new(name, options[:compare])
 
-    changed = true if writer.evaluate
-end
+      changed = true if writer.evaluate
+    end
 
     if options[:compare] and changed
-    exit(1)
-else
-    exit(0)
-end
+      exit(1)
+    else
+      exit(0)
+    end
 
   end
 
