@@ -295,14 +295,6 @@ describe Puppet::Network::Server do
     @server.server_type.should == :suparserver
   end
 
-  it "should provide a means of determining which protocols are in use" do
-    @server.should respond_to(:protocols)
-  end
-
-  it "should set the protocols to :rest" do
-    @server.protocols.should == [ :rest ]
-  end
-
   it "should provide a means of determining the listening address" do
     @server.address.should == "127.0.0.1"
   end
@@ -407,14 +399,6 @@ describe Puppet::Network::Server do
       @server.stubs(:http_server).returns(@mock_http_server)
       @mock_http_server.expects(:listen).with do |args|
         args[:handlers] == [ :node ]
-      end
-      @server.listen
-    end
-
-    it "should pass a list of protocols to the HTTP server" do
-      @server.stubs(:http_server).returns(@mock_http_server)
-      @mock_http_server.expects(:listen).with do |args|
-        args[:protocols] == [ :rest ]
       end
       @server.listen
     end

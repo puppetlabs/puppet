@@ -2,7 +2,7 @@ require 'puppet/network/http'
 require 'puppet/util/pidlock'
 
 class Puppet::Network::Server
-  attr_reader :server_type, :protocols, :address, :port
+  attr_reader :server_type, :address, :port
 
   # Put the daemon into the background.
   def daemonize
@@ -60,7 +60,6 @@ class Puppet::Network::Server
     @port = args[:port] || Puppet[:masterport] || raise(ArgumentError, "Must specify :port or configure Puppet :masterport")
     @address = determine_bind_address
 
-    @protocols = [ :rest ]
     @listening = false
     @routes = {}
     self.register(args[:handlers]) if args[:handlers]
@@ -99,7 +98,7 @@ class Puppet::Network::Server
   def listen
     raise "Cannot listen -- already listening." if listening?
     @listening = true
-    http_server.listen(:address => address, :port => port, :handlers => @routes.keys, :protocols => protocols)
+    http_server.listen(:address => address, :port => port, :handlers => @routes.keys)
   end
 
   def unlisten

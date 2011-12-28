@@ -189,7 +189,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       @daemon.daemonize if Puppet[:daemonize]
     else
       require 'puppet/network/http/rack'
-      @app = Puppet::Network::HTTP::Rack.new(:protocols => [:rest])
+      @app = Puppet::Network::HTTP::Rack.new()
     end
 
     Puppet.notice "Starting Puppet master version #{Puppet.version}"

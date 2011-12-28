@@ -24,10 +24,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless =>
     Proc.new { @server.listen(@listen_params) }.should raise_error(RuntimeError)
   end
 
-  it "should require at least one protocol" do
-    Proc.new { @server.listen(@listen_params.delete_if {|k,v| :protocols == k}) }.should raise_error(ArgumentError)
-  end
-
   it "should require a listening address to be specified" do
     Proc.new { @server.listen(@listen_params.delete_if {|k,v| :address == k})}.should raise_error(ArgumentError)
   end
@@ -82,25 +78,6 @@ describe Puppet::Network::HTTP::WEBrick, "when turning on listening", :unless =>
 
       @server.listen(@listen_params.merge(:protocols => [:rest]))
     end
-  end
-end
-
-
-describe Puppet::Network::HTTP::WEBrick, "when looking up the class to handle a protocol", :unless => Puppet.features.microsoft_windows? do
-  it "should require a protocol" do
-    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol }.should raise_error(ArgumentError)
-  end
-
-  it "should accept a protocol" do
-    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("bob") }.should_not raise_error(ArgumentError)
-  end
-
-  it "should use a WEBrick + REST class when a REST protocol is specified" do
-    Puppet::Network::HTTP::WEBrick.class_for_protocol("rest").should == Puppet::Network::HTTP::WEBrickREST
-  end
-
-  it "should fail when an unknown protocol is specified" do
-    lambda { Puppet::Network::HTTP::WEBrick.class_for_protocol("abcdefg") }.should raise_error
   end
 end
 

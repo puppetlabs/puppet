@@ -3,31 +3,9 @@ require 'spec_helper'
 require 'puppet/network/http/rack' if Puppet.features.rack?
 
 describe "Puppet::Network::HTTP::Rack", :if => Puppet.features.rack? do
-  describe "while initializing" do
-
-    it "should require a protocol specification" do
-      Proc.new { Puppet::Network::HTTP::Rack.new({}) }.should raise_error(ArgumentError)
-    end
-
-    it "should not accept imaginary protocols" do
-      Proc.new { Puppet::Network::HTTP::Rack.new({:protocols => [:foo]}) }.should raise_error(ArgumentError)
-    end
-
-    it "should accept the REST protocol" do
-      Proc.new { Puppet::Network::HTTP::Rack.new({:protocols => [:rest]}) }.should_not raise_error(ArgumentError)
-    end
-
-    it "should create a RackREST instance" do
-      Puppet::Network::HTTP::RackREST.expects(:new)
-      Puppet::Network::HTTP::Rack.new({:protocols => [:rest]})
-    end
-
-  end
-
   describe "when called" do
-
     before :all do
-      @app = Puppet::Network::HTTP::Rack.new({:protocols => [:rest]})
+      @app = Puppet::Network::HTTP::Rack.new()
       # let's use Rack::Lint to verify that we're OK with the rack specification
       @linted = Rack::Lint.new(@app)
     end

@@ -12,17 +12,9 @@ class Puppet::Network::HTTP::WEBrick
     @mutex = Mutex.new
   end
 
-  def self.class_for_protocol(protocol)
-    return Puppet::Network::HTTP::WEBrickREST if protocol.to_sym == :rest
-    raise "Unknown protocol [#{protocol}]."
-  end
-
   def listen(args = {})
-    raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
     raise ArgumentError, ":address must be specified." unless args[:address]
     raise ArgumentError, ":port must be specified." unless args[:port]
-
-    @protocols = args[:protocols]
 
     arguments = {:BindAddress => args[:address], :Port => args[:port]}
     arguments.merge!(setup_logger)
@@ -31,7 +23,7 @@ class Puppet::Network::HTTP::WEBrick
     @server = WEBrick::HTTPServer.new(arguments)
     @server.listeners.each { |l| l.start_immediately = false }
 
-    setup_handlers
+    @server.mount('/', Puppet::Network::HTTP::WEBrickREST, :this_value_is_apparently_necessary_but_unused)
 
     @mutex.synchronize do
       raise "WEBrick server is already listening" if @listening
@@ -111,13 +103,5 @@ class Puppet::Network::HTTP::WEBrick
     results[:SSLCertificateStore] = host.ssl_store
 
     results
-  end
-
-  private
-
-  def setup_handlers
-    # Set up the new-style protocols.
-    klass = self.class.class_for_protocol(:rest)
-    @server.mount('/', klass, :this_value_is_apparently_necessary_but_unused)
   end
 end

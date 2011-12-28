@@ -7,18 +7,6 @@ require 'puppet/network/http/rack/rest'
 
 # An rack application, for running the Puppet HTTP Server.
 class Puppet::Network::HTTP::Rack
-
-  def initialize(args)
-    raise ArgumentError, ":protocols must be specified." if !args[:protocols] or args[:protocols].empty?
-    protocols = args[:protocols]
-
-    # Always prepare a REST handler
-    @rest_http_handler = Puppet::Network::HTTP::RackREST.new
-    protocols.delete :rest
-
-    raise ArgumentError, "there were unknown :protocols specified." if !protocols.empty?
-  end
-
   # The real rack application (which needs to respond to call).
   # The work we need to do, roughly is:
   # * Read request (from env) and prepare a response
@@ -29,10 +17,8 @@ class Puppet::Network::HTTP::Rack
     response = Rack::Response.new
     Puppet.debug 'Handling request: %s %s' % [request.request_method, request.fullpath]
 
-    handler = @rest_http_handler
-
     begin
-      handler.process(request, response)
+      Puppet::Network::HTTP::RackREST.new.process(request, response)
     rescue => detail
       # Send a Status 500 Error on unhandled exceptions.
       response.status = 500
