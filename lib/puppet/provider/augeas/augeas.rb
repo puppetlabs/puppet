@@ -17,10 +17,12 @@ require 'augeas' if Puppet.features.augeas?
 require 'strscan'
 require 'puppet/util'
 require 'puppet/util/diff'
+require 'puppet/util/package'
 
 Puppet::Type.type(:augeas).provide(:augeas) do
   include Puppet::Util
   include Puppet::Util::Diff
+  include Puppet::Util::Package
 
   confine :true => Puppet.features.augeas?
 
@@ -149,7 +151,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
       @aug = Augeas::open(root, load_path,flags)
 
-      debug("Augeas version #{get_augeas_version} is installed") if get_augeas_version >= "0.3.6"
+      debug("Augeas version #{get_augeas_version} is installed") if versioncmp(get_augeas_version, "0.3.6") >= 0
 
       if resource[:incl]
         aug.set("/augeas/load/Xfm/lens", resource[:lens])
@@ -285,7 +287,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         # If we have a verison of augeas which is at least 0.3.6 then we
         # can make the changes now, see if changes were made, and
         # actually do the save.
-        if return_value and get_augeas_version >= "0.3.6"
+        if return_value and versioncmp(get_augeas_version, "0.3.6") >= 0
           debug("Will attempt to save and only run if files changed")
           set_augeas_save_mode(SAVE_NEWFILE)
           do_execute_changes
@@ -325,7 +327,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
     begin
       open_augeas
       saved_files = @aug.match("/augeas/events/saved")
-      if saved_files
+      unless saved_files.empty?
         saved_files.each do |key|
           root = resource[:root].sub(/^\/$/, "")
           saved_file = @aug.get(key).to_s.sub(/^\/files/, root)
@@ -337,7 +339,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
         end
       else
         debug("No saved files, re-executing augeas")
-        set_augeas_save_mode(SAVE_OVERWRITE) if get_augeas_version >= "0.3.6"
+        set_augeas_save_mode(SAVE_OVERWRITE) if versioncmp(get_augeas_version, "0.3.6") >= 0
         do_execute_changes
         success = @aug.save
         fail("Save failed with return code #{success}") if success != true

@@ -353,7 +353,7 @@ describe provider_class do
         @augeas_stub = stub("augeas")
         @provider.aug = @augeas_stub
 
-        @augeas_stub.stubs("get").with("/augeas/version").returns("0.7.2")
+        @augeas_stub.stubs("get").with("/augeas/version").returns("0.10.0")
         @augeas_stub.stubs(:set).returns(true)
         @augeas_stub.stubs(:save).returns(true)
       end
@@ -467,7 +467,7 @@ describe provider_class do
       @augeas = stub("augeas")
       @provider.aug= @augeas
       @provider.stubs(:get_augeas_version).returns("0.3.5")
-      @augeas.stubs(:match).with("/augeas/events/saved")
+      @augeas.stubs(:match).with("/augeas/events/saved").returns([])
     end
 
     it "should handle set commands" do
