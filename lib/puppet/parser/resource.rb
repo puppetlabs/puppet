@@ -230,15 +230,7 @@ class Puppet::Parser::Resource < Puppet::Resource
     result
   end
 
-  # Translate our object to a transportable object.
-  def to_trans
-    return nil if virtual?
-
-    to_resource.to_trans
-  end
-
-  # Convert this resource to a RAL resource.  We hackishly go via the
-  # transportable stuff.
+  # Convert this resource to a RAL resource.
   def to_ral
     to_resource.to_ral
   end

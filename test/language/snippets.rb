@@ -74,19 +74,9 @@ class TestSnippets < Test::Unit::TestCase
     scope
   end
 
-  def scope2objs(scope)
-    objs = scope.to_trans
-  end
-
   def snippet2scope(snippet)
     ast = snippet2ast(snippet)
     scope = ast2scope(ast)
-  end
-
-  def snippet2objs(snippet)
-    ast = snippet2ast(snippet)
-    scope = ast2scope(ast)
-    objs = scope2objs(scope)
   end
 
   def properties(type)

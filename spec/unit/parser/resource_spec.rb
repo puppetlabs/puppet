@@ -452,26 +452,6 @@ describe Puppet::Parser::Resource do
     @resource.should respond_to(:to_resource)
   end
 
-  it "should use its resource converter to convert to a transportable resource" do
-    @source = stub 'scope', :name => "myscope"
-    @resource = mkresource :source => @source
-
-    newresource = Puppet::Resource.new(:file, "/my")
-    Puppet::Resource.expects(:new).returns(newresource)
-
-    newresource.expects(:to_trans).returns "mytrans"
-
-    @resource.to_trans.should == "mytrans"
-  end
-
-  it "should return nil if converted to a transportable resource and it is virtual" do
-    @source = stub 'scope', :name => "myscope"
-    @resource = mkresource :source => @source
-
-    @resource.expects(:virtual?).returns true
-    @resource.to_trans.should be_nil
-  end
-
   describe "when being converted to a resource" do
     before do
       @parser_resource = mkresource :scope => @scope, :parameters => {:foo => "bar", :fee => "fum"}
