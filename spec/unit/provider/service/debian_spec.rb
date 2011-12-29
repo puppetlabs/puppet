@@ -88,6 +88,21 @@ describe provider_class do
       @provider.enabled?.should == :true
     end
 
+    context "when invoke-rc.d exits with 105 status" do
+      it "links count is 4" do
+        @provider.stubs(:system)
+        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        @provider.stubs(:get_start_link_count).returns(4)
+        @provider.enabled?.should == :true
+      end
+      it "links count is less than 4" do
+        @provider.stubs(:system)
+        $CHILD_STATUS.stubs(:exitstatus).returns(105)
+        @provider.stubs(:get_start_link_count).returns(3)
+        @provider.enabled?.should == :false
+      end
+    end
+
     # pick a range of non-[104.106] numbers, strings and booleans to test with.
     [-100, -1, 0, 1, 100, "foo", "", :true, :false].each do |exitstatus|
       it "should return false when invoke-rc.d exits with #{exitstatus} status" do
