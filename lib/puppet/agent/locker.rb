@@ -13,8 +13,8 @@ module Puppet::Agent::Locker
     lockfile.lock(:anonymous => true)
   end
 
-  # Yield if we get a lock, else do nothing.  Return
-  # true/false depending on whether we get the lock.
+  # Yield if we get a lock, else do nothing.
+  # We return the block result.
   def lock
     if lockfile.lock
       begin
@@ -22,9 +22,6 @@ module Puppet::Agent::Locker
       ensure
         lockfile.unlock
       end
-      return true
-    else
-      return false
     end
   end
 

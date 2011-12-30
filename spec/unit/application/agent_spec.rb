@@ -514,6 +514,11 @@ describe Puppet::Application::Agent do
         expect { @puppetd.onetime }.to exit_with 0
       end
 
+      it "should not let the agent fork" do
+        @agent.expects(:should_fork=).with(false)
+        expect { @puppetd.onetime }.to exit_with 0
+      end
+
       it "should let the agent run" do
         @agent.expects(:run).returns(:report)
         expect { @puppetd.onetime }.to exit_with 0
@@ -528,18 +533,16 @@ describe Puppet::Application::Agent do
           @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
         end
 
-        it "should exit with report's computed exit status" do
+        it "should exit with agent computed exit status" do
           Puppet[:noop] = false
-          report = stub 'report', :exit_status => 666
-          @agent.stubs(:run).returns(report)
+          @agent.stubs(:run).returns(666)
 
           expect { @puppetd.onetime }.to exit_with 666
         end
 
-        it "should exit with the report's computer exit status, even if --noop is set." do
+        it "should exit with the agent's exit status, even if --noop is set." do
           Puppet[:noop] = true
-          report = stub 'report', :exit_status => 666
-          @agent.stubs(:run).returns(report)
+          @agent.stubs(:run).returns(666)
 
           expect { @puppetd.onetime }.to exit_with 666
         end
