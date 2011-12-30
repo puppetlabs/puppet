@@ -41,7 +41,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
       hash[:provider] = self.name
       hash[:error] = "ok"
 
-      if hash[:status] == "installed"
+      if hash[:status] =~ /^i/
         hash[:ensure] = :present
       else
         hash[:ensure] = :absent
@@ -79,7 +79,7 @@ Puppet::Type.type(:package).provide :pkg, :parent => Puppet::Provider::Package d
 
   # uninstall the package
   def uninstall
-    pkg :uninstall, '-r', @resource[:name]
+    pkg :uninstall, @resource[:name]
   end
 
   # update the package to the latest version available
