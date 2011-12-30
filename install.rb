@@ -53,7 +53,7 @@ rescue LoadError
   $haverdoc = false
 end
 
-PREREQS = %w{openssl facter xmlrpc/client xmlrpc/server cgi}
+PREREQS = %w{openssl facter cgi}
 MIN_FACTER_VERSION = 1.5
 
 InstallOptions = OpenStruct.new

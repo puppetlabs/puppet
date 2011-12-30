@@ -5,7 +5,6 @@ require 'puppet/agent'
 require 'puppet/application/agent'
 require 'puppet/network/server'
 require 'puppet/daemon'
-require 'puppet/network/handler'
 
 describe Puppet::Application::Agent do
   before :each do
@@ -100,13 +99,6 @@ describe Puppet::Application::Agent do
         @puppetd.options.expects(:[]=).with(option, 'arg')
         @puppetd.send("handle_#{option}".to_sym, 'arg')
       end
-    end
-
-    it "should set an existing handler on server" do
-      Puppet::Network::Handler.stubs(:handler).with("handler").returns(true)
-
-      @puppetd.handle_serve("handler")
-      @puppetd.options[:serve].should == [ :handler ]
     end
 
     it "should set client to false with --no-client" do
@@ -414,19 +406,6 @@ describe Puppet::Application::Agent do
         Puppet.stubs(:err)
         FileTest.stubs(:exists?).with(Puppet[:rest_authconfig]).returns(false)
         expect { @puppetd.setup_listen }.to exit_with 14
-      end
-
-      it "should create a server to listen on at least the Runner handler" do
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:Runner] }
-
-        @puppetd.setup_listen
-      end
-
-      it "should create a server to listen for specific handlers" do
-        @puppetd.options.stubs(:[]).with(:serve).returns([:handler])
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:handler] }
-
-        @puppetd.setup_listen
       end
 
       it "should use puppet default port" do

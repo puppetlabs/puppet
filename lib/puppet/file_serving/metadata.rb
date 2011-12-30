@@ -17,20 +17,6 @@ class Puppet::FileServing::Metadata < Puppet::FileServing::Base
 
   PARAM_ORDER = [:mode, :ftype, :owner, :group]
 
-  def attributes_with_tabs
-    raise(ArgumentError, "Cannot manage files of type #{ftype}") unless ['file','directory','link'].include? ftype
-    desc = []
-    PARAM_ORDER.each { |check|
-      check = :ftype if check == :type
-      desc << send(check)
-    }
-
-    desc << checksum
-    desc << @destination rescue nil if ftype == 'link'
-
-    desc.join("\t")
-  end
-
   def checksum_type=(type)
     raise(ArgumentError, "Unsupported checksum type #{type}") unless respond_to?("#{type}_file")
 

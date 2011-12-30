@@ -11,7 +11,7 @@ describe Puppet::Network::Server, :unless => Puppet.features.microsoft_windows? 
     before :each do
       Puppet[:servertype] = 'webrick'
       Puppet[:server] = '127.0.0.1'
-      @params = { :port => 34343, :handlers => [ :node ], :xmlrpc_handlers => [ :status ] }
+      @params = { :port => 34343, :handlers => [ :node ] }
 
       # Get a safe temporary file
       dir = tmpdir("webrick_integration_testing")
