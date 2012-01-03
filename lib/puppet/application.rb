@@ -263,12 +263,15 @@ class Application
   end
 
   def initialize(command_line = nil)
+
     require 'puppet/util/command_line'
     @command_line = command_line || Puppet::Util::CommandLine.new
     set_run_mode self.class.run_mode
     @options = {}
 
     require 'puppet'
+    require 'puppet/util/instrumentation'
+    Puppet::Util::Instrumentation.init
   end
 
   # WARNING: This is a totally scary, frightening, and nasty internal API.  We
