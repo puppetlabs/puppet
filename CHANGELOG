@@ -1371,6 +1371,38 @@ d532e6d Fixing #3185 Rakefile is loading puppet.rb twice
 5aa596c Fix #3150 - require function doesn't like ::class syntax
 3457b87 Added time module to tagmail report
 
+2.6.13
+===
+e4ee794 (#10739) Provide default subjectAltNames while bootstrapping master
+9dfd011 (#5617)  Puppet queue logging
+a91cfa1 maint: Fix failing spec on old version of rspec
+aa2a762 (#10289) Add an ext script to upload facts to inventory server
+5129d38 (#10289) Add a safe alternative to REST for inventory service
+7514d32 missing includes in network XML-RPC handlers
+397a506 (#10244) Restore Mongrel XMLRPC functionality
+e7a6995 (#9794) k5login can overwrite arbitrary files as root
+0a92a70 Resist directory traversal attacks through indirections.
+8d86e5a (9547) Minor mods to acceptance tests
+2bf6721 Reset indirector state after configurer tests.
+bb224dd (#8770) Don't fail to set supplementary groups when changing user to root
+2a0de12 (#8770) Always fully drop privileges when changing user
+00c4b25 (#8662) Migrate suidmanager test case to rspec
+d7c9c76 (#8740) Do not enumerate files in the root directory.
+0e00473 (#3553) Explain that cron resources require time attributes
+769d432 (#8302) Improve documentation of exec providers
+c209f62 Add document outlining preferred contribution methods
+fb2ffd6 (#8596) Detect resource alias conflicts when titles do not match
+89c021c (#8418) Fix inspect app to have the correct run_mode
+3165364 maint: Adding logging to include environment when source fails
+f484851 maint: Add debug logging when the master receives a report
+e639868 Confine password disclosure acceptance test to hosts with required libraries
+a109c90 (maint) Cleanup and strengthen acceptance tests
+b268fb3 (#7144) Update Settings#writesub to convert mode to Fixnum
+4a2f22c (maint) Fix platform dection for RHEL
+111a4b5 (#6857) Password disclosure when changing a user's password
+
+2.6.12 (CVE-2011-3872 see http://puppetlabs.com/security/hotfixes/cve-2011-3872/)
+
 2.6.11
 ===
 e158b26 (#9793) "secure" indirector file backed terminus base class.
