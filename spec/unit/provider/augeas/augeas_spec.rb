@@ -432,7 +432,7 @@ describe provider_class do
     before do
       @augeas = stub("augeas")
       @augeas.stubs("close")
-      @augeas.stubs(:match).with("/augeas/events/saved")
+      @augeas.stubs(:match).with("/augeas/events/saved").returns([])
 
       @provider.aug = @augeas
       @provider.stubs(:get_augeas_version).returns("0.3.5")
