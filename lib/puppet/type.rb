@@ -1902,6 +1902,16 @@ class Type
   def to_resource
     resource = self.retrieve_resource
     resource.tag(*self.tags)
+
+    @parameters.each do |name, param|
+      # Avoid adding each instance name twice
+      next if param.class.isnamevar? and param.value == self.title
+
+      # We've already got property values
+      next if param.is_a?(Puppet::Property)
+      resource[name] = param.value
+    end
+
     resource
   end
 

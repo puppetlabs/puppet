@@ -4,6 +4,7 @@ require 'spec_helper'
 require 'puppet/application/resource'
 
 describe Puppet::Application::Resource do
+  include PuppetSpec::Files
   before :each do
     @resource_app = Puppet::Application[:resource]
     Puppet::Util::Log.stubs(:newdestination)
@@ -53,6 +54,18 @@ describe Puppet::Application::Resource do
       @resource_app.handle_param("whatever")
 
       @resource_app.extra_params.should == [ :param1, :whatever ]
+    end
+
+    it "should get a parameter in the printed data if extra_params are passed" do
+      tty  = stub("tty",  :tty? => true )
+      path = tmpfile('testfile')
+      command_line = Puppet::Util::CommandLine.new("puppet", [ 'resource', 'file', path ], tty )
+      @resource_app.stubs(:command_line).returns command_line
+
+      # provider is a parameter that should always be available
+      @resource_app.extra_params = [ :provider ]
+
+      expect { @resource_app.main }.to have_printed /provider\s+=>/
     end
   end
 
