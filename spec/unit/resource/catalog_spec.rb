@@ -639,7 +639,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "5")
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "5"\].*resource \["Multiple", "red", "5"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "5"\].*resource \["Multiple", "red", "5"\] already declared/)
       end
 
       it "should conflict when its uniqueness key matches another resource's title" do
@@ -648,7 +648,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @other    = Puppet::Type.type(:file).new(:title => "another file", :path => path)
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["#{Regexp.escape(path)}"\].*resource \["File", "#{Regexp.escape(path)}"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias File\[another file\] to \["#{Regexp.escape(path)}"\].*resource \["File", "#{Regexp.escape(path)}"\] already declared/)
       end
 
       it "should conflict when its uniqueness key matches the uniqueness key derived from another resource's title" do
@@ -656,7 +656,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
         @other    = Puppet::Type.type(:multiple).new(:title => "another resource", :color => "red", :designation => "leader")
 
         @catalog.add_resource(@resource)
-        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "leader"\].*resource \["Multiple", "red", "leader"\] already defined/)
+        expect { @catalog.add_resource(@other) }.to raise_error(ArgumentError, /Cannot alias Multiple\[another resource\] to \["red", "leader"\].*resource \["Multiple", "red", "leader"\] already declared/)
       end
     end
   end
