@@ -124,10 +124,11 @@ class Puppet::Parser::AST
     # not include syntactical constructs, like '$' and '{}').
     def evaluate(scope)
       parsewrap do
-        if (var = scope.lookupvar(@value, :file => file, :line => line)) == :undefined
-          var = :undef
+        if ! scope.include?(@value)
+          :undef
+        else
+          scope[@value, {:file => file, :line => line}]
         end
-        var
       end
     end
 
@@ -141,7 +142,7 @@ class Puppet::Parser::AST
 
     def evaluate_container(scope)
       container = variable.respond_to?(:evaluate) ? variable.safeevaluate(scope) : variable
-      (container.is_a?(Hash) or container.is_a?(Array)) ? container : scope.lookupvar(container, :file => file, :line => line)
+      (container.is_a?(Hash) or container.is_a?(Array)) ? container : scope[container, {:file => file, :line => line}]
     end
 
     def evaluate_key(scope)

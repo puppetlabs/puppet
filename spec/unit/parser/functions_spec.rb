@@ -20,11 +20,15 @@ describe Puppet::Parser::Functions do
   end
 
   it "should have a method for returning an environment-specific module" do
-    Puppet::Parser::Functions.environment_module("myenv").should be_instance_of(Module)
+    Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should be_instance_of(Module)
   end
 
   it "should use the current default environment if no environment is provided" do
     Puppet::Parser::Functions.environment_module.should be_instance_of(Module)
+  end
+
+  it "should be able to retrieve environment modules asked for by name rather than instance" do
+    Puppet::Parser::Functions.environment_module(Puppet::Node::Environment.new("myenv")).should equal(Puppet::Parser::Functions.environment_module("myenv"))
   end
 
   describe "when calling newfunction" do

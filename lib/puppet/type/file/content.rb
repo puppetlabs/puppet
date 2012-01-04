@@ -199,10 +199,18 @@ module Puppet
       end
     end
 
-    def chunk_file_from_source(source_or_content)
+    def get_from_source(source_or_content, &block)
       request = Puppet::Indirector::Request.new(:file_content, :find, source_or_content.full_path.sub(/^\//,''))
-      connection = Puppet::Network::HttpPool.http_instance(source_or_content.server, source_or_content.port)
-      connection.request_get(indirection2uri(request), add_accept_encoding({"Accept" => "raw"})) do |response|
+
+      request.do_request(:fileserver) do |req|
+        connection = Puppet::Network::HttpPool.http_instance(req.server, req.port)
+        connection.request_get(indirection2uri(req), add_accept_encoding({"Accept" => "raw"}), &block)
+      end
+    end
+
+
+    def chunk_file_from_source(source_or_content)
+      get_from_source(source_or_content) do |response|
         case response.code
         when /^2/;  uncompress(response) { |uncompressor| response.read_body { |chunk| yield uncompressor.uncompress(chunk) } }
         else

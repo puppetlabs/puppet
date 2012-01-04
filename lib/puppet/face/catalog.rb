@@ -66,6 +66,7 @@ Puppet::Indirector::Face.define(:catalog, '0.0.1') do
 
       report = Puppet::Transaction::Report.new("apply")
       report.configuration_version = catalog.version
+      report.environment = Puppet[:environment]
 
       Puppet::Util::Log.newdestination(report)
 

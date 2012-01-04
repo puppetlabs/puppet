@@ -154,9 +154,8 @@ module PuppetTest
     end
 
 
-      @configpath = File.join(
-        tmpdir,
-
+    @configpath = File.join(
+      tmpdir,
       "configdir" + @@testcount.to_s + "/"
     )
 
@@ -233,11 +232,11 @@ module PuppetTest
   def tmpdir
     unless @tmpdir
       @tmpdir = case Facter["operatingsystem"].value
-        when "Darwin"; "/private/tmp"
-        when "SunOS"; "/var/tmp"
+        when "Darwin" then "/private/tmp"
+        when "SunOS"  then "/var/tmp"
         else
           "/tmp"
-            end
+      end
 
 
       @tmpdir = File.join(@tmpdir, "puppettesting#{Process.pid}")

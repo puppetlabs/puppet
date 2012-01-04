@@ -2,6 +2,8 @@
 require 'spec_helper'
 require 'puppet/network/http_pool'
 
+require 'puppet/network/resolver'
+
 content = Puppet::Type.type(:file).attrclass(:content)
 describe content do
   include PuppetSpec::Files
@@ -332,7 +334,7 @@ describe content do
         @response.stubs(:read_body).multiple_yields(*(["source file content\n"]*10000))
 
         @conn = stub_everything 'connection'
-        @conn.stubs(:request_get).yields(@response)
+        @conn.stubs(:request_get).yields @response
         Puppet::Network::HttpPool.stubs(:http_instance).returns @conn
 
         @content = @resource.newattr(:content)

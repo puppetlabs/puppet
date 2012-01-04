@@ -371,19 +371,11 @@ describe Puppet::Module do
     end
   end
 
-  %w{plugins files}.each do |filetype|
-    short = filetype.sub(/s$/, '')
-    dirname = filetype == "plugins" ? "lib" : filetype.to_s
-    it "should be able to return the #{short} directory" do
-      Puppet::Module.new("foo").should respond_to(short + "_directory")
-    end
+  it "should return the path to the plugin directory" do
+    mod = Puppet::Module.new("foo")
+    mod.stubs(:path).returns "/a/foo"
 
-    it "should return the path to the #{short} directory" do
-      mod = Puppet::Module.new("foo")
-      mod.stubs(:path).returns "/a/foo"
-
-      mod.send(short + "_directory").should == "/a/foo/#{dirname}"
-    end
+    mod.plugin_directory.should == "/a/foo/lib"
   end
 
   it "should throw a warning if plugins are in a 'plugins' directory rather than a 'lib' directory" do

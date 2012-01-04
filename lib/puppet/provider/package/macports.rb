@@ -21,7 +21,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
 
   def self.parse_installed_query_line(line)
-    regex = /(\S+)\s+@(\S+)_(\S+)\s+\(active\)/
+    regex = /(\S+)\s+@(\S+)_(\d+).*\(active\)/
     fields = [:name, :ensure, :revision]
     hash_from_line(line, regex, fields)
   end
@@ -46,7 +46,7 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
 
   def self.instances
     packages = []
-    port("-q", :installed).each do |line|
+    port("-q", :installed).each_line do |line|
       if hash = parse_installed_query_line(line)
         packages << new(hash)
       end
@@ -66,14 +66,16 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def query
-    return self.class.parse_installed_query_line(port("-q", :installed, @resource[:name]))
+    result = self.class.parse_installed_query_line(execute([command(:port), "-q", :installed, @resource[:name]], :combine => false))
+    return {} if result.nil?
+    return result
   end
 
   def latest
     # We need both the version and the revision to be confident
     # we've got the latest revision of a specific version
     # Note we're still not doing anything with variants here.
-    info_line = port("-q", :info, "--line", "--version", "--revision", @resource[:name])
+    info_line = execute([command(:port), "-q", :info, "--line", "--version", "--revision", @resource[:name]], :combine => false)
     return nil if info_line == ""
 
     if newest = self.class.parse_info_query_line(info_line)
@@ -96,10 +98,6 @@ Puppet::Type.type(:package).provide :macports, :parent => Puppet::Provider::Pack
   end
 
   def update
-    if query[:name] == @resource[:name]  # 'port upgrade' cannot install new ports
-      port("-q", :upgrade, @resource[:name])
-    else
-      install
-    end
+    install
   end
 end

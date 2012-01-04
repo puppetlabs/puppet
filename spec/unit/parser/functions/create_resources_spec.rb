@@ -84,7 +84,7 @@ notify{test:}
     end
     it 'should fail if defines are missing params' do
       @scope.function_create_resources(['foo', {'blah'=>{}}])
-      lambda { @scope.compiler.compile }.should raise_error(Puppet::ParseError, 'Must pass one to Foo[blah] at line 1')
+      lambda { @scope.compiler.compile }.should raise_error(Puppet::ParseError, /Must pass one to Foo\[blah\]/)
     end
     it 'should be able to add multiple defines' do
       hash = {}

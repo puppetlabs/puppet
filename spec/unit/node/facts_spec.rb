@@ -124,6 +124,20 @@ describe Puppet::Node::Facts, "when indirecting" do
         result['timestamp'].should == facts.timestamp.to_s
         result['expiration'].should == facts.expiration.to_s
       end
+
+      it "should not include nil values" do
+        facts = Puppet::Node::Facts.new("foo", {'a' => 1, 'b' => 2, 'c' => 3})
+        pson = PSON.parse(facts.to_pson)
+        pson.should_not be_include("expiration")
+      end
+
+      it "should be able to handle nil values" do
+        pson = %Q({"name": "foo", "values": {"a": "1", "b": "2", "c": "3"}})
+        format = Puppet::Network::FormatHandler.format('pson')
+        facts = format.intern(Puppet::Node::Facts,pson)
+        facts.name.should == 'foo'
+        facts.expiration.should be_nil
+      end
     end
   end
 end

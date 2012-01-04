@@ -44,7 +44,7 @@ Puppet.features.add(:libshadow, :libs => ["shadow"])
 Puppet.features.add(:root) { require 'puppet/util/suidmanager'; Puppet::Util::SUIDManager.root? }
 
 # We've got mongrel available
-Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http_server/mongrel})
+Puppet.features.add(:mongrel, :libs => %w{rubygems mongrel puppet/network/http/mongrel})
 
 # We have lcs diff
 Puppet.features.add :diff, :libs => %w{diff/lcs diff/lcs/hunk}
