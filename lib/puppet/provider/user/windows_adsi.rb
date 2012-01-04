@@ -22,7 +22,10 @@ Puppet::Type.type(:user).provide :windows_adsi do
 
   def create
     @user = Puppet::Util::ADSI::User.create(@resource[:name])
-    @user.commit
+    #if a windows complexity policy is set you have to set the password when
+    # the account is created, a call to .password is all that is needed it does
+    # it's own commit.
+    @user.password = @resource[:password]
 
     [:comment, :home, :groups].each do |prop|
       send("#{prop}=", @resource[prop]) if @resource[prop]
