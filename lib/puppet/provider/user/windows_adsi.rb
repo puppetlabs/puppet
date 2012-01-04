@@ -27,6 +27,7 @@ Puppet::Type.type(:user).provide :windows_adsi do
     # the account is created, a call to .password is all that is needed it does
     # it's own commit.
     @user.password = @resource[:password]
+    @user.commit
 
     [:comment, :home, :groups].each do |prop|
       send("#{prop}=", @resource[prop]) if @resource[prop]
