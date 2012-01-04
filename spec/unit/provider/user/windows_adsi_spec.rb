@@ -74,6 +74,7 @@ describe Puppet::Type.type(:user).provider(:windows_adsi) do
       user.stubs(:groups).returns(['group2', 'group3'])
 
       create = sequence('create')
+      user.expects(:password=).in_sequence(create)
       user.expects(:commit).in_sequence(create)
       user.expects(:set_groups).with('group1,group2', false).in_sequence(create)
       user.expects(:[]=).with('Description', 'a test user')
