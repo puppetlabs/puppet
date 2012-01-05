@@ -494,6 +494,32 @@ describe Puppet::Type, :fails_on_windows => true do
     end
   end
 
+  describe "#to_resource" do
+    it "should return a Puppet::Resource that includes properties, parameters and tags" do
+      type_resource = Puppet::Type.type(:mount).new(
+        :ensure   => :present,
+        :name     => "foo",
+        :fstype   => "bar",
+        :remounts => true
+      )
+      type_resource.tags = %w{bar baz}
+
+      # If it's not a property it's a parameter
+      type_resource.parameters[:remounts].should_not be_a(Puppet::Property)
+      type_resource.parameters[:fstype].is_a?(Puppet::Property).should be_true
+
+      type_resource.property(:ensure).expects(:retrieve).returns :present
+      type_resource.property(:fstype).expects(:retrieve).returns 15
+
+      resource = type_resource.to_resource
+
+      resource.should be_a Puppet::Resource
+      resource[:fstype].should   == 15
+      resource[:remounts].should == :true
+      resource.tags.should       =~ %w{foo bar baz mount}
+    end
+  end
+
   describe ".title_patterns" do
     describe "when there's one namevar" do
       before do
