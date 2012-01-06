@@ -24,7 +24,7 @@ agents.each do |host|
     step "verify that crontab -l contains what you expected"
     run_cron_on(host,:list,tmpuser) do
         count = stdout.scan("/bin/true").length
-        fail_test "found /bin/true the wrong number of times (#{count})" unless count == 1
+        fail_test "found /bin/true the wrong number of times (#{count})" unless count == 0
     end
 
     step "remove the crontab file for that user"
