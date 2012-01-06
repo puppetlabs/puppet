@@ -83,7 +83,6 @@ class Puppet::Parser::Resource < Puppet::Resource
     if klass = resource_type and ! builtin_type?
       finish
       evaluated_code = klass.evaluate_code(self)
-      add_edge_to_stage
 
       return evaluated_code
     elsif builtin?

@@ -462,9 +462,10 @@ class Puppet::Parser::Compiler
     end
 
     settings_resource = Puppet::Parser::Resource.new("class", "settings", :scope => @topscope)
-    settings_type.evaluate_code(settings_resource)
 
     @catalog.add_resource(settings_resource)
+
+    settings_type.evaluate_code(settings_resource)
 
     scope = @topscope.class_scope(settings_type)
 
