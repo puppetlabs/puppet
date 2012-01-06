@@ -5,7 +5,7 @@ require 'puppet/util/retryaction'
 
 describe Puppet::Util::RetryAction do
   let (:exceptions) {{ Puppet::Error => 'Puppet Error Exception' }}
-  
+
   it 'should retry on any exception if no acceptable exceptions given' do
     Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 1) -1) * 0.1) )
     Puppet::Util::RetryAction.expects(:sleep).with( (((2 ** 2) -1) * 0.1) )
