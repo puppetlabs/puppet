@@ -16,7 +16,8 @@ describe Puppet::Util::ExecutionStub do
     Puppet::Util::ExecutionStub.current_value.should == nil
   end
 
-  it "should restore normal execution after 'reset' is called" do
+  # fails on windows, see #11740
+  it "should restore normal execution after 'reset' is called", :fails_on_windows => true do
     # Note: "true" exists at different paths in different OSes
     if Puppet.features.microsoft_windows?
       true_command = [Puppet::Util.which('cmd.exe').tr('/', '\\'), '/c', 'exit 0']
