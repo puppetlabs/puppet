@@ -16,7 +16,7 @@ agents.each do |host|
     step "apply the resource on the host using puppet resource"
     on(host, puppet_resource("cron", "crontest", "user=#{tmpuser}",
                   "command=/bin/true", "ensure=absent")) do
-      assert_match(/crontest\D+ensure:\s+removed/, stdout, "Didn't remove crobtab entry for #{tmpuser} on #{host}")
+      assert_no_match(/crontest\D+ensure:\s+removed/, stdout, "Didn't remove crobtab entry for #{tmpuser} on #{host}")
     end
 
     step "verify that crontab -l contains what you expected"
