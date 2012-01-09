@@ -403,24 +403,6 @@ describe Puppet::Module do
   end
 end
 
-describe Puppet::Module, " when building its search path" do
-  it "should use the current environment's search path if no environment is specified" do
-    env = mock 'env'
-    env.expects(:modulepath).returns "eh"
-    Puppet::Node::Environment.expects(:new).with(nil).returns env
-
-    Puppet::Module.modulepath.should == "eh"
-  end
-
-  it "should use the specified environment's search path if an environment is specified" do
-    env = mock 'env'
-    env.expects(:modulepath).returns "eh"
-    Puppet::Node::Environment.expects(:new).with("foo").returns env
-
-    Puppet::Module.modulepath("foo").should == "eh"
-  end
-end
-
 describe Puppet::Module, "when finding matching manifests" do
   before do
     @mod = Puppet::Module.new("mymod")
@@ -591,7 +573,6 @@ describe Puppet::Module do
       @module.load_metadata
       @module.puppetversion.should == @data[:puppetversion]
     end
-
 
     it "should fail if the discovered name is different than the metadata name"
   end

@@ -19,13 +19,6 @@ class Puppet::Module
 
   FILETYPES = [MANIFESTS, FILES, TEMPLATES, PLUGINS]
 
-  # Return an array of paths by splitting the +modulepath+ config
-  # parameter. Only consider paths that are absolute and existing
-  # directories
-  def self.modulepath(environment = nil)
-    Puppet::Node::Environment.new(environment).modulepath
-  end
-
   # Find and return the +module+ that +path+ belongs to. If +path+ is
   # absolute, or if there is no module whose name is the first component
   # of +path+, return +nil+

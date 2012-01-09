@@ -135,7 +135,7 @@ describe RDoc::Parser, :'fails_on_ruby_1.9.2' => true do
 
   describe "when finding modules from filepath" do
     before :each do
-      Puppet::Module.stubs(:modulepath).returns("/path/to/modules")
+      Puppet::Node::Environment.any_instance.stubs(:modulepath).returns("/path/to/modules")
     end
 
     it "should return the module name for modulized puppet manifests" do
