@@ -461,19 +461,10 @@ describe Puppet::Network::Rights do
       end
     end
 
-    ["off", "no", "false", false].each do |auth|
-      it "should allow filtering on unauthenticated requests with '#{auth}'" do
+    ["off", "no", "false", false, "all", "any", :all, :any].each do |auth|
+      it "should allow filtering on authenticated or unauthenticated requests with '#{auth}'" do
         @acl.restrict_authenticated(auth)
-
         @acl.authentication.should be_false
-      end
-    end
-
-    ["all", "any", :all, :any].each do |auth|
-      it "should not use request authenticated state filtering with '#{auth}'" do
-        @acl.restrict_authenticated(auth)
-
-        @acl.authentication.should be_nil
       end
     end
 

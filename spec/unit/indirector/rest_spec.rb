@@ -137,6 +137,10 @@ describe Puppet::Indirector::REST do
     end
   end
 
+  it 'should default to :puppet for the srv_service' do
+    Puppet::Indirector::REST.srv_service.should == :puppet
+  end
+
   describe "when deserializing responses" do
     it "should return nil if the response code is 404" do
       response = mock 'response'
@@ -562,6 +566,27 @@ describe Puppet::Indirector::REST do
     it "should generate an error when result data deserializes fails" do
       @searcher.expects(:deserialize).raises(ArgumentError)
       lambda { @searcher.save(@request) }.should raise_error(ArgumentError)
+    end
+  end
+
+  context 'dealing with SRV settings' do
+    [
+      :destroy,
+      :find,
+      :head,
+      :save,
+      :search
+    ].each do |method|
+      it "##{method} passes the SRV service, and fall-back server & port to the request's do_request method" do
+        request = Puppet::Indirector::Request.new(:indirection, method, 'key')
+        stub_response = stub 'response'
+        stub_response.stubs(:code).returns('200')
+        @searcher.stubs(:deserialize)
+
+        request.expects(:do_request).with(@searcher.class.srv_service, @searcher.class.server, @searcher.class.port).returns(stub_response)
+
+        @searcher.send(method, request)
+      end
     end
   end
 end

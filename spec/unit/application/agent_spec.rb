@@ -5,7 +5,6 @@ require 'puppet/agent'
 require 'puppet/application/agent'
 require 'puppet/network/server'
 require 'puppet/daemon'
-require 'puppet/network/handler'
 
 describe Puppet::Application::Agent do
   before :each do
@@ -91,7 +90,7 @@ describe Puppet::Application::Agent do
       @puppetd.command_line.stubs(:args).returns([])
     end
 
-    [:centrallogging, :disable, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
+    [:centrallogging, :enable, :debug, :fqdn, :test, :verbose, :digest].each do |option|
       it "should declare handle_#{option} method" do
         @puppetd.should respond_to("handle_#{option}".to_sym)
       end
@@ -100,13 +99,6 @@ describe Puppet::Application::Agent do
         @puppetd.options.expects(:[]=).with(option, 'arg')
         @puppetd.send("handle_#{option}".to_sym, 'arg')
       end
-    end
-
-    it "should set an existing handler on server" do
-      Puppet::Network::Handler.stubs(:handler).with("handler").returns(true)
-
-      @puppetd.handle_serve("handler")
-      @puppetd.options[:serve].should == [ :handler ]
     end
 
     it "should set client to false with --no-client" do
@@ -349,6 +341,20 @@ describe Puppet::Application::Agent do
         end
       end
 
+      it "should pass the disable message when disabling" do
+        @puppetd.options.stubs(:[]).with(:disable).returns(true)
+        @puppetd.options.stubs(:[]).with(:disable_message).returns("message")
+        @agent.expects(:disable).with("message")
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+      end
+
+      it "should pass the default disable message when disabling without a message" do
+        @puppetd.options.stubs(:[]).with(:disable).returns(true)
+        @puppetd.options.stubs(:[]).with(:disable_message).returns(nil)
+        @agent.expects(:disable).with("reason not specified")
+        expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
+      end
+
       it "should finally exit" do
         expect { @puppetd.enable_disable_client(@agent) }.to exit_with 0
       end
@@ -416,25 +422,38 @@ describe Puppet::Application::Agent do
         expect { @puppetd.setup_listen }.to exit_with 14
       end
 
-      it "should create a server to listen on at least the Runner handler" do
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:Runner] }
-
-        @puppetd.setup_listen
-      end
-
-      it "should create a server to listen for specific handlers" do
-        @puppetd.options.stubs(:[]).with(:serve).returns([:handler])
-        Puppet::Network::Server.expects(:new).with { |args| args[:xmlrpc_handlers] == [:handler] }
-
-        @puppetd.setup_listen
-      end
-
       it "should use puppet default port" do
         Puppet[:puppetport] = 32768
 
         Puppet::Network::Server.expects(:new).with { |args| args[:port] == 32768 }
 
         @puppetd.setup_listen
+      end
+    end
+
+    describe "when setting up for fingerprint" do
+      before(:each) do
+        @puppetd.options.stubs(:[]).with(:fingerprint).returns(true)
+      end
+
+      it "should not setup as an agent" do
+        @puppetd.expects(:setup_agent).never
+        @puppetd.setup
+      end
+
+      it "should not create an agent" do
+        Puppet::Agent.stubs(:new).with(Puppet::Configurer).never
+        @puppetd.setup
+      end
+
+      it "should not daemonize" do
+        @daemon.expects(:daemonize).never
+        @puppetd.setup
+      end
+
+      it "should setup our certificate host" do
+        @puppetd.expects(:setup_host)
+        @puppetd.setup
       end
     end
   end

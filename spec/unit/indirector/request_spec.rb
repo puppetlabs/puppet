@@ -2,8 +2,16 @@
 require 'spec_helper'
 require 'matchers/json'
 require 'puppet/indirector/request'
+require 'puppet/util/pson'
 
 describe Puppet::Indirector::Request do
+
+  describe "when registering the document type" do
+    it "should register its document type with JSON" do
+      PSON.registered_document_types["IndirectorRequest"].should equal(Puppet::Indirector::Request)
+    end
+  end
+
   describe "when initializing" do
     it "should require an indirection name, a key, and a method" do
       lambda { Puppet::Indirector::Request.new }.should raise_error(ArgumentError)
@@ -309,6 +317,201 @@ describe Puppet::Indirector::Request do
     it "should fail if options other than booleans or strings are provided" do
       @request.stubs(:options).returns(:one => {:one => :two})
       lambda { @request.query_string }.should raise_error(ArgumentError)
+    end
+  end
+
+  describe "when converting to json" do
+    before do
+      @request = Puppet::Indirector::Request.new(:facts, :find, "foo")
+    end
+
+    it "should produce a hash with the document_type set to 'request'" do
+      @request.should set_json_document_type_to("IndirectorRequest")
+    end
+
+    it "should set the 'key'" do
+      @request.should set_json_attribute("key").to("foo")
+    end
+
+    it "should include an attribute for its indirection name" do
+      @request.should set_json_attribute("type").to("facts")
+    end
+
+    it "should include a 'method' attribute set to its method" do
+      @request.should set_json_attribute("method").to("find")
+    end
+
+    it "should add all attributes under the 'attributes' attribute" do
+      @request.ip = "127.0.0.1"
+      @request.should set_json_attribute("attributes", "ip").to("127.0.0.1")
+    end
+
+    it "should add all options under the 'attributes' attribute" do
+      @request.options["opt"] = "value"
+      PSON.parse(@request.to_pson)["data"]['attributes']['opt'].should == "value"
+    end
+
+    it "should include the instance if provided" do
+      facts = Puppet::Node::Facts.new("foo")
+      @request.instance = facts
+      PSON.parse(@request.to_pson)["data"]['instance'].should be_instance_of(Hash)
+    end
+  end
+
+  describe "when converting from json" do
+    before do
+      @request = Puppet::Indirector::Request.new(:facts, :find, "foo")
+      @klass = Puppet::Indirector::Request
+      @format = Puppet::Network::FormatHandler.format('pson')
+    end
+
+    def from_json(json)
+      @format.intern(Puppet::Indirector::Request, json)
+    end
+
+    it "should set the 'key'" do
+      from_json(@request.to_pson).key.should == "foo"
+    end
+
+    it "should fail if no key is provided" do
+      json = PSON.parse(@request.to_pson)
+      json['data'].delete("key")
+      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+    end
+
+    it "should set its indirector name" do
+      from_json(@request.to_pson).indirection_name.should == :facts
+    end
+
+    it "should fail if no type is provided" do
+      json = PSON.parse(@request.to_pson)
+      json['data'].delete("type")
+      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+    end
+
+    it "should set its method" do
+      from_json(@request.to_pson).method.should == "find"
+    end
+
+    it "should fail if no method is provided" do
+      json = PSON.parse(@request.to_pson)
+      json['data'].delete("method")
+      lambda { from_json(json.to_pson) }.should raise_error(ArgumentError)
+    end
+
+    it "should initialize with all attributes and options" do
+      @request.ip = "127.0.0.1"
+      @request.options["opt"] = "value"
+      result = from_json(@request.to_pson)
+      result.options[:opt].should == "value"
+      result.ip.should == "127.0.0.1"
+    end
+
+    it "should set its instance as an instance if one is provided" do
+      facts = Puppet::Node::Facts.new("foo")
+      @request.instance = facts
+      result = from_json(@request.to_pson)
+      result.instance.should be_instance_of(Puppet::Node::Facts)
+    end
+  end
+
+  context '#do_request' do
+    before :each do
+      @request = Puppet::Indirector::Request.new(:myind, :find, "my key")
+    end
+
+    context 'when not using SRV records' do
+      before :each do
+        Puppet.settings[:use_srv_records] = false
+      end
+
+      it "yields the request with the default server and port when no server or port were specified on the original request" do
+        count = 0
+        rval = @request.do_request(:puppet, 'puppet.example.com', '90210') do |got|
+          count += 1
+          got.server.should == 'puppet.example.com'
+          got.port.should   == '90210'
+          'Block return value'
+        end
+        count.should == 1
+
+        rval.should == 'Block return value'
+      end
+    end
+
+    context 'when using SRV records' do
+      before :each do
+        Puppet.settings[:use_srv_records] = true
+        Puppet.settings[:srv_domain]      = 'example.com'
+      end
+
+      it "yields the request with the original server and port unmodified" do
+        @request.server = 'puppet.example.com'
+        @request.port   = '90210'
+
+        count = 0
+        rval = @request.do_request do |got|
+          count += 1
+          got.server.should == 'puppet.example.com'
+          got.port.should   == '90210'
+          'Block return value'
+        end
+        count.should == 1
+
+        rval.should == 'Block return value'
+      end
+
+      context "when SRV returns servers" do
+        before :each do
+          @dns_mock = mock('dns')
+          Resolv::DNS.expects(:new).returns(@dns_mock)
+
+          @port = 7205
+          @host = '_x-puppet._tcp.example.com'
+          @srv_records = [Resolv::DNS::Resource::IN::SRV.new(0, 0, @port, @host)]
+
+          @dns_mock.expects(:getresources).
+            with("_x-puppet._tcp.#{Puppet.settings[:srv_domain]}", Resolv::DNS::Resource::IN::SRV).
+            returns(@srv_records)
+        end
+
+        it "yields a request using the server and port from the SRV record" do
+          count = 0
+          rval = @request.do_request do |got|
+            count += 1
+            got.server.should == '_x-puppet._tcp.example.com'
+            got.port.should == 7205
+
+            @block_return
+          end
+          count.should == 1
+
+          rval.should == @block_return
+        end
+
+        it "should fall back to the default server when the block raises a SystemCallError" do
+          count = 0
+          second_pass = nil
+
+          rval = @request.do_request(:puppet, 'puppet', 8140) do |got|
+            count += 1
+
+            if got.server == '_x-puppet._tcp.example.com' then
+              raise SystemCallError, "example failure"
+            else
+              second_pass = got
+            end
+
+            @block_return
+          end
+
+          second_pass.server.should == 'puppet'
+          second_pass.port.should   == 8140
+          count.should == 2
+
+          rval.should == @block_return
+        end
+      end
     end
   end
 end

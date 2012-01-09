@@ -199,6 +199,10 @@ module Puppet
       essentially means that you can't have any code outside of a node, class, or definition other
       than in the site manifest."]
   )
+  Puppet.setdefaults(:module_tool,
+    :module_repository  => ['http://forge.puppetlabs.com', "The module repository"],
+    :module_working_dir => ['$vardir/puppet-module', "The directory into which module tool data is stored"]
+  )
 
   hostname = Facter["hostname"].value
   domain = Facter["domain"].value
@@ -606,7 +610,12 @@ EOT
       :mode => 0640,
       :desc => "The log file for puppet agent.  This is generally not used."
     },
-    :server => ["puppet", "The server to which server puppet agent should connect"],
+    :server => {
+      :default => "puppet",
+      :desc => "The server to which the puppet agent should connect"
+    },
+    :use_srv_records => [true, "Whether the server will search for SRV records in DNS for the current domain."],
+    :srv_domain => [ "#{domain}", "The domain which will be queried to find the SRV records of servers to use."],
     :ignoreschedules => [false,
       "Boolean; whether puppet agent should ignore schedules.  This is useful
       for initial puppet agent runs."],
@@ -705,11 +714,11 @@ EOT
       "Whether to send reports after every transaction."
     ],
     :lastrunfile =>  { :default => "$statedir/last_run_summary.yaml",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report summary in yaml format."
     },
     :lastrunreport =>  { :default => "$statedir/last_run_report.yaml",
-      :mode => 0660,
+      :mode => 0644,
       :desc => "Where puppet agent stores the last run report in yaml format."
     },
     :graph => [false, "Whether to create dot graph files for the different

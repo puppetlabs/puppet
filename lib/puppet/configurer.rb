@@ -116,6 +116,7 @@ class Puppet::Configurer
 
     report = options[:report]
     report.configuration_version = catalog.version
+    report.environment = Puppet[:environment]
 
     benchmark(:notice, "Finished catalog run") do
       catalog.apply(options)
@@ -178,9 +179,17 @@ class Puppet::Configurer
   end
 
   def save_last_run_summary(report)
-    Puppet::Util::FileLocking.writelock(Puppet[:lastrunfile], 0660) do |file|
-      file.print YAML.dump(report.raw_summary)
-    end
+    last_run = Puppet.settings.setting(:lastrunfile)
+    last_run.create = true # force file creation
+
+    resource = last_run.to_resource
+    resource[:content] = YAML.dump(report.raw_summary)
+
+    catalog = Puppet::Resource::Catalog.new("last_run_file")
+    catalog.add_resource(resource)
+    ral = catalog.to_ral
+    ral.host_config = false
+    ral.apply
   rescue => detail
     puts detail.backtrace if Puppet[:trace]
     Puppet.err "Could not save last run local report: #{detail}"

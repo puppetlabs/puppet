@@ -107,11 +107,9 @@ class Type
   def self.ensurable?
     # If the class has all three of these methods defined, then it's
     # ensurable.
-    ens = [:exists?, :create, :destroy].inject { |set, method|
-      set &&= self.public_method_defined?(method)
+    [:exists?, :create, :destroy].all? { |method|
+      self.public_method_defined?(method)
     }
-
-    ens
   end
 
   def self.apply_to_device
@@ -754,10 +752,6 @@ class Type
   def noop
     noop?
   end
-
-  ###############################
-  # Code related to managing resource instances.
-  require 'puppet/transportable'
 
   # retrieve a named instance of the current type
   def self.[](name)
@@ -1500,11 +1494,14 @@ class Type
 
       # We need to add documentation for each provider.
       def self.doc
-        @doc + "  Available providers are:\n\n" + parenttype.providers.sort { |a,b|
+        # Since we're mixing @doc with text from other sources, we must normalize
+        # its indentation with scrub. But we don't need to manually scrub the
+        # provider's doc string, since markdown_definitionlist sanitizes its inputs.
+        scrub(@doc) + "Available providers are:\n\n" + parenttype.providers.sort { |a,b|
           a.to_s <=> b.to_s
         }.collect { |i|
-          "* **#{i}**: #{parenttype().provider(i).doc}"
-        }.join("\n")
+          markdown_definitionlist( i, scrub(parenttype().provider(i).doc) )
+        }.join
       end
 
       defaultto {
@@ -1753,7 +1750,6 @@ class Type
 
   # initialize the type instance
   def initialize(resource)
-    raise Puppet::DevError, "Got TransObject instead of Resource or hash" if resource.is_a?(Puppet::TransObject)
     resource = self.class.hash2resource(resource) unless resource.is_a?(Puppet::Resource)
 
     # The list of parameter/property instances.
@@ -1903,15 +1899,9 @@ class Type
     self.ref
   end
 
-  # Convert to a transportable object
-  def to_trans(ret = true)
-    trans = TransObject.new(self.title, self.class.name)
-
-    values = retrieve_resource
-    values.each do |name, value|
-      name = name.name if name.respond_to? :name
-      trans[name] = value
-    end
+  def to_resource
+    resource = self.retrieve_resource
+    resource.tag(*self.tags)
 
     @parameters.each do |name, param|
       # Avoid adding each instance name twice
@@ -1919,20 +1909,10 @@ class Type
 
       # We've already got property values
       next if param.is_a?(Puppet::Property)
-      trans[name] = param.value
+      resource[name] = param.value
     end
 
-    trans.tags = self.tags
-
-    # FIXME I'm currently ignoring 'parent' and 'path'
-
-    trans
-  end
-
-  def to_resource
-    # this 'type instance' versus 'resource' distinction seems artificial
-    # I'd like to see it collapsed someday ~JW
-    self.to_trans.to_resource
+    resource
   end
 
   def virtual?;  !!@virtual;  end

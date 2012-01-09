@@ -8,6 +8,7 @@ require 'getoptlong'
 describe Puppet::Application do
 
   before do
+    Puppet::Util::Instrumentation.stubs(:init)
     @app = Class.new(Puppet::Application).new
     @appclass = @app.class
 
@@ -115,6 +116,11 @@ describe Puppet::Application do
   it "should invoke main as the default" do
     @app.expects( :main )
     @app.run_command
+  end
+
+  it "should initialize the Puppet Instrumentation layer on creation" do
+    Puppet::Util::Instrumentation.expects(:init)
+    Class.new(Puppet::Application).new
   end
 
   describe 'when invoking clear!' do

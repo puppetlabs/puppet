@@ -117,10 +117,6 @@ describe Puppet::FileServing::Metadata do
           FileUtils.touch(path)
         end
 
-        it "should be able to produce xmlrpc-style attribute information" do
-          metadata.should respond_to(:attributes_with_tabs)
-        end
-
         it "should set the owner to the file's current owner" do
           metadata.owner.should == owner
         end
@@ -153,12 +149,6 @@ describe Puppet::FileServing::Metadata do
             metadata.collect
             metadata.checksum.should == "{mtime}#{@time}"
           end
-
-          it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
-            set_mode(0755, path)
-
-            metadata.attributes_with_tabs.should == "#{0755.to_s}\tfile\t#{owner}\t#{group}\t{md5}#{checksum}"
-          end
         end
       end
 
@@ -181,13 +171,6 @@ describe Puppet::FileServing::Metadata do
           metadata.collect
           metadata.checksum.should == "{ctime}#{time}"
         end
-
-        it "should produce tab-separated mode, type, owner, group, and checksum for xmlrpc" do
-          set_mode(0755, path)
-          metadata.collect
-
-          metadata.attributes_with_tabs.should == "#{0755.to_s}\tdirectory\t#{owner}\t#{group}\t{ctime}#{time.to_s}"
-        end
       end
 
       describe "when managing links", :unless => Puppet.features.microsoft_windows? do
@@ -206,15 +189,6 @@ describe Puppet::FileServing::Metadata do
 
         it "should read links instead of returning their checksums" do
           metadata.destination.should == target
-        end
-
-        pending "should produce tab-separated mode, type, owner, group, and destination for xmlrpc" do
-          # "We'd like this to be true, but we need to always collect the checksum because in the server/client/server round trip we lose the distintion between manage and follow."
-          metadata.attributes_with_tabs.should == "#{0755}\tlink\t#{owner}\t#{group}\t#{target}"
-        end
-
-        it "should produce tab-separated mode, type, owner, group, checksum, and destination for xmlrpc" do
-          metadata.attributes_with_tabs.should == "#{fmode}\tlink\t#{owner}\t#{group}\t{md5}eb9c2bf0eb63f3a7bc0ea37ef18aeba5\t#{target}"
         end
       end
     end

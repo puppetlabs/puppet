@@ -20,6 +20,10 @@ describe Puppet::SSL::Certificate::Rest do
     Puppet::SSL::Certificate::Rest.port_setting.should == :ca_port
   end
 
+  it "should use the :ca SRV service" do
+    Puppet::SSL::Certificate::Rest.srv_service.should == :ca
+  end
+
   it "should make sure found certificates have their names set to the search string" do
     terminus = Puppet::SSL::Certificate::Rest.new
 

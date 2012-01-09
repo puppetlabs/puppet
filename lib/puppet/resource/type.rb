@@ -158,11 +158,7 @@ class Puppet::Resource::Type
       return resource
     end
     resource = Puppet::Parser::Resource.new(resource_type, name, :scope => scope, :source => self)
-    if parameters
-      parameters.each do |k,v|
-        resource.set_parameter(k,v)
-      end
-    end
+    assign_parameter_values(parameters, resource)
     instantiate_resource(scope, resource)
     scope.compiler.add_resource(scope, resource)
     resource
@@ -186,6 +182,18 @@ class Puppet::Resource::Type
 
   def name_is_regex?
     @name.is_a?(Regexp)
+  end
+
+  def assign_parameter_values(parameters, resource)
+    return unless parameters
+    scope = resource.scope || {}
+
+    # It'd be nice to assign default parameter values here,
+    # but we can't because they often rely on local variables
+    # created during set_resource_parameters.
+    parameters.each do |name, value|
+      resource.set_parameter name, value
+    end
   end
 
   # MQR TODO:
@@ -225,40 +233,32 @@ class Puppet::Resource::Type
       param = param.to_sym
       fail Puppet::ParseError, "#{resource.ref} does not accept attribute #{param}" unless valid_parameter?(param)
 
-      exceptwrap { scope.setvar(param.to_s, value) }
+      exceptwrap { scope[param.to_s] = value }
 
       set[param] = true
     end
 
     if @type == :hostclass
-      scope.setvar("title", resource.title.to_s.downcase) unless set.include? :title
-      scope.setvar("name",  resource.name.to_s.downcase ) unless set.include? :name
+      scope["title"] = resource.title.to_s.downcase unless set.include? :title
+      scope["name"] =  resource.name.to_s.downcase  unless set.include? :name
     else
-      scope.setvar("title", resource.title              ) unless set.include? :title
-      scope.setvar("name",  resource.name               ) unless set.include? :name
+      scope["title"] = resource.title               unless set.include? :title
+      scope["name"] =  resource.name                unless set.include? :name
     end
-    scope.setvar("module_name", module_name) if module_name and ! set.include? :module_name
+    scope["module_name"] = module_name if module_name and ! set.include? :module_name
 
     if caller_name = scope.parent_module_name and ! set.include?(:caller_module_name)
-      scope.setvar("caller_module_name", caller_name)
+      scope["caller_module_name"] = caller_name
     end
     scope.class_set(self.name,scope) if hostclass? or node?
-    # Verify that all required arguments are either present or
-    # have been provided with defaults.
-    arguments.each do |param, default|
-      param = param.to_sym
-      next if set.include?(param)
 
-      # Even if 'default' is a false value, it's an AST value, so this works fine
-      fail Puppet::ParseError, "Must pass #{param} to #{resource.ref}" unless default
+    # Evaluate the default parameters, now that all other variables are set
+    default_params = resource.set_default_parameters(scope)
+    default_params.each { |param| scope[param.to_s] = resource[param] }
 
-      value = default.safeevaluate(scope)
-      scope.setvar(param.to_s, value)
-
-      # Set it in the resource, too, so the value makes it to the client.
-      resource[param] = value
-    end
-
+    # This has to come after the above parameters so that default values
+    # can use their values
+    resource.validate_complete
   end
 
   # Check whether a given argument is valid.

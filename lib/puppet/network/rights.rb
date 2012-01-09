@@ -190,7 +190,7 @@ class Rights
     def allowed?(name, ip, args = {})
       return :dunno if acl_type == :regex and not @methods.include?(args[:method])
       return :dunno if acl_type == :regex and @environment.size > 0 and not @environment.include?(args[:environment])
-      return :dunno if acl_type == :regex and not @authentication.nil? and args[:authenticated] != @authentication
+      return :dunno if acl_type == :regex and (@authentication and not args[:authenticated])
 
       begin
         # make sure any capture are replaced if needed
@@ -229,10 +229,8 @@ class Rights
       case authentication
       when "yes", "on", "true", true
         authentication = true
-      when "no", "off", "false", false
+      when "no", "off", "false", false, "all" ,"any", :all, :any
         authentication = false
-      when "all","any", :all, :any
-        authentication = nil
       else
         raise ArgumentError, "'#{name}' incorrect authenticated value: #{authentication}"
       end

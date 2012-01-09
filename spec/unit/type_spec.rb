@@ -261,13 +261,6 @@ describe Puppet::Type, :fails_on_windows => true do
   end
 
   describe "when initializing" do
-    describe "and passed a TransObject" do
-      it "should fail" do
-        trans = Puppet::TransObject.new("/foo", :mount)
-        lambda { Puppet::Type.type(:mount).new(trans) }.should raise_error(Puppet::DevError)
-      end
-    end
-
     describe "and passed a Puppet::Resource instance" do
       it "should set its title to the title of the resource if the resource type is equal to the current type" do
         resource = Puppet::Resource.new(:mount, "/foo", :parameters => {:name => "/other"})
@@ -501,6 +494,32 @@ describe Puppet::Type, :fails_on_windows => true do
     end
   end
 
+  describe "#to_resource" do
+    it "should return a Puppet::Resource that includes properties, parameters and tags" do
+      type_resource = Puppet::Type.type(:mount).new(
+        :ensure   => :present,
+        :name     => "foo",
+        :fstype   => "bar",
+        :remounts => true
+      )
+      type_resource.tags = %w{bar baz}
+
+      # If it's not a property it's a parameter
+      type_resource.parameters[:remounts].should_not be_a(Puppet::Property)
+      type_resource.parameters[:fstype].is_a?(Puppet::Property).should be_true
+
+      type_resource.property(:ensure).expects(:retrieve).returns :present
+      type_resource.property(:fstype).expects(:retrieve).returns 15
+
+      resource = type_resource.to_resource
+
+      resource.should be_a Puppet::Resource
+      resource[:fstype].should   == 15
+      resource[:remounts].should == :true
+      resource.tags.should       =~ %w{foo bar baz mount}
+    end
+  end
+
   describe ".title_patterns" do
     describe "when there's one namevar" do
       before do
@@ -586,6 +605,35 @@ describe Puppet::Type, :fails_on_windows => true do
       type.stubs(:defaultprovider).returns nil
 
       resource.should_not be_suitable
+    end
+  end
+
+  describe "::ensurable?" do
+    before :each do
+      class TestEnsurableType < Puppet::Type
+        def exists?; end
+        def create; end
+        def destroy; end
+      end
+    end
+
+    it "is true if the class has exists?, create, and destroy methods defined" do
+      TestEnsurableType.should be_ensurable
+    end
+
+    it "is false if exists? is not defined" do
+      TestEnsurableType.class_eval { remove_method(:exists?) }
+      TestEnsurableType.should_not be_ensurable
+    end
+
+    it "is false if create is not defined" do
+      TestEnsurableType.class_eval { remove_method(:create) }
+      TestEnsurableType.should_not be_ensurable
+    end
+
+    it "is false if destroy is not defined" do
+      TestEnsurableType.class_eval { remove_method(:destroy) }
+      TestEnsurableType.should_not be_ensurable
     end
   end
 end

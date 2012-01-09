@@ -11,7 +11,7 @@ module Puppet
       current_value
     end
 
-    validate do
+    validate do |val|
       fail "type is read-only"
     end
   end

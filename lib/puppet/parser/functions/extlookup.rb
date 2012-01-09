@@ -91,9 +91,9 @@ This is for back compatibility to interpolate variables with %. % interpolation 
 
   raise Puppet::ParseError, ("extlookup(): wrong number of arguments (#{args.length}; must be <= 3)") if args.length > 3
 
-  extlookup_datadir = undef_as('',lookupvar('::extlookup_datadir'))
+  extlookup_datadir = undef_as('',self['::extlookup_datadir'])
 
-  extlookup_precedence = undef_as([],lookupvar('::extlookup_precedence')).collect { |var| var.gsub(/%\{(.+?)\}/) { lookupvar("::#{$1}") } }
+  extlookup_precedence = undef_as([],self['::extlookup_precedence']).collect { |var| var.gsub(/%\{(.+?)\}/) { self["::#{$1}"] } }
 
   datafiles = Array.new
 
@@ -121,9 +121,9 @@ This is for back compatibility to interpolate variables with %. % interpolation 
           if result[0].length == 2
             val = result[0][1].to_s
 
-            # parse %{}'s in the CSV into local variables using lookupvar()
+            # parse %{}'s in the CSV into local variables using the current scope
             while val =~ /%\{(.+?)\}/
-              val.gsub!(/%\{#{$1}\}/, lookupvar($1))
+              val.gsub!(/%\{#{$1}\}/, self[$1])
             end
 
             desired = val
@@ -134,9 +134,9 @@ This is for back compatibility to interpolate variables with %. % interpolation 
             # Individual cells in a CSV result are a weird data type and throws
             # puppets yaml parsing, so just map it all to plain old strings
             desired = cells.map do |c|
-              # parse %{}'s in the CSV into local variables using lookupvar()
+              # parse %{}'s in the CSV into local variables using the current scope
               while c =~ /%\{(.+?)\}/
-                c.gsub!(/%\{#{$1}\}/, lookupvar($1))
+                c.gsub!(/%\{#{$1}\}/, self[$1])
               end
 
               c.to_s

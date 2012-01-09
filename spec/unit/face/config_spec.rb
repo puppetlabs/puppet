@@ -21,4 +21,11 @@ describe Puppet::Face[:config, '0.0.1'] do
     Puppet.settings.expects(:print_config_options)
     subject.print("libdir").should be_nil
   end
+
+  it "should default to all when no arguments are given" do
+    Puppet.settings.stubs(:puts)
+    Puppet.settings.expects(:print_config_options)
+    subject.print
+    Puppet.settings[:configprint].should == "all"
+  end
 end

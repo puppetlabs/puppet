@@ -5,7 +5,6 @@ require 'uri'
 require 'fileutils'
 require 'enumerator'
 require 'pathname'
-require 'puppet/network/handler'
 require 'puppet/util/diff'
 require 'puppet/util/checksums'
 require 'puppet/util/backups'
@@ -261,13 +260,18 @@ Puppet::Type.newtype(:file) do
 
   # Autorequire the nearest ancestor directory found in the catalog.
   autorequire(:file) do
+    req = []
     path = Pathname.new(self[:path])
     if !path.root?
       # Start at our parent, to avoid autorequiring ourself
       parents = path.parent.enum_for(:ascend)
-      found = parents.find { |p| catalog.resource(:file, p.to_s) }
-      found and found.to_s
+      if found = parents.find { |p| catalog.resource(:file, p.to_s) }
+        req << found.to_s
+      end
     end
+    # if the resource is a link, make sure the target is created first
+    req << self[:target] if self[:target]
+    req
   end
 
   # Autorequire the owner and group of the file.
@@ -705,13 +709,10 @@ Puppet::Type.newtype(:file) do
     end
   end
 
-  # We have to hack this just a little bit, because otherwise we'll get
-  # an error when the target and the contents are created as properties on
-  # the far side.
-  def to_trans(retrieve = true)
-    obj = super
-    obj.delete(:target) if obj[:target] == :notlink
-    obj
+  def to_resource
+    resource = super
+    resource.delete(:target) if resource[:target] == :notlink
+    resource
   end
 
   # Write out the file.  Requires the property name for logging.

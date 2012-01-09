@@ -10,7 +10,7 @@ class Puppet::Transaction::Report
 
   indirects :report, :terminus_class => :processor
 
-  attr_accessor :configuration_version, :host
+  attr_accessor :configuration_version, :host, :environment
   attr_reader :resource_statuses, :logs, :metrics, :time, :kind, :status
 
   # This is necessary since Marshall doesn't know how to
@@ -68,7 +68,7 @@ class Puppet::Transaction::Report
     @status = compute_status(resource_metrics, change_metric)
   end
 
-  def initialize(kind, configuration_version=nil)
+  def initialize(kind, configuration_version=nil, environment=nil)
     @metrics = {}
     @logs = []
     @resource_statuses = {}
@@ -79,6 +79,7 @@ class Puppet::Transaction::Report
     @report_format = 2
     @puppet_version = Puppet.version
     @configuration_version = configuration_version
+    @environment = environment
     @status = 'failed' # assume failed until the report is finalized
   end
 
@@ -115,7 +116,7 @@ class Puppet::Transaction::Report
 
   # Provide a raw hash summary of this report.
   def raw_summary
-    report = {}
+    report = { "version" => { "config" => configuration_version, "puppet" => Puppet.version  } }
 
     @metrics.each do |name, metric|
       key = metric.name.to_s
@@ -151,7 +152,7 @@ class Puppet::Transaction::Report
 
   def calculate_event_metrics
     metrics = Hash.new(0)
-    metrics["total"] = 0
+    %w{total failure success}.each { |m| metrics[m] = 0 }
     resource_statuses.each do |name, status|
       metrics["total"] += status.events.length
       status.events.each do |event|
@@ -163,8 +164,14 @@ class Puppet::Transaction::Report
   end
 
   def calculate_resource_metrics
-    metrics = Hash.new(0)
+    metrics = {}
     metrics["total"] = resource_statuses.length
+
+    # force every resource key in the report to be present
+    # even if no resources is in this given state
+    Puppet::Resource::Status::STATES.each do |state|
+      metrics[state.to_s] = 0
+    end
 
     resource_statuses.each do |name, status|
       Puppet::Resource::Status::STATES.each do |state|

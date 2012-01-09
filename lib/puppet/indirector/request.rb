@@ -1,6 +1,8 @@
 require 'cgi'
 require 'uri'
 require 'puppet/indirector'
+require 'puppet/util/pson'
+require 'puppet/network/resolver'
 
 # This class encapsulates all of the information you need to make an
 # Indirection call, and as a a result also handles REST calls.  It's somewhat
@@ -13,6 +15,54 @@ class Puppet::Indirector::Request
   attr_reader :indirection_name
 
   OPTION_ATTRIBUTES = [:ip, :node, :authenticated, :ignore_terminus, :ignore_cache, :instance, :environment]
+
+  # Load json before trying to register.
+  Puppet.features.pson? and ::PSON.register_document_type('IndirectorRequest',self)
+
+  def self.from_pson(json)
+    raise ArgumentError, "No indirection name provided in json data" unless indirection_name = json['type']
+    raise ArgumentError, "No method name provided in json data" unless method = json['method']
+    raise ArgumentError, "No key provided in json data" unless key = json['key']
+
+    request = new(indirection_name, method, key, json['attributes'])
+
+    if instance = json['instance']
+      klass = Puppet::Indirector::Indirection.instance(request.indirection_name).model
+      if instance.is_a?(klass)
+        request.instance = instance
+      else
+        request.instance = klass.from_pson(instance)
+      end
+    end
+
+    request
+  end
+
+  def to_pson(*args)
+    result = {
+      'document_type' => 'IndirectorRequest',
+      'data' => {
+        'type' => indirection_name,
+        'method' => method,
+        'key' => key
+      }
+    }
+    data = result['data']
+    attributes = {}
+    OPTION_ATTRIBUTES.each do |key|
+      next unless value = send(key)
+      attributes[key] = value
+    end
+
+    options.each do |opt, value|
+      attributes[opt] = value
+    end
+
+    data['attributes'] = attributes unless attributes.empty?
+    data['instance'] = instance if instance
+
+    result.to_pson(*args)
+  end
 
   # Is this an authenticated request?
   def authenticated?
@@ -61,9 +111,11 @@ class Puppet::Indirector::Request
     self.indirection_name = indirection_name
     self.method = method
 
+    options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
+
     set_attributes(options)
 
-    @options = options.inject({}) { |hash, ary| hash[ary[0].to_sym] = ary[1]; hash }
+    @options = options
 
     if key_or_instance.is_a?(String) || key_or_instance.is_a?(Symbol)
       key = key_or_instance
@@ -150,11 +202,36 @@ class Puppet::Indirector::Request
     return(uri ? uri : "/#{indirection_name}/#{key}")
   end
 
+  def do_request(srv_service=:puppet, default_server=Puppet.settings[:server], default_port=Puppet.settings[:masterport], &block)
+    # We were given a specific server to use, so just use that one.
+    # This happens if someone does something like specifying a file
+    # source using a puppet:// URI with a specific server.
+    return yield self if !self.server.nil?
+
+    if Puppet.settings[:use_srv_records]
+      Puppet::Network::Resolver.each_srv_record(Puppet.settings[:srv_domain], srv_service) do |srv_server, srv_port|
+        begin
+          self.server = srv_server
+          self.port   = srv_port
+          return yield self
+        rescue SystemCallError => e
+          Puppet.warning "Error connecting to #{srv_server}:#{srv_port}: #{e.message}"
+        end
+      end
+    end
+
+    # ... Fall back onto the default server.
+    Puppet.debug "No more servers left, falling back to #{default_server}:#{default_port}" if Puppet.settings[:use_srv_records]
+    self.server = default_server
+    self.port   = default_port
+    return yield self
+  end
+
   private
 
   def set_attributes(options)
     OPTION_ATTRIBUTES.each do |attribute|
-      if options.include?(attribute)
+      if options.include?(attribute.to_sym)
         send(attribute.to_s + "=", options[attribute])
         options.delete(attribute)
       end

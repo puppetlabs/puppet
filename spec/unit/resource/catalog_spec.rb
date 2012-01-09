@@ -123,165 +123,6 @@ describe Puppet::Resource::Catalog, "when compiling" do
     end
   end
 
-  describe "when extracting transobjects" do
-
-    def mkscope
-      @node = Puppet::Node.new("mynode")
-      @compiler = Puppet::Parser::Compiler.new(@node)
-
-      # XXX This is ridiculous.
-      @compiler.send(:evaluate_main)
-      @scope = @compiler.topscope
-    end
-
-    def mkresource(type, name)
-      Puppet::Parser::Resource.new(type, name, :source => @source, :scope => @scope)
-    end
-
-    it "should fail if no 'main' stage can be found" do
-      lambda { Puppet::Resource::Catalog.new("mynode").extract }.should raise_error(Puppet::DevError)
-    end
-
-    it "should warn if any non-main stages are present" do
-      config = Puppet::Resource::Catalog.new("mynode")
-
-      @scope = mkscope
-      @source = mock 'source'
-
-      main = mkresource("stage", "main")
-      config.add_resource(main)
-
-      other = mkresource("stage", "other")
-      config.add_resource(other)
-
-      Puppet.expects(:warning)
-
-      config.extract
-    end
-
-    it "should always create a TransBucket for the 'main' stage" do
-      config = Puppet::Resource::Catalog.new("mynode")
-
-      @scope = mkscope
-      @source = mock 'source'
-
-      main = mkresource("stage", "main")
-      config.add_resource(main)
-
-      result = config.extract
-      result.type.should == "Stage"
-      result.name.should == "main"
-    end
-
-    # Now try it with a more complicated graph -- a three tier graph, each tier
-    it "should transform arbitrarily deep graphs into isomorphic trees" do
-      config = Puppet::Resource::Catalog.new("mynode")
-
-      @scope = mkscope
-      @scope.stubs(:tags).returns([])
-      @source = mock 'source'
-
-      # Create our scopes.
-      top = mkresource "stage", "main"
-
-      config.add_resource top
-      topbucket = []
-      topbucket.expects(:classes=).with([])
-      top.expects(:to_trans).returns(topbucket)
-      topres = mkresource "file", "/top"
-      topres.expects(:to_trans).returns(:topres)
-      config.add_edge top, topres
-
-      middle = mkresource "class", "middle"
-      middle.expects(:to_trans).returns([])
-      config.add_edge top, middle
-      midres = mkresource "file", "/mid"
-      midres.expects(:to_trans).returns(:midres)
-      config.add_edge middle, midres
-
-      bottom = mkresource "class", "bottom"
-      bottom.expects(:to_trans).returns([])
-      config.add_edge middle, bottom
-      botres = mkresource "file", "/bot"
-      botres.expects(:to_trans).returns(:botres)
-      config.add_edge bottom, botres
-
-      toparray = config.extract
-
-      # This is annoying; it should look like:
-      #   [[[:botres], :midres], :topres]
-      # but we can't guarantee sort order.
-      toparray.include?(:topres).should be_true
-
-      midarray = toparray.find { |t| t.is_a?(Array) }
-      midarray.include?(:midres).should be_true
-      botarray = midarray.find { |t| t.is_a?(Array) }
-      botarray.include?(:botres).should be_true
-    end
-  end
-
-  describe " when converting to a Puppet::Resource catalog" do
-    before do
-      @original = Puppet::Resource::Catalog.new("mynode")
-      @original.tag(*%w{one two three})
-      @original.add_class *%w{four five six}
-
-      @top            = Puppet::TransObject.new 'top', "class"
-      @topobject      = Puppet::TransObject.new '/topobject', "file"
-      @middle         = Puppet::TransObject.new 'middle', "class"
-      @middleobject   = Puppet::TransObject.new '/middleobject', "file"
-      @bottom         = Puppet::TransObject.new 'bottom', "class"
-      @bottomobject   = Puppet::TransObject.new '/bottomobject', "file"
-
-      @resources = [@top, @topobject, @middle, @middleobject, @bottom, @bottomobject]
-
-      @original.add_resource(*@resources)
-
-      @original.add_edge(@top, @topobject)
-      @original.add_edge(@top, @middle)
-      @original.add_edge(@middle, @middleobject)
-      @original.add_edge(@middle, @bottom)
-      @original.add_edge(@bottom, @bottomobject)
-
-      @catalog = @original.to_resource
-    end
-
-    it "should copy over the version" do
-      @original.version = "foo"
-      @original.to_resource.version.should == "foo"
-    end
-
-    it "should convert parser resources to plain resources" do
-      resource = Puppet::Parser::Resource.new(:file, "foo", :scope => stub("scope", :environment => nil, :namespaces => nil), :source => stub("source"))
-      catalog = Puppet::Resource::Catalog.new("whev")
-      catalog.add_resource(resource)
-      new = catalog.to_resource
-      new.resource(:file, "foo").class.should == Puppet::Resource
-    end
-
-    it "should add all resources as Puppet::Resource instances" do
-      @resources.each { |resource| @catalog.resource(resource.ref).should be_instance_of(Puppet::Resource) }
-    end
-
-    it "should copy the tag list to the new catalog" do
-      @catalog.tags.sort.should == @original.tags.sort
-    end
-
-    it "should copy the class list to the new catalog" do
-      @catalog.classes.should == @original.classes
-    end
-
-    it "should duplicate the original edges" do
-      @original.edges.each do |edge|
-        @catalog.edge?(@catalog.resource(edge.source.ref), @catalog.resource(edge.target.ref)).should be_true
-      end
-    end
-
-    it "should set itself as the catalog for each converted resource" do
-      @catalog.vertices.each { |v| v.catalog.object_id.should equal(@catalog.object_id) }
-    end
-  end
-
   describe "when converting to a RAL catalog" do
     before do
       @original = Puppet::Resource::Catalog.new("mynode")
@@ -332,7 +173,7 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
     # This tests #931.
     it "should not lose track of resources whose names vary" do
-      changer = Puppet::TransObject.new 'changer', 'test'
+      changer = Puppet::Resource.new :file, @basepath+'/test/', :parameters => {:ensure => :directory}
 
       config = Puppet::Resource::Catalog.new('test')
       config.add_resource(changer)
@@ -340,16 +181,9 @@ describe Puppet::Resource::Catalog, "when compiling" do
 
       config.add_edge(@top, changer)
 
-      resource = stub 'resource', :name => "changer2", :title => "changer2", :ref => "Test[changer2]", :catalog= => nil, :remove => nil
-
-      #changer is going to get duplicated as part of a fix for aliases 1094
-      changer.expects(:dup).returns(changer)
-      changer.expects(:to_ral).returns(resource)
-
-      newconfig = nil
-
-      proc { @catalog = config.to_ral }.should_not raise_error
-      @catalog.resource("Test[changer2]").should equal(resource)
+      catalog = config.to_ral
+      catalog.resource("File[#{@basepath}/test/]").should equal(changer)
+      catalog.resource("File[#{@basepath}/test]").should equal(changer)
     end
 
     after do
@@ -367,12 +201,12 @@ describe Puppet::Resource::Catalog, "when compiling" do
       @r1 = stub_everything 'r1', :ref => "File[/a]"
       @r1.stubs(:respond_to?).with(:ref).returns(true)
       @r1.stubs(:dup).returns(@r1)
-      @r1.stubs(:is_a?).returns(Puppet::Resource).returns(true)
+      @r1.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @r2 = stub_everything 'r2', :ref => "File[/b]"
       @r2.stubs(:respond_to?).with(:ref).returns(true)
       @r2.stubs(:dup).returns(@r2)
-      @r2.stubs(:is_a?).returns(Puppet::Resource).returns(true)
+      @r2.stubs(:is_a?).with(Puppet::Resource).returns(true)
 
       @resources = [@r1,@r2]
 
