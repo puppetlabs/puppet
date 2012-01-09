@@ -170,7 +170,7 @@ module Puppet
       desc "The group to run the command as.  This seems to work quite
         haphazardly on different platforms -- it is a platform issue
         not a Ruby or Puppet one, since the same variety exists when
-        running commnands as different users in the shell."
+        running commands as different users in the shell."
       # Validation is handled by the SUIDManager class.
     end
 
