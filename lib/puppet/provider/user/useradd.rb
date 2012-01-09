@@ -75,6 +75,14 @@ Puppet::Type.type(:user).provide :useradd, :parent => Puppet::Provider::NameServ
     cmd += check_system_users
     cmd << @resource[:name]
   end
+  
+  def deletecmd
+    cmd = [command(:delete)]
+    if @resource.managehome?
+      cmd << "-r"
+    end
+    cmd << @resource[:name]
+  end
 
   def passcmd
     age_limits = [:password_min_age, :password_max_age].select { |property| @resource.should(property) }
