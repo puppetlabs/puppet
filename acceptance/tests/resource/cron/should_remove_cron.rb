@@ -21,7 +21,7 @@ agents.each do |host|
 
     step "verify that crontab -l contains what you expected"
     run_cron_on(host, :list, tmpuser) do
-      assert_match(/\/bin\/true/, stdout, "Error: Found entry for #{tmpuser} on #{host}")
+      assert_no_match(/\/bin\/true/, stdout, "Error: Found entry for #{tmpuser} on #{host}")
     end
 
     step "remove the crontab file for that user"
