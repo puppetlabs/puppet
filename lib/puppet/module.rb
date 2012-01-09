@@ -142,11 +142,6 @@ class Puppet::Module
     subpath("plugins")
   end
 
-  def requires(name, version = nil)
-    @requires ||= []
-    @requires << [name, version]
-  end
-
   def supports(name, version = nil)
     @supports ||= []
     @supports << [name, version]
