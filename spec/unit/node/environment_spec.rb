@@ -175,6 +175,38 @@ describe Puppet::Node::Environment do
       env.module("one").should be_nil
     end
 
+    describe ".modules_by_path" do
+      before do
+        dir = tmpdir("deep_path")
+
+        @first = File.join(dir, "first")
+        @second = File.join(dir, "second")
+        Puppet[:modulepath] = "#{@first}#{File::PATH_SEPARATOR}#{@second}"
+
+        FileUtils.mkdir_p(@first)
+        FileUtils.mkdir_p(@second)
+      end
+
+      it "should return an empty list if there are no modules" do
+        env.modules_by_path.should == {
+          @first  => [],
+          @second => []
+        }
+      end
+
+      it "should include modules even if they exist in multiple dirs in the modulepath" do
+        modpath1 = File.join(@first, "foo")
+        FileUtils.mkdir_p(modpath1)
+        modpath2 = File.join(@second, "foo")
+        FileUtils.mkdir_p(modpath2)
+
+        env.modules_by_path.should == {
+          @first  => [Puppet::Module.new('foo', :environment => env, :path => modpath1)],
+          @second => [Puppet::Module.new('foo', :environment => env, :path => modpath2)]
+        }
+      end
+    end
+
     describe ".modules" do
       it "should return an empty list if there are no modules" do
         env.modulepath = %w{/a /b}
