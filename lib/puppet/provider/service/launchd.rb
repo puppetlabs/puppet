@@ -1,4 +1,12 @@
-require 'facter/util/plist'
+# If you don't find the CFPropertyList library in Facter, fail back to legacy
+# facter/util/plist support and set the $legacy_plist_support variable.
+begin
+  require 'facter/util/cfpropertylist'
+rescue LoadError => e
+  require 'facter/util/plist'
+  $legacy_plist_support = true
+end
+
 Puppet::Type.type(:service).provide :launchd, :parent => :base do
   desc <<-EOT
     This provider manages jobs with `launchd`, which is the default service
@@ -49,13 +57,14 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   has_feature :enableable
   mk_resource_methods
 
-  Launchd_Paths = [ "/Library/LaunchAgents",
-                    "/Library/LaunchDaemons",
-                    "/System/Library/LaunchAgents",
-                    "/System/Library/LaunchDaemons"]
+  Launchd_Paths      = [ "/Library/LaunchAgents",
+                         "/Library/LaunchDaemons",
+                         "/System/Library/LaunchAgents",
+                         "/System/Library/LaunchDaemons"]
+  Launchd_Overrides  = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
+  Binary_Plist_Magic = "bplist00" # Magic number for binary Plist, with 00 version number.
+  Plist_Xml_Doctype  = '<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">'
 
-  Launchd_Overrides = "/var/db/launchd.db/com.apple.launchd/overrides.plist"
-  
   # Caching is enabled through the following three methods. Self.prefetch will
   # call self.instances to create an instance for each service. Self.flush will
   # clear out our cache when we're done.
@@ -90,6 +99,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
         Dir.glob(File.join(path,'*')).each do |filepath|
           next if ! File.file?(filepath)
           job = read_plist(filepath)
+          next if job.nil?
           if job.has_key?("Label") and job["Label"] == label
             return { label => filepath }
           else
@@ -127,7 +137,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   # Launchd implemented plist overrides in version 10.6.
-  # This method checks the major_version of OS X and returns true if 
+  # This method checks the major_version of OS X and returns true if
   # it is 10.6 or greater. This allows us to implement different plist
   # behavior for versions >= 10.6
   def has_macosx_plist_overrides?
@@ -137,9 +147,32 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   # Read a plist, whether its format is XML or in Apple's "binary1"
-  # format.
+  # format. Plist files that contain a bad doctype string will pass
+  # lint, but will also cause Ruby's libxml to throw an error and
+  # fail hard. To remedy this, we have to search for an unquoted
+  # doctype string, which can be found in OS X version 10.6's
+  # /System/Library/LaunchDaemons/org.ntp.ntpd.plist file - a file
+  # that is SHIPPED by Apple.
   def self.read_plist(path)
-    Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+    if $legacy_plist_support
+      Plist::parse_xml(plutil('-convert', 'xml1', '-o', '/dev/stdout', path))
+    else
+      bad_xml_doctype = /^.*<!DOCTYPE plist PUBLIC -\/\/Apple Computer.*$/
+      # We can't really read the file until we know the source encoding in
+      # Ruby 1.9.x, so we use the magic number to detect it.
+      # NOTE: We need to use IO.read to be Ruby 1.8.x compatible.
+      if IO.read(path, Binary_Plist_Magic.length) == Binary_Plist_Magic
+        plist_obj = CFPropertyList::List.new(:file => path)
+      else
+        plist_data = File.open(path, "r:UTF-8").read
+        if plist_data =~ bad_xml_doctype
+          plist_data.gsub!( bad_xml_doctype, Plist_Xml_Doctype )
+          debug("Had to fix plist with incorrect DOCTYPE declaration: #{path}")
+        end
+        plist_obj = CFPropertyList::List.new(:data => plist_data)
+      end
+      plist_data = CFPropertyList.native_types(plist_obj.value)
+    end
   end
 
   # Clean out the @property_hash variable containing the cached list of services
@@ -148,7 +181,6 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   end
 
   def exists?
-    Puppet.debug("Puppet::Provider::Launchd:Ensure for #{@property_hash[:name]}: #{@property_hash[:ensure]}")
     @property_hash[:ensure] != :absent
   end
 
@@ -266,18 +298,30 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # enable and disable are a bit hacky. We write out the plist with the appropriate value
   # rather than dealing with launchctl as it is unable to change the Disabled flag
   # without actually loading/unloading the job.
-  # Starting in 10.6 we need to write out a disabled key to the global 
+  # Starting in 10.6 we need to write out a disabled key to the global
   # overrides plist, in earlier versions this is stored in the job plist itself.
   def enable
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => false }
-      Plist::Emit.save_plist(overrides, Launchd_Overrides)
+      if $legacy_plist_support
+        Plist::Emit.save_plist(overrides, Launchd_Overrides)
+      else
+        overrides_plist       = CFPropertyList::List.new
+        overrides_plist.value = CFPropertyList.guess(overrides)
+        overrides_plist.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
+      end
     else
       job_path, job_plist = plist_from_label(resource[:name])
       if self.enabled? == :false
         job_plist.delete("Disabled")
-        Plist::Emit.save_plist(job_plist, job_path)
+        if $legacy_plist_support
+          Plist::Emit.save_plist(overrides, job_path)
+        else
+          job_plist_file       = CFPropertyList::List.new
+          job_plist_file.value = CFPropertyList.guess(job_plist)
+          job_plist_file.save(job_path, CFPropertyList::List::FORMAT_XML)
+        end
       end
     end
   end
@@ -287,13 +331,23 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     if has_macosx_plist_overrides?
       overrides = self.class.read_plist(Launchd_Overrides)
       overrides[resource[:name]] = { "Disabled" => true }
-      Plist::Emit.save_plist(overrides, Launchd_Overrides)
+      if $legacy_plist_support
+        Plist::Emit.save_plist(overrides, Launchd_Overrides)
+      else
+        overrides_plist       = CFPropertyList::List.new
+        overrides_plist.value = CFPropertyList.guess(overrides)
+        overrides_plist.save(Launchd_Overrides, CFPropertyList::List::FORMAT_XML)
+      end
     else
       job_path, job_plist = plist_from_label(resource[:name])
       job_plist["Disabled"] = true
-      Plist::Emit.save_plist(job_plist, job_path)
+      if $legacy_plist_support
+        Plist::Emit.save_plist(overrides, job_path)
+      else
+        job_plist_file       = CFPropertyList::List.new
+        job_plist_file.value = CFPropertyList.guess(job_plist)
+        job_plist_file.save(job_path, CFPropertyList::List::FORMAT_XML)
+      end
     end
   end
-
-
 end

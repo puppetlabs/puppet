@@ -179,7 +179,13 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should write to the global launchd overrides file once" do
       provider.stubs(:get_macosx_version_major).returns("10.6")
       provider.stubs(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
+      if $legacy_plist_support
+        Plist::Emit.expects(:save_plist).once
+      else
+        File.expects(:exists?).with(launchd_overrides).returns(true)
+        File.expects(:writable?).with(launchd_overrides).returns(true)
+        File.expects(:open).with(launchd_overrides, 'wb').once.returns(true)
+      end
       subject.stubs(:resource).returns({:name => joblabel, :enable => :true})
       subject.enable
     end
@@ -189,7 +195,13 @@ describe Puppet::Type.type(:service).provider(:launchd) do
     it "should write to the global launchd overrides file once" do
       provider.stubs(:get_macosx_version_major).returns("10.6")
       provider.stubs(:read_plist).returns({})
-      Plist::Emit.expects(:save_plist).once
+      if $legacy_plist_support
+        Plist::Emit.expects(:save_plist).once
+      else
+        File.expects(:exists?).with(launchd_overrides).returns(true)
+        File.expects(:writable?).with(launchd_overrides).returns(true)
+        File.expects(:open).with(launchd_overrides, 'wb').once.returns(true)
+      end
       subject.stubs(:resource).returns({:name => joblabel, :enable => :false})
       subject.enable
     end
