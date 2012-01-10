@@ -113,6 +113,14 @@ describe Puppet::Type.type(:service).provider(:launchd) do
       subject.expects(:disable).once
       subject.start
     end
+    it "(#2773) should execute 'launchctl load -w' if the job is enabled but stopped" do
+      subject.expects(:plist_from_label).returns([joblabel, {}])
+      subject.expects(:enabled?).returns(:true)
+      subject.expects(:status).returns(:stopped)
+      subject.expects(:resource).returns({:name => joblabel}).twice
+      subject.expects(:execute).with([:launchctl, :load, '-w', joblabel])
+      subject.start
+    end
   end
 
   describe "when stopping the service" do
