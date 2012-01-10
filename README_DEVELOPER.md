@@ -62,10 +62,9 @@ SyntaxError, invalid multibyte escape as mentioned above.
 
 # Windows #
 
-If you'd like to run Puppet from source on Windows platforms, the include
-`ext/envpuppet.bat` will help.  NOTE: the RUBYLIB environment variable must
-have forward slashes (/) rather than Windows back slashes.  All file paths in
-the Puppet code base should use a path separator of / regardless of Windows or
+If you'd like to run Puppet from source on Windows platforms, the
+include `ext/envpuppet.bat` will help.  All file paths in the Puppet
+code base should use a path separator of / regardless of Windows or
 Unix filesystem.
 
 To quickly run Puppet from source, assuming you already have Ruby installed
@@ -75,10 +74,16 @@ from [rubyinstaller.org](http://rubyinstaller.org).
     gem install win32-service --platform=mswin32 --no-rdoc --no-ri --version 0.7.1
     net use Z: "\\vmware-host\Shared Folders" /persistent:yes
     Z:
-    cd \
-    cd \vagrant\src\puppet\ext
+    cd <path_to_puppet>
+    set PATH=%PATH%;Z:\<path_to_puppet>\ext
     envpuppet puppet --version
     2.7.9
+
+Some spec tests are known to fail on Windows, e.g. no mount provider
+on Windows, so use the following rspec exclude filter:
+
+    cd <path_to_puppet>
+    envpuppet rspec --tag ~fails_on_windows spec
 
 This will give you a shared filesystem with your Mac and allow you to run
 Puppet directly from source without using install.rb or copying files around.
