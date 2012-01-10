@@ -60,4 +60,27 @@ byte manipulations:
 If the Regexp is not marked as ASCII-8BIT using /n, then you can expect the
 SyntaxError, invalid multibyte escape as mentioned above.
 
+# Windows #
+
+If you'd like to run Puppet from source on Windows platforms, the include
+`ext/envpuppet.bat` will help.  NOTE: the RUBYLIB environment variable must
+have forward slashes (/) rather than Windows back slashes.  All file paths in
+the Puppet code base should use a path separator of / regardless of Windows or
+Unix filesystem.
+
+To quickly run Puppet from source, assuming you already have Ruby installed
+from [rubyinstaller.org](http://rubyinstaller.org).
+
+    gem install sys-admin win32-process win32-dir win32-taskscheduler --no-rdoc --no-ri
+    gem install win32-service --platform=mswin32 --no-rdoc --no-ri --version 0.7.1
+    net use Z: "\\vmware-host\Shared Folders" /persistent:yes
+    Z:
+    cd \
+    cd \vagrant\src\puppet\ext
+    envpuppet puppet --version
+    2.7.9
+
+This will give you a shared filesystem with your Mac and allow you to run
+Puppet directly from source without using install.rb or copying files around.
+
 EOF
