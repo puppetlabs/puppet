@@ -193,4 +193,11 @@ class Puppet::Module
   def assert_validity
     raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-'), not '#{name}'" unless name =~ /^[-\w]+$/
   end
+
+  def ==(other)
+    self.name == other.name &&
+      self.version == other.version &&
+      self.path == other.path &&
+      self.environment == other.environment
+  end
 end

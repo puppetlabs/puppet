@@ -54,7 +54,6 @@ class Puppet::Node::Environment
     @root
   end
 
-  # This is only used for testing.
   def self.clear
     @seen.clear
   end
