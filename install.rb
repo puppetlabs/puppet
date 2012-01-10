@@ -422,16 +422,12 @@ def install_binfile(from, op_file, target)
 
     if not installed_wrapper
       tmp_file2 = File.join(tmp_dir, '_tmp_wrapper')
-      cwn = File.join(Config::CONFIG['bindir'], op_file)
       cwv = <<-EOS
 @echo off
-if "%OS%"=="Windows_NT" goto WinNT
-#{ruby} -x "#{cwn}" %1 %2 %3 %4 %5 %6 %7 %8 %9
-goto done
-:WinNT
-#{ruby} -x "#{cwn}" %*
-goto done
-:done
+setlocal
+set RUBY_BIN=%~dp0
+set RUBY_BIN=%RUBY_BIN:\\=/%
+"%RUBY_BIN%ruby.exe" -x "%RUBY_BIN%puppet" %*
 EOS
       File.open(tmp_file2, "w") { |cw| cw.puts cwv }
       FileUtils.install(tmp_file2, File.join(target, "#{op_file}.bat"), :mode => 0755, :verbose => true)
