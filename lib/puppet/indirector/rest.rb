@@ -95,7 +95,7 @@ class Puppet::Indirector::REST < Puppet::Indirector::Terminus
   rescue OpenSSL::SSL::SSLError => error
     if error.message.include? "certificate verify failed"
       raise Puppet::Error, "#{error.message}.  This is often because the time is out of sync on the server or client"
-    elsif error.message.include? "hostname was not match"
+    elsif error.message =~ /hostname (was )?not match/
       raise unless cert = peer_certs.find { |c| c.name !~ /^puppet ca/i }
 
       valid_certnames = [cert.name, *cert.subject_alt_names].uniq
