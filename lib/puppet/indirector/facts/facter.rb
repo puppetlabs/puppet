@@ -15,7 +15,7 @@ class Puppet::Node::Facts::Facter < Puppet::Indirector::Code
       end
     end.flatten
     dirs = module_fact_dirs + Puppet[:factpath].split(File::PATH_SEPARATOR)
-    x = dirs.each do |dir|
+    x = dirs.uniq.each do |dir|
       load_facts_in_dir(dir)
     end
   end
