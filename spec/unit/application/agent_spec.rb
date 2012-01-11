@@ -519,12 +519,6 @@ describe Puppet::Application::Agent do
         @puppetd.onetime
       end
 
-      it "should stop the daemon" do
-        @daemon.expects(:stop).with(:exit => false)
-
-        @puppetd.onetime
-      end
-
       describe "and --detailed-exitcodes" do
         before :each do
           @puppetd.options.stubs(:[]).with(:detailed_exitcodes).returns(true)
