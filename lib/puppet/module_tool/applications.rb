@@ -8,5 +8,6 @@ module Puppet::Module::Tool
     require 'puppet/module_tool/applications/installer'
     require 'puppet/module_tool/applications/searcher'
     require 'puppet/module_tool/applications/unpacker'
+    require 'puppet/module_tool/applications/uninstaller'
   end
 end
