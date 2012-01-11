@@ -5,7 +5,8 @@ module Puppet::Util::SUIDManager
   include Puppet::Util::Warnings
   extend Forwardable
 
-  # Note groups= is handled specially due to a bug in OS X 10.6
+  # Note groups= is handled specially due to a bug in OS X 10.6, 10.7,
+  # and probably upcoming releases...
   to_delegate_to_process = [ :euid=, :euid, :egid=, :egid, :uid=, :uid, :gid=, :gid, :groups ]
 
   to_delegate_to_process.each do |method|
@@ -28,10 +29,25 @@ module Puppet::Util::SUIDManager
   module_function :osx_maj_ver
 
   def groups=(grouplist)
-    if osx_maj_ver == '10.6'
-      return true
-    else
+    begin
       return Process.groups = grouplist
+    rescue Errno::EINVAL => e
+      #We catch Errno::EINVAL as some operating systems (OS X in particular) can
+      # cause troubles when using Process#groups= to change *this* user / process
+      # list of supplementary groups membership.  This is done via Ruby's function
+      # "static VALUE proc_setgroups(VALUE obj, VALUE ary)" which is effectively
+      # a wrapper for "int setgroups(size_t size, const gid_t *list)" (part of SVr4
+      # and 4.3BSD but not in POSIX.1-2001) that fails and sets errno to EINVAL.
+      #
+      # This does not appear to be a problem with Ruby but rather an issue on the
+      # operating system side.  Therefore we catch the exception and look whether
+      # we run under OS X or not -- if so, then we acknowledge the problem and
+      # re-throw the exception otherwise.
+      if osx_maj_ver and not osx_maj_ver.empty?
+        return true
+      else
+        raise e
+      end
     end
   end
   module_function :groups=
