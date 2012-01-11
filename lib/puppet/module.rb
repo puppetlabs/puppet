@@ -41,15 +41,16 @@ class Puppet::Module
     return metadata.is_a?(Hash) && !metadata.keys.empty?
   end
 
-  def initialize(name, environment = nil)
+  def initialize(name, options = {})
     @name = name
+    @path = options[:path]
 
     assert_validity
 
-    if environment.is_a?(Puppet::Node::Environment)
-      @environment = environment
+    if options[:environment].is_a?(Puppet::Node::Environment)
+      @environment = options[:environment]
     else
-      @environment = Puppet::Node::Environment.new(environment)
+      @environment = Puppet::Node::Environment.new(options[:environment])
     end
 
     load_metadata if has_metadata?
@@ -134,7 +135,7 @@ class Puppet::Module
 
   # Find this module in the modulepath.
   def path
-    environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
+    @path ||= environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
   end
 
   # Find all plugin directories.  This is used by the Plugins fileserving mount.

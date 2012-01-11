@@ -88,7 +88,7 @@ class Puppet::Node::Environment
   end
 
   def module(name)
-    mod = Puppet::Module.new(name, self)
+    mod = Puppet::Module.new(name, :environment => self)
     return nil unless mod.exist?
     mod
   end
@@ -107,7 +107,7 @@ class Puppet::Node::Environment
     module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
     module_names.collect do |path|
       begin
-        Puppet::Module.new(path, self)
+        Puppet::Module.new(path, :environment => self)
       rescue Puppet::Module::Error => e
         nil
       end

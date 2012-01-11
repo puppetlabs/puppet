@@ -174,11 +174,11 @@ describe Puppet::Module do
   end
 
   it "should convert an environment name into an Environment instance" do
-    Puppet::Module.new("foo", "prod").environment.should be_instance_of(Puppet::Node::Environment)
+    Puppet::Module.new("foo", :environment => "prod").environment.should be_instance_of(Puppet::Node::Environment)
   end
 
   it "should accept an environment at initialization" do
-    Puppet::Module.new("foo", :prod).environment.name.should == :prod
+    Puppet::Module.new("foo", :environment => :prod).environment.name.should == :prod
   end
 
   it "should use the default environment if none is provided" do
@@ -188,43 +188,53 @@ describe Puppet::Module do
 
   it "should use any provided Environment instance" do
     env = Puppet::Node::Environment.new
-    Puppet::Module.new("foo", env).environment.should equal(env)
+    Puppet::Module.new("foo", :environment => env).environment.should equal(env)
   end
 
-  it "should return the path to the first found instance in its environment's module paths as its path" do
-    dir = tmpdir("deep_path")
-    first = File.join(dir, "first")
-    second = File.join(dir, "second")
+  describe ".path" do
+    before do
+      dir = tmpdir("deep_path")
 
-    FileUtils.mkdir_p(first)
-    FileUtils.mkdir_p(second)
-    Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
+      @first = File.join(dir, "first")
+      @second = File.join(dir, "second")
+      Puppet[:modulepath] = "#{@first}#{File::PATH_SEPARATOR}#{@second}"
 
-    modpath = File.join(first, "foo")
-    FileUtils.mkdir_p(modpath)
+      FileUtils.mkdir_p(@first)
+      FileUtils.mkdir_p(@second)
+    end
 
-    # Make a second one, which we shouldn't find
-    FileUtils.mkdir_p(File.join(second, "foo"))
+    it "should return the path to the first found instance in its environment's module paths as its path" do
+      modpath = File.join(@first, "foo")
+      FileUtils.mkdir_p(modpath)
 
-    mod = Puppet::Module.new("foo")
-    mod.path.should == modpath
-  end
+      # Make a second one, which we shouldn't find
+      FileUtils.mkdir_p(File.join(@second, "foo"))
 
-  it "should be able to find itself in a directory other than the first directory in the module path" do
-    dir = tmpdir("deep_path")
-    first = File.join(dir, "first")
-    second = File.join(dir, "second")
+      mod = Puppet::Module.new("foo")
+      mod.path.should == modpath
+    end
 
-    FileUtils.mkdir_p(first)
-    FileUtils.mkdir_p(second)
-    Puppet[:modulepath] = "#{first}#{File::PATH_SEPARATOR}#{second}"
+    it "should be able to find itself in a directory other than the first directory in the module path" do
+      modpath = File.join(@second, "foo")
+      FileUtils.mkdir_p(modpath)
 
-    modpath = File.join(second, "foo")
-    FileUtils.mkdir_p(modpath)
+      mod = Puppet::Module.new("foo")
+      mod.should be_exist
+      mod.path.should == modpath
+    end
 
-    mod = Puppet::Module.new("foo")
-    mod.should be_exist
-    mod.path.should == modpath
+    it "should be able to find itself in a directory other than the first directory in the module path even when it exists in the first" do
+      environment = Puppet::Node::Environment.new
+
+      first_modpath = File.join(@first, "foo")
+      FileUtils.mkdir_p(first_modpath)
+      second_modpath = File.join(@second, "foo")
+      FileUtils.mkdir_p(second_modpath)
+
+      mod = Puppet::Module.new("foo", :environment => environment, :path => second_modpath)
+      mod.path.should == File.join(@second, "foo")
+      mod.environment.should == environment
+    end
   end
 
   it "should be considered existent if it exists in at least one module path" do
