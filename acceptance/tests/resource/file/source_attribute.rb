@@ -19,10 +19,10 @@ on agents, "rm -rf `puppet agent --configprint ssldir`"
 
 on master, "mkdir -p #{File.dirname(source_file)}"
 on master, "echo 'the content is present' > #{source_file}"
-on master, %Q[echo "file { '#{result_file}': source => 'puppet:///modules/source_test_module/source_file', ensure => present }" > #{source_file}]
+on master, %Q[echo "file { '#{result_file}': source => 'puppet:///modules/source_test_module/source_file', ensure => present }" > #{manifest}]
 
 with_master_running_on master, "--autosign true --manifest #{manifest} --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\"" do
-  run_agent_on agents, "--test --server #{master}" do
+  run_agent_on agents, "--test --server #{master}", :acceptable_exit_codes => [2] do
     on agents, "cat #{result_file}" do
       assert_match(/the content is present/, stdout, "Result file not created")
     end
@@ -57,7 +57,7 @@ on agents, puppet_agent("--configprint modulepath") do
 end
 
 on agents, %q{echo "file { '/tmp/source_file_test.txt': source => 'puppet:///modules/test_module/test_file.txt', ensure => present }" > /tmp/source_test_manifest.pp}
-on agents, puppet_apply("/tmp/source_test_manifest.pp") 
+on agents, puppet_apply("/tmp/source_test_manifest.pp")
 
 agents.each do |host|
   on host, "cat /tmp/source_file_test.txt" do
