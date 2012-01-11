@@ -117,6 +117,8 @@ class Puppet::Application::Agent < Puppet::Application
       Puppet.err detail.to_s
     end
 
+    @daemon.stop(:exit => false)
+
     if not report
       exit(1)
     elsif options[:detailed_exitcodes] then
