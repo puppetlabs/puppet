@@ -24,13 +24,22 @@ Puppet::Face.define(:parser, '0.0.1') do
       Validate two arbitrary manifest files:
 
       $ puppet parser validate init.pp vhost.pp
+
+      Validate from STDIN:
+
+      $ cat init.pp | puppet parser validate
     EOT
     when_invoked do |*args|
       args.pop
       files = args
       if files.empty?
-        files << Puppet[:manifest]
-        Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
+        if not STDIN.tty?
+          Puppet[:code] = STDIN.read
+          Puppet::Node::Environment.new(Puppet[:environment]).known_resource_types.clear
+        else
+           files << Puppet[:manifest]
+           Puppet.notice "No manifest specified. Validating the default manifest #{Puppet[:manifest]}"
+        end
       end
       files.each do |file|
         Puppet[:manifest] = file
