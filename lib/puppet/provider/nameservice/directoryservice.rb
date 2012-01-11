@@ -569,7 +569,14 @@ class DirectoryService < Puppet::Provider::NameService
         begin
           execute(cmd)
         rescue Puppet::ExecutionFailure => detail
-          fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+          # TODO: We're falling back to removing the member using dscl due to rdar://8481241
+          # This bug causes dseditgroup to fail to remove a member if that member doesn't exist
+          cmd = [:dscl, ".", "-delete", "/Groups/#{@resource.name}", "GroupMembership", member]
+          begin
+            execute(cmd)
+          rescue Puppet::ExecutionFailure => detail
+            fail("Could not remove #{member} from group: #{@resource.name}, #{detail}")
+          end
         end
       end
     end
