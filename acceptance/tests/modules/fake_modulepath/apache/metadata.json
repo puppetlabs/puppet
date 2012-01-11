@@ -1,0 +1,54 @@
+{
+  "name": "puppetlabs-apache",
+  "dependencies": [
+
+  ],
+  "author": "",
+  "license": "",
+  "version": "0.0.3",
+  "checksums": {
+    "tests/ssl.pp": "191912535199531fd631f911c6329e56",
+    "manifests/params.pp": "8728cf041cdd94bb0899170eb2b417d9",
+    "tests/vhost.pp": "1b91e03c8ef89a7ecb6793831ac18399",
+    "manifests/php.pp": "8a5ca4035b1c22892923f3fde55e3d5e",
+    "lib/puppet/provider/a2mod/a2mod.rb": "18c5bb180b75a2375e95e07f88a94257",
+    "tests/php.pp": "ce7bb9eef69d32b42a32ce32d9653625",
+    "files/httpd": "295f5e924afe6f752d29327e73fe6d0a",
+    "manifests/dev.pp": "bc54a5af648cb04b7b3bb0e3f7be6543",
+    "manifests/ssl.pp": "11ed1861298c72cca3a706480bb0b67c",
+    "files/test.vhost": "0602022c19a7b6b289f218c7b93c1aea",
+    "tests/init.pp": "4eac4a7ef68499854c54a78879e25535",
+    "manifests/vhost.pp": "7806a6c098e217da046d0555314756c4",
+    "lib/puppet/type/a2mod.rb": "0e1b4843431413a10320ac1f6a055d15",
+    "templates/vhost-default.conf.erb": "ed64a53af0d7bad762176a98c9ea3e62",
+    "tests/dev.pp": "4cf15c1fecea3ca86009f182b402c7ab",
+    "tests/apache.pp": "4eac4a7ef68499854c54a78879e25535",
+    "Modulefile": "9b7a414bf15b06afe2f011068fcaff52",
+    "manifests/init.pp": "9ef7e081c832bca8f861c3a9feb9949d"
+  },
+  "types": [
+    {
+      "name": "a2mod",
+      "doc": "Manage Apache 2 modules on Debian and Ubuntu",
+      "parameters": [
+        {
+          "name": "name",
+          "doc": "The name of the module to be managed"
+        }
+      ],
+      "providers": [
+        {
+          "name": "a2mod",
+          "doc": "Manage Apache 2 modules on Debian and Ubuntu  Required binaries: ``a2enmod``, ``a2dismod``.    Default for ``operatingsystem`` == ``debianubuntu``.  "
+        }
+      ],
+      "properties": [
+        {
+          "name": "ensure",
+          "doc": "The basic property that the resource should be in.  Valid values are ``present``, ``absent``."
+        }
+      ]
+    }
+  ],
+  "source": ""
+}
