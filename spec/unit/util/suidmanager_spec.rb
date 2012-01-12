@@ -308,3 +308,22 @@ describe Puppet::Util::SUIDManager do
     end
   end
 end
+
+describe 'Puppet::Util::SUIDManager#groups=' do
+  subject do
+    Puppet::Util::SUIDManager
+  end
+
+
+  it "(#3419) should rescue Errno::EINVAL on OS X" do
+    Process.expects(:groups=).raises(Errno::EINVAL, 'blew up')
+    subject.expects(:osx_maj_ver).returns('10.7').twice
+    subject.groups = ['list', 'of', 'groups']
+  end
+
+  it "(#3419) should fail if an Errno::EINVAL is raised NOT on OS X" do
+    Process.expects(:groups=).raises(Errno::EINVAL, 'blew up')
+    subject.expects(:osx_maj_ver).returns(false)
+    expect { subject.groups = ['list', 'of', 'groups'] }.should raise_error(Errno::EINVAL)
+  end
+end
