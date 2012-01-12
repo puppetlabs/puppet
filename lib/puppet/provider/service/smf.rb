@@ -58,7 +58,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
     when :maintenance
       [command(:adm), :clear, @resource[:name]]
     else
-      [command(:adm), :enable, @resource[:name]]
+      [command(:adm), :enable, "-s", @resource[:name]]
     end
   end
 
@@ -98,7 +98,7 @@ Puppet::Type.type(:service).provide :smf, :parent => :base do
   end
 
   def stopcmd
-    [command(:adm), :disable, @resource[:name]]
+    [command(:adm), :disable, "-s", @resource[:name]]
   end
 end
 
