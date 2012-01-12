@@ -21,14 +21,29 @@ describe Puppet::Node::Facts::Facter do
     Puppet::Node::Facts::Facter.name.should == :facter
   end
 
-  it "should load facts on initialization" do
-    Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
-    Puppet::Node::Facts::Facter.new
+  describe "when reloading Facter" do
+    before do
+      @facter_class = Puppet::Node::Facts::Facter
+      Facter.stubs(:clear)
+      Facter.stubs(:load)
+      Facter.stubs(:loadfacts)
+    end
+
+    it "should clear Facter" do
+      Facter.expects(:clear)
+      @facter_class.reload_facter
+    end
+
+    it "should load all Facter facts" do
+      Facter.expects(:loadfacts)
+      @facter_class.reload_facter
+    end
   end
 end
 
 describe Puppet::Node::Facts::Facter do
   before :each do
+    Puppet::Node::Facts::Facter.stubs(:reload_facter)
     @facter = Puppet::Node::Facts::Facter.new
     Facter.stubs(:to_hash).returns({})
     @name = "me"
@@ -36,6 +51,13 @@ describe Puppet::Node::Facts::Facter do
   end
 
   describe Puppet::Node::Facts::Facter, " when finding facts" do
+    it "should reset and load facts" do
+      clear = sequence 'clear'
+      Puppet::Node::Facts::Facter.expects(:reload_facter).in_sequence(clear)
+      Puppet::Node::Facts::Facter.expects(:load_fact_plugins).in_sequence(clear)
+      @facter.find(@request)
+    end
+
     it "should return a Facts instance" do
       @facter.find(@request).should be_instance_of(Puppet::Node::Facts)
     end
