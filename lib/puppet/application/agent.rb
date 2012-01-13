@@ -347,6 +347,8 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
       Puppet.err detail.to_s
     end
 
+    @daemon.stop(:exit => false)
+
     if not report
       exit(1)
     elsif options[:detailed_exitcodes] then
