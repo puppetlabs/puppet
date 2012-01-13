@@ -21,7 +21,7 @@ describe Puppet::Type.type(:file).attrclass(:mode) do
     it "should not accept strings other than octal numbers" do
       expect do
         mode.value = 'readable please!'
-      end.to raise_error(Puppet::Error, /File modes can only be octal numbers/)
+      end.to raise_error(Puppet::Error, /The file mode specification is invalid/)
     end
   end
 
