@@ -153,7 +153,7 @@ Puppet::Type.type(:augeas).provide(:augeas) do
       end
 
       root = resource[:root]
-      load_path = resource[:load_path]
+      load_path = [resource[:load_path], "#{Puppet[:plugindir]}/augeas/lenses"].reject! { |i| i == "" }.join(':')
       debug("Opening augeas with root #{root}, lens path #{load_path}, flags #{flags}")
       @aug = Augeas::open(root, load_path,flags)
 
