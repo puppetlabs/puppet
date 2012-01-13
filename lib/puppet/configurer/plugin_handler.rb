@@ -22,6 +22,7 @@ module Puppet::Configurer::PluginHandler
   def load_plugin(file)
     return unless FileTest.exist?(file)
     return if FileTest.directory?(file)
+    return unless File.extname(file) == '.rb'
 
     begin
       if file =~ /.rb$/
