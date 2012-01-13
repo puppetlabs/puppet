@@ -557,8 +557,7 @@ describe Puppet::Application::Agent do
 
       it "should stop the daemon" do
         @daemon.expects(:stop).with(:exit => false)
-
-        @puppetd.onetime
+        expect { @puppetd.onetime }.to exit_with 0
       end
 
       describe "and --detailed-exitcodes" do
