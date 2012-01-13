@@ -3,6 +3,9 @@
 # specifying the full mode.
 module Puppet
   Puppet::Type.type(:file).newproperty(:mode) do
+    require 'puppet/util/symbolic_file_mode'
+    include Puppet::Util::SymbolicFileMode
+
     desc "Mode the file should be.  Currently relatively limited:
       you must specify the exact mode the file should be.
 
@@ -23,23 +26,32 @@ module Puppet
       mode 644, and all of the directories will have mode 755."
 
     validate do |value|
-      if value.is_a?(String) and value !~ /^[0-7]+$/
-        raise Puppet::Error, "File modes can only be octal numbers, not #{should.inspect}"
+      unless value.nil? or valid_symbolic_mode?(value)
+        raise Puppet::Error, "The file mode specification is invalid: #{value.inspect}"
       end
     end
 
-    munge do |should|
-      if should.is_a?(String)
-        should.to_i(8).to_s(8)
-      else
-        should.to_s(8)
+    munge do |value|
+      return nil if value.nil?
+
+      unless valid_symbolic_mode?(value)
+        raise Puppet::Error, "The file mode specification is invalid: #{value.inspect}"
       end
+
+      normalize_symbolic_mode(value)
+    end
+
+    def desired_mode_from_current(desired, current)
+      current = current.to_i(8) if current.is_a? String
+      is_a_directory = @resource.stat and @resource.stat.directory?
+      symbolic_mode_to_int(desired, current, is_a_directory)
     end
 
     # If we're a directory, we need to be executable for all cases
     # that are readable.  This should probably be selectable, but eh.
     def dirmask(value)
-      if FileTest.directory?(resource[:path])
+      orig = value
+      if FileTest.directory?(resource[:path]) and value =~ /^\d+$/ then
         value = value.to_i(8)
         value |= 0100 if value & 0400 != 0
         value |= 010 if value & 040 != 0
@@ -61,6 +73,13 @@ module Puppet
       end
     end
 
+    def property_matches?(current, desired)
+      return false unless current
+      current_bits = normalize_symbolic_mode(current)
+      desired_bits = desired_mode_from_current(desired, current).to_s(8)
+      current_bits == desired_bits
+    end
+
     # Ideally, dirmask'ing could be done at munge time, but we don't know if 'ensure'
     # will eventually be a directory or something else. And unfortunately, that logic
     # depends on the ensure, source, and target properties. So rather than duplicate
@@ -74,12 +93,28 @@ module Puppet
       super
     end
 
+    # Finally, when we sync the mode out we need to transform it; since we
+    # don't have access to the calculated "desired" value here, or the
+    # "current" value, only the "should" value we need to retrieve again.
+    def sync
+      current = @resource.stat ? @resource.stat.mode : 0644
+      set(desired_mode_from_current(@should[0], current).to_s(8))
+    end
+
+    def change_to_s(old_value, desired)
+      return super if desired =~ /^\d+$/
+
+      old_bits = normalize_symbolic_mode(old_value)
+      new_bits = normalize_symbolic_mode(desired_mode_from_current(desired, old_bits))
+      super(old_bits, new_bits) + " (#{desired})"
+    end
+
     def should_to_s(should_value)
-      should_value.rjust(4,"0")
+      should_value.rjust(4, "0")
     end
 
     def is_to_s(currentvalue)
-      currentvalue.rjust(4,"0")
+      currentvalue.rjust(4, "0")
     end
   end
 end

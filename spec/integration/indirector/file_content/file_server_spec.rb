@@ -24,7 +24,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     modpath = File.join(path, "mod")
     FileUtils.mkdir_p(File.join(modpath, "lib"))
     file = File.join(modpath, "lib", "file.rb")
-    File.open(file, "w") { |f| f.puts "1" }
+    File.open(file, "wb") { |f| f.write "1\r\n" }
 
     Puppet.settings[:modulepath] = "/no/such/file"
 
@@ -36,7 +36,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     result.should_not be_nil
     result.length.should == 2
     result[1].should be_instance_of(Puppet::FileServing::Content)
-    result[1].content.should == "1\n"
+    result[1].content.should == "1\r\n"
   end
 
   it "should find file content in modules" do
@@ -47,7 +47,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     modpath = File.join(path, "mymod")
     FileUtils.mkdir_p(File.join(modpath, "files"))
     file = File.join(modpath, "files", "myfile")
-    File.open(file, "w") { |f| f.puts "1" }
+    File.open(file, "wb") { |f| f.write "1\r\n" }
 
     Puppet.settings[:modulepath] = path
 
@@ -55,7 +55,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     result.should_not be_nil
     result.should be_instance_of(Puppet::FileServing::Content)
-    result.content.should == "1\n"
+    result.content.should == "1\r\n"
   end
 
   it "should find file content in files when node name expansions are used" do
@@ -67,7 +67,7 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
     Dir.mkdir(@path)
     subdir = File.join(@path, "mynode")
     Dir.mkdir(subdir)
-    File.open(File.join(subdir, "myfile"), "w") { |f| f.puts "1" }
+    File.open(File.join(subdir, "myfile"), "wb") { |f| f.write "1\r\n" }
 
     # Use a real mount, so the integration is a bit deeper.
     @mount1 = Puppet::FileServing::Configuration::Mount::File.new("one")
@@ -85,6 +85,6 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     result.should_not be_nil
     result.should be_instance_of(Puppet::FileServing::Content)
-    result.content.should == "1\n"
+    result.content.should == "1\r\n"
   end
 end
