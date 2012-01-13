@@ -11,10 +11,3 @@ RSpec.configure do |config|
     config.mock_with :mocha
 end
 
-class Puppet
-    class Parser
-        class Functions
-        end
-    end
-end
-
