@@ -157,3 +157,43 @@ describe 'DirectoryService password behavior' do
   end
 end
 
+describe '(#4855) directoryservice group resource failure' do
+  let :provider_class do
+    Puppet::Type.type(:group).provider(:directoryservice)
+  end
+
+  let :group_members do
+    ['root','jeff']
+  end
+
+  let :user_account do
+    ['root']
+  end
+
+  let :stub_resource do
+    stub('resource')
+  end
+
+  subject do
+    provider_class.new(stub_resource)
+  end
+
+  before :each do
+    @resource = stub("resource")
+    @provider = provider_class.new(@resource)
+  end
+
+  it 'should delete a group member if the user does not exist' do
+    stub_resource.stubs(:[]).with(:name).returns('fake_group')
+    stub_resource.stubs(:name).returns('fake_group')
+    subject.expects(:execute).with([:dseditgroup, '-o', 'edit', '-n', '.',
+                                   '-d', 'jeff',
+                                   'fake_group']).raises(Puppet::ExecutionFailure,
+                                   'it broke')
+    subject.expects(:execute).with([:dscl, '.', '-delete',
+                                   '/Groups/fake_group', 'GroupMembership',
+                                   'jeff'])
+    subject.remove_unwanted_members(group_members, user_account)
+  end
+end
+

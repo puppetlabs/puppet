@@ -1,6 +1,10 @@
+
 module Puppet
   Puppet::Type.type(:file).ensurable do
     require 'etc'
+    require 'puppet/util/symbolic_file_mode'
+    include Puppet::Util::SymbolicFileMode
+
     desc <<-EOT
       Whether to create files that don't currently exist.
       Possible values are *absent*, *present*, *file*, and *directory*.
@@ -63,7 +67,7 @@ module Puppet
       end
       if mode
         Puppet::Util.withumask(000) do
-          Dir.mkdir(@resource[:path], mode.to_i(8))
+          Dir.mkdir(@resource[:path], symbolic_mode_to_int(mode, 755, true))
         end
       else
         Dir.mkdir(@resource[:path])

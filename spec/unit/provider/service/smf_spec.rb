@@ -92,7 +92,7 @@ describe provider_class do
 
     it "should always execute external command 'svcadm enable /system/myservice'" do
       @provider.stubs(:status).returns :running
-      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "/system/myservice"], true)
+      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "-s", "/system/myservice"], true)
       @provider.start
     end
 
@@ -112,7 +112,7 @@ describe provider_class do
 
     it "should import the manifest if service is missing" do
       @provider.expects(:svccfg).with(:import, "/tmp/myservice.xml")
-      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "/system/myservice"], true)
+      @provider.expects(:texecute).with(:start, ["/usr/sbin/svcadm", :enable, "-s", "/system/myservice"], true)
       @provider.expects(:svcs).with('-H', '-o', 'state,nstate', "/system/myservice").returns("online\t-")
       @provider.start
     end
@@ -125,7 +125,7 @@ describe provider_class do
 
   describe "when stopping" do
     it "should execute external command 'svcadm disable /system/myservice'" do
-      @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, "/system/myservice"], true)
+      @provider.expects(:texecute).with(:stop, ["/usr/sbin/svcadm", :disable, "-s", "/system/myservice"], true)
       @provider.stop
     end
   end

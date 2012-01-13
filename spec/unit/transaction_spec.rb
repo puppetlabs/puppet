@@ -436,6 +436,10 @@ describe Puppet::Transaction do
 
       @transaction.catalog.add_resource(dependent, dependent2)
 
+      # We enqueue them here just so we can check their blockers. This is done
+      # again in traverse.
+      graph.enqueue_roots
+
       graph.blockers[dependent].should == 1
       graph.blockers[dependent2].should == 1
 
@@ -452,6 +456,8 @@ describe Puppet::Transaction do
       dependent2 = Puppet::Type.type(:notify).new(:name => "goodbye", :require => resource)
 
       @transaction.catalog.add_resource(dependent, dependent2)
+
+      graph.enqueue_roots
 
       graph.blockers[dependent].should == 1
       graph.blockers[dependent2].should == 1
@@ -510,70 +516,50 @@ describe Puppet::Transaction do
     end
   end
 
-  describe "when generating resources" do
+  describe "when generating resources before traversal" do
+    let(:catalog) { Puppet::Resource::Catalog.new }
+    let(:transaction) { Puppet::Transaction.new(catalog) }
+    let(:generator) { Puppet::Type.type(:notify).create :title => "generator" }
+    let(:generated) do
+      %w[a b c].map { |name| Puppet::Type.type(:notify).new(:name => name) }
+    end
+
+    before :each do
+      catalog.add_resource generator
+      generator.stubs(:generate).returns generated
+    end
+
     it "should call 'generate' on all created resources" do
-      first = Puppet::Type.type(:notify).new(:name => "first")
-      second = Puppet::Type.type(:notify).new(:name => "second")
-      third = Puppet::Type.type(:notify).new(:name => "third")
+      generated.each { |res| res.expects(:generate) }
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
-
-      first.expects(:generate).returns [second]
-      second.expects(:generate).returns [third]
-      third.expects(:generate)
-
-      @transaction.generate_additional_resources(first)
+      transaction.add_dynamically_generated_resources
     end
 
     it "should finish all resources" do
-      generator = stub 'generator', :depthfirst? => true, :tags => [], :ref => "Some[resource]"
-      resource = stub 'resource', :tag => nil
+      generated.each { |res| res.expects(:finish) }
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
-
-      generator.expects(:generate).returns [resource]
-
-      @catalog.expects(:add_resource).yields(resource)
-
-      resource.expects(:finish)
-
-      @transaction.generate_additional_resources(generator)
+      transaction.add_dynamically_generated_resources
     end
 
     it "should skip generated resources that conflict with existing resources" do
-      generator = mock 'generator', :tags => []
-      resource = stub 'resource', :tag => nil
+      duplicate = generated.first
+      catalog.add_resource(duplicate)
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
+      duplicate.expects(:finish).never
 
-      generator.expects(:generate).returns [resource]
+      duplicate.expects(:info).with { |msg| msg =~ /Duplicate generated resource/ }
 
-      @catalog.expects(:add_resource).raises(Puppet::Resource::Catalog::DuplicateResourceError.new("foo"))
-
-      resource.expects(:finish).never
-      resource.expects(:info) # log that it's skipped
-
-      @transaction.generate_additional_resources(generator)
+      transaction.add_dynamically_generated_resources
     end
 
     it "should copy all tags to the newly generated resources" do
-      child = stub 'child', :ref => "Some[child_resource]"
-      generator = stub 'resource', :tags => ["one", "two"], :ref => "Some[resource]"
+      generator.tag('one', 'two')
 
-      @catalog = Puppet::Resource::Catalog.new
-      @transaction = Puppet::Transaction.new(@catalog)
+      transaction.add_dynamically_generated_resources
 
-      generator.stubs(:generate).returns [child]
-      @catalog.stubs(:add_resource)
-
-      child.expects(:tag).with("one", "two")
-      child.expects(:finish)
-      generator.expects(:depthfirst?)
-
-      @transaction.generate_additional_resources(generator)
+      generated.each do |res|
+        res.should be_tagged(generator.tags)
+      end
     end
   end
 
