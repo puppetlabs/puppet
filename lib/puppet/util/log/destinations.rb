@@ -41,6 +41,8 @@ Puppet::Util::Log.newdesttype :syslog do
 end
 
 Puppet::Util::Log.newdesttype :file do
+  require 'fileutils'
+
   def self.match?(obj)
     Puppet::Util.absolute_path?(obj)
   end
@@ -64,7 +66,7 @@ Puppet::Util::Log.newdesttype :file do
     # We can't just use 'Config.use' here, because they've
     # specified a "special" destination.
     unless FileTest.exist?(File.dirname(path))
-      Puppet.recmkdir(File.dirname(path))
+      FileUtils.mkdir_p(File.dirname(path), :mode => 0755)
       Puppet.info "Creating log directory #{File.dirname(path)}"
     end
 
