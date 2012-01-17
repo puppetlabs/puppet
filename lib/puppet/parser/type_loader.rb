@@ -112,7 +112,7 @@ class Puppet::Parser::TypeLoader
     # behavior) only load files from the first module of a given name.  E.g.,
     # given first/foo and second/foo, only files from first/foo will be loaded.
     module_names.each do |name|
-      mod = Puppet::Module.new(name, environment)
+      mod = Puppet::Module.new(name, :environment => environment)
       Find.find(File.join(mod.path, "manifests")) do |path|
         if path =~ /\.pp$/ or path =~ /\.rb$/
           import(path)
