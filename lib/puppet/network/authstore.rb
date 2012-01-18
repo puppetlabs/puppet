@@ -150,7 +150,15 @@ module Puppet
 
       # Does this declaration match the name/ip combo?
       def match?(name, ip)
-        ip? ? pattern.include?(IPAddr.new(ip)) : matchname?(name)
+        case @name
+          when :ip
+            pattern.include?(IPAddr.new(ip))
+          when :domain, :dynamic, :opaque
+            name = munge_name(name)
+            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
+          when :regex
+            Regexp.new(pattern[1..-2]).match(name)
+        end
       end
 
       # Set the pattern appropriately.  Also sets the name and length.
@@ -197,17 +205,6 @@ module Puppet
       # in the <=> operator.
       def compare(me, them)
         (me and them) ? nil : me ? -1 : them ? 1 : nil
-      end
-
-      # Does the name match our pattern?
-      def matchname?(name)
-        case @name
-          when :domain, :dynamic, :opaque
-            name = munge_name(name)
-            (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
-          when :regex
-            Regexp.new(pattern.slice(1..-2)).match(name)
-        end
       end
 
       # Convert the name to a common pattern.
