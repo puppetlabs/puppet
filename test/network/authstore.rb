@@ -347,6 +347,17 @@ class TestAuthStore < Test::Unit::TestCase
     threads.each { |th| th.join }
   end
 
+  def test_catalog_class
+    klass = Declaration.new(:allow, "class:app_a")
+    catalog = Puppet::Resource::Catalog.new()
+    Puppet::Resource::Catalog.indirection.expects(:find).returns(catalog)
+    assert(! klass.match?("host.com", "192.168.0.1"))
+
+    catalog.add_class("app_a")
+    Puppet::Resource::Catalog.indirection.expects(:find).returns(catalog)
+    assert(klass.match?("host.com", "192.168.0.1"))
+  end
+
   def test_hostname_regex
     regex = Declaration.new(:allow, "/host[0-9]+.com/")
     assert(regex.match?("host15.com", "192.168.0.1"))
@@ -383,6 +394,7 @@ class TestAuthStoreDeclaration < PuppetTest::TestCase
       "$1.hostname.COM" => [:dynamic, %w{com hostname $1}, nil],
       "192.168.$1.$2" => [:dynamic, %w{$2 $1 168 192}, nil],
       "/^app[0-9]+.hostname.com$/" => [:regex, Regexp.new("^app[0-9]+.hostname.com$"), nil],
+      "classes:app_a,app_b" => [:klass, %w{app_a app_b}, nil],
       "8A5BC90C-B8FD-4CBC-81DA-BAD84D551791" => [:opaque, %w{8A5BC90C-B8FD-4CBC-81DA-BAD84D551791}, nil]
     }.each do |input, output|
 

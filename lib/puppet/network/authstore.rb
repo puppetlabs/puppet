@@ -158,6 +158,9 @@ module Puppet
             (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
           when :regex
             pattern.match(name)
+          when :klass
+            catalog = Puppet::Resource::Catalog.indirection.find(name)
+            pattern.detect { |klass| catalog.classes.include? klass }
         end
       end
 
@@ -226,7 +229,7 @@ module Puppet
       IP = "#{IPv4}|#{IPv6_full}".gsub(/_/,'([0-9a-fA-F]{1,4})').gsub(/\(/,'(?:')
       def parse(value)
         @name,@exact,@length,@pattern = *case value
-        when /^(?:#{IP})\/(\d+)$/                                   # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
+        when /^(?:#{IP})\/(\d+)$/                                 # 12.34.56.78/24, a001:b002::efff/120, c444:1000:2000::9:192.168.0.1/112
           [:ip,:inexact,$1.to_i,IPAddr.new(value)]
         when /^(#{IP})$/                                          # 10.20.30.40,
           [:ip,:exact,nil,IPAddr.new(value)]
@@ -246,6 +249,9 @@ module Puppet
           [:opaque,:exact,nil,[value]]
         when /^\/.*\/$/                                           # a regular expression
           [:regex,:inexact,nil,Regexp.new(value.slice(1..-2))]
+        when /^class(?:es)?:(.*)$/                                # a list of classes defined in catalog
+          klasses = value.split(':', 2)[1].split(',')
+          [:klass,:inexact,nil,klasses]
         else
           raise AuthStoreError, "Invalid pattern #{value}"
         end
