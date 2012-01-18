@@ -166,22 +166,43 @@ class Puppet::Property < Puppet::Parameter
     raise "Puppet::Property#safe_insync? shouldn't be overridden; please override insync? instead" if sym == :safe_insync?
   end
 
-  # This method should be overridden by derived classes if necessary
+  # This method may be overridden by derived classes if necessary
   # to provide extra logic to determine whether the property is in
-  # sync.
+  # sync.  In most cases, however, only `property_matches?` needs to be
+  # overridden to give the correct outcome - without reproducing all the array
+  # matching logic, etc, found here.
   def insync?(is)
     self.devfail "#{self.class.name}'s should is not array" unless @should.is_a?(Array)
 
     # an empty array is analogous to no should values
     return true if @should.empty?
 
-    # Look for a matching value
-    return (is == @should or is == @should.collect { |v| v.to_s }) if match_all?
+    # Look for a matching value, either for all the @should values, or any of
+    # them, depending on the configuration of this property.
+    if match_all? then
+      old = (is == @should or is == @should.collect { |v| v.to_s })
+      new = Array(is).zip(@should).all? {|is, want| property_matches?(is, want) }
 
-    @should.each { |val| return true if is == val or is == val.to_s }
+      puts "old and new mismatch!" unless old == new
+      fail "old and new mismatch!" unless old == new
 
-    # otherwise, return false
-    false
+      # We need to pairwise compare the entries; this preserves the old
+      # behaviour while using the new pair comparison code.
+      return Array(is).zip(@should).all? {|is, want| property_matches?(is, want) }
+    else
+      return @should.any? {|want| property_matches?(is, want) }
+    end
+  end
+
+  # Compare the current and desired value of a property in a property-specific
+  # way.  Invoked by `insync?`; this should be overridden if your property
+  # has a different comparison type but does not actually differentiate the
+  # overall insync? logic.
+  def property_matches?(current, desired)
+    # This preserves the older Puppet behaviour of doing raw and string
+    # equality comparisons for all equality.  I am not clear this is globally
+    # desirable, but at least it is not a breaking change. --daniel 2011-11-11
+    current == desired or current == desired.to_s
   end
 
   # because the @should and @is vars might be in weird formats,
@@ -194,13 +215,10 @@ class Puppet::Property < Puppet::Parameter
 
   # Send a log message.
   def log(msg)
-
-          Puppet::Util::Log.create(
-
-      :level => resource[:loglevel],
+    Puppet::Util::Log.create(
+      :level   => resource[:loglevel],
       :message => msg,
-
-      :source => self
+      :source  => self
     )
   end
 

@@ -78,12 +78,6 @@ describe Puppet::Configurer::FactHandler do
       Puppet[:node_name_value].should == 'other_node_name'
     end
 
-    it "should reload Facter before finding facts" do
-      @facthandler.expects(:reload_facter)
-
-      @facthandler.find_facts
-    end
-
     it "should fail if finding facts fails" do
       Puppet[:trace] = false
       Puppet[:certname] = "myhost"
@@ -91,6 +85,11 @@ describe Puppet::Configurer::FactHandler do
 
       lambda { @facthandler.find_facts }.should raise_error(Puppet::Error)
     end
+  end
+
+  it "should only load fact plugins once" do
+    Puppet::Node::Facts.indirection.expects(:find).once
+    @facthandler.find_facts
   end
 
   it "should warn about factsync deprecation when factsync is enabled" do
@@ -144,28 +143,5 @@ describe Puppet::Configurer::FactHandler do
     @facthandler.expects(:find_facts).returns facts
 
     @facthandler.facts_for_uploading
-  end
-
-  describe "when reloading Facter" do
-    before do
-      Facter.stubs(:clear)
-      Facter.stubs(:load)
-      Facter.stubs(:loadfacts)
-    end
-
-    it "should clear Facter" do
-      Facter.expects(:clear)
-      @facthandler.reload_facter
-    end
-
-    it "should load all Facter facts" do
-      Facter.expects(:loadfacts)
-      @facthandler.reload_facter
-    end
-
-    it "should use the Facter terminus load all Puppet Fact plugins" do
-      Puppet::Node::Facts::Facter.expects(:load_fact_plugins)
-      @facthandler.reload_facter
-    end
   end
 end
