@@ -17,7 +17,7 @@ describe "puppet module uninstall" do
       end
 
       it "should not require any options" do
-        Puppet::Module::Tool::Applications::UnInstaller.expects(:run).once
+        Puppet::Module::Tool::Applications::Uninstaller.expects(:run).once
         subject.uninstall("puppetlabs-apache")
       end
     end
@@ -25,7 +25,7 @@ describe "puppet module uninstall" do
     it "should accept the --target-directory option" do
       options[:target_directory] = "/foo/puppet/modules"
       expected_options = { :target_directories => ["/foo/puppet/modules"] }
-      Puppet::Module::Tool::Applications::UnInstaller.expects(:run).with("puppetlabs-apache", expected_options).once
+      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.uninstall("puppetlabs-apache", options)
     end
   end
