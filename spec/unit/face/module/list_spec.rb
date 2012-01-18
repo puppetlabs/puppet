@@ -22,7 +22,7 @@ describe "puppet module list" do
   end
 
   it "should return an empty list per dir in path if there are no modules" do
-    Puppet.settings[:modulepath] = "#{@modpath1}:#{@modpath2}"
+    Puppet.settings[:modulepath] = "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}"
     Puppet::Face[:module, :current].list.should == {
       @modpath1 => [],
       @modpath2 => []
@@ -66,7 +66,7 @@ describe "puppet module list" do
     foomod1 = mkmodule('foo', @modpath1)
     barmod2 = mkmodule('bar', @modpath2)
 
-    Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}:#{@modpath2}").should == {
+    Puppet::Face[:module, :current].list(:modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}").should == {
       @modpath1 => [ Puppet::Module.new('foo') ],
       @modpath2 => [ Puppet::Module.new('bar') ]
     }
@@ -78,7 +78,7 @@ describe "puppet module list" do
     env = Puppet::Node::Environment.new('myenv')
     env.modulepath = ['/tmp/notused']
 
-    list = Puppet::Face[:module, :current].list(:env => 'myenv', :modulepath => "#{@modpath1}:#{@modpath2}")
+    list = Puppet::Face[:module, :current].list(:env => 'myenv', :modulepath => "#{@modpath1}#{File::PATH_SEPARATOR}#{@modpath2}")
 
     # Changing Puppet[:modulepath] causes Puppet::Node::Environment.new('myenv')
     # to have a different object_id than the env above
