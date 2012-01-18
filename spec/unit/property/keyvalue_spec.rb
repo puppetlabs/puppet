@@ -35,8 +35,11 @@ describe klass do
       @property.should_to_s({:foo => "baz", :bar => "boo"}) == "foo=baz;bar=boo"
     end
 
-    it "should return the passed in array values joined with the delimiter from is_to_s" do
-      @property.is_to_s({"foo" => "baz" , "bar" => "boo"}).should == "foo=baz;bar=boo"
+    it "should return the passed in hash values joined with the delimiter from is_to_s" do
+      s = @property.is_to_s({"foo" => "baz" , "bar" => "boo"})
+
+      # We can't predict the order the hash is processed in...
+      ["foo=baz;bar=boo", "bar=boo;foo=baz"].should be_include s
     end
 
     describe "when calling inclusive?" do
