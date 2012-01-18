@@ -25,9 +25,14 @@ require 'puppet/util/run_mode'
 
 module Puppet
   PUPPETVERSION = '2.7.9'
+  PEVersionFile = '/opt/puppet/pe_version'
 
   def Puppet.version
-    PUPPETVERSION
+    if File.readable? PEVersionFile then
+      "#{PUPPETVERSION} (Puppet Enterprise %s)" % File.new(PEVersionFile).gets.chomp
+    else
+      PUPPETVERSION
+    end
   end
 
   class << self
