@@ -93,6 +93,9 @@ module Puppet::Module::Tool
         def target
           target = @generator.destination + @source.relative_path_from(@generator.skeleton.path)
           components = target.to_s.split(File::SEPARATOR).map do |part|
+            if part[0] == '_'
+              part[0] = '.'
+            end
             part == 'NAME' ? @generator.metadata.name : part
           end
           Pathname.new(components.join(File::SEPARATOR))
