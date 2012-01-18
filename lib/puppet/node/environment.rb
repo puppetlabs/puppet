@@ -54,7 +54,6 @@ class Puppet::Node::Environment
     @root
   end
 
-  # This is only used for testing.
   def self.clear
     @seen.clear
   end
@@ -88,7 +87,7 @@ class Puppet::Node::Environment
   end
 
   def module(name)
-    mod = Puppet::Module.new(name, self)
+    mod = Puppet::Module.new(name, :environment => self)
     return nil unless mod.exist?
     mod
   end
@@ -107,11 +106,25 @@ class Puppet::Node::Environment
     module_names = modulepath.collect { |path| Dir.entries(path) }.flatten.uniq
     module_names.collect do |path|
       begin
-        Puppet::Module.new(path, self)
+        Puppet::Module.new(path, :environment => self)
       rescue Puppet::Module::Error => e
         nil
       end
     end.compact
+  end
+
+  # Modules broken out by directory in the modulepath
+  def modules_by_path
+    modules_by_path = {}
+    modulepath.each do |path|
+      Dir.chdir(path) do
+        module_names = Dir.glob('*').select { |d| FileTest.directory? d }
+        modules_by_path[path] = module_names.map do |name|
+          Puppet::Module.new(name, :environment => self, :path => File.join(path, name))
+        end
+      end
+    end
+    modules_by_path
   end
 
   def to_s

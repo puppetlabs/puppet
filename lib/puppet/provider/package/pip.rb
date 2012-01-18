@@ -102,7 +102,7 @@ Puppet::Type.type(:package).provide :pip,
       self.class.commands :pip => pathname
       pip *args
     else
-      raise e
+      raise e, 'Could not locate the pip command.'
     end
   end
 end

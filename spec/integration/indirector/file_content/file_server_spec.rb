@@ -35,8 +35,8 @@ describe Puppet::Indirector::FileContent::FileServer, " when finding files" do
 
     result.should_not be_nil
     result.length.should == 2
-    result[1].should be_instance_of(Puppet::FileServing::Content)
-    result[1].content.should == "1\r\n"
+    result.map {|x| x.should be_instance_of(Puppet::FileServing::Content) }
+    result.find {|x| x.relative_path == 'file.rb' }.content.should == "1\r\n"
   end
 
   it "should find file content in modules" do
