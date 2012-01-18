@@ -157,7 +157,7 @@ module Puppet
             name = munge_name(name)
             (pattern == name) or (not exact? and pattern.zip(name).all? { |p,n| p == n })
           when :regex
-            Regexp.new(pattern[1..-2]).match(name)
+            pattern.match(name)
         end
       end
 
@@ -245,7 +245,7 @@ module Puppet
         when /^\w[-.@\w]*$/                                       # ? Just like a host name but allow '@'s and ending '.'s
           [:opaque,:exact,nil,[value]]
         when /^\/.*\/$/                                           # a regular expression
-          [:regex,:inexact,nil,value]
+          [:regex,:inexact,nil,Regexp.new(value.slice(1..-2))]
         else
           raise AuthStoreError, "Invalid pattern #{value}"
         end
