@@ -19,13 +19,6 @@ class Puppet::Module
 
   FILETYPES = [MANIFESTS, FILES, TEMPLATES, PLUGINS]
 
-  # Return an array of paths by splitting the +modulepath+ config
-  # parameter. Only consider paths that are absolute and existing
-  # directories
-  def self.modulepath(environment = nil)
-    Puppet::Node::Environment.new(environment).modulepath
-  end
-
   # Find and return the +module+ that +path+ belongs to. If +path+ is
   # absolute, or if there is no module whose name is the first component
   # of +path+, return +nil+
@@ -48,15 +41,16 @@ class Puppet::Module
     return metadata.is_a?(Hash) && !metadata.keys.empty?
   end
 
-  def initialize(name, environment = nil)
+  def initialize(name, options = {})
     @name = name
+    @path = options[:path]
 
     assert_validity
 
-    if environment.is_a?(Puppet::Node::Environment)
-      @environment = environment
+    if options[:environment].is_a?(Puppet::Node::Environment)
+      @environment = options[:environment]
     else
-      @environment = Puppet::Node::Environment.new(environment)
+      @environment = Puppet::Node::Environment.new(options[:environment])
     end
 
     load_metadata if has_metadata?
@@ -141,17 +135,12 @@ class Puppet::Module
 
   # Find this module in the modulepath.
   def path
-    environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
+    @path ||= environment.modulepath.collect { |path| File.join(path, name) }.find { |d| FileTest.directory?(d) }
   end
 
   # Find all plugin directories.  This is used by the Plugins fileserving mount.
   def plugin_directory
     subpath("plugins")
-  end
-
-  def requires(name, version = nil)
-    @requires ||= []
-    @requires << [name, version]
   end
 
   def supports(name, version = nil)
@@ -203,5 +192,12 @@ class Puppet::Module
 
   def assert_validity
     raise InvalidName, "Invalid module name; module names must be alphanumeric (plus '-'), not '#{name}'" unless name =~ /^[-\w]+$/
+  end
+
+  def ==(other)
+    self.name == other.name &&
+      self.version == other.version &&
+      self.path == other.path &&
+      self.environment == other.environment
   end
 end
