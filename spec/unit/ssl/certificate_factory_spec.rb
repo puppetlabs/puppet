@@ -52,19 +52,19 @@ describe Puppet::SSL::CertificateFactory do
 
     it "should have 24 hours grace on the start of the cert" do
       cert = subject.build(:server, csr, issuer, serial)
-      cert.not_before.should be_within(1).of(Time.now - 24*60*60)
+      cert.not_before.should be_within(30).of(Time.now - 24*60*60)
     end
 
     it "should set the default TTL of the certificate" do
       ttl  = Puppet::SSL::CertificateFactory.ttl
       cert = subject.build(:server, csr, issuer, serial)
-      cert.not_after.should be_within(1).of(Time.now + ttl)
+      cert.not_after.should be_within(30).of(Time.now + ttl)
     end
 
     it "should respect a custom TTL for the CA" do
       Puppet[:ca_ttl] = 12
       cert = subject.build(:server, csr, issuer, serial)
-      cert.not_after.should be_within(1).of(Time.now + 12)
+      cert.not_after.should be_within(30).of(Time.now + 12)
     end
 
     it "should build extensions for the certificate" do
