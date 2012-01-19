@@ -22,9 +22,35 @@ describe "puppet module uninstall" do
       end
     end
 
-    it "should accept the --target-directory option" do
-      options[:target_directory] = "/foo/puppet/modules"
-      expected_options = { :target_directories => ["/foo/puppet/modules"] }
+    it "should accept the --environment option" do
+      options[:environment] = "development"
+      expected_options = {
+        :environment => 'development',
+        :name => 'puppetlabs-apache'
+      }
+      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
+      subject.uninstall("puppetlabs-apache", options)
+    end
+
+    it "should accept the --modulepath option" do
+      options[:modulepath] = "/foo/puppet/modules"
+      expected_options = { 
+        :modulepath => '/foo/puppet/modules',
+        :environment => 'production',
+        :name => 'puppetlabs-apache', 
+      }
+      File.expects(:directory?).with("/foo/puppet/modules").returns(true)
+      Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
+      subject.uninstall("puppetlabs-apache", options)
+    end
+
+    it "should accept the --version option" do
+      options[:version] = "1.0.0"
+      expected_options = { 
+        :version => '1.0.0',
+        :environment => 'production',
+        :name => 'puppetlabs-apache', 
+      }
       Puppet::Module::Tool::Applications::Uninstaller.expects(:run).with("puppetlabs-apache", expected_options).once
       subject.uninstall("puppetlabs-apache", options)
     end
@@ -35,7 +61,7 @@ describe "puppet module uninstall" do
 
     its(:summary)     { should =~ /uninstall.*module/im }
     its(:description) { should =~ /uninstall.*module/im }
-    its(:returns)     { should =~ /array of strings/i }
+    its(:returns)     { should =~ /hash of module objects.*/im }
     its(:examples)    { should_not be_empty }
 
     %w{ license copyright summary description returns examples }.each do |doc|
