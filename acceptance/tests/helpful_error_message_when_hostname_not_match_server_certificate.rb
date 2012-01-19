@@ -1,8 +1,5 @@
 test_name "generate a helpful error message when hostname doesn't match server certificate"
 
-step "Clear any existing SSL directories"
-on(hosts, "rm -rf #{config['puppetpath']}/ssl")
-
 # Start the master with a certname not matching its hostname
 with_master_running_on(master, "--certname foobar_not_my_hostname --dns_alt_names one_cert,two_cert,red_cert,blue_cert --autosign true") do
   run_agent_on(agents, "--no-daemonize --verbose --onetime --server #{master}", :acceptable_exit_codes => (1..255)) do
