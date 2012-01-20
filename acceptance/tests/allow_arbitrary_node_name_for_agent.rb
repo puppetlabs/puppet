@@ -22,8 +22,6 @@ MANIFEST
 
 on master, "chmod 644 #{authfile} #{manifest_file}"
 
-on hosts, "rm -rf /etc/puppet/ssl"
-
 with_master_running_on(master, "--rest_authconfig #{authfile} --manifest #{manifest_file} --daemonize --dns_alt_names=\"puppet, $(hostname -s), $(hostname -f)\" --autosign true") do
   run_agent_on(agents, "--no-daemonize --verbose --onetime --node_name_value specified_node_name --server #{master}") do
     assert_match(success_message, stdout)
