@@ -12,37 +12,6 @@ describe Puppet::Configurer::FactHandler do
     @facthandler = FactHandlerTester.new
   end
 
-  it "should download fact plugins when :factsync is true" do
-    Puppet.settings.expects(:value).with(:factsync).returns true
-    @facthandler.should be_download_fact_plugins
-  end
-
-  it "should not download fact plugins when :factsync is false" do
-    Puppet.settings.expects(:value).with(:factsync).returns false
-    @facthandler.should_not be_download_fact_plugins
-  end
-
-  it "should not download fact plugins when downloading is disabled" do
-    Puppet::Configurer::Downloader.expects(:new).never
-    @facthandler.expects(:download_fact_plugins?).returns false
-    @facthandler.download_fact_plugins
-  end
-
-  it "should use an Agent Downloader, with the name, source, destination, and ignore set correctly, to download fact plugins when downloading is enabled" do
-    downloader = mock 'downloader'
-
-    Puppet.settings.expects(:value).with(:factsource).returns "fsource"
-    Puppet.settings.expects(:value).with(:factdest).returns "fdest"
-    Puppet.settings.expects(:value).with(:factsignore).returns "fignore"
-
-    Puppet::Configurer::Downloader.expects(:new).with("fact", "fdest", "fsource", "fignore").returns downloader
-
-    downloader.expects(:evaluate)
-
-    @facthandler.expects(:download_fact_plugins?).returns true
-    @facthandler.download_fact_plugins
-  end
-
   describe "when finding facts" do
     before :each do
       @facthandler.stubs(:reload_facter)
@@ -90,14 +59,6 @@ describe Puppet::Configurer::FactHandler do
   it "should only load fact plugins once" do
     Puppet::Node::Facts.indirection.expects(:find).once
     @facthandler.find_facts
-  end
-
-  it "should warn about factsync deprecation when factsync is enabled" do
-    Puppet::Configurer::Downloader.stubs(:new).returns mock("downloader", :evaluate => nil)
-
-    @facthandler.expects(:download_fact_plugins?).returns true
-    Puppet.expects(:warning)
-    @facthandler.download_fact_plugins
   end
 
   # I couldn't get marshal to work for this, only yaml, so we hard-code yaml.
