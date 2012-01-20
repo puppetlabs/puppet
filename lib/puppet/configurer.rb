@@ -73,10 +73,7 @@ class Puppet::Configurer
   # Prepare for catalog retrieval.  Downloads everything necessary, etc.
   def prepare(options)
     dostorage
-
     download_plugins unless options[:skip_plugin_download]
-
-    download_fact_plugins unless options[:skip_plugin_download]
   end
 
   # Get the remote catalog, yo.  Returns nil if no catalog can be found.

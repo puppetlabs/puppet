@@ -585,20 +585,12 @@ describe Puppet::Configurer do
   describe "when preparing for a run" do
     before do
       Puppet.settings.stubs(:use).returns(true)
-      @agent.stubs(:download_fact_plugins)
-      @agent.stubs(:download_plugins)
       @facts = {"one" => "two", "three" => "four"}
     end
 
     it "should initialize the metadata store" do
       @agent.class.stubs(:facts).returns(@facts)
       @agent.expects(:dostorage)
-      @agent.prepare({})
-    end
-
-    it "should download fact plugins" do
-      @agent.expects(:download_fact_plugins)
-
       @agent.prepare({})
     end
 
