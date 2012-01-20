@@ -764,16 +764,7 @@ EOT
 
       :call_on_define => true, # Call our hook with the default value, so we always get the value added to facter.
       :type => :setting, # Don't consider it a file, because it could be multiple colon-separated files
-      :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }},
-    :factdest => ["$vardir/facts/",
-      "Where Puppet should store facts that it pulls down from the central
-      server."],
-    :factsource => ["puppet://$server/facts/",
-      "From where to retrieve facts.  The standard Puppet `file` type
-      is used for retrieval, so anything that is a valid file source can
-      be used here."],
-    :factsync => [false, "Whether facts should be synced with the central server."],
-    :factsignore => [".svn CVS", "What files to ignore when pulling down facts."]
+      :hook => proc { |value| Facter.search(value) if Facter.respond_to?(:search) }}
   )
 
 

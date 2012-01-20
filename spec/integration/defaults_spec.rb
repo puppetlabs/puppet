@@ -122,12 +122,6 @@ describe "Puppet defaults" do
     Puppet.settings[:bindaddress].should == ""
   end
 
-  [:factdest].each do |setting|
-    it "should force the :factdest to be a directory" do
-      Puppet.settings[setting].should =~ /\/$/
-    end
-  end
-
   [:modulepath, :factpath].each do |setting|
     it "should configure '#{setting}' not to be a file setting, so multi-directory settings are acceptable" do
       Puppet.settings.setting(setting).should be_instance_of(Puppet::Util::Settings::Setting)
