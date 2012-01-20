@@ -110,6 +110,37 @@ class Hiera
                         @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
                         @backend.lookup("key", @scope, nil, :array).should == ["rspec::key", "test::key"]
                     end
+
+
+                    it "should return a hash of found data for hash searches" do
+                        Backend.expects(:empty_answer).returns({})
+                        Backend.expects(:parse_answer).with("rspec::key", @scope).returns({'rspec'=>'key'})
+                        Backend.expects(:parse_answer).with("test::key", @scope).returns({'test'=>'key'})
+                        catalog = mock
+                        catalog.expects(:classes).returns(["rspec", "test"])
+                        @mockscope.expects(:catalog).returns(catalog)
+                        @mockscope.expects(:function_include).never
+                        @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec::key")
+                        @mockscope.expects(:lookupvar).with("test::key").returns("test::key")
+
+                        @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
+                        @backend.lookup("key", @scope, nil, :hash).should == {'rspec'=>'key', 'test'=>'key'}
+                    end
+
+                    it "should return a merged hash of found data for hash searches" do
+                        Backend.expects(:empty_answer).returns({})
+                        Backend.expects(:parse_answer).with("rspec::key", @scope).returns({'rspec'=>'key', 'common'=>'rspec'})
+                        Backend.expects(:parse_answer).with("test::key", @scope).returns({'test'=>'key', 'common'=>'rspec'})
+                        catalog = mock
+                        catalog.expects(:classes).returns(["rspec", "test"])
+                        @mockscope.expects(:catalog).returns(catalog)
+                        @mockscope.expects(:function_include).never
+                        @mockscope.expects(:lookupvar).with("rspec::key").returns("rspec::key")
+                        @mockscope.expects(:lookupvar).with("test::key").returns("test::key")
+
+                        @backend.expects(:hierarchy).with(@scope, nil).returns(["rspec", "test"])
+                        @backend.lookup("key", @scope, nil, :hash).should == {'rspec'=>'key', 'common'=>'rspec', 'test'=>'key'}
+                    end
                 end
             end
         end
