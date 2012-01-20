@@ -3,19 +3,20 @@ class Puppet::Parser::Relationship
 
   PARAM_MAP = {:relationship => :before, :subscription => :notify}
 
+  def arrayify(resources)
+    case resources
+    when Puppet::Parser::Collector
+      resources.collected.values
+    when Array
+      resources
+    else
+      [resources]
+    end
+  end
+
   def evaluate(catalog)
-    if source.is_a?(Puppet::Parser::Collector)
-      sources = source.collected.values
-    else
-      sources = [source]
-    end
-    if target.is_a?(Puppet::Parser::Collector)
-      targets = target.collected.values
-    else
-      targets = [target]
-    end
-    sources.each do |s|
-      targets.each do |t|
+    arrayify(source).each do |s|
+      arrayify(target).each do |t|
         mk_relationship(s, t, catalog)
       end
     end
