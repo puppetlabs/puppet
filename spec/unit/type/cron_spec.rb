@@ -4,15 +4,9 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows? do
   before do
-
-    # Init a fake provider
-    @provider_class = stub 'provider_class', :ancestors => [], :name => 'fake', :suitable? => true, :supports_parameter? => true
+    @provider_class = described_class.provide(:simple) { mk_resource_methods }
+    @provider_class.stubs(:suitable?).returns true
     described_class.stubs(:defaultprovider).returns @provider_class
-    described_class.stubs(:provider).returns @provider_class
-
-    @provider = stub 'provider', :class => @provider_class, :clean => nil
-    @provider.stubs(:is_a?).returns false
-    @provider_class.stubs(:new).returns @provider
   end
 
   it "should have :name be its namevar" do
