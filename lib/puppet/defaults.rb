@@ -626,6 +626,9 @@ EOT
       Note that a runinterval of 0 means \"run continuously\" rather than
       \"never run.\" If you want puppet agent to never run, you should start
       it with the `--no-client` option."],
+    :client => [true, "This will casue the daemon to run without ever checking for
+      its configuration automagically, and only makes sense when puppet agent is
+      being run with listen = true."],
     :listen => [false, "Whether puppet agent should listen for
       connections.  If this is true, then puppet agent will accept incoming
       REST API requests, subject to the default ACLs and the ACLs set in

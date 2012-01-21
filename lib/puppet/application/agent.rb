@@ -410,7 +410,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
     enable_disable_client(@agent) if options[:enable] or options[:disable]
 
-    @daemon.agent = agent if options[:client]
+    @daemon.agent = agent if options[:client] and Puppet.settings[:client]
 
     # It'd be nice to daemonize later, but we have to daemonize before the
     # waitforcert happens.
