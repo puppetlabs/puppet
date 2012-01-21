@@ -43,6 +43,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       it "should support absent as a value for ensure" do
         proc { described_class.new(:name => 'foo', :ensure => :present) }.should_not raise_error
       end
+
+      it "should not support other values" do
+        proc { described_class.new(:name => 'foo', :ensure => :foo) }.should raise_error(Puppet::Error, /Invalid value/)
+      end
     end
 
     describe "minute" do
@@ -69,17 +73,17 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support non numeric characters" do
-        proc { described_class.new(:name => 'foo', :minute => 'z59') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => '5z9') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => '59z') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :minute => 'z59') }.should raise_error(Puppet::Error, /z59 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => '5z9') }.should raise_error(Puppet::Error, /5z9 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => '59z') }.should raise_error(Puppet::Error, /59z is not a valid minute/)
       end
 
       it "should not support single values out of range" do
 
-        proc { described_class.new(:name => 'foo', :minute => '-1') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => '60') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => '61') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => '120') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :minute => '-1') }.should raise_error(Puppet::Error, /-1 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => '60') }.should raise_error(Puppet::Error, /60 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => '61') }.should raise_error(Puppet::Error, /61 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => '120') }.should raise_error(Puppet::Error, /120 is not a valid minute/)
       end
 
       it "should support valid multiple values" do
@@ -90,13 +94,13 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
       it "should not support multiple values if at least one is invalid" do
         # one invalid
-        proc { described_class.new(:name => 'foo', :minute => ['0','1','60'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => ['0','120','59'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => ['-1','1','59'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :minute => ['0','1','60'] ) }.should raise_error(Puppet::Error, /60 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => ['0','120','59'] ) }.should raise_error(Puppet::Error, /120 is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => ['-1','1','59'] ) }.should raise_error(Puppet::Error, /-1 is not a valid minute/)
         # two invalid
-        proc { described_class.new(:name => 'foo', :minute => ['0','61','62'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :minute => ['0','61','62'] ) }.should raise_error(Puppet::Error, /(61|62) is not a valid minute/)
         # all invalid
-        proc { described_class.new(:name => 'foo', :minute => ['-1','61','62'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :minute => ['-1','61','62'] ) }.should raise_error(Puppet::Error, /(-1|61|62) is not a valid minute/)
       end
 
       it "should support valid step syntax" do
@@ -105,10 +109,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support invalid steps" do
-        proc { described_class.new(:name => 'foo', :minute => '*/A' ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :minute => '*/2A' ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :minute => '*/A' ) }.should raise_error(Puppet::Error, /\*\/A is not a valid minute/)
+        proc { described_class.new(:name => 'foo', :minute => '*/2A' ) }.should raise_error(Puppet::Error, /\*\/2A is not a valid minute/)
         # As it turns out cron does not complaining about steps that exceed the valid range
-        # proc { described_class.new(:name => 'foo', :minute => '*/120' ) }.should raise_error(Puppet::Error)
+        # proc { described_class.new(:name => 'foo', :minute => '*/120' ) }.should raise_error(Puppet::Error, /is not a valid minute/)
       end
     end
 
@@ -138,15 +142,15 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support non numeric characters" do
-        proc { described_class.new(:name => 'foo', :hour => 'z15') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => '1z5') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => '15z') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :hour => 'z15') }.should raise_error(Puppet::Error, /z15 is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => '1z5') }.should raise_error(Puppet::Error, /1z5 is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => '15z') }.should raise_error(Puppet::Error, /15z is not a valid hour/)
       end
 
       it "should not support single values out of range" do
-        proc { described_class.new(:name => 'foo', :hour => '-1') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => '24') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => '120') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :hour => '-1') }.should raise_error(Puppet::Error, /-1 is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => '24') }.should raise_error(Puppet::Error, /24 is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => '120') }.should raise_error(Puppet::Error, /120 is not a valid hour/)
       end
 
       it "should support valid multiple values" do
@@ -157,13 +161,13 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
       it "should not support multiple values if at least one is invalid" do
         # one invalid
-        proc { described_class.new(:name => 'foo', :hour => ['0','1','24'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => ['0','-1','5'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => ['-1','1','23'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :hour => ['0','1','24'] ) }.should raise_error(Puppet::Error, /24 is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => ['0','-1','5'] ) }.should raise_error(Puppet::Error, /-1 is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => ['-1','1','23'] ) }.should raise_error(Puppet::Error, /-1 is not a valid hour/)
         # two invalid
-        proc { described_class.new(:name => 'foo', :hour => ['0','25','26'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :hour => ['0','25','26'] ) }.should raise_error(Puppet::Error, /(25|26) is not a valid hour/)
         # all invalid
-        proc { described_class.new(:name => 'foo', :hour => ['-1','24','120'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :hour => ['-1','24','120'] ) }.should raise_error(Puppet::Error, /(-1|24|120) is not a valid hour/)
       end
 
       it "should support valid step syntax" do
@@ -172,10 +176,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support invalid steps" do
-        proc { described_class.new(:name => 'foo', :hour => '*/A' ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :hour => '*/2A' ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :hour => '*/A' ) }.should raise_error(Puppet::Error, /\*\/A is not a valid hour/)
+        proc { described_class.new(:name => 'foo', :hour => '*/2A' ) }.should raise_error(Puppet::Error, /\*\/2A is not a valid hour/)
         # As it turns out cron does not complaining about steps that exceed the valid range
-        # proc { described_class.new(:name => 'foo', :hour => '*/26' ) }.should raise_error(Puppet::Error)
+        # proc { described_class.new(:name => 'foo', :hour => '*/26' ) }.should raise_error(Puppet::Error, /is not a valid hour/)
       end
     end
 
@@ -204,7 +208,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
         proc { described_class.new(:name => 'foo', :weekday => '7') }.should_not raise_error
       end
 
-      it "should support valid weekdays as words (3 character version)" do
+      it "should support valid weekdays as words (long version)" do
         proc { described_class.new(:name => 'foo', :weekday => 'Monday') }.should_not raise_error
         proc { described_class.new(:name => 'foo', :weekday => 'Tuesday') }.should_not raise_error
         proc { described_class.new(:name => 'foo', :weekday => 'Wednesday') }.should_not raise_error
@@ -225,12 +229,12 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support numeric values out of range" do
-        proc { described_class.new(:name => 'foo', :weekday => '-1') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :weekday => '8') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :weekday => '-1') }.should raise_error(Puppet::Error, /-1 is not a valid weekday/)
+        proc { described_class.new(:name => 'foo', :weekday => '8') }.should raise_error(Puppet::Error, /8 is not a valid weekday/)
       end
 
       it "should not support invalid weekday names" do
-        proc { described_class.new(:name => 'foo', :weekday => 'Sar') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :weekday => 'Sar') }.should raise_error(Puppet::Error, /Sar is not a valid weekday/)
       end
 
       it "should support valid multiple values" do
@@ -240,13 +244,13 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
       it "should not support multiple values if at least one is invalid" do
         # one invalid
-        proc { described_class.new(:name => 'foo', :weekday => ['0','1','8'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :weekday => ['Mon','Fii','Sat'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :weekday => ['0','1','8'] ) }.should raise_error(Puppet::Error, /8 is not a valid weekday/)
+        proc { described_class.new(:name => 'foo', :weekday => ['Mon','Fii','Sat'] ) }.should raise_error(Puppet::Error, /Fii is not a valid weekday/)
         # two invalid
-        proc { described_class.new(:name => 'foo', :weekday => ['Mos','Fii','Sat'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :weekday => ['Mos','Fii','Sat'] ) }.should raise_error(Puppet::Error, /(Mos|Fii) is not a valid weekday/)
         # all invalid
-        proc { described_class.new(:name => 'foo', :weekday => ['Mos','Fii','Saa'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :weekday => ['-1','8','11'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :weekday => ['Mos','Fii','Saa'] ) }.should raise_error(Puppet::Error, /(Mos|Fii|Saa) is not a valid weekday/)
+        proc { described_class.new(:name => 'foo', :weekday => ['-1','8','11'] ) }.should raise_error(Puppet::Error, /(-1|8|11) is not a valid weekday/)
       end
 
       it "should support valid step syntax" do
@@ -255,10 +259,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support invalid steps" do
-        proc { described_class.new(:name => 'foo', :weekday => '*/A' ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :weekday => '*/2A' ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :weekday => '*/A' ) }.should raise_error(Puppet::Error, /\*\/A is not a valid weekday/)
+        proc { described_class.new(:name => 'foo', :weekday => '*/2A' ) }.should raise_error(Puppet::Error, /\*\/2A is not a valid weekday/)
         # As it turns out cron does not complaining about steps that exceed the valid range
-        # proc { described_class.new(:name => 'foo', :weekday => '*/9' ) }.should raise_error(Puppet::Error)
+        # proc { described_class.new(:name => 'foo', :weekday => '*/9' ) }.should raise_error(Puppet::Error, /is not a valid weekday/)
       end
     end
 
@@ -315,21 +319,21 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support numeric values out of range" do
-        proc { described_class.new(:name => 'foo', :month => '-1') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => '0') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => '13') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => '-1') }.should raise_error(Puppet::Error, /-1 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => '0') }.should raise_error(Puppet::Error, /0 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => '13') }.should raise_error(Puppet::Error, /13 is not a valid month/)
       end
 
       it "should not support words that are not valid months" do
-        proc { described_class.new(:name => 'foo', :month => 'Jal') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => 'Jal') }.should raise_error(Puppet::Error, /Jal is not a valid month/)
       end
 
       it "should not support single values out of range" do
 
-        proc { described_class.new(:name => 'foo', :month => '-1') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => '60') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => '61') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => '120') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => '-1') }.should raise_error(Puppet::Error, /-1 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => '60') }.should raise_error(Puppet::Error, /60 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => '61') }.should raise_error(Puppet::Error, /61 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => '120') }.should raise_error(Puppet::Error, /120 is not a valid month/)
       end
 
       it "should support valid multiple values" do
@@ -339,14 +343,14 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
       it "should not support multiple values if at least one is invalid" do
         # one invalid
-        proc { described_class.new(:name => 'foo', :month => ['0','1','12'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => ['1','13','10'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => ['Jan','Feb','Jxx'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => ['0','1','12'] ) }.should raise_error(Puppet::Error, /0 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => ['1','13','10'] ) }.should raise_error(Puppet::Error, /13 is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => ['Jan','Feb','Jxx'] ) }.should raise_error(Puppet::Error, /Jxx is not a valid month/)
         # two invalid
-        proc { described_class.new(:name => 'foo', :month => ['Jan','Fex','Jux'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => ['Jan','Fex','Jux'] ) }.should raise_error(Puppet::Error, /(Fex|Jux) is not a valid month/)
         # all invalid
-        proc { described_class.new(:name => 'foo', :month => ['-1','0','13'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => ['Jax','Fex','Aux'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => ['-1','0','13'] ) }.should raise_error(Puppet::Error, /(-1|0|13) is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => ['Jax','Fex','Aux'] ) }.should raise_error(Puppet::Error, /(Jax|Fex|Aux) is not a valid month/)
       end
 
       it "should support valid step syntax" do
@@ -355,10 +359,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support invalid steps" do
-        proc { described_class.new(:name => 'foo', :month => '*/A' ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :month => '*/2A' ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :month => '*/A' ) }.should raise_error(Puppet::Error, /\*\/A is not a valid month/)
+        proc { described_class.new(:name => 'foo', :month => '*/2A' ) }.should raise_error(Puppet::Error, /\*\/2A is not a valid month/)
         # As it turns out cron does not complaining about steps that exceed the valid range
-        # proc { described_class.new(:name => 'foo', :month => '*/13' ) }.should raise_error(Puppet::Error)
+        # proc { described_class.new(:name => 'foo', :month => '*/13' ) }.should raise_error(Puppet::Error, /is not a valid month/)
       end
     end
 
@@ -386,15 +390,15 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support non numeric characters" do
-        proc { described_class.new(:name => 'foo', :monthday => 'z23') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => '2z3') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => '23z') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :monthday => 'z23') }.should raise_error(Puppet::Error, /z23 is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => '2z3') }.should raise_error(Puppet::Error, /2z3 is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => '23z') }.should raise_error(Puppet::Error, /23z is not a valid monthday/)
       end
 
       it "should not support single values out of range" do
-        proc { described_class.new(:name => 'foo', :monthday => '-1') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => '0') }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => '32') }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :monthday => '-1') }.should raise_error(Puppet::Error, /-1 is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => '0') }.should raise_error(Puppet::Error, /0 is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => '32') }.should raise_error(Puppet::Error, /32 is not a valid monthday/)
       end
 
       it "should support valid multiple values" do
@@ -405,13 +409,13 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
       it "should not support multiple values if at least one is invalid" do
         # one invalid
-        proc { described_class.new(:name => 'foo', :monthday => ['1','23','32'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => ['-1','12','23'] ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => ['13','32','30'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :monthday => ['1','23','32'] ) }.should raise_error(Puppet::Error, /32 is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => ['-1','12','23'] ) }.should raise_error(Puppet::Error, /-1 is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => ['13','32','30'] ) }.should raise_error(Puppet::Error, /32 is not a valid monthday/)
         # two invalid
-        proc { described_class.new(:name => 'foo', :monthday => ['-1','0','23'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :monthday => ['-1','0','23'] ) }.should raise_error(Puppet::Error, /(-1|0) is not a valid monthday/)
         # all invalid
-        proc { described_class.new(:name => 'foo', :monthday => ['-1','0','32'] ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :monthday => ['-1','0','32'] ) }.should raise_error(Puppet::Error, /(-1|0|32) is not a valid monthday/)
       end
 
       it "should support valid step syntax" do
@@ -420,10 +424,10 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       end
 
       it "should not support invalid steps" do
-        proc { described_class.new(:name => 'foo', :monthday => '*/A' ) }.should raise_error(Puppet::Error)
-        proc { described_class.new(:name => 'foo', :monthday => '*/2A' ) }.should raise_error(Puppet::Error)
+        proc { described_class.new(:name => 'foo', :monthday => '*/A' ) }.should raise_error(Puppet::Error, /\*\/A is not a valid monthday/)
+        proc { described_class.new(:name => 'foo', :monthday => '*/2A' ) }.should raise_error(Puppet::Error, /\*\/2A is not a valid monthday/)
         # As it turns out cron does not complaining about steps that exceed the valid range
-        # proc { described_class.new(:name => 'foo', :monthday => '*/32' ) }.should raise_error(Puppet::Error)
+        # proc { described_class.new(:name => 'foo', :monthday => '*/32' ) }.should raise_error(Puppet::Error, /is not a valid monthday/)
       end
     end
 
@@ -437,7 +441,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
       it "should not accept environment variables that do not contain '='" do
         lambda do
           described_class.new(:name => 'foo',:environment => 'INVALID')
-        end.should raise_error(Puppet::Error)
+        end.should raise_error(Puppet::Error, /Invalid environment setting "INVALID"/)
       end
 
       it "should accept empty environment variables that do not contain '='" do
@@ -457,7 +461,7 @@ describe Puppet::Type.type(:cron), :unless => Puppet.features.microsoft_windows?
 
   it "should require a command when adding an entry" do
     entry = described_class.new(:name => "test_entry", :ensure => :present)
-    expect { entry.value(:command) }.should raise_error(/No command/)
+    expect { entry.value(:command) }.should raise_error(Puppet::Error, /No command/)
   end
 
   it "should not require a command when removing an entry" do
