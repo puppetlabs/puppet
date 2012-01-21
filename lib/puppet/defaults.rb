@@ -108,7 +108,10 @@ module Puppet
       we know nothing about."
     },
     :diff_args => ["-u", "Which arguments to pass to the diff command when printing differences between files."],
-    :diff => ["diff", "Which diff command to use when printing differences between files."],
+    :diff => {
+      :default => (Puppet.features.microsoft_windows? ? "" : "diff"),
+      :desc    => "Which diff command to use when printing differences between files.",
+    },
     :show_diff => [false, "Whether to log and report a contextual diff when files are being replaced.  This causes
       partial file contents to pass through Puppet's normal logging and reporting system, so this setting should be
       used with caution if you are sending Puppet's reports to an insecure destination.

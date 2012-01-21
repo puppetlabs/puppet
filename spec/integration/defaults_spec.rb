@@ -309,4 +309,14 @@ describe "Puppet defaults" do
       end
     end
   end
+
+  describe "diff" do
+    it "should default to 'diff' on POSIX", :unless => Puppet.features.microsoft_windows? do
+      Puppet.settings[:diff].should == 'diff'
+    end
+
+    it "should default to '' on Windows", :if => Puppet.features.microsoft_windows? do
+      Puppet.settings[:diff].should == ''
+    end
+  end
 end
