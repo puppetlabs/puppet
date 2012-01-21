@@ -12,9 +12,6 @@ module Puppet::Agent::Locker
       ensure
         lockfile.unlock
       end
-      return true
-    else
-      return false
     end
   end
 

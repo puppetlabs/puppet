@@ -226,12 +226,12 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
 
       require 'puppet/configurer'
       configurer = Puppet::Configurer.new
-      report = configurer.run(:skip_plugin_download => true, :catalog => catalog)
+      exit_status = configurer.run(:skip_plugin_download => true, :catalog => catalog)
 
-      if not report
+      if not exit_status
         exit(1)
       elsif options[:detailed_exitcodes] then
-        exit(report.exit_status)
+        exit(exit_status)
       else
         exit(0)
       end

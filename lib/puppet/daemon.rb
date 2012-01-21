@@ -122,7 +122,10 @@ class Puppet::Daemon
 
     raise Puppet::DevError, "Daemons must have an agent, server, or both" unless agent or server
     server.start if server
-    agent.start if agent
+    if agent
+      agent.should_fork = true
+      agent.start
+    end
 
     EventLoop.current.run
   end
