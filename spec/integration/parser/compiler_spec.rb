@@ -131,4 +131,151 @@ describe Puppet::Parser::Compiler do
 
     lambda { Puppet::Parser::Compiler.compile(Puppet::Node.new("mynode")) }.should raise_error(Puppet::Error)
   end
+
+  describe "when defining relationships" do
+    def extract_name(ref)
+      ref.sub(/File\[(\w+)\]/, '\1')
+    end
+
+    let(:node) { Puppet::Node.new('mynode') }
+    let(:code) do
+      <<-MANIFEST
+        file { [a,b,c]:
+          mode => 0644,
+        }
+        file { [d,e]:
+          mode => 0755,
+        }
+      MANIFEST
+    end
+    let(:expected_relationships) { [] }
+    let(:expected_subscriptions) { [] }
+
+    before :each do
+      Puppet[:code] = code
+    end
+
+    after :each do
+      catalog = described_class.compile(node)
+
+      resources = catalog.resources.select { |res| res.type == 'File' }
+
+      actual_relationships, actual_subscriptions = [:before, :notify].map do |relation|
+        resources.map do |res|
+          dependents = Array(res[relation])
+          dependents.map { |ref| [res.title, extract_name(ref)] }
+        end.inject(&:concat)
+      end
+
+      actual_relationships.should =~ expected_relationships
+      actual_subscriptions.should =~ expected_subscriptions
+    end
+
+    it "should create a relationship" do
+      code << "File[a] -> File[b]"
+
+      expected_relationships << ['a','b']
+    end
+
+    it "should create a subscription" do
+      code << "File[a] ~> File[b]"
+
+      expected_subscriptions << ['a', 'b']
+    end
+
+    it "should create relationships using title arrays" do
+      code << "File[a,b] -> File[c,d]"
+
+      expected_relationships.concat [
+        ['a', 'c'],
+        ['b', 'c'],
+        ['a', 'd'],
+        ['b', 'd'],
+      ]
+    end
+
+    it "should create relationships using collection expressions" do
+      code << "File <| mode == 0644 |> -> File <| mode == 0755 |>"
+
+      expected_relationships.concat [
+        ['a', 'd'],
+        ['b', 'd'],
+        ['c', 'd'],
+        ['a', 'e'],
+        ['b', 'e'],
+        ['c', 'e'],
+      ]
+    end
+
+    it "should create relationships using resource names" do
+      code << "'File[a]' -> 'File[b]'"
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using variables" do
+      code << <<-MANIFEST
+        $var = File[a]
+        $var -> File[b]
+      MANIFEST
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using case statements" do
+      code << <<-MANIFEST
+        $var = 10
+        case $var {
+          10: {
+            file { s1: }
+          }
+          12: {
+            file { s2: }
+          }
+        }
+        ->
+        case $var + 2 {
+          10: {
+            file { t1: }
+          }
+          12: {
+            file { t2: }
+          }
+        }
+      MANIFEST
+
+      expected_relationships << ['s1', 't2']
+    end
+
+    it "should create relationships using array members" do
+      code << <<-MANIFEST
+        $var = [ [ [ File[a], File[b] ] ] ]
+        $var[0][0][0] -> $var[0][0][1]
+      MANIFEST
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using hash members" do
+      code << <<-MANIFEST
+        $var = {'foo' => {'bar' => {'source' => File[a], 'target' => File[b]}}}
+        $var[foo][bar][source] -> $var[foo][bar][target]
+      MANIFEST
+
+      expected_relationships << ['a', 'b']
+    end
+
+    it "should create relationships using resource declarations" do
+      code << "file { l: } -> file { r: }"
+
+      expected_relationships << ['l', 'r']
+    end
+
+    it "should chain relationships" do
+      code << "File[a] -> File[b] ~> File[c] <- File[d] <~ File[e]"
+
+      expected_relationships << ['a', 'b'] << ['d', 'c']
+      expected_subscriptions << ['b', 'c'] << ['e', 'd']
+    end
+  end
 end
