@@ -52,6 +52,58 @@ describe Puppet::Parser::AST::Relationship do
       @compiler.relationships[0].target.should == :right
     end
 
+    describe "an array" do
+      describe "in source" do
+        before (:each) do
+          @source = stub 'left', :safeevaluate => [:left1, :left2]
+          @target = stub 'right', :safeevaluate => :right1
+          @reln = @class.new(@source, @target, '->')
+        end
+        it "should create a relationship for each source to target" do
+          @reln.evaluate(@scope)
+
+          @compiler.relationships[0].source.should == :left1
+          @compiler.relationships[0].target.should == :right1
+          @compiler.relationships[1].source.should == :left2
+          @compiler.relationships[1].target.should == :right1
+        end
+      end
+      describe "in target" do
+        before(:each) do
+          @source = stub 'left', :safeevaluate => :left1
+          @target = stub 'right', :safeevaluate => [:right1, :right2]
+          @reln = @class.new(@source, @target, '->')
+        end
+        it "should create a relationship from source to each target" do
+          @reln.evaluate(@scope)
+
+          @compiler.relationships[0].source.should == :left1
+          @compiler.relationships[0].target.should == :right1
+          @compiler.relationships[1].source.should == :left1
+          @compiler.relationships[1].target.should == :right2
+        end
+      end
+      describe "in both source and target" do
+        before(:each) do
+          @source = stub 'left', :safeevaluate => [:left1, :left2]
+          @target = stub 'right', :safeevaluate => [:right1, :right2]
+          @reln = @class.new(@source, @target, '->')
+        end
+        it "should create a relationship for each source to each target" do
+          @reln.evaluate(@scope)
+
+          @compiler.relationships[0].source.should == :left1
+          @compiler.relationships[0].target.should == :right1
+          @compiler.relationships[1].source.should == :left1
+          @compiler.relationships[1].target.should == :right2
+          @compiler.relationships[2].source.should == :left2
+          @compiler.relationships[2].target.should == :right1
+          @compiler.relationships[3].source.should == :left2
+          @compiler.relationships[3].target.should == :right2
+        end
+      end
+    end
+
     describe "a chained relationship" do
       before do
         @left = stub 'left', :safeevaluate => :left
