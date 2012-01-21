@@ -312,15 +312,26 @@ describe Puppet::Face[:ca, '0.1.0'], :unless => Puppet.features.microsoft_window
     end
 
     context "with no hosts in CA" do
-      [:pending, :signed, :all].each do |type|
-        it "should return nothing for #{type}" do
-          subject.list(type => true).should == []
+      [
+        {},
+        { :pending => true },
+        { :signed => true },
+        { :all => true },
+      ].each do |type|
+        it "should return nothing for #{type.inspect}" do
+          subject.list(type).should == []
         end
 
         it "should not fail when a matcher is passed" do
           expect {
-            subject.list(type => true, :subject => '.').should == []
+            subject.list(type.merge :subject => '.').should == []
           }.should_not raise_error
+        end
+
+        context "when_rendering :console" do
+          it "should return nothing for #{type.inspect}" do
+            action.when_rendering(:console).call(subject.list(type)).should == ""
+          end
         end
       end
     end
