@@ -875,7 +875,7 @@ class Type
         # We always want to use the "first" provider instance we find, unless the resource
         # is already managed and has a different provider set
         if other = provider_instances[instance.name]
-          Puppet.warning "%s %s found in both %s and %s; skipping the %s version" %
+          Puppet.debug "%s %s found in both %s and %s; skipping the %s version" %
             [self.name.to_s.capitalize, instance.name, other.class.name, instance.class.name, instance.class.name]
           next
         end
