@@ -402,7 +402,7 @@ Copyright (c) 2011 Puppet Labs, LLC Licensed under the Apache 2.0 License
   end
 
   def setup_agent
-    # We need tomake the client either way, we just don't start it
+    # We need to make the client either way, we just don't start it
     # if --no-client is set.
     require 'puppet/agent'
     require 'puppet/configurer'
