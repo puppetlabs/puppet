@@ -749,11 +749,13 @@ describe Puppet::Type.type(:file) do
   end
 
   describe "#recurse_remote" do
+    let(:my) { File.expand_path('/my') }
+
     before do
       file[:source] = "puppet://foo/bar"
 
-      @first = Puppet::FileServing::Metadata.new("/my", :relative_path => "first")
-      @second = Puppet::FileServing::Metadata.new("/my", :relative_path => "second")
+      @first = Puppet::FileServing::Metadata.new(my, :relative_path => "first")
+      @second = Puppet::FileServing::Metadata.new(my, :relative_path => "second")
       @first.stubs(:ftype).returns "directory"
       @second.stubs(:ftype).returns "directory"
 
@@ -762,14 +764,14 @@ describe Puppet::Type.type(:file) do
     end
 
     it "should pass its source to the :perform_recursion method" do
-      data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
+      data = Puppet::FileServing::Metadata.new(File.expand_path("/whatever"), :relative_path => "foobar")
       file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
       file.stubs(:newchild).returns @resource
       file.recurse_remote({})
     end
 
     it "should not recurse when the remote file is not a directory" do
-      data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => ".")
+      data = Puppet::FileServing::Metadata.new(File.expand_path("/whatever"), :relative_path => ".")
       data.stubs(:ftype).returns "file"
       file.expects(:perform_recursion).with("puppet://foo/bar").returns [data]
       file.expects(:newchild).never
@@ -850,7 +852,7 @@ describe Puppet::Type.type(:file) do
 
       describe "and :sourceselect is set to :first" do
         it "should create file instances for the results for the first source to return any values" do
-          data = Puppet::FileServing::Metadata.new("/whatever", :relative_path => "foobar")
+          data = Puppet::FileServing::Metadata.new(File.expand_path("/whatever"), :relative_path => "foobar")
           file[:source] = sources.keys.sort.map { |key| File.expand_path(key) }
           file.expects(:perform_recursion).with(sources['/a']).returns nil
           file.expects(:perform_recursion).with(sources['/b']).returns []
@@ -868,18 +870,19 @@ describe Puppet::Type.type(:file) do
 
         it "should return every found file that is not in a previous source" do
           klass = Puppet::FileServing::Metadata
-          file[:source] = %w{/a /b /c /d}.map {|f| File.expand_path(f) }
+
+          file[:source] = abs_path = %w{/a /b /c /d}.map {|f| File.expand_path(f) }
           file.stubs(:newchild).returns @resource
 
-          one = [klass.new("/a", :relative_path => "a")]
+          one = [klass.new(abs_path[0], :relative_path => "a")]
           file.expects(:perform_recursion).with(sources['/a']).returns one
           file.expects(:newchild).with("a").returns @resource
 
-          two = [klass.new("/b", :relative_path => "a"), klass.new("/b", :relative_path => "b")]
+          two = [klass.new(abs_path[1], :relative_path => "a"), klass.new(abs_path[1], :relative_path => "b")]
           file.expects(:perform_recursion).with(sources['/b']).returns two
           file.expects(:newchild).with("b").returns @resource
 
-          three = [klass.new("/c", :relative_path => "a"), klass.new("/c", :relative_path => "c")]
+          three = [klass.new(abs_path[2], :relative_path => "a"), klass.new(abs_path[2], :relative_path => "c")]
           file.expects(:perform_recursion).with(sources['/c']).returns three
           file.expects(:newchild).with("c").returns @resource
 

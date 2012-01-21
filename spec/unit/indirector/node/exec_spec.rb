@@ -6,7 +6,7 @@ require 'puppet/indirector/node/exec'
 describe Puppet::Node::Exec do
   before do
     @indirection = mock 'indirection'
-    Puppet.settings.stubs(:value).with(:external_nodes).returns("/echo")
+    Puppet.settings.stubs(:value).with(:external_nodes).returns(File.expand_path("/echo"))
     @searcher = Puppet::Node::Exec.new
   end
 
