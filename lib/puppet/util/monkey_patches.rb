@@ -129,6 +129,20 @@ class IO
     block_given? and lines.each {|line| yield line }
     lines
   end
+
+  def self.binread(name, length = nil, offset = 0)
+    File.open(name, 'rb') do |f|
+      f.seek(offset) if offset > 0
+      f.read(length)
+    end
+  end unless singleton_methods.include?(:binread)
+
+  def self.binwrite(name, string, offset = 0)
+    File.open(name, 'wb') do |f|
+      f.write(offset > 0 ? string[offset..-1] : string)
+    end
+  end unless singleton_methods.include?(:binwrite)
+
 end
 
 # Ruby 1.8.5 doesn't have tap
