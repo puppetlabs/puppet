@@ -169,7 +169,7 @@ Puppet::Util::Log.newdesttype :host do
         @domain = Facter["domain"].value
         @hostname += ".#{@domain}" if @domain
       end
-      if msg.source =~ /^\//
+      if Puppet::Util.absolute_path?(msg.source)
         msg.source = @hostname + ":#{msg.source}"
       elsif msg.source == "Puppet"
         msg.source = @hostname + " #{msg.source}"
