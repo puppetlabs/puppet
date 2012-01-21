@@ -80,6 +80,12 @@ describe Puppet::Type.type(:service).provider(:launchd) do
   end
 
   describe "when starting the service" do
+    it "should call any explicit 'start' command" do
+      resource[:start] = "/bin/false"
+      subject.expects(:texecute).with(:start, ["/bin/false"], true)
+      subject.start
+    end
+
     it "should look for the relevant plist once" do
       subject.expects(:plist_from_label).returns([joblabel, {}]).once
       subject.expects(:enabled?).returns :true
@@ -117,7 +123,9 @@ describe Puppet::Type.type(:service).provider(:launchd) do
 
   describe "when stopping the service" do
     it "should call any explicit 'stop' command" do
-
+      resource[:stop] = "/bin/false"
+      subject.expects(:texecute).with(:stop, ["/bin/false"], true)
+      subject.stop
     end
 
     it "should look for the relevant plist once" do

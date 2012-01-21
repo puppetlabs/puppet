@@ -35,6 +35,8 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
     Note that this allows you to do something `launchctl` can't do, which is to
     be in a state of "stopped/enabled" or "running/disabled".
 
+    Note that this provider does not support overriding 'restart' or 'status'.
+
   EOT
 
   include Puppet::Util::Warnings
@@ -192,6 +194,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
   # conditionally enable at load, then disable by modifying the plist file
   # directly.
   def start
+    return ucommand(:start) if resource[:start]
     job_path, job_plist = plist_from_label(resource[:name])
     did_enable_job = false
     cmds = []
@@ -212,6 +215,7 @@ Puppet::Type.type(:service).provide :launchd, :parent => :base do
 
 
   def stop
+    return ucommand(:stop) if resource[:stop]
     job_path, job_plist = plist_from_label(resource[:name])
     did_disable_job = false
     cmds = []
