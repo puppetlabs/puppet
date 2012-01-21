@@ -16,6 +16,22 @@ module Puppet::Configurer::PluginHandler
       Puppet[:pluginsignore]
     )
 
-    plugin_downloader.evaluate.each { |file| Puppet.info "Downloaded #{file} from master" unless FileTest.directory?(file) }
+    plugin_downloader.evaluate.each { |file| load_plugin(file) }
+  end
+
+  def load_plugin(file)
+    return unless FileTest.exist?(file)
+    return if FileTest.directory?(file)
+
+    begin
+      if file =~ /.rb$/
+        Puppet.info "Loading downloaded plugin #{file}"
+        load file
+      else
+        Puppet.debug "Skipping downloaded plugin #{file}"
+      end
+    rescue Exception => detail
+      Puppet.err "Could not load downloaded file #{file}: #{detail}"
+    end
   end
 end
