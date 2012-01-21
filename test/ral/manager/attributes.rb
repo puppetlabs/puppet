@@ -227,7 +227,7 @@ class TestTypeAttributes < Test::Unit::TestCase
       no.each do |a|
         assert_nil(resource.should(a), "Got value for unsupported %s in %s" % [a, prov.name])
         if Puppet::Util::Log.sendlevel?(:info)
-          assert(@logs.find { |l| l.message =~ /not managing attribute #{a}/ and l.level == :info }, "No warning about failed %s" % a)
+          assert(@logs.find { |l| l.message =~ /not managing attribute #{a}/ and l.level == :debug }, "No warning about failed %s" % a)
         end
       end
 
