@@ -110,36 +110,6 @@ module Puppet
     Puppet.settings.parse
   end
 
-  # XXX this should all be done using puppet objects, not using
-  # normal mkdir
-  def self.recmkdir(dir,mode = 0755)
-    if FileTest.exist?(dir)
-      return false
-    else
-      tmp = dir.sub(/^\//,'')
-      path = [File::SEPARATOR]
-      tmp.split(File::SEPARATOR).each { |dir|
-        path.push dir
-        if ! FileTest.exist?(File.join(path))
-          begin
-            Dir.mkdir(File.join(path), mode)
-          rescue Errno::EACCES => detail
-            Puppet.err detail.to_s
-            return false
-          rescue => detail
-            Puppet.err "Could not create #{path}: #{detail}"
-            return false
-          end
-        elsif FileTest.directory?(File.join(path))
-          next
-        else FileTest.exist?(File.join(path))
-          raise Puppet::Error, "Cannot create #{dir}: basedir #{File.join(path)} is a file"
-        end
-      }
-      return true
-    end
-  end
-
   # Create a new type.  Just proxy to the Type class.  The mirroring query
   # code was deprecated in 2008, but this is still in heavy use.  I suppose
   # this can count as a soft deprecation for the next dev. --daniel 2011-04-12

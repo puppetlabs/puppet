@@ -14,15 +14,17 @@ describe Puppet::Indirector::Exec do
     end
   end
 
+  let(:path) { File.expand_path('/echo') }
+
   before :each do
     @searcher = @exec_class.new
-    @searcher.command = ["/echo"]
+    @searcher.command = [path]
 
     @request = stub 'request', :key => "foo"
   end
 
   it "should throw an exception if the command is not an array" do
-    @searcher.command = "/usr/bin/echo"
+    @searcher.command = path
     proc { @searcher.find(@request) }.should raise_error(Puppet::DevError)
   end
 
@@ -32,22 +34,22 @@ describe Puppet::Indirector::Exec do
   end
 
   it "should execute the command with the object name as the only argument" do
-    @searcher.expects(:execute).with(%w{/echo foo}, :combine => false)
+    @searcher.expects(:execute).with([path, 'foo'], :combine => false)
     @searcher.find(@request)
   end
 
   it "should return the output of the script" do
-    @searcher.expects(:execute).with(%w{/echo foo}, :combine => false).returns("whatever")
+    @searcher.expects(:execute).with([path, 'foo'], :combine => false).returns("whatever")
     @searcher.find(@request).should == "whatever"
   end
 
   it "should return nil when the command produces no output" do
-    @searcher.expects(:execute).with(%w{/echo foo}, :combine => false).returns(nil)
+    @searcher.expects(:execute).with([path, 'foo'], :combine => false).returns(nil)
     @searcher.find(@request).should be_nil
   end
 
   it "should raise an exception if there's an execution failure" do
-    @searcher.expects(:execute).with(%w{/echo foo}, :combine => false).raises(Puppet::ExecutionFailure.new("message"))
+    @searcher.expects(:execute).with([path, 'foo'], :combine => false).raises(Puppet::ExecutionFailure.new("message"))
 
     lambda {@searcher.find(@request)}.should raise_exception(Puppet::Error, 'Failed to find foo via exec: message')
   end

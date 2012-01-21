@@ -13,10 +13,6 @@ class Puppet::Parameter::Path < Puppet::Parameter
       fail "#{name} only accepts a single path, not an array of paths"
     end
 
-    # We *always* support Unix path separators, as Win32 does now too.
-    absolute = "[/#{::Regexp.quote(::File::SEPARATOR)}]"
-    win32    = Puppet.features.microsoft_windows?
-
     fail("#{name} must be a fully qualified path") unless Array(paths).all? {|path| absolute_path?(path)}
 
     paths
